@@ -5,6 +5,7 @@ from quantifire.config import get_settings
 from quantifire.db import Base
 from quantifire import models  # noqa: F401
 from quantifire import canonical_models  # noqa: F401
+from quantifire import commercial_models  # noqa: F401
 config=context.config
 if config.config_file_name: fileConfig(config.config_file_name)
 config.set_main_option('sqlalchemy.url', get_settings().database_url)
