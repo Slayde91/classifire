@@ -15,6 +15,7 @@ from . import ATTRIBUTION, __version__
 from . import canonical_models as _canonical_models  # noqa: F401
 from . import commercial_models as _commercial_models  # noqa: F401
 from .api import router as api_router
+from .api.agent_api import router as agent_api_router
 from .api.commercial import router as commercial_router
 from .api.guarded_technical import router as guarded_technical_router
 from .api.human_release import router as human_release_router
@@ -72,7 +73,13 @@ app.add_middleware(
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=["Authorization", "Content-Type", "If-Match", "X-CSRF-Token"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "If-Match",
+        "X-CSRF-Token",
+        "X-Classifire-Agent-ID",
+    ],
 )
 app.mount("/static", StaticFiles(directory=str(package_dir / "static")), name="static")
 app.mount("/brand", StaticFiles(directory=str(package_dir / "static" / "brand")), name="brand")
@@ -116,6 +123,7 @@ app.include_router(productivity_router)
 app.include_router(commercial_router)
 app.include_router(release_control_router)
 app.include_router(human_release_router)
+app.include_router(agent_api_router)
 app.include_router(api_router)
 app.include_router(workflow_router)
 app.include_router(workflow_actions_router)
