@@ -1,0 +1,35 @@
+{
+  "name": "@ceasefire-pfp/classifire-openclaw-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "plugin:build": "npm run build && openclaw plugins build --entry ./dist/index.js",
+    "plugin:validate": "npm run plugin:build && openclaw plugins validate --entry ./dist/index.js"
+  },
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "devDependencies": {
+    "openclaw": "2026.7.1-2",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.5.17"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.5.17",
+      "minGatewayVersion": "2026.5.17"
+    }
+  }
+}
