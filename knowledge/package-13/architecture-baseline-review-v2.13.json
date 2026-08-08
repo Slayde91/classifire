@@ -1,0 +1,38 @@
+{
+  "gate": "ARCHITECTURE_BASELINE_APPROVED",
+  "status": "PASS",
+  "production_authority": false,
+  "source_release": "QUANTIFIRE v2.13",
+  "package13_filename": "QUANTIFIRE_13_Knowledge_Index_and_Deployment_Manifest_v2.13.txt",
+  "package13_sha256": "20a6d1ffdbb6aabf7c013c0fcd49fb7e38518819b774b9e0aa2152f4c4127cae",
+  "active_files_verified": 20,
+  "active_file_failures": 0,
+  "chapter_routes": 1599,
+  "unique_document_ids": 1599,
+  "unique_chapter_filenames": 1599,
+  "review_checks": {
+    "authority_and_routing_matches_source": true,
+    "negative_routing_matches_source": true,
+    "all_chapter_routes_unique": true,
+    "all_chapter_titles_present": true,
+    "package_chapter_counts_reconcile": true,
+    "permanent_knowledge_file_limit_reconciles": true
+  },
+  "package_chapter_counts": {
+    "1": 249,
+    "2": 183,
+    "3": 257,
+    "4": 214,
+    "5": 62,
+    "6": 34,
+    "7": 50,
+    "8": 92,
+    "9": 69,
+    "10": 56,
+    "11": 249,
+    "12": 84
+  },
+  "next_phase": "Package 02 + Package 18 schema reconciliation",
+  "next_gate": "SCHEMA_GAP_REVIEW_REQUIRED",
+  "note": "This approval covers the derived migration architecture baseline only. It does not grant production runtime authority to the OpenClaw agents or bypass Package 16, technical, commercial, validation, security or human release gates."
+}
