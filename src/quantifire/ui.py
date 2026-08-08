@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from datetime import date, datetime, timezone
@@ -36,6 +36,7 @@ from .models import (
 from .security import authenticate_user, create_csrf_token, has_permission, verify_csrf
 from .services.calculation import D, calculate_estimate_line, recalculate_estimate
 from .services.rule_engine import evaluate_estimate_rules
+from .services.release_pinning import pin_current_releases, release_basis_for_estimate, validate_estimate_release_basis
 from .services.snapshot import lock_snapshot
 from .services.storage import save_upload
 from .services.technical import extract_pdf_candidate_metadata, search_for_opening
@@ -372,6 +373,11 @@ def estimate_create(
     estimate = Estimate(project_id=project.id, revision=revision, reference=reference, title=title, status="draft", currency=get_settings().currency, tax_name=get_settings().tax_name, tax_rate=D(get_settings().tax_rate))
     db.add(estimate)
     db.flush()
+    try:
+        pin_current_releases(db, estimate)
+    except ValueError as exc:
+        db.rollback()
+        return RedirectResponse(f"/projects?error={str(exc).replace(chr(32), chr(43))}", status_code=303)
     record_audit(db, actor=user, action="create", entity_type="estimate", entity_id=estimate.id, project_id=project.id, new_value={"reference": reference, "revision": revision})
     db.commit()
     return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
@@ -397,7 +403,8 @@ def estimate_page(estimate_id: str, request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "estimate:read")
     estimate = _estimate(db, estimate_id)
     evaluations = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)).all()
-    return templates.TemplateResponse(request, "estimate.html", _context(request, db, estimate=estimate, evaluations=evaluations))
+    release_basis = release_basis_for_estimate(db, estimate)
+    return templates.TemplateResponse(request, "estimate.html", _context(request, db, estimate=estimate, evaluations=evaluations, release_basis=release_basis))
 
 
 @router.post("/estimates/{estimate_id}/openings")
@@ -497,6 +504,10 @@ def estimate_lock(estimate_id: str, request: Request, db: Db, csrf_token: Annota
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:approve")
     estimate = _estimate(db, estimate_id)
+    basis_errors = validate_estimate_release_basis(db, estimate)
+    if basis_errors:
+        message = ("Release basis incomplete: " + "; ".join(basis_errors)).replace(" ", "+")
+        return RedirectResponse(f"/estimates/{estimate.id}?error={message}", status_code=303)
     blockers = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id, RuleEvaluation.result == "BLOCKED")).all()
     if blockers:
         return RedirectResponse(f"/estimates/{estimate.id}?error=Blocking+rule+results+must+be+resolved", status_code=303)
