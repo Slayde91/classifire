@@ -7,6 +7,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..commercial_models import ProductivitySource
 from ..models import (
     Estimate,
     EstimatingRule,
@@ -78,6 +79,40 @@ def pinned_labour(db: Session, estimate: Estimate, code: str) -> LabourComponent
     if not item:
         raise ReleaseScopeError(f"Labour component {code!r} is not present in the pinned Labour release.")
     return item
+
+
+def pinned_productivity_source(
+    db: Session,
+    estimate: Estimate,
+    activity: str,
+) -> ProductivitySource:
+    ids = release_record_ids(db, estimate, "labour")
+    records = list(
+        db.scalars(
+            select(ProductivitySource).where(
+                ProductivitySource.id.in_(ids),
+                ProductivitySource.activity == activity,
+            )
+        ).all()
+    )
+    if not records:
+        raise ReleaseScopeError(
+            f"Productivity activity {activity!r} is not present in the pinned Labour release."
+        )
+    if len(records) != 1:
+        raise ReleaseScopeError(
+            f"Pinned Labour release contains multiple ProductivitySource records for {activity!r}."
+        )
+    record = records[0]
+    if (record.approval_status or "").strip().upper() not in {"APPROVED", "ACTIVE", "CURRENT"}:
+        raise ReleaseScopeError(
+            f"Pinned ProductivitySource for {activity!r} is not approved."
+        )
+    if not record.executable_formula_id:
+        raise ReleaseScopeError(
+            f"Pinned ProductivitySource for {activity!r} has no executable formula."
+        )
+    return record
 
 
 def pinned_pricing_record(db: Session, estimate: Estimate, pkb_entry_id: str) -> PricingLibraryRecord:
