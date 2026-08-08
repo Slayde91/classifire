@@ -43,7 +43,7 @@ def record_audit(
     event = AuditEvent(
         actor_user_id=actor.id if actor else None,
         actor_type=actor_type,
-        actor_name=actor.full_name if actor else actor_name or "QUANTIFIRE system",
+        actor_name=actor.full_name if actor else actor_name or "CLASSIFIRE system",
         action=action,
         entity_type=entity_type,
         entity_id=entity_id,

@@ -57,7 +57,7 @@ from ..services.snapshot import lock_snapshot
 from ..services.storage import save_upload
 from ..services.technical import extract_pdf_candidate_metadata, search_for_opening, search_variants
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE API v1"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE API v1"])
 Db = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
@@ -74,7 +74,7 @@ def health(db: Db, settings: Annotated[Settings, Depends(get_settings)]) -> dict
     db.execute(select(1))
     return {
         "status": "ok",
-        "product": "QUANTIFIRE",
+        "product": "CLASSIFIRE",
         "version": "0.1.0",
         "environment": settings.env,
         "production_findings": settings.validate_production(),
@@ -121,7 +121,7 @@ def create_product(
         entity_type="product",
         entity_id=product.id,
         new_value=payload.model_dump(mode="json"),
-        reason="Created through QUANTIFIRE API",
+        reason="Created through CLASSIFIRE API",
         source_ip=request.client.host if request.client else None,
     )
     db.commit()

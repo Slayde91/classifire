@@ -24,7 +24,7 @@ from .mission_control import MissionControlClient, bootstrap_mission_control
 from .models import PricingLibraryRecord, Product, TechnicalVariant, User
 from .security import hash_password
 
-app = typer.Typer(help="QUANTIFIRE administration, import, run and integration commands.", no_args_is_help=True)
+app = typer.Typer(help="CLASSIFIRE administration, import, run and integration commands.", no_args_is_help=True)
 console = Console()
 
 
@@ -38,8 +38,8 @@ def repo_root() -> Path:
 
 @app.command()
 def version() -> None:
-    """Print the installed QUANTIFIRE version."""
-    console.print(f"QUANTIFIRE {__version__}")
+    """Print the installed CLASSIFIRE version."""
+    console.print(f"CLASSIFIRE {__version__}")
 
 
 @app.command("init")
@@ -61,7 +61,7 @@ def init_database() -> None:
 @app.command("create-admin")
 def create_admin(
     email: str = typer.Option(..., prompt=True),
-    full_name: str = typer.Option("QUANTIFIRE Administrator"),
+    full_name: str = typer.Option("CLASSIFIRE Administrator"),
     password: str = typer.Option(..., prompt=True, hide_input=True, confirmation_prompt=True),
 ) -> None:
     """Create or reset an administrator account."""
@@ -116,8 +116,8 @@ def import_technical(
 def import_supplied_v213(source_root: Optional[Path] = None) -> None:
     """Import the supplied v2.13 pricing and technical libraries."""
     root = source_root or repo_root() / "knowledge" / "source" / "v2.13"
-    pricing = root / "CLASSIFIRE_14_Pricing_Library_v2.13.csv"
-    technical = root / "CLASSIFIRE_17_Technical_System_Variants_v2.13.jsonl"
+    pricing = root / "QUANTIFIRE_14_Pricing_Library_v2.13.csv"
+    technical = root / "QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl"
     missing = [str(path) for path in (pricing, technical) if not path.exists()]
     if missing:
         raise typer.BadParameter(f"Missing supplied source file(s): {missing}")
@@ -136,7 +136,7 @@ def start(
     port: Optional[int] = typer.Option(None),
     reload: bool = typer.Option(False),
 ) -> None:
-    """Start the QUANTIFIRE application."""
+    """Start the CLASSIFIRE application."""
     settings = get_settings()
     uvicorn.run(
         "classifire.main:app",
@@ -163,9 +163,10 @@ def doctor() -> None:
     checks: list[tuple[str, str, str]] = []
     checks.append(("Python", sys.version.split()[0], "PASS" if sys.version_info >= (3, 11) else "FAIL"))
     checks.append(("Repository", str(root), "PASS" if (root / "pyproject.toml").exists() else "WARN"))
-    checks.append(("Approved logo", str(root / "assets/brand/quantifire-logo-master.png"), "PASS" if (root / "assets/brand/quantifire-logo-master.png").exists() else "FAIL"))
-    p14 = root / "knowledge/source/v2.13/CLASSIFIRE_14_Pricing_Library_v2.13.csv"
-    p15 = root / "knowledge/source/v2.13/CLASSIFIRE_17_Technical_System_Variants_v2.13.jsonl"
+    logo = root / "assets/brand/classifire-logo-master.png"
+    checks.append(("Approved CLASSIFIRE logo", str(logo), "PASS" if logo.exists() else "WARN"))
+    p14 = root / "knowledge/source/v2.13/QUANTIFIRE_14_Pricing_Library_v2.13.csv"
+    p15 = root / "knowledge/source/v2.13/QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl"
     calc = root / "knowledge/source/raw-calculator/Penetration Calculator.xlsb"
     for label, path in [("Package 14", p14), ("Package 15 variants", p15), ("Raw calculator", calc)]:
         checks.append((label, str(path), "PASS" if path.exists() else "BLOCKED"))
@@ -202,7 +203,7 @@ def mission_control_bootstrap(
         help="Also seed baseline architecture tasks. Default is agent registration only.",
     ),
 ) -> None:
-    """Register QUANTIFIRE agent records in Mission Control; task seeding is opt-in."""
+    """Register CLASSIFIRE agent records in Mission Control; task seeding is opt-in."""
     settings = get_settings()
     key = api_key or settings.mission_control_api_key
     if not key:

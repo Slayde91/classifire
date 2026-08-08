@@ -18,7 +18,7 @@ from ..services.repair_strategy import (
 )
 from ..services.workflow import WorkflowTransitionError
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Repair Strategy"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Repair Strategy"])
 Db = Annotated[Session, Depends(get_db)]
 
 

@@ -5,4 +5,4 @@ Access, use, reproduction, modification, distribution, or disclosure is permitte
 authorised by Ceasefire PFP.
 
 Third-party dependency licences and notices remain governed by their respective terms.
-Original technical evidence is retained unchanged and does not become QUANTIFIRE branding.
+Original technical evidence is retained unchanged and does not become CLASSIFIRE branding.

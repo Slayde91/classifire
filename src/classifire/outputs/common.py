@@ -6,7 +6,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-ATTRIBUTION = "QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP."
+ATTRIBUTION = "CLASSIFIRE is an estimating system produced and developed by Ceasefire PFP."
 
 
 def d(value: Any) -> Decimal:
@@ -26,14 +26,14 @@ def verify_snapshot(snapshot: dict[str, Any]) -> None:
         raise ValueError("Snapshot hash is missing or invalid; output generation is blocked")
 
 
-def logo_path() -> Path:
+def logo_path() -> Path | None:
     package_root = Path(__file__).resolve().parents[3]
     candidates = [
-        Path(__file__).resolve().parents[1] / "static" / "brand" / "quantifire-logo-master.png",
-        package_root / "assets" / "brand" / "quantifire-logo-master.png",
-        Path.cwd() / "assets" / "brand" / "quantifire-logo-master.png",
+        Path(__file__).resolve().parents[1] / "static" / "brand" / "classifire-logo-master.png",
+        package_root / "assets" / "brand" / "classifire-logo-master.png",
+        Path.cwd() / "assets" / "brand" / "classifire-logo-master.png",
     ]
     for candidate in candidates:
         if candidate.exists():
             return candidate
-    raise FileNotFoundError("Approved QUANTIFIRE logo asset not found")
+    return None

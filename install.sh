@@ -8,7 +8,7 @@ PYTHON_BIN="${PYTHON_BIN:-python3}"
 "$PYTHON_BIN" - <<'PY'
 import sys
 if sys.version_info < (3, 11):
-    raise SystemExit("QUANTIFIRE requires Python 3.11 or later.")
+    raise SystemExit("CLASSIFIRE requires Python 3.11 or later.")
 PY
 
 if [ ! -d .venv ]; then
@@ -24,10 +24,10 @@ if [ ! -f .env ]; then
   echo "Created .env from .env.example. Change the secret key and administrator settings before production use."
 fi
 
-quantifire init
+classifire init
 
 echo
-echo "QUANTIFIRE installed."
+echo "CLASSIFIRE installed."
 echo "Activate: source .venv/bin/activate"
-echo "Create admin: quantifire create-admin"
-echo "Start: quantifire start"
+echo "Create admin: classifire create-admin"
+echo "Start: classifire start"

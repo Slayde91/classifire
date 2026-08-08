@@ -66,7 +66,7 @@ def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
         "request": request,
         "user": user,
         "csrf_token": create_csrf_token(request),
-        "attribution": "QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP.",
+        "attribution": "CLASSIFIRE is an estimating system produced and developed by Ceasefire PFP.",
         "has_permission": lambda permission: bool(user and has_permission(user, permission)),
         **values,
     }

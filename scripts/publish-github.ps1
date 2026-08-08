@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Owner = "Slayde91",
-    [string]$Repository = "quantifire",
+    [string]$Repository = "classifire",
     [ValidateSet("private", "public", "internal")]
     [string]$Visibility = "private",
     [string]$CommitMessage = "Initial QUANTIFIRE pre-production integration build"

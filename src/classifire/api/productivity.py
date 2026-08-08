@@ -19,7 +19,7 @@ from ..services.productivity import (
     create_productivity_source,
 )
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Productivity"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Productivity"])
 Db = Annotated[Session, Depends(get_db)]
 
 

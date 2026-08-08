@@ -13,7 +13,7 @@ from ..services.technical import search_for_opening
 from ..services.workflow import WorkflowAction
 from ..services.workflow_guard import check_estimate_action
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Technical Guarded"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Technical Guarded"])
 Db = Annotated[Session, Depends(get_db)]
 
 

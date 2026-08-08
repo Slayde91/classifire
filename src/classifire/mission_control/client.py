@@ -72,7 +72,7 @@ class MissionControlClient:
         payload = {"name": name, "role": role, **(metadata or {})}
 
         # Mission Control self-registration is rate-limited to 5 requests/minute
-        # per IP. A full QUANTIFIRE fleet contains nine agents, so bootstrap must
+        # per IP. A full CLASSIFIRE fleet contains nine agents, so bootstrap must
         # tolerate 429 responses instead of failing after the fifth registration.
         max_attempts = 3
         for attempt in range(1, max_attempts + 1):

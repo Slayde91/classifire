@@ -11,7 +11,7 @@ from ..security import require_permission
 from ..services.workflow import WorkflowAction
 from ..services.workflow_guard import check_estimate_action
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Workflow"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Workflow"])
 Db = Annotated[Session, Depends(get_db)]
 
 

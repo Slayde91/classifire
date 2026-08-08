@@ -7,6 +7,13 @@ import sys
 from pathlib import Path
 
 APPROVED_LOGO_NAMES = {
+    "classifire-logo-master.png",
+    "classifire-logo-small.png",
+    "classifire-logo-medium.png",
+    "classifire-logo-large.png",
+    "classifire-logo-favicon.png",
+}
+LEGACY_QUANTIFIRE_LOGO_NAMES = {
     "quantifire-logo-master.png",
     "quantifire-logo-small.png",
     "quantifire-logo-medium.png",
@@ -38,7 +45,9 @@ def main() -> int:
         rel = path.relative_to(root)
         if any(part in EXCLUDED_PARTS for part in rel.parts):
             continue
-        if path.suffix.lower() in IMAGE_SUFFIXES and path.name not in APPROVED_LOGO_NAMES:
+        if path.suffix.lower() in IMAGE_SUFFIXES and path.name in LEGACY_QUANTIFIRE_LOGO_NAMES:
+            findings.append({"severity": "review", "path": rel.as_posix(), "finding": "Legacy QUANTIFIRE logo retained; not approved for active CLASSIFIRE rendering", "sha256": sha256(path)})
+        elif path.suffix.lower() in IMAGE_SUFFIXES and path.name not in APPROVED_LOGO_NAMES:
             findings.append({"severity": "error", "path": rel.as_posix(), "finding": "Unapproved image asset", "sha256": sha256(path)})
         if rel.as_posix() in {"scripts/branding_audit.py", "docs/reports/branding-audit-current.json"}:
             continue

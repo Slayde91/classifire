@@ -36,7 +36,7 @@ def ensure_release(db: Session, library_type: str, version: str, status: str = "
         effective_date=date.today(),
         release_hash=hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest(),
         source_manifest=payload,
-        notes="Initial QUANTIFIRE application release record.",
+        notes="Initial CLASSIFIRE application release record.",
     )
     db.add(release)
     db.flush()
@@ -48,7 +48,7 @@ def seed_database(db: Session, settings: Settings) -> dict[str, str]:
     if not user:
         user = User(
             email=settings.admin_email.lower(),
-            full_name="QUANTIFIRE Administrator",
+            full_name="CLASSIFIRE Administrator",
             password_hash=hash_password(settings.admin_password),
             role="administrator",
             is_active=True,

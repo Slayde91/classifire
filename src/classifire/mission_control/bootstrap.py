@@ -10,60 +10,60 @@ from .client import MissionControlClient
 
 DEFAULT_AGENTS: list[dict[str, Any]] = [
     {
-        "name": "qf-orchestrator",
+        "name": "cf-orchestrator",
         "role": "agent",
         "capabilities": ["orchestration", "routing", "status"],
     },
     {
-        "name": "qf-intake-evidence",
+        "name": "cf-intake-evidence",
         "role": "researcher",
         "capabilities": ["evidence-intake", "document-review", "source-provenance"],
     },
     {
-        "name": "qf-physical-model",
+        "name": "cf-physical-model",
         "role": "researcher",
         "capabilities": ["physical-scope", "opening-service-model", "quantity-analysis"],
     },
     {
-        "name": "qf-technical-system",
+        "name": "cf-technical-system",
         "role": "reviewer",
         "capabilities": ["technical-system-search", "applicability-review", "package15"],
     },
     {
-        "name": "qf-commercial-engine",
+        "name": "cf-commercial-engine",
         "role": "agent",
         "capabilities": ["estimating", "pricing", "package14", "component-build"],
     },
     {
-        "name": "qf-validator",
+        "name": "cf-validator",
         "role": "tester",
         "capabilities": ["qa", "regression", "reconciliation", "release-gates"],
     },
     {
-        "name": "qf-output",
+        "name": "cf-output",
         "role": "assistant",
         "capabilities": ["controlled-output", "workbook", "proposal", "reporting"],
     },
     {
-        "name": "qf-library-governance",
+        "name": "cf-library-governance",
         "role": "reviewer",
         "capabilities": ["library-governance", "revision-review", "release-management"],
     },
     {
-        "name": "qf-platform-governance",
+        "name": "cf-platform-governance",
         "role": "devops",
         "capabilities": ["platform", "security", "deployment", "backup", "rollback"],
     },
 ]
 
 DEFAULT_TASKS = [
-    ("QF-ARCH-001", "Confirm OpenClaw and Mission Control compatibility", "qf-platform-governance", "high"),
-    ("QF-DATA-001", "Validate source corpus inventory and hashes", "qf-intake-evidence", "high"),
-    ("QF-XLS-001", "Run Windows Excel formula and macro parity suite", "qf-validator", "high"),
-    ("QF-P15-001", "Link Active technical variants to immutable source documents", "qf-technical-system", "high"),
-    ("QF-P14-001", "Review Package 14 records requiring expert commercial review", "qf-commercial-engine", "high"),
-    ("QF-SEC-001", "Complete production security hardening and backup test", "qf-platform-governance", "high"),
-    ("QF-UAT-001", "Run reference-project acceptance and regression suite", "qf-validator", "high"),
+    ("CF-ARCH-001", "Confirm OpenClaw and Mission Control compatibility", "cf-platform-governance", "high"),
+    ("CF-DATA-001", "Validate source corpus inventory and hashes", "cf-intake-evidence", "high"),
+    ("CF-XLS-001", "Run Windows Excel formula and macro parity suite", "cf-validator", "high"),
+    ("CF-P15-001", "Link Active technical variants to immutable source documents", "cf-technical-system", "high"),
+    ("CF-P14-001", "Review Package 14 records requiring expert commercial review", "cf-commercial-engine", "high"),
+    ("CF-SEC-001", "Complete production security hardening and backup test", "cf-platform-governance", "high"),
+    ("CF-UAT-001", "Run reference-project acceptance and regression suite", "cf-validator", "high"),
 ]
 
 
@@ -74,7 +74,7 @@ def bootstrap_mission_control(
     architecture_registry: Path | None = None,
     create_tasks: bool = False,
 ) -> dict[str, Any]:
-    """Register QUANTIFIRE agent records and optionally seed baseline tasks.
+    """Register CLASSIFIRE agent records and optionally seed baseline tasks.
 
     Task creation is opt-in so Mission Control cannot dispatch work to OpenClaw
     agent IDs that have not yet been created and acceptance-tested.
@@ -107,13 +107,13 @@ def bootstrap_mission_control(
                     assigned_to=agent,
                     priority=priority,
                     description=(
-                        "QUANTIFIRE architecture task. Mission Control manages assignment, review, "
-                        "quality gates and completion receipts; QUANTIFIRE remains the canonical "
+                        "CLASSIFIRE architecture task. Mission Control manages assignment, review, "
+                        "quality gates and completion receipts; CLASSIFIRE remains the canonical "
                         "domain system."
                     ),
                     metadata={
                         "task_id": task_id,
-                        "project": "QUANTIFIRE",
+                        "project": "CLASSIFIRE",
                         "repository": repo_url,
                         "architecture_registry": registry,
                     },

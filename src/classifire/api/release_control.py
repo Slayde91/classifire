@@ -27,7 +27,7 @@ from ..services.validation import (
 from ..services.workflow import WorkflowAction, WorkflowTransitionError
 from ..services.workflow_guard import require_estimate_action
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Validation and Release Control"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Validation and Release Control"])
 Db = Annotated[Session, Depends(get_db)]
 
 

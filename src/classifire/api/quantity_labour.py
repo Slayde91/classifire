@@ -16,7 +16,7 @@ from ..services.release_scope import ReleaseScopeError
 from ..services.workflow import WorkflowTransitionError
 from ..services.workflow_db import assess_estimate_workflow
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Quantity and Labour"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Quantity and Labour"])
 Db = Annotated[Session, Depends(get_db)]
 
 

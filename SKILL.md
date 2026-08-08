@@ -1,13 +1,13 @@
 ---
-name: quantifire
-description: Operate and administer the QUANTIFIRE passive-fire estimating and technical decision-support system through its controlled CLI and API.
+name: classifire
+description: Operate and administer the CLASSIFIRE passive-fire estimating and technical decision-support system through its controlled CLI and API.
 ---
 
-# QUANTIFIRE OpenClaw skill
+# CLASSIFIRE OpenClaw skill
 
-QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP.
+CLASSIFIRE is an estimating system produced and developed by Ceasefire PFP.
 
-Use QUANTIFIRE's typed API or CLI for all canonical reads and writes. Do not treat agent memory, chat history or Mission Control task text as the estimate database.
+Use CLASSIFIRE's typed API or CLI for all canonical reads and writes. Do not treat agent memory, chat history or Mission Control task text as the estimate database.
 
 ## Mandatory boundaries
 
@@ -24,9 +24,9 @@ Use QUANTIFIRE's typed API or CLI for all canonical reads and writes. Do not tre
 ## Local commands
 
 ```bash
-quantifire doctor
-quantifire start
-quantifire worker
+classifire doctor
+classifire start
+classifire worker
 ```
 
-Use the Mission Control adapter only for architecture, task, review, incident and release coordination. Canonical project, library and estimate state remains within QUANTIFIRE.
+Use the Mission Control adapter only for architecture, task, review, incident and release coordination. Canonical project, library and estimate state remains within CLASSIFIRE.

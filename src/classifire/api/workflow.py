@@ -10,7 +10,7 @@ from ..models import Estimate, User
 from ..security import require_permission
 from ..services.workflow_db import assess_estimate_workflow
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Workflow"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Workflow"])
 Db = Annotated[Session, Depends(get_db)]
 
 

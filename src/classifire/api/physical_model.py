@@ -16,7 +16,7 @@ from ..security import require_permission
 from ..services.physical_model import PhysicalModelLockError, create_physical_model_lock
 from ..services.workflow import WorkflowTransitionError
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Physical Model"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Physical Model"])
 Db = Annotated[Session, Depends(get_db)]
 
 
@@ -115,7 +115,7 @@ def register_evidence_source(
             "region_reference": evidence.region_reference,
             "evidence_class": evidence.evidence_class,
         },
-        reason="Evidence registered for QUANTIFIRE v2.13 physical-model workflow",
+        reason="Evidence registered for CLASSIFIRE physical-model workflow (QUANTIFIRE v2.13 lineage)",
         source_ip=request.client.host if request.client else None,
     )
     db.commit()

@@ -50,7 +50,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(
-    title="QUANTIFIRE API",
+    title="CLASSIFIRE API",
     summary="Passive-fire estimating and technical decision-support system",
     description=ATTRIBUTION,
     version=__version__,
@@ -103,7 +103,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.get("/healthz", include_in_schema=False)
 def healthz() -> dict[str, str]:
-    return {"status": "ok", "product": "QUANTIFIRE", "version": __version__}
+    return {"status": "ok", "product": "CLASSIFIRE", "version": __version__}
 
 
 # Guarded transition routes are registered before the legacy v1 router so the

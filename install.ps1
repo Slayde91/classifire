@@ -8,7 +8,7 @@ if (-not (Test-Path ".venv")) {
 }
 
 $venvPython = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
-& $venvPython -c "import sys; assert sys.version_info >= (3, 11), 'QUANTIFIRE requires Python 3.11 or later.'"
+& $venvPython -c "import sys; assert sys.version_info >= (3, 11), 'CLASSIFIRE requires Python 3.11 or later.'"
 & $venvPython -m pip install --upgrade pip setuptools
 & $venvPython -m pip install --no-build-isolation -e .
 
@@ -20,7 +20,7 @@ if (-not (Test-Path ".env")) {
 & (Join-Path $PSScriptRoot ".venv\Scripts\classifire.exe") init
 
 Write-Host ""
-Write-Host "QUANTIFIRE installed." -ForegroundColor Green
+Write-Host "CLASSIFIRE installed." -ForegroundColor Green
 Write-Host "Activate: .\.venv\Scripts\Activate.ps1"
-Write-Host "Create admin: quantifire create-admin"
-Write-Host "Start: quantifire start"
+Write-Host "Create admin: classifire create-admin"
+Write-Host "Start: classifire start"

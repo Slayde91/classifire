@@ -15,7 +15,7 @@ from ..services.validation import IndependentValidationError
 from ..services.workflow import WorkflowTransitionError
 from ..services.workflow_db import assess_estimate_workflow
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Human Release"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Human Release"])
 Db = Annotated[Session, Depends(get_db)]
 
 

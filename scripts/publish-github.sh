@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 OWNER="${1:-Slayde91}"
-REPO="${2:-quantifire}"
+REPO="${2:-classifire}"
 VISIBILITY="${3:-private}"
 
 command -v gh >/dev/null 2>&1 || { echo "GitHub CLI (gh) is required." >&2; exit 1; }

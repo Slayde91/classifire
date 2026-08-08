@@ -21,7 +21,7 @@ from ..services.release_scope import ReleaseScopeError
 from ..services.workflow import WorkflowTransitionError
 from ..services.workflow_db import assess_estimate_workflow
 
-router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE Commercial"])
+router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Commercial"])
 Db = Annotated[Session, Depends(get_db)]
 
 
@@ -170,7 +170,7 @@ def derive_estimate_commercial(
             "canonical_commercial_subtotal_ex_tax": str(subtotal),
             "workflow_stage": assessment.stage,
         },
-        reason="QUANTIFIRE v2.13 controlled Package 14 commercial hierarchy",
+        reason="CLASSIFIRE controlled Package 14 commercial hierarchy (QUANTIFIRE v2.13 lineage)",
         source_ip=request.client.host if request.client else None,
     )
     db.commit()
