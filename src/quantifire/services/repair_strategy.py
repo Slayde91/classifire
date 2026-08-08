@@ -344,6 +344,12 @@ def create_repair_strategy_lock(
     if not strategy or not strategy.selected_technical_variant_id or not strategy.candidate_id:
         raise RepairStrategyError("A selected Package 15 Repair Strategy is required before locking.")
 
+    physical_lock = _active_physical_lock(db, estimate.id, opening.id)
+    if strategy.physical_model_lock_id != physical_lock.id:
+        raise RepairStrategyError(
+            "Selected Repair Strategy was derived from a superseded Physical Model Lock; rerun opening-specific technical search."
+        )
+
     variant = db.get(TechnicalVariant, strategy.selected_technical_variant_id)
     if not variant or variant.variant_id != strategy.candidate_id:
         raise RepairStrategyError("Selected Repair Strategy technical variant is missing or inconsistent.")
