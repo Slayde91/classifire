@@ -1,0 +1,66 @@
+release_id: QF-KNOWLEDGE-v0.1-dev
+status: DEVELOPMENT
+production_authority: false
+historical_source_architecture: PFEOS Master Architecture v3.8
+source_manifest_package: PFEOS-RUNTIME-PACK-13-v2.8
+source_packages:
+  - id: '01'
+    filename: PFEOS_01_Core_Constitution_Kernel_v2.8.txt
+    sha256: 21e39cc0b2e7a546f4cb6628fb13f5aa059d2d1e86c8e31d1e42a7e7425eba59
+  - id: '02'
+    filename: PFEOS_02_Canonical_Ontology_v2.8.txt
+    sha256: c5ce5c98463534326220b6cf0638db277ad5146aa2104e080b81c6b1f39e5790
+  - id: '03'
+    filename: PFEOS_03_Evidence_Physical_and_Repair_Workflows_v2.8.txt
+    sha256: 896c020fb3dee21f1e1c8f6b4dbd0b8c990ffe2816cb08db044c5eba6a3591fd
+  - id: '04'
+    filename: PFEOS_04_Pricing_and_Estimate_Workflows_v2.8.txt
+    sha256: 03554ac3096ac9416a81fdbcc3ba9d88ee8858f2a3664d9cd67b3dd65defe783
+  - id: '05'
+    filename: PFEOS_05_Engineering_Fundamentals_and_Technical_Evidence_v2.8.txt
+    sha256: 8ddf613c741f754227fa52fcdf9e10ca0cc5913429ca95d6d0e9743174cda9ca
+  - id: '06'
+    filename: PFEOS_06_Construction_and_Service_Engineering_v2.8.txt
+    sha256: 137d803e09e66d147cb27a7ffc65038b628d596626526797c22b0e510e0eb96e
+  - id: '07'
+    filename: PFEOS_07_Repair_Systems_Defects_and_Assets_v2.8.txt
+    sha256: aecc0d1b0b075eaa83ee18fe0ebdbdfac3a493620fb4b5e3bb45e8b96cc4dc47
+  - id: '08'
+    filename: PFEOS_08_Commercial_Estimating_Knowledge_v2.8.txt
+    sha256: 65fdecda4dc5f8c61d4df995ce24ee6257c6ff29ff776650b327e2143a294248
+  - id: '09'
+    filename: PFEOS_09_Archetypes_Algorithms_and_Reference_Data_v2.8.txt
+    sha256: a8b7a16fb699bf7520ef1e3e13e136435db5ad5adeb557eb72ddfb71fee4c270
+  - id: '10'
+    filename: PFEOS_10_Validation_Metrics_and_Calibration_v2.8.txt
+    sha256: e168e0f213e7fa550278c1d0db609aacc90a0b61c9dd09d847bde2e3101fccdc
+  - id: '11'
+    filename: PFEOS_11_Custom_GPT_Runtime_Security_Change_Readiness_and_Autonomous_Estimating_v2.8.txt
+    sha256: 248aab3810d285c2f63703dd714e96fe0c733e6b8d2e78b1e7b9ef6b9d391834
+  - id: '12'
+    filename: PFEOS_12_Platform_Operations_and_Integrations_v2.8.txt
+    sha256: 822bc3a7cd1ceeeeed73f5f7b01619ea6c22dd627f718f67961afcf78ec86e27
+runtime_sources:
+  package_13:
+    document_id: PFEOS-RUNTIME-PACK-13-v2.8
+    status: MIGRATION_SOURCE
+  package_14:
+    release: '1.6'
+    expected_rows: 897
+    status: IMPORTED_DATABASE_EXISTS_SOURCE_VALIDATION_REQUIRED
+  package_15:
+    expected_variants: 2861
+    status: IMPORTED_DATABASE_EXISTS_RELEASE_LINEAGE_REVIEW_REQUIRED
+  package_16:
+    status: BLOCKED_PENDING_PROFILE_SPLIT_AND_OWNER_REAPPROVAL
+release_requirements:
+  - source_hash_verification
+  - authority_hierarchy_review
+  - package_13_routing_tests
+  - canonical_schema_review
+  - package_16_profile_split
+  - package_14_release_validation
+  - package_15_release_validation
+  - regression_tests
+  - security_tests
+  - human_release_approval
