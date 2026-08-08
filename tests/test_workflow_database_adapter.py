@@ -310,6 +310,7 @@ def test_adapter_progresses_through_quantity_commercial_and_validation_records()
                 entity_type="estimate",
                 entity_id=estimate.id,
                 project_id=estimate.project_id,
+                new_value={"snapshot_hash": estimate.snapshot_hash},
                 event_hash="f" * 64,
             )
         )
