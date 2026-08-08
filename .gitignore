@@ -31,3 +31,5 @@ test-results/
 # Confidential QUANTIFIRE source corpora
 knowledge/source/**
 private-data/**
+
+patch-backups/
