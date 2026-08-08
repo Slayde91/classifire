@@ -1,0 +1,50 @@
+{
+  "id": "classifire-tools",
+  "name": "CLASSIFIRE Tools",
+  "description": "Role-limited OpenClaw tools for the CLASSIFIRE canonical API.",
+  "version": "0.1.0",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "classifire_health",
+      "classifire_workflow_status",
+      "classifire_evidence_read",
+      "classifire_physical_model_read",
+      "classifire_technical_search",
+      "classifire_package14_recommendation",
+      "classifire_run_validation",
+      "classifire_lock_snapshot",
+      "classifire_render_output",
+      "classifire_library_releases"
+    ]
+  },
+  "toolMetadata": {
+    "classifire_health": {"optional": true},
+    "classifire_workflow_status": {"optional": true},
+    "classifire_evidence_read": {"optional": true},
+    "classifire_physical_model_read": {"optional": true},
+    "classifire_technical_search": {"optional": true},
+    "classifire_package14_recommendation": {"optional": true},
+    "classifire_run_validation": {"optional": true},
+    "classifire_lock_snapshot": {"optional": true},
+    "classifire_render_output": {"optional": true},
+    "classifire_library_releases": {"optional": true}
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["baseUrl", "tokenFile"],
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "Loopback CLASSIFIRE API base URL, normally http://127.0.0.1:8787"
+      },
+      "tokenFile": {
+        "type": "string",
+        "description": "Absolute path to the local CLASSIFIRE agent-token JSON file"
+      }
+    }
+  }
+}
