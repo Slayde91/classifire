@@ -1,11 +1,14 @@
-release_id: QF-KNOWLEDGE-ROUTING-v0.2-dev
-status: DEVELOPMENT_BLOCKED
+release_id: QF-KNOWLEDGE-ROUTING-v0.3-dev
+status: DEVELOPMENT
 production_authority: false
 source_requirement:
   required_product: QUANTIFIRE
   required_version: '2.13'
   required_package: '13'
-  verification_status: PENDING
+  verification_status: VERIFIED_CONTROLLED_INTAKE
+  source_filename: QUANTIFIRE_13_Knowledge_Index_and_Deployment_Manifest_v2.13.txt
+  sha256: 20a6d1ffdbb6aabf7c013c0fcd49fb7e38518819b774b9e0aa2152f4c4127cae
+  architecture_baseline: APPROVED_DEVELOPMENT
   rule: 'No earlier PFEOS or QUANTIFIRE release may be substituted for active v2.13 routing authority.'
 legacy_lineage:
   pfeos_v2_8:
@@ -46,10 +49,12 @@ negative_routing:
   output:
     deny: [recalculation, technical_selection, pricing_mutation]
 package_authority:
-  package_13: BLOCKED_PENDING_VERIFIED_V2_13_SOURCE
-  package_14: COMMERCIAL_ONLY_PENDING_EXACT_V2_13_SOURCE_HASH_VERIFICATION
-  package_15: TECHNICAL_ONLY_PENDING_EXACT_V2_13_SOURCE_HASH_VERIFICATION
-  package_16: BLOCKED_PENDING_VERIFIED_V2_13_SOURCE_AND_PROFILE_SPLIT_REAPPROVAL
+  package_13: VERIFIED_ROUTING_BASELINE_APPROVED_DEVELOPMENT
+  package_14: VERIFIED_SOURCE_COMMERCIAL_ONLY_RELEASE_VALIDATION_PENDING
+  package_15: VERIFIED_SOURCE_TECHNICAL_ONLY_RELEASE_VALIDATION_PENDING
+  package_17: VERIFIED_SOURCE_EXECUTABLE_VARIANTS_RELEASE_VALIDATION_PENDING
+  package_16: VERIFIED_SOURCE_PROFILE_SPLIT_AND_REAPPROVAL_PENDING
+  package_18: VERIFIED_RUNTIME_CONTRACT_SOURCE_SCHEMA_RECONCILED
 canonical_state:
   owner: quantifire_domain_service
   mission_control_is_canonical: false
@@ -63,3 +68,5 @@ required_runtime_receipts:
   - lock_receipts
   - validation_receipt
   - output_hashes
+current_gate: SCHEMA_TEST_PASS
+next_gate: STATE_TRANSITION_TEST_PASS
