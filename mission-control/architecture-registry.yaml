@@ -1,19 +1,23 @@
-product: QUANTIFIRE
-attribution: QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP.
+product: CLASSIFIRE
+attribution: CLASSIFIRE is an estimating system produced and developed by Ceasefire PFP.
 repository: https://github.com/Slayde91/classifire
 status: pre-production
 control_plane: Mission Control
-canonical_system: QUANTIFIRE domain service
+canonical_system: CLASSIFIRE domain service
+legacy_baseline:
+  product: QUANTIFIRE
+  version: v2.13
+  purpose: Historical controlled source and protocol lineage only
 agents:
-  - qf-orchestrator
-  - qf-intake-evidence
-  - qf-physical-model
-  - qf-technical-system
-  - qf-commercial-engine
-  - qf-validator
-  - qf-output
-  - qf-library-governance
-  - qf-platform-governance
+  - cf-orchestrator
+  - cf-intake-evidence
+  - cf-physical-model
+  - cf-technical-system
+  - cf-commercial-engine
+  - cf-validator
+  - cf-output
+  - cf-library-governance
+  - cf-platform-governance
 release_gates:
   - source_inventory_complete
   - calculator_parity_passed
