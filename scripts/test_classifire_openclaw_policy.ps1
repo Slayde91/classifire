@@ -57,7 +57,7 @@ if ($LASTEXITCODE -ne 0) {
 
 foreach ($id in $agentIds) {
     Write-Host "Checking $id..." -ForegroundColor Cyan
-    $base = "agents.entries.$id"
+    $base = 'agents.entries["' + $id + '"]'
 
     $profile = Get-ConfigValue "$base.tools.profile"
     if ($profile -ne "minimal") {
