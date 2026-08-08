@@ -29,8 +29,18 @@ from classifire.commercial_models import (
 )
 from classifire.db import Base
 from classifire.main import app
-from classifire.models import Estimate, EstimateLine, LibraryRelease, Opening, Project, Service
+from classifire.models import (
+    AuditEvent,
+    Estimate,
+    EstimateLine,
+    LibraryRelease,
+    Opening,
+    Project,
+    Service,
+    User,
+)
 from classifire.outputs.common import verify_snapshot
+from classifire.services.human_release import release_estimate
 from classifire.services.validated_snapshot import SNAPSHOT_SCHEMA, lock_validated_snapshot
 from classifire.services.validation import (
     IndependentValidationError,
@@ -363,6 +373,63 @@ def test_validated_snapshot_uses_canonical_pricing_and_creates_certificate() -> 
         second, created_again = lock_validated_snapshot(db, estimate)
         assert not created_again
         assert second["snapshot_hash"] == snapshot["snapshot_hash"]
+
+
+def test_controlled_lifecycle_reaches_complete_only_after_render_and_human_release() -> None:
+    with _session() as db:
+        estimate, _, _ = _fixture(db, amount=Decimal("100.00"))
+        assert assess_estimate_workflow(db, estimate).stage == WorkflowStage.INDEPENDENT_VALIDATION.value
+
+        validation = run_independent_validation(db, estimate)
+        assert validation.passed
+        assert assess_estimate_workflow(db, estimate).stage == WorkflowStage.VALIDATED_SNAPSHOT.value
+
+        snapshot, created = lock_validated_snapshot(db, estimate)
+        assert created
+        verify_snapshot(snapshot)
+        assert assess_estimate_workflow(db, estimate).stage == WorkflowStage.OUTPUT_RENDERING.value
+
+        db.add(
+            AuditEvent(
+                actor_type="system",
+                actor_name="controlled-output-test",
+                action="render_output",
+                entity_type="estimate",
+                entity_id=estimate.id,
+                project_id=estimate.project_id,
+                new_value={
+                    "snapshot_hash": estimate.snapshot_hash,
+                    "artifact_type": "technical_xlsx",
+                    "test_fixture": True,
+                },
+                event_hash="9" * 64,
+            )
+        )
+        db.flush()
+        assert assess_estimate_workflow(db, estimate).stage == WorkflowStage.HUMAN_RELEASE.value
+
+        approver = User(
+            email="lifecycle-approver@example.com",
+            full_name="Lifecycle Human Approver",
+            password_hash="test-only",
+            role="approver",
+            is_active=True,
+        )
+        db.add(approver)
+        db.flush()
+        receipt = release_estimate(
+            db,
+            estimate,
+            approver=approver,
+            reason="Reviewed the validated snapshot and controlled rendered output for release.",
+        )
+        assert receipt.created
+        assert receipt.snapshot_hash == estimate.snapshot_hash
+        assert estimate.status == "released"
+
+        complete = assess_estimate_workflow(db, estimate)
+        assert complete.facts.human_release_approved
+        assert complete.stage == WorkflowStage.COMPLETE.value
 
 
 def test_release_control_routes_precede_legacy_lock_and_export_routes() -> None:
