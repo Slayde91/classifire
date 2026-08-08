@@ -15,6 +15,8 @@ from . import ATTRIBUTION, __version__
 from . import canonical_models as _canonical_models  # noqa: F401
 from . import commercial_models as _commercial_models  # noqa: F401
 from .api import router as api_router
+from .api.guarded_technical import router as guarded_technical_router
+from .api.physical_model import router as physical_model_router
 from .api.workflow import router as workflow_router
 from .api.workflow_actions import router as workflow_actions_router
 from .config import get_settings
@@ -98,6 +100,10 @@ def healthz() -> dict[str, str]:
     return {"status": "ok", "product": "QUANTIFIRE", "version": __version__}
 
 
+# Guarded transition routes are registered before the legacy v1 router so the
+# v2.13 hard gates cannot be bypassed through an older duplicate path.
+app.include_router(guarded_technical_router)
+app.include_router(physical_model_router)
 app.include_router(api_router)
 app.include_router(workflow_router)
 app.include_router(workflow_actions_router)
@@ -106,6 +112,3 @@ app.include_router(estimate_pinning_router)
 app.include_router(release_admin_router)
 app.include_router(technical_admin_router)
 app.include_router(library_ui_router)
-
-
-
