@@ -300,28 +300,39 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
         independent_validation_passed and estimate.snapshot_json and estimate.snapshot_hash
     )
 
-    output_rendered = bool(
-        db.scalar(
-            select(func.count(AuditEvent.id)).where(
+    render_events = list(
+        db.scalars(
+            select(AuditEvent).where(
                 AuditEvent.entity_type == "estimate",
                 AuditEvent.entity_id == estimate.id,
                 AuditEvent.action == "render_output",
             )
-        )
-        or 0
+        ).all()
     )
+    current_render_events = [
+        item
+        for item in render_events
+        if estimate.snapshot_hash
+        and (item.new_value or {}).get("snapshot_hash") == estimate.snapshot_hash
+    ]
+    output_rendered = bool(estimate.snapshot_hash and current_render_events)
 
-    human_release_approved = bool(
-        db.scalar(
-            select(func.count(Approval.id)).where(
+    release_approvals = list(
+        db.scalars(
+            select(Approval).where(
                 Approval.entity_type == "estimate",
                 Approval.entity_id == estimate.id,
                 Approval.approval_type.in_(["human_release", "release"]),
                 Approval.status == "approved",
             )
-        )
-        or 0
+        ).all()
     )
+    current_release_approvals = [
+        item
+        for item in release_approvals
+        if estimate.snapshot_hash and item.snapshot_hash == estimate.snapshot_hash
+    ]
+    human_release_approved = bool(estimate.snapshot_hash and current_release_approvals)
 
     facts = WorkflowFacts(
         evidence_intake_complete=evidence_intake_complete,
@@ -355,13 +366,17 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
         "component_reconciliation_count": len(reconciliations),
         "gate_evidence_count": len(gate_records),
         "final_independent_validation_gate_count": len(final_validation_records),
+        "render_output_event_count": len(render_events),
+        "current_snapshot_render_output_count": len(current_render_events),
+        "approved_release_count": len(release_approvals),
+        "current_snapshot_release_approval_count": len(current_release_approvals),
         "fail_closed_notes": [
             "Only Repair Strategies tied to an active valid Physical Model Lock count as current.",
             "Only Repair Strategy Locks tied to a current Repair Strategy count as valid.",
             "Quantity coverage requires validated executable Quantity records, not mere row existence.",
             "Labour coverage requires every component-required activity as a validated LabourActivity.",
-            "Output rendering is complete only when a render_output audit event is retained.",
-            "Human release is complete only when an approved release Approval record is retained.",
+            "Output rendering is complete only when a render_output audit event references the current snapshot hash.",
+            "Human release is complete only when an approved release Approval references the current snapshot hash.",
             "Narrative or legacy status text is never treated as a lock or validation receipt.",
         ],
     }
