@@ -251,11 +251,12 @@ def test_candidate_selection_retains_detailed_package15_requirements() -> None:
         assert strategy.status == "candidate_selected"
         assert strategy.physical_model_lock_id
         assert strategy.technical_basis["requirements_hash"] == "a" * 64
+        assert strategy.technical_basis["candidate_status"] == "CONFIRMED_TECHNICAL_MATCH"
         assert len(requirements) == 6
         assert any(item.category == "OTHER_SYSTEM_REQUIREMENT" for item in requirements)
 
 
-def test_repair_strategy_lock_generates_controlled_component_inventory() -> None:
+def test_repair_strategy_lock_generates_requirement_level_component_inventory() -> None:
     with _session() as db:
         estimate, opening, variant = _fixture(db)
         create_physical_model_lock(db, estimate)
@@ -267,18 +268,36 @@ def test_repair_strategy_lock_generates_controlled_component_inventory() -> None
         assert created
         assert lock.validator_result == "CONDITIONED"
         assert set(lock.required_component_ids) == {item.id for item in components}
+        assert len(components) == 6
         assert categories == {
             "BATT",
             "MASTIC_SEALANT",
+            "OTHER_SYSTEM_REQUIREMENT",
             "PREPARATION_CLEANUP",
             "QA_DOCUMENTATION",
             "SUPPORT",
         }
-        assert "OTHER_SYSTEM_REQUIREMENT" not in categories
+
         batt = next(item for item in components if item.category == "BATT")
+        assert batt.quantity_formula_id == "QF-BATT-BOARD-AREA"
+        assert batt.technical_requirement_id == "REQ-001"
+        assert batt.description == "Install FIREFLYBatt closure"
         assert "MEASURE_BATT" in (batt.required_labour_activity_ids or [])
+
+        mastic = next(item for item in components if item.category == "MASTIC_SEALANT")
+        assert mastic.service_id is not None
+        assert mastic.quantity_formula_id == "QF-MASTIC-ANNULAR-VOLUME"
+
+        support = next(item for item in components if item.category == "SUPPORT")
+        assert support.service_id is not None
+        assert support.quantity_formula_id == "QF-EACH"
+
         qa = next(item for item in components if item.category == "QA_DOCUMENTATION")
+        assert qa.quantity_formula_id == "QF-EACH"
         assert "SYSTEM_INSPECTION" in (qa.required_labour_activity_ids or [])
+
+        other = next(item for item in components if item.category == "OTHER_SYSTEM_REQUIREMENT")
+        assert other.quantity_formula_id == "QF-EXPERT-ESTIMATE"
 
         persisted = list(
             db.scalars(
