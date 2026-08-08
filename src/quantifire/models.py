@@ -435,6 +435,9 @@ class Opening(RecordMixin, Base):
 
     estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
     defect_id: Mapped[str | None] = mapped_column(String(100), index=True)
+    # Additive v2.13 compatibility field introduced by migration 0003. The
+    # canonical Defect relationship is governed by the canonical model layer.
+    canonical_defect_id: Mapped[str | None] = mapped_column(String(36))
     opening_code: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     location: Mapped[str | None] = mapped_column(Text)
     substrate_type: Mapped[str | None] = mapped_column(String(200), index=True)
@@ -463,6 +466,9 @@ class Service(RecordMixin, Base):
     __tablename__ = "services"
 
     opening_id: Mapped[str] = mapped_column(ForeignKey("openings.id"), index=True, nullable=False)
+    # Temporary legacy-primary-opening marker introduced by migration 0003 while
+    # ServiceOpeningLink becomes the canonical many-to-many physical relation.
+    primary_opening_legacy: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     service_code: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     service_type: Mapped[str] = mapped_column(String(200), index=True, nullable=False)
     material: Mapped[str | None] = mapped_column(String(200), index=True)
