@@ -17,6 +17,7 @@ from . import commercial_models as _commercial_models  # noqa: F401
 from .api import router as api_router
 from .api.commercial import router as commercial_router
 from .api.guarded_technical import router as guarded_technical_router
+from .api.human_release import router as human_release_router
 from .api.physical_model import router as physical_model_router
 from .api.productivity import router as productivity_router
 from .api.quantity_labour import router as quantity_labour_router
@@ -114,6 +115,7 @@ app.include_router(quantity_labour_router)
 app.include_router(productivity_router)
 app.include_router(commercial_router)
 app.include_router(release_control_router)
+app.include_router(human_release_router)
 app.include_router(api_router)
 app.include_router(workflow_router)
 app.include_router(workflow_actions_router)
