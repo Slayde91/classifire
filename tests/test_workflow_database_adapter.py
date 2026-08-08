@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -110,6 +112,50 @@ def test_physical_model_requires_retained_lock_before_technical_stage() -> None:
         assert assessment.stage == WorkflowStage.OPENING_SPECIFIC_TECHNICAL_SEARCH.value
 
 
+def test_stale_repair_strategy_does_not_survive_new_physical_model_lock() -> None:
+    with _session() as db:
+        estimate = _estimate(db)
+        opening, service = _physical_model(db, estimate)
+        old_lock = PhysicalModelLock(
+            project_id=estimate.project_id,
+            estimate_id=estimate.id,
+            service_ids=[service.id],
+            opening_ids=[opening.id],
+            validator_result="PASS",
+            content_hash="a" * 64,
+        )
+        db.add(old_lock)
+        db.flush()
+        db.add(
+            RepairStrategy(
+                opening_id=opening.id,
+                physical_model_lock_id=old_lock.id,
+                candidate_id="CAND-OLD",
+                status="candidate_selected",
+            )
+        )
+        db.flush()
+
+        old_lock.invalidated_at = datetime.now(timezone.utc)
+        old_lock.invalidation_reason = "Physical model changed"
+        db.add(
+            PhysicalModelLock(
+                project_id=estimate.project_id,
+                estimate_id=estimate.id,
+                service_ids=[service.id],
+                opening_ids=[opening.id],
+                validator_result="PASS",
+                content_hash="b" * 64,
+            )
+        )
+        db.flush()
+
+        assessment = assess_estimate_workflow(db, estimate)
+        assert assessment.facts.physical_model_locked
+        assert not assessment.facts.technical_search_complete
+        assert assessment.stage == WorkflowStage.OPENING_SPECIFIC_TECHNICAL_SEARCH.value
+
+
 def test_adapter_progresses_through_quantity_commercial_and_validation_records() -> None:
     with _session() as db:
         estimate = _estimate(db)
@@ -129,7 +175,7 @@ def test_adapter_progresses_through_quantity_commercial_and_validation_records()
             opening_id=opening.id,
             physical_model_lock_id=physical_lock.id,
             candidate_id="CAND-001",
-            status="candidate_reviewed",
+            status="locked",
         )
         db.add(strategy)
         db.flush()
