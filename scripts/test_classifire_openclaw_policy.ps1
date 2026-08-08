@@ -56,32 +56,17 @@ function Convert-ToAgentItems {
     return @($Value)
 }
 
-function Get-ConfigValue {
-    param(
-        [string]$Path,
-        [switch]$Json
-    )
-
-    if ($Json) {
-        $raw = (& $openclaw.Source config get $Path --json 2>&1 | Out-String).Trim()
-    }
-    else {
-        $raw = (& $openclaw.Source config get $Path 2>&1 | Out-String).Trim()
-    }
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Unable to read OpenClaw config path $Path. Output: $raw"
-    }
-    return $raw
-}
-
 Write-Host "Validating OpenClaw config syntax..." -ForegroundColor Cyan
 & $openclaw.Source config validate | Out-Host
 if ($LASTEXITCODE -ne 0) {
     throw "OpenClaw config validate failed."
 }
 
-$agentsRaw = Get-ConfigValue "agents.list" -Json
+Write-Host "Reading agents.list once..." -ForegroundColor Cyan
+$agentsRaw = (& $openclaw.Source config get agents.list --json 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0) {
+    throw "Unable to read OpenClaw agents.list. Output: $agentsRaw"
+}
 try {
     $agentsValue = $agentsRaw | ConvertFrom-Json
     $agents = @(Convert-ToAgentItems $agentsValue)
@@ -90,68 +75,64 @@ catch {
     throw "OpenClaw agents.list was not valid JSON: $agentsRaw"
 }
 
-$indexById = @{}
-for ($i = 0; $i -lt $agents.Count; $i++) {
-    $agentId = [string]$agents[$i].id
-    if ($agentId) {
-        $indexById[$agentId] = $i
+$byId = @{}
+foreach ($item in $agents) {
+    $id = [string]$item.id
+    if ($id) {
+        $byId[$id] = $item
     }
 }
 
 foreach ($id in $agentIds) {
     Write-Host "Checking $id..." -ForegroundColor Cyan
-    if (-not $indexById.ContainsKey($id)) {
+    if (-not $byId.ContainsKey($id)) {
         $failures += "$id is missing from agents.list"
         continue
     }
 
-    $index = $indexById[$id]
-    $base = "agents.list[$index]"
+    $item = $byId[$id]
 
-    $profile = Get-ConfigValue "$base.tools.profile"
-    if ($profile -ne "minimal") {
-        $failures += "$id tools.profile expected minimal, got $profile"
+    if ([string]$item.tools.profile -ne "minimal") {
+        $failures += "$id tools.profile expected minimal, got $($item.tools.profile)"
     }
 
-    $denyRaw = Get-ConfigValue "$base.tools.deny" -Json
-    try {
-        $denyValue = $denyRaw | ConvertFrom-Json
-        $deny = @($denyValue)
-        if ($null -ne $denyValue.list) {
-            $deny = @($denyValue.list)
-        }
-    }
-    catch {
-        $failures += "$id tools.deny was not valid JSON: $denyRaw"
-        $deny = @()
-    }
+    $deny = @($item.tools.deny)
     foreach ($tool in $requiredDenied) {
         if ($deny -notcontains $tool) {
             $failures += "$id is missing denied tool $tool"
         }
     }
 
-    $elevated = Get-ConfigValue "$base.tools.elevated.enabled"
-    if ($elevated -ne "false") {
+    if ($null -eq $item.tools.elevated -or $item.tools.elevated.enabled -ne $false) {
         $failures += "$id elevated execution is not disabled"
     }
 
-    $sandboxMode = Get-ConfigValue "$base.sandbox.mode"
-    $sandboxBackend = Get-ConfigValue "$base.sandbox.backend"
-    $sandboxScope = Get-ConfigValue "$base.sandbox.scope"
-    $workspaceAccess = Get-ConfigValue "$base.sandbox.workspaceAccess"
-
-    if ($sandboxMode -ne "all") { $failures += "$id sandbox.mode expected all, got $sandboxMode" }
-    if ($sandboxBackend -ne "docker") { $failures += "$id sandbox.backend expected docker, got $sandboxBackend" }
-    if ($sandboxScope -ne "agent") { $failures += "$id sandbox.scope expected agent, got $sandboxScope" }
-    if ($workspaceAccess -ne "none") { $failures += "$id sandbox.workspaceAccess expected none, got $workspaceAccess" }
-
-    $explain = (& $openclaw.Source sandbox explain --agent $id --json 2>&1 | Out-String)
-    if ($LASTEXITCODE -ne 0) {
-        $failures += "$id sandbox explain failed: $explain"
+    if ([string]$item.sandbox.mode -ne "all") {
+        $failures += "$id sandbox.mode expected all, got $($item.sandbox.mode)"
     }
-    else {
-        Write-Host "PASS $id" -ForegroundColor Green
+    if ([string]$item.sandbox.backend -ne "docker") {
+        $failures += "$id sandbox.backend expected docker, got $($item.sandbox.backend)"
+    }
+    if ([string]$item.sandbox.scope -ne "agent") {
+        $failures += "$id sandbox.scope expected agent, got $($item.sandbox.scope)"
+    }
+    if ([string]$item.sandbox.workspaceAccess -ne "none") {
+        $failures += "$id sandbox.workspaceAccess expected none, got $($item.sandbox.workspaceAccess)"
+    }
+
+    Write-Host "PASS config $id" -ForegroundColor Green
+}
+
+if ($failures.Count -eq 0) {
+    Write-Host "Checking effective sandbox policy for each CLASSIFIRE agent..." -ForegroundColor Cyan
+    foreach ($id in $agentIds) {
+        $explain = (& $openclaw.Source sandbox explain --agent $id --json 2>&1 | Out-String)
+        if ($LASTEXITCODE -ne 0) {
+            $failures += "$id sandbox explain failed: $explain"
+        }
+        else {
+            Write-Host "PASS sandbox $id" -ForegroundColor Green
+        }
     }
 }
 
