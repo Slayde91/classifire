@@ -22,6 +22,7 @@ from .models import (
     TechnicalVariant,
 )
 from .security import verify_csrf
+from .services.productivity import approved_productivity_manifest_rows
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -139,6 +140,8 @@ def _activate_drafts(db: Session, release_type: str) -> list[str]:
             activated_ids.append(draft.id)
 
     # Technical records must already have passed their dedicated approval gate.
+    # ProductivitySource records are approved through their dedicated API and are
+    # snapshotted into Labour releases without applying a monetary rate.
     # Markup profiles are already activated through the markup workflow.
     return activated_ids
 
@@ -218,9 +221,10 @@ def _snapshot_records(db: Session, release_type: str) -> list[dict[str, Any]]:
         chosen: dict[str, LabourComponent] = {}
         for r in records:
             chosen.setdefault(r.code, r)
-        return [
+        labour_rows = [
             {
                 "id": r.id,
+                "record_type": "labour_component",
                 "key": r.code,
                 "revision": r.revision,
                 "base_rate": str(r.base_rate),
@@ -229,6 +233,7 @@ def _snapshot_records(db: Session, release_type: str) -> list[dict[str, Any]]:
             }
             for r in chosen.values()
         ]
+        return labour_rows + approved_productivity_manifest_rows(db)
 
     if release_type == "products":
         records = db.scalars(
