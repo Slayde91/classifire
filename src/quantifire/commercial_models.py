@@ -15,7 +15,7 @@ class Quantity(CanonicalV213RecordMixin, Base):
 
     __tablename__ = "quantities"
 
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), nullable=False)
     estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
     required_component_id: Mapped[str | None] = mapped_column(
         ForeignKey("system_required_components.id"), index=True
@@ -82,7 +82,7 @@ class LabourActivity(CanonicalV213RecordMixin, Base):
 
     __tablename__ = "labour_activities"
 
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), nullable=False)
     estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
     required_component_id: Mapped[str | None] = mapped_column(
         ForeignKey("system_required_components.id"), index=True
@@ -111,10 +111,10 @@ class PricingComponent(CanonicalV213RecordMixin, Base):
 
     __tablename__ = "pricing_components"
 
-    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), nullable=False)
     estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
-    opening_id: Mapped[str | None] = mapped_column(ForeignKey("openings.id"), index=True)
-    service_id: Mapped[str | None] = mapped_column(ForeignKey("services.id"), index=True)
+    opening_id: Mapped[str | None] = mapped_column(ForeignKey("openings.id"))
+    service_id: Mapped[str | None] = mapped_column(ForeignKey("services.id"))
     required_component_id: Mapped[str | None] = mapped_column(
         ForeignKey("system_required_components.id"), index=True
     )
