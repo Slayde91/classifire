@@ -171,28 +171,43 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
     )
     components_derived = locks_reference_existing_components and all_openings_have_components
 
-    quantity_component_ids = set()
-    labour_component_ids = set()
+    valid_quantities: list[Quantity] = []
+    valid_labour_rows: list[LabourActivity] = []
     if component_ids:
-        quantity_component_ids = set(
+        valid_quantities = list(
             db.scalars(
-                select(Quantity.required_component_id).where(
-                    Quantity.required_component_id.in_(component_ids)
+                select(Quantity).where(
+                    Quantity.required_component_id.in_(component_ids),
+                    Quantity.status == "validated",
+                    Quantity.numeric_value.is_not(None),
                 )
             ).all()
         )
-        labour_component_ids = set(
+        valid_labour_rows = list(
             db.scalars(
-                select(LabourActivity.required_component_id).where(
-                    LabourActivity.required_component_id.in_(component_ids)
+                select(LabourActivity).where(
+                    LabourActivity.required_component_id.in_(component_ids),
+                    LabourActivity.status == "validated",
+                    LabourActivity.labour_quantity_hours.is_not(None),
                 )
             ).all()
         )
-    required_labour_component_ids = {
-        item.id for item in components if bool(item.required_labour_activity_ids)
+
+    quantity_component_ids = {
+        item.required_component_id for item in valid_quantities if item.required_component_id
+    }
+    required_labour_pairs = {
+        (item.id, activity)
+        for item in components
+        for activity in (item.required_labour_activity_ids or [])
+    }
+    actual_labour_pairs = {
+        (item.required_component_id, item.activity_name)
+        for item in valid_labour_rows
+        if item.required_component_id and item.activity_name
     }
     quantity_complete = bool(component_ids) and component_ids.issubset(quantity_component_ids)
-    labour_complete = required_labour_component_ids.issubset(labour_component_ids)
+    labour_complete = required_labour_pairs.issubset(actual_labour_pairs)
     quantity_and_labour_complete = components_derived and quantity_complete and labour_complete
 
     pricing_components = []
@@ -331,9 +346,9 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
         "current_repair_strategy_count": len(strategies),
         "valid_repair_strategy_lock_count": len(valid_repair_locks),
         "required_component_count": len(components),
-        "quantity_covered_component_count": len(quantity_component_ids & component_ids),
-        "labour_required_component_count": len(required_labour_component_ids),
-        "labour_covered_component_count": len(labour_component_ids & required_labour_component_ids),
+        "validated_quantity_component_count": len(quantity_component_ids & component_ids),
+        "required_labour_activity_count": len(required_labour_pairs),
+        "validated_labour_activity_count": len(actual_labour_pairs & required_labour_pairs),
         "pricing_component_count": len(pricing_components),
         "valid_commercial_method_lock_count": len(valid_method_component_ids),
         "active_commercial_recovery_count": len(recovery_records),
@@ -343,6 +358,8 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
         "fail_closed_notes": [
             "Only Repair Strategies tied to an active valid Physical Model Lock count as current.",
             "Only Repair Strategy Locks tied to a current Repair Strategy count as valid.",
+            "Quantity coverage requires validated executable Quantity records, not mere row existence.",
+            "Labour coverage requires every component-required activity as a validated LabourActivity.",
             "Output rendering is complete only when a render_output audit event is retained.",
             "Human release is complete only when an approved release Approval record is retained.",
             "Narrative or legacy status text is never treated as a lock or validation receipt.",
