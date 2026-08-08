@@ -338,7 +338,7 @@ def create_repair_strategy_lock(
     strategy = db.scalar(
         select(RepairStrategy).where(
             RepairStrategy.opening_id == opening.id,
-            RepairStrategy.status == "candidate_selected",
+            RepairStrategy.status.in_(["candidate_selected", "locked"]),
         ).order_by(RepairStrategy.created_at.desc()).limit(1)
     )
     if not strategy or not strategy.selected_technical_variant_id or not strategy.candidate_id:
