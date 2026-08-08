@@ -5,6 +5,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $openclaw = Get-Command openclaw -ErrorAction Stop
+$docker = Get-Command docker -ErrorAction SilentlyContinue
+$sandboxImage = "openclaw-sandbox:bookworm-slim"
 
 $agentIds = @(
     "cf-orchestrator",
@@ -17,6 +19,16 @@ $agentIds = @(
     "cf-library-governance",
     "cf-platform-governance"
 )
+
+if ($docker) {
+    & $docker.Source image inspect $sandboxImage *> $null
+    if ($LASTEXITCODE -ne 0) {
+        throw (
+            "Required OpenClaw sandbox image '$sandboxImage' is missing. " +
+            "Run .\scripts\build_openclaw_sandbox_image.ps1, then rerun this smoke test."
+        )
+    }
+}
 
 Write-Host "Checking CLASSIFIRE OpenClaw agent roster..." -ForegroundColor Cyan
 $roster = (& $openclaw.Source agents list --json 2>&1 | Out-String)
@@ -57,7 +69,7 @@ BOUNDARY <one short sentence stating the most important thing your role must not
 }
 
 if ($failures.Count -gt 0) {
-    Write-Host "" 
+    Write-Host ""
     Write-Host "CLASSIFIRE OpenClaw smoke test FAILED:" -ForegroundColor Red
     foreach ($failure in $failures) {
         Write-Host " - $failure" -ForegroundColor Red
@@ -65,6 +77,6 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write-Host "" 
+Write-Host ""
 Write-Host "CLASSIFIRE OpenClaw smoke test PASSED for all $($agentIds.Count) agents." -ForegroundColor Green
 exit 0
