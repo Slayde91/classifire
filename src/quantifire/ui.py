@@ -473,16 +473,22 @@ def estimate_add_line(
     opening_id: Annotated[str | None, Form()] = None,
     service_id: Annotated[str | None, Form()] = None,
     component_reference: Annotated[str | None, Form()] = None,
+    pricing_method: Annotated[str, Form()] = "component_built",
 ) -> RedirectResponse:
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:write")
     estimate = _estimate(db, estimate_id)
     line_number = (db.scalar(select(func.max(EstimateLine.line_number)).where(EstimateLine.estimate_id == estimate.id)) or 0) + 1
-    line = EstimateLine(estimate_id=estimate.id, line_number=line_number, opening_id=opening_id or None, service_id=service_id or None, component_type=component_type, component_reference=component_reference or None, description=description, quantity=D(quantity), unit=unit, base_unit_cost=D(base_unit_cost), markup_override=(D(markup_override_percent) / Decimal("100") if markup_override_percent else None), pricing_method="component_built", commercial_recovery_status="separately_priced")
+    line = EstimateLine(estimate_id=estimate.id, line_number=line_number, opening_id=opening_id or None, service_id=service_id or None, component_type=component_type, component_reference=component_reference or None, description=description, quantity=D(quantity), unit=unit, base_unit_cost=D(base_unit_cost), markup_override=(D(markup_override_percent) / Decimal("100") if markup_override_percent else None), pricing_method=pricing_method, commercial_recovery_status="separately_priced")
     db.add(line)
     db.flush()
-    calculate_estimate_line(db, estimate, line)
-    recalculate_estimate(db, estimate)
+    try:
+        calculate_estimate_line(db, estimate, line)
+        recalculate_estimate(db, estimate)
+    except ValueError as exc:
+        db.rollback()
+        message = str(exc).replace(" ", "+")
+        return RedirectResponse(f"/estimates/{estimate.id}?error={message}", status_code=303)
     record_audit(db, actor=user, action="create", entity_type="estimate_line", entity_id=line.id, project_id=estimate.project_id, new_value={"description": description, "applied_markup": str(line.applied_markup), "markup_source": line.markup_source})
     db.commit()
     return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
@@ -511,7 +517,12 @@ def estimate_lock(estimate_id: str, request: Request, db: Db, csrf_token: Annota
     blockers = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id, RuleEvaluation.result == "BLOCKED")).all()
     if blockers:
         return RedirectResponse(f"/estimates/{estimate.id}?error=Blocking+rule+results+must+be+resolved", status_code=303)
-    snapshot = lock_snapshot(db, estimate)
+    try:
+        snapshot = lock_snapshot(db, estimate)
+    except ValueError as exc:
+        db.rollback()
+        message = str(exc).replace(" ", "+")
+        return RedirectResponse(f"/estimates/{estimate.id}?error={message}", status_code=303)
     record_audit(db, actor=user, action="lock_snapshot", entity_type="estimate", entity_id=estimate.id, project_id=estimate.project_id, new_value={"snapshot_hash": snapshot["snapshot_hash"]}, reason=reason)
     db.commit()
     return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)

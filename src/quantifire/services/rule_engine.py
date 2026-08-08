@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..models import Estimate, EstimatingRule, Opening, RuleEvaluation, Service
 from .technical import mixed_service_candidate_available
+from .release_scope import pinned_rules
 
 
 @dataclass(frozen=True)
@@ -213,7 +214,7 @@ def evaluate_estimate_rules(db: Session, estimate: Estimate) -> list[RuleEvaluat
     for item in existing:
         db.delete(item)
     results: list[RuleEvaluation] = []
-    for rule in active_rules(db, estimate.project.jurisdiction):
+    for rule in pinned_rules(db, estimate):
         if rule.category == "service_proximity":
             for opening in estimate.openings:
                 evaluation = evaluate_proximity_rule(db, rule, opening)

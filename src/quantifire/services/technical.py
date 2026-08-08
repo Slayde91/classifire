@@ -11,6 +11,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from ..models import Opening, Service, TechnicalDocument, TechnicalVariant
+from .release_scope import pinned_technical_ids
 
 
 @dataclass(frozen=True)
@@ -45,9 +46,13 @@ def search_variants(
     frl: str | None = None,
     limit: int = 20,
     include_draft: bool = False,
+    release_record_ids: set[str] | None = None,
 ) -> list[Candidate]:
-    statuses = ["active"] if not include_draft else ["active", "draft", "in_review"]
-    stmt = select(TechnicalVariant).where(TechnicalVariant.status.in_(statuses))
+    if release_record_ids is not None:
+        stmt = select(TechnicalVariant).where(TechnicalVariant.id.in_(release_record_ids))
+    else:
+        statuses = ["active"] if not include_draft else ["active", "draft", "in_review"]
+        stmt = select(TechnicalVariant).where(TechnicalVariant.status.in_(statuses))
     # Broad SQL prefilter; final matching remains explicit and auditable.
     if service_type:
         stmt = stmt.where(or_(TechnicalVariant.service_type.ilike(f"%{service_type}%"), TechnicalVariant.service_type.is_(None)))
@@ -86,6 +91,7 @@ def search_variants(
 
 
 def search_for_opening(db: Session, opening: Opening, limit: int = 20) -> dict[str, Any]:
+    allowed_ids = pinned_technical_ids(db, opening.estimate)
     per_service: list[dict[str, Any]] = []
     for service in opening.services:
         candidates = search_variants(
@@ -96,6 +102,7 @@ def search_for_opening(db: Session, opening: Opening, limit: int = 20) -> dict[s
             orientation=opening.orientation,
             frl=opening.frl,
             limit=limit,
+            release_record_ids=allowed_ids,
         )
         per_service.append(
             {
@@ -127,8 +134,9 @@ def mixed_service_candidate_available(db: Session, opening: Opening) -> dict[str
     service_terms = {_normal(s.service_type) for s in opening.services}
     if len(service_terms) < 2:
         return {"available": False, "reason": "opening_is_not_mixed_service"}
+    allowed_ids = pinned_technical_ids(db, opening.estimate)
     stmt = select(TechnicalVariant).where(
-        TechnicalVariant.status == "active",
+        TechnicalVariant.id.in_(allowed_ids),
         or_(
             TechnicalVariant.service_type.ilike("%mixed%"),
             TechnicalVariant.product_family.ilike("%mixed%"),

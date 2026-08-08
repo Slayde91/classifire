@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from ..models import Estimate, LibraryRelease
+from .release_scope import validate_runtime_scope
 PIN_FIELDS={'pricing':'pricing_release_id','technical':'technical_release_id','rules':'rules_release_id','products':'products_release_id','labour':'labour_release_id','markups':'markups_release_id'}
 OPTIONAL={'formulas':'formula_release_id','brand':'brand_release_id'}
 def active_release(db:Session, kind:str):
@@ -28,4 +29,5 @@ def validate_estimate_release_basis(db:Session, estimate:Estimate):
         r=db.get(LibraryRelease,rid)
         if not r: errors.append(f'{k}: pinned release missing')
         elif not r.release_hash: errors.append(f'{k}: pinned release has no hash')
-    return errors
+    errors.extend(validate_runtime_scope(db, estimate))
+    return list(dict.fromkeys(errors))
