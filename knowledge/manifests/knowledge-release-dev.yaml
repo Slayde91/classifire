@@ -1,4 +1,4 @@
-release_id: QF-KNOWLEDGE-v0.3-dev
+release_id: QF-KNOWLEDGE-v0.4-dev
 status: DEVELOPMENT
 production_authority: false
 required_authority_release:
@@ -15,19 +15,19 @@ verified_sources:
   package_13:
     filename: QUANTIFIRE_13_Knowledge_Index_and_Deployment_Manifest_v2.13.txt
     sha256: 20a6d1ffdbb6aabf7c013c0fcd49fb7e38518819b774b9e0aa2152f4c4127cae
-    status: VERIFIED_CONTROLLED_INTAKE
+    status: VERIFIED_ROUTING_BASELINE_APPROVED_DEVELOPMENT
   package_14:
     filename: QUANTIFIRE_14_Pricing_Library_v2.13.csv
     sha256: d0ab400affa52cb2c1c07d473a700937fab3c7fca825c201e50cb1a866d6055b
-    status: VERIFIED_CONTROLLED_INTAKE
+    status: VERIFIED_SOURCE_RELEASE_VALIDATION_PENDING
   package_15:
     filename: QUANTIFIRE_15_Technical_System_Library_v2.13.txt
     sha256: 3b59e30ad1451e0ae77f953e264c4e35b1cc024c72c4aa15f0d73fb715aa19ca
-    status: VERIFIED_CONTROLLED_INTAKE
+    status: VERIFIED_SOURCE_RELEASE_VALIDATION_PENDING
   package_17:
     filename: QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl
     sha256: 4ce83403ec7297b7f6d08252fda1a017d88be17faa1d558b34b51d42cc1d0749
-    status: VERIFIED_CONTROLLED_INTAKE
+    status: VERIFIED_SOURCE_RELEASE_VALIDATION_PENDING
   package_16:
     filename: QUANTIFIRE_16_Runtime_Profile_and_Data_Readiness_v2.13.txt
     sha256: fe166bf1e6a4d0a5454bd27e81068dd189a450a7483cf09232bec8dc64e07ea7
@@ -35,17 +35,22 @@ verified_sources:
   package_18:
     filename: QUANTIFIRE_18_Runtime_Schemas_Algorithms_and_Output_Contracts_v2.13.txt
     sha256: 430aacd9c973af84de847cebee6687e698190d74c0d1676ad03b65dd346ff99d
-    status: VERIFIED_CONTROLLED_INTAKE
+    status: VERIFIED_SCHEMA_RECONCILED
+completed_gates:
+  - SOURCE_INVENTORY_APPROVED
+  - ARCHITECTURE_BASELINE_APPROVED
+  - SCHEMA_RECONCILIATION_INVENTORY
+  - SCHEMA_TEST_PASS_PHYSICAL_TECHNICAL_FOUNDATION
+  - SCHEMA_TEST_PASS_QUANTITY_COMMERCIAL_VALIDATION_FOUNDATION
 release_requirements:
-  - authority_hierarchy_review
-  - package_13_routing_tests
-  - canonical_schema_review
+  - deterministic_domain_service_and_state_machine
+  - state_transition_tests
   - package_16_profile_split_and_owner_reapproval
   - package_14_v2_13_release_validation
   - package_15_v2_13_release_validation
   - regression_tests
   - security_tests
   - human_release_approval
-current_gate: SOURCE_INVENTORY_APPROVED
-next_gate: ARCHITECTURE_BASELINE_APPROVED
-fail_closed_rule: 'If a required v2.13 source cannot be verified, the dependent migration or runtime stage is BLOCKED. Do not substitute v2.8.'
+current_gate: SCHEMA_TEST_PASS
+next_gate: STATE_TRANSITION_TEST_PASS
+fail_closed_rule: 'If a required v2.13 source or required prior gate cannot be verified, the dependent runtime stage is BLOCKED. Do not substitute v2.8 or bypass the stage order.'
