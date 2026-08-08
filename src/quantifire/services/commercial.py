@@ -21,7 +21,7 @@ from ..commercial_models import (
     Quantity,
 )
 from ..models import Estimate, LabourComponent, Opening, PricingLibraryRecord, Product, Service, TechnicalVariant
-from .calculation import D, money, resolve_markup
+from .calculation import D, resolve_markup
 from .release_scope import (
     ReleaseScopeError,
     pinned_labour,
@@ -37,7 +37,7 @@ ENGINE_VERSION = "QUANTIFIRE-COMMERCIAL-ENGINE-v1.0"
 MONEY = Decimal("0.01")
 _VALID_INPUT_STATUSES = {"PASS"}
 _YES = {"YES", "Y", "TRUE", "1", "PASS", "ELIGIBLE", "INCLUDED", "ACTIVE"}
-_LOW_RISK = {"", "NONE", "LOW", "MINOR", "N/A", "NA", "NOT_APPLICABLE"}
+_LOW_RISK = {"", "NONE", "LOW", "MINOR", "N_A", "NA", "NOT_APPLICABLE"}
 _MATERIAL_COMPONENT_CATEGORIES = {
     "BATT",
     "BOARD",
@@ -574,7 +574,7 @@ def _select_rate_plan(
         hard_blockers = [
             item
             for item in selected_receipt.blockers
-            if item not in {"critical_fields_incomplete", "opening_reconciliation_required"}
+            if item != "critical_fields_incomplete"
         ]
         reconciliation_proof = str(parameterised_selection.get("reconciliation_proof") or "") or None
         if reconciliation_proof:
@@ -1173,6 +1173,7 @@ def _price_anomaly_reviews(
         groups.setdefault(str(_money(D(item.extended_cost))), []).append(item)
     reviews: list[PriceAnomalyReview] = []
     lock_by_component = {item.component_id: item for item in method_locks}
+    touched_lock_ids: set[str] = set()
     for price, rows in groups.items():
         if len(rows) < 2:
             continue
@@ -1182,34 +1183,58 @@ def _price_anomaly_reviews(
         ]
         distinct = len(set(signatures)) > 1
         result = "REVIEW REQUIRED" if distinct else "PASS — CANONICAL SCOPE MATCH"
-        review = PriceAnomalyReview(
-            estimate_id=estimate.id,
-            comparison_type="equal_price_distinct_scope",
-            subject_ids=[item.id for item in rows],
-            canonical_signatures=signatures,
-            prices=[price for _ in rows],
-            physical_differences=signatures if distinct else [],
-            documented_fixed_reason=None,
-            result=result,
-            required_action=(
+        subject_ids = sorted(item.id for item in rows)
+        review_key = _hash({"price": price, "subject_ids": subject_ids})[:20]
+        comparison_type = f"equal_price_distinct_scope:{review_key}"
+        review = db.scalar(
+            select(PriceAnomalyReview).where(
+                PriceAnomalyReview.estimate_id == estimate.id,
+                PriceAnomalyReview.comparison_type == comparison_type,
+            )
+        )
+        if review is None:
+            review = PriceAnomalyReview(
+                estimate_id=estimate.id,
+                comparison_type=comparison_type,
+                subject_ids=subject_ids,
+                canonical_signatures=signatures,
+                prices=[price for _ in rows],
+                physical_differences=signatures if distinct else [],
+                documented_fixed_reason=None,
+                result=result,
+                required_action=(
+                    "Review equal prices across physically/commercially distinct scope before final validation."
+                    if distinct
+                    else None
+                ),
+            )
+            db.add(review)
+        else:
+            review.subject_ids = subject_ids
+            review.canonical_signatures = signatures
+            review.prices = [price for _ in rows]
+            review.physical_differences = signatures if distinct else []
+            review.result = result
+            review.required_action = (
                 "Review equal prices across physically/commercially distinct scope before final validation."
                 if distinct
                 else None
-            ),
-        )
-        db.add(review)
+            )
         reviews.append(review)
-        if distinct:
-            for item in rows:
-                lock = lock_by_component.get(item.id)
-                if lock and lock.validator_outcome == "PASS":
+        for item in rows:
+            lock = lock_by_component.get(item.id)
+            if not lock:
+                continue
+            touched_lock_ids.add(lock.id)
+            if distinct:
+                lock.anomaly_result = "REVIEW_REQUIRED"
+                if lock.validator_outcome == "PASS":
                     lock.validator_outcome = "PROVISIONAL"
-                    lock.anomaly_result = "REVIEW_REQUIRED"
-        else:
-            for item in rows:
-                lock = lock_by_component.get(item.id)
-                if lock:
-                    lock.anomaly_result = "PASS"
+            else:
+                lock.anomaly_result = "PASS"
+    for lock in method_locks:
+        if lock.id not in touched_lock_ids and lock.anomaly_result == "PENDING":
+            lock.anomaly_result = "PASS"
     db.flush()
     return reviews
 
@@ -1245,7 +1270,6 @@ def derive_commercial_pricing(
             select(Service).where(Service.opening_id.in_([item.id for item in openings]))
         ).all()
     ) if openings else []
-    service_by_id = {item.id: item for item in services}
     components = list(
         db.scalars(
             select(SystemRequiredComponent).where(
@@ -1273,19 +1297,16 @@ def derive_commercial_pricing(
             continue
         shared = _shared_components(components, opening.id)
         scope = _scope_key(opening.id, service.id)
-        try:
-            selected = _select_rate_plan(
-                db,
-                estimate,
-                opening=opening,
-                service=service,
-                service_components=service_components,
-                shared_components=shared,
-                library_selection=library_selections.get(scope),
-                parameterised_selection=parameterised_selections.get(scope),
-            )
-        except (CommercialPricingError, ReleaseScopeError):
-            raise
+        selected = _select_rate_plan(
+            db,
+            estimate,
+            opening=opening,
+            service=service,
+            service_components=service_components,
+            shared_components=shared,
+            library_selection=library_selections.get(scope),
+            parameterised_selection=parameterised_selections.get(scope),
+        )
         if selected:
             rate_plans[scope] = selected
         else:
@@ -1342,7 +1363,18 @@ def derive_commercial_pricing(
         quantity = quantities[component.id]
         labour_rows = labour[component.id]
         scope = _scope_key(component.opening_id, component.service_id)
-        rejected = tuple(scope_rejections.get(scope, []))
+        rejected_items = list(scope_rejections.get(scope, []))
+        selected_rate = rate_plans.get(scope)
+        if selected_rate and component.id not in selected_rate.included_component_ids:
+            rejected_items.append(
+                {
+                    "pkb_entry_id": selected_rate.record.pkb_entry_id,
+                    "reason": "selected_treatment_rate_does_not_include_required_component",
+                    "required_component_id": component.id,
+                    "component_category": component.category,
+                }
+            )
+        rejected = tuple(rejected_items)
         plan = _component_build_plan(
             db,
             estimate,
