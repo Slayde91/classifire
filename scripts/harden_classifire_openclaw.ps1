@@ -4,18 +4,6 @@ $ErrorActionPreference = "Stop"
 $openclaw = Get-Command openclaw -ErrorAction Stop
 $docker = Get-Command docker -ErrorAction Stop
 
-Write-Host "Checking Docker daemon readiness..." -ForegroundColor Cyan
-$dockerStatus = (& $docker.Source info 2>&1 | Out-String)
-if ($LASTEXITCODE -ne 0) {
-    throw (
-        "Docker is installed but the Docker daemon is not reachable. " +
-        "Start Docker Desktop, wait until the Linux engine is running, then confirm 'docker info' succeeds before rerunning this script. " +
-        "No OpenClaw hardening changes have been applied. Docker output: " +
-        $dockerStatus.Trim()
-    )
-}
-Write-Host "Docker daemon is reachable." -ForegroundColor Green
-
 $agentIds = @(
     "cf-orchestrator",
     "cf-intake-evidence",
@@ -45,11 +33,109 @@ $denyTools = @(
 )
 $denyJson = $denyTools | ConvertTo-Json -Compress
 
-$configFile = (& $openclaw.Source config file 2>&1 | Out-String).Trim()
-if (-not $configFile) {
-    throw "Unable to resolve the active OpenClaw configuration file."
+function Resolve-OpenClawConfigPath {
+    $raw = (& $openclaw.Source config file 2>&1 | Out-String).Trim()
+    if (-not $raw) {
+        throw "Unable to resolve the active OpenClaw configuration file."
+    }
+    if ($raw -match '^~[\\/](.+)$') {
+        return Join-Path $HOME $Matches[1]
+    }
+    return [System.IO.Path]::GetFullPath($raw)
 }
 
+function Invoke-ConfigSet {
+    param(
+        [string]$Path,
+        [string]$Value,
+        [switch]$StrictJson,
+        [switch]$DryRun
+    )
+
+    $args = @("config", "set", $Path, $Value)
+    if ($StrictJson) { $args += "--strict-json" }
+    if ($DryRun) { $args += "--dry-run" }
+
+    $output = (& $openclaw.Source @args 2>&1 | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+        throw "OpenClaw config set failed for $Path. Output: $($output.Trim())"
+    }
+    return $output
+}
+
+Write-Host "Checking Docker daemon readiness..." -ForegroundColor Cyan
+$dockerStatus = (& $docker.Source info 2>&1 | Out-String)
+if ($LASTEXITCODE -ne 0) {
+    throw (
+        "Docker is installed but the Docker daemon is not reachable. " +
+        "Start Docker Desktop, wait until the Linux engine is running, then confirm 'docker info' succeeds before rerunning this script. " +
+        "No OpenClaw hardening changes have been applied. Docker output: " +
+        $dockerStatus.Trim()
+    )
+}
+Write-Host "Docker daemon is reachable." -ForegroundColor Green
+
+Write-Host "Validating current OpenClaw configuration..." -ForegroundColor Cyan
+& $openclaw.Source config validate | Out-Host
+if ($LASTEXITCODE -ne 0) {
+    throw "Current OpenClaw configuration is invalid before CLASSIFIRE hardening. Fix it before continuing."
+}
+
+Write-Host "Resolving CLASSIFIRE agent indexes from agents.list..." -ForegroundColor Cyan
+$agentsRaw = (& $openclaw.Source config get agents.list --json 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0) {
+    throw "Unable to read agents.list from OpenClaw. Output: $agentsRaw"
+}
+try {
+    $agents = @($agentsRaw | ConvertFrom-Json)
+}
+catch {
+    throw "OpenClaw agents.list was not valid JSON: $agentsRaw"
+}
+
+$indexById = @{}
+for ($i = 0; $i -lt $agents.Count; $i++) {
+    $agentId = [string]$agents[$i].id
+    if ($agentId) {
+        $indexById[$agentId] = $i
+    }
+}
+foreach ($id in $agentIds) {
+    if (-not $indexById.ContainsKey($id)) {
+        throw "Required CLASSIFIRE agent '$id' is missing from OpenClaw agents.list. Run setup_classifire_openclaw.ps1 first."
+    }
+}
+
+$changes = @()
+foreach ($id in $agentIds) {
+    $index = $indexById[$id]
+    $base = "agents.list[$index]"
+    $changes += @(
+        @{ Agent = $id; Path = "$base.tools.profile"; Value = "minimal"; Strict = $false },
+        @{ Agent = $id; Path = "$base.tools.deny"; Value = $denyJson; Strict = $true },
+        @{ Agent = $id; Path = "$base.tools.elevated.enabled"; Value = "false"; Strict = $true },
+        @{ Agent = $id; Path = "$base.sandbox.mode"; Value = "all"; Strict = $false },
+        @{ Agent = $id; Path = "$base.sandbox.backend"; Value = "docker"; Strict = $false },
+        @{ Agent = $id; Path = "$base.sandbox.scope"; Value = "agent"; Strict = $false },
+        @{ Agent = $id; Path = "$base.sandbox.workspaceAccess"; Value = "none"; Strict = $false }
+    )
+}
+
+Write-Host "Dry-running all CLASSIFIRE hardening changes against the active schema..." -ForegroundColor Cyan
+foreach ($change in $changes) {
+    if ($change.Strict) {
+        Invoke-ConfigSet -Path $change.Path -Value $change.Value -StrictJson -DryRun | Out-Null
+    }
+    else {
+        Invoke-ConfigSet -Path $change.Path -Value $change.Value -DryRun | Out-Null
+    }
+}
+Write-Host "All hardening paths passed schema dry-run." -ForegroundColor Green
+
+$configFile = Resolve-OpenClawConfigPath
+if (-not (Test-Path -LiteralPath $configFile)) {
+    throw "Resolved OpenClaw config file does not exist: $configFile"
+}
 $backupDir = Join-Path (Split-Path -Parent $configFile) "classifire-config-backups"
 New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -57,39 +143,30 @@ $backupFile = Join-Path $backupDir "openclaw-before-classifire-hardening-$stamp.
 Copy-Item -LiteralPath $configFile -Destination $backupFile -Force
 Write-Host "Backed up OpenClaw config to $backupFile" -ForegroundColor DarkYellow
 
-foreach ($id in $agentIds) {
-    Write-Host "Hardening $id..." -ForegroundColor Cyan
-    $base = 'agents.entries["' + $id + '"]'
+try {
+    foreach ($id in $agentIds) {
+        Write-Host "Hardening $id..." -ForegroundColor Cyan
+        foreach ($change in $changes | Where-Object { $_.Agent -eq $id }) {
+            if ($change.Strict) {
+                Invoke-ConfigSet -Path $change.Path -Value $change.Value -StrictJson | Out-Null
+            }
+            else {
+                Invoke-ConfigSet -Path $change.Path -Value $change.Value | Out-Null
+            }
+        }
+    }
 
-    & $openclaw.Source config set "$base.tools.profile" "minimal" | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Failed to set minimal tool profile for $id." }
-
-    & $openclaw.Source config set "$base.tools.deny" $denyJson --strict-json | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Failed to set tool deny list for $id." }
-
-    & $openclaw.Source config set "$base.tools.elevated.enabled" "false" --strict-json | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Failed to disable elevated execution for $id." }
-
-    & $openclaw.Source config set "$base.tools.fs.workspaceOnly" "true" --strict-json | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Failed to restrict filesystem scope for $id." }
-
-    & $openclaw.Source config set "$base.sandbox.mode" "all" | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Failed to enable sandboxing for $id." }
-
-    & $openclaw.Source config set "$base.sandbox.backend" "docker" | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Failed to select Docker sandbox backend for $id." }
-
-    & $openclaw.Source config set "$base.sandbox.scope" "agent" | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Failed to set per-agent sandbox scope for $id." }
-
-    & $openclaw.Source config set "$base.sandbox.workspaceAccess" "none" | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Failed to remove host workspace access for $id." }
+    Write-Host "Validating hardened OpenClaw configuration..." -ForegroundColor Cyan
+    & $openclaw.Source config validate | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "OpenClaw configuration validation failed after CLASSIFIRE hardening."
+    }
 }
-
-Write-Host "Validating OpenClaw configuration..." -ForegroundColor Cyan
-& $openclaw.Source config validate
-if ($LASTEXITCODE -ne 0) {
-    throw "OpenClaw configuration validation failed. Restore $backupFile if required."
+catch {
+    Write-Host "Hardening failed. Restoring the pre-hardening OpenClaw config backup..." -ForegroundColor Red
+    Copy-Item -LiteralPath $backupFile -Destination $configFile -Force
+    & $openclaw.Source config validate | Out-Host
+    throw
 }
 
 Write-Host ""
