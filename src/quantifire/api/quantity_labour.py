@@ -10,7 +10,9 @@ from ..audit import record_audit
 from ..db import get_db
 from ..models import Estimate, User
 from ..security import require_permission
-from ..services.quantity_labour import QuantityLabourError, derive_quantity_and_labour
+from ..services.quantity_labour import QuantityLabourError
+from ..services.quantity_labour_runtime import derive_quantity_and_labour_runtime
+from ..services.release_scope import ReleaseScopeError
 from ..services.workflow import WorkflowTransitionError
 from ..services.workflow_db import assess_estimate_workflow
 
@@ -35,13 +37,13 @@ def derive_estimate_quantity_and_labour(
     if not estimate:
         raise HTTPException(status_code=404, detail="Estimate not found")
     try:
-        result = derive_quantity_and_labour(
+        result = derive_quantity_and_labour_runtime(
             db,
             estimate,
             component_inputs=payload.component_inputs,
             labour_adjustments=payload.labour_adjustments,
         )
-    except (WorkflowTransitionError, QuantityLabourError) as exc:
+    except (WorkflowTransitionError, QuantityLabourError, ReleaseScopeError) as exc:
         db.rollback()
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
@@ -54,16 +56,18 @@ def derive_estimate_quantity_and_labour(
         entity_id=estimate.id,
         project_id=estimate.project_id,
         new_value={
+            "labour_release_id": estimate.labour_release_id,
             "quantity_record_ids": [item.id for item in result.quantities],
             "labour_activity_ids": [item.id for item in result.labour_activities],
             "workflow_stage": assessment.stage,
         },
-        reason="Deterministic v2.13 quantity and person-hour derivation",
+        reason="Deterministic v2.13 quantity and pinned-productivity person-hour derivation",
         source_ip=request.client.host if request.client else None,
     )
     db.commit()
     return {
         "estimate_id": estimate.id,
+        "labour_release_id": estimate.labour_release_id,
         "workflow_stage": assessment.stage,
         "quantities": [
             {
