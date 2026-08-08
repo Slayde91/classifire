@@ -1,5 +1,5 @@
 ﻿{% extends "base.html" %}
-{% block title %}Products & materials â€” QUANTIFIRE{% endblock %}
+{% block title %}Products & materials — QUANTIFIRE{% endblock %}
 {% block heading %}Products & materials{% endblock %}
 {% block content %}
 <div class="toolbar"><form method="get" class="inline-form"><input name="q" value="{{ q }}" placeholder="Search SKU or name"><button class="button button-secondary">Search</button></form></div>
@@ -17,7 +17,7 @@
 </form></details>{% endif %}
 <section class="panel"><div class="panel-head"><h2>Library records</h2><span class="muted">{{ products|length }} shown</span></div>
 <div class="table-wrap"><table><thead><tr><th>SKU</th><th>Name</th><th>Type</th><th>Category</th><th>Unit</th><th>Base cost</th><th>Markup</th><th>Status</th><th>Rev</th><th></th></tr></thead><tbody>
-{% for p in products %}<tr><td class="mono">{{ p.sku }}</td><td>{{ p.name }}</td><td>{{ p.item_type }}</td><td>{{ p.category or 'â€”' }}</td><td>{{ p.unit }}</td><td>{{ p.currency }} {{ '%.4f'|format(p.base_cost|float) }}</td><td>{{ '%.2f'|format((p.default_markup or 0)|float * 100) }}%</td><td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td><td>{{ p.revision }}</td><td><a class="button button-small button-secondary" href="/products/{{ p.id }}/edit">Edit / revise</a></td></tr>{% else %}<tr><td colspan="10" class="empty">No product records.</td></tr>{% endfor %}
+{% for p in products %}<tr><td class="mono">{{ p.sku }}</td><td>{{ p.name }}</td><td>{{ p.item_type }}</td><td>{{ p.category or '—' }}</td><td>{{ p.unit }}</td><td>{{ p.currency }} {{ '%.4f'|format(p.base_cost|float) }}</td><td>{{ '%.2f'|format((p.default_markup or 0)|float * 100) }}%</td><td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td><td>{{ p.revision }}</td><td><a class="button button-small button-secondary" href="/products/{{ p.id }}/edit">Edit / revise</a></td></tr>{% else %}<tr><td colspan="10" class="empty">No product records.</td></tr>{% endfor %}
 </tbody></table></div></section>
 {% endblock %}
 

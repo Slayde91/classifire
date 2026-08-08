@@ -1,17 +1,17 @@
 ﻿{% extends "base.html" %}
-{% block title %}{{ record.pkb_entry_id }} â€” QUANTIFIRE{% endblock %}
+{% block title %}{{ record.pkb_entry_id }} — QUANTIFIRE{% endblock %}
 {% block heading %}Pricing record {{ record.pkb_entry_id }}{% endblock %}
 {% block content %}
 <section class="panel"><div class="panel-head"><h2>Current record</h2><span class="badge badge-{{ record.status }}">{{ record.status }}</span></div>
 <div class="form-grid">
 <div><strong>Description</strong><div>{{ record.description }}</div></div>
-<div><strong>Entry version</strong><div>{{ record.entry_version or 'â€”' }}</div></div>
+<div><strong>Entry version</strong><div>{{ record.entry_version or '—' }}</div></div>
 <div><strong>Unit</strong><div>{{ record.unit }}</div></div>
 <div><strong>Rate ex GST</strong><div>{{ record.currency }} {{ '%.4f'|format(record.rate_ex_tax|float) }}</div></div>
-<div><strong>Direct labour</strong><div>{{ record.direct_labour_cost or 'â€”' }}</div></div>
-<div><strong>Direct material</strong><div>{{ record.direct_material_cost or 'â€”' }}</div></div>
+<div><strong>Direct labour</strong><div>{{ record.direct_labour_cost or '—' }}</div></div>
+<div><strong>Direct material</strong><div>{{ record.direct_material_cost or '—' }}</div></div>
 <div><strong>Material markup</strong><div>{{ '%.2f'|format((record.material_markup or 0)|float * 100) }}%</div></div>
-<div><strong>FRL</strong><div>{{ record.frl or 'â€”' }}</div></div>
+<div><strong>FRL</strong><div>{{ record.frl or '—' }}</div></div>
 </div></section>
 {% if has_permission('pricing:write') %}
 <section class="panel form-panel"><h2>Create Draft Revision</h2>
@@ -27,6 +27,6 @@
 </form></section>
 {% endif %}
 <section class="panel"><div class="panel-head"><h2>Revision history</h2></div><div class="table-wrap"><table><thead><tr><th>Version</th><th>Rate</th><th>Status</th><th>Created</th></tr></thead><tbody>
-{% for h in history %}<tr><td>{{ h.entry_version or 'â€”' }}</td><td>{{ h.currency }} {{ '%.4f'|format(h.rate_ex_tax|float) }}</td><td>{{ h.status }}</td><td>{{ h.created_at }}</td></tr>{% endfor %}
+{% for h in history %}<tr><td>{{ h.entry_version or '—' }}</td><td>{{ h.currency }} {{ '%.4f'|format(h.rate_ex_tax|float) }}</td><td>{{ h.status }}</td><td>{{ h.created_at }}</td></tr>{% endfor %}
 </tbody></table></div></section>
 {% endblock %}

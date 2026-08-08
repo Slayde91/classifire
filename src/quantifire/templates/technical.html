@@ -1,5 +1,5 @@
 ﻿{% extends "base.html" %}
-{% block title %}Technical evidence â€” QUANTIFIRE{% endblock %}
+{% block title %}Technical evidence — QUANTIFIRE{% endblock %}
 {% block heading %}Technical evidence database{% endblock %}
 {% block content %}
 <div class="toolbar"><a class="button button-primary" href="/technical/variants">Manage technical systems</a></div><div class="callout"><strong>Evidence control.</strong> Uploaded source files are preserved unchanged and hashed. Extracted fields are Draft candidates only. An authorised technical reviewer must verify source pages, applicability and complete configuration before activation.</div>
@@ -10,11 +10,11 @@
 <label>Title<input name="title" required></label><label>Manufacturer<input name="manufacturer"></label><label>Reference<input name="reference"></label><label>Revision<input name="revision"></label>
 <div class="span-2"><button class="button button-primary">Upload as immutable Draft evidence</button></div></form></details>{% endif %}
 <section class="panel"><div class="panel-head"><h2>Source documents</h2></div><div class="table-wrap"><table><thead><tr><th>Document ID</th><th>Title</th><th>Type</th><th>Manufacturer</th><th>Revision</th><th>Extraction</th><th>Status</th></tr></thead><tbody>
-{% for d in documents %}<tr><td class="mono"><a href="/technical/documents/{{ d.id }}">{{ d.document_id }}</a></td><td>{{ d.title }}</td><td>{{ d.document_type }}</td><td>{{ d.manufacturer or 'â€”' }}</td><td>{{ d.revision or 'â€”' }}</td><td>{{ d.extraction_status }}</td><td><span class="badge badge-{{ d.status }}">{{ d.status }}</span></td></tr>{% else %}<tr><td colspan="7" class="empty">No source documents uploaded through the application.</td></tr>{% endfor %}
+{% for d in documents %}<tr><td class="mono"><a href="/technical/documents/{{ d.id }}">{{ d.document_id }}</a></td><td>{{ d.title }}</td><td>{{ d.document_type }}</td><td>{{ d.manufacturer or '—' }}</td><td>{{ d.revision or '—' }}</td><td>{{ d.extraction_status }}</td><td><span class="badge badge-{{ d.status }}">{{ d.status }}</span></td></tr>{% else %}<tr><td colspan="7" class="empty">No source documents uploaded through the application.</td></tr>{% endfor %}
 </tbody></table></div></section>
 <section class="panel"><div class="panel-head"><h2>Structured technical variants</h2><form method="get" class="inline-form"><input name="q" value="{{ q }}" placeholder="Search variant, product or Service"><button class="button button-secondary">Search</button></form></div>
 <div class="table-wrap"><table><thead><tr><th>Variant</th><th>System</th><th>Product family</th><th>Service</th><th>Substrate</th><th>FRL</th><th>Source</th><th>Review</th><th>Status</th></tr></thead><tbody>
-{% for v in variants %}<tr><td class="mono"><a href="/technical/variants/{{ v.id }}">{{ v.variant_id }}</a></td><td class="mono">{{ v.system_id }}</td><td>{{ v.product_family or 'â€”' }}</td><td>{{ v.service_type or 'â€”' }}<div class="muted small">{{ v.service_material or '' }}</div></td><td>{{ v.substrate_type or 'â€”' }}</td><td>{{ v.frl or 'â€”' }}</td><td>{{ v.source_document_reference or 'â€”' }} {{ v.source_page or '' }}</td><td>{{ 'Required' if v.expert_review_required else 'No trigger' }}</td><td><span class="badge badge-{{ v.status }}">{{ v.status }}</span></td></tr>{% else %}<tr><td colspan="9" class="empty">No technical variants imported.</td></tr>{% endfor %}
+{% for v in variants %}<tr><td class="mono"><a href="/technical/variants/{{ v.id }}">{{ v.variant_id }}</a></td><td class="mono">{{ v.system_id }}</td><td>{{ v.product_family or '—' }}</td><td>{{ v.service_type or '—' }}<div class="muted small">{{ v.service_material or '' }}</div></td><td>{{ v.substrate_type or '—' }}</td><td>{{ v.frl or '—' }}</td><td>{{ v.source_document_reference or '—' }} {{ v.source_page or '' }}</td><td>{{ 'Required' if v.expert_review_required else 'No trigger' }}</td><td><span class="badge badge-{{ v.status }}">{{ v.status }}</span></td></tr>{% else %}<tr><td colspan="9" class="empty">No technical variants imported.</td></tr>{% endfor %}
 </tbody></table></div></section>
 {% endblock %}
 

@@ -1,0 +1,17 @@
+﻿{% extends "base.html" %}
+{% block title %}{{ release.version }} — QUANTIFIRE{% endblock %}
+{% block heading %}Library release{% endblock %}
+{% block content %}
+<section class="panel"><div class="panel-head"><h2>{{ release.version }}</h2><span class="badge badge-{{ release.status }}">{{ release.status }}</span></div>
+<div class="form-grid">
+<div><strong>Library</strong><div>{{ release.library_type }}</div></div>
+<div><strong>Effective</strong><div>{{ release.effective_date or '—' }}</div></div>
+<div><strong>Record count</strong><div>{{ manifest.get('record_count', records|length) }}</div></div>
+<div><strong>Activated Drafts</strong><div>{{ manifest.get('activated_draft_ids',[])|length }}</div></div>
+<div class="span-2"><strong>SHA-256 release hash</strong><div class="mono">{{ release.release_hash or '—' }}</div></div>
+<div class="span-2"><strong>Notes</strong><div>{{ release.notes or '—' }}</div></div>
+</div></section>
+<section class="panel"><h2>Manifest records</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Record ID</th><th>Details</th></tr></thead><tbody>
+{% for item in records[:500] %}<tr><td class="mono">{{ item.get('key','—') }}</td><td class="mono">{{ item.get('id','—') }}</td><td><code>{{ item }}</code></td></tr>{% else %}<tr><td colspan="3" class="empty">No manifest records.</td></tr>{% endfor %}
+</tbody></table></div>{% if records|length > 500 %}<p class="muted">Showing first 500 of {{ records|length }} manifest records.</p>{% endif %}</section>
+{% endblock %}

@@ -18,6 +18,7 @@ from .db import Base, SessionLocal, engine
 from .importers.seed import seed_database
 from .models import User
 from .ui import router as ui_router
+from .release_admin import router as release_admin_router
 from .technical_admin import router as technical_admin_router
 from .library_ui import router as library_ui_router
 
@@ -94,7 +95,9 @@ def healthz() -> dict[str, str]:
 
 app.include_router(api_router)
 app.include_router(ui_router)
+app.include_router(release_admin_router)
 app.include_router(technical_admin_router)
 app.include_router(library_ui_router)
+
 
 

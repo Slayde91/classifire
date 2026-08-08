@@ -1,5 +1,5 @@
 ﻿{% extends "base.html" %}
-{% block title %}Markup settings â€” QUANTIFIRE{% endblock %}
+{% block title %}Markup settings — QUANTIFIRE{% endblock %}
 {% block heading %}Markup settings{% endblock %}
 {% block content %}
 <div class="callout"><strong>Precedence:</strong> estimate-line override &gt; project override &gt; item/category override &gt; global default.</div>
@@ -14,6 +14,6 @@
 <div class="span-2"><button class="button button-primary">Save New Global Profile</button></div>
 </form></section>{% endif %}
 <section class="panel"><h2>Markup profile history</h2><div class="table-wrap"><table><thead><tr><th>Name</th><th>Scope</th><th>Product</th><th>Material</th><th>Labour</th><th>Status</th><th>Effective</th></tr></thead><tbody>
-{% for p in profiles %}<tr><td>{{ p.name }}</td><td>{{ p.scope_type }}</td><td>{{ '%.2f'|format((p.product_markup or 0)|float*100) }}%</td><td>{{ '%.2f'|format((p.material_markup or 0)|float*100) }}%</td><td>{{ '%.2f'|format((p.labour_markup or 0)|float*100) }}%</td><td>{{ p.status }}</td><td>{{ p.effective_date or 'â€”' }}</td></tr>{% endfor %}
+{% for p in profiles %}<tr><td>{{ p.name }}</td><td>{{ p.scope_type }}</td><td>{{ '%.2f'|format((p.product_markup or 0)|float*100) }}%</td><td>{{ '%.2f'|format((p.material_markup or 0)|float*100) }}%</td><td>{{ '%.2f'|format((p.labour_markup or 0)|float*100) }}%</td><td>{{ p.status }}</td><td>{{ p.effective_date or '—' }}</td></tr>{% endfor %}
 </tbody></table></div></section>
 {% endblock %}
