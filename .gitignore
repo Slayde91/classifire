@@ -33,3 +33,7 @@ knowledge/source/**
 private-data/**
 
 patch-backups/
+
+# SQLite runtime sidecars
+*.db-wal
+*.db-shm

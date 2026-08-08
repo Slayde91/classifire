@@ -8,16 +8,52 @@ import yaml
 from .client import MissionControlClient
 
 
-DEFAULT_AGENTS = [
-    ("qf-orchestrator", "workflow orchestrator"),
-    ("qf-intake-evidence", "evidence intake specialist"),
-    ("qf-physical-model", "physical model specialist"),
-    ("qf-technical-system", "technical system specialist"),
-    ("qf-commercial-engine", "commercial estimating specialist"),
-    ("qf-validator", "independent validation specialist"),
-    ("qf-output", "controlled output renderer"),
-    ("qf-library-governance", "library governance specialist"),
-    ("qf-platform-governance", "platform architecture and release specialist"),
+DEFAULT_AGENTS: list[dict[str, Any]] = [
+    {
+        "name": "qf-orchestrator",
+        "role": "agent",
+        "capabilities": ["orchestration", "routing", "status"],
+    },
+    {
+        "name": "qf-intake-evidence",
+        "role": "researcher",
+        "capabilities": ["evidence-intake", "document-review", "source-provenance"],
+    },
+    {
+        "name": "qf-physical-model",
+        "role": "researcher",
+        "capabilities": ["physical-scope", "opening-service-model", "quantity-analysis"],
+    },
+    {
+        "name": "qf-technical-system",
+        "role": "reviewer",
+        "capabilities": ["technical-system-search", "applicability-review", "package15"],
+    },
+    {
+        "name": "qf-commercial-engine",
+        "role": "agent",
+        "capabilities": ["estimating", "pricing", "package14", "component-build"],
+    },
+    {
+        "name": "qf-validator",
+        "role": "tester",
+        "capabilities": ["qa", "regression", "reconciliation", "release-gates"],
+    },
+    {
+        "name": "qf-output",
+        "role": "assistant",
+        "capabilities": ["controlled-output", "workbook", "proposal", "reporting"],
+    },
+    {
+        "name": "qf-library-governance",
+        "role": "reviewer",
+        "capabilities": ["library-governance", "revision-review", "release-management"],
+    },
+    {
+        "name": "qf-platform-governance",
+        "role": "devops",
+        "capabilities": ["platform", "security", "deployment", "backup", "rollback"],
+    },
 ]
 
 DEFAULT_TASKS = [
@@ -36,36 +72,57 @@ def bootstrap_mission_control(
     *,
     repo_url: str | None = None,
     architecture_registry: Path | None = None,
+    create_tasks: bool = False,
 ) -> dict[str, Any]:
+    """Register QUANTIFIRE agent records and optionally seed baseline tasks.
+
+    Task creation is opt-in so Mission Control cannot dispatch work to OpenClaw
+    agent IDs that have not yet been created and acceptance-tested.
+    """
     probe = client.probe()
+
     registrations = []
-    for name, role in DEFAULT_AGENTS:
+    for spec in DEFAULT_AGENTS:
         registrations.append(
             client.register_agent(
-                name,
-                role,
+                spec["name"],
+                spec["role"],
                 {
                     "framework": "OpenClaw",
-                    "project": "QUANTIFIRE",
-                    "repository": repo_url,
+                    "capabilities": spec["capabilities"],
                 },
             )
         )
+
     registry: dict[str, Any] | None = None
     if architecture_registry and architecture_registry.exists():
         registry = yaml.safe_load(architecture_registry.read_text(encoding="utf-8"))
+
     tasks = []
-    for task_id, title, agent, priority in DEFAULT_TASKS:
-        tasks.append(
-            client.create_task(
-                title=f"{task_id} — {title}",
-                assigned_to=agent,
-                priority=priority,
-                description=(
-                    "QUANTIFIRE architecture task. Mission Control manages assignment, review, quality gates and "
-                    "completion receipts; QUANTIFIRE remains the canonical domain system."
-                ),
-                metadata={"task_id": task_id, "architecture_registry": registry},
+    if create_tasks:
+        for task_id, title, agent, priority in DEFAULT_TASKS:
+            tasks.append(
+                client.create_task(
+                    title=f"{task_id} - {title}",
+                    assigned_to=agent,
+                    priority=priority,
+                    description=(
+                        "QUANTIFIRE architecture task. Mission Control manages assignment, review, "
+                        "quality gates and completion receipts; QUANTIFIRE remains the canonical "
+                        "domain system."
+                    ),
+                    metadata={
+                        "task_id": task_id,
+                        "project": "QUANTIFIRE",
+                        "repository": repo_url,
+                        "architecture_registry": registry,
+                    },
+                )
             )
-        )
-    return {"probe": probe, "agents": registrations, "tasks": tasks}
+
+    return {
+        "probe": probe,
+        "agents": registrations,
+        "tasks_created": create_tasks,
+        "tasks": tasks,
+    }
