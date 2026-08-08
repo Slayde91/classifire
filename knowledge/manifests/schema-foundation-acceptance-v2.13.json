@@ -1,0 +1,33 @@
+{
+  "gate": "SCHEMA_TEST_PASS",
+  "status": "PASS",
+  "scope": "QUANTITY_COMMERCIAL_VALIDATION_FOUNDATION",
+  "production_authority": false,
+  "source_release": "QUANTIFIRE v2.13",
+  "database_revision": "0004_quantity_commercial_validation_foundation",
+  "evidence": {
+    "metadata_pass": true,
+    "table_pass": true,
+    "audit_link_pass": true,
+    "working_tree_clean": true,
+    "alembic_head": "0004_quantity_commercial_validation_foundation"
+  },
+  "tables_verified": [
+    "audit_trails",
+    "commercial_method_locks",
+    "commercial_recovery_records",
+    "component_requirement_reconciliations",
+    "estimate_certificates",
+    "gate_evidence",
+    "labour_activities",
+    "price_anomaly_reviews",
+    "pricing_components",
+    "productivity_sources",
+    "quantities",
+    "quantity_formula_inputs"
+  ],
+  "prior_gate": "SCHEMA_TEST_PASS — PHYSICAL/TECHNICAL FOUNDATION",
+  "next_phase": "deterministic domain service and workflow state machine",
+  "next_gate": "STATE_TRANSITION_TEST_PASS",
+  "note": "This receipt records development schema acceptance only. It does not grant production release authority or bypass technical, commercial, validation, security or human approval gates."
+}
