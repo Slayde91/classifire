@@ -15,6 +15,7 @@ from . import ATTRIBUTION, __version__
 from . import canonical_models as _canonical_models  # noqa: F401
 from . import commercial_models as _commercial_models  # noqa: F401
 from .api import router as api_router
+from .api.workflow import router as workflow_router
 from .config import get_settings
 from .db import Base, SessionLocal, engine
 from .importers.seed import seed_database
@@ -97,6 +98,7 @@ def healthz() -> dict[str, str]:
 
 
 app.include_router(api_router)
+app.include_router(workflow_router)
 app.include_router(ui_router)
 app.include_router(estimate_pinning_router)
 app.include_router(release_admin_router)
