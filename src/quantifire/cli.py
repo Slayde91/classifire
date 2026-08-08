@@ -194,15 +194,25 @@ def mission_control_bootstrap(
     url: Optional[str] = typer.Option(None),
     api_key: Optional[str] = typer.Option(None, envvar="QUANTIFIRE_MISSION_CONTROL_API_KEY"),
     repo_url: str = typer.Option("https://github.com/Slayde91/quantifire"),
+    create_tasks: bool = typer.Option(
+        False,
+        "--create-tasks",
+        help="Also seed baseline architecture tasks. Default is agent registration only.",
+    ),
 ) -> None:
-    """Register the QUANTIFIRE agents and baseline architecture tasks in Mission Control."""
+    """Register QUANTIFIRE agent records in Mission Control; task seeding is opt-in."""
     settings = get_settings()
     key = api_key or settings.mission_control_api_key
     if not key:
         raise typer.BadParameter("Mission Control API key is required")
     client = MissionControlClient(url or settings.mission_control_url, key)
     registry = repo_root() / "mission-control" / "architecture-registry.yaml"
-    result = bootstrap_mission_control(client, repo_url=repo_url, architecture_registry=registry)
+    result = bootstrap_mission_control(
+        client,
+        repo_url=repo_url,
+        architecture_registry=registry,
+        create_tasks=create_tasks,
+    )
     console.print_json(data=result)
 
 
