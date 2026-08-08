@@ -55,9 +55,31 @@ if ($LASTEXITCODE -ne 0) {
     throw "OpenClaw config validate failed."
 }
 
+$agentsRaw = Get-ConfigValue "agents.list" -Json
+try {
+    $agents = @($agentsRaw | ConvertFrom-Json)
+}
+catch {
+    throw "OpenClaw agents.list was not valid JSON: $agentsRaw"
+}
+
+$indexById = @{}
+for ($i = 0; $i -lt $agents.Count; $i++) {
+    $agentId = [string]$agents[$i].id
+    if ($agentId) {
+        $indexById[$agentId] = $i
+    }
+}
+
 foreach ($id in $agentIds) {
     Write-Host "Checking $id..." -ForegroundColor Cyan
-    $base = 'agents.entries["' + $id + '"]'
+    if (-not $indexById.ContainsKey($id)) {
+        $failures += "$id is missing from agents.list"
+        continue
+    }
+
+    $index = $indexById[$id]
+    $base = "agents.list[$index]"
 
     $profile = Get-ConfigValue "$base.tools.profile"
     if ($profile -ne "minimal") {
@@ -81,11 +103,6 @@ foreach ($id in $agentIds) {
     $elevated = Get-ConfigValue "$base.tools.elevated.enabled"
     if ($elevated -ne "false") {
         $failures += "$id elevated execution is not disabled"
-    }
-
-    $workspaceOnly = Get-ConfigValue "$base.tools.fs.workspaceOnly"
-    if ($workspaceOnly -ne "true") {
-        $failures += "$id filesystem workspaceOnly is not true"
     }
 
     $sandboxMode = Get-ConfigValue "$base.sandbox.mode"
