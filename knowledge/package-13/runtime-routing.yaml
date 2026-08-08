@@ -1,0 +1,61 @@
+release_id: QF-KNOWLEDGE-ROUTING-v0.1-dev
+status: DEVELOPMENT
+production_authority: false
+source:
+  package: 13
+  document_id: PFEOS-RUNTIME-PACK-13-v2.8
+  source_filename: PFEOS_13_Knowledge_Index_and_Deployment_Manifest_v2.8.txt
+  source_status: ACTIVE
+  chapter_routes: 1522
+  source_profile: PFEOS-AUTONOMOUS-ESTIMATING-NSW-ACT-v1.3
+  migration_note: "This file is a QUANTIFIRE runtime migration artefact; it does not replace or modify the historical source package."
+authority_order:
+  - platform_safety_and_security
+  - quantifire_constitution_and_governance
+  - approved_runtime_profiles
+  - package_13_routing_and_release_manifest
+  - confirmed_project_evidence
+  - package_15_technical_authority
+  - package_14_commercial_authority
+  - authorised_user_instruction
+hard_stage_order:
+  - evidence_intake
+  - physical_model
+  - physical_model_lock
+  - opening_specific_technical_search
+  - repair_strategy_lock
+  - component_derivation
+  - quantity_and_labour
+  - commercial_pricing_and_recovery
+  - independent_validation
+  - validated_snapshot
+  - output_rendering
+  - human_release
+negative_routing:
+  intake_evidence:
+    deny: [package_14_pricing]
+  physical_model:
+    deny: [package_14_pricing, final_technical_approval]
+  technical_system:
+    deny: [package_14_pricing, commercial_approval]
+  commercial_engine:
+    deny: [technical_applicability_override]
+  output:
+    deny: [recalculation, technical_selection, pricing_mutation]
+package_authority:
+  package_14: commercial_pricing_only
+  package_15: technical_applicability_only
+  package_16: runtime_policy_pending_split_and_reapproval
+canonical_state:
+  owner: quantifire_domain_service
+  mission_control_is_canonical: false
+  agent_memory_is_canonical: false
+  direct_agent_database_writes_allowed: false
+required_runtime_receipts:
+  - source_release_ids
+  - source_hashes
+  - agent_id
+  - run_id
+  - lock_receipts
+  - validation_receipt
+  - output_hashes
