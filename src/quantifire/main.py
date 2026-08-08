@@ -20,6 +20,7 @@ from .api.guarded_technical import router as guarded_technical_router
 from .api.physical_model import router as physical_model_router
 from .api.productivity import router as productivity_router
 from .api.quantity_labour import router as quantity_labour_router
+from .api.release_control import router as release_control_router
 from .api.repair_strategy import router as repair_strategy_router
 from .api.workflow import router as workflow_router
 from .api.workflow_actions import router as workflow_actions_router
@@ -112,6 +113,7 @@ app.include_router(repair_strategy_router)
 app.include_router(quantity_labour_router)
 app.include_router(productivity_router)
 app.include_router(commercial_router)
+app.include_router(release_control_router)
 app.include_router(api_router)
 app.include_router(workflow_router)
 app.include_router(workflow_actions_router)
