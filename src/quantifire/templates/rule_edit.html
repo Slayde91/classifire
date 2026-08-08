@@ -1,0 +1,22 @@
+﻿{% extends "base.html" %}
+{% block title %}Edit {{ rule.rule_code }} â€” QUANTIFIRE{% endblock %}
+{% block heading %}Estimating rule revision{% endblock %}
+{% block content %}
+<section class="panel"><div class="panel-head"><h2>{{ rule.rule_code }} v{{ rule.version }}</h2><span class="badge badge-{{ rule.status }}">{{ rule.status }}</span></div>
+{% if has_permission('rule:write') %}
+<form method="post" action="/rules/{{ rule.id }}/revision" class="form-grid">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label>Name<input name="name" value="{{ rule.name }}" required></label>
+<label>Category<input name="category" value="{{ rule.category }}" required></label>
+<label>Severity<select name="severity"><option value="information" {% if rule.severity == 'information' %}selected{% endif %}>information</option><option value="warning" {% if rule.severity == 'warning' %}selected{% endif %}>warning</option><option value="hold" {% if rule.severity == 'hold' %}selected{% endif %}>hold</option><option value="blocking_error" {% if rule.severity == 'blocking_error' %}selected{% endif %}>blocking_error</option></select></label>
+<label>Priority<input name="priority" type="number" value="{{ rule.priority }}"></label>
+<label class="span-2">Description<textarea name="description" rows="3" required>{{ rule.description }}</textarea></label>
+<label class="span-2">Conditions JSON<textarea name="conditions_json" rows="9" required>{{ conditions_json }}</textarea></label>
+<label class="span-2">Actions JSON<textarea name="actions_json" rows="9" required>{{ actions_json }}</textarea></label>
+<label>Source reference<input name="source_reference" value="{{ rule.source_reference or '' }}"></label>
+<label>Source page<input name="source_page" value="{{ rule.source_page or '' }}"></label>
+<label class="span-2">Reason<input name="reason" value="Rule revision" required></label>
+<div class="span-2"><button class="button button-primary">Create Draft Revision</button></div>
+</form>{% endif %}</section>
+<section class="panel"><h2>Version history</h2><div class="table-wrap"><table><thead><tr><th>Version</th><th>Status</th><th>Severity</th><th>Created</th></tr></thead><tbody>{% for h in history %}<tr><td>{{ h.version }}</td><td>{{ h.status }}</td><td>{{ h.severity }}</td><td>{{ h.created_at }}</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

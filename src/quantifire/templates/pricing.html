@@ -1,0 +1,33 @@
+﻿{% extends "base.html" %}
+{% block title %}Pricing library â€” QUANTIFIRE{% endblock %}
+{% block heading %}Pricing library{% endblock %}
+{% block content %}
+<div class="callout"><strong>Controlled commercial library.</strong> Imported Package 14 records are read-only historical source records. Use Create Draft Revision to change a rate without overwriting the original.</div>
+<div class="toolbar">
+<form method="get" class="inline-form">
+<input name="q" value="{{ q }}" placeholder="PKB ID, service, material, substrate, FRL, manufacturer">
+<select name="status"><option value="">All statuses</option><option value="active" {% if status == 'active' %}selected{% endif %}>Active</option><option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option></select>
+<button class="button button-secondary">Search</button>
+</form>
+</div>
+<section class="panel">
+<div class="panel-head"><h2>Package 14 commercial records</h2><span class="muted">{{ records|length }} shown</span></div>
+<div class="table-wrap"><table><thead><tr><th>PKB Entry</th><th>Description</th><th>Service</th><th>Material</th><th>Substrate</th><th>FRL</th><th>Unit</th><th>Rate ex GST</th><th>Status</th><th></th></tr></thead>
+<tbody>
+{% for r in records %}
+<tr>
+<td class="mono">{{ r.pkb_entry_id }}</td>
+<td>{{ r.description }}</td>
+<td>{{ r.service_type or 'â€”' }}</td>
+<td>{{ r.service_material or 'â€”' }}</td>
+<td>{{ r.substrate or 'â€”' }}</td>
+<td>{{ r.frl or 'â€”' }}</td>
+<td>{{ r.unit }}</td>
+<td>{{ r.currency }} {{ '%.2f'|format(r.rate_ex_tax|float) }}</td>
+<td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+<td><a class="button button-small button-secondary" href="/pricing/{{ r.id }}">View / revise</a></td>
+</tr>
+{% else %}<tr><td colspan="10" class="empty">No pricing records match the filter.</td></tr>{% endfor %}
+</tbody></table></div>
+</section>
+{% endblock %}
