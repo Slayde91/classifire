@@ -16,6 +16,7 @@ from ..services.commercial import (
     derive_commercial_pricing,
     search_package14_candidates,
 )
+from ..services.commercial_near_matches import recommend_package14_matches
 from ..services.release_scope import ReleaseScopeError
 from ..services.workflow import WorkflowTransitionError
 from ..services.workflow_db import assess_estimate_workflow
@@ -102,6 +103,12 @@ def package14_candidates(
             service=service,
             limit=50,
         )
+        recommendation = recommend_package14_matches(
+            db,
+            estimate,
+            opening=opening,
+            service=service,
+        )
     except (CommercialPricingError, ReleaseScopeError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return {
@@ -110,6 +117,7 @@ def package14_candidates(
         "service_id": component.service_id,
         "candidate_id": component.candidate_id,
         "candidates": [item.as_dict() for item in candidates],
+        "recommendation": recommendation.as_dict(),
     }
 
 
