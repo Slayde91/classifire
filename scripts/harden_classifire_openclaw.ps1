@@ -32,15 +32,6 @@ $denyTools = @(
     "music_generate"
 )
 
-# Windows PowerShell strips embedded double quotes when arguments pass through
-# the openclaw.ps1 -> node.exe wrapper. OpenClaw config values parse as JSON5 by
-# default, so use single-quoted JSON5 string values here and deliberately omit
-# --strict-json for the tools.deny array.
-$denyJson5Items = $denyTools | ForEach-Object {
-    "'" + $_.Replace("'", "\\'") + "'"
-}
-$denyJson5 = "[" + ($denyJson5Items -join ",") + "]"
-
 function Resolve-OpenClawConfigPath {
     $raw = (& $openclaw.Source config file 2>&1 | Out-String).Trim()
     if (-not $raw) {
@@ -78,23 +69,13 @@ function Convert-ToAgentItems {
     return @($Value)
 }
 
-function Invoke-ConfigSet {
+function Write-Utf8NoBom {
     param(
         [string]$Path,
-        [string]$Value,
-        [switch]$StrictJson,
-        [switch]$DryRun
+        [string]$Content
     )
-
-    $args = @("config", "set", $Path, $Value)
-    if ($StrictJson) { $args += "--strict-json" }
-    if ($DryRun) { $args += "--dry-run" }
-
-    $output = (& $openclaw.Source @args 2>&1 | Out-String)
-    if ($LASTEXITCODE -ne 0) {
-        throw "OpenClaw config set failed for $Path. Output: $($output.Trim())"
-    }
-    return $output
+    $encoding = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($Path, $Content, $encoding)
 }
 
 Write-Host "Checking Docker daemon readiness..." -ForegroundColor Cyan
@@ -143,54 +124,53 @@ foreach ($id in $agentIds) {
 }
 Write-Host "Resolved all $($agentIds.Count) CLASSIFIRE agents." -ForegroundColor Green
 
-$changes = @()
+# Build one batch payload. OpenClaw's batch mode accepts typed JSON values, so
+# Windows PowerShell never has to pass an embedded JSON array through openclaw.ps1.
+$operations = @()
 foreach ($id in $agentIds) {
     $index = $indexById[$id]
     $base = "agents.list[$index]"
-    $changes += @(
-        @{ Agent = $id; Path = "$base.tools.profile"; Value = "minimal"; Strict = $false },
-        @{ Agent = $id; Path = "$base.tools.deny"; Value = $denyJson5; Strict = $false },
-        @{ Agent = $id; Path = "$base.tools.elevated.enabled"; Value = "false"; Strict = $true },
-        @{ Agent = $id; Path = "$base.sandbox.mode"; Value = "all"; Strict = $false },
-        @{ Agent = $id; Path = "$base.sandbox.backend"; Value = "docker"; Strict = $false },
-        @{ Agent = $id; Path = "$base.sandbox.scope"; Value = "agent"; Strict = $false },
-        @{ Agent = $id; Path = "$base.sandbox.workspaceAccess"; Value = "none"; Strict = $false }
-    )
+    $operations += [pscustomobject]@{ path = "$base.tools.profile"; value = "minimal" }
+    $operations += [pscustomobject]@{ path = "$base.tools.deny"; value = @($denyTools) }
+    $operations += [pscustomobject]@{ path = "$base.tools.elevated.enabled"; value = $false }
+    $operations += [pscustomobject]@{ path = "$base.sandbox.mode"; value = "all" }
+    $operations += [pscustomobject]@{ path = "$base.sandbox.backend"; value = "docker" }
+    $operations += [pscustomobject]@{ path = "$base.sandbox.scope"; value = "agent" }
+    $operations += [pscustomobject]@{ path = "$base.sandbox.workspaceAccess"; value = "none" }
 }
 
-Write-Host "Dry-running all CLASSIFIRE hardening changes against the active schema..." -ForegroundColor Cyan
-foreach ($change in $changes) {
-    if ($change.Strict) {
-        Invoke-ConfigSet -Path $change.Path -Value $change.Value -StrictJson -DryRun | Out-Null
-    }
-    else {
-        Invoke-ConfigSet -Path $change.Path -Value $change.Value -DryRun | Out-Null
-    }
+$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$batchFile = Join-Path $env:TEMP "classifire-openclaw-hardening-$stamp.batch.json"
+$batchJson = @($operations) | ConvertTo-Json -Depth 8
+Write-Utf8NoBom -Path $batchFile -Content $batchJson
+
+Write-Host "Dry-running all $($operations.Count) CLASSIFIRE hardening assignments in one batch..." -ForegroundColor Cyan
+$dryOutput = (& $openclaw.Source config set --batch-file $batchFile --dry-run 2>&1 | Out-String)
+if ($LASTEXITCODE -ne 0) {
+    Remove-Item -LiteralPath $batchFile -Force -ErrorAction SilentlyContinue
+    throw "OpenClaw batch dry-run failed. No hardening changes were applied. Output: $($dryOutput.Trim())"
 }
-Write-Host "All hardening paths passed schema dry-run." -ForegroundColor Green
+Write-Host "Batch dry-run passed." -ForegroundColor Green
+if ($dryOutput.Trim()) {
+    Write-Host $dryOutput.Trim() -ForegroundColor DarkGray
+}
 
 $configFile = Resolve-OpenClawConfigPath
 if (-not (Test-Path -LiteralPath $configFile)) {
+    Remove-Item -LiteralPath $batchFile -Force -ErrorAction SilentlyContinue
     throw "Resolved OpenClaw config file does not exist: $configFile"
 }
 $backupDir = Join-Path (Split-Path -Parent $configFile) "classifire-config-backups"
 New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
-$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $backupFile = Join-Path $backupDir "openclaw-before-classifire-hardening-$stamp.json"
 Copy-Item -LiteralPath $configFile -Destination $backupFile -Force
 Write-Host "Backed up OpenClaw config to $backupFile" -ForegroundColor DarkYellow
 
 try {
-    foreach ($id in $agentIds) {
-        Write-Host "Hardening $id..." -ForegroundColor Cyan
-        foreach ($change in $changes | Where-Object { $_.Agent -eq $id }) {
-            if ($change.Strict) {
-                Invoke-ConfigSet -Path $change.Path -Value $change.Value -StrictJson | Out-Null
-            }
-            else {
-                Invoke-ConfigSet -Path $change.Path -Value $change.Value | Out-Null
-            }
-        }
+    Write-Host "Applying all $($operations.Count) CLASSIFIRE hardening assignments in one batch..." -ForegroundColor Cyan
+    $applyOutput = (& $openclaw.Source config set --batch-file $batchFile 2>&1 | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+        throw "OpenClaw batch apply failed. Output: $($applyOutput.Trim())"
     }
 
     Write-Host "Validating hardened OpenClaw configuration..." -ForegroundColor Cyan
@@ -203,8 +183,11 @@ catch {
     Write-Host "Hardening failed. Restoring the pre-hardening OpenClaw config backup..." -ForegroundColor Red
     Copy-Item -LiteralPath $backupFile -Destination $configFile -Force
     & $openclaw.Source config validate | Out-Host
+    Remove-Item -LiteralPath $batchFile -Force -ErrorAction SilentlyContinue
     throw
 }
+
+Remove-Item -LiteralPath $batchFile -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host "CLASSIFIRE OpenClaw hardening applied." -ForegroundColor Green
