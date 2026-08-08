@@ -1,0 +1,514 @@
+from __future__ import annotations
+
+import json
+from datetime import date, datetime, timezone
+from decimal import Decimal
+from pathlib import Path
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, selectinload
+
+from .audit import record_audit
+from .config import Settings, get_settings
+from .db import get_db
+from .models import (
+    AuditEvent,
+    ChangeProposal,
+    Estimate,
+    EstimateLine,
+    EstimatingRule,
+    LabourComponent,
+    LibraryRelease,
+    Opening,
+    PricingLibraryRecord,
+    Product,
+    Project,
+    RuleEvaluation,
+    Service,
+    TechnicalDocument,
+    TechnicalVariant,
+    User,
+)
+from .security import authenticate_user, create_csrf_token, has_permission, verify_csrf
+from .services.calculation import D, calculate_estimate_line, recalculate_estimate
+from .services.rule_engine import evaluate_estimate_rules
+from .services.snapshot import lock_snapshot
+from .services.storage import save_upload
+from .services.technical import extract_pdf_candidate_metadata, search_for_opening
+
+router = APIRouter(include_in_schema=False)
+templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+Db = Annotated[Session, Depends(get_db)]
+
+
+def _user(request: Request, db: Session) -> User | None:
+    user_id = request.session.get("user_id")
+    return db.get(User, user_id) if user_id else None
+
+
+def _require(request: Request, db: Session, permission: str) -> User:
+    user = _user(request, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not has_permission(user, permission):
+        raise HTTPException(status_code=403, detail="Permission denied")
+    return user
+
+
+def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
+    user = _user(request, db)
+    return {
+        "request": request,
+        "user": user,
+        "csrf_token": create_csrf_token(request),
+        "attribution": "QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP.",
+        "has_permission": lambda permission: bool(user and has_permission(user, permission)),
+        **values,
+    }
+
+
+@router.get("/login", response_class=HTMLResponse)
+def login_page(request: Request, db: Db, error: str | None = None) -> HTMLResponse:
+    if _user(request, db):
+        return RedirectResponse("/", status_code=303)
+    return templates.TemplateResponse("login.html", _context(request, db, error=error))
+
+
+@router.post("/login")
+def login_submit(
+    request: Request,
+    db: Db,
+    email: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    csrf_token: Annotated[str, Form()],
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = authenticate_user(db, email, password)
+    if not user:
+        return RedirectResponse("/login?error=Invalid+email+or+password", status_code=303)
+    request.session.clear()
+    request.session["user_id"] = user.id
+    create_csrf_token(request)
+    return RedirectResponse("/", status_code=303)
+
+
+@router.post("/logout")
+def logout(request: Request, csrf_token: Annotated[str, Form()]) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    request.session.clear()
+    return RedirectResponse("/login", status_code=303)
+
+
+@router.get("/", response_class=HTMLResponse)
+def dashboard(request: Request, db: Db) -> HTMLResponse:
+    _require(request, db, "project:read")
+    counts = {
+        "projects": db.scalar(select(func.count()).select_from(Project)) or 0,
+        "estimates": db.scalar(select(func.count()).select_from(Estimate)) or 0,
+        "products": db.scalar(select(func.count()).select_from(Product)) or 0,
+        "pricing_records": db.scalar(select(func.count()).select_from(PricingLibraryRecord)) or 0,
+        "technical_variants": db.scalar(select(func.count()).select_from(TechnicalVariant)) or 0,
+        "rules": db.scalar(select(func.count()).select_from(EstimatingRule)) or 0,
+    }
+    recent_estimates = db.scalars(
+        select(Estimate)
+        .options(selectinload(Estimate.project))
+        .order_by(Estimate.updated_at.desc())
+        .limit(8)
+    ).all()
+    releases = db.scalars(select(LibraryRelease).order_by(LibraryRelease.created_at.desc()).limit(12)).all()
+    open_changes = db.scalars(
+        select(ChangeProposal).where(ChangeProposal.status.in_(["draft", "in_review"])).order_by(ChangeProposal.updated_at.desc()).limit(8)
+    ).all()
+    return templates.TemplateResponse(
+        "dashboard.html",
+        _context(request, db, counts=counts, recent_estimates=recent_estimates, releases=releases, open_changes=open_changes),
+    )
+
+
+@router.get("/products", response_class=HTMLResponse)
+def products_page(request: Request, db: Db, q: str | None = None) -> HTMLResponse:
+    _require(request, db, "library:read")
+    stmt = select(Product)
+    if q:
+        stmt = stmt.where(Product.name.ilike(f"%{q}%") | Product.sku.ilike(f"%{q}%"))
+    products = db.scalars(stmt.order_by(Product.name).limit(500)).all()
+    return templates.TemplateResponse("products.html", _context(request, db, products=products, q=q or ""))
+
+
+@router.post("/products")
+def products_create(
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    sku: Annotated[str, Form()],
+    name: Annotated[str, Form()],
+    item_type: Annotated[str, Form()],
+    category: Annotated[str | None, Form()] = None,
+    unit: Annotated[str, Form()] = "each",
+    base_cost: Annotated[str, Form()] = "0",
+    default_markup_percent: Annotated[str, Form()] = "30",
+    reason: Annotated[str, Form()] = "New library item",
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "pricing:write")
+    if db.scalar(select(Product.id).where(Product.sku == sku, Product.revision == 1)):
+        return RedirectResponse("/products?error=SKU+already+exists", status_code=303)
+    product = Product(
+        sku=sku,
+        revision=1,
+        name=name,
+        item_type=item_type,
+        category=category,
+        unit=unit,
+        base_cost=D(base_cost),
+        default_markup=D(default_markup_percent) / Decimal("100"),
+        currency="AUD",
+        status="draft",
+        effective_date=date.today(),
+    )
+    db.add(product)
+    db.flush()
+    record_audit(db, actor=user, action="create", entity_type="product", entity_id=product.id, new_value={"sku": sku, "name": name}, reason=reason)
+    db.commit()
+    return RedirectResponse("/products", status_code=303)
+
+
+@router.get("/labour", response_class=HTMLResponse)
+def labour_page(request: Request, db: Db) -> HTMLResponse:
+    _require(request, db, "library:read")
+    labour = db.scalars(select(LabourComponent).order_by(LabourComponent.name).limit(500)).all()
+    return templates.TemplateResponse("labour.html", _context(request, db, labour=labour))
+
+
+@router.post("/labour")
+def labour_create(
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    code: Annotated[str, Form()],
+    name: Annotated[str, Form()],
+    base_rate: Annotated[str, Form()],
+    default_markup_percent: Annotated[str, Form()] = "0",
+    category: Annotated[str | None, Form()] = None,
+    reason: Annotated[str, Form()] = "New labour component",
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "pricing:write")
+    component = LabourComponent(
+        code=code,
+        revision=1,
+        name=name,
+        category=category,
+        unit="person_hour",
+        base_rate=D(base_rate),
+        default_markup=D(default_markup_percent) / Decimal("100"),
+        status="draft",
+        effective_date=date.today(),
+    )
+    db.add(component)
+    db.flush()
+    record_audit(db, actor=user, action="create", entity_type="labour_component", entity_id=component.id, new_value={"code": code, "name": name}, reason=reason)
+    db.commit()
+    return RedirectResponse("/labour", status_code=303)
+
+
+@router.get("/rules", response_class=HTMLResponse)
+def rules_page(request: Request, db: Db) -> HTMLResponse:
+    _require(request, db, "rule:read")
+    rules = db.scalars(select(EstimatingRule).order_by(EstimatingRule.priority, EstimatingRule.rule_code)).all()
+    return templates.TemplateResponse("rules.html", _context(request, db, rules=rules))
+
+
+@router.post("/rules")
+def rule_create(
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    rule_code: Annotated[str, Form()],
+    name: Annotated[str, Form()],
+    category: Annotated[str, Form()],
+    description: Annotated[str, Form()],
+    severity: Annotated[str, Form()],
+    conditions_json: Annotated[str, Form()],
+    actions_json: Annotated[str, Form()],
+    reason: Annotated[str, Form()] = "User-suggested estimating rule",
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "rule:write")
+    try:
+        conditions = json.loads(conditions_json)
+        actions = json.loads(actions_json)
+    except json.JSONDecodeError:
+        return RedirectResponse("/rules?error=Conditions+and+actions+must+be+valid+JSON", status_code=303)
+    version = (db.scalar(select(func.max(EstimatingRule.version)).where(EstimatingRule.rule_code == rule_code)) or 0) + 1
+    rule = EstimatingRule(
+        rule_code=rule_code,
+        version=version,
+        name=name,
+        category=category,
+        description=description,
+        conditions=conditions,
+        actions=actions,
+        severity=severity,
+        jurisdiction=get_settings().jurisdiction,
+        status="draft",
+        priority=100,
+        author_id=user.id,
+    )
+    db.add(rule)
+    db.flush()
+    record_audit(db, actor=user, action="create_revision", entity_type="estimating_rule", entity_id=rule.id, new_value={"rule_code": rule_code, "version": version}, reason=reason)
+    db.commit()
+    return RedirectResponse("/rules", status_code=303)
+
+
+@router.get("/technical", response_class=HTMLResponse)
+def technical_page(request: Request, db: Db, q: str | None = None) -> HTMLResponse:
+    _require(request, db, "technical:read")
+    docs = db.scalars(select(TechnicalDocument).order_by(TechnicalDocument.updated_at.desc()).limit(100)).all()
+    stmt = select(TechnicalVariant)
+    if q:
+        stmt = stmt.where(
+            TechnicalVariant.variant_id.ilike(f"%{q}%")
+            | TechnicalVariant.product_family.ilike(f"%{q}%")
+            | TechnicalVariant.service_type.ilike(f"%{q}%")
+        )
+    variants = db.scalars(stmt.order_by(TechnicalVariant.variant_id).limit(200)).all()
+    return templates.TemplateResponse("technical.html", _context(request, db, documents=docs, variants=variants, q=q or ""))
+
+
+@router.post("/technical/upload")
+def technical_upload(
+    request: Request,
+    db: Db,
+    settings: Annotated[Settings, Depends(get_settings)],
+    csrf_token: Annotated[str, Form()],
+    file: UploadFile,
+    document_id: Annotated[str, Form()],
+    document_type: Annotated[str, Form()],
+    title: Annotated[str, Form()],
+    manufacturer: Annotated[str | None, Form()] = None,
+    reference: Annotated[str | None, Form()] = None,
+    revision: Annotated[str | None, Form()] = None,
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "technical:write")
+    try:
+        stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
+    except ValueError as exc:
+        return RedirectResponse(f"/technical?error={str(exc).replace(' ', '+')}", status_code=303)
+    metadata: dict[str, Any] = {"human_review_required": True, "automatic_activation_permitted": False}
+    if Path(stored.storage_path).suffix.lower() == ".pdf":
+        try:
+            metadata.update(extract_pdf_candidate_metadata(Path(stored.storage_path)))
+        except Exception as exc:
+            metadata["extraction_error"] = str(exc)
+    document = TechnicalDocument(
+        document_id=document_id,
+        stored_file_id=stored.id,
+        document_type=document_type,
+        manufacturer=manufacturer,
+        title=title,
+        reference=reference,
+        revision=revision,
+        jurisdiction=settings.jurisdiction,
+        status="draft",
+        extraction_status=metadata.get("extraction_status", "not_started"),
+        metadata_json=metadata,
+    )
+    db.add(document)
+    db.flush()
+    record_audit(db, actor=user, action="upload", entity_type="technical_document", entity_id=document.id, new_value={"document_id": document_id, "sha256": stored.sha256, "status": "draft"}, reason="Immutable evidence uploaded; extraction remains Draft")
+    db.commit()
+    return RedirectResponse("/technical", status_code=303)
+
+
+@router.get("/projects", response_class=HTMLResponse)
+def projects_page(request: Request, db: Db) -> HTMLResponse:
+    _require(request, db, "project:read")
+    projects = db.scalars(select(Project).options(selectinload(Project.estimates)).order_by(Project.updated_at.desc())).all()
+    return templates.TemplateResponse("projects.html", _context(request, db, projects=projects))
+
+
+@router.post("/projects")
+def project_create(
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    reference: Annotated[str, Form()],
+    name: Annotated[str, Form()],
+    site_address: Annotated[str | None, Form()] = None,
+    jurisdiction: Annotated[str, Form()] = "NSW/ACT, Australia",
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "project:write")
+    project = Project(reference=reference, name=name, site_address=site_address, jurisdiction=jurisdiction)
+    db.add(project)
+    db.flush()
+    record_audit(db, actor=user, action="create", entity_type="project", entity_id=project.id, project_id=project.id, new_value={"reference": reference, "name": name})
+    db.commit()
+    return RedirectResponse("/projects", status_code=303)
+
+
+@router.post("/projects/{project_id}/estimates")
+def estimate_create(
+    project_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    reference: Annotated[str, Form()],
+    title: Annotated[str, Form()],
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "estimate:write")
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Project not found")
+    revision = (db.scalar(select(func.max(Estimate.revision)).where(Estimate.project_id == project.id)) or 0) + 1
+    estimate = Estimate(project_id=project.id, revision=revision, reference=reference, title=title, status="draft", currency=get_settings().currency, tax_name=get_settings().tax_name, tax_rate=D(get_settings().tax_rate))
+    db.add(estimate)
+    db.flush()
+    record_audit(db, actor=user, action="create", entity_type="estimate", entity_id=estimate.id, project_id=project.id, new_value={"reference": reference, "revision": revision})
+    db.commit()
+    return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
+
+
+def _estimate(db: Session, estimate_id: str) -> Estimate:
+    item = db.scalar(
+        select(Estimate)
+        .where(Estimate.id == estimate_id)
+        .options(
+            selectinload(Estimate.project),
+            selectinload(Estimate.openings).selectinload(Opening.services),
+            selectinload(Estimate.lines),
+        )
+    )
+    if not item:
+        raise HTTPException(404, "Estimate not found")
+    return item
+
+
+@router.get("/estimates/{estimate_id}", response_class=HTMLResponse)
+def estimate_page(estimate_id: str, request: Request, db: Db) -> HTMLResponse:
+    _require(request, db, "estimate:read")
+    estimate = _estimate(db, estimate_id)
+    evaluations = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)).all()
+    return templates.TemplateResponse("estimate.html", _context(request, db, estimate=estimate, evaluations=evaluations))
+
+
+@router.post("/estimates/{estimate_id}/openings")
+def estimate_add_opening(
+    estimate_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    opening_code: Annotated[str, Form()],
+    defect_id: Annotated[str | None, Form()] = None,
+    location: Annotated[str | None, Form()] = None,
+    substrate_type: Annotated[str | None, Form()] = None,
+    substrate_plane: Annotated[str | None, Form()] = None,
+    orientation: Annotated[str | None, Form()] = None,
+    frl: Annotated[str | None, Form()] = None,
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "estimate:write")
+    estimate = _estimate(db, estimate_id)
+    opening = Opening(estimate_id=estimate.id, opening_code=opening_code, defect_id=defect_id, location=location, substrate_type=substrate_type, substrate_plane=substrate_plane, orientation=orientation, frl=frl)
+    db.add(opening)
+    db.flush()
+    record_audit(db, actor=user, action="create", entity_type="opening", entity_id=opening.id, project_id=estimate.project_id, new_value={"opening_code": opening_code})
+    db.commit()
+    return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
+
+
+@router.post("/openings/{opening_id}/services")
+def opening_add_service(
+    opening_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    service_code: Annotated[str, Form()],
+    service_type: Annotated[str, Form()],
+    material: Annotated[str | None, Form()] = None,
+    outside_diameter_mm: Annotated[str | None, Form()] = None,
+    centre_x_mm: Annotated[str | None, Form()] = None,
+    centre_y_mm: Annotated[str | None, Form()] = None,
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "estimate:write")
+    opening = db.get(Opening, opening_id)
+    if not opening:
+        raise HTTPException(404, "Opening not found")
+    service = Service(opening_id=opening.id, service_code=service_code, service_type=service_type, material=material, outside_diameter_mm=D(outside_diameter_mm) if outside_diameter_mm else None, centre_x_mm=D(centre_x_mm) if centre_x_mm else None, centre_y_mm=D(centre_y_mm) if centre_y_mm else None, evidence_status="provisional")
+    db.add(service)
+    db.flush()
+    record_audit(db, actor=user, action="create", entity_type="service", entity_id=service.id, project_id=opening.estimate.project_id, new_value={"service_code": service_code, "service_type": service_type})
+    db.commit()
+    return RedirectResponse(f"/estimates/{opening.estimate_id}", status_code=303)
+
+
+@router.post("/estimates/{estimate_id}/lines")
+def estimate_add_line(
+    estimate_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    component_type: Annotated[str, Form()],
+    description: Annotated[str, Form()],
+    quantity: Annotated[str, Form()],
+    unit: Annotated[str, Form()],
+    base_unit_cost: Annotated[str, Form()],
+    markup_override_percent: Annotated[str | None, Form()] = None,
+    opening_id: Annotated[str | None, Form()] = None,
+    service_id: Annotated[str | None, Form()] = None,
+    component_reference: Annotated[str | None, Form()] = None,
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "estimate:write")
+    estimate = _estimate(db, estimate_id)
+    line_number = (db.scalar(select(func.max(EstimateLine.line_number)).where(EstimateLine.estimate_id == estimate.id)) or 0) + 1
+    line = EstimateLine(estimate_id=estimate.id, line_number=line_number, opening_id=opening_id or None, service_id=service_id or None, component_type=component_type, component_reference=component_reference or None, description=description, quantity=D(quantity), unit=unit, base_unit_cost=D(base_unit_cost), markup_override=(D(markup_override_percent) / Decimal("100") if markup_override_percent else None), pricing_method="component_built", commercial_recovery_status="separately_priced")
+    db.add(line)
+    db.flush()
+    calculate_estimate_line(db, estimate, line)
+    recalculate_estimate(db, estimate)
+    record_audit(db, actor=user, action="create", entity_type="estimate_line", entity_id=line.id, project_id=estimate.project_id, new_value={"description": description, "applied_markup": str(line.applied_markup), "markup_source": line.markup_source})
+    db.commit()
+    return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
+
+
+@router.post("/estimates/{estimate_id}/evaluate")
+def estimate_evaluate(estimate_id: str, request: Request, db: Db, csrf_token: Annotated[str, Form()]) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "estimate:write")
+    estimate = _estimate(db, estimate_id)
+    results = evaluate_estimate_rules(db, estimate)
+    record_audit(db, actor=user, action="evaluate_rules", entity_type="estimate", entity_id=estimate.id, project_id=estimate.project_id, new_value={"count": len(results)})
+    db.commit()
+    return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
+
+
+@router.post("/estimates/{estimate_id}/lock")
+def estimate_lock(estimate_id: str, request: Request, db: Db, csrf_token: Annotated[str, Form()], reason: Annotated[str, Form()]) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "estimate:approve")
+    estimate = _estimate(db, estimate_id)
+    blockers = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id, RuleEvaluation.result == "BLOCKED")).all()
+    if blockers:
+        return RedirectResponse(f"/estimates/{estimate.id}?error=Blocking+rule+results+must+be+resolved", status_code=303)
+    snapshot = lock_snapshot(db, estimate)
+    record_audit(db, actor=user, action="lock_snapshot", entity_type="estimate", entity_id=estimate.id, project_id=estimate.project_id, new_value={"snapshot_hash": snapshot["snapshot_hash"]}, reason=reason)
+    db.commit()
+    return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
+
+
+@router.get("/audit", response_class=HTMLResponse)
+def audit_page(request: Request, db: Db) -> HTMLResponse:
+    _require(request, db, "audit:read")
+    events = db.scalars(select(AuditEvent).order_by(AuditEvent.created_at.desc()).limit(500)).all()
+    return templates.TemplateResponse("audit.html", _context(request, db, events=events))

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Projects & estimates — QUANTIFIRE{% endblock %}
+{% block heading %}Projects & estimates{% endblock %}
+{% block content %}
+{% if has_permission('project:write') %}<details class="panel form-panel"><summary>Create project</summary>
+<form method="post" action="/projects" class="form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label>Project reference<input name="reference" required></label><label>Project name<input name="name" required></label><label class="span-2">Site address<textarea name="site_address" rows="2"></textarea></label><label>Jurisdiction<input name="jurisdiction" value="NSW/ACT, Australia"></label><div><button class="button button-primary">Create project</button></div></form></details>{% endif %}
+<section class="project-grid">
+{% for p in projects %}<article class="project-card"><div class="project-head"><div><div class="eyebrow">{{ p.reference }}</div><h2>{{ p.name }}</h2></div><span class="badge badge-{{ p.status }}">{{ p.status }}</span></div><p>{{ p.site_address or 'No site address' }}</p><p class="muted">{{ p.jurisdiction }}</p>
+<div class="project-estimates">{% for e in p.estimates %}<a href="/estimates/{{ e.id }}"><span>{{ e.reference }}</span><span class="badge badge-{{ e.status }}">{{ e.status }}</span><strong>{{ e.currency }} {{ '%.2f'|format(e.total_incl_tax|float) }}</strong></a>{% else %}<div class="empty">No estimate revisions.</div>{% endfor %}</div>
+{% if has_permission('estimate:write') %}<details><summary>New estimate revision</summary><form method="post" action="/projects/{{ p.id }}/estimates" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>Estimate reference<input name="reference" required></label><label>Title<input name="title" value="Passive-fire estimate" required></label><button class="button button-primary button-small">Create estimate</button></form></details>{% endif %}</article>{% else %}<div class="panel empty">No projects yet.</div>{% endfor %}
+</section>
+{% endblock %}

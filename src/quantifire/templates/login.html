@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Sign in — QUANTIFIRE{% endblock %}
+{% block public_content %}
+<div class="login-page">
+  <div class="login-card">
+    <img class="login-logo" src="/brand/generated/quantifire-logo-medium.png" alt="QUANTIFIRE estimating system">
+    <h1>Sign in to QUANTIFIRE</h1>
+    <p class="muted">Passive-fire estimating and technical decision support.</p>
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    <form method="post" action="/login" class="stack-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Email<input type="email" name="email" autocomplete="username" required></label>
+      <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+      <button class="button button-primary" type="submit">Sign in</button>
+    </form>
+    <p class="attribution">{{ attribution }}</p>
+  </div>
+</div>
+{% endblock %}

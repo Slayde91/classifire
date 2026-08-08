@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="QUANTIFIRE passive-fire estimating and technical decision-support system">
+  <title>{% block title %}QUANTIFIRE{% endblock %}</title>
+  <link rel="icon" type="image/png" href="/brand/generated/quantifire-logo-favicon.png">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+{% if user %}
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="QUANTIFIRE estimating system">
+      <img src="/brand/generated/quantifire-logo-small.png" alt="QUANTIFIRE estimating system">
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="/" class="nav-link">Dashboard</a>
+      <a href="/projects" class="nav-link">Projects & estimates</a>
+      <div class="nav-section">Commercial libraries</div>
+      <a href="/products" class="nav-link">Products & materials</a>
+      <a href="/labour" class="nav-link">Labour</a>
+      <div class="nav-section">Technical intelligence</div>
+      <a href="/technical" class="nav-link">Technical evidence</a>
+      <a href="/rules" class="nav-link">Estimating rules</a>
+      <div class="nav-section">Governance</div>
+      <a href="/audit" class="nav-link">Audit history</a>
+      <a href="/docs" class="nav-link">API documentation</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-name">{{ user.full_name }}</div>
+      <div class="user-role">{{ user.role.replace('_', ' ')|title }}</div>
+      <form action="/logout" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="button button-ghost button-small" type="submit">Sign out</button>
+      </form>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">PASSIVE-FIRE ESTIMATING & TECHNICAL INTELLIGENCE</div>
+        <h1>{% block heading %}QUANTIFIRE{% endblock %}</h1>
+      </div>
+      <div class="status-chip">Controlled workspace</div>
+    </header>
+    {% if request.query_params.get('error') %}<div class="alert alert-error">{{ request.query_params.get('error') }}</div>{% endif %}
+    {% if request.query_params.get('success') %}<div class="alert alert-success">{{ request.query_params.get('success') }}</div>{% endif %}
+    {% block content %}{% endblock %}
+    <footer class="page-footer">{{ attribution }}</footer>
+  </main>
+</div>
+{% else %}
+{% block public_content %}{% endblock %}
+{% endif %}
+</body>
+</html>

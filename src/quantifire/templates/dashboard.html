@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — QUANTIFIRE{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block content %}
+<section class="metric-grid">
+  <div class="metric-card"><span>Projects</span><strong>{{ counts.projects }}</strong></div>
+  <div class="metric-card"><span>Estimates</span><strong>{{ counts.estimates }}</strong></div>
+  <div class="metric-card"><span>Products & materials</span><strong>{{ counts.products }}</strong></div>
+  <div class="metric-card"><span>Pricing records</span><strong>{{ counts.pricing_records }}</strong></div>
+  <div class="metric-card"><span>Technical variants</span><strong>{{ counts.technical_variants }}</strong></div>
+  <div class="metric-card"><span>Estimating rules</span><strong>{{ counts.rules }}</strong></div>
+</section>
+<section class="grid-two">
+  <div class="panel">
+    <div class="panel-head"><h2>Recent estimates</h2><a class="text-link" href="/projects">View projects</a></div>
+    <div class="table-wrap"><table><thead><tr><th>Reference</th><th>Project</th><th>Status</th><th>Total</th></tr></thead><tbody>
+      {% for e in recent_estimates %}<tr><td><a href="/estimates/{{ e.id }}">{{ e.reference }}</a></td><td>{{ e.project.name }}</td><td><span class="badge badge-{{ e.status }}">{{ e.status }}</span></td><td>{{ e.currency }} {{ '%.2f'|format(e.total_incl_tax|float) }}</td></tr>{% else %}<tr><td colspan="4" class="empty">No estimates yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h2>Controlled releases</h2></div>
+    <div class="table-wrap"><table><thead><tr><th>Type</th><th>Version</th><th>Status</th></tr></thead><tbody>
+      {% for r in releases %}<tr><td>{{ r.library_type }}</td><td>{{ r.version }}</td><td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td></tr>{% else %}<tr><td colspan="3" class="empty">Initialise the database to create releases.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+</section>
+<section class="panel">
+  <div class="panel-head"><div><h2>Change proposals</h2><p class="muted">User and AI suggestions remain Draft until reviewed and approved.</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Entity</th><th>Proposal</th><th>Status</th><th>Updated</th></tr></thead><tbody>
+  {% for p in open_changes %}<tr><td>{{ p.entity_type }}</td><td>{{ p.reason }}</td><td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td><td>{{ p.updated_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>{% else %}<tr><td colspan="4" class="empty">No open change proposals.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

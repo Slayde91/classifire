@@ -1,0 +1,26 @@
+product: QUANTIFIRE
+attribution: QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP.
+repository: https://github.com/Slayde91/quantifire
+status: pre-production
+control_plane: Mission Control
+canonical_system: QUANTIFIRE domain service
+agents:
+  - qf-orchestrator
+  - qf-intake-evidence
+  - qf-physical-model
+  - qf-technical-system
+  - qf-commercial-engine
+  - qf-validator
+  - qf-output
+  - qf-library-governance
+  - qf-platform-governance
+release_gates:
+  - source_inventory_complete
+  - calculator_parity_passed
+  - package14_release_approved
+  - package15_release_approved
+  - regression_suite_passed
+  - security_tests_passed
+  - backup_restore_tested
+  - rollback_tested
+  - human_release_approval

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Labour library — QUANTIFIRE{% endblock %}
+{% block heading %}Labour library{% endblock %}
+{% block content %}
+{% if has_permission('pricing:write') %}<details class="panel form-panel"><summary>Add labour component</summary>
+<form method="post" action="/labour" class="form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label>Code<input name="code" required></label><label>Name<input name="name" required></label><label>Category<input name="category"></label>
+<label>Base rate / person hour<input name="base_rate" type="number" step="0.01" min="0" required></label>
+<label>Default markup %<input name="default_markup_percent" type="number" step="0.01" value="0"></label>
+<label>Reason<input name="reason" value="New labour component" required></label><div class="span-2"><button class="button button-primary">Create Draft component</button></div>
+</form></details>{% endif %}
+<section class="panel"><div class="panel-head"><h2>Labour components</h2></div><div class="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Trade / grade</th><th>Category</th><th>Unit</th><th>Base rate</th><th>Markup</th><th>Status</th></tr></thead><tbody>
+{% for l in labour %}<tr><td class="mono">{{ l.code }}</td><td>{{ l.name }}</td><td>{{ l.trade_or_grade or '—' }}</td><td>{{ l.category or '—' }}</td><td>{{ l.unit }}</td><td>AUD {{ '%.2f'|format(l.base_rate|float) }}</td><td>{{ '%.2f'|format((l.default_markup or 0)|float * 100) }}%</td><td><span class="badge badge-{{ l.status }}">{{ l.status }}</span></td></tr>{% else %}<tr><td colspan="8" class="empty">No labour components.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

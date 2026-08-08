@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Estimating rules — QUANTIFIRE{% endblock %}
+{% block heading %}Estimating rules{% endblock %}
+{% block content %}
+<div class="callout"><strong>Controlled rule governance.</strong> Rules are versioned records. User suggestions start as Draft and do not affect production estimates until approved. Configurable assumptions must not be represented as legislation without a verified source.</div>
+{% if has_permission('rule:write') %}<details class="panel form-panel"><summary>Propose a rule or revision</summary>
+<form method="post" action="/rules" class="form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label>Rule code<input name="rule_code" placeholder="QF-RULE-..." required></label><label>Name<input name="name" required></label>
+<label>Category<select name="category"><option value="service_proximity">Service proximity</option><option value="commercial">Commercial</option><option value="technical_hold">Technical hold</option><option value="quality">Quality</option></select></label>
+<label>Severity<select name="severity"><option>information</option><option selected>warning</option><option>hold</option><option>blocking_error</option></select></label>
+<label class="span-2">Description<textarea name="description" rows="3" required></textarea></label>
+<label class="span-2">Conditions JSON<textarea name="conditions_json" rows="5" required>{"minimum_separation_mm": 40}</textarea></label>
+<label class="span-2">Actions JSON<textarea name="actions_json" rows="5" required>{"message": "Review required", "automatic_solution_approved": false}</textarea></label>
+<label class="span-2">Reason<input name="reason" value="User-suggested estimating rule" required></label><div class="span-2"><button class="button button-primary">Create Draft revision</button></div>
+</form></details>{% endif %}
+<section class="panel"><div class="panel-head"><h2>Rule register</h2></div><div class="table-wrap"><table><thead><tr><th>Code</th><th>Version</th><th>Name</th><th>Category</th><th>Severity</th><th>Jurisdiction</th><th>Status</th><th>Source</th></tr></thead><tbody>
+{% for r in rules %}<tr><td class="mono">{{ r.rule_code }}</td><td>{{ r.version }}</td><td>{{ r.name }}<div class="muted small">{{ r.description }}</div></td><td>{{ r.category }}</td><td><span class="badge badge-{{ r.severity }}">{{ r.severity }}</span></td><td>{{ r.jurisdiction or 'General' }}</td><td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td><td>{{ r.source_reference or 'User proposal' }}</td></tr>{% else %}<tr><td colspan="8" class="empty">No rules.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

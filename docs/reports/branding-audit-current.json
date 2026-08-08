@@ -1,0 +1,11 @@
+{
+  "root": "/mnt/data/quantifire_repo",
+  "approved_logo_names": [
+    "quantifire-logo-favicon.png",
+    "quantifire-logo-large.png",
+    "quantifire-logo-master.png",
+    "quantifire-logo-medium.png",
+    "quantifire-logo-small.png"
+  ],
+  "findings": []
+}
