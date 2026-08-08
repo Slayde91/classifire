@@ -12,16 +12,25 @@ if ($LASTEXITCODE -ne 0) {
     throw "Docker daemon is not reachable. Start Docker Desktop and confirm 'docker info' succeeds."
 }
 
-$imageExists = $false
-& $docker.Source image inspect $image *> $null
-if ($LASTEXITCODE -eq 0) {
-    $imageExists = $true
-}
+# Do not use `docker image inspect` to test existence here. On Windows PowerShell
+# with ErrorActionPreference=Stop, Docker's expected "No such image" stderr can
+# become a terminating NativeCommandError before we get a chance to inspect
+# LASTEXITCODE. `docker image ls -q <tag>` returns success with empty output when
+# the image is absent, which is the behavior we want for an existence probe.
+$imageId = (& $docker.Source image ls -q $image 2>$null | Select-Object -First 1 | Out-String).Trim()
+$imageExists = -not [string]::IsNullOrWhiteSpace($imageId)
 
 if ($imageExists -and -not $Force) {
     Write-Host "$image already exists. Nothing to build." -ForegroundColor Green
     & $docker.Source image inspect $image --format "{{.Id}}  {{.Created}}" | Out-Host
     exit 0
+}
+
+if ($imageExists -and $Force) {
+    Write-Host "$image already exists, but -Force was requested. Rebuilding it." -ForegroundColor DarkYellow
+}
+else {
+    Write-Host "$image is not present. Building it now." -ForegroundColor Yellow
 }
 
 $tempDir = Join-Path $env:TEMP ("classifire-openclaw-sandbox-" + [guid]::NewGuid().ToString("N"))
