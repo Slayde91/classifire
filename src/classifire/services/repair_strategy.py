@@ -40,7 +40,7 @@ class ParsedPackage15Requirements:
     requirements_hash: str | None
 
 
-# Source-aligned with QUANTIFIRE_System_Derived_Component_Generator_v1_1.
+# Source-aligned with CLASSIFIRE_System_Derived_Component_Generator_v1_1.
 _FORMULA_BY_CATEGORY = {
     "WRAP_MATERIAL": "QF-WRAP-LENGTH",
     "MASTIC_SEALANT": "QF-MASTIC-ANNULAR-VOLUME",

@@ -6,8 +6,8 @@ import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
-from quantifire import canonical_models, commercial_models  # noqa: F401
-from quantifire.canonical_models import (
+from classifire import canonical_models, commercial_models  # noqa: F401
+from classifire.canonical_models import (
     EvidenceSource,
     PhysicalModelLock,
     RepairStrategy,
@@ -15,17 +15,17 @@ from quantifire.canonical_models import (
     ServiceOpeningLink,
     SystemRequiredComponent,
 )
-from quantifire.commercial_models import (
+from classifire.commercial_models import (
     LabourActivity,
     ProductivitySource,
     Quantity,
     QuantityFormulaInput,
 )
-from quantifire.db import Base
-from quantifire.models import Estimate, Opening, Project, Service
-from quantifire.services.quantity_labour import QuantityLabourError, derive_quantity_and_labour
-from quantifire.services.workflow import WorkflowStage
-from quantifire.services.workflow_db import assess_estimate_workflow
+from classifire.db import Base
+from classifire.models import Estimate, Opening, Project, Service
+from classifire.services.quantity_labour import QuantityLabourError, derive_quantity_and_labour
+from classifire.services.workflow import WorkflowStage
+from classifire.services.workflow_db import assess_estimate_workflow
 
 
 def _session() -> Session:

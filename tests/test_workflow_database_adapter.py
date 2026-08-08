@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from quantifire import canonical_models, commercial_models  # noqa: F401
-from quantifire.canonical_models import (
+from classifire import canonical_models, commercial_models  # noqa: F401
+from classifire.canonical_models import (
     EvidenceSource,
     PhysicalModelLock,
     RepairStrategy,
@@ -14,7 +14,7 @@ from quantifire.canonical_models import (
     ServiceOpeningLink,
     SystemRequiredComponent,
 )
-from quantifire.commercial_models import (
+from classifire.commercial_models import (
     CommercialMethodLock,
     CommercialRecoveryRecord,
     ComponentRequirementReconciliation,
@@ -23,10 +23,10 @@ from quantifire.commercial_models import (
     PricingComponent,
     Quantity,
 )
-from quantifire.db import Base
-from quantifire.models import AuditEvent, Estimate, Opening, Project, Service
-from quantifire.services.workflow import WorkflowStage
-from quantifire.services.workflow_db import assess_estimate_workflow
+from classifire.db import Base
+from classifire.models import AuditEvent, Estimate, Opening, Project, Service
+from classifire.services.workflow import WorkflowStage
+from classifire.services.workflow_db import assess_estimate_workflow
 
 
 def _session() -> Session:

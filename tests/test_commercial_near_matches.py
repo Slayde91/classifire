@@ -7,10 +7,10 @@ from decimal import Decimal
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from quantifire import canonical_models, commercial_models  # noqa: F401
-from quantifire.canonical_models import PhysicalModelLock, RepairStrategy
-from quantifire.db import Base
-from quantifire.models import (
+from classifire import canonical_models, commercial_models  # noqa: F401
+from classifire.canonical_models import PhysicalModelLock, RepairStrategy
+from classifire.db import Base
+from classifire.models import (
     Estimate,
     LibraryRelease,
     Opening,
@@ -19,7 +19,7 @@ from quantifire.models import (
     Service,
     TechnicalVariant,
 )
-from quantifire.services.commercial_near_matches import recommend_package14_matches
+from classifire.services.commercial_near_matches import recommend_package14_matches
 
 
 def _session() -> Session:

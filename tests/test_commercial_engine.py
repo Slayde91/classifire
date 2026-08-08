@@ -7,8 +7,8 @@ from decimal import Decimal
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from quantifire import canonical_models, commercial_models  # noqa: F401
-from quantifire.canonical_models import (
+from classifire import canonical_models, commercial_models  # noqa: F401
+from classifire.canonical_models import (
     EvidenceSource,
     PhysicalModelLock,
     RepairStrategy,
@@ -16,13 +16,13 @@ from quantifire.canonical_models import (
     ServiceOpeningLink,
     SystemRequiredComponent,
 )
-from quantifire.commercial_models import (
+from classifire.commercial_models import (
     LabourActivity,
     PricingComponent,
     Quantity,
 )
-from quantifire.db import Base
-from quantifire.models import (
+from classifire.db import Base
+from classifire.models import (
     Estimate,
     LabourComponent,
     LibraryRelease,
@@ -34,9 +34,9 @@ from quantifire.models import (
     Service,
     TechnicalVariant,
 )
-from quantifire.services.commercial import derive_commercial_pricing
-from quantifire.services.workflow import WorkflowStage
-from quantifire.services.workflow_db import assess_estimate_workflow
+from classifire.services.commercial import derive_commercial_pricing
+from classifire.services.workflow import WorkflowStage
+from classifire.services.workflow_db import assess_estimate_workflow
 
 
 def _session() -> Session:

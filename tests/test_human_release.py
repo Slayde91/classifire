@@ -3,14 +3,14 @@ from __future__ import annotations
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from quantifire import canonical_models, commercial_models  # noqa: F401
-from quantifire.commercial_models import GateEvidence
-from quantifire.db import Base
-from quantifire.main import app
-from quantifire.models import Approval, AuditEvent, Estimate, Project, User
-from quantifire.services.human_release import HumanReleaseError, release_estimate
-from quantifire.services.validated_snapshot import SNAPSHOT_SCHEMA
-from quantifire.services.workflow_db import assess_estimate_workflow
+from classifire import canonical_models, commercial_models  # noqa: F401
+from classifire.commercial_models import GateEvidence
+from classifire.db import Base
+from classifire.main import app
+from classifire.models import Approval, AuditEvent, Estimate, Project, User
+from classifire.services.human_release import HumanReleaseError, release_estimate
+from classifire.services.validated_snapshot import SNAPSHOT_SCHEMA
+from classifire.services.workflow_db import assess_estimate_workflow
 
 
 def _session() -> Session:
@@ -138,11 +138,11 @@ def test_release_service_records_current_snapshot_and_is_idempotent(monkeypatch)
         db.flush()
 
         monkeypatch.setattr(
-            "quantifire.services.human_release.require_estimate_action",
+            "classifire.services.human_release.require_estimate_action",
             lambda _db, _estimate, _action: None,
         )
         monkeypatch.setattr(
-            "quantifire.services.human_release.latest_passing_gate",
+            "classifire.services.human_release.latest_passing_gate",
             lambda _db, _estimate: gate,
         )
 

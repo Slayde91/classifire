@@ -67,8 +67,8 @@ quantifire create-admin
 Confidential Package 14, Package 15 and calculator source files are not required to be published with the application repository. Place authorised sources in a controlled local path and import them with:
 
 ```bash
-quantifire import-pricing /path/to/QUANTIFIRE_14_Pricing_Library_v2.13.csv --version 2.13
-quantifire import-technical /path/to/QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl --version 2.13
+quantifire import-pricing /path/to/CLASSIFIRE_14_Pricing_Library_v2.13.csv --version 2.13
+quantifire import-technical /path/to/CLASSIFIRE_17_Technical_System_Variants_v2.13.jsonl --version 2.13
 ```
 
 Run a readiness check:
@@ -81,10 +81,10 @@ quantifire doctor
 
 Mission Control is the architecture and operations control plane. QUANTIFIRE remains the canonical system for evidence, estimates, pricing, technical records, calculations, snapshots and outputs.
 
-After configuring `QUANTIFIRE_MISSION_CONTROL_URL` and `QUANTIFIRE_MISSION_CONTROL_API_KEY`:
+After configuring `CLASSIFIRE_MISSION_CONTROL_URL` and `CLASSIFIRE_MISSION_CONTROL_API_KEY`:
 
 ```bash
-quantifire mission-control-bootstrap --repo-url https://github.com/Slayde91/quantifire
+quantifire mission-control-bootstrap --repo-url https://github.com/Slayde91/classifire
 ```
 
 The adapter must be contract-tested against the exact installed Mission Control version before production use.

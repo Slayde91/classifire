@@ -2,7 +2,7 @@ from dataclasses import replace
 
 import pytest
 
-from quantifire.services.workflow import (
+from classifire.services.workflow import (
     WorkflowAction,
     WorkflowFacts,
     WorkflowStage,

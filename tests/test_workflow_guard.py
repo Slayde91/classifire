@@ -4,12 +4,12 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from quantifire import canonical_models, commercial_models  # noqa: F401
-from quantifire.canonical_models import EvidenceSource, PhysicalModelLock, ServiceOpeningLink
-from quantifire.db import Base
-from quantifire.models import Estimate, Opening, Project, Service
-from quantifire.services.workflow import WorkflowAction, WorkflowTransitionError
-from quantifire.services.workflow_guard import check_estimate_action, require_estimate_action
+from classifire import canonical_models, commercial_models  # noqa: F401
+from classifire.canonical_models import EvidenceSource, PhysicalModelLock, ServiceOpeningLink
+from classifire.db import Base
+from classifire.models import Estimate, Opening, Project, Service
+from classifire.services.workflow import WorkflowAction, WorkflowTransitionError
+from classifire.services.workflow_guard import check_estimate_action, require_estimate_action
 
 
 def _session() -> Session:

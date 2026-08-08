@@ -11,13 +11,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
-        env_prefix="QUANTIFIRE_",
+        env_prefix="CLASSIFIRE_",
         extra="ignore",
         case_sensitive=False,
     )
 
     env: Literal["development", "test", "production"] = "development"
-    database_url: str = "sqlite:///./data/quantifire.db"
+    database_url: str = "sqlite:///./data/classifire.db"
     secret_key: str = "development-only-change-me"
     admin_email: str = "admin@example.com"
     admin_password: str = "change-me-immediately"
@@ -64,11 +64,11 @@ class Settings(BaseSettings):
         findings: list[str] = []
         if self.env == "production":
             if self.secret_key in {"development-only-change-me", "change-me"} or len(self.secret_key) < 32:
-                findings.append("QUANTIFIRE_SECRET_KEY must be a random value of at least 32 characters")
+                findings.append("CLASSIFIRE_SECRET_KEY must be a random value of at least 32 characters")
             if self.admin_password == "change-me-immediately":
                 findings.append("Default administrator password must be replaced")
             if not self.session_https_only:
-                findings.append("QUANTIFIRE_SESSION_HTTPS_ONLY should be true behind production TLS")
+                findings.append("CLASSIFIRE_SESSION_HTTPS_ONLY should be true behind production TLS")
             if self.database_url.startswith("sqlite"):
                 findings.append("PostgreSQL is recommended for multi-user production deployment")
         return findings

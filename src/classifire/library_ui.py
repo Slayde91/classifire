@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from datetime import date
@@ -69,7 +69,7 @@ def pricing_library(
     records = db.scalars(
         stmt.order_by(PricingLibraryRecord.pkb_entry_id, PricingLibraryRecord.created_at.desc()).limit(897)
     ).all()
-    return __import__("quantifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
         request,
         "pricing.html",
         _context(request, db, records=records, q=q or "", status=status or ""),
@@ -87,7 +87,7 @@ def pricing_record_page(record_id: str, request: Request, db: Db) -> HTMLRespons
         .where(PricingLibraryRecord.pkb_entry_id == record.pkb_entry_id)
         .order_by(PricingLibraryRecord.created_at.desc())
     ).all()
-    return __import__("quantifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
         request,
         "pricing_edit.html",
         _context(request, db, record=record, history=history),
@@ -177,7 +177,7 @@ def product_edit_page(product_id: str, request: Request, db: Db) -> HTMLResponse
     history = db.scalars(
         select(Product).where(Product.sku == product.sku).order_by(Product.revision.desc())
     ).all()
-    return __import__("quantifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
         request,
         "product_edit.html",
         _context(request, db, product=product, history=history),
@@ -261,7 +261,7 @@ def labour_edit_page(labour_id: str, request: Request, db: Db) -> HTMLResponse:
     history = db.scalars(
         select(LabourComponent).where(LabourComponent.code == item.code).order_by(LabourComponent.revision.desc())
     ).all()
-    return __import__("quantifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
         request,
         "labour_edit.html",
         _context(request, db, item=item, history=history),
@@ -335,7 +335,7 @@ def rule_edit_page(rule_id: str, request: Request, db: Db) -> HTMLResponse:
     history = db.scalars(
         select(EstimatingRule).where(EstimatingRule.rule_code == rule.rule_code).order_by(EstimatingRule.version.desc())
     ).all()
-    return __import__("quantifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
         request,
         "rule_edit.html",
         _context(
@@ -429,7 +429,7 @@ def markup_settings(request: Request, db: Db) -> HTMLResponse:
         .where(MarkupProfile.scope_type == "global", MarkupProfile.status == "active")
         .order_by(MarkupProfile.created_at.desc())
     )
-    return __import__("quantifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
         request,
         "markups.html",
         _context(request, db, profiles=profiles, active_global=active_global),

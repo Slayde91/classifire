@@ -7,20 +7,20 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from quantifire import canonical_models, commercial_models  # noqa: F401
-from quantifire.canonical_models import (
+from classifire import canonical_models, commercial_models  # noqa: F401
+from classifire.canonical_models import (
     EvidenceSource,
     RepairStrategyLock,
     ServiceOpeningLink,
 )
-from quantifire.db import Base
-from quantifire.main import app
-from quantifire.models import Estimate, Opening, Project, Service
-from quantifire.services.physical_model import (
+from classifire.db import Base
+from classifire.main import app
+from classifire.models import Estimate, Opening, Project, Service
+from classifire.services.physical_model import (
     PhysicalModelLockError,
     create_physical_model_lock,
 )
-from quantifire.services.workflow import WorkflowTransitionError
+from classifire.services.workflow import WorkflowTransitionError
 
 
 @dataclass(frozen=True)
@@ -189,7 +189,7 @@ def test_guarded_technical_route_precedes_legacy_route_and_workflow_routes_are_r
     ]
     assert matching
     assert matching[0].endpoint is not None
-    assert matching[0].endpoint.__module__ == "quantifire.api.guarded_technical"
+    assert matching[0].endpoint.__module__ == "classifire.api.guarded_technical"
 
     paths = {route.path for route in routes if route.path}
     assert "/api/v1/estimates/{estimate_id}/workflow" in paths

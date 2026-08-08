@@ -116,8 +116,8 @@ def import_technical(
 def import_supplied_v213(source_root: Optional[Path] = None) -> None:
     """Import the supplied v2.13 pricing and technical libraries."""
     root = source_root or repo_root() / "knowledge" / "source" / "v2.13"
-    pricing = root / "QUANTIFIRE_14_Pricing_Library_v2.13.csv"
-    technical = root / "QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl"
+    pricing = root / "CLASSIFIRE_14_Pricing_Library_v2.13.csv"
+    technical = root / "CLASSIFIRE_17_Technical_System_Variants_v2.13.jsonl"
     missing = [str(path) for path in (pricing, technical) if not path.exists()]
     if missing:
         raise typer.BadParameter(f"Missing supplied source file(s): {missing}")
@@ -139,7 +139,7 @@ def start(
     """Start the QUANTIFIRE application."""
     settings = get_settings()
     uvicorn.run(
-        "quantifire.main:app",
+        "classifire.main:app",
         host=host or settings.host,
         port=port or settings.port,
         reload=reload,
@@ -164,8 +164,8 @@ def doctor() -> None:
     checks.append(("Python", sys.version.split()[0], "PASS" if sys.version_info >= (3, 11) else "FAIL"))
     checks.append(("Repository", str(root), "PASS" if (root / "pyproject.toml").exists() else "WARN"))
     checks.append(("Approved logo", str(root / "assets/brand/quantifire-logo-master.png"), "PASS" if (root / "assets/brand/quantifire-logo-master.png").exists() else "FAIL"))
-    p14 = root / "knowledge/source/v2.13/QUANTIFIRE_14_Pricing_Library_v2.13.csv"
-    p15 = root / "knowledge/source/v2.13/QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl"
+    p14 = root / "knowledge/source/v2.13/CLASSIFIRE_14_Pricing_Library_v2.13.csv"
+    p15 = root / "knowledge/source/v2.13/CLASSIFIRE_17_Technical_System_Variants_v2.13.jsonl"
     calc = root / "knowledge/source/raw-calculator/Penetration Calculator.xlsb"
     for label, path in [("Package 14", p14), ("Package 15 variants", p15), ("Raw calculator", calc)]:
         checks.append((label, str(path), "PASS" if path.exists() else "BLOCKED"))
@@ -194,8 +194,8 @@ def doctor() -> None:
 @app.command("mission-control-bootstrap")
 def mission_control_bootstrap(
     url: Optional[str] = typer.Option(None),
-    api_key: Optional[str] = typer.Option(None, envvar="QUANTIFIRE_MISSION_CONTROL_API_KEY"),
-    repo_url: str = typer.Option("https://github.com/Slayde91/quantifire"),
+    api_key: Optional[str] = typer.Option(None, envvar="CLASSIFIRE_MISSION_CONTROL_API_KEY"),
+    repo_url: str = typer.Option("https://github.com/Slayde91/classifire"),
     create_tasks: bool = typer.Option(
         False,
         "--create-tasks",

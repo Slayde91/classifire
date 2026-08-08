@@ -10,8 +10,8 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from quantifire import canonical_models, commercial_models  # noqa: F401
-from quantifire.canonical_models import (
+from classifire import canonical_models, commercial_models  # noqa: F401
+from classifire.canonical_models import (
     EvidenceSource,
     PhysicalModelLock,
     RepairStrategy,
@@ -19,7 +19,7 @@ from quantifire.canonical_models import (
     ServiceOpeningLink,
     SystemRequiredComponent,
 )
-from quantifire.commercial_models import (
+from classifire.commercial_models import (
     CommercialMethodLock,
     CommercialRecoveryRecord,
     ComponentRequirementReconciliation,
@@ -27,18 +27,18 @@ from quantifire.commercial_models import (
     PricingComponent,
     Quantity,
 )
-from quantifire.db import Base
-from quantifire.main import app
-from quantifire.models import Estimate, EstimateLine, LibraryRelease, Opening, Project, Service
-from quantifire.outputs.common import verify_snapshot
-from quantifire.services.validated_snapshot import SNAPSHOT_SCHEMA, lock_validated_snapshot
-from quantifire.services.validation import (
+from classifire.db import Base
+from classifire.main import app
+from classifire.models import Estimate, EstimateLine, LibraryRelease, Opening, Project, Service
+from classifire.outputs.common import verify_snapshot
+from classifire.services.validated_snapshot import SNAPSHOT_SCHEMA, lock_validated_snapshot
+from classifire.services.validation import (
     IndependentValidationError,
     latest_passing_gate,
     run_independent_validation,
 )
-from quantifire.services.workflow import WorkflowStage
-from quantifire.services.workflow_db import assess_estimate_workflow
+from classifire.services.workflow import WorkflowStage
+from classifire.services.workflow_db import assess_estimate_workflow
 
 
 @dataclass(frozen=True)
@@ -377,8 +377,8 @@ def test_release_control_routes_precede_legacy_lock_and_export_routes() -> None:
     ]
     assert lock_routes and lock_routes[0].endpoint is not None
     assert export_routes and export_routes[0].endpoint is not None
-    assert lock_routes[0].endpoint.__module__ == "quantifire.api.release_control"
-    assert export_routes[0].endpoint.__module__ == "quantifire.api.release_control"
+    assert lock_routes[0].endpoint.__module__ == "classifire.api.release_control"
+    assert export_routes[0].endpoint.__module__ == "classifire.api.release_control"
     assert any(
         route.path == "/api/v1/estimates/{estimate_id}/independent-validation"
         and "POST" in route.methods

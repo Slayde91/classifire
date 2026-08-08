@@ -17,7 +17,7 @@ if (-not (Test-Path ".env")) {
     Write-Host "Created .env from .env.example. Change the secret key and administrator settings before production use." -ForegroundColor Yellow
 }
 
-& (Join-Path $PSScriptRoot ".venv\Scripts\quantifire.exe") init
+& (Join-Path $PSScriptRoot ".venv\Scripts\classifire.exe") init
 
 Write-Host ""
 Write-Host "QUANTIFIRE installed." -ForegroundColor Green

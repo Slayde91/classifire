@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "quantifire"
+name = "classifire"
 version = "0.1.0"
 description = "Passive-fire estimating and technical decision-support system"
 readme = "README.md"
@@ -45,11 +45,11 @@ postgres = ["psycopg[binary]>=3.2,<4"]
 malware = ["clamd>=1.0,<2"]
 
 [project.scripts]
-quantifire = "quantifire.cli:app"
+classifire = "classifire.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["quantifire*"]
+include = ["classifire*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

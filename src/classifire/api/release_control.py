@@ -153,19 +153,19 @@ def export_validated_estimate(
     safe_ref = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in estimate.reference)
     mapping = {
         "technical-xlsx": (
-            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.xlsx",
+            f"CLASSIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.xlsx",
             render_technical_workbook,
         ),
         "proposal-xlsx": (
-            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.xlsx",
+            f"CLASSIFIRE_{safe_ref}_R{estimate.revision}_Proposal.xlsx",
             render_proposal_workbook,
         ),
         "technical-pdf": (
-            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.pdf",
+            f"CLASSIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.pdf",
             lambda s, p: render_estimate_pdf(s, p, proposal=False),
         ),
         "proposal-pdf": (
-            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.pdf",
+            f"CLASSIFIRE_{safe_ref}_R{estimate.revision}_Proposal.pdf",
             lambda s, p: render_estimate_pdf(s, p, proposal=True),
         ),
     }
