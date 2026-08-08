@@ -1,7 +1,43 @@
-param()
+param(
+    [switch]$ProbeRuntimeRoster
+)
 
 $ErrorActionPreference = "Stop"
 $openclaw = Get-Command openclaw -ErrorAction Stop
+
+function Show-AgentItems {
+    param([object]$Value)
+
+    $items = @()
+
+    if ($Value -is [System.Array]) {
+        $items = @($Value)
+    }
+    elseif ($null -ne $Value.list) {
+        $items = @($Value.list)
+    }
+    elseif ($null -ne $Value.agents) {
+        $items = @($Value.agents)
+    }
+    elseif ($null -ne $Value.entries) {
+        foreach ($property in $Value.entries.PSObject.Properties) {
+            $item = $property.Value
+            if (-not $item.id) {
+                $item | Add-Member -NotePropertyName id -NotePropertyValue $property.Name -Force
+            }
+            $items += $item
+        }
+    }
+    else {
+        $items = @($Value)
+    }
+
+    foreach ($item in $items) {
+        $id = if ($item.id) { $item.id } elseif ($item.agentId) { $item.agentId } elseif ($item.name) { $item.name } else { "<unknown>" }
+        $workspace = if ($item.workspace) { $item.workspace } else { "<not reported>" }
+        Write-Host "   id=$id workspace=$workspace"
+    }
+}
 
 Write-Host "CLASSIFIRE OpenClaw configuration diagnostic" -ForegroundColor Cyan
 Write-Host "This script is read-only and does not print secret values." -ForegroundColor DarkGray
@@ -30,35 +66,26 @@ Write-Host "4. Gateway/service status (deep)" -ForegroundColor Cyan
 Write-Host ""
 
 Write-Host "5. Runtime agent roster" -ForegroundColor Cyan
-$rosterRaw = (& $openclaw.Source agents list --json 2>&1 | Out-String).Trim()
-if ($LASTEXITCODE -ne 0) {
-    Write-Host $rosterRaw -ForegroundColor Red
+if (-not $ProbeRuntimeRoster) {
+    Write-Host "   SKIPPED by default because this command can block on some OpenClaw builds." -ForegroundColor Yellow
+    Write-Host "   The earlier CLASSIFIRE smoke test already proved the cf-* runtime agents are callable."
+    Write-Host "   Use -ProbeRuntimeRoster only when explicitly troubleshooting the roster command."
 }
 else {
-    try {
-        $roster = $rosterRaw | ConvertFrom-Json
-        $items = @()
-        if ($roster -is [System.Array]) {
-            $items = @($roster)
-        }
-        elseif ($null -ne $roster.agents) {
-            $items = @($roster.agents)
-        }
-        elseif ($null -ne $roster.list) {
-            $items = @($roster.list)
-        }
-        else {
-            $items = @($roster)
-        }
-        foreach ($item in $items) {
-            $id = if ($item.id) { $item.id } elseif ($item.agentId) { $item.agentId } elseif ($item.name) { $item.name } else { "<unknown>" }
-            $workspace = if ($item.workspace) { $item.workspace } else { "<not reported>" }
-            Write-Host "   id=$id workspace=$workspace"
-        }
+    Write-Host "   Probing runtime roster..." -ForegroundColor Yellow
+    $rosterRaw = (& $openclaw.Source agents list --json 2>&1 | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host $rosterRaw -ForegroundColor Red
     }
-    catch {
-        Write-Host "   Unable to parse agent roster JSON; raw non-secret output follows:" -ForegroundColor Yellow
-        Write-Host $rosterRaw
+    else {
+        try {
+            $roster = $rosterRaw | ConvertFrom-Json
+            Show-AgentItems $roster
+        }
+        catch {
+            Write-Host "   Unable to parse agent roster JSON; raw non-secret output follows:" -ForegroundColor Yellow
+            Write-Host $rosterRaw
+        }
     }
 }
 Write-Host ""
@@ -71,18 +98,17 @@ if ($LASTEXITCODE -ne 0) {
 else {
     try {
         $cfg = $configRaw | ConvertFrom-Json
-        $items = @($cfg)
-        if ($cfg -isnot [System.Array] -and $null -ne $cfg.list) {
-            $items = @($cfg.list)
+        Write-Host "   JSON type: $($cfg.GetType().FullName)" -ForegroundColor DarkGray
+        if ($cfg -isnot [System.Array]) {
+            $propertyNames = @($cfg.PSObject.Properties.Name)
+            if ($propertyNames.Count -gt 0) {
+                Write-Host "   Top-level properties: $($propertyNames -join ', ')" -ForegroundColor DarkGray
+            }
         }
-        foreach ($item in $items) {
-            $id = if ($item.id) { $item.id } elseif ($item.agentId) { $item.agentId } elseif ($item.name) { $item.name } else { "<unknown>" }
-            $workspace = if ($item.workspace) { $item.workspace } else { "<not reported>" }
-            Write-Host "   id=$id workspace=$workspace"
-        }
+        Show-AgentItems $cfg
     }
     catch {
-        Write-Host "   Unable to parse agents.list JSON; raw redacted output follows:" -ForegroundColor Yellow
+        Write-Host "   Unable to parse agents.list JSON; raw output follows:" -ForegroundColor Yellow
         Write-Host $configRaw
     }
 }
