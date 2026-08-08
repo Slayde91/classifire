@@ -6,9 +6,10 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..commercial_models import GateEvidence
 from ..models import Approval, Estimate, User
 from .validated_snapshot import SNAPSHOT_SCHEMA
-from .validation import GateEvidence, latest_passing_gate
+from .validation import latest_passing_gate
 from .workflow import WorkflowAction
 from .workflow_guard import require_estimate_action
 
