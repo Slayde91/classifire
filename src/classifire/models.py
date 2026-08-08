@@ -51,6 +51,26 @@ class User(RecordMixin, Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class AgentServicePrincipal(RecordMixin, Base):
+    """Machine credential for one role-limited CLASSIFIRE OpenClaw agent.
+
+    Only a SHA-256 digest of the high-entropy bearer token is persisted. Scopes
+    are explicit and independent of human User roles so an agent can never gain
+    human approval authority by reusing a human session or role.
+    """
+
+    __tablename__ = "agent_service_principals"
+
+    agent_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    display_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    token_hint: Mapped[str] = mapped_column(String(16), nullable=False)
+    scopes: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True, nullable=False)
+    rotated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class AuditEvent(RecordMixin, Base):
     __tablename__ = "audit_events"
 
@@ -218,258 +238,139 @@ class TechnicalDocument(RecordMixin, Base):
     __tablename__ = "technical_documents"
 
     document_id: Mapped[str] = mapped_column(String(200), unique=True, index=True, nullable=False)
-    stored_file_id: Mapped[str] = mapped_column(ForeignKey("stored_files.id"), nullable=False)
-    document_type: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    source_file_id: Mapped[str] = mapped_column(ForeignKey("stored_files.id"), nullable=False)
     manufacturer: Mapped[str | None] = mapped_column(String(200), index=True)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
-    reference: Mapped[str | None] = mapped_column(String(300), index=True)
     revision: Mapped[str | None] = mapped_column(String(100))
-    issuing_organisation: Mapped[str | None] = mapped_column(String(300))
-    publication_date: Mapped[date | None] = mapped_column(Date)
-    review_date: Mapped[date | None] = mapped_column(Date)
-    expiry_date: Mapped[date | None] = mapped_column(Date)
-    jurisdiction: Mapped[str | None] = mapped_column(String(200), index=True)
-    standards: Mapped[list[str] | None] = mapped_column(JSON)
-    status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
+    document_date: Mapped[date | None] = mapped_column(Date)
+    document_type: Mapped[str | None] = mapped_column(String(100), index=True)
+    authority_status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     extraction_status: Mapped[str] = mapped_column(String(50), default="not_started")
-    metadata_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
-    supersedes_document_id: Mapped[str | None] = mapped_column(ForeignKey("technical_documents.id"))
-    reviewed_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
-    approved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
-    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    extracted_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    notes: Mapped[str | None] = mapped_column(Text)
 
 
 class TechnicalVariant(RecordMixin, Base):
     __tablename__ = "technical_variants"
 
-    variant_id: Mapped[str] = mapped_column(String(300), unique=True, index=True, nullable=False)
-    system_id: Mapped[str] = mapped_column(String(300), index=True, nullable=False)
-    technical_document_id: Mapped[str | None] = mapped_column(ForeignKey("technical_documents.id"))
-    source_document_reference: Mapped[str | None] = mapped_column(String(300), index=True)
-    source_page: Mapped[str | None] = mapped_column(String(100))
-    source_table: Mapped[str | None] = mapped_column(String(300))
-    source_figure: Mapped[str | None] = mapped_column(String(300))
+    variant_id: Mapped[str] = mapped_column(String(200), unique=True, index=True, nullable=False)
+    system_id: Mapped[str | None] = mapped_column(String(200), index=True)
+    source_document_id: Mapped[str | None] = mapped_column(ForeignKey("technical_documents.id"), index=True)
     manufacturer: Mapped[str | None] = mapped_column(String(200), index=True)
-    product_family: Mapped[str | None] = mapped_column(String(300), index=True)
-    service_type: Mapped[str | None] = mapped_column(String(300), index=True)
-    service_material: Mapped[str | None] = mapped_column(String(300), index=True)
-    minimum_service_size_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
-    maximum_service_size_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
-    permitted_service_quantity: Mapped[str | None] = mapped_column(String(100))
-    insulation_type: Mapped[str | None] = mapped_column(Text)
-    insulation_thickness_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
-    substrate_type: Mapped[str | None] = mapped_column(Text, index=True)
-    minimum_substrate_thickness_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
-    maximum_substrate_thickness_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
-    orientation: Mapped[str | None] = mapped_column(Text, index=True)
-    installation_face: Mapped[str | None] = mapped_column(Text)
-    opening_type: Mapped[str | None] = mapped_column(Text, index=True)
-    opening_dimensions: Mapped[str | None] = mapped_column(Text)
+    service_type: Mapped[str | None] = mapped_column(String(200), index=True)
+    service_material: Mapped[str | None] = mapped_column(String(200), index=True)
+    service_size_min_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    service_size_max_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    insulation_type: Mapped[str | None] = mapped_column(String(200), index=True)
+    substrate_type: Mapped[str | None] = mapped_column(String(200), index=True)
+    substrate_thickness_min_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    substrate_thickness_max_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    opening_shape: Mapped[str | None] = mapped_column(String(100), index=True)
+    opening_width_max_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    opening_height_max_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    orientation: Mapped[str | None] = mapped_column(String(100), index=True)
+    frl: Mapped[str | None] = mapped_column(String(100), index=True)
     annular_gap_min_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     annular_gap_max_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
-    service_spacing_rules: Mapped[str | None] = mapped_column(Text)
-    edge_distance_rules: Mapped[str | None] = mapped_column(Text)
-    support_rules: Mapped[str | None] = mapped_column(Text)
-    fixing_rules: Mapped[str | None] = mapped_column(Text)
-    component_requirements: Mapped[dict[str, Any] | list[Any] | None] = mapped_column(JSON)
-    labour_requirements: Mapped[list[str] | None] = mapped_column(JSON)
-    hard_exclusions: Mapped[str | None] = mapped_column(Text)
-    dependencies: Mapped[str | None] = mapped_column(Text)
-    frl: Mapped[str | None] = mapped_column(String(100), index=True)
-    jurisdiction: Mapped[str | None] = mapped_column(String(200), index=True)
-    quality_score: Mapped[Decimal | None] = mapped_column(Numeric(9, 3))
-    confidence_cap: Mapped[Decimal | None] = mapped_column(Numeric(9, 3))
-    search_eligibility: Mapped[str | None] = mapped_column(String(100), index=True)
-    expert_review_required: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
-    effective_date: Mapped[date | None] = mapped_column(Date)
-    expiry_date: Mapped[date | None] = mapped_column(Date)
+    spacing_min_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    component_requirements: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    installation_requirements: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    limitations: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    evidence_refs: Mapped[list[str] | None] = mapped_column(JSON)
     source_hash: Mapped[str | None] = mapped_column(String(64))
     source_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="draft", index=True, nullable=False)
+    expert_review_required: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"), index=True)
     supersedes_id: Mapped[str | None] = mapped_column(ForeignKey("technical_variants.id"))
 
-    __table_args__ = (
-        Index("ix_technical_search", "service_type", "service_material", "frl", "status"),
-    )
-
-
-class EstimatingRule(RecordMixin, Base):
-    __tablename__ = "estimating_rules"
-    __table_args__ = (UniqueConstraint("rule_code", "version", name="uq_rule_code_version"),)
-
-    rule_code: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
-    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
-    name: Mapped[str] = mapped_column(String(300), nullable=False)
-    category: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=False)
-    conditions: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    actions: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    severity: Mapped[str] = mapped_column(String(30), default="warning", index=True)
-    jurisdiction: Mapped[str | None] = mapped_column(String(200), index=True)
-    source_reference: Mapped[str | None] = mapped_column(Text)
-    source_page: Mapped[str | None] = mapped_column(String(100))
-    priority: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
-    conflict_resolution: Mapped[str] = mapped_column(String(100), default="higher_priority_wins")
-    status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
-    effective_date: Mapped[date | None] = mapped_column(Date)
-    expiry_date: Mapped[date | None] = mapped_column(Date)
-    test_cases: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON)
-    author_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
-    reviewer_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
-    approver_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
-    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"), index=True)
-    supersedes_id: Mapped[str | None] = mapped_column(ForeignKey("estimating_rules.id"))
-
-
-class ChangeProposal(RecordMixin, Base):
-    __tablename__ = "change_proposals"
-
-    entity_type: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
-    entity_id: Mapped[str | None] = mapped_column(String(100), index=True)
-    proposal_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    proposed_data: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    source: Mapped[str] = mapped_column(String(100), default="user", nullable=False)
-    reason: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
-    submitted_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
-    reviewed_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
-    approved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
-    review_notes: Mapped[str | None] = mapped_column(Text)
-    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-
-class Customer(RecordMixin, Base):
-    __tablename__ = "customers"
-
-    name: Mapped[str] = mapped_column(String(300), index=True, nullable=False)
-    legal_name: Mapped[str | None] = mapped_column(String(300))
-    tax_identifier: Mapped[str | None] = mapped_column(String(100))
-    email: Mapped[str | None] = mapped_column(String(320))
-    phone: Mapped[str | None] = mapped_column(String(100))
-    billing_address: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(30), default="active", index=True)
-
-    contacts: Mapped[list[Contact]] = relationship(back_populates="customer", cascade="all, delete-orphan")
-    projects: Mapped[list[Project]] = relationship(back_populates="customer")
-
-
-class Contact(RecordMixin, Base):
-    __tablename__ = "contacts"
-
-    customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id"), index=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(300), nullable=False)
-    email: Mapped[str | None] = mapped_column(String(320))
-    phone: Mapped[str | None] = mapped_column(String(100))
-    position: Mapped[str | None] = mapped_column(String(200))
-    is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
-
-    customer: Mapped[Customer] = relationship(back_populates="contacts")
+    source_document: Mapped[TechnicalDocument | None] = relationship("TechnicalDocument")
 
 
 class Project(RecordMixin, Base):
     __tablename__ = "projects"
 
-    customer_id: Mapped[str | None] = mapped_column(ForeignKey("customers.id"), index=True)
     reference: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(300), nullable=False)
+    customer: Mapped[str | None] = mapped_column(String(300))
     site_address: Mapped[str | None] = mapped_column(Text)
-    jurisdiction: Mapped[str] = mapped_column(String(200), default="NSW/ACT, Australia")
-    status: Mapped[str] = mapped_column(String(30), default="active", index=True)
+    jurisdiction: Mapped[str | None] = mapped_column(String(200))
+    currency: Mapped[str] = mapped_column(String(3), default="AUD", nullable=False)
+    tax_name: Mapped[str] = mapped_column(String(50), default="GST", nullable=False)
+    tax_rate: Mapped[Decimal] = mapped_column(Numeric(9, 6), default=Decimal("0.10"), nullable=False)
     product_markup_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
     material_markup_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
     labour_markup_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
-    notes: Mapped[str | None] = mapped_column(Text)
-
-    customer: Mapped[Customer | None] = relationship(back_populates="projects")
-    estimates: Mapped[list[Estimate]] = relationship(back_populates="project")
+    status: Mapped[str] = mapped_column(String(30), default="active", index=True, nullable=False)
 
 
 class Estimate(RecordMixin, Base):
     __tablename__ = "estimates"
-    __table_args__ = (UniqueConstraint("project_id", "revision", name="uq_project_estimate_revision"),)
 
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
     revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     reference: Mapped[str] = mapped_column(String(150), unique=True, index=True, nullable=False)
     title: Mapped[str] = mapped_column(String(300), nullable=False)
-    status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
-    currency: Mapped[str] = mapped_column(String(3), default="AUD")
-    tax_name: Mapped[str] = mapped_column(String(30), default="GST")
-    tax_rate: Mapped[Decimal] = mapped_column(Numeric(9, 6), default=Decimal("0.10"))
+    status: Mapped[str] = mapped_column(String(30), default="draft", index=True, nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), default="AUD", nullable=False)
+    tax_name: Mapped[str] = mapped_column(String(50), default="GST", nullable=False)
+    tax_rate: Mapped[Decimal] = mapped_column(Numeric(9, 6), default=Decimal("0.10"), nullable=False)
     product_markup_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
     material_markup_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
     labour_markup_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
-    assumptions: Mapped[list[str] | None] = mapped_column(JSON)
-    exclusions: Mapped[list[str] | None] = mapped_column(JSON)
-    qualifications: Mapped[list[str] | None] = mapped_column(JSON)
-    pricing_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"))
-    technical_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"))
-    rules_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"))
-    products_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"))
-    labour_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"))
-    markups_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"))
-    formula_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"))
-    brand_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"))
-    subtotal_ex_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))
-    tax_total: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))
-    total_incl_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))
-    snapshot_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
-    snapshot_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    subtotal_ex_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    tax_total: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    total_incl_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    pricing_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"), index=True)
+    technical_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"), index=True)
+    rules_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"), index=True)
+    products_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"), index=True)
+    labour_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"), index=True)
+    markups_release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"), index=True)
+    formula_release_id: Mapped[str | None] = mapped_column(String(36), index=True)
+    brand_release_id: Mapped[str | None] = mapped_column(String(36), index=True)
     locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     approved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    snapshot_hash: Mapped[str | None] = mapped_column(String(64))
+    snapshot_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    notes: Mapped[str | None] = mapped_column(Text)
 
-    project: Mapped[Project] = relationship(back_populates="estimates")
-    openings: Mapped[list[Opening]] = relationship(
-        back_populates="estimate", cascade="all, delete-orphan", order_by="Opening.created_at"
-    )
-    lines: Mapped[list[EstimateLine]] = relationship(
-        back_populates="estimate", cascade="all, delete-orphan", order_by="EstimateLine.created_at"
-    )
+    project: Mapped[Project] = relationship("Project")
+    openings: Mapped[list[Opening]] = relationship("Opening", back_populates="estimate", cascade="all, delete-orphan")
+    lines: Mapped[list[EstimateLine]] = relationship("EstimateLine", back_populates="estimate", cascade="all, delete-orphan")
 
 
 class Opening(RecordMixin, Base):
     __tablename__ = "openings"
 
     estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
-    defect_id: Mapped[str | None] = mapped_column(String(100), index=True)
-    # Additive v2.13 compatibility field introduced by migration 0003. The
-    # canonical Defect relationship is governed by the canonical model layer.
-    canonical_defect_id: Mapped[str | None] = mapped_column(String(36))
-    opening_code: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    opening_code: Mapped[str | None] = mapped_column(String(100), index=True)
     location: Mapped[str | None] = mapped_column(Text)
     substrate_type: Mapped[str | None] = mapped_column(String(200), index=True)
-    substrate_plane: Mapped[str | None] = mapped_column(String(50), index=True)
-    substrate_thickness_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    substrate_plane: Mapped[str | None] = mapped_column(String(100), index=True)
     orientation: Mapped[str | None] = mapped_column(String(100), index=True)
-    opening_type: Mapped[str | None] = mapped_column(String(100))
+    opening_type: Mapped[str | None] = mapped_column(String(100), index=True)
     width_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     height_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     diameter_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    depth_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     frl: Mapped[str | None] = mapped_column(String(100), index=True)
-    physical_model_status: Mapped[str] = mapped_column(String(30), default="draft")
-    technical_status: Mapped[str] = mapped_column(String(50), default="not_assessed")
-    selected_technical_variant_id: Mapped[str | None] = mapped_column(ForeignKey("technical_variants.id"))
+    access_condition: Mapped[str | None] = mapped_column(String(100))
+    complexity: Mapped[str | None] = mapped_column(String(100))
     notes: Mapped[str | None] = mapped_column(Text)
+    evidence_links: Mapped[list[str] | None] = mapped_column(JSON)
 
-    estimate: Mapped[Estimate] = relationship(back_populates="openings")
-    services: Mapped[list[Service]] = relationship(
-        back_populates="opening", cascade="all, delete-orphan", order_by="Service.created_at"
-    )
-
-    __table_args__ = (UniqueConstraint("estimate_id", "opening_code", name="uq_estimate_opening_code"),)
+    estimate: Mapped[Estimate] = relationship("Estimate", back_populates="openings")
+    services: Mapped[list[Service]] = relationship("Service", back_populates="opening", cascade="all, delete-orphan")
 
 
 class Service(RecordMixin, Base):
     __tablename__ = "services"
 
     opening_id: Mapped[str] = mapped_column(ForeignKey("openings.id"), index=True, nullable=False)
-    # Temporary legacy-primary-opening marker introduced by migration 0003 while
-    # ServiceOpeningLink becomes the canonical many-to-many physical relation.
-    primary_opening_legacy: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    service_code: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    service_code: Mapped[str | None] = mapped_column(String(100), index=True)
     service_type: Mapped[str] = mapped_column(String(200), index=True, nullable=False)
     material: Mapped[str | None] = mapped_column(String(200), index=True)
     nominal_size_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
@@ -478,16 +379,11 @@ class Service(RecordMixin, Base):
     height_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     insulation_type: Mapped[str | None] = mapped_column(String(200))
     insulation_thickness_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
-    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("1"))
-    centre_x_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
-    centre_y_mm: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
-    evidence_status: Mapped[str] = mapped_column(String(30), default="provisional")
-    confidence: Mapped[Decimal | None] = mapped_column(Numeric(9, 4))
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("1"), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text)
+    evidence_links: Mapped[list[str] | None] = mapped_column(JSON)
 
-    opening: Mapped[Opening] = relationship(back_populates="services")
-
-    __table_args__ = (UniqueConstraint("opening_id", "service_code", name="uq_opening_service_code"),)
+    opening: Mapped[Opening] = relationship("Opening", back_populates="services")
 
 
 class EstimateLine(RecordMixin, Base):
@@ -498,44 +394,27 @@ class EstimateLine(RecordMixin, Base):
     service_id: Mapped[str | None] = mapped_column(ForeignKey("services.id"), index=True)
     line_number: Mapped[int] = mapped_column(Integer, nullable=False)
     component_type: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
-    component_reference: Mapped[str | None] = mapped_column(String(200), index=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("1"))
-    unit: Mapped[str] = mapped_column(String(50), default="each")
-    base_unit_cost: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))
-    waste_factor: Mapped[Decimal] = mapped_column(Numeric(9, 6), default=Decimal("0"))
-    markup_override: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
-    applied_markup: Mapped[Decimal] = mapped_column(Numeric(9, 6), default=Decimal("0"))
-    markup_source: Mapped[str] = mapped_column(String(100), default="global_default")
-    unit_sell: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))
-    subtotal_ex_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))
-    tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))
-    total_incl_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"))
-    pricing_method: Mapped[str] = mapped_column(String(80), default="component_built")
-    commercial_recovery_status: Mapped[str] = mapped_column(String(80), default="separately_priced")
-    rate_source: Mapped[str | None] = mapped_column(String(300))
-    formula_version: Mapped[str] = mapped_column(String(50), default="QF-CALC-1")
-    status: Mapped[str] = mapped_column(String(30), default="draft")
-    notes: Mapped[str | None] = mapped_column(Text)
-
-    estimate: Mapped[Estimate] = relationship(back_populates="lines")
-
-    __table_args__ = (UniqueConstraint("estimate_id", "line_number", name="uq_estimate_line_number"),)
-
-
-class RuleEvaluation(RecordMixin, Base):
-    __tablename__ = "rule_evaluations"
-
-    estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
-    opening_id: Mapped[str | None] = mapped_column(ForeignKey("openings.id"), index=True)
-    rule_id: Mapped[str] = mapped_column(ForeignKey("estimating_rules.id"), index=True, nullable=False)
-    result: Mapped[str] = mapped_column(String(30), index=True, nullable=False)
-    severity: Mapped[str] = mapped_column(String(30), nullable=False)
-    explanation: Mapped[str] = mapped_column(Text, nullable=False)
-    inputs: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    output: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    rule_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    unit: Mapped[str] = mapped_column(String(50), nullable=False)
+    product_id: Mapped[str | None] = mapped_column(ForeignKey("products.id"), index=True)
+    labour_component_id: Mapped[str | None] = mapped_column(ForeignKey("labour_components.id"), index=True)
+    source_rate_id: Mapped[str | None] = mapped_column(ForeignKey("pricing_library_records.id"), index=True)
+    source_system_id: Mapped[str | None] = mapped_column(ForeignKey("technical_variants.id"), index=True)
+    base_unit_cost: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    markup_rate: Mapped[Decimal] = mapped_column(Numeric(9, 6), default=Decimal("0"), nullable=False)
+    unit_sell: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    subtotal_ex_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    total_incl_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    pricing_method: Mapped[str | None] = mapped_column(String(100))
+    confidence: Mapped[str | None] = mapped_column(String(50))
     source_reference: Mapped[str | None] = mapped_column(Text)
+    assumptions: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    exclusion: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    provisional: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    estimate: Mapped[Estimate] = relationship("Estimate", back_populates="lines")
 
 
 class Approval(RecordMixin, Base):
@@ -544,24 +423,86 @@ class Approval(RecordMixin, Base):
     entity_type: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     entity_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     approval_type: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
-    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True, nullable=False)
     requested_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     decided_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     decision_reason: Mapped[str | None] = mapped_column(Text)
-    snapshot_hash: Mapped[str | None] = mapped_column(String(64))
+    snapshot_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+
+
+class ChangeProposal(RecordMixin, Base):
+    __tablename__ = "change_proposals"
+
+    entity_type: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    entity_id: Mapped[str | None] = mapped_column(String(100), index=True)
+    proposed_change: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    justification: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_ids: Mapped[list[str] | None] = mapped_column(JSON)
+    proposed_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
+    reviewed_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decision_notes: Mapped[str | None] = mapped_column(Text)
 
 
 class BackgroundJob(RecordMixin, Base):
     __tablename__ = "background_jobs"
 
     job_type: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
-    status: Mapped[str] = mapped_column(String(30), default="queued", index=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
-    result: Mapped[dict[str, Any] | None] = mapped_column(JSON)
-    error: Mapped[str | None] = mapped_column(Text)
-    attempts: Mapped[int] = mapped_column(Integer, default=0)
-    run_after: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(30), default="queued", index=True, nullable=False)
+    attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    max_attempts: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
+    run_after: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, nullable=False)
+    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    locked_by: Mapped[str | None] = mapped_column(String(200))
+    last_error: Mapped[str | None] = mapped_column(Text)
+
+
+class RuleRecord(RecordMixin, Base):
+    __tablename__ = "rule_records"
+
+    rule_code: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    rule_type: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    condition: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    action: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    severity: Mapped[str] = mapped_column(String(30), default="warning", nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="active", index=True, nullable=False)
+    effective_date: Mapped[date | None] = mapped_column(Date)
+    expiry_date: Mapped[date | None] = mapped_column(Date)
+    source_reference: Mapped[str | None] = mapped_column(Text)
+    notes: Mapped[str | None] = mapped_column(Text)
+    release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"), index=True)
+    supersedes_id: Mapped[str | None] = mapped_column(ForeignKey("rule_records.id"))
+
+    __table_args__ = (UniqueConstraint("rule_code", "revision", name="uq_rule_code_revision"),)
+
+
+class RuleEvaluation(RecordMixin, Base):
+    __tablename__ = "rule_evaluations"
+
+    estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
+    opening_id: Mapped[str | None] = mapped_column(ForeignKey("openings.id"), index=True)
+    service_id: Mapped[str | None] = mapped_column(ForeignKey("services.id"), index=True)
+    rule_id: Mapped[str | None] = mapped_column(ForeignKey("rule_records.id"))
+    rule_code: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    severity: Mapped[str] = mapped_column(String(30), nullable=False)
+    result: Mapped[str] = mapped_column(String(30), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+
+
+class AuditTrail(RecordMixin, Base):
+    __tablename__ = "audit_trails"
+
+    project_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    estimate_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    event_ids: Mapped[list[str] | None] = mapped_column(JSON)
+    source_receipt_ids: Mapped[list[str] | None] = mapped_column(JSON)
+    validation_receipt_ids: Mapped[list[str] | None] = mapped_column(JSON)
+    summary_hash: Mapped[str | None] = mapped_column(String(64))
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
