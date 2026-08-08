@@ -13,6 +13,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import ATTRIBUTION, __version__
 from . import canonical_models as _canonical_models  # noqa: F401
+from . import commercial_models as _commercial_models  # noqa: F401
 from .api import router as api_router
 from .config import get_settings
 from .db import Base, SessionLocal, engine
@@ -101,3 +102,6 @@ app.include_router(estimate_pinning_router)
 app.include_router(release_admin_router)
 app.include_router(technical_admin_router)
 app.include_router(library_ui_router)
+
+
+
