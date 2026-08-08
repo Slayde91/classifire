@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -17,11 +18,13 @@ from sqlalchemy import func, select
 from . import __version__
 from . import canonical_models as _canonical_models  # noqa: F401
 from . import commercial_models as _commercial_models  # noqa: F401
+from .agent_security import AGENT_SCOPE_MAP, provision_agent_principal
+from .audit import record_audit
 from .config import get_settings
 from .db import Base, SessionLocal, engine
 from .importers import import_pricing_library, import_technical_variants, seed_database
 from .mission_control import MissionControlClient, bootstrap_mission_control
-from .models import PricingLibraryRecord, Product, TechnicalVariant, User
+from .models import AgentServicePrincipal, PricingLibraryRecord, Product, TechnicalVariant, User
 from .security import hash_password
 
 app = typer.Typer(help="CLASSIFIRE administration, import, run and integration commands.", no_args_is_help=True)
@@ -84,6 +87,88 @@ def create_admin(
             db.add(user)
         db.commit()
     console.print(f"[green]Administrator ready:[/green] {email.lower()}")
+
+
+@app.command("provision-agent-tokens")
+def provision_agent_tokens(
+    output: Path = typer.Option(
+        Path.home() / ".openclaw" / "classifire-agent-tokens.json",
+        "--output",
+        help="Local secret file consumed by the CLASSIFIRE OpenClaw plugin.",
+    ),
+    rotate: bool = typer.Option(
+        False,
+        "--rotate",
+        help="Rotate existing agent credentials. Existing plaintext tokens become invalid immediately.",
+    ),
+) -> None:
+    """Provision role-limited machine credentials for the nine cf-* agents."""
+    Base.metadata.create_all(bind=engine)
+    output = output.expanduser().resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    with SessionLocal() as db:
+        existing = {
+            item.agent_id
+            for item in db.scalars(select(AgentServicePrincipal)).all()
+            if item.agent_id in AGENT_SCOPE_MAP
+        }
+        if existing and not rotate:
+            names = ", ".join(sorted(existing))
+            raise typer.BadParameter(
+                "Agent credentials already exist for: " + names + ". Use --rotate to replace them."
+            )
+
+        tokens: dict[str, str] = {}
+        scopes: dict[str, list[str]] = {}
+        for agent_id in sorted(AGENT_SCOPE_MAP):
+            principal, token = provision_agent_principal(
+                db,
+                agent_id=agent_id,
+                display_name=agent_id,
+            )
+            tokens[agent_id] = token
+            scopes[agent_id] = list(principal.scopes or [])
+            record_audit(
+                db,
+                actor=None,
+                actor_type="system",
+                actor_name="CLASSIFIRE agent credential provisioner",
+                action="provision_agent_service_token",
+                entity_type="agent_service_principal",
+                entity_id=principal.id,
+                new_value={
+                    "agent_id": agent_id,
+                    "token_hint": principal.token_hint,
+                    "scopes": principal.scopes,
+                    "rotated": agent_id in existing,
+                },
+                reason="Provision role-limited OpenClaw service credential",
+            )
+        db.commit()
+
+    payload = {
+        "schema": "CLASSIFIRE-AGENT-TOKENS-v1",
+        "generated_utc": datetime.now(timezone.utc).isoformat(),
+        "base_url": "http://127.0.0.1:8787",
+        "tokens": tokens,
+        "scopes": scopes,
+    }
+    temp = output.with_suffix(output.suffix + ".tmp")
+    temp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    try:
+        os.chmod(temp, 0o600)
+    except OSError:
+        pass
+    temp.replace(output)
+    try:
+        os.chmod(output, 0o600)
+    except OSError:
+        pass
+
+    console.print(f"[green]Provisioned {len(tokens)} CLASSIFIRE agent credentials.[/green]")
+    console.print(f"Secret token file: {output}")
+    console.print("[yellow]Tokens are not printed. Protect this file and never commit it.[/yellow]")
 
 
 @app.command("import-pricing")
