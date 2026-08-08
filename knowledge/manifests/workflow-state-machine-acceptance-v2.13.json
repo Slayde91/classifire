@@ -1,0 +1,26 @@
+{
+  "gate": "WORKFLOW_STATE_MACHINE_TEST_PASS",
+  "status": "PASS",
+  "production_authority": false,
+  "source_release": "QUANTIFIRE v2.13",
+  "targeted_tests": {
+    "file": "tests/test_workflow_state_machine.py",
+    "passed": 10,
+    "failed": 0
+  },
+  "full_current_test_suite": {
+    "passed": 10,
+    "failed": 0
+  },
+  "verified_behavior": [
+    "technical search blocked before Physical Model Lock",
+    "component derivation blocked before Repair Strategy Lock",
+    "commercial pricing blocked before components plus quantity and labour",
+    "independent validation blocked before commercial recovery",
+    "validated snapshot blocked before independent validation",
+    "output rendering blocked before validated snapshot",
+    "human release blocked before validation, snapshot and controlled output"
+  ],
+  "next_phase": "database-backed workflow facts adapter and API/domain guard integration",
+  "next_gate": "WORKFLOW_DATABASE_ADAPTER_TEST_PASS"
+}
