@@ -44,6 +44,32 @@ function Resolve-OpenClawConfigPath {
     return [System.IO.Path]::GetFullPath($raw)
 }
 
+function Convert-ToAgentItems {
+    param([object]$Value)
+
+    if ($Value -is [System.Array]) {
+        return @($Value)
+    }
+    if ($null -ne $Value.list) {
+        return @($Value.list)
+    }
+    if ($null -ne $Value.agents) {
+        return @($Value.agents)
+    }
+    if ($null -ne $Value.entries) {
+        $items = @()
+        foreach ($property in $Value.entries.PSObject.Properties) {
+            $item = $property.Value
+            if (-not $item.id) {
+                $item | Add-Member -NotePropertyName id -NotePropertyValue $property.Name -Force
+            }
+            $items += $item
+        }
+        return $items
+    }
+    return @($Value)
+}
+
 function Invoke-ConfigSet {
     param(
         [string]$Path,
@@ -87,7 +113,8 @@ if ($LASTEXITCODE -ne 0) {
     throw "Unable to read agents.list from OpenClaw. Output: $agentsRaw"
 }
 try {
-    $agents = @($agentsRaw | ConvertFrom-Json)
+    $agentsValue = $agentsRaw | ConvertFrom-Json
+    $agents = @(Convert-ToAgentItems $agentsValue)
 }
 catch {
     throw "OpenClaw agents.list was not valid JSON: $agentsRaw"
@@ -102,9 +129,11 @@ for ($i = 0; $i -lt $agents.Count; $i++) {
 }
 foreach ($id in $agentIds) {
     if (-not $indexById.ContainsKey($id)) {
-        throw "Required CLASSIFIRE agent '$id' is missing from OpenClaw agents.list. Run setup_classifire_openclaw.ps1 first."
+        $available = @($indexById.Keys | Sort-Object) -join ", "
+        throw "Required CLASSIFIRE agent '$id' is missing from OpenClaw agents.list. Available ids: $available"
     }
 }
+Write-Host "Resolved all $($agentIds.Count) CLASSIFIRE agents." -ForegroundColor Green
 
 $changes = @()
 foreach ($id in $agentIds) {
