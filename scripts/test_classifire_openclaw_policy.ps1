@@ -30,6 +30,32 @@ $requiredDenied = @(
 
 $failures = @()
 
+function Convert-ToAgentItems {
+    param([object]$Value)
+
+    if ($Value -is [System.Array]) {
+        return @($Value)
+    }
+    if ($null -ne $Value.list) {
+        return @($Value.list)
+    }
+    if ($null -ne $Value.agents) {
+        return @($Value.agents)
+    }
+    if ($null -ne $Value.entries) {
+        $items = @()
+        foreach ($property in $Value.entries.PSObject.Properties) {
+            $item = $property.Value
+            if (-not $item.id) {
+                $item | Add-Member -NotePropertyName id -NotePropertyValue $property.Name -Force
+            }
+            $items += $item
+        }
+        return $items
+    }
+    return @($Value)
+}
+
 function Get-ConfigValue {
     param(
         [string]$Path,
@@ -57,7 +83,8 @@ if ($LASTEXITCODE -ne 0) {
 
 $agentsRaw = Get-ConfigValue "agents.list" -Json
 try {
-    $agents = @($agentsRaw | ConvertFrom-Json)
+    $agentsValue = $agentsRaw | ConvertFrom-Json
+    $agents = @(Convert-ToAgentItems $agentsValue)
 }
 catch {
     throw "OpenClaw agents.list was not valid JSON: $agentsRaw"
@@ -88,7 +115,11 @@ foreach ($id in $agentIds) {
 
     $denyRaw = Get-ConfigValue "$base.tools.deny" -Json
     try {
-        $deny = @($denyRaw | ConvertFrom-Json)
+        $denyValue = $denyRaw | ConvertFrom-Json
+        $deny = @($denyValue)
+        if ($null -ne $denyValue.list) {
+            $deny = @($denyValue.list)
+        }
     }
     catch {
         $failures += "$id tools.deny was not valid JSON: $denyRaw"
