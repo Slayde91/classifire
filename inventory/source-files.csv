@@ -1,0 +1,19 @@
+category,item,source_filename,legacy_document_id,version,status,availability,migration_destination,blocking_effect
+control,Full controlling build brief,QUANTIFIRE_OpenClaw_Mission_Control_Full_Build_Brief_v1.0.txt,,1.0,CONTROL,available,architecture/ and plan/,none
+core,Package 01,PFEOS_01_Core_Constitution_Kernel_v2.8.txt,PFEOS-RUNTIME-PACK-01-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-01,architecture migration
+core,Package 02,PFEOS_02_Canonical_Ontology_v2.8.txt,PFEOS-RUNTIME-PACK-02-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-02,schema migration
+core,Package 03,PFEOS_03_Evidence_Physical_and_Repair_Workflows_v2.8.txt,PFEOS-RUNTIME-PACK-03-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-03,physical workflow
+core,Package 04,PFEOS_04_Pricing_and_Estimate_Workflows_v2.8.txt,PFEOS-RUNTIME-PACK-04-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-04,commercial workflow
+core,Package 05,PFEOS_05_Engineering_Fundamentals_and_Technical_Evidence_v2.8.txt,PFEOS-RUNTIME-PACK-05-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-05,technical migration
+core,Package 06,PFEOS_06_Construction_and_Service_Engineering_v2.8.txt,PFEOS-RUNTIME-PACK-06-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-06,technical migration
+core,Package 07,PFEOS_07_Repair_Systems_Defects_and_Assets_v2.8.txt,PFEOS-RUNTIME-PACK-07-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-07,component model
+core,Package 08,PFEOS_08_Commercial_Estimating_Knowledge_v2.8.txt,PFEOS-RUNTIME-PACK-08-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-08,labour/commercial engine
+core,Package 09,PFEOS_09_Archetypes_Algorithms_and_Reference_Data_v2.8.txt,PFEOS-RUNTIME-PACK-09-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-09,deterministic rules
+core,Package 10,PFEOS_10_Validation_Metrics_and_Calibration_v2.8.txt,PFEOS-RUNTIME-PACK-10-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-10,validation/testing
+core,Package 11,PFEOS_11_Custom_GPT_Runtime_Security_Change_Readiness_and_Autonomous_Estimating_v2.8.txt,PFEOS-RUNTIME-PACK-11-v2.8,2.8,ACTIVE_LEGACY,file_library,knowledge/migrations/package-11,OpenClaw rewrite required
+core,Package 12,PFEOS_12_Platform_Operations_and_Integrations_v2.8.txt,PFEOS-RUNTIME-PACK-12-v2.8,2.8,ACTIVE,file_library,knowledge/migrations/package-12,domain/platform architecture
+routing,Package 13,PFEOS_13_Knowledge_Index_and_Deployment_Manifest_v2.8.txt,PFEOS-RUNTIME-PACK-13-v2.8,2.8,ACTIVE,file_library,knowledge/package-13,runtime routing
+pricing,Package 14,Penetration_Library.csv,,1.6,CONTROLLED_CONFIDENTIAL,external_controlled_source,QUANTIFIRE pricing database,commercial source validation
+technical,Package 15 text,PFEOS_15_Technical_System_Library_v2.8.txt,,2.8,CONTROLLED,file_library,QUANTIFIRE technical database,technical source validation
+technical,Package 15 variants,PFEOS_15_Technical_System_Variants_v2.8.jsonl,,2.8,CONTROLLED,external_or_local_controlled_source,QUANTIFIRE technical database,technical release lineage
+runtime,Package 16,PFEOS_16_Runtime_Profile_and_Data_Readiness_v2.8.txt,,2.8,REQUIRES_SPLIT_REAPPROVAL,file_library,knowledge/package-16,production profile approval
