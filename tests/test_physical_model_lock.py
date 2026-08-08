@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Callable, Iterator
 
 import pytest
 from sqlalchemy import create_engine
@@ -23,14 +23,37 @@ from quantifire.services.physical_model import (
 from quantifire.services.workflow import WorkflowTransitionError
 
 
-def _iter_leaf_routes(routes: Iterable[Any]) -> Iterator[Any]:
-    """Traverse FastAPI/Starlette route containers without assuming a flat app.routes list."""
-    for route in routes:
-        nested = getattr(route, "routes", None)
-        if nested is not None:
-            yield from _iter_leaf_routes(nested)
-        else:
-            yield route
+@dataclass(frozen=True)
+class _RouteView:
+    path: str
+    methods: frozenset[str]
+    endpoint: Callable[..., Any] | None
+
+
+def _iter_effective_routes() -> Iterator[_RouteView]:
+    """Yield effective FastAPI routes across 0.141 included-router boundaries.
+
+    FastAPI 0.141 represents included routers as private _IncludedRouter objects.
+    Their effective_route_contexts() iterator supplies the resolved path/endpoint,
+    while HTTP methods remain on context.original_route.
+    """
+    for route in app.routes:
+        contexts = getattr(route, "effective_route_contexts", None)
+        if callable(contexts):
+            for context in contexts():
+                original = context.original_route
+                yield _RouteView(
+                    path=getattr(context, "path", "") or getattr(original, "path", ""),
+                    methods=frozenset(getattr(original, "methods", set()) or set()),
+                    endpoint=getattr(context, "endpoint", None)
+                    or getattr(original, "endpoint", None),
+                )
+            continue
+        yield _RouteView(
+            path=getattr(route, "path", ""),
+            methods=frozenset(getattr(route, "methods", set()) or set()),
+            endpoint=getattr(route, "endpoint", None),
+        )
 
 
 def _session() -> Session:
@@ -157,22 +180,18 @@ def test_physical_model_relock_fails_closed_when_downstream_repair_lock_exists()
 
 
 def test_guarded_technical_route_precedes_legacy_route_and_workflow_routes_are_registered() -> None:
-    routes = list(_iter_leaf_routes(app.routes))
+    routes = list(_iter_effective_routes())
     technical_path = "/api/v1/openings/{opening_id}/technical-search"
     matching = [
         route
         for route in routes
-        if getattr(route, "path", None) == technical_path
-        and "GET" in (getattr(route, "methods", set()) or set())
+        if route.path == technical_path and "GET" in route.methods
     ]
     assert matching
+    assert matching[0].endpoint is not None
     assert matching[0].endpoint.__module__ == "quantifire.api.guarded_technical"
 
-    paths = {
-        getattr(route, "path", "")
-        for route in routes
-        if getattr(route, "path", "")
-    }
+    paths = {route.path for route in routes if route.path}
     assert "/api/v1/estimates/{estimate_id}/workflow" in paths
     assert "/api/v1/estimates/{estimate_id}/workflow/actions/{action}" in paths
     assert "/api/v1/estimates/{estimate_id}/physical-model/lock" in paths
