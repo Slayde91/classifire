@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator
+from typing import Any
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -18,6 +21,16 @@ from quantifire.services.physical_model import (
     create_physical_model_lock,
 )
 from quantifire.services.workflow import WorkflowTransitionError
+
+
+def _iter_leaf_routes(routes: Iterable[Any]) -> Iterator[Any]:
+    """Traverse FastAPI/Starlette route containers without assuming a flat app.routes list."""
+    for route in routes:
+        nested = getattr(route, "routes", None)
+        if nested is not None:
+            yield from _iter_leaf_routes(nested)
+        else:
+            yield route
 
 
 def _session() -> Session:
@@ -144,10 +157,11 @@ def test_physical_model_relock_fails_closed_when_downstream_repair_lock_exists()
 
 
 def test_guarded_technical_route_precedes_legacy_route_and_workflow_routes_are_registered() -> None:
+    routes = list(_iter_leaf_routes(app.routes))
     technical_path = "/api/v1/openings/{opening_id}/technical-search"
     matching = [
         route
-        for route in app.routes
+        for route in routes
         if getattr(route, "path", None) == technical_path
         and "GET" in (getattr(route, "methods", set()) or set())
     ]
@@ -156,7 +170,7 @@ def test_guarded_technical_route_precedes_legacy_route_and_workflow_routes_are_r
 
     paths = {
         getattr(route, "path", "")
-        for route in app.routes
+        for route in routes
         if getattr(route, "path", "")
     }
     assert "/api/v1/estimates/{estimate_id}/workflow" in paths
