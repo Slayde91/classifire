@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import uuid
 from dataclasses import dataclass
 from typing import Any
@@ -14,6 +15,7 @@ from ..canonical_models import (
     PhysicalModelLock,
     RepairStrategy,
     RepairStrategyLock,
+    ServiceOpeningLink,
     SystemRequiredComponent,
 )
 from ..models import Estimate, Opening, TechnicalVariant
@@ -38,7 +40,52 @@ class ParsedPackage15Requirements:
     requirements_hash: str | None
 
 
-_NON_COMPONENT_CATEGORIES = {"OTHER_SYSTEM_REQUIREMENT"}
+# Source-aligned with QUANTIFIRE_System_Derived_Component_Generator_v1_1.
+_FORMULA_BY_CATEGORY = {
+    "WRAP_MATERIAL": "QF-WRAP-LENGTH",
+    "MASTIC_SEALANT": "QF-MASTIC-ANNULAR-VOLUME",
+    "BATT": "QF-BATT-BOARD-AREA",
+    "BOARD": "QF-BATT-BOARD-AREA",
+    "FRAMING": "QF-FRAMING-PROCUREMENT",
+    "MECHANICAL_FIXING": "QF-FIXING-COUNT",
+    "PIGTAIL_FIXING": "QF-FIXING-COUNT",
+    "CABLE_TIE": "QF-FIXING-COUNT",
+    "MORTAR": "QF-MORTAR-VOLUME",
+    "COLLAR": "QF-EACH",
+    "SUPPORT": "QF-EACH",
+    "BACKING": "QF-LENGTH",
+    "SLEEVE": "QF-EACH",
+    "LABEL": "QF-EACH",
+    "QA_DOCUMENTATION": "QF-EACH",
+    "PREPARATION_CLEANUP": "QF-ACTIVITY",
+    "OTHER_SYSTEM_REQUIREMENT": "QF-EXPERT-ESTIMATE",
+}
+_SERVICE_SPECIFIC_CATEGORIES = {
+    "WRAP_MATERIAL",
+    "CABLE_TIE",
+    "COLLAR",
+    "PIGTAIL_FIXING",
+    "MECHANICAL_FIXING",
+    "MASTIC_SEALANT",
+    "SLEEVE",
+    "SUPPORT",
+}
+_ACTIVITY_TO_CATEGORY = {
+    "WRAP": "WRAP_MATERIAL",
+    "TIE": "CABLE_TIE",
+    "COLLAR": "COLLAR",
+    "PIGTAIL": "PIGTAIL_FIXING",
+    "MECHANICAL_FIXING": "MECHANICAL_FIXING",
+    "MASTIC": "MASTIC_SEALANT",
+    "SEAL": "MASTIC_SEALANT",
+    "BATT": "BATT",
+    "BOARD": "BOARD",
+    "MORTAR": "MORTAR",
+    "BACKING": "BACKING",
+    "FRAMING": "FRAMING",
+    "SUPPORT": "SUPPORT",
+    "SLEEVE": "SLEEVE",
+}
 
 
 def _canonical(payload: Any) -> str:
@@ -104,6 +151,23 @@ def _active_physical_lock(db: Session, estimate_id: str, opening_id: str) -> Phy
     raise RepairStrategyError("No active Physical Model Lock covers this opening.")
 
 
+def _candidate_status(hits: list[dict[str, Any]], mixed_receipt: dict[str, Any] | None) -> str:
+    if mixed_receipt is not None:
+        return "PROVISIONAL_TECHNICAL_HYPOTHESIS"
+    comparisons = {
+        str(result).upper()
+        for hit in hits
+        for result in (hit.get("comparisons") or {}).values()
+    }
+    if "MISMATCH" in comparisons:
+        return "REJECTED_KNOWN_MISMATCH"
+    if "UNKNOWN" in comparisons:
+        return "PROVISIONAL_TECHNICAL_HYPOTHESIS"
+    if comparisons and comparisons <= {"MATCH", "NOT APPLICABLE", "NOT_APPLICABLE"}:
+        return "CONFIRMED_TECHNICAL_MATCH"
+    return "PROVISIONAL_TECHNICAL_HYPOTHESIS"
+
+
 def _candidate_search_receipt(db: Session, opening: Opening, variant: TechnicalVariant) -> dict[str, Any]:
     result = search_for_opening(db, opening, limit=100)
     hits: list[dict[str, Any]] = []
@@ -149,6 +213,7 @@ def _candidate_search_receipt(db: Session, opening: Opening, variant: TechnicalV
         "selected_candidate_hits": hits,
         "mixed_service_receipt": mixed_receipt,
         "critical_blockers": critical_blockers,
+        "candidate_status": _candidate_status(hits, mixed_receipt),
     }
 
 
@@ -167,9 +232,11 @@ def _materialize_candidate_requirements(
             "opening_id": opening.id,
             "candidate_id": variant.variant_id,
             "category": _norm(str(requirement.get("category") or "OTHER_SYSTEM_REQUIREMENT")),
-            "description": str(requirement.get("description") or "").strip() or "Unstated Package 15 requirement",
+            "description": str(requirement.get("description") or "").strip()
+            or "Unstated Package 15 requirement",
             "source_field": requirement.get("source_field"),
-            "source_document_id": requirement.get("source_document_id") or variant.source_document_reference,
+            "source_document_id": requirement.get("source_document_id")
+            or variant.source_document_reference,
             "source_page": requirement.get("source_page") or variant.source_page,
             "source_row": requirement.get("source_row"),
             "mandatory": bool(requirement.get("mandatory", True)),
@@ -223,10 +290,15 @@ def select_repair_strategy(
         ).limit(1)
     )
     if active_lock:
-        raise RepairStrategyError("Repair Strategy is already locked and cannot be changed without controlled invalidation.")
+        raise RepairStrategyError(
+            "Repair Strategy is already locked and cannot be changed without controlled invalidation."
+        )
 
     strategy = db.scalar(
-        select(RepairStrategy).where(RepairStrategy.opening_id == opening.id).order_by(RepairStrategy.created_at.desc()).limit(1)
+        select(RepairStrategy)
+        .where(RepairStrategy.opening_id == opening.id)
+        .order_by(RepairStrategy.created_at.desc())
+        .limit(1)
     )
     if strategy is None:
         strategy = RepairStrategy(opening_id=opening.id)
@@ -256,6 +328,7 @@ def select_repair_strategy(
         "exclusions": list(parsed.exclusions),
         "candidate_requirement_ids": sorted(item.id for item in requirement_records),
         "expert_review_required": bool(variant.expert_review_required),
+        "candidate_status": search_receipt["candidate_status"],
         "search_receipt": search_receipt,
     }
     strategy.status = "candidate_selected"
@@ -265,29 +338,48 @@ def select_repair_strategy(
     return strategy
 
 
+def _activity_category(activity: str) -> str | None:
+    normalized = _norm(activity)
+    for token, category in _ACTIVITY_TO_CATEGORY.items():
+        if token in normalized:
+            return category
+    if any(token in normalized for token in ("INSPECTION", "PHOTOGRAPHY", "REGISTER", "LABEL")):
+        return "QA_DOCUMENTATION"
+    if any(token in normalized for token in ("PREPARE", "CLEANUP", "REMOVE", "WASTE")):
+        return "PREPARATION_CLEANUP"
+    return None
+
+
 def _labour_codes_for_category(category: str, activities: tuple[str, ...]) -> list[str]:
-    category = _norm(category)
-    tokens: dict[str, tuple[str, ...]] = {
-        "BATT": ("BATT",),
-        "MASTIC_SEALANT": ("MASTIC", "SEAL_SURFACE", "SEAL_DEPTH"),
-        "PIGTAIL_FIXING": ("PIGTAIL",),
-        "MECHANICAL_FIXING": ("MECHANICAL_FIXING",),
-        "SUPPORT": ("SERVICE_SUPPORT",),
-        "QA_DOCUMENTATION": ("INSPECTION", "PHOTOGRAPHY", "REGISTER"),
-        "PREPARATION_CLEANUP": ("PREPARE_", "CLEANUP"),
-        "FRAMING": ("FRAMING",),
-        "WRAP_MATERIAL": ("WRAP",),
-        "MORTAR": ("MORTAR",),
-        "CABLE_TIE": ("CABLE_TIE", "TIE_SPACING"),
-        "COLLAR": ("COLLAR",),
-        "BACKING": ("BACKING",),
-        "BOARD": ("BOARD",),
-    }
-    wanted = tokens.get(category, ())
     return sorted(
         activity
         for activity in activities
-        if any(token in _norm(activity) for token in wanted)
+        if _activity_category(activity) == _norm(category)
+    )
+
+
+def _opening_service_ids(db: Session, opening_id: str) -> list[str]:
+    return sorted(
+        {
+            item
+            for item in db.scalars(
+                select(ServiceOpeningLink.service_id).where(
+                    ServiceOpeningLink.opening_id == opening_id
+                )
+            ).all()
+            if item
+        }
+    )
+
+
+def _wrap_layer_count(description: str) -> int:
+    return (
+        2
+        if re.search(
+            r"(?:second|2(?:nd)?|two)\s+(?:wrap\s+)?layer|2\s+layers",
+            description.lower(),
+        )
+        else 1
     )
 
 
@@ -296,34 +388,81 @@ def _materialize_system_components(
     opening: Opening,
     variant: TechnicalVariant,
     parsed: ParsedPackage15Requirements,
+    *,
+    candidate_status: str,
 ) -> list[SystemRequiredComponent]:
+    """Persist requirement-level v2.13 SystemRequiredComponent records.
+
+    This mirrors the Package 18 v1.1 generator semantics: every mandatory,
+    non-exclusion requirement becomes a controlled component; service-specific
+    categories expand per Service; two-layer wrap requirements expand per layer;
+    and each record carries an executable quantity formula identifier.
+    """
+    service_ids = _opening_service_ids(db, opening.id)
     components: list[SystemRequiredComponent] = []
-    for category in parsed.component_categories:
-        if category in _NON_COMPONENT_CATEGORIES:
+
+    for index, requirement in enumerate(parsed.requirements, 1):
+        if bool(requirement.get("exclusion", False)) or not bool(
+            requirement.get("mandatory", True)
+        ):
             continue
-        component_id = _stable_uuid("system-component", opening.id, variant.variant_id, category)
-        component = db.get(SystemRequiredComponent, component_id)
-        values = {
-            "opening_id": opening.id,
-            "service_id": None,
-            "candidate_id": variant.variant_id,
-            "category": category,
-            "description": f"Package 15 required component category: {category}",
-            "technical_requirement_id": f"P15CAT:{variant.variant_id}:{category}"[:300],
-            "quantity_formula_id": None,
-            "required_labour_activity_ids": _labour_codes_for_category(category, parsed.labour_activities),
-            "candidate_status": "RETAINED_TECHNICAL_REQUIREMENT",
-            "mandatory": True,
-        }
-        if component is None:
-            component = SystemRequiredComponent(id=component_id, **values)
-            db.add(component)
-        else:
-            for key, value in values.items():
-                setattr(component, key, value)
-        components.append(component)
+
+        category = _norm(str(requirement.get("category") or "OTHER_SYSTEM_REQUIREMENT"))
+        requirement_id = str(requirement.get("requirement_id") or f"REQ-{index:04d}")
+        base_description = str(requirement.get("description") or "").strip() or (
+            "Unstated Package 15 requirement"
+        )
+        targets: list[str | None] = (
+            list(service_ids)
+            if category in _SERVICE_SPECIFIC_CATEGORIES and service_ids
+            else [None]
+        )
+        layer_count = _wrap_layer_count(base_description) if category == "WRAP_MATERIAL" else 1
+
+        for service_id in targets:
+            for layer in range(1, layer_count + 1):
+                component_id = _stable_uuid(
+                    "system-component",
+                    opening.id,
+                    variant.variant_id,
+                    requirement_id,
+                    service_id or "opening",
+                    str(layer),
+                )
+                component = db.get(SystemRequiredComponent, component_id)
+                description = (
+                    f"{base_description} — layer {layer}"
+                    if layer_count > 1
+                    else base_description
+                )
+                values = {
+                    "opening_id": opening.id,
+                    "service_id": service_id,
+                    "candidate_id": variant.variant_id,
+                    "category": category,
+                    "description": description,
+                    "technical_requirement_id": requirement_id[:300],
+                    "quantity_formula_id": _FORMULA_BY_CATEGORY.get(
+                        category, "QF-EXPERT-ESTIMATE"
+                    ),
+                    "required_labour_activity_ids": _labour_codes_for_category(
+                        category, parsed.labour_activities
+                    ),
+                    "candidate_status": candidate_status,
+                    "mandatory": True,
+                }
+                if component is None:
+                    component = SystemRequiredComponent(id=component_id, **values)
+                    db.add(component)
+                else:
+                    for key, value in values.items():
+                        setattr(component, key, value)
+                components.append(component)
+
     if not components:
-        raise RepairStrategyError("Package 15 candidate produced no controlled SystemRequiredComponent records.")
+        raise RepairStrategyError(
+            "Package 15 candidate produced no controlled SystemRequiredComponent records."
+        )
     db.flush()
     return components
 
@@ -336,41 +475,58 @@ def create_repair_strategy_lock(
     require_estimate_action(db, estimate, WorkflowAction.LOCK_REPAIR_STRATEGY)
 
     strategy = db.scalar(
-        select(RepairStrategy).where(
+        select(RepairStrategy)
+        .where(
             RepairStrategy.opening_id == opening.id,
             RepairStrategy.status.in_(["candidate_selected", "locked"]),
-        ).order_by(RepairStrategy.created_at.desc()).limit(1)
+        )
+        .order_by(RepairStrategy.created_at.desc())
+        .limit(1)
     )
     if not strategy or not strategy.selected_technical_variant_id or not strategy.candidate_id:
-        raise RepairStrategyError("A selected Package 15 Repair Strategy is required before locking.")
+        raise RepairStrategyError(
+            "A selected Package 15 Repair Strategy is required before locking."
+        )
 
     physical_lock = _active_physical_lock(db, estimate.id, opening.id)
     if strategy.physical_model_lock_id != physical_lock.id:
         raise RepairStrategyError(
-            "Selected Repair Strategy was derived from a superseded Physical Model Lock; rerun opening-specific technical search."
+            "Selected Repair Strategy was derived from a superseded Physical Model Lock; "
+            "rerun opening-specific technical search."
         )
 
     variant = db.get(TechnicalVariant, strategy.selected_technical_variant_id)
     if not variant or variant.variant_id != strategy.candidate_id:
-        raise RepairStrategyError("Selected Repair Strategy technical variant is missing or inconsistent.")
+        raise RepairStrategyError(
+            "Selected Repair Strategy technical variant is missing or inconsistent."
+        )
 
     parsed = parse_package15_requirements(variant)
-    components = _materialize_system_components(db, opening, variant, parsed)
+    technical_basis = strategy.technical_basis or {}
+    candidate_status = str(
+        technical_basis.get("candidate_status") or "PROVISIONAL_TECHNICAL_HYPOTHESIS"
+    )
+    components = _materialize_system_components(
+        db,
+        opening,
+        variant,
+        parsed,
+        candidate_status=candidate_status,
+    )
     component_ids = sorted(item.id for item in components)
 
-    technical_basis = strategy.technical_basis or {}
     search_receipt = technical_basis.get("search_receipt") or {}
     mismatches = list(search_receipt.get("critical_blockers") or [])
-    unmapped_labour = sorted(
-        set(parsed.labour_activities)
-        - {
-            activity
-            for component in components
-            for activity in (component.required_labour_activity_ids or [])
-        }
-    )
+    mapped_labour = {
+        activity
+        for component in components
+        for activity in (component.required_labour_activity_ids or [])
+    }
+    unmapped_labour = sorted(set(parsed.labour_activities) - mapped_labour)
     if unmapped_labour:
-        mismatches.append("Unmapped Package 15 labour activities: " + ", ".join(unmapped_labour))
+        mismatches.append(
+            "Unmapped Package 15 labour activities: " + ", ".join(unmapped_labour)
+        )
 
     payload = {
         "schema": "QUANTIFIRE-RepairStrategyLock-v2.13",
@@ -378,14 +534,18 @@ def create_repair_strategy_lock(
         "repair_strategy_id": strategy.id,
         "physical_model_lock_id": strategy.physical_model_lock_id,
         "candidate_id": variant.variant_id,
+        "candidate_status": candidate_status,
         "variant_content_hash": variant.source_hash,
         "requirements_hash": parsed.requirements_hash,
         "required_component_ids": component_ids,
         "component_rows": [
             {
                 "id": item.id,
+                "service_id": item.service_id,
                 "category": item.category,
+                "description": item.description,
                 "technical_requirement_id": item.technical_requirement_id,
+                "quantity_formula_id": item.quantity_formula_id,
                 "required_labour_activity_ids": item.required_labour_activity_ids or [],
             }
             for item in sorted(components, key=lambda row: row.id)
@@ -406,15 +566,22 @@ def create_repair_strategy_lock(
         if existing.content_hash == content_hash:
             return existing, False, components
         raise RepairStrategyError(
-            "An active Repair Strategy Lock already exists with different content; controlled invalidation is required."
+            "An active Repair Strategy Lock already exists with different content; "
+            "controlled invalidation is required."
         )
 
-    validator_result = "CONDITIONED" if variant.expert_review_required or mismatches else "PASS"
+    validator_result = (
+        "CONDITIONED"
+        if variant.expert_review_required
+        or mismatches
+        or candidate_status != "CONFIRMED_TECHNICAL_MATCH"
+        else "PASS"
+    )
     lock = RepairStrategyLock(
         opening_id=opening.id,
         repair_strategy_id=strategy.id,
         candidate_id=variant.variant_id,
-        candidate_status="APPROVED_WITH_EXPERT_REVIEW" if variant.expert_review_required else "APPROVED",
+        candidate_status=candidate_status,
         required_component_ids=component_ids,
         dependencies=list(parsed.dependencies),
         mismatches=mismatches,
