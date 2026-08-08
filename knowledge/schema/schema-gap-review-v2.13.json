@@ -1,0 +1,52 @@
+{
+  "gate": "SCHEMA_GAP_REVIEW_REQUIRED",
+  "status": "REVIEW_COMPLETE",
+  "source_release": "QUANTIFIRE v2.13",
+  "package02_sha256": "4c2f381870f108d9b40c1296f290b5ca6608b575e896f1348abf4b517b5c8f4a",
+  "package18_sha256": "430aacd9c973af84de847cebee6687e698190d74c0d1676ad03b65dd346ff99d",
+  "production_authority": false,
+  "critical_findings": [
+    "Current Service is owned by one Opening through opening_id, but Package 02 v2.13 requires one Service to be able to pass through several Openings and one Opening to contain several Services. Add canonical ServiceOpeningLink and migrate away from single-opening ownership semantics.",
+    "Current Opening stores defect_id as an untyped string; Package 02 v2.13 requires Defect as a canonical entity distinct from Opening, Service, report row and photograph.",
+    "Current Opening.selected_technical_variant_id jumps directly from Opening to a technical variant. v2.13 requires candidate requirements, Repair Strategy Lock and component derivation before commercial pricing. Retain only as legacy compatibility until the new lock pipeline is active.",
+    "Current EstimateLine carries quantity, rate, pricing method and recovery status together. v2.13 requires Pricing Component, Quantity, Commercial Method Lock and Commercial Recovery to remain distinct controlled records.",
+    "Current LabourComponent is a rate/library component and is not equivalent to a project-scoped Labour Activity.",
+    "TechnicalVariant.component_requirements JSON is useful source data but does not replace parsed Package15CandidateRequirement and SystemRequiredComponent records required for auditable reconciliation."
+  ],
+  "decisions": [
+    {"concept":"Project","decision":"EXTEND_EXISTING","current":"Project","reason":"Existing canonical project table is a sound base; add/relate configuration, evidence, participants and lifecycle controls rather than replacing it."},
+    {"concept":"Defect","decision":"ADD_PERSISTED_MODEL","current":"Opening.defect_id string only","reason":"Defect is a canonical physical-condition entity and must not be collapsed into Opening or a source identifier."},
+    {"concept":"Opening","decision":"EXTEND_EXISTING","current":"Opening","reason":"Keep current table but remove single-service ownership assumptions, link canonical Defect/evidence, and use ServiceOpeningLink."},
+    {"concept":"Service","decision":"EXTEND_EXISTING","current":"Service with opening_id","reason":"Service identity must survive across several Openings; decouple from a single Opening and add many-to-many link records."},
+    {"concept":"ServiceOpeningLink","decision":"ADD_PERSISTED_MODEL","current":"none","reason":"Required to represent many Services to many Openings without collapsing physical identity."},
+    {"concept":"EvidenceSource","decision":"ADD_PERSISTED_MODEL","current":"StoredFile and TechnicalDocument are evidence objects, not Evidence Source","reason":"Package 02 requires source provenance/authority/chain-of-custody context distinct from the evidence object itself."},
+    {"concept":"RepairStrategy","decision":"ADD_PERSISTED_MODEL","current":"TechnicalVariant is not equivalent","reason":"Repair Strategy is the controlled project/opening-specific engineering selection and must remain distinct from proprietary-system evidence and price rows."},
+    {"concept":"PricingComponent","decision":"ADD_PERSISTED_MODEL","current":"EstimateLine partially overlaps","reason":"Pricing Component is the smallest cost-bearing element; EstimateLine should remain a summarised commercial/output line rather than collapse component identity."},
+    {"concept":"Quantity","decision":"ADD_PERSISTED_MODEL","current":"quantities are embedded in EstimateLine and other records","reason":"v2.13 requires independently traceable quantity identity, source, method, units, precision, factors and epistemic status."},
+    {"concept":"LabourActivity","decision":"ADD_PERSISTED_MODEL","current":"LabourComponent is a library/rate entity","reason":"Project-scoped work activities require their own identity, output, crew, productivity basis and quantity."},
+    {"concept":"AuditTrail","decision":"ADD_PERSISTED_MODEL","current":"AuditEvent provides event foundation","reason":"Create AuditTrail grouping/canonical identity and retain/extend AuditEvent as append-only child events with exact versions, transaction/correlation, result, security and integrity sequencing."},
+    {"concept":"PhysicalModelLock","decision":"ADD_PERSISTED_MODEL","current":"none","reason":"Required Package 18 lock and hard stage boundary before technical/commercial processing."},
+    {"concept":"RepairStrategyLock","decision":"ADD_PERSISTED_MODEL","current":"none","reason":"Required to freeze the technically selected candidate and required components before price selection."},
+    {"concept":"CommercialMethodLock","decision":"ADD_PERSISTED_MODEL","current":"EstimateLine.pricing_method is insufficient","reason":"Pricing method selection is a controlled per-component lock with validator outcome and content hash."},
+    {"concept":"CommercialRecoveryRecord","decision":"ADD_PERSISTED_MODEL","current":"EstimateLine.commercial_recovery_status is insufficient","reason":"Recovery must be independently auditable per required component/economic activity and protect against double recovery."},
+    {"concept":"ComponentRequirementReconciliation","decision":"ADD_PERSISTED_MODEL","current":"none","reason":"Required to prove every technical required component maps to generated quantity, labour, pricing and recovery records."},
+    {"concept":"EstimateCertificate","decision":"ADD_PERSISTED_MODEL","current":"Estimate.snapshot_hash is a useful base but not a certificate","reason":"Certificate has distinct manifest/gate/workbook/proposal hashes, validator identity and final hash/signature."},
+    {"concept":"GateEvidence","decision":"ADD_PERSISTED_MODEL","current":"RuleEvaluation/Approval are not equivalent","reason":"Blocking validator gates require immutable evidence records with input hashes, run ID, counts and validator result."},
+    {"concept":"Package15CandidateRequirement","decision":"ADD_PERSISTED_MODEL","current":"TechnicalVariant.component_requirements JSON only","reason":"Parsed candidate requirements require source locator, mandatory/exclusion status and opening/candidate identity."},
+    {"concept":"PriceAnomalyReview","decision":"ADD_PERSISTED_MODEL","current":"none","reason":"Duplicate/equal-price anomaly review can block release and must be attributable/auditable."},
+    {"concept":"ProductivitySource","decision":"ADD_PERSISTED_MODEL","current":"LabourComponent.productivity_source is free text","reason":"v2.13 requires structured source values, decomposition/adjustment formulas, evidence class, confidence and approval status."},
+    {"concept":"ProposalCommercialValidityResult","decision":"ADD_RUNTIME_SCHEMA_ONLY","current":"none","reason":"Keep as immutable validator result in the validated snapshot/gate evidence; a dedicated relational table is not required initially."},
+    {"concept":"QuantityFormulaInput","decision":"ADD_PERSISTED_MODEL","current":"none","reason":"Exact formula inputs/evidence/assumptions must remain traceable to each Quantity record."},
+    {"concept":"ServiceMaterialHypothesis","decision":"ADD_PERSISTED_MODEL","current":"Service.material/evidence_status/confidence partially overlap","reason":"Material uncertainty must retain competing/evidence-backed hypotheses and consequences rather than overwrite one Service.material value."},
+    {"concept":"SystemRequiredComponent","decision":"ADD_PERSISTED_MODEL","current":"TechnicalVariant.component_requirements JSON partially overlaps","reason":"Required components are project/opening/candidate-specific controlled records driving quantity, labour and commercial reconciliation."}
+  ],
+  "migration_groups": [
+    {"group":"A_PHYSICAL_CANONICAL","items":["Defect","ServiceOpeningLink","EvidenceSource","Service changes","Opening changes"]},
+    {"group":"B_TECHNICAL_LOCKS","items":["RepairStrategy","Package15CandidateRequirement","PhysicalModelLock","RepairStrategyLock","SystemRequiredComponent","ServiceMaterialHypothesis"]},
+    {"group":"C_QUANTITY_LABOUR","items":["Quantity","QuantityFormulaInput","ProductivitySource","LabourActivity"]},
+    {"group":"D_COMMERCIAL_CONTROL","items":["PricingComponent","CommercialMethodLock","CommercialRecoveryRecord","ComponentRequirementReconciliation","PriceAnomalyReview"]},
+    {"group":"E_VALIDATION_RELEASE","items":["AuditTrail","GateEvidence","EstimateCertificate","ProposalCommercialValidityResult runtime schema"]}
+  ],
+  "next_gate": "SCHEMA_MIGRATION_DESIGN_APPROVED",
+  "next_action": "Design additive Alembic migrations and compatibility/backfill plan in the migration-group order. Do not drop or destructively rewrite legacy fields in the first migration."
+}
