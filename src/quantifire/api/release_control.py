@@ -14,7 +14,11 @@ from ..db import get_db
 from ..models import Estimate, User
 from ..outputs import render_estimate_pdf, render_proposal_workbook, render_technical_workbook
 from ..security import require_permission
-from ..services.validated_snapshot import ValidatedSnapshotError, lock_validated_snapshot
+from ..services.validated_snapshot import (
+    SNAPSHOT_SCHEMA,
+    ValidatedSnapshotError,
+    lock_validated_snapshot,
+)
 from ..services.validation import (
     IndependentValidationError,
     latest_passing_gate,
@@ -83,7 +87,6 @@ def lock_validated_estimate(
 ) -> dict[str, Any]:
     estimate = _estimate(db, estimate_id)
     try:
-        # Re-check the current validation fingerprint even when an older snapshot exists.
         gate = latest_passing_gate(db, estimate)
         snapshot, created = lock_validated_snapshot(db, estimate)
     except (WorkflowTransitionError, IndependentValidationError, ValidatedSnapshotError) as exc:
@@ -134,6 +137,11 @@ def export_validated_estimate(
     snapshot = estimate.snapshot_json
     if not snapshot or not estimate.snapshot_hash:
         raise HTTPException(status_code=409, detail="Validated snapshot is missing")
+    if snapshot.get("schema") != SNAPSHOT_SCHEMA:
+        raise HTTPException(status_code=409, detail="Only the canonical v2.13 validated snapshot may be exported")
+    certificate_hash = (snapshot.get("estimate_certificate") or {}).get("final_certificate_hash")
+    if not certificate_hash:
+        raise HTTPException(status_code=409, detail="Validated snapshot has no EstimateCertificate hash")
     if snapshot.get("validation_state_hash") != str(gate.run_id or "").removeprefix("QF-IV:"):
         raise HTTPException(
             status_code=409,
@@ -182,6 +190,7 @@ def export_validated_estimate(
             "artifact_sha256": artifact_hash,
             "snapshot_hash": estimate.snapshot_hash,
             "validation_gate_id": gate.id,
+            "certificate_hash": certificate_hash,
         },
         reason="Render controlled output from validated immutable snapshot",
     )
