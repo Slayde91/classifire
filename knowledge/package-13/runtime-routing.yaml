@@ -1,22 +1,25 @@
-release_id: QF-KNOWLEDGE-ROUTING-v0.1-dev
-status: DEVELOPMENT
+release_id: QF-KNOWLEDGE-ROUTING-v0.2-dev
+status: DEVELOPMENT_BLOCKED
 production_authority: false
-source:
-  package: 13
-  document_id: PFEOS-RUNTIME-PACK-13-v2.8
-  source_filename: PFEOS_13_Knowledge_Index_and_Deployment_Manifest_v2.8.txt
-  source_status: ACTIVE
-  chapter_routes: 1522
-  source_profile: PFEOS-AUTONOMOUS-ESTIMATING-NSW-ACT-v1.3
-  migration_note: "This file is a QUANTIFIRE runtime migration artefact; it does not replace or modify the historical source package."
+source_requirement:
+  required_product: QUANTIFIRE
+  required_version: '2.13'
+  required_package: '13'
+  verification_status: PENDING
+  rule: 'No earlier PFEOS or QUANTIFIRE release may be substituted for active v2.13 routing authority.'
+legacy_lineage:
+  pfeos_v2_8:
+    status: HISTORICAL_MIGRATION_REFERENCE_ONLY
+    runtime_authority: false
+    use: 'Compatibility analysis and migration comparison only.'
 authority_order:
   - platform_safety_and_security
-  - quantifire_constitution_and_governance
+  - verified_quantifire_v2_13_constitution_and_governance
   - approved_runtime_profiles
-  - package_13_routing_and_release_manifest
+  - verified_quantifire_v2_13_package_13_routing_and_release_manifest
   - confirmed_project_evidence
-  - package_15_technical_authority
-  - package_14_commercial_authority
+  - verified_quantifire_v2_13_package_15_technical_authority
+  - verified_quantifire_v2_13_package_14_commercial_authority
   - authorised_user_instruction
 hard_stage_order:
   - evidence_intake
@@ -43,16 +46,17 @@ negative_routing:
   output:
     deny: [recalculation, technical_selection, pricing_mutation]
 package_authority:
-  package_14: commercial_pricing_only
-  package_15: technical_applicability_only
-  package_16: runtime_policy_pending_split_and_reapproval
+  package_13: BLOCKED_PENDING_VERIFIED_V2_13_SOURCE
+  package_14: COMMERCIAL_ONLY_PENDING_EXACT_V2_13_SOURCE_HASH_VERIFICATION
+  package_15: TECHNICAL_ONLY_PENDING_EXACT_V2_13_SOURCE_HASH_VERIFICATION
+  package_16: BLOCKED_PENDING_VERIFIED_V2_13_SOURCE_AND_PROFILE_SPLIT_REAPPROVAL
 canonical_state:
   owner: quantifire_domain_service
   mission_control_is_canonical: false
   agent_memory_is_canonical: false
   direct_agent_database_writes_allowed: false
 required_runtime_receipts:
-  - source_release_ids
+  - quantifire_v2_13_release_ids
   - source_hashes
   - agent_id
   - run_id
