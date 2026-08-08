@@ -104,9 +104,17 @@ def pinned_productivity_source(
             f"Pinned Labour release contains multiple ProductivitySource records for {activity!r}."
         )
     record = records[0]
-    if (record.approval_status or "").strip().upper() not in {"APPROVED", "ACTIVE", "CURRENT"}:
+    # A superseded record remains valid for an estimate whose immutable Labour
+    # release explicitly pinned that historical version. Runtime authority comes
+    # from the release manifest, not from the record's current lifecycle label.
+    if (record.approval_status or "").strip().upper() not in {
+        "APPROVED",
+        "ACTIVE",
+        "CURRENT",
+        "SUPERSEDED",
+    }:
         raise ReleaseScopeError(
-            f"Pinned ProductivitySource for {activity!r} is not approved."
+            f"Pinned ProductivitySource for {activity!r} was never approved for runtime use."
         )
     if not record.executable_formula_id:
         raise ReleaseScopeError(
