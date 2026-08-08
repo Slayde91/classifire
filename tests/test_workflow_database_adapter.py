@@ -214,18 +214,22 @@ def test_adapter_progresses_through_quantity_commercial_and_validation_records()
             project_id=estimate.project_id,
             estimate_id=estimate.id,
             required_component_id=component.id,
-            quantity_type="material",
+            quantity_type="Calculated Quantity",
             subject_type="system_required_component",
             subject_id=component.id,
             numeric_value=1,
             unit_basis="each",
+            formula_id="QF-EACH",
+            status="validated",
         )
         labour = LabourActivity(
             project_id=estimate.project_id,
             estimate_id=estimate.id,
             required_component_id=component.id,
-            activity_type="installation",
-            activity_name="Install firestop material",
+            activity_type="Installation",
+            activity_name="LAB-001",
+            labour_quantity_hours=1,
+            status="validated",
         )
         db.add_all([quantity, labour])
         db.flush()
