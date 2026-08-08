@@ -106,26 +106,33 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
     valid_physical_locks = [
         item for item in physical_locks if _norm(item.validator_result) in _VALID_LOCK_RESULTS
     ]
+    valid_physical_lock_ids = {item.id for item in valid_physical_locks}
     physical_model_locked = bool(valid_physical_locks)
 
     strategies = []
-    if opening_ids:
+    if opening_ids and valid_physical_lock_ids:
         strategies = list(
             db.scalars(
-                select(RepairStrategy).where(RepairStrategy.opening_id.in_(opening_ids))
+                select(RepairStrategy).where(
+                    RepairStrategy.opening_id.in_(opening_ids),
+                    RepairStrategy.physical_model_lock_id.in_(valid_physical_lock_ids),
+                    RepairStrategy.status.in_(["candidate_selected", "locked"]),
+                )
             ).all()
         )
     strategy_opening_ids = {item.opening_id for item in strategies}
+    valid_strategy_ids = {item.id for item in strategies}
     technical_search_complete = bool(openings) and all(
         opening_id in strategy_opening_ids for opening_id in opening_ids
     )
 
     repair_locks = []
-    if opening_ids:
+    if opening_ids and valid_strategy_ids:
         repair_locks = list(
             db.scalars(
                 select(RepairStrategyLock).where(
                     RepairStrategyLock.opening_id.in_(opening_ids),
+                    RepairStrategyLock.repair_strategy_id.in_(valid_strategy_ids),
                     RepairStrategyLock.invalidated_at.is_(None),
                 )
             ).all()
@@ -321,7 +328,7 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
         "opening_count": len(openings),
         "service_opening_link_count": len(links),
         "valid_physical_model_lock_count": len(valid_physical_locks),
-        "repair_strategy_count": len(strategies),
+        "current_repair_strategy_count": len(strategies),
         "valid_repair_strategy_lock_count": len(valid_repair_locks),
         "required_component_count": len(components),
         "quantity_covered_component_count": len(quantity_component_ids & component_ids),
@@ -334,6 +341,8 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
         "gate_evidence_count": len(gate_records),
         "final_independent_validation_gate_count": len(final_validation_records),
         "fail_closed_notes": [
+            "Only Repair Strategies tied to an active valid Physical Model Lock count as current.",
+            "Only Repair Strategy Locks tied to a current Repair Strategy count as valid.",
             "Output rendering is complete only when a render_output audit event is retained.",
             "Human release is complete only when an approved release Approval record is retained.",
             "Narrative or legacy status text is never treated as a lock or validation receipt.",
