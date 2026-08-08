@@ -46,7 +46,7 @@ Write-Host "Backed up OpenClaw config to $backupFile" -ForegroundColor DarkYello
 
 foreach ($id in $agentIds) {
     Write-Host "Hardening $id..." -ForegroundColor Cyan
-    $base = "agents.entries.$id"
+    $base = 'agents.entries["' + $id + '"]'
 
     & $openclaw.Source config set "$base.tools.profile" "minimal" | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "Failed to set minimal tool profile for $id." }
@@ -79,7 +79,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "OpenClaw configuration validation failed. Restore $backupFile if required."
 }
 
-Write-Host "" 
+Write-Host ""
 Write-Host "CLASSIFIRE OpenClaw hardening applied." -ForegroundColor Green
 Write-Host "All cf-* agents now use:" -ForegroundColor Green
 Write-Host " - tools.profile = minimal"
