@@ -1,0 +1,10 @@
+﻿{% extends "base.html" %}
+{% block title %}Technical systems â€” QUANTIFIRE{% endblock %}
+{% block heading %}Technical system library{% endblock %}
+{% block content %}
+<div class="callout"><strong>Technical authority control.</strong> Editing creates a Draft QUANTIFIRE revision. The imported source variant remains unchanged. Draft revisions require technical review and approval before activation.</div>
+<div class="toolbar"><form method="get" class="inline-form"><input name="q" value="{{ q }}" placeholder="Variant, system, service, material, substrate, FRL or source"><select name="status"><option value="">All statuses</option>{% for s in ['active','draft','in_review','rejected','superseded','retired'] %}<option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s.replace('_',' ')|title }}</option>{% endfor %}</select><button class="button button-secondary">Search</button></form></div>
+<section class="panel"><div class="panel-head"><h2>Variant register</h2><span class="muted">Active {{ counts.get('active',0) }} Â· Draft {{ counts.get('draft',0) }} Â· In review {{ counts.get('in_review',0) }}</span></div><div class="table-wrap"><table><thead><tr><th>Variant</th><th>System</th><th>Service</th><th>Substrate</th><th>FRL</th><th>Source</th><th>Status</th><th></th></tr></thead><tbody>
+{% for v in variants %}<tr><td class="mono">{{ v.variant_id }}</td><td class="mono">{{ v.system_id }}</td><td>{{ v.service_type or 'â€”' }}<div class="muted small">{{ v.service_material or '' }}</div></td><td>{{ v.substrate_type or 'â€”' }}</td><td>{{ v.frl or 'â€”' }}</td><td>{{ v.source_document_reference or 'â€”' }} {{ v.source_page or '' }}</td><td><span class="badge badge-{{ v.status }}">{{ v.status }}</span></td><td><a class="button button-small button-secondary" href="/technical/variants/{{ v.id }}">View</a></td></tr>{% else %}<tr><td colspan="8" class="empty">No technical variants match the filter.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}
