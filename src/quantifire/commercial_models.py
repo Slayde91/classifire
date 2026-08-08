@@ -5,9 +5,33 @@ from typing import Any
 
 from sqlalchemy import Boolean, ForeignKey, JSON, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.types import TypeDecorator
 
 from .canonical_models import CanonicalV213RecordMixin
 from .db import Base
+
+
+def _json_safe(value: Any) -> Any:
+    """Convert canonical runtime values to deterministic JSON-safe values at bind time."""
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_json_safe(item) for item in value]
+    if hasattr(value, "isoformat") and callable(value.isoformat):
+        return value.isoformat()
+    return value
+
+
+class JSONSafe(TypeDecorator):
+    """JSON storage that preserves Decimal precision as strings instead of floats."""
+
+    impl = JSON
+    cache_ok = True
+
+    def process_bind_param(self, value: Any, dialect: Any) -> Any:
+        return _json_safe(value)
 
 
 class Quantity(CanonicalV213RecordMixin, Base):
@@ -38,7 +62,7 @@ class Quantity(CanonicalV213RecordMixin, Base):
     confidence: Mapped[str | None] = mapped_column(String(80))
     risk_status: Mapped[str | None] = mapped_column(String(80))
     status: Mapped[str] = mapped_column(String(50), default="draft", nullable=False)
-    provenance: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    provenance: Mapped[dict[str, Any] | None] = mapped_column(JSONSafe())
 
 
 class QuantityFormulaInput(CanonicalV213RecordMixin, Base):
@@ -48,7 +72,7 @@ class QuantityFormulaInput(CanonicalV213RecordMixin, Base):
 
     quantity_record_id: Mapped[str] = mapped_column(ForeignKey("quantities.id"), index=True, nullable=False)
     input_name: Mapped[str] = mapped_column(String(200), nullable=False)
-    input_value: Mapped[Any] = mapped_column(JSON, nullable=False)
+    input_value: Mapped[Any] = mapped_column(JSONSafe(), nullable=False)
     unit: Mapped[str] = mapped_column(String(80), nullable=False)
     evidence_class: Mapped[str | None] = mapped_column(String(80))
     evidence_ids: Mapped[list[str] | None] = mapped_column(JSON)
