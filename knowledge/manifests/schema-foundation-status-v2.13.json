@@ -1,0 +1,48 @@
+{
+  "source_release": "QUANTIFIRE v2.13",
+  "phase": "canonical schema migration",
+  "production_authority": false,
+  "completed": {
+    "0003_canonical_physical_technical_foundation": {
+      "gate": "SCHEMA_TEST_PASS_PHYSICAL_TECHNICAL_FOUNDATION",
+      "status": "PASS",
+      "verified_on_development_database": true,
+      "alembic_current": "0003_canonical_physical_technical_foundation",
+      "required_tables_verified": [
+        "defects",
+        "evidence_sources",
+        "package15_candidate_requirements",
+        "physical_model_locks",
+        "repair_strategies",
+        "repair_strategy_locks",
+        "service_material_hypotheses",
+        "service_opening_links",
+        "system_required_components"
+      ],
+      "legacy_compatibility_verified": {
+        "openings": ["defect_id", "canonical_defect_id"],
+        "services": ["opening_id", "primary_opening_legacy"]
+      },
+      "metadata_registration": "PASS"
+    }
+  },
+  "next": {
+    "migration": "0004_quantity_commercial_validation_foundation",
+    "status": "PENDING_LIVE_DATABASE_TEST",
+    "scope": [
+      "Quantity",
+      "QuantityFormulaInput",
+      "ProductivitySource",
+      "LabourActivity",
+      "PricingComponent",
+      "CommercialMethodLock",
+      "CommercialRecoveryRecord",
+      "ComponentRequirementReconciliation",
+      "PriceAnomalyReview",
+      "GateEvidence",
+      "EstimateCertificate",
+      "AuditTrail"
+    ]
+  },
+  "note": "ProposalCommercialValidityResult remains a runtime validated-snapshot contract at this stage and is not persisted as a standalone table."
+}
