@@ -1,17 +1,7 @@
-source_package,source_role,target_runtime_form,primary_owner,agent_access,runtime_rule
-01,Constitution and corpus governance,constitutional policy + state/gate rules,domain service + validator,orchestrator;validator;governance,never silently mutate approved behaviour
-02,Canonical ontology,schemas + relationships + database constraints,domain service,all via typed schemas,Defect->Services->Openings->Links->Components->Recovery->Pricing
-03,Evidence/physical/repair workflows,evidence schemas + provenance + physical lock rules,evidence/physical services,intake;physical;validator,no pricing before physical lock
-04,Pricing and estimate workflows,commercial decision tables + pricing gates,pricing/recovery services,commercial;validator,no technical inference from pricing
-05,Engineering fundamentals/technical evidence,technical evidence rules,technical service,technical;validator,source evidence controls applicability
-06,Construction/service engineering,service/substrate taxonomy + constraints,physical/technical services,physical;technical;validator,do not infer blank source fields as wildcards
-07,Repair systems/defects/assets,component/repair requirement rules,technical/components services,technical;validator,derive required components from supported repair strategy
-08,Commercial estimating knowledge,labour/productivity/commercial rules,labour/pricing/recovery services,commercial;validator,shared work recovered once
-09,Archetypes/algorithms/reference data,deterministic algorithms + controlled reference data,domain engines,service-specific,LLM does not perform critical arithmetic
-10,Validation/metrics/calibration,executable validation + regression tests,validator/test suite,validator;governance,computed gates only
-11,Custom GPT runtime/security/readiness,OpenClaw-specific rewritten security/runtime controls,OpenClaw config + security model,platform-governance;orchestrator,do not port Custom GPT mechanics blindly
-12,Platform operations/integrations,domain API + audit + integration contracts,domain service + adapters,platform-governance;orchestrator,agents write only through typed tools
-13,Knowledge index/deployment manifest,machine-readable routing + authority + source-hash manifest,knowledge/package-13,orchestrator;validator;governance,routing authority
-14,Pricing source,editable versioned pricing database + immutable releases,pricing database,commercial via tools;validator,commercial authority only
-15,Technical source,editable technical database + immutable releases,technical database,technical via tools;validator,technical applicability authority only
-16,Runtime/data readiness,split release-controlled runtime profiles,knowledge/package-16,role-specific views;validator;governance,reapproval required after split
+source_release,source_role,target_runtime_form,primary_owner,agent_access,runtime_rule,status
+QUANTIFIRE v2.13 Packages 01-12,Core constitutional/ontology/workflow/technical/commercial/validation/platform knowledge,schemas + constraints + decision tables + deterministic services + tests,domain service and validator,role-specific only,Do not substitute earlier PFEOS packages for active v2.13 authority,BLOCKED_PENDING_SOURCE_VERIFICATION
+QUANTIFIRE v2.13 Package 13,Knowledge index/deployment manifest,machine-readable routing + authority + source-hash manifest,knowledge/package-13,orchestrator;validator;governance,Routing authority must derive from verified v2.13 source,BLOCKED_PENDING_SOURCE_VERIFICATION
+QUANTIFIRE Package 14 v2.13,Pricing source,editable versioned pricing database + immutable releases,pricing database,commercial via tools;validator,Commercial authority only; exact file/hash/release required,VERIFY_LOCAL_SOURCE
+QUANTIFIRE Package 15 v2.13,Technical source,editable technical database + immutable releases,technical database,technical via tools;validator,Technical applicability authority only; exact file/hash/release required,VERIFY_LOCAL_SOURCE
+QUANTIFIRE v2.13 Package 16,Runtime/data readiness,split release-controlled runtime profiles,knowledge/package-16,role-specific views;validator;governance,Reapproval required after split and source must be verified v2.13,BLOCKED_PENDING_SOURCE_VERIFICATION
+PFEOS v2.8 corpus,Historical migration lineage only,compatibility/source-lineage records,governance,not runtime authority,May be used only to explain lineage or compare migration changes; never as active substitute,LEGACY_ONLY
