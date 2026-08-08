@@ -2,6 +2,19 @@ param()
 
 $ErrorActionPreference = "Stop"
 $openclaw = Get-Command openclaw -ErrorAction Stop
+$docker = Get-Command docker -ErrorAction Stop
+
+Write-Host "Checking Docker daemon readiness..." -ForegroundColor Cyan
+$dockerStatus = (& $docker.Source info 2>&1 | Out-String)
+if ($LASTEXITCODE -ne 0) {
+    throw (
+        "Docker is installed but the Docker daemon is not reachable. " +
+        "Start Docker Desktop, wait until the Linux engine is running, then confirm 'docker info' succeeds before rerunning this script. " +
+        "No OpenClaw hardening changes have been applied. Docker output: " +
+        $dockerStatus.Trim()
+    )
+}
+Write-Host "Docker daemon is reachable." -ForegroundColor Green
 
 $agentIds = @(
     "cf-orchestrator",
