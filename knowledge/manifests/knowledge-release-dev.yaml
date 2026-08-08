@@ -1,43 +1,42 @@
-release_id: QF-KNOWLEDGE-v0.2-dev
-status: DEVELOPMENT_BLOCKED
+release_id: QF-KNOWLEDGE-v0.3-dev
+status: DEVELOPMENT
 production_authority: false
 required_authority_release:
   product: QUANTIFIRE
   version: '2.13'
-  verification_status: PENDING
+  verification_status: VERIFIED_CONTROLLED_INTAKE
 source_policy:
   active_runtime_sources_must_be_v2_13: true
   earlier_pfeos_sources_runtime_authority: false
   earlier_pfeos_sources_use: 'Historical migration lineage, compatibility analysis and regression comparison only.'
-required_sources:
+verified_sources:
   packages_01_12:
-    required: true
-    expected_product: QUANTIFIRE
-    expected_version: '2.13'
-    status: BLOCKED_PENDING_VERIFIED_SOURCE_FILES
+    status: VERIFIED_CONTROLLED_INTAKE
   package_13:
-    required: true
-    expected_product: QUANTIFIRE
-    expected_version: '2.13'
-    status: BLOCKED_PENDING_VERIFIED_SOURCE_FILE_AND_HASH
+    filename: QUANTIFIRE_13_Knowledge_Index_and_Deployment_Manifest_v2.13.txt
+    sha256: 20a6d1ffdbb6aabf7c013c0fcd49fb7e38518819b774b9e0aa2152f4c4127cae
+    status: VERIFIED_CONTROLLED_INTAKE
   package_14:
-    required: true
-    expected_filename: QUANTIFIRE_14_Pricing_Library_v2.13.csv
-    expected_version: '2.13'
-    status: VERIFY_LOCAL_CONTROLLED_SOURCE_AND_HASH
+    filename: QUANTIFIRE_14_Pricing_Library_v2.13.csv
+    sha256: d0ab400affa52cb2c1c07d473a700937fab3c7fca825c201e50cb1a866d6055b
+    status: VERIFIED_CONTROLLED_INTAKE
   package_15:
-    required: true
-    expected_filename: QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl
-    expected_version: '2.13'
-    status: VERIFY_LOCAL_CONTROLLED_SOURCE_AND_HASH
+    filename: QUANTIFIRE_15_Technical_System_Library_v2.13.txt
+    sha256: 3b59e30ad1451e0ae77f953e264c4e35b1cc024c72c4aa15f0d73fb715aa19ca
+    status: VERIFIED_CONTROLLED_INTAKE
+  package_17:
+    filename: QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl
+    sha256: 4ce83403ec7297b7f6d08252fda1a017d88be17faa1d558b34b51d42cc1d0749
+    status: VERIFIED_CONTROLLED_INTAKE
   package_16:
-    required: true
-    expected_product: QUANTIFIRE
-    expected_version: '2.13'
-    status: BLOCKED_PENDING_VERIFIED_SOURCE_AND_PROFILE_SPLIT_REAPPROVAL
+    filename: QUANTIFIRE_16_Runtime_Profile_and_Data_Readiness_v2.13.txt
+    sha256: fe166bf1e6a4d0a5454bd27e81068dd189a450a7483cf09232bec8dc64e07ea7
+    status: VERIFIED_SOURCE_PROFILE_SPLIT_PENDING
+  package_18:
+    filename: QUANTIFIRE_18_Runtime_Schemas_Algorithms_and_Output_Contracts_v2.13.txt
+    sha256: 430aacd9c973af84de847cebee6687e698190d74c0d1676ad03b65dd346ff99d
+    status: VERIFIED_CONTROLLED_INTAKE
 release_requirements:
-  - verified_v2_13_source_inventory
-  - sha256_for_each_authoritative_source
   - authority_hierarchy_review
   - package_13_routing_tests
   - canonical_schema_review
@@ -47,4 +46,6 @@ release_requirements:
   - regression_tests
   - security_tests
   - human_release_approval
+current_gate: SOURCE_INVENTORY_APPROVED
+next_gate: ARCHITECTURE_BASELINE_APPROVED
 fail_closed_rule: 'If a required v2.13 source cannot be verified, the dependent migration or runtime stage is BLOCKED. Do not substitute v2.8.'
