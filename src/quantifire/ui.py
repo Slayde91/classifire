@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from datetime import date, datetime, timezone
@@ -75,7 +75,7 @@ def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
 def login_page(request: Request, db: Db, error: str | None = None) -> HTMLResponse:
     if _user(request, db):
         return RedirectResponse("/", status_code=303)
-    return templates.TemplateResponse("login.html", _context(request, db, error=error))
+    return templates.TemplateResponse(request, "login.html", _context(request, db, error=error))
 
 
 @router.post("/login")
@@ -124,8 +124,7 @@ def dashboard(request: Request, db: Db) -> HTMLResponse:
     open_changes = db.scalars(
         select(ChangeProposal).where(ChangeProposal.status.in_(["draft", "in_review"])).order_by(ChangeProposal.updated_at.desc()).limit(8)
     ).all()
-    return templates.TemplateResponse(
-        "dashboard.html",
+    return templates.TemplateResponse(request, "dashboard.html",
         _context(request, db, counts=counts, recent_estimates=recent_estimates, releases=releases, open_changes=open_changes),
     )
 
@@ -137,7 +136,7 @@ def products_page(request: Request, db: Db, q: str | None = None) -> HTMLRespons
     if q:
         stmt = stmt.where(Product.name.ilike(f"%{q}%") | Product.sku.ilike(f"%{q}%"))
     products = db.scalars(stmt.order_by(Product.name).limit(500)).all()
-    return templates.TemplateResponse("products.html", _context(request, db, products=products, q=q or ""))
+    return templates.TemplateResponse(request, "products.html", _context(request, db, products=products, q=q or ""))
 
 
 @router.post("/products")
@@ -182,7 +181,7 @@ def products_create(
 def labour_page(request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "library:read")
     labour = db.scalars(select(LabourComponent).order_by(LabourComponent.name).limit(500)).all()
-    return templates.TemplateResponse("labour.html", _context(request, db, labour=labour))
+    return templates.TemplateResponse(request, "labour.html", _context(request, db, labour=labour))
 
 
 @router.post("/labour")
@@ -221,7 +220,7 @@ def labour_create(
 def rules_page(request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "rule:read")
     rules = db.scalars(select(EstimatingRule).order_by(EstimatingRule.priority, EstimatingRule.rule_code)).all()
-    return templates.TemplateResponse("rules.html", _context(request, db, rules=rules))
+    return templates.TemplateResponse(request, "rules.html", _context(request, db, rules=rules))
 
 
 @router.post("/rules")
@@ -279,7 +278,7 @@ def technical_page(request: Request, db: Db, q: str | None = None) -> HTMLRespon
             | TechnicalVariant.service_type.ilike(f"%{q}%")
         )
     variants = db.scalars(stmt.order_by(TechnicalVariant.variant_id).limit(200)).all()
-    return templates.TemplateResponse("technical.html", _context(request, db, documents=docs, variants=variants, q=q or ""))
+    return templates.TemplateResponse(request, "technical.html", _context(request, db, documents=docs, variants=variants, q=q or ""))
 
 
 @router.post("/technical/upload")
@@ -332,7 +331,7 @@ def technical_upload(
 def projects_page(request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "project:read")
     projects = db.scalars(select(Project).options(selectinload(Project.estimates)).order_by(Project.updated_at.desc())).all()
-    return templates.TemplateResponse("projects.html", _context(request, db, projects=projects))
+    return templates.TemplateResponse(request, "projects.html", _context(request, db, projects=projects))
 
 
 @router.post("/projects")
@@ -398,7 +397,7 @@ def estimate_page(estimate_id: str, request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "estimate:read")
     estimate = _estimate(db, estimate_id)
     evaluations = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)).all()
-    return templates.TemplateResponse("estimate.html", _context(request, db, estimate=estimate, evaluations=evaluations))
+    return templates.TemplateResponse(request, "estimate.html", _context(request, db, estimate=estimate, evaluations=evaluations))
 
 
 @router.post("/estimates/{estimate_id}/openings")
@@ -511,4 +510,5 @@ def estimate_lock(estimate_id: str, request: Request, db: Db, csrf_token: Annota
 def audit_page(request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "audit:read")
     events = db.scalars(select(AuditEvent).order_by(AuditEvent.created_at.desc()).limit(500)).all()
-    return templates.TemplateResponse("audit.html", _context(request, db, events=events))
+    return templates.TemplateResponse(request, "audit.html", _context(request, db, events=events))
+
