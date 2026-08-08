@@ -27,3 +27,7 @@ Thumbs.db
 secrets/
 playwright-report/
 test-results/
+
+# Confidential QUANTIFIRE source corpora
+knowledge/source/**
+private-data/**
