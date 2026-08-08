@@ -31,7 +31,15 @@ $denyTools = @(
     "video_generate",
     "music_generate"
 )
-$denyJson = $denyTools | ConvertTo-Json -Compress
+
+# Windows PowerShell strips embedded double quotes when arguments pass through
+# the openclaw.ps1 -> node.exe wrapper. OpenClaw config values parse as JSON5 by
+# default, so use single-quoted JSON5 string values here and deliberately omit
+# --strict-json for the tools.deny array.
+$denyJson5Items = $denyTools | ForEach-Object {
+    "'" + $_.Replace("'", "\\'") + "'"
+}
+$denyJson5 = "[" + ($denyJson5Items -join ",") + "]"
 
 function Resolve-OpenClawConfigPath {
     $raw = (& $openclaw.Source config file 2>&1 | Out-String).Trim()
@@ -141,7 +149,7 @@ foreach ($id in $agentIds) {
     $base = "agents.list[$index]"
     $changes += @(
         @{ Agent = $id; Path = "$base.tools.profile"; Value = "minimal"; Strict = $false },
-        @{ Agent = $id; Path = "$base.tools.deny"; Value = $denyJson; Strict = $true },
+        @{ Agent = $id; Path = "$base.tools.deny"; Value = $denyJson5; Strict = $false },
         @{ Agent = $id; Path = "$base.tools.elevated.enabled"; Value = "false"; Strict = $true },
         @{ Agent = $id; Path = "$base.sandbox.mode"; Value = "all"; Strict = $false },
         @{ Agent = $id; Path = "$base.sandbox.backend"; Value = "docker"; Strict = $false },
