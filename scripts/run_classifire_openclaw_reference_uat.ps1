@@ -30,24 +30,56 @@ function Save-Receipt {
     return $path
 }
 
-function Invoke-UatAgent {
+function Convert-OpenClawJson {
+    param([string]$Raw)
+    $trimmed = ($Raw | Out-String).Trim()
+    try {
+        return $trimmed | ConvertFrom-Json
+    }
+    catch {
+        $start = $trimmed.IndexOf('{')
+        $end = $trimmed.LastIndexOf('}')
+        if ($start -lt 0 -or $end -lt $start) {
+            throw "OpenClaw did not return a JSON object. Output: $trimmed"
+        }
+        return $trimmed.Substring($start, $end - $start + 1) | ConvertFrom-Json
+    }
+}
+
+function Convert-ToOpenClawNativeJsonArgument {
+    param([string]$Json)
+
+    # OpenClaw documents --params as JSON. Windows PowerShell 5.1 strips
+    # embedded quotes when its .ps1 shim forwards arguments to node.exe, so
+    # preserve them at the native-process boundary.
+    if ($env:OS -eq "Windows_NT" -and $PSVersionTable.PSVersion.Major -lt 6) {
+        return $Json.Replace('"', '\"')
+    }
+    return $Json
+}
+
+function Initialize-UatAgentSession {
     param(
         [string]$Stage,
-        [string]$AgentId,
-        [string]$Prompt
+        [string]$AgentId
     )
 
-    $promptFile = Join-Path $env:TEMP ("classifire-uat-" + $RunId + "-" + $Stage + ".txt")
-    $stderrFile = Join-Path $env:TEMP ("classifire-uat-" + $RunId + "-" + $Stage + ".stderr.txt")
-    Write-Utf8NoBom -Path $promptFile -Content $Prompt
+    $alias = "classifire-uat-$RunId-$Stage"
+    $canonicalSessionKey = "agent:$AgentId:$alias"
+    $promptFile = Join-Path $env:TEMP ("classifire-uat-" + $RunId + "-" + $Stage + "-ready.txt")
+    $stderrFile = Join-Path $env:TEMP ("classifire-uat-" + $RunId + "-" + $Stage + "-ready.stderr.txt")
+    Write-Utf8NoBom -Path $promptFile -Content (
+        "Controlled CLASSIFIRE UAT session readiness check. Reply exactly READY. " +
+        "Do not call any tools. Mandatory governed actions are invoked separately by the UAT controller."
+    )
     try {
-        $sessionKey = "classifire-uat-$RunId-$Stage"
-        Write-Host "Running $Stage with $AgentId..." -ForegroundColor Cyan
+        Write-Host "Opening $Stage session for $AgentId..." -ForegroundColor Cyan
         $raw = (& $openclaw.Source agent `
             --agent $AgentId `
-            --session-key $sessionKey `
+            --session-key $alias `
             --message-file $promptFile `
             --timeout $TimeoutSeconds `
+            --verbose full `
             --json 2>$stderrFile | Out-String).Trim()
         $exitCode = $LASTEXITCODE
         $stderr = if (Test-Path -LiteralPath $stderrFile) {
@@ -55,23 +87,102 @@ function Invoke-UatAgent {
         }
         else { "" }
 
-        Save-Receipt -Name ("$Stage.openclaw.json") -Content $raw | Out-Null
+        Save-Receipt -Name ("$Stage.session.json") -Content $raw | Out-Null
         if ($stderr) {
-            Save-Receipt -Name ("$Stage.openclaw.stderr.txt") -Content $stderr | Out-Null
+            Save-Receipt -Name ("$Stage.session.stderr.txt") -Content $stderr | Out-Null
         }
         if ($exitCode -ne 0) {
-            throw "OpenClaw agent turn failed for $Stage/$AgentId with exit code $exitCode. $stderr"
+            throw "OpenClaw session readiness failed for $Stage/$AgentId with exit code $exitCode. $stderr"
         }
-        try {
-            $null = $raw | ConvertFrom-Json
-        }
-        catch {
-            throw "OpenClaw did not return the documented JSON envelope for $Stage/$AgentId. Raw response: $raw"
-        }
-        Write-Host "PASS OpenClaw turn $Stage / $AgentId" -ForegroundColor Green
+        $null = Convert-OpenClawJson $raw
+        Write-Host "PASS OpenClaw session $Stage / $AgentId" -ForegroundColor Green
+        return $canonicalSessionKey
     }
     finally {
         Remove-Item -LiteralPath $promptFile -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $stderrFile -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Assert-EffectiveTool {
+    param(
+        [string]$Stage,
+        [string]$AgentId,
+        [string]$SessionKey,
+        [string]$ToolName
+    )
+
+    $paramsJson = @{ sessionKey = $SessionKey } | ConvertTo-Json -Compress
+    $paramsNative = Convert-ToOpenClawNativeJsonArgument -Json $paramsJson
+    $raw = (& $openclaw.Source gateway call tools.effective --params $paramsNative --json 2>&1 | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0) {
+        throw "tools.effective failed for $Stage/$AgentId. $raw"
+    }
+    Save-Receipt -Name ("$Stage.effective.json") -Content $raw | Out-Null
+    $effective = Convert-OpenClawJson $raw
+    $serialized = $effective | ConvertTo-Json -Depth 40 -Compress
+    if ($serialized -notmatch ('(?<![A-Za-z0-9_])' + [regex]::Escape($ToolName) + '(?![A-Za-z0-9_])')) {
+        throw "$AgentId does not have effective OpenClaw tool $ToolName in session $SessionKey."
+    }
+}
+
+function Invoke-ClassifireTool {
+    param(
+        [string]$Stage,
+        [string]$AgentId,
+        [string]$SessionKey,
+        [string]$ToolName,
+        [hashtable]$Args,
+        [string]$ReceiptName
+    )
+
+    Assert-EffectiveTool -Stage $Stage -AgentId $AgentId -SessionKey $SessionKey -ToolName $ToolName
+
+    $idempotencyKey = "classifire-uat-$RunId-$Stage-$ToolName"
+    $paramsJson = @{
+        name = $ToolName
+        args = $Args
+        sessionKey = $SessionKey
+        agentId = $AgentId
+        idempotencyKey = $idempotencyKey
+    } | ConvertTo-Json -Depth 30 -Compress
+    $paramsNative = Convert-ToOpenClawNativeJsonArgument -Json $paramsJson
+    $stderrFile = Join-Path $env:TEMP ("classifire-uat-" + $RunId + "-" + $Stage + "-" + $ToolName + ".stderr.txt")
+
+    try {
+        Write-Host "Invoking $ToolName as $AgentId..." -ForegroundColor Cyan
+        $raw = (& $openclaw.Source gateway call tools.invoke `
+            --params $paramsNative `
+            --json 2>$stderrFile | Out-String).Trim()
+        $exitCode = $LASTEXITCODE
+        $stderr = if (Test-Path -LiteralPath $stderrFile) {
+            Get-Content -LiteralPath $stderrFile -Raw
+        }
+        else { "" }
+
+        Save-Receipt -Name $ReceiptName -Content $raw | Out-Null
+        if ($stderr) {
+            Save-Receipt -Name ($ReceiptName + ".stderr.txt") -Content $stderr | Out-Null
+        }
+        if ($exitCode -ne 0) {
+            throw "OpenClaw tools.invoke failed for $ToolName/$AgentId with exit code $exitCode. $stderr $raw"
+        }
+
+        $payload = Convert-OpenClawJson $raw
+        $invokeOk = $false
+        if ($null -ne $payload.PSObject.Properties["ok"]) {
+            $invokeOk = [bool]$payload.ok
+        }
+        elseif ($null -ne $payload.PSObject.Properties["result"] -and $null -ne $payload.result.PSObject.Properties["ok"]) {
+            $invokeOk = [bool]$payload.result.ok
+        }
+        if (-not $invokeOk) {
+            throw "OpenClaw policy/tool invocation returned ok=false for $ToolName/$AgentId. $raw"
+        }
+        Write-Host "PASS tool $ToolName / $AgentId" -ForegroundColor Green
+        return $payload
+    }
+    finally {
         Remove-Item -LiteralPath $stderrFile -Force -ErrorAction SilentlyContinue
     }
 }
@@ -135,82 +246,104 @@ $pricingEntryId = [string]$fixture.pricing_entry_id
 
 Verify-UatStage -EstimateId $estimateId -ExpectedStage "opening_specific_technical_search" -ReceiptName "01-initial-state.json" | Out-Null
 
-$technicalPrompt = @"
-Controlled CLASSIFIRE OpenClaw reference UAT. You are cf-technical-system.
-Estimate ID: $estimateId
-Opening ID: $openingId
-Expected Package 15 variant: $variantId
+# Technical stage: exact candidate search, controlled selection and deterministic RepairStrategyLock.
+$technicalAgent = "cf-technical-system"
+$technicalSession = Initialize-UatAgentSession -Stage "10-technical" -AgentId $technicalAgent
+Invoke-ClassifireTool -Stage "10-technical" -AgentId $technicalAgent -SessionKey $technicalSession `
+    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ReceiptName "10a-technical-workflow.json" | Out-Null
+Invoke-ClassifireTool -Stage "10-technical" -AgentId $technicalAgent -SessionKey $technicalSession `
+    -ToolName "classifire_technical_search" -Args @{ opening_id = $openingId } `
+    -ReceiptName "10b-technical-search.json" | Out-Null
+Invoke-ClassifireTool -Stage "10-technical" -AgentId $technicalAgent -SessionKey $technicalSession `
+    -ToolName "classifire_select_repair_strategy" -Args @{
+        opening_id = $openingId
+        variant_id = $variantId
+        match_classification = "opening_specific_candidate"
+        treatment_description = "Controlled reference UAT exact Package 15 collar treatment"
+        assumptions = @()
+        limitations = @()
+    } -ReceiptName "10c-technical-select.json" | Out-Null
+Invoke-ClassifireTool -Stage "10-technical" -AgentId $technicalAgent -SessionKey $technicalSession `
+    -ToolName "classifire_lock_repair_strategy" -Args @{ opening_id = $openingId } `
+    -ReceiptName "10d-technical-lock.json" | Out-Null
+$afterTechnical = Verify-UatStage -EstimateId $estimateId -ExpectedStage "quantity_and_labour" -ReceiptName "11-after-technical.json"
+if (@($afterTechnical.required_components).Count -ne 1) {
+    throw "Reference UAT expected exactly one Package 15 required component after technical lock."
+}
+$requiredComponentId = [string]$afterTechnical.required_components[0].id
 
-Perform only this governed technical stage:
-1. Call classifire_workflow_status for the estimate and require stage opening_specific_technical_search.
-2. Call classifire_technical_search for the opening.
-3. Locate variant $variantId for the service. Proceed only if it is returned, every critical comparison is MATCH, and blockers is empty. If not, stop and report ERROR without selecting or locking anything.
-4. Call classifire_select_repair_strategy with this opening and variant, match_classification opening_specific_candidate, and treatment_description 'Controlled reference UAT exact Package 15 collar treatment'.
-5. Call classifire_lock_repair_strategy for the opening. Require validator_result PASS and exactly one required component.
-6. Call classifire_workflow_status again.
-Do not perform commercial work, validation, output rendering, library approval, Human Release, shell, browser, filesystem or generic HTTP work. Reply with a concise result only.
-"@
-Invoke-UatAgent -Stage "10-technical" -AgentId "cf-technical-system" -Prompt $technicalPrompt
-Verify-UatStage -EstimateId $estimateId -ExpectedStage "quantity_and_labour" -ReceiptName "11-after-technical.json" | Out-Null
-
-$quantityPrompt = @"
-Controlled CLASSIFIRE OpenClaw reference UAT. You are cf-physical-model.
-Estimate ID: $estimateId
-
-Perform only this governed quantity/labour stage:
-1. Call classifire_workflow_status and require stage quantity_and_labour.
-2. Call classifire_derive_quantity_labour for the estimate with empty component_inputs and empty labour_adjustments.
-3. Require exactly one validated quantity, value 1, unit each, formula QF-EACH, with no required labour activities.
-4. Call classifire_workflow_status again.
-Do not change technical strategy, do commercial work, validate, render outputs or perform Human Release. Reply with a concise result only.
-"@
-Invoke-UatAgent -Stage "20-quantity" -AgentId "cf-physical-model" -Prompt $quantityPrompt
+# Quantity/labour stage: QF-EACH resolves from the canonical one-service physical model.
+$quantityAgent = "cf-physical-model"
+$quantitySession = Initialize-UatAgentSession -Stage "20-quantity" -AgentId $quantityAgent
+Invoke-ClassifireTool -Stage "20-quantity" -AgentId $quantityAgent -SessionKey $quantitySession `
+    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ReceiptName "20a-quantity-workflow.json" | Out-Null
+Invoke-ClassifireTool -Stage "20-quantity" -AgentId $quantityAgent -SessionKey $quantitySession `
+    -ToolName "classifire_derive_quantity_labour" -Args @{
+        estimate_id = $estimateId
+        component_inputs = @{}
+        labour_adjustments = @{}
+    } -ReceiptName "20b-quantity-derive.json" | Out-Null
 Verify-UatStage -EstimateId $estimateId -ExpectedStage "commercial_pricing_and_recovery" -ReceiptName "21-after-quantity.json" | Out-Null
 
-$commercialPrompt = @"
-Controlled CLASSIFIRE OpenClaw reference UAT. You are cf-commercial-engine.
-Estimate ID: $estimateId
-Expected exact Package 14 entry: $pricingEntryId
+# Commercial stage: recommendation is retained for audit; the deterministic engine may auto-apply only the single exact eligible rate.
+$commercialAgent = "cf-commercial-engine"
+$commercialSession = Initialize-UatAgentSession -Stage "30-commercial" -AgentId $commercialAgent
+Invoke-ClassifireTool -Stage "30-commercial" -AgentId $commercialAgent -SessionKey $commercialSession `
+    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ReceiptName "30a-commercial-workflow.json" | Out-Null
+Invoke-ClassifireTool -Stage "30-commercial" -AgentId $commercialAgent -SessionKey $commercialSession `
+    -ToolName "classifire_required_components" -Args @{ estimate_id = $estimateId } `
+    -ReceiptName "30b-required-components.json" | Out-Null
+Invoke-ClassifireTool -Stage "30-commercial" -AgentId $commercialAgent -SessionKey $commercialSession `
+    -ToolName "classifire_package14_recommendation" -Args @{ component_id = $requiredComponentId } `
+    -ReceiptName "30c-package14-recommendation.json" | Out-Null
+Invoke-ClassifireTool -Stage "30-commercial" -AgentId $commercialAgent -SessionKey $commercialSession `
+    -ToolName "classifire_derive_commercial" -Args @{
+        estimate_id = $estimateId
+        library_selections = @{}
+        parameterised_selections = @{}
+        component_builds = @{}
+        expert_estimates = @{}
+    } -ReceiptName "30d-commercial-derive.json" | Out-Null
+$afterCommercial = Verify-UatStage -EstimateId $estimateId -ExpectedStage "independent_validation" -ReceiptName "31-after-commercial.json"
+if (@($afterCommercial.commercial_methods).Count -ne 1 -or [string]$afterCommercial.commercial_methods[0].selected_pricing_method -ne "Exact Library Match") {
+    throw "Reference UAT did not retain exactly one Exact Library Match commercial method for $pricingEntryId."
+}
 
-Perform only this governed commercial stage:
-1. Call classifire_workflow_status and require stage commercial_pricing_and_recovery.
-2. Call classifire_required_components and require exactly one mandatory COLLAR component with candidate_status CONFIRMED_TECHNICAL_MATCH.
-3. For that required component, call classifire_package14_recommendation. Proceed only if $pricingEntryId is the exact eligible Package 14 basis. Never promote a near/proxy match.
-4. Call classifire_derive_commercial with empty library_selections, parameterised_selections, component_builds and expert_estimates. The deterministic engine may auto-select only the single eligible exact match.
-5. Require Exact Library Match, validator_outcome PASS, and no unresolved anomaly.
-6. Call classifire_workflow_status again.
-Do not perform validation, output rendering, library approval or Human Release. Reply with a concise result only.
-"@
-Invoke-UatAgent -Stage "30-commercial" -AgentId "cf-commercial-engine" -Prompt $commercialPrompt
-Verify-UatStage -EstimateId $estimateId -ExpectedStage "independent_validation" -ReceiptName "31-after-commercial.json" | Out-Null
-
-$validatorPrompt = @"
-Controlled CLASSIFIRE OpenClaw reference UAT. You are cf-validator.
-Estimate ID: $estimateId
-
-Perform only final independent validation:
-1. Call classifire_workflow_status and require stage independent_validation.
-2. Call classifire_run_validation for the estimate.
-3. Require passed true, result PASS, exception_count 0.
-4. Call classifire_workflow_status again and require validated_snapshot.
-Do not lock the snapshot, render outputs or perform Human Release. Reply with a concise result only.
-"@
-Invoke-UatAgent -Stage "40-validation" -AgentId "cf-validator" -Prompt $validatorPrompt
+# Independent validation stage.
+$validatorAgent = "cf-validator"
+$validatorSession = Initialize-UatAgentSession -Stage "40-validation" -AgentId $validatorAgent
+Invoke-ClassifireTool -Stage "40-validation" -AgentId $validatorAgent -SessionKey $validatorSession `
+    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ReceiptName "40a-validation-workflow.json" | Out-Null
+Invoke-ClassifireTool -Stage "40-validation" -AgentId $validatorAgent -SessionKey $validatorSession `
+    -ToolName "classifire_run_validation" -Args @{ estimate_id = $estimateId } `
+    -ReceiptName "40b-validation-run.json" | Out-Null
 Verify-UatStage -EstimateId $estimateId -ExpectedStage "validated_snapshot" -ReceiptName "41-after-validation.json" | Out-Null
 
-$outputPrompt = @"
-Controlled CLASSIFIRE OpenClaw reference UAT. You are cf-output.
-Estimate ID: $estimateId
-
-Perform only controlled validated output creation:
-1. Call classifire_workflow_status and require stage validated_snapshot.
-2. Call classifire_lock_snapshot with reason 'Controlled OpenClaw reference UAT after passing deterministic validation'.
-3. Call classifire_render_output for artifact_type technical-xlsx.
-4. Call classifire_render_output for artifact_type proposal-xlsx.
-5. Call classifire_workflow_status again and require stage human_release.
-Never perform or request Human Release. Human Release must remain a separate human-controlled action. Reply with a concise result only.
-"@
-Invoke-UatAgent -Stage "50-output" -AgentId "cf-output" -Prompt $outputPrompt
+# Output stage: immutable validated snapshot and controlled workbooks only. Human Release stays outside all agent tools.
+$outputAgent = "cf-output"
+$outputSession = Initialize-UatAgentSession -Stage "50-output" -AgentId $outputAgent
+Invoke-ClassifireTool -Stage "50-output" -AgentId $outputAgent -SessionKey $outputSession `
+    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ReceiptName "50a-output-workflow.json" | Out-Null
+Invoke-ClassifireTool -Stage "50-output" -AgentId $outputAgent -SessionKey $outputSession `
+    -ToolName "classifire_lock_snapshot" -Args @{
+        estimate_id = $estimateId
+        reason = "Controlled OpenClaw reference UAT after passing deterministic validation"
+    } -ReceiptName "50b-snapshot-lock.json" | Out-Null
+Invoke-ClassifireTool -Stage "50-output" -AgentId $outputAgent -SessionKey $outputSession `
+    -ToolName "classifire_render_output" -Args @{
+        estimate_id = $estimateId
+        artifact_type = "technical-xlsx"
+    } -ReceiptName "50c-technical-xlsx.json" | Out-Null
+Invoke-ClassifireTool -Stage "50-output" -AgentId $outputAgent -SessionKey $outputSession `
+    -ToolName "classifire_render_output" -Args @{
+        estimate_id = $estimateId
+        artifact_type = "proposal-xlsx"
+    } -ReceiptName "50d-proposal-xlsx.json" | Out-Null
 $final = Verify-UatStage -EstimateId $estimateId -ExpectedStage "human_release" -ReceiptName "51-final-state.json"
 
 Write-Host "Recording CF-UAT-001 review receipt in Mission Control..." -ForegroundColor Cyan
