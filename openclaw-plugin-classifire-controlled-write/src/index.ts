@@ -23,6 +23,9 @@ const DEFAULT_BASE_URL = "http://127.0.0.1:8787";
 const DEFAULT_TOKEN_FILE = join(homedir(), ".openclaw", "classifire-agent-tokens.json");
 
 const TOOL_AGENTS: Record<string, Set<string>> = {
+  classifire_register_evidence_observations: new Set(["cf-intake-evidence"]),
+  classifire_submit_initial_physical_model: new Set(["cf-physical-model"]),
+  classifire_lock_physical_model: new Set(["cf-physical-model"]),
   classifire_select_repair_strategy: new Set(["cf-technical-system"]),
   classifire_lock_repair_strategy: new Set(["cf-technical-system"]),
   classifire_derive_quantity_labour: new Set(["cf-physical-model"]),
@@ -143,7 +146,7 @@ function requireVerifiedCall(toolCallId: string, toolName: string): VerifiedCall
 export default definePluginEntry({
   id: "classifire-controlled-write",
   name: "CLASSIFIRE Controlled Write Tools",
-  description: "Narrow role-limited write bridge for controlled CLASSIFIRE estimate UAT stages.",
+  description: "Narrow role-limited write bridge for controlled CLASSIFIRE estimate stages.",
   configSchema: pluginConfigSchema,
   register(api: any) {
     const pluginConfig = parsePluginConfig(api.pluginConfig);
@@ -199,6 +202,104 @@ export default definePluginEntry({
         { optional: true, catalogMode: "direct-only" },
       );
     };
+
+    register(
+      "classifire_register_evidence_observations",
+      "Append source-preserving page/photo/schedule observations to one editable CLASSIFIRE estimate. The tool may create canonical Defect records but cannot create scope, technical selections, pricing, validation, or release approvals.",
+      Type.Object({
+        estimate_id: Type.String(),
+        observations: Type.Array(Type.Object({
+          stored_file_id: Type.String(),
+          evidence_type: Type.String(),
+          external_defect_id: Type.Optional(Type.String()),
+          defect_code: Type.Optional(Type.String()),
+          defect_description: Type.Optional(Type.String()),
+          defect_location: Type.Optional(Type.String()),
+          defect_classification: Type.Optional(Type.String()),
+          source_reference: Type.Optional(Type.String()),
+          page_number: Type.Optional(Type.String()),
+          region_reference: Type.Optional(Type.String()),
+          evidence_class: Type.Optional(Type.String()),
+          confidence: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
+          source_json: Type.Optional(Type.Record(Type.String(), Type.Any())),
+        })),
+      }),
+      (agentId, params, config) => classifireRequest(
+        config,
+        agentId,
+        `/api/v1/agent/estimates/${encodeURIComponent(params.estimate_id)}/evidence/register`,
+        { method: "POST", body: JSON.stringify({ observations: params.observations }) },
+      ),
+    );
+
+    register(
+      "classifire_submit_initial_physical_model",
+      "Submit the one-shot initial canonical opening/service model for an editable estimate. Every Service requires an explicit quantity; omission never defaults to quantity one. The tool cannot select Package 15 systems or pricing.",
+      Type.Object({
+        estimate_id: Type.String(),
+        openings: Type.Array(Type.Object({
+          opening_code: Type.String(),
+          external_defect_id: Type.Optional(Type.String()),
+          location: Type.Optional(Type.String()),
+          substrate_type: Type.Optional(Type.String()),
+          substrate_plane: Type.Optional(Type.String()),
+          substrate_thickness_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+          orientation: Type.Optional(Type.String()),
+          opening_type: Type.Optional(Type.String()),
+          width_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+          height_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+          diameter_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+          frl: Type.Optional(Type.String()),
+          notes: Type.Optional(Type.String()),
+        })),
+        services: Type.Array(Type.Object({
+          service_code: Type.String(),
+          primary_opening_code: Type.String(),
+          opening_codes: Type.Array(Type.String()),
+          service_type: Type.String(),
+          material: Type.Optional(Type.String()),
+          nominal_size_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+          outside_diameter_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+          width_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+          height_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+          insulation_type: Type.Optional(Type.String()),
+          insulation_thickness_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+          quantity: Type.Number({ exclusiveMinimum: 0 }),
+          centre_x_mm: Type.Optional(Type.Number()),
+          centre_y_mm: Type.Optional(Type.Number()),
+          evidence_status: Type.Optional(Type.String()),
+          confidence: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
+          relationship_status: Type.Optional(Type.String()),
+          link_type: Type.Optional(Type.String()),
+          source_reference: Type.Optional(Type.String()),
+          notes: Type.Optional(Type.String()),
+        })),
+      }),
+      (agentId, params, config) => classifireRequest(
+        config,
+        agentId,
+        `/api/v1/agent/estimates/${encodeURIComponent(params.estimate_id)}/physical-model/initial`,
+        { method: "POST", body: JSON.stringify({ openings: params.openings, services: params.services }) },
+      ),
+    );
+
+    register(
+      "classifire_lock_physical_model",
+      "Create or reuse the deterministic Physical Model Lock after the initial evidence-backed physical model has been submitted. A PROVISIONAL lock does not open Package 15 search.",
+      Type.Object({
+        estimate_id: Type.String(),
+        reason: Type.Optional(Type.String()),
+      }),
+      (agentId, params, config) => classifireRequest(
+        config,
+        agentId,
+        `/api/v1/agent/estimates/${encodeURIComponent(params.estimate_id)}/physical-model/lock`,
+        {
+          method: "POST",
+          body: JSON.stringify({ reason: params.reason ?? "Controlled cf-physical-model lock request" }),
+        },
+      ),
+    );
 
     register(
       "classifire_select_repair_strategy",
