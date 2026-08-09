@@ -160,6 +160,37 @@ class MissionControlClient:
             )
         return response.json()
 
+    def update_task(
+        self,
+        task_row_id: int,
+        *,
+        status: str | None = None,
+        resolution: str | None = None,
+        error_message: str | None = None,
+    ) -> dict[str, Any]:
+        """Update only the Mission Control task-state fields used by CLASSIFIRE receipts."""
+        payload: dict[str, Any] = {}
+        if status is not None:
+            payload["status"] = status
+        if resolution is not None:
+            payload["resolution"] = resolution
+        if error_message is not None:
+            payload["error_message"] = error_message
+        if not payload:
+            raise ValueError("Mission Control task update requires at least one field")
+
+        with httpx.Client(timeout=self.timeout) as client:
+            response = client.put(
+                self._url(f"/api/tasks/{task_row_id}"),
+                headers=self.headers,
+                json=payload,
+            )
+        if response.status_code not in {200, 201}:
+            raise MissionControlError(
+                f"Task update failed ({response.status_code}): {response.text[:500]}"
+            )
+        return response.json() if response.content else {"status": response.status_code}
+
     def ensure_task(
         self,
         *,
