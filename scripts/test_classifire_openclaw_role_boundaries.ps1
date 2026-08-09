@@ -133,13 +133,18 @@ foreach ($agentId in ($expectedByAgent.Keys | Sort-Object)) {
 }
 
 $openApi = Invoke-RestMethod ($BaseUrl.TrimEnd('/') + "/openapi.json")
+# Match exact dangerous path segments only. The governed read-only endpoint
+# /api/v1/agent/library/releases is intentionally allowed; plural "releases"
+# must not be mistaken for Human Release authority.
+$forbiddenAgentAuthoritySegment = '/(human[-_]?release|release|approve|approval)(/|$)'
 $agentHumanReleasePaths = @($openApi.paths.PSObject.Properties.Name | Where-Object {
-    $_ -like "/api/v1/agent/*" -and $_ -match "release"
+    $path = ([string]$_).ToLowerInvariant()
+    $path -like "/api/v1/agent/*" -and $path -match $forbiddenAgentAuthoritySegment
 })
 if ($agentHumanReleasePaths.Count -gt 0) {
-    throw "Human Release-like route exists under the agent API: $($agentHumanReleasePaths -join ', ')"
+    throw "Human Release/approval-like route exists under the agent API: $($agentHumanReleasePaths -join ', ')"
 }
-Write-Host "PASS no Human Release route exists under /api/v1/agent" -ForegroundColor Green
+Write-Host "PASS no Human Release or approval route exists under /api/v1/agent" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "Checking OpenClaw direct tool visibility per agent..." -ForegroundColor Cyan
