@@ -45,10 +45,27 @@ function Write-Utf8NoBom {
     )
 }
 
+# Keep the CLASSIFIRE fleet on OpenClaw's minimal base profile and add only the
+# narrow role-specific tools each agent needs. The real-report agents also need
+# read-only media inspection so report photos are reviewed rather than inferred
+# from extracted text.
 $allowByAgent = @{
     "cf-orchestrator" = @("classifire_health", "classifire_workflow_status")
-    "cf-intake-evidence" = @("classifire_health", "classifire_workflow_status", "classifire_evidence_read")
-    "cf-physical-model" = @("classifire_health", "classifire_workflow_status", "classifire_physical_model_read")
+    "cf-intake-evidence" = @(
+        "classifire_health",
+        "classifire_workflow_status",
+        "classifire_evidence_read",
+        "pdf",
+        "image"
+    )
+    "cf-physical-model" = @(
+        "classifire_health",
+        "classifire_workflow_status",
+        "classifire_evidence_read",
+        "classifire_physical_model_read",
+        "pdf",
+        "image"
+    )
     "cf-technical-system" = @("classifire_health", "classifire_workflow_status", "classifire_technical_search")
     "cf-commercial-engine" = @("classifire_health", "classifire_workflow_status", "classifire_package14_recommendation")
     "cf-validator" = @("classifire_health", "classifire_workflow_status", "classifire_run_validation")
@@ -98,9 +115,19 @@ $operations = @(
 )
 foreach ($id in ($allowByAgent.Keys | Sort-Object)) {
     $index = $indexById[$id]
+    $existing = @()
+    $toolsNode = $agents[$index].tools
+    if ($null -ne $toolsNode -and $null -ne $toolsNode.alsoAllow) {
+        $existing = @($toolsNode.alsoAllow)
+    }
+    $merged = @(
+        $existing + @($allowByAgent[$id]) |
+            ForEach-Object { [string]$_ } |
+            Sort-Object -Unique
+    )
     $operations += [pscustomobject]@{
         path = "agents.list[$index].tools.alsoAllow"
-        value = @($allowByAgent[$id])
+        value = $merged
     }
 }
 
@@ -109,13 +136,13 @@ $batchFile = Join-Path $env:TEMP "classifire-openclaw-plugin-$stamp.batch.json"
 Write-Utf8NoBom -Path $batchFile -Content (@($operations) | ConvertTo-Json -Depth 8)
 
 try {
-    Write-Host "Dry-running CLASSIFIRE plugin configuration and per-agent additive tool grants..." -ForegroundColor Cyan
+    Write-Host "Dry-running CLASSIFIRE plugin configuration and merged per-agent tool grants..." -ForegroundColor Cyan
     $dry = (& $openclaw.Source config set --batch-file $batchFile --dry-run 2>&1 | Out-String)
     if ($LASTEXITCODE -ne 0) {
         throw "OpenClaw plugin config dry-run failed: $($dry.Trim())"
     }
 
-    Write-Host "Applying CLASSIFIRE plugin configuration and per-agent additive tool grants..." -ForegroundColor Cyan
+    Write-Host "Applying CLASSIFIRE plugin configuration and merged per-agent tool grants..." -ForegroundColor Cyan
     $apply = (& $openclaw.Source config set --batch-file $batchFile 2>&1 | Out-String)
     if ($LASTEXITCODE -ne 0) {
         throw "OpenClaw plugin config apply failed: $($apply.Trim())"
@@ -141,5 +168,7 @@ Write-Host "Inspecting live CLASSIFIRE plugin runtime..." -ForegroundColor Cyan
 if ($LASTEXITCODE -ne 0) { throw "CLASSIFIRE plugin runtime inspection failed." }
 
 Write-Host "CLASSIFIRE OpenClaw plugin installed and role-limited additive tools applied." -ForegroundColor Green
-Write-Host "The minimal base profile remains in force; only the listed CLASSIFIRE tools are added per agent." -ForegroundColor Green
+Write-Host "Existing controlled-write grants were preserved rather than replaced." -ForegroundColor Green
+Write-Host "cf-intake-evidence and cf-physical-model received read-only pdf/image inspection tools." -ForegroundColor Green
+Write-Host "cf-physical-model also received canonical evidence read access for evidence-backed modelling." -ForegroundColor Green
 Write-Host "Human Release remains unavailable to every agent." -ForegroundColor Green
