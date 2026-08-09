@@ -16,7 +16,7 @@ if (-not (Test-Path -LiteralPath $TokenFile)) {
 
 $tokenDoc = Get-Content -LiteralPath $TokenFile -Raw | ConvertFrom-Json
 if ($tokenDoc.schema -ne "CLASSIFIRE-AGENT-TOKENS-v1") {
-    throw "Unexpected CLASSIFIRE token-file schema."
+    throw "Unexpected CLASSIFIRE agent token-file schema."
 }
 
 $expectedByAgent = @{
@@ -106,13 +106,15 @@ function Start-ManagedClassifireApiIfNeeded {
     $stderr = Join-Path $logRoot "$stamp.stderr.log"
 
     Write-Host "CLASSIFIRE API is offline; starting a temporary local boundary-test API..." -ForegroundColor DarkYellow
-    $script:managedApiProcess = Start-Process \
-        -FilePath $python.Source \
-        -ArgumentList @("-m", "uvicorn", "classifire.main:app", "--host", "127.0.0.1", "--port", "8787") \
-        -WorkingDirectory $repoRoot \
-        -RedirectStandardOutput $stdout \
-        -RedirectStandardError $stderr \
-        -PassThru
+    $startParams = @{
+        FilePath = $python.Source
+        ArgumentList = @("-m", "uvicorn", "classifire.main:app", "--host", "127.0.0.1", "--port", "8787")
+        WorkingDirectory = $repoRoot
+        RedirectStandardOutput = $stdout
+        RedirectStandardError = $stderr
+        PassThru = $true
+    }
+    $script:managedApiProcess = Start-Process @startParams
 
     for ($attempt = 0; $attempt -lt 40; $attempt++) {
         if (Test-ClassifireApiHealth) {
