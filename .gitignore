@@ -15,6 +15,7 @@ data/storage/**
 !data/storage/.gitkeep
 data/backups/**
 !data/backups/.gitkeep
+data/uat/**
 build/
 dist/
 *.egg-info/
