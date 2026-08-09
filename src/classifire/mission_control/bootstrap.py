@@ -67,6 +67,58 @@ DEFAULT_TASKS = [
 ]
 
 
+def baseline_task_statuses(client: MissionControlClient) -> list[dict[str, Any]]:
+    """Return a compact, non-secret status snapshot for the seven baseline tasks."""
+    rows: list[dict[str, Any]] = []
+    for task_id, title, assigned_agent, priority in DEFAULT_TASKS:
+        full_title = f"{task_id} - {title}"
+        task = client.find_task(task_id=task_id, title=full_title)
+        if task is None:
+            rows.append(
+                {
+                    "task_id": task_id,
+                    "mission_control_id": None,
+                    "title": full_title,
+                    "assigned_to": assigned_agent,
+                    "priority": priority,
+                    "status": "missing",
+                    "dispatch_attempts": 0,
+                    "outcome": None,
+                    "error_message": None,
+                    "linkage": {},
+                }
+            )
+            continue
+
+        linkage: dict[str, Any] = {}
+        for key, value in task.items():
+            lowered = str(key).lower()
+            if not any(marker in lowered for marker in ("session", "gateway", "runtime", "dispatch")):
+                continue
+            if value in (None, "", [], {}, False, 0):
+                continue
+            # Never surface anything that looks like a secret/token field.
+            if any(marker in lowered for marker in ("token", "secret", "key", "credential")):
+                continue
+            linkage[str(key)] = value
+
+        rows.append(
+            {
+                "task_id": task_id,
+                "mission_control_id": task.get("id"),
+                "title": task.get("title", full_title),
+                "assigned_to": task.get("assigned_to", assigned_agent),
+                "priority": task.get("priority", priority),
+                "status": task.get("status", "unknown"),
+                "dispatch_attempts": task.get("dispatch_attempts", 0) or 0,
+                "outcome": task.get("outcome"),
+                "error_message": task.get("error_message"),
+                "linkage": linkage,
+            }
+        )
+    return rows
+
+
 def bootstrap_mission_control(
     client: MissionControlClient,
     *,
