@@ -154,19 +154,21 @@ def agent_physical_model(
             {
                 "id": opening.id,
                 "opening_code": opening.opening_code,
+                "defect_id": opening.defect_id,
+                "canonical_defect_id": opening.canonical_defect_id,
                 "location": opening.location,
                 "substrate_type": opening.substrate_type,
                 "substrate_plane": opening.substrate_plane,
+                "substrate_thickness_mm": _decimal(opening.substrate_thickness_mm),
                 "orientation": opening.orientation,
                 "opening_type": opening.opening_type,
                 "width_mm": _decimal(opening.width_mm),
                 "height_mm": _decimal(opening.height_mm),
                 "diameter_mm": _decimal(opening.diameter_mm),
-                "depth_mm": _decimal(opening.depth_mm),
                 "frl": opening.frl,
-                "access_condition": opening.access_condition,
-                "complexity": opening.complexity,
-                "evidence_links": opening.evidence_links or [],
+                "physical_model_status": opening.physical_model_status,
+                "technical_status": opening.technical_status,
+                "selected_technical_variant_id": opening.selected_technical_variant_id,
                 "services": [
                     {
                         "id": service.id,
@@ -180,7 +182,10 @@ def agent_physical_model(
                         "insulation_type": service.insulation_type,
                         "insulation_thickness_mm": _decimal(service.insulation_thickness_mm),
                         "quantity": _decimal(service.quantity),
-                        "evidence_links": service.evidence_links or [],
+                        "centre_x_mm": _decimal(service.centre_x_mm),
+                        "centre_y_mm": _decimal(service.centre_y_mm),
+                        "evidence_status": service.evidence_status,
+                        "confidence": _decimal(service.confidence),
                     }
                     for service in opening.services
                 ],
