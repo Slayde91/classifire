@@ -88,6 +88,32 @@ def test_stage_essentials_extracts_and_verifies_controlled_sources(tmp_path: Pat
     assert (destination / "CLASSIFIRE_CONTROLLED_SOURCE_STAGE.json").exists()
 
 
+def test_stage_essentials_is_idempotent_for_verified_existing_files(tmp_path: Path) -> None:
+    archive_path = tmp_path / "essentials.zip"
+    destination = tmp_path / "controlled"
+    _write_archive(archive_path)
+
+    first = stage_essentials_archive(archive_path, destination)
+    second = stage_essentials_archive(archive_path, destination)
+
+    assert first.extracted_files > 0
+    assert second.extracted_files == 0
+    assert second.verified_files == first.verified_files
+    assert (destination / SHA256_NAME).exists()
+
+
+def test_stage_essentials_rejects_changed_existing_root_control_file(tmp_path: Path) -> None:
+    archive_path = tmp_path / "essentials.zip"
+    destination = tmp_path / "controlled"
+    _write_archive(archive_path)
+    stage_essentials_archive(archive_path, destination)
+
+    (destination / SHA256_NAME).write_text("tampered\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError, match="different content"):
+        stage_essentials_archive(archive_path, destination)
+
+
 def test_stage_essentials_rejects_manifest_hash_mismatch(tmp_path: Path) -> None:
     archive_path = tmp_path / "essentials.zip"
     _write_archive(archive_path, tamper_hash=True)
