@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import argparse
 import json
+from pathlib import Path
 
 from sqlalchemy import select
 
@@ -10,7 +12,49 @@ from classifire.db import SessionLocal
 from classifire.models import AgentServicePrincipal
 
 
+def _sync_token_file_metadata(path: Path) -> bool:
+    path = path.expanduser().resolve()
+    if not path.is_file():
+        return False
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if payload.get("schema") != "CLASSIFIRE-AGENT-TOKENS-v1":
+        raise RuntimeError(f"Unexpected CLASSIFIRE token-file schema: {path}")
+
+    tokens = payload.get("tokens")
+    if not isinstance(tokens, dict):
+        raise RuntimeError(f"CLASSIFIRE token file has no tokens object: {path}")
+    missing_tokens = [agent_id for agent_id in AGENT_SCOPE_MAP if not tokens.get(agent_id)]
+    if missing_tokens:
+        raise RuntimeError(
+            "CLASSIFIRE token file is missing agent token(s): " + ", ".join(sorted(missing_tokens))
+        )
+
+    # Preserve bearer tokens byte-for-byte; only refresh the non-secret scope metadata snapshot.
+    payload["scopes"] = {
+        agent_id: scopes_for_agent(agent_id)
+        for agent_id in sorted(AGENT_SCOPE_MAP)
+    }
+    temp = path.with_suffix(path.suffix + ".scope-sync.tmp")
+    temp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    temp.replace(path)
+    return True
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Synchronise persisted CLASSIFIRE agent scopes with AGENT_SCOPE_MAP without rotating "
+            "or replacing any existing bearer token."
+        )
+    )
+    parser.add_argument(
+        "--token-file",
+        type=Path,
+        default=Path.home() / ".openclaw" / "classifire-agent-tokens.json",
+    )
+    args = parser.parse_args()
+
     changed: list[dict[str, object]] = []
     unchanged: list[str] = []
     missing: list[str] = []
@@ -55,7 +99,10 @@ def main() -> int:
                 entity_id=principal.id,
                 previous_value={"scopes": previous},
                 new_value={"scopes": desired, "token_rotated": False},
-                reason="Synchronise persisted machine scopes with governed AGENT_SCOPE_MAP without rotating credentials",
+                reason=(
+                    "Synchronise persisted machine scopes with governed AGENT_SCOPE_MAP "
+                    "without rotating credentials"
+                ),
             )
 
         if missing:
@@ -65,6 +112,8 @@ def main() -> int:
             )
         db.commit()
 
+    token_file_updated = _sync_token_file_metadata(args.token_file)
+
     print(
         json.dumps(
             {
@@ -72,6 +121,8 @@ def main() -> int:
                 "changed": changed,
                 "unchanged": unchanged,
                 "token_rotation_performed": False,
+                "token_file_metadata_updated": token_file_updated,
+                "token_file": str(args.token_file.expanduser().resolve()),
             },
             indent=2,
         )
