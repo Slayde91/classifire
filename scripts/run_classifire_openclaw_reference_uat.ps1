@@ -107,7 +107,7 @@ Write-Host "Validating OpenClaw configuration..." -ForegroundColor Cyan
 if ($LASTEXITCODE -ne 0) { throw "OpenClaw configuration is invalid." }
 
 Write-Host "Checking live OpenClaw Gateway RPC..." -ForegroundColor Cyan
-& $openclaw.Source gateway status --deep --require-rpc | Out-Host
+& $openclaw.Source gateway status --require-rpc | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "OpenClaw Gateway RPC preflight failed." }
 
 Write-Host "Checking CLASSIFIRE API..." -ForegroundColor Cyan
