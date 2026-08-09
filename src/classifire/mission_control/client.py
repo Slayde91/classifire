@@ -107,6 +107,35 @@ class MissionControlClient:
             )
         return response.json() if response.content else {"status": response.status_code}
 
+    def list_tasks(self) -> list[dict[str, Any]]:
+        """Return Mission Control task rows across known response envelopes."""
+        with httpx.Client(timeout=self.timeout) as client:
+            response = client.get(self._url("/api/tasks"), headers=self.headers)
+        if response.status_code != 200:
+            raise MissionControlError(
+                f"Task listing failed ({response.status_code}): {response.text[:500]}"
+            )
+
+        payload = response.json()
+        if isinstance(payload, list):
+            return [row for row in payload if isinstance(row, dict)]
+        if isinstance(payload, dict):
+            for key in ("tasks", "items", "data", "results"):
+                value = payload.get(key)
+                if isinstance(value, list):
+                    return [row for row in value if isinstance(row, dict)]
+        raise MissionControlError("Task listing returned an unsupported response shape")
+
+    def find_task(self, *, task_id: str | None = None, title: str | None = None) -> dict[str, Any] | None:
+        """Find an existing CLASSIFIRE task by stable metadata ID or exact title."""
+        for task in self.list_tasks():
+            metadata = task.get("metadata") if isinstance(task.get("metadata"), dict) else {}
+            if task_id and metadata.get("task_id") == task_id:
+                return task
+            if title and task.get("title") == title:
+                return task
+        return None
+
     def create_task(
         self,
         *,
@@ -130,3 +159,28 @@ class MissionControlClient:
                 f"Task creation failed ({response.status_code}): {response.text[:500]}"
             )
         return response.json()
+
+    def ensure_task(
+        self,
+        *,
+        task_id: str,
+        title: str,
+        assigned_to: str | None = None,
+        priority: str = "medium",
+        description: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Create a task once; future calls return the existing Mission Control row."""
+        existing = self.find_task(task_id=task_id, title=title)
+        if existing is not None:
+            return {"created": False, "task_id": task_id, "task": existing}
+
+        created = self.create_task(
+            title=title,
+            assigned_to=assigned_to,
+            priority=priority,
+            description=description,
+            metadata=metadata,
+        )
+        task = created.get("task", created) if isinstance(created, dict) else created
+        return {"created": True, "task_id": task_id, "task": task}
