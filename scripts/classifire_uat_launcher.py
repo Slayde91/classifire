@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 from run_classifire_openclaw_reference_uat import Controller, parse_json_envelope
 
 GATEWAY_RPC_TIMEOUT_MS = 30_000
+GATEWAY_RPC_PROCESS_TIMEOUT_SECONDS = 45
 GATEWAY_RPC_RETRIES = 2
 
 
@@ -43,25 +44,50 @@ def terminate_process(process: subprocess.Popen[str]) -> None:
 
 
 class ResilientController(Controller):
-    """Reference-UAT controller with explicit OpenClaw RPC budgets and retry."""
+    """Reference-UAT controller with bounded OpenClaw RPC retry and session caching."""
+
+    def __init__(self, run_id: str, timeout_seconds: int, base_url: str) -> None:
+        super().__init__(run_id, timeout_seconds, base_url)
+        self._effective_tool_payloads: dict[str, str] = {}
 
     def gateway_call(self, method: str, params: dict, receipt_name: str) -> dict:
         params_json = json.dumps(params, separators=(",", ":"), ensure_ascii=False)
         last_detail = ""
 
         for attempt in range(1, GATEWAY_RPC_RETRIES + 1):
-            result = self.openclaw(
-                "gateway",
-                "call",
-                method,
-                "--params",
-                params_json,
-                "--timeout",
-                str(GATEWAY_RPC_TIMEOUT_MS),
-                "--json",
-                timeout=45,
-                check=False,
-            )
+            try:
+                result = self.openclaw(
+                    "gateway",
+                    "call",
+                    method,
+                    "--params",
+                    params_json,
+                    "--timeout",
+                    str(GATEWAY_RPC_TIMEOUT_MS),
+                    "--json",
+                    timeout=GATEWAY_RPC_PROCESS_TIMEOUT_SECONDS,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired as exc:
+                last_detail = (
+                    f"OpenClaw CLI subprocess for Gateway RPC {method} exceeded "
+                    f"{GATEWAY_RPC_PROCESS_TIMEOUT_SECONDS}s"
+                )
+                stdout = exc.stdout.decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+                stderr = exc.stderr.decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+                detail_parts = [part.strip() for part in (stdout, stderr) if part and part.strip()]
+                if detail_parts:
+                    last_detail += ":\n" + "\n".join(detail_parts)
+                self.save(f"{receipt_name}.attempt-{attempt}.timeout.txt", last_detail)
+                if attempt < GATEWAY_RPC_RETRIES:
+                    print(
+                        f"OpenClaw Gateway RPC {method} exceeded the local process budget; "
+                        "retrying once with the same request identity..."
+                    )
+                    time.sleep(2)
+                    continue
+                raise RuntimeError(last_detail) from exc
+
             raw = result.stdout.strip()
             stderr = result.stderr.strip()
 
@@ -78,6 +104,7 @@ class ResilientController(Controller):
                 or '"kind":"timeout"' in compact
             )
             if is_timeout and attempt < GATEWAY_RPC_RETRIES:
+                self.save(f"{receipt_name}.attempt-{attempt}.timeout.txt", last_detail)
                 print(
                     f"OpenClaw Gateway RPC {method} timed out after "
                     f"{GATEWAY_RPC_TIMEOUT_MS}ms; retrying once with the same request identity..."
@@ -92,6 +119,31 @@ class ResilientController(Controller):
             )
 
         raise RuntimeError(f"OpenClaw Gateway RPC {method} failed: {last_detail}")
+
+    def assert_effective_tool(
+        self,
+        stage: str,
+        agent_id: str,
+        session_key: str,
+        tool_name: str,
+    ) -> None:
+        serialized = self._effective_tool_payloads.get(session_key)
+        if serialized is None:
+            print(f"Checking effective OpenClaw tools for {agent_id}...")
+            payload = self.gateway_call(
+                "tools.effective",
+                {"sessionKey": session_key},
+                f"{stage}.effective.json",
+            )
+            serialized = json.dumps(payload, separators=(",", ":"))
+            self._effective_tool_payloads[session_key] = serialized
+            print(f"PASS effective tool inventory / {agent_id}")
+
+        if tool_name not in serialized:
+            raise RuntimeError(
+                f"{agent_id} does not have effective OpenClaw tool {tool_name} "
+                f"in session {session_key}."
+            )
 
 
 def main() -> int:
