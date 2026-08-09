@@ -27,6 +27,7 @@ AGENT_SCOPE_MAP: dict[str, set[str]] = {
     "cf-physical-model": {
         "health:read",
         "workflow:read",
+        "evidence:read",
         "physical:read",
         "physical:write",
         "physical:lock",
