@@ -18,7 +18,8 @@ from classifire.models import LibraryRelease, PricingLibraryRecord, TechnicalVar
 
 EXPECTED_PRICING_ROWS = 897
 EXPECTED_TECHNICAL_LINES = 2861
-EXPECTED_UNIQUE_VARIANTS = 2860
+EXPECTED_UNIQUE_SOURCE_VARIANTS = 2860
+EXPECTED_IMPORTED_TECHNICAL_RECORDS = 2861
 KNOWN_DUPLICATE_VARIANT_ID = "TSL-FF-FAS190236-RIR1-25A-V211-VAR01"
 RELEASE_VERSION = "2.13"
 
@@ -68,9 +69,9 @@ def validate_source_shape(staged: StagedEssentials) -> dict[str, object]:
         )
     if invalid_json:
         errors.append(f"Package 17 contains {invalid_json} invalid JSON lines.")
-    if len(unique_ids) != EXPECTED_UNIQUE_VARIANTS:
+    if len(unique_ids) != EXPECTED_UNIQUE_SOURCE_VARIANTS:
         errors.append(
-            f"Package 17 expected {EXPECTED_UNIQUE_VARIANTS} unique Variant_ID values; "
+            f"Package 17 expected {EXPECTED_UNIQUE_SOURCE_VARIANTS} unique source Variant_ID values; "
             f"found {len(unique_ids)}."
         )
     if duplicates != [KNOWN_DUPLICATE_VARIANT_ID]:
@@ -131,6 +132,7 @@ def import_libraries(staged: StagedEssentials) -> dict[str, object]:
             staged.technical_variants_path,
             version=RELEASE_VERSION,
             status="draft",
+            allowed_identity_collisions={KNOWN_DUPLICATE_VARIANT_ID},
         )
 
     with SessionLocal() as db:
@@ -162,7 +164,8 @@ def import_libraries(staged: StagedEssentials) -> dict[str, object]:
             "Controlled CLASSIFIRE Package 17 executable technical variants v2.13. "
             "Package 15 technical source authority is retained in the same controlled "
             "source stage. Runtime use remains subject to release approval and fail-closed "
-            "applicability/expert-review gates."
+            "applicability/expert-review gates. One authorised source Variant_ID collision "
+            "is preserved as a distinct migration identity using a deterministic content-hash suffix."
         )
         technical_release.source_manifest = {
             "package_id": staged.package_id,
@@ -170,6 +173,9 @@ def import_libraries(staged: StagedEssentials) -> dict[str, object]:
             "package_15_source_sha256": technical_source_hash,
             "package_17_variants_filename": staged.technical_variants_path.name,
             "package_17_variants_sha256": technical_variants_hash,
+            "source_unique_variant_ids": EXPECTED_UNIQUE_SOURCE_VARIANTS,
+            "imported_technical_records": EXPECTED_IMPORTED_TECHNICAL_RECORDS,
+            "authorised_source_identity_collision": KNOWN_DUPLICATE_VARIANT_ID,
         }
         db.commit()
 
@@ -195,10 +201,14 @@ def import_libraries(staged: StagedEssentials) -> dict[str, object]:
             f"Imported Package 14 release contains {pricing_count} rows; "
             f"expected {EXPECTED_PRICING_ROWS}."
         )
-    if technical_count != EXPECTED_UNIQUE_VARIANTS:
+    if technical_count != EXPECTED_IMPORTED_TECHNICAL_RECORDS:
         raise RuntimeError(
-            f"Imported Package 17 release contains {technical_count} unique variants; "
-            f"expected {EXPECTED_UNIQUE_VARIANTS}."
+            f"Imported Package 17 release contains {technical_count} preserved technical records; "
+            f"expected {EXPECTED_IMPORTED_TECHNICAL_RECORDS}."
+        )
+    if technical_result.get("identity_collisions_remapped") != 1:
+        raise RuntimeError(
+            "Package 17 import did not preserve exactly one authorised source identity collision."
         )
 
     return {
@@ -207,6 +217,7 @@ def import_libraries(staged: StagedEssentials) -> dict[str, object]:
         "post_import": {
             "pricing_records": pricing_count,
             "technical_variants": technical_count,
+            "source_unique_variant_ids": EXPECTED_UNIQUE_SOURCE_VARIANTS,
             "technical_variant_rows_active": technical_variant_rows_active,
             "pricing_release_id": pricing_release.id,
             "pricing_release_status": pricing_release.status,
