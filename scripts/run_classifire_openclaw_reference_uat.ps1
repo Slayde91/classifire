@@ -1,7 +1,8 @@
 param(
     [string]$RunId = (Get-Date -Format "yyyyMMdd-HHmmss"),
     [int]$TimeoutSeconds = 300,
-    [string]$BaseUrl = "http://127.0.0.1:8787"
+    [string]$BaseUrl = "http://127.0.0.1:8787",
+    [string]$GatewayHttpBaseUrl = "http://127.0.0.1:18789"
 )
 
 Set-StrictMode -Version Latest
@@ -49,13 +50,77 @@ function Convert-OpenClawJson {
 function Convert-ToOpenClawNativeJsonArgument {
     param([string]$Json)
 
-    # OpenClaw documents --params as JSON. Windows PowerShell 5.1 strips
-    # embedded quotes when its .ps1 shim forwards arguments to node.exe, so
-    # preserve them at the native-process boundary.
+    # tools.effective still uses Gateway WebSocket RPC. Its JSON contains only
+    # the canonical session key, so the existing Windows PowerShell 5.1 quote
+    # preservation is sufficient for that read-only RPC boundary.
     if ($env:OS -eq "Windows_NT" -and $PSVersionTable.PSVersion.Major -lt 6) {
         return $Json.Replace('"', '\"')
     }
     return $Json
+}
+
+function Get-OpenClawConfigScalar {
+    param([string]$Path)
+
+    $raw = (& $openclaw.Source config get $Path --json 2>&1 | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($raw)) {
+        return $null
+    }
+    try {
+        $value = $raw | ConvertFrom-Json
+        if ($value -is [string]) { return [string]$value }
+        if ($value -is [bool] -or $value -is [int] -or $value -is [long]) { return [string]$value }
+        return $null
+    }
+    catch {
+        return $raw.Trim('"')
+    }
+}
+
+function Get-OpenClawGatewayHttpHeaders {
+    $mode = Get-OpenClawConfigScalar -Path "gateway.auth.mode"
+    if ([string]::IsNullOrWhiteSpace($mode)) {
+        $mode = "token"
+    }
+    $mode = $mode.ToLowerInvariant()
+
+    if ($mode -eq "none") {
+        return @{}
+    }
+
+    $secret = $null
+    if ($mode -eq "token") {
+        $secret = [string]$env:OPENCLAW_GATEWAY_TOKEN
+        if ([string]::IsNullOrWhiteSpace($secret)) {
+            $secret = Get-OpenClawConfigScalar -Path "gateway.auth.token"
+        }
+    }
+    elseif ($mode -eq "password") {
+        $secret = [string]$env:OPENCLAW_GATEWAY_PASSWORD
+        if ([string]::IsNullOrWhiteSpace($secret)) {
+            $secret = Get-OpenClawConfigScalar -Path "gateway.auth.password"
+        }
+    }
+    elseif ($mode -eq "trusted-proxy") {
+        # OpenClaw permits a same-host direct password fallback for trusted-proxy
+        # mode when no forwarded identity headers are supplied.
+        $secret = [string]$env:OPENCLAW_GATEWAY_PASSWORD
+        if ([string]::IsNullOrWhiteSpace($secret)) {
+            $secret = Get-OpenClawConfigScalar -Path "gateway.auth.password"
+        }
+        if ([string]::IsNullOrWhiteSpace($secret)) {
+            throw "OpenClaw gateway.auth.mode is trusted-proxy but no same-host gateway.auth.password/OPENCLAW_GATEWAY_PASSWORD fallback is available for the UAT HTTP caller."
+        }
+    }
+    else {
+        throw "Unsupported OpenClaw gateway.auth.mode '$mode' for the controlled UAT HTTP caller."
+    }
+
+    if ([string]::IsNullOrWhiteSpace($secret)) {
+        throw "Unable to resolve the OpenClaw Gateway $mode credential. Configure gateway.auth.$mode or the corresponding OPENCLAW_GATEWAY_* environment variable."
+    }
+
+    return @{ Authorization = "Bearer $secret" }
 }
 
 function Initialize-UatAgentSession {
@@ -146,9 +211,8 @@ function Invoke-ClassifireTool {
 
     Assert-EffectiveTool -Stage $Stage -AgentId $AgentId -SessionKey $SessionKey -ToolName $ToolName
 
-    # tools.invoke derives a stable tool-call id from idempotencyKey. Include the
-    # receipt identity so two legitimate calls to the same tool in one stage
-    # (for example technical-xlsx and proposal-xlsx rendering) remain distinct.
+    # /tools/invoke uses Gateway auth plus the same effective tool policy. HTTP
+    # request bodies avoid Windows PowerShell 5.1/npm shim argument splitting.
     $idempotencyKey = "classifire-uat-$RunId-$Stage-$ToolName-$ReceiptName"
     $paramsJson = @{
         name = $ToolName
@@ -157,45 +221,51 @@ function Invoke-ClassifireTool {
         agentId = $AgentId
         idempotencyKey = $idempotencyKey
     } | ConvertTo-Json -Depth 30 -Compress
-    $paramsNative = Convert-ToOpenClawNativeJsonArgument -Json $paramsJson
-    $stderrFile = Join-Path $env:TEMP ("classifire-uat-" + $RunId + "-" + $Stage + "-" + $ToolName + ".stderr.txt")
+
+    Write-Host "Invoking $ToolName as $AgentId..." -ForegroundColor Cyan
+    $invokeUrl = $GatewayHttpBaseUrl.TrimEnd('/') + "/tools/invoke"
+    $headers = Get-OpenClawGatewayHttpHeaders
 
     try {
-        Write-Host "Invoking $ToolName as $AgentId..." -ForegroundColor Cyan
-        $raw = (& $openclaw.Source gateway call tools.invoke `
-            --params $paramsNative `
-            --json 2>$stderrFile | Out-String).Trim()
-        $exitCode = $LASTEXITCODE
-        $stderr = if (Test-Path -LiteralPath $stderrFile) {
-            Get-Content -LiteralPath $stderrFile -Raw
-        }
-        else { "" }
-
+        $response = Invoke-WebRequest `
+            -Uri $invokeUrl `
+            -Method POST `
+            -Headers $headers `
+            -ContentType "application/json" `
+            -Body $paramsJson `
+            -UseBasicParsing `
+            -TimeoutSec 90
+        $raw = [string]$response.Content
         Save-Receipt -Name $ReceiptName -Content $raw | Out-Null
-        if ($stderr) {
-            Save-Receipt -Name ($ReceiptName + ".stderr.txt") -Content $stderr | Out-Null
+    }
+    catch [System.Net.WebException] {
+        $status = $null
+        $raw = ""
+        if ($null -ne $_.Exception.Response) {
+            try { $status = [int]$_.Exception.Response.StatusCode } catch { }
+            try {
+                $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                try { $raw = $reader.ReadToEnd() } finally { $reader.Dispose() }
+            }
+            catch { }
         }
-        if ($exitCode -ne 0) {
-            throw "OpenClaw tools.invoke failed for $ToolName/$AgentId with exit code $exitCode. $stderr $raw"
-        }
+        if ($raw) { Save-Receipt -Name ($ReceiptName + ".error.json") -Content $raw | Out-Null }
+        throw "OpenClaw HTTP /tools/invoke failed for $ToolName/$AgentId$(if ($null -ne $status) { " with HTTP $status" } else { "" }). $raw"
+    }
 
-        $payload = Convert-OpenClawJson $raw
-        $invokeOk = $false
-        if ($null -ne $payload.PSObject.Properties["ok"]) {
-            $invokeOk = [bool]$payload.ok
-        }
-        elseif ($null -ne $payload.PSObject.Properties["result"] -and $null -ne $payload.result.PSObject.Properties["ok"]) {
-            $invokeOk = [bool]$payload.result.ok
-        }
-        if (-not $invokeOk) {
-            throw "OpenClaw policy/tool invocation returned ok=false for $ToolName/$AgentId. $raw"
-        }
-        Write-Host "PASS tool $ToolName / $AgentId" -ForegroundColor Green
-        return $payload
+    $payload = Convert-OpenClawJson $raw
+    $invokeOk = $false
+    if ($null -ne $payload.PSObject.Properties["ok"]) {
+        $invokeOk = [bool]$payload.ok
     }
-    finally {
-        Remove-Item -LiteralPath $stderrFile -Force -ErrorAction SilentlyContinue
+    elseif ($null -ne $payload.PSObject.Properties["result"] -and $null -ne $payload.result.PSObject.Properties["ok"]) {
+        $invokeOk = [bool]$payload.result.ok
     }
+    if (-not $invokeOk) {
+        throw "OpenClaw policy/tool invocation returned ok=false for $ToolName/$AgentId. $raw"
+    }
+    Write-Host "PASS tool $ToolName / $AgentId" -ForegroundColor Green
+    return $payload
 }
 
 function Verify-UatStage {
@@ -231,6 +301,10 @@ if ($LASTEXITCODE -ne 0) { throw "OpenClaw configuration is invalid." }
 Write-Host "Checking live OpenClaw Gateway RPC..." -ForegroundColor Cyan
 & $openclaw.Source gateway status --require-rpc | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "OpenClaw Gateway RPC preflight failed." }
+
+Write-Host "Checking OpenClaw Gateway HTTP auth..." -ForegroundColor Cyan
+$null = Get-OpenClawGatewayHttpHeaders
+Write-Host "PASS OpenClaw Gateway HTTP auth resolved" -ForegroundColor Green
 
 Write-Host "Checking CLASSIFIRE API..." -ForegroundColor Cyan
 $health = Invoke-RestMethod ($BaseUrl.TrimEnd('/') + "/healthz")
