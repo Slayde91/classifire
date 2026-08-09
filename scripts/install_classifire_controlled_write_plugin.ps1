@@ -79,6 +79,16 @@ $addByAgent = @{
     )
 }
 
+Write-Host "Validating existing OpenClaw config before plugin install..." -ForegroundColor Cyan
+$configValidation = (& $openclaw.Source config validate --json 2>&1 | Out-String).Trim()
+if ($LASTEXITCODE -ne 0) {
+    throw (
+        "OpenClaw config is invalid before CLASSIFIRE controlled-write installation. " +
+        "Run 'openclaw config validate --json' and 'openclaw doctor --lint --json' and review the reported issue before repair. " +
+        "Validation output: $configValidation"
+    )
+}
+
 Write-Host "Building CLASSIFIRE controlled-write OpenClaw plugin..." -ForegroundColor Cyan
 Push-Location $pluginRoot
 try {
