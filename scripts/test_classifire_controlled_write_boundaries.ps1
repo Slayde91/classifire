@@ -18,8 +18,12 @@ if ($tokenDoc.schema -ne "CLASSIFIRE-AGENT-TOKENS-v1") {
 
 $expectedByAgent = @{
     "cf-orchestrator" = @()
-    "cf-intake-evidence" = @()
-    "cf-physical-model" = @("classifire_derive_quantity_labour")
+    "cf-intake-evidence" = @("classifire_register_evidence_observations")
+    "cf-physical-model" = @(
+        "classifire_submit_initial_physical_model",
+        "classifire_lock_physical_model",
+        "classifire_derive_quantity_labour"
+    )
     "cf-technical-system" = @("classifire_select_repair_strategy", "classifire_lock_repair_strategy")
     "cf-commercial-engine" = @("classifire_required_components", "classifire_derive_commercial")
     "cf-validator" = @()
@@ -29,6 +33,9 @@ $expectedByAgent = @{
 }
 
 $allWriteTools = @(
+    "classifire_register_evidence_observations",
+    "classifire_submit_initial_physical_model",
+    "classifire_lock_physical_model",
     "classifire_select_repair_strategy",
     "classifire_lock_repair_strategy",
     "classifire_derive_quantity_labour",
@@ -109,11 +116,17 @@ function Assert-ForbiddenApi {
 
 Write-Host "Checking controlled-write API cross-role denial..." -ForegroundColor Cyan
 foreach ($agentId in ($expectedByAgent.Keys | Sort-Object)) {
-    if ($agentId -eq "cf-technical-system") {
-        Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/commercial/derive" -Body @{}
+    if ($agentId -eq "cf-intake-evidence") {
+        Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/physical-model/initial" -Body @{ openings = @(); services = @() }
     }
     elseif ($agentId -eq "cf-physical-model") {
-        Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/openings/not-real/repair-strategy/lock"
+        Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/evidence/register" -Body @{ observations = @(@{ stored_file_id = "x"; evidence_type = "page" }) }
+    }
+    elseif ($agentId -eq "cf-technical-system") {
+        Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/commercial/derive" -Body @{}
+    }
+    elseif ($agentId -eq "cf-commercial-engine") {
+        Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/openings/not-real/repair-strategy" -Body @{ variant_id = "VAR-001" }
     }
     else {
         Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/openings/not-real/repair-strategy" -Body @{ variant_id = "VAR-001" }
