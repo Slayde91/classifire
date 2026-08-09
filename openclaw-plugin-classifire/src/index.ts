@@ -13,6 +13,11 @@ type TokenFile = {
   tokens: Record<string, string>;
 };
 
+type VerifiedCall = {
+  agentId: string;
+  config: PluginConfig;
+};
+
 const ALL_CF_AGENTS = new Set([
   "cf-orchestrator",
   "cf-intake-evidence",
@@ -38,7 +43,7 @@ const TOOL_AGENTS: Record<string, Set<string>> = {
   classifire_library_releases: new Set(["cf-library-governance"]),
 };
 
-const callAgents = new Map<string, string>();
+const verifiedCalls = new Map<string, VerifiedCall>();
 
 function normalizedBaseUrl(raw: string): string {
   const url = new URL(raw);
@@ -49,6 +54,20 @@ function normalizedBaseUrl(raw: string): string {
     throw new Error("CLASSIFIRE tool plugin is restricted to a loopback API endpoint");
   }
   return url.toString().replace(/\/$/, "");
+}
+
+function parsePluginConfig(value: unknown): PluginConfig {
+  if (!value || typeof value !== "object") {
+    throw new Error("CLASSIFIRE plugin configuration is missing");
+  }
+  const raw = value as Record<string, unknown>;
+  const baseUrl = String(raw.baseUrl ?? "");
+  const tokenFile = String(raw.tokenFile ?? "");
+  if (!baseUrl || !tokenFile) {
+    throw new Error("CLASSIFIRE plugin configuration requires baseUrl and tokenFile");
+  }
+  normalizedBaseUrl(baseUrl);
+  return { baseUrl, tokenFile };
 }
 
 async function loadToken(config: PluginConfig, agentId: string): Promise<string> {
@@ -105,16 +124,16 @@ async function classifireRequest(
   }
 }
 
-function requireCallAgent(toolCallId: string, toolName: string): string {
-  const agentId = callAgents.get(toolCallId);
-  if (!agentId) {
-    throw new Error(`CLASSIFIRE tool ${toolName} has no verified OpenClaw agent context`);
+function requireVerifiedCall(toolCallId: string, toolName: string): VerifiedCall {
+  const verified = verifiedCalls.get(toolCallId);
+  if (!verified) {
+    throw new Error(`CLASSIFIRE tool ${toolName} has no verified OpenClaw tool-call context`);
   }
   const allowed = TOOL_AGENTS[toolName];
-  if (!allowed?.has(agentId)) {
-    throw new Error(`Agent ${agentId} is not authorised for ${toolName}`);
+  if (!allowed?.has(verified.agentId)) {
+    throw new Error(`Agent ${verified.agentId} is not authorised for ${toolName}`);
   }
-  return agentId;
+  return verified;
 }
 
 export default definePluginEntry({
@@ -150,7 +169,15 @@ export default definePluginEntry({
             blockReason: "CLASSIFIRE tool call has no host-authoritative toolCallId",
           };
         }
-        callAgents.set(toolCallId, agentId);
+        try {
+          const config = parsePluginConfig(event?.context?.pluginConfig);
+          verifiedCalls.set(toolCallId, { agentId, config });
+        } catch (error) {
+          return {
+            block: true,
+            blockReason: error instanceof Error ? error.message : "Invalid CLASSIFIRE plugin config",
+          };
+        }
       },
       { priority: 100, registrationId: "classifire-agent-boundary" },
     );
@@ -167,15 +194,11 @@ export default definePluginEntry({
           description,
           parameters,
           async execute(toolCallId: string, params: any) {
-            const config = api.getPluginConfig?.() as PluginConfig | undefined;
-            if (!config?.baseUrl || !config?.tokenFile) {
-              throw new Error("CLASSIFIRE plugin configuration is incomplete");
-            }
-            const agentId = requireCallAgent(toolCallId, name);
+            const verified = requireVerifiedCall(toolCallId, name);
             try {
-              return await executeRequest(agentId, params, config);
+              return await executeRequest(verified.agentId, params, verified.config);
             } finally {
-              callAgents.delete(toolCallId);
+              verifiedCalls.delete(toolCallId);
             }
           },
         },
