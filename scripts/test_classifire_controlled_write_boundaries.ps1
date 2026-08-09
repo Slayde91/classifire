@@ -173,7 +173,7 @@ function Assert-ForbiddenApi {
             $response = Invoke-WebRequest @params
         }
         catch {
-            throw "CLASSIFIRE API transport failure for $AgentId -> $Method $Path: $($_.Exception.Message)"
+            throw "CLASSIFIRE API transport failure for $AgentId -> $Method ${Path}: $($_.Exception.Message)"
         }
         $status = [int]$response.StatusCode
         if ($status -ne 403) {
@@ -189,7 +189,7 @@ function Assert-ForbiddenApi {
     catch {
         $status = Get-HttpStatusFromError -ErrorRecord $_
         if ($null -eq $status) {
-            throw "CLASSIFIRE API transport failure for $AgentId -> $Method $Path: $($_.Exception.Message)"
+            throw "CLASSIFIRE API transport failure for $AgentId -> $Method ${Path}: $($_.Exception.Message)"
         }
     }
     if ($status -ne 403) {
