@@ -83,12 +83,20 @@ async function loadToken(config: PluginConfig, agentId: string): Promise<string>
   return token;
 }
 
+function asToolResult(body: unknown) {
+  const text = typeof body === "string" ? body : JSON.stringify(body, null, 2);
+  return {
+    content: [{ type: "text" as const, text }],
+    details: body,
+  };
+}
+
 async function classifireRequest(
   config: PluginConfig,
   agentId: string,
   path: string,
   init: RequestInit = {},
-): Promise<unknown> {
+): Promise<ReturnType<typeof asToolResult>> {
   const baseUrl = normalizedBaseUrl(config.baseUrl);
   const token = await loadToken(config, agentId);
   const controller = new AbortController();
@@ -118,7 +126,7 @@ async function classifireRequest(
         `CLASSIFIRE API ${response.status} ${response.statusText}: ${JSON.stringify(body)}`,
       );
     }
-    return body;
+    return asToolResult(body);
   } finally {
     clearTimeout(timeout);
   }
@@ -186,7 +194,11 @@ export default definePluginEntry({
       name: string,
       description: string,
       parameters: any,
-      executeRequest: (agentId: string, params: any, config: PluginConfig) => Promise<unknown>,
+      executeRequest: (
+        agentId: string,
+        params: any,
+        config: PluginConfig,
+      ) => Promise<ReturnType<typeof asToolResult>>,
     ) => {
       api.registerTool(
         {
