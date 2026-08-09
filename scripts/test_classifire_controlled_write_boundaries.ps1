@@ -16,7 +16,7 @@ if (-not (Test-Path -LiteralPath $TokenFile)) {
 
 $tokenDoc = Get-Content -LiteralPath $TokenFile -Raw | ConvertFrom-Json
 if ($tokenDoc.schema -ne "CLASSIFIRE-AGENT-TOKENS-v1") {
-    throw "Unexpected CLASSIFIRE agent token-file schema."
+    throw "Unexpected CLASSIFIRE token-file schema."
 }
 
 $expectedByAgent = @{
@@ -133,7 +133,6 @@ function Start-ManagedClassifireApiIfNeeded {
 
 function Get-HttpStatusFromError {
     param([System.Management.Automation.ErrorRecord]$ErrorRecord)
-
     $response = $ErrorRecord.Exception.Response
     if ($null -ne $response -and $null -ne $response.StatusCode) {
         try { return [int]$response.StatusCode } catch { }
@@ -151,6 +150,7 @@ function Assert-ForbiddenApi {
         [string]$Method = "POST",
         [object]$Body = $null
     )
+
     $headers = @{
         Authorization = "Bearer $(Get-AgentToken $AgentId)"
         "X-Classifire-Agent-ID" = $AgentId
@@ -176,24 +176,91 @@ function Assert-ForbiddenApi {
             throw "CLASSIFIRE API transport failure for $AgentId -> $Method ${Path}: $($_.Exception.Message)"
         }
         $status = [int]$response.StatusCode
-        if ($status -ne 403) {
-            throw "Expected HTTP 403 for $AgentId -> $Method $Path, but received HTTP $status."
+    }
+    else {
+        try {
+            $response = Invoke-WebRequest @params
+            $status = [int]$response.StatusCode
         }
-        return
+        catch {
+            $status = Get-HttpStatusFromError -ErrorRecord $_
+            if ($null -eq $status) {
+                throw "CLASSIFIRE API transport failure for $AgentId -> $Method ${Path}: $($_.Exception.Message)"
+            }
+        }
     }
 
-    try {
-        $response = Invoke-WebRequest @params
-        $status = [int]$response.StatusCode
-    }
-    catch {
-        $status = Get-HttpStatusFromError -ErrorRecord $_
-        if ($null -eq $status) {
-            throw "CLASSIFIRE API transport failure for $AgentId -> $Method ${Path}: $($_.Exception.Message)"
-        }
-    }
     if ($status -ne 403) {
         throw "Expected HTTP 403 for $AgentId -> $Method $Path, but received HTTP $status."
+    }
+}
+
+function Test-OpenClawGatewayRpc {
+    $raw = (& $openclaw.Source gateway status --require-rpc --timeout 30000 2>&1 | Out-String)
+    return ($LASTEXITCODE -eq 0)
+}
+
+function Restart-OpenClawGatewayAndWait {
+    Write-Host "Restarting OpenClaw Gateway and waiting for RPC..." -ForegroundColor DarkYellow
+    $restart = (& $openclaw.Source gateway restart 2>&1 | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+        throw "OpenClaw Gateway restart failed: $($restart.Trim())"
+    }
+    for ($attempt = 0; $attempt -lt 12; $attempt++) {
+        Start-Sleep -Seconds 1
+        if (Test-OpenClawGatewayRpc) {
+            Write-Host "PASS OpenClaw Gateway RPC" -ForegroundColor Green
+            return
+        }
+    }
+    throw "OpenClaw Gateway RPC did not become healthy after restart."
+}
+
+function Ensure-OpenClawGatewayRpc {
+    if (Test-OpenClawGatewayRpc) {
+        Write-Host "PASS OpenClaw Gateway RPC" -ForegroundColor Green
+        return
+    }
+    Restart-OpenClawGatewayAndWait
+}
+
+function Invoke-GatewayJson {
+    param(
+        [string]$Method,
+        [hashtable]$Params,
+        [string]$Context
+    )
+
+    $paramsJson = $Params | ConvertTo-Json -Depth 12 -Compress
+    $paramsNative = Convert-ToOpenClawNativeJsonArgument -Json $paramsJson
+
+    for ($attempt = 0; $attempt -lt 2; $attempt++) {
+        $raw = (& $openclaw.Source gateway call $Method --params $paramsNative --timeout 60000 --json 2>&1 | Out-String).Trim()
+        $exitCode = $LASTEXITCODE
+        $parsed = $null
+        try { $parsed = Convert-OpenClawJson $raw } catch { }
+
+        $transportFailure = $false
+        if ($null -ne $parsed -and $parsed.ok -eq $false -and $null -ne $parsed.error) {
+            $errorType = [string]$parsed.error.type
+            $errorKind = [string]$parsed.error.kind
+            $transportFailure = ($errorType -eq "gateway_transport_error" -or $errorKind -eq "timeout")
+        }
+        elseif ($exitCode -ne 0 -and $raw -match "(?i)gateway.*(timeout|transport|closed|unavailable)") {
+            $transportFailure = $true
+        }
+
+        if ($exitCode -eq 0 -and $null -ne $parsed -and -not $transportFailure) {
+            return $parsed
+        }
+
+        if ($attempt -eq 0 -and $transportFailure) {
+            Write-Host "Gateway RPC transient failure during $Context; restarting once and retrying..." -ForegroundColor DarkYellow
+            Restart-OpenClawGatewayAndWait
+            continue
+        }
+
+        throw "Gateway call $Method failed for ${Context}: $raw"
     }
 }
 
@@ -229,9 +296,6 @@ try {
         elseif ($agentId -eq "cf-technical-system") {
             Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/commercial/derive" -Body @{}
         }
-        elseif ($agentId -eq "cf-commercial-engine") {
-            Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/openings/not-real/repair-strategy" -Body @{ variant_id = "VAR-001" }
-        }
         else {
             Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/openings/not-real/repair-strategy" -Body @{ variant_id = "VAR-001" }
         }
@@ -249,6 +313,9 @@ try {
     Write-Host "PASS controlled-write API exposes no Human Release/approval route" -ForegroundColor Green
 
     Write-Host ""
+    Write-Host "Checking OpenClaw Gateway RPC..." -ForegroundColor Cyan
+    Ensure-OpenClawGatewayRpc
+
     Write-Host "Checking OpenClaw controlled-write effective tool boundaries..." -ForegroundColor Cyan
     $stamp = Get-Date -Format "yyyyMMddHHmmss"
     foreach ($agentId in ($expectedByAgent.Keys | Sort-Object)) {
@@ -263,13 +330,7 @@ try {
             $canonicalSessionKey = ("agent:{0}:{1}" -f $agentId, $sessionAlias)
         }
 
-        $paramsJson = @{ sessionKey = $canonicalSessionKey } | ConvertTo-Json -Compress
-        $paramsNative = Convert-ToOpenClawNativeJsonArgument -Json $paramsJson
-        $effectiveRaw = (& $openclaw.Source gateway call tools.effective --params $paramsNative --json 2>&1 | Out-String)
-        if ($LASTEXITCODE -ne 0) {
-            throw "tools.effective failed for $agentId. Output: $effectiveRaw"
-        }
-        $effective = Convert-OpenClawJson $effectiveRaw
+        $effective = Invoke-GatewayJson -Method "tools.effective" -Params @{ sessionKey = $canonicalSessionKey } -Context $agentId
         $visibleAll = @(Get-ClassifireToolNames -Value $effective)
         $visible = @($visibleAll | Where-Object { $allWriteTools -contains $_ })
         $expected = @($expectedByAgent[$agentId])
