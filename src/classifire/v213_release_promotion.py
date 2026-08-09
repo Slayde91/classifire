@@ -22,11 +22,11 @@ class V213PromotionError(RuntimeError):
 
 
 def _canonical_hash(payload: Any) -> str:
+    # Keep this byte-for-byte compatible with services.release_scope._manifest_hash.
     raw = json.dumps(
         payload,
         sort_keys=True,
         separators=(",", ":"),
-        ensure_ascii=False,
         default=str,
     ).encode("utf-8")
     return hashlib.sha256(raw).hexdigest()
