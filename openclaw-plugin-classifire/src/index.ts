@@ -70,6 +70,19 @@ function parsePluginConfig(value: unknown): PluginConfig {
   return { baseUrl, tokenFile };
 }
 
+const pluginConfigSchema = {
+  parse: parsePluginConfig,
+  jsonSchema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["baseUrl", "tokenFile"],
+    properties: {
+      baseUrl: { type: "string" },
+      tokenFile: { type: "string" },
+    },
+  },
+};
+
 async function loadToken(config: PluginConfig, agentId: string): Promise<string> {
   const raw = await readFile(config.tokenFile, "utf8");
   const parsed = JSON.parse(raw) as TokenFile;
@@ -148,16 +161,10 @@ export default definePluginEntry({
   id: "classifire-tools",
   name: "CLASSIFIRE Tools",
   description: "Role-limited bridge from OpenClaw agents to the canonical CLASSIFIRE API.",
-  configSchema: {
-    type: "object",
-    additionalProperties: false,
-    required: ["baseUrl", "tokenFile"],
-    properties: {
-      baseUrl: { type: "string" },
-      tokenFile: { type: "string" },
-    },
-  },
+  configSchema: pluginConfigSchema,
   register(api: any) {
+    const pluginConfig = parsePluginConfig(api.pluginConfig);
+
     api.on(
       "before_tool_call",
       async (event: any, ctx: any) => {
@@ -177,15 +184,7 @@ export default definePluginEntry({
             blockReason: "CLASSIFIRE tool call has no host-authoritative toolCallId",
           };
         }
-        try {
-          const config = parsePluginConfig(event?.context?.pluginConfig);
-          verifiedCalls.set(toolCallId, { agentId, config });
-        } catch (error) {
-          return {
-            block: true,
-            blockReason: error instanceof Error ? error.message : "Invalid CLASSIFIRE plugin config",
-          };
-        }
+        verifiedCalls.set(toolCallId, { agentId, config: pluginConfig });
       },
       { priority: 100, registrationId: "classifire-agent-boundary" },
     );
