@@ -5,34 +5,43 @@ import json
 from pathlib import Path
 import sys
 
+from pypdf import PdfReader
+
 from run_classifire_real_uat_intake import (
     Controller as BaseController,
-    REQUIRED_INTAKE_TOOLS,
-    REQUIRED_PHYSICAL_TOOLS,
     load_receipt,
     repo_root,
 )
 
 
 BATCH_SIZE = 2
+INFER_MODEL = "openai/gpt-5.6"
+REQUIRED_INTAKE_WRITE_TOOLS = {
+    "classifire_register_evidence_observations",
+}
+REQUIRED_PHYSICAL_WRITE_TOOLS = {
+    "classifire_evidence_read",
+    "classifire_submit_initial_physical_model",
+    "classifire_lock_physical_model",
+}
 
 
-def _tool_texts(value: object) -> list[str]:
+def _text_candidates(value: object) -> list[str]:
     texts: list[str] = []
+    interesting_keys = {"text", "final", "output", "message", "content"}
 
     def walk(node: object) -> None:
         if isinstance(node, dict):
-            text = node.get("text")
-            if isinstance(text, str) and text.strip():
-                texts.append(text.strip())
-            for child in node.values():
+            for key, child in node.items():
+                if key in interesting_keys and isinstance(child, str) and child.strip():
+                    texts.append(child.strip())
                 walk(child)
         elif isinstance(node, list):
             for child in node:
                 walk(child)
 
     walk(value)
-    return texts
+    return list(dict.fromkeys(texts))
 
 
 def _decode_json_from_text(text: str) -> object:
@@ -59,11 +68,11 @@ def _decode_json_from_text(text: str) -> object:
             return value
         except json.JSONDecodeError:
             continue
-    raise ValueError("No JSON value found in model/tool text")
+    raise ValueError("No JSON value found in model output")
 
 
 def _json_from_payload(payload: dict, *, context: str) -> dict:
-    candidates = sorted(_tool_texts(payload), key=len, reverse=True)
+    candidates = sorted(_text_candidates(payload), key=len, reverse=True)
     errors: list[str] = []
     for text in candidates:
         try:
@@ -94,7 +103,30 @@ def _clean_optional_text(value: object) -> str | None:
     return text or None
 
 
-def _scope_observation(page_number: int, item: dict, report_name: str, stored_file_id: str) -> dict:
+def _extract_page_text(report: Path, pages: list[int]) -> str:
+    reader = PdfReader(str(report))
+    blocks: list[str] = []
+    for page_number in pages:
+        if page_number < 1 or page_number > len(reader.pages):
+            raise RuntimeError(f"Requested page {page_number} is outside the PDF page range")
+        try:
+            text = reader.pages[page_number - 1].extract_text() or ""
+        except Exception as exc:
+            raise RuntimeError(f"Unable to extract text from PDF page {page_number}: {exc}") from exc
+        blocks.append(
+            f"--- PAGE {page_number} EXTRACTED TEXT ---\n"
+            f"{text.strip() or '[NO EXTRACTABLE TEXT]'}\n"
+            f"--- END PAGE {page_number} ---"
+        )
+    return "\n\n".join(blocks)
+
+
+def _scope_observation(
+    page_number: int,
+    item: dict,
+    report_name: str,
+    stored_file_id: str,
+) -> dict:
     external_id = _clean_optional_text(item.get("external_defect_id"))
     defect_code = _clean_optional_text(item.get("defect_code"))
     description = _clean_optional_text(item.get("description")) or "Passive-fire scope observation"
@@ -110,11 +142,12 @@ def _scope_observation(page_number: int, item: dict, report_name: str, stored_fi
         **({"defect_classification": classification} if classification else {}),
         "source_reference": report_name,
         "page_number": str(page_number),
-        "region_reference": _clean_optional_text(item.get("region_reference")) or f"page:{page_number}:scope",
+        "region_reference": _clean_optional_text(item.get("region_reference"))
+        or f"page:{page_number}:scope",
         "evidence_class": _clean_optional_text(item.get("evidence_class")) or "observed",
         "confidence": _confidence(item.get("confidence")),
         "source_json": {
-            "source": "direct_pdf_analysis",
+            "source": "openclaw_infer_page_text",
             "physical_facts": item.get("physical_facts") or [],
             "uncertainties": item.get("uncertainties") or [],
             "raw_model_item": item,
@@ -123,9 +156,71 @@ def _scope_observation(page_number: int, item: dict, report_name: str, stored_fi
 
 
 class DeterministicController(BaseController):
-    def page_analysis_prompt(self, pages: list[int]) -> str:
+    def infer_model(
+        self,
+        *,
+        prompt: str,
+        receipt_name: str,
+        files: list[Path] | None = None,
+        thinking: str = "medium",
+    ) -> dict:
+        command = [
+            "infer",
+            "model",
+            "run",
+            "--gateway",
+            "--model",
+            INFER_MODEL,
+            "--thinking",
+            thinking,
+            "--prompt",
+            prompt,
+        ]
+        for file in files or []:
+            command.extend(["--file", str(file)])
+        command.append("--json")
+
+        result = self.openclaw(
+            *command,
+            timeout=self.timeout_seconds + 60,
+            check=False,
+        )
+        stdout = result.stdout.strip()
+        stderr = result.stderr.strip()
+        if stdout:
+            self.save_text(receipt_name + ".stdout.json", stdout)
+        if stderr:
+            self.save_text(receipt_name + ".stderr.txt", stderr)
+        if result.returncode != 0:
+            detail = "\n".join(part for part in (stdout, stderr) if part)
+            raise RuntimeError(
+                f"OpenClaw infer model run failed for {receipt_name} with exit code "
+                f"{result.returncode}: {detail}"
+            )
+        payload = self._parse_infer_envelope(stdout, context=receipt_name)
+        self.save_json(receipt_name + ".json", payload)
+        if payload.get("ok") is False or payload.get("status") in {"error", "timeout"}:
+            raise RuntimeError(f"OpenClaw infer model run returned failure: {json.dumps(payload)}")
+        return payload
+
+    @staticmethod
+    def _parse_infer_envelope(raw: str, *, context: str) -> dict:
+        text = raw.strip()
+        try:
+            value = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"{context} did not return valid JSON: {text[:500]}") from exc
+        if not isinstance(value, dict):
+            raise RuntimeError(f"{context} returned a non-object JSON envelope")
+        return value
+
+    def page_analysis_prompt(self, pages: list[int], extracted_text: str) -> str:
         return f"""You are performing source-preserving passive-fire evidence review for CLASSIFIRE.
-Analyze ONLY PDF pages {pages}. Return ONLY valid JSON, no markdown and no commentary.
+Analyze ONLY PDF pages {pages} using the extracted text supplied below. The page's embedded images are
+analyzed separately and must NOT be inferred from filenames or missing text. Return ONLY valid JSON,
+no markdown and no commentary.
+
+{extracted_text}
 
 Required schema:
 {{
@@ -142,7 +237,7 @@ Required schema:
           "description": "factual report observation",
           "location": null,
           "classification": null,
-          "region_reference": "table/row/photo/section reference if visible",
+          "region_reference": "table/row/section reference if present in text",
           "evidence_class": "observed",
           "confidence": 0.0,
           "physical_facts": [],
@@ -154,17 +249,17 @@ Required schema:
 }}
 
 Rules:
-- One photo, row, or defect ID does NOT imply one Service, one Opening, one repair, or quantity one.
+- One row or defect ID does NOT imply one Service, one Opening, one repair, or quantity one.
 - Do not choose technical systems or pricing.
 - Do not invent hidden services, dimensions, materials, substrate planes, quantities, defect IDs, or locations.
-- Preserve uncertainty explicitly.
+- Preserve uncertainty explicitly, including uncertainty introduced by text extraction or lost layout.
 - Include every supplied page exactly once in pages[].
 """
 
     def image_analysis_prompt(self, rows: list[dict]) -> str:
         names = [str(row["filename"]) for row in rows]
-        return f"""Analyze these passive-fire report images in the supplied order.
-Return ONLY valid JSON, no markdown and no commentary.
+        return f"""Analyze these passive-fire report images in the supplied order. Return ONLY valid JSON,
+no markdown and no commentary.
 
 Input filenames in order: {json.dumps(names)}
 
@@ -189,7 +284,12 @@ Rules:
 - One photo does NOT equal one Service, penetration, repair, or quantity.
 """
 
-    def register_observations(self, session_key: str, observations: list[dict], receipt_name: str) -> None:
+    def register_observations(
+        self,
+        session_key: str,
+        observations: list[dict],
+        receipt_name: str,
+    ) -> None:
         if not observations:
             return
         self.invoke_tool(
@@ -206,44 +306,42 @@ Rules:
             print("PASS deterministic intake coverage already complete")
             return self.verify_intake_coverage(manifest)
 
-        session = self.initialize_session("cf-intake-evidence", "10-direct-intake")
+        session = self.initialize_session("cf-intake-evidence", "10-infer-intake")
         self.require_tools(
             "cf-intake-evidence",
             session,
-            REQUIRED_INTAKE_TOOLS,
-            "10-direct-intake-effective.json",
+            REQUIRED_INTAKE_WRITE_TOOLS,
+            "10-infer-intake-effective.json",
         )
 
         page_numbers = list(range(1, int(manifest["page_count"]) + 1))
-        batches = [page_numbers[i : i + BATCH_SIZE] for i in range(0, len(page_numbers), BATCH_SIZE)]
+        batches = [
+            page_numbers[i : i + BATCH_SIZE]
+            for i in range(0, len(page_numbers), BATCH_SIZE)
+        ]
 
         for batch_number, pages in enumerate(batches, start=1):
             missing_pages, missing_images = self.coverage_gaps(manifest)
             page_targets = [page for page in pages if f"page:{page}" in missing_pages]
             image_targets = [
-                row for row in manifest["images"]
+                row
+                for row in manifest["images"]
                 if int(row["page_number"]) in pages
                 and f"image:{row['filename']}" in missing_images
             ]
             observations: list[dict] = []
 
             if page_targets:
-                page_filter = ",".join(str(page) for page in page_targets)
-                payload = self.invoke_tool(
-                    "cf-intake-evidence",
-                    session,
-                    "pdf",
-                    {
-                        "pdf": str(report),
-                        "pages": page_filter,
-                        "prompt": self.page_analysis_prompt(page_targets),
-                    },
-                    f"10-direct-b{batch_number:02d}-pdf.json",
+                extracted_text = _extract_page_text(report, page_targets)
+                payload = self.infer_model(
+                    prompt=self.page_analysis_prompt(page_targets, extracted_text),
+                    receipt_name=f"10-infer-b{batch_number:02d}-pages",
+                    thinking="medium",
                 )
-                analysis = _json_from_payload(payload, context=f"PDF batch {batch_number}")
+                analysis = _json_from_payload(payload, context=f"Page batch {batch_number}")
                 rows = analysis.get("pages")
                 if not isinstance(rows, list):
-                    raise RuntimeError(f"PDF batch {batch_number} JSON has no pages array")
+                    raise RuntimeError(f"Page batch {batch_number} JSON has no pages array")
                 by_page: dict[int, dict] = {}
                 for row in rows:
                     if not isinstance(row, dict):
@@ -256,7 +354,7 @@ Rules:
                 missing_from_model = [page for page in page_targets if page not in by_page]
                 if missing_from_model:
                     raise RuntimeError(
-                        f"PDF batch {batch_number} omitted page analysis for {missing_from_model}"
+                        f"Page batch {batch_number} omitted page analysis for {missing_from_model}"
                     )
                 for page in page_targets:
                     row = by_page[page]
@@ -270,8 +368,9 @@ Rules:
                             "evidence_class": "observed",
                             "confidence": _confidence(row.get("confidence"), 0.8),
                             "source_json": {
-                                "source": "direct_pdf_analysis",
-                                "page_summary": _clean_optional_text(row.get("page_summary")) or "Reviewed",
+                                "source": "openclaw_infer_page_text",
+                                "page_summary": _clean_optional_text(row.get("page_summary"))
+                                or "Reviewed",
                                 "scope_relevant": row.get("scope_relevant"),
                                 "raw_model_page": row,
                             },
@@ -291,29 +390,30 @@ Rules:
                                 )
 
             if image_targets:
-                image_paths = [str(report.parent / "visuals" / row["filename"]) for row in image_targets]
-                payload = self.invoke_tool(
-                    "cf-intake-evidence",
-                    session,
-                    "image",
-                    {
-                        "images": image_paths,
-                        "prompt": self.image_analysis_prompt(image_targets),
-                        "maxImages": len(image_paths),
-                    },
-                    f"10-direct-b{batch_number:02d}-images.json",
+                image_paths = [
+                    report.parent / "visuals" / str(row["filename"])
+                    for row in image_targets
+                ]
+                payload = self.infer_model(
+                    prompt=self.image_analysis_prompt(image_targets),
+                    receipt_name=f"10-infer-b{batch_number:02d}-images",
+                    files=image_paths,
+                    thinking="low",
                 )
                 analysis = _json_from_payload(payload, context=f"Image batch {batch_number}")
                 image_rows = analysis.get("images")
                 if not isinstance(image_rows, list) or len(image_rows) != len(image_targets):
                     raise RuntimeError(
-                        f"Image batch {batch_number} returned {len(image_rows) if isinstance(image_rows, list) else 'no'} "
-                        f"image rows for {len(image_targets)} inputs"
+                        f"Image batch {batch_number} returned "
+                        f"{len(image_rows) if isinstance(image_rows, list) else 'no'} image rows "
+                        f"for {len(image_targets)} inputs"
                     )
                 for position, source_row in enumerate(image_targets, start=1):
                     model_row = image_rows[position - 1]
                     if not isinstance(model_row, dict):
-                        raise RuntimeError(f"Image batch {batch_number} item {position} is not an object")
+                        raise RuntimeError(
+                            f"Image batch {batch_number} item {position} is not an object"
+                        )
                     observations.append(
                         {
                             "stored_file_id": self.stored_file_id,
@@ -324,11 +424,17 @@ Rules:
                             "evidence_class": "observed",
                             "confidence": _confidence(model_row.get("confidence"), 0.75),
                             "source_json": {
-                                "source": "direct_image_analysis",
+                                "source": "openclaw_infer_image_input",
                                 "filename": source_row["filename"],
                                 "sha256": source_row["sha256"],
-                                "visible_summary": _clean_optional_text(model_row.get("visible_summary")) or "Reviewed",
-                                "scope_relevance": _clean_optional_text(model_row.get("scope_relevance")) or "uncertain",
+                                "visible_summary": _clean_optional_text(
+                                    model_row.get("visible_summary")
+                                )
+                                or "Reviewed",
+                                "scope_relevance": _clean_optional_text(
+                                    model_row.get("scope_relevance")
+                                )
+                                or "uncertain",
                                 "physical_facts": model_row.get("physical_facts") or [],
                                 "uncertainties": model_row.get("uncertainties") or [],
                                 "raw_model_image": model_row,
@@ -339,12 +445,13 @@ Rules:
             self.register_observations(
                 session,
                 observations,
-                f"10-direct-b{batch_number:02d}-register.json",
+                f"10-infer-b{batch_number:02d}-register.json",
             )
             after_pages, after_images = self.coverage_gaps(manifest)
             remaining_pages = [page for page in pages if f"page:{page}" in after_pages]
             remaining_images = [
-                row["filename"] for row in manifest["images"]
+                row["filename"]
+                for row in manifest["images"]
                 if int(row["page_number"]) in pages
                 and f"image:{row['filename']}" in after_images
             ]
@@ -361,8 +468,9 @@ Rules:
         return self.verify_intake_coverage(manifest)
 
     def physical_model_prompt(self, evidence_text: str) -> str:
-        return f"""You are `cf-physical-model`. Produce a physical model proposal from retained CLASSIFIRE evidence.
-Do NOT call tools. Return ONLY valid JSON, no markdown and no commentary.
+        return f"""You are performing the `cf-physical-model` reasoning stage for CLASSIFIRE.
+Produce a physical model proposal from retained canonical evidence. Return ONLY valid JSON, no markdown
+and no commentary. You are not authorised to choose Package 15 systems or pricing.
 
 Canonical evidence follows:
 ---BEGIN EVIDENCE---
@@ -428,18 +536,44 @@ Hard rules:
 
     def _clean_opening(self, row: dict) -> dict:
         allowed = {
-            "opening_code", "external_defect_id", "location", "substrate_type", "substrate_plane",
-            "substrate_thickness_mm", "orientation", "opening_type", "width_mm", "height_mm",
-            "diameter_mm", "frl", "notes",
+            "opening_code",
+            "external_defect_id",
+            "location",
+            "substrate_type",
+            "substrate_plane",
+            "substrate_thickness_mm",
+            "orientation",
+            "opening_type",
+            "width_mm",
+            "height_mm",
+            "diameter_mm",
+            "frl",
+            "notes",
         }
         return {key: row.get(key) for key in allowed if row.get(key) is not None}
 
     def _clean_service(self, row: dict) -> dict:
         allowed = {
-            "service_code", "primary_opening_code", "opening_codes", "service_type", "material",
-            "nominal_size_mm", "outside_diameter_mm", "width_mm", "height_mm", "insulation_type",
-            "insulation_thickness_mm", "quantity", "centre_x_mm", "centre_y_mm", "evidence_status",
-            "confidence", "relationship_status", "link_type", "source_reference", "notes",
+            "service_code",
+            "primary_opening_code",
+            "opening_codes",
+            "service_type",
+            "material",
+            "nominal_size_mm",
+            "outside_diameter_mm",
+            "width_mm",
+            "height_mm",
+            "insulation_type",
+            "insulation_thickness_mm",
+            "quantity",
+            "centre_x_mm",
+            "centre_y_mm",
+            "evidence_status",
+            "confidence",
+            "relationship_status",
+            "link_type",
+            "source_reference",
+            "notes",
         }
         return {key: row.get(key) for key in allowed if row.get(key) is not None}
 
@@ -453,38 +587,36 @@ Hard rules:
             report = self.workspace_report("cf-physical-model")
             return self.run_physical(report)
 
-        session = self.initialize_session("cf-physical-model", "20-direct-physical")
+        session = self.initialize_session("cf-physical-model", "20-infer-physical")
         self.require_tools(
             "cf-physical-model",
             session,
-            REQUIRED_PHYSICAL_TOOLS,
-            "20-direct-physical-effective.json",
+            REQUIRED_PHYSICAL_WRITE_TOOLS,
+            "20-infer-physical-effective.json",
         )
         evidence_payload = self.invoke_tool(
             "cf-physical-model",
             session,
             "classifire_evidence_read",
             {"estimate_id": self.estimate_id},
-            "20-direct-evidence-read.json",
+            "20-infer-evidence-read.json",
         )
-        evidence_texts = _tool_texts(evidence_payload)
-        evidence_text = max(evidence_texts, key=len) if evidence_texts else json.dumps(evidence_payload)
+        evidence_texts = _text_candidates(evidence_payload)
+        evidence_text = (
+            max(evidence_texts, key=len)
+            if evidence_texts
+            else json.dumps(evidence_payload, default=str)
+        )
 
-        synthesis = self.agent_turn(
-            "cf-physical-model",
-            session,
-            self.physical_model_prompt(evidence_text),
-            "20-direct-physical-synthesis",
+        synthesis = self.infer_model(
+            prompt=self.physical_model_prompt(evidence_text),
+            receipt_name="20-infer-physical-synthesis",
+            thinking="high",
         )
-        if synthesis.get("recoverable_empty_result"):
-            raise RuntimeError(
-                "Physical-model synthesis returned empty_result before any canonical model existed. "
-                "No scope was invented; rerun or inspect the synthesis receipt."
-            )
         model = _json_from_payload(synthesis, context="Physical-model synthesis")
         status = str(model.get("status") or "").strip().upper()
         if status == "INSUFFICIENT_EVIDENCE":
-            self.save_json("20-direct-physical-limitation.json", model)
+            self.save_json("20-infer-physical-limitation.json", model)
             print("Physical-model synthesis found insufficient evidence; no model submitted.")
             return self.inspect_state()
         if status != "MODEL_SUPPORTED":
@@ -494,8 +626,16 @@ Hard rules:
         services_raw = model.get("services")
         if not isinstance(openings_raw, list) or not isinstance(services_raw, list):
             raise RuntimeError("Physical-model synthesis did not return openings/services arrays")
-        openings = [self._clean_opening(row) for row in openings_raw if isinstance(row, dict)]
-        services = [self._clean_service(row) for row in services_raw if isinstance(row, dict)]
+        openings = [
+            self._clean_opening(row)
+            for row in openings_raw
+            if isinstance(row, dict)
+        ]
+        services = [
+            self._clean_service(row)
+            for row in services_raw
+            if isinstance(row, dict)
+        ]
         if not openings or not services:
             raise RuntimeError("Physical-model synthesis claimed MODEL_SUPPORTED but returned empty scope")
 
@@ -517,8 +657,8 @@ Hard rules:
                 raise RuntimeError(f"Service {code} references an unknown opening")
             try:
                 quantity = float(row.get("quantity"))
-            except (TypeError, ValueError):
-                raise RuntimeError(f"Service {code} has no explicit numeric quantity")
+            except (TypeError, ValueError) as exc:
+                raise RuntimeError(f"Service {code} has no explicit numeric quantity") from exc
             if quantity <= 0:
                 raise RuntimeError(f"Service {code} quantity must be greater than zero")
 
@@ -527,10 +667,10 @@ Hard rules:
             session,
             "classifire_submit_initial_physical_model",
             {"estimate_id": self.estimate_id, "openings": openings, "services": services},
-            "20-direct-physical-submit.json",
+            "20-infer-physical-submit.json",
         )
         after_submit = self.inspect_state()
-        self.save_json("20-direct-physical-after-submit.json", after_submit)
+        self.save_json("20-infer-physical-after-submit.json", after_submit)
 
         self.invoke_tool(
             "cf-physical-model",
@@ -538,9 +678,9 @@ Hard rules:
             "classifire_lock_physical_model",
             {
                 "estimate_id": self.estimate_id,
-                "reason": "Deterministic real-UAT lock after evidence-backed physical-model synthesis",
+                "reason": "Deterministic real-UAT lock after OpenClaw-infer evidence-backed physical-model synthesis",
             },
-            "20-direct-physical-lock.json",
+            "20-infer-physical-lock.json",
             require_ok=False,
         )
         return self.inspect_state()
