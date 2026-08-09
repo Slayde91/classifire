@@ -37,15 +37,27 @@ def _hash(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _row_hash(row: dict[str, Any], line: str) -> str:
+    return str(row.get("Variant_Content_Hash") or "").strip() or hashlib.sha256(
+        line.encode("utf-8")
+    ).hexdigest()
+
+
+def _collision_variant_id(source_variant_id: str, source_hash: str) -> str:
+    return f"{source_variant_id}-QFSRC-{source_hash[:12].upper()}"
+
+
 def import_technical_variants(
     db: Session,
     path: Path,
     *,
     version: str | None = None,
     status: str = "active",
+    allowed_identity_collisions: set[str] | None = None,
 ) -> dict[str, Any]:
     release_version = version or "source-import"
     release_hash = _hash(path)
+    allowed_collisions = set(allowed_identity_collisions or set())
     release = db.scalar(
         select(LibraryRelease).where(
             LibraryRelease.library_type == "technical",
@@ -66,9 +78,15 @@ def import_technical_variants(
         )
         db.add(release)
         db.flush()
+
     inserted = 0
     skipped = 0
     invalid = 0
+    exact_source_duplicates_skipped = 0
+    identity_collisions_remapped = 0
+    collision_map: list[dict[str, Any]] = []
+    seen_source_hashes: dict[str, set[str]] = {}
+
     with path.open(encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, 1):
             if not line.strip():
@@ -78,19 +96,76 @@ def import_technical_variants(
             except json.JSONDecodeError:
                 invalid += 1
                 continue
-            variant_id = str(row.get("Variant_ID") or "").strip()
+
+            source_variant_id = str(row.get("Variant_ID") or "").strip()
             system_id = str(row.get("System_ID") or "").strip()
-            if not variant_id or not system_id:
+            if not source_variant_id or not system_id:
                 invalid += 1
                 continue
-            if db.scalar(select(TechnicalVariant.id).where(TechnicalVariant.variant_id == variant_id)):
+
+            source_hash = _row_hash(row, line)
+            prior_hashes = seen_source_hashes.setdefault(source_variant_id, set())
+            if source_hash in prior_hashes:
+                skipped += 1
+                exact_source_duplicates_skipped += 1
+                continue
+
+            resolved_variant_id = source_variant_id
+            source_json: dict[str, Any] = dict(row)
+            if prior_hashes:
+                if source_variant_id not in allowed_collisions:
+                    raise ValueError(
+                        "Package 17 contains materially different rows with the same Variant_ID "
+                        f"{source_variant_id!r}; collision is not authorised for controlled import."
+                    )
+                resolved_variant_id = _collision_variant_id(source_variant_id, source_hash)
+                migration_meta = dict(source_json.get("CLASSIFIRE_Migration") or {})
+                migration_meta.update(
+                    {
+                        "source_variant_id": source_variant_id,
+                        "resolved_variant_id": resolved_variant_id,
+                        "identity_collision": True,
+                        "collision_resolution": "deterministic_content_hash_suffix",
+                        "source_line_number": line_number,
+                        "source_content_hash": source_hash,
+                    }
+                )
+                source_json["CLASSIFIRE_Migration"] = migration_meta
+                identity_collisions_remapped += 1
+                collision_map.append(
+                    {
+                        "source_variant_id": source_variant_id,
+                        "resolved_variant_id": resolved_variant_id,
+                        "source_line_number": line_number,
+                        "source_content_hash": source_hash,
+                        "frl": row.get("FRL_Variant"),
+                    }
+                )
+            prior_hashes.add(source_hash)
+
+            existing = db.scalar(
+                select(TechnicalVariant).where(
+                    TechnicalVariant.variant_id == resolved_variant_id
+                )
+            )
+            if existing:
+                if existing.source_hash and existing.source_hash != source_hash:
+                    raise ValueError(
+                        f"Existing technical variant {resolved_variant_id!r} has source hash "
+                        f"{existing.source_hash}, not {source_hash}; refusing identity overwrite."
+                    )
                 skipped += 1
                 continue
+
             variant_status = str(row.get("Variant_Status") or "DRAFT").lower()
             search_status = str(row.get("Search_Index_Status") or "")
-            status_value = "active" if variant_status == "active" and search_status == "ACTIVE" else "draft"
+            status_value = (
+                "active"
+                if variant_status == "active" and search_status == "ACTIVE"
+                else "draft"
+            )
             record = TechnicalVariant(
-                variant_id=variant_id,
+                variant_id=resolved_variant_id,
                 system_id=system_id,
                 source_document_reference=row.get("Source_Document_ID"),
                 source_page=row.get("Source_Page"),
@@ -99,18 +174,28 @@ def import_technical_variants(
                 manufacturer=row.get("Manufacturer"),
                 product_family=row.get("Product_Family"),
                 service_type=row.get("Service_Type"),
-                service_material=row.get("Service_Material") or row.get("Canonical_Service_Material"),
+                service_material=row.get("Service_Material")
+                or row.get("Canonical_Service_Material"),
                 minimum_service_size_mm=_decimal(row.get("Minimum_Service_Size_mm")),
                 maximum_service_size_mm=_decimal(row.get("Maximum_Service_Size_mm")),
-                permitted_service_quantity=str(row.get("Permitted_Service_Quantity") or "") or None,
+                permitted_service_quantity=str(
+                    row.get("Permitted_Service_Quantity") or ""
+                )
+                or None,
                 insulation_type=row.get("Insulation_Type"),
                 insulation_thickness_mm=_decimal(row.get("Insulation_Thickness_mm")),
-                substrate_type=row.get("Substrate_Type") or row.get("Canonical_Substrate_Family"),
-                minimum_substrate_thickness_mm=_decimal(row.get("Minimum_Substrate_Thickness_mm")),
-                maximum_substrate_thickness_mm=_decimal(row.get("Maximum_Substrate_Thickness_mm")),
+                substrate_type=row.get("Substrate_Type")
+                or row.get("Canonical_Substrate_Family"),
+                minimum_substrate_thickness_mm=_decimal(
+                    row.get("Minimum_Substrate_Thickness_mm")
+                ),
+                maximum_substrate_thickness_mm=_decimal(
+                    row.get("Maximum_Substrate_Thickness_mm")
+                ),
                 orientation=row.get("Orientation") or row.get("Canonical_Orientation"),
                 installation_face=row.get("Installation_Face"),
-                opening_type=row.get("Opening_Type") or row.get("Canonical_Opening_Type"),
+                opening_type=row.get("Opening_Type")
+                or row.get("Canonical_Opening_Type"),
                 opening_dimensions=row.get("Opening_Dimensions"),
                 annular_gap_min_mm=_decimal(row.get("Annular_Gap_Min_mm")),
                 annular_gap_max_mm=_decimal(row.get("Annular_Gap_Max_mm")),
@@ -128,19 +213,21 @@ def import_technical_variants(
                 quality_score=_decimal(row.get("Variant_Quality_Score")),
                 confidence_cap=_decimal(row.get("Matching_Confidence_Cap")),
                 search_eligibility=row.get("Search_Eligibility"),
-                expert_review_required=(str(row.get("Expert_Review_Trigger_YN") or "YES").upper() == "YES"),
+                expert_review_required=(
+                    str(row.get("Expert_Review_Trigger_YN") or "YES").upper() == "YES"
+                ),
                 status=status_value,
                 effective_date=_date(row.get("Effective_Date")),
                 expiry_date=_date(row.get("Evidence_Expiry_Date")),
-                source_hash=row.get("Variant_Content_Hash")
-                or hashlib.sha256(line.encode("utf-8")).hexdigest(),
-                source_json=row,
+                source_hash=source_hash,
+                source_json=source_json,
                 release_id=release.id,
             )
             db.add(record)
             inserted += 1
             if inserted % 250 == 0:
                 db.flush()
+
     db.commit()
     return {
         "release_id": release.id,
@@ -149,4 +236,7 @@ def import_technical_variants(
         "records_inserted": inserted,
         "records_skipped": skipped,
         "invalid_lines": invalid,
+        "exact_source_duplicates_skipped": exact_source_duplicates_skipped,
+        "identity_collisions_remapped": identity_collisions_remapped,
+        "identity_collision_map": collision_map,
     }
