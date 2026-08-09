@@ -170,7 +170,7 @@ foreach ($agentId in ($expectedByAgent.Keys | Sort-Object)) {
     $json = Convert-OpenClawJson $raw
     $canonicalSessionKey = [string]$json.result.meta.systemPromptReport.sessionKey
     if ([string]::IsNullOrWhiteSpace($canonicalSessionKey)) {
-        $canonicalSessionKey = "agent:$agentId:$sessionAlias"
+        $canonicalSessionKey = ("agent:{0}:{1}" -f $agentId, $sessionAlias)
     }
 
     $effectiveParams = @{ sessionKey = $canonicalSessionKey } | ConvertTo-Json -Compress
