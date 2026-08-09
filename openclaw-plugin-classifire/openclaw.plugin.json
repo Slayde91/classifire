@@ -35,15 +35,14 @@
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["baseUrl", "tokenFile"],
     "properties": {
       "baseUrl": {
         "type": "string",
-        "description": "Loopback CLASSIFIRE API base URL, normally http://127.0.0.1:8787"
+        "description": "Loopback CLASSIFIRE API base URL. Defaults to http://127.0.0.1:8787 when omitted during link bootstrap."
       },
       "tokenFile": {
         "type": "string",
-        "description": "Absolute path to the local CLASSIFIRE agent-token JSON file"
+        "description": "Absolute path to the local CLASSIFIRE agent-token JSON file. Defaults to the current user's .openclaw/classifire-agent-tokens.json when omitted during link bootstrap."
       }
     }
   }
