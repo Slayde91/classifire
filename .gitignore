@@ -28,8 +28,9 @@ Thumbs.db
 secrets/
 playwright-report/
 test-results/
+node_modules/
 
-# Confidential QUANTIFIRE source corpora
+# Confidential CLASSIFIRE source corpora
 knowledge/source/**
 private-data/**
 
