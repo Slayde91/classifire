@@ -207,6 +207,7 @@ export default definePluginEntry({
           name,
           description,
           parameters,
+          catalogMode: "direct-only",
           async execute(toolCallId: string, params: any) {
             const verified = requireVerifiedCall(toolCallId, name);
             try {
