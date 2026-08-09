@@ -51,6 +51,16 @@ function Convert-OpenClawJson {
     return $Raw.Substring($start, $end - $start + 1) | ConvertFrom-Json
 }
 
+function Get-ClassifireToolNames {
+    param([object]$Value)
+    $serialized = $Value | ConvertTo-Json -Depth 30 -Compress
+    return @(
+        [regex]::Matches($serialized, 'classifire_[A-Za-z0-9_]+') |
+            ForEach-Object { $_.Value } |
+            Sort-Object -Unique
+    )
+}
+
 function Get-AgentToken {
     param([string]$AgentId)
     $property = $tokenDoc.tokens.PSObject.Properties[$AgentId]
@@ -147,31 +157,67 @@ if ($agentHumanReleasePaths.Count -gt 0) {
 Write-Host "PASS no Human Release or approval route exists under /api/v1/agent" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "Checking OpenClaw direct tool visibility per agent..." -ForegroundColor Cyan
+Write-Host "Checking OpenClaw runtime-effective tool boundaries per agent..." -ForegroundColor Cyan
 $stamp = Get-Date -Format "yyyyMMddHHmmss"
 foreach ($agentId in ($expectedByAgent.Keys | Sort-Object)) {
-    $sessionKey = "classifire-role-boundary-$stamp-$agentId"
-    $raw = (& $openclaw.Source agent --agent $agentId --session-key $sessionKey --message "Reply exactly READY. Do not call any tools." --timeout 180 --json 2>&1 | Out-String)
+    # Warm a fresh agent-scoped session. The model is not used as the authority
+    # for tool inventory; tools.effective is queried from the Gateway afterward.
+    $sessionAlias = "classifire-role-boundary-$stamp-$agentId"
+    $raw = (& $openclaw.Source agent --agent $agentId --session-key $sessionAlias --message "Reply exactly READY. Do not call any tools." --timeout 180 --json 2>&1 | Out-String)
     if ($LASTEXITCODE -ne 0) {
         throw "OpenClaw agent probe failed for $agentId. Output: $raw"
     }
     $json = Convert-OpenClawJson $raw
-    $entries = @($json.result.meta.systemPromptReport.tools.entries)
-    $visible = @($entries | ForEach-Object { [string]$_.name } | Where-Object { $_ -like "classifire_*" })
+    $canonicalSessionKey = [string]$json.result.meta.systemPromptReport.sessionKey
+    if ([string]::IsNullOrWhiteSpace($canonicalSessionKey)) {
+        $canonicalSessionKey = "agent:$agentId:$sessionAlias"
+    }
+
+    $effectiveParams = @{ sessionKey = $canonicalSessionKey } | ConvertTo-Json -Compress
+    $effectiveRaw = (& $openclaw.Source gateway call tools.effective --params $effectiveParams --json 2>&1 | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+        throw "tools.effective failed for $agentId ($canonicalSessionKey). Output: $effectiveRaw"
+    }
+    $effective = Convert-OpenClawJson $effectiveRaw
+    $visible = @(Get-ClassifireToolNames -Value $effective)
     $expected = @($expectedByAgent[$agentId])
 
     foreach ($tool in $expected) {
         if ($visible -notcontains $tool) {
-            throw "$agentId is missing authorised direct tool $tool. Visible CLASSIFIRE tools: $($visible -join ', ')"
+            throw "$agentId is missing authorised effective tool $tool. Effective CLASSIFIRE tools: $($visible -join ', ')"
         }
     }
     foreach ($tool in $allClassifireTools) {
         if ($expected -notcontains $tool -and $visible -contains $tool) {
-            throw "$agentId can see forbidden CLASSIFIRE tool $tool."
+            throw "$agentId has forbidden effective CLASSIFIRE tool $tool."
         }
     }
     if ($visible -contains "classifire_human_release" -or $visible -contains "human_release") {
-        throw "$agentId can see a Human Release tool."
+        throw "$agentId has an effective Human Release tool."
+    }
+
+    # Prove an authorised plugin tool is actually callable through the same
+    # Gateway policy path, rather than merely present in configuration.
+    $invokeParams = @{
+        name = "classifire_health"
+        args = @{}
+        sessionKey = $canonicalSessionKey
+        agentId = $agentId
+    } | ConvertTo-Json -Depth 6 -Compress
+    $invokeRaw = (& $openclaw.Source gateway call tools.invoke --params $invokeParams --json 2>&1 | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+        throw "tools.invoke classifire_health failed for $agentId. Output: $invokeRaw"
+    }
+    $invoke = Convert-OpenClawJson $invokeRaw
+    $invokeOk = $false
+    if ($null -ne $invoke.ok) {
+        $invokeOk = [bool]$invoke.ok
+    }
+    elseif ($null -ne $invoke.result -and $null -ne $invoke.result.ok) {
+        $invokeOk = [bool]$invoke.result.ok
+    }
+    if (-not $invokeOk) {
+        throw "classifire_health is effective but not callable for $agentId. Output: $invokeRaw"
     }
 
     Write-Host "PASS tool boundary $agentId -> $($visible -join ', ')" -ForegroundColor Green
