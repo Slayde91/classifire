@@ -1,0 +1,39 @@
+{
+  "id": "classifire-controlled-write",
+  "name": "CLASSIFIRE Controlled Write Tools",
+  "description": "Narrow role-limited write bridge for controlled CLASSIFIRE estimate UAT stages.",
+  "version": "0.1.0",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "classifire_select_repair_strategy",
+      "classifire_lock_repair_strategy",
+      "classifire_derive_quantity_labour",
+      "classifire_required_components",
+      "classifire_derive_commercial"
+    ]
+  },
+  "toolMetadata": {
+    "classifire_select_repair_strategy": {"optional": true},
+    "classifire_lock_repair_strategy": {"optional": true},
+    "classifire_derive_quantity_labour": {"optional": true},
+    "classifire_required_components": {"optional": true},
+    "classifire_derive_commercial": {"optional": true}
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "Loopback CLASSIFIRE API base URL, normally http://127.0.0.1:8787"
+      },
+      "tokenFile": {
+        "type": "string",
+        "description": "Absolute path to the local CLASSIFIRE agent-token JSON file"
+      }
+    }
+  }
+}
