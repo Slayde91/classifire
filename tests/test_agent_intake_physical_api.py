@@ -241,7 +241,12 @@ def test_initial_physical_model_creates_opening_service_and_canonical_link_once(
         assert opening is not None
         service = db.scalar(select(Service).where(Service.opening_id == opening.id))
         assert service is not None
-        link = db.scalar(select(ServiceOpeningLink).where(Service.service_id == service.id, ServiceOpeningLink.opening_id == opening.id))
+        link = db.scalar(
+            select(ServiceOpeningLink).where(
+                ServiceOpeningLink.service_id == service.id,
+                ServiceOpeningLink.opening_id == opening.id,
+            )
+        )
         assert link is not None
         assert service.quantity == Decimal("1.0000")
         assert opening.canonical_defect_id is not None
