@@ -132,7 +132,8 @@ foreach ($id in $addByAgent.Keys) {
 
 $operations = @(
     [pscustomobject]@{ path = 'plugins.entries["classifire-controlled-write"].config.baseUrl'; value = $BaseUrl },
-    [pscustomobject]@{ path = 'plugins.entries["classifire-controlled-write"].config.tokenFile'; value = $TokenFile }
+    [pscustomobject]@{ path = 'plugins.entries["classifire-controlled-write"].config.tokenFile'; value = $TokenFile },
+    [pscustomobject]@{ path = 'agents.defaults.pdfMaxPages'; value = 200 }
 )
 
 foreach ($id in ($addByAgent.Keys | Sort-Object)) {
@@ -187,4 +188,5 @@ if ($LASTEXITCODE -ne 0) { throw "CLASSIFIRE controlled-write plugin runtime ins
 
 Write-Host "CLASSIFIRE controlled-write plugin installed." -ForegroundColor Green
 Write-Host "Only cf-intake-evidence, cf-physical-model, cf-technical-system and cf-commercial-engine received controlled-write tools." -ForegroundColor Green
+Write-Host "OpenClaw PDF extraction allowance set to 200 pages for CLASSIFIRE report review." -ForegroundColor Green
 Write-Host "Human Release, library approval and generic estimate:write remain unavailable to agents." -ForegroundColor Green
