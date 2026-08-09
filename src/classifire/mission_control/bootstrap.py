@@ -77,7 +77,8 @@ def bootstrap_mission_control(
     """Register CLASSIFIRE agent records and optionally seed baseline tasks.
 
     Task creation is opt-in so Mission Control cannot dispatch work to OpenClaw
-    agent IDs that have not yet been created and acceptance-tested.
+    agent IDs that have not yet been created and acceptance-tested. Baseline task
+    seeding is idempotent by stable CLASSIFIRE task ID and exact title.
     """
     probe = client.probe()
 
@@ -101,9 +102,11 @@ def bootstrap_mission_control(
     tasks = []
     if create_tasks:
         for task_id, title, agent, priority in DEFAULT_TASKS:
+            full_title = f"{task_id} - {title}"
             tasks.append(
-                client.create_task(
-                    title=f"{task_id} - {title}",
+                client.ensure_task(
+                    task_id=task_id,
+                    title=full_title,
                     assigned_to=agent,
                     priority=priority,
                     description=(
