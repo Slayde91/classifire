@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { Type } from "typebox";
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 
@@ -17,6 +19,9 @@ type VerifiedCall = {
   agentId: string;
   config: PluginConfig;
 };
+
+const DEFAULT_BASE_URL = "http://127.0.0.1:8787";
+const DEFAULT_TOKEN_FILE = join(homedir(), ".openclaw", "classifire-agent-tokens.json");
 
 const ALL_CF_AGENTS = new Set([
   "cf-orchestrator",
@@ -57,16 +62,15 @@ function normalizedBaseUrl(raw: string): string {
 }
 
 function parsePluginConfig(value: unknown): PluginConfig {
-  if (!value || typeof value !== "object") {
-    throw new Error("CLASSIFIRE plugin configuration is missing");
-  }
-  const raw = value as Record<string, unknown>;
-  const baseUrl = String(raw.baseUrl ?? "");
-  const tokenFile = String(raw.tokenFile ?? "");
-  if (!baseUrl || !tokenFile) {
-    throw new Error("CLASSIFIRE plugin configuration requires baseUrl and tokenFile");
-  }
+  const raw = value && typeof value === "object"
+    ? value as Record<string, unknown>
+    : {};
+  const baseUrl = String(raw.baseUrl ?? DEFAULT_BASE_URL);
+  const tokenFile = String(raw.tokenFile ?? DEFAULT_TOKEN_FILE);
   normalizedBaseUrl(baseUrl);
+  if (!tokenFile.trim()) {
+    throw new Error("CLASSIFIRE tokenFile cannot be blank");
+  }
   return { baseUrl, tokenFile };
 }
 
@@ -75,7 +79,6 @@ const pluginConfigSchema = {
   jsonSchema: {
     type: "object",
     additionalProperties: false,
-    required: ["baseUrl", "tokenFile"],
     properties: {
       baseUrl: { type: "string" },
       tokenFile: { type: "string" },
