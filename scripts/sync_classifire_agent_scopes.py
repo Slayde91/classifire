@@ -6,6 +6,11 @@ from pathlib import Path
 
 from sqlalchemy import select
 
+# Load the full governed ORM registry before writing AuditEvent rows. AuditEvent
+# references audit_trails.id, whose table is defined in commercial_models.py.
+# Standalone scripts do not automatically import the application model registry.
+from classifire import canonical_models as _canonical_models  # noqa: F401
+from classifire import commercial_models as _commercial_models  # noqa: F401
 from classifire.agent_security import AGENT_SCOPE_MAP, FORBIDDEN_AGENT_SCOPES, scopes_for_agent
 from classifire.audit import record_audit
 from classifire.db import SessionLocal
