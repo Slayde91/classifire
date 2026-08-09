@@ -65,7 +65,6 @@ function Initialize-UatAgentSession {
     )
 
     $alias = "classifire-uat-$RunId-$Stage"
-    $canonicalSessionKey = "agent:$AgentId:$alias"
     $promptFile = Join-Path $env:TEMP ("classifire-uat-" + $RunId + "-" + $Stage + "-ready.txt")
     $stderrFile = Join-Path $env:TEMP ("classifire-uat-" + $RunId + "-" + $Stage + "-ready.stderr.txt")
     Write-Utf8NoBom -Path $promptFile -Content (
@@ -94,7 +93,16 @@ function Initialize-UatAgentSession {
         if ($exitCode -ne 0) {
             throw "OpenClaw session readiness failed for $Stage/$AgentId with exit code $exitCode. $stderr"
         }
-        $null = Convert-OpenClawJson $raw
+
+        $sessionEnvelope = Convert-OpenClawJson $raw
+        $canonicalSessionKey = [string]$sessionEnvelope.result.meta.systemPromptReport.sessionKey
+        if ([string]::IsNullOrWhiteSpace($canonicalSessionKey)) {
+            $canonicalSessionKey = ("agent:{0}:{1}" -f $AgentId, $alias)
+        }
+        if (-not $canonicalSessionKey.StartsWith(("agent:{0}:" -f $AgentId), [System.StringComparison]::Ordinal)) {
+            throw "OpenClaw returned session '$canonicalSessionKey' for $Stage, which does not belong to agent $AgentId."
+        }
+
         Write-Host "PASS OpenClaw session $Stage / $AgentId" -ForegroundColor Green
         return $canonicalSessionKey
     }
@@ -132,16 +140,19 @@ function Invoke-ClassifireTool {
         [string]$AgentId,
         [string]$SessionKey,
         [string]$ToolName,
-        [hashtable]$Args,
+        [hashtable]$ToolArgs,
         [string]$ReceiptName
     )
 
     Assert-EffectiveTool -Stage $Stage -AgentId $AgentId -SessionKey $SessionKey -ToolName $ToolName
 
-    $idempotencyKey = "classifire-uat-$RunId-$Stage-$ToolName"
+    # tools.invoke derives a stable tool-call id from idempotencyKey. Include the
+    # receipt identity so two legitimate calls to the same tool in one stage
+    # (for example technical-xlsx and proposal-xlsx rendering) remain distinct.
+    $idempotencyKey = "classifire-uat-$RunId-$Stage-$ToolName-$ReceiptName"
     $paramsJson = @{
         name = $ToolName
-        args = $Args
+        args = $ToolArgs
         sessionKey = $SessionKey
         agentId = $AgentId
         idempotencyKey = $idempotencyKey
@@ -250,13 +261,13 @@ Verify-UatStage -EstimateId $estimateId -ExpectedStage "opening_specific_technic
 $technicalAgent = "cf-technical-system"
 $technicalSession = Initialize-UatAgentSession -Stage "10-technical" -AgentId $technicalAgent
 Invoke-ClassifireTool -Stage "10-technical" -AgentId $technicalAgent -SessionKey $technicalSession `
-    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ToolName "classifire_workflow_status" -ToolArgs @{ estimate_id = $estimateId } `
     -ReceiptName "10a-technical-workflow.json" | Out-Null
 Invoke-ClassifireTool -Stage "10-technical" -AgentId $technicalAgent -SessionKey $technicalSession `
-    -ToolName "classifire_technical_search" -Args @{ opening_id = $openingId } `
+    -ToolName "classifire_technical_search" -ToolArgs @{ opening_id = $openingId } `
     -ReceiptName "10b-technical-search.json" | Out-Null
 Invoke-ClassifireTool -Stage "10-technical" -AgentId $technicalAgent -SessionKey $technicalSession `
-    -ToolName "classifire_select_repair_strategy" -Args @{
+    -ToolName "classifire_select_repair_strategy" -ToolArgs @{
         opening_id = $openingId
         variant_id = $variantId
         match_classification = "opening_specific_candidate"
@@ -265,7 +276,7 @@ Invoke-ClassifireTool -Stage "10-technical" -AgentId $technicalAgent -SessionKey
         limitations = @()
     } -ReceiptName "10c-technical-select.json" | Out-Null
 Invoke-ClassifireTool -Stage "10-technical" -AgentId $technicalAgent -SessionKey $technicalSession `
-    -ToolName "classifire_lock_repair_strategy" -Args @{ opening_id = $openingId } `
+    -ToolName "classifire_lock_repair_strategy" -ToolArgs @{ opening_id = $openingId } `
     -ReceiptName "10d-technical-lock.json" | Out-Null
 $afterTechnical = Verify-UatStage -EstimateId $estimateId -ExpectedStage "quantity_and_labour" -ReceiptName "11-after-technical.json"
 if (@($afterTechnical.required_components).Count -ne 1) {
@@ -277,10 +288,10 @@ $requiredComponentId = [string]$afterTechnical.required_components[0].id
 $quantityAgent = "cf-physical-model"
 $quantitySession = Initialize-UatAgentSession -Stage "20-quantity" -AgentId $quantityAgent
 Invoke-ClassifireTool -Stage "20-quantity" -AgentId $quantityAgent -SessionKey $quantitySession `
-    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ToolName "classifire_workflow_status" -ToolArgs @{ estimate_id = $estimateId } `
     -ReceiptName "20a-quantity-workflow.json" | Out-Null
 Invoke-ClassifireTool -Stage "20-quantity" -AgentId $quantityAgent -SessionKey $quantitySession `
-    -ToolName "classifire_derive_quantity_labour" -Args @{
+    -ToolName "classifire_derive_quantity_labour" -ToolArgs @{
         estimate_id = $estimateId
         component_inputs = @{}
         labour_adjustments = @{}
@@ -291,16 +302,16 @@ Verify-UatStage -EstimateId $estimateId -ExpectedStage "commercial_pricing_and_r
 $commercialAgent = "cf-commercial-engine"
 $commercialSession = Initialize-UatAgentSession -Stage "30-commercial" -AgentId $commercialAgent
 Invoke-ClassifireTool -Stage "30-commercial" -AgentId $commercialAgent -SessionKey $commercialSession `
-    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ToolName "classifire_workflow_status" -ToolArgs @{ estimate_id = $estimateId } `
     -ReceiptName "30a-commercial-workflow.json" | Out-Null
 Invoke-ClassifireTool -Stage "30-commercial" -AgentId $commercialAgent -SessionKey $commercialSession `
-    -ToolName "classifire_required_components" -Args @{ estimate_id = $estimateId } `
+    -ToolName "classifire_required_components" -ToolArgs @{ estimate_id = $estimateId } `
     -ReceiptName "30b-required-components.json" | Out-Null
 Invoke-ClassifireTool -Stage "30-commercial" -AgentId $commercialAgent -SessionKey $commercialSession `
-    -ToolName "classifire_package14_recommendation" -Args @{ component_id = $requiredComponentId } `
+    -ToolName "classifire_package14_recommendation" -ToolArgs @{ component_id = $requiredComponentId } `
     -ReceiptName "30c-package14-recommendation.json" | Out-Null
 Invoke-ClassifireTool -Stage "30-commercial" -AgentId $commercialAgent -SessionKey $commercialSession `
-    -ToolName "classifire_derive_commercial" -Args @{
+    -ToolName "classifire_derive_commercial" -ToolArgs @{
         estimate_id = $estimateId
         library_selections = @{}
         parameterised_selections = @{}
@@ -316,10 +327,10 @@ if (@($afterCommercial.commercial_methods).Count -ne 1 -or [string]$afterCommerc
 $validatorAgent = "cf-validator"
 $validatorSession = Initialize-UatAgentSession -Stage "40-validation" -AgentId $validatorAgent
 Invoke-ClassifireTool -Stage "40-validation" -AgentId $validatorAgent -SessionKey $validatorSession `
-    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ToolName "classifire_workflow_status" -ToolArgs @{ estimate_id = $estimateId } `
     -ReceiptName "40a-validation-workflow.json" | Out-Null
 Invoke-ClassifireTool -Stage "40-validation" -AgentId $validatorAgent -SessionKey $validatorSession `
-    -ToolName "classifire_run_validation" -Args @{ estimate_id = $estimateId } `
+    -ToolName "classifire_run_validation" -ToolArgs @{ estimate_id = $estimateId } `
     -ReceiptName "40b-validation-run.json" | Out-Null
 Verify-UatStage -EstimateId $estimateId -ExpectedStage "validated_snapshot" -ReceiptName "41-after-validation.json" | Out-Null
 
@@ -327,20 +338,20 @@ Verify-UatStage -EstimateId $estimateId -ExpectedStage "validated_snapshot" -Rec
 $outputAgent = "cf-output"
 $outputSession = Initialize-UatAgentSession -Stage "50-output" -AgentId $outputAgent
 Invoke-ClassifireTool -Stage "50-output" -AgentId $outputAgent -SessionKey $outputSession `
-    -ToolName "classifire_workflow_status" -Args @{ estimate_id = $estimateId } `
+    -ToolName "classifire_workflow_status" -ToolArgs @{ estimate_id = $estimateId } `
     -ReceiptName "50a-output-workflow.json" | Out-Null
 Invoke-ClassifireTool -Stage "50-output" -AgentId $outputAgent -SessionKey $outputSession `
-    -ToolName "classifire_lock_snapshot" -Args @{
+    -ToolName "classifire_lock_snapshot" -ToolArgs @{
         estimate_id = $estimateId
         reason = "Controlled OpenClaw reference UAT after passing deterministic validation"
     } -ReceiptName "50b-snapshot-lock.json" | Out-Null
 Invoke-ClassifireTool -Stage "50-output" -AgentId $outputAgent -SessionKey $outputSession `
-    -ToolName "classifire_render_output" -Args @{
+    -ToolName "classifire_render_output" -ToolArgs @{
         estimate_id = $estimateId
         artifact_type = "technical-xlsx"
     } -ReceiptName "50c-technical-xlsx.json" | Out-Null
 Invoke-ClassifireTool -Stage "50-output" -AgentId $outputAgent -SessionKey $outputSession `
-    -ToolName "classifire_render_output" -Args @{
+    -ToolName "classifire_render_output" -ToolArgs @{
         estimate_id = $estimateId
         artifact_type = "proposal-xlsx"
     } -ReceiptName "50d-proposal-xlsx.json" | Out-Null
