@@ -19,7 +19,7 @@ if ($tokenDoc.schema -ne "CLASSIFIRE-AGENT-TOKENS-v1") {
 $expectedByAgent = @{
     "cf-orchestrator" = @("classifire_health", "classifire_workflow_status")
     "cf-intake-evidence" = @("classifire_health", "classifire_workflow_status", "classifire_evidence_read")
-    "cf-physical-model" = @("classifire_health", "classifire_workflow_status", "classifire_physical_model_read")
+    "cf-physical-model" = @("classifire_health", "classifire_workflow_status", "classifire_evidence_read", "classifire_physical_model_read")
     "cf-technical-system" = @("classifire_health", "classifire_workflow_status", "classifire_technical_search")
     "cf-commercial-engine" = @("classifire_health", "classifire_workflow_status", "classifire_package14_recommendation")
     "cf-validator" = @("classifire_health", "classifire_workflow_status", "classifire_run_validation")
