@@ -9,18 +9,18 @@ $ErrorActionPreference = "Stop"
 
 $python = Get-Command python -ErrorAction Stop
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$runner = Join-Path $repoRoot "scripts\run_classifire_openclaw_reference_uat.py"
+$launcher = Join-Path $repoRoot "scripts\classifire_uat_launcher.py"
 
-if (-not (Test-Path -LiteralPath $runner)) {
-    throw "CLASSIFIRE Python UAT controller is missing: $runner"
+if (-not (Test-Path -LiteralPath $launcher)) {
+    throw "CLASSIFIRE managed UAT launcher is missing: $launcher"
 }
 
-& $python.Source $runner `
+& $python.Source $launcher `
     --run-id $RunId `
     --timeout-seconds $TimeoutSeconds `
     --base-url $BaseUrl
 
 $exitCode = $LASTEXITCODE
 if ($exitCode -ne 0) {
-    throw "CLASSIFIRE Python UAT controller failed with exit code $exitCode."
+    throw "CLASSIFIRE managed UAT launcher failed with exit code $exitCode."
 }
