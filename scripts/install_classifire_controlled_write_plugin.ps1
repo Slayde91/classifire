@@ -11,10 +11,30 @@ $pluginRoot = Join-Path $repoRoot "openclaw-plugin-classifire-controlled-write"
 $TokenFile = [System.IO.Path]::GetFullPath($TokenFile)
 
 if (-not (Test-Path -LiteralPath $TokenFile)) {
-    throw "CLASSIFIRE agent token file is missing: $TokenFile. Rotate/provision credentials first."
+    throw "CLASSIFIRE agent token file is missing: $TokenFile. Run 'classifire provision-agent-tokens --rotate' first."
 }
 if (-not (Test-Path -LiteralPath (Join-Path $pluginRoot "package.json"))) {
     throw "CLASSIFIRE controlled-write plugin source is missing at $pluginRoot"
+}
+
+$tokenDoc = Get-Content -LiteralPath $TokenFile -Raw | ConvertFrom-Json
+if ($tokenDoc.schema -ne "CLASSIFIRE-AGENT-TOKENS-v1") {
+    throw "Unexpected CLASSIFIRE agent token-file schema."
+}
+
+$requiredScopes = @{
+    "cf-technical-system" = @("technical:select", "technical:lock")
+    "cf-physical-model" = @("quantity:derive")
+    "cf-commercial-engine" = @("commercial:components", "commercial:derive")
+}
+foreach ($agentId in $requiredScopes.Keys) {
+    $scopeProperty = $tokenDoc.scopes.PSObject.Properties[$agentId]
+    $currentScopes = if ($null -ne $scopeProperty) { @($scopeProperty.Value) } else { @() }
+    foreach ($scope in $requiredScopes[$agentId]) {
+        if ($currentScopes -notcontains $scope) {
+            throw "CLASSIFIRE agent token scopes are stale for $agentId (missing $scope). Run 'classifire provision-agent-tokens --rotate', then rerun this installer."
+        }
+    }
 }
 
 function Convert-ToAgentItems {
@@ -72,7 +92,9 @@ finally {
 }
 
 Write-Host "Link-installing CLASSIFIRE controlled-write plugin..." -ForegroundColor Cyan
-$installOutput = (& $openclaw.Source plugins install $pluginRoot --link 2>&1 | Out-String)
+# Official OpenClaw local-development form: openclaw plugins install --link <path>.
+# This installed OpenClaw build rejects combining --force with --link, so do not add --force here.
+$installOutput = (& $openclaw.Source plugins install --link $pluginRoot 2>&1 | Out-String)
 if ($LASTEXITCODE -ne 0 -and $installOutput -notmatch "already (installed|linked|registered)" -and $installOutput -notmatch "already exists") {
     throw "OpenClaw controlled-write plugin install failed: $($installOutput.Trim())"
 }
