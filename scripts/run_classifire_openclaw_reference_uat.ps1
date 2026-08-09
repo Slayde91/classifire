@@ -213,6 +213,19 @@ Never perform or request Human Release. Human Release must remain a separate hum
 Invoke-UatAgent -Stage "50-output" -AgentId "cf-output" -Prompt $outputPrompt
 $final = Verify-UatStage -EstimateId $estimateId -ExpectedStage "human_release" -ReceiptName "51-final-state.json"
 
+Write-Host "Recording CF-UAT-001 review receipt in Mission Control..." -ForegroundColor Cyan
+$mcRaw = (& $python.Source $uatHelper receipt --run-id $RunId --estimate-id $estimateId | Out-String).Trim()
+$mcExit = $LASTEXITCODE
+Save-Receipt -Name "60-mission-control-review.json" -Content $mcRaw | Out-Null
+if ($mcExit -ne 0) {
+    throw "Mission Control UAT receipt failed. CLASSIFIRE state is retained for diagnosis. $mcRaw"
+}
+$mcReceipt = $mcRaw | ConvertFrom-Json
+if (-not [bool]$mcReceipt.ok -or $mcReceipt.status -ne "review") {
+    throw "Mission Control did not accept CF-UAT-001 into review. $mcRaw"
+}
+Write-Host "PASS Mission Control CF-UAT-001 -> review" -ForegroundColor Green
+
 Write-Host ""
 Write-Host "CLASSIFIRE controlled multi-agent reference UAT PASSED." -ForegroundColor Green
 Write-Host "Estimate: $($final.estimate_reference)" -ForegroundColor Green
@@ -220,4 +233,5 @@ Write-Host "Final stage: $($final.workflow.stage)" -ForegroundColor Green
 Write-Host "Snapshot: $($final.snapshot_hash)" -ForegroundColor Green
 Write-Host "Certificate: $($final.certificate_hash)" -ForegroundColor Green
 Write-Host "Human Release approvals: $($final.human_release_approval_count) (must be 0)" -ForegroundColor Green
+Write-Host "Mission Control: CF-UAT-001 is in review" -ForegroundColor Green
 Write-Host "Receipts retained at: $receiptDir" -ForegroundColor Green
