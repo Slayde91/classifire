@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from classifire.mission_control.bootstrap import DEFAULT_TASKS, bootstrap_mission_control
+from classifire.mission_control.bootstrap import DEFAULT_TASKS, baseline_task_statuses, bootstrap_mission_control
 from classifire.mission_control.client import MissionControlClient
 
 
@@ -70,3 +70,30 @@ def test_bootstrap_uses_idempotent_ensure_task_for_all_baseline_tasks():
     assert client.ensured == expected_ids
     assert len(result["tasks"]) == len(DEFAULT_TASKS)
     assert all(item["created"] is False for item in result["tasks"])
+
+
+def test_baseline_task_statuses_reports_dispatch_and_filters_secret_linkage():
+    class StatusClient:
+        def find_task(self, *, task_id=None, title=None):
+            if task_id == "CF-ARCH-001":
+                return {
+                    "id": 14,
+                    "title": title,
+                    "assigned_to": "cf-platform-governance",
+                    "priority": "high",
+                    "status": "in_progress",
+                    "dispatch_attempts": 1,
+                    "gateway_session_id": "session-123",
+                    "gateway_token": "must-not-leak",
+                }
+            return None
+
+    rows = baseline_task_statuses(StatusClient())
+    arch = next(row for row in rows if row["task_id"] == "CF-ARCH-001")
+    data = next(row for row in rows if row["task_id"] == "CF-DATA-001")
+
+    assert arch["mission_control_id"] == 14
+    assert arch["status"] == "in_progress"
+    assert arch["dispatch_attempts"] == 1
+    assert arch["linkage"] == {"gateway_session_id": "session-123", "dispatch_attempts": 1}
+    assert data["status"] == "missing"
