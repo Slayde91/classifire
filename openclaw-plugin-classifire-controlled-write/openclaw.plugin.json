@@ -1,13 +1,16 @@
 {
   "id": "classifire-controlled-write",
   "name": "CLASSIFIRE Controlled Write Tools",
-  "description": "Narrow role-limited write bridge for controlled CLASSIFIRE estimate UAT stages.",
-  "version": "0.1.0",
+  "description": "Narrow role-limited write bridge for controlled CLASSIFIRE estimate stages.",
+  "version": "0.2.0",
   "activation": {
     "onStartup": true
   },
   "contracts": {
     "tools": [
+      "classifire_register_evidence_observations",
+      "classifire_submit_initial_physical_model",
+      "classifire_lock_physical_model",
       "classifire_select_repair_strategy",
       "classifire_lock_repair_strategy",
       "classifire_derive_quantity_labour",
@@ -16,6 +19,9 @@
     ]
   },
   "toolMetadata": {
+    "classifire_register_evidence_observations": {"optional": true},
+    "classifire_submit_initial_physical_model": {"optional": true},
+    "classifire_lock_physical_model": {"optional": true},
     "classifire_select_repair_strategy": {"optional": true},
     "classifire_lock_repair_strategy": {"optional": true},
     "classifire_derive_quantity_labour": {"optional": true},
