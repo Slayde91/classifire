@@ -99,7 +99,7 @@ $operations = @(
 foreach ($id in ($allowByAgent.Keys | Sort-Object)) {
     $index = $indexById[$id]
     $operations += [pscustomobject]@{
-        path = "agents.list[$index].tools.allow"
+        path = "agents.list[$index].tools.alsoAllow"
         value = @($allowByAgent[$id])
     }
 }
@@ -109,13 +109,13 @@ $batchFile = Join-Path $env:TEMP "classifire-openclaw-plugin-$stamp.batch.json"
 Write-Utf8NoBom -Path $batchFile -Content (@($operations) | ConvertTo-Json -Depth 8)
 
 try {
-    Write-Host "Dry-running CLASSIFIRE plugin configuration and per-agent allowlists..." -ForegroundColor Cyan
+    Write-Host "Dry-running CLASSIFIRE plugin configuration and per-agent additive tool grants..." -ForegroundColor Cyan
     $dry = (& $openclaw.Source config set --batch-file $batchFile --dry-run 2>&1 | Out-String)
     if ($LASTEXITCODE -ne 0) {
         throw "OpenClaw plugin config dry-run failed: $($dry.Trim())"
     }
 
-    Write-Host "Applying CLASSIFIRE plugin configuration and per-agent allowlists..." -ForegroundColor Cyan
+    Write-Host "Applying CLASSIFIRE plugin configuration and per-agent additive tool grants..." -ForegroundColor Cyan
     $apply = (& $openclaw.Source config set --batch-file $batchFile 2>&1 | Out-String)
     if ($LASTEXITCODE -ne 0) {
         throw "OpenClaw plugin config apply failed: $($apply.Trim())"
@@ -140,5 +140,6 @@ Write-Host "Inspecting live CLASSIFIRE plugin runtime..." -ForegroundColor Cyan
 & $openclaw.Source plugins inspect classifire-tools --runtime --json | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "CLASSIFIRE plugin runtime inspection failed." }
 
-Write-Host "CLASSIFIRE OpenClaw plugin installed and role allowlists applied." -ForegroundColor Green
+Write-Host "CLASSIFIRE OpenClaw plugin installed and role-limited additive tools applied." -ForegroundColor Green
+Write-Host "The minimal base profile remains in force; only the listed CLASSIFIRE tools are added per agent." -ForegroundColor Green
 Write-Host "Human Release remains unavailable to every agent." -ForegroundColor Green
