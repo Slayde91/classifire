@@ -38,7 +38,7 @@ const ALL_CF_AGENTS = new Set([
 const TOOL_AGENTS: Record<string, Set<string>> = {
   classifire_health: ALL_CF_AGENTS,
   classifire_workflow_status: ALL_CF_AGENTS,
-  classifire_evidence_read: new Set(["cf-intake-evidence"]),
+  classifire_evidence_read: new Set(["cf-intake-evidence", "cf-physical-model"]),
   classifire_physical_model_read: new Set(["cf-physical-model"]),
   classifire_technical_search: new Set(["cf-technical-system"]),
   classifire_package14_recommendation: new Set(["cf-commercial-engine"]),
