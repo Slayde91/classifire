@@ -51,6 +51,18 @@ function Convert-OpenClawJson {
     return $Raw.Substring($start, $end - $start + 1) | ConvertFrom-Json
 }
 
+function Convert-ToOpenClawNativeJsonArgument {
+    param([string]$Json)
+
+    # Windows PowerShell 5.1 strips embedded double quotes when a .ps1 wrapper
+    # forwards arguments to node.exe. Escape them for the native boundary so
+    # OpenClaw receives valid JSON such as {\"sessionKey\":\"...\"}.
+    if ($env:OS -eq "Windows_NT" -and $PSVersionTable.PSVersion.Major -lt 6) {
+        return $Json.Replace('"', '\"')
+    }
+    return $Json
+}
+
 function Get-ClassifireToolNames {
     param([object]$Value)
     $serialized = $Value | ConvertTo-Json -Depth 30 -Compress
@@ -173,7 +185,8 @@ foreach ($agentId in ($expectedByAgent.Keys | Sort-Object)) {
         $canonicalSessionKey = ("agent:{0}:{1}" -f $agentId, $sessionAlias)
     }
 
-    $effectiveParams = @{ sessionKey = $canonicalSessionKey } | ConvertTo-Json -Compress
+    $effectiveParamsJson = @{ sessionKey = $canonicalSessionKey } | ConvertTo-Json -Compress
+    $effectiveParams = Convert-ToOpenClawNativeJsonArgument -Json $effectiveParamsJson
     $effectiveRaw = (& $openclaw.Source gateway call tools.effective --params $effectiveParams --json 2>&1 | Out-String)
     if ($LASTEXITCODE -ne 0) {
         throw "tools.effective failed for $agentId ($canonicalSessionKey). Output: $effectiveRaw"
@@ -198,12 +211,13 @@ foreach ($agentId in ($expectedByAgent.Keys | Sort-Object)) {
 
     # Prove an authorised plugin tool is actually callable through the same
     # Gateway policy path, rather than merely present in configuration.
-    $invokeParams = @{
+    $invokeParamsJson = @{
         name = "classifire_health"
         args = @{}
         sessionKey = $canonicalSessionKey
         agentId = $agentId
     } | ConvertTo-Json -Depth 6 -Compress
+    $invokeParams = Convert-ToOpenClawNativeJsonArgument -Json $invokeParamsJson
     $invokeRaw = (& $openclaw.Source gateway call tools.invoke --params $invokeParams --json 2>&1 | Out-String)
     if ($LASTEXITCODE -ne 0) {
         throw "tools.invoke classifire_health failed for $agentId. Output: $invokeRaw"
