@@ -250,7 +250,8 @@ function Invoke-ClassifireTool {
             catch { }
         }
         if ($raw) { Save-Receipt -Name ($ReceiptName + ".error.json") -Content $raw | Out-Null }
-        throw "OpenClaw HTTP /tools/invoke failed for $ToolName/$AgentId$(if ($null -ne $status) { " with HTTP $status" } else { "" }). $raw"
+        $statusSuffix = if ($null -ne $status) { " with HTTP $status" } else { "" }
+        throw ("OpenClaw HTTP /tools/invoke failed for {0}/{1}{2}. {3}" -f $ToolName, $AgentId, $statusSuffix, $raw)
     }
 
     $payload = Convert-OpenClawJson $raw
