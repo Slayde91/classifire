@@ -6,7 +6,11 @@ from pathlib import Path
 import zipfile
 
 import pytest
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import sessionmaker
 
+from classifire.db import Base
+from classifire.importers.technical import import_technical_variants
 from classifire.knowledge_migration import (
     MANIFEST_NAME,
     PACKAGE_ID,
@@ -17,6 +21,10 @@ from classifire.knowledge_migration import (
     TECHNICAL_VARIANTS_RELATIVE,
     stage_essentials_archive,
 )
+from classifire.models import TechnicalVariant
+
+
+COLLIDING_ID = "TSL-TEST-COLLISION-VAR01"
 
 
 def _digest(data: bytes) -> str:
@@ -71,6 +79,39 @@ def _write_archive(path: Path, *, tamper_hash: bool = False, unsafe: bool = Fals
         archive.writestr(prefix + SHA256_NAME, "\n".join(sums) + "\n")
         for name, data in payloads.items():
             archive.writestr(prefix + name, data)
+
+
+def _write_collision_source(path: Path) -> None:
+    rows = [
+        {
+            "Variant_ID": COLLIDING_ID,
+            "System_ID": "TSL-TEST-COLLISION",
+            "FRL_Variant": "-/90/90",
+            "Variant_Status": "ACTIVE",
+            "Search_Index_Status": "ACTIVE",
+            "Variant_Content_Hash": "a" * 64,
+            "Substrate_Type": "120 mm masonry wall",
+        },
+        {
+            "Variant_ID": COLLIDING_ID,
+            "System_ID": "TSL-TEST-COLLISION",
+            "FRL_Variant": "-/60/60",
+            "Variant_Status": "ACTIVE",
+            "Search_Index_Status": "ACTIVE",
+            "Variant_Content_Hash": "b" * 64,
+            "Substrate_Type": "100 mm masonry wall",
+        },
+    ]
+    path.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+
+def _collision_session(tmp_path: Path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'collision.db'}", future=True)
+    Base.metadata.create_all(bind=engine)
+    return sessionmaker(bind=engine, expire_on_commit=False, future=True)
 
 
 def test_stage_essentials_extracts_and_verifies_controlled_sources(tmp_path: Path) -> None:
@@ -128,3 +169,64 @@ def test_stage_essentials_rejects_unsafe_manifest_paths(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Unsafe archive member path"):
         stage_essentials_archive(archive_path, tmp_path / "controlled")
+
+
+def test_authorised_material_variant_id_collision_preserves_both_rows(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "variants.jsonl"
+    _write_collision_source(source)
+    Session = _collision_session(tmp_path)
+
+    with Session() as db:
+        result = import_technical_variants(
+            db,
+            source,
+            version="test-collision",
+            status="draft",
+            allowed_identity_collisions={COLLIDING_ID},
+        )
+        records = list(db.scalars(select(TechnicalVariant)).all())
+
+    assert result["records_inserted"] == 2
+    assert result["identity_collisions_remapped"] == 1
+    assert len(records) == 2
+    original = next(item for item in records if item.variant_id == COLLIDING_ID)
+    remapped = next(item for item in records if item.variant_id != COLLIDING_ID)
+    assert original.frl == "-/90/90"
+    assert remapped.frl == "-/60/60"
+    assert remapped.variant_id == f"{COLLIDING_ID}-QFSRC-{'B' * 12}"
+    migration = (remapped.source_json or {}).get("CLASSIFIRE_Migration") or {}
+    assert migration["source_variant_id"] == COLLIDING_ID
+    assert migration["identity_collision"] is True
+    assert migration["collision_resolution"] == "deterministic_content_hash_suffix"
+
+    with Session() as db:
+        rerun = import_technical_variants(
+            db,
+            source,
+            version="test-collision",
+            status="draft",
+            allowed_identity_collisions={COLLIDING_ID},
+        )
+        count = len(list(db.scalars(select(TechnicalVariant)).all()))
+
+    assert rerun["records_inserted"] == 0
+    assert rerun["records_skipped"] == 2
+    assert rerun["identity_collisions_remapped"] == 1
+    assert count == 2
+
+
+def test_unapproved_material_variant_id_collision_fails_closed(tmp_path: Path) -> None:
+    source = tmp_path / "variants.jsonl"
+    _write_collision_source(source)
+    Session = _collision_session(tmp_path)
+
+    with Session() as db:
+        with pytest.raises(ValueError, match="collision is not authorised"):
+            import_technical_variants(
+                db,
+                source,
+                version="test-unapproved-collision",
+                status="draft",
+            )
