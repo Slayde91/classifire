@@ -9,6 +9,8 @@ import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
+from classifire import canonical_models as _canonical_models  # noqa: F401
+from classifire import commercial_models as _commercial_models  # noqa: F401
 from classifire.db import Base
 from classifire.importers.technical import import_technical_variants
 from classifire.knowledge_migration import (
