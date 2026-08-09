@@ -111,9 +111,10 @@ def assert_release_hash(
 
 def import_libraries(staged: StagedEssentials) -> dict[str, object]:
     pricing_hash = sha256_file(staged.pricing_path)
-    technical_hash = sha256_file(staged.technical_variants_path)
+    technical_source_hash = sha256_file(staged.technical_library_path)
+    technical_variants_hash = sha256_file(staged.technical_variants_path)
     assert_release_hash("pricing", RELEASE_VERSION, pricing_hash)
-    assert_release_hash("technical", RELEASE_VERSION, technical_hash)
+    assert_release_hash("technical", RELEASE_VERSION, technical_variants_hash)
 
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
@@ -122,12 +123,14 @@ def import_libraries(staged: StagedEssentials) -> dict[str, object]:
             db,
             staged.pricing_path,
             version=RELEASE_VERSION,
+            status="draft",
         )
     with SessionLocal() as db:
         technical_result = import_technical_variants(
             db,
             staged.technical_variants_path,
             version=RELEASE_VERSION,
+            status="draft",
         )
 
     with SessionLocal() as db:
@@ -145,6 +148,31 @@ def import_libraries(staged: StagedEssentials) -> dict[str, object]:
         )
         if pricing_release is None or technical_release is None:
             raise RuntimeError("Expected imported pricing and technical releases were not found.")
+
+        pricing_release.notes = (
+            "Controlled CLASSIFIRE Package 14 pricing library v2.13 staged from the "
+            "reviewed OpenClaw + Mission Control essentials migration payload."
+        )
+        pricing_release.source_manifest = {
+            "package_id": staged.package_id,
+            "filename": staged.pricing_path.name,
+            "sha256": pricing_hash,
+        }
+        technical_release.notes = (
+            "Controlled CLASSIFIRE Package 17 executable technical variants v2.13. "
+            "Package 15 technical source authority is retained in the same controlled "
+            "source stage. Runtime use remains subject to release approval and fail-closed "
+            "applicability/expert-review gates."
+        )
+        technical_release.source_manifest = {
+            "package_id": staged.package_id,
+            "package_15_source_filename": staged.technical_library_path.name,
+            "package_15_source_sha256": technical_source_hash,
+            "package_17_variants_filename": staged.technical_variants_path.name,
+            "package_17_variants_sha256": technical_variants_hash,
+        }
+        db.commit()
+
         pricing_count = db.scalar(
             select(func.count()).select_from(PricingLibraryRecord).where(
                 PricingLibraryRecord.release_id == pricing_release.id
@@ -155,7 +183,7 @@ def import_libraries(staged: StagedEssentials) -> dict[str, object]:
                 TechnicalVariant.release_id == technical_release.id
             )
         ) or 0
-        technical_active = db.scalar(
+        technical_variant_rows_active = db.scalar(
             select(func.count()).select_from(TechnicalVariant).where(
                 TechnicalVariant.release_id == technical_release.id,
                 TechnicalVariant.status == "active",
@@ -179,9 +207,11 @@ def import_libraries(staged: StagedEssentials) -> dict[str, object]:
         "post_import": {
             "pricing_records": pricing_count,
             "technical_variants": technical_count,
-            "technical_active": technical_active,
+            "technical_variant_rows_active": technical_variant_rows_active,
             "pricing_release_id": pricing_release.id,
+            "pricing_release_status": pricing_release.status,
             "technical_release_id": technical_release.id,
+            "technical_release_status": technical_release.status,
         },
     }
 
