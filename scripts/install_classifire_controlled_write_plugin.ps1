@@ -23,8 +23,9 @@ if ($tokenDoc.schema -ne "CLASSIFIRE-AGENT-TOKENS-v1") {
 }
 
 $requiredScopes = @{
+    "cf-intake-evidence" = @("evidence:write")
+    "cf-physical-model" = @("physical:write", "physical:lock", "quantity:derive")
     "cf-technical-system" = @("technical:select", "technical:lock")
-    "cf-physical-model" = @("quantity:derive")
     "cf-commercial-engine" = @("commercial:components", "commercial:derive")
 }
 foreach ($agentId in $requiredScopes.Keys) {
@@ -66,12 +67,17 @@ function Write-Utf8NoBom {
 }
 
 $addByAgent = @{
+    "cf-intake-evidence" = @(
+        "classifire_register_evidence_observations"
+    )
+    "cf-physical-model" = @(
+        "classifire_submit_initial_physical_model",
+        "classifire_lock_physical_model",
+        "classifire_derive_quantity_labour"
+    )
     "cf-technical-system" = @(
         "classifire_select_repair_strategy",
         "classifire_lock_repair_strategy"
-    )
-    "cf-physical-model" = @(
-        "classifire_derive_quantity_labour"
     )
     "cf-commercial-engine" = @(
         "classifire_required_components",
@@ -102,8 +108,6 @@ finally {
 }
 
 Write-Host "Link-installing CLASSIFIRE controlled-write plugin..." -ForegroundColor Cyan
-# Official OpenClaw local-development form: openclaw plugins install --link <path>.
-# This installed OpenClaw build rejects combining --force with --link, so do not add --force here.
 $installOutput = (& $openclaw.Source plugins install --link $pluginRoot 2>&1 | Out-String)
 if ($LASTEXITCODE -ne 0 -and $installOutput -notmatch "already (installed|linked|registered)" -and $installOutput -notmatch "already exists") {
     throw "OpenClaw controlled-write plugin install failed: $($installOutput.Trim())"
@@ -182,5 +186,5 @@ Write-Host "Inspecting live controlled-write plugin runtime..." -ForegroundColor
 if ($LASTEXITCODE -ne 0) { throw "CLASSIFIRE controlled-write plugin runtime inspection failed." }
 
 Write-Host "CLASSIFIRE controlled-write plugin installed." -ForegroundColor Green
-Write-Host "Only cf-technical-system, cf-physical-model and cf-commercial-engine received new tools." -ForegroundColor Green
+Write-Host "Only cf-intake-evidence, cf-physical-model, cf-technical-system and cf-commercial-engine received controlled-write tools." -ForegroundColor Green
 Write-Host "Human Release, library approval and generic estimate:write remain unavailable to agents." -ForegroundColor Green
