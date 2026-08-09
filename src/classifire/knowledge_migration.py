@@ -102,6 +102,14 @@ def _read_zip_text(archive: zipfile.ZipFile, member: str) -> str:
     return data.decode("utf-8-sig")
 
 
+def _archive_member_sha256(archive: zipfile.ZipFile, info: zipfile.ZipInfo) -> str:
+    digest = hashlib.sha256()
+    with archive.open(info, "r") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _manifest_entries(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
     files = manifest.get("files")
     if not isinstance(files, list):
@@ -205,7 +213,14 @@ def stage_essentials_archive(
                 expected = (
                     stage_entries.get(relative, {}).get("sha256") or sums.get(relative)
                 )
-                if expected and existing_hash == expected:
+                # Some controlled root files (notably SHA256SUMS.txt) cannot
+                # carry their own digest in the checksum list and may not be
+                # listed in the manifest. For those files, compare the staged
+                # bytes directly with the authoritative archive member so a
+                # verified second run is idempotent without requiring overwrite.
+                if expected is None:
+                    expected = _archive_member_sha256(archive, info)
+                if existing_hash == expected and target.stat().st_size == info.file_size:
                     verified += 1
                     continue
                 raise FileExistsError(
@@ -229,9 +244,11 @@ def stage_essentials_archive(
             expected_hash = (
                 expected_meta.get("sha256") if expected_meta else sums.get(relative)
             )
-            expected_size = expected_meta.get("size_bytes") if expected_meta else None
             actual_hash = digest.hexdigest()
-            if expected_hash and actual_hash != expected_hash:
+            if expected_hash is None:
+                expected_hash = actual_hash
+            expected_size = expected_meta.get("size_bytes") if expected_meta else info.file_size
+            if actual_hash != expected_hash:
                 temp.unlink(missing_ok=True)
                 raise ValueError(
                     f"SHA-256 mismatch for {relative}: expected {expected_hash}, "
