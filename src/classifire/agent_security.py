@@ -18,11 +18,18 @@ TOKEN_PREFIX = "cfa_"
 
 AGENT_SCOPE_MAP: dict[str, set[str]] = {
     "cf-orchestrator": {"health:read", "workflow:read"},
-    "cf-intake-evidence": {"health:read", "workflow:read", "evidence:read"},
+    "cf-intake-evidence": {
+        "health:read",
+        "workflow:read",
+        "evidence:read",
+        "evidence:write",
+    },
     "cf-physical-model": {
         "health:read",
         "workflow:read",
         "physical:read",
+        "physical:write",
+        "physical:lock",
         "quantity:derive",
     },
     "cf-technical-system": {
