@@ -70,7 +70,7 @@ finally {
 }
 
 Write-Host "Link-installing CLASSIFIRE OpenClaw plugin..." -ForegroundColor Cyan
-$installOutput = (& $openclaw.Source plugins install -l $pluginRoot --force 2>&1 | Out-String)
+$installOutput = (& $openclaw.Source plugins install --link $pluginRoot --force 2>&1 | Out-String)
 if ($LASTEXITCODE -ne 0 -and $installOutput -notmatch "already installed") {
     throw "OpenClaw plugin install failed: $($installOutput.Trim())"
 }
