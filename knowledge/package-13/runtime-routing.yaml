@@ -1,36 +1,43 @@
-release_id: QF-KNOWLEDGE-ROUTING-v0.3-dev
+release_id: CLASSIFIRE-KNOWLEDGE-ROUTING-v2.13.1-dev
 status: DEVELOPMENT
 production_authority: false
+product: CLASSIFIRE
+implementation_overlay: CLASSIFIRE-KNOWLEDGE-ALIGNMENT-v2.13.1
 source_requirement:
-  required_product: QUANTIFIRE
   required_version: '2.13'
   required_package: '13'
-  verification_status: VERIFIED_CONTROLLED_INTAKE
-  source_filename: QUANTIFIRE_13_Knowledge_Index_and_Deployment_Manifest_v2.13.txt
-  sha256: 20a6d1ffdbb6aabf7c013c0fcd49fb7e38518819b774b9e0aa2152f4c4127cae
-  architecture_baseline: APPROVED_DEVELOPMENT
-  rule: 'No earlier PFEOS or QUANTIFIRE release may be substituted for active v2.13 routing authority.'
+  verification_status: PREVIOUSLY_REVIEWED_CONTROLLED_INTAKE
+  supplied_in_current_review: false
+  legacy_source_filename: QUANTIFIRE_13_Knowledge_Index_and_Deployment_Manifest_v2.13.txt
+  legacy_source_sha256: 20a6d1ffdbb6aabf7c013c0fcd49fb7e38518819b774b9e0aa2152f4c4127cae
+  architecture_baseline: APPROVED_DEVELOPMENT_LINEAGE
+  rule: >-
+    The retained Package 13 source is historical routing lineage. Active implementation
+    routing is CLASSIFIRE and must not substitute an earlier PFEOS/QUANTIFIRE runtime
+    or treat Package 15 as a universal technical database.
 legacy_lineage:
-  pfeos_v2_8:
+  pfeos_and_quantifire:
     status: HISTORICAL_MIGRATION_REFERENCE_ONLY
     runtime_authority: false
-    use: 'Compatibility analysis and migration comparison only.'
+    use: Compatibility analysis, source provenance and regression comparison only.
 authority_order:
   - platform_safety_and_security
-  - verified_quantifire_v2_13_constitution_and_governance
-  - approved_runtime_profiles
-  - verified_quantifire_v2_13_package_13_routing_and_release_manifest
+  - classifire_constitution_and_canonical_ontology
+  - approved_runtime_jurisdiction_and_commercial_profiles
+  - classifire_knowledge_release_manifest_and_routing_controls
   - confirmed_project_evidence
-  - verified_quantifire_v2_13_package_15_technical_authority
-  - verified_quantifire_v2_13_package_14_commercial_authority
+  - locked_physical_model
+  - pinned_technical_authority_registry_release
+  - pinned_pricing_products_labour_rules_and_markup_releases
   - authorised_user_instruction
+  - validated_snapshot_and_human_release_controls
 hard_stage_order:
   - evidence_intake
   - physical_model
   - physical_model_lock
   - opening_specific_technical_search
   - repair_strategy_lock
-  - component_derivation
+  - system_derived_component_generation
   - quantity_and_labour
   - commercial_pricing_and_recovery
   - independent_validation
@@ -39,34 +46,51 @@ hard_stage_order:
   - human_release
 negative_routing:
   intake_evidence:
-    deny: [package_14_pricing]
+    deny: [package_14_pricing, technical_selection]
   physical_model:
-    deny: [package_14_pricing, final_technical_approval]
+    deny: [package_14_pricing, technical_selection, human_release]
   technical_system:
-    deny: [package_14_pricing, commercial_approval]
+    deny: [package_14_pricing, commercial_approval, human_release]
   commercial_engine:
-    deny: [technical_applicability_override]
+    deny: [technical_applicability_override, human_release]
+  validator:
+    deny: [producer_self_approval, human_release]
   output:
-    deny: [recalculation, technical_selection, pricing_mutation]
+    deny: [recalculation, technical_selection, pricing_mutation, human_release]
+technical_authority_registry:
+  registry_id: CLASSIFIRE-TECHNICAL-AUTHORITY-REGISTRY
+  current_members:
+    - technical_library_id: TECHLIB-FIREFLY-P15
+      library_name: FIREFLY Technical System Library
+      manufacturer: FIREFLY
+      source_package: '15'
+      executable_variant_package: '17'
+  rule: >-
+    Package 15/17 is the current FIREFLY technical library. Future technical libraries
+    are independently governed registry members and must not change FIREFLY identities.
 package_authority:
-  package_13: VERIFIED_ROUTING_BASELINE_APPROVED_DEVELOPMENT
-  package_14: VERIFIED_SOURCE_COMMERCIAL_ONLY_RELEASE_VALIDATION_PENDING
-  package_15: VERIFIED_SOURCE_TECHNICAL_ONLY_RELEASE_VALIDATION_PENDING
-  package_17: VERIFIED_SOURCE_EXECUTABLE_VARIANTS_RELEASE_VALIDATION_PENDING
-  package_16: VERIFIED_SOURCE_PROFILE_SPLIT_AND_REAPPROVAL_PENDING
-  package_18: VERIFIED_RUNTIME_CONTRACT_SOURCE_SCHEMA_RECONCILED
+  package_13: PREVIOUSLY_REVIEWED_ROUTING_SOURCE_WITH_CLASSIFIRE_OVERLAY
+  package_14: ACTIVE_2_13_RUNTIME_COMMERCIAL_ONLY
+  package_15: ACTIVE_2_13_RUNTIME_FIREFLY_TECHNICAL_SOURCE
+  package_17: ACTIVE_2_13_RUNTIME_FIREFLY_EXECUTABLE_VARIANTS
+  package_16: ACTIVE_CONDITIONAL_HUMAN_GOVERNED_PROFILE
+  package_18: REVIEWED_RUNTIME_CONTRACT_COMPATIBILITY_SOURCE
 canonical_state:
-  owner: quantifire_domain_service
+  owner: classifire_domain_service
   mission_control_is_canonical: false
-  agent_memory_is_canonical: false
-  direct_agent_database_writes_allowed: false
+  openclaw_agent_memory_is_canonical: false
+  generic_direct_agent_database_writes_allowed: false
+  controlled_role_scoped_service_writes_required: true
 required_runtime_receipts:
-  - quantifire_v2_13_release_ids
+  - classifire_release_ids_and_manifest_hashes
   - source_hashes
+  - technical_library_and_registry_release_ids
   - agent_id
   - run_id
   - lock_receipts
   - validation_receipt
+  - snapshot_hash
   - output_hashes
-current_gate: SCHEMA_TEST_PASS
-next_gate: STATE_TRANSITION_TEST_PASS
+  - human_release_approval
+current_gate: REAL_REPORT_PHYSICAL_MODEL_LOCK
+next_gate: FIREFLY_OPENING_SPECIFIC_SEARCH_PASS
