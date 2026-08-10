@@ -13,14 +13,20 @@ class ScopeClass(StrEnum):
     LINEAR_JOINT = "LINEAR_JOINT"
     DAMPER = "DAMPER"
     DAMPER_PENETRATION = "DAMPER_PENETRATION"
-    DUCT_PENETRATION = "DUCT_PENETRATION"
-    FIRE_RATED_DUCTWORK = "FIRE_RATED_DUCTWORK"
+    DUCT_BARRIER_PENETRATION = "DUCT_BARRIER_PENETRATION"
+    FIRE_RATED_DUCT_RUN = "FIRE_RATED_DUCT_RUN"
     STEEL_BARRIER_PENETRATION = "STEEL_BARRIER_PENETRATION"
     PURLIN_BARRIER_PENETRATION = "PURLIN_BARRIER_PENETRATION"
     STRUCTURAL_STEEL_FIRE_PROTECTION = "STRUCTURAL_STEEL_FIRE_PROTECTION"
     STRUCTURAL_STEEL_COATING_REPAIR = "STRUCTURAL_STEEL_COATING_REPAIR"
     ACCESS_PANEL_OR_DOOR = "ACCESS_PANEL_OR_DOOR"
     OTHER_PASSIVE_FIRE_SCOPE = "OTHER_PASSIVE_FIRE_SCOPE"
+
+    # Compatibility aliases for early UAT terminology. New code and outputs must use
+    # the explicit canonical names above so full-run duct protection is never confused
+    # with treatment of a single barrier penetration.
+    DUCT_PENETRATION = "DUCT_BARRIER_PENETRATION"
+    FIRE_RATED_DUCTWORK = "FIRE_RATED_DUCT_RUN"
 
 
 FRLStatus = Literal["source_confirmed", "assumed", "unresolved"]
@@ -31,6 +37,7 @@ FRLFormatFamily = Literal[
 ]
 
 PENETRATION_DEFAULT_FRL = "-/120/120"
+FIRE_RATED_DUCT_RUN_DEFAULT_FRL = "-/120/120"
 STRUCTURAL_STEEL_DEFAULT_FRL = "120/-/-"
 
 PENETRATION_STYLE_SCOPES = frozenset(
@@ -39,12 +46,13 @@ PENETRATION_STYLE_SCOPES = frozenset(
         ScopeClass.FIRE_SEAL,
         ScopeClass.DAMPER,
         ScopeClass.DAMPER_PENETRATION,
-        ScopeClass.DUCT_PENETRATION,
-        ScopeClass.FIRE_RATED_DUCTWORK,
+        ScopeClass.DUCT_BARRIER_PENETRATION,
         ScopeClass.STEEL_BARRIER_PENETRATION,
         ScopeClass.PURLIN_BARRIER_PENETRATION,
     }
 )
+
+FIRE_RATED_DUCT_RUN_SCOPES = frozenset({ScopeClass.FIRE_RATED_DUCT_RUN})
 
 STRUCTURAL_STEEL_SCOPES = frozenset(
     {
@@ -126,8 +134,25 @@ def resolve_frl(
             note=(
                 "FRL was not provided in the source evidence. CLASSIFIRE assumed "
                 f"{PENETRATION_DEFAULT_FRL} for estimating this barrier penetration, "
-                "fire seal, damper or ductwork scope. Verify the required FRL and the "
-                "selected approved system before technical approval or Human Release."
+                "fire seal or damper scope. Verify the required FRL and the selected "
+                "approved system before technical approval or Human Release."
+            ),
+            human_verification_required=True,
+        )
+
+    if classification in FIRE_RATED_DUCT_RUN_SCOPES:
+        return FRLResolution(
+            frl=FIRE_RATED_DUCT_RUN_DEFAULT_FRL,
+            status="assumed",
+            format_family="structural_integrity_insulation",
+            basis_code="CLASSIFIRE-FRL-DEFAULT-DUCT-RUN-v1",
+            note=(
+                "FRL was not provided in the source evidence. CLASSIFIRE assumed "
+                f"{FIRE_RATED_DUCT_RUN_DEFAULT_FRL} for estimating protection of the "
+                "complete identified duct run, not merely a barrier penetration. Verify "
+                "the required FRL, protected route, duct geometry, exposure, supports, "
+                "length and selected fire-wrap, fire-spray or board system before "
+                "technical approval or Human Release."
             ),
             human_verification_required=True,
         )
@@ -162,6 +187,7 @@ def resolve_frl(
 
 
 __all__ = [
+    "FIRE_RATED_DUCT_RUN_DEFAULT_FRL",
     "FRLResolution",
     "PENETRATION_DEFAULT_FRL",
     "STRUCTURAL_STEEL_DEFAULT_FRL",
