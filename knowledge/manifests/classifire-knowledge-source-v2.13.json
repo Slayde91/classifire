@@ -1,0 +1,61 @@
+{
+  "schema": "CLASSIFIRE-KNOWLEDGE-SOURCE-MANIFEST-v2",
+  "product": "CLASSIFIRE",
+  "review_date": "2026-08-11",
+  "release_label": "v2.13-attached-review-set",
+  "repository": "Slayde91/classifire",
+  "target_branch": "feature/classifire-product-rename",
+  "confidentiality": "Private controlled source. Do not publish to a public repository.",
+  "runtime_authority": "Approved immutable database releases and their manifests; source files are retained migration/evidence artifacts.",
+  "current_focus": ["fire seals", "service penetrations"],
+  "deferred_domains": ["complete structural-steel protection", "complete fire-rated duct runs"],
+  "supplied_packages": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "12", "14", "15", "16", "17", "18"],
+  "not_supplied_in_current_review": {
+    "11": "Not supplied; no new content authority inferred.",
+    "13": "Not supplied; repository retains the previously reviewed routing baseline."
+  },
+  "technical_registry": {
+    "registry_id": "CLASSIFIRE-TECHNICAL-AUTHORITY-REGISTRY",
+    "current_libraries": [{
+      "technical_library_id": "TECHLIB-FIREFLY-P15",
+      "manufacturer": "FIREFLY",
+      "source_package": "15",
+      "executable_variant_package": "17"
+    }]
+  },
+  "known_anomalies": [
+    {"id": "KNO-P14-LIBRARY-ID-LINEAGE", "detail": "Package 14 source Library_ID is v2.11 while deployment/release version is v2.13. Preserve stable PKB IDs and govern the lineage."},
+    {"id": "KNO-P15-VERSION-LAYERS", "detail": "Package 15 top-level filename/release is v2.13, internal manifest is 2.5 and governance wording references v2.3."},
+    {"id": "KNO-P17-VERSION-LAYERS", "detail": "Package 17 source records use version 2.7 under the v2.13 deployment release."},
+    {"id": "KNO-P17-DUPLICATE-VARIANT-ID", "detail": "One source Variant_ID occurs twice; preserve both source rows while enforcing one controlled active Variant identity."},
+    {"id": "KNO-FRL-BLANKET-AMENDMENT", "detail": "Generic 120-minute defaults must be applied only through a visible scope-sensitive assumption policy."},
+    {"id": "KNO-P15-GLOBAL-AUTHORITY-WORDING", "detail": "Package 15 is the FIREFLY technical library within the Technical Authority Registry, not the universal technical database."},
+    {"id": "KNO-P18-PACKAGE15-NAMES", "detail": "Package15-specific schema and parser names remain compatibility aliases pending registry-neutral contracts."},
+    {"id": "KNO-LEGACY-PFEOS-TEXT", "detail": "A small number of retained source definitions still use PFEOS wording; correct only through governed source revision/aliasing."}
+  ],
+  "packages": [
+    {"filename": "CLASSIFIRE_01_Core_Constitution_Kernel_v2.13.txt", "size_bytes": 6601487, "sha256": "d5767c37c9c116e5586d839a7a4b013da1cba599eed4194808783f53482c9e53", "status": "reviewed_source_evidence", "source_chapter_count": 249, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_02_Canonical_Ontology_v2.13.txt", "size_bytes": 4334949, "sha256": "ae72d385efe46a7a2304aba619ba93d1c58eee9651fa12f90b46dc95ab3ab0f5", "status": "reviewed_source_evidence", "source_chapter_count": 183, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_03_Evidence_Physical_and_Repair_Workflows_v2.13.txt", "size_bytes": 6997731, "sha256": "467fe779d0d79cacdfa7a656890676856d2bd70ac0718e3bbe727f620c511b3a", "status": "reviewed_source_evidence", "source_chapter_count": 257, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_04_Pricing_and_Estimate_Workflows_v2.13.txt", "size_bytes": 4935449, "sha256": "990ddd1c682ea8a2b08af81205779c5656b25dcdc2d391b6098ab5826859fa12", "status": "reviewed_source_evidence", "source_chapter_count": 214, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_05_Engineering_Fundamentals_and_Technical_Evidence_v2.13.txt", "size_bytes": 1172575, "sha256": "cff58b55a3f73780c04b8fa3e1d668c8f8d8201e5af8d02d49bda195246bdc57", "status": "reviewed_source_evidence", "source_chapter_count": 62, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_06_Construction_and_Service_Engineering_v2.13.txt", "size_bytes": 646062, "sha256": "83ad0451461e4e9cbf01411aa4ee803b759be85356101689f22adb9d5701cac0", "status": "reviewed_source_evidence", "source_chapter_count": 34, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_07_Repair_Systems_Defects_and_Assets_v2.13.txt", "size_bytes": 984879, "sha256": "a39168266ff00f3d2ec97c5d38452a1b911d20298802d23392a08cc30867eb2a", "status": "reviewed_source_evidence", "source_chapter_count": 50, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_08_Commercial_Estimating_Knowledge_v2.13.txt", "size_bytes": 1897876, "sha256": "7496b74cc41298badeb54f6eb86c7455c6b73a4f201e5a2f802669f6b6b3ab95", "status": "reviewed_source_evidence", "source_chapter_count": 92, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_09_Archetypes_Algorithms_and_Reference_Data_v2.13.txt", "size_bytes": 1481585, "sha256": "12515b51c1b366ecb688077f9ab3372aa3c95a24e6504f8f639d5fd543decb7e", "status": "reviewed_source_evidence", "source_chapter_count": 69, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_10_Validation_Metrics_and_Calibration_v2.13.txt", "size_bytes": 1198491, "sha256": "a05bd3aef0d8799a3801e2bf86dd04f0ffd3fd277e5dc75190ebf1b8ec1e1a1b", "status": "reviewed_source_evidence", "source_chapter_count": 56, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_12_Platform_Operations_and_Integrations_v2.13.txt", "size_bytes": 2052364, "sha256": "604f684f06b6fef7baff6ddad274e76c70710877b37326af50ead546377575c0", "status": "reviewed_source_evidence", "source_chapter_count": 84, "master_architecture": "v3.13", "source_status": "ACTIVE RELEASE CANDIDATE"},
+    {"filename": "CLASSIFIRE_14_Pricing_Library_v2.13.csv", "size_bytes": 9271565, "sha256": "45043c0bb0d2890f36eb6e7dd8a3f22bbf57b387b56b971cabbe00bba81484c6", "status": "reviewed_source_evidence", "record_count": 897, "unique_pkb_entry_ids": 897, "source_library_id": "CLASSIFIRE-PACKAGE-14-v2.11", "deployment_release_version": "2.13", "authority_scope": "commercial_only"},
+    {"filename": "CLASSIFIRE_15_Technical_System_Library_v2.13.txt", "size_bytes": 7186160, "sha256": "aca7c99517ac223603c476e23ccf7cbc48b59dbf884cc8730dfa252b488a6c24", "status": "reviewed_source_evidence", "source_system_count": 2183, "active_system_count": 2182, "inactive_system_count": 1, "manufacturer_coverage": ["FIREFLY"], "source_evidence": ["FAS190234", "FAS190235", "FAS190236"], "technical_library_id": "TECHLIB-FIREFLY-P15", "internal_manifest_version": "2.5", "deployment_release_version": "2.13"},
+    {"filename": "CLASSIFIRE_16_Runtime_Profile_and_Data_Readiness_v2.13.txt", "size_bytes": 4484, "sha256": "340ff28201e6b4da8af3277df55b1a1245ba43ab2bdbf3872309335eb122ba02", "status": "reviewed_source_evidence", "profile_id": "CLASSIFIRE-RUNTIME-PROFILE-CEASEFIRE-NSW-ACT-v2.13", "profile_status": "ACTIVE", "production_readiness": "CONDITIONAL / PROJECT GATES APPLY"},
+    {"filename": "CLASSIFIRE_17_Technical_System_Variants_v2.13.jsonl", "size_bytes": 86449584, "sha256": "3e605849fd72b37bf23207233767a3be1321766382327830f8fd1cdfbc5c637e", "status": "reviewed_source_evidence", "record_count": 2861, "unique_variant_ids": 2860, "unique_system_ids": 2182, "active_variant_count": 2860, "inactive_variant_count": 1, "manufacturer_coverage": ["FIREFLY"], "record_version": "2.7", "known_source_variant_id_collision": "TSL-FF-FAS190236-RIR1-25A-V211-VAR01"},
+    {"filename": "CLASSIFIRE_18_Runtime_Schemas_Algorithms_and_Output_Contracts_v2.13.txt", "size_bytes": 61736, "sha256": "841222756da6a3885f400f6a0ca92452f090b84b681ccc2b000292369f8f555f", "status": "reviewed_source_evidence", "schema_count": 14, "implementation_artifact_count": 7, "compatibility_note": "Package15-specific contract names are retained aliases pending a registry-neutral schema release."}
+  ],
+  "publication": {
+    "status": "available_for_private_repository_publication",
+    "expected_repository_path": "knowledge/source/CLASSIFIRE_Knowledge_Source_Pack_v2.13.zip",
+    "publisher_script": "scripts/publish_classifire_knowledge_source_pack.ps1",
+    "source_pack_sha256": "47b650d670cc13d817a7b76b5cd98d1305198dc64266565f0ecfbccc1a6dcae5",
+    "source_pack_size_bytes": 7521432
+  }
+}
