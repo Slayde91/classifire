@@ -68,8 +68,9 @@ $Destination = Join-Path $RepoRoot $DestinationRelative
 New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Destination) | Out-Null
 Copy-Item -LiteralPath $SourceItem.FullName -Destination $Destination -Force
 
-# The repository already tracks *.zip with Git LFS. Require Git LFS rather than
-# silently committing confidential binary source as an ordinary Git blob.
+# The repository deliberately ignores knowledge/source/** for ordinary work, but
+# *.zip is LFS-tracked. This publisher is the explicit controlled exception: it
+# force-adds only the verified governed source pack and requires Git LFS.
 try {
     git lfs version | Out-Null
 }
@@ -81,7 +82,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 git lfs install --local | Out-Null
-git add -- $DestinationRelative
+git add -f -- $DestinationRelative
 if ($LASTEXITCODE -ne 0) {
     throw "git add failed for $DestinationRelative"
 }
