@@ -18,8 +18,8 @@ from run_classifire_real_uat_intake import load_receipt, repo_root
 
 
 # Keep the evidence portion comfortably below the Windows command-line budget.
-# The fix is field-aware deterministic projection, not repeated increases to this
-# threshold and not an AI-to-AI reduction pass.
+# The fix is deterministic physical-fact projection and consolidation, not repeated
+# increases to this threshold and not an AI reduction pass.
 BOUNDED_DEFECT_EVIDENCE_CHARS = 12_000
 
 
@@ -51,6 +51,10 @@ def _clip(value: object, *, string_limit: int, list_limit: int, depth: int = 0) 
     return _trim_text(value, string_limit)
 
 
+def _stable_key(value: object) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
+
+
 def _project_dict_list(
     value: object,
     *,
@@ -62,7 +66,10 @@ def _project_dict_list(
     if not isinstance(value, list):
         return []
     result: list[dict[str, object]] = []
-    for raw in value[:max_items]:
+    seen: set[str] = set()
+    for raw in value:
+        if len(result) >= max_items:
+            break
         if not isinstance(raw, dict):
             continue
         row = {
@@ -74,8 +81,13 @@ def _project_dict_list(
             for key in keys
             if raw.get(key) not in (None, "", [], {})
         }
-        if row:
-            result.append(row)
+        if not row:
+            continue
+        identity = _stable_key(row)
+        if identity in seen:
+            continue
+        seen.add(identity)
+        result.append(row)
     return result
 
 
@@ -83,10 +95,30 @@ def _project_strings(value: object, *, max_items: int, string_limit: int) -> lis
     if not isinstance(value, list):
         return []
     result: list[str] = []
-    for item in value[:max_items]:
+    for item in value:
+        if len(result) >= max_items:
+            break
         text = _trim_text(item, string_limit)
         if text and text not in result:
             result.append(text)
+    return result
+
+
+def _project_count(value: object, *, string_limit: int, list_limit: int) -> object:
+    if not isinstance(value, dict):
+        return _clip(value, string_limit=string_limit, list_limit=list_limit)
+    result = {
+        key: _clip(value.get(key), string_limit=string_limit, list_limit=list_limit)
+        for key in ("value", "status")
+        if value.get(key) not in (None, "", [], {})
+    }
+    basis = _project_strings(
+        value.get("basis"),
+        max_items=min(list_limit, 3),
+        string_limit=string_limit,
+    )
+    if basis:
+        result["basis"] = basis
     return result
 
 
@@ -100,24 +132,27 @@ def _project_evidence_row(
     base: dict[str, object] = {
         "type": evidence_type,
         "page": row.get("page"),
-        "region": _trim_text(row.get("region"), 180),
+        "region": _trim_text(row.get("region"), 120),
     }
 
     if evidence_type == "defect_text_fact_review":
         base.update(
             {
                 "association_status": row.get("association_status"),
+                # The physical-model prompt needs the asserted value and epistemic
+                # status. Repeated prose bases remain in canonical evidence and are
+                # intentionally omitted from this inference projection.
                 "attributes": _project_dict_list(
                     row.get("attributes"),
-                    keys=("name", "value", "status", "source_role", "basis"),
-                    max_items=max(list_limit + 3, 7),
+                    keys=("name", "value", "status", "source_role"),
+                    max_items=max(list_limit + 1, 4),
                     string_limit=string_limit,
                     list_limit=list_limit,
                 ),
                 "quantities": _project_dict_list(
                     row.get("quantities"),
-                    keys=("kind", "value", "unit", "status", "source_role", "basis"),
-                    max_items=max(list_limit + 1, 5),
+                    keys=("kind", "value", "unit", "status", "source_role"),
+                    max_items=max(list_limit, 3),
                     string_limit=string_limit,
                     list_limit=list_limit,
                 ),
@@ -131,28 +166,19 @@ def _project_evidence_row(
                         "quantity",
                         "status",
                         "source_role",
-                        "basis",
                     ),
-                    max_items=max(list_limit + 3, 7),
+                    max_items=max(list_limit + 2, 5),
                     string_limit=string_limit,
                     list_limit=list_limit,
                 ),
-                # Treatment clues are deliberately omitted here. They are retained
-                # canonically for the later technical-system stage but are not needed
-                # to establish the physical Opening/Service model.
-                "technical_details": _project_strings(
-                    row.get("technical_details"),
-                    max_items=list_limit,
-                    string_limit=string_limit,
-                ),
                 "physical_facts": _project_strings(
                     row.get("physical_facts"),
-                    max_items=list_limit + 2,
+                    max_items=list_limit + 1,
                     string_limit=string_limit,
                 ),
                 "uncertainties": _project_strings(
                     row.get("uncertainties"),
-                    max_items=list_limit + 2,
+                    max_items=list_limit + 1,
                     string_limit=string_limit,
                 ),
             }
@@ -163,34 +189,58 @@ def _project_evidence_row(
         base.update(
             {
                 "status": row.get("status"),
-                "opening_count": _clip(
-                    row.get("opening_count"), string_limit=string_limit, list_limit=list_limit
-                ),
-                "service_count": _clip(
-                    row.get("service_count"), string_limit=string_limit, list_limit=list_limit
-                ),
-                "counting_decisions": _clip(
-                    row.get("counting_decisions"),
+                "opening_count": _project_count(
+                    row.get("opening_count"),
                     string_limit=string_limit,
                     list_limit=list_limit,
                 ),
-                "openings": _clip(
-                    row.get("openings"), string_limit=string_limit, list_limit=list_limit
+                "service_count": _project_count(
+                    row.get("service_count"),
+                    string_limit=string_limit,
+                    list_limit=list_limit,
                 ),
-                "services": _clip(
-                    row.get("services"), string_limit=string_limit, list_limit=list_limit
+                "openings": _project_dict_list(
+                    row.get("openings"),
+                    keys=(
+                        "label",
+                        "substrate_type",
+                        "substrate_plane",
+                        "opening_type",
+                        "dimensions",
+                        "evidence_status",
+                        "source_region",
+                    ),
+                    max_items=max(list_limit, 3),
+                    string_limit=string_limit,
+                    list_limit=list_limit,
                 ),
-                "relationships": _clip(
-                    row.get("relationships"), string_limit=string_limit, list_limit=list_limit
+                "services": _project_dict_list(
+                    row.get("services"),
+                    keys=(
+                        "label",
+                        "service_type",
+                        "material",
+                        "size",
+                        "quantity",
+                        "evidence_status",
+                    ),
+                    max_items=max(list_limit + 2, 5),
+                    string_limit=string_limit,
+                    list_limit=list_limit,
+                ),
+                "relationships": _project_strings(
+                    row.get("relationships"),
+                    max_items=list_limit + 1,
+                    string_limit=string_limit,
                 ),
                 "physical_facts": _project_strings(
                     row.get("physical_facts"),
-                    max_items=list_limit + 2,
+                    max_items=list_limit + 1,
                     string_limit=string_limit,
                 ),
                 "uncertainties": _project_strings(
                     row.get("uncertainties"),
-                    max_items=list_limit + 2,
+                    max_items=list_limit + 1,
                     string_limit=string_limit,
                 ),
             }
@@ -198,18 +248,47 @@ def _project_evidence_row(
         return {key: value for key, value in base.items() if value not in (None, "", [], {})}
 
     if evidence_type == "defect_page_layout_review":
-        for key in (
-            "association_status",
-            "association_confidence",
-            "opening_count",
-            "service_count",
-            "openings",
-            "services",
-            "relationships",
-        ):
-            value = row.get(key)
-            if value not in (None, "", [], {}):
-                base[key] = _clip(value, string_limit=string_limit, list_limit=list_limit)
+        base["association_status"] = row.get("association_status")
+        base["association_confidence"] = row.get("association_confidence")
+        base["opening_count"] = _project_count(
+            row.get("opening_count"), string_limit=string_limit, list_limit=list_limit
+        )
+        base["service_count"] = _project_count(
+            row.get("service_count"), string_limit=string_limit, list_limit=list_limit
+        )
+        base["openings"] = _project_dict_list(
+            row.get("openings"),
+            keys=(
+                "label",
+                "substrate_type",
+                "substrate_plane",
+                "opening_type",
+                "dimensions",
+                "evidence_status",
+                "source_region",
+            ),
+            max_items=max(list_limit, 3),
+            string_limit=string_limit,
+            list_limit=list_limit,
+        )
+        base["services"] = _project_dict_list(
+            row.get("services"),
+            keys=(
+                "label",
+                "service_type",
+                "material",
+                "size",
+                "quantity",
+                "evidence_status",
+                "source_region",
+            ),
+            max_items=max(list_limit + 2, 5),
+            string_limit=string_limit,
+            list_limit=list_limit,
+        )
+        base["relationships"] = _project_strings(
+            row.get("relationships"), max_items=list_limit + 1, string_limit=string_limit
+        )
         base["physical_facts"] = _project_strings(
             row.get("physical_facts"), max_items=list_limit + 1, string_limit=string_limit
         )
@@ -225,12 +304,24 @@ def _project_evidence_row(
             "target_link",
             "viewpoint",
             "barrier_face",
-            "visible_services",
-            "visible_openings",
         ):
             value = row.get(key)
             if value not in (None, "", [], {}):
                 base[key] = _clip(value, string_limit=string_limit, list_limit=list_limit)
+        base["visible_services"] = _project_dict_list(
+            row.get("visible_services"),
+            keys=("label", "service_type", "material", "size", "quantity", "status"),
+            max_items=max(list_limit + 2, 5),
+            string_limit=string_limit,
+            list_limit=list_limit,
+        )
+        base["visible_openings"] = _project_dict_list(
+            row.get("visible_openings"),
+            keys=("label", "substrate_type", "substrate_plane", "opening_type", "dimensions"),
+            max_items=max(list_limit, 3),
+            string_limit=string_limit,
+            list_limit=list_limit,
+        )
         base["physical_facts"] = _project_strings(
             row.get("physical_facts"), max_items=list_limit + 1, string_limit=string_limit
         )
@@ -243,13 +334,16 @@ def _project_evidence_row(
         for key in (
             "association_status",
             "association_confidence",
-            "association_basis",
-            "associated_photo_ids",
-            "uncertain_photo_ids",
         ):
             value = row.get(key)
             if value not in (None, "", [], {}):
-                base[key] = _clip(value, string_limit=string_limit, list_limit=list_limit)
+                base[key] = value
+        base["associated_photo_ids"] = _project_strings(
+            row.get("associated_photo_ids"), max_items=list_limit + 1, string_limit=80
+        )
+        base["uncertain_photo_ids"] = _project_strings(
+            row.get("uncertain_photo_ids"), max_items=list_limit + 1, string_limit=80
+        )
         base["physical_facts"] = _project_strings(
             row.get("physical_facts"), max_items=list_limit + 1, string_limit=string_limit
         )
@@ -258,7 +352,7 @@ def _project_evidence_row(
         )
         return {key: value for key, value in base.items() if value not in (None, "", [], {})}
 
-    # Retain only the compact physical fields for lower-priority direct records.
+    # Retain only compact physical fields for lower-priority direct records.
     for key in (
         "description",
         "location",
@@ -279,6 +373,156 @@ def _project_evidence_row(
     return {key: value for key, value in base.items() if value not in (None, "", [], {})}
 
 
+def _consolidate_projected_rows(
+    rows: list[dict[str, object]],
+    *,
+    provenance_limit: int,
+) -> list[dict[str, object]]:
+    """Collapse repeated physical content while retaining occurrence provenance."""
+
+    groups: dict[str, dict[str, object]] = {}
+    order: list[str] = []
+    for row in rows:
+        core = {key: value for key, value in row.items() if key not in {"page", "region"}}
+        identity = _stable_key(core)
+        provenance = {
+            key: row.get(key)
+            for key in ("page", "region")
+            if row.get(key) not in (None, "")
+        }
+        if identity not in groups:
+            groups[identity] = {**core, "provenance": []}
+            order.append(identity)
+        provenance_rows = groups[identity]["provenance"]
+        if (
+            provenance
+            and isinstance(provenance_rows, list)
+            and provenance not in provenance_rows
+            and len(provenance_rows) < provenance_limit
+        ):
+            provenance_rows.append(provenance)
+
+    result: list[dict[str, object]] = []
+    for identity in order:
+        row = groups[identity]
+        if row.get("provenance") == []:
+            row = {key: value for key, value in row.items() if key != "provenance"}
+        result.append(row)
+    return result
+
+
+def _bundle_rules() -> dict[str, bool]:
+    return {
+        "same_page_is_not_association": True,
+        "photo_count_is_not_quantity": True,
+        "exact_duplicate_visuals_count_once": True,
+        "best_estimate_unknown_size_quantity_when_rational": True,
+        "technical_selection_deferred": True,
+        "pricing_deferred": True,
+    }
+
+
+def _serialize_bundle(
+    defect_payload: dict[str, Any],
+    direct_evidence: list[dict[str, object]],
+    *,
+    defect_string_limit: int,
+    defect_list_limit: int,
+) -> str:
+    return json.dumps(
+        {
+            "defect": _clip(
+                defect_payload,
+                string_limit=defect_string_limit,
+                list_limit=defect_list_limit,
+            ),
+            "direct_evidence": direct_evidence,
+            "rules": _bundle_rules(),
+        },
+        ensure_ascii=False,
+        separators=(",", ":"),
+        default=str,
+    )
+
+
+def _append_unique(target: list[object], value: object, *, limit: int) -> None:
+    if value in (None, "", [], {}) or len(target) >= limit:
+        return
+    identity = _stable_key(value)
+    if any(_stable_key(item) == identity for item in target):
+        return
+    target.append(value)
+
+
+def _essential_summary(
+    ranked: list[dict[str, Any]],
+    *,
+    string_limit: int,
+    list_limit: int,
+) -> dict[str, object]:
+    """Final deterministic projection of only physical-model-relevant evidence."""
+
+    summary: dict[str, list[object]] = {
+        "provenance": [],
+        "attributes": [],
+        "quantities": [],
+        "services": [],
+        "openings": [],
+        "opening_counts": [],
+        "service_counts": [],
+        "relationships": [],
+        "physical_facts": [],
+        "uncertainties": [],
+    }
+
+    for raw in ranked:
+        projected = _project_evidence_row(
+            raw,
+            string_limit=string_limit,
+            list_limit=list_limit,
+        )
+        _append_unique(
+            summary["provenance"],
+            {
+                key: projected.get(key)
+                for key in ("type", "page", "region")
+                if projected.get(key) not in (None, "", [], {})
+            },
+            limit=max(list_limit * 2, 6),
+        )
+        for key, max_items in (
+            ("attributes", max(list_limit * 2, 6)),
+            ("quantities", max(list_limit * 2, 6)),
+            ("services", max(list_limit * 3, 8)),
+            ("openings", max(list_limit * 2, 5)),
+            ("relationships", max(list_limit * 2, 6)),
+            ("physical_facts", max(list_limit * 2, 8)),
+            ("uncertainties", max(list_limit * 2, 8)),
+        ):
+            value = projected.get(key)
+            if isinstance(value, list):
+                for item in value:
+                    _append_unique(summary[key], item, limit=max_items)
+        if projected.get("opening_count") not in (None, "", [], {}):
+            _append_unique(
+                summary["opening_counts"],
+                projected["opening_count"],
+                limit=max(list_limit, 3),
+            )
+        if projected.get("service_count") not in (None, "", [], {}):
+            _append_unique(
+                summary["service_counts"],
+                projected["service_count"],
+                limit=max(list_limit, 3),
+            )
+
+    return {
+        key: values
+        for key, values in summary.items()
+        if values
+    }
+
+
 def build_projected_defect_bundle(
     defect_payload: dict[str, Any],
     evidence_rows: list[dict[str, Any]],
@@ -290,41 +534,57 @@ def build_projected_defect_bundle(
     ]
     ranked = _dedupe_ranked_rows(allowed)
 
-    # The profiles reduce representational detail only. Evidence source order,
-    # direct defect linkage, counts, service/opening facts and uncertainty remain.
+    # First preserve evidence-row structure but collapse repeated content into one
+    # row with bounded page/region provenance. This is important for reports that
+    # repeat the same defect facts in several extraction/reconciliation records.
     profiles = (
-        (150, 7, 14),
-        (120, 6, 12),
-        (95, 5, 10),
-        (75, 4, 8),
+        (150, 7, 14, 6),
+        (110, 6, 12, 5),
+        (85, 5, 10, 4),
+        (65, 4, 8, 3),
     )
     last_text = ""
-    for string_limit, list_limit, row_limit in profiles:
-        payload = {
-            "defect": _clip(
-                defect_payload,
-                string_limit=max(string_limit, 260),
+    for string_limit, list_limit, row_limit, provenance_limit in profiles:
+        projected = [
+            _project_evidence_row(
+                row,
+                string_limit=string_limit,
                 list_limit=list_limit,
-            ),
-            "direct_evidence": [
-                _project_evidence_row(
-                    row,
-                    string_limit=string_limit,
-                    list_limit=list_limit,
-                )
-                for row in ranked[:row_limit]
-            ],
-            "rules": {
-                "same_page_is_not_association": True,
-                "photo_count_is_not_quantity": True,
-                "exact_duplicate_visuals_count_once": True,
-                "best_estimate_unknown_size_quantity_when_rational": True,
-                "technical_selection_deferred": True,
-                "pricing_deferred": True,
-            },
-        }
+            )
+            for row in ranked
+        ]
+        consolidated = _consolidate_projected_rows(
+            projected,
+            provenance_limit=provenance_limit,
+        )
+        last_text = _serialize_bundle(
+            defect_payload,
+            consolidated[:row_limit],
+            defect_string_limit=max(string_limit, 240),
+            defect_list_limit=list_limit,
+        )
+        if len(last_text) <= max_chars:
+            return last_text
+
+    # If a defect genuinely has many unique direct evidence records, switch to an
+    # aggregate physical-fact summary. Canonical evidence is not deleted; only the
+    # inference payload representation changes. No model-to-model summarisation is used.
+    for string_limit, list_limit in ((60, 4), (45, 3), (36, 2)):
+        summary = _essential_summary(
+            ranked,
+            string_limit=string_limit,
+            list_limit=list_limit,
+        )
         last_text = json.dumps(
-            payload,
+            {
+                "defect": _clip(
+                    defect_payload,
+                    string_limit=220,
+                    list_limit=max(list_limit, 2),
+                ),
+                "evidence_summary": summary,
+                "rules": _bundle_rules(),
+            },
             ensure_ascii=False,
             separators=(",", ":"),
             default=str,
@@ -461,8 +721,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Resume the retained CLASSIFIRE real-report fire-seal UAT using "
-            "field-aware deterministic evidence projection and a 12,000-character "
-            "per-defect evidence budget."
+            "consolidated deterministic physical-evidence projection and a "
+            "12,000-character per-defect evidence budget."
         )
     )
     parser.add_argument("--run-id")
