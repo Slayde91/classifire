@@ -1,183 +1,230 @@
 # CLASSIFIRE Roadmap
 
-## Current product focus
+**Roadmap status:** Active  
+**Current milestone:** Real-report fire-seal and penetration Physical Model Lock  
+**Current product status:** Pre-production integration build  
+**Current technical coverage:** FIREFLY Package 15 source / Package 17 executable variants  
+**Deferred:** Complete structural-steel and fire-rated-duct-run implementation
 
-CLASSIFIRE is currently focused on **fire seals and service penetrations**. The active implementation and UAT sequence remains:
+## 1. Current position
 
-1. report, schedule, text and photograph intake;
-2. duplicate-image and multi-angle reconciliation;
-3. Defect -> Opening -> Service physical modelling;
-4. Physical Model Lock;
-5. opening-specific search of the authorised FIREFLY technical library (Package 15 source / Package 17 executable variants);
-6. system-derived components;
-7. quantity and labour derivation;
-8. Package 14 commercial pricing and recovery;
-9. independent validation, outputs and Human Release.
+The governed synthetic multi-agent UAT passed end to end through Human Release staging. The v2.13 pricing and FIREFLY technical runtime releases were migrated, approved and verified. The current real-report pilot has retained:
 
-Structural-steel protection and complete fire-rated duct runs are **recorded future work and are not part of the current implementation sprint**.
+- 10/10 PDF pages;
+- 41/41 displayed image occurrences;
+- 32 unique visual digests;
+- 9 exact duplicate occurrences;
+- 10 canonical defects;
+- complete structured defect-linked text evidence;
+- complete page-layout and full-resolution photograph review;
+- complete defect-level photo-reconciliation records.
 
-## Source examples reviewed for future phases
+The latest failure occurred before physical submission because one defect's bounded evidence payload was 9,923 characters against an obsolete 9,000-character forensic runner limit. No partial physical model was submitted. The next runner uses a 12,000-character Windows-safe defect budget and retains deterministic compaction, direct defect linkage, duplicate collapse and resumable cache receipts.
 
-The following user-supplied source types were reviewed only to identify future roadmap requirements:
+## 2. Source and knowledge status
 
-- completed vermiculite / spray calculators;
-- blank and partially completed spray-calculator quote templates;
-- the current fire-seals / penetration calculator;
-- the shared inventory and price list used by the penetration and spray calculators;
-- marked-up structural drawings identifying whole steel members, runs and sections;
-- marked-up mechanical drawings identifying complete fire-rated duct routes;
-- mechanical and structural schedules containing member IDs, profiles, sizes, locations and fire-rating requirements.
+### Reviewed v2.13 packages
 
-These source files are controlled commercial evidence. They must remain in private controlled-source storage and must not be committed to GitHub as ordinary application assets.
+The current review set includes Packages 01–10, 12 and 14–18. Package 13 was not re-uploaded in this review; the repository retains its previously reviewed routing baseline. Package 11 was not supplied in this review set and no new content conclusion is made about it.
 
-## Findings retained for later steel and ductwork design
+Key controlled source facts:
 
-Only the following architecture requirements are carried forward now.
+- Package 14: 897 rows and 897 unique PKB Entry IDs;
+- Package 15: 2,183 FIREFLY systems, 2,182 active and one inactive;
+- Package 17: 2,861 rows, 2,860 unique Variant IDs, one retained authorised source collision, 2,182 System IDs and FIREFLY-only manufacturer coverage;
+- Package 16: active human-governed runtime profile with conditional Project gates;
+- Package 18: system-derived component schemas and algorithms, with legacy Package-15-specific contract names retained as compatibility aliases pending a registry-neutral schema release.
 
-### Separate commercial methods
+### Alignment controls added
 
-The current penetration calculator is relevant to fire seals and service penetrations. It is **not** the commercial calculation engine for structural-steel coatings or complete fire-rated duct runs.
+- Technical Authority Registry introduced above individual technical libraries;
+- Package 15/17 formally scoped as the FIREFLY technical library;
+- Package 14 retained as commercial-only authority;
+- scope-sensitive FRL assumption policy recorded;
+- human-governed current profile distinguished from dormant autonomous-profile amendments;
+- source version and count anomalies retained and disclosed rather than silently edited;
+- full knowledge-source manifest, hashes and publication procedure added;
+- project/knowledge alignment audit added.
 
-Future CLASSIFIRE releases require a Commercial Method Registry containing independently governed methods for:
+## 3. Immediate execution plan
 
-- penetration and fire-seal estimating;
-- structural-steel fire-protection estimating;
-- complete fire-rated duct-run estimating.
+### Phase P1 — Complete real-report physical modelling
 
-The methods may consume one shared governed product/rate source, but their formulas, applicability conditions and quantity bases must remain separate.
+**Status:** In progress
 
-### Shared price source, separate calculation logic
+1. Run the bounded fire-seal UAT using retained evidence.
+2. Review every proposed Opening and Service, including inferred quantities and sizes.
+3. Confirm exact duplicate photos did not increase scope.
+4. Confirm opposite-face or alternate-angle photographs were reconciled correctly.
+5. Confirm missing FRL is visibly marked as assumed `-/120/120`, not source-confirmed.
+6. Submit and lock only when all ten defects have a defensible complete physical model.
 
-The supplied calculators show that common rates can include labour, access, access freight, travel, accommodation, masking, spray products, boards, mastic, primers, topcoats and other materials. Future migration must establish stable rate identities and provenance once, then allow each approved commercial method to consume only the relevant records.
+**Gate:** `REAL_REPORT_PHYSICAL_MODEL_LOCK_PASS`
 
-A shared price list must never cause the penetration, steel and duct methods to be merged into one formula engine.
+### Phase P2 — Opening-specific FIREFLY technical search
 
-### Conditional ductwork components
+**Status:** Ready after P1
 
-Pins/clips, mesh and access panels appear in the spray-calculator family and are commonly associated with ductwork scope. They are **conditional system components**, not universal allowances.
+1. Search the estimate's pinned Technical Authority Registry release.
+2. Search the active FIREFLY Package 15/17 records opening by opening.
+3. Compare Service, material, size, quantity, substrate, plane, orientation, opening, FRL, spacing, edge distance, support, fixing and dependencies.
+4. Preserve every mismatch and unknown.
+5. Select one complete source-locked variant or return a qualified result.
+6. Record library, release, manufacturer, source document, page/table/figure, System ID and Variant ID.
 
-Future ductwork implementation must derive them from the selected approved technical system and actual route details. It must not automatically add pins, mesh or access panels merely because a scope item is ductwork.
+**Gate:** `FIREFLY_OPENING_SPECIFIC_SEARCH_PASS`
 
-### Structural-steel data carried forward
+### Phase P3 — Repair strategy and system-derived components
 
-Future whole-member or whole-run steel support must be able to receive, where available:
+**Status:** Partial foundation exists
 
-- quantity and member ID;
-- profile / section designation;
-- member or repair length;
-- protected sides / exposed faces;
-- required fire duration / structural FRL;
-- zone and location;
-- beam, column, brace, purlin or other use;
-- limiting temperature;
-- internal / external exposure;
-- section factor or massivity;
-- existing and target DFT;
-- coating, spray or wrap system;
-- notes, evidence status and confidence.
+1. Create a current Repair Strategy tied to the valid Physical Model Lock.
+2. Lock the selected strategy.
+3. Parse the selected FIREFLY variant into every required product, layer, fixing, support, preparation, installation, finishing and QA component.
+4. Reconcile required versus generated components.
 
-Steel or purlin crossings through a fire-rated barrier remain a separate local barrier-penetration class from protection of an entire structural member or run.
+**Gates:** `REPAIR_STRATEGY_LOCK_PASS`, `COMPONENT_COMPLETENESS_PASS`
 
-### Complete fire-rated duct-run data carried forward
+### Phase P4 — Quantity and labour
 
-Future duct support must represent complete protected routes, not a count of barrier penetrations. It must be able to receive, where available:
+**Status:** Blocked on productivity coverage for production reliance
 
-- run and segment IDs;
-- duct height, width or diameter by segment;
-- protected length by segment;
-- number of protected sides;
-- required FRL;
-- zone and location;
-- horizontal, vertical and riser orientation;
-- route start and end limits;
-- bends, branches and transitions;
-- supports, hangers, flanges and access doors;
-- wrap layers / thickness or spray DFT;
-- developed external surface area;
-- notes, evidence status and confidence.
+1. Calculate executable quantities with inputs, units, waste, rounding and procurement minimums.
+2. Derive labour from required activities rather than fixed generic hours.
+3. Approve productivity sources for the 38 currently referenced FIREFLY activity codes.
+4. Keep mobilisation, access, preparation, installation, QA, documentation and cleanup distinct where material.
+5. Recover shared labour once.
 
-Marked-up drawings may be the primary project evidence. CLASSIFIRE must preserve drawing number, revision, scale, grid/location, legend, mark-up colour or layer, member/run labels, schedules and related section/elevation references.
+**Gates:** `QUANTITY_ARITHMETIC_PASS`, `LABOUR_ACTIVITY_COMPLETENESS_PASS`, `PRODUCTIVITY_SOURCE_PASS`
 
-### Technical authority remains separate from calculators
+### Phase P5 — Commercial pricing and recovery
 
-The calculators are commercial tools. They do not by themselves prove technical applicability, required DFT, wrap layers, fixings, access-panel requirements or other tested-system controls.
+**Status:** Strong foundation; real-report execution pending P4
 
-Future steel and ductwork technical libraries must be independently governed under the CLASSIFIRE Technical Authority Registry. Package 15 remains the current **FIREFLY Technical System Library** for the present penetration-focused work; it is not the universal technical database for all future steel and duct systems.
+1. Apply Package 14 exact/parameterised rates only after line-specific applicability.
+2. Otherwise use component-built price, then bounded expert estimate.
+3. Record a Commercial Method Lock for every component.
+4. Prove inclusions and allocated value.
+5. Prevent duplicate recovery of batt, mastic, framing, collars, wraps, fixings, access and labour.
+6. Keep commercial analogues benchmark-only unless a different approved status applies.
 
-## Deferred steel and ductwork work package
+**Gates:** `RATE_APPLICABILITY_PASS`, `COMMERCIAL_METHOD_LOCK_PASS`, `RECOVERY_RECONCILIATION_PASS`
 
-**Status: DEFERRED - source examples retained; design not yet authorised for implementation.**
+### Phase P6 — Independent validation and outputs
 
-Later work will include:
+**Status:** Synthetic UAT passed; real-report execution pending
 
-1. controlled source intake and hashing for the spray calculators, examples, markups and shared price list;
-2. formula, named-range, macro and rate-lineage inventories;
-3. separation of technical rules from commercial formulas;
-4. structural-steel and duct-run physical-asset schemas;
-5. drawing/markup take-off workflows;
-6. steel and duct technical-library releases;
-7. separate commercial-method implementations;
-8. regression comparisons against completed calculator examples;
-9. mixed-scope and performance UAT.
+1. Independently validate physical, technical, component, quantity, labour and commercial records.
+2. Create the validated immutable snapshot.
+3. Render the technical/audit workbook, client proposal workbook and approved PDF.
+4. Reconcile all totals and output hashes.
+5. Create the estimate certificate.
+6. Bind Human Release to the exact snapshot and outputs.
 
-No steel or ductwork calculator data is to be imported into the active fire-seal/penetration runtime until this work package is separately designed, reviewed and approved.
+**Gates:** `INDEPENDENT_VALIDATION_PASS`, `OUTPUT_RECONCILIATION_PASS`, `HUMAN_RELEASE_APPROVAL`
 
-## Immediate fire-seal and penetration roadmap
+## 4. Knowledge and library programme
 
-### Phase P1 - Complete real-report physical modelling
+### K1 — Private GitHub source preservation
 
-- retain the completed 10-page / 41-image intake;
-- retain exact-image de-duplication and duplicate-placement provenance;
-- make per-defect physical synthesis resumable and Windows-safe;
-- avoid whole-report or oversized per-defect synthesis payloads;
-- use explicit text, reconciled photographs and labelled AI best estimates for size and quantity;
-- apply `-/120/120` only as the approved missing-FRL estimating assumption for the current penetration/fire-seal scope;
-- record confirmed, stated, inferred, provisional and assumed values distinctly;
-- submit and lock only a complete canonical penetration physical model.
+- publish the reviewed source pack to the private repository using the controlled publisher;
+- verify the source-pack SHA-256 and every constituent file hash;
+- prohibit public-repository publication;
+- preserve source files as immutable evidence, not live editable runtime state;
+- retain approved database releases as runtime authority.
 
-### Phase P2 - FIREFLY technical selection
+### K2 — Registry-neutral technical contracts
 
-- search the active FIREFLY Package 15/17 release opening by opening;
-- reject incompatible service, size, substrate, orientation, FRL, spacing and opening configurations;
-- select one complete approved variant or fail closed;
-- retain source document, page/table/figure, system ID, variant ID and release provenance.
+- retain Package 15 and Package 17 identifiers for FIREFLY lineage;
+- add Technical Library and Technical Registry Release identities to candidate/search records;
+- replace new hard-coded `package15_basis` fields with registry-neutral fields while preserving compatibility aliases;
+- support additional manufacturer libraries without changing FIREFLY IDs.
 
-### Phase P3 - Components, quantities and labour
+### K3 — Source corpus cleanup
 
-- derive all required components and labour activities from the selected FIREFLY variant;
-- calculate every physical component separately;
-- prevent one-photo, one-row or one-defect quantity defaults;
-- complete approved productivity coverage before production labour pricing.
+- issue a governed source amendment rather than rewriting retained evidence;
+- resolve accidental active PFEOS wording through aliases;
+- govern the Package 14 `Library_ID` v2.11 versus release v2.13 discrepancy;
+- govern Package 15 top-level v2.13 / manifest v2.5 / governance v2.3 lineage;
+- govern Package 17 record version 2.7 under the v2.13 deployment release;
+- preserve the known duplicate Variant ID collision with deterministic canonical IDs;
+- replace blanket FRL-default language with the approved scope-sensitive policy in the next source release.
 
-### Phase P4 - Commercial pricing and recovery
+## 5. Platform, security and operations
 
-- use the penetration/fire-seal commercial method only;
-- use Package 14 exact or approved parameterised rates where applicable;
-- otherwise use component-built pricing, then bounded expert estimate;
-- reconcile every required component and labour activity;
-- prevent duplicate recovery of included batt, mastic, collars, wraps, fixings and labour.
+### O1 — OpenClaw
 
-### Phase P5 - Validation, output and performance
+- keep role-specific tool grants and deny generic writes;
+- maintain image/PDF review only for authorised evidence roles;
+- retain direct role-scoped CLASSIFIRE API writes where Gateway tool transport is unreliable;
+- cache inference by evidence and prompt hashes;
+- record model, prompt, agent, run and receipt versions.
 
-- independently validate physical, technical and commercial records;
-- produce technical/audit and proposal outputs from a validated snapshot;
-- retain Human Release as human-only;
-- instrument stage timing and model-call counts;
-- add evidence-hash caching, bounded concurrency and ambiguity routing before scale testing.
+### O2 — Mission Control
 
-## Performance acceptance targets to establish
+- retain Mission Control as task/control plane only;
+- mirror run, gate, review and release receipts;
+- link architecture changes and test evidence to tasks;
+- do not store pricing/technical authority in task text.
 
-The current real-report scripts are forensic UAT tools and are not the production performance target. Production acceptance must benchmark at least:
+### O3 — Security and resilience
 
-- 10 defects;
-- 100 defects;
-- 1,000 synthetic defects;
-- image-heavy and duplicate-heavy reports;
-- text-only defect schedules;
-- interrupted/resumed runs.
+- complete malicious-file, prompt-injection, path-traversal, formula-injection and cross-agent tests;
+- validate secret handling and redacted logs;
+- test backup, restore and rollback across application, database, OpenClaw, knowledge releases and Mission Control;
+- maintain private repository and controlled-source handling.
 
-Metrics must include extraction time, AI call count and duration, cache hits, unique-image ratio, physical-model time, technical-search time, commercial time and output-render time.
+## 6. Performance programme
 
-## Related architecture record
+The current real-report scripts are forensic UAT, not the production speed target.
 
-See [CLASSIFIRE Next Architecture](./CLASSIFIRE_NEXT_ARCHITECTURE.md) for the detailed scope classifications, FRL policy, Technical Authority Registry and future physical-asset model.
+Production work:
+
+- stage timing and model-call instrumentation;
+- deterministic extraction before AI reasoning;
+- unique-image caching;
+- bounded concurrency;
+- batch related defects;
+- ambiguity routing to deeper reasoning only when required;
+- local database technical/pricing search;
+- resumable checkpoints;
+- 10-, 100- and 1,000-defect benchmarks.
+
+**Gate:** `PRODUCTION_PERFORMANCE_ACCEPTANCE_PASS`
+
+## 7. Deferred structural-steel and ductwork programme
+
+**Status:** Source examples retained; design and implementation deferred.
+
+Future work will include:
+
+- whole steel member/run and local barrier-crossing classes;
+- structural FRL format and DFT/section-factor measurements;
+- complete fire-rated duct-run segmentation and developed area;
+- drawing/markup take-off;
+- separate steel and duct technical libraries;
+- separate commercial calculators;
+- conditional pins, mesh and access-panel components;
+- regression against completed spray-calculator examples.
+
+No steel or duct calculator data is imported into the active fire-seal/penetration runtime until this work package is separately designed and approved.
+
+## 8. Production release criteria
+
+CLASSIFIRE remains pre-production until:
+
+- real-report end-to-end UAT passes;
+- current source and runtime manifests reconcile;
+- all mandatory regressions pass;
+- productivity coverage is approved;
+- technical and commercial release integrity passes;
+- security, backup, restore, rollback and performance tests pass;
+- outputs reconcile and certificates verify;
+- a competent human approves production release.
+
+## 9. Related documents
+
+- [CLASSIFIRE Architecture](./CLASSIFIRE_ARCHITECTURE.md)
+- [Knowledge Alignment Amendment](../knowledge/amendments/CLASSIFIRE_KNOWLEDGE_ALIGNMENT_AMENDMENT_v2.13.1.md)
+- [Knowledge Source Manifest](../knowledge/manifests/classifire-knowledge-source-v2.13.json)
+- [Project and Knowledge Alignment Review](./reports/CLASSIFIRE_PROJECT_KNOWLEDGE_ALIGNMENT_20260811.md)
