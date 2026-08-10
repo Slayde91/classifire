@@ -19,9 +19,26 @@ The governed synthetic multi-agent UAT passed end to end through Human Release s
 - complete page-layout and full-resolution photograph review;
 - complete defect-level photo-reconciliation records.
 
-The real-report physical stage is now producing usable defect-level scope: defects 147039, 147046 and 147031 produced Opening/Service proposals in the latest run. Two UAT defects were identified in the continuation runner itself: defect 147038 returned the internally invalid state `MODEL_SUPPORTED` with empty physical scope, and a later defect still produced 13,664 characters after generic nested compaction against the 12,000-character evidence budget. No partial canonical model was submitted.
+The real-report physical stage has now progressed through eight of ten defects in one retained run without payload-size failure. The latest successful proposals were:
 
-The current continuation runner therefore uses **field-aware deterministic evidence projection** rather than another threshold increase. It retains direct defect-linked text attributes, quantities, Service facts, Opening/Service reconciliation, physical facts, uncertainties and source provenance while omitting duplicated explanation and treatment clues that belong to the later technical stage. A `MODEL_SUPPORTED` response is not accepted or cached unless it contains actual Opening and Service scope; one independent scope-repair retry is permitted, otherwise the defect becomes a visible limitation. No AI-to-AI evidence reduction is used.
+- 147038: 1 Opening, 1 Service;
+- 147039: 1 Opening, 3 Services;
+- 147046: 1 Opening, 1 Service;
+- 147031: 1 Opening, 2 Services;
+- 147037: 1 Opening, 3 Services;
+- 147042: 2 Openings, 2 Services;
+- 147044: 1 Opening, 2 Services;
+- 147045: 1 Opening, 1 Service.
+
+The run then stopped while synthesising defect 147047 because `openclaw infer model run --gateway` returned `GatewayTransportError: gateway timeout after 120000ms`. This was an inference transport interruption, not a physical-model validation failure. No partial canonical model was submitted.
+
+The active continuation path now combines three controls:
+
+1. **field-aware deterministic evidence projection** rather than threshold inflation or AI-to-AI evidence reduction;
+2. **structural validation of model output**, so `MODEL_SUPPORTED` is rejected unless actual Opening and Service scope exists; and
+3. **transport-resilient resumability**, where successful defect proposals are reused by evidence-bundle hash and only a specific OpenClaw Gateway timeout may fall back to the equivalent OpenClaw local/in-process raw model transport using the same model, prompt and reasoning level. Business-rule, model-validation, authentication and other failures do not trigger the fallback.
+
+The evidence projection retains direct defect-linked attributes, quantities, Service facts, Opening/Service reconciliation, physical facts, uncertainties and source provenance while omitting duplicated explanation and treatment clues that belong to the later technical stage. No AI-to-AI evidence reduction is used.
 
 ## 2. Source and knowledge status
 
@@ -52,15 +69,16 @@ Key controlled source facts:
 
 ### Phase P1 — Complete real-report physical modelling
 
-**Status:** In progress
+**Status:** In progress — 8/10 defect proposals completed before transport interruption
 
-1. Run the projected/bounded fire-seal UAT using retained evidence.
-2. Review every proposed Opening and Service, including inferred quantities and sizes.
-3. Reject or retry any internally inconsistent model response such as `MODEL_SUPPORTED` with empty physical scope.
-4. Confirm exact duplicate photos did not increase scope.
-5. Confirm opposite-face or alternate-angle photographs were reconciled correctly.
-6. Confirm missing FRL is visibly marked as assumed `-/120/120`, not source-confirmed.
-7. Submit and lock only when all ten defects have a defensible complete physical model.
+1. Resume the bounded fire-seal UAT using retained evidence and supported-proposal caches.
+2. Use OpenClaw Gateway inference first; on the specific Gateway timeout only, retry the same raw model probe through OpenClaw local/in-process transport.
+3. Review every proposed Opening and Service, including inferred quantities and sizes.
+4. Reject or retry any internally inconsistent model response such as `MODEL_SUPPORTED` with empty physical scope.
+5. Confirm exact duplicate photos did not increase scope.
+6. Confirm opposite-face or alternate-angle photographs were reconciled correctly.
+7. Confirm missing FRL is visibly marked as assumed `-/120/120`, not source-confirmed.
+8. Submit and lock only when all ten defects have a defensible complete physical model.
 
 **Gate:** `REAL_REPORT_PHYSICAL_MODEL_LOCK_PASS`
 
@@ -160,8 +178,9 @@ Key controlled source facts:
 - keep role-specific tool grants and deny generic writes;
 - maintain image/PDF review only for authorised evidence roles;
 - retain direct role-scoped CLASSIFIRE API writes where Gateway tool transport is unreliable;
+- use raw OpenClaw local/in-process model transport only as a bounded fallback for explicit Gateway inference timeout;
 - cache inference by evidence and prompt hashes;
-- record model, prompt, agent, run and receipt versions.
+- record model, prompt, agent, run, transport and receipt versions.
 
 ### O2 — Mission Control
 
@@ -191,6 +210,7 @@ Production work:
 - ambiguity routing to deeper reasoning only when required;
 - local database technical/pricing search;
 - resumable checkpoints;
+- transport failover metrics and retry budgets;
 - 10-, 100- and 1,000-defect benchmarks.
 
 **Gate:** `PRODUCTION_PERFORMANCE_ACCEPTANCE_PASS`
