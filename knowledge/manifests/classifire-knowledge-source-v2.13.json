@@ -52,10 +52,11 @@
     {"filename": "CLASSIFIRE_18_Runtime_Schemas_Algorithms_and_Output_Contracts_v2.13.txt", "size_bytes": 61736, "sha256": "841222756da6a3885f400f6a0ca92452f090b84b681ccc2b000292369f8f555f", "status": "reviewed_source_evidence", "schema_count": 14, "implementation_artifact_count": 7, "compatibility_note": "Package15-specific contract names are retained aliases pending a registry-neutral schema release."}
   ],
   "publication": {
-    "status": "available_for_private_repository_publication",
+    "status": "PENDING_PRIVATE_GIT_LFS_PUBLICATION",
     "expected_repository_path": "knowledge/source/CLASSIFIRE_Knowledge_Source_Pack_v2.13.zip",
     "publisher_script": "scripts/publish_classifire_knowledge_source_pack.ps1",
-    "source_pack_sha256": "47b650d670cc13d817a7b76b5cd98d1305198dc64266565f0ecfbccc1a6dcae5",
-    "source_pack_size_bytes": 7521432
+    "source_pack_sha256": "75cccd7a33b84b276bbc47820f204b020151553d410dad73cc0d39c2ce2f925e",
+    "source_pack_size_bytes": 7514016,
+    "source_pack_file_count": 16
   }
 }
