@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document records the architecture decisions discovered during real-report UAT. It is additive: the current penetration-focused UAT may continue without interruption, while future releases expand CLASSIFIRE to structural steel, fire-rated ductwork, dampers, purlins and multiple manufacturer technical libraries.
+This document records the architecture decisions discovered during real-report UAT. It is additive: the current penetration-focused UAT may continue without interruption, while future releases expand CLASSIFIRE to structural steel, entire fire-rated duct runs, dampers, purlins and multiple manufacturer technical libraries.
 
 ## 1. Evidence and assumption hierarchy
 
@@ -34,8 +34,8 @@ The physical-model stage should classify scope before applying FRL, quantity or 
 - `LINEAR_JOINT`
 - `DAMPER`
 - `DAMPER_PENETRATION`
-- `DUCT_PENETRATION`
-- `FIRE_RATED_DUCTWORK`
+- `DUCT_BARRIER_PENETRATION`
+- `FIRE_RATED_DUCT_RUN`
 - `STEEL_BARRIER_PENETRATION`
 - `PURLIN_BARRIER_PENETRATION`
 - `STRUCTURAL_STEEL_FIRE_PROTECTION`
@@ -43,25 +43,48 @@ The physical-model stage should classify scope before applying FRL, quantity or 
 - `ACCESS_PANEL_OR_DOOR`
 - `OTHER_PASSIVE_FIRE_SCOPE`
 
-The distinction between `STEEL_BARRIER_PENETRATION` and `STRUCTURAL_STEEL_FIRE_PROTECTION` is mandatory.
+The following distinctions are mandatory:
+
+- `FIRE_RATED_DUCT_RUN` means the complete identified run or route of ductwork requiring fire wrap, fire spray, board or another approved protection system. It is not a synonym for a duct penetration.
+- `DUCT_BARRIER_PENETRATION` is used only when the defect is specifically the opening, seal, damper or local barrier interface where a duct crosses a fire-rated element.
+- `STEEL_BARRIER_PENETRATION` is separate from `STRUCTURAL_STEEL_FIRE_PROTECTION`.
 
 ## 3. Asset-sensitive FRL assumptions
 
 Source evidence always controls when FRL is supplied.
 
-### Penetration-style scope
+### Barrier-penetration scope
 
 The following missing-FRL cases may use `-/120/120` as an estimating assumption:
 
 - service penetrations;
 - fire seals;
 - dampers and damper penetrations;
-- duct penetrations;
-- fire-rated ductwork;
+- duct barrier penetrations;
 - steel penetrating a fire-rated element;
 - purlins penetrating a fire-rated element.
 
 The assumption must state that FRL was not provided and that `-/120/120` is used for estimating only, subject to Project and technical approval.
+
+### Entire fire-rated duct runs
+
+Where an entire run of ductwork requires fire wrap, fire spray, fire board or another approved fire-resisting system, classify the physical scope as `FIRE_RATED_DUCT_RUN`.
+
+When the source does not provide an FRL, `-/120/120` may be used as a separately identified duct-run estimating assumption. This must not be described as a penetration-only allowance.
+
+The assumption must require later verification of:
+
+- the complete protected route and its start/end limits;
+- required FRL;
+- duct type and construction;
+- size and shape by segment;
+- horizontal, vertical and riser segments;
+- bends, transitions and branches;
+- length by segment;
+- developed external surface area;
+- supports, hangers, access doors, flanges and discontinuities;
+- selected approved wrap, spray, board or other system;
+- wrap layers/thickness or spray DFT where applicable.
 
 ### Structural steel protection
 
@@ -113,28 +136,39 @@ A future additive structural-steel model should support:
 
 Final DFT is determined by the approved technical system, not appearance or a generic rule.
 
-## 6. Fire-rated ductwork physical asset
+## 6. Entire fire-rated duct-run physical asset
 
-A future additive duct model should support:
+A fire-rated ductwork item is an entire identified run, route or bounded section requiring continuous protection. It must not be represented as one penetration or one arbitrary `each` item.
 
+The physical model should segment a run whenever size, shape, direction, level, treatment requirement or evidence basis changes. Each segment should support:
+
+- run ID and segment ID;
+- start and end locations;
 - duct shape;
 - width, height or diameter;
-- measured or estimated length;
-- developed surface area;
-- orientation;
+- measured or AI-estimated length;
+- developed external surface area;
+- horizontal, vertical, riser or other orientation;
+- bends, branches and transitions;
 - required FRL and FRL status;
 - treatment type: wrap, spray, board or other;
-- wrap layers and thickness;
+- wrap layers and wrap thickness;
 - spray target DFT and existing DFT;
 - supports and hangers;
+- access doors, flanges and joints;
+- penetrations encountered along the route as separately linked barrier-interface records where applicable;
 - access conditions;
 - location;
 - confidence and evidence status.
 
-Quantity formulas:
+Run totals must aggregate the measured segments rather than count photographs, defect rows or penetration points.
+
+Quantity formulas before system-specific laps, waste and allowances:
 
 - rectangular developed area: `2 x (width + height) x length`;
 - circular developed area: `pi x diameter x length`.
+
+Package-specific technical rules must later add overlaps, joints, layers, fixings, supports, termination requirements, spray thickness and other approved-system requirements.
 
 ## 7. Technical Authority Registry
 
@@ -149,6 +183,8 @@ The umbrella authority is the **CLASSIFIRE Technical Authority Registry**, which
 - Trafalgar;
 - Hilti;
 - Ryanfire;
+- specialist duct-wrap or fire-spray libraries;
+- structural-steel coating libraries;
 - other approved manufacturer or specialist libraries.
 
 Each estimate pins an immutable Technical Registry Release. Every technical candidate and selected system must retain:
@@ -209,7 +245,8 @@ Acceptance benchmarking should cover at least:
 - duplicate-heavy reports;
 - image-heavy reports;
 - text-only schedules;
-- mixed-scope reports.
+- mixed-scope reports;
+- long fire-rated duct routes with changing sizes and multiple segments.
 
 ## 9. Recommended implementation sequence
 
@@ -219,7 +256,7 @@ Acceptance benchmarking should cover at least:
 4. Introduce the Technical Authority Registry while preserving existing FIREFLY IDs.
 5. Remove unsafe database quantity defaults from future write paths.
 6. Add first-class measurement and assumption records.
-7. Add structural-steel and ductwork asset models.
+7. Add structural-steel and full-run ductwork asset models.
 8. Add timing instrumentation and persistent inference cache.
 9. Add bounded parallel processing and ambiguity routing.
 10. Run mixed-scope and scale acceptance tests.
@@ -232,4 +269,5 @@ Acceptance benchmarking should cover at least:
 - Source FRL always overrides a default assumption.
 - Missing quantity must never silently become one.
 - Proposed repair wording remains a clue until technical applicability is established.
+- A fire-rated duct run must never be reduced to the number of wall/floor penetrations it crosses.
 - Current stable Package 15/17 FIREFLY IDs must be preserved during registry migration.
