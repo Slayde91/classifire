@@ -1,56 +1,105 @@
-release_id: QF-KNOWLEDGE-v0.4-dev
+release_id: CLASSIFIRE-KNOWLEDGE-v2.13-dev
 status: DEVELOPMENT
 production_authority: false
-required_authority_release:
-  product: QUANTIFIRE
+product: CLASSIFIRE
+application_status: PRE_PRODUCTION_INTEGRATION
+architecture_version: '3.14'
+source_release:
   version: '2.13'
-  verification_status: VERIFIED_CONTROLLED_INTAKE
+  review_date: '2026-08-11'
+  manifest: knowledge/manifests/classifire-knowledge-source-v2.13.json
+  alignment_amendment: knowledge/amendments/CLASSIFIRE_KNOWLEDGE_ALIGNMENT_AMENDMENT_v2.13.1.md
+  publication_status: PENDING_PRIVATE_REPOSITORY_BINARY_UPLOAD
 source_policy:
-  active_runtime_sources_must_be_v2_13: true
-  earlier_pfeos_sources_runtime_authority: false
-  earlier_pfeos_sources_use: 'Historical migration lineage, compatibility analysis and regression comparison only.'
-verified_sources:
-  packages_01_12:
-    status: VERIFIED_CONTROLLED_INTAKE
+  private_repository_required: true
+  source_files_are_immutable_evidence: true
+  runtime_authority_is_approved_database_release: true
+  do_not_copy_full_source_corpus_into_agent_prompts: true
+  earlier_pfeos_or_quantifire_sources_runtime_authority: false
+  historical_sources_use: Historical lineage, compatibility analysis and regression comparison only.
+reviewed_sources:
+  packages_01_10_and_12:
+    status: REVIEWED_ACTIVE_RELEASE_CANDIDATES
+    master_architecture: v3.13
+    implementation_overlay: CLASSIFIRE-KNOWLEDGE-ALIGNMENT-v2.13.1
   package_13:
-    filename: QUANTIFIRE_13_Knowledge_Index_and_Deployment_Manifest_v2.13.txt
-    sha256: 20a6d1ffdbb6aabf7c013c0fcd49fb7e38518819b774b9e0aa2152f4c4127cae
-    status: VERIFIED_ROUTING_BASELINE_APPROVED_DEVELOPMENT
+    status: PREVIOUSLY_REVIEWED_ROUTING_BASELINE
+    supplied_in_current_review: false
+    path: knowledge/package-13/runtime-routing.yaml
   package_14:
-    filename: QUANTIFIRE_14_Pricing_Library_v2.13.csv
-    sha256: d0ab400affa52cb2c1c07d473a700937fab3c7fca825c201e50cb1a866d6055b
-    status: VERIFIED_SOURCE_RELEASE_VALIDATION_PENDING
+    filename: CLASSIFIRE_14_Pricing_Library_v2.13.csv
+    sha256: 45043c0bb0d2890f36eb6e7dd8a3f22bbf57b387b56b971cabbe00bba81484c6
+    record_count: 897
+    unique_pkb_entry_ids: 897
+    scope: COMMERCIAL_ONLY
+    runtime_status: ACTIVE_2_13_RUNTIME_VERIFIED
+    known_lineage: source Library_ID remains CLASSIFIRE-PACKAGE-14-v2.11
   package_15:
-    filename: QUANTIFIRE_15_Technical_System_Library_v2.13.txt
-    sha256: 3b59e30ad1451e0ae77f953e264c4e35b1cc024c72c4aa15f0d73fb715aa19ca
-    status: VERIFIED_SOURCE_RELEASE_VALIDATION_PENDING
+    filename: CLASSIFIRE_15_Technical_System_Library_v2.13.txt
+    sha256: aca7c99517ac223603c476e23ccf7cbc48b59dbf884cc8730dfa252b488a6c24
+    technical_library_id: TECHLIB-FIREFLY-P15
+    manufacturer: FIREFLY
+    source_system_count: 2183
+    active_system_count: 2182
+    inactive_system_count: 1
+    runtime_status: ACTIVE_2_13_RUNTIME_VERIFIED
   package_17:
-    filename: QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl
-    sha256: 4ce83403ec7297b7f6d08252fda1a017d88be17faa1d558b34b51d42cc1d0749
-    status: VERIFIED_SOURCE_RELEASE_VALIDATION_PENDING
+    filename: CLASSIFIRE_17_Technical_System_Variants_v2.13.jsonl
+    sha256: 3e605849fd72b37bf23207233767a3be1321766382327830f8fd1cdfbc5c637e
+    source_row_count: 2861
+    unique_variant_ids: 2860
+    unique_system_ids: 2182
+    known_duplicate_variant_id: TSL-FF-FAS190236-RIR1-25A-V211-VAR01
+    runtime_status: ACTIVE_2860_VARIANT_SCOPE_VERIFIED
   package_16:
-    filename: QUANTIFIRE_16_Runtime_Profile_and_Data_Readiness_v2.13.txt
-    sha256: fe166bf1e6a4d0a5454bd27e81068dd189a450a7483cf09232bec8dc64e07ea7
-    status: VERIFIED_SOURCE_PROFILE_SPLIT_PENDING
+    filename: CLASSIFIRE_16_Runtime_Profile_and_Data_Readiness_v2.13.txt
+    sha256: 340ff28201e6b4da8af3277df55b1a1245ba43ab2bdbf3872309335eb122ba02
+    profile: CLASSIFIRE-RUNTIME-PROFILE-CEASEFIRE-NSW-ACT-v2.13
+    current_governance: HUMAN_GOVERNED
+    status: ACTIVE_CONDITIONAL_PROJECT_GATES
   package_18:
-    filename: QUANTIFIRE_18_Runtime_Schemas_Algorithms_and_Output_Contracts_v2.13.txt
-    sha256: 430aacd9c973af84de847cebee6687e698190d74c0d1676ad03b65dd346ff99d
-    status: VERIFIED_SCHEMA_RECONCILED
+    filename: CLASSIFIRE_18_Runtime_Schemas_Algorithms_and_Output_Contracts_v2.13.txt
+    sha256: 841222756da6a3885f400f6a0ca92452f090b84b681ccc2b000292369f8f555f
+    status: REVIEWED_COMPATIBILITY_SOURCE
+    registry_neutral_contracts: REQUIRED_BEFORE_SECOND_TECHNICAL_LIBRARY
+technical_authority_registry:
+  registry_id: CLASSIFIRE-TECHNICAL-AUTHORITY-REGISTRY
+  current_members:
+    - technical_library_id: TECHLIB-FIREFLY-P15
+      manufacturer: FIREFLY
+      source_package: '15'
+      executable_variant_package: '17'
+current_runtime:
+  pricing_release: 2.13-runtime
+  technical_registry_release: 2.13-runtime
+  technical_registry_members: [TECHLIB-FIREFLY-P15]
+  rules_release: 2.13-runtime
+  products_release: 2.13-runtime
+  labour_release: 2.13-runtime
+  markups_release: 2.13-runtime
+  real_uat_reference: UAT-REAL-20260809-182033
 completed_gates:
-  - SOURCE_INVENTORY_APPROVED
-  - ARCHITECTURE_BASELINE_APPROVED
-  - SCHEMA_RECONCILIATION_INVENTORY
-  - SCHEMA_TEST_PASS_PHYSICAL_TECHNICAL_FOUNDATION
-  - SCHEMA_TEST_PASS_QUANTITY_COMMERCIAL_VALIDATION_FOUNDATION
-release_requirements:
-  - deterministic_domain_service_and_state_machine
-  - state_transition_tests
-  - package_16_profile_split_and_owner_reapproval
-  - package_14_v2_13_release_validation
-  - package_15_v2_13_release_validation
-  - regression_tests
-  - security_tests
-  - human_release_approval
-current_gate: SCHEMA_TEST_PASS
-next_gate: STATE_TRANSITION_TEST_PASS
-fail_closed_rule: 'If a required v2.13 source or required prior gate cannot be verified, the dependent runtime stage is BLOCKED. Do not substitute v2.8 or bypass the stage order.'
+  - SOURCE_MIGRATION_TEST_PASS
+  - PACKAGE14_RUNTIME_VERIFICATION_PASS
+  - FIREFLY_TECHNICAL_RUNTIME_VERIFICATION_PASS
+  - AUXILIARY_RUNTIME_VERIFICATION_PASS
+  - CONTROLLED_AGENT_WRITE_BOUNDARY_PASS
+  - SYNTHETIC_MULTI_AGENT_REFERENCE_UAT_PASS
+  - REAL_REPORT_INTAKE_COVERAGE_PASS
+  - REAL_REPORT_EXACT_IMAGE_DEDUP_PASS
+  - REAL_REPORT_TEXT_EVIDENCE_PASS
+  - REAL_REPORT_PHOTO_RECONCILIATION_PASS
+current_gate: REAL_REPORT_PHYSICAL_MODEL_LOCK
+next_gate: FIREFLY_OPENING_SPECIFIC_SEARCH_PASS
+blocking_conditions:
+  - Complete the ten-defect fire-seal physical model and lock.
+  - Approve productivity coverage for selected-system required activities.
+  - Publish and verify the reviewed source pack in the private repository.
+  - Complete real-report technical, component, commercial, validation and output stages.
+  - Complete security, backup/restore, rollback and performance acceptance.
+fail_closed_rule: >-
+  If a required source, release, lock, component, quantity, labour activity,
+  productivity source, rate applicability result, recovery proof, validation
+  receipt, snapshot hash or Human Release approval cannot be verified, the
+  dependent stage is blocked or visibly downgraded. Do not substitute legacy
+  authority or bypass the stage order.
