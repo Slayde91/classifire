@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from classifire.services.frl_policy import (
+    FIRE_RATED_DUCT_RUN_DEFAULT_FRL,
     PENETRATION_DEFAULT_FRL,
     STRUCTURAL_STEEL_DEFAULT_FRL,
     ScopeClass,
@@ -17,8 +18,7 @@ from classifire.services.frl_policy import (
         ScopeClass.FIRE_SEAL,
         ScopeClass.DAMPER,
         ScopeClass.DAMPER_PENETRATION,
-        ScopeClass.DUCT_PENETRATION,
-        ScopeClass.FIRE_RATED_DUCTWORK,
+        ScopeClass.DUCT_BARRIER_PENETRATION,
         ScopeClass.STEEL_BARRIER_PENETRATION,
         ScopeClass.PURLIN_BARRIER_PENETRATION,
     ],
@@ -33,7 +33,27 @@ def test_penetration_style_scope_uses_governed_120_minute_default(
     assert result.format_family == "structural_integrity_insulation"
     assert result.basis_code == "CLASSIFIRE-FRL-DEFAULT-PENETRATION-v1"
     assert result.human_verification_required is True
-    assert "source evidence" in str(result.note)
+    assert "barrier penetration" in str(result.note)
+
+
+def test_full_fire_rated_duct_run_is_not_treated_as_a_penetration() -> None:
+    result = resolve_frl(
+        scope_class=ScopeClass.FIRE_RATED_DUCT_RUN,
+        source_frl=None,
+    )
+
+    assert result.frl == FIRE_RATED_DUCT_RUN_DEFAULT_FRL
+    assert result.status == "assumed"
+    assert result.format_family == "structural_integrity_insulation"
+    assert result.basis_code == "CLASSIFIRE-FRL-DEFAULT-DUCT-RUN-v1"
+    assert "complete identified duct run" in str(result.note)
+    assert "not merely a barrier penetration" in str(result.note)
+    assert "length" in str(result.note)
+
+
+def test_legacy_ductwork_scope_alias_resolves_to_full_run_class() -> None:
+    assert ScopeClass.FIRE_RATED_DUCTWORK is ScopeClass.FIRE_RATED_DUCT_RUN
+    assert ScopeClass.DUCT_PENETRATION is ScopeClass.DUCT_BARRIER_PENETRATION
 
 
 @pytest.mark.parametrize(
@@ -67,6 +87,17 @@ def test_source_frl_wins_over_default() -> None:
     assert result.basis_code == "CLASSIFIRE-FRL-SOURCE-v1"
     assert result.note is None
     assert result.human_verification_required is False
+
+
+def test_source_duct_run_frl_wins_over_default() -> None:
+    result = resolve_frl(
+        scope_class=ScopeClass.FIRE_RATED_DUCT_RUN,
+        source_frl="-/60/60",
+    )
+
+    assert result.frl == "-/60/60"
+    assert result.status == "source_confirmed"
+    assert result.basis_code == "CLASSIFIRE-FRL-SOURCE-v1"
 
 
 def test_source_structural_frl_retains_structural_format_family() -> None:
