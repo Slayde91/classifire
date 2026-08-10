@@ -1,13 +1,32 @@
 product: CLASSIFIRE
 attribution: CLASSIFIRE is an estimating system produced and developed by Ceasefire PFP.
 repository: https://github.com/Slayde91/classifire
-status: pre-production
+branch: feature/classifire-product-rename
+status: pre-production integration
+architecture_version: '3.14'
 control_plane: Mission Control
 canonical_system: CLASSIFIRE domain service
+canonical_state_owner: CLASSIFIRE database and validated domain services
+mission_control_is_canonical: false
+openclaw_agent_memory_is_canonical: false
+human_release: human-only
 legacy_baseline:
   product: QUANTIFIRE
   version: v2.13
   purpose: Historical controlled source and protocol lineage only
+knowledge_release:
+  manifest: knowledge/releases/v2.13/CLASSIFIRE_KNOWLEDGE_RELEASE_MANIFEST_v2.13.json
+  source_manifest: knowledge/manifests/classifire-knowledge-source-v2.13.json
+  alignment_amendment: knowledge/amendments/CLASSIFIRE_KNOWLEDGE_ALIGNMENT_AMENDMENT_v2.13.1.md
+  source_pack_publication: pending_private_git_lfs_publication
+technical_authority_registry:
+  registry_id: CLASSIFIRE-TECHNICAL-AUTHORITY-REGISTRY
+  current_libraries:
+    - technical_library_id: TECHLIB-FIREFLY-P15
+      library_name: FIREFLY Technical System Library
+      manufacturer: FIREFLY
+      source_package: '15'
+      executable_variant_package: '17'
 agents:
   - cf-orchestrator
   - cf-intake-evidence
@@ -18,13 +37,44 @@ agents:
   - cf-output
   - cf-library-governance
   - cf-platform-governance
-release_gates:
-  - source_inventory_complete
-  - calculator_parity_passed
-  - package14_release_approved
-  - package15_release_approved
-  - regression_suite_passed
+hard_stage_order:
+  - evidence_intake
+  - physical_model
+  - physical_model_lock
+  - opening_specific_technical_search
+  - repair_strategy_lock
+  - system_derived_components
+  - quantity_and_labour
+  - commercial_pricing_and_recovery
+  - independent_validation
+  - validated_snapshot
+  - output_rendering
+  - human_release
+completed_gates:
+  - synthetic_multi_agent_reference_uat_pass
+  - package14_runtime_verification_pass
+  - firefly_technical_runtime_verification_pass
+  - auxiliary_runtime_verification_pass
+  - controlled_agent_write_boundary_pass
+  - real_report_intake_coverage_pass
+  - real_report_exact_image_dedup_pass
+  - real_report_text_evidence_pass
+  - real_report_photo_reconciliation_pass
+current_gate: real_report_physical_model_lock
+next_gate: firefly_opening_specific_search_pass
+remaining_release_gates:
+  - real_report_physical_model_lock_pass
+  - firefly_opening_specific_search_pass
+  - repair_strategy_lock_pass
+  - component_completeness_pass
+  - quantity_arithmetic_pass
+  - productivity_source_pass
+  - commercial_recovery_reconciliation_pass
+  - independent_validation_pass
+  - output_reconciliation_pass
+  - private_knowledge_source_publication_pass
   - security_tests_passed
   - backup_restore_tested
   - rollback_tested
-  - human_release_approval
+  - production_performance_acceptance_pass
+  - human_production_release_approval
