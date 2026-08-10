@@ -19,7 +19,9 @@ The governed synthetic multi-agent UAT passed end to end through Human Release s
 - complete page-layout and full-resolution photograph review;
 - complete defect-level photo-reconciliation records.
 
-The latest failure occurred before physical submission because one defect's bounded evidence payload was 9,923 characters against an obsolete 9,000-character forensic runner limit. No partial physical model was submitted. The next runner uses a 12,000-character Windows-safe defect budget and retains deterministic compaction, direct defect linkage, duplicate collapse and resumable cache receipts.
+The real-report physical stage is now producing usable defect-level scope: defects 147039, 147046 and 147031 produced Opening/Service proposals in the latest run. Two UAT defects were identified in the continuation runner itself: defect 147038 returned the internally invalid state `MODEL_SUPPORTED` with empty physical scope, and a later defect still produced 13,664 characters after generic nested compaction against the 12,000-character evidence budget. No partial canonical model was submitted.
+
+The current continuation runner therefore uses **field-aware deterministic evidence projection** rather than another threshold increase. It retains direct defect-linked text attributes, quantities, Service facts, Opening/Service reconciliation, physical facts, uncertainties and source provenance while omitting duplicated explanation and treatment clues that belong to the later technical stage. A `MODEL_SUPPORTED` response is not accepted or cached unless it contains actual Opening and Service scope; one independent scope-repair retry is permitted, otherwise the defect becomes a visible limitation. No AI-to-AI evidence reduction is used.
 
 ## 2. Source and knowledge status
 
@@ -52,12 +54,13 @@ Key controlled source facts:
 
 **Status:** In progress
 
-1. Run the bounded fire-seal UAT using retained evidence.
+1. Run the projected/bounded fire-seal UAT using retained evidence.
 2. Review every proposed Opening and Service, including inferred quantities and sizes.
-3. Confirm exact duplicate photos did not increase scope.
-4. Confirm opposite-face or alternate-angle photographs were reconciled correctly.
-5. Confirm missing FRL is visibly marked as assumed `-/120/120`, not source-confirmed.
-6. Submit and lock only when all ten defects have a defensible complete physical model.
+3. Reject or retry any internally inconsistent model response such as `MODEL_SUPPORTED` with empty physical scope.
+4. Confirm exact duplicate photos did not increase scope.
+5. Confirm opposite-face or alternate-angle photographs were reconciled correctly.
+6. Confirm missing FRL is visibly marked as assumed `-/120/120`, not source-confirmed.
+7. Submit and lock only when all ten defects have a defensible complete physical model.
 
 **Gate:** `REAL_REPORT_PHYSICAL_MODEL_LOCK_PASS`
 
