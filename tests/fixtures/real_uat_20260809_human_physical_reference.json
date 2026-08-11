@@ -63,8 +63,9 @@
       "external_defect_id": "147045",
       "opening_count": 1,
       "openings": [
-        {"substrate": "core hole", "blank": false, "service_groups": [{"type": "pipe", "material": "PEX", "quantity": 1}]}
-      ]
+        {"substrate": null, "blank": false, "service_groups": [{"type": "pipe", "material": "PEX", "quantity": 1}]}
+      ],
+      "notes": "Human review establishes the core hole and PEX service but did not state the substrate; runtime may infer substrate provisionally from photographs."
     },
     {
       "external_defect_id": "147047",
