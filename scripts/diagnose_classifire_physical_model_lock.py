@@ -8,15 +8,9 @@ from sqlalchemy import select
 from classifire.canonical_models import ServiceOpeningLink
 from classifire.db import SessionLocal
 from classifire.models import Estimate, Opening, Service
-from classifire.services.workflow_db import assess_estimate_workflow
-
-
-REQUIRED_OPENING_FIELDS = (
-    "substrate_type",
-    "substrate_plane",
-    "orientation",
-    "frl",
-)
+from classifire.services.physical_scope import assess_physical_model_completeness
+from classifire.services.workflow_guard import check_estimate_action
+from classifire.services.workflow import WorkflowAction
 
 
 def main() -> int:
@@ -63,20 +57,20 @@ def main() -> int:
         for link in links:
             links_by_opening.setdefault(link.opening_id, []).append(link)
 
+        physical = assess_physical_model_completeness(db, estimate.id)
+        completeness_by_id = {row.opening_id: row for row in physical.openings}
         incomplete: list[dict[str, object]] = []
         opening_rows: list[dict[str, object]] = []
         for opening in openings:
-            missing_fields = [
-                field for field in REQUIRED_OPENING_FIELDS if not getattr(opening, field, None)
-            ]
             opening_links = links_by_opening.get(opening.id, [])
-            if not opening_links:
-                missing_fields.append("service_opening_link")
+            completeness = completeness_by_id[opening.id]
             row = {
                 "opening_id": opening.id,
                 "opening_code": opening.opening_code,
-                "external_defect_id": opening.external_defect_id,
+                "external_defect_id": opening.defect_id,
                 "canonical_defect_id": opening.canonical_defect_id,
+                "opening_type": completeness.opening_type,
+                "blank_opening": completeness.blank_opening,
                 "substrate_type": opening.substrate_type,
                 "substrate_plane": opening.substrate_plane,
                 "orientation": opening.orientation,
@@ -108,32 +102,30 @@ def main() -> int:
                     }
                     for link in opening_links
                 ],
-                "missing_for_lock": missing_fields,
+                "missing_for_lock": list(completeness.missing_fields),
             }
             opening_rows.append(row)
-            if missing_fields:
+            if not completeness.complete:
                 incomplete.append(row)
 
-        assessment = assess_estimate_workflow(db, estimate)
+        guard = check_estimate_action(db, estimate, WorkflowAction.LOCK_PHYSICAL_MODEL)
         result = {
-            "schema": "CLASSIFIRE-PHYSICAL-MODEL-LOCK-DIAGNOSTIC-v1",
+            "schema": "CLASSIFIRE-PHYSICAL-MODEL-LOCK-DIAGNOSTIC-v2",
             "estimate_id": estimate.id,
-            "workflow_stage": assessment.stage,
-            "workflow_facts": {
-                "evidence_intake_complete": assessment.facts.evidence_intake_complete,
-                "physical_model_complete": assessment.facts.physical_model_complete,
-                "physical_model_locked": assessment.facts.physical_model_locked,
-            },
+            "workflow_stage": guard.stage,
+            "lock_allowed": guard.allowed,
+            "lock_blockers": list(guard.blockers),
             "opening_count": len(openings),
             "service_count_linked": len(service_ids),
             "service_opening_link_count": len(links),
+            "scope_aware_physical_model_complete": physical.complete,
             "incomplete_opening_count": len(incomplete),
             "incomplete_openings": incomplete,
             "openings": opening_rows,
-            "workflow_diagnostics": assessment.diagnostics,
+            "workflow_diagnostics": guard.diagnostics,
         }
         print(json.dumps(result, indent=2, default=str))
-        return 0 if not incomplete else 2
+        return 0 if guard.allowed else 2
 
 
 if __name__ == "__main__":
