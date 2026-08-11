@@ -5,6 +5,11 @@ import json
 
 from sqlalchemy import delete, select
 
+# Load the complete governed ORM metadata before any Session operation. AuditEvent
+# has a foreign key to commercial_models.AuditTrail, so omitting this import leaves
+# the audit_trails table unregistered and causes SQLAlchemy mapper configuration to
+# fail before the correction transaction can start.
+from classifire import commercial_models  # noqa: F401
 from classifire.audit import record_audit
 from classifire.canonical_models import (
     PhysicalModelLock,
