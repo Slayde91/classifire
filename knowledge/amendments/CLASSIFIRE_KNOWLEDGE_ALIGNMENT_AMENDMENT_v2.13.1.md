@@ -78,8 +78,22 @@ Unclassified scope receives no FRL default. Every applied default must have an a
 3. Different views of the same Service or Opening are reconciled before quantity.
 4. Photograph count, defect count and row count do not establish physical quantity.
 5. Missing exact size or quantity does not automatically stop a budget/provisional estimate when a rational evidence-supported estimate can be made.
-6. AI-estimated values must remain provisional/inferred, carry reduced confidence and state the basis.
-7. Where no rational basis exists, the item remains unresolved or Not Priced as applicable.
+6. Where report text does not state substrate type, substrate plane or orientation, defect-linked photographs and page layout may support a provisional/inferred assumption when a rational visual basis exists.
+7. Photo-derived substrate/orientation assumptions must remain visibly provisional/inferred and retain their basis; they do not become confirmed technical facts.
+8. AI-estimated values must remain provisional/inferred, carry reduced confidence and state the basis.
+9. Where no rational basis exists, the item remains unresolved or Not Priced as applicable.
+
+## 7A. Blank openings and redundant core holes
+
+1. An Opening does not require a Service merely because the Opening requires passive-fire sealing.
+2. An empty aperture, blank opening, redundant core or empty core hole is valid physical scope in its own right.
+3. The canonical current-scope opening types are `blank_opening`, `blank_core_hole` and `service_penetration`.
+4. `blank_opening` and `blank_core_hole` may contain zero Services and therefore require no `ServiceOpeningLink`.
+5. A `service_penetration` must retain at least one actual Service relationship.
+6. CLASSIFIRE must never invent a pipe, cable, conduit or other Service merely to satisfy a workflow or database relationship.
+7. A service-free Opening must be explicitly classified as blank; an unclassified Opening with no Service remains incomplete.
+8. Blank openings still require substrate type, substrate plane, orientation and FRL/FRL-assumption data before Physical Model Lock.
+9. Package 15/17 technical search remains Opening-specific for blank openings and must select a valid blank-aperture/core-hole system where available.
 
 ## 8. Runtime profile
 
@@ -90,10 +104,11 @@ Unclassified scope receives no FRL default. Every applied default must have an a
 
 ## 9. Physical and commercial scope
 
-1. The current implementation conformance scope is fire seals and service penetrations represented through Defects, Openings, Services and Links.
-2. Complete structural-steel protection and complete fire-rated duct runs are deferred additive asset classes.
-3. The penetration calculator and Package 14 penetration rates must not price whole-run steel or duct coating scope.
-4. Future steel and duct calculators use separate commercial methods while consuming approved shared rate records where applicable.
+1. The current implementation conformance scope is fire seals and service penetrations represented through Defects, Openings, optional Services and Service–Opening Links.
+2. A Defect may contain one or more service penetrations, one or more service-free blank openings/core holes, or a combination.
+3. Complete structural-steel protection and complete fire-rated duct runs are deferred additive asset classes.
+4. The penetration calculator and Package 14 penetration rates must not price whole-run steel or duct coating scope.
+5. Future steel and duct calculators use separate commercial methods while consuming approved shared rate records where applicable.
 
 ## 10. Labour and productivity
 
@@ -111,12 +126,16 @@ Unclassified scope receives no FRL default. Every applied default must have an a
 
 ## 12. Implementation precedence
 
-Where retained source wording conflicts with this amendment solely because the current implementation has moved from a single FIREFLY library to a registry architecture, this amendment controls the implementation without altering the source evidence. Constitutional requirements, confirmed Project evidence and exact tested/assessed source conditions continue to prevail.
+Where retained source wording conflicts with this amendment solely because the current implementation has moved from a single FIREFLY library to a registry architecture or corrected a database implementation assumption that every Opening must contain a Service, this amendment controls the implementation without altering the source evidence. Constitutional requirements, confirmed Project evidence and exact tested/assessed source conditions continue to prevail.
 
 ## 13. Required regressions
 
-- missing-FRL penetration assumption is visible and does not create a confirmed match;
+- missing-FRL penetration/fire-seal assumption is visible and does not create a confirmed match;
 - unknown scope receives no default;
+- a blank/redundant core hole can reach Physical Model Lock with zero Services when explicitly classified and otherwise complete;
+- a service penetration with zero Services fails closed;
+- no placeholder Service is created for a blank opening;
+- missing substrate type/plane/orientation can be provisionally inferred from defect-linked photographs when rational and the basis remains visible;
 - Package 15 search results carry FIREFLY library provenance;
 - a second technical library can coexist without changing FIREFLY IDs;
 - Package 14 cannot establish technical applicability;
