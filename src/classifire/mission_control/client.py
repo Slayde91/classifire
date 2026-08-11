@@ -68,6 +68,55 @@ class MissionControlClient:
 
         return findings
 
+    def list_agents(self) -> list[dict[str, Any]]:
+        """Return Mission Control agents, including hidden rows, across known envelopes."""
+        with httpx.Client(timeout=self.timeout) as client:
+            response = client.get(
+                self._url("/api/agents?show_hidden=true&limit=200"),
+                headers=self.headers,
+            )
+        if response.status_code != 200:
+            raise MissionControlError(
+                f"Agent listing failed ({response.status_code}): {response.text[:500]}"
+            )
+
+        payload = response.json()
+        if isinstance(payload, list):
+            return [row for row in payload if isinstance(row, dict)]
+        if isinstance(payload, dict):
+            for key in ("agents", "items", "data", "results"):
+                value = payload.get(key)
+                if isinstance(value, list):
+                    return [row for row in value if isinstance(row, dict)]
+        raise MissionControlError("Agent listing returned an unsupported response shape")
+
+    def find_agent(
+        self,
+        *,
+        openclaw_id: str | None = None,
+        name: str | None = None,
+        agents: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any] | None:
+        """Find an agent, preferring the stable OpenClaw ID over Mission Control display name.
+
+        Mission Control sync names agents from OpenClaw identity.name, while CLASSIFIRE
+        uses stable cf-* OpenClaw IDs. Matching config.openclawId first prevents a second
+        bootstrap-only row from being created for the same OpenClaw agent.
+        """
+        rows = agents if agents is not None else self.list_agents()
+
+        if openclaw_id:
+            for agent in rows:
+                config = agent.get("config") if isinstance(agent.get("config"), dict) else {}
+                if config.get("openclawId") == openclaw_id:
+                    return agent
+
+        if name:
+            for agent in rows:
+                if agent.get("name") == name:
+                    return agent
+        return None
+
     def register_agent(self, name: str, role: str, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         payload = {"name": name, "role": role, **(metadata or {})}
 
