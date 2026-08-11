@@ -46,9 +46,9 @@ function Write-Utf8NoBom {
 }
 
 # Keep the CLASSIFIRE fleet on OpenClaw's minimal base profile and add only the
-# narrow role-specific tools each agent needs. The real-report agents also need
-# read-only media inspection so report photos are reviewed rather than inferred
-# from extracted text.
+# narrow role-specific tools each agent needs. The real-report agents and the
+# independent validator need read-only media inspection so visual topology can
+# be reviewed from source evidence rather than inferred from extracted text.
 $allowByAgent = @{
     "cf-orchestrator" = @("classifire_health", "classifire_workflow_status")
     "cf-intake-evidence" = @(
@@ -68,7 +68,15 @@ $allowByAgent = @{
     )
     "cf-technical-system" = @("classifire_health", "classifire_workflow_status", "classifire_technical_search")
     "cf-commercial-engine" = @("classifire_health", "classifire_workflow_status", "classifire_package14_recommendation")
-    "cf-validator" = @("classifire_health", "classifire_workflow_status", "classifire_run_validation")
+    "cf-validator" = @(
+        "classifire_health",
+        "classifire_workflow_status",
+        "classifire_evidence_read",
+        "classifire_physical_model_read",
+        "classifire_run_validation",
+        "pdf",
+        "image"
+    )
     "cf-output" = @("classifire_health", "classifire_workflow_status", "classifire_lock_snapshot", "classifire_render_output")
     "cf-library-governance" = @("classifire_health", "classifire_workflow_status", "classifire_library_releases")
     "cf-platform-governance" = @("classifire_health", "classifire_workflow_status")
@@ -169,6 +177,7 @@ if ($LASTEXITCODE -ne 0) { throw "CLASSIFIRE plugin runtime inspection failed." 
 
 Write-Host "CLASSIFIRE OpenClaw plugin installed and role-limited additive tools applied." -ForegroundColor Green
 Write-Host "Existing controlled-write grants were preserved rather than replaced." -ForegroundColor Green
-Write-Host "cf-intake-evidence and cf-physical-model received read-only pdf/image inspection tools." -ForegroundColor Green
-Write-Host "cf-physical-model also received canonical evidence read access for evidence-backed modelling." -ForegroundColor Green
+Write-Host "cf-intake-evidence, cf-physical-model, and cf-validator received read-only pdf/image inspection tools." -ForegroundColor Green
+Write-Host "cf-physical-model and cf-validator received canonical evidence/physical-model read access as required by their roles." -ForegroundColor Green
+Write-Host "cf-validator received no evidence write, physical write/lock, technical select/lock, commercial derive, snapshot lock, or Human Release authority." -ForegroundColor Green
 Write-Host "Human Release remains unavailable to every agent." -ForegroundColor Green
