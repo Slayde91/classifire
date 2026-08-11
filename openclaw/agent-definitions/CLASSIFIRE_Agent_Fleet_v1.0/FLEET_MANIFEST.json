@@ -1,0 +1,208 @@
+{
+  "schema": "CLASSIFIRE-AGENT-FLEET-MANIFEST-v1",
+  "version": "1.0",
+  "generated_utc": "2026-08-11T12:29:07.681063+00:00",
+  "workspace_root_default": "C:\\CLASSIFIRE-OpenClaw",
+  "repository": "Slayde91/classifire",
+  "branch": "feature/classifire-product-rename",
+  "agents": [
+    {
+      "id": "cf-orchestrator",
+      "name": "CLASSIFIRE Orchestrator",
+      "role": "agent",
+      "theme": "controlled workflow orchestration, routing, and gate discipline",
+      "capabilities": [
+        "orchestration",
+        "routing",
+        "workflow-status",
+        "gate-control",
+        "handoff"
+      ],
+      "files": [
+        "IDENTITY.md",
+        "SOUL.md",
+        "AGENTS.md",
+        "TOOLS.md",
+        "TASK_BOUNDARIES.md",
+        "WORKFLOWS.md",
+        "PROMPTS.md"
+      ]
+    },
+    {
+      "id": "cf-intake-evidence",
+      "name": "CLASSIFIRE Intake and Evidence",
+      "role": "researcher",
+      "theme": "forensic source review, direct visual observation, and provenance preservation",
+      "capabilities": [
+        "evidence-intake",
+        "document-review",
+        "direct-image-review",
+        "photo-reconciliation",
+        "source-provenance"
+      ],
+      "files": [
+        "IDENTITY.md",
+        "SOUL.md",
+        "AGENTS.md",
+        "TOOLS.md",
+        "TASK_BOUNDARIES.md",
+        "WORKFLOWS.md",
+        "PROMPTS.md"
+      ]
+    },
+    {
+      "id": "cf-physical-model",
+      "name": "CLASSIFIRE Physical Model",
+      "role": "researcher",
+      "theme": "barrier-first physical topology, Opening-Service relationships, and controlled canonical write",
+      "capabilities": [
+        "physical-scope",
+        "barrier-topology",
+        "opening-service-model",
+        "mixed-service-openings",
+        "physical-lock"
+      ],
+      "files": [
+        "IDENTITY.md",
+        "SOUL.md",
+        "AGENTS.md",
+        "TOOLS.md",
+        "TASK_BOUNDARIES.md",
+        "WORKFLOWS.md",
+        "PROMPTS.md"
+      ]
+    },
+    {
+      "id": "cf-technical-system",
+      "name": "CLASSIFIRE Technical System",
+      "role": "reviewer",
+      "theme": "opening-specific technical applicability under the Technical Authority Registry",
+      "capabilities": [
+        "technical-system-search",
+        "applicability-review",
+        "technical-authority-registry",
+        "firefly-package15-17"
+      ],
+      "files": [
+        "IDENTITY.md",
+        "SOUL.md",
+        "AGENTS.md",
+        "TOOLS.md",
+        "TASK_BOUNDARIES.md",
+        "WORKFLOWS.md",
+        "PROMPTS.md"
+      ]
+    },
+    {
+      "id": "cf-commercial-engine",
+      "name": "CLASSIFIRE Commercial Engine",
+      "role": "agent",
+      "theme": "component-complete Package 14 pricing and commercial recovery reconciliation",
+      "capabilities": [
+        "estimating",
+        "package14",
+        "component-build",
+        "commercial-recovery",
+        "duplicate-recovery-control"
+      ],
+      "files": [
+        "IDENTITY.md",
+        "SOUL.md",
+        "AGENTS.md",
+        "TOOLS.md",
+        "TASK_BOUNDARIES.md",
+        "WORKFLOWS.md",
+        "PROMPTS.md"
+      ]
+    },
+    {
+      "id": "cf-validator",
+      "name": "CLASSIFIRE Validator",
+      "role": "tester",
+      "theme": "independent adversarial visual, workflow, commercial, and release validation",
+      "capabilities": [
+        "independent-visual-review",
+        "qa",
+        "regression",
+        "reconciliation",
+        "release-gates"
+      ],
+      "files": [
+        "IDENTITY.md",
+        "SOUL.md",
+        "AGENTS.md",
+        "TOOLS.md",
+        "TASK_BOUNDARIES.md",
+        "WORKFLOWS.md",
+        "PROMPTS.md"
+      ]
+    },
+    {
+      "id": "cf-output",
+      "name": "CLASSIFIRE Output",
+      "role": "assistant",
+      "theme": "immutable-snapshot rendering and controlled user-facing communication",
+      "capabilities": [
+        "controlled-output",
+        "validated-snapshot",
+        "workbook",
+        "proposal",
+        "reporting"
+      ],
+      "files": [
+        "IDENTITY.md",
+        "SOUL.md",
+        "AGENTS.md",
+        "TOOLS.md",
+        "TASK_BOUNDARIES.md",
+        "WORKFLOWS.md",
+        "PROMPTS.md"
+      ]
+    },
+    {
+      "id": "cf-library-governance",
+      "name": "CLASSIFIRE Library Governance",
+      "role": "reviewer",
+      "theme": "immutable library lineage, provenance, revision, approval, and supersession control",
+      "capabilities": [
+        "library-governance",
+        "source-provenance",
+        "revision-review",
+        "release-management"
+      ],
+      "files": [
+        "IDENTITY.md",
+        "SOUL.md",
+        "AGENTS.md",
+        "TOOLS.md",
+        "TASK_BOUNDARIES.md",
+        "WORKFLOWS.md",
+        "PROMPTS.md"
+      ]
+    },
+    {
+      "id": "cf-platform-governance",
+      "name": "CLASSIFIRE Platform Governance",
+      "role": "devops",
+      "theme": "secure software, deployment, integration, observability, backup, and rollback governance",
+      "capabilities": [
+        "platform",
+        "security",
+        "deployment",
+        "openclaw",
+        "mission-control",
+        "backup",
+        "rollback"
+      ],
+      "files": [
+        "IDENTITY.md",
+        "SOUL.md",
+        "AGENTS.md",
+        "TOOLS.md",
+        "TASK_BOUNDARIES.md",
+        "WORKFLOWS.md",
+        "PROMPTS.md"
+      ]
+    }
+  ]
+}
