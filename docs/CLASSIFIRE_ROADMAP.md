@@ -1,7 +1,7 @@
 # CLASSIFIRE Roadmap
 
 **Roadmap status:** Active  
-**Current milestone:** Real-report fire-seal and penetration Physical Model Lock  
+**Current milestone:** Rebuild and lock real-report fire-seal physical model under corrected blank-opening policy  
 **Current product status:** Pre-production integration build  
 **Current technical coverage:** FIREFLY Package 15 source / Package 17 executable variants  
 **Deferred:** Complete structural-steel and fire-rated-duct-run implementation
@@ -19,26 +19,21 @@ The governed synthetic multi-agent UAT passed end to end through Human Release s
 - complete page-layout and full-resolution photograph review;
 - complete defect-level photo-reconciliation records.
 
-The real-report physical stage has now progressed through eight of ten defects in one retained run without payload-size failure. The latest successful proposals were:
+The resumable physical-synthesis pipeline subsequently completed all ten defects and submitted a provisional physical model containing 12 Openings and 19 Services. The model did **not** receive a Physical Model Lock. The lock was correctly refused while the workflow considered the physical model incomplete.
 
-- 147038: 1 Opening, 1 Service;
-- 147039: 1 Opening, 3 Services;
-- 147046: 1 Opening, 1 Service;
-- 147031: 1 Opening, 2 Services;
-- 147037: 1 Opening, 3 Services;
-- 147042: 2 Openings, 2 Services;
-- 147044: 1 Opening, 2 Services;
-- 147045: 1 Opening, 1 Service.
+A domain-policy review then identified a material implementation error in the old completeness rule: the database adapter assumed every Opening required at least one Service. That is incorrect. A blank aperture, empty core hole or redundant core hole may itself require passive-fire sealing with **zero Services**. The prior UAT prompt/validator could therefore manufacture placeholder Service records merely to satisfy the old relationship rule. The 12-Opening / 19-Service submission is not suitable for lock and must be rebuilt before technical search.
 
-The run then stopped while synthesising defect 147047 because `openclaw infer model run --gateway` returned `GatewayTransportError: gateway timeout after 120000ms`. This was an inference transport interruption, not a physical-model validation failure. No partial canonical model was submitted.
+The corrected physical-scope policy is now:
 
-The active continuation path now combines three controls:
+- `service_penetration` → one or more actual Services and ServiceOpeningLinks;
+- `blank_opening` → zero Services permitted;
+- `blank_core_hole` → zero Services permitted;
+- never create a placeholder Service solely to satisfy a schema or workflow gate;
+- every Opening still requires substrate type, substrate plane, orientation and FRL/FRL assumption before lock;
+- where report text is silent, defect-linked photographs/page layout may support provisional/inferred substrate type, substrate plane and orientation when a rational visual basis exists;
+- missing FRL for the current fire-seal/penetration/blank-opening scope uses the governed estimating assumption `-/120/120`, visibly marked as assumed and requiring verification before technical approval or Human Release.
 
-1. **field-aware deterministic evidence projection** rather than threshold inflation or AI-to-AI evidence reduction;
-2. **structural validation of model output**, so `MODEL_SUPPORTED` is rejected unless actual Opening and Service scope exists; and
-3. **transport-resilient resumability**, where successful defect proposals are reused by evidence-bundle hash and only a specific OpenClaw Gateway timeout may fall back to the equivalent OpenClaw local/in-process raw model transport using the same model, prompt and reasoning level. Business-rule, model-validation, authentication and other failures do not trigger the fallback.
-
-The evidence projection retains direct defect-linked attributes, quantities, Service facts, Opening/Service reconciliation, physical facts, uncertainties and source provenance while omitting duplicated explanation and treatment clues that belong to the later technical stage. No AI-to-AI evidence reduction is used.
+The current correction path preserves all evidence work, invalidates only the **unlocked pre-technical physical submission**, forces a new physical-synthesis policy/cache version and rebuilds the Physical Model from retained evidence. No PDF extraction, photo extraction or defect intake needs to be repeated.
 
 ## 2. Source and knowledge status
 
@@ -50,6 +45,7 @@ Key controlled source facts:
 
 - Package 14: 897 rows and 897 unique PKB Entry IDs;
 - Package 15: 2,183 FIREFLY systems, 2,182 active and one inactive;
+- Package 15 includes FIREFLY blank-aperture seal systems as well as service-penetration systems;
 - Package 17: 2,861 rows, 2,860 unique Variant IDs, one retained authorised source collision, 2,182 System IDs and FIREFLY-only manufacturer coverage;
 - Package 16: active human-governed runtime profile with conditional Project gates;
 - Package 18: system-derived component schemas and algorithms, with legacy Package-15-specific contract names retained as compatibility aliases pending a registry-neutral schema release.
@@ -60,6 +56,8 @@ Key controlled source facts:
 - Package 15/17 formally scoped as the FIREFLY technical library;
 - Package 14 retained as commercial-only authority;
 - scope-sensitive FRL assumption policy recorded;
+- blank Opening/core-hole semantics added to physical completeness;
+- photo-based provisional substrate type/plane/orientation assumptions explicitly governed;
 - human-governed current profile distinguished from dormant autonomous-profile amendments;
 - source version and count anomalies retained and disclosed rather than silently edited;
 - full knowledge-source manifest, hashes and publication procedure added;
@@ -67,31 +65,34 @@ Key controlled source facts:
 
 ## 3. Immediate execution plan
 
-### Phase P1 — Complete real-report physical modelling
+### Phase P1 — Correct and complete real-report physical modelling
 
-**Status:** In progress — 8/10 defect proposals completed before transport interruption
+**Status:** In progress — evidence complete; prior unlocked physical submission requires governed rebuild
 
-1. Resume the bounded fire-seal UAT using retained evidence and supported-proposal caches.
-2. Use OpenClaw Gateway inference first; on the specific Gateway timeout only, retry the same raw model probe through OpenClaw local/in-process transport.
-3. Review every proposed Opening and Service, including inferred quantities and sizes.
-4. Reject or retry any internally inconsistent model response such as `MODEL_SUPPORTED` with empty physical scope.
-5. Confirm exact duplicate photos did not increase scope.
-6. Confirm opposite-face or alternate-angle photographs were reconciled correctly.
-7. Confirm missing FRL is visibly marked as assumed `-/120/120`, not source-confirmed.
-8. Submit and lock only when all ten defects have a defensible complete physical model.
+1. Run the controlled unlocked physical-model correction. It must refuse to operate if a Physical Model Lock or downstream technical/component record exists.
+2. Rebuild all ten defect proposals under a new physical-synthesis policy version so old caches cannot silently preserve the every-Opening-has-a-Service assumption.
+3. Allow explicit `blank_opening` and `blank_core_hole` records with zero Services.
+4. Never invent placeholder Services.
+5. Use defect-linked report text first and defect-linked photos/page layout to make provisional substrate type, substrate plane and orientation assumptions where rational.
+6. Apply `-/120/120` as the current-scope missing-FRL estimating assumption when source FRL is absent.
+7. Reconcile every proposed Opening and actual Service, including inferred quantities and sizes.
+8. Confirm exact duplicate photos did not increase scope.
+9. Confirm opposite-face or alternate-angle photographs were reconciled correctly.
+10. Attempt Physical Model Lock only after scope-aware completeness passes.
 
 **Gate:** `REAL_REPORT_PHYSICAL_MODEL_LOCK_PASS`
 
 ### Phase P2 — Opening-specific FIREFLY technical search
 
-**Status:** Ready after P1
+**Status:** Ready after corrected P1
 
 1. Search the estimate's pinned Technical Authority Registry release.
-2. Search the active FIREFLY Package 15/17 records opening by opening.
-3. Compare Service, material, size, quantity, substrate, plane, orientation, opening, FRL, spacing, edge distance, support, fixing and dependencies.
-4. Preserve every mismatch and unknown.
-5. Select one complete source-locked variant or return a qualified result.
-6. Record library, release, manufacturer, source document, page/table/figure, System ID and Variant ID.
+2. Search the active FIREFLY Package 15/17 records Opening by Opening.
+3. For blank openings/core holes, search blank-aperture/core-hole systems without inventing Service attributes.
+4. For service penetrations, compare Service, material, size, quantity, substrate, plane, orientation, opening, FRL, spacing, edge distance, support, fixing and dependencies.
+5. Preserve every mismatch and unknown.
+6. Select one complete source-locked variant or return a qualified result.
+7. Record library, release, manufacturer, source document, page/table/figure, System ID and Variant ID.
 
 **Gate:** `FIREFLY_OPENING_SPECIFIC_SEARCH_PASS`
 
@@ -102,7 +103,8 @@ Key controlled source facts:
 1. Create a current Repair Strategy tied to the valid Physical Model Lock.
 2. Lock the selected strategy.
 3. Parse the selected FIREFLY variant into every required product, layer, fixing, support, preparation, installation, finishing and QA component.
-4. Reconcile required versus generated components.
+4. For blank openings, generate closure components without creating service-treatment components.
+5. Reconcile required versus generated components.
 
 **Gates:** `REPAIR_STRATEGY_LOCK_PASS`, `COMPONENT_COMPLETENESS_PASS`
 
@@ -163,13 +165,14 @@ Key controlled source facts:
 
 ### K3 — Source corpus cleanup
 
-- issue a governed source amendment rather than rewriting retained evidence;
+- issue governed amendments rather than rewriting retained evidence;
 - resolve accidental active PFEOS wording through aliases;
 - govern the Package 14 `Library_ID` v2.11 versus release v2.13 discrepancy;
 - govern Package 15 top-level v2.13 / manifest v2.5 / governance v2.3 lineage;
 - govern Package 17 record version 2.7 under the v2.13 deployment release;
 - preserve the known duplicate Variant ID collision with deterministic canonical IDs;
-- replace blanket FRL-default language with the approved scope-sensitive policy in the next source release.
+- replace blanket FRL-default language with the approved scope-sensitive policy in the next source release;
+- preserve the explicit distinction between blank-aperture systems and service-penetration systems.
 
 ## 5. Platform, security and operations
 
@@ -179,8 +182,8 @@ Key controlled source facts:
 - maintain image/PDF review only for authorised evidence roles;
 - retain direct role-scoped CLASSIFIRE API writes where Gateway tool transport is unreliable;
 - use raw OpenClaw local/in-process model transport only as a bounded fallback for explicit Gateway inference timeout;
-- cache inference by evidence and prompt hashes;
-- record model, prompt, agent, run, transport and receipt versions.
+- cache inference by evidence, physical-policy, prompt and model hashes;
+- record model, prompt, policy, agent, run, transport and receipt versions.
 
 ### O2 — Mission Control
 
@@ -211,7 +214,8 @@ Production work:
 - local database technical/pricing search;
 - resumable checkpoints;
 - transport failover metrics and retry budgets;
-- 10-, 100- and 1,000-defect benchmarks.
+- 10-, 100- and 1,000-defect benchmarks;
+- explicit mixed service/blank-opening fixtures and all-blank-opening fixtures.
 
 **Gate:** `PRODUCTION_PERFORMANCE_ACCEPTANCE_PASS`
 
@@ -236,7 +240,7 @@ No steel or duct calculator data is imported into the active fire-seal/penetrati
 
 CLASSIFIRE remains pre-production until:
 
-- real-report end-to-end UAT passes;
+- corrected real-report end-to-end UAT passes;
 - current source and runtime manifests reconcile;
 - all mandatory regressions pass;
 - productivity coverage is approved;
