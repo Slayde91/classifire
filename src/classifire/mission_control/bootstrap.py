@@ -128,24 +128,58 @@ def bootstrap_mission_control(
 ) -> dict[str, Any]:
     """Register CLASSIFIRE agent records and optionally seed baseline tasks.
 
+    Mission Control sync can name an OpenClaw agent from identity.name while
+    CLASSIFIRE refers to it by stable cf-* OpenClaw ID. Bootstrap therefore
+    reconciles config.openclawId before falling back to Mission Control name so
+    it cannot create a second row for the same OpenClaw agent.
+
     Task creation is opt-in so Mission Control cannot dispatch work to OpenClaw
     agent IDs that have not yet been created and acceptance-tested. Baseline task
     seeding is idempotent by stable CLASSIFIRE task ID and exact title.
     """
     probe = client.probe()
 
-    registrations = []
+    existing_agents = client.list_agents()
+    registrations: list[dict[str, Any]] = []
+    mission_control_names: dict[str, str] = {}
+
     for spec in DEFAULT_AGENTS:
-        registrations.append(
-            client.register_agent(
-                spec["name"],
-                spec["role"],
-                {
-                    "framework": "OpenClaw",
-                    "capabilities": spec["capabilities"],
-                },
-            )
+        existing = client.find_agent(
+            openclaw_id=spec["name"],
+            name=spec["name"],
+            agents=existing_agents,
         )
+        if existing is not None:
+            registrations.append(
+                {
+                    "agent": existing,
+                    "registered": False,
+                    "message": "Agent already present in Mission Control",
+                    "matched_by": (
+                        "openclaw_id"
+                        if isinstance(existing.get("config"), dict)
+                        and existing["config"].get("openclawId") == spec["name"]
+                        else "name"
+                    ),
+                }
+            )
+            mission_control_names[spec["name"]] = str(existing.get("name") or spec["name"])
+            continue
+
+        registration = client.register_agent(
+            spec["name"],
+            spec["role"],
+            {
+                "framework": "OpenClaw",
+                "capabilities": spec["capabilities"],
+            },
+        )
+        registrations.append(registration)
+        registered_agent = registration.get("agent") if isinstance(registration, dict) else None
+        if isinstance(registered_agent, dict) and registered_agent.get("name"):
+            mission_control_names[spec["name"]] = str(registered_agent["name"])
+        else:
+            mission_control_names[spec["name"]] = spec["name"]
 
     registry: dict[str, Any] | None = None
     if architecture_registry and architecture_registry.exists():
@@ -159,7 +193,7 @@ def bootstrap_mission_control(
                 client.ensure_task(
                     task_id=task_id,
                     title=full_title,
-                    assigned_to=agent,
+                    assigned_to=mission_control_names.get(agent, agent),
                     priority=priority,
                     description=(
                         "CLASSIFIRE architecture task. Mission Control manages assignment, review, "
@@ -171,6 +205,7 @@ def bootstrap_mission_control(
                         "project": "CLASSIFIRE",
                         "repository": repo_url,
                         "architecture_registry": registry,
+                        "openclaw_agent_id": agent,
                     },
                 )
             )
@@ -178,6 +213,7 @@ def bootstrap_mission_control(
     return {
         "probe": probe,
         "agents": registrations,
+        "agent_name_map": mission_control_names,
         "tasks_created": create_tasks,
         "tasks": tasks,
     }
