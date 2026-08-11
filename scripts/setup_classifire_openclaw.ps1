@@ -105,7 +105,7 @@ foreach ($spec in $manifest.agents) {
 
     $installedCount = @(Get-ChildItem -LiteralPath $workspace -File -Filter "*.md" | Where-Object { $_.Name -in $requiredFiles }).Count
     if ($installedCount -ne 7) {
-        throw "Canonical Agent Fleet installation incomplete for $id: expected 7 Markdown files, found $installedCount."
+        throw "Canonical Agent Fleet installation incomplete for ${id}: expected 7 Markdown files, found $installedCount."
     }
     Write-Host "Installed canonical Agent Fleet v1.0 definition for $id (7 Markdown files)." -ForegroundColor Green
 }
