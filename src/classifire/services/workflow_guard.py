@@ -1,12 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from ..models import Estimate
-from .workflow import WorkflowAction, WorkflowTransitionError, blockers_for, require_action
+from .physical_scope import assess_physical_model_completeness
+from .workflow import (
+    WorkflowAction,
+    WorkflowTransitionError,
+    blockers_for,
+    current_stage,
+    require_action,
+)
 from .workflow_db import WorkflowAssessment, assess_estimate_workflow
 
 
@@ -57,13 +64,45 @@ def _status_blockers(estimate: Estimate, action: WorkflowAction) -> tuple[str, .
     return ()
 
 
+def _with_scope_aware_physical_completeness(
+    db: Session,
+    estimate: Estimate,
+    assessment: WorkflowAssessment,
+) -> WorkflowAssessment:
+    """Apply the current CLASSIFIRE physical-scope completeness policy.
+
+    The original v2.13 database adapter assumed that every Opening required at
+    least one ServiceOpeningLink. That is incorrect for a blank aperture or an
+    empty/redundant core hole that itself requires sealing. A service-free Opening
+    is complete only when it is explicitly classified as a governed blank Opening;
+    ordinary service penetrations still require at least one canonical Service link.
+    """
+
+    physical = assess_physical_model_completeness(db, estimate.id)
+    facts = assessment.facts
+    if facts.physical_model_complete != physical.complete:
+        facts = replace(facts, physical_model_complete=physical.complete)
+
+    diagnostics = dict(assessment.diagnostics)
+    diagnostics["scope_aware_physical_completeness"] = physical.as_dict()
+    return WorkflowAssessment(
+        facts=facts,
+        stage=current_stage(facts).value,
+        diagnostics=diagnostics,
+    )
+
+
 def check_estimate_action(
     db: Session,
     estimate: Estimate,
     action: WorkflowAction,
 ) -> WorkflowGuardReceipt:
     """Return a deterministic, fail-closed preflight receipt for one estimate action."""
-    assessment = assess_estimate_workflow(db, estimate)
+    assessment = _with_scope_aware_physical_completeness(
+        db,
+        estimate,
+        assess_estimate_workflow(db, estimate),
+    )
     blockers = tuple((*blockers_for(action, assessment.facts), *_status_blockers(estimate, action)))
     return WorkflowGuardReceipt(
         action=action,
@@ -80,7 +119,11 @@ def require_estimate_action(
     action: WorkflowAction,
 ) -> WorkflowAssessment:
     """Raise WorkflowTransitionError unless retained database state and estimate status permit the action."""
-    assessment = assess_estimate_workflow(db, estimate)
+    assessment = _with_scope_aware_physical_completeness(
+        db,
+        estimate,
+        assess_estimate_workflow(db, estimate),
+    )
     status_blockers = _status_blockers(estimate, action)
     if status_blockers:
         raise WorkflowTransitionError(action, status_blockers)
