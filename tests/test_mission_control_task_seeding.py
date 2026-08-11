@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from classifire.mission_control.bootstrap import DEFAULT_TASKS, baseline_task_statuses, bootstrap_mission_control
+from classifire.mission_control.bootstrap import (
+    DEFAULT_AGENTS,
+    DEFAULT_TASKS,
+    baseline_task_statuses,
+    bootstrap_mission_control,
+)
 from classifire.mission_control.client import MissionControlClient
 
 
@@ -46,12 +51,33 @@ def test_ensure_task_creates_missing(monkeypatch):
     assert result["task"]["id"] == 42
 
 
+def test_find_agent_prefers_openclaw_id_over_duplicate_name(monkeypatch):
+    client = MissionControlClient("http://mission-control.test", "secret")
+    duplicate = {"id": 36, "name": "cf-validator", "config": {}}
+    synced = {
+        "id": 26,
+        "name": "CLASSIFIRE Validator",
+        "config": {"openclawId": "cf-validator"},
+    }
+    monkeypatch.setattr(client, "list_agents", lambda: [duplicate, synced])
+
+    result = client.find_agent(openclaw_id="cf-validator", name="cf-validator")
+
+    assert result is synced
+
+
 class FakeMissionControlClient:
     def __init__(self):
         self.ensured: list[str] = []
 
     def probe(self):
         return {"status_endpoint": 200}
+
+    def list_agents(self):
+        return []
+
+    def find_agent(self, *, openclaw_id=None, name=None, agents=None):
+        return None
 
     def register_agent(self, name, role, metadata=None):
         return {"agent": {"name": name, "role": role}, "registered": False}
@@ -70,6 +96,59 @@ def test_bootstrap_uses_idempotent_ensure_task_for_all_baseline_tasks():
     assert client.ensured == expected_ids
     assert len(result["tasks"]) == len(DEFAULT_TASKS)
     assert all(item["created"] is False for item in result["tasks"])
+
+
+def test_bootstrap_reuses_openclaw_synced_agents_and_routes_tasks_to_synced_names():
+    class SyncedMissionControlClient(FakeMissionControlClient):
+        def __init__(self):
+            super().__init__()
+            self.registered: list[str] = []
+            self.assigned_to: dict[str, str | None] = {}
+            self._agents = [
+                {
+                    "id": 100 + index,
+                    "name": f"Display {spec['name']}",
+                    "role": spec["role"],
+                    "config": {"openclawId": spec["name"]},
+                }
+                for index, spec in enumerate(DEFAULT_AGENTS)
+            ]
+
+        def list_agents(self):
+            return list(self._agents)
+
+        def find_agent(self, *, openclaw_id=None, name=None, agents=None):
+            rows = agents if agents is not None else self._agents
+            if openclaw_id:
+                for row in rows:
+                    config = row.get("config") if isinstance(row.get("config"), dict) else {}
+                    if config.get("openclawId") == openclaw_id:
+                        return row
+            if name:
+                for row in rows:
+                    if row.get("name") == name:
+                        return row
+            return None
+
+        def register_agent(self, name, role, metadata=None):
+            self.registered.append(name)
+            raise AssertionError("synced OpenClaw agents must not be registered again")
+
+        def ensure_task(self, *, task_id, title, assigned_to=None, **_kwargs):
+            self.ensured.append(task_id)
+            self.assigned_to[task_id] = assigned_to
+            return {"created": False, "task_id": task_id, "task": {"title": title}}
+
+    client = SyncedMissionControlClient()
+
+    result = bootstrap_mission_control(client, create_tasks=True)
+
+    assert client.registered == []
+    assert len(result["agents"]) == len(DEFAULT_AGENTS)
+    assert all(row["matched_by"] == "openclaw_id" for row in result["agents"])
+    assert result["agent_name_map"]["cf-validator"] == "Display cf-validator"
+    assert client.assigned_to["CF-UAT-001"] == "Display cf-validator"
+    assert client.assigned_to["CF-DATA-001"] == "Display cf-intake-evidence"
 
 
 def test_baseline_task_statuses_reports_dispatch_and_filters_secret_linkage():
