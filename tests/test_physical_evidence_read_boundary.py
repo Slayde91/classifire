@@ -14,7 +14,20 @@ def test_physical_model_agent_can_read_evidence_without_intake_write_authority()
     assert not (scopes & FORBIDDEN_AGENT_SCOPES)
 
 
-def test_openclaw_read_plugin_allows_evidence_for_intake_and_physical_only() -> None:
+def test_validator_can_read_evidence_and_physical_model_without_upstream_write_authority() -> None:
+    scopes = AGENT_SCOPE_MAP["cf-validator"]
+    assert {"evidence:read", "physical:read", "validation:run"} <= scopes
+    assert "evidence:write" not in scopes
+    assert "physical:write" not in scopes
+    assert "physical:lock" not in scopes
+    assert "technical:select" not in scopes
+    assert "technical:lock" not in scopes
+    assert "commercial:derive" not in scopes
+    assert "snapshot:lock" not in scopes
+    assert not (scopes & FORBIDDEN_AGENT_SCOPES)
+
+
+def test_openclaw_read_plugin_allows_validator_read_only_visual_review() -> None:
     source = (
         Path(__file__).resolve().parents[1]
         / "openclaw-plugin-classifire"
@@ -22,11 +35,49 @@ def test_openclaw_read_plugin_allows_evidence_for_intake_and_physical_only() -> 
         / "index.ts"
     ).read_text(encoding="utf-8")
 
-    expected = (
-        'classifire_evidence_read: new Set(["cf-intake-evidence", "cf-physical-model"])'
+    evidence_expected = (
+        'classifire_evidence_read: new Set(["cf-intake-evidence", "cf-physical-model", "cf-validator"])'
     )
-    assert expected in source
-    assert 'classifire_evidence_read: new Set(["cf-intake-evidence"])' not in source
+    physical_expected = (
+        'classifire_physical_model_read: new Set(["cf-physical-model", "cf-validator"])'
+    )
+    assert evidence_expected in source
+    assert physical_expected in source
+    assert 'classifire_evidence_read: new Set(["cf-intake-evidence", "cf-physical-model"])' not in source
+    assert 'classifire_physical_model_read: new Set(["cf-physical-model"])' not in source
+
+
+def test_openclaw_installer_grants_validator_only_required_visual_read_tools() -> None:
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "install_classifire_openclaw_plugin.ps1"
+    ).read_text(encoding="utf-8")
+    start = source.index('"cf-validator" = @(')
+    end = source.index("\n    )", start)
+    block = source[start:end]
+
+    for tool in (
+        "classifire_health",
+        "classifire_workflow_status",
+        "classifire_evidence_read",
+        "classifire_physical_model_read",
+        "classifire_run_validation",
+        "pdf",
+        "image",
+    ):
+        assert f'"{tool}"' in block
+
+    for forbidden in (
+        "classifire_register_evidence_observations",
+        "classifire_submit_initial_physical_model",
+        "classifire_lock_physical_model",
+        "classifire_select_repair_strategy",
+        "classifire_lock_repair_strategy",
+        "classifire_derive_commercial",
+        "classifire_lock_snapshot",
+    ):
+        assert forbidden not in block
 
 
 def test_scope_sync_standalone_import_loads_audit_trail_table() -> None:
