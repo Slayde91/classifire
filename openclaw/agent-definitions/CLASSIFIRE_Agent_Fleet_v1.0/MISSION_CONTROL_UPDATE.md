@@ -8,15 +8,17 @@ Mission Control is the task and review control plane. CLASSIFIRE remains the can
 2. OpenClaw Gateway is running.
 3. The nine `cf-*` OpenClaw agents already exist.
 4. The Mission Control API key is stored in `C:\CLASSIFIRE\.env` as `CLASSIFIRE_MISSION_CONTROL_API_KEY`.
-5. This package has been copied into the OpenClaw workspaces.
+5. The canonical fleet exists at `C:\CLASSIFIRE\openclaw\agent-definitions\CLASSIFIRE_Agent_Fleet_v1.0`.
 
-## Step 1 — register or refresh the agent roster
+## Step 1 — register or refresh the CLASSIFIRE roster
 
 ```powershell
 Set-Location "C:\CLASSIFIRE"
 .\scripts\configure_classifire_mission_control.ps1
 classifire mission-control-bootstrap --repo-url https://github.com/Slayde91/classifire
 ```
+
+The CLASSIFIRE bootstrap reconciles existing Mission Control agents by `config.openclawId` before considering names. It must not create a second record merely because Mission Control displays the OpenClaw identity name instead of the `cf-*` ID.
 
 ## Step 2 — sync OpenClaw agents into Mission Control
 
@@ -41,39 +43,46 @@ Invoke-RestMethod `
 
 ## Step 3 — update SOUL and agent configuration
 
-Use `Update-CLASSIFIRE-MissionControlAgents.ps1` from this package:
+Run the updater from the canonical repository-controlled fleet:
 
 ```powershell
-.\Update-CLASSIFIRE-MissionControlAgents.ps1 `
-  -SourceRoot "C:\CLASSIFIRE\agent-definitions\CLASSIFIRE_Agent_Fleet_v1.0" `
+Set-Location "C:\CLASSIFIRE"
+
+.\openclaw\agent-definitions\CLASSIFIRE_Agent_Fleet_v1.0\Update-CLASSIFIRE-MissionControlAgents.ps1 `
   -MissionControlUrl "http://127.0.0.1:3000" `
   -RepoEnvFile "C:\CLASSIFIRE\.env"
 ```
 
 The script:
 
-- finds each agent by exact `cf-*` name;
-- uploads the complete `SOUL.md`;
-- preserves any existing dispatch-model setting;
-- sets `openclawId`, framework, capabilities, and definition version;
-- does not create new agent names;
-- does not modify CLASSIFIRE canonical state.
+- resolves each Mission Control record by `config.openclawId` first, with canonical-name fallback only when necessary;
+- fails closed if more than one record claims the same `openclawId`;
+- preserves the Mission Control display name instead of renaming synced agents;
+- updates the complete `SOUL.md`, role and CLASSIFIRE metadata through the normal `PUT /api/agents` route;
+- preserves unrelated existing Mission Control config, including dispatch/model settings;
+- sets `openclawId`, framework, capabilities, definition version and visual-workflow version;
+- creates no Mission Control agents;
+- verifies all nine agents after the update;
+- does not modify canonical CLASSIFIRE estimate state.
 
 ## Step 4 — verify in the Mission Control UI
 
-For each agent:
+For each CLASSIFIRE agent:
 
 1. Open **Agents**.
-2. Confirm the exact `cf-*` name.
-3. Confirm the role and OpenClaw ID.
-4. Open the **SOUL** tab and confirm the full role-specific content.
-5. Confirm capabilities match `FLEET_MANIFEST.json`.
-6. Confirm status is idle/offline as expected.
-7. Do not edit `WORKING.md` manually.
+2. Confirm the displayed identity is the expected CLASSIFIRE identity.
+3. Confirm `config.openclawId` is the corresponding stable `cf-*` ID.
+4. Confirm the role matches `FLEET_MANIFEST.json`.
+5. Open the **SOUL** tab and confirm the full role-specific content.
+6. Confirm capabilities match `FLEET_MANIFEST.json`.
+7. Confirm `classifireAgentDefinitionVersion` is `1.0`.
+8. Do not edit `WORKING.md` manually.
 
-## Step 5 — create the visual physical-model workflow tasks
+Legacy `qf-*` agents and any historical duplicate Mission Control records are not canonical CLASSIFIRE agents. Do not assign new CLASSIFIRE tasks to them.
 
-For every defect, use four tasks:
+## Step 5 — visual physical-model workflow tasks
+
+For every defect, use four governed passes:
 
 ### Task A — Evidence and photo reconciliation
 - Assigned to: `cf-intake-evidence`
@@ -96,7 +105,7 @@ For every defect, use four tasks:
 - Preconditions: Task C APPROVED
 - Output: canonical IDs, Physical Model Lock, content hash, critical unknowns
 
-Do not dispatch the technical-system task until Task D has a valid lock and the visual validator approval receipt is retained.
+Do not dispatch the technical-system task until Task D has a valid Physical Model Lock and the visual-validator approval receipt is retained.
 
 ## Step 6 — quality-review policy
 
