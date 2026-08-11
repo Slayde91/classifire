@@ -1,0 +1,85 @@
+{
+  "schema": "CLASSIFIRE-HUMAN-PHYSICAL-REFERENCE-v1",
+  "run_id": "20260809-182033",
+  "purpose": "Regression reference only. Must never be used as runtime inference input.",
+  "defects": [
+    {
+      "external_defect_id": "147038",
+      "opening_count": 2,
+      "openings": [
+        {"substrate": "concrete slab", "blank": true, "service_groups": []},
+        {"substrate": "concrete slab", "blank": false, "service_groups": [{"type": "pipe", "material": "PVC", "quantity": 1}]}
+      ]
+    },
+    {
+      "external_defect_id": "147039",
+      "opening_count": 1,
+      "openings": [
+        {"substrate": "concrete slab", "blank": false, "service_groups": [{"type": "pipe", "material": "PVC", "quantity": 1}, {"type": "cable_bundle", "material": null, "quantity": 1, "notes": "several cables"}]}
+      ]
+    },
+    {
+      "external_defect_id": "147046",
+      "opening_count": 1,
+      "openings": [
+        {"substrate": "concrete slab", "blank": false, "service_groups": [{"type": "pipe", "material": "PVC", "quantity": 1}]}
+      ]
+    },
+    {
+      "external_defect_id": "147031",
+      "opening_count": 1,
+      "openings": [
+        {"substrate": "block wall", "blank": false, "service_groups": [{"type": "pipe", "material": "PEX", "quantity": 2}]}
+      ]
+    },
+    {
+      "external_defect_id": "147037",
+      "opening_count": 1,
+      "openings": [
+        {"substrate": "block wall", "blank": false, "service_groups": [{"type": "pipe", "material": "PVC", "quantity": 1}, {"type": "pipe", "material": "PEX", "quantity": 2}, {"type": "cable_bundle", "material": null, "quantity": 1}]}
+      ]
+    },
+    {
+      "external_defect_id": "147042",
+      "opening_count": 5,
+      "openings": [
+        {"substrate": "concrete wall", "blank": true, "service_groups": []},
+        {"substrate": "concrete wall", "blank": false, "service_groups": [{"type": "pipe", "material": "metal", "quantity": 1}, {"type": "conduit", "material": null, "quantity": 2}, {"type": "cable_bundle", "material": null, "quantity": 1}]},
+        {"substrate": "concrete wall", "blank": false, "service_groups": [{"type": "cable_bundle", "material": null, "quantity": 1}]},
+        {"substrate": "concrete wall", "blank": false, "service_groups": [{"type": "flexible_duct", "material": null, "quantity": 1}]},
+        {"substrate": "concrete wall", "blank": false, "service_groups": [{"type": "flexible_duct", "material": null, "quantity": 1}]}
+      ],
+      "notes": "Approximately six service groups when two conduits are represented as one homogeneous group with quantity 2."
+    },
+    {
+      "external_defect_id": "147044",
+      "opening_count": 2,
+      "openings": [
+        {"substrate": "block wall", "blank": false, "service_groups": [{"type": "pipe", "material": "PVC", "quantity": 1}]},
+        {"substrate": "concrete slab", "blank": false, "service_groups": [{"type": "pipe", "material": "copper", "quantity": 1}, {"type": "cable_bundle", "material": null, "quantity": 1}]}
+      ]
+    },
+    {
+      "external_defect_id": "147045",
+      "opening_count": 1,
+      "openings": [
+        {"substrate": "core hole", "blank": false, "service_groups": [{"type": "pipe", "material": "PEX", "quantity": 1}]}
+      ]
+    },
+    {
+      "external_defect_id": "147047",
+      "opening_count": 1,
+      "openings": [
+        {"substrate": "block wall", "blank": false, "service_groups": [{"type": "pipe", "material": "copper", "quantity": 1}, {"type": "cable", "material": null, "quantity": 1}]}
+      ]
+    },
+    {
+      "external_defect_id": "147192",
+      "opening_count": 2,
+      "openings": [
+        {"substrate": "concrete wall", "blank": false, "service_groups": [{"type": "aircon_bundle", "material": null, "quantity": 1, "notes": "air-conditioning bundle including conduits"}]},
+        {"substrate": "concrete wall", "blank": false, "service_groups": [{"type": "cable", "material": null, "quantity": 1}]}
+      ]
+    }
+  ]
+}
