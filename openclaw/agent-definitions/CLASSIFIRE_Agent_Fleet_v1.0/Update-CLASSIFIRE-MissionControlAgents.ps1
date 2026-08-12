@@ -60,6 +60,44 @@ function Get-ClassifireMissionControlAgent {
     return $null
 }
 
+function Invoke-MissionControlAgentUpdate {
+    param(
+        [string]$BaseUrl,
+        [string]$ApiKey,
+        [string]$JsonBody,
+        [string]$AgentLabel
+    )
+
+    $curl = Get-Command curl.exe -ErrorAction Stop
+    $tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("classifire-mc-agent-" + [guid]::NewGuid().ToString("N") + ".json")
+    try {
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::WriteAllText($tempPath, $JsonBody, $utf8NoBom)
+
+        Write-Host "Updating Mission Control agent $AgentLabel ..." -ForegroundColor Cyan
+        $response = & $curl.Source `
+            --silent `
+            --show-error `
+            --fail-with-body `
+            --connect-timeout 5 `
+            --max-time 15 `
+            --request PUT `
+            --url "$BaseUrl/api/agents" `
+            --header "Authorization: Bearer $ApiKey" `
+            --header "x-api-key: $ApiKey" `
+            --header "Content-Type: application/json" `
+            --data-binary "@$tempPath" 2>&1
+
+        if ($LASTEXITCODE -ne 0) {
+            $detail = ($response | Out-String).Trim()
+            throw "Mission Control update failed or timed out for ${AgentLabel}: curl exit $LASTEXITCODE. $detail"
+        }
+    }
+    finally {
+        Remove-Item -LiteralPath $tempPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 $SourceRoot = [System.IO.Path]::GetFullPath($SourceRoot)
 $manifestPath = Join-Path $SourceRoot "FLEET_MANIFEST.json"
 if (-not (Test-Path -LiteralPath $manifestPath)) {
@@ -78,7 +116,8 @@ $headers = @{
 $agentResponse = Invoke-RestMethod `
     -Method Get `
     -Uri "$baseUrl/api/agents?show_hidden=true&limit=200" `
-    -Headers $headers
+    -Headers $headers `
+    -TimeoutSec 15
 
 $agents = @($agentResponse.agents)
 if (-not $agents) {
@@ -113,8 +152,10 @@ foreach ($spec in $manifest.agents) {
     $config["classifireVisualWorkflowVersion"] = "barrier-opening-service-validator-v1"
     $config["classifireCanonicalAgentName"] = [string]$spec.name
 
-    # Use Mission Control's normal agent update route. This updates SOUL, role,
-    # and config together and avoids the dedicated /soul workspace-write route.
+    # Use Mission Control's normal agent update route. Deliver JSON from a UTF-8
+    # temp file through curl.exe because this local Mission Control build has shown
+    # intermittent hangs with PowerShell Invoke-RestMethod writes. Every write has
+    # a 5-second connect timeout and 15-second hard timeout and fails closed.
     $updateBody = @{
         name = [string]$agent.name
         role = [string]$spec.role
@@ -122,11 +163,11 @@ foreach ($spec in $manifest.agents) {
         config = $config
     } | ConvertTo-Json -Depth 30 -Compress
 
-    Invoke-RestMethod `
-        -Method Put `
-        -Uri "$baseUrl/api/agents" `
-        -Headers $headers `
-        -Body $updateBody | Out-Null
+    Invoke-MissionControlAgentUpdate `
+        -BaseUrl $baseUrl `
+        -ApiKey $key `
+        -JsonBody $updateBody `
+        -AgentLabel "'$($agent.name)' ($($spec.id))"
 
     Write-Host "Updated Mission Control agent '$($agent.name)' for OpenClaw ID $($spec.id)" -ForegroundColor Green
 }
@@ -136,7 +177,8 @@ foreach ($spec in $manifest.agents) {
 $verifyResponse = Invoke-RestMethod `
     -Method Get `
     -Uri "$baseUrl/api/agents?show_hidden=true&limit=200" `
-    -Headers $headers
+    -Headers $headers `
+    -TimeoutSec 15
 
 $verifiedAgents = @($verifyResponse.agents)
 foreach ($spec in $manifest.agents) {
