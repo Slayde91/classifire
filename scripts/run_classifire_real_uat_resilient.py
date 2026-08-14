@@ -9,16 +9,26 @@ from run_classifire_real_uat_integrated import IntegratedEvidenceController
 from run_classifire_real_uat_intake import load_receipt, repo_root
 
 
-# `tools.effective` is diagnostic inventory only. The actual CLASSIFIRE tool calls
-# remain fail-closed at both the OpenClaw plugin boundary and the CLASSIFIRE API scope boundary.
+# `tools.effective` is diagnostic inventory only. ROLE_TOOL_CONTRACT governs
+# which tools each real-UAT agent role may require. Native OpenClaw tools such
+# as `image` are listed explicitly where a governed visual stage needs them.
+# CLASSIFIRE plugin calls remain fail-closed at both the OpenClaw plugin
+# boundary and the CLASSIFIRE API service-principal scope boundary.
 ROLE_TOOL_CONTRACT: dict[str, set[str]] = {
     "cf-intake-evidence": {
         "classifire_register_evidence_observations",
     },
     "cf-physical-model": {
+        "image",
         "classifire_evidence_read",
         "classifire_submit_initial_physical_model",
         "classifire_lock_physical_model",
+    },
+    "cf-validator": {
+        "image",
+        "classifire_evidence_read",
+        "classifire_physical_model_read",
+        "classifire_run_validation",
     },
 }
 
@@ -32,6 +42,11 @@ ROLE_SCOPE_CONTRACT: dict[str, set[str]] = {
         "physical:read",
         "physical:write",
         "physical:lock",
+    },
+    "cf-validator": {
+        "evidence:read",
+        "physical:read",
+        "validation:run",
     },
 }
 
