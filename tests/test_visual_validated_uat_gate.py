@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import base64
+import json
 from pathlib import Path
 import sys
 from types import SimpleNamespace
+
+import pytest
 
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+import run_classifire_real_uat_fireseals_visualvalidated as visual_module  # noqa: E402
 from run_classifire_real_uat_fireseals_visualvalidated import (  # noqa: E402
     VisualValidatedTopologyController,
 )
@@ -84,7 +89,7 @@ def _bare_controller(tmp_path: Path, responses: list[dict]) -> VisualValidatedTo
     )
     controller._cached_visual_approved_model = lambda _i, _b, _f: None
     controller._visual_gate_cache_key = lambda _b, _f: {"test": True}
-    controller._invoke_image_tool_json = lambda **_kwargs: responses.pop(0)
+    controller._invoke_visual_agent_json = lambda **_kwargs: responses.pop(0)
     return controller
 
 
@@ -122,3 +127,306 @@ def test_visual_gate_repeated_rejection_returns_insufficient_evidence(tmp_path: 
     assert result["services"] == []
     assert any("remained REJECTED" in item for item in result["limitations"])
     assert not (tmp_path / "21-visual-defect-001-approved-model.json").exists()
+
+
+
+def test_openresponses_visual_transport_sends_all_images_in_order(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    controller = object.__new__(
+        VisualValidatedTopologyController
+    )
+    controller.receipt_dir = tmp_path
+    controller.run_id = "transport-test"
+    controller.gateway_call = (
+        lambda *_args, **_kwargs: {"events": []}
+    )
+
+    first = tmp_path / "first.png"
+    second = tmp_path / "second.png"
+
+    first.write_bytes(b"first-image-bytes")
+    second.write_bytes(b"second-image-bytes")
+
+    monkeypatch.setenv(
+        "OPENCLAW_GATEWAY_TOKEN",
+        "unit-test-secret",
+    )
+
+    captured: dict = {}
+
+    response_payload = {
+        "id": "response-test",
+        "status": "completed",
+        "output": [
+            {
+                "type": "message",
+                "content": [
+                    {
+                        "type": "output_text",
+                        "text": (
+                            '{"status":"MODEL_SUPPORTED",'
+                            '"limitations":[],'
+                            '"openings":[],'
+                            '"services":[]}'
+                        ),
+                    }
+                ],
+            }
+        ],
+    }
+
+    class FakeResponse:
+        status_code = 200
+        text = json.dumps(response_payload)
+
+        @staticmethod
+        def json() -> dict:
+            return response_payload
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs) -> None:
+            captured["client_kwargs"] = kwargs
+
+        def __enter__(self):
+            return self
+
+        def __exit__(
+            self,
+            exc_type,
+            exc,
+            traceback,
+        ) -> None:
+            return None
+
+        def post(
+            self,
+            path: str,
+            *,
+            headers: dict,
+            json: dict,
+        ) -> FakeResponse:
+            captured["path"] = path
+            captured["headers"] = headers
+            captured["payload"] = json
+            return FakeResponse()
+
+    monkeypatch.setattr(
+        visual_module.httpx,
+        "Client",
+        FakeClient,
+    )
+
+    result = controller._invoke_visual_agent_json(
+        agent_id="cf-validator",
+        session_key="agent:cf-validator:test",
+        files=[first, second],
+        prompt="inspect both images",
+        receipt_name="transport-test",
+    )
+
+    assert result["status"] == "MODEL_SUPPORTED"
+
+    assert captured["path"] == "/v1/responses"
+    assert captured["payload"]["tool_choice"] == "none"
+    assert (
+        captured["headers"]["x-openclaw-agent-id"]
+        == "cf-validator"
+    )
+    assert (
+        captured["headers"]["x-openclaw-session-key"]
+        == "agent:cf-validator:test"
+    )
+
+    content = captured["payload"]["input"][0]["content"]
+
+    assert [
+        item["type"]
+        for item in content
+    ] == [
+        "input_text",
+        "input_image",
+        "input_image",
+    ]
+
+    assert base64.b64decode(
+        content[1]["source"]["data"]
+    ) == first.read_bytes()
+
+    assert base64.b64decode(
+        content[2]["source"]["data"]
+    ) == second.read_bytes()
+
+    receipt_text = (
+        tmp_path / "transport-test.json"
+    ).read_text(encoding="utf-8")
+
+    assert "unit-test-secret" not in receipt_text
+
+
+def test_physical_visual_runtime_policy_fails_closed_on_write_tools(
+    tmp_path: Path,
+) -> None:
+    controller = object.__new__(
+        VisualValidatedTopologyController
+    )
+    controller.receipt_dir = tmp_path
+
+    allowed = {
+        "groups": [
+            {
+                "label": "Connected tools",
+                "tools": [
+                    {
+                        "id":
+                            "classifire_evidence_read"
+                    },
+                    {
+                        "id":
+                            "classifire_physical_model_read"
+                    },
+                ],
+            }
+        ]
+    }
+
+    controller.gateway_call = (
+        lambda *_args, **_kwargs: allowed
+    )
+
+    controller._assert_physical_visual_readonly(
+        "agent:cf-physical-model:test"
+    )
+
+    forbidden = {
+        "groups": [
+            {
+                "label": "Connected tools",
+                "tools": [
+                    {
+                        "id":
+                            "classifire_evidence_read"
+                    },
+                    {
+                        "id":
+                            "classifire_physical_model_read"
+                    },
+                    {
+                        "id":
+                            "classifire_lock_physical_model"
+                    },
+                ],
+            }
+        ]
+    }
+
+    controller.gateway_call = (
+        lambda *_args, **_kwargs: forbidden
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="not read-only",
+    ):
+        controller._assert_physical_visual_readonly(
+            "agent:cf-physical-model:test"
+        )
+
+
+
+def test_visual_transport_fails_closed_when_agent_uses_internal_tool(
+    tmp_path: Path,
+) -> None:
+    controller = object.__new__(
+        VisualValidatedTopologyController
+    )
+    controller.receipt_dir = tmp_path
+
+    controller.gateway_call = (
+        lambda *_args, **_kwargs: {
+            "events": [
+                {
+                    "kind": "tool_action",
+                    "toolName":
+                        "classifire_physical_model_read",
+                }
+            ]
+        }
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="visual independence failed",
+    ):
+        controller._assert_no_visual_tool_actions(
+            session_key="agent:cf-physical-model:test",
+            after_ms=1,
+            receipt_name="tool-audit-test",
+        )
+
+
+
+def test_visual_tool_audit_falls_back_to_legacy_rpc(
+    tmp_path: Path,
+) -> None:
+    controller = object.__new__(
+        VisualValidatedTopologyController
+    )
+    controller.receipt_dir = tmp_path
+
+    calls: list[str] = []
+
+    def fake_gateway_call(
+        method: str,
+        params: dict,
+        receipt_name: str,
+    ) -> dict:
+        calls.append(method)
+
+        assert params == {
+            "sessionKey":
+                "agent:cf-physical-model:test",
+            "kind":
+                "tool_action",
+            "after":
+                1234567890,
+            "limit":
+                100,
+        }
+
+        if method == "audit.activity.list":
+            raise RuntimeError(
+                "Gateway call "
+                "audit.activity.list failed: "
+                '{"ok":false,"error":{'
+                '"code":"INVALID_REQUEST",'
+                '"message":"unknown method: '
+                'audit.activity.list"}}'
+            )
+
+        if method == "audit.list":
+            return {
+                "events": [],
+            }
+
+        raise AssertionError(
+            f"Unexpected method: {method}"
+        )
+
+    controller.gateway_call = (
+        fake_gateway_call
+    )
+
+    controller._assert_no_visual_tool_actions(
+        session_key=(
+            "agent:cf-physical-model:test"
+        ),
+        after_ms=1234567890,
+        receipt_name="legacy-audit-test",
+    )
+
+    assert calls == [
+        "audit.activity.list",
+        "audit.list",
+    ]

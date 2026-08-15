@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+import mimetypes
+import os
 from pathlib import Path
 import sys
+import time
 from typing import Any
+
+import httpx
 
 from classifire.canonical_models import Defect
 from classifire.visual_validation import (
@@ -20,17 +26,34 @@ from run_classifire_real_uat_intake import load_receipt, parse_json_envelope, re
 
 VISUAL_GATE_POLICY_VERSION = "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v1"
 MAX_VISUAL_CORRECTION_PASSES = 2
-IMAGE_TOOL_TIMEOUT_MS = 180_000
+OPENRESPONSES_BASE_URL = "http://127.0.0.1:18789"
+OPENRESPONSES_TIMEOUT_SECONDS = 300.0
+OPENRESPONSES_MAX_OUTPUT_TOKENS = 8_000
+
+ALLOWED_VISUAL_MIMES = {
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+}
 
 PHYSICAL_VISUAL_TOOLS = {
-    "image",
     "classifire_evidence_read",
+    "classifire_physical_model_read",
 }
+
 VALIDATOR_VISUAL_TOOLS = {
-    "image",
     "classifire_evidence_read",
     "classifire_physical_model_read",
     "classifire_run_validation",
+}
+
+PHYSICAL_VISUAL_FORBIDDEN_TOOLS = {
+    "classifire_submit_initial_physical_model",
+    "classifire_lock_physical_model",
+    "classifire_derive_quantity_labour",
 }
 
 
@@ -58,6 +81,9 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
                 session,
                 PHYSICAL_VISUAL_TOOLS,
                 "21-visual-physical-effective.json",
+            )
+            self._assert_physical_visual_readonly(
+                session
             )
             self.invoke_tool(
                 "cf-physical-model",
@@ -87,7 +113,193 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
 
         return self._visual_physical_session, self._visual_validator_session
 
-    def _invoke_image_tool_json(
+    @staticmethod
+    def _effective_tool_names(value: Any) -> set[str]:
+        if not isinstance(value, dict):
+            raise RuntimeError(
+                "tools.effective response is not an object"
+            )
+
+        groups = value.get("groups")
+
+        if not isinstance(groups, list):
+            raise RuntimeError(
+                "tools.effective response has no groups list"
+            )
+
+        names: set[str] = set()
+
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+
+            tools = group.get("tools") or []
+
+            if not isinstance(tools, list):
+                continue
+
+            for tool in tools:
+                if not isinstance(tool, dict):
+                    continue
+
+                tool_id = tool.get("id")
+
+                if isinstance(tool_id, str):
+                    names.add(tool_id)
+
+        return names
+
+    def _assert_physical_visual_readonly(
+        self,
+        session_key: str,
+    ) -> None:
+        effective = self.gateway_call(
+            "tools.effective",
+            {
+                "sessionKey": session_key,
+            },
+            "21-visual-physical-runtime-effective.json",
+        )
+
+        names = self._effective_tool_names(effective)
+
+        missing = PHYSICAL_VISUAL_TOOLS - names
+        forbidden = PHYSICAL_VISUAL_FORBIDDEN_TOOLS & names
+
+        if missing:
+            raise RuntimeError(
+                "Physical visual session is missing required "
+                "read tool(s): "
+                + ", ".join(sorted(missing))
+            )
+
+        if forbidden:
+            raise RuntimeError(
+                "Physical visual session is not read-only; "
+                "forbidden tool(s) remain effective: "
+                + ", ".join(sorted(forbidden))
+            )
+
+    def _assert_no_visual_tool_actions(
+        self,
+        *,
+        session_key: str,
+        after_ms: int,
+        receipt_name: str,
+    ) -> None:
+        params = {
+            "sessionKey": session_key,
+            "kind": "tool_action",
+            "after": after_ms,
+            "limit": 100,
+        }
+
+        receipt = (
+            receipt_name
+            + "-tool-audit.json"
+        )
+
+        try:
+            audit = self.gateway_call(
+                "audit.activity.list",
+                params,
+                receipt,
+            )
+        except RuntimeError as exc:
+            message = str(exc)
+
+            if (
+                "unknown method: "
+                "audit.activity.list"
+                not in message
+            ):
+                raise
+
+            audit = self.gateway_call(
+                "audit.list",
+                params,
+                receipt,
+            )
+
+        events = audit.get("events")
+
+        if not isinstance(events, list):
+            raise RuntimeError(
+                "OpenClaw audit response has "
+                "no events list"
+            )
+
+        if events:
+            tool_names = sorted(
+                {
+                    str(
+                        event.get("toolName")
+                        or event.get("tool")
+                        or event.get("action")
+                        or "unknown"
+                    )
+                    for event in events
+                    if isinstance(event, dict)
+                }
+            )
+
+            raise RuntimeError(
+                "Visual agent turn used "
+                "OpenClaw tool(s); "
+                "visual independence failed: "
+                + ", ".join(tool_names)
+            )
+
+    @staticmethod
+    def _gateway_token() -> str:
+        token = os.getenv(
+            "OPENCLAW_GATEWAY_TOKEN",
+            "",
+        ).strip()
+
+        if not token:
+            raise RuntimeError(
+                "OPENCLAW_GATEWAY_TOKEN is required for "
+                "OpenResponses visual inference. Load the "
+                "existing OpenClaw Gateway token into the "
+                "runner process environment before starting UAT."
+            )
+
+        return token
+
+    @staticmethod
+    def _openresponses_output_texts(
+        value: Any,
+    ) -> list[str]:
+        texts: list[str] = []
+
+        if isinstance(value, dict):
+            item_type = str(value.get("type") or "")
+            text = value.get("text")
+
+            if (
+                item_type in {"output_text", "text"}
+                and isinstance(text, str)
+                and text.strip()
+            ):
+                texts.append(text.strip())
+
+            for child in value.values():
+                texts.extend(
+                    VisualValidatedTopologyController
+                    ._openresponses_output_texts(child)
+                )
+
+        elif isinstance(value, list):
+            for child in value:
+                texts.extend(
+                    VisualValidatedTopologyController
+                    ._openresponses_output_texts(child)
+                )
+
+        return texts
+
+    def _invoke_visual_agent_json(
         self,
         *,
         agent_id: str,
@@ -96,59 +308,191 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
         prompt: str,
         receipt_name: str,
     ) -> dict[str, Any]:
-        image_paths = [str(path) for path in files if path.is_file()]
-        if not image_paths:
-            raise RuntimeError(f"No actual images supplied for {receipt_name}")
+        if not files:
+            raise RuntimeError(
+                f"No actual images supplied for {receipt_name}"
+            )
 
-        params = {
-            "name": "image",
-            "args": {
-                "images": image_paths,
-                "prompt": prompt,
-                "maxImages": 20,
-            },
-            "sessionKey": session_key,
-            "agentId": agent_id,
-            "idempotencyKey": f"classifire-real-{self.run_id}-{agent_id}-image-{receipt_name}",
+        missing = [
+            str(path)
+            for path in files
+            if not path.is_file()
+        ]
+
+        if missing:
+            raise RuntimeError(
+                "Visual input file(s) are missing for "
+                f"{receipt_name}: "
+                + ", ".join(missing)
+            )
+
+        content: list[dict[str, Any]] = [
+            {
+                "type": "input_text",
+                "text": prompt,
+            }
+        ]
+
+        safe_files: list[dict[str, Any]] = []
+
+        for path in files:
+            mime_type, _encoding = mimetypes.guess_type(
+                path.name
+            )
+
+            if mime_type == "image/jpg":
+                mime_type = "image/jpeg"
+
+            if mime_type not in ALLOWED_VISUAL_MIMES:
+                raise RuntimeError(
+                    f"Unsupported visual MIME type for {path}: "
+                    f"{mime_type!r}"
+                )
+
+            raw = path.read_bytes()
+
+            content.append(
+                {
+                    "type": "input_image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": mime_type,
+                        "data": base64.b64encode(raw).decode(
+                            "ascii"
+                        ),
+                    },
+                }
+            )
+
+            safe_files.append(
+                {
+                    "path": str(path),
+                    "mime_type": mime_type,
+                    "bytes": len(raw),
+                }
+            )
+
+        request_payload = {
+            "model": "openclaw",
+            "stream": False,
+            "tool_choice": "none",
+            "input": [
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": content,
+                }
+            ],
+            "max_output_tokens": (
+                OPENRESPONSES_MAX_OUTPUT_TOKENS
+            ),
         }
-        raw_params = json.dumps(params, ensure_ascii=False, separators=(",", ":"))
-        result = self.openclaw(
-            "gateway",
-            "call",
-            "tools.invoke",
-            "--params",
-            raw_params,
-            "--timeout",
-            str(IMAGE_TOOL_TIMEOUT_MS),
-            "--json",
-            timeout=(IMAGE_TOOL_TIMEOUT_MS // 1000) + 30,
-            check=False,
-        )
-        stdout = result.stdout.strip()
-        stderr = result.stderr.strip()
-        if stdout:
-            self.save_text(receipt_name + ".stdout.json", stdout)
-        if stderr:
-            self.save_text(receipt_name + ".stderr.txt", stderr)
-        if result.returncode != 0:
-            detail = "\n".join(part for part in (stdout, stderr) if part)
+
+        gateway_url = os.getenv(
+            "OPENCLAW_GATEWAY_HTTP_URL",
+            OPENRESPONSES_BASE_URL,
+        ).strip().rstrip("/")
+
+        if not gateway_url:
             raise RuntimeError(
-                f"OpenClaw image tool failed for {agent_id}/{receipt_name}: {detail}"
+                "OpenResponses Gateway URL is empty"
             )
 
-        payload = parse_json_envelope(stdout)
-        self.save_json(receipt_name + ".json", payload)
-        invoke_ok = payload.get("ok")
-        if invoke_ok is None and isinstance(payload.get("result"), dict):
-            invoke_ok = payload["result"].get("ok")
-        if invoke_ok is not True:
+        token = self._gateway_token()
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "x-openclaw-agent-id": agent_id,
+            "x-openclaw-session-key": session_key,
+        }
+
+        visual_request_started_ms = int(
+            time.time() * 1000
+        )
+
+        try:
+            with httpx.Client(
+                base_url=gateway_url,
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
+                timeout=OPENRESPONSES_TIMEOUT_SECONDS,
+            ) as client:
+                response = client.post(
+                    "/v1/responses",
+                    headers=headers,
+                    json=request_payload,
+                )
+        except httpx.HTTPError as exc:
             raise RuntimeError(
-                f"OpenClaw image tool returned ok=false for {agent_id}/{receipt_name}: "
-                f"{json.dumps(payload, default=str)}"
+                "OpenResponses visual request failed for "
+                f"{agent_id}/{receipt_name}: {exc}"
+            ) from exc
+
+        if response.status_code >= 400:
+            raise RuntimeError(
+                "OpenResponses visual request returned "
+                f"HTTP {response.status_code} for "
+                f"{agent_id}/{receipt_name}: "
+                + response.text[:2000]
             )
+
+        try:
+            response_payload = response.json()
+        except ValueError as exc:
+            raise RuntimeError(
+                "OpenResponses visual request did not "
+                f"return JSON for {agent_id}/{receipt_name}: "
+                + response.text[:1000]
+            ) from exc
+
+        self._assert_no_visual_tool_actions(
+            session_key=session_key,
+            after_ms=visual_request_started_ms,
+            receipt_name=receipt_name,
+        )
+
+        self.save_json(
+            receipt_name + ".json",
+            {
+                "transport": "openresponses",
+                "agent_id": agent_id,
+                "session_key": session_key,
+                "files": safe_files,
+                "response_id": response_payload.get("id"),
+                "status": response_payload.get("status"),
+                "output": response_payload.get("output"),
+                "usage": response_payload.get("usage"),
+            },
+        )
+
+        output_texts = self._openresponses_output_texts(
+            response_payload.get("output", [])
+        )
+
+        direct_text = response_payload.get("output_text")
+
+        if (
+            isinstance(direct_text, str)
+            and direct_text.strip()
+        ):
+            output_texts.append(direct_text.strip())
+
+        if not output_texts:
+            raise RuntimeError(
+                "OpenResponses returned no assistant output "
+                f"for {agent_id}/{receipt_name}"
+            )
+
         return _json_from_payload(
-            payload,
-            context=f"{agent_id} actual-image receipt {receipt_name}",
+            {
+                "text": output_texts[-1],
+            },
+            context=(
+                f"{agent_id} actual-image receipt "
+                f"{receipt_name}"
+            ),
         )
 
     def _physical_visual_prompt(self, defect: Defect, bundle: str) -> str:
@@ -157,7 +501,13 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
 Execution role: cf-physical-model actual-image draft pass.
 This is a non-canonical draft. Reinspect all supplied images together and return the complete
 physical-model JSON only. Do not rely on an earlier topology cache. The independent validator
-has not yet reviewed this proposal. Policy: {VISUAL_GATE_POLICY_VERSION}.
+has not yet reviewed this proposal.
+
+Do not call any OpenClaw or CLASSIFIRE tool during this visual inference turn.
+Use only the supplied retained images and the direct evidence already present in this prompt.
+Do not read the existing canonical Physical Model.
+
+Policy: {VISUAL_GATE_POLICY_VERSION}.
 """
 
     def _validator_prompt(self, defect: Defect, bundle: str, proposal: dict[str, Any]) -> str:
@@ -166,6 +516,10 @@ has not yet reviewed this proposal. Policy: {VISUAL_GATE_POLICY_VERSION}.
 Inspect ALL supplied images together. They are the same actual retained defect images supplied
 to cf-physical-model. Attempt to DISPROVE the draft below; do not repair it and do not make a
 new canonical model. Never use or infer from any human UAT reference fixture.
+
+Do not call any OpenClaw or CLASSIFIRE tool during this visual validation turn.
+Use only the supplied retained images, the direct evidence already present in this prompt,
+and the draft proposal included below. Do not read the existing canonical Physical Model.
 
 Defect: {defect.external_defect_id or defect.defect_code or defect.id}
 Direct evidence bundle (secondary to the actual images):
@@ -300,7 +654,7 @@ Independent validator receipt:
         if cached is not None:
             return cached
 
-        proposal = self._invoke_image_tool_json(
+        proposal = self._invoke_visual_agent_json(
             agent_id="cf-physical-model",
             session_key=physical_session,
             files=files,
@@ -317,7 +671,7 @@ Independent validator receipt:
                         f"physical visual draft returned status {status or 'MISSING'}"
                     ]
                     return self._insufficient_from_visual_gate(*[str(item) for item in reasons])
-                proposal = self._invoke_image_tool_json(
+                proposal = self._invoke_visual_agent_json(
                     agent_id="cf-physical-model",
                     session_key=physical_session,
                     files=files,
@@ -329,7 +683,7 @@ Independent validator receipt:
                 )
                 continue
 
-            validator = self._invoke_image_tool_json(
+            validator = self._invoke_visual_agent_json(
                 agent_id="cf-validator",
                 session_key=validator_session,
                 files=files,
@@ -338,7 +692,7 @@ Independent validator receipt:
             )
             receipt_errors = validate_visual_validator_payload(validator, proposal)
             if receipt_errors:
-                validator = self._invoke_image_tool_json(
+                validator = self._invoke_visual_agent_json(
                     agent_id="cf-validator",
                     session_key=validator_session,
                     files=files,
@@ -401,7 +755,7 @@ Independent validator receipt:
                     + issue_text
                 )
 
-            proposal = self._invoke_image_tool_json(
+            proposal = self._invoke_visual_agent_json(
                 agent_id="cf-physical-model",
                 session_key=physical_session,
                 files=files,

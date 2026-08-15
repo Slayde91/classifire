@@ -34,11 +34,12 @@ def test_intake_role_contract_is_narrow() -> None:
 
 def test_physical_role_contract_has_visual_evidence_and_no_release_authority() -> None:
     assert ROLE_TOOL_CONTRACT["cf-physical-model"] == {
-        "image",
         "classifire_evidence_read",
+        "classifire_physical_model_read",
         "classifire_submit_initial_physical_model",
         "classifire_lock_physical_model",
     }
+    assert "image" not in ROLE_TOOL_CONTRACT["cf-physical-model"]
     scopes = ROLE_SCOPE_CONTRACT["cf-physical-model"]
     assert {"evidence:read", "physical:read", "physical:write", "physical:lock"} <= scopes
     assert "validation:run" not in scopes
@@ -47,11 +48,11 @@ def test_physical_role_contract_has_visual_evidence_and_no_release_authority() -
 
 def test_validator_role_contract_is_read_only_for_visual_validation() -> None:
     assert ROLE_TOOL_CONTRACT["cf-validator"] == {
-        "image",
         "classifire_evidence_read",
         "classifire_physical_model_read",
         "classifire_run_validation",
     }
+    assert "image" not in ROLE_TOOL_CONTRACT["cf-validator"]
 
     assert ROLE_SCOPE_CONTRACT["cf-validator"] == {
         "evidence:read",

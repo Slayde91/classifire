@@ -10,8 +10,9 @@ from run_classifire_real_uat_intake import load_receipt, repo_root
 
 
 # `tools.effective` is diagnostic inventory only. ROLE_TOOL_CONTRACT governs
-# which tools each real-UAT agent role may require. Native OpenClaw tools such
-# as `image` are listed explicitly where a governed visual stage needs them.
+# which callable tools each real-UAT agent role may require. Native multimodal
+# evidence supplied as OpenResponses `input_image` content is transport input,
+# not a callable agent tool and therefore does not belong in this contract.
 # CLASSIFIRE plugin calls remain fail-closed at both the OpenClaw plugin
 # boundary and the CLASSIFIRE API service-principal scope boundary.
 ROLE_TOOL_CONTRACT: dict[str, set[str]] = {
@@ -19,13 +20,12 @@ ROLE_TOOL_CONTRACT: dict[str, set[str]] = {
         "classifire_register_evidence_observations",
     },
     "cf-physical-model": {
-        "image",
         "classifire_evidence_read",
+        "classifire_physical_model_read",
         "classifire_submit_initial_physical_model",
         "classifire_lock_physical_model",
     },
     "cf-validator": {
-        "image",
         "classifire_evidence_read",
         "classifire_physical_model_read",
         "classifire_run_validation",
