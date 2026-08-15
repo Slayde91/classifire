@@ -14,7 +14,15 @@ This file documents intended tool use. It does **not** grant permission. OpenCla
 - `image`
 - `classifire_submit_initial_physical_model`
 - `classifire_lock_physical_model`
-- `classifire_derive_quantity_labour`
+
+`classifire_derive_quantity_labour` is intentionally not granted to
+`cf-physical-model`. Quantity/labour is downstream of the Physical Model
+Lock and remains unassigned until its later-stage ownership is explicitly
+governed.
+
+During `21-visual-physical` sessions, submit and lock remain registered for
+normal Physical work but are blocked before execution by the CLASSIFIRE
+controlled-write plugin.
 
 ## Required additional tools for the approved workflow
 

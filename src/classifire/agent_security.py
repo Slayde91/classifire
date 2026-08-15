@@ -31,7 +31,6 @@ AGENT_SCOPE_MAP: dict[str, set[str]] = {
         "physical:read",
         "physical:write",
         "physical:lock",
-        "quantity:derive",
     },
     "cf-technical-system": {
         "health:read",
@@ -163,12 +162,27 @@ def require_agent_scope(scope: str) -> Callable[..., AgentServicePrincipal]:
     def dependency(
         principal: Annotated[AgentServicePrincipal, Depends(authenticate_agent)],
     ) -> AgentServicePrincipal:
+        configured_scopes = AGENT_SCOPE_MAP.get(
+            principal.agent_id
+        )
+
+        if (
+            configured_scopes is None
+            or scope not in configured_scopes
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Agent scope required: {scope}",
+            )
+
         scopes = set(principal.scopes or [])
+
         if scope not in scopes:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Agent scope required: {scope}",
             )
+
         return principal
 
     return dependency

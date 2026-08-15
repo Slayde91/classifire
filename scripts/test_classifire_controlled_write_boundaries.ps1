@@ -5,8 +5,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 $openclaw = Get-Command openclaw -ErrorAction Stop
-$python = Get-Command python -ErrorAction Stop
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$venvPython = Join-Path $repoRoot ".venv\Scripts\python.exe"
+if (-not (Test-Path -LiteralPath $venvPython)) {
+    throw "CLASSIFIRE virtual-environment Python is missing: $venvPython"
+}
+$python = Get-Command -Name $venvPython -ErrorAction Stop
 $TokenFile = [System.IO.Path]::GetFullPath($TokenFile)
 $managedApiProcess = $null
 
@@ -24,8 +28,7 @@ $expectedByAgent = @{
     "cf-intake-evidence" = @("classifire_register_evidence_observations")
     "cf-physical-model" = @(
         "classifire_submit_initial_physical_model",
-        "classifire_lock_physical_model",
-        "classifire_derive_quantity_labour"
+        "classifire_lock_physical_model"
     )
     "cf-technical-system" = @("classifire_select_repair_strategy", "classifire_lock_repair_strategy")
     "cf-commercial-engine" = @("classifire_required_components", "classifire_derive_commercial")
@@ -292,6 +295,7 @@ try {
         }
         elseif ($agentId -eq "cf-physical-model") {
             Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/evidence/register" -Body @{ observations = @(@{ stored_file_id = "x"; evidence_type = "page" }) }
+            Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/quantity-labour/derive" -Body @{}
         }
         elseif ($agentId -eq "cf-technical-system") {
             Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/commercial/derive" -Body @{}

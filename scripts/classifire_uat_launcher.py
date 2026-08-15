@@ -29,7 +29,6 @@ UAT_ROLE_TOOLS: dict[str, set[str]] = {
     },
     "cf-physical-model": {
         "classifire_workflow_status",
-        "classifire_derive_quantity_labour",
     },
     "cf-commercial-engine": {
         "classifire_workflow_status",

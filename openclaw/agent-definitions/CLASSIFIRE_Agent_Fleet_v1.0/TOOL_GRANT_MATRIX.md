@@ -4,7 +4,7 @@
 |---|---|---|
 | cf-orchestrator | classifire_health, classifire_workflow_status | none |
 | cf-intake-evidence | classifire_health, classifire_workflow_status, classifire_evidence_read, pdf, image | classifire_register_evidence_observations |
-| cf-physical-model | classifire_health, classifire_workflow_status, classifire_evidence_read, classifire_physical_model_read, pdf, image | classifire_submit_initial_physical_model, classifire_lock_physical_model, classifire_derive_quantity_labour |
+| cf-physical-model | classifire_health, classifire_workflow_status, classifire_evidence_read, classifire_physical_model_read, pdf, image | classifire_submit_initial_physical_model, classifire_lock_physical_model |
 | cf-technical-system | classifire_health, classifire_workflow_status, classifire_technical_search | classifire_select_repair_strategy, classifire_lock_repair_strategy |
 | cf-commercial-engine | classifire_health, classifire_workflow_status, classifire_package14_recommendation | classifire_required_components, classifire_derive_commercial |
 | cf-validator | classifire_health, classifire_workflow_status, **classifire_evidence_read, classifire_physical_model_read, pdf, image** | classifire_run_validation |

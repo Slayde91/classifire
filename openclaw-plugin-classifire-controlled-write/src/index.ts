@@ -28,10 +28,19 @@ const TOOL_AGENTS: Record<string, Set<string>> = {
   classifire_lock_physical_model: new Set(["cf-physical-model"]),
   classifire_select_repair_strategy: new Set(["cf-technical-system"]),
   classifire_lock_repair_strategy: new Set(["cf-technical-system"]),
-  classifire_derive_quantity_labour: new Set(["cf-physical-model"]),
+  classifire_derive_quantity_labour: new Set<string>(),
   classifire_required_components: new Set(["cf-commercial-engine"]),
   classifire_derive_commercial: new Set(["cf-commercial-engine"]),
 };
+
+const PHYSICAL_VISUAL_SESSION_SUFFIX =
+  "-21-visual-physical";
+
+const PHYSICAL_VISUAL_BLOCKED_TOOLS =
+  new Set<string>([
+    "classifire_submit_initial_physical_model",
+    "classifire_lock_physical_model",
+  ]);
 
 const verifiedCalls = new Map<string, VerifiedCall>();
 
@@ -157,6 +166,37 @@ export default definePluginEntry({
         const allowed = TOOL_AGENTS[event.toolName];
         if (!allowed) return;
         const agentId = String(ctx?.agentId ?? "");
+        const sessionKey = String(
+          ctx?.sessionKey ?? ""
+        );
+
+        if (
+          agentId === "cf-physical-model"
+          && PHYSICAL_VISUAL_BLOCKED_TOOLS.has(
+            event.toolName
+          )
+        ) {
+          if (!sessionKey) {
+            return {
+              block: true,
+              blockReason:
+                "CLASSIFIRE Physical controlled write requires host-authoritative sessionKey",
+            };
+          }
+
+          if (
+            sessionKey.endsWith(
+              PHYSICAL_VISUAL_SESSION_SUFFIX
+            )
+          ) {
+            return {
+              block: true,
+              blockReason:
+                `CLASSIFIRE visual Physical session denies ${event.toolName}`,
+            };
+          }
+        }
+
         if (!agentId || !allowed.has(agentId)) {
           return {
             block: true,

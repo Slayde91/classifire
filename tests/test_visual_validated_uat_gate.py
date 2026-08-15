@@ -265,7 +265,7 @@ def test_openresponses_visual_transport_sends_all_images_in_order(
     assert "unit-test-secret" not in receipt_text
 
 
-def test_physical_visual_runtime_policy_fails_closed_on_write_tools(
+def test_physical_visual_runtime_policy_requires_guarded_writes_and_blocks_quantity(
     tmp_path: Path,
 ) -> None:
     controller = object.__new__(
@@ -276,16 +276,11 @@ def test_physical_visual_runtime_policy_fails_closed_on_write_tools(
     allowed = {
         "groups": [
             {
-                "label": "Connected tools",
                 "tools": [
-                    {
-                        "id":
-                            "classifire_evidence_read"
-                    },
-                    {
-                        "id":
-                            "classifire_physical_model_read"
-                    },
+                    {"id": "classifire_evidence_read"},
+                    {"id": "classifire_physical_model_read"},
+                    {"id": "classifire_submit_initial_physical_model"},
+                    {"id": "classifire_lock_physical_model"},
                 ],
             }
         ]
@@ -296,26 +291,18 @@ def test_physical_visual_runtime_policy_fails_closed_on_write_tools(
     )
 
     controller._assert_physical_visual_readonly(
-        "agent:cf-physical-model:test"
+        "agent:cf-physical-model:test-21-visual-physical"
     )
 
     forbidden = {
         "groups": [
             {
-                "label": "Connected tools",
                 "tools": [
-                    {
-                        "id":
-                            "classifire_evidence_read"
-                    },
-                    {
-                        "id":
-                            "classifire_physical_model_read"
-                    },
-                    {
-                        "id":
-                            "classifire_lock_physical_model"
-                    },
+                    {"id": "classifire_evidence_read"},
+                    {"id": "classifire_physical_model_read"},
+                    {"id": "classifire_submit_initial_physical_model"},
+                    {"id": "classifire_lock_physical_model"},
+                    {"id": "classifire_derive_quantity_labour"},
                 ],
             }
         ]
@@ -327,12 +314,11 @@ def test_physical_visual_runtime_policy_fails_closed_on_write_tools(
 
     with pytest.raises(
         RuntimeError,
-        match="not read-only",
+        match="forbidden downstream tool",
     ):
         controller._assert_physical_visual_readonly(
-            "agent:cf-physical-model:test"
+            "agent:cf-physical-model:test-21-visual-physical"
         )
-
 
 
 def test_visual_transport_fails_closed_when_agent_uses_internal_tool(

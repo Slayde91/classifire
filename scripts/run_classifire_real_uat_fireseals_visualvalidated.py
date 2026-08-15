@@ -50,9 +50,12 @@ VALIDATOR_VISUAL_TOOLS = {
     "classifire_run_validation",
 }
 
-PHYSICAL_VISUAL_FORBIDDEN_TOOLS = {
+PHYSICAL_VISUAL_GUARDED_WRITE_TOOLS = {
     "classifire_submit_initial_physical_model",
     "classifire_lock_physical_model",
+}
+
+PHYSICAL_VISUAL_FORBIDDEN_TOOLS = {
     "classifire_derive_quantity_labour",
 }
 
@@ -161,23 +164,49 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
             "21-visual-physical-runtime-effective.json",
         )
 
-        names = self._effective_tool_names(effective)
+        names = self._effective_tool_names(
+            effective
+        )
 
-        missing = PHYSICAL_VISUAL_TOOLS - names
-        forbidden = PHYSICAL_VISUAL_FORBIDDEN_TOOLS & names
+        missing_reads = (
+            PHYSICAL_VISUAL_TOOLS - names
+        )
 
-        if missing:
+        missing_guarded_writes = (
+            PHYSICAL_VISUAL_GUARDED_WRITE_TOOLS
+            - names
+        )
+
+        forbidden = (
+            PHYSICAL_VISUAL_FORBIDDEN_TOOLS
+            & names
+        )
+
+        if missing_reads:
             raise RuntimeError(
                 "Physical visual session is missing required "
                 "read tool(s): "
-                + ", ".join(sorted(missing))
+                + ", ".join(
+                    sorted(missing_reads)
+                )
+            )
+
+        if missing_guarded_writes:
+            raise RuntimeError(
+                "Physical Phase 8 policy is missing guarded "
+                "canonical write tool(s): "
+                + ", ".join(
+                    sorted(missing_guarded_writes)
+                )
             )
 
         if forbidden:
             raise RuntimeError(
-                "Physical visual session is not read-only; "
-                "forbidden tool(s) remain effective: "
-                + ", ".join(sorted(forbidden))
+                "Physical visual policy exposes forbidden "
+                "downstream tool(s): "
+                + ", ".join(
+                    sorted(forbidden)
+                )
             )
 
     def _assert_no_visual_tool_actions(
