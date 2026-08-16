@@ -71,8 +71,39 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
     which causes the parent runner to withhold the entire canonical physical model.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *args: Any,
+        openresponses_timeout_seconds: float | None = None,
+        **kwargs: Any,
+    ) -> None:
+        configured_timeout = openresponses_timeout_seconds
+
+        if configured_timeout is None:
+            configured_timeout = kwargs.get(
+                "timeout_seconds"
+            )
+
+        if configured_timeout is None:
+            configured_timeout = (
+                OPENRESPONSES_TIMEOUT_SECONDS
+            )
+
+        configured_timeout = float(
+            configured_timeout
+        )
+
+        if configured_timeout <= 0:
+            raise ValueError(
+                "OpenResponses timeout must be greater than zero"
+            )
+
+        self._openresponses_timeout_seconds = (
+            configured_timeout
+        )
+
         super().__init__(*args, **kwargs)
+
         self._visual_physical_session: str | None = None
         self._visual_validator_session: str | None = None
 
@@ -446,13 +477,19 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
                 headers={
                     "Authorization": f"Bearer {token}"
                 },
-                timeout=OPENRESPONSES_TIMEOUT_SECONDS,
+                timeout=self._openresponses_timeout_seconds,
             ) as client:
                 response = client.post(
                     "/v1/responses",
                     headers=headers,
                     json=request_payload,
                 )
+        except httpx.TimeoutException as exc:
+            raise RuntimeError(
+                "OpenResponses visual request timed out after "
+                f"{self._openresponses_timeout_seconds:g}s for "
+                f"{agent_id}/{receipt_name}"
+            ) from exc
         except httpx.HTTPError as exc:
             raise RuntimeError(
                 "OpenResponses visual request failed for "
@@ -486,6 +523,7 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
             receipt_name + ".json",
             {
                 "transport": "openresponses",
+                "timeout_seconds": self._openresponses_timeout_seconds,
                 "agent_id": agent_id,
                 "session_key": session_key,
                 "files": safe_files,
