@@ -55,6 +55,38 @@ def _approved() -> dict:
     }
 
 
+
+def _blind_inventory() -> dict:
+    return {
+        "status": "COMPLETE",
+        "observed_opening_count": 1,
+        "observed_service_group_count": 1,
+        "candidate_openings": [
+            {
+                "candidate_id": "V-O-001",
+                "blank": False,
+                "detail": "one candidate opening",
+                "evidence_refs": ["photo-a.png"],
+            }
+        ],
+        "candidate_services": [
+            {
+                "candidate_id": "V-S-001",
+                "service_type": "pipe",
+                "material": "PEX",
+                "quantity": 2,
+                "candidate_opening_ids": [
+                    "V-O-001"
+                ],
+                "detail": "one homogeneous pipe group",
+                "evidence_refs": ["photo-a.png"],
+            }
+        ],
+        "unresolved_candidates": [],
+        "limitations": [],
+    }
+
+
 def _rejected() -> dict:
     return {
         "verdict": "REJECTED",
@@ -89,6 +121,12 @@ def _bare_controller(tmp_path: Path, responses: list[dict]) -> VisualValidatedTo
     )
     controller._cached_visual_approved_model = lambda _i, _b, _f: None
     controller._visual_gate_cache_key = lambda _b, _f: {"test": True}
+    controller._blind_validator_inventory = (
+        lambda **_kwargs: (
+            _blind_inventory(),
+            [],
+        )
+    )
     controller._invoke_visual_agent_json = lambda **_kwargs: responses.pop(0)
     return controller
 

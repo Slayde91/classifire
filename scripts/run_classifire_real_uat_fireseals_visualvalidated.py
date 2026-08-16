@@ -13,6 +13,13 @@ from typing import Any
 import httpx
 
 from classifire.canonical_models import Defect
+from classifire.blind_visual_inventory import (
+    BLIND_INVENTORY_BLOCKED,
+    BLIND_INVENTORY_COMPLETE,
+    blind_inventory_approval_errors,
+    blind_inventory_block_reasons,
+    validate_blind_visual_inventory_payload,
+)
 from classifire.visual_validation import (
     VISUAL_VALIDATOR_ISSUE_CODES,
     validate_visual_validator_payload,
@@ -24,7 +31,7 @@ from run_classifire_real_uat_fireseals_topologyaware import TopologyAwareFireSea
 from run_classifire_real_uat_intake import load_receipt, parse_json_envelope, repo_root
 
 
-VISUAL_GATE_POLICY_VERSION = "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v1"
+VISUAL_GATE_POLICY_VERSION = "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v2"
 MAX_VISUAL_CORRECTION_PASSES = 2
 OPENRESPONSES_BASE_URL = "http://127.0.0.1:18789"
 OPENRESPONSES_TIMEOUT_SECONDS = 300.0
@@ -577,6 +584,268 @@ Do not read the existing canonical Physical Model.
 Policy: {VISUAL_GATE_POLICY_VERSION}.
 """
 
+
+    def _blind_validator_inventory_prompt(
+        self,
+        defect: Defect,
+        bundle: str,
+    ) -> str:
+        return f"""
+You are the independent cf-validator BLIND visual-inventory pass for CLASSIFIRE.
+
+You have NOT been shown any cf-physical-model proposal for this defect.
+Inspect ALL supplied retained images together before making any conclusion.
+Produce your own complete candidate inventory of physical Openings and Service
+GROUPS. Do not try to agree with a draft; no Physical draft is available in
+this pass.
+
+Do not call any OpenClaw or CLASSIFIRE tool during this visual inference turn.
+Use only the supplied retained images and the direct evidence already present
+in this prompt. Never use or infer from any human UAT reference fixture.
+
+Defect:
+{defect.external_defect_id or defect.defect_code or defect.id}
+
+Direct evidence bundle (secondary to the actual images):
+{bundle}
+
+Inventory rules:
+- reconcile duplicate views and opposite barrier faces;
+- identify distinct physical Openings rather than photograph count;
+- explicitly identify whether each Opening is blank or occupied;
+- identify every visually supportable Service GROUP;
+- a visible candidate must not disappear merely because its exact class or
+  material is unknown;
+- group homogeneous repeated Services using quantity rather than inventing a
+  separate Service group for every photograph;
+- link a Service candidate to an Opening only when that relationship is
+  supportable;
+- if a possible additional Opening, Service, link, classification, barrier or
+  photo relationship cannot be resolved and could alter topology, return
+  BLOCKED rather than pretending the inventory is complete;
+- COMPLETE means there is no unresolved candidate that could change physical
+  topology.
+
+Return ONLY valid JSON using exactly this shape:
+{{
+  "status": "COMPLETE|BLOCKED",
+  "observed_opening_count": 0,
+  "observed_service_group_count": 0,
+  "candidate_openings": [
+    {{
+      "candidate_id": "V-O-001",
+      "blank": false,
+      "detail": "what physical opening is independently supported",
+      "evidence_refs": ["photo id or filename"]
+    }}
+  ],
+  "candidate_services": [
+    {{
+      "candidate_id": "V-S-001",
+      "service_type": "pipe|cable|cable_bundle|conduit|flexible_duct|aircon_bundle|other|unknown",
+      "material": null,
+      "quantity": 1,
+      "candidate_opening_ids": ["V-O-001"],
+      "detail": "what physical Service group is independently supported",
+      "evidence_refs": ["photo id or filename"]
+    }}
+  ],
+  "unresolved_candidates": [
+    {{
+      "kind": "barrier|opening|service|link|classification|photo_relationship",
+      "detail": "specific unresolved topology candidate",
+      "evidence_refs": ["photo id or filename"]
+    }}
+  ],
+  "limitations": []
+}}
+
+For COMPLETE:
+- observed counts MUST equal the candidate-array lengths;
+- every occupied Opening must have at least one Service-group relationship;
+- every blank Opening must have zero Service-group relationships;
+- every Service group must have at least one supported Opening relationship;
+- unresolved_candidates must be empty.
+
+Policy: {VISUAL_GATE_POLICY_VERSION}.
+"""
+
+    def _blind_validator_inventory_retry_prompt(
+        self,
+        defect: Defect,
+        bundle: str,
+        validation_errors: list[str],
+    ) -> str:
+        return (
+            self._blind_validator_inventory_prompt(
+                defect,
+                bundle,
+            )
+            + f"""
+
+Your previous blind-inventory receipt was structurally invalid.
+
+Receipt errors:
+{json.dumps(validation_errors, ensure_ascii=False, separators=(",", ":"))}
+
+Reinspect the SAME supplied images and return exactly one corrected
+blind-inventory JSON object only.
+
+Do not use any Physical proposal.
+Do not use any human UAT reference.
+"""
+        )
+
+    def _blind_validator_inventory(
+        self,
+        *,
+        defect_index: int,
+        defect: Defect,
+        bundle: str,
+        files: list[Path],
+        validator_session: str,
+    ) -> tuple[
+        dict[str, Any],
+        list[str],
+    ]:
+        receipt_base = (
+            f"21-visual-defect-{defect_index:03d}-"
+            "validator-blind-pass-0"
+        )
+
+        inventory = (
+            self._invoke_visual_agent_json(
+                agent_id="cf-validator",
+                session_key=validator_session,
+                files=files,
+                prompt=(
+                    self._blind_validator_inventory_prompt(
+                        defect,
+                        bundle,
+                    )
+                ),
+                receipt_name=receipt_base,
+            )
+        )
+
+        errors = (
+            validate_blind_visual_inventory_payload(
+                inventory
+            )
+        )
+
+        if errors:
+            inventory = (
+                self._invoke_visual_agent_json(
+                    agent_id="cf-validator",
+                    session_key=validator_session,
+                    files=files,
+                    prompt=(
+                        self
+                        ._blind_validator_inventory_retry_prompt(
+                            defect,
+                            bundle,
+                            errors,
+                        )
+                    ),
+                    receipt_name=(
+                        f"21-visual-defect-"
+                        f"{defect_index:03d}-"
+                        "validator-blind-format-retry"
+                    ),
+                )
+            )
+
+            errors = (
+                validate_blind_visual_inventory_payload(
+                    inventory
+                )
+            )
+
+        self.save_json(
+            (
+                f"21-visual-defect-{defect_index:03d}-"
+                "blind-inventory.json"
+            ),
+            inventory,
+        )
+
+        return (
+            inventory,
+            errors,
+        )
+
+    def _validator_prompt_with_blind(
+        self,
+        defect: Defect,
+        bundle: str,
+        blind_inventory: dict[str, Any],
+        proposal: dict[str, Any],
+    ) -> str:
+        return (
+            self._validator_prompt(
+                defect,
+                bundle,
+                proposal,
+            )
+            + f"""
+
+IMPORTANT: before seeing the Physical draft, you independently produced this
+blind visual inventory from the same retained images:
+
+{json.dumps(blind_inventory, ensure_ascii=False, separators=(",", ":"), default=str)}
+
+Completeness rules:
+- APPROVED is forbidden unless the blind inventory status is COMPLETE;
+- APPROVED is forbidden if any blind unresolved candidate remains;
+- every blind Opening candidate must be accounted for by the Physical proposal;
+- every blind Service-group candidate must be accounted for by the Physical
+  proposal;
+- blank versus occupied Opening semantics must agree;
+- proposal Opening count must equal blind observed Opening count;
+- proposal Service-group count must equal blind observed Service-group count;
+- if Physical omitted a blind candidate, return REJECTED using
+  MISSED_OPENING, MISSED_SERVICE, WRONG_SERVICE_OPENING_LINK, or another
+  applicable allowed issue code;
+- do not silently discard a candidate merely because its exact service class,
+  material or dimensions remain uncertain.
+
+The blind inventory is an independent completeness baseline, not a human
+reference and not canonical state.
+
+Do not use any human UAT reference fixture.
+"""
+        )
+
+    def _validator_retry_prompt_with_blind(
+        self,
+        defect: Defect,
+        bundle: str,
+        blind_inventory: dict[str, Any],
+        proposal: dict[str, Any],
+        validation_errors: list[str],
+    ) -> str:
+        return (
+            self._validator_prompt_with_blind(
+                defect,
+                bundle,
+                blind_inventory,
+                proposal,
+            )
+            + f"""
+
+Your previous conditioned-validator receipt cannot pass the deterministic
+visual gate.
+
+Receipt errors:
+{json.dumps(validation_errors, ensure_ascii=False, separators=(",", ":"))}
+
+Reinspect the same images. Preserve the independently captured blind inventory
+as the completeness baseline and return exactly one corrected validator JSON
+object only.
+"""
+        )
+
     def _validator_prompt(self, defect: Defect, bundle: str, proposal: dict[str, Any]) -> str:
         issue_codes = sorted(VISUAL_VALIDATOR_ISSUE_CODES)
         return f"""You are the independent cf-validator visual-topology gate for CLASSIFIRE.
@@ -664,11 +933,37 @@ Independent validator receipt:
 {json.dumps(validator, ensure_ascii=False, separators=(",", ":"), default=str)}
 """
 
-    def _visual_gate_cache_key(self, bundle: str, files: list[Path]) -> dict[str, Any]:
-        return {
-            **self._visual_cache_key(bundle, files),
-            "visual_gate_policy_version": VISUAL_GATE_POLICY_VERSION,
+
+    def _visual_gate_cache_key(
+        self,
+        bundle: str,
+        files: list[Path],
+    ) -> dict[str, Any]:
+        key = {
+            **self._visual_cache_key(
+                bundle,
+                files,
+            ),
+            "visual_gate_policy_version":
+                VISUAL_GATE_POLICY_VERSION,
         }
+
+        blind_inventory = getattr(
+            self,
+            "_current_blind_inventory",
+            None,
+        )
+
+        if isinstance(
+            blind_inventory,
+            dict,
+        ):
+            key[
+                "blind_inventory"
+            ] = blind_inventory
+
+        return key
+
 
     def _cached_visual_approved_model(
         self,
@@ -676,26 +971,114 @@ Independent validator receipt:
         bundle: str,
         files: list[Path],
     ) -> dict[str, Any] | None:
-        key_path = self.receipt_dir / f"21-visual-defect-{defect_index:03d}-cache.json"
-        model_path = self.receipt_dir / f"21-visual-defect-{defect_index:03d}-approved-model.json"
-        validator_path = self.receipt_dir / f"21-visual-defect-{defect_index:03d}-approved-validator.json"
-        if not key_path.is_file() or not model_path.is_file() or not validator_path.is_file():
+        blind_inventory = getattr(
+            self,
+            "_current_blind_inventory",
+            None,
+        )
+
+        if not isinstance(
+            blind_inventory,
+            dict,
+        ):
             return None
+
+        key_path = (
+            self.receipt_dir
+            / (
+                f"21-visual-defect-"
+                f"{defect_index:03d}-cache.json"
+            )
+        )
+
+        model_path = (
+            self.receipt_dir
+            / (
+                f"21-visual-defect-"
+                f"{defect_index:03d}-approved-model.json"
+            )
+        )
+
+        validator_path = (
+            self.receipt_dir
+            / (
+                f"21-visual-defect-"
+                f"{defect_index:03d}-approved-validator.json"
+            )
+        )
+
+        if (
+            not key_path.is_file()
+            or not model_path.is_file()
+            or not validator_path.is_file()
+        ):
+            return None
+
         try:
-            key = json.loads(key_path.read_text(encoding="utf-8"))
-            model = json.loads(model_path.read_text(encoding="utf-8"))
-            validator = json.loads(validator_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            key = json.loads(
+                key_path.read_text(
+                    encoding="utf-8"
+                )
+            )
+
+            model = json.loads(
+                model_path.read_text(
+                    encoding="utf-8"
+                )
+            )
+
+            validator = json.loads(
+                validator_path.read_text(
+                    encoding="utf-8"
+                )
+            )
+
+        except (
+            OSError,
+            json.JSONDecodeError,
+        ):
             return None
-        if key != self._visual_gate_cache_key(bundle, files):
+
+        if key != self._visual_gate_cache_key(
+            bundle,
+            files,
+        ):
             return None
-        if str(model.get("status") or "").strip().upper() != "MODEL_SUPPORTED":
+
+        if (
+            str(
+                model.get("status")
+                or ""
+            )
+            .strip()
+            .upper()
+            != "MODEL_SUPPORTED"
+        ):
             return None
-        if _model_completeness_issues(model):
+
+        if _model_completeness_issues(
+            model
+        ):
             return None
-        if not visual_validator_approved(validator, model):
+
+        if blind_inventory_approval_errors(
+            blind_inventory,
+            model,
+        ):
             return None
-        print(f"PASS defect {defect_index} visual gate cache -> retained validator-approved proposal")
+
+        if not visual_validator_approved(
+            validator,
+            model,
+        ):
+            return None
+
+        print(
+            f"PASS defect {defect_index} "
+            "visual gate cache -> retained "
+            "blind-validated proposal"
+        )
+
         return model
 
     @staticmethod
@@ -707,133 +1090,559 @@ Independent validator receipt:
             "services": [],
         }
 
+
     def _synthesise_defect(
         self,
         defect_index: int,
         defect: Defect,
         bundle: str,
     ) -> dict:
-        physical_session, validator_session = self._ensure_visual_sessions()
-        files, manifest = self._visual_files_for_defect(defect_index, defect)
-        self.save_json(f"21-visual-defect-{defect_index:03d}-manifest.json", manifest)
+        (
+            physical_session,
+            validator_session,
+        ) = self._ensure_visual_sessions()
 
-        cached = self._cached_visual_approved_model(defect_index, bundle, files)
+        (
+            files,
+            manifest,
+        ) = self._visual_files_for_defect(
+            defect_index,
+            defect,
+        )
+
+        self.save_json(
+            (
+                f"21-visual-defect-"
+                f"{defect_index:03d}-manifest.json"
+            ),
+            manifest,
+        )
+
+        # -----------------------------------------------------
+        # Pass A:
+        # Validator inventories the images BEFORE seeing any
+        # Physical proposal.
+        # -----------------------------------------------------
+
+        (
+            blind_inventory,
+            blind_errors,
+        ) = self._blind_validator_inventory(
+            defect_index=defect_index,
+            defect=defect,
+            bundle=bundle,
+            files=files,
+            validator_session=validator_session,
+        )
+
+        self._current_blind_inventory = (
+            blind_inventory
+        )
+
+        if blind_errors:
+            self.save_json(
+                (
+                    f"21-visual-defect-"
+                    f"{defect_index:03d}-"
+                    "blind-inventory-invalid.json"
+                ),
+                {
+                    "inventory":
+                        blind_inventory,
+                    "errors":
+                        blind_errors,
+                },
+            )
+
+            return (
+                self._insufficient_from_visual_gate(
+                    "Independent blind validator "
+                    "inventory remained structurally "
+                    "invalid: "
+                    + "; ".join(
+                        blind_errors
+                    )
+                )
+            )
+
+        blind_status = str(
+            blind_inventory.get(
+                "status"
+            )
+            or ""
+        ).strip().upper()
+
+        if (
+            blind_status
+            == BLIND_INVENTORY_BLOCKED
+        ):
+            reasons = (
+                blind_inventory_block_reasons(
+                    blind_inventory
+                )
+            )
+
+            return (
+                self._insufficient_from_visual_gate(
+                    "Independent blind validator "
+                    "inventory BLOCKED: "
+                    + "; ".join(
+                        reasons
+                    )
+                )
+            )
+
+        if (
+            blind_status
+            != BLIND_INVENTORY_COMPLETE
+        ):
+            return (
+                self._insufficient_from_visual_gate(
+                    "Independent blind validator "
+                    "inventory returned unsupported "
+                    f"status {blind_status!r}"
+                )
+            )
+
+        # Policy v2 cache keys include the current blind
+        # inventory. Old v1 approvals cannot be reused.
+        cached = (
+            self._cached_visual_approved_model(
+                defect_index,
+                bundle,
+                files,
+            )
+        )
+
         if cached is not None:
             return cached
 
-        proposal = self._invoke_visual_agent_json(
-            agent_id="cf-physical-model",
-            session_key=physical_session,
-            files=files,
-            prompt=self._physical_visual_prompt(defect, bundle),
-            receipt_name=f"21-visual-defect-{defect_index:03d}-physical-pass-0",
-        )
+        # -----------------------------------------------------
+        # Pass B:
+        # Physical independently builds its proposal.
+        # -----------------------------------------------------
 
-        for correction_pass in range(MAX_VISUAL_CORRECTION_PASSES + 1):
-            status = str(proposal.get("status") or "").strip().upper()
-            completeness = _model_completeness_issues(proposal) if status == "MODEL_SUPPORTED" else []
-            if status != "MODEL_SUPPORTED" or completeness:
-                if correction_pass >= MAX_VISUAL_CORRECTION_PASSES:
-                    reasons = completeness or list(proposal.get("limitations") or []) or [
-                        f"physical visual draft returned status {status or 'MISSING'}"
-                    ]
-                    return self._insufficient_from_visual_gate(*[str(item) for item in reasons])
-                proposal = self._invoke_visual_agent_json(
-                    agent_id="cf-physical-model",
-                    session_key=physical_session,
-                    files=files,
-                    prompt=self._topology_retry_prompt(defect, bundle, proposal, completeness),
-                    receipt_name=(
-                        f"21-visual-defect-{defect_index:03d}-physical-structural-retry-"
-                        f"{correction_pass + 1}"
-                    ),
-                )
-                continue
-
-            validator = self._invoke_visual_agent_json(
-                agent_id="cf-validator",
-                session_key=validator_session,
-                files=files,
-                prompt=self._validator_prompt(defect, bundle, proposal),
-                receipt_name=f"21-visual-defect-{defect_index:03d}-validator-pass-{correction_pass}",
-            )
-            receipt_errors = validate_visual_validator_payload(validator, proposal)
-            if receipt_errors:
-                validator = self._invoke_visual_agent_json(
-                    agent_id="cf-validator",
-                    session_key=validator_session,
-                    files=files,
-                    prompt=self._validator_retry_prompt(defect, bundle, proposal, receipt_errors),
-                    receipt_name=(
-                        f"21-visual-defect-{defect_index:03d}-validator-format-retry-"
-                        f"{correction_pass}"
-                    ),
-                )
-                receipt_errors = validate_visual_validator_payload(validator, proposal)
-                if receipt_errors:
-                    self.save_json(
-                        f"21-visual-defect-{defect_index:03d}-validator-invalid.json",
-                        {"receipt": validator, "errors": receipt_errors},
-                    )
-                    return self._insufficient_from_visual_gate(
-                        "Independent visual-validator receipt remained invalid: "
-                        + "; ".join(receipt_errors)
-                    )
-
-            if visual_validator_approved(validator, proposal):
-                self.save_json(
-                    f"21-visual-defect-{defect_index:03d}-approved-model.json",
-                    proposal,
-                )
-                self.save_json(
-                    f"21-visual-defect-{defect_index:03d}-approved-validator.json",
-                    validator,
-                )
-                self.save_json(
-                    f"21-visual-defect-{defect_index:03d}-cache.json",
-                    self._visual_gate_cache_key(bundle, files),
-                )
-                print(
-                    f"PASS defect {defect_index} independent visual gate -> APPROVED "
-                    f"({len(proposal.get('openings') or [])} openings, "
-                    f"{len(proposal.get('services') or [])} service groups)"
-                )
-                return proposal
-
-            verdict = str(validator.get("verdict") or "").strip().upper()
-            if verdict == "BLOCKED":
-                reasons = [
-                    str(item.get("detail") or item.get("code") or "")
-                    for item in (validator.get("issues") or [])
-                    if isinstance(item, dict)
-                ] + [str(item) for item in (validator.get("limitations") or [])]
-                return self._insufficient_from_visual_gate(
-                    "Independent visual validator BLOCKED: " + "; ".join(item for item in reasons if item)
-                )
-
-            if correction_pass >= MAX_VISUAL_CORRECTION_PASSES:
-                issue_text = "; ".join(
-                    f"{item.get('code')}: {item.get('detail')}"
-                    for item in (validator.get("issues") or [])
-                    if isinstance(item, dict)
-                )
-                return self._insufficient_from_visual_gate(
-                    "Independent visual validator remained REJECTED after bounded corrections: "
-                    + issue_text
-                )
-
-            proposal = self._invoke_visual_agent_json(
+        proposal = (
+            self._invoke_visual_agent_json(
                 agent_id="cf-physical-model",
                 session_key=physical_session,
                 files=files,
-                prompt=self._physical_correction_prompt(defect, bundle, proposal, validator),
+                prompt=(
+                    self._physical_visual_prompt(
+                        defect,
+                        bundle,
+                    )
+                ),
                 receipt_name=(
-                    f"21-visual-defect-{defect_index:03d}-physical-correction-"
-                    f"{correction_pass + 1}"
+                    f"21-visual-defect-"
+                    f"{defect_index:03d}-"
+                    "physical-pass-0"
                 ),
             )
+        )
 
-        return self._insufficient_from_visual_gate("Visual gate exhausted without an approved proposal")
+        for correction_pass in range(
+            MAX_VISUAL_CORRECTION_PASSES
+            + 1
+        ):
+            status = str(
+                proposal.get(
+                    "status"
+                )
+                or ""
+            ).strip().upper()
+
+            completeness = (
+                _model_completeness_issues(
+                    proposal
+                )
+                if status
+                == "MODEL_SUPPORTED"
+                else []
+            )
+
+            if (
+                status
+                != "MODEL_SUPPORTED"
+                or completeness
+            ):
+                if (
+                    correction_pass
+                    >= MAX_VISUAL_CORRECTION_PASSES
+                ):
+                    reasons = (
+                        completeness
+                        or list(
+                            proposal.get(
+                                "limitations"
+                            )
+                            or []
+                        )
+                        or [
+                            "physical visual draft "
+                            "returned status "
+                            f"{status or 'MISSING'}"
+                        ]
+                    )
+
+                    return (
+                        self._insufficient_from_visual_gate(
+                            *[
+                                str(item)
+                                for item
+                                in reasons
+                            ]
+                        )
+                    )
+
+                proposal = (
+                    self._invoke_visual_agent_json(
+                        agent_id=(
+                            "cf-physical-model"
+                        ),
+                        session_key=(
+                            physical_session
+                        ),
+                        files=files,
+                        prompt=(
+                            self._topology_retry_prompt(
+                                defect,
+                                bundle,
+                                proposal,
+                                completeness,
+                            )
+                        ),
+                        receipt_name=(
+                            f"21-visual-defect-"
+                            f"{defect_index:03d}-"
+                            "physical-structural-retry-"
+                            f"{correction_pass + 1}"
+                        ),
+                    )
+                )
+
+                continue
+
+            # -------------------------------------------------
+            # Pass C:
+            # Validator now sees Physical's proposal AND its
+            # own previously saved blind inventory.
+            # -------------------------------------------------
+
+            validator = (
+                self._invoke_visual_agent_json(
+                    agent_id="cf-validator",
+                    session_key=validator_session,
+                    files=files,
+                    prompt=(
+                        self._validator_prompt_with_blind(
+                            defect,
+                            bundle,
+                            blind_inventory,
+                            proposal,
+                        )
+                    ),
+                    receipt_name=(
+                        f"21-visual-defect-"
+                        f"{defect_index:03d}-"
+                        "validator-pass-"
+                        f"{correction_pass}"
+                    ),
+                )
+            )
+
+            receipt_errors = (
+                validate_visual_validator_payload(
+                    validator,
+                    proposal,
+                )
+            )
+
+            if (
+                str(
+                    validator.get(
+                        "verdict"
+                    )
+                    or ""
+                )
+                .strip()
+                .upper()
+                == "APPROVED"
+            ):
+                receipt_errors = list(
+                    dict.fromkeys(
+                        [
+                            *receipt_errors,
+                            *(
+                                blind_inventory_approval_errors(
+                                    blind_inventory,
+                                    proposal,
+                                )
+                            ),
+                        ]
+                    )
+                )
+
+            if receipt_errors:
+                validator = (
+                    self._invoke_visual_agent_json(
+                        agent_id="cf-validator",
+                        session_key=validator_session,
+                        files=files,
+                        prompt=(
+                            self
+                            ._validator_retry_prompt_with_blind(
+                                defect,
+                                bundle,
+                                blind_inventory,
+                                proposal,
+                                receipt_errors,
+                            )
+                        ),
+                        receipt_name=(
+                            f"21-visual-defect-"
+                            f"{defect_index:03d}-"
+                            "validator-format-retry-"
+                            f"{correction_pass}"
+                        ),
+                    )
+                )
+
+                receipt_errors = (
+                    validate_visual_validator_payload(
+                        validator,
+                        proposal,
+                    )
+                )
+
+                if (
+                    str(
+                        validator.get(
+                            "verdict"
+                        )
+                        or ""
+                    )
+                    .strip()
+                    .upper()
+                    == "APPROVED"
+                ):
+                    receipt_errors = list(
+                        dict.fromkeys(
+                            [
+                                *receipt_errors,
+                                *(
+                                    blind_inventory_approval_errors(
+                                        blind_inventory,
+                                        proposal,
+                                    )
+                                ),
+                            ]
+                        )
+                    )
+
+                if receipt_errors:
+                    self.save_json(
+                        (
+                            f"21-visual-defect-"
+                            f"{defect_index:03d}-"
+                            "validator-invalid.json"
+                        ),
+                        {
+                            "receipt":
+                                validator,
+                            "errors":
+                                receipt_errors,
+                            "blind_inventory":
+                                blind_inventory,
+                        },
+                    )
+
+                    return (
+                        self._insufficient_from_visual_gate(
+                            "Independent visual-validator "
+                            "receipt remained invalid: "
+                            + "; ".join(
+                                receipt_errors
+                            )
+                        )
+                    )
+
+            blind_approval_errors = (
+                blind_inventory_approval_errors(
+                    blind_inventory,
+                    proposal,
+                )
+            )
+
+            if (
+                visual_validator_approved(
+                    validator,
+                    proposal,
+                )
+                and not blind_approval_errors
+            ):
+                self.save_json(
+                    (
+                        f"21-visual-defect-"
+                        f"{defect_index:03d}-"
+                        "approved-model.json"
+                    ),
+                    proposal,
+                )
+
+                self.save_json(
+                    (
+                        f"21-visual-defect-"
+                        f"{defect_index:03d}-"
+                        "approved-validator.json"
+                    ),
+                    validator,
+                )
+
+                self.save_json(
+                    (
+                        f"21-visual-defect-"
+                        f"{defect_index:03d}-"
+                        "cache.json"
+                    ),
+                    self._visual_gate_cache_key(
+                        bundle,
+                        files,
+                    ),
+                )
+
+                print(
+                    f"PASS defect {defect_index} "
+                    "blind + independent visual gate "
+                    "-> APPROVED "
+                    f"({len(proposal.get('openings') or [])} "
+                    "openings, "
+                    f"{len(proposal.get('services') or [])} "
+                    "service groups)"
+                )
+
+                return proposal
+
+            verdict = str(
+                validator.get(
+                    "verdict"
+                )
+                or ""
+            ).strip().upper()
+
+            if verdict == "BLOCKED":
+                reasons = [
+                    str(
+                        item.get(
+                            "detail"
+                        )
+                        or item.get(
+                            "code"
+                        )
+                        or ""
+                    )
+                    for item
+                    in (
+                        validator.get(
+                            "issues"
+                        )
+                        or []
+                    )
+                    if isinstance(
+                        item,
+                        dict,
+                    )
+                ] + [
+                    str(item)
+                    for item
+                    in (
+                        validator.get(
+                            "limitations"
+                        )
+                        or []
+                    )
+                ]
+
+                return (
+                    self._insufficient_from_visual_gate(
+                        "Independent visual validator "
+                        "BLOCKED: "
+                        + "; ".join(
+                            item
+                            for item
+                            in reasons
+                            if item
+                        )
+                    )
+                )
+
+            if (
+                correction_pass
+                >= MAX_VISUAL_CORRECTION_PASSES
+            ):
+                issue_text = "; ".join(
+                    (
+                        f"{item.get('code')}: "
+                        f"{item.get('detail')}"
+                    )
+                    for item
+                    in (
+                        validator.get(
+                            "issues"
+                        )
+                        or []
+                    )
+                    if isinstance(
+                        item,
+                        dict,
+                    )
+                )
+
+                if (
+                    not issue_text
+                    and blind_approval_errors
+                ):
+                    issue_text = "; ".join(
+                        blind_approval_errors
+                    )
+
+                return (
+                    self._insufficient_from_visual_gate(
+                        "Independent visual validator "
+                        "remained REJECTED after "
+                        "bounded corrections: "
+                        + issue_text
+                    )
+                )
+
+            proposal = (
+                self._invoke_visual_agent_json(
+                    agent_id="cf-physical-model",
+                    session_key=physical_session,
+                    files=files,
+                    prompt=(
+                        self._physical_correction_prompt(
+                            defect,
+                            bundle,
+                            proposal,
+                            validator,
+                        )
+                    ),
+                    receipt_name=(
+                        f"21-visual-defect-"
+                        f"{defect_index:03d}-"
+                        "physical-correction-"
+                        f"{correction_pass + 1}"
+                    ),
+                )
+            )
+
+        return (
+            self._insufficient_from_visual_gate(
+                "Visual gate exhausted without "
+                "an approved proposal"
+            )
+        )
 
 
 def main() -> int:
