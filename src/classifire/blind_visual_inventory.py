@@ -2,10 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from classifire.services.physical_scope import (
-    is_blank_opening_type,
-)
-
 
 BLIND_INVENTORY_COMPLETE = "COMPLETE"
 BLIND_INVENTORY_BLOCKED = "BLOCKED"
@@ -459,51 +455,201 @@ def validate_blind_visual_inventory_payload(
         )
     )
 
+BLIND_RECONCILIATION_DISPOSITIONS = frozenset(
+    {
+        "ACCOUNTED_FOR",
+        "DUPLICATE_OR_SAME_ITEM",
+        "NOT_TOPOLOGY",
+        "RESOLVED_NONSTRUCTURAL",
+        "UNRESOLVED",
+    }
+)
 
-def _proposal_blank_opening_count(
+
+def _blind_observation_rows(
+    inventory: dict[str, Any],
+) -> list[tuple[str, str]]:
+    rows: list[tuple[str, str]] = []
+
+    openings = inventory.get(
+        "candidate_openings"
+    )
+
+    if isinstance(openings, list):
+        for item in openings:
+            if not isinstance(item, dict):
+                continue
+
+            candidate_id = str(
+                item.get("candidate_id")
+                or ""
+            ).strip()
+
+            if candidate_id:
+                rows.append(
+                    (
+                        candidate_id,
+                        "opening",
+                    )
+                )
+
+    services = inventory.get(
+        "candidate_services"
+    )
+
+    if isinstance(services, list):
+        for item in services:
+            if not isinstance(item, dict):
+                continue
+
+            candidate_id = str(
+                item.get("candidate_id")
+                or ""
+            ).strip()
+
+            if candidate_id:
+                rows.append(
+                    (
+                        candidate_id,
+                        "service",
+                    )
+                )
+
+    unresolved = inventory.get(
+        "unresolved_candidates"
+    )
+
+    if isinstance(unresolved, list):
+        for index, item in enumerate(
+            unresolved,
+            start=1,
+        ):
+            if not isinstance(item, dict):
+                continue
+
+            candidate_id = str(
+                item.get("candidate_id")
+                or ""
+            ).strip()
+
+            if not candidate_id:
+                candidate_id = (
+                    f"V-U-{index:03d}"
+                )
+
+            kind = str(
+                item.get("kind")
+                or "unknown"
+            ).strip().lower()
+
+            rows.append(
+                (
+                    candidate_id,
+                    f"unresolved:{kind}",
+                )
+            )
+
+    limitations = inventory.get(
+        "limitations"
+    )
+
+    if isinstance(limitations, list):
+        for index, item in enumerate(
+            limitations,
+            start=1,
+        ):
+            if (
+                isinstance(item, str)
+                and item.strip()
+            ):
+                rows.append(
+                    (
+                        f"V-L-{index:03d}",
+                        "limitation",
+                    )
+                )
+
+    return rows
+
+
+def blind_observation_catalog(
+    inventory: dict[str, Any],
+) -> dict[str, str]:
+    """Return the IDs that the conditioned Validator must reconcile."""
+
+    return {
+        candidate_id: kind
+        for candidate_id, kind
+        in _blind_observation_rows(
+            inventory
+        )
+    }
+
+
+def _proposal_reference_sets(
     proposal: dict[str, Any],
-) -> int:
+) -> tuple[set[str], set[str]]:
+    opening_refs: set[str] = set()
+    service_refs: set[str] = set()
+
     openings = proposal.get(
         "openings"
     )
 
-    if not isinstance(
-        openings,
-        list,
-    ):
-        return -1
+    if isinstance(openings, list):
+        for item in openings:
+            if not isinstance(item, dict):
+                continue
 
-    count = 0
+            code = str(
+                item.get("opening_code")
+                or ""
+            ).strip()
 
-    for opening in openings:
-        if not isinstance(
-            opening,
-            dict,
-        ):
-            continue
+            if code:
+                opening_refs.add(
+                    code
+                )
 
-        opening_type = str(
-            opening.get(
-                "opening_type"
-            )
-            or ""
-        )
+    services = proposal.get(
+        "services"
+    )
 
-        if is_blank_opening_type(
-            opening_type
-        ):
-            count += 1
+    if isinstance(services, list):
+        for item in services:
+            if not isinstance(item, dict):
+                continue
 
-    return count
+            code = str(
+                item.get("service_code")
+                or ""
+            ).strip()
+
+            if code:
+                service_refs.add(
+                    code
+                )
+
+    return (
+        opening_refs,
+        service_refs,
+    )
 
 
-def blind_inventory_approval_errors(
+def validate_blind_reconciliation_payload(
     inventory: dict[str, Any],
     proposal: dict[str, Any],
+    validator: dict[str, Any],
 ) -> list[str]:
-    """Return reasons a proposal cannot pass the blind gate."""
+    """
+    Validate the v3 blind-observation reconciliation ledger.
 
-    errors = [
+    Raw blind counts are deliberately NOT required to equal Physical counts.
+    Approval instead requires every independent blind observation to receive
+    exactly one evidence-backed disposition, with no UNRESOLVED disposition.
+    """
+
+    errors: list[str] = [
         "blind inventory invalid: " + item
         for item in (
             validate_blind_visual_inventory_payload(
@@ -512,204 +658,423 @@ def blind_inventory_approval_errors(
         )
     ]
 
-    status = str(
-        inventory.get("status") or ""
-    ).strip().upper()
-
-    if status != BLIND_INVENTORY_COMPLETE:
-        errors.append(
-            "APPROVED validator requires a COMPLETE "
-            "blind inventory"
+    observation_rows = (
+        _blind_observation_rows(
+            inventory
         )
-
-    unresolved = inventory.get(
-        "unresolved_candidates"
     )
 
-    if (
-        isinstance(
-            unresolved,
-            list,
-        )
-        and unresolved
-    ):
-        errors.append(
-            "APPROVED validator cannot leave blind "
-            "inventory candidates unresolved"
-        )
+    observation_catalog: dict[
+        str,
+        str,
+    ] = {}
 
-    proposal_openings = proposal.get(
-        "openings"
+    for candidate_id, kind in observation_rows:
+        if candidate_id in observation_catalog:
+            errors.append(
+                "duplicate blind observation id "
+                + candidate_id
+            )
+            continue
+
+        observation_catalog[
+            candidate_id
+        ] = kind
+
+    opening_refs, service_refs = (
+        _proposal_reference_sets(
+            proposal
+        )
     )
 
-    proposal_services = proposal.get(
-        "services"
+    all_proposal_refs = (
+        opening_refs
+        | service_refs
     )
 
-    if not isinstance(
-        proposal_openings,
-        list,
-    ):
-        errors.append(
-            "proposal openings must be an array"
-        )
-        proposal_opening_count = -1
-    else:
-        proposal_opening_count = len(
-            proposal_openings
-        )
-
-    if not isinstance(
-        proposal_services,
-        list,
-    ):
-        errors.append(
-            "proposal services must be an array"
-        )
-        proposal_service_count = -1
-    else:
-        proposal_service_count = len(
-            proposal_services
-        )
-
-    inventory_opening_count = inventory.get(
-        "observed_opening_count"
+    ledger = validator.get(
+        "blind_reconciliation"
     )
 
-    inventory_service_count = inventory.get(
-        "observed_service_group_count"
-    )
-
-    if (
-        _non_negative_int(
-            inventory_opening_count
-        )
-        and proposal_opening_count >= 0
-        and inventory_opening_count
-        != proposal_opening_count
-    ):
+    if not isinstance(ledger, list):
         errors.append(
-            "blind inventory / proposal Opening count "
-            "contradiction: "
-            f"blind={inventory_opening_count}, "
-            f"proposal={proposal_opening_count}"
+            "blind_reconciliation must be an array"
         )
 
-    if (
-        _non_negative_int(
-            inventory_service_count
-        )
-        and proposal_service_count >= 0
-        and inventory_service_count
-        != proposal_service_count
-    ):
-        errors.append(
-            "blind inventory / proposal Service-group count "
-            "contradiction: "
-            f"blind={inventory_service_count}, "
-            f"proposal={proposal_service_count}"
-        )
-
-    blind_openings = inventory.get(
-        "candidate_openings"
-    )
-
-    if (
-        isinstance(
-            blind_openings,
-            list,
-        )
-        and proposal_opening_count >= 0
-    ):
-        blind_blank_count = sum(
-            1
-            for opening in blind_openings
-            if (
-                isinstance(
-                    opening,
-                    dict,
-                )
-                and opening.get("blank")
-                is True
+        return list(
+            dict.fromkeys(
+                errors
             )
         )
 
-        proposal_blank_count = (
-            _proposal_blank_opening_count(
-                proposal
+    seen: set[str] = set()
+    dispositions: dict[str, str] = {}
+
+    mapped_claims: dict[
+        tuple[str, str],
+        list[tuple[str, str]],
+    ] = {}
+
+    mapped_dispositions = {
+        "ACCOUNTED_FOR",
+        "DUPLICATE_OR_SAME_ITEM",
+    }
+
+    no_ref_dispositions = {
+        "NOT_TOPOLOGY",
+        "RESOLVED_NONSTRUCTURAL",
+    }
+
+    for index, item in enumerate(
+        ledger,
+        start=1,
+    ):
+        if not isinstance(item, dict):
+            errors.append(
+                f"blind reconciliation {index} "
+                "is not an object"
             )
+            continue
+
+        candidate_id = str(
+            item.get(
+                "blind_candidate_id"
+            )
+            or ""
+        ).strip()
+
+        if not candidate_id:
+            errors.append(
+                f"blind reconciliation {index} "
+                "has no blind_candidate_id"
+            )
+            continue
+
+        if candidate_id not in observation_catalog:
+            errors.append(
+                f"blind reconciliation {index} "
+                f"references unknown observation "
+                f"{candidate_id}"
+            )
+            continue
+
+        if candidate_id in seen:
+            errors.append(
+                "blind observation reconciled "
+                f"more than once: {candidate_id}"
+            )
+            continue
+
+        seen.add(
+            candidate_id
         )
+
+        disposition = str(
+            item.get(
+                "disposition"
+            )
+            or ""
+        ).strip().upper()
 
         if (
-            proposal_blank_count >= 0
-            and blind_blank_count
-            != proposal_blank_count
+            disposition
+            not in BLIND_RECONCILIATION_DISPOSITIONS
         ):
             errors.append(
-                "blind inventory / proposal blank-Opening "
-                "count contradiction: "
-                f"blind={blind_blank_count}, "
-                f"proposal={proposal_blank_count}"
+                f"blind reconciliation {index} "
+                f"has unsupported disposition "
+                f"{disposition!r}"
+            )
+            continue
+
+        dispositions[
+            candidate_id
+        ] = disposition
+
+        detail = str(
+            item.get("detail")
+            or ""
+        ).strip()
+
+        if not detail:
+            errors.append(
+                f"blind reconciliation {index} "
+                "has no detail"
+            )
+
+        if not _non_empty_string_list(
+            item.get(
+                "evidence_refs"
+            )
+        ):
+            errors.append(
+                f"blind reconciliation {index} "
+                "must have evidence_refs"
+            )
+
+        raw_refs = item.get(
+            "proposal_refs"
+        )
+
+        if not isinstance(raw_refs, list):
+            errors.append(
+                f"blind reconciliation {index} "
+                "proposal_refs must be an array"
+            )
+            refs: list[str] = []
+        else:
+            refs = []
+
+            for raw_ref in raw_refs:
+                if (
+                    not isinstance(
+                        raw_ref,
+                        str,
+                    )
+                    or not raw_ref.strip()
+                ):
+                    errors.append(
+                        f"blind reconciliation {index} "
+                        "contains an invalid proposal_ref"
+                    )
+                    continue
+
+                ref = raw_ref.strip()
+
+                if ref in refs:
+                    errors.append(
+                        f"blind reconciliation {index} "
+                        f"repeats proposal_ref {ref}"
+                    )
+                    continue
+
+                refs.append(
+                    ref
+                )
+
+                if ref not in all_proposal_refs:
+                    errors.append(
+                        f"blind reconciliation {index} "
+                        f"references unknown proposal item "
+                        f"{ref}"
+                    )
+
+        kind = observation_catalog[
+            candidate_id
+        ]
+
+        if (
+            disposition
+            in mapped_dispositions
+            and not refs
+        ):
+            errors.append(
+                f"{candidate_id} disposition "
+                f"{disposition} requires proposal_refs"
+            )
+
+        if (
+            disposition
+            in no_ref_dispositions
+            and refs
+        ):
+            errors.append(
+                f"{candidate_id} disposition "
+                f"{disposition} cannot have proposal_refs"
+            )
+
+        if (
+            disposition
+            == "RESOLVED_NONSTRUCTURAL"
+            and kind
+            not in {
+                "unresolved:barrier",
+                "unresolved:classification",
+                "unresolved:photo_relationship",
+                "limitation",
+            }
+        ):
+            errors.append(
+                f"{candidate_id} cannot use "
+                "RESOLVED_NONSTRUCTURAL for "
+                f"observation kind {kind}"
+            )
+
+        if disposition in mapped_dispositions:
+            if kind in {
+                "opening",
+                "unresolved:opening",
+            }:
+                invalid = [
+                    ref
+                    for ref in refs
+                    if ref not in opening_refs
+                ]
+
+                if invalid:
+                    errors.append(
+                        f"{candidate_id} Opening observation "
+                        "must map only to proposal Openings"
+                    )
+
+            elif kind in {
+                "service",
+                "unresolved:service",
+            }:
+                invalid = [
+                    ref
+                    for ref in refs
+                    if ref not in service_refs
+                ]
+
+                if invalid:
+                    errors.append(
+                        f"{candidate_id} Service observation "
+                        "must map only to proposal Services"
+                    )
+
+            elif kind == "unresolved:link":
+                has_opening = any(
+                    ref in opening_refs
+                    for ref in refs
+                )
+
+                has_service = any(
+                    ref in service_refs
+                    for ref in refs
+                )
+
+                if not (
+                    has_opening
+                    and has_service
+                ):
+                    errors.append(
+                        f"{candidate_id} link observation "
+                        "must map to at least one proposal "
+                        "Opening and one proposal Service"
+                    )
+
+        if (
+            kind in {
+                "opening",
+                "service",
+            }
+            and disposition
+            in mapped_dispositions
+        ):
+            for ref in refs:
+                if (
+                    kind == "opening"
+                    and ref not in opening_refs
+                ):
+                    continue
+
+                if (
+                    kind == "service"
+                    and ref not in service_refs
+                ):
+                    continue
+
+                mapped_claims.setdefault(
+                    (
+                        kind,
+                        ref,
+                    ),
+                    [],
+                ).append(
+                    (
+                        candidate_id,
+                        disposition,
+                    )
+                )
+
+    expected_ids = set(
+        observation_catalog
+    )
+
+    missing_ids = sorted(
+        expected_ids
+        - seen
+    )
+
+    for candidate_id in missing_ids:
+        errors.append(
+            "blind observation has no reconciliation: "
+            + candidate_id
+        )
+
+    for (
+        kind,
+        proposal_ref,
+    ), claims in mapped_claims.items():
+        if len(claims) <= 1:
+            continue
+
+        accounted = [
+            candidate_id
+            for (
+                candidate_id,
+                disposition,
+            )
+            in claims
+            if disposition
+            == "ACCOUNTED_FOR"
+        ]
+
+        duplicates = [
+            candidate_id
+            for (
+                candidate_id,
+                disposition,
+            )
+            in claims
+            if disposition
+            == "DUPLICATE_OR_SAME_ITEM"
+        ]
+
+        if (
+            len(accounted) != 1
+            or (
+                len(accounted)
+                + len(duplicates)
+                != len(claims)
+            )
+        ):
+            errors.append(
+                f"multiple blind {kind} observations "
+                f"map to {proposal_ref}; exactly one must "
+                "be ACCOUNTED_FOR and the others must be "
+                "DUPLICATE_OR_SAME_ITEM"
+            )
+
+    verdict = str(
+        validator.get("verdict")
+        or ""
+    ).strip().upper()
+
+    if verdict == "APPROVED":
+        unresolved_ids = sorted(
+            candidate_id
+            for (
+                candidate_id,
+                disposition,
+            )
+            in dispositions.items()
+            if disposition
+            == "UNRESOLVED"
+        )
+
+        if unresolved_ids:
+            errors.append(
+                "APPROVED validator cannot leave blind "
+                "observations UNRESOLVED: "
+                + ", ".join(
+                    unresolved_ids
+                )
             )
 
     return list(
         dict.fromkeys(
             errors
-        )
-    )
-
-
-def blind_inventory_block_reasons(
-    inventory: dict[str, Any],
-) -> list[str]:
-    reasons: list[str] = []
-
-    unresolved = inventory.get(
-        "unresolved_candidates"
-    )
-
-    if isinstance(
-        unresolved,
-        list,
-    ):
-        for item in unresolved:
-            if not isinstance(
-                item,
-                dict,
-            ):
-                continue
-
-            detail = str(
-                item.get("detail") or ""
-            ).strip()
-
-            if detail:
-                reasons.append(
-                    detail
-                )
-
-    limitations = inventory.get(
-        "limitations"
-    )
-
-    if isinstance(
-        limitations,
-        list,
-    ):
-        reasons.extend(
-            str(item).strip()
-            for item in limitations
-            if str(item).strip()
-        )
-
-    if not reasons:
-        reasons.append(
-            "blind validator could not establish a "
-            "complete physical inventory"
-        )
-
-    return list(
-        dict.fromkeys(
-            reasons
         )
     )

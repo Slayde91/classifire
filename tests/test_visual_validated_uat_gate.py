@@ -47,11 +47,43 @@ def _proposal() -> dict:
 
 def _approved() -> dict:
     return {
-        "verdict": "APPROVED",
-        "observed_opening_count": 1,
-        "observed_service_group_count": 1,
-        "issues": [],
-        "limitations": [],
+        "verdict":
+            "APPROVED",
+        "observed_opening_count":
+            1,
+        "observed_service_group_count":
+            1,
+        "issues":
+            [],
+        "limitations":
+            [],
+        "blind_reconciliation":
+            [
+                {
+                    "blind_candidate_id":
+                        "V-O-001",
+                    "disposition":
+                        "ACCOUNTED_FOR",
+                    "proposal_refs":
+                        ["O-A"],
+                    "detail":
+                        "blind Opening corresponds to O-A",
+                    "evidence_refs":
+                        ["photo-a.png"],
+                },
+                {
+                    "blind_candidate_id":
+                        "V-S-001",
+                    "disposition":
+                        "ACCOUNTED_FOR",
+                    "proposal_refs":
+                        ["S-A"],
+                    "detail":
+                        "blind Service corresponds to S-A",
+                    "evidence_refs":
+                        ["photo-a.png"],
+                },
+            ],
     }
 
 

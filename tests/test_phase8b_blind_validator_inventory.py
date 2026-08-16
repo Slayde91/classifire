@@ -23,7 +23,8 @@ if str(SCRIPTS_DIR) not in sys.path:
 from classifire.blind_visual_inventory import (  # noqa: E402
     BLIND_INVENTORY_BLOCKED,
     BLIND_INVENTORY_COMPLETE,
-    blind_inventory_approval_errors,
+    blind_observation_catalog,
+    validate_blind_reconciliation_payload,
     validate_blind_visual_inventory_payload,
 )
 from run_classifire_real_uat_fireseals_visualvalidated import (  # noqa: E402
@@ -280,140 +281,14 @@ def test_unknown_opening_link_is_invalid() -> None:
     )
 
 
-def test_blind_service_count_mismatch_blocks_approval() -> None:
-    inventory = _inventory(
-        opening_count=1,
-        service_count=3,
-    )
-
-    proposal = _proposal(
-        opening_count=1,
-        service_count=2,
-    )
-
-    errors = (
-        blind_inventory_approval_errors(
-            inventory,
-            proposal,
-        )
-    )
-
-    assert any(
-        (
-            "Service-group count contradiction"
-            in error
-        )
-        for error in errors
-    )
 
 
-def test_blind_opening_count_mismatch_blocks_approval() -> None:
-    inventory = _inventory(
-        opening_count=2,
-        service_count=2,
-    )
-
-    proposal = _proposal(
-        opening_count=1,
-        service_count=2,
-    )
-
-    errors = (
-        blind_inventory_approval_errors(
-            inventory,
-            proposal,
-        )
-    )
-
-    assert any(
-        (
-            "Opening count contradiction"
-            in error
-        )
-        for error in errors
-    )
 
 
-def test_blind_blank_opening_mismatch_blocks_approval() -> None:
-    inventory = _inventory(
-        opening_count=2,
-        service_count=1,
-        blank=True,
-    )
-
-    proposal = _proposal(
-        opening_count=2,
-        service_count=1,
-        blank=False,
-    )
-
-    errors = (
-        blind_inventory_approval_errors(
-            inventory,
-            proposal,
-        )
-    )
-
-    assert any(
-        (
-            "blank-Opening count contradiction"
-            in error
-        )
-        for error in errors
-    )
 
 
-def test_matching_complete_blind_inventory_allows_comparison() -> None:
-    inventory = _inventory(
-        opening_count=2,
-        service_count=3,
-    )
-
-    proposal = _proposal(
-        opening_count=2,
-        service_count=3,
-    )
-
-    assert (
-        blind_inventory_approval_errors(
-            inventory,
-            proposal,
-        )
-        == []
-    )
 
 
-def test_blocked_blind_inventory_cannot_be_approved() -> None:
-    inventory = _inventory(
-        status=BLIND_INVENTORY_BLOCKED,
-        unresolved=[
-            {
-                "kind":
-                    "service",
-                "detail":
-                    "possible additional service",
-                "evidence_refs":
-                    ["P001-I02"],
-            }
-        ],
-    )
-
-    proposal = _proposal()
-
-    errors = (
-        blind_inventory_approval_errors(
-            inventory,
-            proposal,
-        )
-    )
-
-    assert any(
-        (
-            "requires a COMPLETE blind inventory"
-            in error
-        )
-        for error in errors
-    )
 
 
 def test_blind_prompt_has_no_physical_proposal_or_human_fixture() -> None:
@@ -479,8 +354,18 @@ def test_blind_inventory_runs_before_physical_draft() -> None:
     )
 
     assert (
-        "blind_inventory_approval_errors("
+        "validate_blind_reconciliation_payload("
         in source
+    )
+
+    assert (
+        "blind_inventory_approval_errors("
+        not in source
+    )
+
+    assert (
+        "blind_inventory_block_reasons("
+        not in source
     )
 
 
@@ -521,10 +406,10 @@ def test_blind_inventory_is_part_of_visual_cache_key() -> None:
     )
 
 
-def test_visual_policy_version_invalidates_v1_cache() -> None:
+def test_visual_policy_version_invalidates_v2_cache() -> None:
     assert (
         VISUAL_GATE_POLICY_VERSION
-        == "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v2"
+        == "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v3"
     )
 
 
@@ -656,4 +541,480 @@ def test_visual_sessions_are_fresh_per_controller_execution() -> None:
     assert (
         second_keys
         != first_keys
+    )
+
+def _ledger_entry(
+    blind_candidate_id: str,
+    disposition: str,
+    proposal_refs: list[str],
+) -> dict:
+    return {
+        "blind_candidate_id":
+            blind_candidate_id,
+        "disposition":
+            disposition,
+        "proposal_refs":
+            proposal_refs,
+        "detail":
+            "evidence-backed reconciliation",
+        "evidence_refs":
+            ["P001-I01"],
+    }
+
+
+def _validator_receipt(
+    proposal: dict,
+    ledger: list[dict],
+) -> dict:
+    return {
+        "verdict":
+            "APPROVED",
+        "observed_opening_count":
+            len(
+                proposal.get(
+                    "openings"
+                )
+                or []
+            ),
+        "observed_service_group_count":
+            len(
+                proposal.get(
+                    "services"
+                )
+                or []
+            ),
+        "issues":
+            [],
+        "limitations":
+            [],
+        "blind_reconciliation":
+            ledger,
+    }
+
+
+def test_v3_blocked_blind_inventory_can_be_reconciled_with_different_counts() -> None:
+    inventory = _inventory(
+        opening_count=2,
+        service_count=3,
+        status=BLIND_INVENTORY_BLOCKED,
+        unresolved=[
+            {
+                "candidate_id":
+                    "V-U-001",
+                "kind":
+                    "opening",
+                "detail":
+                    "possible shadow or additional opening",
+                "evidence_refs":
+                    ["P001-I02"],
+            }
+        ],
+    )
+
+    proposal = _proposal(
+        opening_count=1,
+        service_count=2,
+    )
+
+    validator = _validator_receipt(
+        proposal,
+        [
+            _ledger_entry(
+                "V-O-001",
+                "ACCOUNTED_FOR",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-O-002",
+                "DUPLICATE_OR_SAME_ITEM",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-S-001",
+                "ACCOUNTED_FOR",
+                ["D-S-001"],
+            ),
+            _ledger_entry(
+                "V-S-002",
+                "ACCOUNTED_FOR",
+                ["D-S-002"],
+            ),
+            _ledger_entry(
+                "V-S-003",
+                "DUPLICATE_OR_SAME_ITEM",
+                ["D-S-002"],
+            ),
+            _ledger_entry(
+                "V-U-001",
+                "NOT_TOPOLOGY",
+                [],
+            ),
+        ],
+    )
+
+    assert (
+        validate_blind_reconciliation_payload(
+            inventory,
+            proposal,
+            validator,
+        )
+        == []
+    )
+
+
+def test_v3_blind_undercount_does_not_force_physical_to_undercount() -> None:
+    inventory = _inventory(
+        opening_count=1,
+        service_count=1,
+    )
+
+    proposal = _proposal(
+        opening_count=2,
+        service_count=3,
+    )
+
+    validator = _validator_receipt(
+        proposal,
+        [
+            _ledger_entry(
+                "V-O-001",
+                "ACCOUNTED_FOR",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-S-001",
+                "ACCOUNTED_FOR",
+                ["D-S-001"],
+            ),
+        ],
+    )
+
+    assert (
+        validate_blind_reconciliation_payload(
+            inventory,
+            proposal,
+            validator,
+        )
+        == []
+    )
+
+
+def test_v3_missing_blind_disposition_blocks_approval() -> None:
+    inventory = _inventory(
+        opening_count=1,
+        service_count=2,
+    )
+
+    proposal = _proposal(
+        opening_count=1,
+        service_count=2,
+    )
+
+    validator = _validator_receipt(
+        proposal,
+        [
+            _ledger_entry(
+                "V-O-001",
+                "ACCOUNTED_FOR",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-S-001",
+                "ACCOUNTED_FOR",
+                ["D-S-001"],
+            ),
+        ],
+    )
+
+    errors = (
+        validate_blind_reconciliation_payload(
+            inventory,
+            proposal,
+            validator,
+        )
+    )
+
+    assert any(
+        (
+            "V-S-002"
+            in error
+            and "no reconciliation"
+            in error
+        )
+        for error in errors
+    )
+
+
+def test_v3_unresolved_disposition_blocks_approved_validator() -> None:
+    inventory = _inventory(
+        opening_count=1,
+        service_count=1,
+    )
+
+    proposal = _proposal(
+        opening_count=1,
+        service_count=1,
+    )
+
+    validator = _validator_receipt(
+        proposal,
+        [
+            _ledger_entry(
+                "V-O-001",
+                "ACCOUNTED_FOR",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-S-001",
+                "UNRESOLVED",
+                [],
+            ),
+        ],
+    )
+
+    errors = (
+        validate_blind_reconciliation_payload(
+            inventory,
+            proposal,
+            validator,
+        )
+    )
+
+    assert any(
+        (
+            "cannot leave blind observations UNRESOLVED"
+            in error
+        )
+        for error in errors
+    )
+
+
+def test_v3_unknown_proposal_reference_blocks_approval() -> None:
+    inventory = _inventory(
+        opening_count=1,
+        service_count=1,
+    )
+
+    proposal = _proposal(
+        opening_count=1,
+        service_count=1,
+    )
+
+    validator = _validator_receipt(
+        proposal,
+        [
+            _ledger_entry(
+                "V-O-001",
+                "ACCOUNTED_FOR",
+                ["D-O-NOT-REAL"],
+            ),
+            _ledger_entry(
+                "V-S-001",
+                "ACCOUNTED_FOR",
+                ["D-S-001"],
+            ),
+        ],
+    )
+
+    errors = (
+        validate_blind_reconciliation_payload(
+            inventory,
+            proposal,
+            validator,
+        )
+    )
+
+    assert any(
+        (
+            "unknown proposal item"
+            in error
+        )
+        for error in errors
+    )
+
+
+def test_v3_duplicate_collapse_requires_explicit_duplicate_disposition() -> None:
+    inventory = _inventory(
+        opening_count=2,
+        service_count=2,
+    )
+
+    proposal = _proposal(
+        opening_count=1,
+        service_count=2,
+    )
+
+    bad_validator = _validator_receipt(
+        proposal,
+        [
+            _ledger_entry(
+                "V-O-001",
+                "ACCOUNTED_FOR",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-O-002",
+                "ACCOUNTED_FOR",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-S-001",
+                "ACCOUNTED_FOR",
+                ["D-S-001"],
+            ),
+            _ledger_entry(
+                "V-S-002",
+                "ACCOUNTED_FOR",
+                ["D-S-002"],
+            ),
+        ],
+    )
+
+    bad_errors = (
+        validate_blind_reconciliation_payload(
+            inventory,
+            proposal,
+            bad_validator,
+        )
+    )
+
+    assert any(
+        (
+            "exactly one must be ACCOUNTED_FOR"
+            in error
+        )
+        for error in bad_errors
+    )
+
+    good_validator = _validator_receipt(
+        proposal,
+        [
+            _ledger_entry(
+                "V-O-001",
+                "ACCOUNTED_FOR",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-O-002",
+                "DUPLICATE_OR_SAME_ITEM",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-S-001",
+                "ACCOUNTED_FOR",
+                ["D-S-001"],
+            ),
+            _ledger_entry(
+                "V-S-002",
+                "ACCOUNTED_FOR",
+                ["D-S-002"],
+            ),
+        ],
+    )
+
+    assert (
+        validate_blind_reconciliation_payload(
+            inventory,
+            proposal,
+            good_validator,
+        )
+        == []
+    )
+
+
+def test_v3_nonstructural_classification_uncertainty_can_be_resolved() -> None:
+    inventory = _inventory(
+        opening_count=1,
+        service_count=1,
+        status=BLIND_INVENTORY_BLOCKED,
+        unresolved=[
+            {
+                "candidate_id":
+                    "V-U-001",
+                "kind":
+                    "classification",
+                "detail":
+                    "pipe versus conduit classification",
+                "evidence_refs":
+                    ["P001-I02"],
+            }
+        ],
+    )
+
+    proposal = _proposal(
+        opening_count=1,
+        service_count=1,
+    )
+
+    validator = _validator_receipt(
+        proposal,
+        [
+            _ledger_entry(
+                "V-O-001",
+                "ACCOUNTED_FOR",
+                ["D-O-001"],
+            ),
+            _ledger_entry(
+                "V-S-001",
+                "ACCOUNTED_FOR",
+                ["D-S-001"],
+            ),
+            _ledger_entry(
+                "V-U-001",
+                "RESOLVED_NONSTRUCTURAL",
+                [],
+            ),
+        ],
+    )
+
+    assert (
+        validate_blind_reconciliation_payload(
+            inventory,
+            proposal,
+            validator,
+        )
+        == []
+    )
+
+
+def test_v3_observation_catalog_includes_limitations() -> None:
+    inventory = _inventory()
+
+    inventory[
+        "limitations"
+    ] = [
+        "image crop prevents dimensional confirmation"
+    ]
+
+    catalog = (
+        blind_observation_catalog(
+            inventory
+        )
+    )
+
+    assert (
+        catalog["V-L-001"]
+        == "limitation"
+    )
+
+
+def test_v3_blocked_inventory_no_longer_short_circuits_physical() -> None:
+    source = inspect.getsource(
+        VisualValidatedTopologyController
+        ._synthesise_defect
+    )
+
+    assert (
+        "BLIND_INVENTORY_BLOCKED"
+        not in source
+    )
+
+    assert (
+        "blind_inventory_block_reasons"
+        not in source
+    )
+
+    assert (
+        "Policy v3"
+        in source
     )

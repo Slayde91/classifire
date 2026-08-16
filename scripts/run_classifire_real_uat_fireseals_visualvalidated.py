@@ -16,10 +16,8 @@ import httpx
 
 from classifire.canonical_models import Defect
 from classifire.blind_visual_inventory import (
-    BLIND_INVENTORY_BLOCKED,
-    BLIND_INVENTORY_COMPLETE,
-    blind_inventory_approval_errors,
-    blind_inventory_block_reasons,
+    blind_observation_catalog,
+    validate_blind_reconciliation_payload,
     validate_blind_visual_inventory_payload,
 )
 from classifire.visual_validation import (
@@ -33,7 +31,7 @@ from run_classifire_real_uat_fireseals_topologyaware import TopologyAwareFireSea
 from run_classifire_real_uat_intake import load_receipt, parse_json_envelope, repo_root
 
 
-VISUAL_GATE_POLICY_VERSION = "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v2"
+VISUAL_GATE_POLICY_VERSION = "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v3"
 MAX_VISUAL_CORRECTION_PASSES = 2
 OPENRESPONSES_BASE_URL = "http://127.0.0.1:18789"
 OPENRESPONSES_TIMEOUT_SECONDS = 300.0
@@ -644,13 +642,15 @@ Policy: {VISUAL_GATE_POLICY_VERSION}.
         bundle: str,
     ) -> str:
         return f"""
-You are the independent cf-validator BLIND visual-inventory pass for CLASSIFIRE.
+You are the independent cf-validator BLIND visual-observation pass for CLASSIFIRE.
 
 You have NOT been shown any cf-physical-model proposal for this defect.
 Inspect ALL supplied retained images together before making any conclusion.
-Produce your own complete candidate inventory of physical Openings and Service
-GROUPS. Do not try to agree with a draft; no Physical draft is available in
-this pass.
+
+Your job in this pass is to preserve independent observations and possible
+topology challenges. You are NOT the final topology authority. Physical will
+later build an independent proposal, after which you will reconcile these
+observations against it.
 
 Do not call any OpenClaw or CLASSIFIRE tool during this visual inference turn.
 Use only the supplied retained images and the direct evidence already present
@@ -662,22 +662,18 @@ Defect:
 Direct evidence bundle (secondary to the actual images):
 {bundle}
 
-Inventory rules:
-- reconcile duplicate views and opposite barrier faces;
-- identify distinct physical Openings rather than photograph count;
-- explicitly identify whether each Opening is blank or occupied;
-- identify every visually supportable Service GROUP;
-- a visible candidate must not disappear merely because its exact class or
-  material is unknown;
-- group homogeneous repeated Services using quantity rather than inventing a
-  separate Service group for every photograph;
-- link a Service candidate to an Opening only when that relationship is
-  supportable;
-- if a possible additional Opening, Service, link, classification, barrier or
-  photo relationship cannot be resolved and could alter topology, return
-  BLOCKED rather than pretending the inventory is complete;
-- COMPLETE means there is no unresolved candidate that could change physical
-  topology.
+Observation rules:
+- reconcile duplicate views and opposite barrier faces where defensible;
+- record independently supportable Opening candidates;
+- record independently supportable Service-group candidates;
+- do not hide a visible candidate merely because class or material is unknown;
+- record possible topology-altering uncertainties in unresolved_candidates;
+- use a stable unique candidate_id for every unresolved candidate;
+- BLOCKED means this blind pass still contains uncertainty that could alter
+  topology; it does NOT terminate Physical reasoning;
+- COMPLETE means this blind pass itself has no unresolved topology-changing
+  observation;
+- do not invent certainty merely to return COMPLETE.
 
 Return ONLY valid JSON using exactly this shape:
 {{
@@ -688,7 +684,7 @@ Return ONLY valid JSON using exactly this shape:
     {{
       "candidate_id": "V-O-001",
       "blank": false,
-      "detail": "what physical opening is independently supported",
+      "detail": "independently observed Opening candidate",
       "evidence_refs": ["photo id or filename"]
     }}
   ],
@@ -699,26 +695,24 @@ Return ONLY valid JSON using exactly this shape:
       "material": null,
       "quantity": 1,
       "candidate_opening_ids": ["V-O-001"],
-      "detail": "what physical Service group is independently supported",
+      "detail": "independently observed Service-group candidate",
       "evidence_refs": ["photo id or filename"]
     }}
   ],
   "unresolved_candidates": [
     {{
+      "candidate_id": "V-U-001",
       "kind": "barrier|opening|service|link|classification|photo_relationship",
-      "detail": "specific unresolved topology candidate",
+      "detail": "specific unresolved observation",
       "evidence_refs": ["photo id or filename"]
     }}
   ],
   "limitations": []
 }}
 
-For COMPLETE:
-- observed counts MUST equal the candidate-array lengths;
-- every occupied Opening must have at least one Service-group relationship;
-- every blank Opening must have zero Service-group relationships;
-- every Service group must have at least one supported Opening relationship;
-- unresolved_candidates must be empty.
+Observed counts MUST equal the candidate-array lengths.
+For COMPLETE, unresolved_candidates must be empty.
+For BLOCKED, preserve every topology-relevant uncertainty rather than guessing.
 
 Policy: {VISUAL_GATE_POLICY_VERSION}.
 """
@@ -835,6 +829,12 @@ Do not use any human UAT reference.
         blind_inventory: dict[str, Any],
         proposal: dict[str, Any],
     ) -> str:
+        observation_catalog = (
+            blind_observation_catalog(
+                blind_inventory
+            )
+        )
+
         return (
             self._validator_prompt(
                 defect,
@@ -843,30 +843,70 @@ Do not use any human UAT reference.
             )
             + f"""
 
-IMPORTANT: before seeing the Physical draft, you independently produced this
-blind visual inventory from the same retained images:
+CONDITIONED RECONCILIATION OVERRIDE ? policy
+{VISUAL_GATE_POLICY_VERSION}:
+
+Before seeing Physical's proposal, you independently produced this blind
+observation receipt from the same retained images:
 
 {json.dumps(blind_inventory, ensure_ascii=False, separators=(",", ":"), default=str)}
 
-Completeness rules:
-- APPROVED is forbidden unless the blind inventory status is COMPLETE;
-- APPROVED is forbidden if any blind unresolved candidate remains;
-- every blind Opening candidate must be accounted for by the Physical proposal;
-- every blind Service-group candidate must be accounted for by the Physical
-  proposal;
-- blank versus occupied Opening semantics must agree;
-- proposal Opening count must equal blind observed Opening count;
-- proposal Service-group count must equal blind observed Service-group count;
-- if Physical omitted a blind candidate, return REJECTED using
-  MISSED_OPENING, MISSED_SERVICE, WRONG_SERVICE_OPENING_LINK, or another
-  applicable allowed issue code;
-- do not silently discard a candidate merely because its exact service class,
-  material or dimensions remain uncertain.
+The deterministic observation IDs requiring reconciliation are:
 
-The blind inventory is an independent completeness baseline, not a human
-reference and not canonical state.
+{json.dumps(observation_catalog, ensure_ascii=False, separators=(",", ":"))}
 
-Do not use any human UAT reference fixture.
+The blind receipt is challenge evidence, NOT canonical truth.
+Its raw Opening and Service counts do NOT have to equal Physical's counts.
+
+Reinspect the same images and reconcile EVERY blind observation ID exactly once.
+
+Allowed dispositions:
+- ACCOUNTED_FOR:
+  the observation is represented by the listed Physical proposal item(s).
+- DUPLICATE_OR_SAME_ITEM:
+  the blind observation is another view/grouping of the same listed proposal
+  item. When multiple blind Opening or Service candidates collapse into one
+  proposal item, exactly one must be ACCOUNTED_FOR and the others must use
+  DUPLICATE_OR_SAME_ITEM.
+- NOT_TOPOLOGY:
+  after reconciliation this observation is a shadow, fitting, background item,
+  non-penetrating object, or otherwise not a physical topology record.
+- RESOLVED_NONSTRUCTURAL:
+  a barrier/classification/photo-relationship uncertainty has been resolved
+  and does not alter Opening-Service topology.
+- UNRESOLVED:
+  the evidence still cannot safely resolve the observation.
+
+APPROVED is forbidden when:
+- any blind observation is missing from the reconciliation ledger;
+- any blind observation appears more than once;
+- any disposition references a nonexistent Physical proposal item;
+- any blind observation remains UNRESOLVED.
+
+Do NOT force Physical to match raw blind counts.
+Do NOT silently discard an over-counted or under-counted blind observation.
+Explain the reconciliation using the actual image evidence.
+
+For this conditioned pass, return all normal validator fields PLUS this
+mandatory top-level array:
+
+"blind_reconciliation": [
+  {{
+    "blind_candidate_id": "V-O-001",
+    "disposition": "ACCOUNTED_FOR|DUPLICATE_OR_SAME_ITEM|NOT_TOPOLOGY|RESOLVED_NONSTRUCTURAL|UNRESOLVED",
+    "proposal_refs": ["D-O-001"],
+    "detail": "specific evidence-backed reconciliation",
+    "evidence_refs": ["photo id or filename"]
+  }}
+]
+
+For NOT_TOPOLOGY and RESOLVED_NONSTRUCTURAL, proposal_refs must be [].
+For ACCOUNTED_FOR and DUPLICATE_OR_SAME_ITEM, proposal_refs must identify the
+actual Physical proposal item(s).
+For a link observation mapped as ACCOUNTED_FOR, proposal_refs must include at
+least one proposal Opening and one proposal Service.
+
+The human UAT reference fixture remains forbidden.
 """
         )
 
@@ -1114,10 +1154,11 @@ Independent validator receipt:
         ):
             return None
 
-        if blind_inventory_approval_errors(
-            blind_inventory,
-            model,
-        ):
+        if validate_blind_reconciliation_payload(
+     blind_inventory,
+     model,
+     validator,
+ ):
             return None
 
         if not visual_validator_approved(
@@ -1218,47 +1259,11 @@ Independent validator receipt:
                 )
             )
 
-        blind_status = str(
-            blind_inventory.get(
-                "status"
-            )
-            or ""
-        ).strip().upper()
-
-        if (
-            blind_status
-            == BLIND_INVENTORY_BLOCKED
-        ):
-            reasons = (
-                blind_inventory_block_reasons(
-                    blind_inventory
-                )
-            )
-
-            return (
-                self._insufficient_from_visual_gate(
-                    "Independent blind validator "
-                    "inventory BLOCKED: "
-                    + "; ".join(
-                        reasons
-                    )
-                )
-            )
-
-        if (
-            blind_status
-            != BLIND_INVENTORY_COMPLETE
-        ):
-            return (
-                self._insufficient_from_visual_gate(
-                    "Independent blind validator "
-                    "inventory returned unsupported "
-                    f"status {blind_status!r}"
-                )
-            )
-
-        # Policy v2 cache keys include the current blind
-        # inventory. Old v1 approvals cannot be reused.
+        # Policy v3: a structurally valid blind receipt is independent
+        # challenge evidence. COMPLETE and BLOCKED both proceed to Physical.
+        # Final approval depends on explicit conditioned reconciliation.
+        # Policy v3 cache keys include the current blind
+        # inventory. Old v1/v2 approvals cannot be reused.
         cached = (
             self._cached_visual_approved_model(
                 defect_index,
@@ -1427,9 +1432,10 @@ Independent validator receipt:
                         [
                             *receipt_errors,
                             *(
-                                blind_inventory_approval_errors(
+                                validate_blind_reconciliation_payload(
                                     blind_inventory,
                                     proposal,
+                                    validator,
                                 )
                             ),
                         ]
@@ -1484,9 +1490,10 @@ Independent validator receipt:
                             [
                                 *receipt_errors,
                                 *(
-                                    blind_inventory_approval_errors(
+                                    validate_blind_reconciliation_payload(
                                         blind_inventory,
                                         proposal,
+                                        validator,
                                     )
                                 ),
                             ]
@@ -1520,10 +1527,11 @@ Independent validator receipt:
                         )
                     )
 
-            blind_approval_errors = (
-                blind_inventory_approval_errors(
+            blind_reconciliation_errors = (
+                validate_blind_reconciliation_payload(
                     blind_inventory,
                     proposal,
+                    validator,
                 )
             )
 
@@ -1532,7 +1540,7 @@ Independent validator receipt:
                     validator,
                     proposal,
                 )
-                and not blind_approval_errors
+                and not blind_reconciliation_errors
             ):
                 self.save_json(
                     (
@@ -1653,10 +1661,10 @@ Independent validator receipt:
 
                 if (
                     not issue_text
-                    and blind_approval_errors
+                    and blind_reconciliation_errors
                 ):
                     issue_text = "; ".join(
-                        blind_approval_errors
+                        blind_reconciliation_errors
                     )
 
                 return (
