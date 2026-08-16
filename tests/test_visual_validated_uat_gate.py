@@ -139,6 +139,7 @@ def test_openresponses_visual_transport_sends_all_images_in_order(
     )
     controller.receipt_dir = tmp_path
     controller.run_id = "transport-test"
+    controller._openresponses_timeout_seconds = 1800.0
     controller.gateway_call = (
         lambda *_args, **_kwargs: {"events": []}
     )
@@ -229,6 +230,7 @@ def test_openresponses_visual_transport_sends_all_images_in_order(
     assert result["status"] == "MODEL_SUPPORTED"
 
     assert captured["path"] == "/v1/responses"
+    assert captured["client_kwargs"]["timeout"] == 1800.0
     assert captured["payload"]["tool_choice"] == "none"
     assert (
         captured["headers"]["x-openclaw-agent-id"]

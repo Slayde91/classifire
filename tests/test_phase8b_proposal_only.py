@@ -19,6 +19,9 @@ if str(SCRIPTS_DIR) not in sys.path:
     )
 
 
+from run_classifire_real_uat_fireseals_topologyaware import (  # noqa: E402
+    TopologyAwareFireSealController,
+)
 from run_classifire_real_uat_fireseals_visualvalidated import (  # noqa: E402
     PHYSICAL_VISUAL_GUARDED_WRITE_TOOLS,
     VisualValidatedTopologyController,
@@ -231,3 +234,77 @@ def test_proposal_only_delegates_non_write_tools(
 
     assert len(calls) == 1
     assert saved == {}
+
+
+@pytest.mark.parametrize(
+    (
+        "runner_timeout",
+        "explicit_timeout",
+        "expected_timeout",
+    ),
+    [
+        (1800, None, 1800.0),
+        (1800, 900.0, 900.0),
+    ],
+)
+def test_visual_openresponses_timeout_is_configurable(
+    monkeypatch: pytest.MonkeyPatch,
+    runner_timeout: int,
+    explicit_timeout: float | None,
+    expected_timeout: float,
+) -> None:
+    def fake_parent_init(
+        self: TopologyAwareFireSealController,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        return None
+
+    monkeypatch.setattr(
+        TopologyAwareFireSealController,
+        "__init__",
+        fake_parent_init,
+    )
+
+    kwargs: dict[str, Any] = {
+        "timeout_seconds": runner_timeout,
+    }
+
+    if explicit_timeout is not None:
+        kwargs[
+            "openresponses_timeout_seconds"
+        ] = explicit_timeout
+
+    controller = VisualValidatedTopologyController(
+        **kwargs,
+    )
+
+    assert (
+        controller._openresponses_timeout_seconds
+        == expected_timeout
+    )
+
+
+def test_visual_openresponses_timeout_rejects_nonpositive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_parent_init(
+        self: TopologyAwareFireSealController,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        return None
+
+    monkeypatch.setattr(
+        TopologyAwareFireSealController,
+        "__init__",
+        fake_parent_init,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="greater than zero",
+    ):
+        VisualValidatedTopologyController(
+            timeout_seconds=0,
+        )
