@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from copy import deepcopy
 import json
 from pathlib import Path
 import sys
@@ -197,6 +198,104 @@ def test_visual_gate_repeated_rejection_returns_insufficient_evidence(tmp_path: 
     assert result["services"] == []
     assert any("remained REJECTED" in item for item in result["limitations"])
     assert not (tmp_path / "21-visual-defect-001-approved-model.json").exists()
+
+
+def test_v4b_out_of_scope_correction_is_rejected_without_replacing_original(
+    tmp_path: Path,
+) -> None:
+    proposal = _proposal()
+    validator = {
+        "verdict": "REJECTED",
+        "observed_opening_count": 1,
+        "observed_service_group_count": 1,
+        "issues": [
+            {
+                "code": "WRONG_SERVICE_OPENING_LINK",
+                "detail": "The Service belongs to the other visible Opening.",
+                "evidence_refs": ["photo-a.png"],
+            }
+        ],
+        "limitations": [],
+    }
+    out_of_scope = deepcopy(proposal)
+    out_of_scope["services"].append(
+        {
+            "service_code": "S-B",
+            "primary_opening_code": "O-A",
+            "opening_codes": ["O-A"],
+            "service_type": "pipe",
+            "material": "PEX",
+            "quantity": 1,
+        }
+    )
+    controller = _bare_controller(
+        tmp_path,
+        [proposal, validator, out_of_scope],
+    )
+    defect = SimpleNamespace(
+        id="d1",
+        external_defect_id="147192",
+        defect_code="147192",
+    )
+
+    result = controller._synthesise_defect(1, defect, "{}")
+
+    assert result["status"] == "INSUFFICIENT_EVIDENCE"
+    assert any(
+        "exceeded structured Validator scope" in item
+        for item in result["limitations"]
+    )
+    receipt = json.loads(
+        (
+            tmp_path
+            / "21-visual-defect-001-correction-scope-rejected-1.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert receipt["original_proposal"] == proposal
+    assert receipt["rejected_correction"] == out_of_scope
+    assert not (
+        tmp_path / "21-visual-defect-001-approved-model.json"
+    ).exists()
+
+
+def test_v4b_ambiguous_size_or_quantity_blocks_before_physical_correction(
+    tmp_path: Path,
+) -> None:
+    proposal = _proposal()
+    validator = {
+        "verdict": "REJECTED",
+        "observed_opening_count": 1,
+        "observed_service_group_count": 1,
+        "issues": [
+            {
+                "code": "UNSUPPORTED_SIZE_OR_QUANTITY",
+                "detail": "The visible size or quantity is unsupported.",
+                "evidence_refs": ["photo-a.png"],
+            }
+        ],
+        "limitations": [],
+    }
+    responses = [proposal, validator]
+    controller = _bare_controller(tmp_path, responses)
+    defect = SimpleNamespace(
+        id="d1",
+        external_defect_id="147192",
+        defect_code="147192",
+    )
+
+    result = controller._synthesise_defect(1, defect, "{}")
+
+    assert result["status"] == "INSUFFICIENT_EVIDENCE"
+    assert any("is ambiguous" in item for item in result["limitations"])
+    assert responses == []
+    receipt = json.loads(
+        (
+            tmp_path
+            / "21-visual-defect-001-correction-scope-blocked.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert receipt["proposal"] == proposal
+    assert any("is ambiguous" in error for error in receipt["errors"])
 
 
 
