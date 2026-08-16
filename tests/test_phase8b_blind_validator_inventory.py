@@ -526,3 +526,134 @@ def test_visual_policy_version_invalidates_v1_cache() -> None:
         VISUAL_GATE_POLICY_VERSION
         == "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v2"
     )
+
+
+def _visual_session_probe():
+    controller = object.__new__(
+        VisualValidatedTopologyController
+    )
+
+    controller._visual_physical_session = None
+    controller._visual_validator_session = None
+    controller.estimate_id = "estimate-test"
+
+    calls = []
+
+    def initialize_session(
+        agent_id,
+        stage,
+    ):
+        calls.append(
+            (
+                agent_id,
+                stage,
+            )
+        )
+
+        return (
+            f"agent:{agent_id}:{stage}"
+        )
+
+    controller.initialize_session = (
+        initialize_session
+    )
+
+    controller.require_tools = (
+        lambda *_args, **_kwargs: None
+    )
+
+    controller._assert_physical_visual_readonly = (
+        lambda *_args, **_kwargs: None
+    )
+
+    controller.invoke_tool = (
+        lambda *_args, **_kwargs: {}
+    )
+
+    return controller, calls
+
+
+def test_visual_sessions_are_fresh_per_controller_execution() -> None:
+    first, first_calls = (
+        _visual_session_probe()
+    )
+
+    first_keys = (
+        first._ensure_visual_sessions()
+    )
+
+    repeated_keys = (
+        first._ensure_visual_sessions()
+    )
+
+    assert repeated_keys == first_keys
+    assert len(first_calls) == 2
+
+    first_physical_stage = (
+        first_calls[0][1]
+    )
+
+    first_validator_stage = (
+        first_calls[1][1]
+    )
+
+    physical_prefix = (
+        "21-visual-physical-"
+    )
+
+    validator_prefix = (
+        "21-visual-validator-"
+    )
+
+    assert first_physical_stage.startswith(
+        physical_prefix
+    )
+
+    assert first_validator_stage.startswith(
+        validator_prefix
+    )
+
+    first_physical_nonce = (
+        first_physical_stage[
+            len(physical_prefix):
+        ]
+    )
+
+    first_validator_nonce = (
+        first_validator_stage[
+            len(validator_prefix):
+        ]
+    )
+
+    assert first_physical_nonce
+    assert (
+        first_physical_nonce
+        == first_validator_nonce
+    )
+
+    second, second_calls = (
+        _visual_session_probe()
+    )
+
+    second_keys = (
+        second._ensure_visual_sessions()
+    )
+
+    assert len(second_calls) == 2
+
+    second_nonce = (
+        second_calls[0][1][
+            len(physical_prefix):
+        ]
+    )
+
+    assert second_nonce
+    assert (
+        second_nonce
+        != first_physical_nonce
+    )
+
+    assert (
+        second_keys
+        != first_keys
+    )

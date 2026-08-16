@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import uuid
+
 import argparse
 import base64
 import json
@@ -114,45 +116,96 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
         self._visual_physical_session: str | None = None
         self._visual_validator_session: str | None = None
 
-    def _ensure_visual_sessions(self) -> tuple[str, str]:
+
+    def _ensure_visual_sessions(
+        self,
+    ) -> tuple[str, str]:
+        session_nonce = getattr(
+            self,
+            "_visual_session_nonce",
+            None,
+        )
+
+        if not session_nonce:
+            session_nonce = uuid.uuid4().hex
+            self._visual_session_nonce = session_nonce
+
         if self._visual_physical_session is None:
-            session = self.initialize_session("cf-physical-model", "21-visual-physical")
+            physical_stage = (
+                "21-visual-physical-"
+                + session_nonce
+            )
+
+            session = self.initialize_session(
+                "cf-physical-model",
+                physical_stage,
+            )
+
             self.require_tools(
                 "cf-physical-model",
                 session,
                 PHYSICAL_VISUAL_TOOLS,
                 "21-visual-physical-effective.json",
             )
+
             self._assert_physical_visual_readonly(
                 session
             )
+
             self.invoke_tool(
                 "cf-physical-model",
                 session,
                 "classifire_evidence_read",
-                {"estimate_id": self.estimate_id},
-                "21-visual-physical-evidence-read.json",
+                {
+                    "estimate_id":
+                        self.estimate_id
+                },
+                (
+                    "21-visual-physical-"
+                    "evidence-read.json"
+                ),
             )
+
             self._visual_physical_session = session
 
         if self._visual_validator_session is None:
-            session = self.initialize_session("cf-validator", "21-visual-validator")
+            validator_stage = (
+                "21-visual-validator-"
+                + session_nonce
+            )
+
+            session = self.initialize_session(
+                "cf-validator",
+                validator_stage,
+            )
+
             self.require_tools(
                 "cf-validator",
                 session,
                 VALIDATOR_VISUAL_TOOLS,
                 "21-visual-validator-effective.json",
             )
+
             self.invoke_tool(
                 "cf-validator",
                 session,
                 "classifire_evidence_read",
-                {"estimate_id": self.estimate_id},
-                "21-visual-validator-evidence-read.json",
+                {
+                    "estimate_id":
+                        self.estimate_id
+                },
+                (
+                    "21-visual-validator-"
+                    "evidence-read.json"
+                ),
             )
+
             self._visual_validator_session = session
 
-        return self._visual_physical_session, self._visual_validator_session
+        return (
+            self._visual_physical_session,
+            self._visual_validator_session,
+        )
 
     @staticmethod
     def _effective_tool_names(value: Any) -> set[str]:
