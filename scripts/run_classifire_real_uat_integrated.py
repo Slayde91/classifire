@@ -2,18 +2,14 @@ from __future__ import annotations
 
 import argparse
 import copy
-from collections import defaultdict
 import json
-from pathlib import Path
 import subprocess
 import sys
 import time
+from collections import defaultdict
+from pathlib import Path
 
 from pypdf import PdfReader
-from sqlalchemy import select
-
-from classifire.canonical_models import Defect, EvidenceSource
-from classifire.db import SessionLocal
 from run_classifire_real_uat_defectwise import _trim
 from run_classifire_real_uat_deterministic import (
     REQUIRED_INTAKE_WRITE_TOOLS,
@@ -24,6 +20,7 @@ from run_classifire_real_uat_intake import load_receipt, repo_root
 from run_classifire_real_uat_photoaware import PhotoAwareController
 from run_classifire_real_uat_windows_safe import _split_text
 
+from classifire.canonical_models import Defect, EvidenceSource
 
 TEXT_FACT_EVIDENCE_TYPE = "defect_text_fact_review"
 TEXT_CHUNK_CHARS = 5200
@@ -351,11 +348,26 @@ Hard rules:
 
     @staticmethod
     def _visual_key(row: dict) -> str:
+        variant_group = str(row.get("image_variant_group_id") or "").strip()
+        if variant_group:
+            relationships = {
+                str(value) for value in (row.get("image_variant_relationships") or [])
+            }
+            if str(row.get("image_variant_group_status") or "") != "RESOLVED" or (
+                relationships & {"AMBIGUOUS", "SIMILAR_DISTINCT"}
+            ):
+                return f"variant-occurrence:{variant_group}:{row['photo_id']}"
+            return f"variant-group:{variant_group}"
+        linked_digest = str(row.get("full_resolution_sha256") or "").strip()
+        if linked_digest:
+            return f"linked-sha256:{linked_digest.lower()}"
         digest = str(row.get("digest") or "").strip()
         return f"digest:{digest}" if digest else f"photo:{row['photo_id']}"
 
     def _build_photo_inventory(self, report: Path) -> tuple[dict[int, list[dict]], dict[str, dict]]:
-        pages, by_id = super()._build_photo_inventory(report)
+        return super()._build_photo_inventory(report)
+
+    def _on_image_variant_inventory_ready(self, by_id: dict[str, dict]) -> None:
         groups: dict[str, list[dict]] = defaultdict(list)
         for row in by_id.values():
             groups[self._visual_key(row)].append(row)
@@ -363,15 +375,63 @@ Hard rules:
         duplicate_occurrences = 0
         for group_key, rows in groups.items():
             rows.sort(key=lambda item: (int(item["page_number"]), int(item["occurrence"])))
-            canonical = rows[0]
+            variant_result = getattr(self, "_image_variant_resolution_cache", None)
+            variant_group = None
+            if variant_result is not None and group_key.startswith("variant-group:"):
+                wanted_group_id = group_key.removeprefix("variant-group:")
+                variant_group = next(
+                    (
+                        item
+                        for item in variant_result.groups
+                        if str(item.get("group_id") or "") == wanted_group_id
+                    ),
+                    None,
+                )
+            exact_occurrences: set[str] = set()
+            if variant_group is not None:
+                candidate_rows = {
+                    str(item.get("candidate_id") or ""): item
+                    for item in variant_result.rows
+                }
+                exact_candidate_ids = [str(variant_group.get("primary_candidate_id") or "")]
+                exact_candidate_ids.extend(
+                    str(item) for item in (variant_group.get("equivalent_candidate_ids") or ())
+                )
+                for candidate_id in exact_candidate_ids:
+                    candidate = candidate_rows.get(candidate_id)
+                    if candidate is None:
+                        continue
+                    if str(candidate.get("relationship_to_primary") or "") in {
+                        "SELF",
+                        "EXACT_BYTES",
+                        "EXACT_DECODED_PIXELS",
+                    }:
+                        exact_occurrences.add(str(candidate.get("occurrence_id") or ""))
+            exact_group = len(rows) > 1 and all(
+                str(item.get("photo_id") or "") in exact_occurrences for item in rows
+            )
+            preferred_photo_id = next(
+                (
+                    str(item.get("image_variant_primary_photo_id") or "")
+                    for item in rows
+                    if str(item.get("image_variant_primary_photo_id") or "")
+                ),
+                "",
+            )
+            canonical = next(
+                (item for item in rows if str(item.get("photo_id")) == preferred_photo_id),
+                rows[0],
+            )
             canonical_id = str(canonical["photo_id"])
             for row in rows:
                 row["visual_group_key"] = group_key
                 row["canonical_photo_id"] = canonical_id
                 row["duplicate_group_size"] = len(rows)
-                row["exact_duplicate"] = len(rows) > 1
+                row["exact_duplicate"] = exact_group
                 row["duplicate_of_photo_id"] = (
-                    None if str(row["photo_id"]) == canonical_id else canonical_id
+                    None
+                    if not exact_group or str(row["photo_id"]) == canonical_id
+                    else canonical_id
                 )
                 if row["duplicate_of_photo_id"]:
                     duplicate_occurrences += 1
@@ -380,6 +440,16 @@ Hard rules:
         self.save_json(
             "16a-photo-dedup-map.json",
             {
+                "schema": "CLASSIFIRE-PHOTO-VARIANT-GROUP-MAP-v2",
+                "report_sha256": str(self.receipt["report_sha256"]),
+                "image_variant_policy_version": str(
+                    next(
+                        iter(by_id.values()),
+                        {},
+                    ).get("image_variant_policy_version")
+                    or ""
+                ),
+                "image_variant_receipt_sha256": self._image_variant_receipt_sha256(),
                 "photo_occurrences": len(by_id),
                 "unique_visuals": len(groups),
                 "exact_duplicate_occurrences": duplicate_occurrences,
@@ -390,16 +460,24 @@ Hard rules:
             },
         )
         print(
-            f"PASS exact-image de-duplication -> {len(by_id)} occurrences, "
+            f"PASS image-variant grouping -> {len(by_id)} occurrences, "
             f"{len(groups)} unique visuals, {duplicate_occurrences} duplicate occurrences"
         )
-        return pages, by_id
 
-    def _visual_photo_prompt(self, row: dict) -> str:
+    def _visual_photo_prompt(
+        self,
+        row: dict,
+        attachment_manifest: list[dict] | None = None,
+    ) -> str:
+        manifest = attachment_manifest or []
         return f"""Perform a defect-neutral, high-resolution visual inspection of ONE report image for CLASSIFIRE.
 Image occurrence ID: {row['photo_id']} from source page {row['page_number']}.
-If two files are attached, the first is the native embedded image and the second is a high-DPI crop of the
-same displayed occurrence. Use both; the crop grounds the native pixels to what was actually shown on the page.
+The ordered attachment manifest is authoritative:
+{json.dumps(manifest, ensure_ascii=False, separators=(",", ":"))}
+Attachment 1 is the proven greatest-usable-detail PRIMARY regardless of where it occurs in the report. Inspect it
+first for fine detail. Inspect every MANDATORY_SECONDARY attachment for unique crop, annotation, contrast, label or
+page-context information. Do not base detailed conclusions on a lower-resolution equivalent when the primary is
+clearer, and do not collapse AMBIGUOUS, SIMILAR_DISTINCT or derivative versions as resolution-only.
 
 Return ONLY valid JSON:
 {{
@@ -436,19 +514,19 @@ Rules:
         # Exact duplicate image bytes are visually analysed once for the whole report. Each occurrence still
         # receives its own page-layout linkage evidence, so repeated placement under different defect rows is
         # not silently treated as the same defect association.
-        visual_key = self._visual_key(row)
+        variant_fingerprint = self._image_variant_receipt_sha256()
+        visual_key = f"{variant_fingerprint}:{self._visual_key(row)}"
         cached = self._photo_visual_cache.get(visual_key)
         if cached is None:
-            native = Path(str(row["native_path"])) if row.get("native_path") else None
-            zoom = self._ensure_zoom_crop(report, row)
-            files: list[Path] = []
-            if native is not None and native.is_file():
-                files.append(native)
-            if not files or zoom.resolve() != files[0].resolve():
-                files.append(zoom)
+            sources = self._preferred_photo_sources(report, row)
+            files = [Path(item["path"]) for item in sources]
+            attachment_manifest = self._attachment_manifest(sources)
             payload = self.infer_model(
-                prompt=self._visual_photo_prompt(row),
-                receipt_name=f"16a-visual-{row['canonical_photo_id']}",
+                prompt=self._visual_photo_prompt(row, attachment_manifest),
+                receipt_name=(
+                    f"16a-visual-v2-{variant_fingerprint[:12]}-"
+                    f"{row['canonical_photo_id']}"
+                ),
                 files=files,
                 thinking="medium",
             )
@@ -456,12 +534,18 @@ Rules:
             if str(cached.get("photo_id") or "") != str(row["photo_id"]):
                 raise RuntimeError(f"Unique visual review returned wrong photo_id for {row['photo_id']}")
             cached["native_extraction_ok"] = bool(row.get("native_extraction_ok"))
+            cached["full_resolution_status"] = row.get("full_resolution_status")
             cached["native_pixels"] = [
-                row.get("native_width") or row.get("width"),
-                row.get("native_height") or row.get("height"),
+                sources[0].get("width"),
+                sources[0].get("height"),
             ]
+            cached["primary_photo_id"] = sources[0].get("photo_id")
+            cached["primary_page"] = sources[0].get("page")
             cached["source_bbox"] = row.get("bbox")
             cached["zoom_refinement_performed"] = True
+            cached["image_variant_receipt_sha256"] = variant_fingerprint
+            cached["image_variant_group_id"] = row.get("image_variant_group_id")
+            cached["attachment_manifest"] = attachment_manifest
             self._photo_visual_cache[visual_key] = copy.deepcopy(cached)
         else:
             cached = copy.deepcopy(cached)
@@ -471,7 +555,9 @@ Rules:
         # Defect association is established by the page-layout linkage step, not by the cached visual review.
         model["target_link"] = "ambiguous"
         features = list(model.get("distinctive_features") or [])
-        features.append(f"EXACT_IMAGE_GROUP:{visual_key}")
+        features.append(f"IMAGE_VARIANT_GROUP:{visual_key}")
+        if row.get("exact_duplicate"):
+            features.append(f"EXACT_IMAGE_GROUP:{visual_key}")
         features.append(f"CANONICAL_PHOTO_ID:{row['canonical_photo_id']}")
         if row.get("duplicate_of_photo_id"):
             features.append(f"EXACT_DUPLICATE_OF:{row['duplicate_of_photo_id']}")
@@ -491,13 +577,12 @@ Rules:
     def _contact_sheet(self, rows: list[tuple[str, Path]], defect_index: int) -> Path:
         unique_rows: list[tuple[str, Path]] = []
         seen: set[str] = set()
-        for photo_id, path in rows:
-            row = self._photo_rows.get(str(photo_id), {"photo_id": photo_id})
-            key = self._visual_key(row)
+        for label, path in rows:
+            key = str(path.resolve()).casefold()
             if key in seen:
                 continue
             seen.add(key)
-            unique_rows.append((str(row.get("canonical_photo_id") or photo_id), path))
+            unique_rows.append((label, path))
         return super()._contact_sheet(unique_rows, defect_index)
 
     def reconciliation_prompt(self, defect: Defect, details: list[dict]) -> str:

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import base64
-from copy import deepcopy
+import hashlib
 import json
-from pathlib import Path
 import sys
+from copy import deepcopy
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 if str(SCRIPTS) not in sys.path:
@@ -407,6 +407,26 @@ def test_openresponses_visual_transport_sends_all_images_in_order(
 
     first.write_bytes(b"first-image-bytes")
     second.write_bytes(b"second-image-bytes")
+    controller._current_visual_manifest = [
+        {
+            "attachment_index": 1,
+            "filename": first.name,
+            "path": str(first),
+            "role": "defect_photo",
+            "primary_secondary": "PRIMARY",
+            "relationship_to_primary": "SELF",
+            "expected_sha256": hashlib.sha256(first.read_bytes()).hexdigest(),
+        },
+        {
+            "attachment_index": 2,
+            "filename": second.name,
+            "path": str(second),
+            "role": "labelled_full_page",
+            "primary_secondary": "SECONDARY",
+            "relationship_to_primary": "REPORT_PAGE_CONTEXT",
+            "expected_sha256": hashlib.sha256(second.read_bytes()).hexdigest(),
+        },
+    ]
 
     monkeypatch.setenv(
         "OPENCLAW_GATEWAY_TOKEN",
