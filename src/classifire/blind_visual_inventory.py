@@ -586,6 +586,100 @@ def blind_observation_catalog(
     }
 
 
+def blind_hard_topology_observation_catalog(
+    inventory: dict[str, Any],
+) -> dict[str, str]:
+    """
+    Return blind observations with deterministic hard-veto authority.
+
+    The full blind observation catalog remains mandatory for ledger
+    completeness. Hard topology authority is narrower:
+
+    * every affirmative candidate Opening is hard;
+    * a candidate Service is hard only when the blind inventory
+      explicitly links it to at least one candidate Opening.
+
+    Unlinked visible Service candidates and unresolved/limitation
+    observations remain auditable challenge evidence, but their mere
+    existence is not itself a deterministic penetration-topology veto.
+    """
+
+    catalog: dict[str, str] = {}
+
+    openings = inventory.get(
+        "candidate_openings"
+    )
+
+    if isinstance(openings, list):
+        for item in openings:
+            if not isinstance(
+                item,
+                dict,
+            ):
+                continue
+
+            candidate_id = str(
+                item.get(
+                    "candidate_id"
+                )
+                or ""
+            ).strip()
+
+            if candidate_id:
+                catalog[
+                    candidate_id
+                ] = "opening"
+
+    services = inventory.get(
+        "candidate_services"
+    )
+
+    if isinstance(services, list):
+        for item in services:
+            if not isinstance(
+                item,
+                dict,
+            ):
+                continue
+
+            linked_openings = item.get(
+                "candidate_opening_ids"
+            )
+
+            if not isinstance(
+                linked_openings,
+                list,
+            ):
+                continue
+
+            has_opening_link = any(
+                isinstance(
+                    opening_id,
+                    str,
+                )
+                and bool(
+                    opening_id.strip()
+                )
+                for opening_id
+                in linked_openings
+            )
+
+            if not has_opening_link:
+                continue
+
+            candidate_id = str(
+                item.get(
+                    "candidate_id"
+                )
+                or ""
+            ).strip()
+
+            if candidate_id:
+                catalog[
+                    candidate_id
+                ] = "service"
+
+    return catalog
 def _proposal_reference_sets(
     proposal: dict[str, Any],
 ) -> tuple[set[str], set[str]]:
@@ -642,11 +736,12 @@ def validate_blind_reconciliation_payload(
     validator: dict[str, Any],
 ) -> list[str]:
     """
-    Validate the v3 blind-observation reconciliation ledger.
+    Validate the v4 blind-observation reconciliation ledger.
 
     Raw blind counts are deliberately NOT required to equal Physical counts.
-    Approval instead requires every independent blind observation to receive
-    exactly one evidence-backed disposition, with no UNRESOLVED disposition.
+    Approval requires every independent blind observation to receive exactly
+    one evidence-backed disposition. Only hard-topology observations are
+    deterministically forbidden from remaining UNRESOLVED under APPROVED.
     """
 
     errors: list[str] = [
@@ -1053,6 +1148,12 @@ def validate_blind_reconciliation_payload(
     ).strip().upper()
 
     if verdict == "APPROVED":
+        hard_topology_ids = set(
+            blind_hard_topology_observation_catalog(
+                inventory
+            )
+        )
+
         unresolved_ids = sorted(
             candidate_id
             for (
@@ -1060,13 +1161,16 @@ def validate_blind_reconciliation_payload(
                 disposition,
             )
             in dispositions.items()
-            if disposition
-            == "UNRESOLVED"
+            if (
+                disposition == "UNRESOLVED"
+                and candidate_id
+                in hard_topology_ids
+            )
         )
 
         if unresolved_ids:
             errors.append(
-                "APPROVED validator cannot leave blind "
+                "APPROVED validator cannot leave hard topology "
                 "observations UNRESOLVED: "
                 + ", ".join(
                     unresolved_ids

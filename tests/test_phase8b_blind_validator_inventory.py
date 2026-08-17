@@ -406,10 +406,10 @@ def test_blind_inventory_is_part_of_visual_cache_key() -> None:
     )
 
 
-def test_visual_policy_version_invalidates_v2_cache() -> None:
+def test_visual_policy_version_invalidates_v3_cache() -> None:
     assert (
         VISUAL_GATE_POLICY_VERSION
-        == "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v3"
+        == "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v4"
     )
 
 
@@ -745,7 +745,7 @@ def test_v3_missing_blind_disposition_blocks_approval() -> None:
     )
 
 
-def test_v3_unresolved_disposition_blocks_approved_validator() -> None:
+def test_v4_unresolved_hard_topology_disposition_blocks_approved_validator() -> None:
     inventory = _inventory(
         opening_count=1,
         service_count=1,
@@ -782,7 +782,7 @@ def test_v3_unresolved_disposition_blocks_approved_validator() -> None:
 
     assert any(
         (
-            "cannot leave blind observations UNRESOLVED"
+            "cannot leave hard topology observations UNRESOLVED"
             in error
         )
         for error in errors
@@ -998,7 +998,7 @@ def test_v3_observation_catalog_includes_limitations() -> None:
     )
 
 
-def test_v3_blocked_inventory_no_longer_short_circuits_physical() -> None:
+def test_v4_blocked_inventory_no_longer_short_circuits_physical() -> None:
     source = inspect.getsource(
         VisualValidatedTopologyController
         ._synthesise_defect
@@ -1015,6 +1015,229 @@ def test_v3_blocked_inventory_no_longer_short_circuits_physical() -> None:
     )
 
     assert (
-        "Policy v3"
+        "Policy v4"
         in source
+    )
+
+def test_v4_hard_topology_catalog_only_promotes_openings_and_linked_services():
+    from classifire.blind_visual_inventory import (
+        blind_hard_topology_observation_catalog,
+    )
+
+    inventory = {
+        "status": "BLOCKED",
+        "observed_opening_count": 1,
+        "observed_service_group_count": 2,
+        "candidate_openings": [
+            {
+                "candidate_id": "V-O-001",
+                "blank": False,
+                "detail": "visible opening candidate",
+                "evidence_refs": ["P001"],
+            },
+        ],
+        "candidate_services": [
+            {
+                "candidate_id": "V-S-001",
+                "service_type": "pipe",
+                "material": None,
+                "quantity": 1,
+                "candidate_opening_ids": ["V-O-001"],
+                "detail": "linked service candidate",
+                "evidence_refs": ["P001"],
+            },
+            {
+                "candidate_id": "V-S-002",
+                "service_type": "unknown",
+                "material": None,
+                "quantity": 1,
+                "candidate_opening_ids": [],
+                "detail": "visible but unlinked service candidate",
+                "evidence_refs": ["P001"],
+            },
+        ],
+        "unresolved_candidates": [
+            {
+                "candidate_id": "V-U-001",
+                "kind": "classification",
+                "detail": "classification remains uncertain",
+                "evidence_refs": ["P001"],
+            },
+        ],
+        "limitations": [
+            "image resolution is limited",
+        ],
+    }
+
+    assert blind_hard_topology_observation_catalog(
+        inventory
+    ) == {
+        "V-O-001": "opening",
+        "V-S-001": "service",
+    }
+
+
+def test_v4_approved_reconciliation_allows_unresolved_advisory_service():
+    from classifire.blind_visual_inventory import (
+        validate_blind_reconciliation_payload,
+    )
+
+    inventory = {
+        "status": "BLOCKED",
+        "observed_opening_count": 1,
+        "observed_service_group_count": 1,
+        "candidate_openings": [
+            {
+                "candidate_id": "V-O-001",
+                "blank": True,
+                "detail": "blank opening candidate",
+                "evidence_refs": ["P001"],
+            },
+        ],
+        "candidate_services": [
+            {
+                "candidate_id": "V-S-001",
+                "service_type": "unknown",
+                "material": None,
+                "quantity": 1,
+                "candidate_opening_ids": [],
+                "detail": "visible but unlinked service candidate",
+                "evidence_refs": ["P001"],
+            },
+        ],
+        "unresolved_candidates": [
+            {
+                "candidate_id": "V-U-001",
+                "kind": "classification",
+                "detail": "classification remains uncertain",
+                "evidence_refs": ["P001"],
+            },
+        ],
+        "limitations": [],
+    }
+
+    proposal = {
+        "status": "MODEL_SUPPORTED",
+        "openings": [
+            {
+                "opening_code": "D-O-001",
+            },
+        ],
+        "services": [],
+    }
+
+    validator = {
+        "verdict": "APPROVED",
+        "blind_reconciliation": [
+            {
+                "blind_candidate_id": "V-O-001",
+                "disposition": "ACCOUNTED_FOR",
+                "proposal_refs": ["D-O-001"],
+                "detail": "proposal represents the opening",
+                "evidence_refs": ["P001"],
+            },
+            {
+                "blind_candidate_id": "V-S-001",
+                "disposition": "UNRESOLVED",
+                "proposal_refs": [],
+                "detail": (
+                    "visible object cannot be established as "
+                    "a penetrating Service"
+                ),
+                "evidence_refs": ["P001"],
+            },
+            {
+                "blind_candidate_id": "V-U-001",
+                "disposition": "RESOLVED_NONSTRUCTURAL",
+                "proposal_refs": [],
+                "detail": "classification does not alter topology",
+                "evidence_refs": ["P001"],
+            },
+        ],
+    }
+
+    assert validate_blind_reconciliation_payload(
+        inventory,
+        proposal,
+        validator,
+    ) == []
+
+
+def test_v4_approved_reconciliation_rejects_unresolved_linked_service():
+    from classifire.blind_visual_inventory import (
+        validate_blind_reconciliation_payload,
+    )
+
+    inventory = {
+        "status": "BLOCKED",
+        "observed_opening_count": 1,
+        "observed_service_group_count": 1,
+        "candidate_openings": [
+            {
+                "candidate_id": "V-O-001",
+                "blank": False,
+                "detail": "opening candidate",
+                "evidence_refs": ["P001"],
+            },
+        ],
+        "candidate_services": [
+            {
+                "candidate_id": "V-S-001",
+                "service_type": "pipe",
+                "material": None,
+                "quantity": 1,
+                "candidate_opening_ids": ["V-O-001"],
+                "detail": (
+                    "service candidate explicitly linked "
+                    "to opening candidate"
+                ),
+                "evidence_refs": ["P001"],
+            },
+        ],
+        "unresolved_candidates": [],
+        "limitations": [],
+    }
+
+    proposal = {
+        "status": "MODEL_SUPPORTED",
+        "openings": [
+            {
+                "opening_code": "D-O-001",
+            },
+        ],
+        "services": [],
+    }
+
+    validator = {
+        "verdict": "APPROVED",
+        "blind_reconciliation": [
+            {
+                "blind_candidate_id": "V-O-001",
+                "disposition": "ACCOUNTED_FOR",
+                "proposal_refs": ["D-O-001"],
+                "detail": "proposal represents the opening",
+                "evidence_refs": ["P001"],
+            },
+            {
+                "blind_candidate_id": "V-S-001",
+                "disposition": "UNRESOLVED",
+                "proposal_refs": [],
+                "detail": "linked Service remains unresolved",
+                "evidence_refs": ["P001"],
+            },
+        ],
+    }
+
+    errors = validate_blind_reconciliation_payload(
+        inventory,
+        proposal,
+        validator,
+    )
+
+    assert any(
+        (
+            "hard topology" in error
+            and "V-S-001" in error
+        )
+        for error in errors
     )

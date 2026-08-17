@@ -17,13 +17,16 @@ import httpx
 from classifire.canonical_models import Defect
 from classifire.blind_visual_inventory import (
     blind_observation_catalog,
+    blind_hard_topology_observation_catalog,
     validate_blind_reconciliation_payload,
     validate_blind_visual_inventory_payload,
 )
 from classifire.visual_validation import (
     VISUAL_VALIDATOR_ISSUE_CODES,
+    validate_visual_correction_scope,
     validate_visual_validator_payload,
     visual_validator_approved,
+    visual_validator_issue_codes,
 )
 from run_classifire_real_uat_deterministic import _json_from_payload
 from run_classifire_real_uat_fireseals_blankaware import _model_completeness_issues
@@ -31,7 +34,7 @@ from run_classifire_real_uat_fireseals_topologyaware import TopologyAwareFireSea
 from run_classifire_real_uat_intake import load_receipt, parse_json_envelope, repo_root
 
 
-VISUAL_GATE_POLICY_VERSION = "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v3"
+VISUAL_GATE_POLICY_VERSION = "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v4"
 MAX_VISUAL_CORRECTION_PASSES = 2
 OPENRESPONSES_BASE_URL = "http://127.0.0.1:18789"
 OPENRESPONSES_TIMEOUT_SECONDS = 300.0
@@ -835,6 +838,12 @@ Do not use any human UAT reference.
             )
         )
 
+        hard_topology_catalog = (
+            blind_hard_topology_observation_catalog(
+                blind_inventory
+            )
+        )
+
         return (
             self._validator_prompt(
                 defect,
@@ -843,71 +852,84 @@ Do not use any human UAT reference.
             )
             + f"""
 
-CONDITIONED RECONCILIATION OVERRIDE ? policy
-{VISUAL_GATE_POLICY_VERSION}:
+    CONDITIONED RECONCILIATION OVERRIDE / policy
+    {VISUAL_GATE_POLICY_VERSION}:
 
-Before seeing Physical's proposal, you independently produced this blind
-observation receipt from the same retained images:
+    Before seeing Physical's proposal, you independently produced this
+    blind observation receipt from the same retained images:
 
-{json.dumps(blind_inventory, ensure_ascii=False, separators=(",", ":"), default=str)}
+    {json.dumps(blind_inventory, ensure_ascii=False, separators=(",", ":"), default=str)}
 
-The deterministic observation IDs requiring reconciliation are:
+    The complete deterministic observation catalog is:
 
-{json.dumps(observation_catalog, ensure_ascii=False, separators=(",", ":"))}
+    {json.dumps(observation_catalog, ensure_ascii=False, separators=(",", ":"))}
 
-The blind receipt is challenge evidence, NOT canonical truth.
-Its raw Opening and Service counts do NOT have to equal Physical's counts.
+    Every ID in that complete catalog MUST appear exactly once in
+    blind_reconciliation. The complete ledger is retained for auditability
+    even where an observation is advisory rather than a hard topology claim.
 
-Reinspect the same images and reconcile EVERY blind observation ID exactly once.
+    The deterministic HARD TOPOLOGY catalog is:
 
-Allowed dispositions:
-- ACCOUNTED_FOR:
-  the observation is represented by the listed Physical proposal item(s).
-- DUPLICATE_OR_SAME_ITEM:
-  the blind observation is another view/grouping of the same listed proposal
-  item. When multiple blind Opening or Service candidates collapse into one
-  proposal item, exactly one must be ACCOUNTED_FOR and the others must use
-  DUPLICATE_OR_SAME_ITEM.
-- NOT_TOPOLOGY:
-  after reconciliation this observation is a shadow, fitting, background item,
-  non-penetrating object, or otherwise not a physical topology record.
-- RESOLVED_NONSTRUCTURAL:
-  a barrier/classification/photo-relationship uncertainty has been resolved
-  and does not alter Opening-Service topology.
-- UNRESOLVED:
-  the evidence still cannot safely resolve the observation.
+    {json.dumps(hard_topology_catalog, ensure_ascii=False, separators=(",", ":"))}
 
-APPROVED is forbidden when:
-- any blind observation is missing from the reconciliation ledger;
-- any blind observation appears more than once;
-- any disposition references a nonexistent Physical proposal item;
-- any blind observation remains UNRESOLVED.
+    Hard topology authority is deliberately narrower than visual observation:
+    - every candidate Opening is a hard topology claim;
+    - a candidate Service is a hard topology claim only when the blind pass
+      explicitly linked it to at least one candidate Opening;
+    - an unlinked visible Service candidate is challenge evidence, but its
+      mere visibility does not prove a penetration or Opening-Service link;
+    - unresolved candidates, barrier/classification/photo uncertainties and
+      limitations remain in the full ledger and must not be discarded.
 
-Do NOT force Physical to match raw blind counts.
-Do NOT silently discard an over-counted or under-counted blind observation.
-Explain the reconciliation using the actual image evidence.
+    Allowed dispositions remain:
+    - ACCOUNTED_FOR
+    - DUPLICATE_OR_SAME_ITEM
+    - NOT_TOPOLOGY
+    - RESOLVED_NONSTRUCTURAL
+    - UNRESOLVED
 
-For this conditioned pass, return all normal validator fields PLUS this
-mandatory top-level array:
+    All existing proposal-reference and duplicate-collapse rules still apply.
 
-"blind_reconciliation": [
-  {{
-    "blind_candidate_id": "V-O-001",
-    "disposition": "ACCOUNTED_FOR|DUPLICATE_OR_SAME_ITEM|NOT_TOPOLOGY|RESOLVED_NONSTRUCTURAL|UNRESOLVED",
-    "proposal_refs": ["D-O-001"],
-    "detail": "specific evidence-backed reconciliation",
-    "evidence_refs": ["photo id or filename"]
-  }}
-]
+    APPROVED is forbidden when:
+    - any complete-catalog observation is missing from blind_reconciliation;
+    - any observation appears more than once;
+    - a disposition references a nonexistent Physical proposal item;
+    - any HARD TOPOLOGY observation remains UNRESOLVED.
 
-For NOT_TOPOLOGY and RESOLVED_NONSTRUCTURAL, proposal_refs must be [].
-For ACCOUNTED_FOR and DUPLICATE_OR_SAME_ITEM, proposal_refs must identify the
-actual Physical proposal item(s).
-For a link observation mapped as ACCOUNTED_FOR, proposal_refs must include at
-least one proposal Opening and one proposal Service.
+    Advisory observations MAY remain UNRESOLVED on an APPROVED verdict only
+    when the evidence does not elevate them into a concrete supported defect
+    in Physical's proposed topology. Preserve that uncertainty explicitly in
+    the reconciliation detail and/or limitations.
 
-The human UAT reference fixture remains forbidden.
-"""
+    If an advisory observation demonstrates a concrete model defect after
+    conditioned reinspection, do NOT approve it merely because it is
+    advisory. Return REJECTED with the appropriate structured visual issue
+    code and evidence references.
+
+    Do NOT force Physical to match the raw blind counts.
+    Do NOT silently discard over-counted or under-counted blind observations.
+    Explain the reconciliation using the actual image evidence.
+
+    Return all normal validator fields PLUS this mandatory top-level array:
+
+    "blind_reconciliation": [
+      {{
+        "blind_candidate_id": "V-O-001",
+        "disposition": "ACCOUNTED_FOR|DUPLICATE_OR_SAME_ITEM|NOT_TOPOLOGY|RESOLVED_NONSTRUCTURAL|UNRESOLVED",
+        "proposal_refs": ["D-O-001"],
+        "detail": "specific evidence-backed reconciliation",
+        "evidence_refs": ["photo id or filename"]
+      }}
+    ]
+
+    For NOT_TOPOLOGY and RESOLVED_NONSTRUCTURAL, proposal_refs must be [].
+    For ACCOUNTED_FOR and DUPLICATE_OR_SAME_ITEM, proposal_refs must identify
+    the actual Physical proposal item(s).
+    For a link observation mapped as ACCOUNTED_FOR, proposal_refs must include
+    at least one proposal Opening and one proposal Service.
+
+    The human UAT reference fixture remains forbidden.
+    """
         )
 
     def _validator_retry_prompt_with_blind(
@@ -1024,6 +1046,17 @@ Previous draft:
 
 Independent validator receipt:
 {json.dumps(validator, ensure_ascii=False, separators=(",", ":"), default=str)}
+
+Binding correction-scope rules:
+- Change only topology dimensions authorized by the structured Validator issue codes.
+- A link-only issue may change link assignments only; preserve Opening and Service identities and counts.
+- Class, material or dimension issues may change only the named attribute dimension; preserve entity identities and counts.
+- INVENTED_SERVICE may remove Services but may not add them.
+- MISSED_SERVICE may add Services but may not add or remove Openings unless a separate Opening issue authorizes it.
+- MISSED_OPENING and OVER_MERGED_OPENING may add Openings; DUPLICATED_OPENING and OVER_SPLIT_OPENING may remove Openings.
+- WRONG_SERVICE_GROUPING may split or merge Service groups without changing Openings.
+- Quantity issues may change Service quantity values, not Opening or Service-group counts.
+- Preserve every unrelated entity and topology field. The deterministic runner will reject any wider correction.
 """
 
 
@@ -1259,10 +1292,10 @@ Independent validator receipt:
                 )
             )
 
-        # Policy v3: a structurally valid blind receipt is independent
+        # Policy v4: a structurally valid blind receipt is independent
         # challenge evidence. COMPLETE and BLOCKED both proceed to Physical.
         # Final approval depends on explicit conditioned reconciliation.
-        # Policy v3 cache keys include the current blind
+        # Policy v4 cache keys include the current blind
         # inventory. Old v1/v2 approvals cannot be reused.
         cached = (
             self._cached_visual_approved_model(
@@ -1676,7 +1709,45 @@ Independent validator receipt:
                     )
                 )
 
-            proposal = (
+            correction_issue_codes = (
+                visual_validator_issue_codes(
+                    validator
+                )
+            )
+
+            correction_preflight_errors = (
+                validate_visual_correction_scope(
+                    proposal,
+                    proposal,
+                    validator,
+                )
+            )
+
+            if correction_preflight_errors:
+                self.save_json(
+                    (
+                        f"21-visual-defect-"
+                        f"{defect_index:03d}-"
+                        "correction-scope-blocked.json"
+                    ),
+                    {
+                        "proposal": proposal,
+                        "validator": validator,
+                        "errors":
+                            correction_preflight_errors,
+                    },
+                )
+
+                return (
+                    self._insufficient_from_visual_gate(
+                        "Physical correction blocked: "
+                        + "; ".join(
+                            correction_preflight_errors
+                        )
+                    )
+                )
+
+            corrected_proposal = (
                 self._invoke_visual_agent_json(
                     agent_id="cf-physical-model",
                     session_key=physical_session,
@@ -1697,6 +1768,92 @@ Independent validator receipt:
                     ),
                 )
             )
+
+            correction_scope_errors = (
+                validate_visual_correction_scope(
+                    proposal,
+                    corrected_proposal,
+                    validator,
+                )
+            )
+
+            if correction_scope_errors:
+                self.save_json(
+                    (
+                        f"21-visual-defect-"
+                        f"{defect_index:03d}-"
+                        "correction-scope-rejected-"
+                        f"{correction_pass + 1}.json"
+                    ),
+                    {
+                        "original_proposal": proposal,
+                        "rejected_correction": corrected_proposal,
+                        "validator": validator,
+                        "issue_codes": sorted(
+                            correction_issue_codes
+                        ),
+                        "errors": correction_scope_errors,
+                    },
+                )
+
+                return (
+                    self._insufficient_from_visual_gate(
+                        "Physical correction exceeded structured Validator scope: "
+                        + "; ".join(
+                            correction_scope_errors
+                        )
+                    )
+                )
+
+            corrected_status = str(
+                corrected_proposal.get(
+                    "status"
+                )
+                or ""
+            ).strip().upper()
+
+            corrected_completeness = (
+                _model_completeness_issues(
+                    corrected_proposal
+                )
+                if corrected_status
+                == "MODEL_SUPPORTED"
+                else []
+            )
+
+            if (
+                corrected_status
+                != "MODEL_SUPPORTED"
+                or corrected_completeness
+            ):
+                reasons = (
+                    corrected_completeness
+                    or list(
+                        corrected_proposal.get(
+                            "limitations"
+                        )
+                        or []
+                    )
+                    or [
+                        "Physical correction returned status "
+                        f"{corrected_status or 'MISSING'}"
+                    ]
+                )
+
+                return (
+                    self._insufficient_from_visual_gate(
+                        "Physical correction remained "
+                        "insufficient within structured "
+                        "Validator scope: "
+                        + "; ".join(
+                            str(item)
+                            for item
+                            in reasons
+                        )
+                    )
+                )
+
+            proposal = corrected_proposal
 
         return (
             self._insufficient_from_visual_gate(
