@@ -258,6 +258,95 @@ def test_v4b_out_of_scope_correction_is_rejected_without_replacing_original(
     ).exists()
 
 
+def test_v4b_insufficient_scoped_correction_is_terminal_without_structural_retry(
+    tmp_path: Path,
+) -> None:
+    proposal = _proposal()
+    corrected = deepcopy(proposal)
+    corrected.update(
+        {
+            "status": "INSUFFICIENT_EVIDENCE",
+            "limitations": [
+                "The Validator issue cannot be resolved from the available images."
+            ],
+        }
+    )
+    responses = [proposal, _rejected(), corrected]
+    receipt_names: list[str] = []
+    controller = _bare_controller(tmp_path, responses)
+
+    def invoke(**kwargs: object) -> dict:
+        receipt_names.append(str(kwargs["receipt_name"]))
+        return responses.pop(0)
+
+    controller._invoke_visual_agent_json = invoke
+    defect = SimpleNamespace(
+        id="d1",
+        external_defect_id="147039",
+        defect_code="147039",
+    )
+
+    result = controller._synthesise_defect(1, defect, "{}")
+
+    assert result["status"] == "INSUFFICIENT_EVIDENCE"
+    assert any(
+        "remained insufficient within structured Validator scope" in item
+        for item in result["limitations"]
+    )
+    assert responses == []
+    assert receipt_names == [
+        "21-visual-defect-001-physical-pass-0",
+        "21-visual-defect-001-validator-pass-0",
+        "21-visual-defect-001-physical-correction-1",
+    ]
+    assert not any("physical-structural-retry" in name for name in receipt_names)
+    assert not (tmp_path / "21-visual-defect-001-approved-model.json").exists()
+
+
+def test_v4b_incomplete_supported_scoped_correction_is_terminal_without_retry(
+    tmp_path: Path,
+) -> None:
+    proposal = _proposal()
+    validator = {
+        "verdict": "REJECTED",
+        "observed_opening_count": 1,
+        "observed_service_group_count": 1,
+        "issues": [
+            {
+                "code": "WRONG_BARRIER",
+                "detail": "The barrier construction is not supported.",
+                "evidence_refs": ["photo-a.png"],
+            }
+        ],
+        "limitations": [],
+    }
+    corrected = deepcopy(proposal)
+    corrected["openings"][0]["substrate_type"] = None
+    responses = [proposal, validator, corrected]
+    receipt_names: list[str] = []
+    controller = _bare_controller(tmp_path, responses)
+
+    def invoke(**kwargs: object) -> dict:
+        receipt_names.append(str(kwargs["receipt_name"]))
+        return responses.pop(0)
+
+    controller._invoke_visual_agent_json = invoke
+    defect = SimpleNamespace(
+        id="d1",
+        external_defect_id="147039",
+        defect_code="147039",
+    )
+
+    result = controller._synthesise_defect(1, defect, "{}")
+
+    assert result["status"] == "INSUFFICIENT_EVIDENCE"
+    assert any("missing substrate_type" in item for item in result["limitations"])
+    assert responses == []
+    assert len(receipt_names) == 3
+    assert not any("physical-structural-retry" in name for name in receipt_names)
+    assert not (tmp_path / "21-visual-defect-001-approved-model.json").exists()
+
+
 def test_v4b_ambiguous_size_or_quantity_blocks_before_physical_correction(
     tmp_path: Path,
 ) -> None:

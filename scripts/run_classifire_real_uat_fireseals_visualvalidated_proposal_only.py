@@ -634,6 +634,50 @@ def _proposal_only_protected_state_guard(
 class ProposalOnlyVisualValidatedTopologyController(VisualValidatedTopologyController):
     """Run visual Physical/Validator inference without canonical writes."""
 
+    def preflight(self) -> None:
+        """Verify Gateway RPC without mutating its managed service state."""
+        config = self.openclaw(
+            "config",
+            "validate",
+            "--json",
+        )
+        self.save_text(
+            "01-openclaw-config.json",
+            config.stdout,
+        )
+
+        status = self.openclaw(
+            "gateway",
+            "status",
+            "--require-rpc",
+            "--timeout",
+            "60000",
+            timeout=90,
+            check=False,
+        )
+
+        if status.returncode != 0:
+            detail = "\n".join(
+                item
+                for item in (
+                    status.stdout.strip(),
+                    status.stderr.strip(),
+                )
+                if item
+            )
+            raise RuntimeError(
+                "OpenClaw Gateway RPC preflight failed; "
+                "proposal-only mode will not restart the managed Gateway."
+                + (f" Details: {detail}" if detail else "")
+            )
+
+        self.save_text(
+            "02-openclaw-gateway.txt",
+            status.stdout + status.stderr,
+        )
+        print("PASS OpenClaw Gateway RPC")
+        self.ensure_api()
+
     def invoke_tool(
         self,
         *args: Any,

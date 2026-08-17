@@ -91,6 +91,114 @@ def _controller(
     return controller, saved
 
 
+def test_proposal_only_preflight_checks_gateway_without_service_restart(
+    tmp_path: Path,
+) -> None:
+    controller, _saved = _controller(tmp_path)
+    calls: list[tuple[tuple[str, ...], dict[str, Any]]] = []
+    api_checks: list[bool] = []
+
+    class Result:
+        def __init__(
+            self,
+            *,
+            returncode: int = 0,
+            stdout: str = "",
+            stderr: str = "",
+        ) -> None:
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    def openclaw(
+        *args: str,
+        **kwargs: Any,
+    ) -> Result:
+        calls.append((args, kwargs))
+        if args[:2] == ("config", "validate"):
+            return Result(stdout='{"valid": true}')
+        return Result(stdout="RPC probe: ok")
+
+    controller.openclaw = openclaw  # type: ignore[method-assign]
+    controller.ensure_api = lambda: api_checks.append(True)  # type: ignore[method-assign]
+
+    controller.preflight()
+
+    assert [args for args, _kwargs in calls] == [
+        ("config", "validate", "--json"),
+        (
+            "gateway",
+            "status",
+            "--require-rpc",
+            "--timeout",
+            "60000",
+        ),
+    ]
+    assert all("restart" not in args for args, _kwargs in calls)
+    assert calls[1][1] == {
+        "timeout": 90,
+        "check": False,
+    }
+    assert api_checks == [True]
+    assert (tmp_path / "01-openclaw-config.json").is_file()
+    assert (tmp_path / "02-openclaw-gateway.txt").is_file()
+
+
+def test_proposal_only_preflight_fails_closed_without_service_restart(
+    tmp_path: Path,
+) -> None:
+    controller, _saved = _controller(tmp_path)
+    calls: list[tuple[str, ...]] = []
+
+    class Result:
+        def __init__(
+            self,
+            *,
+            returncode: int = 0,
+            stdout: str = "",
+            stderr: str = "",
+        ) -> None:
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    def openclaw(
+        *args: str,
+        **_kwargs: Any,
+    ) -> Result:
+        calls.append(args)
+        if args[:2] == ("config", "validate"):
+            return Result(stdout='{"valid": true}')
+        return Result(
+            returncode=1,
+            stderr="RPC unavailable",
+        )
+
+    controller.openclaw = openclaw  # type: ignore[method-assign]
+    controller.ensure_api = lambda: pytest.fail(  # type: ignore[method-assign]
+        "API startup must not follow a failed Gateway check"
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="proposal-only mode will not restart",
+    ):
+        controller.preflight()
+
+    assert calls == [
+        ("config", "validate", "--json"),
+        (
+            "gateway",
+            "status",
+            "--require-rpc",
+            "--timeout",
+            "60000",
+        ),
+    ]
+    assert all("restart" not in args for args in calls)
+    assert not (tmp_path / "02-openclaw-gateway.txt").exists()
+
+
 @pytest.fixture
 def protected_state_db() -> tuple[
     Session,

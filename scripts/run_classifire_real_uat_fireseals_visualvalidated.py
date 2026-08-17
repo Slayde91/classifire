@@ -1805,6 +1805,54 @@ Binding correction-scope rules:
                     )
                 )
 
+            corrected_status = str(
+                corrected_proposal.get(
+                    "status"
+                )
+                or ""
+            ).strip().upper()
+
+            corrected_completeness = (
+                _model_completeness_issues(
+                    corrected_proposal
+                )
+                if corrected_status
+                == "MODEL_SUPPORTED"
+                else []
+            )
+
+            if (
+                corrected_status
+                != "MODEL_SUPPORTED"
+                or corrected_completeness
+            ):
+                reasons = (
+                    corrected_completeness
+                    or list(
+                        corrected_proposal.get(
+                            "limitations"
+                        )
+                        or []
+                    )
+                    or [
+                        "Physical correction returned status "
+                        f"{corrected_status or 'MISSING'}"
+                    ]
+                )
+
+                return (
+                    self._insufficient_from_visual_gate(
+                        "Physical correction remained "
+                        "insufficient within structured "
+                        "Validator scope: "
+                        + "; ".join(
+                            str(item)
+                            for item
+                            in reasons
+                        )
+                    )
+                )
+
             proposal = corrected_proposal
 
         return (
