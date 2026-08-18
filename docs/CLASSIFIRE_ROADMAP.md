@@ -312,7 +312,45 @@ If preflight passes and the authorised approver directs it:
 - Every known defect is defensibly represented or explicitly withheld with reason.
 - Every historical/reference mismatch is explained, adjudicated, or retained as unresolved uncertainty.
 - The canonical model is semantically approved, receipt-bound, and independently checked.
-- A replacement active Physical Model Lock…707 tokens truncated… possible training use.
+- A replacement active Physical Model Lock supersedes invalid historical state.
+- Protected-state evidence proves the canonical change was limited to the intended physical-model components.
+
+## 13. Phase 8C - Automated Physical-Model Accuracy Programme
+
+**Status:** Planned - not started
+
+**Position:** This is a dedicated post-prototype programme. It reduces routine human intervention through measurable automation and governed continual learning from routine reports, but does not replace existing Phase 8 safety or Phase 14 human release authority.
+
+### 13.1 Purpose and non-goals
+
+**Purpose:** Improve CLASSIFIRE's automated ability to identify barriers, openings, services, service quantities, materials, and Opening-Service links from report evidence while correctly withholding uncertainty.
+
+**Non-goals:**
+
+- Do not let unreviewed live reports or human corrections directly self-modify a model, become an answer key for the same case, or cross a customer/tenant boundary.
+- Do not use a report's human fixture, adjudication, or sealed expected answer during that report's runtime inference.
+- Do not claim accuracy from count equality alone.
+- Do not eliminate final human release authority.
+- Do not grant a trained model direct canonical-write, lock, technical-approval, commercial-approval, or release authority.
+
+### 13.2 Four separate improvement lanes
+
+| Lane | Purpose | Prohibited shortcut |
+| --- | --- | --- |
+| Evaluation | Measure a fixed candidate against independent ground truth. | Expose labels to runtime inference or tune on sealed results. |
+| System and prompt improvement | Improve evidence selection, multi-view reconciliation, schema constraints, prompts, confidence, and Validator behaviour. | Treat a case-specific answer key as runtime instruction. |
+| Model training or fine-tuning | Change model weights or create an approved provider-hosted/custom model from an approved corpus. | Start automatically, use unapproved data, or bypass the same independent evaluation. |
+| Governed continual learning | Capture routine report evidence and verified outcomes into a versioned learning pipeline, then periodically release evaluated improvements. | Per-report weight updates, self-label training, cross-tenant leakage, or silent provider-side learning. |
+
+### 13.3 Programme admission gate - working prototype
+
+Only preparation may begin before the following are all true:
+
+1. Phase 8 has produced a defensible replacement active Physical Model Lock.
+2. The graph schema, blank-opening semantics, evidence receipts, and protected-state safeguards are stable and versioned.
+3. Higher-detail source selection, duplicate grouping, and image provenance are reproducible.
+4. Proposal-only evaluation and independent visual validation remain proven.
+5. Every dataset source has an approved data-use basis for benchmarking and, separately, any possible training use.
 6. An end-to-end prototype has produced snapshot-backed outputs through Phase 13 before a training/fine-tuning decision is made.
 
 Until then, this programme may create the charter, taxonomy, and rights inventory. It must not train a model or tune against the current UAT outcome.
@@ -640,4 +678,3 @@ No steel or duct calculator data may be imported into the active fire-seal/penet
 - [Knowledge Alignment Amendment](../knowledge/amendments/CLASSIFIRE_KNOWLEDGE_ALIGNMENT_AMENDMENT_v2.13.1.md)
 - [Knowledge Source Manifest](../knowledge/manifests/classifire-knowledge-source-v2.13.json)
 - [Project and Knowledge Alignment Review](./reports/CLASSIFIRE_PROJECT_KNOWLEDGE_ALIGNMENT_20260811.md)
-
