@@ -2,7 +2,7 @@
 
 **Document status:** Active working roadmap
 
-**Roadmap version:** 2026-08-18
+**Roadmap version:** 2026-08-18 r2
 
 **Product status:** Pre-production prototype and controlled UAT build
 
@@ -64,6 +64,7 @@ These differences must remain explicit. Passing a count comparison alone is neve
 - The historical human fixture and any adjudication for a report are validation-only; they must not be exposed to that report's runtime inference or used as hidden prompt answers.
 - Full-resolution originals are preferred when verified. Lower-resolution thumbnails, crops, labels, and page renders remain contextual evidence when they preserve information not present in the original.
 - Human adjudication is an exception mechanism for genuine conflict or ambiguity. It is not the intended routine input for every estimate.
+- Routine live reports and their verified outcomes are intended to improve CLASSIFIRE through a governed continual-learning pipeline. They must not directly self-modify the model during the same live case.
 - A trained or improved model never bypasses protected-state checks, independent validation, Physical Model Lock rules, or human-only final release.
 
 ## 3. Master roadmap at a glance
@@ -311,44 +312,7 @@ If preflight passes and the authorised approver directs it:
 - Every known defect is defensibly represented or explicitly withheld with reason.
 - Every historical/reference mismatch is explained, adjudicated, or retained as unresolved uncertainty.
 - The canonical model is semantically approved, receipt-bound, and independently checked.
-- A replacement active Physical Model Lock supersedes invalid historical state.
-- Protected-state evidence proves the canonical change was limited to the intended physical-model components.
-
-## 13. Phase 8C - Automated Physical-Model Accuracy Programme
-
-**Status:** Planned - not started
-
-**Position:** This is a dedicated post-prototype programme. It reduces routine human intervention through measurable automation, but does not replace existing Phase 8 safety or Phase 14 human release authority.
-
-### 13.1 Purpose and non-goals
-
-**Purpose:** Improve CLASSIFIRE's automated ability to identify barriers, openings, services, service quantities, materials, and Opening-Service links from report evidence while correctly withholding uncertainty.
-
-**Non-goals:**
-
-- Do not train a model silently from live reports or human corrections.
-- Do not use a report's human fixture, adjudication, or sealed expected answer during that report's runtime inference.
-- Do not claim accuracy from count equality alone.
-- Do not eliminate final human release authority.
-- Do not grant a trained model direct canonical-write, lock, technical-approval, commercial-approval, or release authority.
-
-### 13.2 Three separate improvement lanes
-
-| Lane | Purpose | Prohibited shortcut |
-| --- | --- | --- |
-| Evaluation | Measure a fixed candidate against independent ground truth. | Expose labels to runtime inference or tune on sealed results. |
-| System and prompt improvement | Improve evidence selection, multi-view reconciliation, schema constraints, prompts, confidence, and Validator behaviour. | Treat a case-specific answer key as runtime instruction. |
-| Model training or fine-tuning | Change model weights or create an approved provider-hosted/custom model from an approved corpus. | Start automatically, use unapproved data, or bypass the same independent evaluation. |
-
-### 13.3 Programme admission gate - working prototype
-
-Only preparation may begin before the following are all true:
-
-1. Phase 8 has produced a defensible replacement active Physical Model Lock.
-2. The graph schema, blank-opening semantics, evidence receipts, and protected-state safeguards are stable and versioned.
-3. Higher-detail source selection, duplicate grouping, and image provenance are reproducible.
-4. Proposal-only evaluation and independent visual validation remain proven.
-5. Every dataset source has an approved data-use basis for benchmarking and, separately, any possible training use.
+- A replacement active Physical Model Lock…707 tokens truncated… possible training use.
 6. An end-to-end prototype has produced snapshot-backed outputs through Phase 13 before a training/fine-tuning decision is made.
 
 Until then, this programme may create the charter, taxonomy, and rights inventory. It must not train a model or tune against the current UAT outcome.
@@ -433,7 +397,34 @@ Every candidate configuration must be versioned, selected on development data, r
 
 **Exit condition:** Measurable independent improvement is demonstrated, or a documented plateau justifies considering a controlled fine-tuning experiment.
 
-### 13.8 8C.4 - Minimal human exception workflow
+### 13.8 8C.4 - Governed continual learning from live reports
+
+**Objective:** Turn routine report inputs and verified outcomes into a controlled learning loop that improves future automation without allowing an untrusted report to self-modify the system.
+
+**What enters the learning pipeline:**
+
+1. A routine live run records a hash-bound evidence manifest, model/prompt/configuration version, structured proposal, field-level confidence, Validator result, exception reasons, and any later verified outcome.
+2. A live report becomes a **learning candidate**, not an immediate training example. Its evidence remains private and tenant-scoped until data rights, retention, redaction, and quality gates pass.
+3. A label may be created only from an independent outcome: an approved physical/technical result, a governed adjudication, verified as-built evidence, or another approved source. A model's own output is never sufficient ground truth.
+4. Approved learning candidates are periodically assembled into a versioned dataset. Candidate configurations, retrieval indexes, calibration changes, or trained models are then evaluated and released through the same development, sealed-holdout, shadow, and rollback gates.
+
+**Runtime learning rules:**
+
+- The current report may use its own retained evidence during its run; that is evidence reasoning, not training.
+- The current report's outcome must not change the model, prompt, or retrieval corpus used to decide that same report.
+- Tenant-scoped retrieval of previously approved, permissioned patterns may assist future proposals, but it may not reveal another customer's evidence or replace the current report's evidence basis.
+- Live inputs are screened for privacy, malicious content, source integrity, prompt injection, and data-rights eligibility before entering any learning store.
+- A learning release is versioned, reproducible, proposal-only qualified, independently evaluated, and rollback-capable. There are no direct per-report model-weight updates in production.
+
+**Required measurements:**
+
+- Eligible-report coverage, outcome-feedback coverage, data-quality rejection rate, and time from verified outcome to approved dataset version.
+- Accuracy, calibration, abstention, critical-error, and exception-rate change by live-report cohort.
+- Cross-tenant isolation, provenance completeness, label disagreement, drift, and rollback effectiveness.
+
+**Exit condition:** A permissioned learning ledger, outcome-ingestion path, data-quality gate, versioned dataset release process, and independent candidate-release controls are proven in shadow operation.
+
+### 13.9 8C.5 - Minimal human exception workflow
 
 **Objective:** Make human input targeted, auditable, and progressively smaller.
 
@@ -457,7 +448,7 @@ Every candidate configuration must be versioned, selected on development data, r
 
 **Exit condition:** Exception queue, reviewer guidance, sampling policy, decision receipt, disagreement register, and review-rate dashboard are operational.
 
-### 13.9 8C.5 - Fine-tuning readiness and controlled experiments
+### 13.10 8C.6 - Fine-tuning readiness and controlled experiments
 
 **Objective:** Decide whether actual model training is justified and, only if it is, test it safely.
 
@@ -473,7 +464,7 @@ Fine-tuning is optional. It may begin only when all of the following are satisfi
 **Fine-tuning controls:**
 
 - Use only the approved training partition, never development, sealed-holdout, or current runtime cases.
-- No online learning, silent continual learning, or automatic provider training.
+- No ungoverned online learning, self-label training, silent provider-side training, or automatic use of a live report outside the approved learning pipeline.
 - Train offline with no canonical database authority.
 - Produce a model card, training-data card, experiment receipt, failure analysis, cost record, and rollback plan.
 - Compare against both the unchanged baseline and the best non-training candidate.
@@ -481,7 +472,7 @@ Fine-tuning is optional. It may begin only when all of the following are satisfi
 
 **Exit condition:** A candidate is rejected with evidence or approved only for proposal-only shadow evaluation.
 
-### 13.10 8C.6 - Independent holdout and prospective shadow evaluation
+### 13.11 8C.7 - Independent holdout and prospective shadow evaluation
 
 **Objective:** Prove that the selected candidate generalises beyond the data used to develop it.
 
@@ -496,7 +487,7 @@ Fine-tuning is optional. It may begin only when all of the following are satisfi
 
 **Exit condition:** Predeclared acceptance criteria pass on both sealed holdout and prospective shadow evidence with no unmitigated critical regression.
 
-### 13.11 8C.7 - Controlled automation release and monitoring
+### 13.12 8C.8 - Controlled automation release and monitoring
 
 **Objective:** Increase automated throughput without weakening existing control boundaries.
 
@@ -512,7 +503,7 @@ Fine-tuning is optional. It may begin only when all of the following are satisfi
 - Monitor error, conflict, exception, and provenance rates by confidence band, source quality, report/site cohort, and physical category.
 - Alert on drift, increasing critical error, false confidence, source conflict, or evidence-provenance failure.
 - Keep a rollback-ready prior candidate.
-- Treat each retraining event as a new governed release requiring the same dataset, benchmark, shadow, and approval gates.
+- Treat every dataset, retrieval, calibration, prompt, and model release as a new governed learning release requiring the same benchmark, shadow, approval, and rollback gates.
 
 **Exit condition:** Controlled automation policy, monitoring, incident process, rollback procedure, and retraining runbook are proven.
 
@@ -637,7 +628,7 @@ No steel or duct calculator data may be imported into the active fire-seal/penet
 3. Proposal-only experimentation is the default for expensive, uncertain, or model-changing work.
 4. Human fixtures, adjudications, and sealed benchmark labels are unavailable to inference for the same case.
 5. High-resolution verified evidence improves automated input quality but does not justify inventing concealed or uncertain physical facts.
-6. Training is optional, governed, reproducible, and evaluated independently; it is never silent continual learning.
+6. Training and continual learning are governed, reproducible, and independently evaluated. Routine reports may contribute through the permissioned, versioned learning pipeline; they never cause silent self-modification or bypass release gates.
 7. Correct abstention is preferable to an unsupported confident claim.
 8. Human involvement is targeted to exception review and final release, not routine hidden assistance.
 9. No downstream phase may bypass an unresolved upstream gate.
@@ -649,5 +640,4 @@ No steel or duct calculator data may be imported into the active fire-seal/penet
 - [Knowledge Alignment Amendment](../knowledge/amendments/CLASSIFIRE_KNOWLEDGE_ALIGNMENT_AMENDMENT_v2.13.1.md)
 - [Knowledge Source Manifest](../knowledge/manifests/classifire-knowledge-source-v2.13.json)
 - [Project and Knowledge Alignment Review](./reports/CLASSIFIRE_PROJECT_KNOWLEDGE_ALIGNMENT_20260811.md)
-
 
