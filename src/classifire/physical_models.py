@@ -140,3 +140,36 @@ class PhysicalModelLock(PhysicalRecordMixin, Base):
             postgresql_where=text("invalidated_at IS NULL"),
         ),
     )
+
+
+class PhysicalModelAdmission(PhysicalRecordMixin, Base):
+    """An externally signed, one-time admission recorded before any submission.
+
+    Layer 4 records this evidence only.  It does not create an initial physical
+    model and does not represent a Physical Model Lock.
+    """
+
+    __tablename__ = "physical_model_admissions"
+
+    admission_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
+    purpose: Mapped[str] = mapped_column(String(80), nullable=False)
+    preflight_receipt_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    normalised_submission_payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    protected_state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    protected_state_fingerprint_version: Mapped[str] = mapped_column(String(100), nullable=False)
+    source_run_id: Mapped[str] = mapped_column(String(160), nullable=False)
+    adjudicated_run_id: Mapped[str] = mapped_column(String(160), nullable=False)
+    artifact_digests: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False)
+    policy_versions: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False)
+    admission_envelope_json: Mapped[str] = mapped_column(Text, nullable=False)
+    admission_envelope_sha256: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    issuer_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    signing_key_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    signature_algorithm: Mapped[str] = mapped_column(String(80), nullable=False)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    state: Mapped[str] = mapped_column(String(20), default="issued", index=True, nullable=False)
+
+    __table_args__ = (Index("ix_physical_model_admission_estimate_state", "estimate_id", "state"),)

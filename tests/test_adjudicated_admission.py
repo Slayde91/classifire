@@ -29,7 +29,9 @@ def _b64(value: bytes) -> str:
     return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
 
 
-def _fixture() -> tuple[dict[str, object], str, dict[str, object]]:
+def _fixture(
+    *, project_id: str | None = None, estimate_id: str | None = None
+) -> tuple[dict[str, object], str, dict[str, object]]:
     private_key = ec.generate_private_key(ec.SECP256R1())
     public_key = _b64(
         private_key.public_key().public_bytes(
@@ -43,8 +45,8 @@ def _fixture() -> tuple[dict[str, object], str, dict[str, object]]:
         "schema": ADMISSION_MANIFEST_SCHEMA,
         "admission_id": str(uuid4()),
         "purpose": ADMISSION_PURPOSE,
-        "project_id": str(uuid4()),
-        "estimate_id": str(uuid4()),
+        "project_id": project_id or str(uuid4()),
+        "estimate_id": estimate_id or str(uuid4()),
         "source_run_id": "source-run-1",
         "adjudicated_run_id": "adjudicated-run-1",
         "preflight_receipt_sha256": digest,
