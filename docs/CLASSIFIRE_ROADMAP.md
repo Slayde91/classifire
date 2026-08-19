@@ -2,11 +2,11 @@
 
 **Document status:** Active working roadmap
 
-**Roadmap version:** 2026-08-18 r2
+**Roadmap version:** 2026-08-20 r3
 
 **Product status:** Pre-production prototype and controlled UAT build
 
-**Supersedes:** The 16 August 2026 Master Roadmap as the current working plan. The supplied PDF remains an immutable reference and historical decision record.
+**Supersedes:** The 18 August 2026 r2 Master Roadmap as the current working plan. The supplied PDF and earlier roadmap revisions remain immutable reference and decision-history records.
 
 **Scope:** Passive-fire evidence intake, physical-model automation, technical selection, quantities, commercial recovery, validation, output, release, and production hardening.
 
@@ -66,6 +66,40 @@ These differences must remain explicit. Passing a count comparison alone is neve
 - Human adjudication is an exception mechanism for genuine conflict or ambiguity. It is not the intended routine input for every estimate.
 - Routine live reports and their verified outcomes are intended to improve CLASSIFIRE through a governed continual-learning pipeline. They must not directly self-modify the model during the same live case.
 - A trained or improved model never bypasses protected-state checks, independent validation, Physical Model Lock rules, or human-only final release.
+
+### 2.5 20 August 2026 implementation reconciliation
+
+The current report UAT remains **proposal-only**. The adjudicated revision has 17 Openings and 22 Service groups, but no real admission has been registered, no canonical Opening-Service-Link model has been written, and no replacement active Physical Model Lock has been created. Technical selection, quantities, commercial recovery, snapshot, output, and release therefore remain correctly blocked.
+
+The original Phase 8 branch contained valuable UAT work but mixed physical, commercial, agent, plugin, and deployment concerns. The implementation is being rebuilt as a clean foundation stack rather than published wholesale from the dirty legacy worktree:
+
+| Foundation workstream | Roadmap phases supported | Recorded factual status | Remaining evidence before completion |
+| --- | --- | --- | --- |
+| Layer 1 - runtime foundation | 0, 15 | Draft foundation; recorded tip `b4eef5d`. | Current PR/CI status refresh before merge. |
+| Layer 2 - physical foundation | 1, 6, 8 | Draft foundation; recorded tip `8606b67`. | Final cross-layer review and merge sequencing. |
+| Layer 3 - least-privilege agents | 3, 15 | Draft foundation; recorded tip `57fe33f`. | Clean plugin rebuild and deployment rehearsal. |
+| Layer 4 - P-256 admission/writer | 1, 3, 6, 8, 15 | **In progress**; recorded base tip `12c2e5c`. | Stored-payload integrity, durable receipt scope, expiry/corruption/rollback/replay/state-drift tests, and full regression. |
+| Controlled plugin rebuild | 3, 15 | Not started on the clean stack. | Reviewed build/install/restart and synthetic no-write proof. |
+| Controlled canonicalisation | 8 | Blocked. | Layer 4 closure, deployment readiness, fresh preflight, external signature, admission registration, and separate write authority. |
+| Signed lock-admission | 1, 6, 8 | Not designed as a completed boundary. | Separate signed lock design and authority. |
+| Automated Physical-Model Accuracy Programme | 8C | Planned - not started. | Working prototype and the programme admission gate. |
+
+The recorded draft PR stack is `main -> Layer 1 -> Layer 2 -> Layer 3 -> Layer 4`. Those references are prior verified session evidence; GitHub state must be refreshed before a merge or publication decision. The dirty `gpt/phase8-linked-original-images` worktree remains an evidence/development source, not a safe bulk staging source.
+
+### 2.6 Controlled canonicalisation and signer direction
+
+The first canonical write must be admission-bound. A signed admission binds one estimate, one normalized Opening-Service-Link payload, one protected-state fingerprint, source/adjudicated artefact hashes, policy and implementation hashes, issuer/key identity, purpose, and expiry. The writer consumes that admission once, rechecks the current state in the write transaction, writes only the sealed physical facts, and **does not create a Physical Model Lock**.
+
+P-256 is the approved production admission protocol direction. A Samsung Galaxy S25 Ultra proof-of-capability successfully performed a local P-256 AndroidKeyStore sign-and-verify operation using a temporary key, which was then deleted. The prior Ed25519 path was unavailable from the tested AndroidKeyStore provider. This establishes handset capability only: no production key has been created, copied, configured, registered, or used by CLASSIFIRE. Private keys remain outside CLASSIFIRE; it receives only a public verification key and explicit issuer-to-key authorisation mapping.
+
+### 2.7 Immediate major sequence
+
+1. Finish Layer 4 locally: stored-payload hash recheck, durable/explicit successful-submission receipt behaviour, expiry/corruption/replay/state-drift/rollback coverage, full regression, and final diff review.
+2. Update the Layer 4 draft PR only after that local evidence exists and under separate publication authority.
+3. Rebuild the admission-only controlled plugin on the clean stack.
+4. Under separate deployment-readiness authority: confirm the real target, verify backup/restore, rehearse migration, configure only public P-256 verification policy, install/restart the clean plugin, and run synthetic no-write tests.
+5. Create a fresh proposal-only preflight; obtain a short-lived external P-256 signature; register an admission offline; then seek separate current authority for the one-time initial canonical write.
+6. Design and approve a separate signed Physical Model Lock admission before technical, quantity, commercial, snapshot, output, or release phases are allowed to advance.
 
 ## 3. Master roadmap at a glance
 
@@ -285,7 +319,7 @@ An independently validated, durable visual receipt is required for every canonic
 
 ### Current gate
 
-The next canonical action is not another inference run. It is a controlled preflight followed, only if current state is still safe and explicitly authorised, by initial Physical Model submission and deterministic lock creation.
+The next canonical action is not another inference run. It is deployment and verification of the admission-bound writer, followed only if current state is still safe and separately authorised by a fresh preflight, externally signed admission, and initial Physical Model submission. Physical Model Lock creation remains a later separate gate; it is intentionally unavailable until a signed lock-admission boundary is designed and approved.
 
 ### Required preflight
 
@@ -301,11 +335,12 @@ Before any canonical write:
 
 If preflight passes and the authorised approver directs it:
 
-1. Submit the exact adjudicated Opening-Service proposal through the controlled initial-physical-model tool.
-2. Re-read the canonical state and reconcile codes, quantities, materials, links, and defect associations exactly.
-3. Invoke deterministic Physical Model Lock creation.
-4. Verify the lock hash, validator result, protected-state delta, audit event, and absence of unauthorised component changes.
-5. Stop and retain a limitation if any condition fails. Do not partly repair the canonical model in place.
+1. Deploy and verify the admission-bound writer through the [controlled-writer deployment runbook](./ADJUDICATED_CANONICAL_WRITER_DEPLOYMENT_RUNBOOK.md).
+2. Produce a fresh no-write preflight and obtain a separately governed, externally signed admission manifest bound to that exact payload and protected-state fingerprint.
+3. Register the admission offline, then obtain separate current authority to submit the exact adjudicated Opening-Service proposal by admission ID.
+4. Re-read the canonical state and reconcile codes, quantities, materials, links, and defect associations exactly.
+5. Do not create a Physical Model Lock in this operation. A separate signed lock-admission boundary and explicit authority remain required.
+6. Stop and retain a limitation if any condition fails. Do not partly repair the canonical model in place.
 
 ### Phase 8 exit condition
 
@@ -674,7 +709,11 @@ No steel or duct calculator data may be imported into the active fire-seal/penet
 
 ## 23. Related documentation
 
-- [CLASSIFIRE Architecture](./CLASSIFIRE_ARCHITECTURE.md)
-- [Knowledge Alignment Amendment](../knowledge/amendments/CLASSIFIRE_KNOWLEDGE_ALIGNMENT_AMENDMENT_v2.13.1.md)
-- [Knowledge Source Manifest](../knowledge/manifests/classifire-knowledge-source-v2.13.json)
-- [Project and Knowledge Alignment Review](./reports/CLASSIFIRE_PROJECT_KNOWLEDGE_ALIGNMENT_20260811.md)
+This documentation-only publication is self-contained on its target branch.
+The two linked documents below are included with this roadmap update. Other
+architecture, knowledge-alignment, and evidence documents must be linked only
+when they are independently published to the target branch; this avoids
+publishing GitHub links that resolve only in a local or unrelated worktree.
+
+- [Admission-Bound Canonical Writer Deployment Runbook](./ADJUDICATED_CANONICAL_WRITER_DEPLOYMENT_RUNBOOK.md)
+- [External Signer Operating Model for Adjudicated Admissions](./ADJUDICATED_ADMISSION_EXTERNAL_SIGNER_OPERATING_MODEL.md)
