@@ -33,13 +33,25 @@ from .models import (
     TechnicalVariant,
     User,
 )
+from .physical_models import ServiceOpeningLink
 from .security import authenticate_user, create_csrf_token, has_permission, verify_csrf
 from .services.calculation import D, calculate_estimate_line, recalculate_estimate
+from .services.physical_defects import bind_canonical_defect
+from .services.physical_mutation_guard import PhysicalMutationError, require_physical_model_mutation
+from .services.release_pinning import (
+    pin_current_releases,
+    release_basis_for_estimate,
+    validate_estimate_release_basis,
+)
 from .services.rule_engine import evaluate_estimate_rules
-from .services.release_pinning import pin_current_releases, release_basis_for_estimate, validate_estimate_release_basis
 from .services.snapshot import lock_snapshot
 from .services.storage import save_upload
 from .services.technical import extract_pdf_candidate_metadata, search_for_opening
+from .services.workflow import WorkflowTransitionError
+from .services.workflow_guard import (
+    PhysicalModelLockRequiredError,
+    require_active_physical_model_lock,
+)
 
 router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
@@ -424,7 +436,24 @@ def estimate_add_opening(
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:write")
     estimate = _estimate(db, estimate_id)
-    opening = Opening(estimate_id=estimate.id, opening_code=opening_code, defect_id=defect_id, location=location, substrate_type=substrate_type, substrate_plane=substrate_plane, orientation=orientation, frl=frl)
+    if estimate.status not in {"draft", "in_review"}:
+        raise HTTPException(409, "Locked or released estimates cannot be modified")
+    try:
+        require_physical_model_mutation(db, estimate)
+    except (PhysicalMutationError, WorkflowTransitionError) as exc:
+        raise HTTPException(409, str(exc)) from exc
+    defect = bind_canonical_defect(db, estimate, defect_id)
+    opening = Opening(
+        estimate_id=estimate.id,
+        opening_code=opening_code,
+        defect_id=defect_id,
+        canonical_defect_id=defect.id if defect else None,
+        location=location,
+        substrate_type=substrate_type,
+        substrate_plane=substrate_plane,
+        orientation=orientation,
+        frl=frl,
+    )
     db.add(opening)
     db.flush()
     record_audit(db, actor=user, action="create", entity_type="opening", entity_id=opening.id, project_id=estimate.project_id, new_value={"opening_code": opening_code})
@@ -450,9 +479,23 @@ def opening_add_service(
     opening = db.get(Opening, opening_id)
     if not opening:
         raise HTTPException(404, "Opening not found")
+    if opening.estimate.status not in {"draft", "in_review"}:
+        raise HTTPException(409, "Locked or released estimates cannot be modified")
+    try:
+        require_physical_model_mutation(db, opening.estimate)
+    except (PhysicalMutationError, WorkflowTransitionError) as exc:
+        raise HTTPException(409, str(exc)) from exc
     service = Service(opening_id=opening.id, service_code=service_code, service_type=service_type, material=material, outside_diameter_mm=D(outside_diameter_mm) if outside_diameter_mm else None, centre_x_mm=D(centre_x_mm) if centre_x_mm else None, centre_y_mm=D(centre_y_mm) if centre_y_mm else None, evidence_status="provisional")
     db.add(service)
     db.flush()
+    db.add(
+        ServiceOpeningLink(
+            service_id=service.id,
+            opening_id=opening.id,
+            evidence_status=service.evidence_status,
+            confidence=service.confidence,
+        )
+    )
     record_audit(db, actor=user, action="create", entity_type="service", entity_id=service.id, project_id=opening.estimate.project_id, new_value={"service_code": service_code, "service_type": service_type})
     db.commit()
     return RedirectResponse(f"/estimates/{opening.estimate_id}", status_code=303)
@@ -478,6 +521,10 @@ def estimate_add_line(
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:write")
     estimate = _estimate(db, estimate_id)
+    try:
+        require_active_physical_model_lock(db, estimate)
+    except PhysicalModelLockRequiredError as exc:
+        raise HTTPException(409, str(exc)) from exc
     line_number = (db.scalar(select(func.max(EstimateLine.line_number)).where(EstimateLine.estimate_id == estimate.id)) or 0) + 1
     line = EstimateLine(estimate_id=estimate.id, line_number=line_number, opening_id=opening_id or None, service_id=service_id or None, component_type=component_type, component_reference=component_reference or None, description=description, quantity=D(quantity), unit=unit, base_unit_cost=D(base_unit_cost), markup_override=(D(markup_override_percent) / Decimal("100") if markup_override_percent else None), pricing_method=pricing_method, commercial_recovery_status="separately_priced")
     db.add(line)
@@ -499,6 +546,10 @@ def estimate_evaluate(estimate_id: str, request: Request, db: Db, csrf_token: An
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:write")
     estimate = _estimate(db, estimate_id)
+    try:
+        require_active_physical_model_lock(db, estimate)
+    except PhysicalModelLockRequiredError as exc:
+        raise HTTPException(409, str(exc)) from exc
     results = evaluate_estimate_rules(db, estimate)
     record_audit(db, actor=user, action="evaluate_rules", entity_type="estimate", entity_id=estimate.id, project_id=estimate.project_id, new_value={"count": len(results)})
     db.commit()
@@ -510,6 +561,10 @@ def estimate_lock(estimate_id: str, request: Request, db: Db, csrf_token: Annota
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:approve")
     estimate = _estimate(db, estimate_id)
+    try:
+        require_active_physical_model_lock(db, estimate)
+    except PhysicalModelLockRequiredError as exc:
+        raise HTTPException(409, str(exc)) from exc
     basis_errors = validate_estimate_release_basis(db, estimate)
     if basis_errors:
         message = ("Release basis incomplete: " + "; ".join(basis_errors)).replace(" ", "+")
@@ -533,4 +588,3 @@ def audit_page(request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "audit:read")
     events = db.scalars(select(AuditEvent).order_by(AuditEvent.created_at.desc()).limit(500)).all()
     return templates.TemplateResponse(request, "audit.html", _context(request, db, events=events))
-

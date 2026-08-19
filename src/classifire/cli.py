@@ -14,7 +14,10 @@ from rich.console import Console
 from rich.table import Table
 from sqlalchemy import func, select
 
-from . import __version__
+from . import (
+    __version__,
+    physical_models,  # noqa: F401
+)
 from .config import get_settings
 from .db import Base, SessionLocal, engine
 from .importers import import_pricing_library, import_technical_variants, seed_database
