@@ -12,7 +12,7 @@ from decimal import Decimal
 from typing import Any
 
 from run_classifire_real_uat_fireseals_visualvalidated import (
-    PHYSICAL_VISUAL_GUARDED_WRITE_TOOLS,
+    RETIRED_PHYSICAL_VISUAL_MUTATION_TOOLS,
     VisualValidatedTopologyController,
 )
 from run_classifire_real_uat_intake import (
@@ -678,6 +678,58 @@ class ProposalOnlyVisualValidatedTopologyController(VisualValidatedTopologyContr
         print("PASS OpenClaw Gateway RPC")
         self.ensure_api()
 
+    def _withhold_retired_legacy_mutation(
+        self,
+        *,
+        tool_name: str,
+        proposal_receipt: str | None,
+    ) -> None:
+        proposal_path = self.receipt_dir / (proposal_receipt or PROPOSAL_RECEIPT)
+
+        if not proposal_path.is_file():
+            raise RuntimeError(
+                "Proposal-only mode reached a retired canonical mutation boundary "
+                "before the merged proposal receipt existed"
+            )
+
+        self.save_json(
+            WITHHELD_WRITE_RECEIPT,
+            {
+                "status": PROPOSAL_READY_STATUS,
+                "reason_code": "RETIRED_RAW_PHYSICAL_MUTATION_TOOL",
+                "run_id": self.run_id,
+                "estimate_id": self.estimate_id,
+                "agent_id": "cf-physical-model",
+                "withheld_tool": tool_name,
+                "retired_tools": sorted(RETIRED_PHYSICAL_VISUAL_MUTATION_TOOLS),
+                "proposal_receipt": str(proposal_path),
+                "canonical_write_performed": False,
+                "physical_model_lock_created": False,
+                "next_action": (
+                    "Proposal-only UAT stops here. A fresh controlled preflight and "
+                    "independently signed admission are required before the separate "
+                    "cf-adjudicated-physical-writer can submit canonical state."
+                ),
+            },
+        )
+
+        raise ProposalOnlyComplete(tool_name)
+
+    def withhold_legacy_physical_mutation(
+        self,
+        *,
+        source_stage: str,
+        proposal_receipt: str | None,
+        proposed_opening_count: int | None,
+        proposed_service_count: int | None,
+        receipt_name: str,
+    ) -> dict[str, Any]:
+        del source_stage, proposed_opening_count, proposed_service_count, receipt_name
+        self._withhold_retired_legacy_mutation(
+            tool_name="classifire_submit_initial_physical_model",
+            proposal_receipt=proposal_receipt,
+        )
+
     def invoke_tool(
         self,
         *args: Any,
@@ -693,29 +745,11 @@ class ProposalOnlyVisualValidatedTopologyController(VisualValidatedTopologyContr
                 "Unable to determine OpenClaw tool name for proposal-only write control"
             )
 
-        if tool_name in PHYSICAL_VISUAL_GUARDED_WRITE_TOOLS:
-            proposal_path = self.receipt_dir / PROPOSAL_RECEIPT
-
-            if not proposal_path.is_file():
-                raise RuntimeError(
-                    "Proposal-only mode reached a canonical "
-                    "write boundary before the merged proposal "
-                    "receipt existed"
-                )
-
-            self.save_json(
-                WITHHELD_WRITE_RECEIPT,
-                {
-                    "status": PROPOSAL_READY_STATUS,
-                    "run_id": self.run_id,
-                    "estimate_id": self.estimate_id,
-                    "withheld_tool": tool_name,
-                    "proposal_receipt": str(proposal_path),
-                    "canonical_write_performed": False,
-                },
+        if tool_name in RETIRED_PHYSICAL_VISUAL_MUTATION_TOOLS:
+            self._withhold_retired_legacy_mutation(
+                tool_name=tool_name,
+                proposal_receipt=PROPOSAL_RECEIPT,
             )
-
-            raise ProposalOnlyComplete(tool_name)
 
         return super().invoke_tool(
             *args,

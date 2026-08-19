@@ -35,6 +35,10 @@ from .models import (
 )
 from .security import authenticate_user, create_csrf_token, has_permission, verify_csrf
 from .services.calculation import D, calculate_estimate_line, recalculate_estimate
+from .services.initial_canonicalisation_boundary import (
+    InitialCanonicalisationAdmissionRequired,
+    require_admission_bound_initial_canonicalisation,
+)
 from .services.rule_engine import evaluate_estimate_rules
 from .services.release_pinning import pin_current_releases, release_basis_for_estimate, validate_estimate_release_basis
 from .services.snapshot import lock_snapshot
@@ -412,6 +416,7 @@ def estimate_add_opening(
     estimate_id: str,
     request: Request,
     db: Db,
+    settings: Annotated[Settings, Depends(get_settings)],
     csrf_token: Annotated[str, Form()],
     opening_code: Annotated[str, Form()],
     defect_id: Annotated[str | None, Form()] = None,
@@ -424,6 +429,16 @@ def estimate_add_opening(
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:write")
     estimate = _estimate(db, estimate_id)
+    if estimate.status not in {"draft", "in_review"}:
+        raise HTTPException(409, "Locked or released estimates cannot be modified")
+    try:
+        require_admission_bound_initial_canonicalisation(
+            db,
+            estimate_id=estimate.id,
+            enabled=settings.adjudicated_initial_submission_enabled,
+        )
+    except InitialCanonicalisationAdmissionRequired as exc:
+        raise HTTPException(409, "Initial physical model requires signed admission.") from exc
     opening = Opening(estimate_id=estimate.id, opening_code=opening_code, defect_id=defect_id, location=location, substrate_type=substrate_type, substrate_plane=substrate_plane, orientation=orientation, frl=frl)
     db.add(opening)
     db.flush()
@@ -450,6 +465,8 @@ def opening_add_service(
     opening = db.get(Opening, opening_id)
     if not opening:
         raise HTTPException(404, "Opening not found")
+    if opening.estimate.status not in {"draft", "in_review"}:
+        raise HTTPException(409, "Locked or released estimates cannot be modified")
     service = Service(opening_id=opening.id, service_code=service_code, service_type=service_type, material=material, outside_diameter_mm=D(outside_diameter_mm) if outside_diameter_mm else None, centre_x_mm=D(centre_x_mm) if centre_x_mm else None, centre_y_mm=D(centre_y_mm) if centre_y_mm else None, evidence_status="provisional")
     db.add(service)
     db.flush()

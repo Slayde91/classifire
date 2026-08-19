@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
+from run_classifire_real_uat_intake import (
+    ADMISSION_BOUND_CANONICAL_WRITE_STATUS,
+    load_receipt,
+    repo_root,
+)
 from run_classifire_real_uat_integrated import IntegratedEvidenceController
-from run_classifire_real_uat_intake import load_receipt, repo_root
-
 
 # `tools.effective` is diagnostic inventory only. ROLE_TOOL_CONTRACT governs
 # which callable tools each real-UAT agent role may require. Native multimodal
@@ -22,8 +25,6 @@ ROLE_TOOL_CONTRACT: dict[str, set[str]] = {
     "cf-physical-model": {
         "classifire_evidence_read",
         "classifire_physical_model_read",
-        "classifire_submit_initial_physical_model",
-        "classifire_lock_physical_model",
     },
     "cf-validator": {
         "classifire_evidence_read",
@@ -40,8 +41,6 @@ ROLE_SCOPE_CONTRACT: dict[str, set[str]] = {
     "cf-physical-model": {
         "evidence:read",
         "physical:read",
-        "physical:write",
-        "physical:lock",
     },
     "cf-validator": {
         "evidence:read",
@@ -88,6 +87,36 @@ class ResilientIntegratedController(IntegratedEvidenceController):
 
         expected_scopes = ROLE_SCOPE_CONTRACT.get(agent_id, set())
         persisted_scopes = set((token_doc.get("scopes") or {}).get(agent_id) or [])
+        if agent_id == "cf-physical-model":
+            retired_scopes = sorted(
+                persisted_scopes
+                & {
+                    "physical:write",
+                    "physical:lock",
+                    "physical:adjudicated:submit",
+                }
+            )
+            if retired_scopes:
+                self.save_json(
+                    receipt_name,
+                    {
+                        "ok": False,
+                        "status": ADMISSION_BOUND_CANONICAL_WRITE_STATUS,
+                        "reason_code": "STALE_CF_PHYSICAL_MODEL_MUTATION_SCOPE",
+                        "agent_id": agent_id,
+                        "retired_scopes": retired_scopes,
+                        "canonical_write_performed": False,
+                        "physical_model_lock_created": False,
+                        "next_action": (
+                            "Remove stale mutation scopes from cf-physical-model. Only the "
+                            "separate admission-bound writer may hold its dedicated submit scope."
+                        ),
+                    },
+                )
+                raise RuntimeError(
+                    "cf-physical-model has retired mutation scope(s): "
+                    + ", ".join(retired_scopes)
+                )
         missing_scopes = sorted(expected_scopes - persisted_scopes)
         if missing_scopes:
             raise RuntimeError(

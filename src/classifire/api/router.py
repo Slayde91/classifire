@@ -52,6 +52,10 @@ from ..schemas import (
 )
 from ..security import get_current_user, require_permission
 from ..services.calculation import D, calculate_estimate_line, recalculate_estimate
+from ..services.initial_canonicalisation_boundary import (
+    InitialCanonicalisationAdmissionRequired,
+    require_admission_bound_initial_canonicalisation,
+)
 from ..services.rule_engine import evaluate_estimate_rules
 from ..services.snapshot import lock_snapshot
 from ..services.storage import save_upload
@@ -554,11 +558,20 @@ def add_opening(
     payload: OpeningInput,
     request: Request,
     db: Db,
+    settings: Annotated[Settings, Depends(get_settings)],
     user: Annotated[User, Depends(require_permission("estimate:write"))],
 ) -> dict[str, Any]:
     estimate = _load_estimate(db, estimate_id)
     if estimate.status not in {"draft", "in_review"}:
         raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
+    try:
+        require_admission_bound_initial_canonicalisation(
+            db,
+            estimate_id=estimate.id,
+            enabled=settings.adjudicated_initial_submission_enabled,
+        )
+    except InitialCanonicalisationAdmissionRequired as exc:
+        raise HTTPException(status_code=409, detail="Initial physical model requires signed admission.") from exc
     opening = Opening(estimate_id=estimate.id, **payload.model_dump())
     db.add(opening)
     db.flush()

@@ -26,6 +26,13 @@ from .importers import import_pricing_library, import_technical_variants, seed_d
 from .mission_control import MissionControlClient, bootstrap_mission_control
 from .models import AgentServicePrincipal, PricingLibraryRecord, Product, TechnicalVariant, User
 from .security import hash_password
+from .services.adjudicated_admission_registration import (
+    OfflineAdmissionRegistrationError,
+    read_admission_manifest,
+    read_preflight_receipt,
+    register_offline_adjudicated_admission,
+)
+from .services.adjudicated_physical_submission import ControlledPhysicalSubmissionError
 
 app = typer.Typer(help="CLASSIFIRE administration, import, run and integration commands.", no_args_is_help=True)
 console = Console()
@@ -169,6 +176,95 @@ def provision_agent_tokens(
     console.print(f"[green]Provisioned {len(tokens)} CLASSIFIRE agent credentials.[/green]")
     console.print(f"Secret token file: {output}")
     console.print("[yellow]Tokens are not printed. Protect this file and never commit it.[/yellow]")
+
+
+def _offline_admission_registration_failure(code: str) -> None:
+    """Return a machine-readable, no-write result for this local command."""
+
+    console.print_json(
+        data={
+            "schema": "CLASSIFIRE-OFFLINE-ADMISSION-REGISTRATION-v1",
+            "status": "BLOCKED",
+            "code": code,
+            "canonical_write_performed": False,
+            "physical_model_lock_created": False,
+            "gateway_call_performed": False,
+        }
+    )
+    raise typer.Exit(code=2)
+
+
+@app.command("register-adjudicated-admission")
+def register_adjudicated_admission_command(
+    manifest: Path = typer.Option(
+        ...,
+        "--manifest",
+        help="Signed admission manifest JSON. The command never accepts private signing keys.",
+    ),
+    preflight_receipt: Path = typer.Option(
+        ...,
+        "--preflight-receipt",
+        help="Fresh no-write canonicalisation preflight receipt JSON.",
+    ),
+    operator_reference: str = typer.Option(
+        ...,
+        "--operator-reference",
+        help="Human change-control or approval reference retained in the audit trail.",
+    ),
+    confirm: bool = typer.Option(
+        False,
+        "--confirm",
+        help="Required confirmation to record the admission only; no model or lock is created.",
+    ),
+) -> None:
+    """Verify and journal a signed admission without submitting a model or lock."""
+
+    if not confirm:
+        _offline_admission_registration_failure(
+            "ADMISSION_REGISTRATION_CONFIRMATION_REQUIRED"
+        )
+    try:
+        settings = get_settings()
+    except Exception:
+        _offline_admission_registration_failure("ADMISSION_REGISTRATION_CONFIGURATION_UNAVAILABLE")
+    if not settings.adjudicated_initial_submission_enabled:
+        _offline_admission_registration_failure("ADMISSION_REGISTRATION_DISABLED")
+    if (
+        not settings.adjudicated_admission_public_keys
+        or not settings.adjudicated_admission_issuer_key_ids
+    ):
+        _offline_admission_registration_failure("ADMISSION_REGISTRATION_CONFIGURATION_INCOMPLETE")
+
+    try:
+        manifest_bytes = read_admission_manifest(manifest)
+        preflight_receipt_bytes = read_preflight_receipt(preflight_receipt)
+    except OfflineAdmissionRegistrationError as exc:
+        _offline_admission_registration_failure(exc.code)
+
+    with SessionLocal() as db:
+        try:
+            result = register_offline_adjudicated_admission(
+                db,
+                manifest_bytes=manifest_bytes,
+                preflight_receipt_bytes=preflight_receipt_bytes,
+                operator_reference=operator_reference,
+                pinned_public_keys=settings.adjudicated_admission_public_keys,
+                issuer_key_ids=settings.adjudicated_admission_issuer_key_ids,
+                max_admission_ttl_seconds=settings.adjudicated_admission_max_ttl_seconds,
+            )
+        except (ControlledPhysicalSubmissionError, OfflineAdmissionRegistrationError) as exc:
+            db.rollback()
+            _offline_admission_registration_failure(exc.code)
+        except Exception:
+            db.rollback()
+            _offline_admission_registration_failure("ADMISSION_REGISTRATION_PERSISTENCE_FAILED")
+
+    response = result.as_dict()
+    response["next_action"] = (
+        "Admission recorded only. A separate fresh explicit authorization is required before "
+        "the controlled writer may submit a canonical model."
+    )
+    console.print_json(data=response)
 
 
 @app.command("import-pricing")

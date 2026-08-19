@@ -26,10 +26,8 @@ if ($tokenDoc.schema -ne "CLASSIFIRE-AGENT-TOKENS-v1") {
 $expectedByAgent = @{
     "cf-orchestrator" = @()
     "cf-intake-evidence" = @("classifire_register_evidence_observations")
-    "cf-physical-model" = @(
-        "classifire_submit_initial_physical_model",
-        "classifire_lock_physical_model"
-    )
+    "cf-physical-model" = @()
+    "cf-adjudicated-physical-writer" = @("classifire_submit_initial_physical_model")
     "cf-technical-system" = @("classifire_select_repair_strategy", "classifire_lock_repair_strategy")
     "cf-commercial-engine" = @("classifire_required_components", "classifire_derive_commercial")
     "cf-validator" = @()
@@ -41,13 +39,46 @@ $expectedByAgent = @{
 $allWriteTools = @(
     "classifire_register_evidence_observations",
     "classifire_submit_initial_physical_model",
-    "classifire_lock_physical_model",
     "classifire_select_repair_strategy",
     "classifire_lock_repair_strategy",
     "classifire_derive_quantity_labour",
     "classifire_required_components",
     "classifire_derive_commercial"
 )
+
+$retiredWriteTools = @(
+    "classifire_lock_physical_model"
+)
+
+$allManagedWriteTools = @(
+    ($allWriteTools + $retiredWriteTools) |
+    Sort-Object -Unique
+)
+
+$writerAgentId = "cf-adjudicated-physical-writer"
+$writerTokenProperty = $tokenDoc.tokens.PSObject.Properties[$writerAgentId]
+if ($null -eq $writerTokenProperty -or [string]::IsNullOrWhiteSpace([string]$writerTokenProperty.Value)) {
+    throw "No token found for $writerAgentId. Provision the dedicated admission-bound writer before running this boundary test."
+}
+
+$writerScopeProperty = $tokenDoc.scopes.PSObject.Properties[$writerAgentId]
+$writerScopes = if ($null -ne $writerScopeProperty) { @($writerScopeProperty.Value) } else { @() }
+if ($writerScopes -notcontains "physical:adjudicated:submit") {
+    throw "$writerAgentId is missing physical:adjudicated:submit. Refuse to test a stale controlled-write boundary."
+}
+foreach ($forbiddenScope in @("physical:write", "physical:lock")) {
+    if ($writerScopes -contains $forbiddenScope) {
+        throw "$writerAgentId has forbidden legacy scope $forbiddenScope. Refuse to test a stale controlled-write boundary."
+    }
+}
+
+$legacyPhysicalScopeProperty = $tokenDoc.scopes.PSObject.Properties["cf-physical-model"]
+$legacyPhysicalScopes = if ($null -ne $legacyPhysicalScopeProperty) { @($legacyPhysicalScopeProperty.Value) } else { @() }
+foreach ($forbiddenScope in @("physical:write", "physical:lock", "physical:adjudicated:submit")) {
+    if ($legacyPhysicalScopes -contains $forbiddenScope) {
+        throw "cf-physical-model has forbidden mutation scope $forbiddenScope. Refuse to test a stale controlled-write boundary."
+    }
+}
 
 function Convert-OpenClawJson {
     param([string]$Raw)
@@ -295,7 +326,12 @@ try {
         }
         elseif ($agentId -eq "cf-physical-model") {
             Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/evidence/register" -Body @{ observations = @(@{ stored_file_id = "x"; evidence_type = "page" }) }
+            Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/physical-model/initial" -Body @{ admission_id = "c14663d4-ae8d-4a77-8ae9-51a4402520f1"; idempotency_key = "boundary-test-idempotency-key" }
             Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/quantity-labour/derive" -Body @{}
+        }
+        elseif ($agentId -eq "cf-adjudicated-physical-writer") {
+            Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/evidence/register" -Body @{ observations = @(@{ stored_file_id = "x"; evidence_type = "page" }) }
+            Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/physical-model/lock" -Body @{}
         }
         elseif ($agentId -eq "cf-technical-system") {
             Assert-ForbiddenApi -AgentId $agentId -Path "/api/v1/agent/estimates/not-real/commercial/derive" -Body @{}
@@ -336,7 +372,7 @@ try {
 
         $effective = Invoke-GatewayJson -Method "tools.effective" -Params @{ sessionKey = $canonicalSessionKey } -Context $agentId
         $visibleAll = @(Get-ClassifireToolNames -Value $effective)
-        $visible = @($visibleAll | Where-Object { $allWriteTools -contains $_ })
+        $visible = @($visibleAll | Where-Object { $allManagedWriteTools -contains $_ })
         $expected = @($expectedByAgent[$agentId])
 
         foreach ($tool in $expected) {
@@ -344,7 +380,7 @@ try {
                 throw "$agentId is missing authorised controlled-write tool $tool. Visible write tools: $($visible -join ', ')"
             }
         }
-        foreach ($tool in $allWriteTools) {
+        foreach ($tool in $allManagedWriteTools) {
             if ($expected -notcontains $tool -and $visible -contains $tool) {
                 throw "$agentId can see forbidden controlled-write tool $tool."
             }
@@ -354,7 +390,7 @@ try {
     }
 
     Write-Host ""
-    Write-Host "CLASSIFIRE controlled-write role-boundary test PASSED for all 9 agents." -ForegroundColor Green
+    Write-Host "CLASSIFIRE controlled-write role-boundary test PASSED for all 10 agents." -ForegroundColor Green
 }
 finally {
     if ($null -ne $managedApiProcess) {

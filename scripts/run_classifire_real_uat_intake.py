@@ -4,7 +4,6 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
@@ -13,6 +12,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 from PIL import Image
 from pypdf import PdfReader
@@ -23,7 +23,6 @@ from classifire.db import SessionLocal
 from classifire.models import Estimate, Opening, Service
 from classifire.services.workflow_db import assess_estimate_workflow
 
-
 REQUIRED_INTAKE_TOOLS = {
     "pdf",
     "image",
@@ -33,9 +32,21 @@ REQUIRED_PHYSICAL_TOOLS = {
     "pdf",
     "image",
     "classifire_evidence_read",
-    "classifire_submit_initial_physical_model",
-    "classifire_lock_physical_model",
 }
+
+# These tool names existed before the admission-bound canonical writer.  They
+# remain an explicit deny-list so a stale UAT runner cannot accidentally regain
+# mutation authority just because a Gateway inventory is out of date.
+RETIRED_CF_PHYSICAL_MODEL_MUTATION_TOOLS = frozenset(
+    {
+        "classifire_submit_initial_physical_model",
+        "classifire_lock_physical_model",
+    }
+)
+LEGACY_PHYSICAL_MUTATION_RETIREMENT_SCHEMA = (
+    "CLASSIFIRE-LEGACY-PHYSICAL-MUTATION-RETIREMENT-v1"
+)
+ADMISSION_BOUND_CANONICAL_WRITE_STATUS = "ADMISSION_BOUND_CANONICAL_WRITE_REQUIRED"
 INTAKE_PAGE_BATCH_SIZE = 2
 MAX_INTAKE_BATCH_ATTEMPTS = 2
 
@@ -56,15 +67,21 @@ def parse_json_envelope(raw: str) -> dict:
     text = raw.strip()
     try:
         value = json.loads(text)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as exc:
         start = text.find("{")
         end = text.rfind("}")
         if start < 0 or end < start:
-            raise RuntimeError(f"OpenClaw did not return a JSON object. Output: {text}")
+            raise RuntimeError(
+                f"OpenClaw did not return a JSON object. Output: {text}"
+            ) from exc
         value = json.loads(text[start : end + 1])
     if not isinstance(value, dict):
         raise RuntimeError("Expected a JSON object from OpenClaw.")
     return value
+
+
+class LegacyPhysicalMutationRetired(RuntimeError):
+    """Raised before a legacy cf-physical-model mutation could leave this process."""
 
 
 def locate_openclaw_entry() -> tuple[str, str]:
@@ -190,6 +207,91 @@ class Controller:
 
     def save_text(self, name: str, value: str) -> None:
         (self.receipt_dir / name).write_text(value, encoding="utf-8")
+
+    def _reject_retired_physical_mutation(
+        self,
+        *,
+        tool_name: str,
+        receipt_name: str,
+        boundary: str,
+    ) -> None:
+        """Write a local denial receipt before any legacy mutation transport is used."""
+        self.save_json(
+            receipt_name,
+            {
+                "schema": LEGACY_PHYSICAL_MUTATION_RETIREMENT_SCHEMA,
+                "status": ADMISSION_BOUND_CANONICAL_WRITE_STATUS,
+                "reason_code": "RETIRED_RAW_PHYSICAL_MUTATION_TOOL",
+                "run_id": self.run_id,
+                "estimate_id": self.estimate_id,
+                "agent_id": "cf-physical-model",
+                "boundary": boundary,
+                "attempted_tool": tool_name,
+                "retired_tools": sorted(RETIRED_CF_PHYSICAL_MODEL_MUTATION_TOOLS),
+                "canonical_write_performed": False,
+                "physical_model_lock_created": False,
+                "next_action": (
+                    "Keep this proposal non-canonical. A fresh no-write preflight, an "
+                    "externally signed admission, and the dedicated "
+                    "cf-adjudicated-physical-writer are required for canonical submission."
+                ),
+            },
+        )
+        raise LegacyPhysicalMutationRetired(
+            "Legacy UAT blocked before "
+            f"{boundary}: cf-physical-model may not invoke retired raw physical "
+            f"mutation tool {tool_name}. Use the admission-bound controlled writer."
+        )
+
+    def withhold_legacy_physical_mutation(
+        self,
+        *,
+        source_stage: str,
+        proposal_receipt: str | None,
+        proposed_opening_count: int | None,
+        proposed_service_count: int | None,
+        receipt_name: str,
+    ) -> dict:
+        """Retire a legacy canonical-write hand-off while retaining its local proposal."""
+        state = self.inspect_state()
+        self.save_json(
+            receipt_name,
+            {
+                "schema": LEGACY_PHYSICAL_MUTATION_RETIREMENT_SCHEMA,
+                "status": ADMISSION_BOUND_CANONICAL_WRITE_STATUS,
+                "reason_code": "LEGACY_UAT_CANONICAL_MUTATION_RETIRED",
+                "run_id": self.run_id,
+                "estimate_id": self.estimate_id,
+                "source_stage": source_stage,
+                "agent_id": "cf-physical-model",
+                "retired_tools": sorted(RETIRED_CF_PHYSICAL_MODEL_MUTATION_TOOLS),
+                "proposal_receipt": proposal_receipt,
+                "proposed_opening_count": proposed_opening_count,
+                "proposed_service_count": proposed_service_count,
+                "canonical_write_performed": False,
+                "physical_model_lock_created": False,
+                "canonical_state_after_proposal": {
+                    "opening_count": state["opening_count"],
+                    "service_count": state["service_count"],
+                    "physical_lock_count": state["physical_lock_count"],
+                },
+                "next_action": (
+                    "Do not invoke a raw physical submit or lock tool from this legacy UAT "
+                    "runner. Keep the proposal non-canonical until a fresh controlled "
+                    "preflight and independently signed admission are available to the "
+                    "dedicated cf-adjudicated-physical-writer."
+                ),
+            },
+        )
+        print(
+            "WITHHELD legacy canonical physical mutation: proposal retained locally; "
+            "admission-bound writer required."
+        )
+        return {
+            **state,
+            "status": ADMISSION_BOUND_CANONICAL_WRITE_STATUS,
+            "canonical_write_withheld": True,
+        }
 
     def run_process(
         self,
@@ -362,6 +464,14 @@ class Controller:
     def require_tools(
         self, agent_id: str, session_key: str, tools: set[str], receipt_name: str
     ) -> None:
+        if agent_id == "cf-physical-model":
+            retired_tools = sorted(tools & RETIRED_CF_PHYSICAL_MODEL_MUTATION_TOOLS)
+            if retired_tools:
+                self._reject_retired_physical_mutation(
+                    tool_name=retired_tools[0],
+                    receipt_name=receipt_name,
+                    boundary="required-tool contract",
+                )
         visible = self.effective_tools(session_key, receipt_name)
         missing = sorted(tools - visible)
         if missing:
@@ -401,6 +511,15 @@ class Controller:
         *,
         require_ok: bool = True,
     ) -> dict:
+        if (
+            agent_id == "cf-physical-model"
+            and tool_name in RETIRED_CF_PHYSICAL_MODEL_MUTATION_TOOLS
+        ):
+            self._reject_retired_physical_mutation(
+                tool_name=tool_name,
+                receipt_name=receipt_name,
+                boundary="tools.invoke",
+            )
         payload = self.gateway_call(
             "tools.invoke",
             {
@@ -754,17 +873,16 @@ model only; do not choose technical systems or prices.
 3. Model Defect -> Opening(s) -> Service(s). A defect ID may contain multiple openings and services.
 4. Identify substrate plane independently for every opening. Wall and floor/soffit planes are separate
    physical openings unless evidence proves otherwise.
-5. Every Service submitted through `classifire_submit_initial_physical_model` MUST have an explicit
-   quantity greater than zero. Never default quantity to 1 from one photo, row or defect ID.
+5. Every proposed Service MUST have an explicit quantity greater than zero. Never default quantity to
+   1 from one photo, row or defect ID.
 6. Preserve confirmed/inferred/provisional uncertainty. Do not invent material, dimensions, service
    count, opening relationships or hidden services.
-7. Submit the initial physical model exactly once only if the evidence supports at least one opening and
-   service. If no defensible physical model exists, do not submit an empty or invented model.
-8. DO NOT call `classifire_lock_physical_model`; the controller performs the deterministic lock after
-   verifying that a canonical model exists.
+7. Return a proposed initial physical model only if the evidence supports at least one opening and
+   service. This legacy runner has no canonical write or lock authority; do not invoke any mutation tool.
+8. If no defensible physical model exists, do not invent an empty or unsupported model.
 9. Do not search Package 15, derive quantities/labour, or price anything.
 
-After submitting a supported model, reply exactly `MODEL_SUBMITTED`. If evidence is insufficient,
+After proposing a supported model, reply exactly `MODEL_PROPOSED`. If evidence is insufficient,
 reply with a concise limitation statement.
 """
 
@@ -790,40 +908,27 @@ reply with a concise limitation statement.
                 "20-physical-agent",
             )
 
-        after_submit = self.inspect_state()
-        self.save_json("20-physical-after-submit.json", after_submit)
-        if after_submit["opening_count"] == 0 or after_submit["service_count"] == 0:
-            print(
-                "CLASSIFIRE physical model was not submitted; retaining a controlled "
-                "source/physical limitation rather than inventing scope."
+        after_proposal = self.inspect_state()
+        self.save_json("20-physical-after-proposal.json", after_proposal)
+        changed_fields = [
+            field
+            for field in ("opening_count", "service_count", "physical_lock_count")
+            if after_proposal[field] != existing[field]
+        ]
+        if changed_fields:
+            raise RuntimeError(
+                "Legacy UAT detected unexpected canonical physical-state mutation while its "
+                "writer authority is retired: "
+                + ", ".join(changed_fields)
             )
-            return after_submit
 
-        if after_submit["physical_lock_count"] == 0:
-            print("Invoking deterministic Physical Model Lock as cf-physical-model...")
-            try:
-                self.invoke_tool(
-                    "cf-physical-model",
-                    session,
-                    "classifire_lock_physical_model",
-                    {
-                        "estimate_id": self.estimate_id,
-                        "reason": (
-                            "Controlled real-UAT physical-model lock after evidence-backed "
-                            "initial model submission"
-                        ),
-                    },
-                    "20-physical-lock.json",
-                    require_ok=False,
-                )
-            except Exception as exc:
-                self.save_text("20-physical-lock-error.txt", str(exc))
-                print(
-                    "Physical Model Lock did not complete; retaining canonical model and "
-                    "reporting the fail-closed limitation."
-                )
-
-        return self.inspect_state()
+        return self.withhold_legacy_physical_mutation(
+            source_stage="intake-agent-physical-proposal",
+            proposal_receipt="20-physical-agent.json",
+            proposed_opening_count=None,
+            proposed_service_count=None,
+            receipt_name="20-physical-admission-required.json",
+        )
 
     def run(self) -> dict:
         print("CLASSIFIRE real-report intake + physical-model UAT")
@@ -840,11 +945,14 @@ reply with a concise limitation statement.
         final_state = self.run_physical(physical_report)
         final_state["run_id"] = self.run_id
         final_state["intake_coverage_ok"] = intake_state["coverage_ok"]
-        final_state["status"] = (
-            "PHYSICAL_MODEL_LOCKED"
-            if final_state["physical_lock_count"] > 0
-            else "PARTIAL_SOURCE_OR_PHYSICAL_LIMITATION"
-        )
+        if final_state.get("canonical_write_withheld"):
+            final_state["status"] = ADMISSION_BOUND_CANONICAL_WRITE_STATUS
+        else:
+            final_state["status"] = (
+                "PHYSICAL_MODEL_LOCKED"
+                if final_state["physical_lock_count"] > 0
+                else "PARTIAL_SOURCE_OR_PHYSICAL_LIMITATION"
+            )
         self.save_json("21-physical-state.json", final_state)
         print(json.dumps(final_state, indent=2, default=str))
         return final_state

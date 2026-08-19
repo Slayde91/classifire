@@ -78,7 +78,9 @@ def _estimate(db: Session) -> Estimate:
     return estimate
 
 
-def _physical_model(db: Session, estimate: Estimate, *, evidence: bool = True) -> tuple[Opening, Service]:
+def _physical_model(
+    db: Session, estimate: Estimate, *, evidence: bool = True
+) -> tuple[Opening, Service]:
     if evidence:
         db.add(
             EvidenceSource(
@@ -183,9 +185,7 @@ def test_guarded_technical_route_precedes_legacy_route_and_workflow_routes_are_r
     routes = list(_iter_effective_routes())
     technical_path = "/api/v1/openings/{opening_id}/technical-search"
     matching = [
-        route
-        for route in routes
-        if route.path == technical_path and "GET" in route.methods
+        route for route in routes if route.path == technical_path and "GET" in route.methods
     ]
     assert matching
     assert matching[0].endpoint is not None

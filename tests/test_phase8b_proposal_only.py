@@ -45,7 +45,7 @@ from run_classifire_real_uat_fireseals_topologyaware import (  # noqa: E402
     TopologyAwareFireSealController,
 )
 from run_classifire_real_uat_fireseals_visualvalidated import (  # noqa: E402
-    PHYSICAL_VISUAL_GUARDED_WRITE_TOOLS,
+    RETIRED_PHYSICAL_VISUAL_MUTATION_TOOLS,
     VisualValidatedTopologyController,
 )
 from run_classifire_real_uat_fireseals_visualvalidated_proposal_only import (  # noqa: E402
@@ -382,7 +382,7 @@ def _synthetic_protected_snapshot() -> dict[str, Any]:
 
 @pytest.mark.parametrize(
     "tool_name",
-    sorted(PHYSICAL_VISUAL_GUARDED_WRITE_TOOLS),
+    sorted(RETIRED_PHYSICAL_VISUAL_MUTATION_TOOLS),
 )
 def test_proposal_only_withholds_all_physical_writes(
     tmp_path: Path,
@@ -435,6 +435,28 @@ def test_proposal_only_fails_closed_without_merged_proposal(
             },
             "test-receipt.json",
         )
+
+
+def test_proposal_only_preserves_its_withheld_receipt_for_retired_legacy_runner_path(
+    tmp_path: Path,
+) -> None:
+    controller, saved = _controller(tmp_path)
+    (tmp_path / PROPOSAL_RECEIPT).write_text("{}", encoding="utf-8")
+
+    with pytest.raises(ProposalOnlyComplete) as caught:
+        controller.withhold_legacy_physical_mutation(
+            source_stage="visual-validated-proposal",
+            proposal_receipt=PROPOSAL_RECEIPT,
+            proposed_opening_count=1,
+            proposed_service_count=1,
+            receipt_name="ignored-by-proposal-only.json",
+        )
+
+    assert caught.value.tool_name == "classifire_submit_initial_physical_model"
+    receipt = saved[WITHHELD_WRITE_RECEIPT]
+    assert receipt["status"] == PROPOSAL_READY_STATUS
+    assert receipt["canonical_write_performed"] is False
+    assert receipt["physical_model_lock_created"] is False
 
 
 @pytest.mark.parametrize(

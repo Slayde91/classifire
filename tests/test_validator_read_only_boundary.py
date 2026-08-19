@@ -7,7 +7,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from classifire import canonical_models, commercial_models  # noqa: F401
-from classifire.agent_security import AGENT_SCOPE_MAP, FORBIDDEN_AGENT_SCOPES, provision_agent_principal
+from classifire.agent_security import (
+    AGENT_SCOPE_MAP,
+    FORBIDDEN_AGENT_SCOPES,
+    provision_agent_principal,
+)
 from classifire.api.agent_api import router as agent_router
 from classifire.api.agent_intake_physical import router as intake_physical_router
 from classifire.db import Base, get_db
@@ -135,7 +139,7 @@ def test_validator_can_read_evidence_and_physical_model_but_cannot_mutate_upstre
     assert evidence_write.json()["detail"] == "Agent scope required: evidence:write"
 
     assert physical_write.status_code == 403
-    assert physical_write.json()["detail"] == "Agent scope required: physical:write"
+    assert physical_write.json()["detail"] == "Agent scope required: physical:adjudicated:submit"
 
     assert physical_lock.status_code == 403
     assert physical_lock.json()["detail"] == "Agent scope required: physical:lock"

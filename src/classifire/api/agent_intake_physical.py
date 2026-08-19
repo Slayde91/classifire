@@ -3,21 +3,26 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..agent_security import require_agent_scope
 from ..audit import record_audit
-from ..canonical_models import Defect, EvidenceSource, PhysicalModelLock, ServiceOpeningLink
+from ..canonical_models import Defect, EvidenceSource, PhysicalModelLock
+from ..config import Settings, get_settings
 from ..db import get_db
-from ..models import AgentServicePrincipal, Estimate, Opening, Service, StoredFile
-from ..services.physical_model import PhysicalModelLockError, create_physical_model_lock
-from ..services.workflow import WorkflowTransitionError
+from ..models import AgentServicePrincipal, Estimate, StoredFile
+from ..physical_model_submission_schema import AgentAdjudicatedInitialPhysicalSubmissionRequest
+from ..services.adjudicated_physical_submission import (
+    ControlledPhysicalSubmissionError,
+    execute_adjudicated_initial_submission,
+)
 
 router = APIRouter(prefix="/api/v1/agent", tags=["CLASSIFIRE Controlled Intake and Physical Model"])
 Db = Annotated[Session, Depends(get_db)]
+SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
 class AgentEvidenceObservation(BaseModel):
@@ -40,52 +45,12 @@ class AgentEvidenceBatchInput(BaseModel):
     observations: list[AgentEvidenceObservation] = Field(min_length=1, max_length=5000)
 
 
-class AgentOpeningInput(BaseModel):
-    opening_code: str = Field(min_length=1, max_length=100)
-    external_defect_id: str | None = Field(default=None, max_length=150)
-    location: str | None = None
-    substrate_type: str | None = Field(default=None, max_length=200)
-    substrate_plane: str | None = Field(default=None, max_length=50)
-    substrate_thickness_mm: Decimal | None = Field(default=None, gt=0)
-    orientation: str | None = Field(default=None, max_length=100)
-    opening_type: str | None = Field(default=None, max_length=100)
-    width_mm: Decimal | None = Field(default=None, gt=0)
-    height_mm: Decimal | None = Field(default=None, gt=0)
-    diameter_mm: Decimal | None = Field(default=None, gt=0)
-    frl: str | None = Field(default=None, max_length=100)
-    notes: str | None = None
-
-
-class AgentServiceInput(BaseModel):
-    service_code: str = Field(min_length=1, max_length=100)
-    primary_opening_code: str = Field(min_length=1, max_length=100)
-    opening_codes: list[str] = Field(min_length=1, max_length=50)
-    service_type: str = Field(min_length=1, max_length=200)
-    material: str | None = Field(default=None, max_length=200)
-    nominal_size_mm: Decimal | None = Field(default=None, gt=0)
-    outside_diameter_mm: Decimal | None = Field(default=None, gt=0)
-    width_mm: Decimal | None = Field(default=None, gt=0)
-    height_mm: Decimal | None = Field(default=None, gt=0)
-    insulation_type: str | None = Field(default=None, max_length=200)
-    insulation_thickness_mm: Decimal | None = Field(default=None, gt=0)
-    quantity: Decimal = Field(gt=0)
-    centre_x_mm: Decimal | None = None
-    centre_y_mm: Decimal | None = None
-    evidence_status: str = Field(default="provisional", max_length=30)
-    confidence: Decimal | None = Field(default=None, ge=0, le=1)
-    relationship_status: str = Field(default="confirmed", max_length=30)
-    link_type: str = Field(default="penetrates", max_length=50)
-    source_reference: str | None = None
-    notes: str | None = None
-
-
-class AgentInitialPhysicalModelInput(BaseModel):
-    openings: list[AgentOpeningInput] = Field(min_length=1, max_length=5000)
-    services: list[AgentServiceInput] = Field(min_length=1, max_length=10000)
-
-
 class AgentPhysicalModelLockInput(BaseModel):
-    reason: str = Field(default="Controlled cf-physical-model lock request", min_length=3, max_length=2000)
+    reason: str = Field(
+        default="Controlled cf-physical-model lock request",
+        min_length=3,
+        max_length=2000,
+    )
 
 
 def _estimate(db: Session, estimate_id: str) -> Estimate:
@@ -100,10 +65,12 @@ def _estimate(db: Session, estimate_id: str) -> Estimate:
 def _active_physical_lock_exists(db: Session, estimate_id: str) -> bool:
     return bool(
         db.scalar(
-            select(PhysicalModelLock.id).where(
+            select(PhysicalModelLock.id)
+            .where(
                 PhysicalModelLock.estimate_id == estimate_id,
                 PhysicalModelLock.invalidated_at.is_(None),
-            ).limit(1)
+            )
+            .limit(1)
         )
     )
 
@@ -112,7 +79,10 @@ def _require_unlocked(db: Session, estimate: Estimate) -> None:
     if _active_physical_lock_exists(db, estimate.id):
         raise HTTPException(
             status_code=409,
-            detail="Physical Model Lock already exists; controlled invalidation is required before upstream changes.",
+            detail=(
+                "Physical Model Lock already exists; controlled invalidation is required "
+                "before upstream changes."
+            ),
         )
 
 
@@ -202,9 +172,7 @@ def agent_register_evidence(
     estimate_id: str,
     payload: AgentEvidenceBatchInput,
     db: Db,
-    principal: Annotated[
-        AgentServicePrincipal, Depends(require_agent_scope("evidence:write"))
-    ],
+    principal: Annotated[AgentServicePrincipal, Depends(require_agent_scope("evidence:write"))],
 ) -> dict[str, Any]:
     estimate = _estimate(db, estimate_id)
     _require_unlocked(db, estimate)
@@ -214,7 +182,10 @@ def agent_register_evidence(
         stored = db.get(StoredFile, item.stored_file_id)
         if stored is None:
             db.rollback()
-            raise HTTPException(status_code=404, detail=f"Stored evidence file not found: {item.stored_file_id}")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Stored evidence file not found: {item.stored_file_id}",
+            )
         defect = _defect_for_external_id(
             db,
             estimate,
@@ -288,143 +259,74 @@ def agent_register_evidence(
 @router.post("/estimates/{estimate_id}/physical-model/initial")
 def agent_submit_initial_physical_model(
     estimate_id: str,
-    payload: AgentInitialPhysicalModelInput,
+    payload: AgentAdjudicatedInitialPhysicalSubmissionRequest,
     db: Db,
+    settings: SettingsDep,
     principal: Annotated[
-        AgentServicePrincipal, Depends(require_agent_scope("physical:write"))
+        AgentServicePrincipal, Depends(require_agent_scope("physical:adjudicated:submit"))
     ],
 ) -> dict[str, Any]:
-    estimate = _estimate(db, estimate_id)
-    _require_unlocked(db, estimate)
-    existing_opening = db.scalar(select(Opening.id).where(Opening.estimate_id == estimate.id).limit(1))
-    if existing_opening:
+    if not settings.adjudicated_initial_submission_enabled:
         raise HTTPException(
-            status_code=409,
-            detail=(
-                "Initial physical model already exists for this estimate. This endpoint is intentionally "
-                "one-shot; use a controlled amendment workflow rather than silently replacing retained scope."
-            ),
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Signed adjudicated initial submission is disabled.",
+        )
+    if (
+        not settings.adjudicated_admission_public_keys
+        or not settings.adjudicated_admission_issuer_key_ids
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Signed adjudicated initial submission is not securely configured.",
         )
 
-    opening_codes = [item.opening_code for item in payload.openings]
-    if len(set(opening_codes)) != len(opening_codes):
-        raise HTTPException(status_code=422, detail="Opening codes must be unique within the submitted model")
-    opening_by_code: dict[str, Opening] = {}
-
-    for item in payload.openings:
-        defect = _defect_for_external_id(db, estimate, item.external_defect_id)
-        opening = Opening(
-            estimate_id=estimate.id,
-            defect_id=item.external_defect_id,
-            canonical_defect_id=defect.id if defect else None,
-            opening_code=item.opening_code,
-            location=item.location,
-            substrate_type=item.substrate_type,
-            substrate_plane=item.substrate_plane,
-            substrate_thickness_mm=item.substrate_thickness_mm,
-            orientation=item.orientation,
-            opening_type=item.opening_type,
-            width_mm=item.width_mm,
-            height_mm=item.height_mm,
-            diameter_mm=item.diameter_mm,
-            frl=item.frl,
-            physical_model_status="modelled",
-            technical_status="not_assessed",
-            notes=item.notes,
+    # Authentication reads through this session. Release that read transaction
+    # before the service obtains SQLite's BEGIN IMMEDIATE / PostgreSQL serializable
+    # transaction. Capture scalars first so no lazy ORM access reopens it.
+    principal_id = principal.id
+    principal_agent_id = principal.agent_id
+    db.rollback()
+    try:
+        result = execute_adjudicated_initial_submission(
+            db,
+            estimate_id=estimate_id,
+            admission_id=payload.admission_id,
+            idempotency_key=payload.idempotency_key,
+            principal_id=principal_id,
+            principal_agent_id=principal_agent_id,
+            pinned_public_keys=settings.adjudicated_admission_public_keys,
+            issuer_key_ids=settings.adjudicated_admission_issuer_key_ids,
+            max_admission_ttl_seconds=settings.adjudicated_admission_max_ttl_seconds,
         )
-        db.add(opening)
-        db.flush()
-        opening_by_code[item.opening_code] = opening
-
-    created_services: list[Service] = []
-    created_links: list[ServiceOpeningLink] = []
-    for item in payload.services:
-        if item.primary_opening_code not in opening_by_code:
-            db.rollback()
-            raise HTTPException(
-                status_code=422,
-                detail=f"Unknown primary opening code for service {item.service_code}: {item.primary_opening_code}",
-            )
-        requested_codes = list(dict.fromkeys(item.opening_codes))
-        if item.primary_opening_code not in requested_codes:
-            db.rollback()
-            raise HTTPException(
-                status_code=422,
-                detail=f"Service {item.service_code} must include its primary opening in opening_codes",
-            )
-        unknown_codes = sorted(set(requested_codes) - set(opening_by_code))
-        if unknown_codes:
-            db.rollback()
-            raise HTTPException(
-                status_code=422,
-                detail=f"Unknown opening codes for service {item.service_code}: {', '.join(unknown_codes)}",
-            )
-        primary = opening_by_code[item.primary_opening_code]
-        service = Service(
-            opening_id=primary.id,
-            service_code=item.service_code,
-            service_type=item.service_type,
-            material=item.material,
-            nominal_size_mm=item.nominal_size_mm,
-            outside_diameter_mm=item.outside_diameter_mm,
-            width_mm=item.width_mm,
-            height_mm=item.height_mm,
-            insulation_type=item.insulation_type,
-            insulation_thickness_mm=item.insulation_thickness_mm,
-            quantity=item.quantity,
-            centre_x_mm=item.centre_x_mm,
-            centre_y_mm=item.centre_y_mm,
-            evidence_status=item.evidence_status,
-            confidence=item.confidence,
-            notes=item.notes,
-        )
-        db.add(service)
-        db.flush()
-        created_services.append(service)
-        for opening_code in requested_codes:
-            opening = opening_by_code[opening_code]
-            link = ServiceOpeningLink(
-                service_id=service.id,
-                opening_id=opening.id,
-                link_type=item.link_type,
-                relationship_status=item.relationship_status,
-                evidence_status=item.evidence_status,
-                confidence=item.confidence,
-                source_reference=item.source_reference,
-                notes=item.notes,
-            )
-            db.add(link)
-            created_links.append(link)
-
-    db.flush()
-    _agent_audit(
-        db,
-        principal=principal,
-        action="agent_submit_initial_physical_model",
-        entity_type="estimate",
-        entity_id=estimate.id,
-        estimate=estimate,
-        new_value={
-            "opening_ids": sorted(opening.id for opening in opening_by_code.values()),
-            "service_ids": sorted(service.id for service in created_services),
-            "service_opening_link_count": len(created_links),
-            "explicit_service_quantities": {service.id: str(service.quantity) for service in created_services},
-        },
-        reason="Role-limited cf-physical-model initial canonical physical-scope submission",
-    )
-    db.commit()
+    except ControlledPhysicalSubmissionError as exc:
+        if exc.code in {"ADMISSION_NOT_FOUND", "ESTIMATE_NOT_FOUND"}:
+            status_code = status.HTTP_404_NOT_FOUND
+        elif exc.code in {
+            "PREFLIGHT_RECEIPT_INVALID",
+            "PREFLIGHT_PAYLOAD_INVALID",
+            "ADMISSION_MANIFEST_INVALID",
+            "ADMISSION_PAYLOAD_INVALID",
+            "IDEMPOTENCY_KEY_INVALID",
+        }:
+            status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+        elif exc.code in {
+            "ADMISSION_KEY_UNTRUSTED",
+            "ADMISSION_ISSUER_UNTRUSTED",
+            "ADMISSION_SIGNER_UNTRUSTED",
+            "ADMISSION_VERIFIER_UNAVAILABLE",
+            "ADMISSION_PINNED_KEY_INVALID",
+        }:
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        else:
+            status_code = status.HTTP_409_CONFLICT
+        raise HTTPException(status_code=status_code, detail={"code": exc.code}) from exc
     return {
-        "agent_id": principal.agent_id,
-        "estimate_id": estimate.id,
-        "openings": [
-            {"id": opening.id, "opening_code": opening.opening_code, "canonical_defect_id": opening.canonical_defect_id}
-            for opening in opening_by_code.values()
-        ],
-        "services": [
-            {"id": service.id, "service_code": service.service_code, "quantity": str(service.quantity)}
-            for service in created_services
-        ],
-        "service_opening_link_count": len(created_links),
+        "agent_id": principal_agent_id,
+        "estimate_id": result.estimate_id,
+        "admission_id": result.admission_id,
+        "submission_id": result.submission_id,
+        "replayed": result.replayed,
+        "receipt": result.receipt,
     }
 
 
@@ -433,49 +335,13 @@ def agent_lock_physical_model(
     estimate_id: str,
     payload: AgentPhysicalModelLockInput,
     db: Db,
-    principal: Annotated[
-        AgentServicePrincipal, Depends(require_agent_scope("physical:lock"))
-    ],
+    principal: Annotated[AgentServicePrincipal, Depends(require_agent_scope("physical:lock"))],
 ) -> dict[str, Any]:
-    estimate = _estimate(db, estimate_id)
-    try:
-        lock, created = create_physical_model_lock(db, estimate)
-    except (WorkflowTransitionError, PhysicalModelLockError) as exc:
-        db.rollback()
-        blockers = list(exc.blockers) if isinstance(exc, WorkflowTransitionError) else [str(exc)]
-        raise HTTPException(
-            status_code=409,
-            detail={"action": "lock_physical_model", "allowed": False, "blockers": blockers},
-        ) from exc
-
-    _agent_audit(
-        db,
-        principal=principal,
-        action="agent_lock_physical_model",
-        entity_type="physical_model_lock",
-        entity_id=lock.id,
-        estimate=estimate,
-        new_value={
-            "content_hash": lock.content_hash,
-            "validator_result": lock.validator_result,
-            "opening_ids": lock.opening_ids,
-            "service_ids": lock.service_ids,
-            "critical_unknowns": lock.critical_unknowns or [],
-            "created": created,
-        },
-        reason=payload.reason,
+    del estimate_id, payload, db, principal
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail=(
+            "Generic agent Physical Model Lock requests are disabled. "
+            "A separate signed lock-admission boundary is required."
+        ),
     )
-    if created:
-        db.commit()
-    else:
-        db.rollback()
-    return {
-        "agent_id": principal.agent_id,
-        "estimate_id": estimate.id,
-        "lock_id": lock.id,
-        "created": created,
-        "content_hash": lock.content_hash,
-        "validator_result": lock.validator_result,
-        "critical_unknowns": lock.critical_unknowns or [],
-        "permitted_classes": lock.permitted_classes or [],
-    }

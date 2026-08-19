@@ -32,7 +32,7 @@ def test_fresh_sqlite_database_migrates_to_head(tmp_path: Path) -> None:
             ).fetchall()
         }
 
-    assert revision == ("0005_agent_service_principals",)
+    assert revision == ("0006_adjudicated_canonical_admissions",)
     assert {
         "users",
         "projects",
@@ -40,6 +40,8 @@ def test_fresh_sqlite_database_migrates_to_head(tmp_path: Path) -> None:
         "openings",
         "services",
         "agent_service_principals",
+        "physical_model_admissions",
+        "physical_model_initial_submissions",
         "physical_model_locks",
         "repair_strategy_locks",
         "pricing_components",

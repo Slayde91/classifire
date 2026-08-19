@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
@@ -36,12 +35,18 @@ def test_physical_role_contract_has_visual_evidence_and_no_release_authority() -
     assert ROLE_TOOL_CONTRACT["cf-physical-model"] == {
         "classifire_evidence_read",
         "classifire_physical_model_read",
-        "classifire_submit_initial_physical_model",
-        "classifire_lock_physical_model",
     }
     assert "image" not in ROLE_TOOL_CONTRACT["cf-physical-model"]
     scopes = ROLE_SCOPE_CONTRACT["cf-physical-model"]
-    assert {"evidence:read", "physical:read", "physical:write", "physical:lock"} <= scopes
+    assert scopes == {"evidence:read", "physical:read"}
+    assert not (
+        scopes
+        & {
+            "physical:write",
+            "physical:lock",
+            "physical:adjudicated:submit",
+        }
+    )
     assert "validation:run" not in scopes
     assert "human_release" not in scopes
     assert "estimate:approve" not in scopes
