@@ -157,6 +157,7 @@ class PhysicalModelAdmission(PhysicalRecordMixin, Base):
     purpose: Mapped[str] = mapped_column(String(80), nullable=False)
     preflight_receipt_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     normalised_submission_payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    normalised_submission_payload_json: Mapped[str] = mapped_column(Text, nullable=False)
     protected_state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     protected_state_fingerprint_version: Mapped[str] = mapped_column(String(100), nullable=False)
     source_run_id: Mapped[str] = mapped_column(String(160), nullable=False)

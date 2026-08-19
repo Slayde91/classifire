@@ -10,10 +10,12 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from pydantic import ValidationError
 
 from ..audit import record_audit
 from ..models import Estimate
 from ..physical_models import PhysicalModelAdmission, PhysicalModelLock
+from ..physical_model_submission_schema import InitialCanonicalPhysicalSubmission
 from .adjudicated_admission import (
     ADMISSION_PURPOSE,
     ADMISSION_SIGNATURE_ALGORITHM,
@@ -55,13 +57,15 @@ def register_verified_admission(
     if not isinstance(operator_reference, str) or not operator_reference.strip():
         raise AdmissionRegistrationError("ADMISSION_OPERATOR_INVALID")
     try:
+        payload_model = InitialCanonicalPhysicalSubmission.model_validate(submission_payload)
+        canonical_payload = payload_model.model_dump(mode="json")
         verified = verify_adjudicated_admission(
             manifest,
             pinned_public_key=pinned_public_key,
             expected_project_id=expected_project_id,
             expected_estimate_id=expected_estimate_id,
             expected_preflight_receipt_sha256=expected_preflight_receipt_sha256,
-            submission_payload=submission_payload,
+            submission_payload=canonical_payload,
             expected_protected_state_fingerprint=expected_protected_state_fingerprint,
             expected_protected_state_fingerprint_version=expected_protected_state_fingerprint_version,
             expected_artifact_digests=expected_artifact_digests,
@@ -70,12 +74,15 @@ def register_verified_admission(
             expected_key_id=expected_key_id,
             now=now,
         )
+    except ValidationError as exc:
+        raise AdmissionRegistrationError("ADMISSION_PAYLOAD_INVALID") from exc
     except AdmissionVerificationError as exc:
         raise AdmissionRegistrationError(exc.code) from exc
     return _persist_verified_admission(
         db,
         verified=verified,
         manifest=manifest,
+        canonical_payload=canonical_payload,
         operator_reference=operator_reference,
     )
 
@@ -85,6 +92,7 @@ def _persist_verified_admission(
     *,
     verified: VerifiedAdmission,
     manifest: Mapping[str, Any] | bytes | str,
+    canonical_payload: dict[str, Any],
     operator_reference: str,
 ) -> tuple[PhysicalModelAdmission, bool]:
     estimate = db.get(Estimate, verified.estimate_id)
@@ -116,6 +124,9 @@ def _persist_verified_admission(
         purpose=ADMISSION_PURPOSE,
         preflight_receipt_sha256=verified.preflight_receipt_sha256,
         normalised_submission_payload_sha256=verified.normalised_submission_payload_sha256,
+        normalised_submission_payload_json=json.dumps(
+            canonical_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ),
         protected_state_fingerprint=verified.protected_state_fingerprint,
         protected_state_fingerprint_version=verified.protected_state_fingerprint_version,
         source_run_id=verified.source_run_id,

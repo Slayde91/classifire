@@ -28,6 +28,7 @@ def upgrade() -> None:
         sa.Column("purpose", sa.String(80), nullable=False),
         sa.Column("preflight_receipt_sha256", sa.String(64), nullable=False),
         sa.Column("normalised_submission_payload_sha256", sa.String(64), nullable=False),
+        sa.Column("normalised_submission_payload_json", sa.Text(), nullable=False),
         sa.Column("protected_state_fingerprint", sa.String(64), nullable=False),
         sa.Column("protected_state_fingerprint_version", sa.String(100), nullable=False),
         sa.Column("source_run_id", sa.String(160), nullable=False),

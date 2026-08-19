@@ -21,6 +21,7 @@ from classifire.services.adjudicated_admission import (
     normalised_submission_payload_sha256,
     verify_adjudicated_admission,
 )
+from classifire.physical_model_submission_schema import InitialCanonicalPhysicalSubmission
 
 NOW = datetime(2026, 8, 20, 1, 0, tzinfo=UTC)
 
@@ -39,7 +40,12 @@ def _fixture(
             serialization.PublicFormat.SubjectPublicKeyInfo,
         )
     )
-    payload = {"openings": [{"opening_code": "O-001"}], "services": []}
+    payload = {
+        "openings": [{"opening_code": "O-001", "canonical_defect_id": str(uuid4())}],
+        "services": [],
+        "service_opening_links": [],
+    }
+    payload = InitialCanonicalPhysicalSubmission.model_validate(payload).model_dump(mode="json")
     digest = "A" * 64
     manifest: dict[str, object] = {
         "schema": ADMISSION_MANIFEST_SCHEMA,
