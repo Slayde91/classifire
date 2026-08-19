@@ -17,6 +17,7 @@ from . import (
     physical_models,  # noqa: F401
 )
 from .api import router as api_router
+from .api.agent_api import router as agent_api_router
 from .api.physical_model import router as physical_model_router
 from .api.workflow import router as workflow_router
 from .api.workflow_actions import router as workflow_actions_router
@@ -67,7 +68,13 @@ app.add_middleware(
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=["Authorization", "Content-Type", "If-Match", "X-CSRF-Token"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "If-Match",
+        "X-CSRF-Token",
+        "X-Classifire-Agent-ID",
+    ],
 )
 app.mount("/static", StaticFiles(directory=str(package_dir / "static")), name="static")
 app.mount("/brand", StaticFiles(directory=str(package_dir / "static" / "brand")), name="brand")
@@ -103,6 +110,7 @@ def healthz() -> dict[str, str]:
 
 app.include_router(api_router)
 app.include_router(physical_model_router)
+app.include_router(agent_api_router)
 app.include_router(workflow_router)
 app.include_router(workflow_actions_router)
 app.include_router(ui_router)
@@ -110,5 +118,3 @@ app.include_router(estimate_pinning_router)
 app.include_router(release_admin_router)
 app.include_router(technical_admin_router)
 app.include_router(library_ui_router)
-
-
