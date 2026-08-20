@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session, selectinload
 from .. import __version__
 from ..agent_security import require_agent_scope
 from ..audit import record_audit
+from ..config import Settings, get_settings
 from ..db import get_db
 from ..models import AgentServicePrincipal, AuditEvent, Estimate, Opening
 from ..physical_models import (
@@ -200,8 +201,13 @@ def agent_submit_initial_physical_model(
         AgentServicePrincipal,
         Depends(require_agent_scope("physical:adjudicated:submit")),
     ],
+    settings: Settings = Depends(get_settings),
 ) -> dict[str, Any]:
     """Consume one sealed admission without accepting physical-model content."""
+    if not isinstance(settings, Settings):
+        settings = get_settings()
+    if not settings.adjudicated_initial_submission_enabled:
+        raise HTTPException(status_code=503, detail={"code": "ADJUDICATED_SUBMISSION_DISABLED"})
     idempotency_key_sha256 = hashlib.sha256(payload.idempotency_key.encode("utf-8")).hexdigest()
     admission = db.scalar(
         select(PhysicalModelAdmission).where(

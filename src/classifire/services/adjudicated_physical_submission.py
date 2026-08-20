@@ -29,6 +29,8 @@ from .canonical_submission_state import (
     require_initial_submission_state,
 )
 
+CONTROLLED_CANONICAL_WRITER_POLICY_VERSION = "CLASSIFIRE-ADJUDICATED-CANONICAL-WRITER-v1"
+
 
 class ControlledPhysicalSubmissionError(RuntimeError):
     def __init__(self, code: str) -> None:

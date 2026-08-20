@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..audit import record_audit
+from ..config import Settings, get_settings
 from ..db import get_db
 from ..models import Estimate, StoredFile, User
 from ..physical_models import Defect, EvidenceSource
@@ -161,9 +162,21 @@ def lock_physical_model(
     request: Request,
     db: Db,
     user: Annotated[User, Depends(require_permission("estimate:write"))],
+    settings: Settings = Depends(get_settings),
 ) -> dict[str, Any]:
     """Create one deterministic physical lock or return an identical active one."""
+    if not isinstance(settings, Settings):
+        settings = get_settings()
     estimate = _estimate_or_404(db, estimate_id)
+    if settings.adjudicated_initial_submission_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail=(
+                "Generic Physical Model Lock creation is disabled while signed "
+                "adjudicated canonicalisation is enabled. A separate signed "
+                "lock-admission boundary is required."
+            ),
+        )
     try:
         lock, created = create_physical_model_lock(db, estimate)
     except (WorkflowTransitionError, PhysicalModelLockError) as exc:

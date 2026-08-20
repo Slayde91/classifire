@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     mission_control_api_key: str | None = None
     openclaw_config_path: Path | None = None
     openclaw_state_dir: Path | None = None
+    adjudicated_initial_submission_enabled: bool = False
     currency: str = "AUD"
     tax_name: str = "GST"
     tax_rate: str = "0.10"
