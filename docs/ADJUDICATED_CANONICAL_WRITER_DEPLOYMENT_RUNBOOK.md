@@ -162,6 +162,18 @@ With separate approval for security configuration:
 6. Confirm `cf-physical-model` has no physical mutation scope and the writer
    has neither `physical:write` nor `physical:lock`.
 
+The reviewed configuration inputs are JSON objects. Keep the feature disabled
+until both maps are present and the real public-key provenance is approved:
+
+```text
+CLASSIFIRE_ADJUDICATED_ADMISSION_PUBLIC_KEYS={"governance-p256-01":"<base64url-DER-SPKI-P256-public-key>"}
+CLASSIFIRE_ADJUDICATED_ADMISSION_ISSUER_KEY_IDS={"classifire-governance":["governance-p256-01"]}
+```
+
+The first map contains only P-256 public keys. The second independently binds
+each permitted issuer to its allowed key IDs. CLASSIFIRE rejects an admission
+unless both maps explicitly resolve its issuer and key ID.
+
 Stop if the public-key provenance, issuer/key mapping, or least-privilege
 scope evidence is incomplete.
 

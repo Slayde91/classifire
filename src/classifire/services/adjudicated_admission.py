@@ -119,6 +119,17 @@ def admission_signing_bytes(manifest: Mapping[str, Any] | bytes | str) -> bytes:
     return _canonical_json_bytes(unsigned, code="ADMISSION_MANIFEST_INVALID")
 
 
+def admission_identity(manifest: Mapping[str, Any] | bytes | str) -> tuple[str, str]:
+    """Return validated issuer and key ID without verifying the signature."""
+    item = _parse_manifest(manifest)
+    return item["issuer"], item["key_id"]
+
+
+def validate_p256_public_key(value: str) -> None:
+    """Validate a canonical base64url DER SubjectPublicKeyInfo P-256 public key."""
+    _load_p256_public_key(value)
+
+
 def verify_adjudicated_admission(
     manifest: Mapping[str, Any] | bytes | str,
     *,

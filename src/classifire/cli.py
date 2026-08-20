@@ -24,6 +24,15 @@ from .importers import import_pricing_library, import_technical_variants, seed_d
 from .mission_control import MissionControlClient, bootstrap_mission_control
 from .models import PricingLibraryRecord, Product, TechnicalVariant, User
 from .security import hash_password
+from .services.adjudicated_admission import AdmissionVerificationError, admission_identity
+from .services.adjudicated_admission_registration import (
+    AdmissionRegistrationError,
+    register_verified_admission_from_preflight,
+)
+from .services.adjudicated_key_policy import (
+    AdjudicatedKeyPolicyError,
+    resolve_adjudicated_public_key,
+)
 
 app = typer.Typer(help="CLASSIFIRE administration, import, run and integration commands.", no_args_is_help=True)
 console = Console()
@@ -241,6 +250,59 @@ def source_hashes() -> None:
     output = root / "knowledge" / "SOURCE_SHA256_MANIFEST.json"
     output.write_text(json.dumps(rows, indent=2), encoding="utf-8")
     console.print(f"[green]Wrote {len(rows)} source hashes:[/green] {output}")
+
+
+@app.command("register-adjudicated-admission")
+def register_adjudicated_admission(
+    manifest_path: Path = typer.Argument(..., exists=True, readable=True),
+    preflight_receipt_path: Path = typer.Argument(..., exists=True, readable=True),
+    operator_reference: str = typer.Option(..., "--operator-reference"),
+) -> None:
+    """Register one verified admission without a canonical write or physical lock."""
+    settings = get_settings()
+    if not settings.adjudicated_initial_submission_enabled:
+        raise typer.BadParameter("ADJUDICATED_SUBMISSION_DISABLED")
+
+    manifest = manifest_path.read_bytes()
+    preflight_receipt = preflight_receipt_path.read_bytes()
+    try:
+        issuer, key_id = admission_identity(manifest)
+        pinned_public_key = resolve_adjudicated_public_key(
+            enabled=settings.adjudicated_initial_submission_enabled,
+            public_keys=settings.adjudicated_admission_public_keys,
+            issuer_key_ids=settings.adjudicated_admission_issuer_key_ids,
+            issuer=issuer,
+            key_id=key_id,
+        )
+        with SessionLocal() as db:
+            admission, created = register_verified_admission_from_preflight(
+                db,
+                manifest=manifest,
+                preflight_receipt=preflight_receipt,
+                pinned_public_key=pinned_public_key,
+                expected_issuer=issuer,
+                expected_key_id=key_id,
+                operator_reference=operator_reference,
+            )
+            db.commit()
+    except (
+        AdmissionRegistrationError,
+        AdmissionVerificationError,
+        AdjudicatedKeyPolicyError,
+    ) as exc:
+        raise typer.BadParameter(exc.code) from exc
+
+    console.print_json(
+        data={
+            "admission_id": admission.admission_id,
+            "state": admission.state,
+            "issuer": admission.issuer_id,
+            "key_id": admission.signing_key_id,
+            "created": created,
+            "canonical_write_performed": False,
+            "physical_model_lock_created": False,
+        }
+    )
 
 
 if __name__ == "__main__":
