@@ -11,17 +11,24 @@ from sqlalchemy import select
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from . import ATTRIBUTION, __version__
+from . import (
+    ATTRIBUTION,
+    __version__,
+    physical_models,  # noqa: F401
+)
 from .api import router as api_router
+from .api.physical_model import router as physical_model_router
+from .api.workflow import router as workflow_router
+from .api.workflow_actions import router as workflow_actions_router
 from .config import get_settings
 from .db import Base, SessionLocal, engine
-from .importers.seed import seed_database
-from .models import User
-from .ui import router as ui_router
 from .estimate_pinning import router as estimate_pinning_router
+from .importers.seed import seed_database
+from .library_ui import router as library_ui_router
+from .models import User
 from .release_admin import router as release_admin_router
 from .technical_admin import router as technical_admin_router
-from .library_ui import router as library_ui_router
+from .ui import router as ui_router
 
 settings = get_settings()
 package_dir = Path(__file__).parent
@@ -95,11 +102,13 @@ def healthz() -> dict[str, str]:
 
 
 app.include_router(api_router)
+app.include_router(physical_model_router)
+app.include_router(workflow_router)
+app.include_router(workflow_actions_router)
 app.include_router(ui_router)
 app.include_router(estimate_pinning_router)
 app.include_router(release_admin_router)
 app.include_router(technical_admin_router)
 app.include_router(library_ui_router)
-
 
 

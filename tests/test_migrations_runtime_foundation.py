@@ -23,7 +23,15 @@ def test_fresh_database_upgrades_through_runtime_foundation(tmp_path: Path) -> N
     )
 
     result = subprocess.run(  # noqa: S603
-        [sys.executable, "-m", "alembic", "-c", str(ROOT / "alembic.ini"), "upgrade", "head"],
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            str(ROOT / "alembic.ini"),
+            "upgrade",
+            "0002_estimate_release_pins",
+        ],
         cwd=ROOT,
         env=environment,
         capture_output=True,

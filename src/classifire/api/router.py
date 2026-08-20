@@ -7,7 +7,17 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi.responses import FileResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
@@ -33,6 +43,7 @@ from ..models import (
     User,
 )
 from ..outputs import render_estimate_pdf, render_proposal_workbook, render_technical_workbook
+from ..physical_models import ServiceOpeningLink
 from ..schemas import (
     ChangeProposalInput,
     EstimateInput,
@@ -52,10 +63,21 @@ from ..schemas import (
 )
 from ..security import get_current_user, require_permission
 from ..services.calculation import D, calculate_estimate_line, recalculate_estimate
+from ..services.physical_defects import bind_canonical_defect
+from ..services.physical_mutation_guard import (
+    PhysicalMutationError,
+    require_physical_model_mutation,
+)
 from ..services.rule_engine import evaluate_estimate_rules
 from ..services.snapshot import lock_snapshot
 from ..services.storage import save_upload
 from ..services.technical import extract_pdf_candidate_metadata, search_for_opening, search_variants
+from ..services.workflow import WorkflowAction, WorkflowTransitionError
+from ..services.workflow_guard import (
+    PhysicalModelLockRequiredError,
+    require_active_physical_model_lock,
+    require_estimate_action,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["QUANTIFIRE API v1"])
 Db = Annotated[Session, Depends(get_db)]
@@ -559,7 +581,16 @@ def add_opening(
     estimate = _load_estimate(db, estimate_id)
     if estimate.status not in {"draft", "in_review"}:
         raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
-    opening = Opening(estimate_id=estimate.id, **payload.model_dump())
+    try:
+        require_physical_model_mutation(db, estimate)
+    except (PhysicalMutationError, WorkflowTransitionError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    defect = bind_canonical_defect(db, estimate, payload.defect_id)
+    opening = Opening(
+        estimate_id=estimate.id,
+        canonical_defect_id=defect.id if defect else None,
+        **payload.model_dump(),
+    )
     db.add(opening)
     db.flush()
     record_audit(
@@ -587,9 +618,21 @@ def add_service(
     opening: Opening = _get_or_404(db, Opening, opening_id, "Opening")
     if opening.estimate.status not in {"draft", "in_review"}:
         raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
+    try:
+        require_physical_model_mutation(db, opening.estimate)
+    except (PhysicalMutationError, WorkflowTransitionError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     service = Service(opening_id=opening.id, **payload.model_dump())
     db.add(service)
     db.flush()
+    db.add(
+        ServiceOpeningLink(
+            service_id=service.id,
+            opening_id=opening.id,
+            evidence_status=service.evidence_status,
+            confidence=service.confidence,
+        )
+    )
     record_audit(
         db,
         actor=user,
@@ -613,6 +656,10 @@ def add_line(
     user: Annotated[User, Depends(require_permission("estimate:write"))],
 ) -> dict[str, Any]:
     estimate = _load_estimate(db, estimate_id)
+    try:
+        require_active_physical_model_lock(db, estimate)
+    except PhysicalModelLockRequiredError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if estimate.status not in {"draft", "in_review"}:
         raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
     next_number = (db.scalar(select(func.max(EstimateLine.line_number)).where(EstimateLine.estimate_id == estimate.id)) or 0) + 1
@@ -649,6 +696,10 @@ def recalculate(
     user: Annotated[User, Depends(require_permission("estimate:write"))],
 ) -> dict[str, Any]:
     estimate = _load_estimate(db, estimate_id)
+    try:
+        require_active_physical_model_lock(db, estimate)
+    except PhysicalModelLockRequiredError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if estimate.status not in {"draft", "in_review"}:
         raise HTTPException(status_code=409, detail="Locked or released estimates cannot be recalculated")
     recalculate_estimate(db, estimate)
@@ -682,6 +733,10 @@ def evaluate_rules(
     user: Annotated[User, Depends(require_permission("estimate:write"))],
 ) -> list[dict[str, Any]]:
     estimate = _load_estimate(db, estimate_id)
+    try:
+        require_active_physical_model_lock(db, estimate)
+    except PhysicalModelLockRequiredError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     results = evaluate_estimate_rules(db, estimate)
     record_audit(
         db,
@@ -719,6 +774,10 @@ def opening_technical_search(
     )
     if not opening:
         raise HTTPException(status_code=404, detail="Opening not found")
+    try:
+        require_estimate_action(db, opening.estimate, WorkflowAction.SEARCH_TECHNICAL)
+    except WorkflowTransitionError as exc:
+        raise HTTPException(status_code=409, detail={"action": "search_technical", "blockers": list(exc.blockers)}) from exc
     return search_for_opening(db, opening)
 
 
@@ -731,6 +790,10 @@ def lock_estimate(
     user: Annotated[User, Depends(require_permission("estimate:approve"))],
 ) -> dict[str, Any]:
     estimate = _load_estimate(db, estimate_id)
+    try:
+        require_active_physical_model_lock(db, estimate)
+    except PhysicalModelLockRequiredError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     evaluations = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)).all()
     blocking = [item for item in evaluations if item.result == "BLOCKED" or item.severity == "blocking_error"]
     if blocking:
@@ -760,6 +823,10 @@ def export_estimate(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> FileResponse:
     estimate = _load_estimate(db, estimate_id)
+    try:
+        require_active_physical_model_lock(db, estimate)
+    except PhysicalModelLockRequiredError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if not estimate.snapshot_json or not estimate.snapshot_hash:
         raise HTTPException(status_code=409, detail="Lock the estimate before exporting")
     export_dir = settings.storage_root / "exports" / estimate.id / estimate.snapshot_hash
