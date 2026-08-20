@@ -7,6 +7,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -174,3 +175,29 @@ class PhysicalModelAdmission(PhysicalRecordMixin, Base):
     state: Mapped[str] = mapped_column(String(20), default="issued", index=True, nullable=False)
 
     __table_args__ = (Index("ix_physical_model_admission_estimate_state", "estimate_id", "state"),)
+
+
+class PhysicalModelSubmissionReceipt(Base):
+    """Immutable proof of one successful admission-bound canonical write."""
+
+    __tablename__ = "physical_model_submission_receipts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_now_utc, nullable=False
+    )
+    admission_record_id: Mapped[str] = mapped_column(
+        ForeignKey("physical_model_admissions.id"), unique=True, index=True, nullable=False
+    )
+    admission_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
+    normalised_submission_payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    protected_state_fingerprint_before: Mapped[str] = mapped_column(String(64), nullable=False)
+    opening_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    service_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    service_opening_link_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    canonical_write_performed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    physical_model_lock_created: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    receipt_json: Mapped[str] = mapped_column(Text, nullable=False)
+    receipt_sha256: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
