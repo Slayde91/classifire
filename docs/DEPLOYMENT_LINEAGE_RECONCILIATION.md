@@ -38,13 +38,22 @@ Until that evidence exists, the live-looking legacy database remains blocked
 and a fresh disposable clean-stack database is the only valid migration-test
 target.
 
-## Remaining Phase 8 adapter boundary
+## Phase 8 adapter boundary
 
-The clean-stack preflight validates the canonical payload schema, its exact
-payload artifact, the five required adjudication artifacts, protected database
-state, policy versions, and implementation hashes. It does not import the
-legacy Phase 8 visual/UAT subsystems or silently reimplement their semantic
-comparison rules. Before the real UAT preflight, a reviewed adapter must prove
-that the sealed canonical payload is exactly derived from the approved
-adjudicated proposal, final-state receipt, diff, and human comparison. Until
-that adapter passes, the generic preflight is synthetic-readiness evidence only.
+The clean-stack preflight now invokes the bounded Phase 8 adapter and requires
+the sealed canonical payload to be exactly derived from the four approved
+Phase 8 artifacts: the adjudicated proposal, final-state receipt, adjudicated
+diff, and human comparison. Together with the canonical payload artifact, the
+preflight binds five exact files to the protected database state, policy
+versions, deployment lineage, and controlled implementation hashes.
+
+The adapter validates the retained receipt graph without importing the legacy
+Phase 8 visual/UAT subsystems or silently reimplementing their semantic
+comparison rules. Read-only validation against the retained UAT evidence
+derived 17 openings, 22 services, and 22 links without performing a database
+write.
+
+This completes the adapter implementation boundary. It does not authorize a
+real preflight or canonical write against the configured deployment database.
+Those actions remain blocked until Gate B proves a safe transition from the
+legacy database lineage under a separately approved database change window.
