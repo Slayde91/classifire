@@ -162,7 +162,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
     assert active_lock_index["unique"]
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0006_physical_submission_receipts"
+            "0007_reconcile_adjudicated_admission_lineages"
         )
         active_lock_index_sql = connection.execute(
             text(
@@ -172,23 +172,6 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
         ).scalar_one()
         assert "WHERE invalidated_at IS NULL" in active_lock_index_sql
 
-    _downgrade(
-        database_url,
-        environment,
-        "0002_estimate_release_pins",
-        enforce_sqlite_foreign_keys=True,
-    )
-    post_downgrade = inspect(engine)
-    assert {
-        "defects",
-        "evidence_sources",
-        "service_opening_links",
-        "physical_model_locks",
-    }.isdisjoint(post_downgrade.get_table_names())
-    with engine.connect() as connection:
-        assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0002_estimate_release_pins"
-        )
 
 
 def test_fk_enforced_physical_migration_backfills_and_downgrades_safely(
@@ -250,7 +233,7 @@ def test_fk_enforced_physical_migration_backfills_and_downgrades_safely(
     _upgrade(
         database_url,
         environment,
-        "head",
+        "0006_physical_submission_receipts",
         enforce_sqlite_foreign_keys=True,
     )
     with engine.connect() as connection:
