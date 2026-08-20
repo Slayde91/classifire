@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     openclaw_config_path: Path | None = None
     openclaw_state_dir: Path | None = None
     adjudicated_initial_submission_enabled: bool = False
+    adjudicated_admission_public_keys: dict[str, str] = Field(default_factory=dict)
+    adjudicated_admission_issuer_key_ids: dict[str, list[str]] = Field(default_factory=dict)
     currency: str = "AUD"
     tax_name: str = "GST"
     tax_rate: str = "0.10"
@@ -49,6 +51,19 @@ class Settings(BaseSettings):
     def split_csv(cls, value: object) -> object:
         if isinstance(value, str):
             return [item.strip() for item in value.split(",") if item.strip()]
+        return value
+
+    @field_validator(
+        "adjudicated_admission_public_keys",
+        "adjudicated_admission_issuer_key_ids",
+        mode="before",
+    )
+    @classmethod
+    def require_mapping_configuration(cls, value: object) -> object:
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise ValueError("must be a JSON object")
         return value
 
     @field_validator("storage_root", mode="after")
