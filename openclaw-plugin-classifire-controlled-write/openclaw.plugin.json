@@ -1,0 +1,31 @@
+{
+  "id": "classifire-controlled-write",
+  "name": "CLASSIFIRE Admission Writer",
+  "description": "Admission-only bridge for one controlled initial CLASSIFIRE physical-model submission.",
+  "version": "0.4.0",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "classifire_submit_initial_physical_model"
+    ]
+  },
+  "toolMetadata": {
+    "classifire_submit_initial_physical_model": {"optional": true}
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "Loopback CLASSIFIRE API base URL, normally http://127.0.0.1:8787"
+      },
+      "tokenFile": {
+        "type": "string",
+        "description": "Absolute path to the local CLASSIFIRE agent-token JSON file"
+      }
+    }
+  }
+}

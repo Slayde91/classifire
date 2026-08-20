@@ -16,9 +16,9 @@ from .models import AgentServicePrincipal
 
 TOKEN_PREFIX = "cfa_"  # noqa: S105 - identifier prefix, not a credential.
 
-# Layer 3 establishes identities and read-only access only.  Physical mutation,
-# locking, commercial work, and the later admission writer are deliberately not
-# represented here.
+# Layer 3 identities remain read-only except for the dedicated Layer 5 writer,
+# whose single scope can consume a pre-registered signed admission. It cannot
+# accept raw physical facts or create a Physical Model Lock.
 AGENT_SCOPE_MAP: dict[str, frozenset[str]] = {
     "cf-orchestrator": frozenset({"health:read", "workflow:read"}),
     "cf-intake-evidence": frozenset({"health:read", "workflow:read", "evidence:read"}),
@@ -26,6 +26,9 @@ AGENT_SCOPE_MAP: dict[str, frozenset[str]] = {
         {"health:read", "workflow:read", "evidence:read", "physical:read"}
     ),
     "cf-validator": frozenset({"health:read", "workflow:read", "evidence:read", "physical:read"}),
+    "cf-adjudicated-physical-writer": frozenset(
+        {"health:read", "workflow:read", "physical:adjudicated:submit"}
+    ),
     "cf-library-governance": frozenset({"health:read", "workflow:read"}),
     "cf-platform-governance": frozenset({"health:read", "workflow:read"}),
 }

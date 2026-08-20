@@ -1,21 +1,41 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 from decimal import Decimal
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from .. import __version__
 from ..agent_security import require_agent_scope
+from ..audit import record_audit
 from ..db import get_db
-from ..models import AgentServicePrincipal, Estimate, Opening
-from ..physical_models import EvidenceSource, PhysicalModelLock, ServiceOpeningLink
+from ..models import AgentServicePrincipal, AuditEvent, Estimate, Opening
+from ..physical_models import (
+    EvidenceSource,
+    PhysicalModelAdmission,
+    PhysicalModelLock,
+    PhysicalModelSubmissionReceipt,
+    ServiceOpeningLink,
+)
+from ..services.adjudicated_physical_submission import (
+    ControlledPhysicalSubmissionError,
+    submit_recorded_initial_physical_model,
+)
 from ..services.workflow_db import assess_estimate_workflow
 
 router = APIRouter(prefix="/api/v1/agent", tags=["CLASSIFIRE Agent Read API"])
 Db = Annotated[Session, Depends(get_db)]
+
+
+class InitialPhysicalModelSubmissionRequest(BaseModel):
+    admission_id: str = Field(min_length=36, max_length=100)
+    idempotency_key: str = Field(min_length=16, max_length=200)
 
 
 def _decimal(value: Decimal | None) -> str | None:
@@ -33,13 +53,15 @@ def _estimate_or_404(db: Session, estimate_id: str) -> Estimate:
 def agent_health(
     principal: Annotated[AgentServicePrincipal, Depends(require_agent_scope("health:read"))],
 ) -> dict[str, Any]:
+    scopes = set(principal.scopes or [])
     return {
         "status": "ok",
         "product": "CLASSIFIRE",
         "version": __version__,
         "agent_id": principal.agent_id,
         "scopes": sorted(principal.scopes or []),
-        "physical_mutation_exposed": False,
+        "physical_mutation_exposed": "physical:adjudicated:submit" in scopes,
+        "adjudicated_submission_exposed": "physical:adjudicated:submit" in scopes,
         "physical_lock_exposed": False,
     }
 
@@ -167,3 +189,100 @@ def agent_physical_model(
             for lock in locks
         ],
     }
+
+
+@router.post("/physical-model/initial")
+def agent_submit_initial_physical_model(
+    payload: InitialPhysicalModelSubmissionRequest,
+    request: Request,
+    db: Db,
+    principal: Annotated[
+        AgentServicePrincipal,
+        Depends(require_agent_scope("physical:adjudicated:submit")),
+    ],
+) -> dict[str, Any]:
+    """Consume one sealed admission without accepting physical-model content."""
+    idempotency_key_sha256 = hashlib.sha256(payload.idempotency_key.encode("utf-8")).hexdigest()
+    admission = db.scalar(
+        select(PhysicalModelAdmission).where(
+            PhysicalModelAdmission.admission_id == payload.admission_id
+        )
+    )
+    if admission is None:
+        raise HTTPException(status_code=404, detail={"code": "ADMISSION_NOT_FOUND"})
+
+    if admission.state == "consumed":
+        receipt = db.scalar(
+            select(PhysicalModelSubmissionReceipt).where(
+                PhysicalModelSubmissionReceipt.admission_record_id == admission.id
+            )
+        )
+        if receipt is None:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "ADMISSION_CONSUMED_RECEIPT_MISSING"},
+            )
+        submission_audit = db.scalar(
+            select(AuditEvent).where(
+                AuditEvent.action == "submit_adjudicated_initial_physical_model",
+                AuditEvent.entity_type == "physical_model_submission_receipt",
+                AuditEvent.entity_id == receipt.id,
+            )
+        )
+        if submission_audit is None or not hmac.compare_digest(
+            submission_audit.correlation_id or "",
+            idempotency_key_sha256,
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "ADMISSION_IDEMPOTENCY_KEY_MISMATCH"},
+            )
+        return {
+            **json.loads(receipt.receipt_json),
+            "receipt_sha256": receipt.receipt_sha256,
+            "idempotent_replay": True,
+        }
+
+    try:
+        result = submit_recorded_initial_physical_model(
+            db,
+            admission_id=payload.admission_id,
+        )
+    except ControlledPhysicalSubmissionError as exc:
+        db.rollback()
+        response_status = 500 if exc.code == "ADMISSION_WRITE_FAILED" else 409
+        raise HTTPException(status_code=response_status, detail={"code": exc.code}) from exc
+
+    receipt = db.scalar(
+        select(PhysicalModelSubmissionReceipt).where(
+            PhysicalModelSubmissionReceipt.admission_record_id == admission.id
+        )
+    )
+    if receipt is None:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "ADMISSION_RECEIPT_NOT_PERSISTED"},
+        )
+
+    record_audit(
+        db,
+        actor=None,
+        actor_type="agent_service_principal",
+        actor_name=principal.agent_id,
+        action="submit_adjudicated_initial_physical_model",
+        entity_type="physical_model_submission_receipt",
+        entity_id=receipt.id,
+        project_id=admission.project_id,
+        new_value={
+            "admission_id": admission.admission_id,
+            "receipt_sha256": receipt.receipt_sha256,
+            "canonical_write_performed": True,
+            "physical_model_lock_created": False,
+        },
+        reason="Consumed one pre-registered signed admission through the dedicated writer.",
+        source_ip=request.client.host if request.client else None,
+        correlation_id=idempotency_key_sha256,
+    )
+    db.commit()
+    return {**result, "idempotent_replay": False}

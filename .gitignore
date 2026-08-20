@@ -17,6 +17,7 @@ data/backups/**
 !data/backups/.gitkeep
 build/
 dist/
+node_modules/
 *.egg-info/
 .DS_Store
 Thumbs.db
