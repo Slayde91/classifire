@@ -36,6 +36,10 @@ from .models import (
 from .physical_models import ServiceOpeningLink
 from .security import authenticate_user, create_csrf_token, has_permission, verify_csrf
 from .services.calculation import D, calculate_estimate_line, recalculate_estimate
+from .services.initial_canonicalisation_boundary import (
+    InitialCanonicalisationAdmissionRequired,
+    require_admission_bound_initial_canonicalisation,
+)
 from .services.physical_defects import bind_canonical_defect
 from .services.physical_mutation_guard import PhysicalMutationError, require_physical_model_mutation
 from .services.release_pinning import (
@@ -426,6 +430,7 @@ def estimate_add_opening(
     db: Db,
     csrf_token: Annotated[str, Form()],
     opening_code: Annotated[str, Form()],
+    settings: Settings = Depends(get_settings),
     defect_id: Annotated[str | None, Form()] = None,
     location: Annotated[str | None, Form()] = None,
     substrate_type: Annotated[str | None, Form()] = None,
@@ -433,6 +438,8 @@ def estimate_add_opening(
     orientation: Annotated[str | None, Form()] = None,
     frl: Annotated[str | None, Form()] = None,
 ) -> RedirectResponse:
+    if not isinstance(settings, Settings):
+        settings = get_settings()
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:write")
     estimate = _estimate(db, estimate_id)
@@ -440,6 +447,13 @@ def estimate_add_opening(
         raise HTTPException(409, "Locked or released estimates cannot be modified")
     try:
         require_physical_model_mutation(db, estimate)
+        require_admission_bound_initial_canonicalisation(
+            db,
+            estimate_id=estimate.id,
+            enabled=settings.adjudicated_initial_submission_enabled,
+        )
+    except InitialCanonicalisationAdmissionRequired as exc:
+        raise HTTPException(409, "Initial physical model requires signed admission.") from exc
     except (PhysicalMutationError, WorkflowTransitionError) as exc:
         raise HTTPException(409, str(exc)) from exc
     defect = bind_canonical_defect(db, estimate, defect_id)

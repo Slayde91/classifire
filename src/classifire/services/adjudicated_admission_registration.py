@@ -7,15 +7,15 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from pydantic import ValidationError
 
 from ..audit import record_audit
 from ..models import Estimate
-from ..physical_models import PhysicalModelAdmission, PhysicalModelLock
 from ..physical_model_submission_schema import InitialCanonicalPhysicalSubmission
+from ..physical_models import PhysicalModelAdmission, PhysicalModelLock
 from .adjudicated_admission import (
     ADMISSION_PURPOSE,
     ADMISSION_SIGNATURE_ALGORITHM,
@@ -23,12 +23,70 @@ from .adjudicated_admission import (
     VerifiedAdmission,
     verify_adjudicated_admission,
 )
+from .adjudicated_preflight import (
+    AdjudicatedPreflightError,
+    parse_adjudicated_preflight,
+)
+from .canonical_submission_state import (
+    CanonicalSubmissionStateError,
+    require_initial_submission_state,
+)
+from .deployment_lineage import assess_deployment_lineage
 
 
 class AdmissionRegistrationError(RuntimeError):
     def __init__(self, code: str) -> None:
         self.code = code
         super().__init__(f"Admission registration failed: {code}.")
+
+
+def register_verified_admission_from_preflight(
+    db: Session,
+    *,
+    manifest: Mapping[str, Any] | bytes | str,
+    preflight_receipt: bytes,
+    pinned_public_key: str,
+    expected_issuer: str,
+    expected_key_id: str,
+    operator_reference: str,
+    now: datetime | None = None,
+) -> tuple[PhysicalModelAdmission, bool]:
+    """Derive every signed fact from one canonical, current preflight receipt."""
+
+    try:
+        binding = parse_adjudicated_preflight(preflight_receipt, now=now)
+    except AdjudicatedPreflightError as exc:
+        raise AdmissionRegistrationError(exc.code) from exc
+    lineage = assess_deployment_lineage(db)
+    if lineage.status != "READY":
+        raise AdmissionRegistrationError(lineage.code)
+    try:
+        require_initial_submission_state(
+            db,
+            estimate_id=binding.estimate_id,
+            expected_fingerprint=binding.protected_state_fingerprint,
+        )
+    except CanonicalSubmissionStateError as exc:
+        raise AdmissionRegistrationError(exc.code) from exc
+    return register_verified_admission(
+        db,
+        manifest=manifest,
+        pinned_public_key=pinned_public_key,
+        expected_project_id=binding.project_id,
+        expected_estimate_id=binding.estimate_id,
+        expected_preflight_receipt_sha256=binding.receipt_sha256,
+        submission_payload=binding.submission_payload,
+        expected_protected_state_fingerprint=binding.protected_state_fingerprint,
+        expected_protected_state_fingerprint_version=(
+            binding.protected_state_fingerprint_version
+        ),
+        expected_artifact_digests=binding.artifact_digests,
+        expected_policy_versions=binding.policy_versions,
+        expected_issuer=expected_issuer,
+        expected_key_id=expected_key_id,
+        operator_reference=operator_reference,
+        now=now,
+    )
 
 
 def register_verified_admission(

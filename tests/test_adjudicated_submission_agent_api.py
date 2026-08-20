@@ -15,6 +15,7 @@ from classifire.api.agent_api import (
     agent_health,
     agent_submit_initial_physical_model,
 )
+from classifire.config import Settings
 from classifire.models import AgentServicePrincipal, AuditEvent, Opening, Service
 from classifire.physical_models import PhysicalModelLock, PhysicalModelSubmissionReceipt
 
@@ -28,6 +29,10 @@ def _request() -> Request:
             "client": ("127.0.0.1", 50000),
         }
     )
+
+
+def _enabled_settings() -> Settings:
+    return Settings(adjudicated_initial_submission_enabled=True)
 
 
 def _writer(db) -> AgentServicePrincipal:  # type: ignore[no-untyped-def]
@@ -49,7 +54,9 @@ def test_agent_route_consumes_only_admission_and_returns_durable_receipt() -> No
             idempotency_key="submission-request-0001",
         )
 
-        result = agent_submit_initial_physical_model(payload, _request(), db, principal)
+        result = agent_submit_initial_physical_model(
+            payload, _request(), db, principal, _enabled_settings()
+        )
 
         assert result["canonical_write_performed"] is True
         assert result["physical_model_lock_created"] is False
@@ -67,7 +74,9 @@ def test_agent_route_consumes_only_admission_and_returns_durable_receipt() -> No
         assert audit.actor_name == principal.agent_id
         assert audit.correlation_id != payload.idempotency_key
 
-        replay = agent_submit_initial_physical_model(payload, _request(), db, principal)
+        replay = agent_submit_initial_physical_model(
+            payload, _request(), db, principal, _enabled_settings()
+        )
         assert replay["receipt_sha256"] == result["receipt_sha256"]
         assert replay["idempotent_replay"] is True
         assert db.scalar(select(func.count(Opening.id))) == 1
@@ -82,6 +91,7 @@ def test_agent_route_consumes_only_admission_and_returns_durable_receipt() -> No
                 _request(),
                 db,
                 principal,
+                _enabled_settings(),
             )
         assert mismatched_replay.value.status_code == 409
         assert mismatched_replay.value.detail == {"code": "ADMISSION_IDEMPOTENCY_KEY_MISMATCH"}
@@ -105,6 +115,7 @@ def test_agent_route_rejects_expired_admission_without_canonical_writes() -> Non
                 _request(),
                 db,
                 principal,
+                _enabled_settings(),
             )
 
         assert rejected.value.status_code == 409
@@ -112,6 +123,28 @@ def test_agent_route_rejects_expired_admission_without_canonical_writes() -> Non
         assert db.scalar(select(func.count(Opening.id))) == 0
         assert db.scalar(select(func.count(PhysicalModelSubmissionReceipt.id))) == 0
         assert db.scalar(select(func.count(PhysicalModelLock.id))) == 0
+
+
+def test_agent_route_is_disabled_until_deployment_gate_enables_it() -> None:
+    with physical_session() as db:
+        estimate = add_estimate(db)
+        admission = _admission(db, estimate)
+        principal = _writer(db)
+        with pytest.raises(HTTPException) as rejected:
+            agent_submit_initial_physical_model(
+                InitialPhysicalModelSubmissionRequest(
+                    admission_id=admission.admission_id,
+                    idempotency_key="submission-request-disabled",
+                ),
+                _request(),
+                db,
+                principal,
+                Settings(adjudicated_initial_submission_enabled=False),
+            )
+        assert rejected.value.status_code == 503
+        assert rejected.value.detail == {"code": "ADJUDICATED_SUBMISSION_DISABLED"}
+        assert db.scalar(select(func.count(Opening.id))) == 0
+        assert db.scalar(select(func.count(PhysicalModelSubmissionReceipt.id))) == 0
 
 
 def test_only_dedicated_writer_has_the_submission_scope() -> None:
