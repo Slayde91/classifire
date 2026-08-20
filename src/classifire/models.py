@@ -69,6 +69,25 @@ class AuditEvent(RecordMixin, Base):
     event_hash: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class AgentServicePrincipal(RecordMixin, Base):
+    """A least-privilege, non-human service identity for a CLASSIFIRE agent.
+
+    Plaintext credentials are never stored.  The server-side scope map remains
+    authoritative; the persisted scope list provides an auditable second gate.
+    """
+
+    __tablename__ = "agent_service_principals"
+
+    agent_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    display_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    token_hint: Mapped[str] = mapped_column(String(16), nullable=False)
+    scopes: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True, nullable=False)
+    rotated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class LibraryRelease(RecordMixin, Base):
     __tablename__ = "library_releases"
     __table_args__ = (UniqueConstraint("library_type", "version", name="uq_library_release_type_version"),)

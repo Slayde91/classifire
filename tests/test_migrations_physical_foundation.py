@@ -142,6 +142,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
         "evidence_sources",
         "service_opening_links",
         "physical_model_locks",
+        "agent_service_principals",
     }.issubset(inspector.get_table_names())
     assert "canonical_defect_id" in {column["name"] for column in inspector.get_columns("openings")}
     assert "primary_opening_legacy" in {
@@ -159,7 +160,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
     assert active_lock_index["unique"]
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0003_physical_model_foundation"
+            "0004_agent_service_principals"
         )
         active_lock_index_sql = connection.execute(
             text(
@@ -362,5 +363,5 @@ def test_fk_enforced_physical_migration_backfills_and_downgrades_safely(
                 == 1
             )
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0003_physical_model_foundation"
+            "0004_agent_service_principals"
         )
