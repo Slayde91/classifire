@@ -35,8 +35,14 @@ def test_layer_three_scope_map_is_read_only_for_physical_agents() -> None:
     )
     all_scopes = set().union(*AGENT_SCOPE_MAP.values())
     assert {"physical:write", "physical:lock", "estimate:approve"}.isdisjoint(all_scopes)
-    with pytest.raises(ValueError, match="Unknown controlled"):
-        scopes_for_agent("cf-adjudicated-physical-writer")
+    assert AGENT_SCOPE_MAP["cf-adjudicated-physical-writer"] == frozenset(
+        {"health:read", "workflow:read", "physical:adjudicated:submit"}
+    )
+    assert scopes_for_agent("cf-adjudicated-physical-writer") == [
+        "health:read",
+        "physical:adjudicated:submit",
+        "workflow:read",
+    ]
 
 
 def test_agent_token_is_hashed_and_requires_server_and_persisted_scope() -> None:
