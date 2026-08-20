@@ -24,7 +24,7 @@ def _assessment(revision: str, *, receipt_table: bool):  # type: ignore[no-untyp
 
 
 def test_clean_stack_head_is_ready_only_with_both_journal_tables() -> None:
-    result = _assessment("0006_physical_submission_receipts", receipt_table=True)
+    result = _assessment("0007_reconcile_adjudicated_admission_lineages", receipt_table=True)
     assert result.status == "READY"
     assert result.code == "CLEAN_STACK_HEAD_CONFIRMED"
     assert result.database_write_performed is False

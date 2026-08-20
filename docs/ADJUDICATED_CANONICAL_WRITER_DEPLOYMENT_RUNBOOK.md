@@ -134,10 +134,11 @@ During an explicitly approved maintenance window:
 
 1. Create and independently verify a recoverable database backup.
 2. Confirm the database's current Alembic revision and its target revision.
-3. Apply the reviewed Alembic path through the clean-stack adjudicated-admission
-   journal migration (`0005_adjudicated_admission_journal` at this documented
-   foundation revision) before application startup. Confirm the actual target
-   revision rather than assuming this identifier for another deployment.
+3. Apply the reviewed Alembic path through the clean-stack lineage-reconciliation
+   merge migration (`0007_reconcile_adjudicated_admission_lineages`). It may
+   transition only an empty legacy adjudication journal and must never use
+   manual Alembic stamping. Confirm the actual target revision rather than
+   assuming this identifier for another deployment.
 4. Verify both admission journal tables, their uniqueness constraints, and the
    recorded Alembic revision.
 5. Confirm that no admission, initial-submission, Opening, Service, link, or

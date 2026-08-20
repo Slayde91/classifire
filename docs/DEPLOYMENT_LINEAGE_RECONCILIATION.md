@@ -3,7 +3,7 @@
 ## Decision
 
 The reviewed clean-stack database head is
-`0006_physical_submission_receipts`. A database reporting
+`0007_reconcile_adjudicated_admission_lineages`. A database reporting
 `0006_adjudicated_canonical_admissions` belongs to the unreviewed legacy Phase 8
 lineage and must not be stamped, upgraded, or used as the deployment target
 without a separately approved rehearsal.
@@ -22,8 +22,8 @@ environment. It reads only Alembic and table metadata and returns one of:
 
 ## Legacy transition requirements
 
-Gate B may design and execute a transition only after separate database
-change-window approval. The rehearsal must use a verified disposable copy and:
+Gate B uses a historical-revision bridge and a merge migration; it never stamps
+the database manually. The rehearsal must use a verified disposable copy and:
 
 1. prove backup and restore before any schema change;
 2. compare every admission-journal column, constraint, index, and foreign key;
