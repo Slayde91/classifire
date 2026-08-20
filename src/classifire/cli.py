@@ -22,7 +22,7 @@ from .mission_control import MissionControlClient, bootstrap_mission_control
 from .models import PricingLibraryRecord, Product, TechnicalVariant, User
 from .security import hash_password
 
-app = typer.Typer(help="QUANTIFIRE administration, import, run and integration commands.", no_args_is_help=True)
+app = typer.Typer(help="CLASSIFIRE administration, import, run and integration commands.", no_args_is_help=True)
 console = Console()
 
 
@@ -36,8 +36,8 @@ def repo_root() -> Path:
 
 @app.command()
 def version() -> None:
-    """Print the installed QUANTIFIRE version."""
-    console.print(f"QUANTIFIRE {__version__}")
+    """Print the installed CLASSIFIRE version."""
+    console.print(f"CLASSIFIRE {__version__}")
 
 
 @app.command("init")
@@ -59,7 +59,7 @@ def init_database() -> None:
 @app.command("create-admin")
 def create_admin(
     email: str = typer.Option(..., prompt=True),
-    full_name: str = typer.Option("QUANTIFIRE Administrator"),
+    full_name: str = typer.Option("CLASSIFIRE Administrator"),
     password: str = typer.Option(..., prompt=True, hide_input=True, confirmation_prompt=True),
 ) -> None:
     """Create or reset an administrator account."""
@@ -134,10 +134,10 @@ def start(
     port: Optional[int] = typer.Option(None),
     reload: bool = typer.Option(False),
 ) -> None:
-    """Start the QUANTIFIRE application."""
+    """Start the CLASSIFIRE application."""
     settings = get_settings()
     uvicorn.run(
-        "quantifire.main:app",
+        "classifire.main:app",
         host=host or settings.host,
         port=port or settings.port,
         reload=reload,
@@ -192,15 +192,15 @@ def doctor() -> None:
 @app.command("mission-control-bootstrap")
 def mission_control_bootstrap(
     url: Optional[str] = typer.Option(None),
-    api_key: Optional[str] = typer.Option(None, envvar="QUANTIFIRE_MISSION_CONTROL_API_KEY"),
-    repo_url: str = typer.Option("https://github.com/Slayde91/quantifire"),
+    api_key: Optional[str] = typer.Option(None, envvar="CLASSIFIRE_MISSION_CONTROL_API_KEY"),
+    repo_url: str = typer.Option("https://github.com/Slayde91/classifire"),
     create_tasks: bool = typer.Option(
         False,
         "--create-tasks",
         help="Also seed baseline architecture tasks. Default is agent registration only.",
     ),
 ) -> None:
-    """Register QUANTIFIRE agent records in Mission Control; task seeding is opt-in."""
+    """Register CLASSIFIRE agent records in Mission Control; task seeding is opt-in."""
     settings = get_settings()
     key = api_key or settings.mission_control_api_key
     if not key:

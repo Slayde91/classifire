@@ -1,6 +1,6 @@
 * @Slayde91
 /assets/brand/ @Slayde91
-/src/quantifire/services/rule_engine.py @Slayde91
-/src/quantifire/importers/technical.py @Slayde91
-/src/quantifire/services/pricing.py @Slayde91
+/src/classifire/services/rule_engine.py @Slayde91
+/src/classifire/importers/technical.py @Slayde91
+/src/classifire/services/pricing.py @Slayde91
 /knowledge/source/ @Slayde91

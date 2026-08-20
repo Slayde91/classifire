@@ -24,10 +24,10 @@ if [ ! -f .env ]; then
   echo "Created .env from .env.example. Change the secret key and administrator settings before production use."
 fi
 
-quantifire init
+classifire init
 
 echo
 echo "QUANTIFIRE installed."
 echo "Activate: source .venv/bin/activate"
-echo "Create admin: quantifire create-admin"
-echo "Start: quantifire start"
+echo "Create admin: classifire create-admin"
+echo "Start: classifire start"

@@ -1,9 +1,9 @@
 from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
-from quantifire.config import get_settings
-from quantifire.db import Base
-from quantifire import models  # noqa: F401
+from classifire.config import get_settings
+from classifire.db import Base
+from classifire import models  # noqa: F401
 config=context.config
 if config.config_file_name: fileConfig(config.config_file_name)
 config.set_main_option('sqlalchemy.url', get_settings().database_url)
