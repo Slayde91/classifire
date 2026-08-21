@@ -10,7 +10,7 @@ from pypdf import PdfReader
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from ..models import Opening, Service, TechnicalDocument, TechnicalVariant
+from ..models import Opening, TechnicalVariant
 from .release_scope import pinned_technical_ids
 
 
