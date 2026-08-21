@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from collections import Counter
 import csv
 import hashlib
 import json
-from pathlib import Path
 import re
+from collections import Counter
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .file_hashing import sha256_file
 from .models import LibraryRelease, PricingLibraryRecord, TechnicalVariant
 
 SOURCE_VERSION = "2.13"
@@ -27,14 +28,6 @@ KNOWN_COLLISION_ID = "TSL-FF-FAS190236-RIR1-25A-V211-VAR01"
 PRICING_RELATIVE = Path("knowledge/libraries/CLASSIFIRE_14_Pricing_Library_v2.13.csv")
 P15_RELATIVE = Path("knowledge/libraries/CLASSIFIRE_15_Technical_System_Library_v2.13.txt")
 P17_RELATIVE = Path("knowledge/libraries/CLASSIFIRE_17_Technical_System_Variants_v2.13.jsonl")
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def canonical_hash(payload: Any) -> str:
