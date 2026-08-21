@@ -2,6 +2,10 @@
 .venv/
 __pycache__/
 *.py[cod]
+# Local Python cache-prefix directories created by review and test tooling.
+/.codex-pycache-*/
+/.pycache-*/
+/Temp/classifire-review-pyc/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
