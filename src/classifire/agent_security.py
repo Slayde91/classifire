@@ -23,12 +23,17 @@ AGENT_SCOPE_MAP: dict[str, frozenset[str]] = {
     "cf-orchestrator": frozenset({"health:read", "workflow:read"}),
     "cf-intake-evidence": frozenset({"health:read", "workflow:read", "evidence:read"}),
     "cf-physical-model": frozenset(
-        {"health:read", "workflow:read", "evidence:read", "physical:read"}
+        {
+            "health:read",
+            "workflow:read",
+            "evidence:read",
+            "physical:read",
+            # This scope consumes a pre-existing signed admission only. It
+            # cannot submit arbitrary topology or create a Physical Model Lock.
+            "physical:adjudicated:submit",
+        }
     ),
     "cf-validator": frozenset({"health:read", "workflow:read", "evidence:read", "physical:read"}),
-    "cf-adjudicated-physical-writer": frozenset(
-        {"health:read", "workflow:read", "physical:adjudicated:submit"}
-    ),
     "cf-library-governance": frozenset({"health:read", "workflow:read"}),
     "cf-platform-governance": frozenset({"health:read", "workflow:read"}),
 }
