@@ -29,20 +29,21 @@ def _request(agent_id: str, token: str) -> Request:
     )
 
 
-def test_layer_three_scope_map_is_read_only_for_physical_agents() -> None:
+def test_physical_agent_has_only_the_adjudicated_submission_exception() -> None:
     assert AGENT_SCOPE_MAP["cf-physical-model"] == frozenset(
-        {"health:read", "workflow:read", "evidence:read", "physical:read"}
+        {
+            "health:read",
+            "workflow:read",
+            "evidence:read",
+            "physical:read",
+            "physical:adjudicated:submit",
+        }
     )
     all_scopes = set().union(*AGENT_SCOPE_MAP.values())
     assert {"physical:write", "physical:lock", "estimate:approve"}.isdisjoint(all_scopes)
-    assert AGENT_SCOPE_MAP["cf-adjudicated-physical-writer"] == frozenset(
-        {"health:read", "workflow:read", "physical:adjudicated:submit"}
-    )
-    assert scopes_for_agent("cf-adjudicated-physical-writer") == [
-        "health:read",
-        "physical:adjudicated:submit",
-        "workflow:read",
-    ]
+    assert "cf-adjudicated-physical-writer" not in AGENT_SCOPE_MAP
+    with pytest.raises(ValueError, match="Unknown controlled CLASSIFIRE agent id"):
+        scopes_for_agent("cf-adjudicated-physical-writer")
 
 
 def test_agent_token_is_hashed_and_requires_server_and_persisted_scope() -> None:
@@ -57,6 +58,7 @@ def test_agent_token_is_hashed_and_requires_server_and_persisted_scope() -> None
         authenticated = authenticate_agent(_request(principal.agent_id, token), db)
         assert authenticated.id == principal.id
         assert agent_health(principal)["physical_mutation_exposed"] is False
+        assert agent_health(principal)["adjudicated_submission_exposed"] is True
 
         dependency = require_agent_scope("physical:read")
         assert dependency(principal).id == principal.id

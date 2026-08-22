@@ -1,18 +1,30 @@
 {
   "id": "classifire-controlled-write",
-  "name": "CLASSIFIRE Admission Writer",
-  "description": "Admission-only bridge for one controlled initial CLASSIFIRE physical-model submission.",
-  "version": "0.4.0",
+  "name": "CLASSIFIRE Controlled Write Tools",
+  "description": "Profile-gated role-limited bridge for controlled CLASSIFIRE estimate stages.",
+  "version": "0.5.0",
   "activation": {
     "onStartup": true
   },
   "contracts": {
     "tools": [
-      "classifire_submit_initial_physical_model"
+      "classifire_register_evidence_observations",
+      "classifire_submit_initial_physical_model",
+      "classifire_select_repair_strategy",
+      "classifire_lock_repair_strategy",
+      "classifire_derive_quantity_labour",
+      "classifire_required_components",
+      "classifire_derive_commercial"
     ]
   },
   "toolMetadata": {
-    "classifire_submit_initial_physical_model": {"optional": true}
+    "classifire_register_evidence_observations": {"optional": true},
+    "classifire_submit_initial_physical_model": {"optional": true},
+    "classifire_select_repair_strategy": {"optional": true},
+    "classifire_lock_repair_strategy": {"optional": true},
+    "classifire_derive_quantity_labour": {"optional": true},
+    "classifire_required_components": {"optional": true},
+    "classifire_derive_commercial": {"optional": true}
   },
   "configSchema": {
     "type": "object",
@@ -25,6 +37,12 @@
       "tokenFile": {
         "type": "string",
         "description": "Absolute path to the local CLASSIFIRE agent-token JSON file"
+      },
+      "deploymentProfile": {
+        "type": "string",
+        "enum": ["phase8-admission-only", "full-controlled-write"],
+        "default": "phase8-admission-only",
+        "description": "Fail-closed active tool profile. Phase 8 registers only the signed initial physical-model admission tool."
       }
     }
   }

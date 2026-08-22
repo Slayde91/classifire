@@ -14,6 +14,7 @@ from classifire.api.agent_api import (
     InitialPhysicalModelSubmissionRequest,
     agent_health,
     agent_submit_initial_physical_model,
+    agent_submit_initial_physical_model_for_estimate,
 )
 from classifire.config import Settings
 from classifire.models import AgentServicePrincipal, AuditEvent, Opening, Service
@@ -35,11 +36,11 @@ def _enabled_settings() -> Settings:
     return Settings(adjudicated_initial_submission_enabled=True)
 
 
-def _writer(db) -> AgentServicePrincipal:  # type: ignore[no-untyped-def]
+def _physical_model_agent(db) -> AgentServicePrincipal:  # type: ignore[no-untyped-def]
     principal, _token = provision_agent_principal(
         db,
-        agent_id="cf-adjudicated-physical-writer",
-        display_name="Adjudicated physical writer",
+        agent_id="cf-physical-model",
+        display_name="Physical model admission submitter",
     )
     return principal
 
@@ -48,7 +49,7 @@ def test_agent_route_consumes_only_admission_and_returns_durable_receipt() -> No
     with physical_session() as db:
         estimate = add_estimate(db)
         admission = _admission(db, estimate)
-        principal = _writer(db)
+        principal = _physical_model_agent(db)
         payload = InitialPhysicalModelSubmissionRequest(
             admission_id=admission.admission_id,
             idempotency_key="submission-request-0001",
@@ -64,6 +65,42 @@ def test_agent_route_consumes_only_admission_and_returns_durable_receipt() -> No
         assert db.scalar(select(func.count(Opening.id))) == 1
         assert db.scalar(select(func.count(Service.id))) == 1
         assert db.scalar(select(func.count(PhysicalModelSubmissionReceipt.id))) == 1
+
+
+def test_estimate_bound_agent_route_rejects_cross_estimate_before_writes() -> None:
+    with physical_session() as db:
+        estimate = add_estimate(db)
+        admission = _admission(db, estimate)
+        principal = _physical_model_agent(db)
+        payload = InitialPhysicalModelSubmissionRequest(
+            admission_id=admission.admission_id,
+            idempotency_key="submission-request-estimate-bound",
+        )
+
+        with pytest.raises(HTTPException) as rejected:
+            agent_submit_initial_physical_model_for_estimate(
+                "unrelated-estimate-id",
+                payload,
+                _request(),
+                db,
+                principal,
+                _enabled_settings(),
+            )
+        assert rejected.value.status_code == 409
+        assert rejected.value.detail == {"code": "ADMISSION_ESTIMATE_MISMATCH"}
+        assert db.scalar(select(func.count(Opening.id))) == 0
+        assert db.scalar(select(func.count(PhysicalModelSubmissionReceipt.id))) == 0
+
+        result = agent_submit_initial_physical_model_for_estimate(
+            estimate.id,
+            payload,
+            _request(),
+            db,
+            principal,
+            _enabled_settings(),
+        )
+        assert result["canonical_write_performed"] is True
+        assert db.scalar(select(func.count(Opening.id))) == 1
         assert db.scalar(select(func.count(PhysicalModelLock.id))) == 0
         audit = db.scalar(
             select(AuditEvent).where(
@@ -104,7 +141,7 @@ def test_agent_route_rejects_expired_admission_without_canonical_writes() -> Non
         estimate = add_estimate(db)
         admission = _admission(db, estimate)
         admission.expires_at = datetime.now(UTC)
-        principal = _writer(db)
+        principal = _physical_model_agent(db)
 
         with pytest.raises(HTTPException) as rejected:
             agent_submit_initial_physical_model(
@@ -129,7 +166,7 @@ def test_agent_route_is_disabled_until_deployment_gate_enables_it() -> None:
     with physical_session() as db:
         estimate = add_estimate(db)
         admission = _admission(db, estimate)
-        principal = _writer(db)
+        principal = _physical_model_agent(db)
         with pytest.raises(HTTPException) as rejected:
             agent_submit_initial_physical_model(
                 InitialPhysicalModelSubmissionRequest(
@@ -147,18 +184,18 @@ def test_agent_route_is_disabled_until_deployment_gate_enables_it() -> None:
         assert db.scalar(select(func.count(PhysicalModelSubmissionReceipt.id))) == 0
 
 
-def test_only_dedicated_writer_has_the_submission_scope() -> None:
+def test_only_physical_model_has_the_submission_scope() -> None:
     with physical_session() as db:
-        writer = _writer(db)
-        physical, _token = provision_agent_principal(db, agent_id="cf-physical-model")
+        physical = _physical_model_agent(db)
+        intake, _token = provision_agent_principal(db, agent_id="cf-intake-evidence")
         dependency = require_agent_scope("physical:adjudicated:submit")
 
-        assert dependency(writer).id == writer.id
-        assert agent_health(writer)["adjudicated_submission_exposed"] is True
-        assert agent_health(writer)["physical_mutation_exposed"] is True
-        assert agent_health(writer)["physical_lock_exposed"] is False
+        assert dependency(physical).id == physical.id
+        assert agent_health(physical)["adjudicated_submission_exposed"] is True
+        assert agent_health(physical)["physical_mutation_exposed"] is False
+        assert agent_health(physical)["physical_lock_exposed"] is False
         with pytest.raises(HTTPException) as denied:
-            dependency(physical)
+            dependency(intake)
         assert denied.value.status_code == 403
 
 

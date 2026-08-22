@@ -61,7 +61,9 @@ def agent_health(
         "version": __version__,
         "agent_id": principal.agent_id,
         "scopes": sorted(principal.scopes or []),
-        "physical_mutation_exposed": "physical:adjudicated:submit" in scopes,
+        # An admission can consume only an existing signed envelope; it is not
+        # a general physical-model mutation capability.
+        "physical_mutation_exposed": "physical:write" in scopes,
         "adjudicated_submission_exposed": "physical:adjudicated:submit" in scopes,
         "physical_lock_exposed": False,
     }
@@ -286,9 +288,40 @@ def agent_submit_initial_physical_model(
             "canonical_write_performed": True,
             "physical_model_lock_created": False,
         },
-        reason="Consumed one pre-registered signed admission through the dedicated writer.",
+        reason=(
+            "Consumed one pre-registered signed admission through the "
+            "admission-only Physical Model agent."
+        ),
         source_ip=request.client.host if request.client else None,
         correlation_id=idempotency_key_sha256,
     )
     db.commit()
     return {**result, "idempotent_replay": False}
+
+
+@router.post("/estimates/{estimate_id}/physical-model/initial")
+def agent_submit_initial_physical_model_for_estimate(
+    estimate_id: str,
+    payload: InitialPhysicalModelSubmissionRequest,
+    request: Request,
+    db: Db,
+    principal: Annotated[
+        AgentServicePrincipal,
+        Depends(require_agent_scope("physical:adjudicated:submit")),
+    ],
+    settings: Settings = Depends(get_settings),
+) -> dict[str, Any]:
+    """Consume an admission only when it belongs to the requested estimate."""
+    admission = db.scalar(
+        select(PhysicalModelAdmission).where(
+            PhysicalModelAdmission.admission_id == payload.admission_id
+        )
+    )
+    if admission is None:
+        raise HTTPException(status_code=404, detail={"code": "ADMISSION_NOT_FOUND"})
+    if not hmac.compare_digest(admission.estimate_id, estimate_id):
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "ADMISSION_ESTIMATE_MISMATCH"},
+        )
+    return agent_submit_initial_physical_model(payload, request, db, principal, settings)
