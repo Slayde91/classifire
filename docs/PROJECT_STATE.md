@@ -1,9 +1,10 @@
 # CLASSIFIRE Project State
 
-**Verified snapshot:** 2026-08-22 (AEST)
-**Latest code-bearing base:** `1c01d468` (merged Gate B repair PR #37)
-**Current scope:** Gate C admission public-key provenance and least-privilege
-security configuration.
+**Verified snapshot:** 2026-08-23 (AEST)
+**Latest code-bearing base:** `1c20783f` (merged Android proof-recovery PR #40)
+**Current scope:** Gates A-F deployment validation is complete without a real
+admission or canonical submission. The next boundary is a separately governed
+fresh preflight and external signing decision.
 
 This document records repository evidence. The initial local signer work did
 not use operational authority. Later user authority covered the approved logo
@@ -11,7 +12,81 @@ treatment, source publication, and an Android smoke-test attempt; the execution
 environment independently retained its safeguards for persistent APK signing
 material and device deployment.
 
-## Current repository reconciliation - 2026-08-22
+## Current repository reconciliation - 2026-08-23
+
+Shared `main` is at
+`1c20783f1b64756359438fd8d90f98b0cb55d909`. The exact-main Android signer
+recovery correction is merged, and the installed non-debuggable release APK is
+version `0.2.1-local` with SHA-256
+`63CFCEE4ADD2D7C87D94FEE628A9898EF0194667FF5AD9BC2B2B16932FA1C075`.
+Android signature scheme v3 verifies with the approved release certificate
+SHA-256
+`A0B852E6F4A6BCA69CB56D9640281D8B424EF13DFE491F128650E015BA2B4C36`.
+The previous debug app was uninstalled, which retired
+`android-p256-uat-20260822-01` and `governance-p256-01`.
+
+The retained production admission key is `governance-p256-02`, bound to issuer
+`classifire-governance` and custodian Slayde Tana. Its public proof was
+recovered read-only after the in-place APK upgrade and independently verified
+as EC P-256 (`secp256r1`) with public-key fingerprint
+`ezFTerydT4IahBteapQDRM8RiQXi6J4z9AmQdyQ0z_0`. The private key remains
+non-exportable in Android Keystore and is not configured in CLASSIFIRE.
+
+Gate A was rerun against clean exact main after PR #40. The rebuilt plugin
+artifact remains
+`38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`;
+the revision-bound candidate fingerprint is
+`25CD45B781A0FAEF3D036B8E7017409685977324085063E153E1A84C82792A96`.
+Fifty-one focused admission, migration, boundary, plugin-profile, and auditor
+tests pass.
+
+Gate B remains verified at migration
+`0008_retire_legacy_initial_submissions`. Gate C now trusts only
+`governance-p256-02` for `classifire-governance`, with adjudicated initial
+submission enabled. Exact-main deliberately assigns
+`physical:adjudicated:submit` to the existing `cf-physical-model` principal;
+the older runbook identity `cf-adjudicated-physical-writer` was superseded by
+the merged admission-only profile and remains inactive. The existing Physical
+credential was retained without rotation. It has neither `physical:write` nor
+`physical:lock`, and the protected admission/model/lock tables were unchanged
+by the scope reconciliation.
+
+Gate D backed up the installed `0.4.0` plugin and OpenClaw configuration, then
+upgraded the plugin to exact-main `0.5.0`, explicitly selected
+`phase8-admission-only`, and restarted the loopback gateway. The live gateway
+reports the plugin loaded without errors. Only a normal `cf-physical-model`
+session has effective visibility of
+`classifire_submit_initial_physical_model`; Validator, Orchestrator, and Intake
+do not. The installed runtime harness proves wrong-role and visual-Physical
+calls are blocked before network access. Read-only gateway health/catalog
+metadata calls were used for this evidence; no agent turn, model-provider
+request, or controlled tool execution occurred.
+
+Gate E started exact-main CLASSIFIRE on loopback with the configured migrated
+database. Authenticated health exposes the admission-only scope while reporting
+no generic physical mutation or lock capability. A nonexistent admission was
+rejected with HTTP 404 and a raw Opening payload with HTTP 422. Protected table
+counts and row hashes were unchanged. The focused suite separately proves
+invalid, expired, wrong-project, wrong-payload, and wrong-issuer failures,
+generic human Opening/lock denial, and valid synthetic registration in an
+isolated test database.
+
+Gate F rechecked the real UAT estimate from the retained v6 receipt. Its live
+protected-state fingerprint remains
+`18768A9E368C7D0692A950303FCAC9401AFBE7C3632BE6A063FCB67B9671F8F1`,
+with zero Openings, Services, links, active Physical Model Locks, admissions,
+and submission receipts. No fresh preflight was generated, no admission was
+signed or registered, and no canonical write or lock was performed. The local
+non-secret deployment receipt is
+`.tmp/gatec-security-20260823/gates-c-f-deployment-receipt.json`, SHA-256
+`63172B964C4AE3733CB3D01CF0951A330B986259D9582803B9DB427A0113B200`.
+
+The deployment stop boundary is reached. A fresh no-write preflight, external
+signature, offline registration, one-time canonical submission, and any future
+Physical Model Lock each remain separate governed operations. The lock boundary
+is not yet designed or approved.
+
+## Superseded repository reconciliation - 2026-08-22
 
 ### Current Gate A through Gate C position
 

@@ -1,6 +1,7 @@
 # Admission-Bound Canonical Writer Deployment Runbook
 
-**Status:** Draft, local planning document only
+**Status:** Executed locally through Gate F on 2026-08-23; later admission and
+write operations remain separately governed
 **Applies to:** the controlled initial Physical Model writer introduced for the
 adjudicated Phase 8 proposal
 **Does not authorise:** database migration, configuration change, key creation,
@@ -24,21 +25,24 @@ The deployment boundary is deliberately narrower than the Phase 8 workflow:
 
 ## 2. Current verified position
 
-At the time this runbook was prepared:
+Current local deployment evidence supersedes the original planning snapshot:
 
-- the writer, verifier, admission journal schema, and offline registration
-  command exist locally with focused local test evidence; stored-payload
-  integrity, durable receipt scope, failure-path, and full-regression closure
-  remain required before deployment readiness;
-- no target production database has been approved or migrated for this feature;
-  Gate B must confirm the actual target, its current revision, and the reviewed
-  clean-stack migration path before any operational change;
-- the plugin source restricts initial submission to
-  `cf-adjudicated-physical-writer`, but `package.json` loads a stale
-  `dist/index.js` artifact that has not been rebuilt, installed, or verified;
-- no pinned public-key configuration, signing action, live admission
-  registration, model submission, lock creation, or Gateway operation was
-  performed for this work.
+- exact shared main `1c20783f` has a clean Gate A candidate, 51 focused tests,
+  and rebuilt plugin artifact SHA-256
+  `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`;
+- the configured database is verified at
+  `0008_retire_legacy_initial_submissions` with a recoverable backup;
+- `governance-p256-02` is the only configured public verification key for
+  issuer `classifire-governance`; its private key remains non-exportable on the
+  handset and no admission has been signed;
+- the merged admission-only profile deliberately uses the existing
+  `cf-physical-model` principal with `physical:adjudicated:submit`. It has
+  neither `physical:write` nor `physical:lock`; the older
+  `cf-adjudicated-physical-writer` identity is superseded and inactive;
+- OpenClaw plugin `0.5.0` is installed under `phase8-admission-only`, restarted,
+  and boundary-tested without an agent turn or controlled tool execution; and
+- no real admission registration, canonical model submission, or lock creation
+  has occurred.
 
 The generic agent and human Physical Model Lock routes are intentionally
 unavailable while adjudicated mode is enabled. This is a safety control, not a
@@ -89,7 +93,8 @@ The required governance process is defined in the
 4. Do not treat TypeScript source verification as plugin deployment. The
    configured plugin entry point is the compiled `dist/index.js` artifact.
    Do not reuse the legacy `install_classifire_openclaw_plugin.ps1` installer:
-   it targets the older read-oriented plugin and `cf-physical-model` role.
+   it targets the older read-oriented plugin and does not establish the current
+   admission-only artifact, profile, or rollback evidence.
 5. Do not register or submit a real admission while validating deployment.
    Use synthetic, expired, or deliberately invalid fixtures for negative tests.
 6. Do not create a Physical Model Lock in this deployment. A separate signed
@@ -173,17 +178,19 @@ With separate approval for security configuration:
 3. Configure an explicit issuer-to-allowed-key mapping.
 4. Confirm that the configuration contains no private key and that the signing
    service is operationally separate from CLASSIFIRE.
-5. Provision only `cf-adjudicated-physical-writer` with
-   `physical:adjudicated:submit`.
-6. Confirm `cf-physical-model` has no physical mutation scope and the writer
-   has neither `physical:write` nor `physical:lock`.
+5. Reconcile the existing `cf-physical-model` principal to include only the
+   narrow additional scope `physical:adjudicated:submit`; retain its existing
+   credential when it is already correctly installed.
+6. Confirm `cf-physical-model` has neither `physical:write` nor
+   `physical:lock`, all other roles lack `physical:adjudicated:submit`, and the
+   superseded `cf-adjudicated-physical-writer` identity is inactive.
 
 The reviewed configuration inputs are JSON objects. Keep the feature disabled
 until both maps are present and the real public-key provenance is approved:
 
 ```text
-CLASSIFIRE_ADJUDICATED_ADMISSION_PUBLIC_KEYS={"governance-p256-01":"<base64url-DER-SPKI-P256-public-key>"}
-CLASSIFIRE_ADJUDICATED_ADMISSION_ISSUER_KEY_IDS={"classifire-governance":["governance-p256-01"]}
+CLASSIFIRE_ADJUDICATED_ADMISSION_PUBLIC_KEYS={"governance-p256-02":"<base64url-DER-SPKI-P256-public-key>"}
+CLASSIFIRE_ADJUDICATED_ADMISSION_ISSUER_KEY_IDS={"classifire-governance":["governance-p256-02"]}
 ```
 
 The first map contains only P-256 public keys. The second independently binds
@@ -201,8 +208,9 @@ the compiled artifact.
 
 Before install or restart, verify that the resulting `dist/index.js`:
 
-- allows `classifire_submit_initial_physical_model` only for
-  `cf-adjudicated-physical-writer`;
+- allows `classifire_submit_initial_physical_model` only for normal
+  `cf-physical-model` sessions and blocks visual-Physical sessions at call
+  time;
 - accepts only `admission_id` and `idempotency_key` for that tool;
 - exposes no agent physical-model-lock tool;
 - does not accept Opening or Service payloads;
@@ -239,7 +247,9 @@ checks pass and the following remain true for the real UAT estimate:
 
 - zero canonical Openings, Services, links, and active Physical Model Locks;
 - no real admission record has been registered;
-- no model provider/Gateway request was made for deployment validation;
+- no model-provider request, agent turn, or controlled tool execution was made
+  for deployment validation. Read-only OpenClaw health/catalog/effective-policy
+  management RPCs are permitted for Gate D evidence and must be recorded;
 - all deployment changes, tests, and rollback evidence are retained.
 
 At this point, stop. A fresh preflight and external signing action are separate

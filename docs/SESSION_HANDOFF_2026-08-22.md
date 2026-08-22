@@ -1,30 +1,48 @@
 # CLASSIFIRE Session Handoff - 2026-08-22
 
-## Current superseding note
+## Current superseding note - 2026-08-23
 
 The latest code-bearing deployment baseline is
-`1c01d468716d061ffb494d16d2d155957d880614`, merged through PR #37. Its Gate A
-candidate is complete and review-only:
-artifact SHA-256
-`38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`,
-candidate SHA-256
-`2C4810F611571F6EEB47A441D32BC465D995A1D492A3FC53F77EDB6C8F46F217`,
-no missing paths, and both deployment/live-change flags false.
+`1c20783f1b64756359438fd8d90f98b0cb55d909`, merged through PR #40. The clean
+exact-main Gate A candidate uses plugin artifact SHA-256
+`38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`
+and candidate SHA-256
+`25CD45B781A0FAEF3D036B8E7017409685977324085063E153E1A84C82792A96`.
+Fifty-one focused admission, migration, boundary, plugin-profile, and auditor
+tests pass.
 
-Gate B is complete. The recoverable backup at
-`data/gate-b-live-change-window-20260820/pre-0008-recoverable-backup.sqlite`
-was restored and verified before the configured database was upgraded from
-`0007` to `0008_retire_legacy_initial_submissions`. The retired table is absent,
-integrity and foreign-key checks pass, both current journals and the real UAT
-estimate's admission/receipt counts remain zero, and protected counts and row
-hashes are unchanged. The read-only lineage result is `READY` /
-`CLEAN_STACK_HEAD_CONFIRMED`.
+Gates B-F are complete for the configured local deployment without submitting
+the real UAT model. The database remains at
+`0008_retire_legacy_initial_submissions`. The non-debuggable release signer APK
+`0.2.1-local` is installed and verified; the debug app and its two keys were
+retired. The handset key `governance-p256-02` remains non-exportable, and its
+independently verified P-256 public proof is the only key trusted for issuer
+`classifire-governance`. No admission has been signed.
 
-Gate C is the next valid action. No approved admission public-key proof was
-found, and the Samsung signer device was not connected during the bounded
-check. The installed controlled-write plugin is already version `0.4.0`; after
-Gate C it requires one backed-up upgrade to the reviewed `0.5.0` exact-main
-artifact, not a duplicate first installation. This note supersedes older
+The existing `cf-physical-model` credential was retained and its persisted
+scope reconciled to exact main without rotation. It has the narrow
+`physical:adjudicated:submit` scope and neither `physical:write` nor
+`physical:lock`; the obsolete dedicated-writer record remains inactive. The
+installed OpenClaw plugin was backed up, upgraded from `0.4.0` to exact-main
+`0.5.0`, explicitly set to `phase8-admission-only`, restarted, and verified
+through live tool visibility plus the installed executable deny-path harness.
+No agent turn, model-provider request, or controlled tool execution occurred.
+
+The exact-main API is running locally on loopback with Gate C enabled. Live
+negative requests returned 404 for a nonexistent admission and 422 for a raw
+Opening payload, with protected tables unchanged. The real UAT estimate still
+matches protected fingerprint
+`18768A9E368C7D0692A950303FCAC9401AFBE7C3632BE6A063FCB67B9671F8F1`
+and has zero canonical Openings, Services, links, active locks, admissions, and
+submission receipts. No fresh preflight, signature, registration, canonical
+write, or lock was performed.
+
+The local deployment receipt is
+`.tmp/gatec-security-20260823/gates-c-f-deployment-receipt.json`, SHA-256
+`63172B964C4AE3733CB3D01CF0951A330B986259D9582803B9DB427A0113B200`.
+The next action is a separate governance decision for a fresh no-write
+preflight and external signing sequence. A signed Physical Model Lock boundary
+still requires separate design and approval. This note supersedes older
 current-state and next-action wording below while preserving it as session
 history.
 
