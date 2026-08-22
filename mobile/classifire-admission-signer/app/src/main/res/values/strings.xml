@@ -10,6 +10,7 @@
     <string name="key_id_hint">Approved key ID</string>
     <string name="custodian_hint">Approved key custodian</string>
     <string name="create_production_key_button">Create persistent production P-256 key</string>
+    <string name="show_existing_public_key_button">Show existing production public-key proof</string>
     <string name="production_setup_rejected_fields">Production-key setup rejected safely: enter approved issuer, key ID, and custodian.</string>
     <string name="production_key_confirmation_title">Create persistent P-256 signing key?</string>
     <string name="production_key_confirmation">Issuer: %1$s\nKey ID: %2$s\nCustodian: %3$s\n\nThe private key will remain in Android Keystore. This action cannot be undone without explicit key revocation and rotation.</string>
@@ -17,6 +18,8 @@
     <string name="create_key">Create key</string>
     <string name="production_key_exists">Production-key setup rejected safely: this key ID already exists on this device.</string>
     <string name="production_key_created">Persistent P-256 key created.\nIssuer: %1$s\nKey ID: %2$s\nCustodian: %3$s\n\nPublic key (base64url DER SPKI):\n%4$s\n\nPublic-key SHA-256: %5$s\n\nThe private key remains non-exportable in Android Keystore.</string>
+    <string name="production_key_recovered">Existing persistent P-256 key verified.\nIssuer: %1$s\nKey ID: %2$s\nCustodian: %3$s\n\nPublic key (base64url DER SPKI):\n%4$s\n\nPublic-key SHA-256: %5$s\n\nThe private key remains non-exportable in Android Keystore.</string>
+    <string name="production_key_not_found">Public-key proof unavailable: this key ID does not exist on this device.</string>
     <string name="production_key_setup_failed">Production-key setup failed safely: %1$s</string>
     <string name="proof_setup_failed">Local P-256 setup failed safely: %1$s</string>
     <string name="proof_biometric_title">Approve local CLASSIFIRE signer proof</string>

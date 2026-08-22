@@ -2,6 +2,7 @@ package au.com.classifire.admissionsigner;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.SharedPreferences;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
+import java.security.interfaces.ECPublicKey;
 import java.util.Base64;
 import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
@@ -99,6 +101,13 @@ public final class MainActivity extends Activity {
                 issuerInput.getText().toString().trim(), keyIdInput.getText().toString().trim(),
                 custodianInput.getText().toString().trim()));
         layout.addView(production);
+
+        Button showExisting = new Button(this);
+        showExisting.setText(R.string.show_existing_public_key_button);
+        showExisting.setOnClickListener(view -> showExistingProductionKey(
+                issuerInput.getText().toString().trim(), keyIdInput.getText().toString().trim(),
+                custodianInput.getText().toString().trim()));
+        layout.addView(showExisting);
         scroll.addView(layout);
         setContentView(scroll);
     }
@@ -153,6 +162,57 @@ public final class MainActivity extends Activity {
                     .apply();
             status.setText(getString(R.string.production_key_created, issuer, keyId, custodian,
                     publicKey, fingerprint));
+        } catch (Exception exception) {
+            status.setText(getString(R.string.production_key_setup_failed, safeFailure(exception)));
+        }
+    }
+
+    private void showExistingProductionKey(String issuer, String keyId, String custodian) {
+        if (!IDENTIFIER.matcher(issuer).matches() || !IDENTIFIER.matcher(keyId).matches()
+                || custodian.isBlank() || custodian.length() > 160) {
+            status.setText(R.string.production_setup_rejected_fields);
+            return;
+        }
+        String alias = PRODUCTION_ALIAS_PREFIX + keyId;
+        try {
+            KeyStore store = keyStore();
+            if (!store.containsAlias(alias)) {
+                status.setText(R.string.production_key_not_found);
+                return;
+            }
+            PrivateKey privateKey = (PrivateKey) store.getKey(alias, null);
+            KeyInfo keyInfo = KeyFactory.getInstance(privateKey.getAlgorithm(), "AndroidKeyStore")
+                    .getKeySpec(privateKey, KeyInfo.class);
+            if (!KeystoreSecurity.isHardwareBacked(keyInfo)) {
+                throw new SecurityException("Existing key is not securely hardware backed");
+            }
+
+            SharedPreferences preferences = getSharedPreferences(
+                    "classifire_admission_signer", MODE_PRIVATE);
+            String storedIssuer = preferences.getString("production_issuer_" + keyId, null);
+            String storedCustodian = preferences.getString("production_custodian_" + keyId, null);
+            String storedFingerprint = preferences.getString(
+                    "production_fingerprint_" + keyId, null);
+            if (!issuer.equals(storedIssuer) || !custodian.equals(storedCustodian)
+                    || storedFingerprint == null) {
+                throw new SecurityException("Existing key metadata does not match the approved binding");
+            }
+
+            if (!(store.getCertificate(alias).getPublicKey() instanceof ECPublicKey publicKey)
+                    || publicKey.getParams().getCurve().getField().getFieldSize() != 256
+                    || !P256_ORDER.equals(publicKey.getParams().getOrder())) {
+                throw new SecurityException("Existing key is not P-256");
+            }
+            byte[] publicKeyDer = publicKey.getEncoded();
+            String encodedPublicKey = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(publicKeyDer);
+            String fingerprint = Base64.getUrlEncoder().withoutPadding().encodeToString(
+                    MessageDigest.getInstance("SHA-256").digest(publicKeyDer));
+            if (!fingerprint.equals(storedFingerprint)) {
+                throw new SecurityException("Stored public-key fingerprint does not match Android Keystore");
+            }
+            status.setText(getString(R.string.production_key_recovered, issuer, keyId, custodian,
+                    encodedPublicKey, fingerprint));
         } catch (Exception exception) {
             status.setText(getString(R.string.production_key_setup_failed, safeFailure(exception)));
         }
