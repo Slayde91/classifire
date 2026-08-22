@@ -34,17 +34,25 @@ already contains the newer admission-writer lineage (`12c2e5c`, `e19bc45`,
 and `7e8141f`) with the reconciled migration head
 `0007_reconcile_adjudicated_admission_lineages`.
 
-On an isolated worktree whose content matches shared main, 50 focused
+On an isolated worktree whose content matches shared main, 55 focused
 admission, migration, boundary, and plugin-profile tests passed. The offline
 signer verification previously produced 9 focused Python contract/security
 tests and 6 Android unit tests with zero failures or errors. No device was
 connected, no Android admission key was created, no APK was signed, and no
 admission, canonical, or lock action occurred in these checks.
 
-The next valid engineering task is to derive a fresh deployment-readiness
-candidate from the current shared-main writer only, then review it before any
-Gate A audit or runtime deployment. Do not revive or publish the divergent
-dirty writer worktree.
+A current-main Gate A source auditor now fingerprints the writer, migration
+lineage, preflight policy, governance tests, plugin source, and compiled
+plugin artifact without reading configuration, opening a database, contacting
+a runtime, or performing a live action. Its direct run against this unreviewed
+worktree correctly returned `LOCAL_CANDIDATE_DIRTY_REVIEW_REQUIRED`, with both
+`deployment_authorised=false` and `live_change_performed=false`.
+
+The next valid operational task remains a clean, reviewed shared-main
+deployment candidate with a plugin artifact rebuilt in an approved deployment
+environment. A zero audit exit does not authorise deployment, admission
+registration, canonical submission, or a Physical Model Lock. Do not revive
+or publish the divergent dirty writer worktree.
 ## Repository position
 
 Merged main `e2f646b` includes the reconciled Phase 8 admission-only writer from
