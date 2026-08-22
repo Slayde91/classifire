@@ -1,4 +1,4 @@
-# CLASSIFIRE Session Handoff ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â 2026-08-22
+# CLASSIFIRE Session Handoff ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â 2026-08-22
 
 ## Purpose and authority boundary
 
@@ -241,3 +241,31 @@ The primary checkout remains untouched except for the two requested untracked
 handoff documents, which mirror this worktree exactly. No merge, release
 publication, canonical operation, admission operation, or device data removal
 occurred.
+## Merged-main release evidence
+
+PR #26 merged at `b6f5e0e987d0acc212a5ef48ca0cb1d7767d8b10` on 2026-08-22.
+The merge tree exactly matches reviewed signer head `c9ef31d`. A clean, fully
+offline Android build from that merged main tree recorded `BUILD SUCCESSFUL in
+3m 31s`; its release lint report says `No issues found.` The rebuilt unsigned
+release APK is 126,096 bytes with SHA-256
+`70264FAB124D3ACECC8EDC9A8B703576C6B090E7ECC44CC262451F9DD49FF009`.
+
+That merged-main artifact was zip-aligned, signed with the controlled local
+RSA-4096 certificate, and independently verified by `apksigner`. The resulting
+140,079-byte signed APK has SHA-256
+`FB02AE49441FC70777DB9799AC5B6A03DD61AF0250C73ACD8CA3EE5046777BA5`.
+Verification reports the expected single certificate and valid APK Signature
+Scheme v3.
+
+The previously connected device was a debuggable `0.1.0-test` build with a
+private preferences file. Its production-signed in-place update remains
+incompatible, and it disconnected before a safe debug-certificate comparison
+could determine whether a non-destructive debug update is possible. No app was
+removed, no local data was cleared, and no device key or admission operation was
+performed.
+
+The repository contains no approved external certificate-custody procedure or
+destination. The release certificate and password remain Git-ignored and have
+not been copied to an unapproved store. Transfer to the organisation's approved
+secret manager therefore remains an operational handoff for the designated key
+custodian.
