@@ -202,6 +202,8 @@ class ManagedPhase8VisualRuntime:
         provider: str,
         physical_model: str,
         validator_model: str,
+        physical_agent_id: str,
+        validator_agent_id: str,
         implementation_revision: str,
         evidence_packet: RetainedVisualEvidencePacket,
         token_provider: Callable[[], str] | None = None,
@@ -231,8 +233,8 @@ class ManagedPhase8VisualRuntime:
             gateway_rpc=rpc,
             provider=provider,
             agent_models={
-                "cf-physical-model": physical_model,
-                "cf-validator": validator_model,
+                physical_agent_id: physical_model,
+                validator_agent_id: validator_model,
             },
             policy_revision_sha256=self.profile["runtime_policy_sha256"],
         )
@@ -253,6 +255,10 @@ class ManagedPhase8VisualRuntime:
                 ),
                 evidence_packet=evidence_packet,
                 session_guard=guard,
+                runtime_agent_ids={
+                    "cf-physical-model": physical_agent_id,
+                    "cf-validator": validator_agent_id,
+                },
             )
         except BaseException:
             self._client.close()

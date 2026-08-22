@@ -12,7 +12,7 @@ import hashlib
 import ipaddress
 import json
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import urlsplit, urlunsplit
@@ -57,6 +57,7 @@ _REQUEST_KEYS = {
     "stage_input",
 }
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
+_AGENT_ID_CHARACTERS = frozenset("abcdefghijklmnopqrstuvwxyz0123456789-_")
 
 
 class Phase8OpenResponsesTransportError(RuntimeError):
@@ -121,6 +122,16 @@ def _is_sha256(value: object) -> bool:
     )
 
 
+def _is_agent_id(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and value == value.strip().casefold()
+        and 1 <= len(value) <= 64
+        and value[0].isalnum()
+        and all(character in _AGENT_ID_CHARACTERS for character in value)
+    )
+
+
 def _sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest().upper()
 
@@ -160,7 +171,9 @@ class OpenClawGatewayNoToolSessionGuard:
             raise Phase8OpenResponsesTransportError("GUARD_POLICY_REVISION_INVALID")
         if not isinstance(provider, str) or not provider.strip():
             raise Phase8OpenResponsesTransportError("GUARD_MODEL_POLICY_INVALID")
-        if set(agent_models) != _ALLOWED_ROLES or any(
+        if len(agent_models) != len(_ALLOWED_ROLES) or any(
+            not _is_agent_id(key) for key in agent_models
+        ) or any(
             not isinstance(value, str) or not value.strip() for value in agent_models.values()
         ):
             raise Phase8OpenResponsesTransportError("GUARD_MODEL_POLICY_INVALID")
@@ -358,6 +371,7 @@ class Phase8OpenResponsesTransport:
         token_provider: Callable[[], str],
         evidence_packet: RetainedVisualEvidencePacket,
         session_guard: NoToolSessionGuard,
+        runtime_agent_ids: Mapping[str, str],
         prompt_renderer: Phase8VisualPromptRenderer | None = None,
         clock_ms: Callable[[], int] | None = None,
     ) -> None:
@@ -366,6 +380,14 @@ class Phase8OpenResponsesTransport:
         self._token_provider = token_provider
         self._packet = evidence_packet
         self._guard = session_guard
+        selected_agent_ids = dict(runtime_agent_ids)
+        if (
+            set(selected_agent_ids) != _ALLOWED_ROLES
+            or len(set(selected_agent_ids.values())) != len(_ALLOWED_ROLES)
+            or any(not _is_agent_id(value) for value in selected_agent_ids.values())
+        ):
+            raise Phase8OpenResponsesTransportError("RUNTIME_AGENT_POLICY_INVALID")
+        self._runtime_agent_ids = selected_agent_ids
         self._renderer = prompt_renderer or Phase8VisualPromptRenderer()
         self._clock_ms = clock_ms or (lambda: int(time.time() * 1000))
 
@@ -383,14 +405,19 @@ class Phase8OpenResponsesTransport:
             raise Phase8OpenResponsesTransportError("PROMPT_PROFILE_MISMATCH")
 
         content, byte_receipts = self._image_content(request)
-        session_key = self._session_key(role=role, stage=stage, request=request)
+        runtime_agent_id = self._runtime_agent_ids[role]
+        session_key = self._session_key(
+            agent_id=runtime_agent_id,
+            stage=stage,
+            request=request,
+        )
         session_id_sha256 = _sha256_text(session_key)
         expected_model = (
             profile["validator_model"] if role == "cf-validator" else profile["physical_model"]
         )
         try:
             attestation = self._guard.attest(
-                agent_id=role,
+                agent_id=runtime_agent_id,
                 session_key=session_key,
                 provider=profile["provider"],
                 model=expected_model,
@@ -401,7 +428,7 @@ class Phase8OpenResponsesTransport:
             raise Phase8OpenResponsesTransportError("TOOL_ATTESTATION_UNAVAILABLE") from None
         self._validate_attestation(
             attestation,
-            role=role,
+            agent_id=runtime_agent_id,
             provider=profile["provider"],
             model=expected_model,
             session_id_sha256=session_id_sha256,
@@ -454,7 +481,7 @@ class Phase8OpenResponsesTransport:
                 headers={
                     "Authorization": f"Bearer {token.strip()}",
                     "Content-Type": "application/json",
-                    "x-openclaw-agent-id": role,
+                    "x-openclaw-agent-id": runtime_agent_id,
                     "x-openclaw-session-key": session_key,
                 },
                 follow_redirects=False,
@@ -469,7 +496,7 @@ class Phase8OpenResponsesTransport:
             del token
 
         audit = self._audit(
-            role=role,
+            agent_id=runtime_agent_id,
             session_key=session_key,
             session_id_sha256=session_id_sha256,
             after_ms=started_at_ms,
@@ -613,7 +640,7 @@ class Phase8OpenResponsesTransport:
     @staticmethod
     def _session_key(
         *,
-        role: str,
+        agent_id: str,
         stage: str,
         request: dict[str, Any],
     ) -> str:
@@ -624,13 +651,13 @@ class Phase8OpenResponsesTransport:
                 "request_sha256": canonical_json_sha256(request),
             }
         )
-        return f"agent:{role}:classifire-phase8-{identity[:32].lower()}"
+        return f"agent:{agent_id}:classifire-phase8-{identity[:32].lower()}"
 
     @staticmethod
     def _validate_attestation(
         attestation: Any,
         *,
-        role: str,
+        agent_id: str,
         provider: str,
         model: str,
         session_id_sha256: str,
@@ -639,7 +666,7 @@ class Phase8OpenResponsesTransport:
         if not isinstance(attestation, NoToolSessionAttestation):
             raise Phase8OpenResponsesTransportError("TOOL_ATTESTATION_INVALID")
         if (
-            attestation.agent_id != role
+            attestation.agent_id != agent_id
             or attestation.provider != provider
             or attestation.model != model
             or attestation.session_id_sha256.upper() != session_id_sha256
@@ -653,14 +680,14 @@ class Phase8OpenResponsesTransport:
     def _audit(
         self,
         *,
-        role: str,
+        agent_id: str,
         session_key: str,
         session_id_sha256: str,
         after_ms: int,
     ) -> NoToolSessionAudit:
         try:
             audit = self._guard.audit(
-                agent_id=role,
+                agent_id=agent_id,
                 session_key=session_key,
                 after_ms=after_ms,
             )
@@ -671,7 +698,7 @@ class Phase8OpenResponsesTransport:
         if not isinstance(audit, NoToolSessionAudit):
             raise Phase8OpenResponsesTransportError("TOOL_AUDIT_INVALID")
         if (
-            audit.agent_id != role
+            audit.agent_id != agent_id
             or audit.session_id_sha256.upper() != session_id_sha256
             or not _is_sha256(audit.receipt_sha256)
         ):

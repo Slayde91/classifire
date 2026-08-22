@@ -1,0 +1,17 @@
+{
+  "schema": "classifire.phase8-zero-tool-agents.v1",
+  "openclaw_version": "2026.7.1-2",
+  "model": "openai/gpt-5.6",
+  "agents": [
+    {
+      "id": "cf-phase8-visual-physical",
+      "name": "CLASSIFIRE Phase 8 Visual Physical",
+      "theme": "proposal-only physical observation with no tools or canonical authority"
+    },
+    {
+      "id": "cf-phase8-visual-validator",
+      "name": "CLASSIFIRE Phase 8 Visual Validator",
+      "theme": "independent proposal-only visual challenge with no tools or canonical authority"
+    }
+  ]
+}
