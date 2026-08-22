@@ -3,29 +3,33 @@
 ## Current superseding repository note - 2026-08-23
 
 The latest code-bearing shared-main baseline is
-`82ab568f09df8f5fe66aba01a208e849425d25aa`, merged through PR #49. PRs
-#45-#49 cleanly reconciled the visual receipt and bounded-correction guard,
+`ce9ed9301e6baa2d6cc6c4fcf76bd0949f624cf8`, merged through PR #51. PRs
+#45-#51 cleanly reconciled the visual receipt and bounded-correction guard,
 proposal-blind inventory and reconciliation ledger, fail-closed JSON handling,
-and a dependency-injected proposal-only controller. The controller enforces
+dependency-injected proposal-only controller, and retained-evidence adapter.
+The controller enforces
 independent blind-Validator, Physical, conditioned-Validator, and bounded
 correction stages; checks protected canonical state after every inference
 exchange; and emits a strict deterministic receipt. It has no database,
 canonical-write, admission, signing, registration, lock, device, or deployment
-capability. The full repository suite passes 189 tests under the documented
-fail-closed initial-submission setting; 89 exact-main visual-controller,
+capability. The adapter reads one defect's active evidence, verifies immutable
+retained image bytes and provenance, excludes validation-only evidence, and
+sanitises local paths and source locations from its manifest. The full
+repository suite passes 200 tests under the documented fail-closed
+initial-submission setting; 100 exact-main visual-evidence, visual-controller,
 blind-inventory, plugin-profile, and Gate A auditor tests also pass.
 
 The ignored controlled-write plugin artifact was rebuilt from exact main and
 remains SHA-256
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`.
 The read-only Gate A candidate for this revision is
-`73A73C2172C0E43304B63B92D9E6B8BF784E89A694B16D4C4BDEE07418041EE5`;
+`415A94F64B41F6A90CAFB995AB3B92BE095830DDC4ADD67BC3E43ABA82881F28`;
 the audit records `deployment_authorised=false` and
 `live_change_performed=false`.
 
 Issue [#42](https://github.com/Slayde91/classifire/issues/42) remains open.
-The next source task is a current-main no-tool inference transport and
-retained-evidence manifest adapter for the new controller. The validation-only
+The next source task is a current-main, separately enforced no-tool inference
+transport for the new controller and evidence adapter. The validation-only
 human comparator and linked-original resolver also remain to be reconciled.
 Do not port the legacy protected-state implementation: current main's canonical
 submission-state and adjudicated receipt services supersede that architecture.
