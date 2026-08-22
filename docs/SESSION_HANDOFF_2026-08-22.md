@@ -1,4 +1,4 @@
-# CLASSIFIRE Session Handoff ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â 2026-08-22
+# CLASSIFIRE Session Handoff ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â 2026-08-22
 
 ## Purpose and authority boundary
 
@@ -269,3 +269,23 @@ destination. The release certificate and password remain Git-ignored and have
 not been copied to an unapproved store. Transfer to the organisation's approved
 secret manager therefore remains an operational handoff for the designated key
 custodian.
+## Non-destructive Android smoke test
+
+On 2026-08-22, the reconnected SM-S938B's existing `0.1.0-test` debug app was
+compared against the local Android debug certificate. The public certificate
+SHA-256 values matched exactly, allowing a non-destructive in-place update to
+the merged-main `0.2.0-local` debug APK. Android installed the update
+successfully; no app data was cleared and no uninstall occurred.
+
+`OfflineSignerActivity` then launched cold successfully in 160 ms. A
+UI-automation inspection confirmed the offline signer title and notice, the
+no-manifest state, and that review/sign remains disabled before a manifest is
+loaded. No manifest was imported, no provisioning or proof screen was opened,
+and no Android admission device key, admission signature, registration,
+canonical submission, or lock operation was performed.
+
+The separately signed production release APK was not installed on the device:
+Android correctly rejects it as an incompatible update because the existing app
+uses the debug certificate. The controlled release artifact and its verification
+evidence remain valid; certificate-custody transfer to the organisation's
+approved secret manager remains the only outstanding release handoff.
