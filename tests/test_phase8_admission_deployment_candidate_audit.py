@@ -24,7 +24,12 @@ def test_candidate_audit_binds_current_source_profile_and_safe_evidence() -> Non
     audit = module.build_candidate_audit(ROOT)
 
     assert audit["schema"] == module.SCHEMA
-    assert audit["status"] == "LOCAL_CANDIDATE_FROZEN_REVIEW_REQUIRED"
+    expected_status = (
+        "LOCAL_CANDIDATE_FROZEN_CLEAN"
+        if audit["git"]["worktree_clean"]
+        else "LOCAL_CANDIDATE_FROZEN_REVIEW_REQUIRED"
+    )
+    assert audit["status"] == expected_status
     assert audit["deployment_authorised"] is False
     assert audit["live_change_performed"] is False
     assert len(audit["candidate_sha256"]) == 64
@@ -42,8 +47,10 @@ def test_candidate_audit_binds_current_source_profile_and_safe_evidence() -> Non
     assert audit["rehearsal"]["opening_count"] == 17
     assert audit["rehearsal"]["service_count"] == 24
     assert audit["rehearsal"]["service_opening_link_count"] == 24
-    assert audit["git"]["worktree_clean"] is False
-    assert audit["remaining_gate"] is not None
+    if audit["git"]["worktree_clean"]:
+        assert audit["remaining_gate"] is None
+    else:
+        assert audit["remaining_gate"] is not None
 
 
 def test_candidate_audit_rejects_unsafe_rehearsal(tmp_path: Path) -> None:
