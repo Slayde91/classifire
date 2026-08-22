@@ -212,3 +212,16 @@ uninstalling the existing package. Android rejected it with
 `INSTALL_FAILED_UPDATE_INCOMPATIBLE` because the installed package has a
 different signing identity. No uninstall, data removal, device-key creation,
 admission signing, registration, canonical submission, or lock action occurred.
+## Publication result
+
+The reviewed signer change set was committed on
+`gpt/phase8-android-admission-signing-local` as
+`c9124155f4323d9e113c7d49484ac7ced60cbde7` (`Implement offline Android
+admission signer`) and pushed to `origin`. GitHub review pull request #26 is
+open against `main`:
+`https://github.com/Slayde91/classifire/pull/26`.
+
+The primary checkout remains untouched except for the two requested untracked
+handoff documents, which mirror this worktree exactly. No merge, release
+publication, canonical operation, admission operation, or device data removal
+occurred.
