@@ -1,7 +1,7 @@
 # CLASSIFIRE Project State
 
 **Verified snapshot:** 2026-08-23 (AEST)
-**Latest code-bearing base:** `ce9ed93` (merged Phase 8 evidence-adapter PR #51)
+**Latest code-bearing base:** `0e59046` (merged Phase 8 no-tool transport PR #53)
 **Current scope:** Gates A-F deployment validation remains complete without a
 real admission or canonical submission. Repository work is separately
 reconciling the retained proposal-only visual toolchain through issue #42; any
@@ -16,8 +16,8 @@ material and device deployment.
 ## Current repository reconciliation - 2026-08-23
 
 The latest code-bearing shared-main baseline is
-`ce9ed9301e6baa2d6cc6c4fcf76bd0949f624cf8` after Phase 8 reconciliation
-PRs #45-#51. Current main includes the bounded Validator-to-Physical correction
+`0e590469d5b101bad43b38c47a4a19bce9b84df8` after Phase 8 reconciliation
+PRs #45-#53. Current main includes the bounded Validator-to-Physical correction
 guard, proposal-blind Opening/Service inventory, mandatory reconciliation
 ledger, fail-closed JSON input handling, and a dependency-injected
 proposal-only controller. The controller enforces the independent
@@ -31,8 +31,15 @@ that binds one defect's active `EvidenceSource` records to immutable
 `StoredFile` bytes, verifies storage containment, digest, actual image type
 and dimensions, excludes validation-only evidence, sanitises local paths and
 source locations, and emits the controller's strict manifest. A separately
-enforced no-tool OpenClaw inference transport is not yet implemented. The
-installed
+enforced no-tool OpenClaw inference transport is now implemented. It binds
+versioned prompts and model profiles, revalidates retained image bytes
+immediately before upload, permits only literal loopback endpoints, sends no
+client tools, requires the exact session's effective server-tool set to be
+empty, audits every attempted turn, and rejects redirects, tool calls,
+malformed or non-standard JSON, and identity/profile drift. It has passed
+synthetic HTTP and controller integration tests; no configured live Gateway or
+model turn has yet proven the new transport against a dedicated zero-tool
+runtime profile. The installed
 non-debuggable release APK is version `0.2.1-local` with SHA-256
 `63CFCEE4ADD2D7C87D94FEE628A9898EF0194667FF5AD9BC2B2B16932FA1C075`.
 Android signature scheme v3 verifies with the approved release certificate
@@ -48,14 +55,16 @@ as EC P-256 (`secp256r1`) with public-key fingerprint
 `ezFTerydT4IahBteapQDRM8RiQXi6J4z9AmQdyQ0z_0`. The private key remains
 non-exportable in Android Keystore and is not configured in CLASSIFIRE.
 
-Gate A was rerun against clean exact main after PR #51. The rebuilt plugin
+Gate A was rerun against clean exact main after PR #53. The rebuilt plugin
 artifact remains
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`;
 the revision-bound candidate fingerprint is
-`415A94F64B41F6A90CAFB995AB3B92BE095830DDC4ADD67BC3E43ABA82881F28`.
-One hundred exact-main visual-evidence, visual-controller, blind-inventory,
-plugin-profile, and auditor tests pass. The full repository suite passes 200
-tests under the documented fail-closed initial-submission setting.
+`90ABCFF7CFDDBB16ECEE22EE5CC34DD2C09610A4041BA4455410655B7BA8A370`.
+The combined no-tool transport, visual-evidence, visual-controller,
+blind-inventory, and validation set passes 113 tests. The full repository suite
+passes 218 tests under the documented default-disabled initial-submission
+setting. Ruff, targeted mypy, Bandit, plugin-profile verification, and Git diff
+validation also pass.
 
 Gate B remains verified at migration
 `0008_retire_legacy_initial_submissions`. Gate C now trusts only
@@ -106,16 +115,23 @@ is not yet designed or approved.
 ### Shared-main and GitHub reconciliation
 
 The clean foundation stack and deployment documentation are published on shared
-`main`. PRs #45-#51 have reconciled the visual receipt and bounded correction,
+`main`. PRs #45-#53 have reconciled the visual receipt and bounded correction,
 blind inventory and reconciliation, malformed-input guards, and proposal-only
-controller plus retained-evidence adapter with current-main tests. The complete
-historical proposal-only workflow is still not reproducible from shared main:
-the controller currently has no production no-tool inference transport, and the
-validation-only human comparator and linked-original image resolver remain to
-be reconciled from legacy stacked draft PRs #9-#13. The legacy branch differs
+controller, retained-evidence adapter, and guarded OpenResponses transport with
+current-main tests. Live runtime composition and a dedicated zero-tool profile
+still require controlled proof. The complete historical proposal-only workflow
+is also not yet reproducible from shared main because the validation-only human
+comparator and linked-original image resolver remain to be reconciled from
+legacy stacked draft PRs #9-#13. The legacy branch differs
 materially from current main and must not be merged wholesale. Historical UAT
 receipts remain evidence of what was executed, not proof that the remaining
 adapters and comparison workflow are present on shared main.
+
+Shared main does not currently track `docs/CLASSIFIRE_ARCHITECTURE.md`. A
+reconciled copy exists only on the legacy Phase 8 branch and contains stale
+branch-specific statements, so it must not be copied into main as current
+architecture without a separate evidence-based review. `AGENTS.md` and this
+roadmap remain the current tracked architecture and sequencing authorities.
 
 GitHub issue [#42](https://github.com/Slayde91/classifire/issues/42) tracks the
 remaining clean current-main reconciliation and records the merged checkpoints.
