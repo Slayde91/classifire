@@ -1,8 +1,7 @@
 # CLASSIFIRE Project State
 
 **Verified snapshot:** 2026-08-22 (AEST)
-**Working branch:** `docs/phase8-gateb-complete-20260822`
-**Merged base:** `1c01d468` (`origin/main`, merged Gate B repair PR #37)
+**Latest code-bearing base:** `1c01d468` (merged Gate B repair PR #37)
 **Current scope:** Gate C admission public-key provenance and least-privilege
 security configuration.
 
@@ -16,14 +15,15 @@ material and device deployment.
 
 ### Current Gate A through Gate C position
 
-Shared main is `1c01d468716d061ffb494d16d2d155957d880614`. The
-admission-only plugin was rebuilt from that exact clean tree and verified with
+The latest code-bearing deployment baseline is
+`1c01d468716d061ffb494d16d2d155957d880614`. The admission-only plugin was
+rebuilt from that exact clean tree and verified with
 artifact SHA-256
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`.
 Thirty-six admission, migration, boundary, and plugin-profile tests pass. The
 read-only Gate A auditor found no missing paths, recorded both
 `deployment_authorised=false` and `live_change_performed=false`, and produced
-exact-main candidate fingerprint
+candidate fingerprint recorded for that code-bearing baseline
 `2C4810F611571F6EEB47A441D32BC465D995A1D492A3FC53F77EDB6C8F46F217`.
 
 Gate B is complete for the configured local database. Before migration it was

@@ -2,8 +2,9 @@
 
 ## Current superseding note
 
-Shared main advanced to `1c01d468716d061ffb494d16d2d155957d880614`
-through PR #37. The exact-main Gate A candidate is complete and review-only:
+The latest code-bearing deployment baseline is
+`1c01d468716d061ffb494d16d2d155957d880614`, merged through PR #37. Its Gate A
+candidate is complete and review-only:
 artifact SHA-256
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`,
 candidate SHA-256
