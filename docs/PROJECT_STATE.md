@@ -14,31 +14,37 @@ material and device deployment.
 ## Current repository reconciliation - 2026-08-22
 
 The current shared main revision is
-`1370fa0f5731124d60d811a1fb5952aa91500daf`. After the Phase 8 baseline
-`e2f646b`, shared main adds the offline Android admission signer, its tests,
-approved icon resources, and handoff/custody documentation. The signer is
-merged and locally regression-checked; it is not an admission, registration,
-canonical submission, or Physical Model Lock operation.
+`3f42b1631fcc0881ac5f9049b1023b29309e270f`, which includes the merged
+handoff reconciliation PR #33. After the Phase 8 baseline `e2f646b`, shared
+main adds the offline Android admission signer, its tests, approved icon
+resources, and handoff/custody documentation. The signer is merged and
+locally regression-checked; it is not an admission, registration, canonical
+submission, or Physical Model Lock operation.
 
 The deployment runbook currently names a Gate A candidate-audit script and a
 v6 post-merge preflight receipt, but neither is present on shared main. Both
-are currently untracked items in the separate, heavily dirty primary checkout.
-They must not be treated as published deployment evidence, staged from that
-checkout, or used for a live deployment. The current shared-main runbook is
-therefore planning material, not an executable deployment candidate.
+remain untracked items in the separate, heavily dirty primary checkout. They
+must not be treated as published deployment evidence, staged from that
+checkout, or used for a live deployment.
 
-On an isolated worktree whose source matches shared main, 9 focused Python
-offline-signer contract/security tests passed. The Android offline regression
-produced 6 passing unit tests with zero failures or errors, a debug APK, and a
-lint report with no errors or warnings. No device was connected, no Android
-admission key was created, no APK was signed, and no admission, canonical, or
-lock action occurred in this verification.
+That untracked writer material was reviewed in a native isolated worktree. It
+uses a divergent `canonical_models` architecture and has 346 committed files
+of divergence from shared main. It must not be merged wholesale. Shared main
+already contains the newer admission-writer lineage (`12c2e5c`, `e19bc45`,
+and `7e8141f`) with the reconciled migration head
+`0007_reconcile_adjudicated_admission_lineages`.
 
-The next valid engineering task is to identify and review the untracked Phase 8
-writer/deployment material in a new isolated worktree, establish a coherent
-tested candidate, and publish it separately before any Gate A audit or runtime
-deployment is considered.
+On an isolated worktree whose content matches shared main, 50 focused
+admission, migration, boundary, and plugin-profile tests passed. The offline
+signer verification previously produced 9 focused Python contract/security
+tests and 6 Android unit tests with zero failures or errors. No device was
+connected, no Android admission key was created, no APK was signed, and no
+admission, canonical, or lock action occurred in these checks.
 
+The next valid engineering task is to derive a fresh deployment-readiness
+candidate from the current shared-main writer only, then review it before any
+Gate A audit or runtime deployment. Do not revive or publish the divergent
+dirty writer worktree.
 ## Repository position
 
 Merged main `e2f646b` includes the reconciled Phase 8 admission-only writer from
