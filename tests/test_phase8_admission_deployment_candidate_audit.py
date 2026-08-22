@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+from pytest import MonkeyPatch
+
 
 def _audit_module():  # type: ignore[no-untyped-def]
     path = (
@@ -32,7 +34,38 @@ def test_audit_records_current_source_without_live_or_deployment_authority() -> 
     assert receipt["status"] in {
         "LOCAL_CANDIDATE_REQUIRED_ARTIFACT_MISSING",
         "LOCAL_CANDIDATE_DIRTY_REVIEW_REQUIRED",
+        "LOCAL_CANDIDATE_REVIEW_REQUIRED",
     }
+
+
+def test_audit_reports_review_required_for_complete_clean_candidate(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    module = _audit_module()
+    for relative_paths in module.ARTIFACT_GROUPS.values():
+        for relative_path in relative_paths:
+            path = tmp_path / relative_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(relative_path.encode("utf-8"))
+
+    git_outputs = {
+        ("rev-parse", "HEAD"): "A" * 40,
+        ("branch", "--show-current"): "gpt/test-candidate",
+        ("status", "--porcelain"): "",
+    }
+    monkeypatch.setattr(
+        module,
+        "_git_output",
+        lambda _repository_root, *args: git_outputs[args],
+    )
+
+    receipt = module.build_candidate_receipt(tmp_path)
+
+    assert receipt["missing_paths"] == []
+    assert receipt["git"]["worktree_clean"] is True
+    assert receipt["status"] == "LOCAL_CANDIDATE_REVIEW_REQUIRED"
+    assert receipt["deployment_authorised"] is False
+    assert receipt["live_change_performed"] is False
 
 
 def test_audit_hash_is_stable_when_only_generated_at_changes() -> None:
