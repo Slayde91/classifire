@@ -2,7 +2,7 @@
 
 **Document status:** Active working roadmap
 
-**Roadmap version:** 2026-08-22 r4
+**Roadmap version:** 2026-08-23 r5
 
 **Product status:** Pre-production prototype and controlled UAT build
 
@@ -45,8 +45,9 @@ The prototype is not production-authorised. It does not yet have a corrected act
 | Proposal-only safety | Gateway preflight is fail-closed, protected-state receipts are bound to proposal receipts, and proposal-only execution cannot submit or lock a canonical model. |
 | Reconciliation | The human-reference comparator binds proposal/final-state inputs by path and hash and detects topology/substrate swaps rather than matching disconnected multisets. |
 | Human adjudication | A provenance-bound, offline adjudicated proposal revision exists for the current UAT. It records human decisions separately from runtime inference and leaves canonical state unchanged. |
-| Controlled-writer Gate A | Exact shared main `dec65fef` has a reproducible admission-only plugin artifact and a clean, complete, review-only candidate fingerprint. No deployment or live operation was authorised by the audit. |
-| Gate B rehearsal | The existing backup/restore rehearsal was retained. A current-target disposable copy exposed an empty stray legacy journal table; the local fail-closed `0008` repair removes it without changing protected rows. |
+| Controlled-writer Gate A | Exact shared main `1c20783f` has a reproducible admission-only plugin artifact and clean candidate fingerprint `25CD45B7...2A96`. The audit itself remains review-only. |
+| Gates B-F deployment | Migration `0008`, public-key policy, least-privilege scope reconciliation, plugin `0.5.0` upgrade/restart, and synthetic fail-closed validation are complete locally. The real UAT estimate remains unchanged and has no admission, submission receipt, canonical model, or active lock. |
+| Android admission signer | The non-debuggable `0.2.1-local` release APK is installed under the approved APK certificate. `governance-p256-02` exists as a hardware-backed, non-exportable P-256 key; only its independently verified public proof is configured in CLASSIFIRE. No admission has been signed. |
 
 ### 2.3 Current Phase 8 evidence position
 
@@ -80,9 +81,9 @@ The original Phase 8 branch contained valuable UAT work but mixed physical, comm
 | Layer 1 - runtime foundation | 0, 15 | Draft foundation; recorded tip `b4eef5d`. | Current PR/CI status refresh before merge. |
 | Layer 2 - physical foundation | 1, 6, 8 | Draft foundation; recorded tip `8606b67`. | Final cross-layer review and merge sequencing. |
 | Layer 3 - least-privilege agents | 3, 15 | Draft foundation; recorded tip `57fe33f`. | Clean plugin rebuild and deployment rehearsal. |
-| Layer 4 - P-256 admission/writer | 1, 3, 6, 8, 15 | **In progress**; writer and reconciled journal are on shared main. | Publish and deploy the fail-closed `0008` legacy-table retirement, then complete runtime proof. |
-| Controlled plugin rebuild | 3, 15 | **Gate A complete; deployment not started.** | Gate B migration, Gate C public-key policy, install/restart, and synthetic no-write proof. |
-| Controlled canonicalisation | 8 | Blocked. | Gates B-F, fresh preflight, external signature, admission registration, and separate write authority. |
+| Layer 4 - P-256 admission/writer | 1, 3, 6, 8, 15 | **Deployment validated through Gate F**; writer, reconciled journal, key policy, and runtime boundary are active locally. | Fresh preflight, external signature, offline registration, and separate one-time write authority. |
+| Controlled plugin rebuild | 3, 15 | **Verified complete for the local deployment.** Exact-main `0.5.0` is installed under `phase8-admission-only`, restarted, and boundary-tested. | Revalidate for any different environment or source revision. |
+| Controlled canonicalisation | 8 | Blocked at the intended governance boundary. | Fresh preflight, external signature, admission registration, and separate write authority. |
 | Signed lock-admission | 1, 6, 8 | Not designed as a completed boundary. | Separate signed lock design and authority. |
 | Automated Physical-Model Accuracy Programme | 8C | Planned - not started. | Working prototype and the programme admission gate. |
 
@@ -92,15 +93,15 @@ The recorded draft PR stack is `main -> Layer 1 -> Layer 2 -> Layer 3 -> Layer 4
 
 The first canonical write must be admission-bound. A signed admission binds one estimate, one normalized Opening-Service-Link payload, one protected-state fingerprint, source/adjudicated artefact hashes, policy and implementation hashes, issuer/key identity, purpose, and expiry. The writer consumes that admission once, rechecks the current state in the write transaction, writes only the sealed physical facts, and **does not create a Physical Model Lock**.
 
-P-256 is the approved production admission protocol direction. A Samsung Galaxy S25 Ultra proof-of-capability successfully performed a local P-256 AndroidKeyStore sign-and-verify operation using a temporary key, which was then deleted. The prior Ed25519 path was unavailable from the tested AndroidKeyStore provider. This establishes handset capability only: no production key has been created, copied, configured, registered, or used by CLASSIFIRE. Private keys remain outside CLASSIFIRE; it receives only a public verification key and explicit issuer-to-key authorisation mapping.
+P-256 is the approved production admission protocol. The Samsung Galaxy S25 Ultra now holds `governance-p256-02` as a hardware-backed, non-exportable Android Keystore key. Its public proof was recovered read-only and independently verified before CLASSIFIRE was configured to trust that key only for issuer `classifire-governance`. The prior debug-app keys were retired with the debug app. No admission has been signed or registered, and the private key has not left the handset. The prior Ed25519 path remains superseded because it was unavailable from the tested Android Keystore provider.
 
 ### 2.7 Immediate major sequence
 
 1. **Completed:** publish and merge the fail-closed `0008` legacy-table retirement after proving it against a disposable copy of the configured database.
 2. **Completed:** create and restore-verify a recoverable backup, migrate the configured database to `0008`, and confirm protected rows and both empty current journals are unchanged.
-3. **Active:** provision and approve the handset's P-256 admission public-key proof, then configure the public key and issuer-to-key mapping; never substitute the APK release-signing certificate.
-4. **Planned after Gate C:** back up and upgrade the existing controlled-write plugin from `0.4.0` to the reviewed `0.5.0` admission-only build, restart it, and run synthetic fail-closed validation without touching the real UAT estimate.
-5. **Planned after deployment closure:** create a fresh proposal-only preflight; obtain a short-lived external P-256 signature; register an admission offline; then use separate current authority for the one-time initial canonical write.
+3. **Completed:** provision and approve `governance-p256-02`, independently verify its public proof, and configure the explicit `classifire-governance` issuer binding without placing a private key in CLASSIFIRE.
+4. **Completed:** back up and upgrade the controlled-write plugin from `0.4.0` to exact-main `0.5.0`, select `phase8-admission-only`, restart the gateway, and pass live/synthetic no-write boundary checks without touching the real UAT estimate.
+5. **Next separate governance decision:** create a fresh proposal-only preflight; obtain a short-lived external P-256 signature; register an admission offline; then obtain separate current authority for the one-time initial canonical write.
 6. **Blocked pending separate design and approval:** create a signed Physical Model Lock admission boundary before technical, quantity, commercial, snapshot, output, or release phases are allowed to advance.
 
 ## 3. Master roadmap at a glance
@@ -110,7 +111,7 @@ P-256 is the approved production admission protocol direction. A Samsung Galaxy 
 | 0. Product and repository baseline | In progress | Auditable private-repository lineage, controlled changes, and reproducible source state. |
 | 1. Domain and workflow governance | In progress | Governed amendments, blank-opening semantics, visual approval, and no destructive scope replacement. |
 | 2. Governed source libraries | In progress | Immutable, published, auditable technical and commercial releases. |
-| 3. OpenClaw and controlled-write architecture | In progress - Gates A-B complete | Security configuration, controlled plugin upgrade/restart, and least-privilege proof. |
+| 3. OpenClaw and controlled-write architecture | In progress - Gates A-F locally complete | Revalidate the deployment boundary for other environments; later phases still require their own controlled profiles and approvals. |
 | 4. Mission Control integration | In progress | Visibility/control-plane integration without owning estimate truth. |
 | 5. Evidence intake and evidence resolution | In progress | Every downstream claim traces to retained report, page, image, and verified higher-detail source evidence. |
 | 6. Physical Model engine | In progress | Defensible Barrier-Opening-Service model or explicit limitation for every known defect. |
