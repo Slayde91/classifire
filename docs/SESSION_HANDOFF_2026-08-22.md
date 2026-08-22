@@ -1,5 +1,36 @@
 # CLASSIFIRE Session Handoff - 2026-08-22
 
+## Current superseding repository note - 2026-08-23
+
+The latest code-bearing shared-main baseline is
+`8c9393d9763c51917e5268086d89e90973359294`, merged through PR #47. PRs
+#45-#47 cleanly reconciled the pure visual receipt and bounded-correction guard,
+the proposal-blind inventory and reconciliation ledger, and fail-closed
+top-level JSON handling. The full repository suite passes 150 tests under the
+documented fail-closed initial-submission setting; 50 exact-main visual,
+blind-inventory, plugin-profile, and Gate A auditor tests also pass.
+
+The ignored controlled-write plugin artifact was rebuilt from exact main and
+remains SHA-256
+`38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`.
+The read-only Gate A candidate for this revision is
+`9404715961FA9ACEF9A187173FA3375F03536B1EAE54562A309E23701F187D09`;
+the audit records `deployment_authorised=false` and
+`live_change_performed=false`.
+
+Issue [#42](https://github.com/Slayde91/classifire/issues/42) remains open.
+The next source task is clean current-main controller/receipt integration. The
+validation-only human comparator and linked-original resolver also remain to
+be reconciled. Do not port the legacy protected-state implementation: current
+main's canonical submission-state and adjudicated receipt services supersede
+that architecture. No admission was created or signed, no registration,
+canonical write, or lock occurred, and nothing was deployed in this source
+reconciliation.
+
+This repository note supersedes older shared-main revision, Gate A candidate,
+and visual-tooling availability wording below. The operational Gate B-F state
+in the following note remains unchanged.
+
 ## Current superseding note - 2026-08-23
 
 The latest code-bearing deployment baseline is

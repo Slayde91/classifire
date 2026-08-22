@@ -1,10 +1,11 @@
 # CLASSIFIRE Project State
 
 **Verified snapshot:** 2026-08-23 (AEST)
-**Latest code-bearing base:** `1c20783f` (merged Android proof-recovery PR #40)
-**Current scope:** Gates A-F deployment validation is complete without a real
-admission or canonical submission. The next boundary is a separately governed
-fresh preflight and external signing decision.
+**Latest code-bearing base:** `8c9393d` (merged Phase 8 visual-input PR #47)
+**Current scope:** Gates A-F deployment validation remains complete without a
+real admission or canonical submission. Repository work is separately
+reconciling the retained proposal-only visual toolchain through issue #42; any
+fresh preflight or external signing remains its own governed decision.
 
 This document records repository evidence. The initial local signer work did
 not use operational authority. Later user authority covered the approved logo
@@ -14,10 +15,13 @@ material and device deployment.
 
 ## Current repository reconciliation - 2026-08-23
 
-Shared `main` is at
-`5b5ef13cb801d148deab62744b946ace3ed435e3` after the Gate C-F documentation
-merge. The latest code-bearing deployment base remains `1c20783f`, where the
-exact-main Android signer recovery correction is merged. The installed
+The latest code-bearing shared-main baseline is
+`8c9393d9763c51917e5268086d89e90973359294` after Phase 8 reconciliation
+PRs #45-#47. That source baseline includes the bounded Validator-to-Physical
+correction guard, the proposal-blind Opening/Service inventory and mandatory
+reconciliation ledger, and fail-closed top-level JSON input handling. These are
+pure validation components; they do not perform inference or write canonical
+state. The installed
 non-debuggable release APK is version `0.2.1-local` with SHA-256
 `63CFCEE4ADD2D7C87D94FEE628A9898EF0194667FF5AD9BC2B2B16932FA1C075`.
 Android signature scheme v3 verifies with the approved release certificate
@@ -33,13 +37,14 @@ as EC P-256 (`secp256r1`) with public-key fingerprint
 `ezFTerydT4IahBteapQDRM8RiQXi6J4z9AmQdyQ0z_0`. The private key remains
 non-exportable in Android Keystore and is not configured in CLASSIFIRE.
 
-Gate A was rerun against clean exact main after PR #40. The rebuilt plugin
+Gate A was rerun against clean exact main after PR #47. The rebuilt plugin
 artifact remains
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`;
 the revision-bound candidate fingerprint is
-`25CD45B781A0FAEF3D036B8E7017409685977324085063E153E1A84C82792A96`.
-Fifty-one focused admission, migration, boundary, plugin-profile, and auditor
-tests pass.
+`9404715961FA9ACEF9A187173FA3375F03536B1EAE54562A309E23701F187D09`.
+Fifty exact-main visual, blind-inventory, plugin-profile, and auditor tests
+pass. The full repository suite passes 150 tests under the documented
+fail-closed initial-submission setting.
 
 Gate B remains verified at migration
 `0008_retire_legacy_initial_submissions`. Gate C now trusts only
@@ -90,16 +95,18 @@ is not yet designed or approved.
 ### Shared-main and GitHub reconciliation
 
 The clean foundation stack and deployment documentation are published on shared
-`main`, but the retained proposal-only visual UAT implementation is not yet
-reproducible from that branch. The blind Validator inventory, protected
-proposal-only runner, visual correction/comparison tooling, and linked-original
-image resolver remain only in legacy stacked draft PRs #9-#13. The legacy branch
-differs from current main across 407 paths and must not be merged wholesale.
-Historical UAT receipts remain evidence of what was executed, not proof that the
-same workflow is present on shared main.
+`main`. PRs #45-#47 have also reconciled the pure visual receipt, correction,
+blind-inventory, and blind-reconciliation guards with current-main tests. The
+complete proposal-only execution workflow is still not reproducible from shared
+main: its controller/receipt orchestration, validation-only human comparator,
+and linked-original image resolver remain to be reconciled from legacy stacked
+draft PRs #9-#13. The legacy branch differs materially from current main and
+must not be merged wholesale. Historical UAT receipts remain evidence of what
+was executed, not proof that the remaining workflow is present on shared main.
 
-GitHub issue [#42](https://github.com/Slayde91/classifire/issues/42) now tracks a
-clean current-main reconciliation of the still-valid visual tooling. Legacy PRs
+GitHub issue [#42](https://github.com/Slayde91/classifire/issues/42) tracks the
+remaining clean current-main reconciliation and records the merged checkpoints.
+Legacy PRs
 #7, #8, and #15 were closed as superseded by the clean foundations already
 merged through PRs #16-#25 and the later Gate A-F hardening. PRs #9-#13 remain
 open because they still contain implementation that requires review and
