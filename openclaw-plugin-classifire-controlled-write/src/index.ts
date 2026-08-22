@@ -7,7 +7,12 @@ import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 type PluginConfig = {
   baseUrl: string;
   tokenFile: string;
+  deploymentProfile: DeploymentProfile;
 };
+
+type DeploymentProfile =
+  | "phase8-admission-only"
+  | "full-controlled-write";
 
 type TokenFile = {
   schema: string;
@@ -21,16 +26,23 @@ type VerifiedCall = {
 
 const DEFAULT_BASE_URL = "http://127.0.0.1:8787";
 const DEFAULT_TOKEN_FILE = join(homedir(), ".openclaw", "classifire-agent-tokens.json");
+const DEFAULT_DEPLOYMENT_PROFILE: DeploymentProfile = "phase8-admission-only";
 
 const TOOL_AGENTS: Record<string, Set<string>> = {
   classifire_register_evidence_observations: new Set(["cf-intake-evidence"]),
   classifire_submit_initial_physical_model: new Set(["cf-physical-model"]),
-  classifire_lock_physical_model: new Set(["cf-physical-model"]),
   classifire_select_repair_strategy: new Set(["cf-technical-system"]),
   classifire_lock_repair_strategy: new Set(["cf-technical-system"]),
   classifire_derive_quantity_labour: new Set<string>(),
   classifire_required_components: new Set(["cf-commercial-engine"]),
   classifire_derive_commercial: new Set(["cf-commercial-engine"]),
+};
+
+const PROFILE_ACTIVE_TOOLS: Record<DeploymentProfile, Set<string>> = {
+  "phase8-admission-only": new Set([
+    "classifire_submit_initial_physical_model",
+  ]),
+  "full-controlled-write": new Set(Object.keys(TOOL_AGENTS)),
 };
 
 const PHYSICAL_VISUAL_SESSION_SUFFIX =
@@ -39,7 +51,6 @@ const PHYSICAL_VISUAL_SESSION_SUFFIX =
 const PHYSICAL_VISUAL_BLOCKED_TOOLS =
   new Set<string>([
     "classifire_submit_initial_physical_model",
-    "classifire_lock_physical_model",
   ]);
 
 const verifiedCalls = new Map<string, VerifiedCall>();
@@ -59,11 +70,21 @@ function parsePluginConfig(value: unknown): PluginConfig {
   const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const baseUrl = String(raw.baseUrl ?? DEFAULT_BASE_URL);
   const tokenFile = String(raw.tokenFile ?? DEFAULT_TOKEN_FILE);
+  const deploymentProfile = String(
+    raw.deploymentProfile ?? DEFAULT_DEPLOYMENT_PROFILE,
+  );
   normalizedBaseUrl(baseUrl);
   if (!tokenFile.trim()) {
     throw new Error("CLASSIFIRE tokenFile cannot be blank");
   }
-  return { baseUrl, tokenFile };
+  if (!Object.prototype.hasOwnProperty.call(PROFILE_ACTIVE_TOOLS, deploymentProfile)) {
+    throw new Error(`Unsupported CLASSIFIRE deploymentProfile: ${deploymentProfile}`);
+  }
+  return {
+    baseUrl,
+    tokenFile,
+    deploymentProfile: deploymentProfile as DeploymentProfile,
+  };
 }
 
 const pluginConfigSchema = {
@@ -74,6 +95,11 @@ const pluginConfigSchema = {
     properties: {
       baseUrl: { type: "string" },
       tokenFile: { type: "string" },
+      deploymentProfile: {
+        type: "string",
+        enum: ["phase8-admission-only", "full-controlled-write"],
+        default: DEFAULT_DEPLOYMENT_PROFILE,
+      },
     },
   },
 };
@@ -155,16 +181,23 @@ function requireVerifiedCall(toolCallId: string, toolName: string): VerifiedCall
 export default definePluginEntry({
   id: "classifire-controlled-write",
   name: "CLASSIFIRE Controlled Write Tools",
-  description: "Narrow role-limited write bridge for controlled CLASSIFIRE estimate stages.",
+  description: "Profile-gated role-limited bridge for controlled CLASSIFIRE estimate stages.",
   configSchema: pluginConfigSchema,
   register(api: any) {
     const pluginConfig = parsePluginConfig(api.pluginConfig);
+    const activeTools = PROFILE_ACTIVE_TOOLS[pluginConfig.deploymentProfile];
 
     api.on(
       "before_tool_call",
       async (event: any, ctx: any) => {
         const allowed = TOOL_AGENTS[event.toolName];
         if (!allowed) return;
+        if (!activeTools.has(event.toolName)) {
+          return {
+            block: true,
+            blockReason: `CLASSIFIRE deployment profile ${pluginConfig.deploymentProfile} leaves ${event.toolName} inactive`,
+          };
+        }
         const agentId = String(ctx?.agentId ?? "");
         const sessionKey = String(
           ctx?.sessionKey ?? ""
@@ -225,6 +258,9 @@ export default definePluginEntry({
         config: PluginConfig,
       ) => Promise<ReturnType<typeof asToolResult>>,
     ) => {
+      if (!activeTools.has(name)) {
+        return;
+      }
       api.registerTool(
         {
           name,
@@ -274,69 +310,22 @@ export default definePluginEntry({
 
     register(
       "classifire_submit_initial_physical_model",
-      "Submit the one-shot initial canonical opening/service model for an editable estimate. Every Service requires an explicit quantity; omission never defaults to quantity one. The tool cannot select Package 15 systems or pricing.",
+      "Execute one pre-existing signed admission for the one-shot initial canonical opening/service model. This tool never accepts Opening or Service content, cannot create a Physical Model Lock, and cannot select Package 15 systems or pricing.",
       Type.Object({
         estimate_id: Type.String(),
-        openings: Type.Array(Type.Object({
-          opening_code: Type.String(),
-          external_defect_id: Type.Optional(Type.String()),
-          location: Type.Optional(Type.String()),
-          substrate_type: Type.Optional(Type.String()),
-          substrate_plane: Type.Optional(Type.String()),
-          substrate_thickness_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-          orientation: Type.Optional(Type.String()),
-          opening_type: Type.Optional(Type.String()),
-          width_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-          height_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-          diameter_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-          frl: Type.Optional(Type.String()),
-          notes: Type.Optional(Type.String()),
-        })),
-        services: Type.Array(Type.Object({
-          service_code: Type.String(),
-          primary_opening_code: Type.String(),
-          opening_codes: Type.Array(Type.String()),
-          service_type: Type.String(),
-          material: Type.Optional(Type.String()),
-          nominal_size_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-          outside_diameter_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-          width_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-          height_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-          insulation_type: Type.Optional(Type.String()),
-          insulation_thickness_mm: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-          quantity: Type.Number({ exclusiveMinimum: 0 }),
-          centre_x_mm: Type.Optional(Type.Number()),
-          centre_y_mm: Type.Optional(Type.Number()),
-          evidence_status: Type.Optional(Type.String()),
-          confidence: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
-          relationship_status: Type.Optional(Type.String()),
-          link_type: Type.Optional(Type.String()),
-          source_reference: Type.Optional(Type.String()),
-          notes: Type.Optional(Type.String()),
-        })),
-      }),
+        admission_id: Type.String({ minLength: 36, maxLength: 100 }),
+        idempotency_key: Type.String({ minLength: 16, maxLength: 200 }),
+      }, { additionalProperties: false }),
       (agentId, params, config) => classifireRequest(
         config,
         agentId,
         `/api/v1/agent/estimates/${encodeURIComponent(params.estimate_id)}/physical-model/initial`,
-        { method: "POST", body: JSON.stringify({ openings: params.openings, services: params.services }) },
-      ),
-    );
-
-    register(
-      "classifire_lock_physical_model",
-      "Create or reuse the deterministic Physical Model Lock after the initial evidence-backed physical model has been submitted. A PROVISIONAL lock does not open Package 15 search.",
-      Type.Object({
-        estimate_id: Type.String(),
-        reason: Type.Optional(Type.String()),
-      }),
-      (agentId, params, config) => classifireRequest(
-        config,
-        agentId,
-        `/api/v1/agent/estimates/${encodeURIComponent(params.estimate_id)}/physical-model/lock`,
         {
           method: "POST",
-          body: JSON.stringify({ reason: params.reason ?? "Controlled cf-physical-model lock request" }),
+          body: JSON.stringify({
+            admission_id: params.admission_id,
+            idempotency_key: params.idempotency_key,
+          }),
         },
       ),
     );

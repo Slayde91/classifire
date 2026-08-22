@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from decimal import Decimal
-
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
@@ -9,11 +7,15 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from classifire import canonical_models, commercial_models  # noqa: F401
-from classifire.agent_security import AGENT_SCOPE_MAP, FORBIDDEN_AGENT_SCOPES, provision_agent_principal
+from classifire.agent_security import (
+    AGENT_SCOPE_MAP,
+    FORBIDDEN_AGENT_SCOPES,
+    provision_agent_principal,
+)
 from classifire.api.agent_intake_physical import router as intake_physical_router
-from classifire.canonical_models import Defect, EvidenceSource, ServiceOpeningLink
+from classifire.canonical_models import Defect, EvidenceSource
 from classifire.db import Base, get_db
-from classifire.models import Estimate, Opening, Project, Service, StoredFile
+from classifire.models import Estimate, Opening, Project, StoredFile
 
 
 def _test_app() -> tuple[FastAPI, sessionmaker[Session]]:
@@ -135,12 +137,16 @@ def _model_payload(*, include_quantity: bool = True, material: str | None = "Cop
 
 def test_new_scope_matrix_is_narrow_and_role_specific() -> None:
     assert "evidence:write" in AGENT_SCOPE_MAP["cf-intake-evidence"]
-    assert "physical:write" in AGENT_SCOPE_MAP["cf-physical-model"]
-    assert "physical:lock" in AGENT_SCOPE_MAP["cf-physical-model"]
+    assert "physical:write" not in AGENT_SCOPE_MAP["cf-physical-model"]
+    assert "physical:lock" not in AGENT_SCOPE_MAP["cf-physical-model"]
+    assert "physical:adjudicated:submit" in AGENT_SCOPE_MAP["cf-physical-model"]
+    assert "cf-adjudicated-physical-writer" not in AGENT_SCOPE_MAP
     for agent_id, scopes in AGENT_SCOPE_MAP.items():
         assert not (set(scopes) & FORBIDDEN_AGENT_SCOPES), agent_id
         if agent_id != "cf-intake-evidence":
             assert "evidence:write" not in scopes
+        if agent_id != "cf-physical-model":
+            assert "physical:adjudicated:submit" not in scopes
         if agent_id != "cf-physical-model":
             assert "physical:write" not in scopes
             assert "physical:lock" not in scopes
@@ -172,7 +178,7 @@ def test_cross_role_intake_and_physical_writes_fail_before_business_logic() -> N
     assert physical_to_evidence.status_code == 403
     assert "evidence:write" in physical_to_evidence.json()["detail"]
     assert intake_to_model.status_code == 403
-    assert "physical:write" in intake_to_model.json()["detail"]
+    assert "physical:adjudicated:submit" in intake_to_model.json()["detail"]
     assert technical_to_lock.status_code == 403
     assert "physical:lock" in technical_to_lock.json()["detail"]
 
@@ -192,7 +198,11 @@ def test_intake_registration_is_idempotent_and_preserves_defect_provenance() -> 
     assert second.json()["registered"][0]["created"] is False
     with factory() as db:
         defects = list(db.scalars(select(Defect).where(Defect.estimate_id == estimate_id)).all())
-        evidence = list(db.scalars(select(EvidenceSource).where(EvidenceSource.estimate_id == estimate_id)).all())
+        evidence = list(
+            db.scalars(
+                select(EvidenceSource).where(EvidenceSource.estimate_id == estimate_id)
+            ).all()
+        )
     assert len(defects) == 1
     assert defects[0].external_defect_id == "D-001"
     assert len(evidence) == 1
@@ -200,7 +210,7 @@ def test_intake_registration_is_idempotent_and_preserves_defect_provenance() -> 
     assert evidence[0].sha256 == "1" * 64
 
 
-def test_initial_physical_model_requires_explicit_service_quantity() -> None:
+def test_bare_initial_physical_model_request_is_rejected_by_the_admission_schema() -> None:
     app, factory = _test_app()
     estimate_id, _stored_file_id = _seed_estimate(factory)
     physical_token = _credential(factory, "cf-physical-model")
@@ -215,66 +225,48 @@ def test_initial_physical_model_requires_explicit_service_quantity() -> None:
     assert response.status_code == 422
 
 
-def test_initial_physical_model_creates_opening_service_and_canonical_link_once() -> None:
+def test_physical_principal_cannot_bypass_admission_with_a_legacy_payload() -> None:
     app, factory = _test_app()
     estimate_id, stored_file_id = _seed_estimate(factory)
     intake_token = _credential(factory, "cf-intake-evidence")
     physical_token = _credential(factory, "cf-physical-model")
 
     with TestClient(app) as client:
-        assert _register_observation(client, estimate_id, stored_file_id, intake_token).status_code == 200
-        first = client.post(
-            f"/api/v1/agent/estimates/{estimate_id}/physical-model/initial",
-            headers=_headers("cf-physical-model", physical_token),
-            json=_model_payload(),
+        assert (
+            _register_observation(client, estimate_id, stored_file_id, intake_token).status_code
+            == 200
         )
-        second = client.post(
+        response = client.post(
             f"/api/v1/agent/estimates/{estimate_id}/physical-model/initial",
             headers=_headers("cf-physical-model", physical_token),
             json=_model_payload(),
         )
 
-    assert first.status_code == 200, first.text
-    assert second.status_code == 409
+    assert response.status_code == 422
     with factory() as db:
         opening = db.scalar(select(Opening).where(Opening.estimate_id == estimate_id))
-        assert opening is not None
-        service = db.scalar(select(Service).where(Service.opening_id == opening.id))
-        assert service is not None
-        link = db.scalar(
-            select(ServiceOpeningLink).where(
-                ServiceOpeningLink.service_id == service.id,
-                ServiceOpeningLink.opening_id == opening.id,
-            )
-        )
-        assert link is not None
-        assert service.quantity == Decimal("1.0000")
-        assert opening.canonical_defect_id is not None
+        assert opening is None
 
 
-def test_authorised_physical_lock_reaches_workflow_guard() -> None:
+def test_legacy_physical_principal_cannot_lock_a_model() -> None:
     app, factory = _test_app()
     estimate_id, stored_file_id = _seed_estimate(factory)
     intake_token = _credential(factory, "cf-intake-evidence")
     physical_token = _credential(factory, "cf-physical-model")
 
     with TestClient(app) as client:
-        assert _register_observation(client, estimate_id, stored_file_id, intake_token).status_code == 200
-        assert client.post(
-            f"/api/v1/agent/estimates/{estimate_id}/physical-model/initial",
-            headers=_headers("cf-physical-model", physical_token),
-            json=_model_payload(),
-        ).status_code == 200
+        assert (
+            _register_observation(client, estimate_id, stored_file_id, intake_token).status_code
+            == 200
+        )
         lock = client.post(
             f"/api/v1/agent/estimates/{estimate_id}/physical-model/lock",
             headers=_headers("cf-physical-model", physical_token),
             json={"reason": "test controlled lock"},
         )
 
-    # The endpoint passed role authentication. Depending on seeded workflow/release
-    # prerequisites it may lock or fail closed in the deterministic workflow guard.
-    assert lock.status_code in {200, 409}
-    assert lock.status_code != 403
+    assert lock.status_code == 403
+    assert "physical:lock" in lock.json()["detail"]
 
 
 def test_intake_physical_openapi_exposes_no_human_release_or_approval_route() -> None:

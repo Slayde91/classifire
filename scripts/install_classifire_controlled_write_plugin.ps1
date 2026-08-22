@@ -24,17 +24,32 @@ if ($tokenDoc.schema -ne "CLASSIFIRE-AGENT-TOKENS-v1") {
 }
 
 $requiredScopes = @{
-    "cf-intake-evidence" = @("evidence:write")
-    "cf-physical-model" = @("physical:write", "physical:lock")
-    "cf-technical-system" = @("technical:select", "technical:lock")
-    "cf-commercial-engine" = @("commercial:components", "commercial:derive")
+    "cf-physical-model" = @("physical:adjudicated:submit")
 }
 foreach ($agentId in $requiredScopes.Keys) {
+    $tokenProperty = $tokenDoc.tokens.PSObject.Properties[$agentId]
+    if ($null -eq $tokenProperty -or [string]::IsNullOrWhiteSpace([string]$tokenProperty.Value)) {
+        throw "CLASSIFIRE agent token file is stale for $agentId (missing token). Provision that existing agent credential through the approved credential workflow, then rerun this installer."
+    }
+
     $scopeProperty = $tokenDoc.scopes.PSObject.Properties[$agentId]
     $currentScopes = if ($null -ne $scopeProperty) { @($scopeProperty.Value) } else { @() }
     foreach ($scope in $requiredScopes[$agentId]) {
         if ($currentScopes -notcontains $scope) {
-            throw "CLASSIFIRE agent token scopes are stale for $agentId (missing $scope). Run 'classifire provision-agent-tokens --rotate', then rerun this installer."
+            throw "CLASSIFIRE agent token scopes are stale for $agentId (missing $scope). With separate live-change approval, run the scoped synchronizer for this agent without rotating its token, then rerun this installer."
+        }
+    }
+}
+
+$forbiddenMutationScopes = @{
+    "cf-physical-model" = @("physical:write", "physical:lock")
+}
+foreach ($agentId in $forbiddenMutationScopes.Keys) {
+    $scopeProperty = $tokenDoc.scopes.PSObject.Properties[$agentId]
+    $currentScopes = if ($null -ne $scopeProperty) { @($scopeProperty.Value) } else { @() }
+    foreach ($scope in $forbiddenMutationScopes[$agentId]) {
+        if ($currentScopes -contains $scope) {
+            throw "CLASSIFIRE agent token scopes are stale for $agentId (forbidden $scope). With separate live-change approval, run the scoped synchronizer for this agent without rotating its token, then rerun this installer."
         }
     }
 }
@@ -197,32 +212,40 @@ function Invoke-OpenClawJsonRead {
 
 
 $addByAgent = @{
-    "cf-intake-evidence" = @(
-        "classifire_register_evidence_observations"
-    )
     "cf-physical-model" = @(
-        "classifire_submit_initial_physical_model",
-        "classifire_lock_physical_model"
-    )
-    "cf-technical-system" = @(
-        "classifire_select_repair_strategy",
-        "classifire_lock_repair_strategy"
-    )
-    "cf-commercial-engine" = @(
-        "classifire_required_components",
-        "classifire_derive_commercial"
+        "classifire_submit_initial_physical_model"
     )
 }
+
+$managedAgentIds = @(
+    "cf-orchestrator",
+    "cf-intake-evidence",
+    "cf-physical-model",
+    "cf-technical-system",
+    "cf-commercial-engine",
+    "cf-validator",
+    "cf-output",
+    "cf-library-governance",
+    "cf-platform-governance"
+)
 
 $allControlledWriteTools = @(
     "classifire_register_evidence_observations",
     "classifire_submit_initial_physical_model",
-    "classifire_lock_physical_model",
     "classifire_select_repair_strategy",
     "classifire_lock_repair_strategy",
     "classifire_derive_quantity_labour",
     "classifire_required_components",
     "classifire_derive_commercial"
+)
+
+$retiredControlledWriteTools = @(
+    "classifire_lock_physical_model"
+)
+
+$allManagedControlledWriteTools = @(
+    ($allControlledWriteTools + $retiredControlledWriteTools) |
+    Sort-Object -Unique
 )
 
 Write-Host "Validating existing OpenClaw config before plugin install..." -ForegroundColor Cyan
@@ -299,14 +322,11 @@ for ($i = 0; $i -lt $agents.Count; $i++) {
     $id = [string]$agents[$i].id
     if ($id) { $indexById[$id] = $i }
 }
-foreach ($id in $addByAgent.Keys) {
+$requiredAgentIds = @($managedAgentIds | Sort-Object -Unique)
+foreach ($id in $requiredAgentIds) {
     if (-not $indexById.ContainsKey($id)) {
         throw "Required CLASSIFIRE agent '$id' is missing from OpenClaw agents.list."
     }
-}
-
-if (-not $indexById.ContainsKey("cf-validator")) {
-    throw "Required CLASSIFIRE policy agent 'cf-validator' is missing from OpenClaw agents.list."
 }
 
 $operations = @(
@@ -317,6 +337,10 @@ $operations = @(
     [pscustomobject]@{
         path = 'plugins.entries["classifire-controlled-write"].config.tokenFile'
         value = $TokenFile
+    },
+    [pscustomobject]@{
+        path = 'plugins.entries["classifire-controlled-write"].config.deploymentProfile'
+        value = 'phase8-admission-only'
     },
     [pscustomobject]@{
         path = 'agents.defaults.pdfMaxPages'
@@ -340,7 +364,11 @@ $operations = @(
     },
     [pscustomobject]@{
         path = 'gateway.http.endpoints.responses.images.allowedMimes'
-        value = @('image/png')
+        # Linked report originals are verified JPEGs.  Keep the previously
+        # approved JPEG allowance when installing the controlled-write plugin;
+        # reducing this list to PNG would silently break high-detail visual
+        # evidence handling after deployment.
+        value = @('image/png', 'image/jpeg')
     },
     [pscustomobject]@{
         path = 'gateway.http.endpoints.responses.images.maxBytes'
@@ -369,7 +397,7 @@ $operations = @(
     }
 )
 
-foreach ($id in ($addByAgent.Keys | Sort-Object)) {
+foreach ($id in ($managedAgentIds | Sort-Object)) {
     $index = $indexById[$id]
     $toolsNode = $agents[$index].tools
 
@@ -382,12 +410,19 @@ foreach ($id in ($addByAgent.Keys | Sort-Object)) {
         $existing |
         ForEach-Object { [string]$_ } |
         Where-Object {
-            $_ -notin $allControlledWriteTools
+            $_ -notin $allManagedControlledWriteTools
         }
     )
 
+    $desiredTools = if ($addByAgent.ContainsKey($id)) {
+        @($addByAgent[$id])
+    }
+    else {
+        @()
+    }
+
     $merged = @(
-        $retained + @($addByAgent[$id]) |
+        $retained + $desiredTools |
         Sort-Object -Unique
     )
 
@@ -410,11 +445,18 @@ foreach ($id in ($addByAgent.Keys | Sort-Object)) {
     }
 
     $sandboxAllow = @(
-        $sandboxAllow +
-        "classifire-controlled-write" |
+        $sandboxAllow |
         ForEach-Object { [string]$_ } |
+        Where-Object { $_ -ne "classifire-controlled-write" } |
         Sort-Object -Unique
     )
+
+    if ($id -eq "cf-physical-model") {
+        $sandboxAllow = @(
+            $sandboxAllow + "classifire-controlled-write" |
+            Sort-Object -Unique
+        )
+    }
 
     $operations += [pscustomobject]@{
         path = "agents.list[$index].tools.sandbox.tools.alsoAllow"
@@ -430,19 +472,16 @@ if ($null -ne $physicalTools -and $null -ne $physicalTools.deny) {
     $physicalDeny = @(
         $physicalTools.deny |
         ForEach-Object { [string]$_ } |
-        Where-Object {
-            $_ -notin @(
-                "classifire_submit_initial_physical_model",
-                "classifire_lock_physical_model",
-                "classifire_derive_quantity_labour"
-            )
-        }
+        Where-Object { $_ -ne "classifire_submit_initial_physical_model" }
     )
 }
 
 $physicalDeny = @(
     $physicalDeny +
-    "classifire_derive_quantity_labour" |
+    @(
+        "classifire_lock_physical_model",
+        "classifire_derive_quantity_labour"
+    ) |
     Sort-Object -Unique
 )
 
@@ -453,22 +492,6 @@ $operations += [pscustomobject]@{
 
 $validatorIndex = $indexById["cf-validator"]
 $validatorTools = $agents[$validatorIndex].tools
-
-$validatorAllow = @()
-if ($null -ne $validatorTools -and $null -ne $validatorTools.alsoAllow) {
-    $validatorAllow = @(
-        $validatorTools.alsoAllow |
-        ForEach-Object { [string]$_ } |
-        Where-Object {
-            $_ -notin $allControlledWriteTools
-        }
-    )
-}
-
-$operations += [pscustomobject]@{
-    path = "agents.list[$validatorIndex].tools.alsoAllow"
-    value = @($validatorAllow | Sort-Object -Unique)
-}
 
 $validatorDeny = @()
 if ($null -ne $validatorTools -and $null -ne $validatorTools.deny) {
@@ -482,7 +505,6 @@ $validatorDeny = @(
     $validatorDeny +
     @(
         "classifire_submit_initial_physical_model",
-        "classifire_lock_physical_model",
         "classifire_derive_quantity_labour"
     ) |
     Sort-Object -Unique
@@ -493,27 +515,6 @@ $operations += [pscustomobject]@{
     value = $validatorDeny
 }
 
-$validatorSandboxAllow = @()
-
-if (
-    $null -ne $validatorTools -and
-    $null -ne $validatorTools.sandbox -and
-    $null -ne $validatorTools.sandbox.tools -and
-    $null -ne $validatorTools.sandbox.tools.alsoAllow
-) {
-    $validatorSandboxAllow = @(
-        $validatorTools.sandbox.tools.alsoAllow |
-        ForEach-Object { [string]$_ } |
-        Where-Object {
-            $_ -ne "classifire-controlled-write"
-        }
-    )
-}
-
-$operations += [pscustomobject]@{
-    path = "agents.list[$validatorIndex].tools.sandbox.tools.alsoAllow"
-    value = @($validatorSandboxAllow | Sort-Object -Unique)
-}
 
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $batchFile = Join-Path $env:TEMP "classifire-controlled-write-$stamp.batch.json"
@@ -628,6 +629,6 @@ if ($inspectResult.ExitCode -ne 0) {
 }
 
 Write-Host "CLASSIFIRE controlled-write plugin installed." -ForegroundColor Green
-Write-Host "Only cf-intake-evidence, cf-physical-model, cf-technical-system and cf-commercial-engine received controlled-write tools." -ForegroundColor Green
+Write-Host "Phase 8 admission-only profile active: only cf-physical-model received classifire_submit_initial_physical_model." -ForegroundColor Green
 Write-Host "OpenClaw PDF extraction allowance set to 200 pages for CLASSIFIRE report review." -ForegroundColor Green
 Write-Host "Human Release, library approval and generic estimate:write remain unavailable to agents." -ForegroundColor Green

@@ -29,8 +29,9 @@ AGENT_SCOPE_MAP: dict[str, set[str]] = {
         "workflow:read",
         "evidence:read",
         "physical:read",
-        "physical:write",
-        "physical:lock",
+        # This scope can execute only a pre-existing signed admission. It
+        # cannot submit arbitrary topology or create a physical-model lock.
+        "physical:adjudicated:submit",
     },
     "cf-technical-system": {
         "health:read",
@@ -162,14 +163,9 @@ def require_agent_scope(scope: str) -> Callable[..., AgentServicePrincipal]:
     def dependency(
         principal: Annotated[AgentServicePrincipal, Depends(authenticate_agent)],
     ) -> AgentServicePrincipal:
-        configured_scopes = AGENT_SCOPE_MAP.get(
-            principal.agent_id
-        )
+        configured_scopes = AGENT_SCOPE_MAP.get(principal.agent_id)
 
-        if (
-            configured_scopes is None
-            or scope not in configured_scopes
-        ):
+        if configured_scopes is None or scope not in configured_scopes:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Agent scope required: {scope}",

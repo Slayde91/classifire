@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from ..audit import record_audit
 from ..canonical_models import EvidenceSource, PhysicalModelLock
+from ..config import Settings, get_settings
 from ..db import get_db
 from ..models import Estimate, StoredFile, User
 from ..security import require_permission
@@ -45,10 +46,12 @@ def _estimate_or_404(db: Session, estimate_id: str) -> Estimate:
 def _active_physical_lock_exists(db: Session, estimate_id: str) -> bool:
     return bool(
         db.scalar(
-            select(PhysicalModelLock.id).where(
+            select(PhysicalModelLock.id)
+            .where(
                 PhysicalModelLock.estimate_id == estimate_id,
                 PhysicalModelLock.invalidated_at.is_(None),
-            ).limit(1)
+            )
+            .limit(1)
         )
     )
 
@@ -66,7 +69,9 @@ def register_evidence_source(
 ) -> dict[str, Any]:
     estimate = _estimate_or_404(db, estimate_id)
     if estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot accept new evidence")
+        raise HTTPException(
+            status_code=409, detail="Locked or released estimates cannot accept new evidence"
+        )
     if _active_physical_lock_exists(db, estimate.id):
         raise HTTPException(
             status_code=409,
@@ -115,7 +120,9 @@ def register_evidence_source(
             "region_reference": evidence.region_reference,
             "evidence_class": evidence.evidence_class,
         },
-        reason="Evidence registered for CLASSIFIRE physical-model workflow (QUANTIFIRE v2.13 lineage)",
+        reason=(
+            "Evidence registered for CLASSIFIRE physical-model workflow (QUANTIFIRE v2.13 lineage)"
+        ),
         source_ip=request.client.host if request.client else None,
     )
     db.commit()
@@ -133,11 +140,24 @@ def lock_physical_model(
     payload: PhysicalModelLockRequest,
     request: Request,
     db: Db,
+    settings: Annotated[Settings, Depends(get_settings)],
     user: Annotated[User, Depends(require_permission("estimate:write"))],
 ) -> dict[str, Any]:
     estimate = _estimate_or_404(db, estimate_id)
+    if settings.adjudicated_initial_submission_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail=(
+                "Generic Physical Model Lock creation is disabled while signed "
+                "adjudicated canonicalisation is enabled. A separate signed lock-admission "
+                "boundary is required."
+            ),
+        )
     if estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot change physical-model state")
+        raise HTTPException(
+            status_code=409,
+            detail="Locked or released estimates cannot change physical-model state",
+        )
     try:
         lock, created = create_physical_model_lock(db, estimate)
     except (WorkflowTransitionError, PhysicalModelLockError) as exc:

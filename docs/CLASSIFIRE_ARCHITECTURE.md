@@ -1,7 +1,7 @@
 # CLASSIFIRE Architecture
 
 **Document status:** Current pre-production architecture baseline  
-**Architecture version:** 3.15  
+**Architecture version:** 3.16
 **Application release basis:** CLASSIFIRE v2.13 runtime  
 **Current implementation focus:** Fire seals, blank openings/core holes and service penetrations  
 **Deferred domains:** Whole-run structural-steel protection and complete fire-rated duct runs
@@ -111,6 +111,14 @@ Evidence intake
 
 A failed gate returns the estimate to the earliest owning stage. Narrative status text is never a lock, validation receipt or approval.
 
+Where an estimate has no current canonical Opening, Service, or
+Service-Opening Link records, initial canonicalisation is an additional
+controlled transition before the Physical Model Lock. The required sequence is
+a hash-bound proposal-only preflight, fresh external P-256 admission,
+immutable admission-journal registration, same-transaction protected-state
+recheck, and exact initial canonical submission. Registration records
+authority only; it is neither a canonical submission nor a lock.
+
 ## 5. Evidence architecture
 
 CLASSIFIRE reviews each material source as a container and preserves file hash, page, region, photograph and extraction method. For reports containing photographs:
@@ -193,6 +201,24 @@ For service penetrations, blank openings/core holes and fire seals:
 - the assumption does not create a confirmed technical-system match.
 
 Asset-sensitive FRL rules for structural steel and complete fire-rated duct runs are recorded for later implementation and do not expand the current conformance scope.
+
+### 6.4 Admission-bound initial canonicalisation
+
+The private signing key remains outside CLASSIFIRE in the approved external
+keystore. A stale, rejected, or expired admission must not be reused. Direct
+database writes or a bypass of the admission journal are prohibited.
+
+The ORM, registration boundary, controlled writer, migrations, and tests now
+converge on the clean `0007` contract, and the exact current proposal passed a
+disposable-copy registration/submission rehearsal without changing the source
+database or creating a lock. The repository v0.5.0 plugin candidate has an
+explicit fail-closed profile that locally registers only the admission tool for
+`cf-physical-model`, while retaining broader tools inactive in source. The
+boundary is not yet deployed or operationally proven: the rebuilt plugin has
+not been installed/restarted and the live `cf-physical-model` credential does
+not yet have the admission-only scope.
+Those live changes and every real admission or canonical submission retain
+separate authority gates.
 
 ## 7. Technical Authority Registry
 
@@ -362,7 +388,7 @@ These future domains require additive physical-asset schemas, first-class measur
 
 The project remains pre-production until these gaps are closed:
 
-1. the real-report fire-seal UAT is rebuilt under the corrected blank-opening/photo-assumption policy and reaches a valid Physical Model Lock;
+1. the corrected real-report UAT proposal is made eligible for canonicalisation through approved writer deployment, runtime boundary verification, a current external signature, separately authorised registration, and separately authorised submission; a valid Physical Model Lock remains required afterward;
 2. the generic database workflow adapter is fully consolidated with the new scope-aware Opening completeness helper rather than retaining the prior every-Opening-has-a-Service assumption internally;
 3. FIREFLY technical search is proven on the corrected real physical model, including any blank openings/core holes;
 4. all selected-system components, quantities and labour are complete;
