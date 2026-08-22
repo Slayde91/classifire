@@ -2,7 +2,7 @@
 
 **Document status:** Active working roadmap
 
-**Roadmap version:** 2026-08-23 r6
+**Roadmap version:** 2026-08-23 r7
 
 **Product status:** Pre-production prototype and controlled UAT build
 
@@ -30,7 +30,7 @@ Nothing in a report, fixture, receipt, or attached reference document grants aut
 
 ### 2.1 Current product position
 
-CLASSIFIRE has a controlled evidence-to-physical-model prototype. Retained legacy-branch execution evidence shows report retention, image reconciliation, proposal-only Opening-Service modelling, an independent visual challenge, and protected-state checks. Current shared main contains the canonical runtime, admission-bound writer, bounded visual correction guard, proposal-blind inventory, and mandatory blind-reconciliation rules. It does not yet contain the controller, comparator, and linked-original components required to reproduce the complete historical proposal-only inference workflow.
+CLASSIFIRE has a controlled evidence-to-physical-model prototype. Retained legacy-branch execution evidence shows report retention, image reconciliation, proposal-only Opening-Service modelling, an independent visual challenge, and protected-state checks. Current shared main contains the canonical runtime, admission-bound writer, bounded visual correction guard, proposal-blind inventory, mandatory blind-reconciliation rules, and a deterministic proposal-only controller/receipt boundary. It does not yet contain the production inference transport, retained-evidence adapter, validation-only comparator, and linked-original resolver required to reproduce the complete historical proposal-only inference workflow.
 
 The prototype is not production-authorised. It does not yet have a corrected active Physical Model Lock for the current real-report UAT, and all technical, quantity, commercial, snapshot, output, and release work remains downstream-blocked by that missing lock.
 
@@ -41,11 +41,11 @@ The prototype is not production-authorised. It does not yet have a corrected act
 | Evidence integrity | Proposal-only runs protect the canonical estimate with a component-level protected-state fingerprint rather than relying on a whole-database file hash. |
 | Image quality | The report pipeline can discover report-provided linked originals, validate that they correspond to the displayed image, prefer verified full-resolution detail, and retain lower-resolution page context. |
 | Image provenance | Duplicate, crop, annotation, and page-context relationships are retained rather than silently collapsed when their visual information differs. |
-| Visual safety | Current main enforces bounded correction semantics, fail-closed visual receipts, proposal-blind inventory structure, and mandatory reconciliation. Isolated live visual-session execution remains historical UAT evidence until its controller is reconciled. |
-| Proposal-only safety | Gateway preflight is fail-closed, protected-state receipts are bound to proposal receipts, and proposal-only execution cannot submit or lock a canonical model. |
+| Visual safety | Current main enforces bounded correction semantics, fail-closed strict-schema visual receipts, proposal-blind inventory structure, mandatory reconciliation, ordered role separation, and protected-state checks after every inference exchange. Live current-main execution remains pending a real transport and retained-evidence adapter. |
+| Proposal-only safety | The controller has no database, canonical-write, admission, signing, registration, lock, device, or deployment capability; its inference requests expose no tools. Gateway preflight separately remains fail-closed. |
 | Reconciliation | The human-reference comparator binds proposal/final-state inputs by path and hash and detects topology/substrate swaps rather than matching disconnected multisets. |
 | Human adjudication | A provenance-bound, offline adjudicated proposal revision exists for the current UAT. It records human decisions separately from runtime inference and leaves canonical state unchanged. |
-| Controlled-writer Gate A | Latest code-bearing shared-main baseline `8c9393d` has a reproducible admission-only plugin artifact and clean candidate fingerprint `94047159...7D09`. The audit itself remains review-only. |
+| Controlled-writer Gate A | Latest code-bearing shared-main baseline `82ab568` has a reproducible admission-only plugin artifact and clean candidate fingerprint `73A73C21...41EE5`. The audit itself remains review-only. |
 | Gates B-F deployment | Migration `0008`, public-key policy, least-privilege scope reconciliation, plugin `0.5.0` upgrade/restart, and synthetic fail-closed validation are complete locally. The real UAT estimate remains unchanged and has no admission, submission receipt, canonical model, or active lock. |
 | Android admission signer | The non-debuggable `0.2.1-local` release APK is installed under the approved APK certificate. `governance-p256-02` exists as a hardware-backed, non-exportable P-256 key; only its independently verified public proof is configured in CLASSIFIRE. No admission has been signed. |
 
@@ -87,7 +87,7 @@ The original Phase 8 branch contained valuable UAT work but mixed physical, comm
 | Signed lock-admission | 1, 6, 8 | Not designed as a completed boundary. | Separate signed lock design and authority. |
 | Automated Physical-Model Accuracy Programme | 8C | Planned - not started. | Working prototype and the programme admission gate. |
 
-The former clean foundation stack is now merged through Layer 4. The dirty `gpt/phase8-linked-original-images` worktree remains an evidence/development source, not a safe bulk staging source. PRs #45-#47 reconciled the pure visual validation, bounded correction, blind inventory, and blind reconciliation guards onto shared main. The proposal-only controller/receipt orchestration, validation-only comparator, and linked-original resolver remain tracked in [GitHub issue #42](https://github.com/Slayde91/classifire/issues/42). Legacy stacked PRs #9-#13 must not be merged directly; each remaining valid change needs review against current abstractions, focused transplantation, and current-main tests.
+The former clean foundation stack is now merged through Layer 4. The dirty `gpt/phase8-linked-original-images` worktree remains an evidence/development source, not a safe bulk staging source. PRs #45-#49 reconciled the pure visual validation, bounded correction, blind inventory, blind reconciliation, malformed-input handling, and proposal-only controller/receipt onto shared main. The production inference transport, retained-evidence adapter, validation-only comparator, and linked-original resolver remain tracked in [GitHub issue #42](https://github.com/Slayde91/classifire/issues/42). Legacy stacked PRs #9-#13 must not be merged directly; each remaining valid change needs review against current abstractions, focused transplantation, and current-main tests.
 
 The controlled-write plugin's shipped dependency set currently has zero npm audit findings. Ten findings remain in the latest available OpenClaw development dependency, with no safe upstream OpenClaw release yet available. [GitHub issue #43](https://github.com/Slayde91/classifire/issues/43) tracks the update; forced dependency downgrades or overrides are not an accepted remedy.
 
@@ -98,6 +98,11 @@ The first canonical write must be admission-bound. A signed admission binds one 
 P-256 is the approved production admission protocol. The Samsung Galaxy S25 Ultra now holds `governance-p256-02` as a hardware-backed, non-exportable Android Keystore key. Its public proof was recovered read-only and independently verified before CLASSIFIRE was configured to trust that key only for issuer `classifire-governance`. The prior debug-app keys were retired with the debug app. No admission has been signed or registered, and the private key has not left the handset. The prior Ed25519 path remains superseded because it was unavailable from the tested Android Keystore provider.
 
 ### 2.7 Immediate major sequence
+
+Repository development and live governance remain separate. The next source
+step is the no-tool inference transport and retained-evidence adapter in issue
+#42. The operational sequence below remains gated and does not become
+authorised merely because the source work advances.
 
 1. **Completed:** publish and merge the fail-closed `0008` legacy-table retirement after proving it against a disposable copy of the configured database.
 2. **Completed:** create and restore-verify a recoverable backup, migrate the configured database to `0008`, and confirm protected rows and both empty current journals are unchanged.
@@ -292,18 +297,19 @@ Every known defect has a defensible physical model or an explicit evidence limit
 
 ### Verified behaviour
 
-- Historical controlled-UAT evidence shows Physical and Validator roles inspecting independently scoped visual evidence; the current-main controller is not yet restored.
+- Historical controlled-UAT evidence shows Physical and Validator roles inspecting independently scoped visual evidence. Current main now enforces that ordering through a dependency-injected controller and strict deterministic receipt.
 - Current main gives Validator corrections bounded authority and fails closed on malformed receipts, proposals, correction inputs, and ambiguous size-or-quantity authority.
 - Current main validates a proposal-blind Opening/Service inventory and requires each blind observation to receive one evidence-backed reconciliation disposition.
 - A non-supported or incomplete correction fails closed with limitations.
-- Sessions, prompts, selected visual files, and results are receipt-bound.
+- Evidence manifests, implementation revision, models, prompts, runtime policy, sessions, transports, stage requests, stage results, and protected-state fingerprints are receipt-bound.
 - Proposal-only operation prevents visual agents from submitting or locking the canonical model.
 
 ### Remaining work
 
-1. Persist and enforce a canonical VisualValidationReceipt in lock eligibility.
-2. Carry v4 correction semantics into production service boundaries.
-3. Broaden adversarial visual-gate tests beyond the current report.
+1. Implement a real no-tool inference transport and retained-evidence manifest adapter against the current controller.
+2. Reconcile the validation-only human comparator and linked-original resolver without exposing reference answers to inference.
+3. Persist and enforce a canonical VisualValidationReceipt in lock eligibility.
+4. Broaden adversarial visual-gate tests beyond the current report.
 
 ### Exit condition
 
@@ -318,7 +324,7 @@ An independently validated, durable visual receipt is required for every canonic
 ### Current verified milestones
 
 1. The old incorrect unlocked physical state was removed through controlled reopen while preserving evidence, defects, and historical lock records.
-2. Proposal-only safety, protected-state integrity, bounded correction policy, and comparator hardening were implemented and tested.
+2. Proposal-only safety, protected-state integrity, bounded correction policy, blind reconciliation, and deterministic controller/receipt orchestration were implemented and tested on current main. Comparator hardening remains historical until its current-main transplant is complete.
 3. Linked high-resolution originals were verified and made available to visual analysis.
 4. A full-resolution proposal-only UAT completed without canonical writes.
 5. A provenance-bound human-adjudication record and offline revised proposal were created for the exceptional source conflicts and withheld details.
