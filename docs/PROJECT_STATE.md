@@ -276,7 +276,7 @@ approved secret manager remains the only outstanding release handoff.
 ## Release-certificate custody complete
 
 The release certificate and its password were stored in the approved LastPass
-Business shared folder `CLASSIFIRE â€“ Release Signing`. Slayde Tana is the
+Business shared folder `CLASSIFIRE Ã¢â‚¬â€œ Release Signing`. Slayde Tana is the
 primary custodian and Sophie Richards is the recovery custodian; recovery access
 was confirmed before local cleanup.
 
@@ -285,3 +285,20 @@ The local Git-ignored `classifire-offline-signer-release.p12` certificate and
 worktree and their absence was verified. No private signing material is tracked
 in the repository. Future signing requires a controlled retrieval from the
 approved vault by an authorised custodian.
+## Certificate rotation in progress
+
+The prior local release certificate with SHA-256
+`32C42180007C0827E73E3A41FCBA6FCBFD194808AC374A8EF5449F1DABA0B383`
+is retired and must not be used. Its PKCS#12 password was not retained in the
+vault, so the certificate is unusable. No production-signed APK using that
+certificate was installed or distributed. The primary custodian must remove the
+obsolete certificate attachment from LastPass; no certificate authority or
+external registry revocation is required for this self-signed, undistributed
+credential.
+
+A replacement Git-ignored RSA-4096 release certificate was created with SHA-256
+`A0B852E6F4A6BCA69CB56D9640281D8B424EF13DFE491F128650E015BA2B4C36`.
+Its PKCS#12 file and separate password file remain locally only while the
+primary custodian uploads both to `CLASSIFIRE â€“ Release Signing` and Sophie
+Richards verifies recovery access. They must not be deleted until that explicit
+vault-custody confirmation is recorded.
