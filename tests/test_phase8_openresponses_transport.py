@@ -193,8 +193,12 @@ def _transport(
     *,
     guard: FakeGuard | None = None,
     token_provider=lambda: "secret-token",  # noqa: B008
+    runtime_agent_ids: dict[str, str] | None = None,
 ) -> tuple[Phase8OpenResponsesTransport, FakeGuard]:
     selected_guard = guard or FakeGuard()
+    selected_runtime_agent_ids = runtime_agent_ids or {
+        role: role for role in ("cf-physical-model", "cf-validator")
+    }
     client = httpx.Client(transport=httpx.MockTransport(handler))
     return (
         Phase8OpenResponsesTransport(
@@ -203,6 +207,7 @@ def _transport(
             token_provider=token_provider,
             evidence_packet=packet,
             session_guard=selected_guard,
+            runtime_agent_ids=selected_runtime_agent_ids,
             clock_ms=lambda: 1234567890,
         ),
         selected_guard,
@@ -259,6 +264,74 @@ def test_success_revalidates_bytes_and_emits_strict_no_tool_request(tmp_path: Pa
     assert str(packet.files[0].path) not in str(result)
 
 
+def test_logical_role_uses_dedicated_runtime_agent_identity(tmp_path: Path) -> None:
+    packet = _packet(tmp_path)
+    captured: dict[str, Any] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["headers"] = dict(request.headers)
+        return httpx.Response(200, json=_openresponses({"ok": True}))
+
+    transport, guard = _transport(
+        packet,
+        handler,
+        runtime_agent_ids={
+            "cf-physical-model": "cf-phase8-visual-physical",
+            "cf-validator": "cf-phase8-visual-validator",
+        },
+    )
+    request = _request(packet)
+
+    result = transport.invoke(
+        role="cf-validator",
+        stage="blind_inventory",
+        request=request,
+    )
+
+    assert result["agent_id"] == "cf-validator"
+    assert captured["headers"]["x-openclaw-agent-id"] == (
+        "cf-phase8-visual-validator"
+    )
+    assert guard.attestations[0]["agent_id"] == "cf-phase8-visual-validator"
+    assert guard.audits[0]["agent_id"] == "cf-phase8-visual-validator"
+    assert guard.attestations[0]["session_key"].startswith(
+        "agent:cf-phase8-visual-validator:classifire-phase8-"
+    )
+
+
+@pytest.mark.parametrize(
+    "runtime_agent_ids",
+    [
+        {"cf-validator": "cf-phase8-visual-validator"},
+        {
+            "cf-physical-model": "same-agent",
+            "cf-validator": "same-agent",
+        },
+        {
+            "cf-physical-model": "cf-phase8-visual-physical",
+            "cf-validator": "INVALID AGENT",
+        },
+    ],
+)
+def test_invalid_runtime_agent_mapping_is_rejected(
+    tmp_path: Path,
+    runtime_agent_ids: dict[str, str],
+) -> None:
+    packet = _packet(tmp_path)
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        Phase8OpenResponsesTransport(
+            client=httpx.Client(
+                transport=httpx.MockTransport(lambda request: httpx.Response(500))
+            ),
+            base_url="http://127.0.0.1:18789/v1",
+            token_provider=lambda: "token",
+            evidence_packet=packet,
+            session_guard=FakeGuard(),
+            runtime_agent_ids=runtime_agent_ids,
+        )
+    assert exc_info.value.code == "RUNTIME_AGENT_POLICY_INVALID"
+
+
 def base64_decode(value: str) -> bytes:
     import base64
 
@@ -276,6 +349,10 @@ def test_non_loopback_and_dns_gateway_names_are_rejected(tmp_path: Path) -> None
                 token_provider=lambda: "token",
                 evidence_packet=packet,
                 session_guard=FakeGuard(),
+                runtime_agent_ids={
+                    "cf-physical-model": "cf-physical-model",
+                    "cf-validator": "cf-validator",
+                },
             )
         assert exc_info.value.code == "GATEWAY_URL_FORBIDDEN"
 

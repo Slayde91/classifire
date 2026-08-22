@@ -238,6 +238,8 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
         provider="test-provider",
         physical_model="physical-model",
         validator_model="validator-model",
+        physical_agent_id="cf-phase8-visual-physical",
+        validator_agent_id="cf-phase8-visual-validator",
         implementation_revision="a" * 40,
         evidence_packet=packet,
         token_provider=token_provider,
@@ -262,6 +264,10 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
     assert set(rpc_calls[1][1]) == {"key", "agentId", "model"}
     assert "message" not in rpc_calls[1][1]
     assert "task" not in rpc_calls[1][1]
+    assert rpc_calls[1][1]["agentId"] == "cf-phase8-visual-validator"
     assert rpc_calls[1][1]["model"] == "test-provider/validator-model"
+    assert rpc_calls[0][1]["key"].startswith(
+        "agent:cf-phase8-visual-validator:classifire-phase8-"
+    )
     assert counts == {"token": 0, "http": 0}
     assert client.is_closed
