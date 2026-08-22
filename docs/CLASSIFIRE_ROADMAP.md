@@ -30,7 +30,7 @@ Nothing in a report, fixture, receipt, or attached reference document grants aut
 
 ### 2.1 Current product position
 
-CLASSIFIRE has a controlled evidence-to-physical-model prototype. It can retain report evidence, reconcile images, construct a proposal-only Opening-Service model, independently challenge the model through a visual gate, and preserve a protected canonical baseline while experiments run.
+CLASSIFIRE has a controlled evidence-to-physical-model prototype. Retained legacy-branch execution evidence shows report retention, image reconciliation, proposal-only Opening-Service modelling, an independent visual challenge, and protected-state checks. The current shared-main foundation contains the canonical runtime and admission-bound writer, but it does not yet contain the complete historical proposal-only visual toolchain needed to reproduce that inference workflow.
 
 The prototype is not production-authorised. It does not yet have a corrected active Physical Model Lock for the current real-report UAT, and all technical, quantity, commercial, snapshot, output, and release work remains downstream-blocked by that missing lock.
 
@@ -78,16 +78,18 @@ The original Phase 8 branch contained valuable UAT work but mixed physical, comm
 
 | Foundation workstream | Roadmap phases supported | Recorded factual status | Remaining evidence before completion |
 | --- | --- | --- | --- |
-| Layer 1 - runtime foundation | 0, 15 | Draft foundation; recorded tip `b4eef5d`. | Current PR/CI status refresh before merge. |
-| Layer 2 - physical foundation | 1, 6, 8 | Draft foundation; recorded tip `8606b67`. | Final cross-layer review and merge sequencing. |
-| Layer 3 - least-privilege agents | 3, 15 | Draft foundation; recorded tip `57fe33f`. | Clean plugin rebuild and deployment rehearsal. |
+| Layer 1 - runtime foundation | 0, 15 | **Merged** through PR #16 and present on shared main. | Broader CI and production-hardening evidence. |
+| Layer 2 - physical foundation | 1, 6, 8 | **Merged** through PR #17 and present on shared main. | Complete Phase 8 canonicalisation and the separately governed lock boundary. |
+| Layer 3 - least-privilege agents | 3, 15 | **Merged and locally deployment-validated** through PRs #18, #20, #25, and Gates D-E. | Revalidate in each different deployment environment. |
 | Layer 4 - P-256 admission/writer | 1, 3, 6, 8, 15 | **Deployment validated through Gate F**; writer, reconciled journal, key policy, and runtime boundary are active locally. | Fresh preflight, external signature, offline registration, and separate one-time write authority. |
 | Controlled plugin rebuild | 3, 15 | **Verified complete for the local deployment.** Exact-main `0.5.0` is installed under `phase8-admission-only`, restarted, and boundary-tested. | Revalidate for any different environment or source revision. |
 | Controlled canonicalisation | 8 | Blocked at the intended governance boundary. | Fresh preflight, external signature, admission registration, and separate write authority. |
 | Signed lock-admission | 1, 6, 8 | Not designed as a completed boundary. | Separate signed lock design and authority. |
 | Automated Physical-Model Accuracy Programme | 8C | Planned - not started. | Working prototype and the programme admission gate. |
 
-The recorded draft PR stack is `main -> Layer 1 -> Layer 2 -> Layer 3 -> Layer 4`. Those references are prior verified session evidence; GitHub state must be refreshed before a merge or publication decision. The dirty `gpt/phase8-linked-original-images` worktree remains an evidence/development source, not a safe bulk staging source.
+The former clean foundation stack is now merged through Layer 4. The dirty `gpt/phase8-linked-original-images` worktree remains an evidence/development source, not a safe bulk staging source. Its still-valid proposal-only visual implementation is absent from shared main and is tracked for clean reconciliation in [GitHub issue #42](https://github.com/Slayde91/classifire/issues/42). Legacy stacked PRs #9-#13 must not be merged directly; each valid change needs review against current abstractions, focused transplantation, and current-main tests.
+
+The controlled-write plugin's shipped dependency set currently has zero npm audit findings. Ten findings remain in the latest available OpenClaw development dependency, with no safe upstream OpenClaw release yet available. [GitHub issue #43](https://github.com/Slayde91/classifire/issues/43) tracks the update; forced dependency downgrades or overrides are not an accepted remedy.
 
 ### 2.6 Controlled canonicalisation and signer direction
 

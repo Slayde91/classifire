@@ -15,9 +15,10 @@ material and device deployment.
 ## Current repository reconciliation - 2026-08-23
 
 Shared `main` is at
-`1c20783f1b64756359438fd8d90f98b0cb55d909`. The exact-main Android signer
-recovery correction is merged, and the installed non-debuggable release APK is
-version `0.2.1-local` with SHA-256
+`5b5ef13cb801d148deab62744b946ace3ed435e3` after the Gate C-F documentation
+merge. The latest code-bearing deployment base remains `1c20783f`, where the
+exact-main Android signer recovery correction is merged. The installed
+non-debuggable release APK is version `0.2.1-local` with SHA-256
 `63CFCEE4ADD2D7C87D94FEE628A9898EF0194667FF5AD9BC2B2B16932FA1C075`.
 Android signature scheme v3 verifies with the approved release certificate
 SHA-256
@@ -85,6 +86,32 @@ The deployment stop boundary is reached. A fresh no-write preflight, external
 signature, offline registration, one-time canonical submission, and any future
 Physical Model Lock each remain separate governed operations. The lock boundary
 is not yet designed or approved.
+
+### Shared-main and GitHub reconciliation
+
+The clean foundation stack and deployment documentation are published on shared
+`main`, but the retained proposal-only visual UAT implementation is not yet
+reproducible from that branch. The blind Validator inventory, protected
+proposal-only runner, visual correction/comparison tooling, and linked-original
+image resolver remain only in legacy stacked draft PRs #9-#13. The legacy branch
+differs from current main across 407 paths and must not be merged wholesale.
+Historical UAT receipts remain evidence of what was executed, not proof that the
+same workflow is present on shared main.
+
+GitHub issue [#42](https://github.com/Slayde91/classifire/issues/42) now tracks a
+clean current-main reconciliation of the still-valid visual tooling. Legacy PRs
+#7, #8, and #15 were closed as superseded by the clean foundations already
+merged through PRs #16-#25 and the later Gate A-F hardening. PRs #9-#13 remain
+open because they still contain implementation that requires review and
+transplanting; their stale stacked bases are not merge candidates.
+
+The controlled-write plugin has zero production dependency findings under
+`npm audit --omit=dev`. The full audit reports 10 findings (3 moderate and 7
+high), all under the pinned OpenClaw development dependency. Installed and
+npm-latest OpenClaw are both `2026.7.1-2`, so no safe upstream upgrade currently
+exists; forced downgrade or override remediation was not applied. GitHub issue
+[#43](https://github.com/Slayde91/classifire/issues/43) tracks the upstream
+update and required compatibility revalidation.
 
 ## Superseded repository reconciliation - 2026-08-22
 

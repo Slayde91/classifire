@@ -46,6 +46,22 @@ still requires separate design and approval. This note supersedes older
 current-state and next-action wording below while preserving it as session
 history.
 
+Shared `main` is now `5b5ef13cb801d148deab62744b946ace3ed435e3` after the
+Gate C-F documentation merge; the latest code-bearing deployment base remains
+`1c20783f`. A subsequent GitHub reconciliation confirmed that the clean
+foundation and admission writer are published, while the retained proposal-only
+visual UAT toolchain still exists only in legacy stacked draft PRs #9-#13. Those
+branches differ from current main across 407 paths and are not safe direct merge
+candidates. Issue [#42](https://github.com/Slayde91/classifire/issues/42) tracks
+clean transplantation and current-main verification. Superseded PRs #7, #8, and
+#15 were closed without deleting their branches.
+
+The controlled-write plugin's production dependencies have zero npm audit
+findings. Ten findings remain confined to the latest available OpenClaw
+development dependency; issue
+[#43](https://github.com/Slayde91/classifire/issues/43) tracks the required
+upstream update and compatibility testing. No forced fix was applied.
+
 ## Purpose and authority boundary
 
 This session continued from merged main `e2f646b` on
