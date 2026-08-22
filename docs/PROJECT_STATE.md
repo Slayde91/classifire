@@ -1,7 +1,7 @@
 # CLASSIFIRE Project State
 
 **Verified snapshot:** 2026-08-23 (AEST)
-**Latest code-bearing base:** `8c9393d` (merged Phase 8 visual-input PR #47)
+**Latest code-bearing base:** `82ab568` (merged Phase 8 controller PR #49)
 **Current scope:** Gates A-F deployment validation remains complete without a
 real admission or canonical submission. Repository work is separately
 reconciling the retained proposal-only visual toolchain through issue #42; any
@@ -16,12 +16,18 @@ material and device deployment.
 ## Current repository reconciliation - 2026-08-23
 
 The latest code-bearing shared-main baseline is
-`8c9393d9763c51917e5268086d89e90973359294` after Phase 8 reconciliation
-PRs #45-#47. That source baseline includes the bounded Validator-to-Physical
-correction guard, the proposal-blind Opening/Service inventory and mandatory
-reconciliation ledger, and fail-closed top-level JSON input handling. These are
-pure validation components; they do not perform inference or write canonical
-state. The installed
+`82ab568f09df8f5fe66aba01a208e849425d25aa` after Phase 8 reconciliation
+PRs #45-#49. Current main includes the bounded Validator-to-Physical correction
+guard, proposal-blind Opening/Service inventory, mandatory reconciliation
+ledger, fail-closed JSON input handling, and a dependency-injected
+proposal-only controller. The controller enforces the independent
+blind-Validator, Physical, conditioned-Validator, bounded-correction sequence;
+checks protected canonical state after every inference exchange; and emits a
+strict deterministic receipt bound to evidence, implementation, prompt,
+runtime, model, session, and transport hashes. It exposes no database,
+canonical-write, admission, signing, registration, lock, device, or deployment
+capability. A real OpenClaw inference transport and retained-evidence manifest
+adapter are not yet implemented. The installed
 non-debuggable release APK is version `0.2.1-local` with SHA-256
 `63CFCEE4ADD2D7C87D94FEE628A9898EF0194667FF5AD9BC2B2B16932FA1C075`.
 Android signature scheme v3 verifies with the approved release certificate
@@ -37,14 +43,14 @@ as EC P-256 (`secp256r1`) with public-key fingerprint
 `ezFTerydT4IahBteapQDRM8RiQXi6J4z9AmQdyQ0z_0`. The private key remains
 non-exportable in Android Keystore and is not configured in CLASSIFIRE.
 
-Gate A was rerun against clean exact main after PR #47. The rebuilt plugin
+Gate A was rerun against clean exact main after PR #49. The rebuilt plugin
 artifact remains
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`;
 the revision-bound candidate fingerprint is
-`9404715961FA9ACEF9A187173FA3375F03536B1EAE54562A309E23701F187D09`.
-Fifty exact-main visual, blind-inventory, plugin-profile, and auditor tests
-pass. The full repository suite passes 150 tests under the documented
-fail-closed initial-submission setting.
+`73A73C2172C0E43304B63B92D9E6B8BF784E89A694B16D4C4BDEE07418041EE5`.
+Eighty-nine exact-main visual-controller, blind-inventory, plugin-profile, and
+auditor tests pass. The full repository suite passes 189 tests under the
+documented fail-closed initial-submission setting.
 
 Gate B remains verified at migration
 `0008_retire_legacy_initial_submissions`. Gate C now trusts only
@@ -95,14 +101,16 @@ is not yet designed or approved.
 ### Shared-main and GitHub reconciliation
 
 The clean foundation stack and deployment documentation are published on shared
-`main`. PRs #45-#47 have also reconciled the pure visual receipt, correction,
-blind-inventory, and blind-reconciliation guards with current-main tests. The
-complete proposal-only execution workflow is still not reproducible from shared
-main: its controller/receipt orchestration, validation-only human comparator,
-and linked-original image resolver remain to be reconciled from legacy stacked
-draft PRs #9-#13. The legacy branch differs materially from current main and
-must not be merged wholesale. Historical UAT receipts remain evidence of what
-was executed, not proof that the remaining workflow is present on shared main.
+`main`. PRs #45-#49 have reconciled the visual receipt and bounded correction,
+blind inventory and reconciliation, malformed-input guards, and proposal-only
+controller with current-main tests. The complete historical proposal-only
+workflow is still not reproducible from shared main: the controller currently
+has no production inference transport or retained-evidence adapter, and the
+validation-only human comparator and linked-original image resolver remain to
+be reconciled from legacy stacked draft PRs #9-#13. The legacy branch differs
+materially from current main and must not be merged wholesale. Historical UAT
+receipts remain evidence of what was executed, not proof that the remaining
+adapters and comparison workflow are present on shared main.
 
 GitHub issue [#42](https://github.com/Slayde91/classifire/issues/42) tracks the
 remaining clean current-main reconciliation and records the merged checkpoints.

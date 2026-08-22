@@ -3,29 +3,35 @@
 ## Current superseding repository note - 2026-08-23
 
 The latest code-bearing shared-main baseline is
-`8c9393d9763c51917e5268086d89e90973359294`, merged through PR #47. PRs
-#45-#47 cleanly reconciled the pure visual receipt and bounded-correction guard,
-the proposal-blind inventory and reconciliation ledger, and fail-closed
-top-level JSON handling. The full repository suite passes 150 tests under the
-documented fail-closed initial-submission setting; 50 exact-main visual,
+`82ab568f09df8f5fe66aba01a208e849425d25aa`, merged through PR #49. PRs
+#45-#49 cleanly reconciled the visual receipt and bounded-correction guard,
+proposal-blind inventory and reconciliation ledger, fail-closed JSON handling,
+and a dependency-injected proposal-only controller. The controller enforces
+independent blind-Validator, Physical, conditioned-Validator, and bounded
+correction stages; checks protected canonical state after every inference
+exchange; and emits a strict deterministic receipt. It has no database,
+canonical-write, admission, signing, registration, lock, device, or deployment
+capability. The full repository suite passes 189 tests under the documented
+fail-closed initial-submission setting; 89 exact-main visual-controller,
 blind-inventory, plugin-profile, and Gate A auditor tests also pass.
 
 The ignored controlled-write plugin artifact was rebuilt from exact main and
 remains SHA-256
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`.
 The read-only Gate A candidate for this revision is
-`9404715961FA9ACEF9A187173FA3375F03536B1EAE54562A309E23701F187D09`;
+`73A73C2172C0E43304B63B92D9E6B8BF784E89A694B16D4C4BDEE07418041EE5`;
 the audit records `deployment_authorised=false` and
 `live_change_performed=false`.
 
 Issue [#42](https://github.com/Slayde91/classifire/issues/42) remains open.
-The next source task is clean current-main controller/receipt integration. The
-validation-only human comparator and linked-original resolver also remain to
-be reconciled. Do not port the legacy protected-state implementation: current
-main's canonical submission-state and adjudicated receipt services supersede
-that architecture. No admission was created or signed, no registration,
-canonical write, or lock occurred, and nothing was deployed in this source
-reconciliation.
+The next source task is a current-main no-tool inference transport and
+retained-evidence manifest adapter for the new controller. The validation-only
+human comparator and linked-original resolver also remain to be reconciled.
+Do not port the legacy protected-state implementation: current main's canonical
+submission-state and adjudicated receipt services supersede that architecture.
+No inference-provider request was made, no admission was created or signed, no
+registration, canonical write, or lock occurred, and nothing was deployed in
+this source reconciliation.
 
 This repository note supersedes older shared-main revision, Gate A candidate,
 and visual-tooling availability wording below. The operational Gate B-F state
