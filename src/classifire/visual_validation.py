@@ -81,7 +81,10 @@ _SERVICE_MATERIAL_FIELDS = frozenset(
 )
 
 
-def proposal_topology_counts(proposal: dict[str, Any]) -> tuple[int, int]:
+def proposal_topology_counts(proposal: Any) -> tuple[int, int]:
+    if not isinstance(proposal, dict):
+        return (-1, -1)
+
     openings = proposal.get("openings")
     services = proposal.get("services")
     return (
@@ -91,8 +94,8 @@ def proposal_topology_counts(proposal: dict[str, Any]) -> tuple[int, int]:
 
 
 def validate_visual_validator_payload(
-    payload: dict[str, Any],
-    proposal: dict[str, Any],
+    payload: Any,
+    proposal: Any,
 ) -> list[str]:
     """Validate one independent visual-validator receipt.
 
@@ -102,6 +105,13 @@ def validate_visual_validator_payload(
     """
 
     issues: list[str] = []
+    if not isinstance(payload, dict):
+        issues.append("validator receipt must be an object")
+        payload = {}
+    if not isinstance(proposal, dict):
+        issues.append("proposal must be an object")
+        proposal = {}
+
     verdict = str(payload.get("verdict") or "").strip().upper()
     if verdict not in VISUAL_VALIDATOR_VERDICTS:
         issues.append(f"validator verdict must be one of {sorted(VISUAL_VALIDATOR_VERDICTS)}")
@@ -155,14 +165,19 @@ def validate_visual_validator_payload(
     return list(dict.fromkeys(issues))
 
 
-def visual_validator_approved(payload: dict[str, Any], proposal: dict[str, Any]) -> bool:
-    return str(
-        payload.get("verdict") or ""
-    ).strip().upper() == "APPROVED" and not validate_visual_validator_payload(payload, proposal)
+def visual_validator_approved(payload: Any, proposal: Any) -> bool:
+    return (
+        isinstance(payload, dict)
+        and str(payload.get("verdict") or "").strip().upper() == "APPROVED"
+        and not validate_visual_validator_payload(payload, proposal)
+    )
 
 
-def visual_validator_issue_codes(payload: dict[str, Any]) -> frozenset[str]:
+def visual_validator_issue_codes(payload: Any) -> frozenset[str]:
     """Return the supported structured issue codes in one Validator receipt."""
+
+    if not isinstance(payload, dict):
+        return frozenset()
 
     raw_issues = payload.get("issues")
     if not isinstance(raw_issues, list):
@@ -211,9 +226,9 @@ def _normalised_topology_value(field: str, value: Any) -> Any:
 
 
 def validate_visual_correction_scope(
-    previous: dict[str, Any],
-    corrected: dict[str, Any],
-    validator: dict[str, Any],
+    previous: Any,
+    corrected: Any,
+    validator: Any,
 ) -> list[str]:
     """Reject Physical corrections outside the Validator's structured issues.
 
@@ -222,6 +237,16 @@ def validate_visual_correction_scope(
     survived a correction pass; additions, removals, links, classes, material,
     dimensions and quantities then require their own explicit authority.
     """
+
+    boundary_errors: list[str] = []
+    if not isinstance(previous, dict):
+        boundary_errors.append("previous proposal must be an object")
+    if not isinstance(corrected, dict):
+        boundary_errors.append("corrected proposal must be an object")
+    if not isinstance(validator, dict):
+        boundary_errors.append("validator receipt must be an object")
+    if boundary_errors:
+        return boundary_errors
 
     issue_codes = visual_validator_issue_codes(validator)
     if not issue_codes:
