@@ -1,10 +1,46 @@
 # CLASSIFIRE Architecture
 
-**Document status:** Current pre-production architecture baseline  
-**Architecture version:** 3.15  
-**Application release basis:** CLASSIFIRE v2.13 runtime  
-**Current implementation focus:** Fire seals, blank openings/core holes and service penetrations  
+**Document status:** Current pre-production target architecture reconciled with implementation
+
+**Architecture version:** 3.17
+
+**Application release basis:** CLASSIFIRE v2.13 runtime
+
+**Current implementation focus:** Fire seals, blank openings/core holes and service penetrations
+
 **Deferred domains:** Whole-run structural-steel protection and complete fire-rated duct runs
+
+## 0. Implementation scope and status
+
+This document defines the architecture that remains valid and records where the
+repository has or has not reached it. It must be read with
+[`PROJECT_STATE.md`](./PROJECT_STATE.md) and the roadmap. Current executable
+code and tests determine implementation status; this document does not turn a
+designed component into an operationally complete phase.
+
+| Architecture area | Repository evidence | Current status |
+| --- | --- | --- |
+| Core application | FastAPI, server-rendered UI, Typer CLI, SQLAlchemy and Alembic | Completed foundation; pre-production |
+| Evidence and physical proposal | Report/image runners, linked-original resolution, provenance and visual challenge | Completed for the controlled UAT path; generalisation in progress |
+| Canonical physical model | Opening/Service/link models, scope-aware lock service and admission-bound initial submission | In progress; current UAT has no canonical model or active lock |
+| Technical through Human Release | Guarded services, persistence and reference-fixture tests | Implemented foundations; blocked for the current UAT by the missing Physical Model Lock |
+| OpenClaw/Mission Control | Role-scoped API/plugin contracts and Mission Control client/bootstrap | In progress; live reproducibility and deployment proof incomplete |
+| External admission signer | Offline Android signer exists on shared `main` | Implemented and bounded; not present in this checked-out branch and not proof of an admission |
+| Production operation | Security settings and fail-closed gates exist | In progress; clean deployment, recovery, performance and monitoring gates incomplete |
+
+### 0.1 Repository divergence that affects architecture
+
+The checked-out branch uses records spread across `models.py`,
+`canonical_models.py` and `commercial_models.py`. Shared `main` contains the
+newer admission lineage around `physical_models.py`. Both expose related
+physical concepts, but they are not interchangeable source trees and must be
+reconciled through reviewed changes rather than a wholesale branch merge.
+
+The application also registers guarded phase-specific routers before an
+overlapping legacy v1 router. Ordering protects the newer hard gates in known
+duplicate paths, but the public API remains a compatibility composition rather
+than one fully consolidated service surface. Legacy routes and models are
+therefore compatibility debt, not a second approved architecture.
 
 ## 1. Product purpose
 
@@ -61,6 +97,14 @@ The CLASSIFIRE application owns:
 
 The database is the system of record. Chat transcripts, agent memory and Mission Control task text are never authoritative Project state.
 
+The implemented application includes both human-facing and role-scoped agent
+APIs for later workflow stages. Their presence is deliberate reuse of one
+domain service layer, but operational eligibility is always derived from
+persisted gate records. For the current Phase 8 estimate, a read-only database
+check found no canonical physical model, downstream strategy, snapshot or
+release approval; the later services therefore remain inaccessible through the
+workflow guards.
+
 ### 3.2 OpenClaw
 
 OpenClaw provides model execution, agent workspaces, tool policy and runtime sessions. Models may extract, classify, compare, estimate, propose and challenge. They may not directly approve, release, change authority or overwrite canonical records.
@@ -78,6 +122,13 @@ Current specialist roles:
 - `cf-platform-governance`
 
 Every state-changing agent action must use a role-scoped CLASSIFIRE service contract. Generic database writes and generic Human Release tools remain prohibited.
+
+The current local controlled-write plugin is version `0.5.0`. Its default
+`phase8-admission-only` profile registers only
+`classifire_submit_initial_physical_model` for `cf-physical-model`; broader
+tools remain inactive source inventory. The profile is not proof that a loaded
+Gateway is running that artifact or that the role has the required persisted
+credential scope.
 
 ### 3.3 Mission Control
 
@@ -110,6 +161,14 @@ Evidence intake
 ```
 
 A failed gate returns the estimate to the earliest owning stage. Narrative status text is never a lock, validation receipt or approval.
+
+Where an estimate has no current canonical Opening, Service, or
+Service-Opening Link records, initial canonicalisation is an additional
+controlled transition before the Physical Model Lock. The required sequence is
+a hash-bound proposal-only preflight, fresh external P-256 admission,
+immutable admission-journal registration, same-transaction protected-state
+recheck, and exact initial canonical submission. Registration records
+authority only; it is neither a canonical submission nor a lock.
 
 ## 5. Evidence architecture
 
@@ -193,6 +252,48 @@ For service penetrations, blank openings/core holes and fire seals:
 - the assumption does not create a confirmed technical-system match.
 
 Asset-sensitive FRL rules for structural steel and complete fire-rated duct runs are recorded for later implementation and do not expand the current conformance scope.
+
+### 6.4 Admission-bound initial canonicalisation
+
+The private signing key remains outside CLASSIFIRE in the approved external
+keystore. A stale, rejected, or expired admission must not be reused. Direct
+database writes or a bypass of the admission journal are prohibited.
+
+The local migration graph converges on
+`0007_reconcile_adjudicated_admission_lineages`. The local writer verifies a
+short-lived P-256 admission, immutable admission registration, an exact
+preflight/payload/protected-state binding, same-transaction state recheck,
+single-use consumption and idempotent submission receipt. It cannot create a
+Physical Model Lock. Focused tests and a disposable-copy rehearsal support the
+boundary, while the source database remains unchanged.
+
+The current 17-Opening/24-Service/24-link proposal has only a no-write v6
+preflight. An immutable read-only database check confirms zero canonical
+Openings, Services, links, admissions, submission receipts and active Physical
+Model Locks for that estimate. The proposal is not canonical.
+
+Shared `main` contains a reconciled admission-writer lineage and a read-only
+deployment-candidate auditor, but its clean candidate is missing the required
+compiled plugin artifact. The auditor therefore returns
+`LOCAL_CANDIDATE_REQUIRED_ARTIFACT_MISSING`. The compiled artifact in this dirty
+divergent checkout is not a substitute. Deployment/runtime proof and every real
+admission, registration, submission and later lock remain separate gates.
+
+### 6.5 Offline external signer
+
+Shared `main` contains an Android admission signer as a separate offline trust
+boundary. Its manifest declares only biometric permission, disables backup and
+cleartext traffic, and has no Internet permission. The app validates the exact
+admission manifest, displays its bindings, requires strong biometric approval,
+uses a hardware-backed Android Keystore P-256 key, normalises and locally
+verifies low-S ECDSA, and exports the signed JSON through a local document
+picker.
+
+The signer cannot register an admission, contact CLASSIFIRE, submit canonical
+records or create a lock. Its private admission key is non-exportable. APK
+release signing and Android admission signing are separate credentials and
+governance concerns. The signer is absent from this checked-out branch, so its
+shared-main implementation must not be confused with the local writer source.
 
 ## 7. Technical Authority Registry
 
@@ -329,6 +430,11 @@ Required output families include:
 - estimate certificate;
 - assumptions, qualifications and non-reliance language appropriate to the estimate class.
 
+PDF and XLSX renderers plus guarded human and agent export routes are present.
+They require the current immutable validated snapshot and matching validation
+state. No output for the current Phase 8 estimate is eligible, and this
+reconciliation did not inspect a representative rendered artifact.
+
 ## 14. Performance architecture
 
 The real-report UAT runners are forensic tools, not the production latency target. Production processing should:
@@ -362,14 +468,27 @@ These future domains require additive physical-asset schemas, first-class measur
 
 The project remains pre-production until these gaps are closed:
 
-1. the real-report fire-seal UAT is rebuilt under the corrected blank-opening/photo-assumption policy and reaches a valid Physical Model Lock;
-2. the generic database workflow adapter is fully consolidated with the new scope-aware Opening completeness helper rather than retaining the prior every-Opening-has-a-Service assumption internally;
-3. FIREFLY technical search is proven on the corrected real physical model, including any blank openings/core holes;
-4. all selected-system components, quantities and labour are complete;
-5. approved productivity coverage exists for required activities;
-6. knowledge-source publication and hash verification are completed in the private repository;
-7. stale legacy identifiers and branding assets are removed or quarantined;
-8. Package 15/17 wording is consistently represented as FIREFLY library scope under the Technical Authority Registry;
-9. source-version anomalies are governed rather than silently rewritten;
-10. security, backup/restore, rollback and scale tests pass;
-11. a competent human approves production release.
+1. Reconcile the divergent checked-out branch with the current shared-main
+   physical/admission model and migration lineage through reviewed, bounded
+   changes rather than a wholesale merge.
+2. Produce a reproducible shared-main controlled-write plugin artifact and pass
+   the read-only Gate A audit before any deployment review.
+3. Complete approved deployment and live least-privilege runtime proof before a
+   fresh preflight or external signature is considered.
+4. Canonicalise and independently reconcile the corrected real-report Physical
+   Model through its governed boundary, then design and approve the separate
+   signed lock-admission boundary required for a replacement active lock.
+5. Consolidate the generic database workflow adapter with the scope-aware
+   Opening completeness helper; it still assumes every Opening has a Service.
+6. Retire or isolate overlapping legacy v1 routes and duplicated model paths
+   after compatibility impact is understood.
+7. Prove FIREFLY technical selection, component generation, quantities, labour
+   and commercial recovery on the corrected locked model, including blank
+   Openings and incomplete productivity coverage.
+8. Complete private knowledge-source publication, registry-neutral technical
+   provenance, multi-library pinning and removal of the schema-level Service
+   quantity default.
+9. Perform rendered-output QA, security, backup/restore, rollback, scale,
+   observability and clean-machine deployment tests.
+10. Preserve human-only acceptance of the exact validated snapshot and output
+    hashes before production release.
