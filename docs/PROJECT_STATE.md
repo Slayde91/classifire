@@ -270,21 +270,16 @@ canonical submission, or lock operation was performed.
 
 The separately signed production release APK was not installed on the device:
 Android correctly rejects it as an incompatible update because the existing app
-uses the debug certificate. The controlled release artifact and its verification
-evidence remain valid; certificate-custody transfer to the organisation's
-approved secret manager remains the only outstanding release handoff.
-## Release-certificate custody complete
+uses the debug certificate. The verification record remains valid, but every cached signed APK from the
+retired certificate has been removed. Certificate-custody transfer for the
+replacement remains the only outstanding release handoff.
 
-The release certificate and its password were stored in the approved LastPass
-Business shared folder `CLASSIFIRE Ã¢â‚¬â€œ Release Signing`. Slayde Tana is the
-primary custodian and Sophie Richards is the recovery custodian; recovery access
-was confirmed before local cleanup.
+## Superseded prior certificate-custody record
 
-The local Git-ignored `classifire-offline-signer-release.p12` certificate and
-`release-storepass.txt` password files were then deleted from the signing
-worktree and their absence was verified. No private signing material is tracked
-in the repository. Future signing requires a controlled retrieval from the
-approved vault by an authorised custodian.
+An earlier handoff entry incorrectly stated that both the prior certificate and
+its password had been retained in LastPass. The password was not retained, and
+the local copies were deleted, so that certificate is unusable. This record is
+superseded by the certificate-rotation state below.
 ## Certificate rotation in progress
 
 The prior local release certificate with SHA-256
@@ -302,3 +297,11 @@ Its PKCS#12 file and separate password file remain locally only while the
 primary custodian uploads both to `CLASSIFIRE â€“ Release Signing` and Sophie
 Richards verifies recovery access. They must not be deleted until that explicit
 vault-custody confirmation is recorded.
+
+## Retired release-artifact cleanup
+
+On 2026-08-22, the two ignored 140,079-byte APK caches signed with the retired
+certificate were deleted: one from the original signer worktree and one from
+the release-evidence worktree. Both paths were checked after deletion and were
+absent. No old-certificate production APK remains available for accidental
+installation or distribution.
