@@ -3,7 +3,10 @@
 ## Decision
 
 The reviewed clean-stack database head is
-`0007_reconcile_adjudicated_admission_lineages`. A database reporting
+`0008_retire_legacy_initial_submissions`. Revision `0008` follows the
+`0007_reconcile_adjudicated_admission_lineages` merge migration and removes a
+stray `physical_model_initial_submissions` table only when it is empty. A
+database reporting
 `0006_adjudicated_canonical_admissions` belongs to the unreviewed legacy Phase 8
 lineage and must not be stamped, upgraded, or used as the deployment target
 without a separately approved rehearsal.
@@ -13,8 +16,15 @@ without a separately approved rehearsal.
 Run `scripts/check_adjudicated_deployment_lineage.py` in the exact deployment
 environment. It reads only Alembic and table metadata and returns one of:
 
-- `CLEAN_STACK_HEAD_CONFIRMED`: the configured database is at the reviewed head
-  and contains both admission journal tables;
+- `CLEAN_STACK_HEAD_CONFIRMED`: the configured database is at the reviewed head,
+  contains both current admission journal tables, and contains no retired
+  initial-submission table;
+- `LEGACY_INITIAL_SUBMISSION_RETIREMENT_REQUIRED`: the database is at `0007`
+  with the empty legacy table shape that requires the reviewed `0008` migration;
+- `DATABASE_MIGRATION_REQUIRED`: the database is at `0007` without that drift
+  but still requires the no-op head transition;
+- `DEPLOYMENT_SCHEMA_DRIFT`: the database claims the current head while a
+  required table is missing or a retired table is present;
 - `LEGACY_LINEAGE_REHEARSAL_REQUIRED`: the database uses the legacy competing
   revision and requires a disposable-copy transition rehearsal;
 - `DEPLOYMENT_LINEAGE_UNRECOGNISED`: the revision or required tables do not match

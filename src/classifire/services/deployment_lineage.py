@@ -7,7 +7,8 @@ from dataclasses import asdict, dataclass
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-CLEAN_STACK_HEAD = "0007_reconcile_adjudicated_admission_lineages"
+CLEAN_STACK_HEAD = "0008_retire_legacy_initial_submissions"
+PREVIOUS_CLEAN_STACK_HEAD = "0007_reconcile_adjudicated_admission_lineages"
 LEGACY_ADJUDICATED_HEAD = "0006_adjudicated_canonical_admissions"
 REQUIRED_TABLES = frozenset(
     {
@@ -15,6 +16,7 @@ REQUIRED_TABLES = frozenset(
         "physical_model_submission_receipts",
     }
 )
+RETIRED_TABLES = frozenset({"physical_model_initial_submissions"})
 
 
 @dataclass(frozen=True)
@@ -23,6 +25,7 @@ class DeploymentLineageAssessment:
     code: str
     alembic_revisions: tuple[str, ...]
     missing_tables: tuple[str, ...]
+    unexpected_tables: tuple[str, ...] = ()
     expected_head: str = CLEAN_STACK_HEAD
     database_write_performed: bool = False
 
@@ -46,12 +49,33 @@ def assess_deployment_lineage(db: Session) -> DeploymentLineageAssessment:
         sorted(str(row[0]) for row in db.execute(text("SELECT version_num FROM alembic_version")))
     )
     missing_tables = tuple(sorted(REQUIRED_TABLES - tables))
-    if revisions == (CLEAN_STACK_HEAD,) and not missing_tables:
+    unexpected_tables = tuple(sorted(RETIRED_TABLES & tables))
+    if revisions == (CLEAN_STACK_HEAD,) and not missing_tables and not unexpected_tables:
         return DeploymentLineageAssessment(
             status="READY",
             code="CLEAN_STACK_HEAD_CONFIRMED",
             alembic_revisions=revisions,
             missing_tables=(),
+        )
+    if revisions == (CLEAN_STACK_HEAD,):
+        return DeploymentLineageAssessment(
+            status="BLOCKED",
+            code="DEPLOYMENT_SCHEMA_DRIFT",
+            alembic_revisions=revisions,
+            missing_tables=missing_tables,
+            unexpected_tables=unexpected_tables,
+        )
+    if revisions == (PREVIOUS_CLEAN_STACK_HEAD,):
+        return DeploymentLineageAssessment(
+            status="BLOCKED",
+            code=(
+                "LEGACY_INITIAL_SUBMISSION_RETIREMENT_REQUIRED"
+                if unexpected_tables
+                else "DATABASE_MIGRATION_REQUIRED"
+            ),
+            alembic_revisions=revisions,
+            missing_tables=missing_tables,
+            unexpected_tables=unexpected_tables,
         )
     if revisions == (LEGACY_ADJUDICATED_HEAD,):
         return DeploymentLineageAssessment(
@@ -65,12 +89,15 @@ def assess_deployment_lineage(db: Session) -> DeploymentLineageAssessment:
         code="DEPLOYMENT_LINEAGE_UNRECOGNISED",
         alembic_revisions=revisions,
         missing_tables=missing_tables,
+        unexpected_tables=unexpected_tables,
     )
 
 
 __all__ = [
     "CLEAN_STACK_HEAD",
     "LEGACY_ADJUDICATED_HEAD",
+    "PREVIOUS_CLEAN_STACK_HEAD",
+    "RETIRED_TABLES",
     "DeploymentLineageAssessment",
     "assess_deployment_lineage",
 ]
