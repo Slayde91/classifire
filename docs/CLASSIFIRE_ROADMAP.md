@@ -96,12 +96,12 @@ P-256 is the approved production admission protocol direction. A Samsung Galaxy 
 
 ### 2.7 Immediate major sequence
 
-1. Review, publish, and merge the `0008` legacy-table retirement proven against a disposable copy of the configured database.
-2. Create and verify a recoverable backup, migrate the configured database to `0008`, and confirm protected rows and both empty current journals are unchanged.
-3. Configure only the approved P-256 admission public key and issuer-to-key mapping; never substitute the APK release-signing certificate.
-4. Install/restart the reviewed admission-only plugin and run synthetic fail-closed validation without touching the real UAT estimate.
-5. Create a fresh proposal-only preflight; obtain a short-lived external P-256 signature; register an admission offline; then use separate current authority for the one-time initial canonical write.
-6. Design and approve a separate signed Physical Model Lock admission before technical, quantity, commercial, snapshot, output, or release phases are allowed to advance.
+1. **Completed:** publish and merge the fail-closed `0008` legacy-table retirement after proving it against a disposable copy of the configured database.
+2. **Completed:** create and restore-verify a recoverable backup, migrate the configured database to `0008`, and confirm protected rows and both empty current journals are unchanged.
+3. **Active:** provision and approve the handset's P-256 admission public-key proof, then configure the public key and issuer-to-key mapping; never substitute the APK release-signing certificate.
+4. **Planned after Gate C:** back up and upgrade the existing controlled-write plugin from `0.4.0` to the reviewed `0.5.0` admission-only build, restart it, and run synthetic fail-closed validation without touching the real UAT estimate.
+5. **Planned after deployment closure:** create a fresh proposal-only preflight; obtain a short-lived external P-256 signature; register an admission offline; then use separate current authority for the one-time initial canonical write.
+6. **Blocked pending separate design and approval:** create a signed Physical Model Lock admission boundary before technical, quantity, commercial, snapshot, output, or release phases are allowed to advance.
 
 ## 3. Master roadmap at a glance
 
@@ -110,7 +110,7 @@ P-256 is the approved production admission protocol direction. A Samsung Galaxy 
 | 0. Product and repository baseline | In progress | Auditable private-repository lineage, controlled changes, and reproducible source state. |
 | 1. Domain and workflow governance | In progress | Governed amendments, blank-opening semantics, visual approval, and no destructive scope replacement. |
 | 2. Governed source libraries | In progress | Immutable, published, auditable technical and commercial releases. |
-| 3. OpenClaw and controlled-write architecture | In progress - Gate A complete | Live migration, security configuration, installation, restart, and least-privilege proof. |
+| 3. OpenClaw and controlled-write architecture | In progress - Gates A-B complete | Security configuration, controlled plugin upgrade/restart, and least-privilege proof. |
 | 4. Mission Control integration | In progress | Visibility/control-plane integration without owning estimate truth. |
 | 5. Evidence intake and evidence resolution | In progress | Every downstream claim traces to retained report, page, image, and verified higher-detail source evidence. |
 | 6. Physical Model engine | In progress | Defensible Barrier-Opening-Service model or explicit limitation for every known defect. |
