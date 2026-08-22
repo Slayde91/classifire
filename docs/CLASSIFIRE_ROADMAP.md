@@ -2,7 +2,7 @@
 
 **Document status:** Active working roadmap
 
-**Roadmap version:** 2026-08-23 r5
+**Roadmap version:** 2026-08-23 r6
 
 **Product status:** Pre-production prototype and controlled UAT build
 
@@ -30,7 +30,7 @@ Nothing in a report, fixture, receipt, or attached reference document grants aut
 
 ### 2.1 Current product position
 
-CLASSIFIRE has a controlled evidence-to-physical-model prototype. Retained legacy-branch execution evidence shows report retention, image reconciliation, proposal-only Opening-Service modelling, an independent visual challenge, and protected-state checks. The current shared-main foundation contains the canonical runtime and admission-bound writer, but it does not yet contain the complete historical proposal-only visual toolchain needed to reproduce that inference workflow.
+CLASSIFIRE has a controlled evidence-to-physical-model prototype. Retained legacy-branch execution evidence shows report retention, image reconciliation, proposal-only Opening-Service modelling, an independent visual challenge, and protected-state checks. Current shared main contains the canonical runtime, admission-bound writer, bounded visual correction guard, proposal-blind inventory, and mandatory blind-reconciliation rules. It does not yet contain the controller, comparator, and linked-original components required to reproduce the complete historical proposal-only inference workflow.
 
 The prototype is not production-authorised. It does not yet have a corrected active Physical Model Lock for the current real-report UAT, and all technical, quantity, commercial, snapshot, output, and release work remains downstream-blocked by that missing lock.
 
@@ -41,11 +41,11 @@ The prototype is not production-authorised. It does not yet have a corrected act
 | Evidence integrity | Proposal-only runs protect the canonical estimate with a component-level protected-state fingerprint rather than relying on a whole-database file hash. |
 | Image quality | The report pipeline can discover report-provided linked originals, validate that they correspond to the displayed image, prefer verified full-resolution detail, and retain lower-resolution page context. |
 | Image provenance | Duplicate, crop, annotation, and page-context relationships are retained rather than silently collapsed when their visual information differs. |
-| Visual safety | Physical and Validator roles use isolated visual sessions; structural retry is blocked after Validator-scoped correction to prevent authority escape. |
+| Visual safety | Current main enforces bounded correction semantics, fail-closed visual receipts, proposal-blind inventory structure, and mandatory reconciliation. Isolated live visual-session execution remains historical UAT evidence until its controller is reconciled. |
 | Proposal-only safety | Gateway preflight is fail-closed, protected-state receipts are bound to proposal receipts, and proposal-only execution cannot submit or lock a canonical model. |
 | Reconciliation | The human-reference comparator binds proposal/final-state inputs by path and hash and detects topology/substrate swaps rather than matching disconnected multisets. |
 | Human adjudication | A provenance-bound, offline adjudicated proposal revision exists for the current UAT. It records human decisions separately from runtime inference and leaves canonical state unchanged. |
-| Controlled-writer Gate A | Exact shared main `1c20783f` has a reproducible admission-only plugin artifact and clean candidate fingerprint `25CD45B7...2A96`. The audit itself remains review-only. |
+| Controlled-writer Gate A | Latest code-bearing shared-main baseline `8c9393d` has a reproducible admission-only plugin artifact and clean candidate fingerprint `94047159...7D09`. The audit itself remains review-only. |
 | Gates B-F deployment | Migration `0008`, public-key policy, least-privilege scope reconciliation, plugin `0.5.0` upgrade/restart, and synthetic fail-closed validation are complete locally. The real UAT estimate remains unchanged and has no admission, submission receipt, canonical model, or active lock. |
 | Android admission signer | The non-debuggable `0.2.1-local` release APK is installed under the approved APK certificate. `governance-p256-02` exists as a hardware-backed, non-exportable P-256 key; only its independently verified public proof is configured in CLASSIFIRE. No admission has been signed. |
 
@@ -87,7 +87,7 @@ The original Phase 8 branch contained valuable UAT work but mixed physical, comm
 | Signed lock-admission | 1, 6, 8 | Not designed as a completed boundary. | Separate signed lock design and authority. |
 | Automated Physical-Model Accuracy Programme | 8C | Planned - not started. | Working prototype and the programme admission gate. |
 
-The former clean foundation stack is now merged through Layer 4. The dirty `gpt/phase8-linked-original-images` worktree remains an evidence/development source, not a safe bulk staging source. Its still-valid proposal-only visual implementation is absent from shared main and is tracked for clean reconciliation in [GitHub issue #42](https://github.com/Slayde91/classifire/issues/42). Legacy stacked PRs #9-#13 must not be merged directly; each valid change needs review against current abstractions, focused transplantation, and current-main tests.
+The former clean foundation stack is now merged through Layer 4. The dirty `gpt/phase8-linked-original-images` worktree remains an evidence/development source, not a safe bulk staging source. PRs #45-#47 reconciled the pure visual validation, bounded correction, blind inventory, and blind reconciliation guards onto shared main. The proposal-only controller/receipt orchestration, validation-only comparator, and linked-original resolver remain tracked in [GitHub issue #42](https://github.com/Slayde91/classifire/issues/42). Legacy stacked PRs #9-#13 must not be merged directly; each remaining valid change needs review against current abstractions, focused transplantation, and current-main tests.
 
 The controlled-write plugin's shipped dependency set currently has zero npm audit findings. Ten findings remain in the latest available OpenClaw development dependency, with no safe upstream OpenClaw release yet available. [GitHub issue #43](https://github.com/Slayde91/classifire/issues/43) tracks the update; forced dependency downgrades or overrides are not an accepted remedy.
 
@@ -292,8 +292,9 @@ Every known defect has a defensible physical model or an explicit evidence limit
 
 ### Verified behaviour
 
-- Physical and Validator roles inspect independently scoped visual evidence.
-- Validator corrections have bounded authority; a scoped correction cannot escape into an unguided structural retry.
+- Historical controlled-UAT evidence shows Physical and Validator roles inspecting independently scoped visual evidence; the current-main controller is not yet restored.
+- Current main gives Validator corrections bounded authority and fails closed on malformed receipts, proposals, correction inputs, and ambiguous size-or-quantity authority.
+- Current main validates a proposal-blind Opening/Service inventory and requires each blind observation to receive one evidence-backed reconciliation disposition.
 - A non-supported or incomplete correction fails closed with limitations.
 - Sessions, prompts, selected visual files, and results are receipt-bound.
 - Proposal-only operation prevents visual agents from submitting or locking the canonical model.
