@@ -117,6 +117,19 @@ Before any environment change, record the exact reviewed source revision and
 the hashes of the writer, verifier, preflight policy, schema, and plugin
 artifact. Confirm that the local test suite covers:
 
+Use the current-main local-only auditor before treating a source tree as a
+candidate:
+
+```powershell
+python scripts/audit_phase8_admission_deployment_candidate.py --repository-root . --require-clean
+```
+
+It reads source files and Git metadata only. It never reads configuration,
+contacts a runtime, opens a database, or performs a deployment action. Exit
+`2` means a required artifact is missing or the source tree is dirty; in
+either case, stop and review the candidate. A zero exit does not authorise a
+deployment, admission registration, canonical submission, or lock.
+
 - signature, expiry, issuer-to-key, payload, preflight, fingerprint, and
   implementation-pin rejection;
 - generic first-opening and raw agent-write denial when adjudicated mode is
