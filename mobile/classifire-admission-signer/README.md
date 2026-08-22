@@ -23,6 +23,11 @@ Opening that screen does not create a key. Persistent key creation still
 requires explicit operational authority and a separate on-device confirmation.
 The private key is never exportable; only its DER SubjectPublicKeyInfo and
 SHA-256 fingerprint are displayed.
+If the first display is dismissed, the key-setup screen can redisplay an
+existing key's public proof only after the operator re-enters the exact issuer,
+key ID, and custodian binding. Recovery rechecks secure-hardware backing, P-256
+parameters, stored metadata, and the public-key fingerprint; it does not create,
+delete, export, or use the private key.
 On Android 12 and later, signing accepts only Trusted Environment or StrongBox
 keys; unsupported, software, and unknown levels are rejected. Android 11 retains
 its platform hardware-backed check as a fail-closed compatibility path.
