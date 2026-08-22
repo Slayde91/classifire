@@ -273,3 +273,15 @@ Android correctly rejects it as an incompatible update because the existing app
 uses the debug certificate. The controlled release artifact and its verification
 evidence remain valid; certificate-custody transfer to the organisation's
 approved secret manager remains the only outstanding release handoff.
+## Release-certificate custody complete
+
+The release certificate and its password were stored in the approved LastPass
+Business shared folder `CLASSIFIRE â€“ Release Signing`. Slayde Tana is the
+primary custodian and Sophie Richards is the recovery custodian; recovery access
+was confirmed before local cleanup.
+
+The local Git-ignored `classifire-offline-signer-release.p12` certificate and
+`release-storepass.txt` password files were then deleted from the signing
+worktree and their absence was verified. No private signing material is tracked
+in the repository. Future signing requires a controlled retrieval from the
+approved vault by an authorised custodian.
