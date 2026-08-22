@@ -8,6 +8,7 @@ from classifire.visual_validation import (
     validate_visual_correction_scope,
     validate_visual_validator_payload,
     visual_validator_approved,
+    visual_validator_issue_codes,
 )
 
 
@@ -419,3 +420,22 @@ def test_v4b_ambiguous_size_or_quantity_issue_cannot_authorize_correction() -> N
         and "WRONG_SERVICE_QUANTITY" in error
         for error in errors
     )
+
+
+def test_visual_validator_boundary_rejects_non_object_inputs_without_raising() -> None:
+    errors = validate_visual_validator_payload([], [])
+
+    assert "validator receipt must be an object" in errors
+    assert "proposal must be an object" in errors
+    assert visual_validator_approved([], {}) is False
+    assert visual_validator_issue_codes([]) == frozenset()
+
+
+def test_visual_correction_boundary_rejects_non_object_inputs_without_raising() -> None:
+    errors = validate_visual_correction_scope([], [], [])
+
+    assert errors == [
+        "previous proposal must be an object",
+        "corrected proposal must be an object",
+        "validator receipt must be an object",
+    ]
