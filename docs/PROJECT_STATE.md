@@ -1,7 +1,7 @@
 # CLASSIFIRE Project State
 
 **Verified snapshot:** 2026-08-23 (AEST)
-**Latest code-bearing base:** `0e59046` (merged Phase 8 no-tool transport PR #53)
+**Latest code-bearing base:** `55044be` (merged Phase 8 runtime composition PR #55)
 **Current scope:** Gates A-F deployment validation remains complete without a
 real admission or canonical submission. Repository work is separately
 reconciling the retained proposal-only visual toolchain through issue #42; any
@@ -16,8 +16,8 @@ material and device deployment.
 ## Current repository reconciliation - 2026-08-23
 
 The latest code-bearing shared-main baseline is
-`0e590469d5b101bad43b38c47a4a19bce9b84df8` after Phase 8 reconciliation
-PRs #45-#53. Current main includes the bounded Validator-to-Physical correction
+`55044be79d72f3b1fb0fb0c56d9f1cb4a7177ee2` after Phase 8 reconciliation
+PRs #45-#55. Current main includes the bounded Validator-to-Physical correction
 guard, proposal-blind Opening/Service inventory, mandatory reconciliation
 ledger, fail-closed JSON input handling, and a dependency-injected
 proposal-only controller. The controller enforces the independent
@@ -36,10 +36,15 @@ versioned prompts and model profiles, revalidates retained image bytes
 immediately before upload, permits only literal loopback endpoints, sends no
 client tools, requires the exact session's effective server-tool set to be
 empty, audits every attempted turn, and rejects redirects, tool calls,
-malformed or non-standard JSON, and identity/profile drift. It has passed
-synthetic HTTP and controller integration tests; no configured live Gateway or
-model turn has yet proven the new transport against a dedicated zero-tool
-runtime profile. The installed
+malformed or non-standard JSON, and identity/profile drift. Current main also
+owns the local runtime composition: an explicit no-shell Gateway CLI adapter,
+a narrow RPC/parameter allowlist, fresh metadata-only session registration,
+resolved provider/model verification, collision rejection, lazy token access,
+and a proxy-independent loopback HTTP client. A live metadata-only preflight
+resolved `openai/gpt-5.6` for Validator and found eight effective tools, so the
+existing agent correctly failed the zero-tool gate before token access or a
+model request. Dedicated zero-tool Physical and Validator profiles and one
+controlled synthetic live inference remain outstanding. The installed
 non-debuggable release APK is version `0.2.1-local` with SHA-256
 `63CFCEE4ADD2D7C87D94FEE628A9898EF0194667FF5AD9BC2B2B16932FA1C075`.
 Android signature scheme v3 verifies with the approved release certificate
@@ -55,15 +60,14 @@ as EC P-256 (`secp256r1`) with public-key fingerprint
 `ezFTerydT4IahBteapQDRM8RiQXi6J4z9AmQdyQ0z_0`. The private key remains
 non-exportable in Android Keystore and is not configured in CLASSIFIRE.
 
-Gate A was rerun against clean exact main after PR #53. The rebuilt plugin
+Gate A was rerun against clean exact main after PR #55. The rebuilt plugin
 artifact remains
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`;
 the revision-bound candidate fingerprint is
-`90ABCFF7CFDDBB16ECEE22EE5CC34DD2C09610A4041BA4455410655B7BA8A370`.
-The combined no-tool transport, visual-evidence, visual-controller,
-blind-inventory, and validation set passes 113 tests. The full repository suite
-passes 218 tests under the documented default-disabled initial-submission
-setting. Ruff, targeted mypy, Bandit, plugin-profile verification, and Git diff
+`7F41D13F22B7C4D3A207CD6E33B507278A9E278CD27EF634360A3CFA1F9E4CC9`.
+The focused transport/runtime set passes 27 tests. The full repository suite
+passes 227 tests under the documented default-disabled initial-submission
+setting. Ruff, targeted mypy, plugin-profile verification, and Git diff
 validation also pass.
 
 Gate B remains verified at migration
@@ -115,11 +119,12 @@ is not yet designed or approved.
 ### Shared-main and GitHub reconciliation
 
 The clean foundation stack and deployment documentation are published on shared
-`main`. PRs #45-#53 have reconciled the visual receipt and bounded correction,
+`main`. PRs #45-#55 have reconciled the visual receipt and bounded correction,
 blind inventory and reconciliation, malformed-input guards, and proposal-only
-controller, retained-evidence adapter, and guarded OpenResponses transport with
-current-main tests. Live runtime composition and a dedicated zero-tool profile
-still require controlled proof. The complete historical proposal-only workflow
+controller, retained-evidence adapter, guarded OpenResponses transport, and
+managed local runtime composition with current-main tests. Dedicated zero-tool
+profiles and a controlled synthetic live inference still require proof. The
+complete historical proposal-only workflow
 is also not yet reproducible from shared main because the validation-only human
 comparator and linked-original image resolver remain to be reconciled from
 legacy stacked draft PRs #9-#13. The legacy branch differs
