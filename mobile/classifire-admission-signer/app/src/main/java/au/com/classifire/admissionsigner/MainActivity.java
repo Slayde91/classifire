@@ -10,6 +10,7 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
 import android.view.Gravity;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -43,6 +44,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         ScrollView scroll = new ScrollView(this);
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -51,50 +53,48 @@ public final class MainActivity extends Activity {
         layout.setPadding(padding, padding, padding, padding);
 
         TextView title = new TextView(this);
-        title.setText("CLASSIFIRE P-256 signer proof");
+        title.setText(R.string.proof_title);
         title.setTextSize(22);
         layout.addView(title);
 
         status = new TextView(this);
-        status.setText("Test-only. No production key, admission, or network activity.");
+        status.setText(R.string.proof_initial_status);
         status.setPadding(0, 32, 0, 32);
         status.setTextIsSelectable(true);
         layout.addView(status);
 
         Button proof = new Button(this);
-        proof.setText("Run local P-256 signing proof");
+        proof.setText(R.string.proof_button);
         proof.setOnClickListener(view -> beginProof());
         layout.addView(proof);
 
         TextView productionTitle = new TextView(this);
-        productionTitle.setText("Production-key setup");
+        productionTitle.setText(R.string.production_key_title);
         productionTitle.setTextSize(20);
         productionTitle.setPadding(0, 48, 0, 12);
         layout.addView(productionTitle);
 
         TextView productionNotice = new TextView(this);
-        productionNotice.setText("Use only after the issuer, key ID, and custodian have been approved. "
-                + "This creates a persistent non-exportable key. The app will show only its public key."
-        );
+        productionNotice.setText(R.string.production_key_notice);
         layout.addView(productionNotice);
 
         EditText issuerInput = new EditText(this);
-        issuerInput.setHint("Approved issuer ID");
+        issuerInput.setHint(R.string.issuer_hint);
         issuerInput.setSingleLine(true);
         layout.addView(issuerInput);
 
         EditText keyIdInput = new EditText(this);
-        keyIdInput.setHint("Approved key ID");
+        keyIdInput.setHint(R.string.key_id_hint);
         keyIdInput.setSingleLine(true);
         layout.addView(keyIdInput);
 
         EditText custodianInput = new EditText(this);
-        custodianInput.setHint("Approved key custodian");
+        custodianInput.setHint(R.string.custodian_hint);
         custodianInput.setSingleLine(true);
         layout.addView(custodianInput);
 
         Button production = new Button(this);
-        production.setText("Create persistent production P-256 key");
+        production.setText(R.string.create_production_key_button);
         production.setOnClickListener(view -> confirmProductionKey(
                 issuerInput.getText().toString().trim(), keyIdInput.getText().toString().trim(),
                 custodianInput.getText().toString().trim()));
@@ -106,16 +106,14 @@ public final class MainActivity extends Activity {
     private void confirmProductionKey(String issuer, String keyId, String custodian) {
         if (!IDENTIFIER.matcher(issuer).matches() || !IDENTIFIER.matcher(keyId).matches()
                 || custodian.isBlank() || custodian.length() > 160) {
-            status.setText("Production-key setup rejected safely: enter approved issuer, key ID, and custodian.");
+            status.setText(R.string.production_setup_rejected_fields);
             return;
         }
         new AlertDialog.Builder(this)
-                .setTitle("Create persistent P-256 signing key?")
-                .setMessage("Issuer: " + issuer + "\nKey ID: " + keyId + "\nCustodian: " + custodian + "\n\n"
-                        + "The private key will remain in Android Keystore. This action cannot be undone "
-                        + "without explicit key revocation and rotation.")
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Create key", (dialog, which) -> createProductionKey(issuer, keyId, custodian))
+                .setTitle(R.string.production_key_confirmation_title)
+                .setMessage(getString(R.string.production_key_confirmation, issuer, keyId, custodian))
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.create_key, (dialog, which) -> createProductionKey(issuer, keyId, custodian))
                 .show();
     }
 
@@ -124,7 +122,7 @@ public final class MainActivity extends Activity {
         try {
             KeyStore store = keyStore();
             if (store.containsAlias(alias)) {
-                status.setText("Production-key setup rejected safely: this key ID already exists on this device.");
+                status.setText(R.string.production_key_exists);
                 return;
             }
             KeyPairGenerator generator = KeyPairGenerator.getInstance(
@@ -140,7 +138,7 @@ public final class MainActivity extends Activity {
             PrivateKey privateKey = (PrivateKey) store.getKey(alias, null);
             KeyInfo keyInfo = KeyFactory.getInstance(privateKey.getAlgorithm(), "AndroidKeyStore")
                     .getKeySpec(privateKey, KeyInfo.class);
-            if (!keyInfo.isInsideSecureHardware()) {
+            if (!KeystoreSecurity.isHardwareBacked(keyInfo)) {
                 store.deleteEntry(alias);
                 throw new SecurityException("Android Keystore did not report secure-hardware backing");
             }
@@ -148,18 +146,15 @@ public final class MainActivity extends Activity {
             String publicKey = Base64.getUrlEncoder().withoutPadding().encodeToString(publicKeyDer);
             String fingerprint = Base64.getUrlEncoder().withoutPadding().encodeToString(
                     MessageDigest.getInstance("SHA-256").digest(publicKeyDer));
-            getPreferences(MODE_PRIVATE).edit()
+            getSharedPreferences("classifire_admission_signer", MODE_PRIVATE).edit()
                     .putString("production_issuer_" + keyId, issuer)
                     .putString("production_custodian_" + keyId, custodian)
                     .putString("production_fingerprint_" + keyId, fingerprint)
                     .apply();
-            status.setText("Persistent P-256 key created.\nIssuer: " + issuer + "\nKey ID: " + keyId
-                    + "\nCustodian: " + custodian + "\n\n"
-                    + "Public key (base64url DER SPKI):\n" + publicKey + "\n\n"
-                    + "Public-key SHA-256: " + fingerprint + "\n\n"
-                    + "The private key remains non-exportable in Android Keystore.");
+            status.setText(getString(R.string.production_key_created, issuer, keyId, custodian,
+                    publicKey, fingerprint));
         } catch (Exception exception) {
-            status.setText("Production-key setup failed safely: " + safeFailure(exception));
+            status.setText(getString(R.string.production_key_setup_failed, safeFailure(exception)));
         }
     }
 
@@ -184,15 +179,15 @@ public final class MainActivity extends Activity {
             authenticateAndSign(signature);
         } catch (Exception exception) {
             deleteTestKey();
-            status.setText("Local P-256 setup failed safely: " + safeFailure(exception));
+            status.setText(getString(R.string.proof_setup_failed, safeFailure(exception)));
         }
     }
 
     private void authenticateAndSign(Signature signature) {
         Executor executor = getMainExecutor();
         BiometricPrompt prompt = new BiometricPrompt.Builder(this)
-                .setTitle("Approve local CLASSIFIRE signer proof")
-                .setSubtitle("This creates and immediately deletes a test-only P-256 key.")
+                .setTitle(getString(R.string.proof_biometric_title))
+                .setSubtitle(getString(R.string.proof_biometric_subtitle))
                 .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
                 .build();
         prompt.authenticate(new BiometricPrompt.CryptoObject(signature), new CancellationSignal(), executor,
@@ -200,7 +195,7 @@ public final class MainActivity extends Activity {
                     @Override
                     public void onAuthenticationError(int errorCode, CharSequence error) {
                         deleteTestKey();
-                        status.setText("Local proof cancelled safely.");
+                        status.setText(R.string.proof_cancelled);
                     }
 
                     @Override
@@ -212,12 +207,11 @@ public final class MainActivity extends Activity {
                             canonicalLowS(approved.sign());
                             String fingerprint = publicKeyFingerprint();
                             deleteTestKey();
-                            status.setText("P-256 proof passed. Canonical low-S DER signature created. "
-                                    + "Temporary key deleted. Public-key SHA-256: " + fingerprint);
+                            status.setText(getString(R.string.proof_passed, fingerprint));
                         } catch (Exception exception) {
                             deleteTestKey();
-                            status.setText("Local P-256 signing failed safely: "
-                                    + safeFailure(exception));
+                            status.setText(getString(R.string.proof_signing_failed,
+                                    safeFailure(exception)));
                         }
                     }
                 });

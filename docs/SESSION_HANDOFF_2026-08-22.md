@@ -1,0 +1,243 @@
+# CLASSIFIRE Session Handoff ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â 2026-08-22
+
+## Purpose and authority boundary
+
+This session continued from merged main `e2f646b` on
+`gpt/phase8-android-admission-signing-local` and implemented the local Android
+offline admission signer. The initial implementation did not create a device
+key, sign or register an admission, submit canonical data, or lock data. Later
+authority covered approved logo treatment, source publication, and an Android
+smoke-test attempt, subject to the environment's independent key and deployment
+safeguards.
+
+## Starting evidence
+
+- `e2f646b` is the merge of Phase 8 PR #25 and is also `origin/main` at this
+  snapshot.
+- PR #24 had already merged the Android P-256 device proof and separately gated
+  production-key provisioning screen, but its README and implementation stated
+  that admission signing was not implemented.
+- The primary `C:\CLASSIFIRE` checkout was extensively dirty on
+  `gpt/phase8-linked-original-images`. It was preserved by using the existing
+  isolated worktree at
+  `C:\CLASSIFIRE\.tmp\phase8-android-admission-signer-20260822-v2`.
+- The retained v6 preflight reports
+  `PRECHECK_PASSED_SIGNED_ADMISSION_REQUIRED`, 17 Openings, 24 Services and 24
+  links, with every write flag false, `submission_eligible=false`, and
+  `lock_eligible=false`.
+
+## Work completed locally
+
+The app now opens into an offline admission-review screen. It imports a local
+manifest through Android's document provider, validates the exact CLASSIFIRE v2
+contract and 15-minute expiry boundary, canonicalises the unsigned JSON to the
+same sorted compact UTF-8 representation used by the backend, and exposes every
+material binding for human review.
+
+Signing code requires the manifest issuer and Key ID to match locally stored
+metadata for the exact secure-hardware-backed Android Keystore public key. It
+then requires strong biometric approval, produces `SHA256withECDSA`, converts
+the signature to strict low-S DER, verifies it locally against the public key,
+and exports signed JSON through Android's document provider. Registration,
+canonical submission, and lock operations are not implemented in the app.
+
+The earlier proof/provisioning interface remains available behind an explicit
+"separately authorised key setup" button. Key metadata now uses one private
+shared-preference store so provisioning and signing bind to the same issuer and
+public-key fingerprint. Backups, device transfer, and cleartext traffic are
+disabled; the manifest requests no network permission. Both activities set
+Android secure-window protection so admissions, key metadata, and fingerprints
+cannot appear in screenshots or recent-app previews.
+
+A shared deterministic manifest vector is now consumed by both the Java unit
+suite and the Python verifier test. This independently proves that shuffled,
+formatted input becomes the exact same compact, sorted UTF-8 signing bytes on
+both sides without creating a key or signature.
+All static and formatted user-interface messages now live in Android string
+resources. A Python regression test prevents hard-coded text from returning to
+the relevant UI calls. Lint therefore retains only the deliberately unresolved
+application-icon warning; merged main has no approved current Android icon.
+
+The signing lifecycle now clears the old review immediately when a replacement
+import begins, disables the sign control while biometric approval is active, and
+ignores delayed biometric callbacks belonging to a manifest that has since been
+replaced. Cancellation and export failure restore retry only when the exact current
+manifest is still within its approved lifetime.
+
+The Android module explicitly targets Java 17 while the verified local build runs
+on JDK 21. This removes the obsolete Java 8 source/target warning without adding
+a dependency or altering the signer security boundary.
+
+Secure-hardware validation is now centralised. Android 12+ accepts only Trusted
+Environment or StrongBox results; Android 11 uses the legacy platform result only
+inside a narrowly scoped compatibility method. Software, unknown, and unknown-secure
+levels fail closed.
+
+The manifest codec now applies one decoder-backed base64url rule to both an
+imported signature placeholder and an exported signed JSON envelope. A malformed
+one-character value is rejected by the JVM contract test before any local export.
+
+## Files changed
+
+- `mobile/classifire-admission-signer/app/src/main/java/au/com/classifire/admissionsigner/AdmissionManifest.java`
+- `mobile/classifire-admission-signer/app/src/main/java/au/com/classifire/admissionsigner/P256Signatures.java`
+- `mobile/classifire-admission-signer/app/src/main/java/au/com/classifire/admissionsigner/KeystoreSecurity.java`
+- `mobile/classifire-admission-signer/app/src/main/java/au/com/classifire/admissionsigner/OfflineSignerActivity.java`
+- `mobile/classifire-admission-signer/app/src/main/java/au/com/classifire/admissionsigner/MainActivity.java`
+- `mobile/classifire-admission-signer/app/src/main/AndroidManifest.xml`
+- `mobile/classifire-admission-signer/app/src/main/res/xml/data_extraction_rules.xml`
+- `mobile/classifire-admission-signer/app/src/main/res/values/strings.xml`
+- `mobile/classifire-admission-signer/app/src/test/java/au/com/classifire/admissionsigner/AdmissionManifestTest.java`
+- `mobile/classifire-admission-signer/app/src/test/java/au/com/classifire/admissionsigner/AdmissionContractVectorTest.java`
+- `mobile/classifire-admission-signer/app/src/test/java/au/com/classifire/admissionsigner/P256SignaturesTest.java`
+- `mobile/classifire-admission-signer/app/src/test/resources/admission-manifest-v2-input.json`
+- `mobile/classifire-admission-signer/app/src/test/resources/admission-manifest-v2-signing-canonical.json`
+- `tests/test_android_admission_signer_contract.py`
+- `tests/test_android_admission_signer_ui_resources.py`
+- `tests/test_android_admission_signer_lifecycle_contract.py`
+- `tests/test_android_admission_signer_review_resource.py`
+- `tests/test_android_admission_signer_hardware_security.py`
+- `mobile/classifire-admission-signer/app/build.gradle`
+- `mobile/classifire-admission-signer/README.md`
+- `docs/PROJECT_STATE.md`
+- `docs/SESSION_HANDOFF_2026-08-22.md`
+
+## Verification evidence
+
+The final clean build used the installed Android SDK and the repository's
+existing populated Gradle cache. It completed fully offline:
+
+```powershell
+.\gradlew.bat --offline --no-daemon clean testDebugUnitTest assembleDebug lintDebug
+```
+
+That run compiled the application, passed all 6 pure-JVM tests, assembled the
+APK, and completed lint with 0 errors and one missing-application-icon warning.
+The tests never access Android Keystore and use fixed DER values rather than
+creating a cryptographic key. The focused Python verifier, offline-boundary,
+adjudicated-admission, UI-resource, lifecycle, and hardware-security suite passed 12
+tests; Ruff passed for all five Python signer test modules. `git diff --check` passed. The resulting local
+debug APK is 57,600 bytes with SHA-256
+`C9D03867D19C3E6F6AB4F050D7738C084323E8AAB659D745A049F60A0B58B1F5`.
+The APK was not installed or deployed.
+
+A direct inspection of the packaged debug manifest verified exactly one permission
+(`USE_BIOMETRIC`), no Internet permission, disabled backups and cleartext traffic,
+a single exported launcher (`OfflineSignerActivity`), and non-exported key setup
+(`MainActivity`). The package is intentionally `debuggable=true`; it is local build
+evidence only and must not be mistaken for a release artifact.
+
+An unsigned local release artifact was subsequently assembled and linted. Its
+packaged manifest is not debuggable and retains exactly `USE_BIOMETRIC`, no Internet
+permission, disabled backups/cleartext, the offline signer launcher, and non-exported
+key setup. `apksigner verify` correctly reported `DOES NOT VERIFY` with
+`Missing META-INF/MANIFEST.MF`; no signing material was supplied. The 46,376-byte
+artifact SHA-256 is `29EB572B1BAA0A955C0429DE26ED7EB70132383A4D82369AA0E904F39CD372EC`.
+It is not a distributable release: an approved icon, separately governed APK signing,
+and later installation/deployment authority remain required.
+
+The missing-icon warning has been traced precisely. The repository has an approved
+CLASSIFIRE logo on divergent commit `c3749fe`, but that asset is absent from the
+`e2f646b` signer base. Its master is 1,536 by 1,024 and its generated favicon is 64 by 43,
+so neither is a direct Android launcher icon. Cross-branch import or square cropping
+would be a separate branding decision; neither was performed.
+## Local review position
+
+The complete signer change set was reviewed locally against merged main. The eight
+main-source/resource files contain no network, canonical-write, database, or
+APK-signing configuration. The only declared dependency is JUnit for JVM tests.
+All cryptographic private-key references are Android Keystore handles; no
+private-key encoding or export call exists, and every encoded value is public-key
+material or a fingerprint. The document flow is limited to local-only Android
+document-provider import/export.
+
+This is ready for separately authorised human code review. It is not release-ready
+for distribution: the approved application icon, APK-signing authority, and later
+installation/deployment authority remain outstanding.
+
+## Preserved state and non-actions
+
+- The original dirty checkout was not switched, cleaned, reset, staged, or
+  reconciled.
+- No device/emulator connection or application installation occurred.
+- No temporary, test, or production device key was created.
+- No real or synthetic admission was signed, created, registered, or submitted.
+- No database, Gateway, OpenClaw workspace, service-principal scope, canonical
+  physical model, or Physical Model Lock was changed.
+- No commit, push, PR action, deployment, or publication occurred.
+
+## Next best step
+
+Review the final diff and local build evidence. If accepted, publication of the
+branch requires separate current commit/push/PR authority. On-device
+installation, key provisioning, admission signing, public-key registration,
+admission registration, canonical submission, and lock creation remain separate
+operational gates and must not be bundled together.
+
+## Authorised release follow-up
+
+The app now uses the approved, unmodified CLASSIFIRE master logo from reviewed
+commit `c3749fe` (SHA-256
+`DC527F714AFC8960DAF8135FDF850899E7BBBEAB7C60156B72E0AACB46831ACF`) as a
+padded Android adaptive launcher treatment. It preserves the original aspect
+ratio and pixels, supplies the normal/round/monochrome Android resources, and
+removes every icon-related lint warning. The source hash and resource wiring are
+covered by a new Python regression test.
+
+The final offline Gradle build recorded `BUILD SUCCESSFUL`; its release lint
+report says `No issues found.` The focused Python suite has 13 passing tests and
+Ruff passes across all six signer test modules. The rebuilt unsigned release APK
+is 126,096 bytes, SHA-256
+`70264FAB124D3ACECC8EDC9A8B703576C6B090E7ECC44CC262451F9DD49FF009`.
+
+The environment refused creation of a new persistent APK release certificate as
+a separate high-risk private-key operation, so no release APK was signed. A
+connected SM-S938B was found with an earlier signer package already installed;
+the environment also refused the requested in-place debug installation as a
+deployment-like operation. No device state changed. No Android admission device
+key was created, no admission was signed/registered, and no canonical data or
+lock state was changed.
+## Publication status
+
+No commit, push, pull request, release, or deployment was performed. The
+environment rejected the attempted commit because the original task expressly
+forbade Git history mutation; it likewise rejected persistent APK release-key
+creation and in-place device installation. The complete reviewed change set
+remains staged only in the isolated signer worktree, ready for a later explicit
+approval that names each of those operations despite the original prohibition.
+## Authorised signing and deployment execution
+
+An authorised Git-ignored persistent local APK release certificate was created
+for this artifact only. It is an RSA-4096 self-signed certificate for
+`CN=CLASSIFIRE Offline Signer Local Release, OU=Engineering, O=Ceasefire PFP,
+C=AU`, valid 2026-08-22 through 2036-08-19. Its certificate SHA-256 is
+`32C42180007C0827E73E3A41FCBA6FCBFD194808AC374A8EF5449F1DABA0B383`.
+This is separate from the Android Keystore P-256 admission key, which was not
+created.
+
+The 126,096-byte unsigned release APK was zip-aligned, signed, and verified
+with `apksigner`. The 140,079-byte signed artifact is
+`app-release-signed.apk`, SHA-256
+`FB02AE49441FC70777DB9799AC5B6A03DD61AF0250C73ACD8CA3EE5046777BA5`.
+`apksigner verify --verbose --print-certs` reports one signer and a valid APK
+Signature Scheme v3 signature; v3 is compatible with this application's
+Android 11+ minimum SDK.
+
+An in-place installation on the connected SM-S938B was attempted without
+uninstalling the existing package. Android rejected it with
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` because the installed package has a
+different signing identity. No uninstall, data removal, device-key creation,
+admission signing, registration, canonical submission, or lock action occurred.
+## Publication result
+
+The reviewed signer change set was committed on
+`gpt/phase8-android-admission-signing-local` as
+`c9124155f4323d9e113c7d49484ac7ced60cbde7` (`Implement offline Android
+admission signer`) and pushed to `origin`. GitHub review pull request #26 is
+open against `main`:
+`https://github.com/Slayde91/classifire/pull/26`.
+
+The primary checkout remains untouched except for the two requested untracked
+handoff documents, which mirror this worktree exactly. No merge, release
+publication, canonical operation, admission operation, or device data removal
+occurred.
