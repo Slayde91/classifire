@@ -184,12 +184,67 @@ class OpenClawGatewayNoToolSessionGuard:
         ):
             raise Phase8OpenResponsesTransportError("TOOL_ATTESTATION_MODEL_MISMATCH")
         try:
-            result = self._gateway_rpc("tools.effective", {"sessionKey": session_key})
+            existing = self._gateway_rpc("sessions.describe", {"key": session_key})
+            if not isinstance(existing, dict) or "session" not in existing:
+                raise Phase8OpenResponsesTransportError(
+                    "TOOL_ATTESTATION_SESSION_INVALID"
+                )
+            if existing["session"] is not None:
+                raise Phase8OpenResponsesTransportError(
+                    "TOOL_ATTESTATION_SESSION_EXISTS"
+                )
+            created = self._gateway_rpc(
+                "sessions.create",
+                {
+                    "key": session_key,
+                    "agentId": agent_id,
+                    "model": f"{self._provider}/{self._agent_models[agent_id]}",
+                },
+            )
+            if (
+                not isinstance(created, dict)
+                or created.get("ok") is not True
+                or created.get("key") != session_key
+                or not isinstance(created.get("sessionId"), str)
+                or not created["sessionId"].strip()
+                or not isinstance(created.get("entry"), dict)
+                or created["entry"].get("sessionId") != created["sessionId"]
+                or created.get("runStarted") is not False
+                or "runError" in created
+                or "worktree" in created
+            ):
+                raise Phase8OpenResponsesTransportError(
+                    "TOOL_ATTESTATION_SESSION_INVALID"
+                )
+            described = self._gateway_rpc("sessions.describe", {"key": session_key})
+            session = described.get("session") if isinstance(described, dict) else None
+            if (
+                not isinstance(session, dict)
+                or session.get("key") != session_key
+                or session.get("sessionId") != created["sessionId"]
+                or session.get("modelProvider") != self._provider
+                or session.get("model") != self._agent_models[agent_id]
+            ):
+                raise Phase8OpenResponsesTransportError(
+                    "TOOL_ATTESTATION_MODEL_MISMATCH"
+                )
+            result = self._gateway_rpc(
+                "tools.effective",
+                {"sessionKey": session_key, "agentId": agent_id},
+            )
             tools = _effective_tool_names(result)
             receipt_sha256 = canonical_json_sha256(
                 {
-                    "method": "tools.effective",
+                    "methods": [
+                        "sessions.describe",
+                        "sessions.create",
+                        "sessions.describe",
+                        "tools.effective",
+                    ],
                     "session_id_sha256": _sha256_text(session_key),
+                    "existing": existing,
+                    "created": created,
+                    "described": described,
                     "result": result,
                 }
             )
@@ -216,6 +271,7 @@ class OpenClawGatewayNoToolSessionGuard:
     ) -> NoToolSessionAudit:
         params = {
             "sessionKey": session_key,
+            "agentId": agent_id,
             "kind": "tool_action",
             "after": after_ms,
             "limit": 100,

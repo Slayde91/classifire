@@ -543,9 +543,31 @@ def test_unexpected_client_exception_is_sanitized_and_audited(tmp_path: Path) ->
 
 def test_concrete_gateway_guard_proves_empty_tools_and_records_audit() -> None:
     calls: list[tuple[str, dict[str, Any]]] = []
+    session_created = False
 
     def rpc(method: str, params: dict[str, Any]):
+        nonlocal session_created
         calls.append((method, params))
+        if method == "sessions.create":
+            session_created = True
+            return {
+                "ok": True,
+                "key": params["key"],
+                "sessionId": "session-id",
+                "entry": {"sessionId": "session-id"},
+                "runStarted": False,
+            }
+        if method == "sessions.describe":
+            if not session_created:
+                return {"session": None}
+            return {
+                "session": {
+                    "key": params["key"],
+                    "sessionId": "session-id",
+                    "modelProvider": "provider",
+                    "model": "model",
+                }
+            }
         if method == "tools.effective":
             return {"groups": [{"name": "builtins", "tools": []}]}
         return {"events": []}
@@ -573,7 +595,24 @@ def test_concrete_gateway_guard_proves_empty_tools_and_records_audit() -> None:
 
     assert attestation.effective_tools == ()
     assert audit.tool_calls == ()
-    assert [method for method, _params in calls] == ["tools.effective", "audit.activity.list"]
+    assert [method for method, _params in calls] == [
+        "sessions.describe",
+        "sessions.create",
+        "sessions.describe",
+        "tools.effective",
+        "audit.activity.list",
+    ]
+    assert calls[0][1] == {"key": "agent:cf-validator:test"}
+    assert calls[1][1] == {
+        "key": "agent:cf-validator:test",
+        "agentId": "cf-validator",
+        "model": "provider/model",
+    }
+    assert calls[2][1] == {"key": "agent:cf-validator:test"}
+    assert calls[3][1] == {
+        "sessionKey": "agent:cf-validator:test",
+        "agentId": "cf-validator",
+    }
     assert all(
         _is_safe_receipt(value)
         for value in (attestation.receipt_sha256, audit.receipt_sha256)
@@ -586,6 +625,136 @@ def test_concrete_gateway_guard_proves_empty_tools_and_records_audit() -> None:
             model="unreviewed-model",
         )
     assert exc_info.value.code == "TOOL_ATTESTATION_MODEL_MISMATCH"
+
+
+@pytest.mark.parametrize(
+    "changed_response",
+    [
+        {"runStarted": True},
+        {"sessionId": "different-session"},
+        {"entry": {"sessionId": "different-session"}},
+    ],
+)
+def test_concrete_gateway_guard_rejects_unsafe_session_creation(
+    changed_response: dict[str, Any],
+) -> None:
+    calls: list[str] = []
+
+    def rpc(method: str, params: dict[str, Any]):
+        calls.append(method)
+        if method == "sessions.describe":
+            return {"session": None}
+        created = {
+            "ok": True,
+            "key": params["key"],
+            "sessionId": "session-id",
+            "entry": {"sessionId": "session-id"},
+            "runStarted": False,
+        }
+        return created | changed_response
+
+    guard = OpenClawGatewayNoToolSessionGuard(
+        gateway_rpc=rpc,
+        provider="provider",
+        agent_models={
+            "cf-physical-model": "physical-model",
+            "cf-validator": "model",
+        },
+        policy_revision_sha256="C" * 64,
+    )
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        guard.attest(
+            agent_id="cf-validator",
+            session_key="agent:cf-validator:test",
+            provider="provider",
+            model="model",
+        )
+
+    assert exc_info.value.code == "TOOL_ATTESTATION_SESSION_INVALID"
+    assert calls == ["sessions.describe", "sessions.create"]
+
+
+def test_concrete_gateway_guard_rejects_resolved_model_mismatch() -> None:
+    calls: list[str] = []
+    session_created = False
+
+    def rpc(method: str, params: dict[str, Any]):
+        nonlocal session_created
+        calls.append(method)
+        if method == "sessions.create":
+            session_created = True
+            return {
+                "ok": True,
+                "key": params["key"],
+                "sessionId": "session-id",
+                "entry": {"sessionId": "session-id"},
+                "runStarted": False,
+            }
+        if not session_created:
+            return {"session": None}
+        return {
+            "session": {
+                "key": params["key"],
+                "sessionId": "session-id",
+                "modelProvider": "different-provider",
+                "model": "model",
+            }
+        }
+
+    guard = OpenClawGatewayNoToolSessionGuard(
+        gateway_rpc=rpc,
+        provider="provider",
+        agent_models={
+            "cf-physical-model": "physical-model",
+            "cf-validator": "model",
+        },
+        policy_revision_sha256="C" * 64,
+    )
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        guard.attest(
+            agent_id="cf-validator",
+            session_key="agent:cf-validator:test",
+            provider="provider",
+            model="model",
+        )
+
+    assert exc_info.value.code == "TOOL_ATTESTATION_MODEL_MISMATCH"
+    assert calls == ["sessions.describe", "sessions.create", "sessions.describe"]
+
+
+def test_concrete_gateway_guard_rejects_existing_session_without_reset() -> None:
+    calls: list[str] = []
+
+    def rpc(method: str, params: dict[str, Any]):
+        calls.append(method)
+        return {
+            "session": {
+                "key": params["key"],
+                "sessionId": "prior-session",
+                "modelProvider": "provider",
+                "model": "model",
+            }
+        }
+
+    guard = OpenClawGatewayNoToolSessionGuard(
+        gateway_rpc=rpc,
+        provider="provider",
+        agent_models={
+            "cf-physical-model": "physical-model",
+            "cf-validator": "model",
+        },
+        policy_revision_sha256="C" * 64,
+    )
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        guard.attest(
+            agent_id="cf-validator",
+            session_key="agent:cf-validator:test",
+            provider="provider",
+            model="model",
+        )
+
+    assert exc_info.value.code == "TOOL_ATTESTATION_SESSION_EXISTS"
+    assert calls == ["sessions.describe"]
 
 
 def _is_safe_receipt(value: str) -> bool:
