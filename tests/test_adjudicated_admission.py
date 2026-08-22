@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives.asymmetric.utils import (
     encode_dss_signature,
 )
 
+from classifire.physical_model_submission_schema import InitialCanonicalPhysicalSubmission
 from classifire.services.adjudicated_admission import (
     ADMISSION_MANIFEST_SCHEMA,
     ADMISSION_PURPOSE,
@@ -21,7 +22,6 @@ from classifire.services.adjudicated_admission import (
     normalised_submission_payload_sha256,
     verify_adjudicated_admission,
 )
-from classifire.physical_model_submission_schema import InitialCanonicalPhysicalSubmission
 
 NOW = datetime(2026, 8, 20, 1, 0, tzinfo=UTC)
 
