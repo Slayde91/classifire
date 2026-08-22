@@ -1,5 +1,23 @@
 # CLASSIFIRE Session Handoff - 2026-08-22
 
+## Current superseding note
+
+Shared main advanced to `dec65fef633b4844304974a966baab8498a99acc`
+through PR #36. The exact-main Gate A candidate is complete and review-only:
+artifact SHA-256
+`38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`,
+candidate SHA-256
+`2CEA7EDECEC705CC5182141DE98F8B0D47794CE81D45C7B947ECAF09CDC13557`,
+no missing paths, and both deployment/live-change flags false.
+
+The configured database is at `0007_reconcile_adjudicated_admission_lineages`
+with both empty current journals and an empty stray
+`physical_model_initial_submissions` table. The local fail-closed
+`0008_retire_legacy_initial_submissions` repair and its disposable-copy
+rehearsal pass without protected-row changes; the configured database itself
+has not yet been migrated. This note supersedes older current-state and
+next-action wording below while preserving it as session history.
+
 ## Purpose and authority boundary
 
 This session continued from merged main `e2f646b` on

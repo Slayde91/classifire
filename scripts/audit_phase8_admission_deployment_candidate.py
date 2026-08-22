@@ -34,6 +34,7 @@ ARTIFACT_GROUPS: dict[str, tuple[str, ...]] = {
         "migrations/versions/0005_adjudicated_admission_journal.py",
         "migrations/versions/0006_legacy_adjudicated_canonical_admissions.py",
         "migrations/versions/0007_reconcile_adjudicated_admission_lineages.py",
+        "migrations/versions/0008_retire_legacy_initial_submissions.py",
         "scripts/check_adjudicated_deployment_lineage.py",
     ),
     "plugin": (

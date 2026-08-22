@@ -1,9 +1,9 @@
 # CLASSIFIRE Project State
 
 **Verified snapshot:** 2026-08-22 (AEST)
-**Working branch:** `gpt/phase8-android-admission-signing-local`
-**Merged base:** `e2f646b` (`origin/main`, merged Phase 8 PR #25)
-**Current scope:** local implementation and verification of the offline Android admission signer.
+**Working branch:** `gpt/phase8-gateb-legacy-table-retirement`
+**Merged base:** `dec65fef` (`origin/main`, merged Gate A test PR #36)
+**Current scope:** Gate B schema-drift repair and deployment-readiness verification.
 
 This document records repository evidence. The initial local signer work did
 not use operational authority. Later user authority covered the approved logo
@@ -12,6 +12,45 @@ environment independently retained its safeguards for persistent APK signing
 material and device deployment.
 
 ## Current repository reconciliation - 2026-08-22
+
+### Current Gate A and Gate B position
+
+Shared main is `dec65fef633b4844304974a966baab8498a99acc`. The
+admission-only plugin was rebuilt from that exact clean tree and verified with
+artifact SHA-256
+`38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`.
+The read-only Gate A auditor returned `LOCAL_CANDIDATE_REVIEW_REQUIRED` with no
+missing paths, `deployment_authorised=false`, and
+`live_change_performed=false`. The exact-main candidate fingerprint is
+`2CEA7EDECEC705CC5182141DE98F8B0D47794CE81D45C7B947ECAF09CDC13557`.
+
+Read-only inspection of the configured local database found integrity `ok`, no
+foreign-key violations, zero admission and submission-receipt records, and
+Alembic revision `0007_reconcile_adjudicated_admission_lineages`. It also found
+an empty stray `physical_model_initial_submissions` table that the reviewed
+`0007` migration and fresh-install tests require to be absent. Gate B is
+therefore not complete.
+
+A narrow local `0008_retire_legacy_initial_submissions` migration now removes
+that table only when it is empty and fails closed if any record exists. Twenty
+focused migration, lineage, preflight, and Gate A tests pass, and Ruff passes.
+A byte-identical disposable copy of the current database upgraded to `0008`:
+the legacy table was removed, integrity and foreign-key checks passed, both
+current journal tables remained empty, all protected row counts and hashes
+were unchanged, and the source database SHA-256 remained
+`D66E336F1C6245528D199EA22571037934342CCA0EBDF2E6314A570766540A16`.
+
+The next valid action is review and publication of the `0008` repair, followed
+by a verified recoverable backup and the same migration against the configured
+database. Gate C public-key configuration and runtime deployment remain later
+gates. The APK release-signing certificate is not an admission verification
+key and must not be used for Gate C.
+
+The older sections below preserve chronological signer and reconciliation
+evidence. Where they describe an earlier branch, main revision, Gate A blocker,
+or next action, this current section supersedes them.
+
+### Superseded earlier reconciliation snapshot
 
 The current shared main revision is
 `3f42b1631fcc0881ac5f9049b1023b29309e270f`, which includes the merged

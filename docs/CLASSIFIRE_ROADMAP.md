@@ -2,7 +2,7 @@
 
 **Document status:** Active working roadmap
 
-**Roadmap version:** 2026-08-20 r3
+**Roadmap version:** 2026-08-22 r4
 
 **Product status:** Pre-production prototype and controlled UAT build
 
@@ -45,6 +45,8 @@ The prototype is not production-authorised. It does not yet have a corrected act
 | Proposal-only safety | Gateway preflight is fail-closed, protected-state receipts are bound to proposal receipts, and proposal-only execution cannot submit or lock a canonical model. |
 | Reconciliation | The human-reference comparator binds proposal/final-state inputs by path and hash and detects topology/substrate swaps rather than matching disconnected multisets. |
 | Human adjudication | A provenance-bound, offline adjudicated proposal revision exists for the current UAT. It records human decisions separately from runtime inference and leaves canonical state unchanged. |
+| Controlled-writer Gate A | Exact shared main `dec65fef` has a reproducible admission-only plugin artifact and a clean, complete, review-only candidate fingerprint. No deployment or live operation was authorised by the audit. |
+| Gate B rehearsal | The existing backup/restore rehearsal was retained. A current-target disposable copy exposed an empty stray legacy journal table; the local fail-closed `0008` repair removes it without changing protected rows. |
 
 ### 2.3 Current Phase 8 evidence position
 
@@ -78,9 +80,9 @@ The original Phase 8 branch contained valuable UAT work but mixed physical, comm
 | Layer 1 - runtime foundation | 0, 15 | Draft foundation; recorded tip `b4eef5d`. | Current PR/CI status refresh before merge. |
 | Layer 2 - physical foundation | 1, 6, 8 | Draft foundation; recorded tip `8606b67`. | Final cross-layer review and merge sequencing. |
 | Layer 3 - least-privilege agents | 3, 15 | Draft foundation; recorded tip `57fe33f`. | Clean plugin rebuild and deployment rehearsal. |
-| Layer 4 - P-256 admission/writer | 1, 3, 6, 8, 15 | **In progress**; recorded base tip `12c2e5c`. | Stored-payload integrity, durable receipt scope, expiry/corruption/rollback/replay/state-drift tests, and full regression. |
-| Controlled plugin rebuild | 3, 15 | Not started on the clean stack. | Reviewed build/install/restart and synthetic no-write proof. |
-| Controlled canonicalisation | 8 | Blocked. | Layer 4 closure, deployment readiness, fresh preflight, external signature, admission registration, and separate write authority. |
+| Layer 4 - P-256 admission/writer | 1, 3, 6, 8, 15 | **In progress**; writer and reconciled journal are on shared main. | Publish and deploy the fail-closed `0008` legacy-table retirement, then complete runtime proof. |
+| Controlled plugin rebuild | 3, 15 | **Gate A complete; deployment not started.** | Gate B migration, Gate C public-key policy, install/restart, and synthetic no-write proof. |
+| Controlled canonicalisation | 8 | Blocked. | Gates B-F, fresh preflight, external signature, admission registration, and separate write authority. |
 | Signed lock-admission | 1, 6, 8 | Not designed as a completed boundary. | Separate signed lock design and authority. |
 | Automated Physical-Model Accuracy Programme | 8C | Planned - not started. | Working prototype and the programme admission gate. |
 
@@ -94,11 +96,11 @@ P-256 is the approved production admission protocol direction. A Samsung Galaxy 
 
 ### 2.7 Immediate major sequence
 
-1. Finish Layer 4 locally: stored-payload hash recheck, durable/explicit successful-submission receipt behaviour, expiry/corruption/replay/state-drift/rollback coverage, full regression, and final diff review.
-2. Update the Layer 4 draft PR only after that local evidence exists and under separate publication authority.
-3. Rebuild the admission-only controlled plugin on the clean stack.
-4. Under separate deployment-readiness authority: confirm the real target, verify backup/restore, rehearse migration, configure only public P-256 verification policy, install/restart the clean plugin, and run synthetic no-write tests.
-5. Create a fresh proposal-only preflight; obtain a short-lived external P-256 signature; register an admission offline; then seek separate current authority for the one-time initial canonical write.
+1. Review, publish, and merge the `0008` legacy-table retirement proven against a disposable copy of the configured database.
+2. Create and verify a recoverable backup, migrate the configured database to `0008`, and confirm protected rows and both empty current journals are unchanged.
+3. Configure only the approved P-256 admission public key and issuer-to-key mapping; never substitute the APK release-signing certificate.
+4. Install/restart the reviewed admission-only plugin and run synthetic fail-closed validation without touching the real UAT estimate.
+5. Create a fresh proposal-only preflight; obtain a short-lived external P-256 signature; register an admission offline; then use separate current authority for the one-time initial canonical write.
 6. Design and approve a separate signed Physical Model Lock admission before technical, quantity, commercial, snapshot, output, or release phases are allowed to advance.
 
 ## 3. Master roadmap at a glance
@@ -108,7 +110,7 @@ P-256 is the approved production admission protocol direction. A Samsung Galaxy 
 | 0. Product and repository baseline | In progress | Auditable private-repository lineage, controlled changes, and reproducible source state. |
 | 1. Domain and workflow governance | In progress | Governed amendments, blank-opening semantics, visual approval, and no destructive scope replacement. |
 | 2. Governed source libraries | In progress | Immutable, published, auditable technical and commercial releases. |
-| 3. OpenClaw and controlled-write architecture | In progress | Clean-machine reproducibility and live least-privilege proof. |
+| 3. OpenClaw and controlled-write architecture | In progress - Gate A complete | Live migration, security configuration, installation, restart, and least-privilege proof. |
 | 4. Mission Control integration | In progress | Visibility/control-plane integration without owning estimate truth. |
 | 5. Evidence intake and evidence resolution | In progress | Every downstream claim traces to retained report, page, image, and verified higher-detail source evidence. |
 | 6. Physical Model engine | In progress | Defensible Barrier-Opening-Service model or explicit limitation for every known defect. |
