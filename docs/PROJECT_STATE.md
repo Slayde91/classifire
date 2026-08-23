@@ -1,11 +1,12 @@
 # CLASSIFIRE Project State
 
 **Verified snapshot:** 2026-08-23 (AEST)
-**Latest code-bearing base:** `7f7a062` (merged Phase 8 comparator PR #63)
+**Latest code-bearing base:** `ecf7721` (merged linked-original PR #65)
 **Current scope:** Gates A-F deployment validation remains complete without a
 real admission or canonical submission. Repository work is separately
-reconciling the retained proposal-only visual toolchain through issue #42; any
-fresh preflight or external signing remains its own governed decision.
+validating the now-reconciled retained proposal-only visual toolchain through
+issue #42; any fresh preflight or external signing remains its own governed
+decision.
 
 This document records repository evidence. The initial local signer work did
 not use operational authority. Later user authority covered the approved logo
@@ -16,8 +17,8 @@ material and device deployment.
 ## Current repository reconciliation - 2026-08-23
 
 The latest code-bearing shared-main baseline is
-`7f7a06206eb52ea294c6dd6e44e2920b5546ab58` after Phase 8 reconciliation
-PRs #45-#63. Current main includes the bounded Validator-to-Physical correction
+`ecf7721628374ad3d5940e8e2cb72fdb729428e3` after Phase 8 reconciliation
+PRs #45-#65. Current main includes the bounded Validator-to-Physical correction
 guard, proposal-blind Opening/Service inventory, mandatory reconciliation
 ledger, fail-closed JSON input handling, and a dependency-injected
 proposal-only controller. The controller enforces the independent
@@ -82,15 +83,29 @@ matches substrate only within the same opening/service topology. It has no
 database, inference, admission, signing, registration, canonical-write, or lock
 interface. The historical real-UAT reference fixture was not copied to main.
 
-Gate A was rerun against clean exact main after PR #63. The rebuilt plugin
-artifact remains
+Current main now also contains the focused linked-original source slice from
+PR #65. It discovers HTTPS links from report annotations; restricts hosts,
+query keys, paths, redirects, resolved addresses, TLS, response types, bytes,
+pixels, dimensions, and run time; and accepts a downloaded JPEG only after
+binding it to the embedded report thumbnail and proving usable additional
+detail. Verified bytes are stored by SHA-256. A separate guarded retention
+service then revalidates the result, exact parent thumbnail, page, and photo
+identity; enforces the physical-model evidence-mutation guard; records an
+immutable `StoredFile`, child `EvidenceSource`, redacted provenance, and audit
+event; and flushes without committing the caller's transaction. Replay is
+idempotent and conflicts fail closed. No signed URL, private fixture, obsolete
+real-UAT runner, inference call, admission action, canonical write, or lock
+capability was added to the retrieval service.
+
+Gate A was rerun against the clean exact code-bearing main after PR #65. The
+rebuilt plugin artifact remains
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`;
 the revision-bound candidate fingerprint is
-`86FCF6000C450D77019F1FAD4F3434F44445AA1FDC091370A22B703A3F619557`.
-The comparator passes 8 focused tests and 89 related Phase 8 tests. The full
-repository suite passes 239 tests under the documented default-disabled
-initial-submission setting. Ruff, targeted mypy, plugin-profile verification,
-and Git diff validation also pass.
+`2C43E1CB46629BAA2A69A2417C0F296312ECC8C3F57E2C179FF0011121593C6A`.
+The linked-original retrieval, retention, and retained-evidence chain passes 58
+focused tests. The full repository suite passes 286 tests under the documented
+default-disabled initial-submission setting. Ruff, targeted mypy, Bandit,
+plugin-profile verification, and Git diff validation also pass.
 
 Gate B remains verified at migration
 `0008_retire_legacy_initial_submissions`. Gate C now trusts only
@@ -141,18 +156,18 @@ is not yet designed or approved.
 ### Shared-main and GitHub reconciliation
 
 The clean foundation stack and deployment documentation are published on shared
-`main`. PRs #45-#63 have reconciled the visual receipt and bounded correction,
+`main`. PRs #45-#65 have reconciled the visual receipt and bounded correction,
 blind inventory and reconciliation, malformed-input guards, and proposal-only
 controller, retained-evidence adapter, guarded OpenResponses transport, and
 managed local runtime composition with current-main tests. Dedicated zero-tool
 runtime identities are installed and a controlled synthetic live inference is
-proven. The validation-only comparator is reconciled. The complete historical
-proposal-only workflow is not yet reproducible from shared main because the
-linked-original image resolver remains to be reconciled from
-legacy stacked draft PRs #9-#13. The legacy branch differs
+proven. The validation-only comparator and linked-original retrieval/retention
+source are reconciled. Representative current-main execution has not yet proven
+the complete linked-original-to-proposal chain against an approved report; that
+remaining no-write validation stays in issue #42. The legacy branch differs
 materially from current main and must not be merged wholesale. Historical UAT
-receipts remain evidence of what was executed, not proof that the remaining
-adapters and comparison workflow are present on shared main.
+receipts remain evidence of what was executed, not proof of current-main runtime
+execution.
 
 Shared main does not currently track `docs/CLASSIFIRE_ARCHITECTURE.md`. A
 reconciled copy exists only on the legacy Phase 8 branch and contains stale
@@ -165,8 +180,9 @@ remaining clean current-main reconciliation and records the merged checkpoints.
 Legacy PRs
 #7, #8, and #15 were closed as superseded by the clean foundations already
 merged through PRs #16-#25 and the later Gate A-F hardening. PRs #9-#13 remain
-open because they still contain implementation that requires review and
-transplanting; their stale stacked bases are not merge candidates.
+open because they may still contain image-family and other implementation that
+requires review or explicit supersession; their stale stacked bases are not
+merge candidates.
 
 The controlled-write plugin has zero production dependency findings under
 `npm audit --omit=dev`. The full audit reports 10 findings (3 moderate and 7
