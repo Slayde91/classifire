@@ -6,8 +6,8 @@ source of truth.
 
 ## Latest verified state
 
-- Shared-main code baseline is `7f7a06206eb52ea294c6dd6e44e2920b5546ab58`,
-  merge commit for Phase 8 comparator PR #63.
+- Shared-main code baseline is `ecf7721628374ad3d5940e8e2cb72fdb729428e3`,
+  merge commit for linked-original PR #65.
 - Gates A-F remain locally deployment-validated. The real UAT estimate remains
   unchanged: no admission has been signed or registered, no canonical physical
   model has been submitted, and no Physical Model Lock exists.
@@ -33,20 +33,27 @@ source of truth.
   It binds the proposal, strict controller receipt, and reference by path and
   SHA-256, verifies the proposal's canonical JSON hash, and detects
   topology/substrate swaps. It imports no database or inference interface.
+- Current main has a fail-closed linked-original retrieval service and a
+  separate guarded retention bridge. The retrieval service restricts network,
+  redirect, response, image, resource, and time behaviour; binds each JPEG to
+  the embedded thumbnail; and proves usable extra detail. The bridge revalidates
+  the exact result and parent thumbnail, retains immutable content-addressed
+  evidence, records redacted provenance and audit history, is idempotent, obeys
+  the physical-model lock guard, and never commits the caller's transaction.
 
 ## Verification completed
 
 - 31 focused transport/runtime tests pass.
-- 8 comparator tests and 89 related Phase 8 tests pass.
-- The full repository suite passes 239 tests when
+- 58 focused linked-original retrieval, retention, and evidence-adapter tests pass.
+- The full repository suite passes 286 tests when
   `CLASSIFIRE_ADJUDICATED_INITIAL_SUBMISSION_ENABLED=false`, which restores the
   repository default for tests instead of inheriting the configured live value.
-- Targeted Ruff and mypy, `git diff --check`, TypeScript compilation, and the
-  Phase 8 plugin-profile verifier pass.
+- Targeted Ruff, mypy, Bandit, `git diff --check`, TypeScript compilation, and
+  the Phase 8 plugin-profile verifier pass.
 - Exact-main ignored plugin artifact SHA-256 remains
   `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`.
-- Exact-main Gate A candidate fingerprint is
-  `86FCF6000C450D77019F1FAD4F3434F44445AA1FDC091370A22B703A3F619557`.
+- Exact code-bearing-main Gate A candidate fingerprint is
+  `2C43E1CB46629BAA2A69A2417C0F296312ECC8C3F57E2C179FF0011121593C6A`.
   The audit records `deployment_authorised=false` and
   `live_change_performed=false`.
 - The synthetic live-proof receipt is
@@ -58,8 +65,10 @@ source of truth.
 
 ## Unresolved work
 
-1. Reconcile the linked-original resolver against current retained-evidence
-   abstractions and multiple report formats.
+1. Prove representative current-main linked-original retrieval, governed
+   retention, and proposal-only execution with protected state unchanged.
+   Generalisation beyond the current allowlisted report source remains later
+   Phase 5 work.
 2. Design, persist, and enforce a canonical visual-validation receipt before a
    future Physical Model Lock can become eligible.
 3. Reconcile a tracked `docs/CLASSIFIRE_ARCHITECTURE.md`. The existing copy is
@@ -67,8 +76,8 @@ source of truth.
 
 ## Next valid task
 
-Reconcile the standalone linked-image retrieval/materialisation service and its
-security tests from legacy commit `ba1b6bd` without importing the obsolete
-real-UAT runners. Then separately bridge verified linked originals into the
-current retained-evidence boundary while preserving thumbnail and page context.
-Keep live network retrieval out of the source reconciliation tests.
+Build a bounded, no-write representative runner around the reconciled services,
+using an explicitly approved retained report and retrieval location. Prove the
+retrieved originals are bound, retained, fed through the existing proposal-only
+controller, and compared only after inference, while protected canonical state
+remains unchanged. Do not revive the obsolete legacy real-UAT runners.
