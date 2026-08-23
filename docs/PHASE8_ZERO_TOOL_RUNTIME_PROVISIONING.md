@@ -30,7 +30,9 @@ empty without sending a prompt or image:
 
 The script refuses an existing identity whose security-relevant configuration
 does not exactly match the reviewed policy. It never repairs or overwrites a
-conflicting identity. Live verification creates metadata-only sessions with
+conflicting identity. Missing definitions are validated and installed as one
+file-based batch so Windows command-line quoting cannot alter the policy JSON.
+Live verification creates metadata-only sessions with
 `runStarted: false`, verifies the resolved provider and model, reads
 `tools.effective`, and fails unless both inventories contain zero tools.
 
