@@ -6,8 +6,8 @@ source of truth.
 
 ## Latest verified state
 
-- Shared-main code baseline is `ecf7721628374ad3d5940e8e2cb72fdb729428e3`,
-  merge commit for linked-original PR #65.
+- Shared-main code baseline is `4ba134934d72cbf5ca71c8550f5ce3bf7f3c67d4`,
+  merge commit for linked-visual runner PR #67.
 - Gates A-F remain locally deployment-validated. The real UAT estimate remains
   unchanged: no admission has been signed or registered, no canonical physical
   model has been submitted, and no Physical Model Lock exists.
@@ -40,22 +40,33 @@ source of truth.
   the exact result and parent thumbnail, retains immutable content-addressed
   evidence, records redacted provenance and audit history, is idempotent, obeys
   the physical-model lock guard, and never commits the caller's transaction.
+- Current main now also has the bounded runner that composes retrieval,
+  governed retention, the retained-evidence packet, and the existing
+  proposal-only controller. It checks protected state before and after each
+  boundary, uses a nested retention savepoint without committing the caller's
+  transaction, and emits a strict content-free receipt. It has no admission,
+  canonical-write, lock, signing, registration, or deployment action.
+- Required low-resolution photos with no linked original now fail closed. They
+  can no longer be marked as required while still allowing the batch to pass.
 
 ## Verification completed
 
 - 31 focused transport/runtime tests pass.
-- 58 focused linked-original retrieval, retention, and evidence-adapter tests pass.
-- The full repository suite passes 286 tests when
+- 42 focused linked-original retrieval and runner tests pass.
+- 107 related retrieval, retention, evidence, proposal, runtime, and runner
+  tests pass after the final no-link correction.
+- The full repository suite passes 292 tests when
   `CLASSIFIRE_ADJUDICATED_INITIAL_SUBMISSION_ENABLED=false`, which restores the
   repository default for tests instead of inheriting the configured live value.
 - Targeted Ruff, mypy, Bandit, `git diff --check`, TypeScript compilation, and
   the Phase 8 plugin-profile verifier pass.
 - Exact-main ignored plugin artifact SHA-256 remains
   `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`.
-- Exact code-bearing-main Gate A candidate fingerprint is
-  `2C43E1CB46629BAA2A69A2417C0F296312ECC8C3F57E2C179FF0011121593C6A`.
+- The last completed exact-main Gate A candidate, on `74346c5` after PR #66,
+  is `1B71071009EA584C118A4302500C639F1B1AA13F03BA87876514621676CAF8CC`.
   The audit records `deployment_authorised=false` and
-  `live_change_performed=false`.
+  `live_change_performed=false`. A new exact-main Gate A candidate must be
+  generated after this checkpoint is merged.
 - The synthetic live-proof receipt is
   `C:\CLASSIFIRE\.tmp\phase8-synthetic-live-proof-027cf4b-20260823-07\synthetic-live-proof-receipt.json`
   with SHA-256
@@ -65,8 +76,10 @@ source of truth.
 
 ## Unresolved work
 
-1. Prove representative current-main linked-original retrieval, governed
-   retention, and proposal-only execution with protected state unchanged.
+1. Execute the now-merged bounded runner against an explicitly approved
+   retained report and retrieval location, proving representative current-main
+   linked-original retrieval, governed retention, and proposal-only inference
+   with protected state unchanged.
    Generalisation beyond the current allowlisted report source remains later
    Phase 5 work.
 2. Design, persist, and enforce a canonical visual-validation receipt before a
@@ -76,8 +89,11 @@ source of truth.
 
 ## Next valid task
 
-Build a bounded, no-write representative runner around the reconciled services,
-using an explicitly approved retained report and retrieval location. Prove the
-retrieved originals are bound, retained, fed through the existing proposal-only
-controller, and compared only after inference, while protected canonical state
-remains unchanged. Do not revive the obsolete legacy real-UAT runners.
+Prepare and execute a controlled representative package using the merged
+bounded runner and an explicitly approved retained report and retrieval
+location. Prove the retrieved originals are bound, retained, and fed through
+the existing proposal-only controller; compare validation-only human reference
+material only after inference; preserve the content-free receipts; and roll
+back the caller-owned transaction so protected canonical state remains
+unchanged. Do not rebuild the runner or revive the obsolete legacy real-UAT
+runners.

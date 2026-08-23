@@ -1,7 +1,7 @@
 # CLASSIFIRE Project State
 
 **Verified snapshot:** 2026-08-23 (AEST)
-**Latest code-bearing base:** `ecf7721` (merged linked-original PR #65)
+**Latest code-bearing base:** `4ba1349` (merged linked-visual runner PR #67)
 **Current scope:** Gates A-F deployment validation remains complete without a
 real admission or canonical submission. Repository work is separately
 validating the now-reconciled retained proposal-only visual toolchain through
@@ -17,8 +17,8 @@ material and device deployment.
 ## Current repository reconciliation - 2026-08-23
 
 The latest code-bearing shared-main baseline is
-`ecf7721628374ad3d5940e8e2cb72fdb729428e3` after Phase 8 reconciliation
-PRs #45-#65. Current main includes the bounded Validator-to-Physical correction
+`4ba134934d72cbf5ca71c8550f5ce3bf7f3c67d4` after Phase 8 reconciliation
+PRs #45-#67. Current main includes the bounded Validator-to-Physical correction
 guard, proposal-blind Opening/Service inventory, mandatory reconciliation
 ledger, fail-closed JSON input handling, and a dependency-injected
 proposal-only controller. The controller enforces the independent
@@ -97,15 +97,34 @@ idempotent and conflicts fail closed. No signed URL, private fixture, obsolete
 real-UAT runner, inference call, admission action, canonical write, or lock
 capability was added to the retrieval service.
 
-Gate A was rerun against the clean exact code-bearing main after PR #65. The
+PR #67 adds the bounded current-main composition that was previously missing.
+It joins linked-original retrieval, governed evidence retention, the retained-
+evidence packet, and the existing proposal-only controller. It refuses to run
+against a non-empty protected Physical Model; checks that retrieval does not
+change database state; permits retention to add only the expected immutable
+evidence; checks protected state again around inference; and emits a strict,
+content-free receipt. The caller still owns the outer transaction: the runner
+does not commit, submit canonical physical data, create a Physical Model Lock,
+or expose a signed URL or local path. A low-resolution photo that requires an
+original but has no report link now correctly blocks its retrieval batch rather
+than being misclassified as optional. The implementation is proven with
+synthetic data only; representative execution against an explicitly approved
+retained report remains pending.
+
+The latest completed exact-main Gate A predates PR #67 and was run after the
+documentation reconciliation PR #66 at
+`74346c5bf0018e2ff62d266a88f1e3e68ecac724`. The
 rebuilt plugin artifact remains
 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`;
 the revision-bound candidate fingerprint is
-`2C43E1CB46629BAA2A69A2417C0F296312ECC8C3F57E2C179FF0011121593C6A`.
-The linked-original retrieval, retention, and retained-evidence chain passes 58
-focused tests. The full repository suite passes 286 tests under the documented
+`1B71071009EA584C118A4302500C639F1B1AA13F03BA87876514621676CAF8CC`.
+The retrieval and runner slice passes 42 focused tests; the related retrieval,
+retention, evidence, proposal, runtime, and runner suite passes 107 tests. The
+full repository suite passes 292 tests under the documented
 default-disabled initial-submission setting. Ruff, targeted mypy, Bandit,
-plugin-profile verification, and Git diff validation also pass.
+plugin-profile verification, and Git diff validation also pass. A new
+exact-main Gate A candidate must be generated after this documentation
+checkpoint is merged.
 
 Gate B remains verified at migration
 `0008_retire_legacy_initial_submissions`. Gate C now trusts only
@@ -156,15 +175,16 @@ is not yet designed or approved.
 ### Shared-main and GitHub reconciliation
 
 The clean foundation stack and deployment documentation are published on shared
-`main`. PRs #45-#65 have reconciled the visual receipt and bounded correction,
+`main`. PRs #45-#67 have reconciled the visual receipt and bounded correction,
 blind inventory and reconciliation, malformed-input guards, and proposal-only
 controller, retained-evidence adapter, guarded OpenResponses transport, and
 managed local runtime composition with current-main tests. Dedicated zero-tool
 runtime identities are installed and a controlled synthetic live inference is
 proven. The validation-only comparator and linked-original retrieval/retention
-source are reconciled. Representative current-main execution has not yet proven
-the complete linked-original-to-proposal chain against an approved report; that
-remaining no-write validation stays in issue #42. The legacy branch differs
+source are reconciled, and the bounded linked-original-to-proposal runner is
+now merged. Representative current-main execution has not yet proven that
+complete chain against an approved report; that remaining no-write validation
+stays in issue #42. The legacy branch differs
 materially from current main and must not be merged wholesale. Historical UAT
 receipts remain evidence of what was executed, not proof of current-main runtime
 execution.
