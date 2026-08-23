@@ -1735,11 +1735,12 @@ def materialize_linked_images(
                 status=extraction_failures[photo_id],
             )
         elif photo_id not in linked_occurrences:
+            required = _eligible_low_resolution(row, policy)
             results_by_id[photo_id] = LinkedImageResult(
                 photo_id=photo_id,
                 page_number=int(row.get("page_number") or 0),
-                required=False,
-                status="NOT_REQUIRED" if not _eligible_low_resolution(row, policy) else "NO_LINK",
+                required=required,
+                status="NO_LINK" if required else "NOT_REQUIRED",
             )
 
     for photo_id in sorted(candidates):

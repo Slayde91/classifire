@@ -478,6 +478,32 @@ def test_duplicate_photo_ids_fail_before_extraction(tmp_path: Path) -> None:
     assert captured.value.code == "INVALID_PHOTO_INVENTORY"
 
 
+def test_low_resolution_photo_without_link_blocks_batch(tmp_path: Path) -> None:
+    import pymupdf
+
+    report = tmp_path / "no-link.pdf"
+    document = pymupdf.open()
+    document.new_page()
+    document.save(report)
+    document.close()
+    embedded = tmp_path / "embedded.jpg"
+    embedded.write_bytes(_jpeg_bytes((50, 50)))
+
+    batch = linked.materialize_linked_images(
+        report,
+        [_photo_row(embedded)],
+        tmp_path / "output",
+        report_sha256=linked._sha256_file(report),
+        transport=lambda *_args: pytest.fail("missing link must not reach transport"),
+    )
+
+    assert batch.ok is False
+    assert batch.results[0].required is True
+    assert batch.results[0].status == "NO_LINK"
+    assert batch.receipt["required_count"] == 1
+    assert batch.receipt["failure_count"] == 1
+
+
 def test_same_host_redirect_is_revalidated_and_cross_host_redirect_is_rejected(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

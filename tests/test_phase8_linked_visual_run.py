@@ -1,0 +1,531 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from copy import deepcopy
+from io import BytesIO
+from pathlib import Path
+from typing import Any
+
+import pytest
+from physical_foundation_support import add_estimate, physical_session
+from PIL import Image, ImageDraw
+from sqlalchemy import event, func, select
+
+from classifire.models import Opening, StoredFile
+from classifire.physical_models import Defect, EvidenceSource
+from classifire.services.canonical_submission_state import initial_submission_state
+from classifire.services.linked_image_retrieval import _FetchHop
+from classifire.services.phase8_linked_visual_run import (
+    LINKED_VISUAL_RETRIEVAL_BLOCKED,
+    LINKED_VISUAL_RUN_RECEIPT_SCHEMA,
+    Phase8LinkedVisualRunError,
+    run_phase8_linked_visual_proposal,
+    validate_phase8_linked_visual_run_receipt,
+)
+from classifire.services.phase8_visual_prompts import build_visual_inference_profile
+from classifire.services.phase8_visual_proposal import (
+    VISUAL_INFERENCE_RESPONSE_SCHEMA,
+    VISUAL_PROPOSAL_APPROVED,
+    VISUAL_PROPOSAL_PROTECTED_STATE_CHANGED,
+)
+from classifire.services.physical_scope import is_blank_opening_type
+
+LEAK_MARKER = "SIGNED-CAPABILITY-MUST-NOT-LEAK"
+
+
+def _uri() -> str:
+    return (
+        "https://twiddle.onuptick.com/media/original.jpg?Expires=32503680000"
+        f"&Key-Pair-Id=PAIR&Signature={LEAK_MARKER}"
+        "&public_id=PUBLIC-ID&transform=FULL-SIZE"
+    )
+
+
+def _detailed_jpeg() -> bytes:
+    size = (1000, 1000)
+    image = Image.new("RGB", size, (20, 80, 160))
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((200, 200, 800, 800), fill=(220, 170, 30))
+    draw.line((0, 0, 1000, 1000), fill=(245, 245, 245), width=50)
+    for index, offset in enumerate(range(0, 1000, 25)):
+        vertical = tuple(min(255, value + (index % 7) * 4) for value in (35, 95, 175))
+        horizontal = tuple(min(255, value + (index % 5) * 5) for value in (15, 65, 145))
+        draw.line((offset, 0, offset, 1000), fill=vertical, width=1)
+        draw.line((0, offset, 1000, offset), fill=horizontal, width=1)
+    output = BytesIO()
+    image.save(output, format="JPEG", quality=95)
+    return output.getvalue()
+
+
+def _embedded(source: bytes, path: Path) -> None:
+    with Image.open(BytesIO(source)) as image:
+        image.resize((50, 50), Image.Resampling.LANCZOS).save(
+            path,
+            format="JPEG",
+            quality=92,
+        )
+
+
+def _report(path: Path, *, linked: bool = True) -> str:
+    import pymupdf
+
+    document = pymupdf.open()
+    page = document.new_page()
+    if linked:
+        page.insert_link(
+            {
+                "kind": pymupdf.LINK_URI,
+                "from": pymupdf.Rect(10, 10, 60, 60),
+                "uri": _uri(),
+            }
+        )
+    document.save(path)
+    document.close()
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _parent(session, storage_root: Path, embedded_path: Path):
+    estimate = add_estimate(session)
+    defect = Defect(
+        estimate_id=estimate.id,
+        external_defect_id="D-001",
+        evidence_status="confirmed",
+        status="draft",
+    )
+    session.add(defect)
+    session.flush()
+    embedded_sha256 = hashlib.sha256(embedded_path.read_bytes()).hexdigest()
+    stored = StoredFile(
+        original_filename="embedded.jpg",
+        media_type="image/jpeg",
+        storage_path=str(embedded_path),
+        sha256=embedded_sha256,
+        size_bytes=embedded_path.stat().st_size,
+        purpose="technical_evidence",
+        malware_scan_status="clean",
+        immutable=True,
+    )
+    session.add(stored)
+    session.flush()
+    evidence = EvidenceSource(
+        estimate_id=estimate.id,
+        defect_id=defect.id,
+        stored_file_id=stored.id,
+        evidence_type="inspection_photo",
+        source_reference="synthetic-report-thumbnail",
+        page_number="1",
+        region_reference="P001-I01",
+        sha256=embedded_sha256,
+        evidence_class="observed",
+        status="active",
+        source_json={
+            "phase8_visual_inference": {
+                "evidence_role": "primary_detail",
+                "relationship": "embedded_image",
+                "parent_evidence_source_id": None,
+                "inference_allowed": True,
+                "validation_only": False,
+            }
+        },
+    )
+    session.add(evidence)
+    session.flush()
+    return estimate, defect, evidence
+
+
+def _photo_row(embedded_path: Path) -> dict[str, Any]:
+    return {
+        "photo_id": "P001-I01",
+        "page_number": 1,
+        "bbox": [10.0, 10.0, 60.0, 60.0],
+        "native_path": str(embedded_path),
+        "native_width": 50,
+        "native_height": 50,
+        "width": 50,
+        "height": 50,
+        "tiny_artifact": False,
+        "decorative_candidate": False,
+    }
+
+
+def _proposal() -> dict[str, Any]:
+    return {
+        "status": "MODEL_SUPPORTED",
+        "limitations": [],
+        "openings": [
+            {
+                "external_defect_id": "D-001",
+                "opening_code": "O-001",
+                "substrate_type": "concrete",
+                "substrate_plane": "wall",
+                "orientation": "vertical",
+                "opening_type": "service_penetration",
+            }
+        ],
+        "services": [
+            {
+                "service_code": "S-001",
+                "service_type": "pipe",
+                "material": "PVC",
+                "quantity": 1,
+                "primary_opening_code": "O-001",
+                "opening_codes": ["O-001"],
+                "evidence_status": "confirmed",
+                "relationship_status": "confirmed",
+                "link_type": "penetrates",
+                "source_reference": "synthetic-evidence",
+                "confidence": "0.95",
+            }
+        ],
+    }
+
+
+def _blind_inventory(proposal: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": "COMPLETE",
+        "observed_opening_count": len(proposal["openings"]),
+        "observed_service_group_count": len(proposal["services"]),
+        "candidate_openings": [
+            {
+                "candidate_id": f"V-{opening['opening_code']}",
+                "blank": is_blank_opening_type(opening["opening_type"]),
+                "detail": "synthetic opening observation",
+                "evidence_refs": ["synthetic-evidence"],
+            }
+            for opening in proposal["openings"]
+        ],
+        "candidate_services": [
+            {
+                "candidate_id": f"V-{service['service_code']}",
+                "service_type": service["service_type"],
+                "material": service.get("material"),
+                "quantity": service["quantity"],
+                "candidate_opening_ids": [
+                    f"V-{opening_code}" for opening_code in service["opening_codes"]
+                ],
+                "detail": "synthetic service observation",
+                "evidence_refs": ["synthetic-evidence"],
+            }
+            for service in proposal["services"]
+        ],
+        "unresolved_candidates": [],
+        "limitations": [],
+    }
+
+
+def _validator(proposal: dict[str, Any], blind: dict[str, Any]) -> dict[str, Any]:
+    candidates = [*blind["candidate_openings"], *blind["candidate_services"]]
+    return {
+        "verdict": "APPROVED",
+        "issues": [],
+        "limitations": [],
+        "observed_opening_count": len(proposal["openings"]),
+        "observed_service_group_count": len(proposal["services"]),
+        "blind_reconciliation": [
+            {
+                "blind_candidate_id": candidate["candidate_id"],
+                "disposition": "ACCOUNTED_FOR",
+                "proposal_refs": [candidate["candidate_id"].removeprefix("V-")],
+                "detail": "synthetic candidate accounted for",
+                "evidence_refs": ["synthetic-evidence"],
+            }
+            for candidate in candidates
+        ],
+    }
+
+
+class _ScriptedPort:
+    def __init__(self, *, mutation=None) -> None:
+        proposal = _proposal()
+        blind = _blind_inventory(proposal)
+        self.responses = {
+            "blind_inventory": blind,
+            "physical_proposal": proposal,
+            "conditioned_validator_0": _validator(proposal, blind),
+        }
+        self.calls: list[dict[str, Any]] = []
+        self.mutation = mutation
+
+    def invoke(
+        self,
+        *,
+        role: str,
+        stage: str,
+        request: dict[str, Any],
+    ) -> dict[str, Any]:
+        self.calls.append({"role": role, "stage": stage, "request": deepcopy(request)})
+        if self.mutation is not None and len(self.calls) == 1:
+            self.mutation()
+        return {
+            "schema": VISUAL_INFERENCE_RESPONSE_SCHEMA,
+            "agent_id": role,
+            "provider": "test-provider",
+            "model": "validator-test-model" if role == "cf-validator" else "physical-test-model",
+            "session_id_sha256": "7" * 64,
+            "transport_receipt_sha256": "8" * 64,
+            "tool_calls": [],
+            "payload": deepcopy(self.responses[stage]),
+        }
+
+
+def _profile() -> dict[str, Any]:
+    return build_visual_inference_profile(
+        implementation_revision="a" * 40,
+        provider="test-provider",
+        physical_model="physical-test-model",
+        validator_model="validator-test-model",
+    )
+
+
+def _run(
+    session,
+    *,
+    tmp_path: Path,
+    linked: bool = True,
+    port: _ScriptedPort | None = None,
+    parent_map: dict[str, str] | None = None,
+):
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+    source = _detailed_jpeg()
+    embedded_path = storage_root / "embedded.jpg"
+    _embedded(source, embedded_path)
+    report = tmp_path / "report.pdf"
+    report_sha256 = _report(report, linked=linked)
+    estimate, defect, parent = _parent(session, storage_root, embedded_path)
+    selected_port = port or _ScriptedPort()
+    result = run_phase8_linked_visual_proposal(
+        session,
+        run_id="RUN-LINKED-001",
+        estimate_id=estimate.id,
+        defect_reference="D-001",
+        report=report,
+        report_sha256=report_sha256,
+        photo_rows=[_photo_row(embedded_path)],
+        parent_evidence_by_photo_id=(
+            parent_map if parent_map is not None else {"P001-I01": parent.id}
+        ),
+        storage_root=storage_root,
+        retrieval_root=retrieval_root,
+        operator_reference="Synthetic test operator",
+        inference_profile=_profile(),
+        inference_port=selected_port,
+        protected_state_reader=lambda: initial_submission_state(
+            session,
+            estimate_id=estimate.id,
+        ),
+        transport=lambda _uri_value, _policy, _resolver: _FetchHop(
+            status=200,
+            content_type="image/jpeg",
+            declared_length=len(source),
+            body=source,
+            resolved_address_count=1,
+            tls_version="TLSv1.3",
+        ),
+    )
+    return result, estimate, defect, parent, selected_port, storage_root, report
+
+
+def test_runner_composes_retrieval_retention_and_approved_controller_without_commit(
+    tmp_path: Path,
+) -> None:
+    with physical_session() as session:
+        commits: list[bool] = []
+        event.listen(session.get_bind(), "commit", lambda _connection: commits.append(True))
+
+        result, estimate, _defect, parent, port, storage_root, report = _run(
+            session,
+            tmp_path=tmp_path,
+        )
+
+        assert commits == []
+        assert result.receipt["schema"] == LINKED_VISUAL_RUN_RECEIPT_SCHEMA
+        assert validate_phase8_linked_visual_run_receipt(result.receipt) == []
+        assert result.visual_result is not None
+        assert result.visual_result.status == VISUAL_PROPOSAL_APPROVED
+        assert len(result.retentions) == 1
+        linked = result.retentions[0]
+        assert (
+            linked.evidence.source_json["phase8_visual_inference"]["parent_evidence_source_id"]
+            == parent.id
+        )
+        assert result.evidence_packet is not None
+        packet_ids = {item.evidence_id for item in result.evidence_packet.files}
+        assert linked.evidence.id in packet_ids
+        assert [call["stage"] for call in port.calls] == [
+            "blind_inventory",
+            "physical_proposal",
+            "conditioned_validator_0",
+        ]
+        protected = result.receipt["protected_state"]
+        assert protected["retrieval_database_state_unchanged"] is True
+        assert protected["physical_components_unchanged"] is True
+        assert protected["inference_state_unchanged"] is True
+        assert protected["protected_state_changed_during_inference"] is False
+        assert protected["before_retrieval"]["counts"]["evidence_count"] == 1
+        assert protected["before_inference"]["counts"]["evidence_count"] == 2
+        assert result.receipt["runner_database_commit_performed"] is False
+        assert result.receipt["runner_canonical_write_performed"] is False
+        assert result.receipt["runner_physical_model_lock_created"] is False
+        serialized = json.dumps(result.receipt)
+        assert LEAK_MARKER not in serialized
+        assert "https://" not in serialized
+        assert str(storage_root) not in serialized
+        assert str(report) not in serialized
+        tampered_receipt = deepcopy(result.receipt)
+        tampered_receipt["runner_database_commit_performed"] = True
+        tampered_receipt["run_id"] = _uri()
+        tamper_errors = validate_phase8_linked_visual_run_receipt(tampered_receipt)
+        assert any("commit" in error for error in tamper_errors)
+        assert any("signed capability" in error for error in tamper_errors)
+        assert (
+            initial_submission_state(session, estimate_id=estimate.id).counts["opening_count"] == 0
+        )
+
+
+def test_runner_blocks_before_retention_and_inference_when_required_link_is_missing(
+    tmp_path: Path,
+) -> None:
+    with physical_session() as session:
+        result, estimate, _defect, _parent, port, _storage_root, _report_path = _run(
+            session,
+            tmp_path=tmp_path,
+            linked=False,
+        )
+
+        assert result.receipt["status"] == LINKED_VISUAL_RETRIEVAL_BLOCKED
+        assert result.retentions == ()
+        assert result.evidence_packet is None
+        assert result.visual_result is None
+        assert port.calls == []
+        assert result.receipt["runtime_inference_performed"] is False
+        assert result.receipt["protected_state"]["retrieval_database_state_unchanged"] is True
+        assert (
+            initial_submission_state(session, estimate_id=estimate.id).counts["evidence_count"] == 1
+        )
+        optional_no_link = deepcopy(result.receipt)
+        optional_no_link["retrieval"]["ok"] = True
+        optional_no_link["retrieval"]["required_count"] = 0
+        optional_no_link["retrieval"]["status_counts"] = {"NOT_REQUIRED": 1}
+        assert validate_phase8_linked_visual_run_receipt(optional_no_link) == []
+
+
+def test_runner_rejects_parent_mapping_mismatch_before_evidence_retention(tmp_path: Path) -> None:
+    with physical_session() as session:
+        with pytest.raises(Phase8LinkedVisualRunError) as caught:
+            _run(
+                session,
+                tmp_path=tmp_path,
+                parent_map={},
+            )
+
+        assert caught.value.code == "PARENT_MAPPING_MISMATCH"
+        assert session.scalar(select(func.count()).select_from(EvidenceSource)) == 1
+
+
+def test_runner_rejects_nonempty_physical_model_before_network_access(tmp_path: Path) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+    source = _detailed_jpeg()
+    embedded_path = storage_root / "embedded.jpg"
+    _embedded(source, embedded_path)
+    report = tmp_path / "report.pdf"
+    report_sha256 = _report(report)
+
+    with physical_session() as session:
+        estimate, _defect, parent = _parent(session, storage_root, embedded_path)
+        session.add(Opening(estimate_id=estimate.id, opening_code="EXISTING-001"))
+        session.flush()
+
+        with pytest.raises(Phase8LinkedVisualRunError) as caught:
+            run_phase8_linked_visual_proposal(
+                session,
+                run_id="RUN-LINKED-001",
+                estimate_id=estimate.id,
+                defect_reference="D-001",
+                report=report,
+                report_sha256=report_sha256,
+                photo_rows=[_photo_row(embedded_path)],
+                parent_evidence_by_photo_id={"P001-I01": parent.id},
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                operator_reference="Synthetic test operator",
+                inference_profile=_profile(),
+                inference_port=_ScriptedPort(),
+                protected_state_reader=lambda: initial_submission_state(
+                    session,
+                    estimate_id=estimate.id,
+                ),
+                transport=lambda *_args: pytest.fail("network must not be reached"),
+            )
+
+        assert caught.value.code == "PROTECTED_PHYSICAL_MODEL_NOT_EMPTY"
+
+
+def test_runner_receipt_exposes_inference_time_protected_state_change(tmp_path: Path) -> None:
+    with physical_session() as session:
+        pending: dict[str, Any] = {}
+
+        def mutate() -> None:
+            session.add(
+                Opening(
+                    estimate_id=pending["estimate_id"],
+                    opening_code="UNAUTHORISED-001",
+                )
+            )
+            session.flush()
+
+        port = _ScriptedPort(mutation=mutate)
+
+        storage_root = tmp_path / "storage"
+        retrieval_root = tmp_path / "retrieval"
+        storage_root.mkdir()
+        retrieval_root.mkdir()
+        source = _detailed_jpeg()
+        embedded_path = storage_root / "embedded.jpg"
+        _embedded(source, embedded_path)
+        report = tmp_path / "report.pdf"
+        report_sha256 = _report(report)
+        estimate, _defect, parent = _parent(session, storage_root, embedded_path)
+        pending["estimate_id"] = estimate.id
+
+        result = run_phase8_linked_visual_proposal(
+            session,
+            run_id="RUN-LINKED-STATE-CHANGE",
+            estimate_id=estimate.id,
+            defect_reference="D-001",
+            report=report,
+            report_sha256=report_sha256,
+            photo_rows=[_photo_row(embedded_path)],
+            parent_evidence_by_photo_id={"P001-I01": parent.id},
+            storage_root=storage_root,
+            retrieval_root=retrieval_root,
+            operator_reference="Synthetic test operator",
+            inference_profile=_profile(),
+            inference_port=port,
+            protected_state_reader=lambda: initial_submission_state(
+                session,
+                estimate_id=estimate.id,
+            ),
+            transport=lambda _uri_value, _policy, _resolver: _FetchHop(
+                status=200,
+                content_type="image/jpeg",
+                declared_length=len(source),
+                body=source,
+                resolved_address_count=1,
+                tls_version="TLSv1.3",
+            ),
+        )
+
+        assert result.visual_result is not None
+        assert result.visual_result.status == VISUAL_PROPOSAL_PROTECTED_STATE_CHANGED
+        protected = result.receipt["protected_state"]
+        assert protected["inference_state_unchanged"] is False
+        assert protected["protected_state_changed_during_inference"] is True
+        assert protected["physical_components_unchanged"] is False
+        assert result.receipt["runner_database_commit_performed"] is False
