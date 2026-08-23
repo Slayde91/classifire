@@ -6,8 +6,8 @@ source of truth.
 
 ## Latest verified state
 
-- Shared-main code baseline is `027cf4b2063c15d5d455e00ff7ad1c056a0b1ec9`,
-  merge commit for Phase 8 PR #61.
+- Shared-main code baseline is `7f7a06206eb52ea294c6dd6e44e2920b5546ab58`,
+  merge commit for Phase 8 comparator PR #63.
 - Gates A-F remain locally deployment-validated. The real UAT estimate remains
   unchanged: no admission has been signed or registered, no canonical physical
   model has been submitted, and no Physical Model Lock exists.
@@ -29,11 +29,16 @@ source of truth.
   Validator identity on exact main. Its strict payload validated with one stage,
   no tool calls, no human-reference visibility, no canonical-state connection,
   no canonical write, and no lock.
+- Current main has a post-inference, validation-only human-reference comparator.
+  It binds the proposal, strict controller receipt, and reference by path and
+  SHA-256, verifies the proposal's canonical JSON hash, and detects
+  topology/substrate swaps. It imports no database or inference interface.
 
 ## Verification completed
 
 - 31 focused transport/runtime tests pass.
-- The full repository suite passes 231 tests when
+- 8 comparator tests and 89 related Phase 8 tests pass.
+- The full repository suite passes 239 tests when
   `CLASSIFIRE_ADJUDICATED_INITIAL_SUBMISSION_ENABLED=false`, which restores the
   repository default for tests instead of inheriting the configured live value.
 - Targeted Ruff and mypy, `git diff --check`, TypeScript compilation, and the
@@ -41,7 +46,7 @@ source of truth.
 - Exact-main ignored plugin artifact SHA-256 remains
   `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`.
 - Exact-main Gate A candidate fingerprint is
-  `80E96A073DDC8731D9FBF5048EE90EEF74F52338EBECC957C44392B2775ED785`.
+  `86FCF6000C450D77019F1FAD4F3434F44445AA1FDC091370A22B703A3F619557`.
   The audit records `deployment_authorised=false` and
   `live_change_performed=false`.
 - The synthetic live-proof receipt is
@@ -53,18 +58,17 @@ source of truth.
 
 ## Unresolved work
 
-1. Reconcile the validation-only human comparator from the legacy Phase 8 stack
-   without allowing reference answers into inference.
-2. Reconcile the linked-original resolver against current retained-evidence
+1. Reconcile the linked-original resolver against current retained-evidence
    abstractions and multiple report formats.
-3. Design, persist, and enforce a canonical visual-validation receipt before a
+2. Design, persist, and enforce a canonical visual-validation receipt before a
    future Physical Model Lock can become eligible.
-4. Reconcile a tracked `docs/CLASSIFIRE_ARCHITECTURE.md`. The existing copy is
+3. Reconcile a tracked `docs/CLASSIFIRE_ARCHITECTURE.md`. The existing copy is
    confined to the legacy branch and contains stale branch-specific claims.
 
 ## Next valid task
 
-Reconcile and test the validation-only human comparator from the legacy Phase 8
-stack against current-main abstractions. It must compare only after inference,
-bind proposal and reference inputs by path and hash, preserve semantic topology
-differences, and never expose human-reference answers to either runtime agent.
+Reconcile the standalone linked-image retrieval/materialisation service and its
+security tests from legacy commit `ba1b6bd` without importing the obsolete
+real-UAT runners. Then separately bridge verified linked originals into the
+current retained-evidence boundary while preserving thumbnail and page context.
+Keep live network retrieval out of the source reconciliation tests.
