@@ -227,6 +227,7 @@ def test_profile_and_rendering_are_deterministic_and_role_bound(tmp_path: Path) 
     assert "human reference" in first.text.lower()
     assert "blank (the JSON boolean true" in first.text
     assert "candidate_opening_ids, detail, and" in first.text
+    assert "classification, or photo_relationship" in first.text
     with pytest.raises(Exception, match="INFERENCE_STAGE_ROLE_MISMATCH"):
         renderer.render(role="cf-physical-model", stage="blind_inventory", request=request)
 
