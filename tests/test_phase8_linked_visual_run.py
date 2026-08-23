@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import contextmanager
 from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
@@ -77,6 +78,24 @@ def _report(path: Path, *, linked: bool = True) -> str:
             {
                 "kind": pymupdf.LINK_URI,
                 "from": pymupdf.Rect(10, 10, 60, 60),
+                "uri": _uri(),
+            }
+        )
+    document.save(path)
+    document.close()
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _two_link_report(path: Path) -> str:
+    import pymupdf
+
+    document = pymupdf.open()
+    page = document.new_page()
+    for left in (10, 70):
+        page.insert_link(
+            {
+                "kind": pymupdf.LINK_URI,
+                "from": pymupdf.Rect(left, 10, left + 50, 60),
                 "uri": _uri(),
             }
         )
@@ -285,6 +304,7 @@ def _run(
     linked: bool = True,
     port: _ScriptedPort | None = None,
     parent_map: dict[str, str] | None = None,
+    unbound_visual_ids: list[str] | None = None,
 ):
     storage_root = tmp_path / "storage"
     retrieval_root = tmp_path / "retrieval"
@@ -296,6 +316,23 @@ def _run(
     report = tmp_path / "report.pdf"
     report_sha256 = _report(report, linked=linked)
     estimate, defect, parent = _parent(session, storage_root, embedded_path)
+    if unbound_visual_ids is not None:
+        unbound_visual = EvidenceSource(
+            estimate_id=estimate.id,
+            defect_id=defect.id,
+            stored_file_id=parent.stored_file_id,
+            evidence_type="inspection_photo",
+            source_reference="synthetic-unbound-visual-evidence",
+            page_number="1",
+            region_reference="UNBOUND-001",
+            sha256=parent.sha256,
+            evidence_class="observed",
+            status="active",
+            source_json=deepcopy(parent.source_json),
+        )
+        session.add(unbound_visual)
+        session.flush()
+        unbound_visual_ids.append(unbound_visual.id)
     selected_port = port or _ScriptedPort()
     result = run_phase8_linked_visual_proposal(
         session,
@@ -354,7 +391,7 @@ def test_runner_composes_retrieval_retention_and_approved_controller_without_com
         )
         assert result.evidence_packet is not None
         packet_ids = {item.evidence_id for item in result.evidence_packet.files}
-        assert linked.evidence.id in packet_ids
+        assert packet_ids == {parent.id, linked.evidence.id}
         assert [call["stage"] for call in port.calls] == [
             "blind_inventory",
             "physical_proposal",
@@ -384,6 +421,134 @@ def test_runner_composes_retrieval_retention_and_approved_controller_without_com
         assert (
             initial_submission_state(session, estimate_id=estimate.id).counts["opening_count"] == 0
         )
+
+
+def test_runner_excludes_unbound_preexisting_visual_evidence(
+    tmp_path: Path,
+) -> None:
+    with physical_session() as session:
+        unbound_visual_ids: list[str] = []
+        result, _estimate, _defect, parent, _port, _storage_root, _report = _run(
+            session,
+            tmp_path=tmp_path,
+            unbound_visual_ids=unbound_visual_ids,
+        )
+
+        assert len(unbound_visual_ids) == 1
+        assert result.evidence_packet is not None
+        retained_id = result.retentions[0].evidence.id
+        packet_ids = {item.evidence_id for item in result.evidence_packet.files}
+        assert packet_ids == {parent.id, retained_id}
+        assert unbound_visual_ids[0] not in packet_ids
+
+
+def test_runner_verifies_full_report_but_retains_only_target_defect_evidence(
+    tmp_path: Path,
+) -> None:
+    with physical_session() as session:
+        storage_root = tmp_path / "storage"
+        retrieval_root = tmp_path / "retrieval"
+        storage_root.mkdir()
+        retrieval_root.mkdir()
+        source = _detailed_jpeg()
+        embedded_path = storage_root / "embedded.jpg"
+        _embedded(source, embedded_path)
+        report = tmp_path / "report.pdf"
+        report_sha256 = _two_link_report(report)
+        estimate, _target_defect, target_parent = _parent(
+            session,
+            storage_root,
+            embedded_path,
+        )
+        other_defect = Defect(
+            estimate_id=estimate.id,
+            external_defect_id="D-OTHER",
+            evidence_status="confirmed",
+            status="draft",
+        )
+        session.add(other_defect)
+        session.flush()
+        other_parent = EvidenceSource(
+            estimate_id=estimate.id,
+            defect_id=other_defect.id,
+            stored_file_id=target_parent.stored_file_id,
+            evidence_type="inspection_photo",
+            source_reference="synthetic-report-thumbnail",
+            page_number="1",
+            region_reference="P001-I02",
+            sha256=target_parent.sha256,
+            evidence_class="observed",
+            status="active",
+            source_json={},
+        )
+        session.add(other_parent)
+        session.flush()
+        target_row = _photo_row(embedded_path)
+        other_row = {
+            **_photo_row(embedded_path),
+            "photo_id": "P001-I02",
+            "bbox": [70.0, 10.0, 120.0, 60.0],
+        }
+        decorative_row = {
+            **_photo_row(embedded_path),
+            "photo_id": "P001-I03",
+            "bbox": [130.0, 10.0, 180.0, 60.0],
+            "decorative_candidate": True,
+        }
+        port = _ScriptedPort()
+
+        result = run_phase8_linked_visual_proposal(
+            session,
+            run_id="RUN-LINKED-FULL-REPORT-001",
+            estimate_id=estimate.id,
+            defect_reference="D-001",
+            report=report,
+            report_sha256=report_sha256,
+            photo_rows=[target_row, other_row, decorative_row],
+            parent_evidence_by_photo_id={
+                target_row["photo_id"]: target_parent.id,
+                other_row["photo_id"]: other_parent.id,
+                decorative_row["photo_id"]: other_parent.id,
+            },
+            storage_root=storage_root,
+            retrieval_root=retrieval_root,
+            operator_reference="Synthetic test operator",
+            inference_profile=_profile(),
+            inference_port=port,
+            protected_state_reader=lambda: initial_submission_state(
+                session,
+                estimate_id=estimate.id,
+            ),
+            transport=lambda _uri_value, _policy, _resolver: _FetchHop(
+                status=200,
+                content_type="image/jpeg",
+                declared_length=len(source),
+                body=source,
+                resolved_address_count=1,
+                tls_version="TLSv1.3",
+            ),
+        )
+
+        assert result.retrieval.ok is True
+        assert len(result.retrieval.results) == 3
+        assert len(result.retentions) == 1
+        assert (
+            result.retentions[0].evidence.source_json["phase8_visual_inference"][
+                "parent_evidence_source_id"
+            ]
+            == target_parent.id
+        )
+        assert result.evidence_packet is not None
+        assert other_parent.id not in {item.evidence_id for item in result.evidence_packet.files}
+        assert result.receipt["retrieval"]["ready_count"] == 2
+        assert result.receipt["retrieval"]["required_count"] == 2
+        assert len(result.receipt["retained_evidence"]) == 1
+        assert validate_phase8_linked_visual_run_receipt(result.receipt) == []
+        assert [call["stage"] for call in port.calls] == [
+            "blind_inventory",
+            "physical_proposal",
+            "conditioned_validator_0",
+        ]
 
 
 def test_runner_blocks_before_retention_and_inference_when_required_link_is_missing(
@@ -529,3 +694,70 @@ def test_runner_receipt_exposes_inference_time_protected_state_change(tmp_path: 
         assert protected["protected_state_changed_during_inference"] is True
         assert protected["physical_components_unchanged"] is False
         assert result.receipt["runner_database_commit_performed"] is False
+
+
+def test_runner_builds_and_closes_managed_port_from_retained_evidence_packet(
+    tmp_path: Path,
+) -> None:
+    with physical_session() as session:
+        created_for: list[object] = []
+        closed: list[bool] = []
+        port = _ScriptedPort()
+
+        @contextmanager
+        def factory(packet):
+            created_for.append(packet)
+            try:
+                yield port
+            finally:
+                closed.append(True)
+
+        storage_root = tmp_path / "storage"
+        retrieval_root = tmp_path / "retrieval"
+        storage_root.mkdir()
+        retrieval_root.mkdir()
+        source = _detailed_jpeg()
+        embedded_path = storage_root / "embedded.jpg"
+        _embedded(source, embedded_path)
+        report = tmp_path / "report.pdf"
+        report_sha256 = _report(report)
+        estimate, _defect, parent = _parent(session, storage_root, embedded_path)
+
+        result = run_phase8_linked_visual_proposal(
+            session,
+            run_id="RUN-LINKED-FACTORY-001",
+            estimate_id=estimate.id,
+            defect_reference="D-001",
+            report=report,
+            report_sha256=report_sha256,
+            photo_rows=[_photo_row(embedded_path)],
+            parent_evidence_by_photo_id={"P001-I01": parent.id},
+            storage_root=storage_root,
+            retrieval_root=retrieval_root,
+            operator_reference="Synthetic test operator",
+            inference_profile=_profile(),
+            inference_port=None,
+            inference_port_factory=factory,
+            protected_state_reader=lambda: initial_submission_state(
+                session,
+                estimate_id=estimate.id,
+            ),
+            transport=lambda _uri_value, _policy, _resolver: _FetchHop(
+                status=200,
+                content_type="image/jpeg",
+                declared_length=len(source),
+                body=source,
+                resolved_address_count=1,
+                tls_version="TLSv1.3",
+            ),
+        )
+
+        assert result.visual_result is not None
+        assert len(created_for) == 1
+        assert created_for[0] is result.evidence_packet
+        assert closed == [True]
+        assert [call["stage"] for call in port.calls] == [
+            "blind_inventory",
+            "physical_proposal",
+            "conditioned_validator_0",
+        ]

@@ -61,7 +61,9 @@ quantity (a positive integer or null), candidate_opening_ids, detail, and
 evidence_refs. Every unresolved_candidates object requires kind, detail, and
 evidence_refs; candidate_id is optional. kind must be exactly one of barrier,
 opening, service, link, classification, or photo_relationship. Candidate evidence_refs
-must use evidence_id values from the manifest. Counts must equal their candidate-array
+must use evidence_id values from the manifest. Every non-empty candidate_id must be
+globally unique across candidate_openings, candidate_services, and unresolved_candidates;
+do not reuse an ID in a different list. Counts must equal their candidate-array
 lengths. COMPLETE requires no unresolved candidates and every occupied Opening must
 link to a Service group; every blank Opening must have no Service link.
 """
@@ -71,6 +73,9 @@ Role: cf-physical-model proposal author.
 Construct the defect's physical reality before technical selection or pricing.
 Model Openings and Services separately; one defect does not imply one of either.
 Explicitly represent blank Openings, shared Openings, relationships, and limitations.
+When evidence supports a service-free blank Opening, opening_type must be exactly
+blank_opening or blank_core_hole. Do not rely on custom descriptive labels or
+boolean fields to classify a blank Opening.
 
 Required JSON fields:
 status (MODEL_SUPPORTED or INSUFFICIENT_EVIDENCE), limitations, openings, services.
@@ -90,10 +95,19 @@ blind observation exactly once. Do not silently repair the proposal.
 Required JSON fields:
 verdict (APPROVED, REJECTED, or BLOCKED), issues, limitations,
 observed_opening_count, observed_service_group_count, blind_reconciliation.
-Issues must use a supported structured issue code and include specific detail and
-evidence_refs. APPROVED must have no issues and counts equal proposal topology.
-Each blind candidate needs one ACCOUNTED_FOR, CONTRADICTED, or UNRESOLVED ledger
-entry with proposal_refs, detail, and evidence_refs.
+Issues must use exactly one of MISSED_BARRIER, WRONG_BARRIER, WRONG_BARRIER_PLANE,
+MISSED_OPENING, DUPLICATED_OPENING, OVER_SPLIT_OPENING, OVER_MERGED_OPENING,
+MISSED_SERVICE, INVENTED_SERVICE, WRONG_SERVICE_CLASS, WRONG_SERVICE_GROUPING,
+WRONG_SERVICE_QUANTITY, WRONG_SERVICE_OPENING_LINK, PHOTO_DUPLICATE_COUNTED,
+OPPOSITE_FACE_DOUBLE_COUNTED, UNSUPPORTED_MATERIAL, UNSUPPORTED_DIMENSION, or
+UNSUPPORTED_SIZE_OR_QUANTITY. Do not invent issue codes such as INSUFFICIENT_EVIDENCE.
+Every issue requires specific detail and evidence_refs. APPROVED must have no issues and
+counts equal proposal topology. Each blind candidate needs exactly one ledger entry with
+blind_candidate_id, disposition, proposal_refs, detail, and evidence_refs. disposition must
+be exactly ACCOUNTED_FOR, DUPLICATE_OR_SAME_ITEM, NOT_TOPOLOGY,
+RESOLVED_NONSTRUCTURAL, or UNRESOLVED. ACCOUNTED_FOR and DUPLICATE_OR_SAME_ITEM
+require non-empty proposal_refs. NOT_TOPOLOGY and RESOLVED_NONSTRUCTURAL require
+proposal_refs to be an empty array.
 """
 
 CORRECTION_PROMPT_TEMPLATE = _COMMON + """
@@ -104,6 +118,21 @@ Opening and Service codes for surviving entities. UNSUPPORTED_SIZE_OR_QUANTITY b
 itself is ambiguous and grants no correction authority. If a safe correction is not
 supported by the evidence and issue authority, return INSUFFICIENT_EVIDENCE.
 
+Treat the supplied proposal as the correction baseline. Preserve every field of a
+surviving Opening and Service unless its change is explicitly authorised below; in
+particular, never replace a null or unknown value with a guess. Opening
+substrate_type, substrate_plane, and orientation may change only for MISSED_BARRIER,
+WRONG_BARRIER, or WRONG_BARRIER_PLANE. Opening dimensions may change only for
+UNSUPPORTED_DIMENSION. An Opening may be added only for MISSED_OPENING or
+OVER_MERGED_OPENING, removed only for DUPLICATED_OPENING or OVER_SPLIT_OPENING, and
+have opening_type changed only when one of those add/remove authorities applies.
+Services may be added for MISSED_SERVICE or WRONG_SERVICE_GROUPING, removed for
+INVENTED_SERVICE or WRONG_SERVICE_GROUPING, have service_type changed only for
+WRONG_SERVICE_CLASS, material or insulation_type changed only for
+UNSUPPORTED_MATERIAL, dimensions changed only for UNSUPPORTED_DIMENSION, quantity
+changed only for WRONG_SERVICE_GROUPING or WRONG_SERVICE_QUANTITY, and their
+Opening links changed only for WRONG_SERVICE_OPENING_LINK or an authorised Opening
+add/remove. Do not make unrelated "cleanup" changes.
 Use the same Physical proposal JSON shape as the proposal-author stage.
 """
 

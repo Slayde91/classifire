@@ -228,6 +228,36 @@ def test_profile_and_rendering_are_deterministic_and_role_bound(tmp_path: Path) 
     assert "blank (the JSON boolean true" in first.text
     assert "candidate_opening_ids, detail, and" in first.text
     assert "classification, or photo_relationship" in first.text
+    assert "globally unique across candidate_openings" in first.text
+    assert "do not reuse an ID in a different list" in first.text
+
+    physical = renderer.render(
+        role="cf-physical-model", stage="physical_proposal", request=request
+    )
+    assert physical.template_sha256 == request["inference_profile"]["physical_prompt_sha256"]
+    assert "opening_type must be exactly" in physical.text
+    assert "blank_opening or blank_core_hole" in physical.text
+
+    validator = renderer.render(
+        role="cf-validator", stage="conditioned_validator_0", request=request
+    )
+    assert validator.template_sha256 == request["inference_profile"]["validator_prompt_sha256"]
+    assert "MISSED_OPENING" in validator.text
+    assert "UNSUPPORTED_SIZE_OR_QUANTITY" in validator.text
+    assert "DUPLICATE_OR_SAME_ITEM" in validator.text
+    assert "RESOLVED_NONSTRUCTURAL" in validator.text
+    assert "NOT_TOPOLOGY and RESOLVED_NONSTRUCTURAL require" in validator.text
+    assert "proposal_refs to be an empty array" in validator.text
+
+    correction = renderer.render(
+        role="cf-physical-model", stage="physical_correction_1", request=request
+    )
+    assert correction.template_sha256 == request["inference_profile"]["correction_prompt_sha256"]
+    assert "never replace a null or unknown value with a guess" in correction.text
+    assert "substrate_type, substrate_plane, and orientation may change only" in correction.text
+    assert "MISSED_BARRIER" in correction.text
+    assert "WRONG_BARRIER_PLANE" in correction.text
+    assert "Do not make unrelated \"cleanup\" changes." in correction.text
     with pytest.raises(Exception, match="INFERENCE_STAGE_ROLE_MISMATCH"):
         renderer.render(role="cf-physical-model", stage="blind_inventory", request=request)
 

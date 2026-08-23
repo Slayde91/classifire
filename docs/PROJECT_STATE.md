@@ -1,602 +1,205 @@
 # CLASSIFIRE Project State
 
-**Verified snapshot:** 2026-08-23 (AEST)
-**Latest code-bearing base:** `4ba1349` (merged linked-visual runner PR #67)
-**Current scope:** Gates A-F deployment validation remains complete without a
-real admission or canonical submission. Repository work is separately
-validating the now-reconciled retained proposal-only visual toolchain through
-issue #42; any fresh preflight or external signing remains its own governed
-decision.
+**Verified snapshot:** 2026-08-24 (AEST)
 
-This document records repository evidence. The initial local signer work did
-not use operational authority. Later user authority covered the approved logo
-treatment, source publication, and an Android smoke-test attempt; the execution
-environment independently retained its safeguards for persistent APK signing
-material and device deployment.
+**Product status:** Pre-production implementation and controlled UAT
 
-## Current repository reconciliation - 2026-08-23
+**Publication branch:** `gpt/phase8-representative-run-package`
 
-The latest code-bearing shared-main baseline is
-`4ba134934d72cbf5ca71c8550f5ce3bf7f3c67d4` after Phase 8 reconciliation
-PRs #45-#67. Current main includes the bounded Validator-to-Physical correction
-guard, proposal-blind Opening/Service inventory, mandatory reconciliation
-ledger, fail-closed JSON input handling, and a dependency-injected
-proposal-only controller. The controller enforces the independent
-blind-Validator, Physical, conditioned-Validator, bounded-correction sequence;
-checks protected canonical state after every inference exchange; and emits a
-strict deterministic receipt bound to evidence, implementation, prompt,
-runtime, model, session, and transport hashes. It exposes no database,
-canonical-write, admission, signing, registration, lock, device, or deployment
-capability. Current main also includes a read-only retained-evidence adapter
-that binds one defect's active `EvidenceSource` records to immutable
-`StoredFile` bytes, verifies storage containment, digest, actual image type
-and dimensions, excludes validation-only evidence, sanitises local paths and
-source locations, and emits the controller's strict manifest. A separately
-enforced no-tool OpenClaw inference transport is now implemented. It binds
-versioned prompts and model profiles, revalidates retained image bytes
-immediately before upload, permits only literal loopback endpoints, sends no
-client tools, requires the exact session's effective server-tool set to be
-empty, audits every attempted turn, and rejects redirects, tool calls,
-malformed or non-standard JSON, and identity/profile drift. Current main also
-owns the local runtime composition: an explicit no-shell Gateway CLI adapter,
-a narrow RPC/parameter allowlist, fresh metadata-only session registration,
-resolved provider/model verification, collision rejection, lazy token access,
-and a proxy-independent loopback HTTP client. Logical Physical and Validator
-roles must now bind to separate configured runtime identities rather than an
-implicit shared-agent fallback. The installed `cf-phase8-visual-physical` and
-`cf-phase8-visual-validator` identities use the pinned zero-tool v2 profile:
-Docker sandboxing, no workspace access, elevation disabled, an agent-level
-deny-all policy, and an explicit empty sandbox allow gate. Both resolve
-`openai/gpt-5.6`, and their live effective tool inventories are empty. Normal
-OpenClaw agents remain unchanged. The installed
-non-debuggable release APK is version `0.2.1-local` with SHA-256
-`63CFCEE4ADD2D7C87D94FEE628A9898EF0194667FF5AD9BC2B2B16932FA1C075`.
-Android signature scheme v3 verifies with the approved release certificate
-SHA-256
-`A0B852E6F4A6BCA69CB56D9640281D8B424EF13DFE491F128650E015BA2B4C36`.
-The previous debug app was uninstalled, which retired
-`android-p256-uat-20260822-01` and `governance-p256-01`.
+**Reconciled base:** `78016368457748975c331bedab796cd03ee832e6`, equal to `origin/main` after a current remote refresh
 
-The retained production admission key is `governance-p256-02`, bound to issuer
-`classifire-governance` and custodian Slayde Tana. Its public proof was
-recovered read-only after the in-place APK upgrade and independently verified
-as EC P-256 (`secp256r1`) with public-key fingerprint
-`ezFTerydT4IahBteapQDRM8RiQXi6J4z9AmQdyQ0z_0`. The private key remains
-non-exportable in Android Keystore and is not configured in CLASSIFIRE.
+**Current executable source-tree fingerprint:** `F62C153BCCEEFF158C5B63AD933AA00D0EA2D564A692B0FF13C45340FD59A10C`
 
-One controlled synthetic inference completed through the configured Validator
-runtime on exact main `027cf4b`, using retained synthetic image bytes only. The
-strict payload validated with one stage, no tool calls, no human-reference
-visibility, no canonical-state connection, no canonical write, and no lock.
-The receipt is
-`C:\CLASSIFIRE\.tmp\phase8-synthetic-live-proof-027cf4b-20260823-07\synthetic-live-proof-receipt.json`
-with SHA-256
-`F256E6D9ED28904A1B009617B55D677A32AF0F2E8AF5ADAD1A690CD3ED4DD4C4`;
-its transport receipt is
-`991A11A2A8EAEA181A4A05F44D63BC28CBE22C789EA7F41D9EA1AAA1CECE459A`.
+This record reflects committed current-main code, the coherent Phase 8 slice prepared on the publication branch, the mixed legacy checkout, current tests, migration metadata, retained non-canonical execution receipts, and refreshed GitHub state. Source, tests, Git, and execution evidence outrank older documentation.
 
-Current main now also has a post-inference, validation-only human-reference
-comparator. It accepts only explicit proposal, strict controller-receipt, and
-reference JSON files; binds all three by path and SHA-256; verifies the
-proposal's canonical JSON hash against the approved controller receipt; and
-matches substrate only within the same opening/service topology. It has no
-database, inference, admission, signing, registration, canonical-write, or lock
-interface. The historical real-UAT reference fixture was not copied to main.
+Nothing in this document authorises inference, evidence retrieval, admission signing or registration, canonical submission, Physical Model Lock creation, deployment, or release.
 
-Current main now also contains the focused linked-original source slice from
-PR #65. It discovers HTTPS links from report annotations; restricts hosts,
-query keys, paths, redirects, resolved addresses, TLS, response types, bytes,
-pixels, dimensions, and run time; and accepts a downloaded JPEG only after
-binding it to the embedded report thumbnail and proving usable additional
-detail. Verified bytes are stored by SHA-256. A separate guarded retention
-service then revalidates the result, exact parent thumbnail, page, and photo
-identity; enforces the physical-model evidence-mutation guard; records an
-immutable `StoredFile`, child `EvidenceSource`, redacted provenance, and audit
-event; and flushes without committing the caller's transaction. Replay is
-idempotent and conflicts fail closed. No signed URL, private fixture, obsolete
-real-UAT runner, inference call, admission action, canonical write, or lock
-capability was added to the retrieval service.
+## 1. Repository and Git position
 
-PR #67 adds the bounded current-main composition that was previously missing.
-It joins linked-original retrieval, governed evidence retention, the retained-
-evidence packet, and the existing proposal-only controller. It refuses to run
-against a non-empty protected Physical Model; checks that retrieval does not
-change database state; permits retention to add only the expected immutable
-evidence; checks protected state again around inference; and emits a strict,
-content-free receipt. The caller still owns the outer transaction: the runner
-does not commit, submit canonical physical data, create a Physical Model Lock,
-or expose a signed URL or local path. A low-resolution photo that requires an
-original but has no report link now correctly blocks its retrieval batch rather
-than being misclassified as optional. The implementation is proven with
-synthetic data only; representative execution against an explicitly approved
-retained report remains pending.
+Two local checkouts contain materially different work:
 
-The latest completed exact-main Gate A predates PR #67 and was run after the
-documentation reconciliation PR #66 at
-`74346c5bf0018e2ff62d266a88f1e3e68ecac724`. The
-rebuilt plugin artifact remains
-`38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`;
-the revision-bound candidate fingerprint is
-`1B71071009EA584C118A4302500C639F1B1AA13F03BA87876514621676CAF8CC`.
-The retrieval and runner slice passes 42 focused tests; the related retrieval,
-retention, evidence, proposal, runtime, and runner suite passes 107 tests. The
-full repository suite passes 292 tests under the documented
-default-disabled initial-submission setting. Ruff, targeted mypy, Bandit,
-plugin-profile verification, and Git diff validation also pass. A new
-exact-main Gate A candidate must be generated after this documentation
-checkpoint is merged.
+| Checkout | Branch and base | Current role |
+| --- | --- | --- |
+| Isolated current-main worktree | `gpt/phase8-representative-run-package` at `7801636` before this publication | Safe publication source for the coherent representative-run slice and these documents |
+| Primary mixed checkout | `gpt/phase8-linked-original-images` at `79f82a6`, synchronized with its upstream | Legacy evidence/development source only; not a merge, deployment, or bulk-staging source |
 
-Gate B remains verified at migration
-`0008_retire_legacy_initial_submissions`. Gate C now trusts only
-`governance-p256-02` for `classifire-governance`, with adjudicated initial
-submission enabled. Exact-main deliberately assigns
-`physical:adjudicated:submit` to the existing `cf-physical-model` principal;
-the older runbook identity `cf-adjudicated-physical-writer` was superseded by
-the merged admission-only profile and remains inactive. The existing Physical
-credential was retained without rotation. It has neither `physical:write` nor
-`physical:lock`, and the protected admission/model/lock tables were unchanged
-by the scope reconciliation.
+Before this publication, the isolated branch had no upstream, no commits ahead of `origin/main`, no staged files, and a coherent pre-existing 23-path Phase 8 feature slice. This review added the four requested reconciliation documents and a cross-platform LF policy in `.gitattributes`, producing the exact 28-path publication set. No remote branch with this name existed.
 
-Gate D backed up the installed `0.4.0` plugin and OpenClaw configuration, then
-upgraded the plugin to exact-main `0.5.0`, explicitly selected
-`phase8-admission-only`, and restarted the loopback gateway. The live gateway
-reports the plugin loaded without errors. Only a normal `cf-physical-model`
-session has effective visibility of
-`classifire_submit_initial_physical_model`; Validator, Orchestrator, and Intake
-do not. The installed runtime harness proves wrong-role and visual-Physical
-calls are blocked before network access. Read-only gateway health/catalog
-metadata calls were used for this evidence; no agent turn, model-provider
-request, or controlled tool execution occurred.
+The primary checkout had no staged or deleted files. It retained 46 modified tracked files (`+1,668/-894`) plus very large untracked trees and unreadable test-cache entries. Its merge base with `origin/main` is `fea9549`; the histories have 377 legacy-branch-only commits and 116 current-main-only commits. Nothing in that checkout was reset, cleaned, overwritten, staged, or copied wholesale.
 
-Gate E started exact-main CLASSIFIRE on loopback with the configured migrated
-database. Authenticated health exposes the admission-only scope while reporting
-no generic physical mutation or lock capability. A nonexistent admission was
-rejected with HTTP 404 and a raw Opening payload with HTTP 422. Protected table
-counts and row hashes were unchanged. The focused suite separately proves
-invalid, expired, wrong-project, wrong-payload, and wrong-issuer failures,
-generic human Opening/lock denial, and valid synthetic registration in an
-isolated test database.
+The root audit found no implementation change that was both absent from current shared code and ready to publish:
 
-Gate F rechecked the real UAT estimate from the retained v6 receipt. Its live
-protected-state fingerprint remains
-`18768A9E368C7D0692A950303FCAC9401AFBE7C3632BE6A063FCB67B9671F8F1`,
-with zero Openings, Services, links, active Physical Model Locks, admissions,
-and submission receipts. No fresh preflight was generated, no admission was
-signed or registered, and no canonical write or lock was performed. The local
-non-secret deployment receipt is
-`.tmp/gatec-security-20260823/gates-c-f-deployment-receipt.json`, SHA-256
-`63172B964C4AE3733CB3D01CF0951A330B986259D9582803B9DB427A0113B200`.
+- several plugin, migration, profile, and admission files are already byte-identical to `origin/main` or preserved on a remote candidate branch;
+- root-only P-256/preflight variants remain unreconciled and unverified;
+- some root API/security changes remove current mutation, lock, relationship, and evidence-admissibility guards and are unsafe to revive; and
+- real UAT data, databases, reports, receipts, OpenClaw history, tools, caches, editor files, agent definitions, and branding assets remain local and excluded.
 
-The deployment stop boundary is reached. A fresh no-write preflight, external
-signature, offline registration, one-time canonical submission, and any future
-Physical Model Lock each remain separate governed operations. The lock boundary
-is not yet designed or approved.
+Current GitHub facts at review time:
 
-### Shared-main and GitHub reconciliation
+- the repository is private and its default branch is `main`;
+- issues #42 and #43 remain open;
+- draft PRs #9-#13 remain open on the legacy stacked line; and
+- issue #42 still describes the representative run as pending and is now stale relative to the retained v17 evidence. This documentation corrects repository state but does not mutate the issue.
 
-The clean foundation stack and deployment documentation are published on shared
-`main`. PRs #45-#67 have reconciled the visual receipt and bounded correction,
-blind inventory and reconciliation, malformed-input guards, and proposal-only
-controller, retained-evidence adapter, guarded OpenResponses transport, and
-managed local runtime composition with current-main tests. Dedicated zero-tool
-runtime identities are installed and a controlled synthetic live inference is
-proven. The validation-only comparator and linked-original retrieval/retention
-source are reconciled, and the bounded linked-original-to-proposal runner is
-now merged. Representative current-main execution has not yet proven that
-complete chain against an approved report; that remaining no-write validation
-stays in issue #42. The legacy branch differs
-materially from current main and must not be merged wholesale. Historical UAT
-receipts remain evidence of what was executed, not proof of current-main runtime
-execution.
+## 2. Latest verified implementation state
 
-Shared main does not currently track `docs/CLASSIFIRE_ARCHITECTURE.md`. A
-reconciled copy exists only on the legacy Phase 8 branch and contains stale
-branch-specific statements, so it must not be copied into main as current
-architecture without a separate evidence-based review. `AGENTS.md` and this
-roadmap remain the current tracked architecture and sequencing authorities.
+### 2.1 Completed on shared `main`
 
-GitHub issue [#42](https://github.com/Slayde91/classifire/issues/42) tracks the
-remaining clean current-main reconciliation and records the merged checkpoints.
-Legacy PRs
-#7, #8, and #15 were closed as superseded by the clean foundations already
-merged through PRs #16-#25 and the later Gate A-F hardening. PRs #9-#13 remain
-open because they may still contain image-family and other implementation that
-requires review or explicit supersession; their stale stacked bases are not
-merge candidates.
+Shared `main` at `7801636` contains:
 
-The controlled-write plugin has zero production dependency findings under
-`npm audit --omit=dev`. The full audit reports 10 findings (3 moderate and 7
-high), all under the pinned OpenClaw development dependency. Installed and
-npm-latest OpenClaw are both `2026.7.1-2`, so no safe upstream upgrade currently
-exists; forced downgrade or override remediation was not applied. GitHub issue
-[#43](https://github.com/Slayde91/classifire/issues/43) tracks the upstream
-update and required compatibility revalidation.
+- the FastAPI, CLI, SQLAlchemy, Alembic, storage, audit, security, UI, import, release-pinning, calculation, snapshot, PDF/XLSX, and Mission Control foundations;
+- the canonical Defect, EvidenceSource, Opening, Service, Opening-Service link, Physical Model Lock, admission, and submission-receipt records;
+- migration head `0008_retire_legacy_initial_submissions`;
+- component-level protected-state fingerprinting and fail-closed admission-bound initial canonicalisation;
+- immutable admission registration, P-256 verification, single-use submission, idempotent receipts, and an explicit no-lock submission boundary;
+- bounded visual correction, proposal-blind inventory, mandatory reconciliation, strict proposal receipts, retained-evidence adaptation, guarded no-tool transport, managed runtime composition, and dedicated Phase 8 identities;
+- guarded linked-original discovery, verification, retention, and the bounded linked-original-to-proposal runner;
+- a post-inference validation-only human-reference comparator; and
+- the offline Android admission signer and recorded deployment/runbook foundations.
 
-## Superseded repository reconciliation - 2026-08-22
+These are foundations and controlled UAT capabilities, not production authorisation.
 
-### Current Gate A through Gate C position
+### 2.2 Coherent implementation on this publication branch
 
-The latest code-bearing deployment baseline is
-`1c01d468716d061ffb494d16d2d155957d880614`. The admission-only plugin was
-rebuilt from that exact clean tree and verified with
-artifact SHA-256
-`38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`.
-Thirty-six admission, migration, boundary, and plugin-profile tests pass. The
-read-only Gate A auditor found no missing paths, recorded both
-`deployment_authorised=false` and `live_change_performed=false`, and produced
-candidate fingerprint recorded for that code-bearing baseline
-`2C4810F611571F6EEB47A441D32BC465D995A1D492A3FC53F77EDB6C8F46F217`.
+The current branch adds one bounded UAT feature slice:
 
-Gate B is complete for the configured local database. Before migration it was
-at `0007_reconcile_adjudicated_admission_lineages`, had both empty current
-journals, and contained an empty stray
-`physical_model_initial_submissions` table. The reviewed fail-closed `0008`
-repair was first proven on a byte-identical disposable copy. A transactionally
-consistent pre-change backup was then created at
-`data/gate-b-live-change-window-20260820/pre-0008-recoverable-backup.sqlite`
-with SHA-256
-`1CBA598EF3F98A5A3660499C851E4494A78D694DB747BEC762F44CEB000A1CB2`
-and independently restored and verified before the configured database was
-upgraded.
+- an explicit approved-package contract pinned to report hash, Git revision, executable source-tree hash, input snapshots, runtime identities, and no-write policy flags;
+- verify-only package/snapshot checks and a non-session-creating local Gateway readiness probe;
+- a literal-loopback WebSocket RPC fallback for the installed OpenClaw CLI shape, with RFC 6455 SHA-1 explicitly marked as non-security use;
+- a disposable SQLite execution boundary that starts an outer transaction, runs the existing proposal-only chain, always rolls back, expires ORM state, and compares the protected fingerprint/counts after rollback;
+- full-report linked-original retrieval while restricting the inference packet to current retentions and explicitly mapped ready parents for the selected defect;
+- validation of report-derived parent evidence by report hash, page, photo identity, native dimensions, and crop bounds;
+- exclusion of nonvisual EvidenceSource rows from visual inference packets;
+- stricter blank-opening, candidate-ID, Validator vocabulary, blind-reconciliation, quantity-null, correction-authority, and blocked-receipt rules;
+- content-safe evidence-review requests for valid blocked proposals; and
+- fully offline recovery that binds retained receipts to local OpenClaw session indexes, transcripts, and final domain payload hashes without rerunning the report.
 
-The configured database is now at
-`0008_retire_legacy_initial_submissions`; the retired table is absent,
-integrity is `ok`, there are no foreign-key violations, both current journals
-and the real UAT estimate's admission/receipt counts remain zero, and protected
-table counts and row hashes are unchanged. Its post-migration SHA-256 is
-`3874519C6FCD805C1380DF90757878D802A2A52B193ACC68943A9355A5D5C349`.
-The read-only lineage check reports `READY` / `CLEAN_STACK_HEAD_CONFIRMED`.
+The source-tree walker now fails closed on nested symbolic links and Windows reparse points, including junctions on supported Python 3.11. The package approval fields remain trusted operator/governance metadata, not a cryptographic, expiring, or single-use production authorisation. The package runner is controlled UAT tooling, not an untrusted production-ingestion endpoint.
 
-Gate C is next. No approved admission public-key proof was found in the bounded
-signer or operator artifact locations, and the Samsung signer device was not
-connected during the check. The APK release-signing certificate is a separate
-credential and must not be used for Gate C. The installed OpenClaw
-controlled-write plugin is already present at version `0.4.0`; after Gate C it
-must be backed up and upgraded once to the reviewed `0.5.0` exact-main build,
-then restarted and boundary-tested. This is an upgrade, not a first install.
+### 2.3 Current-main foundational capability that is not roadmap-complete
 
-The older sections below preserve chronological signer and reconciliation
-evidence. Where they describe an earlier branch, main revision, Gate A blocker,
-or next action, this current section supersedes them.
+Current main also contains basic technical search, pinned release records, estimating rules, line calculation, snapshot locking, and PDF/XLSX rendering. Those services do not yet implement the complete target chain of Repair Strategy Locks, system-derived component records, approved productivity for every activity, a rate-inclusion/recovery ledger, independent full-estimate validation certificates, snapshot-bound output QA, and explicit Human Release.
 
-### Superseded earlier reconciliation snapshot
+The primary legacy checkout contains richer guarded implementations and tests for parts of Phases 9-14, but its lineage is divergent and unsafe to merge wholesale. It is implementation evidence to review later, not current-main completion.
 
-The current shared main revision is
-`3f42b1631fcc0881ac5f9049b1023b29309e270f`, which includes the merged
-handoff reconciliation PR #33. After the Phase 8 baseline `e2f646b`, shared
-main adds the offline Android admission signer, its tests, approved icon
-resources, and handoff/custody documentation. The signer is merged and
-locally regression-checked; it is not an admission, registration, canonical
-submission, or Physical Model Lock operation.
+## 3. Latest Phase 8 execution evidence
 
-The deployment runbook currently names a Gate A candidate-audit script and a
-v6 post-merge preflight receipt, but neither is present on shared main. Both
-remain untracked items in the separate, heavily dirty primary checkout. They
-must not be treated as published deployment evidence, staged from that
-checkout, or used for a live deployment.
+### 3.1 Representative v17 result
 
-That untracked writer material was reviewed in a native isolated worktree. It
-uses a divergent `canonical_models` architecture and has 346 committed files
-of divergence from shared main. It must not be merged wholesale. Shared main
-already contains the newer admission-writer lineage (`12c2e5c`, `e19bc45`,
-and `7e8141f`) with the reconciled migration head
-`0007_reconcile_adjudicated_admission_lineages`.
+A retained current-main-based v17 run executed the approved full-report package through linked-original retrieval, defect-scoped retention, and four proposal-only inference stages.
 
-On an isolated worktree whose content matches shared main, 55 focused
-admission, migration, boundary, and plugin-profile tests passed. The offline
-signer verification previously produced 9 focused Python contract/security
-tests and 6 Android unit tests with zero failures or errors. No device was
-connected, no Android admission key was created, no APK was signed, and no
-admission, canonical, or lock action occurred in these checks.
-
-A current-main Gate A source auditor now fingerprints the writer, migration
-lineage, preflight policy, governance tests, plugin source, and compiled
-plugin artifact without reading configuration, opening a database, contacting
-a runtime, or performing a live action. Its direct run against this unreviewed
-worktree correctly returned `LOCAL_CANDIDATE_DIRTY_REVIEW_REQUIRED`, with both
-`deployment_authorised=false` and `live_change_performed=false`.
-
-The next valid operational task remains a clean, reviewed shared-main
-deployment candidate with a plugin artifact rebuilt in an approved deployment
-environment. A zero audit exit does not authorise deployment, admission
-registration, canonical submission, or a Physical Model Lock. Do not revive
-or publish the divergent dirty writer worktree.
-## Repository position
-
-Merged main `e2f646b` includes the reconciled Phase 8 admission-only writer from
-PR #25 and the Android P-256 provisioning proof from PR #24. The signer work in
-this snapshot is uncommitted and exists only on
-`gpt/phase8-android-admission-signing-local`.
-
-The primary checkout at `C:\CLASSIFIRE` remains on
-`gpt/phase8-linked-original-images` with extensive pre-existing tracked and
-untracked work. It was not switched, reset, cleaned, staged, or otherwise
-altered for signer implementation. Work was isolated at:
-
-`C:\CLASSIFIRE\.tmp\phase8-android-admission-signer-20260822-v2`
-
-Preserve all unrelated dirty work, especially `agent-definitions/` and
-`classifire logo.png`. Never use `git add .` in the mixed checkout.
-
-## Phase 8 evidence
-
-The current retained post-merge no-write receipt is:
-
-`data/real-uat/20260822-phase8-postmerge-preflight-147042-v6/24-adjudicated-canonicalisation-preflight.json`
-
-Verified values from that receipt are:
-
-| Item | Value |
+| Evidence | Verified result |
 | --- | --- |
-| Schema | `CLASSIFIRE-ADJUDICATED-CANONICALISATION-PREFLIGHT-v3` |
-| Status | `PRECHECK_PASSED_SIGNED_ADMISSION_REQUIRED` |
-| Submission eligible | `false` |
-| Canonical/database/Gateway writes | all `false` |
-| Lock eligible | `false` |
-| Normalised topology | 17 Openings, 24 Services, 24 links |
-| Payload SHA-256 | `85B3D16F92E32AA6BF05B5CD8C0192F9719C2FB45D081C26D1159733E65B8FB3` |
-| Protected-state fingerprint | `18768A9E368C7D0692A950303FCAC9401AFBE7C3632BE6A063FCB67B9671F8F1` |
-| Fingerprint version | `CLASSIFIRE-INITIAL-SUBMISSION-STATE-v1` |
-| Receipt SHA-256 | `1BF735B2D441B214967672072323C37B587C4E8659EF8F8BDC9D0D3A120D43F2` |
-| Generated | `2026-08-22T05:24:50Z` |
+| Required linked originals | 31 of 31 resolved across 41 report photo occurrences |
+| Target-defect evidence supplied to inference | 4 retained originals |
+| Controller stages | 4, using separate Physical and Validator roles |
+| Visual result | `VISUAL_PROPOSAL_BLOCKED` |
+| Human-reference comparison | Correctly skipped because the proposal was not approved |
+| Review handoff | 7 review items and 4 unresolved blind observations |
+| Protected state after rollback | Unchanged: 10 Defects, 128 EvidenceSources, 0 Openings, 0 Services, 0 links, 0 active locks |
+| Canonical submission | Not performed |
+| Physical Model Lock | Not created |
 
-The v6 receipt is evidence of a successful no-write preflight only. It is not a
-signed admission or authority for a later operation. No new admission package
-was created in this signer session. The previously retained v3 signed package
-is expired and must not be reused.
+The run proved the rollback and authority boundary, but it did not produce an accepted physical model. The Validator retained genuine evidence limitations around service classification and quantity, occluded opening/barrier topology, view relationships, dimensions/materials, opposite-face continuity, and overlapping runs. These facts must be resolved with governed evidence or remain explicitly unresolved.
 
-The 17/24 proposal remains provisional and non-canonical. It retains unresolved
-material, size, quantity, FRL, and other evidence limitations. No replacement
-active Physical Model Lock exists, so Phases 9 onward remain blocked.
+“Rollback-only” means no canonical database submission or lock. Retrieval, temporary child-image files, disposable snapshot changes, and output receipts are expected filesystem writes; SQL rollback does not automatically delete those files.
 
-## Offline Android signer
+The live v17 run used source-tree fingerprint `5B00545F5A2A7F3F36930B008B3E0802AFB1EBA5D735A7B9123218B5E972CDE1`. Later review/recovery hardening changed the branch source, so v17 is historical execution proof for that exact current-main-based candidate, not exact runtime proof of the final publication tree.
 
-The local Android app now implements the missing admission-signing workflow:
+### 3.2 Refreshed offline recovery
 
-- local-only document-picker import and export with no Internet permission;
-- exact v2 manifest field, UUID, identifier, SHA-256, signature-placeholder,
-  timestamp, expiry, and maximum 15-minute lifetime validation, with the same
-  decoder-backed base64url rule enforced before signature export;
-- backend-compatible sorted, compact UTF-8 canonical JSON with the signature
-  field omitted from the signed bytes;
-- explicit display of project, estimate, run, preflight, payload, protected
-  state, artifact, policy, issuer, key, fingerprint, and expiry bindings;
-- issuer/Key ID lookup against a matching secure-hardware-backed Android
-  Keystore key and stored public-key fingerprint;
-- Android 12+ acceptance only for Trusted Environment or StrongBox keys, with a
-  narrowly scoped Android 11 fail-closed compatibility check;
-- strong-biometric approval for `SHA256withECDSA`;
-- strict P-256 low-S DER normalisation and local public-key verification before
-  export; and
-- explicit separation of the default signing screen from the separately
-  authorised key-provisioning/proof screen; and
-- screenshot and recent-app preview protection on both signer screens.
-- resource-backed UI text for deterministic lint-clean localisation handling; and
-- fail-closed lifecycle handling that clears stale reviews, serialises biometric
-  attempts, ignores callbacks for replaced manifests, and permits retry only while
-  the current manifest remains unexpired.
+The fully offline recovery was rerun after final source hardening. It binds the current source-tree fingerprint `F62C153BCCEEFF158C5B63AD933AA00D0EA2D564A692B0FF13C45340FD59A10C` and current recovery-script bytes.
 
-Application backup, device transfer, and cleartext traffic are disabled. The
-app has only the biometric permission in the merged debug manifest. It contains
-no registration, canonical-submission, lock, or network client.
+- Evidence-review request file SHA-256: `58200866211E15E49087986BC1E893DE5D377E1067E57B242B537A42E22B34E1`
+- Recovery receipt file SHA-256: `DA503CBFF6C2F4B567A86007B9F9B59F9057E47713BB2AF32D775C03857DC3D8`
+- Recovery script SHA-256: `23B304FA1B89FFAA7A7BB034CF84521E634667648CC29DD7503D3176BBBDA5E1`
+- Output: exactly `evidence-review-request.json` and `recovery-receipt.json`
+- Retained-report/linked-original file reads, retrieval, inference, canonical submission, locking, and human-reference exposure: all false; the bound local session transcripts were read
 
-The packaged local debug APK was also inspected directly. Its effective manifest has
-exactly `USE_BIOMETRIC`, no Internet permission, backup and cleartext traffic disabled,
-only `OfflineSignerActivity` exported as the launcher, and `MainActivity` non-exported.
-It is explicitly a debug artifact (`debuggable=true`) and must not be treated as a
-release or deployment candidate.
+Recovery proves correspondence among retained package metadata, no-write receipts, deterministic session keys, local transcript payloads, and final blind/proposal/Validator hashes. It does not make local OpenClaw history immutable and does not replay Gateway authentication, tool attestation/audit, OpenResponses response identity, or external transport.
 
-An unsigned local release artifact was also assembled without any signing material.
-Its packaged manifest is non-debug, retains the same single biometric permission and
-offline/component boundaries, and has no APK signature (`apksigner verify` reports
-`Missing META-INF/MANIFEST.MF`). The 46,376-byte artifact has SHA-256
-`29EB572B1BAA0A955C0429DE26ED7EB70132383A4D82369AA0E904F39CD372EC`.
-It is build evidence only: approved app-icon, release-signing, installation, and
-deployment authority remain separate gates.
+### 3.3 Historical canonicalisation evidence
 
-The icon warning has a specific provenance gate. The approved CLASSIFIRE logo was
-introduced on divergent commit `c3749fe`, not in `e2f646b`; neither its 1,536 by 1,024
-master nor its 64 by 43 generated favicon exists on this signer branch. Importing it
-would cross branches, and making it square would require a new crop/treatment. Neither
-action was inferred, so an approved Android icon remains required.
+The v6 canonicalisation preflight remains historical no-write evidence only:
 
-A final local change-control audit reviewed all eight main-source/resource files and
-the signer build configuration. It found no network, canonical-write, database, or
-APK-signing configuration; the only declared dependency is JUnit for JVM tests. Private
-keys are used only as Android Keystore handles: no private-key encoding or export path
-exists, while all encoded values are public-key material or fingerprints.
+- status `PRECHECK_PASSED_SIGNED_ADMISSION_REQUIRED`;
+- 17 Openings, 24 normalized Services, and 24 links in that historical payload;
+- protected-state fingerprint `18768A9E368C7D0692A950303FCAC9401AFBE7C3632BE6A063FCB67B9671F8F1`;
+- submission and lock eligibility false; and
+- no database, canonical, or Gateway write.
 
-## Current verification
+The independent v17 evidence block means the historical 17/24 topology must not be treated as accepted physical truth or reusable admission authority. Any future preflight must bind a newly accepted exact proposal and then-current protected state.
 
-The following clean offline command completed successfully with JDK 21 and
-Android SDK 36, using the repository's existing populated Gradle cache:
+## 4. Roadmap status
 
-```powershell
-.\gradlew.bat --offline --no-daemon clean testDebugUnitTest assembleDebug lintDebug
-```
+| Phase | Current state |
+| --- | --- |
+| 0-2 | In progress: repository consolidation, governance, and source-library release controls remain incomplete |
+| 3 | In progress: controlled writer and zero-tool foundations exist; the publication branch adds trusted UAT package/readiness/recovery tooling; production recovery and deployment proof remain incomplete |
+| 4 | In progress: Mission Control client/bootstrap scaffolding exists but does not own estimate truth |
+| 5 | In progress: one approved report/source path demonstrated full-report linked-original resolution; evidence families, other formats/hosts, retention policy, and multi-report proof remain |
+| 6 | In progress and evidence-blocked: no defensible accepted physical model or replacement lock exists |
+| 7 | In progress: representative safety/rollback execution is proven, but the proposal was blocked and no durable canonical visual-validation receipt is enforced |
+| 8 | In progress and blocked on governed evidence resolution; no canonical model or replacement Physical Model Lock exists |
+| 8C | Planned; only charter/taxonomy/rights preparation is allowed before its admission gates |
+| 9-14 | Basic current-main foundations and richer legacy-only foundations exist; operationally blocked and not architecture-complete |
+| 15 | In progress: security, recovery, scale, monitoring, and release hardening remain |
+| 16 | Deferred: structural steel and complete fire-rated duct runs require separate design and evidence |
 
-Verified results:
+## 5. Verification for this reconciliation
 
-- 6 JVM tests passed, including the shared backend/Android canonical-byte vector,
-  manifest rejection cases, strict exported-signature encoding, signed JSON attachment,
-  and low-S DER checks;
-- 12 focused Python verifier, offline-boundary, adjudicated-admission, UI-resource,
-  lifecycle, and hardware-security tests passed;
-- Ruff passed for all five Python signer test modules;
-- debug Java compilation and APK assembly passed;
-- the Android module now explicitly targets Java 17 under the JDK 21 build
-  toolchain, removing the obsolete Java 8 source/target warning; the remaining
-  KeyInfo deprecation calls were removed from the app sources;
-- Android lint completed with 0 errors and one warning for the missing
-  application icon; all 49 hard-coded UI-string warnings were removed;
-- the final generated local debug APK is 57,600 bytes with SHA-256
-  `C9D03867D19C3E6F6AB4F050D7738C084323E8AAB659D745A049F60A0B58B1F5`;
-- the packaged debug manifest was checked directly against its permission, backup,
-  cleartext, launcher, and non-exported key-setup boundaries; and
-- the unsigned release package was assembled and linted: its manifest is non-debug,
-  retains the same offline boundary, and correctly fails APK signing verification; and
-- `git diff --check` passed for the final local working tree.
-No device or emulator was connected. No Android Keystore entry or other key was
-created, no admission was signed or registered, no canonical data was
-submitted, no lock was created, and nothing was installed or deployed.
+Current checks after final hardening:
 
-## Remaining gate
+- remote refs refreshed; branch/upstream/divergence and open GitHub work inspected;
+- complete isolated repository suite: **332 passed**, 135 warnings, with the inherited admission flag explicitly restored to its repository default (`false`);
+- complete focused changed-Phase-8 slice: **145 passed**, 36 warnings;
+- Ruff on all 22 changed Python paths and Mypy on all 11 changed production/script paths: passed;
+- repository-wide Ruff remains an existing baseline issue with 295 findings outside this change set; those unrelated files were not changed;
+- Bandit on all 22 changed Python paths: no medium/high findings;
+- Alembic: one head, `0008_retire_legacy_initial_submissions`;
+- refreshed offline recovery: passed and bound to the current source tree;
+- current v17 receipt validators: no validation errors;
+- `git diff --check`: no whitespace errors.
 
-Review the exact diff. A later on-device installation and runtime exercise
-requires separate authority because it would
-deploy the app and could reach key/signing controls. Key creation, admission
-signing, public-key registration, admission registration, canonical submission,
-and locking remain distinct later approvals.
+No real report was rerun for this documentation review. No admission was created, signed, or registered; no canonical model was submitted; no lock, deployment, or release occurred.
 
-## Authorised release follow-up
+## 6. Local-change commit classification
 
-The approved master CLASSIFIRE logo was imported unchanged from reviewed but
-divergent commit `c3749fe` (SHA-256
-`DC527F714AFC8960DAF8135FDF850899E7BBBEAB7C60156B72E0AACB46831ACF`). A
-deterministic Android treatment centres it on a padded square canvas without
-cropping, recolouring, or aspect-ratio change. The manifest now declares normal
-and round adaptive launcher icons, including a monochrome mask. The new resource
-regression test verifies the source hash, square foreground, and resource wiring.
+### Category 1 - created by this review
 
-The final offline Android build recorded `BUILD SUCCESSFUL`. Its release lint
-report says `No issues found.` (0 errors, 0 warnings). The focused Python suite
-now has 13 passing tests and Ruff passes for all six signer Python modules.
-The current unsigned release APK is 126,096 bytes with SHA-256
-`70264FAB124D3ACECC8EDC9A8B703576C6B090E7ECC44CC262451F9DD49FF009`.
+- `docs/PROJECT_STATE.md`
+- `docs/CLASSIFIRE_ARCHITECTURE.md`
+- `docs/CLASSIFIRE_ROADMAP.md`
+- `docs/SESSION_HANDOFF.md`
+- `.gitattributes`, adding explicit LF policy for the raw-byte fingerprint inputs and for the attributes file itself
 
-No persistent release-signing certificate was created: the environment rejected
-that as a separate high-risk private-key authority. No release APK was signed.
-A connected SM-S938B was detected and already contained an earlier signer
-package, but the environment rejected the in-place debug APK installation as
-deployment-like. The device was not changed. No Android admission device key was
-created; no admission was signed or registered; and no canonical submission or
-Physical Model Lock was performed.
-## Publication status
+### Category 2 - pre-existing, relevant, coherent, and intended for this commit
 
-No commit, push, pull request, release, or deployment was performed. The
-environment rejected the attempted commit because the original task expressly
-forbade Git history mutation; it likewise rejected persistent APK release-key
-creation and in-place device installation. The complete reviewed change set
-remains staged only in the isolated signer worktree, ready for a later explicit
-approval that names each of those operations despite the original prohibition.
-## Authorised signing and deployment execution
+The coherent 23-path Phase 8 feature slice comprises:
 
-An authorised Git-ignored persistent local APK release certificate was created
-for this artifact only. It is an RSA-4096 self-signed certificate for
-`CN=CLASSIFIRE Offline Signer Local Release, OU=Engineering, O=Ceasefire PFP,
-C=AU`, valid 2026-08-22 through 2036-08-19. Its certificate SHA-256 is
-`32C42180007C0827E73E3A41FCBA6FCBFD194808AC374A8EF5449F1DABA0B383`.
-This is separate from the Android Keystore P-256 admission key, which was not
-created.
+- the 14 modified Phase 8 service/test paths present at review start;
+- `docs/PHASE8_REPRESENTATIVE_RUN_PACKAGE.md`;
+- both package/recovery scripts;
+- both new representative-run/evidence-review services; and
+- the four new focused test paths for the package, recovery, and review services.
 
-The 126,096-byte unsigned release APK was zip-aligned, signed, and verified
-with `apksigner`. The 140,079-byte signed artifact is
-`app-release-signed.apk`, SHA-256
-`FB02AE49441FC70777DB9799AC5B6A03DD61AF0250C73ACD8CA3EE5046777BA5`.
-`apksigner verify --verbose --print-certs` reports one signer and a valid APK
-Signature Scheme v3 signature; v3 is compatible with this application's
-Android 11+ minimum SDK.
+Final corrections made within those same Category 2 paths added explicit non-security WebSocket SHA-1 use, literal numeric-loopback Gateway validation, package-bounded evidence allowlisting, non-null report-derived photo bounds, fail-closed symbolic-link and Python 3.11 Windows-reparse rejection, malformed-review-input handling, precise transcript-read attestations, and regression coverage.
 
-An in-place installation on the connected SM-S938B was attempted without
-uninstalling the existing package. Android rejected it with
-`INSTALL_FAILED_UPDATE_INCOMPATIBLE` because the installed package has a
-different signing identity. No uninstall, data removal, device-key creation,
-admission signing, registration, canonical submission, or lock action occurred.
-## Publication result
+### Category 3 - deliberately left untouched
 
-The reviewed signer change set was committed on
-`gpt/phase8-android-admission-signing-local` as
-`c9124155f4323d9e113c7d49484ac7ced60cbde7` (`Implement offline Android
-admission signer`) and pushed to `origin`. GitHub review pull request #26 is
-open against `main`:
-`https://github.com/Slayde91/classifire/pull/26`.
+- every tracked and untracked change in the primary mixed checkout;
+- files already identical to `origin/main` or preserved remote candidate work;
+- root-only incomplete/unsafe admission and UAT variants;
+- `.env`, credentials, keys, signed URLs, customer reports/images, real-UAT packages and receipts, SQLite/WAL/SHM data, OpenClaw session history, Android/Gradle/JDK tools, build caches, generated reports, editor files, `agent-definitions/`, and logo assets.
 
-The primary checkout remains untouched except for the two requested untracked
-handoff documents, which mirror this worktree exactly. No merge, release
-publication, canonical operation, admission operation, or device data removal
-occurred.
-## Merged-main release evidence
+## 7. Current blockers and next valid task
 
-PR #26 merged at `b6f5e0e987d0acc212a5ef48ca0cb1d7767d8b10` on 2026-08-22.
-The merge tree exactly matches reviewed signer head `c9ef31d`. A clean, fully
-offline Android build from that merged main tree recorded `BUILD SUCCESSFUL in
-3m 31s`; its release lint report says `No issues found.` The rebuilt unsigned
-release APK is 126,096 bytes with SHA-256
-`70264FAB124D3ACECC8EDC9A8B703576C6B090E7ECC44CC262451F9DD49FF009`.
+The next valid task is governed evidence resolution, not another unchanged inference run and not canonicalisation.
 
-That merged-main artifact was zip-aligned, signed with the controlled local
-RSA-4096 certificate, and independently verified by `apksigner`. The resulting
-140,079-byte signed APK has SHA-256
-`FB02AE49441FC70777DB9799AC5B6A03DD61AF0250C73ACD8CA3EE5046777BA5`.
-Verification reports the expected single certificate and valid APK Signature
-Scheme v3.
+1. Review the retained seven review items and four unresolved blind observations against retained evidence.
+2. Obtain newly governed evidence only where necessary, such as clearer relationship views, dimensions, material/label evidence, or opposite-face continuity.
+3. Record each item as Confirmed, Contradicted, or Unresolved with provenance.
+4. Rerun proposal-only inference only if the governed evidence or approved interpretation materially changes.
+5. Preserve unresolved facts rather than forcing an Opening, Service, material, quantity, or link.
 
-The previously connected device was a debuggable `0.1.0-test` build with a
-private preferences file. Its production-signed in-place update remains
-incompatible, and it disconnected before a safe debug-certificate comparison
-could determine whether a non-destructive debug update is possible. No app was
-removed, no local data was cleared, and no device key or admission operation was
-performed.
-
-The repository contains no approved external certificate-custody procedure or
-destination. The release certificate and password remain Git-ignored and have
-not been copied to an unapproved store. Transfer to the organisation's approved
-secret manager therefore remains an operational handoff for the designated key
-custodian.
-## Non-destructive Android smoke test
-
-On 2026-08-22, the reconnected SM-S938B's existing `0.1.0-test` debug app was
-compared against the local Android debug certificate. The public certificate
-SHA-256 values matched exactly, allowing a non-destructive in-place update to
-the merged-main `0.2.0-local` debug APK. Android installed the update
-successfully; no app data was cleared and no uninstall occurred.
-
-`OfflineSignerActivity` then launched cold successfully in 160 ms. A
-UI-automation inspection confirmed the offline signer title and notice, the
-no-manifest state, and that review/sign remains disabled before a manifest is
-loaded. No manifest was imported, no provisioning or proof screen was opened,
-and no Android admission device key, admission signature, registration,
-canonical submission, or lock operation was performed.
-
-The separately signed production release APK was not installed on the device:
-Android correctly rejects it as an incompatible update because the existing app
-uses the debug certificate. The verification record remains valid, but every cached signed APK from the
-retired certificate has been removed. Certificate-custody transfer for the
-replacement remains the only outstanding release handoff.
-
-## Superseded prior certificate-custody record
-
-An earlier handoff entry incorrectly stated that both the prior certificate and
-its password had been retained in LastPass. The password was not retained, and
-the local copies were deleted, so that certificate is unusable. This record is
-superseded by the certificate-rotation state below.
-
-## Replacement certificate custody complete
-
-The prior local release certificate with SHA-256
-`32C42180007C0827E73E3A41FCBA6FCBFD194808AC374A8EF5449F1DABA0B383`
-remains retired and must not be used. Its PKCS#12 password was not retained in
-the vault, so the certificate is unusable. No production-signed APK using that
-certificate was installed or distributed.
-
-The replacement RSA-4096 release certificate with SHA-256
-`A0B852E6F4A6BCA69CB56D9640281D8B424EF13DFE491F128650E015BA2B4C36`
-and its separate password note are now held in the approved LastPass shared
-folder. Slayde Tana is the primary custodian and Sophie Richards confirmed
-recovery access. Sophie cancelled the Android certificate-installer prompt
-without selecting an installation type, so the release credential was not
-installed on a device; her temporary local download was removed.
-
-The local Git-ignored replacement PKCS#12 and password files were deleted from
-the signing worktree and their absence was verified. No private signing material
-is tracked in the repository. The obsolete prior-certificate attachment must
-still be removed from LastPass; no certificate authority or external registry
-revocation is required for this self-signed, undistributed credential.
-
-## Retired release-artifact cleanup
-
-On 2026-08-22, the two ignored 140,079-byte APK caches signed with the retired
-certificate were deleted: one from the original signer worktree and one from
-the release-evidence worktree. Both paths were checked after deletion and were
-absent. No old-certificate production APK remains available for accidental
-installation or distribution.
+Only after a semantically accepted proposal and durable visual-validation design exist may the project consider a fresh preflight. External signing, admission registration, canonical submission, and a separately designed signed lock-admission remain later, separately authorised operations.

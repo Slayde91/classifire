@@ -10,13 +10,16 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from ..physical_models import Defect, EvidenceSource
 from .canonical_submission_state import InitialSubmissionState
 from .linked_image_evidence import (
     LinkedImageEvidenceRetention,
@@ -61,6 +64,20 @@ class Phase8LinkedVisualRunError(RuntimeError):
     def __init__(self, code: str) -> None:
         self.code = code
         super().__init__(f"Phase 8 linked visual run failed: {code}.")
+
+
+class Phase8VisualInferencePortFactory(Protocol):
+    """Build a scoped inference port only after retained evidence is available.
+
+    The managed runtime binds the exact retained-evidence packet before it can
+    construct its transport. Keeping that construction inside the runner lets
+    a caller use the managed runtime without duplicating retrieval, retention,
+    or controller orchestration.
+    """
+
+    def __call__(
+        self, evidence_packet: RetainedVisualEvidencePacket
+    ) -> AbstractContextManager[Phase8VisualInferencePort, None]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -261,8 +278,14 @@ def validate_phase8_linked_visual_run_receipt(receipt: Any) -> list[str]:
     ):
         errors.append("linked visual run protected-state summary is invalid")
     if isinstance(retrieval, dict) and isinstance(retained, list):
+        ready_count = retrieval.get("ready_count")
         if runtime_performed:
-            if retrieval.get("ok") is not True or retrieval.get("ready_count") != len(retained):
+            if (
+                retrieval.get("ok") is not True
+                or not retained
+                or not isinstance(ready_count, int)
+                or ready_count < len(retained)
+            ):
                 errors.append("linked visual run execution counts are inconsistent")
         elif (
             receipt.get("status") != LINKED_VISUAL_RETRIEVAL_BLOCKED
@@ -365,6 +388,67 @@ def _retention_summary(item: LinkedImageEvidenceRetention) -> dict[str, Any]:
     }
 
 
+def _target_parent_evidence_ids(
+    db: Session,
+    *,
+    estimate_id: str,
+    defect_reference: str,
+    parent_map: Mapping[str, str],
+) -> frozenset[str]:
+    """Return mapped parents that belong to the selected defect.
+
+    Retrieval remains complete for every package image. Retention and
+    inference deliberately remain restricted to originals whose already
+    governed parent evidence belongs to the requested defect.
+    """
+
+    target_defects = list(
+        db.scalars(
+            select(Defect).where(
+                Defect.estimate_id == estimate_id,
+                or_(
+                    Defect.external_defect_id == defect_reference,
+                    Defect.defect_code == defect_reference,
+                ),
+            )
+        )
+    )
+    if len(target_defects) != 1:
+        raise Phase8LinkedVisualRunError("TARGET_DEFECT_INVALID")
+    target_defect = target_defects[0]
+
+    parents: dict[str, EvidenceSource] = {}
+    for parent_id in set(parent_map.values()):
+        parent = db.get(EvidenceSource, parent_id)
+        if parent is None or parent.estimate_id != estimate_id:
+            raise Phase8LinkedVisualRunError("PARENT_EVIDENCE_INVALID")
+        parents[parent_id] = parent
+
+    target_parent_ids = frozenset(
+        parent_id for parent_id, parent in parents.items() if parent.defect_id == target_defect.id
+    )
+    if not target_parent_ids:
+        raise Phase8LinkedVisualRunError("TARGET_EVIDENCE_REQUIRED")
+    return target_parent_ids
+
+
+@contextmanager
+def _inference_port_scope(
+    *,
+    evidence_packet: RetainedVisualEvidencePacket,
+    inference_port: Phase8VisualInferencePort | None,
+    inference_port_factory: Phase8VisualInferencePortFactory | None,
+) -> Iterator[Phase8VisualInferencePort]:
+    if (inference_port is None) == (inference_port_factory is None):
+        raise Phase8LinkedVisualRunError("INFERENCE_PORT_CONFIGURATION_INVALID")
+    if inference_port is not None:
+        yield inference_port
+        return
+    assert inference_port_factory is not None
+    with inference_port_factory(evidence_packet) as managed_port:
+        yield managed_port
+
+
 def _receipt(
     *,
     run_id: str,
@@ -449,13 +533,14 @@ def run_phase8_linked_visual_proposal(
     retrieval_root: Path,
     operator_reference: str,
     inference_profile: Mapping[str, Any],
-    inference_port: Phase8VisualInferencePort,
+    inference_port: Phase8VisualInferencePort | None,
     protected_state_reader: Callable[[], InitialSubmissionState],
     policy: LinkedImagePolicy = DEFAULT_LINKED_IMAGE_POLICY,
     prior_retrieval_receipt: Mapping[str, Any] | None = None,
     resolver: Resolver = resolve_public_addresses,
     transport: Transport | None = None,
     max_correction_passes: int = 2,
+    inference_port_factory: Phase8VisualInferencePortFactory | None = None,
 ) -> Phase8LinkedVisualRunResult:
     """Run linked retrieval, evidence retention, and proposal-only inference.
 
@@ -521,9 +606,23 @@ def run_phase8_linked_visual_proposal(
             receipt=receipt,
         )
         return result
-    ready_ids = {result.photo_id for result in ready}
-    if set(parent_map) != ready_ids:
+    result_ids = {result.photo_id for result in retrieval.results}
+    if set(parent_map) != result_ids:
         raise Phase8LinkedVisualRunError("PARENT_MAPPING_MISMATCH")
+    target_parent_ids = _target_parent_evidence_ids(
+        db,
+        estimate_id=estimate_id,
+        defect_reference=defect_reference,
+        parent_map=parent_map,
+    )
+    target_ready = tuple(
+        result for result in ready if parent_map[result.photo_id] in target_parent_ids
+    )
+    if not target_ready:
+        raise Phase8LinkedVisualRunError("TARGET_EVIDENCE_REQUIRED")
+    target_ready_parent_ids = frozenset(
+        parent_map[result.photo_id] for result in target_ready
+    )
 
     with db.begin_nested():
         retentions = tuple(
@@ -536,8 +635,9 @@ def run_phase8_linked_visual_proposal(
                 result=result,
                 operator_reference=operator_reference,
                 policy=policy,
+                source_report_sha256=report_sha256,
             )
-            for result in ready
+            for result in target_ready
         )
         state_before_inference = _state(protected_state_reader, estimate_id)
         if not _physical_counts_unchanged(state_before_retrieval, state_before_inference):
@@ -552,28 +652,38 @@ def run_phase8_linked_visual_proposal(
         if state_before_inference.counts.get("evidence_count") != expected_evidence_count:
             raise Phase8LinkedVisualRunError("RETENTION_EVIDENCE_COUNT_INVALID")
 
+        retained_ids = frozenset(item.evidence.id for item in retentions)
+        allowed_packet_ids = retained_ids | target_ready_parent_ids
         evidence_packet = build_retained_visual_evidence_packet(
             db,
             storage_root=storage_root,
             estimate_id=estimate_id,
             defect_reference=defect_reference,
+            allowed_evidence_source_ids=allowed_packet_ids,
         )
         packet_ids = {item.evidence_id for item in evidence_packet.files}
-        if any(item.evidence.id not in packet_ids for item in retentions):
+        if not retained_ids.issubset(packet_ids) or not packet_ids.issubset(
+            allowed_packet_ids
+        ):
             raise Phase8LinkedVisualRunError("RETAINED_EVIDENCE_PACKET_MISMATCH")
         try:
-            controller = ProposalOnlyVisualController(
-                run_id=run_id,
-                estimate_id=estimate_id,
-                evidence_manifest=evidence_packet.manifest,
-                inference_profile=dict(inference_profile),
+            with _inference_port_scope(
+                evidence_packet=evidence_packet,
                 inference_port=inference_port,
-                protected_state_reader=protected_state_reader,
-                max_correction_passes=max_correction_passes,
-            )
+                inference_port_factory=inference_port_factory,
+            ) as selected_inference_port:
+                controller = ProposalOnlyVisualController(
+                    run_id=run_id,
+                    estimate_id=estimate_id,
+                    evidence_manifest=evidence_packet.manifest,
+                    inference_profile=dict(inference_profile),
+                    inference_port=selected_inference_port,
+                    protected_state_reader=protected_state_reader,
+                    max_correction_passes=max_correction_passes,
+                )
+                visual_result = controller.run()
         except Phase8VisualProposalError as exc:
             raise Phase8LinkedVisualRunError(exc.code) from exc
-        visual_result = controller.run()
         state_after_inference = _state(protected_state_reader, estimate_id)
 
     receipt = _receipt(
@@ -606,6 +716,7 @@ __all__ = [
     "LINKED_VISUAL_RUN_RECEIPT_SCHEMA",
     "Phase8LinkedVisualRunError",
     "Phase8LinkedVisualRunResult",
+    "Phase8VisualInferencePortFactory",
     "run_phase8_linked_visual_proposal",
     "validate_phase8_linked_visual_run_receipt",
 ]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import subprocess
@@ -26,7 +27,10 @@ from classifire.services.phase8_visual_runtime import (
     EnvironmentGatewayTokenProvider,
     ManagedPhase8VisualRuntime,
     OpenClawCliGatewayRpc,
+    OpenClawCliOrLoopbackGatewayRpc,
+    OpenClawLoopbackGatewayRpc,
     Phase8GatewayRpcError,
+    verify_phase8_no_write_gateway_readiness,
 )
 
 
@@ -100,6 +104,161 @@ def _request(
         "stage_input": {},
     }
 
+
+class _GatewaySocket:
+    def __init__(self) -> None:
+        self.incoming = bytearray()
+        self.requests: list[dict[str, Any]] = []
+        self.closed = False
+
+    @staticmethod
+    def _server_text(payload: dict[str, Any]) -> bytes:
+        encoded = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        return bytes((0x81, len(encoded))) + encoded
+
+    @staticmethod
+    def _client_text(payload: bytes) -> dict[str, Any]:
+        assert payload[0] == 0x81
+        assert payload[1] & 0x80
+        length = payload[1] & 0x7F
+        start = 2
+        if length == 126:
+            length = int.from_bytes(payload[start : start + 2], "big")
+            start += 2
+        elif length == 127:
+            length = int.from_bytes(payload[start : start + 8], "big")
+            start += 8
+        mask = payload[start : start + 4]
+        start += 4
+        encoded = bytes(
+            value ^ mask[index % 4]
+            for index, value in enumerate(payload[start : start + length])
+        )
+        decoded = json.loads(encoded)
+        assert isinstance(decoded, dict)
+        return decoded
+
+    def close(self) -> None:
+        self.closed = True
+
+    def recv(self, size: int) -> bytes:
+        if not self.incoming:
+            raise TimeoutError()
+        chunk = bytes(self.incoming[:size])
+        del self.incoming[:size]
+        return chunk
+
+    def sendall(self, payload: bytes) -> None:
+        if payload.startswith(b"GET / HTTP/1.1"):
+            key = next(
+                line.split(": ", 1)[1]
+                for line in payload.decode("ascii").split("\r\n")
+                if line.startswith("Sec-WebSocket-Key: ")
+            )
+            accept = base64.b64encode(
+                hashlib.sha1(  # noqa: S324 - RFC 6455 Sec-WebSocket-Accept requires SHA-1
+                    (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode("ascii"),
+                    usedforsecurity=False,
+                ).digest()
+            ).decode("ascii")
+            self.incoming.extend(
+                (
+                    "HTTP/1.1 101 Switching Protocols\r\n"
+                    "Upgrade: websocket\r\n"
+                    "Connection: Upgrade\r\n"
+                    f"Sec-WebSocket-Accept: {accept}\r\n\r\n"
+                ).encode("ascii")
+            )
+            self.incoming.extend(
+                self._server_text(
+                    {
+                        "type": "event",
+                        "event": "connect.challenge",
+                        "payload": {"nonce": "test-nonce"},
+                    }
+                )
+            )
+            return
+        request = self._client_text(payload)
+        self.requests.append(request)
+        if request["method"] == "connect":
+            response = {"type": "res", "id": request["id"], "ok": True, "payload": {}}
+        else:
+            response = {
+                "type": "res",
+                "id": request["id"],
+                "ok": True,
+                "payload": {"session": None},
+            }
+        self.incoming.extend(self._server_text(response))
+
+    def settimeout(self, value: float | None) -> None:
+        assert value is None or value > 0
+
+
+def test_loopback_gateway_rpc_uses_authenticated_least_privilege_framing() -> None:
+    created: list[_GatewaySocket] = []
+
+    def socket_factory(address: tuple[str, int], timeout: float) -> _GatewaySocket:
+        assert address == ("127.0.0.1", 18789)
+        assert timeout > 0
+        gateway_socket = _GatewaySocket()
+        created.append(gateway_socket)
+        return gateway_socket
+
+    rpc = OpenClawLoopbackGatewayRpc(
+        base_url="http://127.0.0.1:18789",
+        token_provider=lambda: "runtime-secret",
+        socket_factory=socket_factory,
+    )
+    assert rpc("sessions.describe", {"key": "classifire-phase8-readiness-no-write"}) == {
+        "session": None
+    }
+    gateway_socket = created[0]
+    assert [request["method"] for request in gateway_socket.requests] == [
+        "connect",
+        "sessions.describe",
+    ]
+    assert gateway_socket.requests[0]["params"]["scopes"] == ["operator.read"]
+    assert gateway_socket.closed is True
+
+
+def test_cli_unavailability_uses_loopback_for_later_calls() -> None:
+    primary_calls = 0
+    fallback_calls = 0
+
+    def primary(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        nonlocal primary_calls
+        primary_calls += 1
+        raise Phase8GatewayRpcError("RPC_UNAVAILABLE")
+
+    def fallback(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        nonlocal fallback_calls
+        fallback_calls += 1
+        return {"session": None}
+
+    rpc = OpenClawCliOrLoopbackGatewayRpc(primary=primary, fallback=fallback)
+    assert rpc("sessions.describe", {"key": "one"}) == {"session": None}
+    assert rpc("sessions.describe", {"key": "two"}) == {"session": None}
+    assert primary_calls == 1
+    assert fallback_calls == 2
+
+@pytest.mark.parametrize(
+    "base_url",
+    (
+        "https://gateway.example.test",
+        "http://localhost:18789",
+        "http://192.0.2.1:18789",
+    ),
+)
+def test_loopback_gateway_rpc_rejects_non_literal_loopback_endpoint(
+    base_url: str,
+) -> None:
+    with pytest.raises(Phase8GatewayRpcError, match="LOOPBACK_GATEWAY_URL_INVALID"):
+        OpenClawLoopbackGatewayRpc(
+            base_url=base_url,
+            token_provider=lambda: "runtime-secret",
+        )
 
 def test_cli_rpc_uses_fixed_command_shape_and_no_shell(tmp_path: Path) -> None:
     calls: list[tuple[tuple[str, ...], dict[str, Any]]] = []
@@ -181,6 +340,32 @@ def test_environment_token_provider_is_lazy_and_fixed(monkeypatch) -> None:
     monkeypatch.setenv("OPENCLAW_GATEWAY_TOKEN", "runtime-secret")
     assert provider() == "runtime-secret"
 
+
+def test_no_write_gateway_readiness_requires_token_and_only_describes_session(
+    tmp_path: Path,
+) -> None:
+    calls: list[tuple[str, dict[str, Any]]] = []
+
+    def rpc(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        calls.append((method, params))
+        return {"session": None}
+
+    verify_phase8_no_write_gateway_readiness(
+        command_prefix=(_executable(tmp_path),),
+        token_provider=lambda: "runtime-secret",
+        gateway_rpc=rpc,
+    )
+
+    assert calls == [
+        ("sessions.describe", {"key": "classifire-phase8-readiness-no-write"})
+    ]
+    with pytest.raises(Phase8GatewayRpcError, match="GATEWAY_TOKEN_UNAVAILABLE"):
+        verify_phase8_no_write_gateway_readiness(
+            command_prefix=(_executable(tmp_path),),
+            token_provider=lambda: "",
+            gateway_rpc=rpc,
+        )
+    assert len(calls) == 1
 
 def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
     tmp_path: Path,

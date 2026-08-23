@@ -270,6 +270,14 @@ def test_evidence_manifest_binds_linked_original_to_retained_context() -> None:
     assert validate_visual_evidence_manifest(manifest, estimate_id="EST-001") == []
 
 
+def test_evidence_manifest_allows_linked_original_to_retain_external_parent_lineage() -> None:
+    manifest = _manifest()
+    provenance = manifest["artifacts"][0]["provenance"]
+    provenance["relationship"] = "linked_original"
+    provenance["parent_evidence_id"] = "retained-report-evidence"
+
+    assert validate_visual_evidence_manifest(manifest, estimate_id="EST-001") == []
+
 def test_evidence_manifest_rejects_unknown_parent_and_missing_image_dimensions() -> None:
     manifest = _manifest()
     provenance = manifest["artifacts"][0]["provenance"]
@@ -914,3 +922,26 @@ def test_receipt_validator_rejects_cross_role_result_hash_substitution() -> None
     errors = validate_phase8_visual_proposal_receipt(receipt)
 
     assert any("blind_inventory_sha256" in error for error in errors)
+
+def test_blocked_receipt_rejects_result_hash_substitution() -> None:
+    validator = _validator(verdict="BLOCKED", issue_code="MISSED_OPENING")
+    validator["blind_reconciliation"][0]["disposition"] = "UNRESOLVED"
+    validator["blind_reconciliation"][0]["proposal_refs"] = []
+    result = _controller(
+        ScriptedInferencePort(
+            {
+                "blind_inventory": [_blind_inventory()],
+                "physical_proposal": [_proposal()],
+                "conditioned_validator_0": [validator],
+            }
+        )
+    ).run()
+    assert result.status == VISUAL_PROPOSAL_BLOCKED
+    receipt = deepcopy(result.receipt)
+    receipt["result_hashes"]["validator_sha256"] = receipt["result_hashes"][
+        "proposal_sha256"
+    ]
+
+    errors = validate_phase8_visual_proposal_receipt(receipt)
+
+    assert any("validator_sha256" in error for error in errors)

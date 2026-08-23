@@ -331,6 +331,30 @@ def test_comparison_runs_after_inference_and_binds_all_input_bytes(
     )
 
 
+def test_comparison_preserves_explicit_unknown_service_quantity(tmp_path: Path) -> None:
+    proposal = _proposal()
+    proposal["services"][0]["quantity"] = None
+    receipt, _ = _completed_controller(proposal)
+    reference = _reference(
+        [
+            {
+                "substrate": "concrete wall",
+                "blank": False,
+                "service_groups": [{"type": "pipe", "material": "PVC", "quantity": None}],
+            }
+        ]
+    )
+    paths = _artifact_paths(tmp_path, proposal, receipt, reference)
+
+    result = compare_phase8_human_reference(
+        proposal_path=paths[0],
+        controller_receipt_path=paths[1],
+        reference_path=paths[2],
+    )
+
+    assert result["status"] == "PASS"
+
+
 def test_comparison_detects_substrate_swap_within_service_topology(
     tmp_path: Path,
 ) -> None:
