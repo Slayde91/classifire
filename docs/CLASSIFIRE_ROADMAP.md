@@ -2,11 +2,13 @@
 
 **Document status:** Active working roadmap
 
-**Roadmap version:** 2026-08-22 r3
+**Roadmap version:** 2026-08-23 r15
 
 **Product status:** Pre-production prototype and controlled UAT build
 
-**Supersedes:** The 18 August 2026 r2 working roadmap. Supplied PDFs remain immutable reference and historical decision records.
+**Supersedes:** Shared-main revision 2026-08-23 r14 and this branch's
+2026-08-22 r3 reconciliation. Supplied PDFs and earlier revisions remain
+immutable reference and decision-history records.
 
 **Scope:** Passive-fire evidence intake, physical-model automation, technical selection, quantities, commercial recovery, validation, output, release, and production hardening.
 
@@ -32,12 +34,18 @@ Nothing in a report, fixture, receipt, or attached reference document grants aut
 ### 2.1 Current product position
 
 CLASSIFIRE is a broad pre-production implementation with a controlled
-evidence-to-physical-model UAT path. It can retain report evidence, reconcile
-images, construct a proposal-only Opening-Service model, independently
-challenge that model, and preserve protected canonical state while experiments
-run. Guarded technical, quantity/labour, commercial, validation, snapshot,
-output and human-release services also exist and are exercised by reference
-fixtures.
+evidence-to-physical-model UAT path. Current shared `main` can retain report
+evidence, retrieve and govern linked originals, construct a proposal-only
+Opening-Service model through separate zero-tool identities, independently
+challenge it, compare it only after inference, and preserve protected canonical
+state. The bounded runner is synthetic-tested; representative execution against
+an explicitly approved retained report remains pending under issue #42.
+
+This divergent branch also contains guarded technical, quantity/labour,
+commercial, validation, snapshot, output, and human-release foundations with
+reference tests. Those services are absent or materially different on shared
+`main`; they are branch-local implementation evidence, not published main-line
+completion.
 
 Code availability is not current-project completion. The current real-report
 estimate has no canonical Opening, Service, link, admission, submission receipt,
@@ -47,9 +55,9 @@ for that estimate by Phase 8 even though their implementation foundations
 exist.
 
 The checked-out branch is also materially divergent from shared `main` and has
-extensive uncommitted work. Shared `main` is the basis for the next deployment
-candidate; local-only writer and compiled-plugin artifacts are not eligible for
-wholesale publication.
+extensive uncommitted work. Shared `main` is the basis for current Phase 8
+development and any future deployment candidate; local-only writer and
+compiled-plugin artifacts are not eligible for wholesale publication.
 
 ### 2.2 Verified recent advances
 
@@ -57,21 +65,24 @@ wholesale publication.
 | --- | --- |
 | Evidence integrity | Proposal-only runs protect the canonical estimate with a component-level protected-state fingerprint rather than relying on a whole-database file hash. |
 | Image quality | The report pipeline can discover report-provided linked originals, validate that they correspond to the displayed image, prefer verified full-resolution detail, and retain lower-resolution page context. |
-| Image provenance | Duplicate, crop, annotation, and page-context relationships are retained rather than silently collapsed when their visual information differs. |
+| Image provenance | Controlled-UAT evidence retains duplicate, crop, annotation, and page-context distinctions; shared main retains linked-original parent/page provenance, while the broader evidence-family taxonomy remains in progress. |
 | Visual safety | Physical and Validator roles use isolated visual sessions; structural retry is blocked after Validator-scoped correction to prevent authority escape. |
 | Proposal-only safety | Gateway preflight is fail-closed, protected-state receipts are bound to proposal receipts, and proposal-only execution cannot submit or lock a canonical model. |
 | Reconciliation | The human-reference comparator binds proposal/final-state inputs by path and hash and detects topology/substrate swaps rather than matching disconnected multisets. |
 | Human adjudication | A provenance-bound, offline adjudicated proposal revision exists for the current UAT. It records human decisions separately from runtime inference and leaves canonical state unchanged. |
-| Downstream services | Technical search/locking, quantities/labour, commercial recovery, independent validation, snapshot, PDF/XLSX rendering and human-only release are implemented foundations with focused tests. |
-| External signer | Shared `main` contains an offline, biometric, hardware-backed Android P-256 signer with no Internet or canonical-write client. |
-| Deployment audit | Shared `main` contains a read-only Gate A source/artifact auditor; the current clean candidate fails only because `dist/index.js` is absent. |
+| Downstream services | This branch has focused-test foundations for technical search/locking, quantities/labour, commercial recovery, independent validation, snapshot, richer PDF/XLSX rendering and human-only release; they are not shared-main completion. |
+| External signer | Shared `main` contains an offline, biometric, hardware-backed Android P-256 signer with no Internet or canonical-write client. The approved release APK and `governance-p256-02` public proof are verified; no admission has been signed. |
+| Linked-original runner | Shared `main` contains guarded retrieval, governed retention and a bounded proposal-only runner. Synthetic tests pass; the representative approved-report run is pending under issue #42. |
+| Deployment audit | The final exact-main Gate A candidate at `7801636` passes with plugin SHA-256 `38812E99...AEE4` and candidate fingerprint `CB52D918...6E15`. The audit made no live change and granted no write authority. |
 
 ### 2.3 Current Phase 8 evidence position
 
-The full-resolution proposal-only UAT produced a visual-validated proposal using the
-measured **12,000-character Windows-safe defect budget**. The subsequent offline
-adjudicated revision contains **17 Openings and 24 Services**. It is not a canonical
-physical model.
+The full-resolution proposal-only UAT produced a visual-validated proposal using
+the measured **12,000-character Windows-safe defect budget**. The subsequent
+offline adjudicated revision produces **17 Openings, 24 normalized Service
+rows, and 24 Opening-Service links** in the v6 preflight. Historical references
+to 22 Service groups describe a different pre-normalisation grouping measure.
+The revision is not a canonical physical model.
 
 The adjudicated proposal comparison passes against the versioned adjudication record. The historical human-reference comparison remains a diagnostic with three explained differences:
 
@@ -84,14 +95,36 @@ These differences must remain explicit. Passing a count comparison alone is neve
 ### 2.4 Immediate governing constraints
 
 - The canonical estimate must remain unchanged until a controlled canonical preflight passes and a separately authorised submission occurs.
-- The clean shared-main deployment candidate must contain a reproducibly built
-  `dist/index.js` and pass Gate A before deployment review; a local artifact from
-  the divergent dirty checkout cannot satisfy that gate.
+- Gate A is complete for exact-main `7801636`; it is a source/artifact audit,
+  not authority for report execution, signing, registration, canonical
+  submission, locking, or release.
 - The historical human fixture and any adjudication for a report are validation-only; they must not be exposed to that report's runtime inference or used as hidden prompt answers.
 - Full-resolution originals are preferred when verified. Lower-resolution thumbnails, crops, labels, and page renders remain contextual evidence when they preserve information not present in the original.
 - Human adjudication is an exception mechanism for genuine conflict or ambiguity. It is not the intended routine input for every estimate.
 - Routine live reports and their verified outcomes are intended to improve CLASSIFIRE through a governed continual-learning pipeline. They must not directly self-modify the model during the same live case.
 - A trained or improved model never bypasses protected-state checks, independent validation, Physical Model Lock rules, or human-only final release.
+
+### 2.5 Repository and deployment reconciliation
+
+| Workstream | Verified status | Remaining condition |
+| --- | --- | --- |
+| Runtime and physical foundations | Merged on shared `main` | Broader production-hardening evidence |
+| Least-privilege agents and admission writer | Gates A-F recorded for the configured local environment; shared migration head is `0008` | Revalidate in any different environment; canonical action still needs its own authority |
+| Linked-original retrieval, retention, and bounded proposal runner | Merged and synthetic-tested through PRs #67-#68 | Representative rollback-only approved-report run under issue #42 |
+| Offline Android signer | Release APK and hardware-backed `governance-p256-02` proof verified | Fresh exact preflight and separate authority before any real signature |
+| Controlled canonicalisation | Blocked at its intended governance boundary | Fresh preflight, external signature, immutable registration, and separate one-time submission authority |
+| Signed Physical Model Lock | Not yet a completed boundary | Separate design, review, and authority |
+| Later phases 9-14 | Guarded foundations exist on this branch only | Reconcile phase by phase onto current `main` after Phase 8 |
+
+The checked-out branch is at `4efe1e5`; shared `main` is at `7801636`.
+From merge base `fea9549`, the histories have 376 branch-only and 116
+main-only commits. The branch is the head of stacked draft PR #13 and must not
+be merged wholesale. PRs #9-#13 require bounded transplantation or explicit
+supersession.
+
+The dirty local source graph ends at `0007`, while the local database records
+shared-main migration `0008`. This checkout is not a valid deployment or
+database-write source.
 
 ## 3. Master roadmap at a glance
 
@@ -100,19 +133,19 @@ These differences must remain explicit. Passing a count comparison alone is neve
 | 0. Product and repository baseline | In progress | Auditable private-repository lineage, controlled changes, and reproducible source state. |
 | 1. Domain and workflow governance | In progress | Governed amendments, blank-opening semantics, visual approval, and no destructive scope replacement. |
 | 2. Governed source libraries | In progress | Immutable, published, auditable technical and commercial releases. |
-| 3. OpenClaw and controlled-write architecture | In progress - Gate A blocked | Clean-machine reproducibility and live least-privilege proof. |
+| 3. OpenClaw and controlled-write architecture | In progress - Gates A-F recorded locally | Revalidation for other environments, clean consolidation, and production proof. |
 | 4. Mission Control integration | In progress | Visibility/control-plane integration without owning estimate truth. |
 | 5. Evidence intake and evidence resolution | In progress | Every downstream claim traces to retained report, page, image, and verified higher-detail source evidence. |
 | 6. Physical Model engine | In progress | Defensible Barrier-Opening-Service model or explicit limitation for every known defect. |
-| 7. Independent visual topology gate | Verified complete for controlled UAT; production persistence in progress | Independent non-mutating visual challenge and fail-closed receipt. |
-| 8. Corrected real Physical UAT | In progress - deployment Gate A blocked | Semantically approved corrected physical model and replacement active Physical Model Lock. |
+| 7. Independent visual topology gate | Verified for synthetic/controlled UAT; representative run and production persistence in progress | Independent non-mutating visual challenge and durable fail-closed receipt. |
+| 8. Corrected real Physical UAT | In progress | Semantically approved corrected physical model and replacement active Physical Model Lock. |
 | 8C. Automated Physical-Model Accuracy Programme | Planned | Measured, leakage-safe reduction of human exception review; optional governed model training only after prototype evidence. |
-| 9. Technical system selection | Foundation implemented; current UAT blocked by Phase 8 | One current, defensible Repair Strategy Lock per supported Opening. |
-| 10. Quantity and labour | Foundation implemented; current UAT blocked by Phase 9 | Deterministic, authorised, complete quantities and labour. |
-| 11. Commercial recovery | Foundation implemented; current UAT blocked by Phases 9-10 | Every required component recovered once with traceable commercial basis. |
-| 12. Independent validation and snapshot | Foundation implemented; current UAT blocked by Phases 8-11 | No unresolved validation blockers and an immutable reproducible snapshot. |
-| 13. Output and proposal generation | Renderers implemented; current UAT blocked by Phase 12 | Snapshot-backed, reconciled technical and client-facing outputs. |
-| 14. Human Release | Human-only service implemented; current UAT blocked by Phase 13 | Human acceptance of the exact validated snapshot and production checklist. |
+| 9. Technical system selection | Branch-local foundation; blocked by Phase 8 and absent from shared main | One current, defensible Repair Strategy Lock per supported Opening. |
+| 10. Quantity and labour | Branch-local foundation; blocked by Phase 9 and absent from shared main | Deterministic, authorised, complete quantities and labour. |
+| 11. Commercial recovery | Branch-local foundation; blocked by Phases 9-10 and absent from shared main | Every required component recovered once with traceable commercial basis. |
+| 12. Independent validation and snapshot | Branch-local foundation; blocked by Phases 8-11 and absent from shared main | No unresolved validation blockers and an immutable reproducible snapshot. |
+| 13. Output and proposal generation | Basic shared-main output exists; richer branch-local renderers are blocked by Phase 12 | Snapshot-backed, reconciled technical and client-facing outputs. |
+| 14. Human Release | Branch-local human-only foundation; blocked by Phase 13 and absent from shared main | Human acceptance of the exact validated snapshot and production checklist. |
 | 15. Production hardening | In progress | Secure, observable, recoverable, reproducible production operation and qualified automation. |
 | 16. Deferred structural steel and ductwork | Deferred | Separate approved design, source authority, calculations, and acceptance evidence. |
 
@@ -183,7 +216,7 @@ Every technical or commercial decision cites a versioned, authorised, reproducib
 
 ## 7. Phase 3 - OpenClaw and controlled-write architecture
 
-**Status:** In progress - shared-main Gate A blocked
+**Status:** In progress - Gates A-F recorded for the configured local environment
 
 **Objective:** Provide role-limited model access and controlled canonical writes without granting a generic agent database authority.
 
@@ -198,23 +231,34 @@ Every technical or commercial decision cites a versioned, authorised, reproducib
 - Shared `main` includes a deterministic read-only deployment-candidate auditor.
 - Shared `main` also includes the separate offline Android admission signer; it
   cannot contact CLASSIFIRE or perform registration/submission.
+- Shared `main` separates zero-tool evidence transport and inference identities
+  from the admission-only writer, and both pinned inference identities have
+  independently verified empty effective tool inventories.
+- A configured synthetic Validator inference completed with a strict payload,
+  no tool calls, no human-reference access, and no canonical-state capability.
 
-### Current blocker
+### Current deployment evidence
 
-The auditor was run against a clean detached shared-main tree at `82d9140` and
-returned `LOCAL_CANDIDATE_REQUIRED_ARTIFACT_MISSING` because
-`openclaw-plugin-classifire-controlled-write/dist/index.js` is absent. The
-compiled artifact in the divergent dirty checkout is not an acceptable
-replacement.
+The earlier missing-artifact result at `82d9140` is superseded. The final
+exact-main Gate A audit at `7801636` passed with no missing paths, a clean
+worktree, plugin SHA-256 `38812E99DC138A198EE58BF6E00E9B34E081502CB43C39089418BC53E3C2AEE4`,
+and candidate fingerprint
+`CB52D91823EFC06EB76E443D3E8D4CF3D9C901DFEBB262842E1EADAE94B26E15`.
+The audit reported `deployment_authorised=false` and
+`live_change_performed=false`.
 
 ### Remaining work
 
-1. Rebuild the controlled-write plugin from shared `main` in an approved
-   reproducible environment and pass the Gate A source/artifact audit.
-2. Prove clean-machine installation and live least-privilege plugin deployment.
-3. Complete operation, restart, recovery, timeout, and credential-handling runbooks.
-4. Maintain provider/model/configuration receipts without logging tokens, signed URLs, or private report content.
-5. Validate policy propagation from UAT runner code into production services.
+1. Revalidate Gates A-F for every materially different deployment environment or
+   source revision.
+2. Complete clean-machine installation, recovery, timeout, credential-handling,
+   and production observability evidence.
+3. Maintain provider/model/configuration receipts without logging tokens, signed
+   URLs, or private report content.
+4. Validate policy propagation from proposal runner code into every production
+   service boundary.
+5. Resolve OpenClaw development-dependency advisories under issue #43 without
+   unsafe forced overrides.
 
 ### Exit condition
 
@@ -247,6 +291,12 @@ Run and approval visibility is useful and traceable without creating a second mu
 - The current UAT report has retained page, image, layout, and defect-text evidence.
 - Linked full-resolution images can be discovered from report annotations and materialised under a strict allowlist, DNS, TLS, size, MIME, pixel, and thumbnail-binding policy.
 - A verified original is selected as primary detail only after binding it to the report thumbnail; lower-resolution page/crop/annotation variants remain mandatory context when they carry distinct information.
+- Verified bytes can be retained by content hash as immutable child evidence
+  bound to an active parent thumbnail, page, and photo identity; the boundary is
+  replay-idempotent and does not commit its caller's transaction.
+- The bounded shared-main runner can connect guarded linked-original retrieval,
+  governed retention, retained-evidence adaptation, zero-tool inference, and
+  proposal-only receipts without obtaining database write or lock authority.
 - Stale low-resolution conclusions are not allowed to suppress high-detail re-review.
 - Model-visible attachments are rehashed immediately before transport to prevent path or byte substitution after earlier validation.
 
@@ -288,23 +338,35 @@ Every known defect has a defensible physical model or an explicit evidence limit
 
 ## 11. Phase 7 - Independent visual topology gate
 
-**Status:** Verified complete for controlled UAT; production receipt persistence remains in progress
+**Status:** Verified for synthetic/controlled UAT; representative execution and
+production receipt persistence remain in progress
 
 **Objective:** Independently challenge a Physical proposal against the same retained evidence before canonical submission.
 
 ### Verified behaviour
 
-- Physical and Validator roles inspect independently scoped visual evidence.
-- Validator corrections have bounded authority; a scoped correction cannot escape into an unguided structural retry.
+- Historical UAT evidence shows Physical and Validator roles inspecting
+  independently scoped visual evidence; current main enforces ordered role
+  separation through the strict proposal controller.
+- Validator corrections have bounded authority; malformed or unsupported scope
+  fails closed and cannot escape into an unguided structural retry.
+- Proposal-blind inventory and mandatory evidence-backed reconciliation prevent
+  a prior proposal or hidden answer key from becoming inference input.
 - A non-supported or incomplete correction fails closed with limitations.
-- Sessions, prompts, selected visual files, and results are receipt-bound.
+- Evidence manifests, selected image bytes, prompts, models, runtime policy,
+  sessions, and results are receipt-bound.
 - Proposal-only operation prevents visual agents from submitting or locking the canonical model.
+- A validation-only comparator runs after inference and has no database or
+  inference interface.
 
 ### Remaining work
 
-1. Persist and enforce a canonical VisualValidationReceipt in lock eligibility.
-2. Carry v4 correction semantics into production service boundaries.
-3. Broaden adversarial visual-gate tests beyond the current report.
+1. Execute the shared-main bounded runner against an explicitly approved
+   retained report and retrieval location, preserving rollback and protected
+   state, as tracked by issue #42.
+2. Persist and enforce a canonical VisualValidationReceipt in lock eligibility.
+3. Carry bounded correction semantics into every production service boundary.
+4. Broaden adversarial visual-gate tests beyond the current report.
 
 ### Exit condition
 
@@ -312,7 +374,7 @@ An independently validated, durable visual receipt is required for every canonic
 
 ## 12. Phase 8 - Corrected real Physical UAT
 
-**Status:** In progress - shared-main deployment Gate A blocked
+**Status:** In progress
 
 **Objective:** Replace the known-wrong retained physical state with a visual-validated, defect-level defensible Physical Model.
 
@@ -320,9 +382,13 @@ An independently validated, durable visual receipt is required for every canonic
 
 1. The old incorrect unlocked physical state was removed through controlled reopen while preserving evidence, defects, and historical lock records.
 2. Proposal-only safety, protected-state integrity, bounded correction policy, and comparator hardening were implemented and tested.
-3. Linked high-resolution originals were verified and made available to visual analysis.
-4. A full-resolution proposal-only UAT completed without canonical writes.
-5. A provenance-bound human-adjudication record and offline revised proposal were created for the exceptional source conflicts and withheld details.
+3. Shared `main` now includes blind inventory/reconciliation, a strict
+   controller/receipt, retained-evidence adaptation, guarded linked-original
+   retrieval/retention, zero-tool identities, a synthetic live inference, a
+   validation-only comparator, and a bounded linked-original-to-proposal runner.
+4. Linked high-resolution originals were verified and made available to visual analysis.
+5. A full-resolution proposal-only UAT completed without canonical writes.
+6. A provenance-bound human-adjudication record and offline revised proposal were created for the exceptional source conflicts and withheld details.
 
 ### Current gate
 
@@ -333,17 +399,16 @@ target estimate confirms 10 Defects and 128 evidence records but zero canonical
 Openings, Services, links, admissions, submission receipts, active Physical
 Model Locks or downstream records. The proposal remains non-canonical.
 
-The local migration graph, focused tests and disposable-copy rehearsal support
-the admission boundary at `0007`, but this checkout is heavily dirty and its
-committed line is 346 files divergent from shared `main`. Its compiled plugin
-artifact is not a shared-main deployment candidate.
+Shared `main` at `7801636` is the current Phase 8 source. Its migration graph
+reaches `0008`, its exact-source/plugin Gate A candidate passes, and Gates A-F
+have recorded local-environment validation. The dirty legacy checkout resolves
+only through `0007`, while its database is already at `0008`; it is not a
+deployment or database-write source.
 
-Shared `main` at `82d9140` contains the reconciled writer, Android offline
-signer and Gate A auditor. A fresh auditor run against a clean shared-main tree
-returned exit code 2 because the required compiled plugin artifact is missing.
-The immediate task is therefore a reproducible shared-main plugin build and a
-passing reviewed source/artifact audit. No live deployment, signature,
-registration, submission or lock follows automatically from that audit.
+The immediate repository task is the rollback-only representative
+linked-original proposal run tracked by issue #42. No live signature,
+registration, canonical submission, or lock follows automatically from the run
+or from the Gate A-F evidence.
 
 The old v3 signed admission is expired and superseded. Physical Model Lock
 creation remains a later separate gate and is intentionally unavailable until
@@ -361,12 +426,11 @@ Before any canonical write:
 
 ### Required canonical operation
 
-After the admission-journal compatibility repair and disposable-copy rehearsal
-pass, and only if a fresh preflight passes and the authorised approver directs
-it:
+Only after the representative proposal path is accepted, a fresh exact-main
+preflight passes, and the authorised approver separately directs the operation:
 
 1. Deploy and verify the admission-bound writer through the
-   [controlled-writer deployment runbook](./ADJUDICATED_CANONICAL_WRITER_DEPLOYMENT_RUNBOOK.md).
+   [controlled-writer deployment runbook on shared main](https://github.com/Slayde91/classifire/blob/main/docs/ADJUDICATED_CANONICAL_WRITER_DEPLOYMENT_RUNBOOK.md).
 2. Produce a fresh no-write preflight and obtain a separately governed,
    externally signed admission manifest bound to that exact payload and
    protected-state fingerprint.
@@ -620,13 +684,14 @@ Fine-tuning is optional. It may begin only when all of the following are satisfi
 
 ## 14. Phase 9 - Technical system selection
 
-**Status:** Implementation foundation complete; current UAT blocked by Phase 8
+**Status:** Branch-local implementation foundation; current UAT blocked by
+Phase 8; absent from shared `main`
 
 **Objective:** Select technically applicable systems only from authorised technical releases, Opening by Opening.
 
 ### Implemented foundation
 
-The repository contains the Technical Authority Registry, guarded
+This branch contains the Technical Authority Registry, guarded
 Opening-specific search, mismatch/unknown handling, RepairStrategy and
 RepairStrategyLock persistence and role-scoped service/API paths. Focused tests
 and the deterministic reference fixture exercise these boundaries. The current
@@ -646,7 +711,8 @@ Every supported Opening has one current, traceable, technically defensible strat
 
 ## 15. Phase 10 - Quantity and labour
 
-**Status:** Implementation foundation complete; current UAT blocked by Phase 9
+**Status:** Branch-local implementation foundation; current UAT blocked by
+Phase 9; absent from shared `main`
 
 **Objective:** Derive deterministic component quantities and authorised labour without silent defaults or invented productivity.
 
@@ -671,7 +737,8 @@ All required quantities and labour are deterministic, authorised, traceable, and
 
 ## 16. Phase 11 - Commercial recovery
 
-**Status:** Implementation foundation complete; current UAT blocked by Phases 9-10
+**Status:** Branch-local implementation foundation; current UAT blocked by
+Phases 9-10; absent from shared `main`
 
 **Objective:** Recover each required commercial component exactly once through the approved pricing hierarchy.
 
@@ -696,11 +763,12 @@ Every required component has one traceable commercial basis, no duplicate recove
 
 ## 17. Phase 12 - Independent validation and immutable snapshot
 
-**Status:** Implementation foundation complete; current UAT blocked by Phases 8-11
+**Status:** Branch-local implementation foundation; current UAT blocked by
+Phases 8-11; absent from shared `main`
 
 **Objective:** Independently validate the complete estimate and freeze a deterministic release snapshot.
 
-The repository contains deterministic validation gates, state hashes,
+This branch contains deterministic validation gates, state hashes,
 EstimateCertificate records and immutable validated-snapshot logic. Focused
 validation/release tests and the reference fixture pass. The current UAT has no
 eligible downstream state and no snapshot.
@@ -711,12 +779,13 @@ No unresolved validation blocker remains. The snapshot is immutable, reproducibl
 
 ## 18. Phase 13 - Output and proposal generation
 
-**Status:** Renderers implemented; current UAT blocked by Phase 12
+**Status:** Richer renderers are branch-local; current UAT blocked by Phase 12
 
 **Objective:** Render technical and client-facing deliverables only from the validated immutable snapshot.
 
-Technical/proposal XLSX and PDF renderers and guarded human/agent export routes
-exist. They check the current snapshot schema, validation-state binding,
+This branch contains technical/proposal XLSX and PDF renderers and guarded
+human/agent export routes; shared `main` has more limited output foundations.
+The branch-local routes check the current snapshot schema, validation-state binding,
 certificate hash and output audit receipt. This review did not inspect a
 representative rendered artifact, and the current UAT has no eligible snapshot.
 
@@ -726,7 +795,8 @@ Outputs contain only snapshot-backed facts, reconcile to canonical totals, rende
 
 ## 19. Phase 14 - Human Release
 
-**Status:** Human-only service implemented; current UAT blocked by Phase 13
+**Status:** Branch-local human-only foundation; current UAT blocked by Phase 13;
+absent from shared `main`
 
 **Objective:** Preserve accountable human authority for final client and production release.
 
@@ -800,12 +870,18 @@ No steel or duct calculator data may be imported into the active fire-seal/penet
   reviewed compatibility migration.
 - Structural-steel and whole fire-rated-duct logic inside the penetration
   workflow is not approved; those domains remain deferred to Phase 16.
+- Wholesale merge of the legacy stacked branch/PR chain is superseded by
+  bounded current-main work. Obsolete UAT launchers and old
+  `canonical_models` admission paths are evidence only, not release candidates.
+- Debug-app admission keys, the retired debug certificate, and the production
+  Ed25519 signer path are superseded. The current external admission protocol is
+  hardware-backed P-256, and no real admission has been signed.
 
 ## 24. Related documentation
 
 - [CLASSIFIRE Architecture](./CLASSIFIRE_ARCHITECTURE.md)
-- [Admission-Bound Canonical Writer Deployment Runbook](./ADJUDICATED_CANONICAL_WRITER_DEPLOYMENT_RUNBOOK.md)
-- [External Signer Operating Model for Adjudicated Admissions](./ADJUDICATED_ADMISSION_EXTERNAL_SIGNER_OPERATING_MODEL.md)
+- [Admission-Bound Canonical Writer Deployment Runbook on shared main](https://github.com/Slayde91/classifire/blob/main/docs/ADJUDICATED_CANONICAL_WRITER_DEPLOYMENT_RUNBOOK.md)
+- [External Signer Operating Model on shared main](https://github.com/Slayde91/classifire/blob/main/docs/ADJUDICATED_ADMISSION_EXTERNAL_SIGNER_OPERATING_MODEL.md)
 - [Knowledge Alignment Amendment](../knowledge/amendments/CLASSIFIRE_KNOWLEDGE_ALIGNMENT_AMENDMENT_v2.13.1.md)
 - [Knowledge Source Manifest](../knowledge/manifests/classifire-knowledge-source-v2.13.json)
 - [Project and Knowledge Alignment Review](./reports/CLASSIFIRE_PROJECT_KNOWLEDGE_ALIGNMENT_20260811.md)
