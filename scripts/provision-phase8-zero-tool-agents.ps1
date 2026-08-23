@@ -16,7 +16,20 @@ $BootstrapPath = Join-Path $RepositoryRoot "config\phase8-zero-tool-workspace\AG
 function Invoke-OpenClawJson {
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
 
-    $Output = & openclaw @Arguments
+    $NativeArguments = @()
+    $EscapeJson = $false
+    foreach ($Argument in $Arguments) {
+        if ($EscapeJson) {
+            $EscapedQuote = [string][char]92 + [string][char]34
+            $NativeArguments += $Argument.Replace([string][char]34, $EscapedQuote)
+            $EscapeJson = $false
+        }
+        else {
+            $NativeArguments += $Argument
+            $EscapeJson = ($Argument -eq "--params")
+        }
+    }
+    $Output = & openclaw @NativeArguments
     if ($LASTEXITCODE -ne 0) {
         throw "OpenClaw command failed safely. No prompt or evidence was sent."
     }
@@ -138,7 +151,9 @@ foreach ($Expected in $DesiredAgents) {
     }
 }
 
-if ($Apply) {
+if ($MissingAgents.Count -gt 0) {
+    $BatchOperations = @()
+    $NextIndex = $ConfiguredAgents.Count
     foreach ($Expected in $MissingAgents) {
         $Entry = [ordered]@{}
         foreach ($Property in $Expected.PSObject.Properties) {
@@ -146,40 +161,73 @@ if ($Apply) {
                 $Entry[$Property.Name] = $Property.Value
             }
         }
-        $EntryJson = $Entry | ConvertTo-Json -Depth 12 -Compress
-        $ConfiguredAgents = @(Invoke-OpenClawJson @("config", "get", "agents.list", "--json"))
-        $Index = $ConfiguredAgents.Count
-        & openclaw config set "agents.list[$Index]" $EntryJson --strict-json --dry-run | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "OpenClaw rejected the reviewed profile during dry-run."
+        $BatchOperations += [pscustomobject][ordered]@{
+            path = "agents.list[$NextIndex]"
+            value = [pscustomobject]$Entry
         }
+        $NextIndex += 1
+    }
 
-        New-Item -ItemType Directory -Path $Expected.workspace -Force | Out-Null
-        New-Item -ItemType Directory -Path $Expected.agentDir -Force | Out-Null
-        $Destination = Join-Path $Expected.workspace "AGENTS.md"
-        if (Test-Path -LiteralPath $Destination) {
-            $ExistingHash = (Get-FileHash -LiteralPath $Destination -Algorithm SHA256).Hash
-            $ExpectedHash = (Get-FileHash -LiteralPath $BootstrapPath -Algorithm SHA256).Hash
-            if ($ExistingHash -ne $ExpectedHash) {
-                throw "Workspace bootstrap conflict detected for $($Expected.id)."
+    if ($BatchOperations.Count -gt 0) {
+        $BatchPath = Join-Path ([System.IO.Path]::GetTempPath()) (
+            "classifire-phase8-zero-tool-$([guid]::NewGuid().ToString('N')).json"
+        )
+        $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        try {
+            $BatchJson = $BatchOperations | ConvertTo-Json -Depth 12
+            [System.IO.File]::WriteAllText($BatchPath, $BatchJson, $Utf8NoBom)
+            & openclaw config set --batch-file $BatchPath --dry-run | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "OpenClaw rejected the reviewed profiles during dry-run."
+            }
+
+            if ($Apply) {
+                foreach ($Expected in $MissingAgents) {
+                    $Destination = Join-Path $Expected.workspace "AGENTS.md"
+                    if (Test-Path -LiteralPath $Destination) {
+                        $ExistingHash = (Get-FileHash -LiteralPath $Destination -Algorithm SHA256).Hash
+                        $ExpectedHash = (Get-FileHash -LiteralPath $BootstrapPath -Algorithm SHA256).Hash
+                        if ($ExistingHash -ne $ExpectedHash) {
+                            throw "Workspace bootstrap conflict detected for $($Expected.id)."
+                        }
+                    }
+                }
+
+                foreach ($Expected in $MissingAgents) {
+                    New-Item -ItemType Directory -Path $Expected.workspace -Force | Out-Null
+                    New-Item -ItemType Directory -Path $Expected.agentDir -Force | Out-Null
+                    $Destination = Join-Path $Expected.workspace "AGENTS.md"
+                    if (-not (Test-Path -LiteralPath $Destination)) {
+                        Copy-Item -LiteralPath $BootstrapPath -Destination $Destination
+                    }
+                }
+
+                & openclaw config set --batch-file $BatchPath | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    throw "OpenClaw failed while installing the reviewed profiles."
+                }
             }
         }
-        else {
-            Copy-Item -LiteralPath $BootstrapPath -Destination $Destination
+        finally {
+            if (Test-Path -LiteralPath $BatchPath) {
+                Remove-Item -LiteralPath $BatchPath -Force
+            }
         }
-
-        & openclaw config set "agents.list[$Index]" $EntryJson --strict-json | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "OpenClaw failed while installing the reviewed profile."
+        if ($Apply) {
+            foreach ($Expected in $MissingAgents) {
+                Write-Host "Installed zero-tool identity: $($Expected.id)"
+            }
         }
-        Write-Host "Installed zero-tool identity: $($Expected.id)"
     }
+}
+
+if ($Apply) {
     & openclaw config validate --json | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "OpenClaw configuration validation failed after installation."
     }
 }
-elseif ($MissingAgents.Count -gt 0) {
+if (-not $Apply -and $MissingAgents.Count -gt 0) {
     Write-Host "Plan only. Re-run with -Apply after review."
 }
 
