@@ -54,8 +54,15 @@ Required JSON fields:
 status (COMPLETE or BLOCKED), observed_opening_count,
 observed_service_group_count, candidate_openings, candidate_services,
 unresolved_candidates, limitations.
-Candidate evidence_refs must use evidence_id values from the manifest. Counts must
-equal their candidate-array lengths. COMPLETE requires no unresolved candidates.
+Every candidate_openings object requires candidate_id, blank (the JSON boolean true
+or false, never null or a string), detail, and evidence_refs. Every
+candidate_services object requires candidate_id, service_type, material (or null),
+quantity (a positive integer or null), candidate_opening_ids, detail, and
+evidence_refs. Every unresolved_candidates object requires kind, detail, and
+evidence_refs; candidate_id is optional. Candidate evidence_refs must use evidence_id
+values from the manifest. Counts must equal their candidate-array lengths. COMPLETE
+requires no unresolved candidates and every occupied Opening must link to a Service
+group; every blank Opening must have no Service link.
 """
 
 PHYSICAL_PROMPT_TEMPLATE = _COMMON + """

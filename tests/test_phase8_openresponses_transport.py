@@ -225,6 +225,8 @@ def test_profile_and_rendering_are_deterministic_and_role_bound(tmp_path: Path) 
     assert first == second
     assert first.template_sha256 == request["inference_profile"]["blind_prompt_sha256"]
     assert "human reference" in first.text.lower()
+    assert "blank (the JSON boolean true" in first.text
+    assert "candidate_opening_ids, detail, and" in first.text
     with pytest.raises(Exception, match="INFERENCE_STAGE_ROLE_MISMATCH"):
         renderer.render(role="cf-physical-model", stage="blind_inventory", request=request)
 
