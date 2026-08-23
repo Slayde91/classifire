@@ -12,8 +12,11 @@ therefore ineligible for this proposal-only inference boundary.
 The reviewed definitions are pinned to OpenClaw `2026.7.1-2` and
 `openai/gpt-5.6`. Each dedicated identity uses an isolated workspace and agent
 directory, Docker sandbox mode with no workspace access, disabled elevation,
-and the exact tool policy `profile: minimal` plus `deny: ["*"]`. No allow or
-sandbox-allow list is present.
+and the exact tool policy `profile: minimal` plus `deny: ["*"]`. No tool is
+allowed. The explicit empty
+`tools.sandbox.tools.allow: []` override suppresses OpenClaw's inherited Docker
+sandbox allow gate; it does not allow a tool. The agent-level `deny: ["*"]`
+remains authoritative and the live effective inventory must still be empty.
 
 From an exact reviewed checkout, inspect the plan:
 
@@ -30,8 +33,10 @@ empty without sending a prompt or image:
 
 The script refuses an existing identity whose security-relevant configuration
 does not exactly match the reviewed policy. It never repairs or overwrites a
-conflicting identity. Missing definitions are validated and installed as one
-file-based batch so Windows command-line quoting cannot alter the policy JSON.
+conflicting identity. It can upgrade only the exact previously reviewed v1
+profile to v2's explicit empty sandbox allow override. Missing definitions and
+eligible upgrades are validated and installed as one file-based batch so
+Windows command-line quoting cannot alter the policy JSON.
 Live verification creates metadata-only sessions with
 `runStarted: false`, verifies the resolved provider and model, reads
 `tools.effective`, and fails unless both inventories contain zero tools.

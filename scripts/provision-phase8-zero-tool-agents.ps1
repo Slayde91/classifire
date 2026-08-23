@@ -52,13 +52,20 @@ function Test-ExactNames {
 function Test-AgentPolicy {
     param(
         [Parameter(Mandatory = $true)]$Actual,
-        [Parameter(Mandatory = $true)]$Expected
+        [Parameter(Mandatory = $true)]$Expected,
+        [Parameter(Mandatory = $true)][bool]$RequireEmptySandboxAllow
     )
 
+    $ExpectedToolNames = if ($RequireEmptySandboxAllow) {
+        @("profile", "deny", "elevated", "sandbox")
+    }
+    else {
+        @("profile", "deny", "elevated")
+    }
     if ($Actual.id -ne $Expected.id -or
         $Actual.workspace -ne $Expected.workspace -or
         $Actual.agentDir -ne $Expected.agentDir -or
-        -not (Test-ExactNames $Actual.tools @("profile", "deny", "elevated")) -or
+        -not (Test-ExactNames $Actual.tools $ExpectedToolNames) -or
         $Actual.tools.profile -ne "minimal" -or
         @($Actual.tools.deny).Count -ne 1 -or
         @($Actual.tools.deny)[0] -ne "*" -or
@@ -69,6 +76,14 @@ function Test-AgentPolicy {
         $Actual.sandbox.backend -ne "docker" -or
         $Actual.sandbox.workspaceAccess -ne "none" -or
         $Actual.sandbox.scope -ne "agent") {
+        return $false
+    }
+
+    if ($RequireEmptySandboxAllow -and (
+        -not (Test-ExactNames $Actual.tools.sandbox @("tools")) -or
+        -not (Test-ExactNames $Actual.tools.sandbox.tools @("allow")) -or
+        @($Actual.tools.sandbox.tools.allow).Count -ne 0
+    )) {
         return $false
     }
 
@@ -86,7 +101,7 @@ if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf) -or
 }
 
 $Manifest = Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json
-if ($Manifest.schema -ne "classifire.phase8-zero-tool-agents.v1" -or
+if ($Manifest.schema -ne "classifire.phase8-zero-tool-agents.v2" -or
     @($Manifest.agents).Count -ne 2) {
     throw "The Phase 8 zero-tool profile manifest is invalid."
 }
@@ -127,6 +142,9 @@ foreach ($Definition in $Manifest.agents) {
             profile = "minimal"
             deny = @("*")
             elevated = [pscustomobject][ordered]@{ enabled = $false }
+            sandbox = [pscustomobject][ordered]@{
+                tools = [pscustomobject][ordered]@{ allow = @() }
+            }
         }
         model = $Manifest.model
     }
@@ -134,16 +152,31 @@ foreach ($Definition in $Manifest.agents) {
 
 $ConfiguredAgents = @(Invoke-OpenClawJson @("config", "get", "agents.list", "--json"))
 $MissingAgents = @()
+$UpgradeAgents = @()
 foreach ($Expected in $DesiredAgents) {
-    $Matches = @($ConfiguredAgents | Where-Object { $_.id -eq $Expected.id })
-    if ($Matches.Count -gt 1) {
+    $MatchIndexes = @(
+        for ($Index = 0; $Index -lt $ConfiguredAgents.Count; $Index += 1) {
+            if ($ConfiguredAgents[$Index].id -eq $Expected.id) { $Index }
+        }
+    )
+    if ($MatchIndexes.Count -gt 1) {
         throw "Duplicate configured identity detected for $($Expected.id)."
     }
-    if ($Matches.Count -eq 1) {
-        if (-not (Test-AgentPolicy $Matches[0] $Expected)) {
+    if ($MatchIndexes.Count -eq 1) {
+        $Actual = $ConfiguredAgents[$MatchIndexes[0]]
+        if (Test-AgentPolicy $Actual $Expected $true) {
+            Write-Host "Verified configured policy: $($Expected.id)"
+        }
+        elseif (Test-AgentPolicy $Actual $Expected $false) {
+            $UpgradeAgents += [pscustomobject][ordered]@{
+                index = $MatchIndexes[0]
+                expected = $Expected
+            }
+            Write-Host "Planned v1 to v2 zero-tool policy upgrade: $($Expected.id)"
+        }
+        else {
             throw "Existing identity $($Expected.id) conflicts with the reviewed zero-tool policy."
         }
-        Write-Host "Verified configured policy: $($Expected.id)"
     }
     else {
         $MissingAgents += $Expected
@@ -151,8 +184,20 @@ foreach ($Expected in $DesiredAgents) {
     }
 }
 
-if ($MissingAgents.Count -gt 0) {
+if ($MissingAgents.Count -gt 0 -or $UpgradeAgents.Count -gt 0) {
     $BatchOperations = @()
+    foreach ($Upgrade in $UpgradeAgents) {
+        $Entry = [ordered]@{}
+        foreach ($Property in $Upgrade.expected.PSObject.Properties) {
+            if ($Property.Name -ne "model") {
+                $Entry[$Property.Name] = $Property.Value
+            }
+        }
+        $BatchOperations += [pscustomobject][ordered]@{
+            path = "agents.list[$($Upgrade.index)]"
+            value = [pscustomobject]$Entry
+        }
+    }
     $NextIndex = $ConfiguredAgents.Count
     foreach ($Expected in $MissingAgents) {
         $Entry = [ordered]@{}
@@ -214,6 +259,9 @@ if ($MissingAgents.Count -gt 0) {
             }
         }
         if ($Apply) {
+            foreach ($Upgrade in $UpgradeAgents) {
+                Write-Host "Upgraded zero-tool policy: $($Upgrade.expected.id)"
+            }
             foreach ($Expected in $MissingAgents) {
                 Write-Host "Installed zero-tool identity: $($Expected.id)"
             }
@@ -227,7 +275,7 @@ if ($Apply) {
         throw "OpenClaw configuration validation failed after installation."
     }
 }
-if (-not $Apply -and $MissingAgents.Count -gt 0) {
+if (-not $Apply -and ($MissingAgents.Count -gt 0 -or $UpgradeAgents.Count -gt 0)) {
     Write-Host "Plan only. Re-run with -Apply after review."
 }
 
