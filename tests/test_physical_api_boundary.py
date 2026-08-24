@@ -98,6 +98,7 @@ def test_human_service_route_creates_canonical_link_and_locked_model_rejects_ope
         add_evidence(session, estimate)
         user = _user(session)
         request = _request()
+        legacy_settings = Settings(adjudicated_initial_submission_enabled=False)
 
         opening_result = add_opening(
             estimate.id,
@@ -113,6 +114,7 @@ def test_human_service_route_creates_canonical_link_and_locked_model_rejects_ope
             request,
             session,
             user,
+            legacy_settings,
         )
         opening = session.get(Opening, opening_result["id"])
         assert opening is not None
@@ -145,6 +147,7 @@ def test_human_service_route_creates_canonical_link_and_locked_model_rejects_ope
                 request,
                 session,
                 user,
+                legacy_settings,
             )
 
         assert blocked.value.status_code == 409
