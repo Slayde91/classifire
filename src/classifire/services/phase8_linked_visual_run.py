@@ -47,7 +47,7 @@ from .phase8_visual_proposal import (
     canonical_json_sha256,
 )
 
-LINKED_VISUAL_RUN_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-LINKED-VISUAL-RUN-v1"
+LINKED_VISUAL_RUN_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-LINKED-VISUAL-RUN-v2"
 LINKED_VISUAL_RETRIEVAL_BLOCKED = "LINKED_VISUAL_RETRIEVAL_BLOCKED"
 _PHYSICAL_COUNT_FIELDS = (
     "opening_count",
@@ -142,6 +142,7 @@ def validate_phase8_linked_visual_run_receipt(receipt: Any) -> list[str]:
         "retrieval",
         "retained_evidence",
         "evidence_manifest_sha256",
+        "evidence_family_inventory_sha256",
         "controller_receipt_sha256",
         "protected_state",
         "runtime_inference_performed",
@@ -217,7 +218,11 @@ def validate_phase8_linked_visual_run_receipt(receipt: Any) -> list[str]:
     runtime_performed = receipt.get("runtime_inference_performed")
     if not isinstance(runtime_performed, bool):
         errors.append("linked visual run inference flag is invalid")
-    for field in ("evidence_manifest_sha256", "controller_receipt_sha256"):
+    for field in (
+        "evidence_manifest_sha256",
+        "evidence_family_inventory_sha256",
+        "controller_receipt_sha256",
+    ):
         value = receipt.get(field)
         if (runtime_performed and not _is_sha256(value)) or (
             not runtime_performed and value is not None
@@ -489,6 +494,11 @@ def _receipt(
         "retained_evidence": retention_rows,
         "evidence_manifest_sha256": (
             evidence_packet.manifest_sha256 if evidence_packet is not None else None
+        ),
+        "evidence_family_inventory_sha256": (
+            evidence_packet.evidence_family_inventory_sha256
+            if evidence_packet is not None
+            else None
         ),
         "controller_receipt_sha256": (
             visual_result.receipt_sha256 if visual_result is not None else None

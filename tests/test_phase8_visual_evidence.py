@@ -11,6 +11,7 @@ from PIL import Image
 from classifire.models import StoredFile
 from classifire.physical_models import Defect, EvidenceSource
 from classifire.services.phase8_visual_evidence import (
+    EVIDENCE_FAMILY_INVENTORY_SCHEMA,
     VISUAL_EVIDENCE_METADATA_KEY,
     Phase8VisualEvidenceError,
     build_retained_visual_evidence_packet,
@@ -363,6 +364,8 @@ def test_adapter_keeps_linked_original_parent_lineage_outside_inference_packet(
 
     assert [item.evidence_id for item in packet.files] == [linked.id]
     assert packet.manifest["artifacts"][0]["provenance"]["parent_evidence_id"] == parent.id
+    assert packet.families[0].member_evidence_ids == (linked.id,)
+    assert packet.families[0].relationship_types == ("UNRESOLVED_VIEW_RELATION",)
 
 
 def test_adapter_rejects_human_reference_provenance(tmp_path: Path) -> None:
@@ -472,3 +475,108 @@ def test_adapter_rejects_invalid_page_number_and_file_purpose(tmp_path: Path) ->
             )
 
     assert rejected.value.code == "STORED_FILE_PURPOSE_FORBIDDEN"
+
+
+def test_adapter_builds_deterministic_evidence_families_without_dropping_context(
+    tmp_path: Path,
+) -> None:
+    storage_root = tmp_path / "storage"
+    storage_root.mkdir()
+    parent_path, parent_sha256 = _image(storage_root, "parent.png", (10, 20, 30))
+    detail_path = storage_root / "detail.png"
+    Image.new("RGB", (96, 72), (11, 21, 31)).save(detail_path, format="PNG")
+    detail_sha256 = hashlib.sha256(detail_path.read_bytes()).hexdigest()
+    exact_path, exact_sha256 = _image(storage_root, "exact.png", (40, 50, 60))
+    singleton_path, singleton_sha256 = _image(storage_root, "singleton.png", (70, 80, 90))
+
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        defect = _defect(session, estimate)
+        parent = _evidence(
+            session,
+            estimate=estimate,
+            defect=defect,
+            path=parent_path,
+            sha256=parent_sha256,
+            source_json=_metadata(role="page_context"),
+        )
+        detail = _evidence(
+            session,
+            estimate=estimate,
+            defect=defect,
+            path=detail_path,
+            sha256=detail_sha256,
+            source_json=_metadata(
+                relationship="linked_original",
+                parent_id=parent.id,
+            ),
+        )
+        exact_first = _evidence(
+            session,
+            estimate=estimate,
+            defect=defect,
+            path=exact_path,
+            sha256=exact_sha256,
+        )
+        exact_second = EvidenceSource(
+            estimate_id=estimate.id,
+            defect_id=defect.id,
+            stored_file_id=exact_first.stored_file_id,
+            evidence_type="inspection_photo",
+            source_reference="duplicate-byte-reference",
+            page_number="1",
+            region_reference="photo-duplicate",
+            sha256=exact_sha256,
+            evidence_class="observed",
+            status="active",
+            source_json=_metadata(role="page_context"),
+        )
+        session.add(exact_second)
+        session.flush()
+        singleton = _evidence(
+            session,
+            estimate=estimate,
+            defect=defect,
+            path=singleton_path,
+            sha256=singleton_sha256,
+        )
+
+        packet = build_retained_visual_evidence_packet(
+            session,
+            storage_root=storage_root,
+            estimate_id=estimate.id,
+            defect_reference="D-001",
+        )
+        assert not session.new
+        assert not session.dirty
+        assert not session.deleted
+
+    families = {frozenset(family.member_evidence_ids): family for family in packet.families}
+    linked = families[frozenset({parent.id, detail.id})]
+    duplicate = families[frozenset({exact_first.id, exact_second.id})]
+    unresolved = families[frozenset({singleton.id})]
+
+    assert linked.relationship_types == ("PARENT_LINKED_DETAIL",)
+    assert linked.preferred_detail_evidence_id == detail.id
+    assert linked.context_evidence_ids == (parent.id,)
+    assert duplicate.relationship_types == ("EXACT_BYTE_DUPLICATE",)
+    assert set(duplicate.context_evidence_ids) | {duplicate.preferred_detail_evidence_id} == {
+        exact_first.id,
+        exact_second.id,
+    }
+    assert unresolved.relationship_types == ("UNRESOLVED_VIEW_RELATION",)
+    assert unresolved.preferred_detail_evidence_id == singleton.id
+
+    inventory = packet.evidence_family_inventory
+    assert inventory["schema"] == EVIDENCE_FAMILY_INVENTORY_SCHEMA
+    assert inventory["source_manifest_sha256"] == packet.manifest_sha256
+    assert packet.evidence_family_inventory_sha256
+    assert packet.evidence_family_inventory_sha256 == packet.evidence_family_inventory_sha256
+    assert {item.evidence_id for item in packet.files} == {
+        parent.id,
+        detail.id,
+        exact_first.id,
+        exact_second.id,
+        singleton.id,
+    }
+    assert str(storage_root) not in str(inventory)

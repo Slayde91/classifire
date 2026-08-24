@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import subprocess
+import sys
 from contextlib import contextmanager
 from copy import deepcopy
 from io import BytesIO
@@ -29,6 +32,9 @@ from classifire.services.phase8_visual_proposal import (
     VISUAL_INFERENCE_RESPONSE_SCHEMA,
     VISUAL_PROPOSAL_APPROVED,
     VISUAL_PROPOSAL_PROTECTED_STATE_CHANGED,
+)
+from classifire.services.phase8_visual_provenance import (
+    assess_phase8_visual_provenance_completeness,
 )
 from classifire.services.physical_scope import is_blank_opening_type
 
@@ -390,8 +396,58 @@ def test_runner_composes_retrieval_retention_and_approved_controller_without_com
             == parent.id
         )
         assert result.evidence_packet is not None
+        assert (
+            result.receipt["evidence_family_inventory_sha256"]
+            == result.evidence_packet.evidence_family_inventory_sha256
+        )
         packet_ids = {item.evidence_id for item in result.evidence_packet.files}
         assert packet_ids == {parent.id, linked.evidence.id}
+        assert linked.evidence.id in packet_ids
+        provenance = assess_phase8_visual_provenance_completeness(
+            estimate_id=estimate.id,
+            defect_reference="D-001",
+            linked_visual_run_receipt=result.receipt,
+            evidence_family_inventory=result.evidence_packet.evidence_family_inventory,
+        )
+        assert provenance.complete is True
+        assert provenance.as_dict() == {
+            "schema": "CLASSIFIRE-PHASE8-VISUAL-PROVENANCE-COMPLETENESS-v1",
+            "status": "PASS",
+            "complete": True,
+            "estimate_id": estimate.id,
+            "defect_reference": "D-001",
+            "linked_visual_run_id": "RUN-LINKED-001",
+            "linked_visual_receipt_status": VISUAL_PROPOSAL_APPROVED,
+            "evidence_manifest_sha256": result.receipt["evidence_manifest_sha256"].upper(),
+            "evidence_family_inventory_sha256": result.receipt["evidence_family_inventory_sha256"],
+            "controller_receipt_sha256": result.receipt["controller_receipt_sha256"],
+            "family_count": 1,
+            "preserved_context_member_count": 1,
+            "errors": [],
+            "report_or_image_retrieval_performed": False,
+            "runtime_inference_performed": False,
+            "database_write_performed": False,
+            "canonical_write_performed": False,
+            "physical_model_lock_created": False,
+        }
+        tampered_inventory = deepcopy(result.evidence_packet.evidence_family_inventory)
+        tampered_inventory["families"][0]["family_id"] = "FAMILY-TAMPERED"
+        tampered_provenance = assess_phase8_visual_provenance_completeness(
+            estimate_id=estimate.id,
+            defect_reference="D-001",
+            linked_visual_run_receipt=result.receipt,
+            evidence_family_inventory=tampered_inventory,
+        )
+        assert tampered_provenance.complete is False
+        assert tampered_provenance.errors == ("EVIDENCE_FAMILY_INVENTORY_HASH_MISMATCH",)
+        wrong_scope_provenance = assess_phase8_visual_provenance_completeness(
+            estimate_id=estimate.id,
+            defect_reference="D-OTHER",
+            linked_visual_run_receipt=result.receipt,
+            evidence_family_inventory=result.evidence_packet.evidence_family_inventory,
+        )
+        assert wrong_scope_provenance.complete is False
+        assert wrong_scope_provenance.errors == ("CURRENT_VISUAL_RUN_SCOPE_MISMATCH",)
         assert [call["stage"] for call in port.calls] == [
             "blind_inventory",
             "physical_proposal",
@@ -415,9 +471,11 @@ def test_runner_composes_retrieval_retention_and_approved_controller_without_com
         tampered_receipt = deepcopy(result.receipt)
         tampered_receipt["runner_database_commit_performed"] = True
         tampered_receipt["run_id"] = _uri()
+        tampered_receipt["evidence_family_inventory_sha256"] = "not-a-sha256"
         tamper_errors = validate_phase8_linked_visual_run_receipt(tampered_receipt)
         assert any("commit" in error for error in tamper_errors)
         assert any("signed capability" in error for error in tamper_errors)
+        assert any("evidence_family_inventory_sha256" in error for error in tamper_errors)
         assert (
             initial_submission_state(session, estimate_id=estimate.id).counts["opening_count"] == 0
         )
@@ -565,6 +623,7 @@ def test_runner_blocks_before_retention_and_inference_when_required_link_is_miss
         assert result.retentions == ()
         assert result.evidence_packet is None
         assert result.visual_result is None
+        assert result.receipt["evidence_family_inventory_sha256"] is None
         assert port.calls == []
         assert result.receipt["runtime_inference_performed"] is False
         assert result.receipt["protected_state"]["retrieval_database_state_unchanged"] is True
@@ -761,3 +820,42 @@ def test_runner_builds_and_closes_managed_port_from_retained_evidence_packet(
             "physical_proposal",
             "conditioned_validator_0",
         ]
+
+
+def test_visual_provenance_cli_assesses_current_content_free_artifacts(tmp_path: Path) -> None:
+    with physical_session() as session:
+        result, estimate, _defect, _parent, _port, _storage, _report = _run(
+            session,
+            tmp_path=tmp_path,
+        )
+        assert result.evidence_packet is not None
+        receipt_path = tmp_path / "linked-visual-run-receipt.json"
+        inventory_path = tmp_path / "evidence-family-inventory.json"
+        receipt_path.write_text(json.dumps(result.receipt), encoding="utf-8")
+        inventory_path.write_text(
+            json.dumps(result.evidence_packet.evidence_family_inventory),
+            encoding="utf-8",
+        )
+        repository_root = Path(__file__).parents[1]
+        command_result = subprocess.run(  # noqa: S603 -- fixed local CLI test fixture
+            [
+                sys.executable,
+                str(repository_root / "scripts" / "assess_phase8_visual_provenance.py"),
+                "--linked-visual-run-receipt",
+                str(receipt_path),
+                "--evidence-family-inventory",
+                str(inventory_path),
+                "--estimate-id",
+                estimate.id,
+                "--defect-reference",
+                "D-001",
+            ],
+            capture_output=True,
+            check=False,
+            cwd=repository_root,
+            env={**os.environ, "PYTHONPATH": str(repository_root / "src")},
+            text=True,
+        )
+
+        assert command_result.returncode == 0, command_result.stderr
+        assert json.loads(command_result.stdout)["complete"] is True
