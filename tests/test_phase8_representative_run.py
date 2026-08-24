@@ -447,6 +447,8 @@ def test_package_rejects_dns_gateway_name_before_execution(tmp_path: Path) -> No
         load_phase8_representative_run_package(package_path)
 
     assert caught.value.code == "RUNTIME_INVALID"
+
+
 def test_package_rejects_invalid_human_reference_before_execution(tmp_path: Path) -> None:
     package_path = _package(
         tmp_path,

@@ -620,9 +620,7 @@ def run_phase8_linked_visual_proposal(
     )
     if not target_ready:
         raise Phase8LinkedVisualRunError("TARGET_EVIDENCE_REQUIRED")
-    target_ready_parent_ids = frozenset(
-        parent_map[result.photo_id] for result in target_ready
-    )
+    target_ready_parent_ids = frozenset(parent_map[result.photo_id] for result in target_ready)
 
     with db.begin_nested():
         retentions = tuple(
@@ -662,9 +660,7 @@ def run_phase8_linked_visual_proposal(
             allowed_evidence_source_ids=allowed_packet_ids,
         )
         packet_ids = {item.evidence_id for item in evidence_packet.files}
-        if not retained_ids.issubset(packet_ids) or not packet_ids.issubset(
-            allowed_packet_ids
-        ):
+        if not retained_ids.issubset(packet_ids) or not packet_ids.issubset(allowed_packet_ids):
             raise Phase8LinkedVisualRunError("RETAINED_EVIDENCE_PACKET_MISMATCH")
         try:
             with _inference_port_scope(

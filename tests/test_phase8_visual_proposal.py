@@ -278,6 +278,7 @@ def test_evidence_manifest_allows_linked_original_to_retain_external_parent_line
 
     assert validate_visual_evidence_manifest(manifest, estimate_id="EST-001") == []
 
+
 def test_evidence_manifest_rejects_unknown_parent_and_missing_image_dimensions() -> None:
     manifest = _manifest()
     provenance = manifest["artifacts"][0]["provenance"]
@@ -923,6 +924,7 @@ def test_receipt_validator_rejects_cross_role_result_hash_substitution() -> None
 
     assert any("blind_inventory_sha256" in error for error in errors)
 
+
 def test_blocked_receipt_rejects_result_hash_substitution() -> None:
     validator = _validator(verdict="BLOCKED", issue_code="MISSED_OPENING")
     validator["blind_reconciliation"][0]["disposition"] = "UNRESOLVED"
@@ -938,9 +940,7 @@ def test_blocked_receipt_rejects_result_hash_substitution() -> None:
     ).run()
     assert result.status == VISUAL_PROPOSAL_BLOCKED
     receipt = deepcopy(result.receipt)
-    receipt["result_hashes"]["validator_sha256"] = receipt["result_hashes"][
-        "proposal_sha256"
-    ]
+    receipt["result_hashes"]["validator_sha256"] = receipt["result_hashes"]["proposal_sha256"]
 
     errors = validate_phase8_visual_proposal_receipt(receipt)
 

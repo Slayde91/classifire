@@ -205,9 +205,14 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
         "proposal_sha256": "proposal.json",
         "evidence_review_request_sha256": "evidence-review-request.json",
     }.items():
-        assert completion["artifacts"][artifact_name] == hashlib.sha256(
-            (output / filename).read_bytes()
-        ).hexdigest().upper()
+        assert (
+            completion["artifacts"][artifact_name]
+            == hashlib.sha256((output / filename).read_bytes()).hexdigest().upper()
+        )
     summary = json.loads(capsys.readouterr().out)
     assert summary["status"] == "VISUAL_PROPOSAL_BLOCKED"
     assert summary["comparison_status"] == "SKIPPED_VISUAL_PROPOSAL_BLOCKED"
+    assert (
+        summary["completion_receipt_sha256"]
+        == hashlib.sha256((output / "completion-receipt.json").read_bytes()).hexdigest().upper()
+    )

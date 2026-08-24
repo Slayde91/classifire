@@ -30,9 +30,7 @@ import recover_phase8_evidence_review_request as recovery_cli  # noqa: E402
 
 
 def _render(value: object) -> bytes:
-    return (
-        json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
-    ).encode("utf-8")
+    return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
 
 
 def _write_json(path: Path, value: object) -> bytes:
@@ -167,9 +165,7 @@ def _stage(
             "payload_sha256": canonical_json_sha256(payload),
             "provider": "test-provider",
             "model": "test-model",
-            "session_id_sha256": hashlib.sha256(
-                session_key.encode("utf-8")
-            ).hexdigest().upper(),
+            "session_id_sha256": hashlib.sha256(session_key.encode("utf-8")).hexdigest().upper(),
             "transport_receipt_sha256": "B" * 64,
             "protected_state_fingerprint_after": "C" * 64,
             "allowed_tools": [],
@@ -218,10 +214,7 @@ def _write_transcript(
     ]
     transcript.write_bytes(
         b"".join(
-            json.dumps(record, ensure_ascii=False, separators=(",", ":")).encode(
-                "utf-8"
-            )
-            + b"\n"
+            json.dumps(record, ensure_ascii=False, separators=(",", ":")).encode("utf-8") + b"\n"
             for record in records
         )
     )
@@ -436,21 +429,15 @@ def test_hash_bound_all_stage_recovery_writes_only_safe_review_files(
 
     assert recovered.receipt["status"] == "RECOVERED_HASH_VERIFIED_LOCAL_TRANSCRIPTS"
     assert len(recovered.receipt["stages"]) == 4
-    assert recovered.request["unresolved_blind_observations"][0][
-        "blind_candidate_id"
-    ] == "V-O-001"
+    assert recovered.request["unresolved_blind_observations"][0]["blind_candidate_id"] == "V-O-001"
     output = tmp_path / "recovered"
     receipt_file_sha256 = recovery_cli._write_recovered_output(output, recovered)
-    assert receipt_file_sha256 == _sha256_bytes(
-        (output / "recovery-receipt.json").read_bytes()
-    )
+    assert receipt_file_sha256 == _sha256_bytes((output / "recovery-receipt.json").read_bytes())
     assert sorted(path.name for path in output.iterdir()) == [
         "evidence-review-request.json",
         "recovery-receipt.json",
     ]
-    rendered = b"".join(path.read_bytes() for path in output.iterdir()).decode(
-        "utf-8"
-    )
+    rendered = b"".join(path.read_bytes() for path in output.iterdir()).decode("utf-8")
     for forbidden in (
         "PROMPT_SENTINEL",
         "BASE64_IMAGE_SENTINEL",
@@ -458,9 +445,7 @@ def test_hash_bound_all_stage_recovery_writes_only_safe_review_files(
         "https://",
     ):
         assert forbidden.casefold() not in rendered.casefold()
-    assert recovered.receipt[
-        "source_report_or_linked_original_file_read_performed"
-    ] is False
+    assert recovered.receipt["source_report_or_linked_original_file_read_performed"] is False
     assert recovered.receipt["inference_request_performed"] is False
     assert recovered.receipt["canonical_submission_performed"] is False
     assert recovered.receipt["physical_model_lock_created"] is False
@@ -507,6 +492,8 @@ def test_recovery_rejects_non_object_assistant_message(tmp_path: Path) -> None:
         _recover(paths)
 
     assert rejected.value.code == "TRANSCRIPT_OUTPUT_INVALID"
+
+
 def test_recovery_rejects_existing_output_directory(tmp_path: Path) -> None:
     recovered = _recover(_fixture(tmp_path))
     output = tmp_path / "existing"
@@ -516,6 +503,7 @@ def test_recovery_rejects_existing_output_directory(tmp_path: Path) -> None:
         recovery_cli._write_recovered_output(output, recovered)
 
     assert rejected.value.code == "OUTPUT_ALREADY_EXISTS"
+
 
 def test_recovery_accepts_and_records_legacy_windows_json_rendering(
     tmp_path: Path,
@@ -530,6 +518,4 @@ def test_recovery_accepts_and_records_legacy_windows_json_rendering(
     source_files = recovered.receipt["source_files"]
     for name in ("representative_run_receipt", "controller_receipt", "proposal"):
         assert source_files[name]["binding_mode"] == "LF_RENDERED_JSON_SHA256"
-        assert source_files[name]["actual_file_sha256"] != source_files[name][
-            "recorded_sha256"
-        ]
+        assert source_files[name]["actual_file_sha256"] != source_files[name]["recorded_sha256"]

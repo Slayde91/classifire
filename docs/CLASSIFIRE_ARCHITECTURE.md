@@ -265,6 +265,23 @@ stages. Protected state is checked throughout the run. Any unexpected state
 change, tool exposure, structural authority escape, malformed result, or hash
 substitution fails closed.
 
+### 7.1 Post-inference human adjudication boundary
+
+Human evidence decisions remain a separate, post-inference provenance record.
+They must bind the exact review request and proposal lineage, account for every
+requested item, preserve unresolved outcomes, and remain invisible to runtime
+inference. A human-adjudicated proposal may record a limited physical
+interpretation, but it is not a visual approval receipt, canonical submission,
+Physical Model Lock, technical selection, quantity completion, or release.
+
+The retained v2 review for the selected representative Defect demonstrates this
+boundary as local execution evidence: all seven review items and four unresolved
+observations are accounted for, and the visible topology is represented as five
+Openings, six Services, and six links. Site-dependent dimensions, depth and
+obscured boundaries, exact substrate composition, labels/material proof, and
+opposite-face continuity remain unresolved. The v2 validator implementation is
+in a separate uncommitted worktree and is not part of this publication branch.
+
 ## 8. Trusted-UAT representative package
 
 ### 8.1 Approval metadata
@@ -487,7 +504,7 @@ receipts, or documentation.
 | Linked-original retrieval and governed retention | **Completed foundation** | Shared current-main; approved hosts/report formats remain narrow |
 | Proposal-only visual controller and no-tool runtime | **Completed foundation** | Shared current-main; production persistence/generalisation incomplete |
 | Trusted-UAT package and rollback proof | **Completed branch-local candidate** | Representative run executed; publication review remains |
-| Representative physical proposal | **Blocked** | Validator requires additional governed evidence or explicit unresolved outcomes |
+| Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; site-dependent facts and independent semantic approval remain unresolved |
 | Content-safe evidence review and local recovery | **Completed branch-local candidate** | Recovery proof has documented mutability/replay limits |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
@@ -501,14 +518,15 @@ receipts, or documentation.
 
 ## 15. Next valid architectural action
 
-Use the content-safe review handoff to resolve the blocked evidence items against
-retained or newly governed evidence. A reviewer may confirm a fact only when the
-evidence supports it, supply additional authorised evidence, or preserve the
-field/topology as unresolved. Do not rerun unchanged evidence merely to seek a
-more favourable answer.
+Publish and review the focused representative-package candidate without folding
+in the separate uncommitted human-review/receipt worktree. For the selected
+Defect, obtain a site visit or equivalent newly governed evidence for the facts
+that human visual review could not establish. Do not repeat unchanged inference
+or convert the limited proposal into canonical truth.
 
-Only after a new proposal independently passes the visual gate should the team
-consider production persistence of its hash-bound validation receipt and a
-fresh canonicalisation preflight. Canonical submission, lock design, technical
-selection, pricing, output, deployment, and Human Release remain outside that
-action and retain their separate gates.
+In parallel, review durable visual-validation receipt enforcement and signed
+lock-admission as separate bounded architecture changes. Only after the remaining
+evidence is governed, the proposal is independently and semantically accepted,
+and those boundaries are approved should the team consider a fresh
+canonicalisation preflight. Submission, lock creation, technical selection,
+pricing, output, deployment, and Human Release retain their separate gates.

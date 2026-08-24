@@ -231,9 +231,7 @@ def test_profile_and_rendering_are_deterministic_and_role_bound(tmp_path: Path) 
     assert "globally unique across candidate_openings" in first.text
     assert "do not reuse an ID in a different list" in first.text
 
-    physical = renderer.render(
-        role="cf-physical-model", stage="physical_proposal", request=request
-    )
+    physical = renderer.render(role="cf-physical-model", stage="physical_proposal", request=request)
     assert physical.template_sha256 == request["inference_profile"]["physical_prompt_sha256"]
     assert "opening_type must be exactly" in physical.text
     assert "blank_opening or blank_core_hole" in physical.text
@@ -257,7 +255,7 @@ def test_profile_and_rendering_are_deterministic_and_role_bound(tmp_path: Path) 
     assert "substrate_type, substrate_plane, and orientation may change only" in correction.text
     assert "MISSED_BARRIER" in correction.text
     assert "WRONG_BARRIER_PLANE" in correction.text
-    assert "Do not make unrelated \"cleanup\" changes." in correction.text
+    assert 'Do not make unrelated "cleanup" changes.' in correction.text
     with pytest.raises(Exception, match="INFERENCE_STAGE_ROLE_MISMATCH"):
         renderer.render(role="cf-physical-model", stage="blind_inventory", request=request)
 
@@ -277,11 +275,14 @@ def test_success_revalidates_bytes_and_emits_strict_no_tool_request(tmp_path: Pa
 
     result = transport.invoke(role="cf-validator", stage="blind_inventory", request=request)
 
-    assert validate_visual_inference_response(
-        result,
-        role="cf-validator",
-        profile=request["inference_profile"],
-    ) == []
+    assert (
+        validate_visual_inference_response(
+            result,
+            role="cf-validator",
+            profile=request["inference_profile"],
+        )
+        == []
+    )
     assert result["payload"] == {"ok": True}
     assert captured["url"] == "http://127.0.0.1:18789/v1/responses"
     assert captured["headers"]["authorization"] == "Bearer secret-token"
@@ -322,9 +323,7 @@ def test_logical_role_uses_dedicated_runtime_agent_identity(tmp_path: Path) -> N
     )
 
     assert result["agent_id"] == "cf-validator"
-    assert captured["headers"]["x-openclaw-agent-id"] == (
-        "cf-phase8-visual-validator"
-    )
+    assert captured["headers"]["x-openclaw-agent-id"] == ("cf-phase8-visual-validator")
     assert guard.attestations[0]["agent_id"] == "cf-phase8-visual-validator"
     assert guard.audits[0]["agent_id"] == "cf-phase8-visual-validator"
     assert guard.attestations[0]["session_key"].startswith(
@@ -353,9 +352,7 @@ def test_invalid_runtime_agent_mapping_is_rejected(
     packet = _packet(tmp_path)
     with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
         Phase8OpenResponsesTransport(
-            client=httpx.Client(
-                transport=httpx.MockTransport(lambda request: httpx.Response(500))
-            ),
+            client=httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(500))),
             base_url="http://127.0.0.1:18789/v1",
             token_provider=lambda: "token",
             evidence_packet=packet,
@@ -473,9 +470,7 @@ def test_manifest_and_prompt_profile_tampering_fail_before_http(tmp_path: Path) 
 
     bad_prompt = _request(packet)
     bad_prompt["inference_profile"]["blind_prompt_sha256"] = "F" * 64
-    bad_prompt["inference_profile_sha256"] = canonical_json_sha256(
-        bad_prompt["inference_profile"]
-    )
+    bad_prompt["inference_profile_sha256"] = canonical_json_sha256(bad_prompt["inference_profile"])
     with pytest.raises(Phase8OpenResponsesTransportError) as prompt_error:
         transport.invoke(
             role="cf-validator",
@@ -540,9 +535,7 @@ def test_manifest_and_prompt_profile_tampering_fail_before_http(tmp_path: Path) 
                         {
                             "type": "message",
                             "role": "assistant",
-                            "content": [
-                                {"type": "output_text", "text": '{"value":1,"value":2}'}
-                            ],
+                            "content": [{"type": "output_text", "text": '{"value":1,"value":2}'}],
                         }
                     ],
                 },
@@ -724,8 +717,7 @@ def test_concrete_gateway_guard_proves_empty_tools_and_records_audit() -> None:
         "agentId": "cf-validator",
     }
     assert all(
-        _is_safe_receipt(value)
-        for value in (attestation.receipt_sha256, audit.receipt_sha256)
+        _is_safe_receipt(value) for value in (attestation.receipt_sha256, audit.receipt_sha256)
     )
     with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
         guard.attest(

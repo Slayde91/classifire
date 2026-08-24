@@ -62,22 +62,6 @@ def _git_revision(repository_root: Path) -> str:
     return revision
 
 
-def _sha256(value: object) -> str:
-    return (
-        hashlib.sha256(
-            json.dumps(
-                value,
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-                allow_nan=False,
-            ).encode("utf-8")
-        )
-        .hexdigest()
-        .upper()
-    )
-
-
 def _write_json(path: Path, value: object) -> str:
     rendered = (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode(
         "utf-8"
@@ -338,7 +322,7 @@ def main() -> int:
         "canonical_submission_performed": False,
         "physical_model_lock_created": False,
     }
-    _write_json(output / "completion-receipt.json", completion_receipt)
+    completion_receipt_sha256 = _write_json(output / "completion-receipt.json", completion_receipt)
     print(
         json.dumps(
             {
@@ -346,7 +330,7 @@ def main() -> int:
                 if visual_result is not None
                 else "RETRIEVAL_BLOCKED",
                 "comparison_status": comparison_status,
-                "completion_receipt_sha256": _sha256(completion_receipt),
+                "completion_receipt_sha256": completion_receipt_sha256,
                 "rollback_only": True,
                 "canonical_submission_performed": False,
                 "physical_model_lock_created": False,

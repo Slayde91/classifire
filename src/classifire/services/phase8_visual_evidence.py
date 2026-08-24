@@ -205,14 +205,9 @@ def build_retained_visual_evidence_packet(
     allowed_ids: frozenset[str] | None = None
     if allowed_evidence_source_ids is not None:
         raw_ids = list(allowed_evidence_source_ids)
-        if (
-            not raw_ids
-            or any(
-                not isinstance(value, str)
-                or not value.strip()
-                or value != value.strip()
-                for value in raw_ids
-            )
+        if not raw_ids or any(
+            not isinstance(value, str) or not value.strip() or value != value.strip()
+            for value in raw_ids
         ):
             raise Phase8VisualEvidenceError("EVIDENCE_SCOPE_INVALID")
         allowed_ids = frozenset(raw_ids)

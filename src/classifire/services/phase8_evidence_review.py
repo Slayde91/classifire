@@ -40,11 +40,7 @@ def _contains_unsafe_review_text(value: str) -> bool:
 
 def _safe_review_text(value: object) -> str:
     text = unicodedata.normalize("NFC", value.strip()) if isinstance(value, str) else ""
-    if (
-        not text
-        or len(text) > _MAX_REVIEW_ITEM_TEXT_LENGTH
-        or _contains_unsafe_review_text(text)
-    ):
+    if not text or len(text) > _MAX_REVIEW_ITEM_TEXT_LENGTH or _contains_unsafe_review_text(text):
         return ""
     return text
 
@@ -79,9 +75,7 @@ def _safe_review_evidence_refs(value: object) -> list[str]:
         return []
     return list(
         dict.fromkeys(
-            item
-            for item in (_safe_review_identifier(candidate) for candidate in value)
-            if item
+            item for item in (_safe_review_identifier(candidate) for candidate in value) if item
         )
     )
 
@@ -173,9 +167,7 @@ def _unresolved_blind_observations(
 ) -> list[dict[str, object]]:
     """Retain only Validator-declared unresolved blind observations for review."""
 
-    observations = _blind_observation_details(
-        getattr(visual_result, "blind_inventory", None)
-    )
+    observations = _blind_observation_details(getattr(visual_result, "blind_inventory", None))
     reconciliation = validator.get("blind_reconciliation")
     if not isinstance(reconciliation, list):
         return []
@@ -194,9 +186,7 @@ def _unresolved_blind_observations(
         unresolved[candidate_id] = {
             **observation,
             "validator_detail": _safe_review_text(item.get("detail")) or None,
-            "validator_evidence_refs": _safe_review_evidence_refs(
-                item.get("evidence_refs")
-            ),
+            "validator_evidence_refs": _safe_review_evidence_refs(item.get("evidence_refs")),
         }
 
     return [unresolved[candidate_id] for candidate_id in sorted(unresolved)]
@@ -265,9 +255,7 @@ def build_blocked_visual_evidence_review_request(
                     "source": "validator_issue",
                     "code": _safe_review_code(issue.get("code")),
                     "detail": detail,
-                    "evidence_refs": _safe_review_evidence_refs(
-                        issue.get("evidence_refs")
-                    ),
+                    "evidence_refs": _safe_review_evidence_refs(issue.get("evidence_refs")),
                 }
             )
     limitations = validator.get("limitations")

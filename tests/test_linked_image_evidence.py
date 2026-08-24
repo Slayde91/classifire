@@ -351,8 +351,8 @@ def test_retention_rejects_report_derived_parent_when_both_bounds_are_missing(
     retrieval_root.mkdir()
 
     with physical_session() as session:
-        estimate, _defect, parent, embedded_sha256, report_sha256 = (
-            _setup_report_derived_parent(session, storage_root)
+        estimate, _defect, parent, embedded_sha256, report_sha256 = _setup_report_derived_parent(
+            session, storage_root
         )
         parent.source_json["source_bbox"] = None
         session.flush()

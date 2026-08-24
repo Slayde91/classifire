@@ -86,9 +86,7 @@ def _packet(tmp_path: Path) -> RetainedVisualEvidencePacket:
     )
 
 
-def _request(
-    packet: RetainedVisualEvidencePacket, profile: dict[str, Any]
-) -> dict[str, Any]:
+def _request(packet: RetainedVisualEvidencePacket, profile: dict[str, Any]) -> dict[str, Any]:
     return {
         "schema": VISUAL_INFERENCE_REQUEST_SCHEMA,
         "policy_version": VISUAL_PROPOSAL_POLICY_VERSION,
@@ -131,8 +129,7 @@ class _GatewaySocket:
         mask = payload[start : start + 4]
         start += 4
         encoded = bytes(
-            value ^ mask[index % 4]
-            for index, value in enumerate(payload[start : start + length])
+            value ^ mask[index % 4] for index, value in enumerate(payload[start : start + length])
         )
         decoded = json.loads(encoded)
         assert isinstance(decoded, dict)
@@ -243,6 +240,7 @@ def test_cli_unavailability_uses_loopback_for_later_calls() -> None:
     assert primary_calls == 1
     assert fallback_calls == 2
 
+
 @pytest.mark.parametrize(
     "base_url",
     (
@@ -259,6 +257,7 @@ def test_loopback_gateway_rpc_rejects_non_literal_loopback_endpoint(
             base_url=base_url,
             token_provider=lambda: "runtime-secret",
         )
+
 
 def test_cli_rpc_uses_fixed_command_shape_and_no_shell(tmp_path: Path) -> None:
     calls: list[tuple[tuple[str, ...], dict[str, Any]]] = []
@@ -298,9 +297,7 @@ def test_cli_rpc_rejects_unapproved_methods_params_and_outputs(tmp_path: Path) -
         calls += 1
         return subprocess.CompletedProcess(args, 0, '{"ok":true}', "")
 
-    rpc = OpenClawCliGatewayRpc(
-        command_prefix=(_executable(tmp_path),), runner=runner
-    )
+    rpc = OpenClawCliGatewayRpc(command_prefix=(_executable(tmp_path),), runner=runner)
     with pytest.raises(Phase8GatewayRpcError, match="RPC_METHOD_FORBIDDEN"):
         rpc("sessions.delete", {"key": "agent:cf-validator:test"})
     with pytest.raises(Phase8GatewayRpcError, match="RPC_PARAMS_FORBIDDEN"):
@@ -316,6 +313,7 @@ def test_cli_rpc_rejects_unapproved_methods_params_and_outputs(tmp_path: Path) -
     assert calls == 0
 
     for output in ('{"value":1,"value":2}', '{"value":NaN}', "prefix {}"):
+
         def invalid_runner(args, _output=output, **kwargs):
             return subprocess.CompletedProcess(args, 0, _output, "secret response")
 
@@ -356,9 +354,7 @@ def test_no_write_gateway_readiness_requires_token_and_only_describes_session(
         gateway_rpc=rpc,
     )
 
-    assert calls == [
-        ("sessions.describe", {"key": "classifire-phase8-readiness-no-write"})
-    ]
+    assert calls == [("sessions.describe", {"key": "classifire-phase8-readiness-no-write"})]
     with pytest.raises(Phase8GatewayRpcError, match="GATEWAY_TOKEN_UNAVAILABLE"):
         verify_phase8_no_write_gateway_readiness(
             command_prefix=(_executable(tmp_path),),
@@ -366,6 +362,7 @@ def test_no_write_gateway_readiness_requires_token_and_only_describes_session(
             gateway_rpc=rpc,
         )
     assert len(calls) == 1
+
 
 def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
     tmp_path: Path,
@@ -390,14 +387,18 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
                 "runStarted": False,
             }
         elif method == "sessions.describe":
-            payload = {"session": None} if not session_created else {
-                "session": {
-                    "key": params["key"],
-                    "sessionId": "session-id",
-                    "modelProvider": "test-provider",
-                    "model": "validator-model",
+            payload = (
+                {"session": None}
+                if not session_created
+                else {
+                    "session": {
+                        "key": params["key"],
+                        "sessionId": "session-id",
+                        "modelProvider": "test-provider",
+                        "model": "validator-model",
+                    }
                 }
-            }
+            )
         else:
             payload = {
                 "groups": [
@@ -451,8 +452,6 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
     assert "task" not in rpc_calls[1][1]
     assert rpc_calls[1][1]["agentId"] == "cf-phase8-visual-validator"
     assert rpc_calls[1][1]["model"] == "test-provider/validator-model"
-    assert rpc_calls[0][1]["key"].startswith(
-        "agent:cf-phase8-visual-validator:classifire-phase8-"
-    )
+    assert rpc_calls[0][1]["key"].startswith("agent:cf-phase8-visual-validator:classifire-phase8-")
     assert counts == {"token": 0, "http": 0}
     assert client.is_closed

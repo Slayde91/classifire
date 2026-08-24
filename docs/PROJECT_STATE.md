@@ -8,9 +8,9 @@
 
 **Reconciled base:** `78016368457748975c331bedab796cd03ee832e6`, equal to `origin/main` after a current remote refresh
 
-**Current executable source-tree fingerprint:** `F62C153BCCEEFF158C5B63AD933AA00D0EA2D564A692B0FF13C45340FD59A10C`
+**Current executable source-tree fingerprint:** `EDBA8858B385BD521D43AB15FAE41C5291356985E47B1792ADC40A0ADD6A8D6F`
 
-This record reflects committed current-main code, the coherent Phase 8 slice prepared on the publication branch, the mixed legacy checkout, current tests, migration metadata, retained non-canonical execution receipts, and refreshed GitHub state. Source, tests, Git, and execution evidence outrank older documentation.
+This record reflects committed current-main code, the coherent Phase 8 slice prepared on the publication branch, the mixed legacy checkout, current tests, migration metadata, retained non-canonical execution receipts, the later local human-review v2 evidence, and refreshed GitHub state. Source, tests, Git, and execution evidence outrank older documentation.
 
 Nothing in this document authorises inference, evidence retrieval, admission signing or registration, canonical submission, Physical Model Lock creation, deployment, or release.
 
@@ -20,12 +20,12 @@ Two local checkouts contain materially different work:
 
 | Checkout | Branch and base | Current role |
 | --- | --- | --- |
-| Isolated current-main worktree | `gpt/phase8-representative-run-package` at `7801636` before this publication | Safe publication source for the coherent representative-run slice and these documents |
-| Primary mixed checkout | `gpt/phase8-linked-original-images` at `79f82a6`, synchronized with its upstream | Legacy evidence/development source only; not a merge, deployment, or bulk-staging source |
+| Isolated current-main worktree | `gpt/phase8-representative-run-package`; clean and synchronized at `b422240` when this follow-up review began | Safe publication source for the coherent representative-run slice and these documents |
+| Primary mixed checkout | `gpt/phase8-linked-original-images` at `de0cc5a`, synchronized with its upstream | Legacy evidence/development source only; not a merge, deployment, or bulk-staging source |
 
-Before this publication, the isolated branch had no upstream, no commits ahead of `origin/main`, no staged files, and a coherent pre-existing 23-path Phase 8 feature slice. This review added the four requested reconciliation documents and a cross-platform LF policy in `.gitattributes`, producing the exact 28-path publication set. No remote branch with this name existed.
+Commit `b422240` is the single linear child of `origin/main` and was already pushed to `origin/gpt/phase8-representative-run-package`; no pull request existed when this follow-up began. This follow-up keeps the same 28-path publication surface, corrects the completion-receipt console hash to bind the exact file bytes, adds regression coverage, and reconciles the four authoritative documents. Final Git history and remote state remain authoritative after publication.
 
-The primary checkout had no staged or deleted files. It retained 46 modified tracked files (`+1,668/-894`) plus very large untracked trees and unreadable test-cache entries. Its merge base with `origin/main` is `fea9549`; the histories have 377 legacy-branch-only commits and 116 current-main-only commits. Nothing in that checkout was reset, cleaned, overwritten, staged, or copied wholesale.
+The primary checkout had no staged or deleted files. It retained 46 modified tracked files (`+1,668/-894`) plus very large untracked trees and unreadable test-cache entries. Its merge base with `origin/main` is `fea9549`; the histories have 378 legacy-branch-only commits and 116 current-main-only commits. Nothing in that checkout was reset, cleaned, overwritten, staged, or copied wholesale.
 
 The root audit found no implementation change that was both absent from current shared code and ready to publish:
 
@@ -39,7 +39,7 @@ Current GitHub facts at review time:
 - the repository is private and its default branch is `main`;
 - issues #42 and #43 remain open;
 - draft PRs #9-#13 remain open on the legacy stacked line; and
-- issue #42 still describes the representative run as pending and is now stale relative to the retained v17 evidence. This documentation corrects repository state but does not mutate the issue.
+- issue #42 remained open with a pre-v17 checklist when this review began. The retained evidence below supersedes that checklist; the issue must remain open until the focused publication result and remaining blockers are recorded there.
 
 ## 2. Latest verified implementation state
 
@@ -100,7 +100,7 @@ A retained current-main-based v17 run executed the approved full-report package 
 | Canonical submission | Not performed |
 | Physical Model Lock | Not created |
 
-The run proved the rollback and authority boundary, but it did not produce an accepted physical model. The Validator retained genuine evidence limitations around service classification and quantity, occluded opening/barrier topology, view relationships, dimensions/materials, opposite-face continuity, and overlapping runs. These facts must be resolved with governed evidence or remain explicitly unresolved.
+The run proved the rollback and authority boundary, but it did not produce an accepted physical model. The later human review resolved the visible service groupings, flexible-duct count, opening relationships, and photo relationship for this Defect. Site-dependent dimensions, depth and obscured boundaries, exact substrate composition, service labels and documentary material proof, and opposite-face continuity remain explicitly unresolved.
 
 “Rollback-only” means no canonical database submission or lock. Retrieval, temporary child-image files, disposable snapshot changes, and output receipts are expected filesystem writes; SQL rollback does not automatically delete those files.
 
@@ -108,17 +108,25 @@ The live v17 run used source-tree fingerprint `5B00545F5A2A7F3F36930B008B3E0802A
 
 ### 3.2 Refreshed offline recovery
 
-The fully offline recovery was rerun after final source hardening. It binds the current source-tree fingerprint `F62C153BCCEEFF158C5B63AD933AA00D0EA2D564A692B0FF13C45340FD59A10C` and current recovery-script bytes.
+The fully offline recovery was rerun as v8 after the completion-receipt byte-hash correction and mechanical formatting. It binds the current source-tree fingerprint `EDBA8858B385BD521D43AB15FAE41C5291356985E47B1792ADC40A0ADD6A8D6F` and current recovery-script bytes.
 
 - Evidence-review request file SHA-256: `58200866211E15E49087986BC1E893DE5D377E1067E57B242B537A42E22B34E1`
-- Recovery receipt file SHA-256: `DA503CBFF6C2F4B567A86007B9F9B59F9057E47713BB2AF32D775C03857DC3D8`
-- Recovery script SHA-256: `23B304FA1B89FFAA7A7BB034CF84521E634667648CC29DD7503D3176BBBDA5E1`
+- Recovery receipt file SHA-256: `D41A424A7D5500E596B73E340E713BC008D2C11830BEC979D1E164B268134BAF`
+- Recovery script SHA-256: `69A926B057900D35F5A509874244A503A0C0CA062F39B72B6C22E4FA6A45B0E2`
 - Output: exactly `evidence-review-request.json` and `recovery-receipt.json`
 - Retained-report/linked-original file reads, retrieval, inference, canonical submission, locking, and human-reference exposure: all false; the bound local session transcripts were read
 
-Recovery proves correspondence among retained package metadata, no-write receipts, deterministic session keys, local transcript payloads, and final blind/proposal/Validator hashes. It does not make local OpenClaw history immutable and does not replay Gateway authentication, tool attestation/audit, OpenResponses response identity, or external transport.
+Recovery proves correspondence among retained package metadata, no-write receipts, deterministic session keys, local transcript payloads, and final blind/proposal/Validator hashes. The historical v17 representative, controller, and proposal files were written on Windows before the current raw-byte writer hardening; recovery records their matching `LF_RENDERED_JSON_SHA256` bindings separately from their actual retained file hashes. It does not make local OpenClaw history immutable and does not replay Gateway authentication, tool attestation/audit, OpenResponses response identity, or external transport.
 
-### 3.3 Historical canonicalisation evidence
+### 3.3 Human review v2 and proposal-only validation
+
+On 24 August, the named human reviewer completed a provenance-bound v2 response for the selected representative Defect. It accounts for all seven Validator review items and four unresolved-observation items exactly once across six decisions. A separate local no-write validator produced status `PASS` for a limited proposal-only record containing one Defect, five Openings, six Services, and six Opening-Service links.
+
+The review confirmed that the two questioned openings are separate openings in the same wall; the close and wide duct photographs show the same location; two flexible foil-covered ducts pass through two separate wall openings; one shared opening contains one metal pipe, two PVC conduits, and one cable bundle; and another opening contains one visible three-cable bundle.
+
+This is human visual adjudication, not site verification or canonical truth. Opening dimensions, depth and obscured boundaries, exact substrate composition, service labels, documentary material proof, and opposite-face continuity remain unresolved. The v2 record and validator are retained local evidence from a separate uncommitted worktree and are not added to this publication branch. Their recording and validation performed no report/image retrieval, runtime inference, canonical database read or write, Gateway call, admission, submission, or lock.
+
+### 3.4 Historical canonicalisation evidence
 
 The v6 canonicalisation preflight remains historical no-write evidence only:
 
@@ -138,9 +146,9 @@ The independent v17 evidence block means the historical 17/24 topology must not 
 | 3 | In progress: controlled writer and zero-tool foundations exist; the publication branch adds trusted UAT package/readiness/recovery tooling; production recovery and deployment proof remain incomplete |
 | 4 | In progress: Mission Control client/bootstrap scaffolding exists but does not own estimate truth |
 | 5 | In progress: one approved report/source path demonstrated full-report linked-original resolution; evidence families, other formats/hosts, retention policy, and multi-report proof remain |
-| 6 | In progress and evidence-blocked: no defensible accepted physical model or replacement lock exists |
-| 7 | In progress: representative safety/rollback execution is proven, but the proposal was blocked and no durable canonical visual-validation receipt is enforced |
-| 8 | In progress and blocked on governed evidence resolution; no canonical model or replacement Physical Model Lock exists |
+| 6 | In progress and evidence-limited: a local human-adjudicated proposal records the visible 5/6/6 topology for one Defect, but site-dependent facts remain unresolved and no accepted canonical model exists |
+| 7 | In progress: representative safety/rollback and limited human review are proven, but no durable canonical visual-validation receipt is enforced |
+| 8 | In progress and blocked on site evidence, durable visual-validation design, and separate canonical/lock authority; no canonical model or replacement Physical Model Lock exists |
 | 8C | Planned; only charter/taxonomy/rights preparation is allowed before its admission gates |
 | 9-14 | Basic current-main foundations and richer legacy-only foundations exist; operationally blocked and not architecture-complete |
 | 15 | In progress: security, recovery, scale, monitoring, and release hardening remain |
@@ -151,14 +159,14 @@ The independent v17 evidence block means the historical 17/24 topology must not 
 Current checks after final hardening:
 
 - remote refs refreshed; branch/upstream/divergence and open GitHub work inspected;
+- disposable Python 3.12 environment: declared development dependencies installed, `pip check` clean, and Pytest **8.4.2** within the repository's `>=8.4,<9` constraint;
 - complete isolated repository suite: **332 passed**, 135 warnings, with the inherited admission flag explicitly restored to its repository default (`false`);
 - complete focused changed-Phase-8 slice: **145 passed**, 36 warnings;
-- Ruff on all 22 changed Python paths and Mypy on all 11 changed production/script paths: passed;
-- repository-wide Ruff remains an existing baseline issue with 295 findings outside this change set; those unrelated files were not changed;
+- Ruff lint and format checks on all 22 changed Python paths and Mypy on all 11 changed production/script paths: passed;
 - Bandit on all 22 changed Python paths: no medium/high findings;
+- syntax compilation on all 11 changed production/script paths: passed;
 - Alembic: one head, `0008_retire_legacy_initial_submissions`;
-- refreshed offline recovery: passed and bound to the current source tree;
-- current v17 receipt validators: no validation errors;
+- refreshed offline recovery v8: passed, revalidated the final blind/proposal/Validator domains, and bound the current source and recovery-script bytes;
 - `git diff --check`: no whitespace errors.
 
 No real report was rerun for this documentation review. No admission was created, signed, or registered; no canonical model was submitted; no lock, deployment, or release occurred.
@@ -183,7 +191,7 @@ The coherent 23-path Phase 8 feature slice comprises:
 - both new representative-run/evidence-review services; and
 - the four new focused test paths for the package, recovery, and review services.
 
-Final corrections made within those same Category 2 paths added explicit non-security WebSocket SHA-1 use, literal numeric-loopback Gateway validation, package-bounded evidence allowlisting, non-null report-derived photo bounds, fail-closed symbolic-link and Python 3.11 Windows-reparse rejection, malformed-review-input handling, precise transcript-read attestations, and regression coverage.
+Final corrections made within those same Category 2 paths added explicit non-security WebSocket SHA-1 use, literal numeric-loopback Gateway validation, package-bounded evidence allowlisting, non-null report-derived photo bounds, fail-closed symbolic-link and Python 3.11 Windows-reparse rejection, malformed-review-input handling, precise transcript-read attestations, exact completion-receipt file-byte hashing, and regression coverage.
 
 ### Category 3 - deliberately left untouched
 
@@ -194,12 +202,8 @@ Final corrections made within those same Category 2 paths added explicit non-sec
 
 ## 7. Current blockers and next valid task
 
-The next valid task is governed evidence resolution, not another unchanged inference run and not canonicalisation.
+The retained 7+4 human review is complete and must not be repeated. The immediate repository action is focused review of this publication branch and reconciliation of issue #42. The next physical-evidence action for the selected Defect is a site visit or equivalent newly governed evidence for dimensions, depth/boundaries, exact substrate, service labels/material proof, and opposite-face continuity.
 
-1. Review the retained seven review items and four unresolved blind observations against retained evidence.
-2. Obtain newly governed evidence only where necessary, such as clearer relationship views, dimensions, material/label evidence, or opposite-face continuity.
-3. Record each item as Confirmed, Contradicted, or Unresolved with provenance.
-4. Rerun proposal-only inference only if the governed evidence or approved interpretation materially changes.
-5. Preserve unresolved facts rather than forcing an Opening, Service, material, quantity, or link.
+Do not rerun unchanged inference or convert the limited 5/6/6 record into canonical truth. In parallel, the durable visual-validation receipt and signed lock-admission boundaries may be reviewed as separate, bounded architecture changes; the unrelated 75-path local worktree must not be folded into this publication candidate.
 
-Only after a semantically accepted proposal and durable visual-validation design exist may the project consider a fresh preflight. External signing, admission registration, canonical submission, and a separately designed signed lock-admission remain later, separately authorised operations.
+Only after the remaining facts are governed, the proposal is semantically accepted, and the durable validation/admission boundaries are approved may the project consider a fresh preflight. External signing, admission registration, canonical submission, and lock creation remain later, separately authorised operations.

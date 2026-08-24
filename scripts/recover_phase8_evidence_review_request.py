@@ -180,8 +180,7 @@ def _artifact_binding(
 
 def _strict_metadata_package(package: dict[str, Any]) -> tuple[str, str, dict[str, str]]:
     if (
-        set(package)
-        != {"schema", "package_id", "approval", "execution", "inputs", "runtime"}
+        set(package) != {"schema", "package_id", "approval", "execution", "inputs", "runtime"}
         or package.get("schema") != REPRESENTATIVE_RUN_PACKAGE_SCHEMA
     ):
         raise Phase8EvidenceReviewRecoveryError("PACKAGE_INVALID")
@@ -323,9 +322,7 @@ def _recover_stage(
     if _sha256_text(session_key) != expected_session_hash:
         raise Phase8EvidenceReviewRecoveryError("SESSION_KEY_HASH_MISMATCH")
     try:
-        sessions_root = (openclaw_root / "agents" / agent_id / "sessions").resolve(
-            strict=True
-        )
+        sessions_root = (openclaw_root / "agents" / agent_id / "sessions").resolve(strict=True)
         sessions_root.relative_to(openclaw_root)
     except (OSError, ValueError):
         raise Phase8EvidenceReviewRecoveryError("SESSIONS_ROOT_INVALID") from None
@@ -438,8 +435,7 @@ def recover_phase8_evidence_review(
     _validate_no_write_receipt(completion, code="COMPLETION_RECEIPT_INVALID")
     _validate_no_write_receipt(representative, code="REPRESENTATIVE_RECEIPT_INVALID")
     if (
-        completion.get("human_reference_comparison_status")
-        != f"SKIPPED_{VISUAL_PROPOSAL_BLOCKED}"
+        completion.get("human_reference_comparison_status") != f"SKIPPED_{VISUAL_PROPOSAL_BLOCKED}"
         or completion.get("package_id") != package_id
         or representative.get("package_id") != package_id
         or completion.get("approval_reference") != approval_reference
@@ -483,9 +479,7 @@ def recover_phase8_evidence_review(
     if controller_errors or controller.get("status") != VISUAL_PROPOSAL_BLOCKED:
         raise Phase8EvidenceReviewRecoveryError("CONTROLLER_RECEIPT_INVALID")
     raw_stages = controller.get("stages")
-    if not isinstance(raw_stages, list) or any(
-        not isinstance(stage, dict) for stage in raw_stages
-    ):
+    if not isinstance(raw_stages, list) or any(not isinstance(stage, dict) for stage in raw_stages):
         raise Phase8EvidenceReviewRecoveryError("CONTROLLER_RECEIPT_INVALID")
     stages = list(raw_stages)
     seen_transcripts: set[Path] = set()
@@ -510,8 +504,10 @@ def recover_phase8_evidence_review(
     )
     proposal_stage = _final_stage(
         stages,
-        predicate=lambda name: name == "physical_proposal"
-        or name.startswith(("physical_structural_retry_", "physical_correction_")),
+        predicate=lambda name: (
+            name == "physical_proposal"
+            or name.startswith(("physical_structural_retry_", "physical_correction_"))
+        ),
         code="PROPOSAL_STAGE_MISSING",
     )
     validator_stage = _final_stage(
@@ -570,9 +566,7 @@ def recover_phase8_evidence_review(
     except (OSError, RuntimeError):
         raise Phase8EvidenceReviewRecoveryError("RECOVERY_SOURCE_INVALID") from None
     selected_script = recovery_script_path or Path(__file__)
-    _, recovery_script_raw = _read_bytes(
-        selected_script, code="RECOVERY_SOURCE_INVALID"
-    )
+    _, recovery_script_raw = _read_bytes(selected_script, code="RECOVERY_SOURCE_INVALID")
     review_file = _render_json(review_request)
     recovery_receipt: dict[str, object] = {
         "schema": RECOVERY_RECEIPT_SCHEMA,
@@ -594,9 +588,7 @@ def recover_phase8_evidence_review(
         "source_run_implementation_revision": controller["implementation_revision"],
         "stages": [recovered.receipt for recovered in recovered_stages],
         "evidence_review_request_file_sha256": _sha256_bytes(review_file),
-        "evidence_review_request_canonical_json_sha256": canonical_json_sha256(
-            review_request
-        ),
+        "evidence_review_request_canonical_json_sha256": canonical_json_sha256(review_request),
         "recovery_source_tree_sha256": recovery_source_tree_sha256,
         "recovery_script_sha256": _sha256_bytes(recovery_script_raw),
         "integrity_scope": {

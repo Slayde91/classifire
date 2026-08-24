@@ -44,7 +44,9 @@ Security and evidence rules:
 Policy: CLASSIFIRE-PHASE8-VISUAL-PROPOSAL-v1.
 """
 
-BLIND_PROMPT_TEMPLATE = _COMMON + """
+BLIND_PROMPT_TEMPLATE = (
+    _COMMON
+    + """
 Role: independent cf-validator blind inventory.
 You have not been shown a Physical proposal. Inventory independently supportable
 Opening and Service-group candidates, reconcile duplicate/opposite-face views where
@@ -67,8 +69,11 @@ do not reuse an ID in a different list. Counts must equal their candidate-array
 lengths. COMPLETE requires no unresolved candidates and every occupied Opening must
 link to a Service group; every blank Opening must have no Service link.
 """
+)
 
-PHYSICAL_PROMPT_TEMPLATE = _COMMON + """
+PHYSICAL_PROMPT_TEMPLATE = (
+    _COMMON
+    + """
 Role: cf-physical-model proposal author.
 Construct the defect's physical reality before technical selection or pricing.
 Model Openings and Services separately; one defect does not imply one of either.
@@ -86,8 +91,11 @@ opening_codes, evidence_status, relationship_status, link_type, source_reference
 and confidence (or null). source_reference must identify supplied evidence.
 INSUFFICIENT_EVIDENCE must contain limitations and no proposed records.
 """
+)
 
-VALIDATOR_PROMPT_TEMPLATE = _COMMON + """
+VALIDATOR_PROMPT_TEMPLATE = (
+    _COMMON
+    + """
 Role: independent cf-validator conditioned review.
 Challenge the supplied Physical proposal against the images and reconcile every
 blind observation exactly once. Do not silently repair the proposal.
@@ -109,8 +117,11 @@ RESOLVED_NONSTRUCTURAL, or UNRESOLVED. ACCOUNTED_FOR and DUPLICATE_OR_SAME_ITEM
 require non-empty proposal_refs. NOT_TOPOLOGY and RESOLVED_NONSTRUCTURAL require
 proposal_refs to be an empty array.
 """
+)
 
-CORRECTION_PROMPT_TEMPLATE = _COMMON + """
+CORRECTION_PROMPT_TEMPLATE = (
+    _COMMON
+    + """
 Role: cf-physical-model bounded correction.
 Return a complete corrected Physical proposal. Change only semantics explicitly
 authorised by the conditioned Validator's supported issue codes. Preserve stable
@@ -135,6 +146,7 @@ Opening links changed only for WRONG_SERVICE_OPENING_LINK or an authorised Openi
 add/remove. Do not make unrelated "cleanup" changes.
 Use the same Physical proposal JSON shape as the proposal-author stage.
 """
+)
 
 
 def _sha256_text(value: str) -> str:
@@ -157,9 +169,10 @@ def _stage_family(stage: str) -> str | None:
         and stage.removeprefix("conditioned_validator_retry_").isdigit()
     ):
         return "validator"
-    if stage.startswith("physical_correction_") and stage.removeprefix(
-        "physical_correction_"
-    ).isdigit():
+    if (
+        stage.startswith("physical_correction_")
+        and stage.removeprefix("physical_correction_").isdigit()
+    ):
         return "correction"
     return None
 

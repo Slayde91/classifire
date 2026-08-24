@@ -249,9 +249,7 @@ def _read_websocket_text(
             raise Phase8GatewayRpcError("RPC_OUTPUT_INVALID")
         payload = _take_socket_bytes(gateway_socket, buffered, payload_length, deadline)
         if opcode == 0x9:
-            _send_websocket_frame(
-                gateway_socket, opcode=0xA, payload=payload, deadline=deadline
-            )
+            _send_websocket_frame(gateway_socket, opcode=0xA, payload=payload, deadline=deadline)
             continue
         if opcode == 0x8:
             raise Phase8GatewayRpcError("RPC_UNAVAILABLE")
@@ -319,9 +317,7 @@ class OpenClawLoopbackGatewayRpc:
                 except OSError:
                     pass
 
-    def _open_websocket(
-        self, gateway_socket: GatewaySocket, deadline: float
-    ) -> bytearray:
+    def _open_websocket(self, gateway_socket: GatewaySocket, deadline: float) -> bytearray:
         key = base64.b64encode(os.urandom(16)).decode("ascii")
         request = (
             "GET / HTTP/1.1\r\n"
@@ -388,9 +384,7 @@ class OpenClawLoopbackGatewayRpc:
         request_sent = False
         scope = "operator.write" if method == "sessions.create" else "operator.read"
         for _ in range(8):
-            frame = _parse_gateway_json(
-                _read_websocket_text(gateway_socket, buffered, deadline)
-            )
+            frame = _parse_gateway_json(_read_websocket_text(gateway_socket, buffered, deadline))
             if frame.get("type") == "event" and frame.get("event") == "connect.challenge":
                 payload = frame.get("payload")
                 if (
@@ -423,9 +417,9 @@ class OpenClawLoopbackGatewayRpc:
                 _send_websocket_frame(
                     gateway_socket,
                     opcode=0x1,
-                    payload=json.dumps(
-                        connect, allow_nan=False, separators=(",", ":")
-                    ).encode("utf-8"),
+                    payload=json.dumps(connect, allow_nan=False, separators=(",", ":")).encode(
+                        "utf-8"
+                    ),
                     deadline=deadline,
                 )
                 connect_sent = True
@@ -446,9 +440,9 @@ class OpenClawLoopbackGatewayRpc:
                 _send_websocket_frame(
                     gateway_socket,
                     opcode=0x1,
-                    payload=json.dumps(
-                        request, allow_nan=False, separators=(",", ":")
-                    ).encode("utf-8"),
+                    payload=json.dumps(request, allow_nan=False, separators=(",", ":")).encode(
+                        "utf-8"
+                    ),
                     deadline=deadline,
                 )
                 request_sent = True
@@ -503,10 +497,7 @@ class OpenClawCliGatewayRpc:
         prefix = tuple(str(value) for value in command_prefix)
         if (
             any(not value.strip() for value in prefix)
-            or any(
-                not Path(value).is_absolute() or not Path(value).is_file()
-                for value in prefix
-            )
+            or any(not Path(value).is_absolute() or not Path(value).is_file() for value in prefix)
             or not isinstance(timeout_seconds, (int, float))
             or isinstance(timeout_seconds, bool)
             or not 0 < timeout_seconds <= 60
@@ -615,9 +606,7 @@ def verify_phase8_no_write_gateway_readiness(
     Neither the token nor the Gateway response is retained or reported.
     """
 
-    provider = (
-        token_provider if token_provider is not None else EnvironmentGatewayTokenProvider()
-    )
+    provider = token_provider if token_provider is not None else EnvironmentGatewayTokenProvider()
     try:
         token = provider()
     except Exception:
@@ -683,9 +672,7 @@ class ManagedPhase8VisualRuntime:
             validator_model=validator_model,
         )
         gateway_token_provider = (
-            token_provider
-            if token_provider is not None
-            else EnvironmentGatewayTokenProvider()
+            token_provider if token_provider is not None else EnvironmentGatewayTokenProvider()
         )
         rpc = _gateway_rpc_with_loopback_fallback(
             command_prefix=command_prefix,

@@ -321,6 +321,7 @@ def test_adapter_excludes_unmarked_legacy_evidence_from_visual_packet(tmp_path: 
 
     assert [item.evidence_id for item in packet.files] == [approved.id]
 
+
 def test_adapter_keeps_linked_original_parent_lineage_outside_inference_packet(
     tmp_path: Path,
 ) -> None:
@@ -362,6 +363,7 @@ def test_adapter_keeps_linked_original_parent_lineage_outside_inference_packet(
 
     assert [item.evidence_id for item in packet.files] == [linked.id]
     assert packet.manifest["artifacts"][0]["provenance"]["parent_evidence_id"] == parent.id
+
 
 def test_adapter_rejects_human_reference_provenance(tmp_path: Path) -> None:
     storage_root = tmp_path / "storage"

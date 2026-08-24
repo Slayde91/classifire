@@ -119,6 +119,7 @@ def test_review_request_rejects_unsafe_identity_or_unbound_artifact_hash() -> No
         is None
     )
 
+
 def test_review_request_fails_closed_for_malformed_validator_lists() -> None:
     visual_result = SimpleNamespace(
         status=VISUAL_PROPOSAL_BLOCKED,

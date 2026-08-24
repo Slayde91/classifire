@@ -69,7 +69,7 @@ The prototype is not production-authorised. It does not yet have a corrected act
 | Visual safety | Shared main enforces bounded correction semantics, fail-closed strict-schema receipts, proposal-blind inventory, mandatory reconciliation, ordered role separation, protected-state checks, byte-verified defect-bound retained evidence, no-tool transport semantics, and dedicated runtime identities. Synthetic inference proved the configured no-tool boundary; the representative pass then proved safe abstention by returning a valid Validator block without changing protected state. |
 | Proposal-only safety | The controller has no database, canonical-write, admission, signing, registration, lock, device, or deployment capability. The transport accepts only literal loopback endpoints, rechecks image bytes, requires empty effective server tools, sends `tools: []` with `tool_choice: none`, and audits the exact session after every attempted request. |
 | Reconciliation | Shared main has a post-inference human-reference comparator that binds proposal, strict controller receipt, and validation-only reference inputs by path and SHA-256. It verifies the proposal's canonical JSON binding and detects topology/substrate swaps rather than matching disconnected multisets. It has no database or inference interface. |
-| Human adjudication | A provenance-bound, offline adjudicated proposal revision exists for the current UAT. It records human decisions separately from runtime inference and leaves canonical state unchanged. |
+| Human adjudication | A provenance-bound v2 review accounts for all seven retained review items and four unresolved observations exactly once. Its separately validated local proposal-only record contains five Openings, six Services, and six links for the selected Defect, preserves site-dependent limitations, and leaves canonical state unchanged. The v2 implementation remains outside this publication branch. |
 | Representative rollback proof | The retained pass resolved all required linked originals, retained only the selected defect's governed evidence, completed four proposal-only inference stages, and stopped at `VISUAL_PROPOSAL_BLOCKED`. The rollback receipt records unchanged protected state and no canonical write or lock. |
 | Evidence-review recovery | The current local tooling can recover a content-safe human review request from the exact package, receipts, proposal, and locally retained controller sessions without opening the retained report or linked-original files and without another inference request. It does read the bound local session transcripts and records that this history is mutable and that Gateway authentication, tool attestation, response identity, and external transport are not replayed. |
 | Controlled-writer Gate A | The last completed exact-main audit was on `74346c5`, with reproducible admission-only plugin artifact SHA-256 `38812E99...AEE4` and clean candidate fingerprint `1B710710...F8CC`. Shared main and the local candidate are newer, so another exact-source Gate A candidate is required before any deployment decision. The audit itself remains review-only. |
@@ -85,14 +85,20 @@ no-write preflight normalised that proposal to **17 Openings, 24 Services, and
 approved Physical Model or authority to write one.
 
 The newer representative full-report pass was a separate proposal-only
-validation of one selected defect. It did not supersede or approve the earlier
+validation of one selected Defect. It did not supersede or approve the earlier
 17/24 preflight. All required linked originals were available, four governed
-images for the selected defect entered inference, and the Validator blocked on
+images for the selected Defect entered inference, and the Validator blocked on
 unsupported service classification/quantity and unresolved opening,
-classification, and photo-relationship evidence. The recovered review handoff
-contains seven structured review items and four unresolved blind observations.
-Those items must be resolved against retained or newly governed evidence before
-another proposal run or canonical preflight.
+classification, and photo-relationship evidence.
+
+The later human-review v2 record accounts for all seven structured review items
+and four unresolved observations exactly once. It confirms the visible opening
+relationships, photo relationship, flexible-duct count, and service groupings,
+and a separate local no-write validator passes a limited five-Opening,
+six-Service, six-link proposal-only record. It is not site verification or an
+approved canonical model. Dimensions, depth and obscured boundaries, exact
+substrate composition, service labels and documentary material proof, and
+opposite-face continuity remain unresolved.
 
 The adjudicated proposal comparison passes against the versioned adjudication record. The historical human-reference comparison remains a diagnostic with three explained differences:
 
@@ -129,13 +135,13 @@ reviewed slices rather than a bulk merge:
 | Foundation workstream | Roadmap phases supported | Recorded factual status | Remaining evidence before completion |
 | --- | --- | --- | --- |
 | Layer 1 - runtime foundation | 0, 15 | **Completed for the merged foundation scope** through PR #16 and present on shared main. | Broader CI and production-hardening evidence. |
-| Layer 2 - physical foundation | 1, 6, 8 | **Completed for the merged foundation scope** through PR #17 and present on shared main. | Complete Phase 8 evidence resolution, canonicalisation, and the separately governed lock boundary. |
+| Layer 2 - physical foundation | 1, 6, 8 | **Completed for the merged foundation scope** through PR #17 and present on shared main. | Resolve remaining site-dependent Phase 8 facts, then complete separately governed canonicalisation and lock boundaries. |
 | Layer 3 - least-privilege agents | 3, 15 | **Completed for the local deployment scope** through PRs #18, #20, #25, and Gates D-E. | Revalidate in each different deployment environment. |
 | Layer 4 - P-256 admission/writer | 1, 3, 6, 8, 15 | **Completed for local Gate F deployment validation**; writer, reconciled journal, key policy, and runtime boundary are active locally. | Evidence-resolved proposal, fresh preflight, external signature, offline registration, and separate one-time write authority. |
 | Controlled plugin rebuild | 3, 15 | **Completed for the local deployment scope.** Exact-main `0.5.0` is installed under `phase8-admission-only`, restarted, and boundary-tested. | Revalidate for any different environment or source revision. |
-| Representative package and runner | 5, 6, 7, 8 | **Completed for the reviewed feature-branch UAT tooling scope; not shared-main completion.** A retained run safely reached a Validator evidence block and rolled back. | Resolve the retained evidence-review items; rerun only with governed evidence and current approval. |
-| Offline evidence-review recovery | 5, 7, 8 | **Completed for the retained blocked-run recovery scope.** The current tool reconstructs a hash-bound, content-safe review handoff without opening the retained report or linked-original files and without inference. It does read the bound local session transcripts. | Human review and governed evidence decisions; local session history is not immutable. |
-| Controlled canonicalisation | 8 | **Blocked.** | Resolve the evidence block, produce a semantically approved proposal, then obtain fresh preflight, external signature, admission registration, and separate write authority. |
+| Representative package and runner | 5, 6, 7, 8 | **Completed for the reviewed feature-branch UAT tooling scope; not shared-main completion.** A retained run safely reached a Validator evidence block and rolled back; the completion summary now binds the exact receipt bytes. | Publish/review the focused candidate; rerun inference only after a material governed input change and current approval. |
+| Offline evidence-review recovery | 5, 7, 8 | **Completed for the retained blocked-run recovery scope.** Recovery v8 binds the corrected, formatted source fingerprint and reconstructs a content-safe review handoff without opening the report/linked originals or performing inference. It does read bound local transcripts. | Local session history remains mutable; the completed review still leaves site-dependent facts unresolved. |
+| Controlled canonicalisation | 8 | **Blocked.** | Obtain the remaining site evidence, produce a semantically accepted proposal with durable validation evidence, then obtain fresh preflight, external signature, admission registration, and separate write authority. |
 | Signed lock-admission | 1, 6, 8 | **Planned and blocked.** | Separate signed lock design and authority after canonical model approval. |
 | Legacy-root-only later-phase modules | 2, 5, 9-15 | **Deprecated / superseded as a bulk-merge path.** Additional guarded-technical registry, image-variant, repair-strategy, productivity/quantity, commercial, validated-snapshot/validation, release-control, and human-release modules/APIs exist on the divergent legacy root. Shared main retains lower-level technical, calculation, snapshot, Mission Control, and output foundations, but not those additional runtime/API layers. | Audit and transplant only still-valid slices after their upstream gates; do not count either source-file presence or legacy tests as current phase completion. |
 | Automated Physical-Model Accuracy Programme | 8C | **Planned.** | Working prototype and the programme admission gate. |
@@ -170,22 +176,26 @@ Repository development and live governance remain separate. Dedicated zero-tool
 runtime identities, controlled synthetic inference, the validation-only
 comparator, linked-original retrieval/retention, the bounded runner, and the
 rollback-only package are implemented for their stated local scopes. The
-representative pass is complete but its proposal is not approved: evidence
-resolution is now the next valid action. Source publication does not authorise
-another report run, canonical write, signature, admission, lock, or deployment.
+representative pass and its 7+4 human review are complete for their limited local
+scopes, but the proposal is not an approved canonical model. Focused source
+publication and issue reconciliation are the immediate repository actions. A
+site visit or equivalent governed evidence is the next physical-evidence action.
+Source publication does not authorise another report run, canonical write,
+signature, admission, lock, or deployment.
 
 1. **Completed:** publish and merge the fail-closed `0008` legacy-table retirement after proving it against a disposable copy of the configured database.
 2. **Completed:** create and restore-verify a recoverable backup, migrate the configured database to `0008`, and confirm protected rows and both empty current journals are unchanged.
 3. **Completed:** provision and approve the retained P-256 admission key, independently verify its public proof, and configure its issuer binding without placing a private key in CLASSIFIRE.
 4. **Completed:** back up and upgrade the controlled-write plugin to exact-main `0.5.0`, select `phase8-admission-only`, restart the Gateway, and pass live/synthetic no-write boundary checks without changing the real UAT estimate.
 5. **Completed for the retained run source:** execute one approved rollback-only representative pass. Retrieval and rollback succeeded; the Validator blocked the proposal and human comparison was correctly skipped.
-6. **In progress - next valid action:** review every retained Validator issue and unresolved blind observation against retained or newly governed evidence. Record each as Confirmed, Contradicted, or Unresolved, then update the proposal/adjudication lineage without writing canonical state.
-7. **Blocked pending evidence resolution and separate authority:** after semantic approval, persist and enforce the required hash-bound visual-validation receipt, create a fresh proposal-only preflight, obtain a short-lived external P-256 signature, register an admission offline, and then obtain separate current authority for the one-time initial canonical write.
-8. **Planned and blocked pending separate design and approval:** create a signed Physical Model Lock admission boundary before technical, quantity, commercial, snapshot, output, or release phases may advance.
+6. **Completed with limitations:** the provenance-bound v2 human response accounts for every retained review item/observation and the separate local validator passes a limited 5/6/6 proposal-only record without reading or writing canonical state.
+7. **In progress / blocked on site evidence:** obtain governed dimensions, depth/boundary evidence, exact substrate, service labels/material proof, and opposite-face continuity; preserve these fields as unresolved until then.
+8. **Blocked pending semantic acceptance and separate authority:** after the remaining evidence and durable visual-validation boundary are accepted, create a fresh proposal-only preflight, obtain a short-lived external P-256 signature, register an admission offline, and then obtain separate current authority for the one-time initial canonical write.
+9. **Planned and blocked pending separate design and approval:** create a signed Physical Model Lock admission boundary before technical, quantity, commercial, snapshot, output, or release phases may advance.
 
 ### 2.8 Deprecated and superseded checkpoints
 
-- The issue #42 checkpoint stating that the first representative run is pending is superseded by the retained Validator-blocked execution. The issue remains open/stale until separately maintained.
+- The issue #42 checkpoint stating that the first representative run is pending is superseded by the retained Validator-blocked execution and completed limited human review. Keep the issue open until the focused publication and remaining evidence/design blockers are recorded there.
 - The 17/22 adjudication and v6 17/24 preflight are historical non-canonical artifacts, not accepted topology, reusable admission authority, or a completion target.
 - Whole-database file hashing and count-only comparison are superseded by component-level protected-state fingerprints plus semantic and evidence-backed validation.
 - The Ed25519 signer, debug-app keys, legacy initial-submission schema, and same-operation lock creation are superseded paths.
@@ -199,10 +209,10 @@ another report run, canonical write, signature, admission, lock, or deployment.
 | 2. Governed source libraries | In progress | Immutable, published, auditable technical and commercial releases. |
 | 3. OpenClaw and controlled-write architecture | In progress - Gates A-F locally complete | Revalidate the deployment boundary for other environments; later phases still require their own controlled profiles and approvals. |
 | 4. Mission Control integration | In progress | Visibility/control-plane integration without owning estimate truth. |
-| 5. Evidence intake and evidence resolution | In progress | Every downstream claim traces to retained report, page, image, and verified higher-detail source evidence. |
-| 6. Physical Model engine | In progress | Defensible Barrier-Opening-Service model or explicit limitation for every known defect. |
-| 7. Independent visual topology gate | In progress - controlled-UAT proof complete | Independent non-mutating visual challenge is proven; durable canonical receipt enforcement and broader evidence remain. |
-| 8. Corrected real Physical UAT | In progress and blocked on governed evidence | Semantically approved corrected physical model and replacement active Physical Model Lock. |
+| 5. Evidence intake and evidence resolution | In progress; selected-Defect human review complete with limitations | Every downstream claim traces to retained report, page, image, and verified higher-detail source evidence. |
+| 6. Physical Model engine | In progress; limited 5/6/6 proposal-only record exists | Defensible Barrier-Opening-Service model or explicit limitation for every known defect. |
+| 7. Independent visual topology gate | In progress - controlled-UAT rollback/review proof complete | Independent non-mutating visual challenge is proven; durable canonical receipt enforcement and broader evidence remain. |
+| 8. Corrected real Physical UAT | In progress and blocked on site evidence and durable validation/lock gates | Semantically approved corrected physical model and replacement active Physical Model Lock. |
 | 8C. Automated Physical-Model Accuracy Programme | Planned | Measured, leakage-safe reduction of human exception review; optional governed model training only after prototype evidence. |
 | 9. Technical system selection | Blocked by Phase 8 | One current, defensible Repair Strategy Lock per supported Opening. |
 | 10. Quantity and labour | Blocked by Phase 9 | Deterministic, authorised, complete quantities and labour. |
@@ -340,7 +350,7 @@ Run and approval visibility is useful and traceable without creating a second mu
 
 ### Remaining work
 
-1. Complete the current evidence-review handoff and retain any additional governed evidence required to resolve the Validator block.
+1. Obtain and retain only the additional governed site evidence needed for dimensions, depth/boundaries, exact substrate, service labels/material proof, and opposite-face continuity; the 7+4 review handoff itself is complete.
 2. Generalise the linked-original workflow across multiple report formats and approved source hosts.
 3. Build a governed evidence-family taxonomy for exact duplicates, re-encodes, crops, annotations, alternate angles, and genuinely distinct images.
 4. Add multi-report evidence-quality metrics and adversarial retrieval tests.
@@ -398,7 +408,7 @@ Every known defect has a defensible physical model or an explicit evidence limit
 
 ### Remaining work
 
-1. Resolve the representative Validator block against retained or newly governed evidence; do not repeat the unchanged run merely to seek a different answer.
+1. Preserve the completed human-review decisions and remaining site-dependent unknowns; do not repeat the unchanged run merely to seek a different answer.
 2. Repeat proposal-only validation only when evidence or approved candidate inputs materially change and current run authority exists.
 3. Persist and enforce a canonical VisualValidationReceipt in lock eligibility after semantic approval.
 4. Broaden adversarial visual-gate tests beyond the current report.
@@ -409,7 +419,7 @@ An independently validated, durable visual receipt is required for every canonic
 
 ## 12. Phase 8 - Corrected real Physical UAT
 
-**Status:** In progress and blocked on governed evidence resolution
+**Status:** In progress; human review complete with limitations, blocked on site evidence and durable validation/lock gates
 
 **Objective:** Replace the known-wrong retained physical state with a visual-validated, defect-level defensible Physical Model.
 
@@ -421,14 +431,15 @@ An independently validated, durable visual receipt is required for every canonic
 4. An earlier full-resolution UAT and human adjudication produced the provisional 17/22 proposal; the retained v6 preflight normalised it to 17 Openings, 24 Services, and 24 links without writing canonical state.
 5. The newer representative pass retrieved every required linked original, used only the selected defect's retained evidence for inference, and safely stopped at a valid Validator block. Protected state was unchanged after rollback; no canonical submission or lock occurred.
 6. The blocked review request was recovered locally from all receipt-bound successful stages. The recovery is content-safe and hash-bound but expressly does not make mutable local OpenClaw history immutable or replay Gateway and external transport evidence.
+7. Human review v2 accounts for all seven review items and four unresolved observations. A separate local no-write validator passes a limited 5/6/6 proposal-only record while preserving the remaining site-dependent unknowns.
 
 ### Current gate
 
-The next valid action is **human evidence resolution**, not canonical preflight,
-signing, submission, locking, pricing, or an unchanged rerun. Each Validator
-issue and unresolved blind observation must be resolved against retained or
-newly governed evidence, with uncertainty preserved where the evidence cannot
-support a fact. The earlier 17/24 preflight remains historical no-write evidence
+The next repository action is **focused publication review and issue #42
+reconciliation**. The next physical-evidence action is a site visit or equivalent
+newly governed evidence for the facts the human review could not establish. It
+is not canonical preflight, signing, submission, locking, pricing, or an
+unchanged rerun. The earlier 17/24 preflight remains historical no-write evidence
 and cannot be reused as admission authority.
 
 Post-run output/recovery hardening changed the candidate source tree. The
@@ -439,12 +450,12 @@ later commit or shared-main revision.
 
 ### Required evidence resolution
 
-1. Review every structured issue, Validator limitation, and unresolved blind observation against retained evidence.
-2. Obtain and govern additional views, dimensions, material evidence, or relationship evidence where required; do not infer concealed facts from appearance.
-3. Record each review item as Confirmed, Contradicted, or Unresolved and bind the decisions to exact evidence/proposal hashes.
-4. Revise the proposal/adjudication lineage only where evidence and issue authority support the change.
-5. Run proposal-only validation again only after a material governed input change, current report/inference authority, and a fresh source-bound package.
-6. Require a valid independent approval before beginning canonical preflight.
+1. Preserve the completed v2 item-coverage record and its exact evidence/proposal bindings.
+2. Obtain and govern site evidence for dimensions, depth/obscured boundaries, exact substrate, service labels/material proof, and opposite-face continuity; do not infer concealed facts from appearance.
+3. Revise the proposal/adjudication lineage only where new evidence and issue authority support the change.
+4. Run proposal-only validation again only after a material governed input change, current report/inference authority, and a fresh source-bound package.
+5. Design, approve, persist, and enforce the durable visual-validation receipt required by lock eligibility.
+6. Require valid independent semantic approval before beginning canonical preflight.
 
 ### Later required preflight
 
