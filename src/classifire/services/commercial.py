@@ -23,7 +23,6 @@ from ..commercial_models import (
 from ..models import Estimate, LabourComponent, Opening, PricingLibraryRecord, Product, Service, TechnicalVariant
 from .calculation import D, resolve_markup
 from .release_scope import (
-    ReleaseScopeError,
     pinned_labour,
     pinned_pricing_record,
     pinned_product,

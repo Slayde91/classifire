@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from .file_hashing import sha256_file
+
 PACKAGE_ID = "CLASSIFIRE-OPENCLAW-MISSION-CONTROL-ESSENTIALS-v1.0"
 PRODUCT = "CLASSIFIRE"
 MANIFEST_NAME = "00_ESSENTIALS_MANIFEST.json"
@@ -63,14 +65,6 @@ class StagedEssentials:
             "extracted_files": self.extracted_files,
             "verified_files": self.verified_files,
         }
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _normalise_member(name: str) -> PurePosixPath:

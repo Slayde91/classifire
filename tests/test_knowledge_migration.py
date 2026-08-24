@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, select
@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from classifire import canonical_models as _canonical_models  # noqa: F401
 from classifire import commercial_models as _commercial_models  # noqa: F401
 from classifire.db import Base
+from classifire.file_hashing import sha256_file
 from classifire.importers.technical import import_technical_variants
 from classifire.knowledge_migration import (
     MANIFEST_NAME,
@@ -23,14 +24,25 @@ from classifire.knowledge_migration import (
     TECHNICAL_VARIANTS_RELATIVE,
     stage_essentials_archive,
 )
+from classifire.knowledge_migration import sha256_file as migration_sha256_file
 from classifire.models import TechnicalVariant
-
+from classifire.v213_release_validation import sha256_file as release_sha256_file
 
 COLLIDING_ID = "TSL-TEST-COLLISION-VAR01"
 
 
 def _digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def test_shared_file_hashing_matches_sha256(tmp_path: Path) -> None:
+    path = tmp_path / "source.bin"
+    payload = b"CLASSIFIRE\x00controlled-source"
+    path.write_bytes(payload)
+
+    assert sha256_file(path) == _digest(payload)
+    assert migration_sha256_file is sha256_file
+    assert release_sha256_file is sha256_file
 
 
 def _write_archive(path: Path, *, tamper_hash: bool = False, unsafe: bool = False) -> None:

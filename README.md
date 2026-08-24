@@ -63,6 +63,41 @@ Create an administrator account before operational use:
 classifire create-admin
 ```
 
+## Developer checks
+
+Confirm the installed command and run non-destructive environment checks:
+
+```powershell
+.\.venv\Scripts\classifire.exe version
+.\.venv\Scripts\classifire.exe doctor
+```
+
+Run the relevant test file or test group before changing behaviour. On Windows,
+use a fresh temporary test directory and disable pytest's repository cache so
+test output is not mixed with retained local evidence:
+
+```powershell
+$testRoot = Join-Path $env:TEMP ("classifire-pytest-" + [guid]::NewGuid())
+.\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --basetemp $testRoot tests/test_physical_model_lock.py
+```
+
+## Repository guide
+
+- `src/classifire/` — application, domain services, API, UI, and CLI.
+- `tests/` — regression and boundary tests.
+- `migrations/` — database lineage; do not edit or remove migrations as ordinary cleanup.
+- `docs/` — architecture, roadmap, operating guidance, and retained reports. See [the architecture baseline](docs/CLASSIFIRE_ARCHITECTURE.md).
+- `knowledge/` — controlled source-release and technical-library material; source corpora are intentionally excluded from Git.
+- `data/` — local runtime databases, backups, UAT material, and evidence. Treat it as operational state, not disposable workspace output.
+- `openclaw/` — controlled integration configuration. CLASSIFIRE remains the canonical home for domain logic and canonical state.
+
+## Safety and governance
+
+- Keep inference, review, and canonical writes separate. Do not let transient inference overwrite approved state.
+- Do not treat a defect as a quantity. Model distinct services, openings, substrate planes, and repair components explicitly.
+- Keep technical compatibility evidence-based. Unresolved evidence must remain unresolved rather than being inferred as approval.
+- Do not commit `.env`, local databases, customer data, supplier pricing, UAT evidence, or generated runtime material.
+
 ## Source-library import
 
 Confidential Package 14, Package 15 and calculator source files are not required to be published with the application repository. Place authorised sources in a controlled local path and import them with:

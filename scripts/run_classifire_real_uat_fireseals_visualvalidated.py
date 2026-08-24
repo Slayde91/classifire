@@ -1,26 +1,30 @@
 from __future__ import annotations
 
-import uuid
-
 import argparse
 import base64
+import hashlib
 import json
 import mimetypes
 import os
-from pathlib import Path
 import sys
 import time
+import uuid
+from pathlib import Path
 from typing import Any
 
 import httpx
+from run_classifire_real_uat_deterministic import _json_from_payload
+from run_classifire_real_uat_fireseals_blankaware import _model_completeness_issues
+from run_classifire_real_uat_fireseals_topologyaware import TopologyAwareFireSealController
+from run_classifire_real_uat_intake import load_receipt, repo_root
 
-from classifire.canonical_models import Defect
 from classifire.blind_visual_inventory import (
-    blind_observation_catalog,
     blind_hard_topology_observation_catalog,
+    blind_observation_catalog,
     validate_blind_reconciliation_payload,
     validate_blind_visual_inventory_payload,
 )
+from classifire.canonical_models import Defect
 from classifire.visual_validation import (
     VISUAL_VALIDATOR_ISSUE_CODES,
     validate_visual_correction_scope,
@@ -28,13 +32,10 @@ from classifire.visual_validation import (
     visual_validator_approved,
     visual_validator_issue_codes,
 )
-from run_classifire_real_uat_deterministic import _json_from_payload
-from run_classifire_real_uat_fireseals_blankaware import _model_completeness_issues
-from run_classifire_real_uat_fireseals_topologyaware import TopologyAwareFireSealController
-from run_classifire_real_uat_intake import load_receipt, parse_json_envelope, repo_root
 
-
-VISUAL_GATE_POLICY_VERSION = "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v4"
+VISUAL_GATE_POLICY_VERSION = (
+    "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v6-HIGHEST-USABLE-DETAIL"
+)
 MAX_VISUAL_CORRECTION_PASSES = 2
 OPENRESPONSES_BASE_URL = "http://127.0.0.1:18789"
 OPENRESPONSES_TIMEOUT_SECONDS = 300.0
@@ -447,16 +448,47 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
                 + ", ".join(missing)
             )
 
+        visible_manifest = self._model_visible_attachment_manifest()
         content: list[dict[str, Any]] = [
             {
                 "type": "input_text",
-                "text": prompt,
+                "text": (
+                    prompt
+                    + "\n\nOrdered attachment manifest. Attachment indexes match the "
+                    "input_image order exactly:\n"
+                    + visible_manifest
+                    + "\nInspect every PRIMARY first for fine detail, then every SECONDARY "
+                    "for unique crop, annotation, contrast, label, or page context."
+                ),
             }
         ]
 
         safe_files: list[dict[str, Any]] = []
 
-        for path in files:
+        current_manifest = getattr(self, "_current_visual_manifest", None) or []
+        if len(current_manifest) != len(files):
+            raise RuntimeError(
+                f"Visual attachment manifest/file count mismatch for {receipt_name}."
+            )
+        for attachment_index, path in enumerate(files, start=1):
+            manifest_row = current_manifest[attachment_index - 1]
+            if not isinstance(manifest_row, dict):
+                raise RuntimeError(
+                    f"Visual attachment manifest row {attachment_index} is invalid."
+                )
+            manifest_path = Path(str(manifest_row.get("path") or ""))
+            if manifest_path.resolve() != path.resolve():
+                raise RuntimeError(
+                    f"Visual attachment manifest row {attachment_index} does not match "
+                    "the supplied file order."
+                )
+            expected_sha256 = str(manifest_row.get("expected_sha256") or "").lower()
+            if len(expected_sha256) != 64 or any(
+                character not in "0123456789abcdef" for character in expected_sha256
+            ):
+                raise RuntimeError(
+                    f"Visual attachment manifest row {attachment_index} has no valid hash."
+                )
             mime_type, _encoding = mimetypes.guess_type(
                 path.name
             )
@@ -471,6 +503,12 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
                 )
 
             raw = path.read_bytes()
+            actual_sha256 = hashlib.sha256(raw).hexdigest()
+            if actual_sha256 != expected_sha256:
+                raise RuntimeError(
+                    f"Visual attachment {attachment_index} changed after attachment "
+                    "manifest assembly; inference was not called."
+                )
 
             content.append(
                 {
@@ -485,13 +523,25 @@ class VisualValidatedTopologyController(TopologyAwareFireSealController):
                 }
             )
 
-            safe_files.append(
-                {
-                    "path": str(path),
+            safe_row: dict[str, Any] = {
+                    "filename": path.name,
                     "mime_type": mime_type,
                     "bytes": len(raw),
+                    "attachment_index": attachment_index,
+                    "sha256": actual_sha256,
+                }
+            safe_row.update(
+                {
+                    "role": manifest_row.get("role"),
+                    "photo_id": manifest_row.get("photo_id"),
+                    "page": manifest_row.get("page"),
+                    "primary_secondary": manifest_row.get("primary_secondary"),
+                    "relationship_to_primary": manifest_row.get(
+                        "relationship_to_primary"
+                    ),
                 }
             )
+            safe_files.append(safe_row)
 
         request_payload = {
             "model": "openclaw",

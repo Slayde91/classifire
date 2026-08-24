@@ -1,5 +1,12 @@
 # CLASSIFIRE controlled rename plan
 
+> **Historical planning record.** The active repository, package, CLI, and
+> workspace now use CLASSIFIRE. This document is retained to preserve the
+> controlled QUANTIFIRE-to-CLASSIFIRE transition decisions and lineage rules;
+> it is not current setup or operational guidance. For current developer setup,
+> use the [repository README](../README.md); for the current architectural
+> baseline, use [CLASSIFIRE Architecture](CLASSIFIRE_ARCHITECTURE.md).
+
 ## Objective
 
 Rename the active product and development project from **QUANTIFIRE** to **CLASSIFIRE** while preserving the integrity of the controlled QUANTIFIRE v2.13 source baseline, immutable hashes, database migration lineage, retained audit records, historical snapshots, and historical output evidence.

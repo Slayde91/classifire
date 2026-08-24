@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import inspect
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 
 SCRIPTS_DIR = (
     Path(__file__).resolve().parents[1]
@@ -20,16 +20,17 @@ if str(SCRIPTS_DIR) not in sys.path:
     )
 
 
+from run_classifire_real_uat_fireseals_visualvalidated import (  # noqa: E402
+    VISUAL_GATE_POLICY_VERSION,
+    VisualValidatedTopologyController,
+)
+
 from classifire.blind_visual_inventory import (  # noqa: E402
     BLIND_INVENTORY_BLOCKED,
     BLIND_INVENTORY_COMPLETE,
     blind_observation_catalog,
     validate_blind_reconciliation_payload,
     validate_blind_visual_inventory_payload,
-)
-from run_classifire_real_uat_fireseals_visualvalidated import (  # noqa: E402
-    VISUAL_GATE_POLICY_VERSION,
-    VisualValidatedTopologyController,
 )
 
 
@@ -406,11 +407,61 @@ def test_blind_inventory_is_part_of_visual_cache_key() -> None:
     )
 
 
-def test_visual_policy_version_invalidates_v3_cache() -> None:
+def test_visual_policy_version_invalidates_pre_high_detail_cache() -> None:
     assert (
         VISUAL_GATE_POLICY_VERSION
-        == "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v4"
+        == "CLASSIFIRE-FIRESEAL-VISUAL-GATE-v6-HIGHEST-USABLE-DETAIL"
     )
+
+
+def test_visual_agent_prompt_receives_ordered_attachment_manifest() -> None:
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "run_classifire_real_uat_fireseals_visualvalidated.py"
+    ).read_text(encoding="utf-8")
+    assert "visible_manifest = self._model_visible_attachment_manifest()" in source
+    assert '"input_image order exactly:\\n"' in source
+    assert '"attachment_index": attachment_index' in source
+    assert '"primary_secondary": manifest_row.get("primary_secondary")' in source
+
+
+@pytest.mark.parametrize(
+    "role",
+    ["defect_photo", "labelled_full_page", "contact_sheet"],
+)
+def test_visual_agent_rejects_attachment_swapped_after_manifest_assembly(
+    tmp_path: Path,
+    role: str,
+) -> None:
+    controller = object.__new__(VisualValidatedTopologyController)
+    path = tmp_path / f"{role}.png"
+    path.write_bytes(b"original visual bytes")
+    expected_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    controller._current_visual_manifest = [
+        {
+            "attachment_index": 1,
+            "filename": path.name,
+            "path": str(path),
+            "role": role,
+            "primary_secondary": "PRIMARY" if role == "defect_photo" else "SECONDARY",
+            "relationship_to_primary": "SELF",
+            "expected_sha256": expected_sha256,
+        }
+    ]
+    visible_manifest = controller._model_visible_attachment_manifest()
+    assert str(tmp_path) not in visible_manifest
+    assert expected_sha256 in visible_manifest
+
+    path.write_bytes(b"swapped visual bytes")
+    with pytest.raises(RuntimeError, match="changed after attachment manifest assembly"):
+        controller._invoke_visual_agent_json(
+            agent_id="cf-validator",
+            session_key="test-session",
+            files=[path],
+            prompt="inspect",
+            receipt_name=f"swap-{role}",
+        )
 
 
 def _visual_session_probe():
