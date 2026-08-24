@@ -410,7 +410,7 @@ Every known defect has a defensible physical model or an explicit evidence limit
 
 1. Preserve the completed human-review decisions and remaining site-dependent unknowns; do not repeat the unchanged run merely to seek a different answer.
 2. Repeat proposal-only validation only when evidence or approved candidate inputs materially change and current run authority exists.
-3. Persist and enforce a canonical VisualValidationReceipt in lock eligibility after semantic approval.
+3. This branch candidate implements the immutable `VisualValidationReceipt` registry and exact side-effect-free eligibility verifier. Independently review it, then design, approve, and enforce the separate signed lock-admission boundary that must call that verifier after semantic approval.
 4. Broaden adversarial visual-gate tests beyond the current report.
 
 ### Exit condition
@@ -454,7 +454,7 @@ later commit or shared-main revision.
 2. Obtain and govern site evidence for dimensions, depth/obscured boundaries, exact substrate, service labels/material proof, and opposite-face continuity; do not infer concealed facts from appearance.
 3. Revise the proposal/adjudication lineage only where new evidence and issue authority support the change.
 4. Run proposal-only validation again only after a material governed input change, current report/inference authority, and a fresh source-bound package.
-5. Design, approve, persist, and enforce the durable visual-validation receipt required by lock eligibility.
+5. Independently review the persisted durable visual-validation receipt and exact eligibility verifier in this branch candidate, then design, approve, and enforce the separate signed lock-admission boundary that must use it.
 6. Require valid independent semantic approval before beginning canonical preflight.
 
 ### Later required preflight

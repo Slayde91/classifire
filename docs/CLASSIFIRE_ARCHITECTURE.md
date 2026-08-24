@@ -93,6 +93,8 @@ Shared current-main contains the active Phase 8 foundations:
 - the current Opening, Service, and Opening-Service relationship model;
 - the reconciled admission lineage through
   `0008_retire_legacy_initial_submissions`;
+- in this branch candidate, the additive durable visual-validation receipt
+  migration `0009_visual_validation_receipts`;
 - component-level protected-state fingerprinting;
 - proposal-blind visual inventory and mandatory reconciliation;
 - bounded Validator-to-Physical correction and strict proposal receipts;
@@ -428,6 +430,14 @@ cannot create a Physical Model Lock. A separately designed, reviewed, signed,
 and authorised lock-admission boundary is required before a replacement lock can
 exist.
 
+The durable visual-validation receipt registry is a separate, immutable
+evidence boundary. It normalizes and hash-binds the exact reviewed candidate,
+controller receipt, evidence manifest, family inventory and reviewed family
+record, human request and response, policy versions, and review decision. Its
+side-effect-free verifier
+can prove that an exact semantically approved receipt is bound to a future lock
+candidate, but it neither creates a lock nor grants lock-admission authority.
+
 The current real-report path is blocked before these boundaries because its
 representative visual proposal is not approved. Even after the evidence blocker
 is resolved, external signing, registration, exact submission, and lock creation
@@ -524,9 +534,10 @@ Defect, obtain a site visit or equivalent newly governed evidence for the facts
 that human visual review could not establish. Do not repeat unchanged inference
 or convert the limited proposal into canonical truth.
 
-In parallel, review durable visual-validation receipt enforcement and signed
-lock-admission as separate bounded architecture changes. Only after the remaining
-evidence is governed, the proposal is independently and semantically accepted,
-and those boundaries are approved should the team consider a fresh
+In parallel, the durable visual-validation receipt registry and exact
+side-effect-free verifier in this branch candidate are ready for independent
+review; signed lock-admission remains a separate bounded architecture change. Only after the remaining evidence
+is governed, the proposal is independently and semantically accepted, and the
+signed lock boundary is approved should the team consider a fresh
 canonicalisation preflight. Submission, lock creation, technical selection,
 pricing, output, deployment, and Human Release retain their separate gates.

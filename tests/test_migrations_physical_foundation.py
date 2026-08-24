@@ -145,11 +145,18 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
         "agent_service_principals",
         "physical_model_admissions",
         "physical_model_submission_receipts",
+        "visual_validation_receipts",
     }.issubset(inspector.get_table_names())
     assert "canonical_defect_id" in {column["name"] for column in inspector.get_columns("openings")}
     assert "primary_opening_legacy" in {
         column["name"] for column in inspector.get_columns("services")
     }
+    visual_validation_columns = {
+        column["name"]: column for column in inspector.get_columns("visual_validation_receipts")
+    }
+    assert not visual_validation_columns["receipt_id"]["nullable"]
+    assert not visual_validation_columns["receipt_sha256"]["nullable"]
+    assert not visual_validation_columns["evidence_family_review_sha256"]["nullable"]
     physical_lock_columns = {
         column["name"]: column for column in inspector.get_columns("physical_model_locks")
     }
@@ -162,7 +169,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
     assert active_lock_index["unique"]
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0008_retire_legacy_initial_submissions"
+            "0009_visual_validation_receipts"
         )
         active_lock_index_sql = connection.execute(
             text(
@@ -171,7 +178,6 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
             )
         ).scalar_one()
         assert "WHERE invalidated_at IS NULL" in active_lock_index_sql
-
 
 
 def test_fk_enforced_physical_migration_backfills_and_downgrades_safely(
@@ -349,4 +355,30 @@ def test_fk_enforced_physical_migration_backfills_and_downgrades_safely(
             )
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
             "0006_physical_submission_receipts"
+        )
+
+
+def test_visual_validation_receipt_migration_refuses_evidence_loss(tmp_path: Path) -> None:
+    database_path = tmp_path / "visual-validation-receipt.sqlite"
+    database_url = f"sqlite:///{database_path.as_posix()}"
+    environment = _migration_environment(tmp_path, database_url)
+    _upgrade(database_url, environment, "head")
+
+    rejected = _downgrade(
+        database_url,
+        environment,
+        "0008_retire_legacy_initial_submissions",
+        expect_success=False,
+    )
+
+    assert rejected.returncode != 0
+    assert "Visual-validation receipt evidence cannot be downgraded" in (
+        rejected.stdout + rejected.stderr
+    )
+    engine = create_engine(database_url)
+    inspector = inspect(engine)
+    assert "visual_validation_receipts" in inspector.get_table_names()
+    with engine.connect() as connection:
+        assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
+            "0009_visual_validation_receipts"
         )

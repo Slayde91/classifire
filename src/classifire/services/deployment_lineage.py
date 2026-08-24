@@ -7,13 +7,14 @@ from dataclasses import asdict, dataclass
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-CLEAN_STACK_HEAD = "0008_retire_legacy_initial_submissions"
+CLEAN_STACK_HEAD = "0009_visual_validation_receipts"
 PREVIOUS_CLEAN_STACK_HEAD = "0007_reconcile_adjudicated_admission_lineages"
 LEGACY_ADJUDICATED_HEAD = "0006_adjudicated_canonical_admissions"
 REQUIRED_TABLES = frozenset(
     {
         "physical_model_admissions",
         "physical_model_submission_receipts",
+        "visual_validation_receipts",
     }
 )
 RETIRED_TABLES = frozenset({"physical_model_initial_submissions"})
