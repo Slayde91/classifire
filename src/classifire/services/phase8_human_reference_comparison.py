@@ -30,7 +30,7 @@ HUMAN_REFERENCE_PURPOSE = (
 HUMAN_COMPARISON_SCHEMA = "CLASSIFIRE-PHASE8-HUMAN-REFERENCE-COMPARISON-v1"
 MAX_ARTIFACT_BYTES = 5 * 1024 * 1024
 
-_OpeningSignature = tuple[bool, tuple[tuple[str, str | None, str], ...]]
+_OpeningSignature = tuple[bool, tuple[tuple[str, str | None, str | None], ...]]
 
 
 class Phase8HumanReferenceComparisonError(RuntimeError):
@@ -123,7 +123,9 @@ def _normalise_material(value: object) -> str | None:
     return aliases.get(text, text)
 
 
-def _quantity(value: object) -> Decimal:
+def _quantity(value: object) -> str | None:
+    if value is None:
+        return None
     try:
         quantity = Decimal(str(value))
     except (InvalidOperation, ValueError) as exc:
@@ -136,14 +138,16 @@ def _quantity(value: object) -> Decimal:
             "SERVICE_QUANTITY_INVALID",
             repr(value),
         )
-    return quantity
+    return str(quantity.normalize())
 
 
-def _service_signature(row: dict[str, Any]) -> tuple[str, str | None, str]:
+def _service_signature(row: dict[str, Any]) -> tuple[str, str | None, str | None]:
+    if "quantity" not in row:
+        raise Phase8HumanReferenceComparisonError("SERVICE_QUANTITY_INVALID", "missing")
     return (
         _normalise_service_type(row.get("type") or row.get("service_type")),
         _normalise_material(row.get("material")),
-        str(_quantity(row.get("quantity")).normalize()),
+        _quantity(row["quantity"]),
     )
 
 
@@ -230,6 +234,12 @@ def _load_reference(
             _opening_signature(opening)
         by_external_id[external_id] = defect
     return reference, by_external_id, reference_sha256
+
+
+def validate_phase8_human_reference(reference_path: Path) -> None:
+    """Validate a post-inference-only human reference before a runtime begins."""
+
+    _load_reference(reference_path)
 
 
 def _proposal_openings(
@@ -552,4 +562,5 @@ __all__ = [
     "HUMAN_REFERENCE_SCHEMA",
     "Phase8HumanReferenceComparisonError",
     "compare_phase8_human_reference",
+    "validate_phase8_human_reference",
 ]

@@ -9,6 +9,7 @@ submission, or lock operation.
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Collection
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -188,6 +189,7 @@ def build_retained_visual_evidence_packet(
     storage_root: Path,
     estimate_id: str,
     defect_reference: str,
+    allowed_evidence_source_ids: Collection[str] | None = None,
 ) -> RetainedVisualEvidencePacket:
     """Build a verified defect-level visual packet without mutating state."""
 
@@ -199,6 +201,18 @@ def build_retained_visual_evidence_packet(
         raise Phase8VisualEvidenceError("DEFECT_REFERENCE_REQUIRED")
     if not storage_root.is_dir():
         raise Phase8VisualEvidenceError("STORAGE_ROOT_UNAVAILABLE")
+
+    allowed_ids: frozenset[str] | None = None
+    if allowed_evidence_source_ids is not None:
+        raw_ids = list(allowed_evidence_source_ids)
+        if not raw_ids or any(
+            not isinstance(value, str) or not value.strip() or value != value.strip()
+            for value in raw_ids
+        ):
+            raise Phase8VisualEvidenceError("EVIDENCE_SCOPE_INVALID")
+        allowed_ids = frozenset(raw_ids)
+        if len(allowed_ids) != len(raw_ids):
+            raise Phase8VisualEvidenceError("EVIDENCE_SCOPE_INVALID")
 
     defect = _defect(
         db,
@@ -216,10 +230,19 @@ def build_retained_visual_evidence_packet(
     ).all()
     if not evidence_rows:
         raise Phase8VisualEvidenceError("ACTIVE_EVIDENCE_REQUIRED")
+    visual_evidence_rows = [
+        evidence
+        for evidence in evidence_rows
+        if isinstance(evidence.source_json, dict)
+        and VISUAL_EVIDENCE_METADATA_KEY in evidence.source_json
+        and (allowed_ids is None or evidence.id in allowed_ids)
+    ]
+    if not visual_evidence_rows:
+        raise Phase8VisualEvidenceError("ACTIVE_VISUAL_EVIDENCE_REQUIRED")
 
     artifacts: list[dict[str, Any]] = []
     files: list[RetainedVisualEvidenceFile] = []
-    for evidence in evidence_rows:
+    for evidence in visual_evidence_rows:
         metadata = _metadata(evidence)
         if not evidence.stored_file_id:
             raise Phase8VisualEvidenceError("STORED_FILE_REQUIRED")

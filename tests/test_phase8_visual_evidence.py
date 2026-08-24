@@ -246,7 +246,8 @@ def test_adapter_rejects_file_outside_storage_root(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("source_json", "expected_code"),
     [
-        (None, "METADATA_REQUIRED"),
+        (None, "ACTIVE_VISUAL_EVIDENCE_REQUIRED"),
+        ({VISUAL_EVIDENCE_METADATA_KEY: {}}, "METADATA_INVALID"),
         (_metadata(inference_allowed=False), "EVIDENCE_NOT_APPROVED_FOR_INFERENCE"),
         (_metadata(validation_only=True), "VALIDATION_ONLY_EVIDENCE_FORBIDDEN"),
     ],
@@ -282,6 +283,86 @@ def test_adapter_requires_explicit_inference_metadata(
             )
 
     assert rejected.value.code == expected_code
+
+
+def test_adapter_excludes_unmarked_legacy_evidence_from_visual_packet(tmp_path: Path) -> None:
+    storage_root = tmp_path / "storage"
+    storage_root.mkdir()
+    legacy_path, legacy_sha256 = _image(storage_root, "legacy.png", (10, 20, 30))
+    approved_path, approved_sha256 = _image(storage_root, "approved.png", (40, 50, 60))
+
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        defect = _defect(session, estimate)
+        legacy = _evidence(
+            session,
+            estimate=estimate,
+            defect=defect,
+            path=legacy_path,
+            sha256=legacy_sha256,
+        )
+        legacy.source_json = {}
+        session.flush()
+        approved = _evidence(
+            session,
+            estimate=estimate,
+            defect=defect,
+            path=approved_path,
+            sha256=approved_sha256,
+            source_json=_metadata(),
+        )
+
+        packet = build_retained_visual_evidence_packet(
+            session,
+            storage_root=storage_root,
+            estimate_id=estimate.id,
+            defect_reference="D-001",
+        )
+
+    assert [item.evidence_id for item in packet.files] == [approved.id]
+
+
+def test_adapter_keeps_linked_original_parent_lineage_outside_inference_packet(
+    tmp_path: Path,
+) -> None:
+    storage_root = tmp_path / "storage"
+    storage_root.mkdir()
+    parent_path, parent_sha256 = _image(storage_root, "parent.png", (10, 20, 30))
+    original_path, original_sha256 = _image(storage_root, "original.png", (40, 50, 60))
+
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        defect = _defect(session, estimate)
+        parent = _evidence(
+            session,
+            estimate=estimate,
+            defect=defect,
+            path=parent_path,
+            sha256=parent_sha256,
+        )
+        parent.source_json = {}
+        session.flush()
+        linked = _evidence(
+            session,
+            estimate=estimate,
+            defect=defect,
+            path=original_path,
+            sha256=original_sha256,
+            source_json=_metadata(
+                relationship="linked_original",
+                parent_id=parent.id,
+            ),
+        )
+
+        packet = build_retained_visual_evidence_packet(
+            session,
+            storage_root=storage_root,
+            estimate_id=estimate.id,
+            defect_reference="D-001",
+        )
+
+    assert [item.evidence_id for item in packet.files] == [linked.id]
+    assert packet.manifest["artifacts"][0]["provenance"]["parent_evidence_id"] == parent.id
 
 
 def test_adapter_rejects_human_reference_provenance(tmp_path: Path) -> None:

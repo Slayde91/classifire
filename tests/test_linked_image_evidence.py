@@ -135,6 +135,57 @@ def _verified_result(retrieval_root: Path, embedded_sha256: str) -> LinkedImageR
     )
 
 
+def _setup_report_derived_parent(session, storage_root: Path):
+    estimate = add_estimate(session)
+    defect = Defect(
+        estimate_id=estimate.id,
+        external_defect_id="D-REPORT-001",
+        evidence_status="confirmed",
+        status="draft",
+    )
+    session.add(defect)
+    session.flush()
+    report = b"%PDF-1.4\nsynthetic retained report\n"
+    report_sha256 = _sha256(report)
+    report_path = storage_root / "retained-report.pdf"
+    report_path.write_bytes(report)
+    stored = StoredFile(
+        original_filename="retained-report.pdf",
+        media_type="application/pdf",
+        storage_path=str(report_path),
+        sha256=report_sha256,
+        size_bytes=len(report),
+        purpose="project_evidence",
+        malware_scan_status="clean",
+        immutable=True,
+    )
+    session.add(stored)
+    session.flush()
+    parent = EvidenceSource(
+        estimate_id=estimate.id,
+        defect_id=defect.id,
+        stored_file_id=stored.id,
+        evidence_type="defect_photo_detail_review",
+        source_reference="retained-report-photo-review",
+        page_number="1",
+        region_reference="photo-detail:P001-I01:defect:D-REPORT-001",
+        sha256=report_sha256,
+        evidence_class="observed",
+        status="active",
+        source_json={
+            "source": "native_or_zoom_photo_vision",
+            "photo_id": "P001-I01",
+            "native_extraction_ok": True,
+            "native_pixels": [50, 50],
+            "source_bbox": [10.0, 10.0, 60.0, 60.0],
+        },
+    )
+    session.add(parent)
+    session.flush()
+    embedded_sha256 = _sha256(_jpeg((50, 50), (30, 70, 110)))
+    return estimate, defect, parent, embedded_sha256, report_sha256
+
+
 def test_retention_creates_governed_evidence_without_committing(tmp_path: Path) -> None:
     storage_root = tmp_path / "storage"
     retrieval_root = tmp_path / "retrieval"
@@ -192,6 +243,137 @@ def test_retention_creates_governed_evidence_without_committing(tmp_path: Path) 
         assert artifacts[retained.evidence.id]["provenance"]["parent_evidence_id"] == parent.id
         assert artifacts[retained.evidence.id]["provenance"]["pixel_width"] == 1200
         assert artifacts[retained.evidence.id]["provenance"]["pixel_height"] == 800
+
+
+def test_retention_accepts_report_derived_parent_only_with_exact_report_binding(
+    tmp_path: Path,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, defect, parent, embedded_sha256, report_sha256 = _setup_report_derived_parent(
+            session,
+            storage_root,
+        )
+        result = _verified_result(retrieval_root, embedded_sha256)
+
+        retained = retain_verified_linked_image(
+            session,
+            storage_root=storage_root,
+            retrieval_root=retrieval_root,
+            estimate_id=estimate.id,
+            parent_evidence_source_id=parent.id,
+            result=result,
+            operator_reference="Synthetic test operator",
+            source_report_sha256=report_sha256,
+        )
+
+        assert retained.evidence.defect_id == defect.id
+        assert (
+            retained.evidence.source_json["phase8_visual_inference"]["parent_evidence_source_id"]
+            == parent.id
+        )
+
+
+@pytest.mark.parametrize("invalid_source_report_sha256", [None, "f" * 64])
+def test_retention_rejects_report_derived_parent_without_exact_report_binding(
+    tmp_path: Path,
+    invalid_source_report_sha256: str | None,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256, _report_sha256 = _setup_report_derived_parent(
+            session,
+            storage_root,
+        )
+        result = _verified_result(retrieval_root, embedded_sha256)
+
+        with pytest.raises(LinkedImageEvidenceError) as caught:
+            retain_verified_linked_image(
+                session,
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                estimate_id=estimate.id,
+                parent_evidence_source_id=parent.id,
+                result=result,
+                operator_reference="Synthetic test operator",
+                source_report_sha256=invalid_source_report_sha256,
+            )
+
+        assert caught.value.code == "PARENT_EVIDENCE_INVALID"
+
+
+def test_retention_rejects_report_derived_parent_with_mismatched_photo_bounds(
+    tmp_path: Path,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256, report_sha256 = _setup_report_derived_parent(
+            session,
+            storage_root,
+        )
+        parent.source_json["source_bbox"] = [11.0, 10.0, 60.0, 60.0]
+        session.flush()
+        result = _verified_result(retrieval_root, embedded_sha256)
+
+        with pytest.raises(LinkedImageEvidenceError) as caught:
+            retain_verified_linked_image(
+                session,
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                estimate_id=estimate.id,
+                parent_evidence_source_id=parent.id,
+                result=result,
+                operator_reference="Synthetic test operator",
+                source_report_sha256=report_sha256,
+            )
+
+        assert caught.value.code == "PARENT_EVIDENCE_INVALID"
+
+
+def test_retention_rejects_report_derived_parent_when_both_bounds_are_missing(
+    tmp_path: Path,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256, report_sha256 = _setup_report_derived_parent(
+            session, storage_root
+        )
+        parent.source_json["source_bbox"] = None
+        session.flush()
+        result = replace(
+            _verified_result(retrieval_root, embedded_sha256),
+            photo_bbox=None,
+        )
+
+        with pytest.raises(LinkedImageEvidenceError) as caught:
+            retain_verified_linked_image(
+                session,
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                estimate_id=estimate.id,
+                parent_evidence_source_id=parent.id,
+                result=result,
+                operator_reference="Synthetic test operator",
+                source_report_sha256=report_sha256,
+            )
+
+        assert caught.value.code == "PARENT_EVIDENCE_INVALID"
 
 
 def test_retention_is_idempotent_and_does_not_duplicate_audit(tmp_path: Path) -> None:

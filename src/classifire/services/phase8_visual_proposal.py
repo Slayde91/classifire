@@ -201,7 +201,7 @@ def validate_visual_evidence_manifest(
         "provenance",
     }
     evidence_ids: set[str] = set()
-    parent_links: list[tuple[int, str, str]] = []
+    parent_links: list[tuple[int, str, str, str]] = []
     for index, artifact in enumerate(artifacts, start=1):
         if not isinstance(artifact, dict):
             errors.append(f"evidence artifact {index} must be an object")
@@ -272,6 +272,7 @@ def validate_visual_evidence_manifest(
         region_reference = provenance.get("region_reference")
         if region_reference is not None and not _nonblank(region_reference):
             errors.append(f"evidence artifact {index} region_reference must be non-empty or null")
+        relationship = _nonblank(provenance.get("relationship"))
         parent_id = provenance.get("parent_evidence_id")
         if parent_id is not None:
             parent_id = _nonblank(parent_id)
@@ -280,7 +281,7 @@ def validate_visual_evidence_manifest(
                     f"evidence artifact {index} parent_evidence_id must be non-empty or null"
                 )
             elif evidence_id:
-                parent_links.append((index, evidence_id, parent_id))
+                parent_links.append((index, evidence_id, parent_id, relationship))
         dimensions: list[int | None] = []
         for field_name in ("pixel_width", "pixel_height"):
             value = provenance.get(field_name)
@@ -296,14 +297,18 @@ def validate_visual_evidence_manifest(
         ):
             errors.append(f"image evidence artifact {index} requires pixel dimensions")
 
-    for index, evidence_id, parent_id in parent_links:
+    for index, evidence_id, parent_id, relationship in parent_links:
         if parent_id == evidence_id:
             errors.append(f"evidence artifact {index} cannot parent itself")
-        elif parent_id not in evidence_ids:
+        elif parent_id not in evidence_ids and relationship != "linked_original":
             errors.append(
                 f"evidence artifact {index} references unknown parent evidence {parent_id}"
             )
-    parents = {evidence_id: parent_id for _index, evidence_id, parent_id in parent_links}
+    parents = {
+        evidence_id: parent_id
+        for _index, evidence_id, parent_id, _relationship in parent_links
+        if parent_id in evidence_ids
+    }
     for evidence_id in parents:
         visited: set[str] = set()
         current: str | None = evidence_id
@@ -835,7 +840,9 @@ def validate_phase8_visual_proposal_receipt(receipt: Any) -> list[str]:
         errors.append("runtime_inference_performed does not match recorded stages")
     if status == VISUAL_PROPOSAL_APPROVED and any(stage.get("failed") for stage in stages):
         errors.append("approved visual proposal receipt cannot contain a failed stage")
-    if status == VISUAL_PROPOSAL_APPROVED and isinstance(result_hashes, dict):
+    if status in {VISUAL_PROPOSAL_APPROVED, VISUAL_PROPOSAL_BLOCKED} and isinstance(
+        result_hashes, dict
+    ):
         expected_result_hashes: dict[str, str | None] = {
             "blind_inventory_sha256": None,
             "proposal_sha256": None,
@@ -858,7 +865,7 @@ def validate_phase8_visual_proposal_receipt(receipt: Any) -> list[str]:
                 expected_result_hashes["validator_sha256"] = stage.get("payload_sha256")
         for name, expected_hash in expected_result_hashes.items():
             if result_hashes.get(name) != expected_hash:
-                errors.append(f"approved {name} is not bound to its final inference stage")
+                errors.append(f"{name} is not bound to its final inference stage")
     return list(dict.fromkeys(errors))
 
 

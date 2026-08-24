@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import tempfile
 from dataclasses import dataclass
@@ -47,6 +48,9 @@ _PARENT_METADATA_KEYS = frozenset(
         "validation_only",
     }
 )
+
+
+_REPORT_DERIVED_PARENT_EVIDENCE_TYPE = "defect_photo_detail_review"
 
 
 class LinkedImageEvidenceError(RuntimeError):
@@ -120,7 +124,19 @@ def _validate_parent(
     stored: StoredFile,
     *,
     result: LinkedImageResult,
+    source_report_sha256: str | None,
 ) -> None:
+    if str(parent.page_number or "").strip() != str(result.page_number):
+        raise LinkedImageEvidenceError("PARENT_PAGE_MISMATCH")
+    if _is_report_derived_parent(parent, stored):
+        _validate_report_derived_parent(
+            storage_root,
+            parent,
+            stored,
+            result=result,
+            source_report_sha256=source_report_sha256,
+        )
+        return
     if (
         parent.status != "active"
         or parent.stored_file_id != stored.id
@@ -136,8 +152,6 @@ def _validate_parent(
         or stored.size_bytes > DEFAULT_LINKED_IMAGE_POLICY.maximum_image_bytes
     ):
         raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID")
-    if str(parent.page_number or "").strip() != str(result.page_number):
-        raise LinkedImageEvidenceError("PARENT_PAGE_MISMATCH")
     if str(parent.region_reference or "").strip() != result.photo_id:
         raise LinkedImageEvidenceError("PARENT_PHOTO_MISMATCH")
     metadata = parent.source_json
@@ -155,6 +169,77 @@ def _validate_parent(
     path = _contained_file(storage_root, stored)
     try:
         if path.stat().st_size != stored.size_bytes or _sha256_file(path) != stored.sha256.lower():
+            raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID")
+    except OSError as exc:
+        raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID") from exc
+
+
+def _is_report_derived_parent(parent: EvidenceSource, stored: StoredFile) -> bool:
+    return (
+        parent.evidence_type == _REPORT_DERIVED_PARENT_EVIDENCE_TYPE
+        and str(stored.media_type or "").strip().lower() == "application/pdf"
+    )
+
+
+def _normalised_bbox(value: object) -> tuple[float, float, float, float] | None:
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        return None
+    try:
+        bbox = tuple(float(item) for item in value)
+    except (TypeError, ValueError):
+        return None
+    if any(not math.isfinite(item) for item in bbox):
+        return None
+    return bbox  # type: ignore[return-value]
+
+
+def _validate_report_derived_parent(
+    storage_root: Path,
+    parent: EvidenceSource,
+    stored: StoredFile,
+    *,
+    result: LinkedImageResult,
+    source_report_sha256: str | None,
+) -> None:
+    report_sha256 = _normalised_sha256(
+        source_report_sha256,
+        code="PARENT_EVIDENCE_INVALID",
+    )
+    metadata = parent.source_json
+    native_pixels = metadata.get("native_pixels") if isinstance(metadata, dict) else None
+    source_bbox = metadata.get("source_bbox") if isinstance(metadata, dict) else None
+    normalised_source_bbox = _normalised_bbox(source_bbox)
+    normalised_result_bbox = _normalised_bbox(result.photo_bbox)
+    if (
+        parent.status != "active"
+        or parent.stored_file_id != stored.id
+        or parent.sha256 is None
+        or parent.sha256.lower() != report_sha256
+        or stored.sha256.lower() != report_sha256
+        or stored.purpose != "project_evidence"
+        or stored.immutable is not True
+        or str(stored.malware_scan_status or "").strip().lower() not in _SAFE_SCAN_STATUSES
+        or str(stored.media_type or "").strip().lower() != "application/pdf"
+        or not isinstance(metadata, dict)
+        or metadata.get("source") != "native_or_zoom_photo_vision"
+        or metadata.get("photo_id") != result.photo_id
+        or metadata.get("native_extraction_ok") is not True
+        or not isinstance(native_pixels, list)
+        or len(native_pixels) != 2
+        or any(
+            isinstance(item, bool) or not isinstance(item, int) or item < 1
+            for item in native_pixels
+        )
+        or result.embedded_width != native_pixels[0]
+        or result.embedded_height != native_pixels[1]
+        or normalised_source_bbox is None
+        or normalised_result_bbox is None
+        or normalised_source_bbox != normalised_result_bbox
+    ):
+        raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID")
+    path = _contained_file(storage_root, stored)
+    try:
+        if path.stat().st_size != stored.size_bytes or _sha256_file(path) != report_sha256:
             raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID")
     except OSError as exc:
         raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID") from exc
@@ -382,6 +467,7 @@ def retain_verified_linked_image(
     result: LinkedImageResult,
     operator_reference: str,
     policy: LinkedImagePolicy = DEFAULT_LINKED_IMAGE_POLICY,
+    source_report_sha256: str | None = None,
 ) -> LinkedImageEvidenceRetention:
     """Retain verified bytes and provenance without committing the transaction."""
 
@@ -407,7 +493,13 @@ def retain_verified_linked_image(
     parent_stored = db.get(StoredFile, parent.stored_file_id) if parent.stored_file_id else None
     if parent_stored is None:
         raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID")
-    _validate_parent(storage_root, parent, parent_stored, result=result)
+    _validate_parent(
+        storage_root,
+        parent,
+        parent_stored,
+        result=result,
+        source_report_sha256=source_report_sha256,
+    )
 
     body, content_sha256 = _verified_source(result, retrieval_root, policy)
     visual_metadata = {
