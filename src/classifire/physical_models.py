@@ -201,3 +201,42 @@ class PhysicalModelSubmissionReceipt(Base):
     physical_model_lock_created: Mapped[bool] = mapped_column(Boolean, nullable=False)
     receipt_json: Mapped[str] = mapped_column(Text, nullable=False)
     receipt_sha256: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+
+
+class VisualValidationReceipt(Base):
+    """Immutable semantic-review evidence for a future Physical Model Lock.
+
+    Recording this evidence is deliberately separate from canonical submission,
+    admission consumption, and Physical Model Lock creation. A later signed lock
+    boundary must revalidate every stored binding before it can rely on a receipt.
+    """
+
+    __tablename__ = "visual_validation_receipts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_now_utc, nullable=False
+    )
+    receipt_id: Mapped[str] = mapped_column(String(36), unique=True, index=True, nullable=False)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
+    source_run_id: Mapped[str] = mapped_column(String(160), nullable=False)
+    candidate_submission_payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    controller_receipt_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    evidence_manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    evidence_family_inventory_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    evidence_family_review_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    human_review_request_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    human_review_response_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    approval_reference: Mapped[str] = mapped_column(String(200), nullable=False)
+    reviewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), index=True, nullable=False)
+    unresolved_items: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    policy_versions: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False)
+    implementation_revision: Mapped[str] = mapped_column(String(40), nullable=False)
+    receipt_json: Mapped[str] = mapped_column(Text, nullable=False)
+    receipt_sha256: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+
+    __table_args__ = (
+        Index("ix_visual_validation_receipt_estimate_status", "estimate_id", "status"),
+    )

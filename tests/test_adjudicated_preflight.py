@@ -44,7 +44,7 @@ def _mark_clean_lineage(db) -> None:  # type: ignore[no-untyped-def]
     db.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(64))"))
     db.execute(
         text("INSERT INTO alembic_version (version_num) VALUES (:revision)"),
-        {"revision": "0008_retire_legacy_initial_submissions"},
+        {"revision": "0009_visual_validation_receipts"},
     )
     db.commit()
 
@@ -141,9 +141,7 @@ def test_preflight_is_no_write_and_binds_current_stack(tmp_path) -> None:  # typ
         assert receipt["gateway_call_performed"] is False
         assert receipt["lock_eligible"] is False
         assert binding.estimate_id == estimate.id
-        assert binding.submission_payload_sha256 == receipt[
-            "normalised_submission_payload_sha256"
-        ]
+        assert binding.submission_payload_sha256 == receipt["normalised_submission_payload_sha256"]
         assert "preflight_implementation" in binding.artifact_digests
         assert db.query(Opening).filter(Opening.estimate_id == estimate.id).count() == 0
 
