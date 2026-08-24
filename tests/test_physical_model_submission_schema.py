@@ -42,3 +42,25 @@ def test_initial_submission_payload_rejects_implicit_or_unknown_records() -> Non
     payload["openings"][0]["unexpected"] = "not allowed"  # type: ignore[index]
     with pytest.raises(ValidationError, match="Extra inputs"):
         InitialCanonicalPhysicalSubmission.model_validate(payload)
+
+
+@pytest.mark.parametrize("opening_type", ["blank opening seal", "blank_core_hole"])
+def test_initial_submission_payload_rejects_service_link_for_blank_opening(
+    opening_type: str,
+) -> None:
+    payload = _payload()
+    payload["openings"][0]["opening_type"] = opening_type  # type: ignore[index]
+
+    with pytest.raises(ValidationError, match="blank opening must not have service"):
+        InitialCanonicalPhysicalSubmission.model_validate(payload)
+
+
+def test_initial_submission_payload_accepts_blank_opening_without_service() -> None:
+    payload = _payload()
+    payload["openings"][0]["opening_type"] = "blank_core_hole"  # type: ignore[index]
+    payload["services"] = []
+    payload["service_opening_links"] = []
+
+    parsed = InitialCanonicalPhysicalSubmission.model_validate(payload)
+
+    assert parsed.openings[0].opening_type == "blank_core_hole"
