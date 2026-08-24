@@ -213,7 +213,9 @@ def _validate_declarations(
                 "EVIDENCE_FAMILY_DECLARATION_ID_DUPLICATE", declaration_id
             )
         declaration_ids.add(declaration_id)
-        relationship = item.get("relationship_type")
+        relationship = _token(
+            item.get("relationship_type"), code="EVIDENCE_FAMILY_RELATIONSHIP_TYPE_INVALID"
+        )
         if relationship not in HUMAN_DECLARED_EVIDENCE_RELATIONSHIPS:
             raise Phase8EvidenceFamilyReviewError("EVIDENCE_FAMILY_RELATIONSHIP_TYPE_INVALID")
         subject = _token(
@@ -227,7 +229,7 @@ def _validate_declarations(
         if item.get("outcome") != "CONFIRMED":
             raise Phase8EvidenceFamilyReviewError("EVIDENCE_FAMILY_DECLARATION_OUTCOME_INVALID")
         _token(item.get("evidence_basis"), code="EVIDENCE_FAMILY_DECLARATION_BASIS_INVALID")
-        pair = tuple(sorted((subject, related)))
+        pair = (subject, related) if subject < related else (related, subject)
         relationship_key = (relationship, pair)
         if relationship_key in seen_relationships:
             raise Phase8EvidenceFamilyReviewError("EVIDENCE_FAMILY_RELATIONSHIP_DUPLICATE")
