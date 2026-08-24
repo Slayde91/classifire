@@ -2,7 +2,7 @@
 
 **Document status:** Current pre-production target architecture reconciled with implementation
 
-**Architecture version:** 3.18
+**Architecture version:** 3.19
 
 **Application release basis:** shared-main Python package `0.1.0`; controlled
 domain/source lineage `v2.13`
@@ -22,23 +22,31 @@ designed component into an operationally complete phase.
 | Architecture area | Repository evidence | Current status |
 | --- | --- | --- |
 | Core application | FastAPI, CLI, SQLAlchemy and Alembic exist on shared `main`; this branch also has a server-rendered UI and later-phase services | Completed foundation; pre-production and not yet consolidated |
-| Evidence and physical proposal | Shared-main retained-evidence, linked-original, blind-inventory, bounded correction and proposal-runner services | Synthetic path verified; representative approved-report execution remains in progress |
+| Evidence and physical proposal | Shared-main retained-evidence, linked-original, blind-inventory, bounded correction and proposal-runner services; pushed representative package at `b422240` | Representative rollback and safe abstention verified; accepted model, durable approved receipt, and generalisation remain in progress |
 | Canonical physical model | Shared-main Opening/Service/link and admission services | In progress; the current estimate has no canonical model or active lock |
-| Technical through Human Release | Guarded services, persistence and reference-fixture tests on this divergent branch | Branch-local foundations only; absent or materially different on shared `main` and blocked for the current estimate |
-| OpenClaw/Mission Control | Role-scoped API/plugin contracts, zero-tool inference identities and Mission Control client/bootstrap | Gates A-F recorded for the configured local environment; representative run, consolidation and production proof remain in progress |
+| Technical through Human Release | Lower-level shared-main services plus richer guarded legacy/local foundations | Not architecture-complete; blocked for the current estimate and split across incompatible source lines |
+| OpenClaw/Mission Control | Role-scoped API/plugin contracts, zero-tool inference identities and Mission Control client/bootstrap | Gates A-F and representative rollback recorded; consolidation and production proof remain in progress |
 | External admission signer | Offline Android signer on shared `main`, verified release APK and on-device governance-key evidence | Implemented and bounded; no real admission has been signed or registered |
 | Production operation | Security settings and fail-closed gates exist | In progress; recovery, scale, monitoring and production readiness remain incomplete |
 
 ### 0.1 Repository divergence that affects architecture
 
-The checked-out branch is a legacy stacked line at `4efe1e5`. Shared `main`
-is at `7801636`; from merge base `fea9549`, 376 commits are unique to this
-branch and 116 are unique to shared main. The branch uses records spread across
+The audited pre-reconciliation tip of the checked-out legacy stacked branch is
+`79f82a6`. Shared `main` is at `7801636`; from merge base `fea9549`, 377
+commits were unique to this branch and 116 were unique to shared main before
+this docs-only commit. The branch uses records spread across
 `models.py`, `canonical_models.py` and `commercial_models.py`; shared
 `main` contains the current Phase 8 lineage around `physical_models.py`,
 `api/agent_api.py`, mutation guards, retained evidence, and bounded proposal
 services. The source trees are not interchangeable and must be reconciled by
 reviewed changes from current `main`, not by a wholesale branch merge.
+
+The pushed `b422240` representative-package commit is one coherent current-
+main slice but is not merged. A second exact-main worktree contains 75
+uncommitted visual-receipt, evidence-family, human-review, provenance, rights,
+technical-compatibility, dependency-lock, and source-release-contract paths.
+Those candidates are in progress only and are not part of this checked-out
+branch or shared main.
 
 The local source graph ends at
 `0007_reconcile_adjudicated_admission_lineages`, while the local operational
@@ -73,9 +81,17 @@ Evidence
 
 Pricing availability must never determine physical reality or technical applicability. A defect row, photograph, Opening, Service, repair component and pricing line are separate canonical concepts.
 
+The arrows above describe required reasoning stages, not a claim that every
+stage is already a first-class table. Observation and Interpretation are
+currently represented through evidence/decision fields, substrate plane is an
+Opening attribute rather than a separate `SubstratePlane` record, and
+Engineering Requirement is approximated by candidate-requirement and required-
+component records. First-class persistence remains an architecture decision
+where audit or lifecycle needs justify it.
+
 ## 2. Current authority hierarchy
 
-For the current human-governed NSW/ACT deployment, conflicts are resolved in this order:
+For the current target human-governed NSW/ACT profile, conflicts are resolved in this order:
 
 1. platform safety, security and system policy;
 2. CLASSIFIRE Constitution and canonical ontology;
@@ -158,6 +174,9 @@ Competent humans own library approval, material exceptions and Human Release. Ap
 ```text
 Evidence intake
 → Physical modelling
+→ Independent visual validation
+→ Governed evidence review/adjudication when blocked
+→ Admission-bound initial canonicalisation when no canonical model exists
 → Physical Model Lock
 → Opening-specific technical search
 → Repair Strategy Lock
@@ -175,10 +194,14 @@ A failed gate returns the estimate to the earliest owning stage. Narrative statu
 Where an estimate has no current canonical Opening, Service, or
 Service-Opening Link records, initial canonicalisation is an additional
 controlled transition before the Physical Model Lock. The required sequence is
-a hash-bound proposal-only preflight, fresh external P-256 admission,
+an accepted evidence-bound proposal, resolution of every scope-affecting review
+item or exclusion of the affected record under a limitation that still passes
+completeness, a hash-bound proposal-only preflight, fresh external P-256 admission,
 immutable admission-journal registration, same-transaction protected-state
-recheck, and exact initial canonical submission. Registration records
-authority only; it is neither a canonical submission nor a lock.
+recheck, and exact initial canonical submission. Human review is governed
+evidence input, not automatic canonical truth. The limited v2 artifact does not
+meet this accepted-proposal gate. Registration records authority only; it is
+neither a canonical submission nor a lock.
 
 ## 5. Evidence architecture
 
@@ -250,6 +273,12 @@ Relationship completeness is then scope-sensitive:
 - `blank_opening` and `blank_core_hole` require no Service link;
 - a blank Opening with a linked Service is contradictory and must be resolved before lock.
 
+Shared-main physical-scope and lock-completeness checks reject a linked blank
+Opening, but the initial-submission schema does not reject that contradiction
+at its earliest boundary. The checked legacy branch's `physical_scope.py` also
+lacks the rule. The uncommitted current-main worktree adds the early schema
+guard and regression coverage but is not published.
+
 For the current fire-seal and penetration scope, rational AI best estimates may also be used for unknown service size or quantity when report text and visual evidence provide a defensible basis. Such values must be labelled provisional or inferred, carry reduced confidence and retain the estimation basis.
 
 ### 6.3 FRL policy for the current scope
@@ -280,10 +309,22 @@ The dirty branch's separate `canonical_models` admission implementation and
 `0007` graph are historical development evidence. They are superseded by the
 shared-main composition and must not be deployed or forward-ported wholesale.
 
-The current 17-Opening/24-Service/24-link proposal has only a no-write v6
-preflight. An immutable read-only database check confirms zero canonical
+The historical whole-estimate 17-Opening/24-Service/24-link proposal has only a
+no-write v6 preflight. It is not accepted physical truth or reusable admission
+authority. An immutable read-only database check confirms zero canonical
 Openings, Services, links, admissions, submission receipts and active Physical
-Model Locks for that estimate. The proposal is not canonical.
+Model Locks for that estimate.
+
+The representative v17 run completed from revision `7801636`, resolved all 31
+required originals, executed four proposal-only stages, rolled back with
+protected state unchanged, and correctly returned
+`VISUAL_PROPOSAL_BLOCKED`. Human review v2 accounts for all seven review items
+and four unresolved observations. Hash, schema, binding, and item-coverage
+validation passes for a selected-defect proposal-only artifact containing five
+Openings, six Services, and six links; it does not independently prove physical
+truth. The artifact remains limited by
+missing dimensions/boundaries, exact substrate and material proof, labels, and
+opposite-face continuity. It is not canonical and cannot qualify for a lock.
 
 Shared `main` now includes bounded linked-original retrieval and retention,
 the proposal-only runner, and a reproducibly built controlled-write plugin.
@@ -293,8 +334,9 @@ and candidate fingerprint
 `CB52D91823EFC06EB76E443D3E8D4CF3D9C901DFEBB262842E1EADAE94B26E15`.
 The audit performed no live change and granted no deployment or write
 authority. The earlier missing-artifact blocker at `82d9140` is superseded.
-Representative report execution, every real admission, registration,
-submission, and the later lock remain separate gates.
+The representative package is pushed separately at `b422240` but is not
+merged. Every real preflight, admission, registration, submission, and later
+lock remains a separate gate.
 
 ### 6.5 Offline external signer
 
@@ -318,7 +360,7 @@ implementation must not be confused with the local writer source.
 
 CLASSIFIRE does not have one universal “Package 15 database”. The umbrella authority is the **CLASSIFIRE Technical Authority Registry**.
 
-The current registry contains one active technical library:
+The current typed registry foundation defines one technical-library identity:
 
 ```text
 Technical library ID: TECHLIB-FIREFLY-P15
@@ -327,6 +369,11 @@ Source package: Package 15
 Executable variants: Package 17
 Source evidence: FAS190234, FAS190235 and FAS190236
 ```
+
+This is currently a typed/static FIREFLY foundation with release-manifest
+support, not a completed persistent multi-manufacturer production registry. A
+source-neutral library-release contract and stricter retained-source-authority
+checks exist only in the uncommitted exact-main worktree.
 
 Package 15 is therefore the **FIREFLY Technical System Library**. Package 17 contains executable FIREFLY variants derived from that source. Future manufacturer or specialist libraries must be approved independently and added as separate registry members without changing existing FIREFLY identities.
 
@@ -406,6 +453,11 @@ Every estimate pins immutable releases for:
 
 Published releases contain exact record IDs and a verified manifest hash. Later library changes must not alter an existing estimate.
 
+The uncommitted current-main worktree adds deterministic source-neutral
+technical/pricing release contracts and conflict-safe re-import checks. That
+candidate does not approve or publish any private source and is not yet the
+shared runtime contract.
+
 The uploaded v2.13 package files are preserved as controlled migration/source evidence. Runtime authority comes from approved database releases and manifests, not from copying large source packages into every agent prompt.
 
 ## 12. Validation and release gates
@@ -435,6 +487,12 @@ At minimum the following evidence-backed gates are required:
 - Human Release approval.
 
 Static `PASS` text is prohibited. Every gate must retain the validator, inputs, counts, exceptions, result and hash.
+
+An isolated current-main candidate adds immutable per-defect
+`VisualValidationReceipt` records and makes complete, current, limitation-free
+coverage a Physical Model Lock prerequisite. Migration `0009` and its tests
+are uncommitted. No real approved receipt has been written, and the proposal-
+only or human-review code has no authority to persist one.
 
 ## 13. Outputs
 
@@ -487,29 +545,34 @@ These future domains require additive physical-asset schemas, first-class measur
 
 The project remains pre-production until these gaps are closed:
 
-1. Continue new work from current shared `main`; reconcile or close the stacked
-   legacy branches through bounded review rather than a wholesale merge.
-2. Complete the rollback-only representative linked-original proposal run
-   tracked by issue #42 and inspect the retained evidence, proposal, Validator,
-   protected-state, and rollback receipts.
-3. Persist and enforce the production visual-validation receipt and complete the
-   evidence-family taxonomy and multi-report generalisation.
+1. Review the pushed `b422240` representative-package branch against current
+   main, publish it through a focused pull request, and update stale issue #42;
+   continue closing legacy branches through bounded review.
+2. Preserve the v17 safe-abstention and human-review-v2 evidence. Obtain
+   governed additional evidence or a site visit for the unresolved dimensions,
+   boundaries, exact substrate/material proof, labels, and opposite-face
+   continuity; do not rerun unchanged inference.
+3. Split and review the uncommitted visual-receipt, human-review/provenance,
+   evidence-family, and rights candidates. Persist and enforce a production
+   visual-validation receipt only through an approved write boundary.
 4. Assess whether current-main admission expiry validation needs an explicit
    maximum lifetime, and forward-port only the proven security rule with tests
    if the gap is confirmed.
 5. Produce a fresh exact-main preflight only after the proposal path is accepted;
    treat external signing, admission registration, canonical submission, and
    lock design as separately authorised operations.
-6. Design and approve the signed lock-admission boundary required for a
-   replacement active Physical Model Lock.
+6. Review the local signed lock-admission design, then separately approve and
+   implement the boundary required for a replacement active Physical Model
+   Lock. The current document is design only.
 7. Consolidate scope-aware blank-opening completeness, compatibility routes,
    product naming, and model/migration ownership on the main-line architecture.
 8. Reconcile the branch-local technical, quantity/labour, commercial,
    validation, snapshot, output, and Human Release foundations into current
    `main` only through phase-specific reviews and acceptance evidence.
-9. Complete private knowledge-source publication, registry-neutral technical
-   provenance, multi-library pinning, productivity coverage, and removal of the
-   schema-level Service quantity default.
+9. Review the local source-neutral release and technical-compatibility
+   candidates; complete private source publication, persistent multi-library
+   pinning, productivity coverage, and removal of the schema-level Service
+   quantity default.
 10. Perform rendered-output QA, security, backup/restore, rollback, scale,
     observability, and production deployment tests while preserving human-only
     acceptance of exact snapshot and output hashes.

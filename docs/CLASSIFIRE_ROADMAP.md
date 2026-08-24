@@ -2,12 +2,11 @@
 
 **Document status:** Active working roadmap
 
-**Roadmap version:** 2026-08-23 r15
+**Roadmap version:** 2026-08-24 r16
 
 **Product status:** Pre-production prototype and controlled UAT build
 
-**Supersedes:** Shared-main revision 2026-08-23 r14 and this branch's
-2026-08-22 r3 reconciliation. Supplied PDFs and earlier revisions remain
+**Supersedes:** 2026-08-23 r15. Supplied PDFs and earlier revisions remain
 immutable reference and decision-history records.
 
 **Scope:** Passive-fire evidence intake, physical-model automation, technical selection, quantities, commercial recovery, validation, output, release, and production hardening.
@@ -38,14 +37,15 @@ evidence-to-physical-model UAT path. Current shared `main` can retain report
 evidence, retrieve and govern linked originals, construct a proposal-only
 Opening-Service model through separate zero-tool identities, independently
 challenge it, compare it only after inference, and preserve protected canonical
-state. The bounded runner is synthetic-tested; representative execution against
-an explicitly approved retained report remains pending under issue #42.
+state. The representative v17 run has now completed from that source baseline,
+rolled back with protected state unchanged, and correctly stopped at
+`VISUAL_PROPOSAL_BLOCKED`.
 
 This divergent branch also contains guarded technical, quantity/labour,
 commercial, validation, snapshot, output, and human-release foundations with
-reference tests. Those services are absent or materially different on shared
-`main`; they are branch-local implementation evidence, not published main-line
-completion.
+reference tests. Shared main has lower-level technical, release, calculation,
+snapshot, and output foundations, but neither source line satisfies the full
+Phase 9-14 exit architecture.
 
 Code availability is not current-project completion. The current real-report
 estimate has no canonical Opening, Service, link, admission, submission receipt,
@@ -59,6 +59,12 @@ extensive uncommitted work. Shared `main` is the basis for current Phase 8
 development and any future deployment candidate; local-only writer and
 compiled-plugin artifacts are not eligible for wholesale publication.
 
+The coherent representative package is pushed separately at `b422240` but is
+not merged and has no pull request. A second current-main worktree contains 75
+uncommitted visual-receipt, human-review, provenance, evidence-family,
+technical-compatibility, dependency-lock, and source-release candidate paths.
+They are local in-progress evidence, not shared capability.
+
 ### 2.2 Verified recent advances
 
 | Area | Verified current position |
@@ -69,28 +75,42 @@ compiled-plugin artifacts are not eligible for wholesale publication.
 | Visual safety | Physical and Validator roles use isolated visual sessions; structural retry is blocked after Validator-scoped correction to prevent authority escape. |
 | Proposal-only safety | Gateway preflight is fail-closed, protected-state receipts are bound to proposal receipts, and proposal-only execution cannot submit or lock a canonical model. |
 | Reconciliation | The human-reference comparator binds proposal/final-state inputs by path and hash and detects topology/substrate swaps rather than matching disconnected multisets. |
-| Human adjudication | A provenance-bound, offline adjudicated proposal revision exists for the current UAT. It records human decisions separately from runtime inference and leaves canonical state unchanged. |
+| Human adjudication | Human-review v2 accounts for all 7 review items and 4 unresolved observations; structural/hash validation passes for its selected-defect 5-Opening/6-Service/6-link artifact, which remains limited and leaves canonical state unchanged. |
 | Downstream services | This branch has focused-test foundations for technical search/locking, quantities/labour, commercial recovery, independent validation, snapshot, richer PDF/XLSX rendering and human-only release; they are not shared-main completion. |
 | External signer | Shared `main` contains an offline, biometric, hardware-backed Android P-256 signer with no Internet or canonical-write client. The approved release APK and `governance-p256-02` public proof are verified; no admission has been signed. |
-| Linked-original runner | Shared `main` contains guarded retrieval, governed retention and a bounded proposal-only runner. Synthetic tests pass; the representative approved-report run is pending under issue #42. |
+| Linked-original runner | Shared `main` contains the bounded runner. The v17 representative execution resolved 31/31 required originals across 41 occurrences, ran four proposal-only stages, and safely blocked with rollback proven. |
+| Representative package | Pushed commit `b422240` contains the coherent package/recovery slice with 332 full and 145 focused tests recorded; it is not merged. |
+| Current-main candidates | A separate uncommitted worktree records 362 full tests over visual receipts, review/provenance, evidence families, technical/source contracts, and dependency locks; publication review remains. |
 | Deployment audit | The final exact-main Gate A candidate at `7801636` passes with plugin SHA-256 `38812E99...AEE4` and candidate fingerprint `CB52D918...6E15`. The audit made no live change and granted no write authority. |
 
 ### 2.3 Current Phase 8 evidence position
 
-The full-resolution proposal-only UAT produced a visual-validated proposal using
-the measured **12,000-character Windows-safe defect budget**. The subsequent
-offline adjudicated revision produces **17 Openings, 24 normalized Service
-rows, and 24 Opening-Service links** in the v6 preflight. Historical references
-to 22 Service groups describe a different pre-normalisation grouping measure.
-The revision is not a canonical physical model.
+The representative v17 package executed the approved full report from revision
+`7801636`. It resolved all 31 required linked originals across 41 report photo
+occurrences, supplied four target-defect originals to four proposal-only
+stages, and returned `VISUAL_PROPOSAL_BLOCKED`. Rollback preserved 10 Defects,
+128 EvidenceSources, and zero canonical Openings, Services, links, or active
+locks. No canonical submission occurred.
 
-The adjudicated proposal comparison passes against the versioned adjudication record. The historical human-reference comparison remains a diagnostic with three explained differences:
+Human-review v2 accounts for all seven Validator review items and four
+unresolved observations exactly once. Hash, schema, binding, and item-coverage
+validation passes for a proposal-only artifact containing **5 Openings, 6
+Services, and 6 Opening-Service links** for defect `147042`. This structural
+validation does not independently prove physical truth.
+The human response records the reviewer's topology/classification/quantity
+decisions, while the artifact retains limitations for dimensions, depth and
+obscured boundaries, exact substrate and material proof, labels, and opposite-
+face continuity. No site visit occurred.
 
-1. Defect 147038 retains an unknown material for a separate pipe rather than inventing PVC.
-2. Defect 147039 follows the clarified wall penetration instead of the older fixture's concrete-slab classification.
-3. Defect 147042 preserves the clarified five-opening topology and explicit uncertainty rather than forcing the older fixture's service grouping or substrate assumption.
+The historical whole-estimate v6 preflight contains **17 Openings, 24
+normalized Services, and 24 links**. That is a different scope; it remains
+no-write historical evidence and is not accepted physical truth or reusable
+admission authority. Count agreement alone is never sufficient for a Physical
+Model Lock.
 
-These differences must remain explicit. Passing a count comparison alone is never sufficient for a Physical Model Lock.
+The earlier full-resolution proposal-only UAT used the measured
+**12,000-character Windows-safe defect budget**. That implementation constraint
+remains recorded here; it does not change the narrower v17 review outcome.
 
 ### 2.4 Immediate governing constraints
 
@@ -101,6 +121,8 @@ These differences must remain explicit. Passing a count comparison alone is neve
 - The historical human fixture and any adjudication for a report are validation-only; they must not be exposed to that report's runtime inference or used as hidden prompt answers.
 - Full-resolution originals are preferred when verified. Lower-resolution thumbnails, crops, labels, and page renders remain contextual evidence when they preserve information not present in the original.
 - Human adjudication is an exception mechanism for genuine conflict or ambiguity. It is not the intended routine input for every estimate.
+- Do not rerun unchanged inference. Remaining site-dependent facts require
+  governed additional evidence or must stay unresolved.
 - Routine live reports and their verified outcomes are intended to improve CLASSIFIRE through a governed continual-learning pipeline. They must not directly self-modify the model during the same live case.
 - A trained or improved model never bypasses protected-state checks, independent validation, Physical Model Lock rules, or human-only final release.
 
@@ -110,17 +132,17 @@ These differences must remain explicit. Passing a count comparison alone is neve
 | --- | --- | --- |
 | Runtime and physical foundations | Merged on shared `main` | Broader production-hardening evidence |
 | Least-privilege agents and admission writer | Gates A-F recorded for the configured local environment; shared migration head is `0008` | Revalidate in any different environment; canonical action still needs its own authority |
-| Linked-original retrieval, retention, and bounded proposal runner | Merged and synthetic-tested through PRs #67-#68 | Representative rollback-only approved-report run under issue #42 |
+| Linked-original retrieval, retention, and bounded proposal runner | Merged; v17 representative rollback and safe abstention verified | Review the pushed `b422240` package, publish it through a focused PR if safe/current, and update stale issue #42 |
 | Offline Android signer | Release APK and hardware-backed `governance-p256-02` proof verified | Fresh exact preflight and separate authority before any real signature |
 | Controlled canonicalisation | Blocked at its intended governance boundary | Fresh preflight, external signature, immutable registration, and separate one-time submission authority |
-| Signed Physical Model Lock | Not yet a completed boundary | Separate design, review, and authority |
-| Later phases 9-14 | Guarded foundations exist on this branch only | Reconcile phase by phase onto current `main` after Phase 8 |
+| Signed Physical Model Lock | Local design exists but is neither approved nor implemented | Separate design approval, implementation review, and authority |
+| Later phases 9-14 | Lower-level main foundations plus richer legacy/local candidates | Reconcile phase by phase after Phase 8 |
 
-The checked-out branch is at `4efe1e5`; shared `main` is at `7801636`.
-From merge base `fea9549`, the histories have 376 branch-only and 116
-main-only commits. The branch is the head of stacked draft PR #13 and must not
-be merged wholesale. PRs #9-#13 require bounded transplantation or explicit
-supersession.
+The audited pre-reconciliation tip of the checked-out branch is `79f82a6`;
+shared `main` is at `7801636`. From merge base `fea9549`, the histories had 377
+branch-only and 116 main-only commits before this docs-only commit. The branch
+is the head of stacked draft PR #13 and must not be merged wholesale. PRs
+#9-#13 require bounded transplantation or explicit supersession.
 
 The dirty local source graph ends at `0007`, while the local database records
 shared-main migration `0008`. This checkout is not a valid deployment or
@@ -137,15 +159,15 @@ database-write source.
 | 4. Mission Control integration | In progress | Visibility/control-plane integration without owning estimate truth. |
 | 5. Evidence intake and evidence resolution | In progress | Every downstream claim traces to retained report, page, image, and verified higher-detail source evidence. |
 | 6. Physical Model engine | In progress | Defensible Barrier-Opening-Service model or explicit limitation for every known defect. |
-| 7. Independent visual topology gate | Verified for synthetic/controlled UAT; representative run and production persistence in progress | Independent non-mutating visual challenge and durable fail-closed receipt. |
-| 8. Corrected real Physical UAT | In progress | Semantically approved corrected physical model and replacement active Physical Model Lock. |
-| 8C. Automated Physical-Model Accuracy Programme | Planned | Measured, leakage-safe reduction of human exception review; optional governed model training only after prototype evidence. |
-| 9. Technical system selection | Branch-local foundation; blocked by Phase 8 and absent from shared main | One current, defensible Repair Strategy Lock per supported Opening. |
-| 10. Quantity and labour | Branch-local foundation; blocked by Phase 9 and absent from shared main | Deterministic, authorised, complete quantities and labour. |
-| 11. Commercial recovery | Branch-local foundation; blocked by Phases 9-10 and absent from shared main | Every required component recovered once with traceable commercial basis. |
-| 12. Independent validation and snapshot | Branch-local foundation; blocked by Phases 8-11 and absent from shared main | No unresolved validation blockers and an immutable reproducible snapshot. |
+| 7. Independent visual topology gate | In progress: representative rollback and safe abstention verified; approved durable receipt not shared | Independent non-mutating visual challenge and durable fail-closed receipt. |
+| 8. Corrected real Physical UAT | In progress and evidence-blocked | Semantically approved corrected physical model and replacement active Physical Model Lock. |
+| 8C. Automated Physical-Model Accuracy Programme | Preparatory local drafts; execution blocked by admission gate | Measured, leakage-safe reduction of human exception review; optional governed model training only after prototype evidence. |
+| 9. Technical system selection | Basic main/richer legacy and local candidates; blocked by Phase 8 | One current, defensible Repair Strategy Lock per supported Opening. |
+| 10. Quantity and labour | Basic main/richer legacy foundation; blocked by Phase 9 | Deterministic, authorised, complete quantities and labour. |
+| 11. Commercial recovery | Basic main/richer legacy foundation; blocked by Phases 9-10 | Every required component recovered once with traceable commercial basis. |
+| 12. Independent validation and snapshot | Basic main/richer legacy foundation; blocked by Phases 8-11 | No unresolved validation blockers and an immutable reproducible snapshot. |
 | 13. Output and proposal generation | Basic shared-main output exists; richer branch-local renderers are blocked by Phase 12 | Snapshot-backed, reconciled technical and client-facing outputs. |
-| 14. Human Release | Branch-local human-only foundation; blocked by Phase 13 and absent from shared main | Human acceptance of the exact validated snapshot and production checklist. |
+| 14. Human Release | Human-only legacy foundation; blocked by Phase 13 and not complete on main | Human acceptance of the exact validated snapshot and production checklist. |
 | 15. Production hardening | In progress | Secure, observable, recoverable, reproducible production operation and qualified automation. |
 | 16. Deferred structural steel and ductwork | Deferred | Separate approved design, source authority, calculations, and acceptance evidence. |
 
@@ -177,15 +199,21 @@ The active branch, reviewed diff, test evidence, and GitHub draft PR accurately 
 
 - Opening, Service, and ServiceOpeningLink are separate governed records.
 - Blank openings and empty/redundant core holes can legitimately have zero Services.
-- Physical-model change after a lock uses controlled invalidation/amendment, not silent replacement.
+- Legacy-line tests demonstrate controlled invalidation/amendment after a lock;
+  current main still needs a governed reopen and replacement-lock path.
 - A protected-state fingerprint tracks the canonical estimate, workflow, defects, evidence sources, physical records, and historical locks relevant to proposal-only integrity.
+- An uncommitted current-main candidate adds per-defect visual receipts and
+  blank/mixed-model lock regressions. It has no real approved receipt or writer.
 
 ### Remaining work
 
-1. Promote the UAT visual-validation result into a canonical, persisted, hash-bound receipt that lock eligibility enforces.
+1. Review the local visual-receipt design and approved write boundary; do not
+   convert the limited v17 result into an approved receipt.
 2. Finish production-service enforcement for the bounded Validator-to-Physical correction policy.
-3. Verify controlled amendment behaviour across all blank-opening, mixed-service, and all-blank estimate cases.
-4. Complete clean-environment dependency and migration reproducibility evidence.
+3. Review and publish the existing blank/mixed/all-blank lock regressions, then
+   extend them to a governed current-main reopen workflow.
+4. Review the local Windows dependency-lock and migration rehearsal evidence,
+   then add multi-platform, artifact-hash, and deployment proof.
 
 ### Exit condition
 
@@ -201,6 +229,8 @@ Physical records, corrections, lock eligibility, and later amendments are servic
 
 - FIREFLY Package 15/17 technical lineage and Package 14 commercial lineage remain controlled sources.
 - Technical Authority Registry abstractions must continue to distinguish source identity, release identity, and runtime eligibility.
+- Uncommitted source-neutral release and conservative source-authority
+  candidates exist; they do not approve or publish private sources.
 - Private source preservation must not leak into public documents, model prompts, or output assets.
 
 ### Remaining work
@@ -299,11 +329,17 @@ Run and approval visibility is useful and traceable without creating a second mu
   proposal-only receipts without obtaining database write or lock authority.
 - Stale low-resolution conclusions are not allowed to suppress high-detail re-review.
 - Model-visible attachments are rehashed immediately before transport to prevent path or byte substitution after earlier validation.
+- The v17 representative run resolved 31/31 required originals across 41
+  occurrences and proved rollback/safe abstention for one report.
+- Uncommitted evidence-family, quality, provenance, and rights contracts exist
+  as local candidates only.
 
 ### Remaining work
 
 1. Generalise the linked-original workflow across multiple report formats and approved source hosts.
-2. Build a governed evidence-family taxonomy for exact duplicates, re-encodes, crops, annotations, alternate angles, and genuinely distinct images.
+2. Review and publish the local evidence-family/quality/provenance/rights
+   contracts, then extend them across exact duplicates, re-encodes, crops,
+   annotations, alternate angles, and genuinely distinct images.
 3. Add multi-report evidence-quality metrics and adversarial retrieval tests.
 4. Define a production evidence-retention, redaction, deletion, and data-rights policy.
 
@@ -325,11 +361,15 @@ Each physical claim has a durable source trail to the relevant report text, page
 - Barrier substrate, plane, orientation, FRL/assumption, service type, material, quantity, and link evidence must remain independently represented.
 - Unknown, contested, or occluded facts must be withheld or marked provisional rather than inferred from image count alone.
 - Exact opening/service counts do not prove topology correctness.
+- Structural validation passes for the human-review-v2 proposal-only artifact
+  containing 5 Openings, 6 Services, and 6 links for defect `147042`; this does
+  not prove physical truth, and site-dependent facts remain unresolved.
 
 ### Remaining work
 
 1. Complete Phase 8 with a semantically approved model and replacement Physical Model Lock.
-2. Strengthen runtime completeness checks with current visual receipt and evidence-family provenance.
+2. Review and publish the existing visual-receipt and evidence-family-
+   provenance candidates, then integrate them through approved runtime gates.
 3. Expand accuracy and regression coverage to multiple independent reports through Phase 8C.
 
 ### Exit condition
@@ -338,8 +378,8 @@ Every known defect has a defensible physical model or an explicit evidence limit
 
 ## 11. Phase 7 - Independent visual topology gate
 
-**Status:** Verified for synthetic/controlled UAT; representative execution and
-production receipt persistence remain in progress
+**Status:** In progress - representative rollback and safe abstention verified;
+approved durable receipt and generalisation remain
 
 **Objective:** Independently challenge a Physical proposal against the same retained evidence before canonical submission.
 
@@ -361,10 +401,10 @@ production receipt persistence remain in progress
 
 ### Remaining work
 
-1. Execute the shared-main bounded runner against an explicitly approved
-   retained report and retrieval location, preserving rollback and protected
-   state, as tracked by issue #42.
-2. Persist and enforce a canonical VisualValidationReceipt in lock eligibility.
+1. Review the pushed `b422240` package and, if it remains safe and current,
+   publish it through a focused PR before updating stale issue #42.
+2. Review the uncommitted visual-receipt boundary and establish an approved,
+   signed writer before any real receipt is persisted.
 3. Carry bounded correction semantics into every production service boundary.
 4. Broaden adversarial visual-gate tests beyond the current report.
 
@@ -374,9 +414,10 @@ An independently validated, durable visual receipt is required for every canonic
 
 ## 12. Phase 8 - Corrected real Physical UAT
 
-**Status:** In progress
+**Status:** In progress and evidence-blocked
 
-**Objective:** Replace the known-wrong retained physical state with a visual-validated, defect-level defensible Physical Model.
+**Objective:** Create and admit a visual-validated, defect-level defensible
+replacement canonical Physical Model.
 
 ### Current verified milestones
 
@@ -389,15 +430,27 @@ An independently validated, durable visual receipt is required for every canonic
 4. Linked high-resolution originals were verified and made available to visual analysis.
 5. A full-resolution proposal-only UAT completed without canonical writes.
 6. A provenance-bound human-adjudication record and offline revised proposal were created for the exceptional source conflicts and withheld details.
+7. The current-main-based v17 representative run resolved all required linked
+   originals, executed four isolated stages, safely blocked, and rolled back
+   with protected state unchanged.
+8. Human-review v2 accounts for all 7 review items and 4 unresolved
+   observations; structural validation passes for its selected-defect 5/6/6
+   proposal-only artifact without proving physical truth.
 
 ### Current gate
 
-The retained v6 no-write preflight is bound to a 17-Opening/24-Service/24-link
-proposal and reports `PRECHECK_PASSED_SIGNED_ADMISSION_REQUIRED`, with
-submission and lock eligibility both false. An immutable read-only query of the
-target estimate confirms 10 Defects and 128 evidence records but zero canonical
-Openings, Services, links, admissions, submission receipts, active Physical
-Model Locks or downstream records. The proposal remains non-canonical.
+The current defect-level human result remains
+`ADJUDICATED_PROPOSAL_ONLY_WITH_LIMITATIONS`. Missing site-dependent evidence
+prevents an approved visual receipt, accepted proposal, canonical submission,
+or lock. The historical
+v6 no-write preflight is bound to a different whole-estimate
+17-Opening/24-Service/24-link payload and reports
+`PRECHECK_PASSED_SIGNED_ADMISSION_REQUIRED`, with submission and lock
+eligibility both false. It cannot be reused.
+
+An immutable read-only query of the target estimate confirms 10 Defects and 128
+evidence records but zero canonical Openings, Services, links, admissions,
+submission receipts, active Physical Model Locks, or downstream records.
 
 Shared `main` at `7801636` is the current Phase 8 source. Its migration graph
 reaches `0008`, its exact-source/plugin Gate A candidate passes, and Gates A-F
@@ -405,14 +458,17 @@ have recorded local-environment validation. The dirty legacy checkout resolves
 only through `0007`, while its database is already at `0008`; it is not a
 deployment or database-write source.
 
-The immediate repository task is the rollback-only representative
-linked-original proposal run tracked by issue #42. No live signature,
-registration, canonical submission, or lock follows automatically from the run
-or from the Gate A-F evidence.
+The immediate repository task is review/publication of pushed commit
+`b422240`, followed by focused review of the uncommitted current-main human-
+review/provenance and visual-receipt candidates. The real case needs governed
+additional evidence or a site visit for dimensions, boundaries, exact
+substrate/material proof, labels, and opposite-face continuity. Do not rerun
+unchanged inference.
 
 The old v3 signed admission is expired and superseded. Physical Model Lock
 creation remains a later separate gate and is intentionally unavailable until
-a signed lock-admission boundary is designed and approved.
+the local signed-lock design is reviewed and approved, implemented, verified,
+and separately authorised.
 
 ### Required preflight
 
@@ -454,7 +510,7 @@ preflight passes, and the authorised approver separately directs the operation:
 
 ## 13. Phase 8C - Automated Physical-Model Accuracy Programme
 
-**Status:** Planned - not started
+**Status:** Preparatory local drafts only; programme execution not started
 
 **Position:** This is a dedicated post-prototype programme. It reduces routine human intervention through measurable automation and governed continual learning from routine reports, but does not replace existing Phase 8 safety or Phase 14 human release authority.
 
@@ -684,18 +740,21 @@ Fine-tuning is optional. It may begin only when all of the following are satisfi
 
 ## 14. Phase 9 - Technical system selection
 
-**Status:** Branch-local implementation foundation; current UAT blocked by
-Phase 8; absent from shared `main`
+**Status:** Basic shared-main and richer legacy/local foundations; current UAT
+blocked by Phase 8
 
 **Objective:** Select technically applicable systems only from authorised technical releases, Opening by Opening.
 
 ### Implemented foundation
 
-This branch contains the Technical Authority Registry, guarded
+Shared main contains lower-level technical search and release records. This
+branch contains the richer Technical Authority Registry, guarded
 Opening-specific search, mismatch/unknown handling, RepairStrategy and
 RepairStrategyLock persistence and role-scoped service/API paths. Focused tests
 and the deterministic reference fixture exercise these boundaries. The current
-real-report estimate has no locked Opening on which to run them.
+real-report estimate has no locked Opening on which to run them. An uncommitted
+current-main compatibility/source-authority candidate remains human-review-only
+and is not published.
 
 ### Required work
 
@@ -711,16 +770,17 @@ Every supported Opening has one current, traceable, technically defensible strat
 
 ## 15. Phase 10 - Quantity and labour
 
-**Status:** Branch-local implementation foundation; current UAT blocked by
-Phase 9; absent from shared `main`
+**Status:** Basic shared-main and richer legacy foundations; current UAT
+blocked by Phase 9
 
 **Objective:** Derive deterministic component quantities and authorised labour without silent defaults or invented productivity.
 
 ### Implemented foundation
 
-System-required component, formula-input, quantity, productivity-source and
-labour-activity models and deterministic derivation services are present with
-focused tests. Runtime derivation fails closed when an approved productivity
+Shared main has basic calculation foundations. The legacy line has
+system-required component, formula-input, quantity, productivity-source and
+labour-activity models plus deterministic derivation services with focused
+tests. Runtime derivation fails closed when an approved productivity
 source is absent. Production coverage for all 38 FIREFLY activity codes is not
 complete.
 
@@ -737,16 +797,16 @@ All required quantities and labour are deterministic, authorised, traceable, and
 
 ## 16. Phase 11 - Commercial recovery
 
-**Status:** Branch-local implementation foundation; current UAT blocked by
-Phases 9-10; absent from shared `main`
+**Status:** Basic shared-main and richer legacy foundations; current UAT
+blocked by Phases 9-10
 
 **Objective:** Recover each required commercial component exactly once through the approved pricing hierarchy.
 
 ### Implemented foundation
 
-Package 14 candidate recommendation, commercial derivation, method locks,
-active recovery records, component reconciliation and anomaly review are
-implemented with focused tests. They have not been proven on the current
+The legacy branch implements Package 14 candidate recommendation, commercial
+derivation, method locks, active recovery records, component reconciliation,
+and anomaly review with focused tests. They have not been proven on the current
 corrected real-report model because that model is not canonical or locked.
 
 ### Required work
@@ -763,8 +823,8 @@ Every required component has one traceable commercial basis, no duplicate recove
 
 ## 17. Phase 12 - Independent validation and immutable snapshot
 
-**Status:** Branch-local implementation foundation; current UAT blocked by
-Phases 8-11; absent from shared `main`
+**Status:** Basic shared-main snapshot and richer legacy validation foundations;
+current UAT blocked by Phases 8-11
 
 **Objective:** Independently validate the complete estimate and freeze a deterministic release snapshot.
 
@@ -795,8 +855,8 @@ Outputs contain only snapshot-backed facts, reconcile to canonical totals, rende
 
 ## 19. Phase 14 - Human Release
 
-**Status:** Branch-local human-only foundation; current UAT blocked by Phase 13;
-absent from shared `main`
+**Status:** Human-only legacy foundation; current UAT blocked by Phase 13 and
+the full release boundary is not complete on shared main
 
 **Objective:** Preserve accountable human authority for final client and production release.
 
@@ -817,6 +877,13 @@ A human reviewer accepts the corrected UAT and production-release checklist, bou
 **Status:** In progress
 
 **Objective:** Turn proven UAT architecture into a reproducible, secure, observable, recoverable, and maintainable production system.
+
+### Current local evidence
+
+The uncommitted exact-main candidate includes CPython 3.12 Windows runtime and
+development dependency locks plus fresh-environment/migration rehearsal
+evidence. Multi-platform validation, artifact hashes, deployment,
+backup/recovery, scale, monitoring, and production proof remain outstanding.
 
 ### Required production gates
 
