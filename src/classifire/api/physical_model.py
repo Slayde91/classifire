@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import hashlib
+import json
+from datetime import datetime
 from decimal import Decimal
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy.orm import Session
 
 from ..audit import record_audit
@@ -21,6 +24,70 @@ router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Physical Model"])
 Db = Annotated[Session, Depends(get_db)]
 _ADMISSIBLE_EVIDENCE_FILE_PURPOSES = frozenset({"technical_evidence"})
 _ADMISSIBLE_EVIDENCE_SCAN_STATUSES = frozenset({"clean", "not_configured"})
+_SITE_OBSERVATION_EVIDENCE_TYPE = "site_observation"
+
+
+class _StrictSiteEvidencePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+
+class SiteObservationFact(_StrictSiteEvidencePayload):
+    """One field observation; it records uncertainty rather than filling gaps."""
+
+    observation_id: str = Field(min_length=1, max_length=100)
+    subject_kind: Literal["defect", "opening", "service", "substrate_plane", "interface"]
+    subject_reference: str = Field(min_length=1, max_length=300)
+    evidence_locator: str = Field(min_length=1, max_length=500)
+    fact_type: Literal[
+        "opening_dimensions",
+        "opening_depth_or_boundary",
+        "substrate",
+        "service_identification",
+        "service_material",
+        "opposite_face_continuity",
+    ]
+    status: Literal["confirmed", "inferred", "provisional", "unresolved", "contradicted"]
+    value: str | None = Field(default=None, max_length=1000)
+    unit: str | None = Field(default=None, max_length=50)
+    limitation: str | None = Field(default=None, max_length=1000)
+    notes: str | None = Field(default=None, max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_fact_status(self) -> SiteObservationFact:
+        if self.status == "unresolved":
+            if self.value is not None:
+                raise ValueError("unresolved site observations must not provide a value")
+            if not self.limitation:
+                raise ValueError("unresolved site observations require a limitation")
+        elif not self.value:
+            raise ValueError("resolved site observations require a value")
+        return self
+
+
+class SiteObservationEvidencePayload(_StrictSiteEvidencePayload):
+    """Provenance contract for bounded, defect-level governed site evidence."""
+
+    schema_version: Literal["CLASSIFIRE_SITE_OBSERVATION_EVIDENCE_V1"]
+    captured_at: datetime
+    collected_by: str = Field(min_length=1, max_length=300)
+    collection_method: Literal[
+        "site_visit",
+        "remote_supervised_inspection",
+        "documentary_follow_up",
+    ]
+    governance_reference: str = Field(min_length=1, max_length=300)
+    location_reference: str = Field(min_length=1, max_length=500)
+    observations: list[SiteObservationFact] = Field(min_length=1, max_length=100)
+    notes: str | None = Field(default=None, max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_capture_and_observations(self) -> SiteObservationEvidencePayload:
+        if self.captured_at.tzinfo is None or self.captured_at.utcoffset() is None:
+            raise ValueError("captured_at must include a timezone offset")
+        observation_ids = [item.observation_id for item in self.observations]
+        if len(observation_ids) != len(set(observation_ids)):
+            raise ValueError("site observation IDs must be unique")
+        return self
 
 
 class EvidenceSourceInput(BaseModel):
@@ -33,6 +100,21 @@ class EvidenceSourceInput(BaseModel):
     evidence_class: str = Field(default="observed", max_length=50)
     confidence: Decimal | None = None
     source_json: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def validate_site_observation_payload(self) -> EvidenceSourceInput:
+        if _normalise_token(self.evidence_type) != _SITE_OBSERVATION_EVIDENCE_TYPE:
+            return self
+        if not self.defect_id:
+            raise ValueError("site_observation evidence must bind to one defect")
+        if _normalise_token(self.evidence_class) != "observed":
+            raise ValueError("site_observation evidence_class must be observed")
+        if self.source_json is None:
+            raise ValueError("site_observation evidence requires source_json provenance")
+        payload = SiteObservationEvidencePayload.model_validate(self.source_json)
+        self.evidence_type = _SITE_OBSERVATION_EVIDENCE_TYPE
+        self.source_json = payload.model_dump(mode="json", exclude_none=True)
+        return self
 
 
 class PhysicalModelLockRequest(BaseModel):
@@ -48,6 +130,16 @@ def _estimate_or_404(db: Session, estimate_id: str) -> Estimate:
 
 def _normalise_token(value: object) -> str:
     return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _site_observation_payload_sha256(value: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        value,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest().upper()
 
 
 def _require_admissible_evidence_file(stored: StoredFile) -> None:
@@ -125,6 +217,22 @@ def register_evidence_source(
     )
     db.add(evidence)
     db.flush()
+    audit_value: dict[str, Any] = {
+        "estimate_id": estimate.id,
+        "defect_id": evidence.defect_id,
+        "evidence_type": evidence.evidence_type,
+        "stored_file_id": evidence.stored_file_id,
+        "sha256": evidence.sha256,
+        "source_reference": evidence.source_reference,
+        "page_number": evidence.page_number,
+        "region_reference": evidence.region_reference,
+        "evidence_class": evidence.evidence_class,
+    }
+    if (
+        evidence.evidence_type == _SITE_OBSERVATION_EVIDENCE_TYPE
+        and evidence.source_json is not None
+    ):
+        audit_value["source_json_sha256"] = _site_observation_payload_sha256(evidence.source_json)
     record_audit(
         db,
         actor=user,
@@ -132,17 +240,7 @@ def register_evidence_source(
         entity_type="evidence_source",
         entity_id=evidence.id,
         project_id=estimate.project_id,
-        new_value={
-            "estimate_id": estimate.id,
-            "defect_id": evidence.defect_id,
-            "evidence_type": evidence.evidence_type,
-            "stored_file_id": evidence.stored_file_id,
-            "sha256": evidence.sha256,
-            "source_reference": evidence.source_reference,
-            "page_number": evidence.page_number,
-            "region_reference": evidence.region_reference,
-            "evidence_class": evidence.evidence_class,
-        },
+        new_value=audit_value,
         reason="Evidence registered for the CLASSIFIRE physical-model foundation.",
         source_ip=request.client.host if request.client else None,
     )
