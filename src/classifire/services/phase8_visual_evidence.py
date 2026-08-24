@@ -27,6 +27,7 @@ from .phase8_visual_proposal import (
 )
 
 VISUAL_EVIDENCE_METADATA_KEY = "phase8_visual_inference"
+EVIDENCE_FAMILY_INVENTORY_SCHEMA = "CLASSIFIRE-PHASE8-EVIDENCE-FAMILY-INVENTORY-v1"
 
 _ALLOWED_IMAGE_MIMES = frozenset(
     {
@@ -69,13 +70,46 @@ class RetainedVisualEvidenceFile:
 
 
 @dataclass(frozen=True, slots=True)
+class RetainedVisualEvidenceFamily:
+    """A content-free, deterministic family of related retained evidence."""
+
+    family_id: str
+    member_evidence_ids: tuple[str, ...]
+    relationship_types: tuple[str, ...]
+    preferred_detail_evidence_id: str
+    context_evidence_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class RetainedVisualEvidencePacket:
     manifest: dict[str, Any]
     files: tuple[RetainedVisualEvidenceFile, ...]
+    families: tuple[RetainedVisualEvidenceFamily, ...] = ()
 
     @property
     def manifest_sha256(self) -> str:
         return canonical_json_sha256(self.manifest)
+
+    @property
+    def evidence_family_inventory(self) -> dict[str, Any]:
+        return {
+            "schema": EVIDENCE_FAMILY_INVENTORY_SCHEMA,
+            "source_manifest_sha256": self.manifest_sha256,
+            "families": [
+                {
+                    "family_id": family.family_id,
+                    "member_evidence_ids": list(family.member_evidence_ids),
+                    "relationship_types": list(family.relationship_types),
+                    "preferred_detail_evidence_id": family.preferred_detail_evidence_id,
+                    "context_evidence_ids": list(family.context_evidence_ids),
+                }
+                for family in self.families
+            ],
+        }
+
+    @property
+    def evidence_family_inventory_sha256(self) -> str:
+        return canonical_json_sha256(self.evidence_family_inventory)
 
 
 def _normalise_mime(value: object) -> str:
@@ -157,6 +191,96 @@ def _image_dimensions(path: Path, *, media_type: str) -> tuple[int, int]:
     ):
         raise Phase8VisualEvidenceError("IMAGE_DIMENSIONS_OUT_OF_POLICY")
     return width, height
+
+
+def _evidence_families(
+    artifacts: list[dict[str, Any]],
+) -> tuple[RetainedVisualEvidenceFamily, ...]:
+    """Group only relationships that retained provenance can prove.
+
+    Exact byte equality and a validated parent link are objective relations.
+    Re-encodes, crops, annotations, alternate angles, and genuinely distinct
+    views cannot be inferred safely from this manifest, so they remain
+    unresolved rather than being collapsed into a family.
+    """
+
+    by_id = {str(artifact["evidence_id"]): artifact for artifact in artifacts}
+    roots = {evidence_id: evidence_id for evidence_id in by_id}
+
+    def find(evidence_id: str) -> str:
+        root = roots[evidence_id]
+        while root != roots[root]:
+            root = roots[root]
+        while evidence_id != root:
+            parent = roots[evidence_id]
+            roots[evidence_id] = root
+            evidence_id = parent
+        return root
+
+    def union(left: str, right: str) -> None:
+        left_root = find(left)
+        right_root = find(right)
+        if left_root != right_root:
+            roots[max(left_root, right_root)] = min(left_root, right_root)
+
+    for evidence_id, artifact in by_id.items():
+        parent_id = artifact["provenance"]["parent_evidence_id"]
+        if isinstance(parent_id, str) and parent_id in by_id:
+            union(evidence_id, parent_id)
+
+    ids_by_sha256: dict[str, list[str]] = {}
+    for evidence_id, artifact in by_id.items():
+        ids_by_sha256.setdefault(str(artifact["sha256"]).upper(), []).append(evidence_id)
+    for evidence_ids in ids_by_sha256.values():
+        for evidence_id in evidence_ids[1:]:
+            union(evidence_ids[0], evidence_id)
+
+    members_by_root: dict[str, list[dict[str, Any]]] = {}
+    for evidence_id, artifact in by_id.items():
+        members_by_root.setdefault(find(evidence_id), []).append(artifact)
+
+    families: list[RetainedVisualEvidenceFamily] = []
+    for members in members_by_root.values():
+        ordered_members = sorted(members, key=lambda item: str(item["evidence_id"]))
+        member_ids = tuple(str(item["evidence_id"]) for item in ordered_members)
+        member_id_set = set(member_ids)
+        relationship_types: list[str] = []
+        if any(
+            isinstance(item["provenance"]["parent_evidence_id"], str)
+            and item["provenance"]["parent_evidence_id"] in member_id_set
+            for item in ordered_members
+        ):
+            relationship_types.append("PARENT_LINKED_DETAIL")
+        if len({str(item["sha256"]).upper() for item in ordered_members}) < len(ordered_members):
+            relationship_types.append("EXACT_BYTE_DUPLICATE")
+        if not relationship_types:
+            relationship_types.append("UNRESOLVED_VIEW_RELATION")
+
+        preferred = min(
+            ordered_members,
+            key=lambda item: (
+                -int(item["provenance"]["pixel_width"]) * int(item["provenance"]["pixel_height"]),
+                -int(item["size_bytes"]),
+                str(item["evidence_id"]),
+            ),
+        )
+        preferred_id = str(preferred["evidence_id"])
+        family_id = (
+            "EVIDENCE-FAMILY-"
+            + canonical_json_sha256({"member_evidence_ids": list(member_ids)})[:20]
+        )
+        families.append(
+            RetainedVisualEvidenceFamily(
+                family_id=family_id,
+                member_evidence_ids=member_ids,
+                relationship_types=tuple(relationship_types),
+                preferred_detail_evidence_id=preferred_id,
+                context_evidence_ids=tuple(
+                    evidence_id for evidence_id in member_ids if evidence_id != preferred_id
+                ),
+            )
+        )
+    return tuple(sorted(families, key=lambda family: family.family_id))
 
 
 def _defect(
@@ -326,12 +450,15 @@ def build_retained_visual_evidence_packet(
     return RetainedVisualEvidencePacket(
         manifest=manifest,
         files=tuple(files),
+        families=_evidence_families(artifacts),
     )
 
 
 __all__ = [
+    "EVIDENCE_FAMILY_INVENTORY_SCHEMA",
     "Phase8VisualEvidenceError",
     "RetainedVisualEvidenceFile",
+    "RetainedVisualEvidenceFamily",
     "RetainedVisualEvidencePacket",
     "VISUAL_EVIDENCE_METADATA_KEY",
     "build_retained_visual_evidence_packet",
