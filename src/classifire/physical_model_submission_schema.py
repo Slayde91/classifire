@@ -7,6 +7,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .services.physical_scope import is_blank_opening_type
+
 
 class _StrictPayload(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -93,4 +95,11 @@ class InitialCanonicalPhysicalSubmission(_StrictPayload):
         linked_services = {service_code for service_code, _opening_code in pairs}
         if linked_services != known_services:
             raise ValueError("every declared service must have at least one explicit opening link")
+        linked_openings = {opening_code for _service_code, opening_code in pairs}
+        for opening in self.openings:
+            if (
+                is_blank_opening_type(opening.opening_type)
+                and opening.opening_code in linked_openings
+            ):
+                raise ValueError("a blank opening must not have service-to-opening links")
         return self
