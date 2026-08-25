@@ -19,7 +19,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import LibraryRelease, PricingLibraryRecord
+from ..models import Estimate, LibraryRelease, PricingLibraryRecord, Project, StoredFile
+from ..physical_models import EvidenceSource
 
 DESK_QUOTE_SCHEMA = "CLASSIFIRE_DESK_QUOTE_V1"
 DESK_QUOTE_SNAPSHOT_SCHEMA = "CLASSIFIRE_DESK_QUOTE_SNAPSHOT_V1"
@@ -38,6 +39,7 @@ class _StrictDeskQuoteModel(BaseModel):
 class DeskQuoteEvidenceLocator(_StrictDeskQuoteModel):
     """One retained report, drawing, register, or image location supporting an assumption."""
 
+    evidence_source_id: str = Field(min_length=1, max_length=100)
     evidence_reference: str = Field(min_length=1, max_length=300)
     file_sha256: str = Field(pattern=r"^[A-Fa-f0-9]{64}$")
     locator: str = Field(min_length=1, max_length=500)
@@ -214,6 +216,10 @@ def _manifest_hash(manifest: dict[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def _normalise_token(value: object) -> str:
+    return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+
 def _release_record_snapshots(release: LibraryRelease) -> dict[str, dict[str, Any]]:
     manifest = release.source_manifest
     if not isinstance(manifest, dict) or not release.release_hash:
@@ -322,6 +328,66 @@ def resolve_desk_quote_pricing_bindings(
             )
         )
     return bindings
+
+
+def resolve_desk_quote_project_evidence(db: Session, proposal: DeskQuoteProposal) -> Project:
+    """Bind every desk-quote locator to active retained evidence for its project."""
+
+    project = db.scalar(select(Project).where(Project.reference == proposal.project_reference))
+    if project is None:
+        raise DeskQuoteError("desk-quote project is missing")
+
+    locators = [
+        locator for assumption in proposal.assumptions for locator in assumption.evidence_locators
+    ]
+    source_ids = {locator.evidence_source_id for locator in locators}
+    sources = list(
+        db.scalars(select(EvidenceSource).where(EvidenceSource.id.in_(source_ids))).all()
+    )
+    sources_by_id = {source.id: source for source in sources}
+    if set(sources_by_id) != source_ids:
+        missing = ", ".join(sorted(source_ids - set(sources_by_id)))
+        raise DeskQuoteError("desk-quote evidence source is missing: " + missing)
+
+    project_estimate_ids = set(
+        db.scalars(select(Estimate.id).where(Estimate.project_id == project.id)).all()
+    )
+    stored_file_ids = {source.stored_file_id for source in sources if source.stored_file_id}
+    stored_files = list(
+        db.scalars(select(StoredFile).where(StoredFile.id.in_(stored_file_ids))).all()
+    )
+    stored_files_by_id = {stored.id: stored for stored in stored_files}
+
+    for locator in locators:
+        source = sources_by_id[locator.evidence_source_id]
+        if source.status != "active":
+            raise DeskQuoteError("desk-quote evidence source is not active")
+        if source.estimate_id not in project_estimate_ids:
+            raise DeskQuoteError("desk-quote evidence source does not belong to the project")
+        if not source.stored_file_id:
+            raise DeskQuoteError("desk-quote evidence source has no retained file")
+        stored = stored_files_by_id.get(source.stored_file_id)
+        if stored is None:
+            raise DeskQuoteError("desk-quote retained evidence file is missing")
+        if not stored.immutable:
+            raise DeskQuoteError("desk-quote retained evidence file is not immutable")
+        if _normalise_token(stored.purpose) not in {"project_evidence", "technical_evidence"}:
+            raise DeskQuoteError("desk-quote retained evidence file has the wrong purpose")
+        if _normalise_token(stored.malware_scan_status) not in {"clean", "not_configured"}:
+            raise DeskQuoteError("desk-quote retained evidence file has an unsafe scan status")
+        if not source.sha256 or source.sha256.lower() != stored.sha256.lower():
+            raise DeskQuoteError(
+                "desk-quote evidence source digest does not match its retained file"
+            )
+        if locator.file_sha256.lower() != stored.sha256.lower():
+            raise DeskQuoteError(
+                "desk-quote evidence locator digest does not match its retained file"
+            )
+        if source.source_reference != locator.evidence_reference:
+            raise DeskQuoteError(
+                "desk-quote evidence locator reference does not match retained evidence"
+            )
+    return project
 
 
 def _qualification_messages() -> list[str]:
@@ -529,5 +595,6 @@ __all__ = [
     "DeskQuotePricingBinding",
     "build_desk_quote_snapshot",
     "resolve_desk_quote_pricing_bindings",
+    "resolve_desk_quote_project_evidence",
     "verify_desk_quote_snapshot",
 ]

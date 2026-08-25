@@ -32,8 +32,9 @@ Every assumption must contain:
 - a value and probability from 1 to 99 percent for a resolved assumption, or no
   value and probability 0 for an unresolved item;
 - an explicit confidence band;
-- one or more retained evidence references, exact source-file SHA-256 values, and
-  precise locators, such as report page, photograph or drawing call-out;
+- one or more active CLASSIFIRE EvidenceSource identifiers, exact retained-file
+  SHA-256 values, matching retained evidence references, and precise locators,
+  such as report page, photograph or drawing call-out;
 - rationale, a credible alternative explanation, and the required verification
   action; and
 - one commercial treatment: included allowance, variation risk, or excluded
@@ -79,12 +80,16 @@ Authorised estimators use `POST /api/v1/desk-quotes/export/{artifact_type}` with
 complete `CLASSIFIRE_DESK_QUOTE_V1` payload. The supported artifact types are
 `desk-quote-pdf` and `desk-quote-xlsx`.
 
-Before it builds the receipt, the endpoint resolves each allowance against the
-declared active pricing release and rejects absent, inactive, expired, wrong-
-currency or non-manifest records. It renders only the resulting hash-bound
-desk-quote receipt, stores the output under that receipt hash, and records an
-audit event containing the quote reference, artifact type, document class,
-non-technical position and pricing-release identity. It does
+Before it builds the receipt, the endpoint resolves every evidence locator to
+an active EvidenceSource in an estimate for the named project. The source must
+have the named immutable retained file, matching SHA-256 digest, matching
+source reference, approved storage purpose and safe scan status. It also
+resolves each allowance against the declared active pricing release and rejects
+absent, inactive, expired, wrong-currency or non-manifest records. It renders
+only the resulting hash-bound desk-quote receipt, stores the output under that
+receipt hash, and records an audit event containing the quote reference,
+artifact type, document class, non-technical position, pricing-release identity
+and resolved evidence identifiers/digests. It does
 not require or create a canonical Physical Model, active Physical Model Lock,
 technical selection, approved estimate or release.
 

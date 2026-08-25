@@ -32,7 +32,10 @@ def _money(value: Any, currency: str) -> float:
 
 def _evidence_text(assumption: dict[str, Any]) -> str:
     return "\n".join(
-        (f"{item['evidence_reference']} [SHA-256 {item['file_sha256']}] - {item['locator']}")
+        (
+            f"{item['evidence_reference']} [evidence {item['evidence_source_id']}; "
+            f"SHA-256 {item['file_sha256']}] - {item['locator']}"
+        )
         for item in assumption["evidence_locators"]
     )
 

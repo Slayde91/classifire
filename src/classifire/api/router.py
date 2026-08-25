@@ -74,6 +74,7 @@ from ..services.desk_quote import (
     DeskQuoteProposal,
     build_desk_quote_snapshot,
     resolve_desk_quote_pricing_bindings,
+    resolve_desk_quote_project_evidence,
 )
 from ..services.initial_canonicalisation_boundary import (
     InitialCanonicalisationAdmissionRequired,
@@ -889,6 +890,7 @@ def export_desk_quote(
     """Render a source-linked desk quote without opening the canonical estimate path."""
 
     try:
+        resolve_desk_quote_project_evidence(db, payload)
         pricing_bindings = resolve_desk_quote_pricing_bindings(db, payload)
         snapshot = build_desk_quote_snapshot(payload, pricing_bindings=pricing_bindings)
     except DeskQuoteError as exc:
@@ -932,6 +934,20 @@ def export_desk_quote(
             "pricing_release_id": payload.pricing_release_id,
             "pricing_release_version": snapshot["pricing_bindings"][0]["pricing_release_version"],
             "pricing_release_hash": snapshot["pricing_bindings"][0]["pricing_release_hash"],
+            "evidence_source_ids": sorted(
+                {
+                    locator.evidence_source_id
+                    for assumption in payload.assumptions
+                    for locator in assumption.evidence_locators
+                }
+            ),
+            "evidence_file_sha256": sorted(
+                {
+                    locator.file_sha256.lower()
+                    for assumption in payload.assumptions
+                    for locator in assumption.evidence_locators
+                }
+            ),
             "snapshot_hash": snapshot["snapshot_hash"],
         },
         reason=(

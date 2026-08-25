@@ -18,9 +18,17 @@ from starlette.requests import Request
 
 from classifire.api.router import export_desk_quote
 from classifire.config import Settings
-from classifire.models import AuditEvent, LibraryRelease, PricingLibraryRecord, User
+from classifire.models import (
+    AuditEvent,
+    Estimate,
+    LibraryRelease,
+    PricingLibraryRecord,
+    Project,
+    StoredFile,
+    User,
+)
 from classifire.outputs import render_desk_quote_pdf, render_desk_quote_workbook
-from classifire.physical_models import PhysicalModelLock
+from classifire.physical_models import EvidenceSource, PhysicalModelLock
 from classifire.services.desk_quote import (
     DESK_QUOTE_DOCUMENT_CLASS,
     DESK_QUOTE_TECHNICAL_POSITION,
@@ -28,6 +36,7 @@ from classifire.services.desk_quote import (
     DeskQuoteProposal,
     build_desk_quote_snapshot,
     resolve_desk_quote_pricing_bindings,
+    resolve_desk_quote_project_evidence,
     verify_desk_quote_snapshot,
 )
 
@@ -36,6 +45,7 @@ def _proposal(
     *,
     pricing_release_id: str = "pricing-release-1001",
     pricing_record_id: str = "pricing-record-1001",
+    evidence_source_ids: tuple[str, str] = ("evidence-source-1001", "evidence-source-1002"),
 ) -> dict[str, Any]:
     return {
         "schema_version": "CLASSIFIRE_DESK_QUOTE_V1",
@@ -58,6 +68,7 @@ def _proposal(
                 "confidence": "medium",
                 "evidence_locators": [
                     {
+                        "evidence_source_id": evidence_source_ids[0],
                         "evidence_reference": "Inspection report REP-1001",
                         "file_sha256": "A" * 64,
                         "locator": "page 8, photo 2",
@@ -85,6 +96,7 @@ def _proposal(
                 "confidence": "low",
                 "evidence_locators": [
                     {
+                        "evidence_source_id": evidence_source_ids[1],
                         "evidence_reference": "Inspection report REP-1001",
                         "file_sha256": "B" * 64,
                         "locator": "page 9, photo 4",
@@ -194,6 +206,49 @@ def _active_pricing_release(session: Any) -> tuple[LibraryRelease, PricingLibrar
     return release, record
 
 
+def _retained_project_evidence(
+    session: Any,
+) -> tuple[Project, tuple[EvidenceSource, EvidenceSource]]:
+    project = Project(reference="PROJECT-1001", name="Example Building")
+    session.add(project)
+    session.flush()
+    estimate = Estimate(
+        project_id=project.id,
+        reference="DQ-TEST-ESTIMATE",
+        title="Desk quote evidence test",
+    )
+    session.add(estimate)
+    session.flush()
+
+    evidence: list[EvidenceSource] = []
+    for index, digest in enumerate(("A" * 64, "B" * 64), start=1):
+        stored = StoredFile(
+            original_filename=f"inspection-report-{index}.pdf",
+            media_type="application/pdf",
+            storage_path=f"project-evidence/inspection-report-{index}.pdf",
+            sha256=digest,
+            size_bytes=1024,
+            purpose="project_evidence",
+            malware_scan_status="clean",
+            immutable=True,
+        )
+        session.add(stored)
+        session.flush()
+        item = EvidenceSource(
+            estimate_id=estimate.id,
+            stored_file_id=stored.id,
+            evidence_type="inspection_report",
+            source_reference="Inspection report REP-1001",
+            sha256=digest,
+            evidence_class="observed",
+            status="active",
+        )
+        session.add(item)
+        evidence.append(item)
+    session.flush()
+    return project, (evidence[0], evidence[1])
+
+
 def _request() -> Request:
     return Request(
         {
@@ -292,6 +347,72 @@ def test_desk_quote_pricing_resolver_requires_active_hash_bound_records() -> Non
             resolve_desk_quote_pricing_bindings(session, proposal)
 
 
+def test_desk_quote_evidence_resolver_requires_retained_project_evidence() -> None:
+    with physical_session() as session:
+        project, evidence = _retained_project_evidence(session)
+        proposal = DeskQuoteProposal.model_validate(
+            _proposal(evidence_source_ids=(evidence[0].id, evidence[1].id))
+        )
+
+        resolved = resolve_desk_quote_project_evidence(session, proposal)
+        assert resolved.id == project.id
+
+        missing = _proposal(evidence_source_ids=("missing-evidence-source", evidence[1].id))
+        with pytest.raises(DeskQuoteError, match="evidence source is missing"):
+            resolve_desk_quote_project_evidence(session, DeskQuoteProposal.model_validate(missing))
+
+        evidence[0].status = "draft"
+        session.flush()
+        with pytest.raises(DeskQuoteError, match="evidence source is not active"):
+            resolve_desk_quote_project_evidence(session, proposal)
+
+        evidence[0].status = "active"
+        stored = session.get(StoredFile, evidence[0].stored_file_id)
+        assert stored is not None
+        stored.immutable = False
+        session.flush()
+        with pytest.raises(DeskQuoteError, match="retained evidence file is not immutable"):
+            resolve_desk_quote_project_evidence(session, proposal)
+
+        stored.immutable = True
+        evidence[0].sha256 = "C" * 64
+        session.flush()
+        with pytest.raises(DeskQuoteError, match="source digest does not match"):
+            resolve_desk_quote_project_evidence(session, proposal)
+
+        evidence[0].sha256 = "A" * 64
+        mismatched_digest = _proposal(evidence_source_ids=(evidence[0].id, evidence[1].id))
+        mismatched_digest["assumptions"][0]["evidence_locators"][0]["file_sha256"] = "C" * 64
+        with pytest.raises(DeskQuoteError, match="locator digest does not match"):
+            resolve_desk_quote_project_evidence(
+                session, DeskQuoteProposal.model_validate(mismatched_digest)
+            )
+
+        mismatched_reference = _proposal(evidence_source_ids=(evidence[0].id, evidence[1].id))
+        mismatched_reference["assumptions"][0]["evidence_locators"][0]["evidence_reference"] = (
+            "Other report"
+        )
+        with pytest.raises(DeskQuoteError, match="reference does not match"):
+            resolve_desk_quote_project_evidence(
+                session, DeskQuoteProposal.model_validate(mismatched_reference)
+            )
+
+        foreign_project = Project(reference="OTHER-PROJECT", name="Other project")
+        session.add(foreign_project)
+        session.flush()
+        foreign_estimate = Estimate(
+            project_id=foreign_project.id,
+            reference="OTHER-ESTIMATE",
+            title="Other project evidence",
+        )
+        session.add(foreign_estimate)
+        session.flush()
+        evidence[0].estimate_id = foreign_estimate.id
+        session.flush()
+        with pytest.raises(DeskQuoteError, match="does not belong to the project"):
+            resolve_desk_quote_project_evidence(session, proposal)
+
+
 def test_desk_quote_outputs_show_assumption_led_position_and_fail_closed_on_tamper(
     tmp_path: Path,
 ) -> None:
@@ -308,6 +429,7 @@ def test_desk_quote_outputs_show_assumption_led_position_and_fail_closed_on_tamp
     assert "ASSUMPTION-LED COMMERCIAL ALLOWANCE" in workbook_text
     assert "A-OPENING-01" in workbook_text
     assert "A-SUBSTRATE-01" in workbook_text
+    assert "evidence-source-1001" in workbook_text
     assert "Governed Pricing Record" in workbook_text
     assert "PF-101" in workbook_text
     assert "PR-2026-08" in workbook_text
@@ -315,6 +437,7 @@ def test_desk_quote_outputs_show_assumption_led_position_and_fail_closed_on_tamp
     pdf_text = "\n".join(page.extract_text() or "" for page in PdfReader(pdf_path).pages)
     assert "ASSUMPTION-LED COMMERCIAL ALLOWANCE" in pdf_text
     assert "A-OPENING-01" in pdf_text
+    assert "evidence-source-1001" in pdf_text
     assert "Commercial pricing basis" in pdf_text
     assert "PF-101" in pdf_text
     assert "PR-2026-08" in pdf_text
@@ -342,6 +465,7 @@ def test_desk_quote_export_route_renders_and_audits_without_a_physical_model_loc
 ) -> None:
     with physical_session() as session:
         release, record = _active_pricing_release(session)
+        _, evidence = _retained_project_evidence(session)
         user = User(
             email="desk-quote@example.test",
             full_name="Desk Quote Estimator",
@@ -354,7 +478,11 @@ def test_desk_quote_export_route_renders_and_audits_without_a_physical_model_loc
         response = export_desk_quote(
             "desk-quote-pdf",
             DeskQuoteProposal.model_validate(
-                _proposal(pricing_release_id=release.id, pricing_record_id=record.id)
+                _proposal(
+                    pricing_release_id=release.id,
+                    pricing_record_id=record.id,
+                    evidence_source_ids=(evidence[0].id, evidence[1].id),
+                )
             ),
             _request(),
             session,
@@ -372,4 +500,6 @@ def test_desk_quote_export_route_renders_and_audits_without_a_physical_model_loc
         assert audit.new_value["pricing_release_id"] == release.id
         assert audit.new_value["pricing_release_version"] == release.version
         assert audit.new_value["pricing_release_hash"] == release.release_hash
+        assert audit.new_value["evidence_source_ids"] == sorted(item.id for item in evidence)
+        assert audit.new_value["evidence_file_sha256"] == ["a" * 64, "b" * 64]
         assert session.scalar(select(PhysicalModelLock)) is None
