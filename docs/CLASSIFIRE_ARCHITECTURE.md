@@ -1,8 +1,9 @@
 # CLASSIFIRE Architecture
 
-**Document status:** Current pre-production architecture reconciled with local implementation
+**Document status:** Current pre-production architecture reconciled with shared
+`main` at `1b3d7c9`; open PR #74 and PR #75 remain unmerged candidates
 
-**Architecture version:** 3.19
+**Architecture version:** 3.20
 
 **Current implementation focus:** Evidence resolution and proposal-only physical modelling for fire seals, blank openings/core holes, and service penetrations
 
@@ -92,9 +93,9 @@ Shared current-main contains the active Phase 8 foundations:
 - FastAPI, CLI, SQLAlchemy, and Alembic infrastructure;
 - the current Opening, Service, and Opening-Service relationship model;
 - the reconciled admission lineage through
-  `0008_retire_legacy_initial_submissions`;
-- in this branch candidate, the additive durable visual-validation receipt
-  migration `0009_visual_validation_receipts`;
+  `0008_retire_legacy_initial_submissions`; and
+- the additive durable visual-validation receipt migration
+  `0009_visual_validation_receipts`;
 - component-level protected-state fingerprinting;
 - proposal-blind visual inventory and mandatory reconciliation;
 - bounded Validator-to-Physical correction and strict proposal receipts;
@@ -110,9 +111,9 @@ Shared current-main contains the active Phase 8 foundations:
 These are completed foundations, not completion of Phase 8 or production
 readiness.
 
-### 4.2 Feature-branch representative-run candidate - In progress
+### 4.2 Shared-main representative-run implementation - Completed for its stated boundary
 
-The coherent branch-local candidate extends current main with:
+Shared current main also includes:
 
 - a strict, approval-bound representative-run package;
 - deterministic binding to the checked-out Git revision and executable source
@@ -135,18 +136,37 @@ independent Validator blocked the proposal because material physical facts could
 not be established from the governed evidence. This is valid fail-closed
 behaviour. It is not an approved Physical Model.
 
-### 4.3 Legacy-root later-phase evidence - In progress and not consolidated
+### 4.3 Open evidence and desk-quote candidates - Unmerged
 
-The materially divergent primary checkout contains guarded foundations for
+PR #74 at `5874dadeac2bca97fdbf366967590e1539c148df` adds strict,
+Defect-bound `site_observation` evidence intake at the existing evidence
+registration boundary. It requires governed capture provenance, per-fact
+locators, explicit uncertainty, and an immutable admissible retained file. It
+records evidence only; it creates no Opening, Service, link, canonical model,
+admission, or lock.
+
+PR #75 at `ef4425422a5d80387626697c1d8d99dcdd9e6bdc` is stacked on
+PR #74 and adds an assumption-led desk-quote proposal. It resolves evidence to
+active immutable project evidence and rates to an active hash-bound pricing
+release. It is not technical selection, canonical estimating, certification,
+admission, lock, or release.
+
+Both pull requests are open and are not shared-main implementation.
+
+### 4.4 Legacy later-phase modules - Not current architecture
+
+Historical source contains guarded foundations for
 technical search and Repair Strategy, components and labour, commercial
 recovery, independent validation, immutable snapshots, richer outputs, and
 human-only release. Focused tests exercise much of that chain.
 
-Those foundations are legacy-root evidence only. They are absent or materially
+Those foundations are legacy implementation evidence only. They are absent or materially
 different on current main, use a superseded model/API/migration composition in
 places, and must not be merged wholesale. Any useful capability must be
 reconciled phase by phase onto current main with its own review, migrations,
-tests, and acceptance evidence.
+tests, and acceptance evidence. Operational worktree and cherry-pick risks are
+recorded in PROJECT_STATE and SESSION_HANDOFF; they do not define product
+architecture.
 
 ## 5. System layers
 
@@ -200,6 +220,11 @@ Evidence values retain explicit states such as Confirmed, Inferred,
 Provisional, and Unresolved. Unknown must not silently become zero, absence,
 quantity one, a service class, a material, or a dimension.
 
+The open PR #74 candidate provides a governed intake contract if new site,
+remote-supervised, or documentary evidence later becomes available. The
+contract itself creates no evidence and cannot convert an assumption into an
+observation.
+
 ### 6.2 Linked originals
 
 The linked-original boundary restricts approved hosts, resolved network
@@ -208,7 +233,7 @@ count, dimensions, and run time. A retrieved image is accepted only after it is
 visually bound to the report-provided image and proves usable additional detail.
 
 Current-main retention normally binds the verified original to an active parent
-thumbnail. The branch-local candidate also supports report-derived parent
+thumbnail. The shared-main implementation also supports report-derived parent
 evidence only when the immutable PDF hash, page, photo identity, native
 dimensions, and crop bounds all match. Content-addressed bytes and redacted
 provenance are retained without committing the caller's transaction.
@@ -281,8 +306,9 @@ boundary as local execution evidence: all seven review items and four unresolved
 observations are accounted for, and the visible topology is represented as five
 Openings, six Services, and six links. Site-dependent dimensions, depth and
 obscured boundaries, exact substrate composition, labels/material proof, and
-opposite-face continuity remain unresolved. The v2 validator implementation is
-in a separate uncommitted worktree and is not part of this publication branch.
+opposite-face continuity remain unresolved. The provenance and evidence-family
+review validators are on shared main. The retained v2 response remains local
+human-review evidence; it is neither canonical state nor publication authority.
 
 ## 8. Trusted-UAT representative package
 
@@ -326,7 +352,7 @@ it. The only readiness RPC describes a fixed nonexistent session key; it creates
 no session and performs no inference or retrieval.
 
 The runtime first uses the explicit local CLI RPC adapter. If that CLI is
-unavailable, the branch-local candidate may use the same authenticated Gateway
+unavailable, the shared-main implementation may use the same authenticated Gateway
 protocol directly over a literal-loopback WebSocket. The fallback does not allow
 remote hosts or broaden the RPC/parameter allowlist. Runtime sessions and model
 requests remain subject to the existing no-tool guard.
@@ -482,6 +508,12 @@ genuinely separate work. Analogue pricing remains benchmark-only unless a
 governed rule expressly permits otherwise. Current-main estimating rules do not
 yet implement the complete rate-inclusion/recovery ledger.
 
+The open PR #75 desk-quote path is a separate provisional proposal lane for
+cases where further physical evidence is unavailable. It binds explicit
+assumptions to retained project evidence and governed rates, but it does not
+satisfy the Phase 11 commercial-recovery or Phase 13 snapshot-backed-output
+exit conditions.
+
 ### 12.4 Validation, snapshot, output, and Human Release - Basic shared outputs; richer legacy foundations; blocked
 
 Independent validation must prove physical, technical, quantity, labour,
@@ -513,9 +545,11 @@ receipts, or documentation.
 | Application, persistence, and current migration lineage | **Completed foundation** | Shared current-main; pre-production |
 | Linked-original retrieval and governed retention | **Completed foundation** | Shared current-main; approved hosts/report formats remain narrow |
 | Proposal-only visual controller and no-tool runtime | **Completed foundation** | Shared current-main; production persistence/generalisation incomplete |
-| Trusted-UAT package and rollback proof | **Completed branch-local candidate** | Representative run executed; publication review remains |
+| Trusted-UAT package and rollback proof | **Completed shared-main capability** | Representative run executed; source and receipt package are merged |
 | Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; site-dependent facts and independent semantic approval remain unresolved |
-| Content-safe evidence review and local recovery | **Completed branch-local candidate** | Recovery proof has documented mutability/replay limits |
+| Content-safe evidence review and local recovery | **Completed shared-main capability** | Recovery proof has documented mutability/replay limits |
+| Site-observation evidence intake | **Open branch candidate** | PR #74; unmerged and evidence-only |
+| Assumption-led desk quote | **Open stacked branch candidate** | PR #75; unmerged, noncanonical, and nontechnical |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
 | Technical through Human Release | **In progress / blocked** | Basic shared foundations and richer legacy-root foundations exist; upstream Physical Model gate unresolved |
@@ -528,16 +562,19 @@ receipts, or documentation.
 
 ## 15. Next valid architectural action
 
-Publish and review the focused representative-package candidate without folding
-in the separate uncommitted human-review/receipt worktree. For the selected
-Defect, obtain a site visit or equivalent newly governed evidence for the facts
-that human visual review could not establish. Do not repeat unchanged inference
-or convert the limited proposal into canonical truth.
+The representative package, review safeguards, and durable visual-validation
+receipt registry are on shared main. No site, remote-supervised, or documentary
+follow-up evidence is currently available, so the unresolved physical fields
+must remain unresolved. Do not repeat unchanged inference or convert the
+limited proposal into canonical truth.
 
-In parallel, the durable visual-validation receipt registry and exact
-side-effect-free verifier in this branch candidate are ready for independent
-review; signed lock-admission remains a separate bounded architecture change. Only after the remaining evidence
-is governed, the proposal is independently and semantically accepted, and the
-signed lock boundary is approved should the team consider a fresh
-canonicalisation preflight. Submission, lock creation, technical selection,
-pricing, output, deployment, and Human Release retain their separate gates.
+Review PR #74 as the evidence-intake foundation. After that branch is resolved,
+recalculate and review PR #75 as the dependent desk-quote change. A desk quote
+may use explicit qualified assumptions, but it does not advance the canonical
+Physical Model, technical-selection, lock, snapshot, or Human Release gates.
+
+The receipt verifier remains a no-write pre-lock check, not signed lock
+admission. Design, approve, and enforce that separate boundary only after the
+remaining evidence is governed and the proposal is independently and
+semantically accepted. Submission, lock creation, technical selection, output,
+deployment, and Human Release retain their separate gates.

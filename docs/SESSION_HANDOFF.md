@@ -1,26 +1,39 @@
 # CLASSIFIRE Session Handoff
 
-**Verified:** 2026-08-24 (AEST)
+**Verified:** 2026-08-25 (AEST)
 
 **Status:** Pre-production implementation and controlled Phase 8 UAT
 
 This handoff records current evidence. It does not authorise inference, retrieval, admission signing or registration, canonical submission, Physical Model Lock creation, deployment, release, commit, or push.
 
-## 1. Publication position
+## 1. Current shared-main position
 
-- Publication branch: `gpt/phase8-representative-run-package`.
-- Reconciled base and current `origin/main`: `78016368457748975c331bedab796cd03ee832e6`.
-- At follow-up review start, branch divergence from `origin/main`: 1 ahead / 0 behind at `b422240`.
-- Upstream: `origin/gpt/phase8-representative-run-package`, synchronized at follow-up review start.
-- At handoff preparation time, staged files: none.
-- Authorised publication scope: the same exact reviewed 28-path set, including the completion-file byte-hash correction and current-state documentation; resulting Git history and upstream are authoritative for the publication result.
-- Current executable source-tree fingerprint: `EDBA8858B385BD521D43AB15FAE41C5291356985E47B1792ADC40A0ADD6A8D6F`.
+- Shared `main` and `origin/main`:
+  `1b3d7c976dd726a663c105e99d0b38ab22460d66` (PR #73 merge).
+- Merged Phase 8 work: representative rollback package and recovery,
+  evidence-family and human-review validators, direct legacy-route test
+  isolation, and the durable visual-validation receipt registry/verifier.
+- Open PR #74: `5874dadeac2bca97fdbf366967590e1539c148df`,
+  a committed seven-file `site_observation` evidence-intake candidate; unmerged.
+- Open PR #75: `ef4425422a5d80387626697c1d8d99dcdd9e6bdc`,
+  an assumption-led desk-quote candidate stacked on PR #74; unmerged.
 
-The isolated worktree is the only publication source for this slice. The primary checkout remains on `gpt/phase8-linked-original-images` at `de0cc5a` and contains a divergent mixed working tree. Its merge base with `origin/main` is `fea9549`; its histories contain 378 legacy-branch-only commits and 116 current-main-only commits. It must not be bulk-staged, merged, cleaned, or used as the publication base.
+Neither open pull request creates canonical, technical, lock, deployment, or
+release authority.
 
-## 2. Coherent Phase 8 slice
+The primary checkout remains on `gpt/phase8-linked-original-images` at
+`de0cc5a` with a divergent mixed working tree. It is a legacy evidence and
+development source only. Do not bulk-stage, merge, clean, reset, or use it as a
+publication base; its contents were not touched by this reconciliation.
 
-The 23-path feature slice being published extends current main with:
+Do not cherry-pick from the mixed root or old stacked branches by title alone.
+Their divergent histories may carry superseded migrations, APIs, guards, or
+unrelated working-tree content. Reconstruct or path-review any still-useful
+change against a clean exact-main worktree.
+
+## 2. Merged Phase 8 capability
+
+Shared main includes the representative-run and recovery capability:
 
 - an explicit rollback-only representative package bound to report, Git revision, executable source tree, snapshot, runtime identities, and no-write flags;
 - verify-only package and snapshot checks plus a non-session-creating local Gateway readiness probe;
@@ -32,9 +45,27 @@ The 23-path feature slice being published extends current main with:
 - content-safe human evidence-review requests; and
 - fully offline recovery from hash-matched retained receipts and local OpenClaw transcripts without rerunning inference.
 
-Final publication review also excludes unlisted same-Defect visual evidence, requires a literal numeric loopback Gateway address before token-capable fallback is constructed, rejects symbolic links and Windows junctions from the fingerprinted source set on Python 3.11+, pins Python/JSON/TOML inputs to LF line endings, and reports the completion receipt's exact UTF-8/LF file-byte hash. Together with the four reconciliation documents and `.gitattributes`, the 23 feature paths form the exact 28-file publication set.
+The merged representative package excludes unlisted same-Defect visual evidence,
+requires a literal numeric loopback Gateway address before token-capable fallback
+is constructed, rejects symbolic links and Windows junctions from the
+fingerprinted source set on Python 3.11+, pins the relevant raw-byte inputs to
+LF line endings, and reports the completion receipt's exact UTF-8/LF file-byte
+hash. The original representative publication used an explicitly reviewed
+28-file slice; later bounded PRs added provenance and durable-receipt work.
 
 The package approval fields remain trusted human/governance metadata. They are not cryptographic, expiring, single-use production authority. This is controlled UAT tooling, not an untrusted production-ingestion or canonical-write path.
+
+### 2.1 Open evidence and desk-quote candidates
+
+PR #74 validates Defect-bound observed facts only when they carry capture and
+governance provenance, per-fact locators, explicit uncertainty, and an immutable
+admissible retained file. The contract content is approved, but the pull request
+remains unmerged and contains no live evidence.
+
+PR #75 resolves each quote assumption to retained immutable project evidence and
+each allowance to an active hash-bound pricing release. It is a qualified
+commercial proposal only, not technical selection, canonical estimating,
+certification, admission, lock, or release.
 
 ## 3. Retained v17 execution evidence
 
@@ -52,6 +83,9 @@ The authorised v17 full-report run completed linked-original retrieval and four 
 | Canonical submission | Not performed |
 | Physical Model Lock | Not created |
 
+These counts and the fingerprint are retained v17 receipt evidence, not a fresh
+query of a live or current canonical database.
+
 The protected state before and after rollback was identical:
 
 - fingerprint: `18768A9E368C7D0692A950303FCAC9401AFBE7C3632BE6A063FCB67B9671F8F1`;
@@ -60,7 +94,7 @@ The protected state before and after rollback was identical:
 
 The Validator block is a genuine evidence limitation, not a runtime failure. A later human review resolved the visible service groupings and quantities, flexible-duct count, opening relationships, and close/wide photo relationship. Dimensions, depth and obscured boundaries, exact substrate composition, service labels and documentary material proof, and opposite-face continuity remain unresolved.
 
-The v17 live run used source-tree fingerprint `5B00545F5A2A7F3F36930B008B3E0802AFB1EBA5D735A7B9123218B5E972CDE1`. Later recovery and review hardening changed the source tree. V17 is therefore historical runtime proof for that exact candidate, not a live execution proof for the final publication source.
+The v17 live run used source-tree fingerprint `5B00545F5A2A7F3F36930B008B3E0802AFB1EBA5D735A7B9123218B5E972CDE1`. Later recovery, review, provenance, and receipt hardening changed the source tree. V17 is therefore historical runtime proof for that exact run source, not a live execution proof for the later merged source.
 
 ## 4. Later human review v2 evidence
 
@@ -68,7 +102,7 @@ The retained v2 response accounts for all seven review items and four unresolved
 
 The review confirmed two questioned openings as separate openings in the same wall, the close and wide duct photographs as the same location, two flexible ducts through separate wall openings, one shared opening with a metal pipe/two PVC conduits/a cable bundle, and another opening with a visible three-cable bundle.
 
-This remains human visual adjudication without a site visit. It is not an approved canonical model, and it does not settle dimensions, depth/boundaries, exact substrate, service labels/material proof, or opposite-face continuity. The v2 artifacts and their validator belong to a separate uncommitted worktree and are not included in this publication branch. Their recording and validation performed no report/image retrieval, runtime inference, canonical database read or write, Gateway call, admission, canonical submission, or lock.
+This remains human visual adjudication without a site visit. It is not an approved canonical model, and it does not settle dimensions, depth/boundaries, exact substrate, service labels/material proof, or opposite-face continuity. The v2 review and evidence-family validators are on shared main; the retained response remains local evidence, not canonical state or publication authority. Its recording and validation performed no report/image retrieval, runtime inference, canonical database read or write, Gateway call, admission, canonical submission, or lock.
 
 ## 5. Final-source offline recovery proof
 
@@ -89,30 +123,48 @@ No real report was rerun after final-source hardening.
 
 ## 6. Verification
 
-Current validation evidence for the coherent slice and repository reconciliation:
+Retained verification for exact PR #73/shared-main source:
 
-- disposable Python 3.12 environment: repository-declared development dependencies installed, `pip check` clean, and Pytest **8.4.2** within the declared `>=8.4,<9` range;
-- complete isolated repository suite: **332 passed**, 135 warnings, with the inherited admission flag restored to its repository default (`false`);
-- complete focused changed-Phase-8 slice: **145 passed**, 36 warnings;
-- Ruff lint and format: passed on all 22 changed Python paths;
-- Mypy: passed on all 11 changed production/script paths;
-- Bandit: no medium/high findings on all 22 changed Python paths;
-- syntax compilation: passed on all 11 changed production/script paths;
-- Alembic: one head, `0008_retire_legacy_initial_submissions`;
-- refreshed offline recovery v8: passed, revalidated the final blind/proposal/Validator domains, and bound to the final source and recovery script; and
-- `git diff --check`: no whitespace errors.
+- complete repository suite: **345 passed**, 135 warnings;
+- focused durable-receipt, migration, lock, and admission-boundary set: **55
+  passed**; and
+- Ruff, formatting, Mypy, compilation, Bandit, Alembic one-head
+  (`0009_visual_validation_receipts`), and diff checks passed.
+
+Later branch-candidate evidence is separate:
+
+- PR #74 records **377 passed**, 139 warnings for its complete branch suite and
+  **24 focused tests**, plus Ruff, Mypy, Bandit, compilation, Alembic,
+  documentation-link, and whitespace checks; and
+- PR #75 durably claims **17 focused desk-quote and physical-evidence tests**
+  plus Ruff, service Mypy, Bandit, generated Excel/PDF, and diff checks. Its PR
+  description does not claim an auditable full-suite result.
+
+The recovery v8 result remains successful historical hash-binding evidence for
+its own source. No real report was rerun after the later source hardening.
 
 ## 7. Exact next valid task
 
-Do not repeat the completed 7+4 review. The immediate repository task is review of this focused publication candidate and factual reconciliation of issue #42. The next evidence task for the selected Defect is a site visit or equivalent newly governed evidence for the remaining dimensions, depth/boundaries, substrate, labels/material proof, and opposite-face continuity.
+Do not repeat the completed 7+4 review. No site, remote-supervised, or
+documentary follow-up evidence is currently available. The remaining
+dimensions, depth and boundaries, exact substrate, labels and material proof,
+and opposite-face continuity must stay unresolved.
 
-Do not rerun unchanged inference or canonicalise the limited 5/6/6 proposal. Durable visual-validation receipt enforcement and a signed lock-admission boundary remain separate architecture work and must be reviewed independently from the unrelated 75-path local worktree.
+Review PR #74 as the open evidence-intake foundation. After that branch is
+resolved, recalculate and review PR #75 as the dependent desk-quote change. The
+desk quote may proceed only with explicit qualified assumptions and variation
+limits. It does not resolve physical facts or advance the canonical technical,
+lock, snapshot, or release chain.
 
-Only after the remaining evidence is governed, the proposal is semantically accepted, and the validation/admission boundaries are approved may a fresh preflight be considered. External signing, admission registration, canonical submission, and lock creation remain later operations requiring separate authority.
+Do not rerun unchanged inference or canonicalise the limited 5/6/6 proposal.
+Semantic acceptance and a signed lock-admission boundary remain separate,
+unresolved architecture work. External signing, admission registration,
+canonical submission, and lock creation remain later operations requiring
+separate authority.
 
 ## 8. Authority boundaries and exclusions
 
-This handoff was prepared for the authorised feature-branch commit and push. Git history is authoritative for that publication result. No deployment, admission, canonical write, Physical Model Lock, or release was performed.
+This handoff records the merged shared-main position. Git history is authoritative for publication results. No deployment, admission, canonical write, Physical Model Lock, or release was performed.
 
 Intentionally excluded from this work and any publication staging:
 
@@ -124,4 +176,6 @@ Intentionally excluded from this work and any publication staging:
 - Android, Gradle, JDK, SDK, dependency, build, and test-cache artefacts;
 - generated reports, editor/workspace files, `agent-definitions/`, and logo assets.
 
-Publication, if separately authorised, must use explicit reviewed paths from this isolated worktree only. Never use bulk staging.
+Any later repository change must begin in a clean exact-main worktree and use
+explicit reviewed paths. Commit, push, pull-request, and merge authority remain
+separate; never use bulk staging.
