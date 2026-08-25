@@ -15,7 +15,12 @@ from classifire.agent_security import authenticate_agent, provision_agent_princi
 from classifire.db import Base, get_db
 from classifire.main import http_exception_handler
 from classifire.models import AgentServicePrincipal, User
-from classifire.security import get_current_user, get_optional_user, hash_password
+from classifire.security import (
+    create_human_session,
+    get_current_user,
+    get_optional_user,
+    hash_password,
+)
 from classifire.ui import _require, _user
 from classifire.ui import router as ui_router
 
@@ -33,6 +38,7 @@ _SENSITIVE_PERMISSIONS = frozenset(
         "rule:approve",
     }
 )
+_TEST_CSRF_TOKEN = "c" * 43  # noqa: S105 - isolated test value.
 
 
 def _session_factory() -> sessionmaker[Session]:
@@ -67,7 +73,40 @@ def _create_user(
         return str(user.id)
 
 
-def _request(user_id: object) -> Request:
+def _issue_session(factory: sessionmaker[Session], user_id: str) -> str:
+    with factory() as db:
+        user = db.get(User, user_id)
+        assert user is not None
+        token = create_human_session(db, user, source_ip="192.0.2.20")
+        db.commit()
+        return token
+
+
+def _request(
+    session_token: object,
+    *,
+    session_schema: object = 1,
+    csrf_token: object = _TEST_CSRF_TOKEN,
+    extra: dict[str, object] | None = None,
+) -> Request:
+    session: dict[str, object] = {
+        "session_schema": session_schema,
+        "session_token": session_token,
+        "csrf_token": csrf_token,
+    }
+    if extra:
+        session.update(extra)
+    return Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "headers": [],
+            "session": session,
+        }
+    )
+
+
+def _legacy_request(user_id: object) -> Request:
     return Request(
         {
             "type": "http",
@@ -75,8 +114,7 @@ def _request(user_id: object) -> Request:
             "headers": [],
             "session": {
                 "user_id": user_id,
-                "csrf_token": "stale-session-csrf",
-                "unrelated": "must-also-be-cleared",
+                "csrf_token": _TEST_CSRF_TOKEN,
             },
         }
     )
@@ -88,7 +126,10 @@ def _ui_app(factory: sessionmaker[Session]) -> FastAPI:
         SessionMiddleware,
         secret_key="inactive-session-test-secret",  # noqa: S106 - isolated test value.
     )
-    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(
+        HTTPException,
+        http_exception_handler,  # type: ignore[arg-type]
+    )
     app.include_router(ui_router)
 
     def override_db():  # type: ignore[no-untyped-def]
@@ -174,30 +215,110 @@ def test_deactivated_account_loses_existing_ui_session_immediately() -> None:
 @pytest.mark.parametrize("account_state", ["inactive", "missing"])
 def test_invalid_ui_session_is_fully_cleared(account_state: str) -> None:
     factory = _session_factory()
-    if account_state == "inactive":
-        user_id = _create_user(
-            factory,
-            email="inactive-lookup@example.test",
-            is_active=False,
-        )
-    else:
-        user_id = "missing-user-id"
+    user_id = _create_user(
+        factory,
+        email=f"{account_state}-lookup@example.test",
+    )
+    token = _issue_session(factory, user_id)
+    with factory() as db:
+        user = db.get(User, user_id)
+        assert user is not None
+        if account_state == "inactive":
+            user.is_active = False
+        else:
+            db.delete(user)
+        db.commit()
 
-    request = _request(user_id)
+    request = _request(token)
     with factory() as db:
         assert _user(request, db) is None
 
     assert dict(request.session) == {}
 
 
-@pytest.mark.parametrize(
-    "user_id",
-    [None, "", "   ", 0, False, [], {}],
-    ids=["none", "empty", "whitespace", "zero", "false", "list", "mapping"],
-)
-def test_malformed_authentication_session_is_fully_cleared(user_id: object) -> None:
+def test_legacy_user_id_authentication_cookie_is_fully_cleared() -> None:
     factory = _session_factory()
-    request = _request(user_id)
+    user_id = _create_user(factory, email="legacy-cookie@example.test")
+    request = _legacy_request(user_id)
+
+    with factory() as db:
+        assert get_optional_user(request, db) is None
+
+    assert dict(request.session) == {}
+
+
+@pytest.mark.parametrize(
+    "session",
+    [
+        {"session_token": _TEST_CSRF_TOKEN, "csrf_token": _TEST_CSRF_TOKEN},
+        {
+            "session_schema": 1,
+            "csrf_token": _TEST_CSRF_TOKEN,
+        },
+        {
+            "session_schema": 1,
+            "session_token": _TEST_CSRF_TOKEN,
+        },
+        {
+            "session_schema": True,
+            "session_token": _TEST_CSRF_TOKEN,
+            "csrf_token": _TEST_CSRF_TOKEN,
+        },
+        {
+            "session_schema": 2,
+            "session_token": _TEST_CSRF_TOKEN,
+            "csrf_token": _TEST_CSRF_TOKEN,
+        },
+        {
+            "session_schema": 1,
+            "session_token": "short",
+            "csrf_token": _TEST_CSRF_TOKEN,
+        },
+        {
+            "session_schema": 1,
+            "session_token": _TEST_CSRF_TOKEN,
+            "csrf_token": "short",
+        },
+        {
+            "session_schema": 1,
+            "session_token": _TEST_CSRF_TOKEN,
+            "csrf_token": _TEST_CSRF_TOKEN,
+            "unrelated": "must-also-be-cleared",
+        },
+    ],
+    ids=[
+        "missing-schema",
+        "missing-token",
+        "missing-csrf",
+        "boolean-schema",
+        "future-schema",
+        "short-token",
+        "short-csrf",
+        "unexpected-key",
+    ],
+)
+def test_malformed_authentication_session_is_fully_cleared(
+    session: dict[str, object],
+) -> None:
+    factory = _session_factory()
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "headers": [],
+            "session": dict(session),
+        }
+    )
+
+    with factory() as db:
+        assert get_optional_user(request, db) is None
+
+    assert dict(request.session) == {}
+
+
+def test_unknown_opaque_session_token_is_fully_cleared() -> None:
+    factory = _session_factory()
+    request = _request(_TEST_CSRF_TOKEN)
 
     with factory() as db:
         assert get_optional_user(request, db) is None
@@ -210,9 +331,14 @@ def test_api_current_user_uses_the_same_inactive_session_boundary() -> None:
     user_id = _create_user(
         factory,
         email="inactive-api@example.test",
-        is_active=False,
     )
-    request = _request(user_id)
+    token = _issue_session(factory, user_id)
+    with factory() as db:
+        user = db.get(User, user_id)
+        assert user is not None
+        user.is_active = False
+        db.commit()
+    request = _request(token)
 
     with factory() as db, pytest.raises(HTTPException) as blocked:
         get_current_user(request, db)
@@ -227,13 +353,17 @@ def test_api_current_user_preserves_an_active_session() -> None:
         factory,
         email="active-api@example.test",
     )
-    request = _request(user_id)
+    token = _issue_session(factory, user_id)
+    request = _request(token)
 
     with factory() as db:
         assert get_current_user(request, db).id == user_id
 
-    assert request.session["user_id"] == user_id
-    assert request.session["csrf_token"] == "stale-session-csrf"  # noqa: S105 - test value.
+    assert dict(request.session) == {
+        "session_schema": 1,
+        "session_token": token,
+        "csrf_token": _TEST_CSRF_TOKEN,
+    }
 
 
 def test_inactive_agent_principal_cannot_reuse_its_bearer_token() -> None:
@@ -311,17 +441,19 @@ def test_active_ui_sensitive_permission_matrix_is_unchanged(
         email=f"{role}@example.test",
         role=role,
     )
+    token = _issue_session(factory, user_id)
 
     with factory() as db:
         for permission in sorted(_SENSITIVE_PERMISSIONS):
-            request = _request(user_id)
+            request = _request(token)
             if permission in allowed_permissions:
                 assert _require(request, db, permission).id == user_id
             else:
                 with pytest.raises(HTTPException) as denied:
                     _require(request, db, permission)
                 assert denied.value.status_code == 403
-            assert request.session["user_id"] == user_id
+            assert request.session["session_token"] == token
+            assert "user_id" not in request.session
 
 
 def test_role_downgrade_applies_to_the_next_ui_request() -> None:
@@ -331,7 +463,8 @@ def test_role_downgrade_applies_to_the_next_ui_request() -> None:
         email="role-downgrade@example.test",
         role="estimator",
     )
-    request = _request(user_id)
+    token = _issue_session(factory, user_id)
+    request = _request(token)
 
     with factory() as db:
         assert _require(request, db, "estimate:write").id == user_id
@@ -346,7 +479,8 @@ def test_role_downgrade_applies_to_the_next_ui_request() -> None:
         _require(request, db, "estimate:write")
 
     assert denied.value.status_code == 403
-    assert request.session["user_id"] == user_id
+    assert request.session["session_token"] == token
+    assert "user_id" not in request.session
 
 
 def test_logout_csrf_failure_retains_session_and_valid_logout_clears_it() -> None:

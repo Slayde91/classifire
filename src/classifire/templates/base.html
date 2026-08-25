@@ -35,9 +35,13 @@
     <div class="sidebar-footer">
       <div class="user-name">{{ user.full_name }}</div>
       <div class="user-role">{{ user.role.replace('_', ' ')|title }}</div>
-      <form action="/logout" method="post">
+      <form action="/logout" method="post" aria-label="Sign out this browser">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="button button-ghost button-small" type="submit">Sign out</button>
+        <button class="button button-ghost button-small" type="submit">Sign out this browser</button>
+      </form>
+      <form action="/logout-all" method="post" aria-label="Sign out everywhere">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="button button-ghost button-small" type="submit">Sign out everywhere</button>
       </form>
     </div>
   </aside>

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import secrets
 import uuid
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -31,6 +32,10 @@ def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def new_auth_generation() -> str:
+    return secrets.token_hex(32)
+
+
 class RecordMixin:
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, nullable=False)
@@ -49,6 +54,23 @@ class User(RecordMixin, Base):
     role: Mapped[str] = mapped_column(String(50), default="estimator", index=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    auth_generation: Mapped[str] = mapped_column(
+        String(64), default=new_auth_generation, nullable=False
+    )
+
+
+class HumanSession(RecordMixin, Base):
+    __tablename__ = "human_sessions"
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    token_hint: Mapped[str] = mapped_column(String(12), nullable=False)
+    auth_generation: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_reason: Mapped[str | None] = mapped_column(Text)
 
 
 class AuditEvent(RecordMixin, Base):

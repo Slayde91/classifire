@@ -17,10 +17,14 @@ if (-not (Test-Path ".env")) {
     Write-Host "Created .env from .env.example. Change the secret key and administrator settings before production use." -ForegroundColor Yellow
 }
 
-& (Join-Path $PSScriptRoot ".venv\Scripts\classifire.exe") init
+$classifire = Join-Path $PSScriptRoot ".venv\Scripts\classifire.exe"
+& $classifire init
+if ($LASTEXITCODE -ne 0) {
+    throw "classifire init failed with exit code $LASTEXITCODE. Installation did not complete."
+}
 
 Write-Host ""
 Write-Host "QUANTIFIRE installed." -ForegroundColor Green
 Write-Host "Activate: .\.venv\Scripts\Activate.ps1"
-Write-Host "Create admin: classifire create-admin"
+Write-Host 'Create admin: classifire create-admin --operator-reference "initial-admin-provisioning"'
 Write-Host "Start: classifire start"

@@ -29,5 +29,5 @@ classifire init
 echo
 echo "QUANTIFIRE installed."
 echo "Activate: source .venv/bin/activate"
-echo "Create admin: classifire create-admin"
+echo 'Create admin: classifire create-admin --operator-reference "initial-admin-provisioning"'
 echo "Start: classifire start"

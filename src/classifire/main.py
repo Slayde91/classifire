@@ -22,12 +22,14 @@ from .api.physical_model import router as physical_model_router
 from .api.workflow import router as workflow_router
 from .api.workflow_actions import router as workflow_actions_router
 from .config import get_settings
-from .db import Base, SessionLocal, engine
+from .db import SessionLocal, engine
 from .estimate_pinning import router as estimate_pinning_router
 from .importers.seed import seed_database
 from .library_ui import router as library_ui_router
 from .models import User
 from .release_admin import router as release_admin_router
+from .security import HUMAN_SESSION_MAX_AGE_SECONDS
+from .services.schema_bootstrap import prepare_application_schema
 from .technical_admin import router as technical_admin_router
 from .ui import router as ui_router
 
@@ -37,8 +39,7 @@ package_dir = Path(__file__).parent
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Development/local installer convenience. Production deployment must run Alembic first.
-    Base.metadata.create_all(bind=engine)
+    prepare_application_schema(engine, settings.env)
     with SessionLocal() as db:
         if not db.scalar(select(User.id).limit(1)):
             seed_database(db, settings)
@@ -60,7 +61,7 @@ app.add_middleware(
     secret_key=settings.secret_key,
     same_site="lax",
     https_only=settings.session_https_only,
-    max_age=60 * 60 * 12,
+    max_age=HUMAN_SESSION_MAX_AGE_SECONDS,
 )
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts or ["*"])
 app.add_middleware(

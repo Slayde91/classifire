@@ -3,8 +3,11 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sqlite3
 import subprocess
 import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -12,18 +15,27 @@ import typer
 import uvicorn
 from rich.console import Console
 from rich.table import Table
-from sqlalchemy import func, select
+from sqlalchemy import create_engine, func, select
+from sqlalchemy.engine import Engine, make_url
+from sqlalchemy.exc import ArgumentError
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import NullPool
 
 from . import (
     __version__,
     physical_models,  # noqa: F401
 )
+from .audit import record_audit
 from .config import get_settings
-from .db import Base, SessionLocal, engine
+from .db import SessionLocal, engine
 from .importers import import_pricing_library, import_technical_variants, seed_database
 from .mission_control import MissionControlClient, bootstrap_mission_control
 from .models import PricingLibraryRecord, Product, TechnicalVariant, User
-from .security import hash_password
+from .security import (
+    hash_password,
+    revoke_all_human_sessions,
+    update_user_security,
+)
 from .services.adjudicated_admission import AdmissionVerificationError, admission_identity
 from .services.adjudicated_admission_registration import (
     AdmissionRegistrationError,
@@ -32,6 +44,10 @@ from .services.adjudicated_admission_registration import (
 from .services.adjudicated_key_policy import (
     AdjudicatedKeyPolicyError,
     resolve_adjudicated_public_key,
+)
+from .services.schema_bootstrap import (
+    SchemaBootstrapError,
+    prepare_application_schema,
 )
 
 app = typer.Typer(help="CLASSIFIRE administration, import, run and integration commands.", no_args_is_help=True)
@@ -44,6 +60,109 @@ def repo_root() -> Path:
         if (candidate / "pyproject.toml").exists():
             return candidate
     return Path.cwd()
+
+
+def _required_cli_text(value: str, *, option_name: str) -> str:
+    normalized = value.strip()
+    if not normalized:
+        raise typer.BadParameter(f"{option_name} must not be blank")
+    return normalized
+
+
+def _prepare_database_schema() -> None:
+    settings = get_settings()
+    try:
+        prepare_application_schema(engine, settings.env)
+    except SchemaBootstrapError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+def _database_identity(database_url: str) -> str:
+    """Return only the configured driver name, never URL authority or query data."""
+
+    try:
+        parsed = make_url(database_url)
+    except ArgumentError:
+        return "configured database"
+    return f"{parsed.drivername} database"
+
+
+def _sqlite_sidecars(database_path: Path) -> tuple[Path, ...]:
+    return tuple(
+        Path(f"{database_path}{suffix}")
+        for suffix in ("-journal", "-shm", "-wal")
+    )
+
+
+def _require_closed_sqlite_state(database_path: Path) -> None:
+    for sidecar_path in _sqlite_sidecars(database_path):
+        try:
+            sidecar_path.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise SchemaBootstrapError(
+                "SQLITE_DIAGNOSTIC_SIDECAR_INSPECTION_FAILED",
+                "SQLite sidecar state could not be verified; immutable inspection "
+                "was not started",
+            ) from exc
+        raise SchemaBootstrapError(
+            "SQLITE_DIAGNOSTIC_SIDECAR_PRESENT",
+            "immutable inspection requires a closed, checkpointed SQLite database; "
+            "do not remove journal, SHM or WAL files manually",
+        )
+
+
+def _sqlite_file_identity(database_path: Path) -> tuple[int, int, int, int]:
+    state = database_path.stat()
+    return (state.st_dev, state.st_ino, state.st_size, state.st_mtime_ns)
+
+
+@contextmanager
+def _doctor_database_engine(bind: Engine) -> Iterator[Engine]:
+    """Yield a diagnostic engine that cannot trigger SQLite write pragmas."""
+
+    database = bind.url.database
+    if bind.dialect.name != "sqlite" or database in {None, "", ":memory:"}:
+        yield bind
+        return
+
+    database_path = Path(str(database)).resolve()
+    _require_closed_sqlite_state(database_path)
+    before_identity = _sqlite_file_identity(database_path)
+    read_only_uri = f"{database_path.as_uri()}?mode=ro&immutable=1"
+
+    def connect_read_only() -> sqlite3.Connection:
+        _require_closed_sqlite_state(database_path)
+        connection = sqlite3.connect(
+            read_only_uri,
+            uri=True,
+            check_same_thread=False,
+        )
+        try:
+            _require_closed_sqlite_state(database_path)
+        except Exception:
+            connection.close()
+            raise
+        return connection
+
+    diagnostic_engine = create_engine(
+        "sqlite+pysqlite://",
+        creator=connect_read_only,
+        future=True,
+        poolclass=NullPool,
+    )
+    try:
+        yield diagnostic_engine
+    finally:
+        diagnostic_engine.dispose()
+        _require_closed_sqlite_state(database_path)
+        if _sqlite_file_identity(database_path) != before_identity:
+            raise SchemaBootstrapError(
+                "SQLITE_DIAGNOSTIC_RACE_DETECTED",
+                "SQLite database changed during immutable inspection; retry only "
+                "after all writers are stopped",
+            )
 
 
 @app.command()
@@ -61,7 +180,7 @@ def init_database() -> None:
         console.print("[yellow]Production configuration findings:[/yellow]")
         for item in findings:
             console.print(f"  - {item}")
-    Base.metadata.create_all(bind=engine)
+    _prepare_database_schema()
     with SessionLocal() as db:
         result = seed_database(db, settings)
     console.print("[green]Database initialised.[/green]")
@@ -73,27 +192,121 @@ def create_admin(
     email: str = typer.Option(..., prompt=True),
     full_name: str = typer.Option("CLASSIFIRE Administrator"),
     password: str = typer.Option(..., prompt=True, hide_input=True, confirmation_prompt=True),
+    operator_reference: str = typer.Option(
+        ...,
+        "--operator-reference",
+        help="Auditable identity or change reference for this administrator operation.",
+    ),
 ) -> None:
-    """Create or reset an administrator account."""
-    Base.metadata.create_all(bind=engine)
+    """Create an administrator or reset one while revoking all prior sessions."""
+
+    email_address = _required_cli_text(email, option_name="--email").lower()
+    operator = _required_cli_text(
+        operator_reference,
+        option_name="--operator-reference",
+    )
+    _prepare_database_schema()
+    password_digest = hash_password(password)
+    reset_existing = False
+    revoked_count = 0
     with SessionLocal() as db:
-        user = db.scalar(select(User).where(User.email == email.lower()))
+        user = db.scalar(
+            select(User)
+            .where(User.email == email_address)
+            .with_for_update()
+        )
         if user:
-            user.password_hash = hash_password(password)
-            user.full_name = full_name
-            user.role = "administrator"
-            user.is_active = True
+            reset_existing = True
+            revoked_count = update_user_security(
+                db,
+                user,
+                actor=None,
+                reason="Administrator credential reset and reactivation",
+                actor_name=operator,
+                password_hash=password_digest,
+                full_name=full_name,
+                role="administrator",
+                is_active=True,
+            )
         else:
             user = User(
-                email=email.lower(),
+                email=email_address,
                 full_name=full_name,
-                password_hash=hash_password(password),
+                password_hash=password_digest,
                 role="administrator",
                 is_active=True,
             )
             db.add(user)
+            db.flush()
+            record_audit(
+                db,
+                actor=None,
+                actor_type="system",
+                actor_name=operator,
+                action="create_administrator",
+                entity_type="user",
+                entity_id=user.id,
+                new_value={
+                    "email": email_address,
+                    "full_name": full_name,
+                    "role": "administrator",
+                    "is_active": True,
+                },
+                reason="Administrator account created",
+            )
         db.commit()
-    console.print(f"[green]Administrator ready:[/green] {email.lower()}")
+    if reset_existing:
+        console.print(
+            "[green]Administrator reset and prior sessions revoked:[/green] "
+            f"{email_address} ({revoked_count} active session(s))"
+        )
+    else:
+        console.print(f"[green]Administrator created:[/green] {email_address}")
+
+
+@app.command("revoke-user-sessions")
+def revoke_user_sessions(
+    email: str = typer.Option(..., "--email"),
+    reason: str = typer.Option(
+        ...,
+        "--reason",
+        help="Auditable reason for revoking every current human session.",
+    ),
+    operator_reference: str = typer.Option(
+        ...,
+        "--operator-reference",
+        help="Auditable identity or change reference for this revocation.",
+    ),
+) -> None:
+    """Permanently revoke every currently issued session for one human user."""
+
+    email_address = _required_cli_text(email, option_name="--email").lower()
+    audit_reason = _required_cli_text(reason, option_name="--reason")
+    operator = _required_cli_text(
+        operator_reference,
+        option_name="--operator-reference",
+    )
+    _prepare_database_schema()
+    with SessionLocal() as db:
+        user = db.scalar(
+            select(User)
+            .where(User.email == email_address)
+            .with_for_update()
+        )
+        if user is None:
+            raise typer.BadParameter("No user exists for --email")
+        revoked_count = revoke_all_human_sessions(
+            db,
+            user,
+            actor=None,
+            reason=audit_reason,
+            actor_name=operator,
+        )
+        db.commit()
+    console.print(
+        "[green]All human sessions revoked:[/green] "
+        f"{email_address} ({revoked_count} active session(s))"
+    )
 
 
 @app.command("import-pricing")
@@ -102,7 +315,7 @@ def import_pricing(
     version: str = typer.Option("2.13"),
 ) -> None:
     """Import Package 14 into the editable versioned pricing database."""
-    Base.metadata.create_all(bind=engine)
+    _prepare_database_schema()
     with SessionLocal() as db:
         seed_database(db, get_settings())
         result = import_pricing_library(db, path, version=version)
@@ -115,7 +328,7 @@ def import_technical(
     version: str = typer.Option("2.13"),
 ) -> None:
     """Import Package 15 executable variants into the technical database."""
-    Base.metadata.create_all(bind=engine)
+    _prepare_database_schema()
     with SessionLocal() as db:
         seed_database(db, get_settings())
         result = import_technical_variants(db, path, version=version)
@@ -131,7 +344,7 @@ def import_supplied_v213(source_root: Optional[Path] = None) -> None:
     missing = [str(path) for path in (pricing, technical) if not path.exists()]
     if missing:
         raise typer.BadParameter(f"Missing supplied source file(s): {missing}")
-    Base.metadata.create_all(bind=engine)
+    _prepare_database_schema()
     with SessionLocal() as db:
         seed_database(db, get_settings())
         p = import_pricing_library(db, pricing, version="2.13")
@@ -162,6 +375,7 @@ def worker(interval: float = typer.Option(2.0)) -> None:
     """Run the background job worker."""
     from .worker import run_forever
 
+    _prepare_database_schema()
     run_forever(interval)
 
 
@@ -179,18 +393,32 @@ def doctor() -> None:
     calc = root / "knowledge/source/raw-calculator/Penetration Calculator.xlsb"
     for label, path in [("Package 14", p14), ("Package 15 variants", p15), ("Raw calculator", calc)]:
         checks.append((label, str(path), "PASS" if path.exists() else "BLOCKED"))
+    display_database_identity = _database_identity(settings.database_url)
     try:
-        with SessionLocal() as db:
-            db.execute(select(1))
-            users = db.scalar(select(func.count()).select_from(User)) or 0
-            pricing = db.scalar(select(func.count()).select_from(PricingLibraryRecord)) or 0
-            technical = db.scalar(select(func.count()).select_from(TechnicalVariant)) or 0
-        checks.append(("Database", settings.database_url, "PASS"))
+        with _doctor_database_engine(engine) as diagnostic_engine:
+            preparation = prepare_application_schema(
+                diagnostic_engine,
+                settings.env,
+                create_empty=False,
+            )
+            with Session(diagnostic_engine) as db:
+                db.execute(select(1))
+                users = db.scalar(select(func.count()).select_from(User)) or 0
+                pricing = db.scalar(select(func.count()).select_from(PricingLibraryRecord)) or 0
+                technical = db.scalar(select(func.count()).select_from(TechnicalVariant)) or 0
+        checks.append(
+            (
+                "Database",
+                f"{display_database_identity} ({preparation.code})",
+                "PASS",
+            )
+        )
         checks.append(("Users", str(users), "PASS" if users else "WARN"))
         checks.append(("Pricing rows", str(pricing), "PASS" if pricing else "WARN"))
         checks.append(("Technical variants", str(technical), "PASS" if technical else "WARN"))
     except Exception as exc:
-        checks.append(("Database", str(exc), "FAIL"))
+        failure = str(exc) if isinstance(exc, SchemaBootstrapError) else type(exc).__name__
+        checks.append(("Database", f"{display_database_identity} ({failure})", "FAIL"))
     for finding in settings.validate_production():
         checks.append(("Production config", finding, "WARN"))
     table = Table("Check", "Detail", "Result")

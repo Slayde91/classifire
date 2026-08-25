@@ -31,12 +31,15 @@ from classifire.estimate_pinning import refresh as refresh_release_basis
 from classifire.models import EstimateLine, Opening, Service, User
 from classifire.physical_models import ServiceOpeningLink
 from classifire.schemas import EstimateLineInput, OpeningInput, ServiceInput
+from classifire.security import create_human_session
 from classifire.services.physical_model import create_physical_model_lock
 from classifire.services.workflow_guard import (
     PhysicalModelLockRequiredError,
     require_active_physical_model_lock,
 )
 from classifire.ui import estimate_add_line, estimate_evaluate, estimate_lock
+
+_PHYSICAL_BOUNDARY_CSRF = "c" * 43  # noqa: S105 - isolated test value.
 
 
 def _request() -> Request:
@@ -50,14 +53,19 @@ def _request() -> Request:
     )
 
 
-def _ui_request(user: User) -> Request:
+def _ui_request(session, user: User) -> Request:  # type: ignore[no-untyped-def]
+    token = create_human_session(session, user)
     return Request(
         {
             "type": "http",
             "method": "POST",
             "headers": [],
             "client": ("127.0.0.1", 50000),
-            "session": {"user_id": user.id, "csrf_token": "physical-boundary-csrf"},
+            "session": {
+                "session_schema": 1,
+                "session_token": token,
+                "csrf_token": _PHYSICAL_BOUNDARY_CSRF,
+            },
         }
     )
 
@@ -192,14 +200,14 @@ def test_downstream_ui_and_release_routes_fail_closed_without_a_physical_model_l
     with physical_session() as session:
         estimate = add_estimate(session)
         user = _user(session)
-        request = _ui_request(user)
+        request = _ui_request(session, user)
 
         for operation in (
             lambda: estimate_add_line(
                 estimate.id,
                 request,
                 session,
-                "physical-boundary-csrf",
+                _PHYSICAL_BOUNDARY_CSRF,
                 "labour",
                 "Must not be written",
                 "1",
@@ -210,20 +218,20 @@ def test_downstream_ui_and_release_routes_fail_closed_without_a_physical_model_l
                 estimate.id,
                 request,
                 session,
-                "physical-boundary-csrf",
+                _PHYSICAL_BOUNDARY_CSRF,
             ),
             lambda: estimate_lock(
                 estimate.id,
                 request,
                 session,
-                "physical-boundary-csrf",
+                _PHYSICAL_BOUNDARY_CSRF,
                 "must not lock",
             ),
             lambda: refresh_release_basis(
                 estimate.id,
                 request,
                 session,
-                "physical-boundary-csrf",
+                _PHYSICAL_BOUNDARY_CSRF,
                 "must not refresh release basis",
             ),
         ):
@@ -249,7 +257,7 @@ def test_every_downstream_route_rejects_a_stale_physical_model_lock(tmp_path) ->
 
         user = _user(session)
         request = _request()
-        ui_request = _ui_request(user)
+        ui_request = _ui_request(session, user)
         line = EstimateLineInput(component_type="labour", description="Must not be written")
 
         for operation in (
@@ -268,7 +276,7 @@ def test_every_downstream_route_rejects_a_stale_physical_model_lock(tmp_path) ->
                 estimate.id,
                 ui_request,
                 session,
-                "physical-boundary-csrf",
+                _PHYSICAL_BOUNDARY_CSRF,
                 "labour",
                 "Must not be written",
                 "1",
@@ -279,20 +287,20 @@ def test_every_downstream_route_rejects_a_stale_physical_model_lock(tmp_path) ->
                 estimate.id,
                 ui_request,
                 session,
-                "physical-boundary-csrf",
+                _PHYSICAL_BOUNDARY_CSRF,
             ),
             lambda: estimate_lock(
                 estimate.id,
                 ui_request,
                 session,
-                "physical-boundary-csrf",
+                _PHYSICAL_BOUNDARY_CSRF,
                 "must not lock",
             ),
             lambda: refresh_release_basis(
                 estimate.id,
                 ui_request,
                 session,
-                "physical-boundary-csrf",
+                _PHYSICAL_BOUNDARY_CSRF,
                 "must not refresh release basis",
             ),
         ):

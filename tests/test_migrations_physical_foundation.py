@@ -146,6 +146,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
         "physical_model_admissions",
         "physical_model_submission_receipts",
         "visual_validation_receipts",
+        "human_sessions",
     }.issubset(inspector.get_table_names())
     assert "canonical_defect_id" in {column["name"] for column in inspector.get_columns("openings")}
     assert "primary_opening_legacy" in {
@@ -169,7 +170,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
     assert active_lock_index["unique"]
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0009_visual_validation_receipts"
+            "0010_human_sessions"
         )
         active_lock_index_sql = connection.execute(
             text(
@@ -362,7 +363,7 @@ def test_visual_validation_receipt_migration_refuses_evidence_loss(tmp_path: Pat
     database_path = tmp_path / "visual-validation-receipt.sqlite"
     database_url = f"sqlite:///{database_path.as_posix()}"
     environment = _migration_environment(tmp_path, database_url)
-    _upgrade(database_url, environment, "head")
+    _upgrade(database_url, environment, "0009_visual_validation_receipts")
 
     rejected = _downgrade(
         database_url,

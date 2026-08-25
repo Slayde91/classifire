@@ -37,8 +37,11 @@ from .physical_models import ServiceOpeningLink
 from .security import (
     authenticate_user,
     create_csrf_token,
+    create_human_session,
     get_optional_user,
     has_permission,
+    revoke_all_human_sessions,
+    revoke_current_human_session,
     verify_csrf,
 )
 from .services.calculation import D, calculate_estimate_line, recalculate_estimate
@@ -66,6 +69,12 @@ from .services.workflow_guard import (
 router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 Db = Annotated[Session, Depends(get_db)]
+
+
+def _source_ip(request: Request) -> str | None:
+    """Return the socket peer address without trusting forwarded headers."""
+
+    return request.client.host if request.client else None
 
 
 def _user(request: Request, db: Session) -> User | None:
@@ -112,15 +121,51 @@ def login_submit(
     user = authenticate_user(db, email, password)
     if not user:
         return RedirectResponse("/login?error=Invalid+email+or+password", status_code=303)
+    session_token = create_human_session(db, user, source_ip=_source_ip(request))
+    db.commit()
     request.session.clear()
-    request.session["user_id"] = user.id
+    request.session["session_schema"] = 1
+    request.session["session_token"] = session_token
     create_csrf_token(request)
     return RedirectResponse("/", status_code=303)
 
 
 @router.post("/logout")
-def logout(request: Request, csrf_token: Annotated[str, Form()]) -> RedirectResponse:
+def logout(
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+) -> RedirectResponse:
     verify_csrf(request, csrf_token)
+    revoke_current_human_session(
+        db,
+        request,
+        reason="User requested sign out",
+        source_ip=_source_ip(request),
+    )
+    db.commit()
+    request.session.clear()
+    return RedirectResponse("/login", status_code=303)
+
+
+@router.post("/logout-all")
+def logout_all(
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _user(request, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    revoke_all_human_sessions(
+        db,
+        user,
+        actor=user,
+        reason="User requested sign out everywhere",
+        source_ip=_source_ip(request),
+    )
+    db.commit()
     request.session.clear()
     return RedirectResponse("/login", status_code=303)
 

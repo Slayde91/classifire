@@ -56,11 +56,51 @@ classifire start
 
 Open `http://127.0.0.1:8787`.
 
+For an existing database that already has an `alembic_version` table, take a
+verified backup and then apply the reviewed migrations:
+
+```bash
+alembic upgrade head
+```
+
+Do not run `alembic upgrade head` or `alembic stamp` against an unversioned
+database. Application startup and database-writing commands refuse a non-empty
+database that is behind the reviewed migration head; they do not try to repair
+it with automatic table creation. Only a completely empty development or test
+database may be initialised directly. Production always requires Alembic.
+
+If a local database has tables but no `alembic_version` table, follow the
+[backup-first unversioned database recovery guide](docs/UNVERSIONED_DATABASE_RECOVERY.md).
+A disposable development database may be replaced with a new empty database
+only while the original archive is retained. Any data-bearing unversioned
+database remains blocked until a separately governed reconciliation preserves
+and validates its data.
+
 Create an administrator account before operational use:
 
 ```bash
-classifire create-admin
+classifire create-admin --operator-reference "initial-admin-provisioning"
 ```
+
+The command prompts for the email address and password. If that email already
+exists, it resets and reactivates the administrator in one transaction and
+permanently revokes every previously issued human session. The password and
+session tokens are never printed.
+
+An authorised operator can revoke every current browser session for one user
+without changing the password:
+
+```bash
+classifire revoke-user-sessions \
+  --email user@example.com \
+  --reason "Access review session revocation" \
+  --operator-reference "CHANGE-REPLACE"
+```
+
+The operator reference and reason are retained as audit evidence. In the web
+interface, **Sign out this browser** revokes only the current opaque session,
+while **Sign out everywhere** rotates the user's session generation and revokes
+all current browser sessions. Both web actions require the current CSRF token.
 
 ## Source-library import
 
