@@ -1,6 +1,6 @@
 # Phase 8 Site-Observation Evidence Contract
 
-**Status:** Draft local implementation; not yet published to shared `main`.
+**Status:** Controlled evidence-intake contract; non-canonical and non-authorising.
 
 ## Purpose
 
@@ -78,6 +78,9 @@ A non-unresolved fact needs a value. An `unresolved` fact must have no value and
 must record a `limitation`, such as inaccessible opposite face or obscured
 boundary. The contract intentionally preserves uncertainty instead of treating
 an unverified field observation as a fact.
+
+A `contradicted` fact must also record a `limitation` explaining the conflict;
+it is not a resolved site fact.
 
 ## Operational use
 

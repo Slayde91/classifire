@@ -1,6 +1,6 @@
 # CLASSIFIRE Session Handoff
 
-**Verified:** 2026-08-25 (AEST)
+**Verified:** 2026-08-26 (AEST)
 
 **Status:** Pre-production implementation and controlled Phase 8 UAT
 
@@ -15,11 +15,11 @@ This handoff records current evidence. It does not authorise inference, retrieva
   isolation, and the durable visual-validation receipt registry/verifier.
 - The exact tested pre-merge tree and `origin/main` have tree hash
   `7eb06c1fee6bccb0761d17f4010f6ce1d866953c`.
-- Staged local, uncommitted evidence-intake preparation: a `site_observation`
+- PR #74 branch-proposed evidence-intake preparation: a `site_observation`
   contract at the existing evidence-registration endpoint plus its operating
   contract. It binds each fact to a locator and writes the canonical payload
-  digest into the existing audit event. It has no database migration, new writer,
-  or live evidence.
+  digest into the existing audit event. It is not part of shared main unless the
+  PR is merged, and it has no database migration, new writer, or live evidence.
 
 The primary checkout remains on `gpt/phase8-linked-original-images` at
 `de0cc5a` with a divergent mixed working tree. It is a legacy evidence and
@@ -121,10 +121,11 @@ Current validation evidence for the exact merged source tree:
   type errors were corrected before merge.
 
 The recovery v8 result remains successful historical hash-binding evidence for
-its own source. The staged local site-observation contract then passed the
-complete isolated suite: **377 passed**, 139 warnings. It is not yet included in
-the shared-main tree above. No real report was rerun after the later source
-hardening.
+its own source. The PR #74 branch-proposed site-observation contract then passed
+the current complete isolated suite: **380 passed** on 26 August. It is not part
+of the shared-main tree above unless the PR is merged. Publishing or merging that code
+does not create live evidence or authority, and no real report was rerun after
+the later source hardening.
 
 ## 7. Exact next valid task
 
@@ -133,7 +134,8 @@ the selected Defect is a site visit or equivalent newly governed evidence for
 the remaining dimensions, depth/boundaries, substrate, labels/material proof,
 and opposite-face continuity. Once retained as an immutable scanned technical
 file, a suitably authorised user can register it against the relevant Defect
-through the staged `site_observation` contract; this is evidence intake only.
+through the branch-proposed `site_observation` contract once it is available in
+an authorised environment; this is evidence intake only.
 
 Do not rerun unchanged inference or canonicalise the limited 5/6/6 proposal.
 The durable visual-validation receipt registry and exact no-write verifier are

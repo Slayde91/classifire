@@ -1,6 +1,6 @@
 # CLASSIFIRE Project State
 
-**Verified snapshot:** 2026-08-25 (AEST)
+**Verified snapshot:** 2026-08-26 (AEST)
 
 **Product status:** Pre-production implementation and controlled UAT
 
@@ -166,11 +166,12 @@ Current verification evidence for the exact merged source tree:
   found during that run were corrected before merge.
 
 The retained offline recovery v8 remains historical, successful hash-binding
-evidence for its own source fingerprint. A staged local `site_observation`
-evidence-intake contract is not part of shared main; its complete isolated suite
-passed **377**, 139 warnings on 25 August. It requires an immutable scanned file,
-one bound Defect, capture/governance provenance, a per-fact evidence locator, explicit uncertainty, and an audit payload digest
-before the existing endpoint can retain the evidence.
+evidence for its own source fingerprint. PR #74 proposes a controlled
+`site_observation` evidence-intake contract; it is not part of shared main unless
+and until that PR is merged. Its current complete isolated suite passed **380**
+on 26 August. It requires an immutable scanned file, one bound Defect,
+capture/governance provenance, a per-fact evidence locator, explicit uncertainty,
+and an audit payload digest before the existing endpoint can retain the evidence.
 
 No real report was rerun for this documentation reconciliation or local contract
 work. No admission was created, signed, or registered; no canonical model was
@@ -189,10 +190,11 @@ not create semantic acceptance for the selected Defect, perform a canonical
 write, create a Physical Model Lock, sign or register an admission, deploy, or
 release anything.
 
-The staged local site-observation contract adds no database table, no new writer,
-and no live evidence. It validates a narrow payload at the existing evidence
-registration boundary and remains unpublished until separately committed and
-reviewed.
+The PR #74 branch-proposed site-observation contract adds no database table, no
+new writer, and no live evidence. It validates a narrow payload at the existing
+evidence-registration boundary. Publishing the branch, or later merging the PR,
+does not register evidence or grant canonical-write, lock, deployment, or release
+authority.
 
 ## 7. Current blockers and next valid task
 

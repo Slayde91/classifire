@@ -59,6 +59,11 @@ class SiteObservationFact(_StrictSiteEvidencePayload):
                 raise ValueError("unresolved site observations must not provide a value")
             if not self.limitation:
                 raise ValueError("unresolved site observations require a limitation")
+        elif self.status == "contradicted":
+            if not self.value:
+                raise ValueError("contradicted site observations require a value")
+            if not self.limitation:
+                raise ValueError("contradicted site observations require a limitation")
         elif not self.value:
             raise ValueError("resolved site observations require a value")
         return self
@@ -113,6 +118,7 @@ class EvidenceSourceInput(BaseModel):
             raise ValueError("site_observation evidence requires source_json provenance")
         payload = SiteObservationEvidencePayload.model_validate(self.source_json)
         self.evidence_type = _SITE_OBSERVATION_EVIDENCE_TYPE
+        self.evidence_class = "observed"
         self.source_json = payload.model_dump(mode="json", exclude_none=True)
         return self
 

@@ -186,6 +186,7 @@ def test_site_observation_registration_requires_bound_governed_provenance() -> N
                 evidence_type="site-observation",
                 defect_id=opening.canonical_defect_id,
                 stored_file_id=stored.id,
+                evidence_class=" OBSERVED ",
                 source_json=_site_observation_json(),
             ),
             _request(),
@@ -198,6 +199,7 @@ def test_site_observation_registration_requires_bound_governed_provenance() -> N
         assert evidence.evidence_type == "site_observation"
         assert evidence.defect_id == opening.canonical_defect_id
         assert evidence.source_json == _site_observation_json()
+        assert evidence.evidence_class == "observed"
         audit_event = session.scalar(
             select(AuditEvent).where(
                 AuditEvent.action == "register_evidence_source",
@@ -227,6 +229,13 @@ def test_site_observation_registration_requires_bound_governed_provenance() -> N
     [
         ("confirmed", None, None, "resolved site observations require a value"),
         ("unresolved", None, None, "unresolved site observations require a limitation"),
+        ("contradicted", "120 x 80", None, "contradicted site observations require a limitation"),
+        (
+            "contradicted",
+            None,
+            "field value conflicts with retained report evidence",
+            "contradicted site observations require a value",
+        ),
         (
             "unresolved",
             "opening depth could not be verified",
@@ -252,6 +261,22 @@ def test_site_observation_rejects_unsupported_certainty(
                 limitation=limitation,
             ),
         )
+
+
+def test_site_observation_accepts_a_bounded_contradiction() -> None:
+    source_json = _site_observation_json(
+        status="contradicted",
+        value="120 x 80",
+        limitation="field measurement conflicts with retained report evidence",
+    )
+    payload = EvidenceSourceInput(
+        evidence_type="site_observation",
+        defect_id="defect-001",
+        stored_file_id="stored-file-001",
+        source_json=source_json,
+    )
+
+    assert payload.source_json == source_json
 
 
 def test_site_observation_rejects_missing_defect_and_unknown_payload_keys() -> None:
