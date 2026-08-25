@@ -41,7 +41,7 @@ def _use_database(
         lambda: SimpleNamespace(
             env=environment,
             database_url=display_database_url,
-            validate_production=lambda: [],
+            production_findings=lambda: (),
         ),
     )
 
@@ -111,8 +111,9 @@ def test_doctor_reports_current_governed_schema_ready_without_mutation(
 
     result = CliRunner().invoke(cli_app, ["doctor"])
 
-    assert result.exit_code == 0, result.output
+    assert result.exit_code == 1, result.output
     assert "GOVERNED_SCHEMA_CONFIRMED" in result.output
+    assert "active_administrator_required" in result.output
     assert _schema_snapshot(engine) == before
     engine.dispose()
 

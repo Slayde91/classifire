@@ -102,8 +102,6 @@ def health(db: Db, settings: Annotated[Settings, Depends(get_settings)]) -> dict
         "status": "ok",
         "product": "QUANTIFIRE",
         "version": "0.1.0",
-        "environment": settings.env,
-        "production_findings": settings.validate_production(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 

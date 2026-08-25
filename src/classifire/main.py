@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import cast
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import select
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.types import Receive, Scope, Send
 
 from . import (
     ATTRIBUTION,
@@ -21,12 +22,16 @@ from .api.agent_api import router as agent_api_router
 from .api.physical_model import router as physical_model_router
 from .api.workflow import router as workflow_router
 from .api.workflow_actions import router as workflow_actions_router
-from .config import get_settings
+from .config import (
+    Settings,
+    get_settings,
+    normalise_exact_host,
+    require_runtime_configuration,
+)
 from .db import SessionLocal, engine
 from .estimate_pinning import router as estimate_pinning_router
-from .importers.seed import seed_database
+from .importers.seed import require_seed_database_ready
 from .library_ui import router as library_ui_router
-from .models import User
 from .release_admin import router as release_admin_router
 from .security import HUMAN_SESSION_MAX_AGE_SECONDS
 from .services.schema_bootstrap import prepare_application_schema
@@ -34,16 +39,90 @@ from .technical_admin import router as technical_admin_router
 from .ui import router as ui_router
 
 settings = get_settings()
+require_runtime_configuration(settings)
 package_dir = Path(__file__).parent
+
+
+class CaseInsensitiveTrustedHostMiddleware(TrustedHostMiddleware):
+    """Validate and canonicalise an exact Host header before trust checks."""
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] in {"http", "websocket"}:
+            host_headers = [value for name, value in scope["headers"] if name.lower() == b"host"]
+            try:
+                raw_host = host_headers[0].decode("ascii")
+            except (IndexError, UnicodeDecodeError):
+                raw_host = ""
+            host, separator, port = raw_host.partition(":")
+            normalised_host = normalise_exact_host(host)
+            port_is_valid = not separator or (
+                raw_host.count(":") == 1
+                and port.isascii()
+                and port.isdigit()
+                and 1 <= len(port) <= 5
+                and 1 <= int(port) <= 65535
+            )
+            if len(host_headers) != 1 or normalised_host is None or not port_is_valid:
+                response = PlainTextResponse("Invalid host header", status_code=400)
+                await response(scope, receive, send)
+                return
+            normalised_scope = cast(Scope, dict(scope))
+            normalised_scope["headers"] = [
+                (
+                    name,
+                    (normalised_host + (f":{port}" if separator else "")).encode("ascii")
+                    if name.lower() == b"host"
+                    else value,
+                )
+                for name, value in scope["headers"]
+            ]
+            scope = normalised_scope
+        await super().__call__(scope, receive, send)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    require_runtime_configuration(settings)
     prepare_application_schema(engine, settings.env)
-    with SessionLocal() as db:
-        if not db.scalar(select(User.id).limit(1)):
-            seed_database(db, settings)
+    if settings.env == "production":
+        with SessionLocal() as db:
+            require_seed_database_ready(db)
+    settings.storage_root.mkdir(parents=True, exist_ok=True)
     yield
+
+
+def add_runtime_security_middleware(
+    application: FastAPI,
+    runtime_settings: Settings,
+) -> None:
+    application.add_middleware(
+        SessionMiddleware,
+        secret_key=runtime_settings.secret_key,
+        same_site="lax",
+        https_only=runtime_settings.session_https_only,
+        max_age=HUMAN_SESSION_MAX_AGE_SECONDS,
+    )
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=runtime_settings.allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "If-Match",
+            "X-CSRF-Token",
+            "X-Classifire-Agent-ID",
+        ],
+    )
+    application.add_middleware(
+        CaseInsensitiveTrustedHostMiddleware,
+        allowed_hosts=[
+            host.casefold()
+            for host in (runtime_settings.trusted_hosts or ["127.0.0.1", "localhost"])
+        ],
+        www_redirect=False,
+    )
 
 
 app = FastAPI(
@@ -56,27 +135,7 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=settings.secret_key,
-    same_site="lax",
-    https_only=settings.session_https_only,
-    max_age=HUMAN_SESSION_MAX_AGE_SECONDS,
-)
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts or ["*"])
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=[
-        "Authorization",
-        "Content-Type",
-        "If-Match",
-        "X-CSRF-Token",
-        "X-Classifire-Agent-ID",
-    ],
-)
+add_runtime_security_middleware(app, settings)
 app.mount("/static", StaticFiles(directory=str(package_dir / "static")), name="static")
 app.mount("/brand", StaticFiles(directory=str(package_dir / "static" / "brand")), name="brand")
 

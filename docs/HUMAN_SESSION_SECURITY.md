@@ -96,6 +96,13 @@ rotated at cutover. Restoring a database backup can resurrect older session
 rows, so recovery must also rotate the signing secret or revoke/rotate all human
 sessions before service resumes.
 
+The initial administrator must be created by an authorised operator through the
+audited `classifire create-admin --operator-reference ...` command. There is no
+environment-provided default administrator. Follow the
+[production configuration and bootstrap runbook](./PRODUCTION_CONFIGURATION.md)
+for the required configuration and the explicitly attributed `create-admin`
+-> `init` -> `start` sequence.
+
 Startup and operational commands never apply metadata changes to a non-empty
 database. Production requires the exact reviewed Alembic head and its critical
 session constraints. Development and test may create only a completely empty

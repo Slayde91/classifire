@@ -37,8 +37,15 @@ operator has confirmed that its contents are disposable.
 1. Preserve the original database and its checksum in an archive location.
 2. Change `CLASSIFIRE_DATABASE_URL` to a new, empty database location. Do not
    reuse or overwrite the archived file.
-3. Run `classifire init` once against the new empty development/test database.
-4. Run `classifire doctor` and confirm that the database check reports `PASS`.
+3. Create the first administrator explicitly with
+   `classifire create-admin --email "admin@your-company.example"
+   --operator-reference "disposable-db-admin-provisioning"`.
+4. Run `classifire init --administrator-email
+   "admin@your-company.example" --operator-reference
+   "disposable-db-initialization"` once against the new empty
+   development/test database. Replace the example email with the same
+   authorised identity in both commands.
+5. Run `classifire doctor` and confirm that the database check reports `PASS`.
 
 This replacement creates no claim that data from the archived database was
 migrated, reconciled or accepted.

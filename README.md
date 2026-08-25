@@ -38,23 +38,42 @@ chmod +x install.sh
 ./install.sh
 ```
 
-The installer creates a virtual environment, installs QUANTIFIRE, copies `.env.example` to `.env` when required, and initialises the local database.
+The installer creates a virtual environment, installs QUANTIFIRE, and copies
+the local-development `.env.example` to `.env` when required. It deliberately
+does not initialise the database or create an administrator. Review `.env`
+before running any CLASSIFIRE command. The example values are not suitable for
+production; see the
+[production configuration and bootstrap runbook](docs/PRODUCTION_CONFIGURATION.md).
 
-Start the application:
+Activate the environment:
 
 ```powershell
 # Windows
 .\.venv\Scripts\Activate.ps1
-classifire start
 ```
 
 ```bash
 # macOS/Linux
 source .venv/bin/activate
+```
+
+For a new, empty development or test database, create the first administrator
+through the explicit audited command, then initialise reference data, then
+start the application:
+
+```bash
+classifire create-admin --email "admin@your-company.example" --operator-reference "initial-admin-provisioning"
+classifire init --administrator-email "admin@your-company.example" --operator-reference "initial-database-bootstrap"
 classifire start
 ```
 
-Open `http://127.0.0.1:8787`.
+Replace the example email with the authorised administrator identity and use
+the same email for both commands. There is no default administrator email or
+password. The first command prompts for the password without printing it. Do
+not reverse this order: `init` needs that existing active administrator and an
+operator/change reference for explicit audit attribution.
+
+Open `http://127.0.0.1:8787` after `classifire start` succeeds.
 
 For an existing database that already has an `alembic_version` table, take a
 verified backup and then apply the reviewed migrations:
@@ -76,7 +95,8 @@ only while the original archive is retained. Any data-bearing unversioned
 database remains blocked until a separately governed reconciliation preserves
 and validates its data.
 
-Create an administrator account before operational use:
+To create a later administrator, or deliberately reset an existing account,
+use:
 
 ```bash
 classifire create-admin --operator-reference "initial-admin-provisioning"
@@ -84,7 +104,8 @@ classifire create-admin --operator-reference "initial-admin-provisioning"
 
 The command prompts for the email address and password. If that email already
 exists, it resets and reactivates the administrator in one transaction and
-permanently revokes every previously issued human session. The password and
+permanently revokes every previously issued human session. Do not run it for an
+existing account unless that reset is intended and authorised. The password and
 session tokens are never printed.
 
 An authorised operator can revoke every current browser session for one user
@@ -133,7 +154,13 @@ The adapter must be contract-tested against the exact installed Mission Control 
 
 - Keep the repository private.
 - Do not commit `.env`, API keys, database credentials, customer data, supplier prices, proprietary technical reports or production evidence.
-- Use PostgreSQL, TLS, secure secrets management, malware scanning and tested backups for production.
+- Production requires a strong unique application secret, the declared
+  PostgreSQL psycopg driver extra,
+  HTTPS-only session cookies, exact trusted hosts, and exact HTTPS browser
+  origins. Wildcards and the public `.env.example` values are not production
+  settings. Follow the
+  [production configuration and bootstrap runbook](docs/PRODUCTION_CONFIGURATION.md).
+- Use TLS, secure secrets management, malware scanning and tested backups for production.
 - Technical records extracted by AI remain draft until authorised review and approval.
 - A cost allowance is not technical approval.
 

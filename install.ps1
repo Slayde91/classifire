@@ -14,17 +14,15 @@ $venvPython = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
 
 if (-not (Test-Path ".env")) {
     Copy-Item ".env.example" ".env"
-    Write-Host "Created .env from .env.example. Change the secret key and administrator settings before production use." -ForegroundColor Yellow
-}
-
-$classifire = Join-Path $PSScriptRoot ".venv\Scripts\classifire.exe"
-& $classifire init
-if ($LASTEXITCODE -ne 0) {
-    throw "classifire init failed with exit code $LASTEXITCODE. Installation did not complete."
+    Write-Host "Created .env from the local-development example. Review it before running CLASSIFIRE." -ForegroundColor Yellow
 }
 
 Write-Host ""
 Write-Host "QUANTIFIRE installed." -ForegroundColor Green
+Write-Host "No database seed or administrator account was created." -ForegroundColor Yellow
 Write-Host "Activate: .\.venv\Scripts\Activate.ps1"
-Write-Host 'Create admin: classifire create-admin --operator-reference "initial-admin-provisioning"'
-Write-Host "Start: classifire start"
+Write-Host "Review: .env"
+Write-Host '1. Create admin: classifire create-admin --email "admin@your-company.example" --operator-reference "initial-admin-provisioning"'
+Write-Host '2. Initialise: classifire init --administrator-email "admin@your-company.example" --operator-reference "initial-database-bootstrap"'
+Write-Host "3. Start: classifire start"
+Write-Host "Production requirements: docs\PRODUCTION_CONFIGURATION.md"

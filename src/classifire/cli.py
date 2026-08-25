@@ -26,9 +26,15 @@ from . import (
     physical_models,  # noqa: F401
 )
 from .audit import record_audit
-from .config import get_settings
+from .config import (
+    RuntimeConfigurationError,
+    Settings,
+    get_settings,
+    require_runtime_configuration,
+)
 from .db import SessionLocal, engine
 from .importers import import_pricing_library, import_technical_variants, seed_database
+from .importers.seed import SeedDatabaseError, require_seed_database_ready
 from .mission_control import MissionControlClient, bootstrap_mission_control
 from .models import PricingLibraryRecord, Product, TechnicalVariant, User
 from .security import (
@@ -69,12 +75,30 @@ def _required_cli_text(value: str, *, option_name: str) -> str:
     return normalized
 
 
-def _prepare_database_schema() -> None:
-    settings = get_settings()
+def _require_runtime_settings(settings: Settings | None = None) -> Settings:
+    runtime_settings = settings or get_settings()
     try:
-        prepare_application_schema(engine, settings.env)
+        require_runtime_configuration(runtime_settings)
+    except RuntimeConfigurationError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    return runtime_settings
+
+
+def _prepare_database_schema(settings: Settings | None = None) -> Settings:
+    runtime_settings = _require_runtime_settings(settings)
+    try:
+        prepare_application_schema(engine, runtime_settings.env)
     except SchemaBootstrapError as exc:
         raise typer.BadParameter(str(exc)) from exc
+    return runtime_settings
+
+
+def _require_seed_ready_for_cli() -> None:
+    try:
+        with SessionLocal() as db:
+            require_seed_database_ready(db)
+    except SeedDatabaseError as exc:
+        raise typer.BadParameter(f"Database bootstrap rejected: {exc}") from exc
 
 
 def _database_identity(database_url: str) -> str:
@@ -172,17 +196,32 @@ def version() -> None:
 
 
 @app.command("init")
-def init_database() -> None:
+def init_database(
+    administrator_email: str = typer.Option(..., "--administrator-email"),
+    operator_reference: str = typer.Option(..., "--operator-reference"),
+) -> None:
     """Create database tables and seed controlled defaults."""
-    settings = get_settings()
-    findings = settings.validate_production()
-    if findings:
-        console.print("[yellow]Production configuration findings:[/yellow]")
-        for item in findings:
-            console.print(f"  - {item}")
-    _prepare_database_schema()
-    with SessionLocal() as db:
-        result = seed_database(db, settings)
+    administrator = _required_cli_text(
+        administrator_email,
+        option_name="--administrator-email",
+    ).lower()
+    operator = _required_cli_text(
+        operator_reference,
+        option_name="--operator-reference",
+    )
+    settings = _prepare_database_schema()
+    try:
+        with SessionLocal() as db:
+            result = seed_database(
+                db,
+                administrator_email=administrator,
+                operator_reference=operator,
+                jurisdiction=settings.jurisdiction,
+            )
+    except SeedDatabaseError as exc:
+        raise typer.BadParameter(
+            f"{exc}: create an active administrator with classifire create-admin first"
+        ) from exc
     console.print("[green]Database initialised.[/green]")
     console.print_json(data=result)
 
@@ -205,6 +244,8 @@ def create_admin(
         operator_reference,
         option_name="--operator-reference",
     )
+    if not password.strip():
+        raise typer.BadParameter("--password must not be blank")
     _prepare_database_schema()
     password_digest = hash_password(password)
     reset_existing = False
@@ -316,8 +357,8 @@ def import_pricing(
 ) -> None:
     """Import Package 14 into the editable versioned pricing database."""
     _prepare_database_schema()
+    _require_seed_ready_for_cli()
     with SessionLocal() as db:
-        seed_database(db, get_settings())
         result = import_pricing_library(db, path, version=version)
     console.print_json(data=result)
 
@@ -329,8 +370,8 @@ def import_technical(
 ) -> None:
     """Import Package 15 executable variants into the technical database."""
     _prepare_database_schema()
+    _require_seed_ready_for_cli()
     with SessionLocal() as db:
-        seed_database(db, get_settings())
         result = import_technical_variants(db, path, version=version)
     console.print_json(data=result)
 
@@ -345,8 +386,8 @@ def import_supplied_v213(source_root: Optional[Path] = None) -> None:
     if missing:
         raise typer.BadParameter(f"Missing supplied source file(s): {missing}")
     _prepare_database_schema()
+    _require_seed_ready_for_cli()
     with SessionLocal() as db:
-        seed_database(db, get_settings())
         p = import_pricing_library(db, pricing, version="2.13")
         t = import_technical_variants(db, technical, version="2.13")
     console.print("[green]Supplied v2.13 libraries imported.[/green]")
@@ -360,7 +401,20 @@ def start(
     reload: bool = typer.Option(False),
 ) -> None:
     """Start the CLASSIFIRE application."""
-    settings = get_settings()
+    settings = _require_runtime_settings()
+    if settings.env == "production" and reload:
+        raise typer.BadParameter(
+            "PRODUCTION_RELOAD_FORBIDDEN: reload is not allowed in production"
+        )
+    if settings.env == "production":
+        _prepare_database_schema(settings)
+        try:
+            with SessionLocal() as db:
+                require_seed_database_ready(db)
+        except SeedDatabaseError as exc:
+            raise typer.BadParameter(
+                f"Production bootstrap rejected: {exc}"
+            ) from exc
     uvicorn.run(
         "classifire.main:app",
         host=host or settings.host,
@@ -375,7 +429,9 @@ def worker(interval: float = typer.Option(2.0)) -> None:
     """Run the background job worker."""
     from .worker import run_forever
 
-    _prepare_database_schema()
+    settings = _prepare_database_schema()
+    if settings.env == "production":
+        _require_seed_ready_for_cli()
     run_forever(interval)
 
 
@@ -383,6 +439,7 @@ def worker(interval: float = typer.Option(2.0)) -> None:
 def doctor() -> None:
     """Run non-destructive environment, source and database checks."""
     settings = get_settings()
+    configuration_findings = settings.production_findings()
     root = repo_root()
     checks: list[tuple[str, str, str]] = []
     checks.append(("Python", sys.version.split()[0], "PASS" if sys.version_info >= (3, 11) else "FAIL"))
@@ -393,34 +450,72 @@ def doctor() -> None:
     calc = root / "knowledge/source/raw-calculator/Penetration Calculator.xlsb"
     for label, path in [("Package 14", p14), ("Package 15 variants", p15), ("Raw calculator", calc)]:
         checks.append((label, str(path), "PASS" if path.exists() else "BLOCKED"))
-    display_database_identity = _database_identity(settings.database_url)
-    try:
-        with _doctor_database_engine(engine) as diagnostic_engine:
-            preparation = prepare_application_schema(
-                diagnostic_engine,
-                settings.env,
-                create_empty=False,
-            )
-            with Session(diagnostic_engine) as db:
-                db.execute(select(1))
-                users = db.scalar(select(func.count()).select_from(User)) or 0
-                pricing = db.scalar(select(func.count()).select_from(PricingLibraryRecord)) or 0
-                technical = db.scalar(select(func.count()).select_from(TechnicalVariant)) or 0
+    if configuration_findings:
         checks.append(
             (
                 "Database",
-                f"{display_database_identity} ({preparation.code})",
-                "PASS",
+                "not inspected until production configuration is valid",
+                "BLOCKED",
             )
         )
-        checks.append(("Users", str(users), "PASS" if users else "WARN"))
-        checks.append(("Pricing rows", str(pricing), "PASS" if pricing else "WARN"))
-        checks.append(("Technical variants", str(technical), "PASS" if technical else "WARN"))
-    except Exception as exc:
-        failure = str(exc) if isinstance(exc, SchemaBootstrapError) else type(exc).__name__
-        checks.append(("Database", f"{display_database_identity} ({failure})", "FAIL"))
-    for finding in settings.validate_production():
-        checks.append(("Production config", finding, "WARN"))
+    else:
+        display_database_identity = _database_identity(settings.database_url)
+        try:
+            with _doctor_database_engine(engine) as diagnostic_engine:
+                preparation = prepare_application_schema(
+                    diagnostic_engine,
+                    settings.env,
+                    create_empty=False,
+                )
+                with Session(diagnostic_engine) as db:
+                    db.execute(select(1))
+                    users = db.scalar(select(func.count()).select_from(User)) or 0
+                    pricing = db.scalar(
+                        select(func.count()).select_from(PricingLibraryRecord)
+                    ) or 0
+                    technical = db.scalar(
+                        select(func.count()).select_from(TechnicalVariant)
+                    ) or 0
+                    bootstrap_failure: str | None = None
+                    if settings.env == "production":
+                        try:
+                            require_seed_database_ready(db)
+                        except SeedDatabaseError as exc:
+                            bootstrap_failure = str(exc)
+            checks.append(
+                (
+                    "Database",
+                    f"{display_database_identity} ({preparation.code})",
+                    "PASS",
+                )
+            )
+            checks.append(("Users", str(users), "PASS" if users else "WARN"))
+            checks.append(("Pricing rows", str(pricing), "PASS" if pricing else "WARN"))
+            checks.append(
+                ("Technical variants", str(technical), "PASS" if technical else "WARN")
+            )
+            if settings.env == "production":
+                checks.append(
+                    (
+                        "Production bootstrap",
+                        bootstrap_failure
+                        or "active administrator and initialization audit confirmed",
+                        "FAIL" if bootstrap_failure else "PASS",
+                    )
+                )
+        except Exception as exc:
+            failure = (
+                str(exc) if isinstance(exc, SchemaBootstrapError) else type(exc).__name__
+            )
+            checks.append(("Database", f"{display_database_identity} ({failure})", "FAIL"))
+    for finding in configuration_findings:
+        checks.append(
+            (
+                "Production config",
+                f"{finding.code}: {finding.message}",
+                "FAIL",
+            )
+        )
     table = Table("Check", "Detail", "Result")
     for item in checks:
         table.add_row(*item)
@@ -490,6 +585,9 @@ def register_adjudicated_admission(
     settings = get_settings()
     if not settings.adjudicated_initial_submission_enabled:
         raise typer.BadParameter("ADJUDICATED_SUBMISSION_DISABLED")
+    settings = _prepare_database_schema(settings)
+    if settings.env == "production":
+        _require_seed_ready_for_cli()
 
     manifest = manifest_path.read_bytes()
     preflight_receipt = preflight_receipt_path.read_bytes()

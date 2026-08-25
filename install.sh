@@ -21,13 +21,15 @@ python -m pip install --no-build-isolation -e .
 
 if [ ! -f .env ]; then
   cp .env.example .env
-  echo "Created .env from .env.example. Change the secret key and administrator settings before production use."
+  echo "Created .env from the local-development example. Review it before running CLASSIFIRE."
 fi
-
-classifire init
 
 echo
 echo "QUANTIFIRE installed."
+echo "No database seed or administrator account was created."
 echo "Activate: source .venv/bin/activate"
-echo 'Create admin: classifire create-admin --operator-reference "initial-admin-provisioning"'
-echo "Start: classifire start"
+echo "Review: .env"
+echo '1. Create admin: classifire create-admin --email "admin@your-company.example" --operator-reference "initial-admin-provisioning"'
+echo '2. Initialise: classifire init --administrator-email "admin@your-company.example" --operator-reference "initial-database-bootstrap"'
+echo "3. Start: classifire start"
+echo "Production requirements: docs/PRODUCTION_CONFIGURATION.md"

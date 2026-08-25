@@ -46,9 +46,7 @@ def _unversioned_model_violations(bind: Engine) -> tuple[str, ...]:
     ]
     for table_name in expected_tables & actual_tables:
         expected_columns = set(Base.metadata.tables[table_name].columns.keys())
-        actual_columns = {
-            str(column["name"]) for column in inspector.get_columns(table_name)
-        }
+        actual_columns = {str(column["name"]) for column in inspector.get_columns(table_name)}
         violations.extend(
             f"missing_column:{table_name}.{column_name}"
             for column_name in expected_columns - actual_columns
@@ -92,7 +90,8 @@ def prepare_application_schema(
         if not create_empty:
             raise SchemaBootstrapError(
                 "EMPTY_LOCAL_DATABASE",
-                "database is empty; run classifire init before startup",
+                "database is empty; run the explicit create-admin and init "
+                "bootstrap sequence before startup",
             )
         Base.metadata.create_all(bind=bind)
         violations = _unversioned_model_violations(bind)
