@@ -92,9 +92,9 @@ Shared current-main contains the active Phase 8 foundations:
 - FastAPI, CLI, SQLAlchemy, and Alembic infrastructure;
 - the current Opening, Service, and Opening-Service relationship model;
 - the reconciled admission lineage through
-  `0008_retire_legacy_initial_submissions`;
-- in this branch candidate, the additive durable visual-validation receipt
-  migration `0009_visual_validation_receipts`;
+  `0008_retire_legacy_initial_submissions`; and
+- the additive durable visual-validation receipt migration
+  `0009_visual_validation_receipts`;
 - component-level protected-state fingerprinting;
 - proposal-blind visual inventory and mandatory reconciliation;
 - bounded Validator-to-Physical correction and strict proposal receipts;
@@ -110,9 +110,9 @@ Shared current-main contains the active Phase 8 foundations:
 These are completed foundations, not completion of Phase 8 or production
 readiness.
 
-### 4.2 Feature-branch representative-run candidate - In progress
+### 4.2 Shared-main representative-run implementation - Completed for its stated boundary
 
-The coherent branch-local candidate extends current main with:
+Shared current main also includes:
 
 - a strict, approval-bound representative-run package;
 - deterministic binding to the checked-out Git revision and executable source
@@ -208,7 +208,7 @@ count, dimensions, and run time. A retrieved image is accepted only after it is
 visually bound to the report-provided image and proves usable additional detail.
 
 Current-main retention normally binds the verified original to an active parent
-thumbnail. The branch-local candidate also supports report-derived parent
+thumbnail. The shared-main implementation also supports report-derived parent
 evidence only when the immutable PDF hash, page, photo identity, native
 dimensions, and crop bounds all match. Content-addressed bytes and redacted
 provenance are retained without committing the caller's transaction.
@@ -281,8 +281,9 @@ boundary as local execution evidence: all seven review items and four unresolved
 observations are accounted for, and the visible topology is represented as five
 Openings, six Services, and six links. Site-dependent dimensions, depth and
 obscured boundaries, exact substrate composition, labels/material proof, and
-opposite-face continuity remain unresolved. The v2 validator implementation is
-in a separate uncommitted worktree and is not part of this publication branch.
+opposite-face continuity remain unresolved. The provenance and evidence-family
+review validators are on shared main. The retained v2 response remains local
+human-review evidence; it is neither canonical state nor publication authority.
 
 ## 8. Trusted-UAT representative package
 
@@ -326,7 +327,7 @@ it. The only readiness RPC describes a fixed nonexistent session key; it creates
 no session and performs no inference or retrieval.
 
 The runtime first uses the explicit local CLI RPC adapter. If that CLI is
-unavailable, the branch-local candidate may use the same authenticated Gateway
+unavailable, the shared-main implementation may use the same authenticated Gateway
 protocol directly over a literal-loopback WebSocket. The fallback does not allow
 remote hosts or broaden the RPC/parameter allowlist. Runtime sessions and model
 requests remain subject to the existing no-tool guard.
@@ -513,9 +514,9 @@ receipts, or documentation.
 | Application, persistence, and current migration lineage | **Completed foundation** | Shared current-main; pre-production |
 | Linked-original retrieval and governed retention | **Completed foundation** | Shared current-main; approved hosts/report formats remain narrow |
 | Proposal-only visual controller and no-tool runtime | **Completed foundation** | Shared current-main; production persistence/generalisation incomplete |
-| Trusted-UAT package and rollback proof | **Completed branch-local candidate** | Representative run executed; publication review remains |
+| Trusted-UAT package and rollback proof | **Completed shared-main capability** | Representative run executed; source and receipt package are merged |
 | Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; site-dependent facts and independent semantic approval remain unresolved |
-| Content-safe evidence review and local recovery | **Completed branch-local candidate** | Recovery proof has documented mutability/replay limits |
+| Content-safe evidence review and local recovery | **Completed shared-main capability** | Recovery proof has documented mutability/replay limits |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
 | Technical through Human Release | **In progress / blocked** | Basic shared foundations and richer legacy-root foundations exist; upstream Physical Model gate unresolved |
@@ -528,16 +529,14 @@ receipts, or documentation.
 
 ## 15. Next valid architectural action
 
-Publish and review the focused representative-package candidate without folding
-in the separate uncommitted human-review/receipt worktree. For the selected
-Defect, obtain a site visit or equivalent newly governed evidence for the facts
-that human visual review could not establish. Do not repeat unchanged inference
-or convert the limited proposal into canonical truth.
+The representative package, review safeguards, and durable visual-validation
+receipt registry are now on shared main. For the selected Defect, obtain a site
+visit or equivalent newly governed evidence for the facts that human visual
+review could not establish. Do not repeat unchanged inference or convert the
+limited proposal into canonical truth.
 
-In parallel, the durable visual-validation receipt registry and exact
-side-effect-free verifier in this branch candidate are ready for independent
-review; signed lock-admission remains a separate bounded architecture change. Only after the remaining evidence
-is governed, the proposal is independently and semantically accepted, and the
-signed lock boundary is approved should the team consider a fresh
-canonicalisation preflight. Submission, lock creation, technical selection,
-pricing, output, deployment, and Human Release retain their separate gates.
+The receipt verifier remains a no-write pre-lock check, not signed lock
+admission. Design, approve, and enforce that separate boundary only after the
+remaining evidence is governed and the proposal is independently and
+semantically accepted. Submission, lock creation, technical selection, pricing,
+output, deployment, and Human Release retain their separate gates.
