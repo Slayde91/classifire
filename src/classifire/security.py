@@ -107,17 +107,29 @@ def verify_csrf(request: Request, supplied: str | None) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid CSRF token")
 
 
+def resolve_session_user(request: Request, db: Session) -> User | None:
+    """Resolve only an active human user and revoke stale session state."""
+
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return None
+    user = db.get(User, user_id)
+    if not user or not user.is_active:
+        request.session.clear()
+        return None
+    return user
+
+
 def get_current_user(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
-    user_id = request.session.get("user_id")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
-    user = db.get(User, user_id)
-    if not user or not user.is_active:
-        request.session.clear()
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+    user = resolve_session_user(request, db)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
     return user
 
 
@@ -125,8 +137,7 @@ def get_optional_user(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
 ) -> User | None:
-    user_id = request.session.get("user_id")
-    return db.get(User, user_id) if user_id else None
+    return resolve_session_user(request, db)
 
 
 def require_permission(permission: str) -> Callable[..., User]:
