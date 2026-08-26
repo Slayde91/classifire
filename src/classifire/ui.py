@@ -34,7 +34,13 @@ from .models import (
     User,
 )
 from .physical_models import ServiceOpeningLink
-from .security import authenticate_user, create_csrf_token, has_permission, verify_csrf
+from .security import (
+    authenticate_user,
+    create_csrf_token,
+    has_permission,
+    resolve_session_user,
+    verify_csrf,
+)
 from .services.calculation import D, calculate_estimate_line, recalculate_estimate
 from .services.initial_canonicalisation_boundary import (
     InitialCanonicalisationAdmissionRequired,
@@ -63,8 +69,7 @@ Db = Annotated[Session, Depends(get_db)]
 
 
 def _user(request: Request, db: Session) -> User | None:
-    user_id = request.session.get("user_id")
-    return db.get(User, user_id) if user_id else None
+    return resolve_session_user(request, db)
 
 
 def _require(request: Request, db: Session, permission: str) -> User:
