@@ -29,7 +29,7 @@ from classifire.models import MalwareScanAttestation, Opening, StoredFile
 from classifire.physical_models import Defect, EvidenceSource
 from classifire.services.canonical_submission_state import initial_submission_state
 from classifire.services.linked_image_evidence import LinkedImageMalwareQuarantinedError
-from classifire.services.linked_image_retrieval import _FetchHop
+from classifire.services.linked_image_retrieval import LinkedImageError, _FetchHop
 from classifire.services.malware_scan_attestations import (
     append_malware_scan_attestation,
 )
@@ -632,6 +632,65 @@ def test_runner_verifies_full_report_but_retains_only_target_defect_evidence(
             "physical_proposal",
             "conditioned_validator_0",
         ]
+
+
+def test_runner_rejects_malformed_optional_photo_before_transport_retention_or_inference(
+    tmp_path: Path,
+) -> None:
+    with physical_session() as session:
+        storage_root = tmp_path / "storage"
+        retrieval_root = tmp_path / "retrieval"
+        storage_root.mkdir()
+        retrieval_root.mkdir()
+        source = _detailed_jpeg()
+        embedded_path = storage_root / "embedded.jpg"
+        _embedded(source, embedded_path)
+        report = tmp_path / "report.pdf"
+        report_sha256 = _report(report)
+        estimate, _defect, parent = _parent(session, storage_root, embedded_path)
+        ready = _photo_row(embedded_path)
+        malformed_optional = {
+            **_photo_row(embedded_path),
+            "photo_id": "P001-I02",
+            "bbox": [100.0, 100.0, 150.0, 150.0],
+            "native_width": 1000,
+            "native_height": 1000,
+            "width": 1000,
+            "height": 1000,
+        }
+        port = _ScriptedPort()
+        before = initial_submission_state(session, estimate_id=estimate.id)
+
+        with pytest.raises(LinkedImageError) as caught:
+            run_phase8_linked_visual_proposal(
+                session,
+                run_id="RUN-LINKED-MALFORMED-OPTIONAL",
+                estimate_id=estimate.id,
+                defect_reference="D-001",
+                report=report,
+                report_sha256=report_sha256,
+                photo_rows=[ready, malformed_optional],
+                parent_evidence_by_photo_id={
+                    ready["photo_id"]: parent.id,
+                    malformed_optional["photo_id"]: parent.id,
+                },
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                operator_reference="Synthetic test operator",
+                inference_profile=_profile(),
+                inference_port=port,
+                protected_state_reader=lambda: initial_submission_state(
+                    session,
+                    estimate_id=estimate.id,
+                ),
+                transport=lambda *_args: pytest.fail("invalid inventory must not reach transport"),
+            )
+
+        after = initial_submission_state(session, estimate_id=estimate.id)
+        assert caught.value.code == "PHOTO_DIMENSIONS_MISMATCH"
+        assert port.calls == []
+        assert before.fingerprint == after.fingerprint
+        assert before.counts == after.counts
 
 
 def test_runner_blocks_before_retention_and_inference_when_required_link_is_missing(

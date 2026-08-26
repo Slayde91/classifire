@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import http.client
 import ipaddress
+import math
 import os
 import re
 import socket
@@ -14,7 +15,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.parse import parse_qsl, unquote, urljoin, urlsplit
 
 from PIL import Image, ImageChops, ImageFilter, ImageOps, ImageStat, UnidentifiedImageError
@@ -33,6 +34,7 @@ REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 TRANSIENT_STATUSES = frozenset({408, 429, 502, 503, 504})
 _HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _BAD_PERCENT_ESCAPE = re.compile(r"%(?![0-9A-Fa-f]{2})")
+_PHOTO_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
 
 
 class LinkedImageError(RuntimeError):
@@ -399,28 +401,139 @@ def _validate_uri(uri: str, policy: LinkedImagePolicy) -> _ValidatedUri:
 def _bbox_overlap_ratio(photo_bbox: Sequence[float], link_bbox: Sequence[float]) -> float:
     if len(photo_bbox) != 4 or len(link_bbox) != 4:
         return 0.0
-    px0, py0, px1, py1 = (float(value) for value in photo_bbox)
-    lx0, ly0, lx1, ly1 = (float(value) for value in link_bbox)
-    photo_area = max(px1 - px0, 0.0) * max(py1 - py0, 0.0)
-    if photo_area <= 0:
+    try:
+        px0, py0, px1, py1 = (float(value) for value in photo_bbox)
+        lx0, ly0, lx1, ly1 = (float(value) for value in link_bbox)
+    except (TypeError, ValueError, OverflowError):
         return 0.0
-    intersection = max(min(px1, lx1) - max(px0, lx0), 0.0) * max(min(py1, ly1) - max(py0, ly0), 0.0)
-    return intersection / photo_area
+    if not all(math.isfinite(value) for value in (px0, py0, px1, py1, lx0, ly0, lx1, ly1)):
+        return 0.0
+    if px1 <= px0 or py1 <= py0 or lx1 <= lx0 or ly1 <= ly0:
+        return 0.0
+    photo_width = px1 - px0
+    photo_height = py1 - py0
+    if not math.isfinite(photo_width) or not math.isfinite(photo_height):
+        return 0.0
+    photo_area = photo_width * photo_height
+    if not math.isfinite(photo_area) or photo_area <= 0:
+        return 0.0
+    intersection_width = max(min(px1, lx1) - max(px0, lx0), 0.0)
+    intersection_height = max(min(py1, ly1) - max(py0, ly0), 0.0)
+    intersection = intersection_width * intersection_height
+    if not math.isfinite(intersection):
+        return 0.0
+    ratio = intersection / photo_area
+    return ratio if math.isfinite(ratio) else 0.0
+
+
+def _positive_photo_integer(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+def _declared_photo_dimensions(row: Mapping[str, Any]) -> tuple[int, int]:
+    pairs: list[tuple[int, int]] = []
+    for width_key, height_key in (
+        ("native_width", "native_height"),
+        ("width", "height"),
+    ):
+        width_present = width_key in row
+        height_present = height_key in row
+        if not width_present or not height_present:
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        width = row.get(width_key)
+        height = row.get(height_key)
+        if not _positive_photo_integer(width) or not _positive_photo_integer(height):
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        pairs.append((cast(int, width), cast(int, height)))
+    if not pairs or any(pair != pairs[0] for pair in pairs[1:]):
+        raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+    return pairs[0]
+
+
+def _validated_photo_bbox(row: Mapping[str, Any]) -> tuple[float, float, float, float]:
+    raw = row.get("bbox")
+    if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes)) or len(raw) != 4:
+        raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+    values: list[float] = []
+    for value in raw:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        try:
+            converted = float(value)
+        except (TypeError, ValueError, OverflowError):
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY") from None
+        if not math.isfinite(converted):
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        values.append(converted)
+    x0, y0, x1, y1 = values
+    if x1 <= x0 or y1 <= y0:
+        raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+    return x0, y0, x1, y1
+
+
+def validate_linked_image_photo_inventory_structure(
+    photo_rows: Sequence[Mapping[str, Any]],
+    policy: LinkedImagePolicy = DEFAULT_LINKED_IMAGE_POLICY,
+) -> None:
+    """Validate every consumed photo-row field without reading report or image bytes."""
+
+    if (
+        not isinstance(photo_rows, Sequence)
+        or isinstance(photo_rows, (str, bytes))
+        or not photo_rows
+    ):
+        raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+    if len(photo_rows) > policy.maximum_candidates:
+        raise LinkedImageError("TOO_MANY_PHOTO_OCCURRENCES")
+    photo_ids: set[str] = set()
+    for row in photo_rows:
+        if not isinstance(row, Mapping):
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        photo_id = row.get("photo_id")
+        if (
+            not isinstance(photo_id, str)
+            or photo_id != photo_id.strip()
+            or not _PHOTO_ID.fullmatch(photo_id)
+            or photo_id in photo_ids
+        ):
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        page_number = row.get("page_number")
+        if not _positive_photo_integer(page_number):
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        _validated_photo_bbox(row)
+        width, height = _declared_photo_dimensions(row)
+        if max(width, height) > policy.maximum_side_px or width * height > policy.maximum_pixels:
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        native_path = row.get("native_path")
+        if (
+            not isinstance(native_path, str)
+            or native_path != native_path.strip()
+            or not native_path
+            or _contains_controls(native_path)
+        ):
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        if not isinstance(row.get("tiny_artifact"), bool) or not isinstance(
+            row.get("decorative_candidate"), bool
+        ):
+            raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+        photo_ids.add(photo_id)
 
 
 def _eligible_raster(row: Mapping[str, Any]) -> bool:
-    if bool(row.get("decorative_candidate")) or bool(row.get("tiny_artifact")):
+    if not isinstance(row.get("decorative_candidate"), bool) or not isinstance(
+        row.get("tiny_artifact"), bool
+    ):
+        raise LinkedImageError("INVALID_PHOTO_INVENTORY")
+    if row["decorative_candidate"] or row["tiny_artifact"]:
         return False
-    width = int(row.get("native_width") or row.get("width") or 0)
-    height = int(row.get("native_height") or row.get("height") or 0)
+    width, height = _declared_photo_dimensions(row)
     return width > 0 and height > 0
 
 
 def _eligible_low_resolution(row: Mapping[str, Any], policy: LinkedImagePolicy) -> bool:
     if not _eligible_raster(row):
         return False
-    width = int(row.get("native_width") or row.get("width") or 0)
-    height = int(row.get("native_height") or row.get("height") or 0)
+    width, height = _declared_photo_dimensions(row)
     return max(width, height) < policy.low_resolution_long_side_px
 
 
@@ -443,17 +556,11 @@ def _candidate_from_matches(
     embedded_path = Path(native_raw)
     if not embedded_path.is_file():
         raise LinkedImageError("EMBEDDED_THUMBNAIL_MISSING")
-    embedded_width = int(row.get("native_width") or row.get("width") or 0)
-    embedded_height = int(row.get("native_height") or row.get("height") or 0)
-    raw_photo_bbox = row["bbox"]
-    if not isinstance(raw_photo_bbox, Sequence) or len(raw_photo_bbox) != 4:
-        raise LinkedImageError("INVALID_PHOTO_BBOX")
-    photo_bbox = (
-        float(raw_photo_bbox[0]),
-        float(raw_photo_bbox[1]),
-        float(raw_photo_bbox[2]),
-        float(raw_photo_bbox[3]),
-    )
+    embedded_width, embedded_height = _declared_photo_dimensions(row)
+    try:
+        photo_bbox = _validated_photo_bbox(row)
+    except LinkedImageError:
+        raise LinkedImageError("INVALID_PHOTO_BBOX") from None
     return LinkedImageCandidate(
         photo_id=str(row["photo_id"]),
         page_number=int(row["page_number"]),
@@ -493,7 +600,30 @@ def extract_candidates(
         raise LinkedImageError("REPORT_UNAVAILABLE") from None
     if not isinstance(report_bytes, bytes):
         raise LinkedImageError("REPORT_UNAVAILABLE")
-    _require_clean_linked_bytes(malware_scanner, report_bytes)
+    _validate_linked_image_photo_inventory(
+        report_bytes,
+        photo_rows,
+        policy,
+        malware_scanner,
+    )
+    return _extract_candidates_from_validated_inventory(
+        report_bytes,
+        photo_rows,
+        policy,
+        unresolved_links=unresolved_links,
+        secondary_activation_regions=secondary_activation_regions,
+    )
+
+
+def _extract_candidates_from_validated_inventory(
+    report_bytes: bytes,
+    photo_rows: Sequence[Mapping[str, Any]],
+    policy: LinkedImagePolicy,
+    *,
+    unresolved_links: list[dict[str, Any]] | None = None,
+    secondary_activation_regions: list[dict[str, Any]] | None = None,
+) -> tuple[dict[str, LinkedImageCandidate], dict[str, str], set[str]]:
+    """Map annotations only after the caller has completed the full inventory contract."""
 
     try:
         import pymupdf
@@ -511,7 +641,10 @@ def extract_candidates(
     secondary = secondary_activation_regions if secondary_activation_regions is not None else []
     unmatched_allowed: list[dict[str, Any]] = []
     annotation_count = 0
-    document = pymupdf.open(stream=report_bytes, filetype="pdf")
+    try:
+        document = pymupdf.open(stream=report_bytes, filetype="pdf")
+    except (RuntimeError, TypeError, ValueError, OverflowError):
+        raise LinkedImageError("REPORT_INVALID") from None
     try:
         for page_number in range(1, len(document) + 1):
             rows = eligible.get(page_number, [])
@@ -575,6 +708,10 @@ def extract_candidates(
                     matches.setdefault(photo_id, []).append(
                         (uri, annotation_bbox, overlap, int(link.get("xref") or 0))
                     )
+    except LinkedImageError:
+        raise
+    except (RuntimeError, TypeError, ValueError, OverflowError, IndexError, KeyError):
+        raise LinkedImageError("REPORT_INVALID") from None
     finally:
         document.close()
 
@@ -873,7 +1010,12 @@ def _load_embedded_image(
     malware_scanner: MalwareScanner,
 ) -> Image.Image:
     try:
-        body = path.read_bytes()
+        if not _positive_photo_integer(policy.maximum_image_bytes):
+            raise LinkedImageError("INVALID_BINDING_POLICY")
+        with path.open("rb") as stream:
+            body = stream.read(policy.maximum_image_bytes + 1)
+        if len(body) > policy.maximum_image_bytes:
+            raise LinkedImageError("EMBEDDED_THUMBNAIL_INVALID")
         _require_clean_linked_bytes(malware_scanner, body)
         with warnings.catch_warnings():
             warnings.simplefilter("error", Image.DecompressionBombWarning)
@@ -934,24 +1076,49 @@ def _embedded_groups_from_items(
     for photo_id, path in items:
         try:
             image = _load_embedded_image(path, policy, malware_scanner)
-            file_sha256 = _sha256_file(path)
+            try:
+                _append_embedded_group(
+                    grouped,
+                    photo_id=photo_id,
+                    file_sha256=_sha256_file(path),
+                    image=image,
+                    policy=policy,
+                )
+            finally:
+                image.close()
         except OSError:
             continue
         except LinkedImageError as exc:
             if exc.code.startswith("MALWARE_"):
                 raise
             continue
-        pixel_sha256 = _canonical_pixel_sha256(image)
-        entry = grouped.setdefault(
-            pixel_sha256,
-            {
-                "image": _comparison_image(image, policy),
-                "width": image.width,
-                "height": image.height,
-                "members": [],
-            },
-        )
-        entry["members"].append((photo_id, file_sha256))
+    return _finalize_embedded_groups(grouped)
+
+
+def _append_embedded_group(
+    grouped: dict[str, dict[str, Any]],
+    *,
+    photo_id: str,
+    file_sha256: str,
+    image: Image.Image,
+    policy: LinkedImagePolicy,
+) -> None:
+    pixel_sha256 = _canonical_pixel_sha256(image)
+    entry = grouped.get(pixel_sha256)
+    if entry is None:
+        entry = {
+            "image": _comparison_image(image, policy),
+            "width": image.width,
+            "height": image.height,
+            "members": [],
+        }
+        grouped[pixel_sha256] = entry
+    entry["members"].append((photo_id, file_sha256))
+
+
+def _finalize_embedded_groups(
+    grouped: Mapping[str, Mapping[str, Any]],
+) -> tuple[_EmbeddedGroup, ...]:
     groups: list[_EmbeddedGroup] = []
     for pixel_sha256, entry in sorted(grouped.items()):
         members = tuple(sorted(entry["members"]))
@@ -973,15 +1140,57 @@ def _build_embedded_groups(
     policy: LinkedImagePolicy,
     malware_scanner: MalwareScanner,
 ) -> tuple[_EmbeddedGroup, ...]:
-    items: list[tuple[str, Path]] = []
+    grouped: dict[str, dict[str, Any]] = {}
     for row in photo_rows:
-        if not _eligible_raster(row):
-            continue
-        photo_id = str(row.get("photo_id") or "").strip()
-        native_raw = str(row.get("native_path") or "").strip()
-        if photo_id and native_raw:
-            items.append((photo_id, Path(native_raw)))
-    return _embedded_groups_from_items(items, policy, malware_scanner)
+        photo_id = str(row["photo_id"])
+        path = Path(str(row["native_path"]))
+        try:
+            image = _load_embedded_image(path, policy, malware_scanner)
+        except OSError:
+            raise LinkedImageError("EMBEDDED_THUMBNAIL_INVALID") from None
+        try:
+            declared_width, declared_height = _declared_photo_dimensions(row)
+            if image.size != (declared_width, declared_height):
+                raise LinkedImageError("PHOTO_DIMENSIONS_MISMATCH")
+            file_sha256 = _sha256_file(path)
+            if _eligible_raster(row):
+                _append_embedded_group(
+                    grouped,
+                    photo_id=photo_id,
+                    file_sha256=file_sha256,
+                    image=image,
+                    policy=policy,
+                )
+        except OSError:
+            raise LinkedImageError("EMBEDDED_THUMBNAIL_INVALID") from None
+        finally:
+            image.close()
+    return _finalize_embedded_groups(grouped)
+
+
+def _validate_linked_image_photo_inventory(
+    report_bytes: bytes,
+    photo_rows: Sequence[Mapping[str, Any]],
+    policy: LinkedImagePolicy,
+    malware_scanner: MalwareScanner,
+) -> tuple[_EmbeddedGroup, ...]:
+    _require_clean_linked_bytes(malware_scanner, report_bytes)
+    validate_linked_image_photo_inventory_structure(photo_rows, policy)
+    try:
+        import pymupdf
+    except ImportError as exc:  # pragma: no cover - dependency is mandatory in this project
+        raise RuntimeError("PyMuPDF is required for linked image extraction.") from exc
+    try:
+        document = pymupdf.open(stream=report_bytes, filetype="pdf")
+        try:
+            page_count = len(document)
+        finally:
+            document.close()
+    except (RuntimeError, TypeError, ValueError, OverflowError):
+        raise LinkedImageError("REPORT_INVALID") from None
+    if any(int(row["page_number"]) > page_count for row in photo_rows):
+        raise LinkedImageError("PHOTO_PAGE_OUT_OF_RANGE")
+    return _build_embedded_groups(photo_rows, policy, malware_scanner)
 
 
 def _mean_rgb_error(left: Image.Image, right: Image.Image) -> float:
@@ -1775,9 +1984,6 @@ def materialize_linked_images(
 ) -> LinkedImageBatch:
     """Materialize verified image-overlay links without exposing signed capability URIs."""
 
-    photo_ids = [str(row.get("photo_id") or "").strip() for row in photo_rows]
-    if any(not photo_id for photo_id in photo_ids) or len(photo_ids) != len(set(photo_ids)):
-        raise LinkedImageError("INVALID_PHOTO_INVENTORY")
     try:
         report_bytes = report.read_bytes()
     except OSError:
@@ -1785,19 +1991,24 @@ def materialize_linked_images(
     report_digest = _sha256_bytes(report_bytes)
     if not _HEX_SHA256.fullmatch(report_sha256.lower()) or report_digest != report_sha256.lower():
         raise LinkedImageError("REPORT_SHA256_MISMATCH")
+    embedded_groups = _validate_linked_image_photo_inventory(
+        report_bytes,
+        photo_rows,
+        policy,
+        malware_scanner,
+    )
     selected_transport = transport or _pinned_https_get
     unresolved_links: list[dict[str, Any]] = []
     secondary_activation_regions: list[dict[str, Any]] = []
-    candidates, extraction_failures, linked_occurrences = extract_candidates(
-        report,
-        photo_rows,
-        policy,
-        malware_scanner=malware_scanner,
-        unresolved_links=unresolved_links,
-        secondary_activation_regions=secondary_activation_regions,
-        _report_bytes=report_bytes,
+    candidates, extraction_failures, linked_occurrences = (
+        _extract_candidates_from_validated_inventory(
+            report_bytes,
+            photo_rows,
+            policy,
+            unresolved_links=unresolved_links,
+            secondary_activation_regions=secondary_activation_regions,
+        )
     )
-    embedded_groups = _build_embedded_groups(photo_rows, policy, malware_scanner)
     rows_by_id = {
         str(row.get("photo_id")): row
         for row in photo_rows

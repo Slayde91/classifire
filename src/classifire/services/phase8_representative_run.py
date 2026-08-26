@@ -26,9 +26,11 @@ from ..physical_models import EvidenceSource
 from .canonical_submission_state import InitialSubmissionState, initial_submission_state
 from .linked_image_retrieval import (
     DEFAULT_LINKED_IMAGE_POLICY,
+    LinkedImageError,
     Resolver,
     Transport,
     resolve_public_addresses,
+    validate_linked_image_photo_inventory_structure,
 )
 from .malware_scanning import MalwareScanner
 from .phase8_human_reference_comparison import (
@@ -289,8 +291,10 @@ def _load_photo_rows(path: Path, storage_root: Path) -> tuple[dict[str, Any], ..
         )
         photo_ids.add(photo_id)
         rows.append(row)
-    if not rows:
-        raise Phase8RepresentativeRunError("PHOTO_ROWS_INVALID")
+    try:
+        validate_linked_image_photo_inventory_structure(rows)
+    except LinkedImageError:
+        raise Phase8RepresentativeRunError("PHOTO_ROWS_INVALID") from None
     return tuple(rows)
 
 

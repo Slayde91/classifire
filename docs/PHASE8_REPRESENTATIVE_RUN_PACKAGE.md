@@ -45,6 +45,25 @@ file resolves inside the packaged storage snapshot. The inference packet is
 then allowlisted to current retentions and explicitly mapped ready parents for
 the selected Defect; other pre-existing visual rows are excluded.
 
+`photo-rows.json` is a bounded evidence inventory, not a permissive metadata
+hint. It must contain at least one and no more than the active linked-image
+policy's maximum photo occurrences. Every row must have a unique content-safe
+photo ID, a genuine positive integer page number, four finite and ordered
+bounding-box coordinates, a storage-root-contained native image path, matching
+positive integer `native_width`/`native_height` and `width`/`height` pairs, and
+real JSON booleans for `tiny_artifact` and `decorative_candidate`. Numeric and
+boolean-looking strings are rejected rather than coerced.
+
+The package loader checks that structure before preflight. During an authorised
+run, the same contract scans the exact report before parsing it, verifies each
+page number exists in that scanned PDF, rejects each native file above the
+active image-byte limit, scans every admitted native image before decoding it,
+and checks the declared dimensions against the decoded image. Full decoded
+images are released row by row; only policy-bounded comparison copies are kept.
+One malformed row—including a row that would otherwise be optional or
+decorative—stops the whole batch before cache reuse, linked-original transport,
+retention, or inference.
+
 ## `package.json` contract
 
 The top-level object has exactly these six entries:

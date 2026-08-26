@@ -557,6 +557,39 @@ def test_package_rejects_missing_approval_reference_before_execution(tmp_path: P
     assert caught.value.code == "APPROVAL_INVALID"
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("decorative_candidate", "false"),
+        ("bbox", [0, 0, 10**400, 10]),
+    ],
+)
+def test_package_rejects_ambiguous_photo_inventory_before_preflight(
+    tmp_path: Path,
+    field: str,
+    value: object,
+) -> None:
+    package_dir = tmp_path / "package"
+    storage_root = package_dir / "storage"
+    storage_root.mkdir(parents=True, exist_ok=True)
+    embedded = storage_root / "embedded.jpg"
+    _embedded(_detailed_jpeg(), embedded)
+    package_path = _package(
+        tmp_path,
+        estimate_id="estimate-id",
+        parent_evidence_id="parent-id",
+    )
+    photo_rows_path = package_dir / "photo-rows.json"
+    photo_rows = json.loads(photo_rows_path.read_text(encoding="utf-8"))
+    photo_rows["photo_rows"][0][field] = value
+    _write_json(photo_rows_path, photo_rows)
+
+    with pytest.raises(Phase8RepresentativeRunError) as caught:
+        load_phase8_representative_run_package(package_path)
+
+    assert caught.value.code == "PHOTO_ROWS_INVALID"
+
+
 def test_package_rejects_dns_gateway_name_before_execution(tmp_path: Path) -> None:
     package_path = _package(
         tmp_path,

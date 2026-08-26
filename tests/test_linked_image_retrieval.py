@@ -181,23 +181,33 @@ def _candidate(embedded: Path, *, uri: str | None = None) -> linked.LinkedImageC
 
 
 def _report(tmp_path: Path) -> tuple[Path, str]:
+    import pymupdf
+
     report = tmp_path / "report.pdf"
-    report.write_bytes(b"controlled test report")
+    document = pymupdf.open()
+    document.new_page()
+    document.save(report)
+    document.close()
     return report, linked._sha256_file(report)
 
 
 def _patch_candidate_extraction(
     monkeypatch: pytest.MonkeyPatch, candidate: linked.LinkedImageCandidate
 ) -> None:
-    monkeypatch.setattr(
-        linked,
-        "extract_candidates",
-        lambda _report, _rows, _policy, **_kwargs: (
-            {candidate.photo_id: candidate},
-            {},
-            {candidate.photo_id},
-        ),
+    result = (
+        {candidate.photo_id: candidate},
+        {},
+        {candidate.photo_id},
     )
+
+    def patched_extraction(*_args: object, **_kwargs: object):
+        return result
+
+    for name in (
+        "extract_candidates",
+        "_extract_candidates_from_validated_inventory",
+    ):
+        monkeypatch.setattr(linked, name, patched_extraction)
 
 
 def test_report_malware_is_rejected_before_pdf_parsing(tmp_path: Path) -> None:
@@ -211,6 +221,32 @@ def test_report_malware_is_rejected_before_pdf_parsing(tmp_path: Path) -> None:
         )
 
     assert captured.value.code == "MALWARE_DETECTED"
+
+
+def test_corrupt_report_uses_stable_error_before_native_decode_or_transport(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report = tmp_path / "corrupt.pdf"
+    report.write_bytes(b"not a PDF")
+    embedded = tmp_path / "embedded.jpg"
+    embedded.write_bytes(_jpeg_bytes((50, 50)))
+    monkeypatch.setattr(
+        linked,
+        "_load_embedded_image",
+        lambda *_args, **_kwargs: pytest.fail("invalid report must not reach image decoding"),
+    )
+
+    with pytest.raises(linked.LinkedImageError) as caught:
+        linked.materialize_linked_images(
+            report,
+            [_photo_row(embedded)],
+            tmp_path / "corrupt-report-output",
+            report_sha256=linked._sha256_file(report),
+            transport=lambda *_args: pytest.fail("invalid report must not reach transport"),
+        )
+
+    assert caught.value.code == "REPORT_INVALID"
 
 
 def test_infected_native_image_blocks_pillow_network_and_storage(
@@ -371,6 +407,130 @@ def test_candidate_rejects_non_rectangular_photo_bbox(tmp_path: Path) -> None:
         )
 
     assert caught.value.code == "INVALID_PHOTO_BBOX"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("photo_id", " P001-I01"),
+        ("page_number", True),
+        ("page_number", 1.0),
+        ("page_number", 0),
+        ("bbox", [float("nan"), 0.0, 10.0, 10.0]),
+        ("bbox", [0.0, 0.0, float("inf"), 10.0]),
+        ("bbox", [0, 0, 10**400, 10]),
+        ("bbox", [10.0, 0.0, 5.0, 10.0]),
+        ("native_width", "50"),
+        ("native_height", True),
+        ("width", 49),
+        ("tiny_artifact", "false"),
+        ("decorative_candidate", 0),
+    ],
+)
+def test_photo_inventory_structure_rejects_ambiguous_values(
+    tmp_path: Path,
+    field: str,
+    value: object,
+) -> None:
+    embedded = tmp_path / "embedded.jpg"
+    embedded.write_bytes(_jpeg_bytes((50, 50)))
+    row = _photo_row(embedded)
+    row[field] = value
+
+    with pytest.raises(linked.LinkedImageError) as caught:
+        linked.validate_linked_image_photo_inventory_structure([row])
+
+    assert caught.value.code == "INVALID_PHOTO_INVENTORY"
+
+
+@pytest.mark.parametrize(
+    "missing_field",
+    [
+        "native_width",
+        "native_height",
+        "width",
+        "height",
+        "tiny_artifact",
+        "decorative_candidate",
+    ],
+)
+def test_photo_inventory_structure_requires_explicit_fields(
+    tmp_path: Path,
+    missing_field: str,
+) -> None:
+    embedded = tmp_path / "embedded.jpg"
+    embedded.write_bytes(_jpeg_bytes((50, 50)))
+    row = _photo_row(embedded)
+    del row[missing_field]
+
+    with pytest.raises(linked.LinkedImageError) as caught:
+        linked.validate_linked_image_photo_inventory_structure([row])
+
+    assert caught.value.code == "INVALID_PHOTO_INVENTORY"
+
+
+def test_photo_inventory_caps_all_occurrences_not_only_linked_rows(tmp_path: Path) -> None:
+    embedded = tmp_path / "embedded.jpg"
+    embedded.write_bytes(_jpeg_bytes((50, 50)))
+    rows = [
+        _photo_row(embedded, photo_id="P001-I01"),
+        _photo_row(embedded, photo_id="P001-I02"),
+    ]
+    policy = replace(linked.DEFAULT_LINKED_IMAGE_POLICY, maximum_candidates=1)
+
+    with pytest.raises(linked.LinkedImageError) as caught:
+        linked.validate_linked_image_photo_inventory_structure(rows, policy)
+
+    assert caught.value.code == "TOO_MANY_PHOTO_OCCURRENCES"
+
+
+def test_bbox_overlap_rejects_nonfinite_geometry() -> None:
+    assert (
+        linked._bbox_overlap_ratio(
+            (float("nan"), 0.0, 10.0, 10.0),
+            (100.0, 100.0, 110.0, 110.0),
+        )
+        == 0.0
+    )
+
+
+def test_bbox_overlap_rejects_unrepresentable_geometry() -> None:
+    assert linked._bbox_overlap_ratio((0, 0, 10**400, 10), (0, 0, 10, 10)) == 0.0
+
+
+def test_bbox_overlap_rejects_finite_geometry_with_overflowing_area() -> None:
+    extreme = (-1e308, -1e308, 1e308, 1e308)
+
+    assert linked._bbox_overlap_ratio(extreme, extreme) == 0.0
+
+
+def test_embedded_grouping_releases_each_full_image_before_loading_the_next(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    paths = [tmp_path / "first.jpg", tmp_path / "second.jpg"]
+    loaded: list[Image.Image] = []
+
+    def load_image(*_args: object, **_kwargs: object) -> Image.Image:
+        if loaded:
+            with pytest.raises(ValueError, match="closed image"):
+                loaded[-1].getbbox()
+        image = Image.new("RGB", (50, 50), (len(loaded) + 1, 0, 0))
+        loaded.append(image)
+        return image
+
+    monkeypatch.setattr(linked, "_load_embedded_image", load_image)
+    monkeypatch.setattr(linked, "_sha256_file", lambda path: path.stem * 64)
+
+    groups = linked._embedded_groups_from_items(
+        [("P001-I01", paths[0]), ("P001-I02", paths[1])],
+        linked.DEFAULT_LINKED_IMAGE_POLICY,
+        _CleanScanner(),
+    )
+
+    assert len(groups) == 2
+    with pytest.raises(ValueError, match="closed image"):
+        loaded[-1].getbbox()
 
 
 @pytest.mark.parametrize(
@@ -664,6 +824,96 @@ def test_duplicate_photo_ids_fail_before_extraction(tmp_path: Path) -> None:
             report_sha256=report_sha256,
         )
     assert captured.value.code == "INVALID_PHOTO_INVENTORY"
+
+
+def test_photo_inventory_rejects_page_outside_scanned_report_before_transport(
+    tmp_path: Path,
+) -> None:
+    report, report_sha256 = _report(tmp_path)
+    embedded = tmp_path / "embedded.jpg"
+    embedded.write_bytes(_jpeg_bytes((50, 50)))
+    row = _photo_row(embedded)
+    row["page_number"] = 2
+
+    with pytest.raises(linked.LinkedImageError) as caught:
+        linked.materialize_linked_images(
+            report,
+            [row],
+            tmp_path / "outside-page",
+            report_sha256=report_sha256,
+            transport=lambda *_args: pytest.fail("invalid inventory must not reach transport"),
+        )
+
+    assert caught.value.code == "PHOTO_PAGE_OUT_OF_RANGE"
+
+
+def test_malformed_optional_row_cannot_hide_behind_ready_photo(
+    tmp_path: Path,
+) -> None:
+    import pymupdf
+
+    first = tmp_path / "first.jpg"
+    second = tmp_path / "second.jpg"
+    first.write_bytes(_jpeg_bytes((50, 50)))
+    second.write_bytes(_jpeg_bytes((50, 50)))
+    report = tmp_path / "two-photo.pdf"
+    document = pymupdf.open()
+    page = document.new_page()
+    page.insert_link(
+        {
+            "kind": pymupdf.LINK_URI,
+            "from": pymupdf.Rect(10, 10, 60, 60),
+            "uri": _uri(),
+        }
+    )
+    document.save(report)
+    document.close()
+    ready = _photo_row(first, photo_id="P001-I01")
+    malformed_optional = _photo_row(second, photo_id="P001-I02")
+    malformed_optional.update(
+        {
+            "bbox": [100.0, 100.0, 150.0, 150.0],
+            "native_width": 1000,
+            "native_height": 1000,
+            "width": 1000,
+            "height": 1000,
+        }
+    )
+
+    with pytest.raises(linked.LinkedImageError) as caught:
+        linked.materialize_linked_images(
+            report,
+            [ready, malformed_optional],
+            tmp_path / "two-photo-output",
+            report_sha256=linked._sha256_file(report),
+            transport=lambda *_args: pytest.fail("invalid inventory must not reach transport"),
+        )
+
+    assert caught.value.code == "PHOTO_DIMENSIONS_MISMATCH"
+
+
+def test_optional_photo_over_byte_limit_blocks_before_transport(tmp_path: Path) -> None:
+    report, report_sha256 = _report(tmp_path)
+    embedded = tmp_path / "embedded.jpg"
+    embedded.write_bytes(_jpeg_bytes((50, 50)))
+    row = _photo_row(embedded)
+    row["decorative_candidate"] = True
+    policy = replace(
+        linked.DEFAULT_LINKED_IMAGE_POLICY,
+        maximum_image_bytes=embedded.stat().st_size - 1,
+    )
+
+    with pytest.raises(linked.LinkedImageError) as caught:
+        linked.materialize_linked_images(
+            report,
+            [row],
+            tmp_path / "oversize-optional-output",
+            report_sha256=report_sha256,
+            policy=policy,
+            transport=lambda *_args: pytest.fail("invalid inventory must not reach transport"),
+        )
+
+    assert caught.value.code == "EMBEDDED_THUMBNAIL_INVALID"
 
 
 def test_low_resolution_photo_without_link_blocks_batch(tmp_path: Path) -> None:
