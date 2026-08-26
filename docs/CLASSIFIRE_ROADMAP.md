@@ -30,8 +30,8 @@ Nothing in a report, fixture, receipt, or attached reference document grants aut
 
 ### 2.1 Current product position
 
-CLASSIFIRE has a controlled evidence-to-physical-model prototype. Shared `main`
-at `20cb72a` contains the canonical runtime,
+CLASSIFIRE has a controlled evidence-to-physical-model prototype. The verified
+shared-main application baseline at `20cb72a` contains the canonical runtime,
 admission-bound writer, bounded visual correction guard, proposal-blind
 inventory, mandatory blind reconciliation, deterministic proposal-only
 controller and receipt, retained-evidence adapter, guarded linked-original

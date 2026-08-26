@@ -8,8 +8,12 @@ This handoff records current evidence. It does not authorise inference, retrieva
 
 ## 1. Current shared-main position
 
-- Shared `main` and `origin/main`:
+- Verified shared-main application baseline:
   `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge).
+  PR #76 advanced `origin/main` to a documentation-only descendant of this
+  baseline; later documentation-only merges may advance it again without
+  changing the runtime baseline. Verify the live branch tip directly whenever
+  publication state matters.
 - Merged Phase 8 work: representative rollback package and recovery,
   evidence-family and human-review validators, direct legacy-route test
   isolation, the durable visual-validation receipt registry/verifier, and the
