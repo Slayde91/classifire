@@ -14,6 +14,14 @@ def _table_names() -> set[str]:
 
 
 def upgrade() -> None:
+    if op.get_bind().dialect.name == "postgresql":
+        op.alter_column(
+            "alembic_version",
+            "version_num",
+            existing_type=sa.String(32),
+            type_=sa.String(64),
+            existing_nullable=False,
+        )
     if "physical_model_admissions" in _table_names():
         return
     op.create_table(

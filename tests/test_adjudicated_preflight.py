@@ -34,6 +34,7 @@ from classifire.services.adjudicated_preflight import (
     parse_adjudicated_preflight,
     preflight_receipt_bytes,
 )
+from classifire.services.deployment_lineage import CLEAN_STACK_HEAD
 from classifire.services.phase8_adjudicated_payload import derive_phase8_adjudicated_payload
 from classifire.services.physical_defects import bind_canonical_defect
 
@@ -41,10 +42,10 @@ NOW = datetime(2026, 8, 20, 8, 0, tzinfo=UTC)
 
 
 def _mark_clean_lineage(db) -> None:  # type: ignore[no-untyped-def]
-    db.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(64))"))
+    db.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL PRIMARY KEY)"))
     db.execute(
         text("INSERT INTO alembic_version (version_num) VALUES (:revision)"),
-        {"revision": "0010_human_sessions"},
+        {"revision": CLEAN_STACK_HEAD},
     )
     db.commit()
 
@@ -144,6 +145,31 @@ def test_preflight_is_no_write_and_binds_current_stack(tmp_path) -> None:  # typ
         assert binding.submission_payload_sha256 == receipt["normalised_submission_payload_sha256"]
         assert "preflight_implementation" in binding.artifact_digests
         assert db.query(Opening).filter(Opening.estimate_id == estimate.id).count() == 0
+
+
+def test_preflight_rejects_unreadable_alembic_lineage_before_payload_work() -> None:
+    with physical_session() as db:
+        estimate = add_estimate(db)
+        _mark_clean_lineage(db)
+        db.execute(text("ALTER TABLE alembic_version RENAME COLUMN version_num TO wrong_name"))
+        db.commit()
+
+        with pytest.raises(AdjudicatedPreflightError) as rejected:
+            build_adjudicated_preflight(
+                db,
+                estimate_id=estimate.id,
+                submission_payload={},
+                source_run_id="source-run-001",
+                adjudicated_run_id="adjudicated-run-001",
+                artifact_files={},
+                policy_versions={},
+                now=NOW,
+            )
+
+        assert rejected.value.code == "DEPLOYMENT_LINEAGE_UNRECOGNISED"
+        assert db.scalar(select(func.count(Opening.id))) == 0
+        assert db.scalar(select(func.count(PhysicalModelAdmission.id))) == 0
+        assert db.scalar(select(func.count(PhysicalModelLock.id))) == 0
 
 
 def test_preflight_rejects_implementation_pin_change(tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -291,3 +317,31 @@ def test_registration_rechecks_live_state_after_preflight(tmp_path) -> None:  # 
             )
         assert rejected.value.code == "INITIAL_SUBMISSION_STATE_CHANGED"
         assert db.scalar(select(func.count(PhysicalModelAdmission.id))) == 0
+
+
+def test_registration_rejects_unreadable_live_alembic_lineage(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    with physical_session() as db:
+        estimate = add_estimate(db)
+        receipt = _build(db, estimate, tmp_path)
+        raw = preflight_receipt_bytes(receipt)
+        binding = parse_adjudicated_preflight(raw, now=NOW)
+        manifest, public_key = _signing_fixture(binding)
+        db.execute(text("ALTER TABLE alembic_version RENAME COLUMN version_num TO wrong_name"))
+        db.commit()
+
+        with pytest.raises(AdmissionRegistrationError) as rejected:
+            register_verified_admission_from_preflight(
+                db,
+                manifest=manifest,
+                preflight_receipt=raw,
+                pinned_public_key=public_key,
+                expected_issuer="classifire-governance",
+                expected_key_id="governance-p256-test-01",
+                operator_reference="CHG-PREFLIGHT-TEST-003",
+                now=NOW,
+            )
+
+        assert rejected.value.code == "DEPLOYMENT_LINEAGE_UNRECOGNISED"
+        assert db.scalar(select(func.count(PhysicalModelAdmission.id))) == 0
+        assert db.scalar(select(func.count(Opening.id))) == 0
+        assert db.scalar(select(func.count(PhysicalModelLock.id))) == 0

@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, inspect, text
 from test_migrations_physical_foundation import _migration_environment, _upgrade
 
 from classifire.db import Base
+from classifire.services.deployment_lineage import CLEAN_STACK_HEAD
 from classifire.services.schema_bootstrap import (
     SchemaBootstrapError,
     prepare_application_schema,
@@ -101,13 +102,24 @@ def test_production_rejects_empty_and_unversioned_databases() -> None:
     assert _schema_snapshot(unversioned_engine) == before
 
 
-def test_0009_startup_rejection_is_read_only_and_0010_can_still_upgrade(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    "starting_revision",
+    (
+        "0008_retire_legacy_initial_submissions",
+        "0009_visual_validation_receipts",
+        "0010_human_sessions",
+    ),
+    ids=("retired-legacy-table", "visual-validation-receipts", "human-sessions"),
+)
+def test_known_stale_startup_rejection_is_read_only_and_can_still_upgrade(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    starting_revision: str,
 ) -> None:
-    database_path = tmp_path / "startup-0009.sqlite"
+    database_path = tmp_path / f"startup-{starting_revision}.sqlite"
     database_url = f"sqlite:///{database_path.as_posix()}"
     environment = _migration_environment(tmp_path, database_url)
-    _upgrade(database_url, environment, "0009_visual_validation_receipts")
+    _upgrade(database_url, environment, starting_revision)
     engine = create_engine(database_url)
     before = _schema_snapshot(engine)
     _forbid_create_all(monkeypatch)
@@ -116,7 +128,7 @@ def test_0009_startup_rejection_is_read_only_and_0010_can_still_upgrade(
         prepare_application_schema(engine, "development")
 
     assert rejected.value.code == "DATABASE_MIGRATION_REQUIRED"
-    assert "0010_human_sessions" in str(rejected.value)
+    assert CLEAN_STACK_HEAD in str(rejected.value)
     assert _schema_snapshot(engine) == before
 
     engine.dispose()
@@ -133,11 +145,24 @@ def test_0009_startup_rejection_is_read_only_and_0010_can_still_upgrade(
     [
         ("DROP TABLE customers", "missing tables ('customers',)"),
         (
+            "DROP TABLE malware_scan_attestations",
+            "missing tables ('malware_scan_attestations',)",
+        ),
+        (
             "ALTER TABLE customers DROP COLUMN legal_name",
             "missing columns ('customers.legal_name',)",
         ),
+        (
+            "ALTER TABLE alembic_version RENAME COLUMN version_num TO wrong_name",
+            "schema violations ('alembic_version:column_contract_required',)",
+        ),
     ],
-    ids=("missing-table", "missing-column"),
+    ids=(
+        "missing-table",
+        "missing-malware-attestation-table",
+        "missing-column",
+        "malformed-alembic-version",
+    ),
 )
 def test_current_head_rejects_incomplete_mapped_schema_without_mutation(
     tmp_path: Path,
@@ -158,6 +183,11 @@ def test_current_head_rejects_incomplete_mapped_schema_without_mutation(
     with pytest.raises(SchemaBootstrapError) as rejected:
         prepare_application_schema(engine, "production")
 
-    assert rejected.value.code == "DEPLOYMENT_SCHEMA_DRIFT"
+    expected_code = (
+        "DEPLOYMENT_LINEAGE_UNRECOGNISED"
+        if "alembic_version" in corruption_sql
+        else "DEPLOYMENT_SCHEMA_DRIFT"
+    )
+    assert rejected.value.code == expected_code
     assert expected_detail in str(rejected.value)
     assert _schema_snapshot(engine) == before

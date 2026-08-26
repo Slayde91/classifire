@@ -3,32 +3,74 @@
 ## Decision
 
 The reviewed clean-stack database head is
-`0008_retire_legacy_initial_submissions`. Revision `0008` follows the
-`0007_reconcile_adjudicated_admission_lineages` merge migration and removes a
-stray `physical_model_initial_submissions` table only when it is empty. A
-database reporting
-`0006_adjudicated_canonical_admissions` belongs to the unreviewed legacy Phase 8
-lineage and must not be stamped, upgraded, or used as the deployment target
-without a separately approved rehearsal.
+`0011_malware_scan_attestations`. Revision `0011` follows
+`0010_human_sessions` and adds the append-only, content-bound malware scan
+attestation journal. The read-only checker recognises `0010`,
+`0009_visual_validation_receipts`, and
+`0008_retire_legacy_initial_submissions` as known earlier clean-stack revisions
+that still require the governed migration to `0011`; it never stamps or upgrades
+a database. A database reporting `0006_adjudicated_canonical_admissions` belongs
+to the unreviewed legacy Phase 8 lineage and must not be stamped, upgraded, or
+used as the deployment target without a separately approved rehearsal.
+
+Clean PostgreSQL installs previously depended on branch traversal order because
+Alembic's initial 32-character revision column could not hold either branch's
+first long revision ID. Both the clean `0005` migration and the legacy `0006`
+marker now widen only Alembic's own revision column to 64 characters on
+PostgreSQL before Alembic records that branch. This does not create, rewrite,
+admit, or lock application data.
+
+The deployment-lineage service and clean `0005` migration are protected
+implementation pins in adjudicated preflight receipts. This correction changes
+those hashes, so every pending receipt or dependent admission manifest created
+from the earlier bytes must fail closed. Regenerate and, where authorised,
+re-sign a fresh package; never edit or re-label a historical receipt or
+signature.
 
 ## Read-only confirmation
 
 Run `scripts/check_adjudicated_deployment_lineage.py` in the exact deployment
-environment. It reads only Alembic and table metadata and returns one of:
+environment. It reads only Alembic, schema, and database-catalog metadata and
+returns one of:
 
-- `CLEAN_STACK_HEAD_CONFIRMED`: the configured database is at the reviewed head,
-  contains both current admission journal tables, and contains no retired
+- `CLEAN_STACK_HEAD_CONFIRMED`: the configured database is at `0011`, contains
+  the complete mapped schema and critical security contracts, includes the
+  append-only malware scan attestation guards, and contains no retired
   initial-submission table;
 - `LEGACY_INITIAL_SUBMISSION_RETIREMENT_REQUIRED`: the database is at `0007`
   with the empty legacy table shape that requires the reviewed `0008` migration;
-- `DATABASE_MIGRATION_REQUIRED`: the database is at `0007` without that drift
-  but still requires the no-op head transition;
+- `DATABASE_MIGRATION_REQUIRED`: the database is at a recognised earlier
+  revision (`0010`, `0009`, `0008`, or `0007` without legacy-table drift) and
+  still requires the governed forward migration;
 - `DEPLOYMENT_SCHEMA_DRIFT`: the database claims the current head while a
-  required table is missing or a retired table is present;
+  required table, column, security constraint, index, foreign key, or
+  append-only guard is missing or invalid, or a retired table is present;
 - `LEGACY_LINEAGE_REHEARSAL_REQUIRED`: the database uses the legacy competing
   revision and requires a disposable-copy transition rehearsal;
-- `DEPLOYMENT_LINEAGE_UNRECOGNISED`: the revision or required tables do not match
-  either known shape.
+- `DEPLOYMENT_LINEAGE_UNRECOGNISED`: the revision cannot be read safely or the
+  revision and required tables do not match either known shape.
+
+For the malware attestation journal, current-head confirmation checks Alembic's
+exact revision-table contract; exact column names, dialect type declarations,
+nullability, and absence of defaults or generated values; and the named check
+predicates with their validation, enforcement, inheritance, and deferral state.
+On PostgreSQL it also requires a permanent, ordinary, non-partitioned table
+without row-level security, inheritance, or rewrite rules; check expressions
+bound only to the expected table rather than shadow functions or operators; the
+exact valid, ready, live B-tree index definitions without predicates,
+expressions, or included columns; the schema-local validated foreign key and
+all four enabled internal enforcement triggers; and the complete unconditional
+append-only trigger definitions.
+PostgreSQL's automatically reflected indexes that duplicate separately checked
+unique constraints are not mistaken for extra application indexes.
+
+The clean migration and read-only confirmation were exercised from empty,
+disposable PostgreSQL 15, 16, 17, and 18 databases. Each rehearsal traversed
+both historical branches and upgraded through the merged `0011` head. The
+deterministic regression suite separately covers same-name predicate tampering,
+invalid or disabled constraints and triggers, wrong column types, partial
+indexes, rewrite rules, shadow dependencies, and a stale 32-character Alembic
+revision column. No configured project database was used or changed.
 
 ## Legacy transition requirements
 

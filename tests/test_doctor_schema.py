@@ -50,14 +50,24 @@ def _use_database(
     )
 
 
-def test_doctor_rejects_0009_without_mutating_the_database(
+@pytest.mark.parametrize(
+    "starting_revision",
+    (
+        "0008_retire_legacy_initial_submissions",
+        "0009_visual_validation_receipts",
+        "0010_human_sessions",
+    ),
+    ids=("retired-legacy-table", "visual-validation-receipts", "human-sessions"),
+)
+def test_doctor_rejects_known_stale_head_without_mutating_the_database(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    starting_revision: str,
 ) -> None:
-    database_path = tmp_path / "doctor-0009.sqlite"
+    database_path = tmp_path / f"doctor-{starting_revision}.sqlite"
     database_url = f"sqlite:///{database_path.as_posix()}"
     environment = _migration_environment(tmp_path, database_url)
-    _upgrade(database_url, environment, "0009_visual_validation_receipts")
+    _upgrade(database_url, environment, starting_revision)
     engine = create_engine(database_url)
     before = _schema_snapshot(engine)
     _use_database(monkeypatch, engine)
@@ -66,6 +76,31 @@ def test_doctor_rejects_0009_without_mutating_the_database(
 
     assert result.exit_code == 1, result.output
     assert "DATABASE_MIGRATION_REQUIRED" in result.output
+    assert _schema_snapshot(engine) == before
+    engine.dispose()
+
+
+def test_doctor_reports_malformed_alembic_metadata_as_schema_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    database_path = tmp_path / "doctor-malformed-alembic.sqlite"
+    database_url = f"sqlite:///{database_path.as_posix()}"
+    environment = _migration_environment(tmp_path, database_url)
+    _upgrade(database_url, environment, "head")
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.execute(
+            text("ALTER TABLE alembic_version RENAME COLUMN version_num TO wrong_name")
+        )
+    before = _schema_snapshot(engine)
+    _use_database(monkeypatch, engine)
+
+    result = CliRunner().invoke(cli_app, ["doctor"])
+
+    assert result.exit_code == 1, result.output
+    assert "DEPLOYMENT_LINEAGE_UNRECOGNISED" in result.output
+    assert "OperationalError" not in result.output
     assert _schema_snapshot(engine) == before
     engine.dispose()
 
