@@ -32,6 +32,10 @@ from classifire.services.phase8_visual_runtime import (
     Phase8GatewayRpcError,
     verify_phase8_no_write_gateway_readiness,
 )
+from classifire.services.storage import VerifiedStoredFile
+
+_STORED_FILE_ID = "00000000-0000-4000-8000-000000000001"
+_SCAN_ATTESTATION_ID = "00000000-0000-4000-8000-000000000002"
 
 
 def _executable(tmp_path: Path) -> Path:
@@ -45,6 +49,17 @@ def _packet(tmp_path: Path) -> RetainedVisualEvidencePacket:
     image = tmp_path / "evidence.png"
     image.write_bytes(data)
     digest = hashlib.sha256(data).hexdigest()
+    verification_token = VerifiedStoredFile(
+        stored_file_id=_STORED_FILE_ID,
+        path=image,
+        content_sha256=digest,
+        content_size_bytes=len(data),
+        media_type="image/png",
+        purpose="technical_evidence",
+        scan_attestation_id=_SCAN_ATTESTATION_ID,
+        scan_attestation_sha256="C" * 64,
+        scan_sequence=1,
+    )
     manifest = {
         "schema": VISUAL_EVIDENCE_MANIFEST_SCHEMA,
         "estimate_id": "EST-001",
@@ -81,6 +96,7 @@ def _packet(tmp_path: Path) -> RetainedVisualEvidencePacket:
                 sha256=digest,
                 size_bytes=len(data),
                 media_type="image/png",
+                verification_token=verification_token,
             ),
         ),
     )
@@ -370,6 +386,7 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
     packet = _packet(tmp_path)
     rpc_calls: list[tuple[str, dict[str, Any]]] = []
     counts = {"token": 0, "http": 0}
+    verified: list[RetainedVisualEvidencePacket] = []
     session_created = False
 
     def runner(args, **kwargs):
@@ -428,6 +445,7 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
         validator_agent_id="cf-phase8-visual-validator",
         implementation_revision="a" * 40,
         evidence_packet=packet,
+        evidence_packet_verifier=verified.append,
         token_provider=token_provider,
         http_transport=httpx.MockTransport(handler),
         rpc_runner=runner,
@@ -454,4 +472,5 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
     assert rpc_calls[1][1]["model"] == "test-provider/validator-model"
     assert rpc_calls[0][1]["key"].startswith("agent:cf-phase8-visual-validator:classifire-phase8-")
     assert counts == {"token": 0, "http": 0}
+    assert verified == [packet]
     assert client.is_closed

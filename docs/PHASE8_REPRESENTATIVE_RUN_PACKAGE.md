@@ -149,6 +149,22 @@ contains only the hashed artifacts actually produced for that outcome. A zero
 exit status requires both an approved visual result and a passing post-inference
 human-reference comparison.
 
+When managed inference produces successful stages, the output also includes
+`openresponses-transport-receipts.json`. This governed local sidecar retains
+the exact content-safe preimage behind each stage's opaque transport hash. The
+writer verifies those preimages against the controller receipt before writing
+them. The `CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-v2` receipt commits the
+canonical bundle hash, and `completion-receipt.json` records the exact sidecar
+file hash as `artifacts.openresponses_transport_receipts_sha256`. A required
+sidecar write failure prevents the completion receipt, although earlier output
+files may remain as an incomplete run. Historical v1 runs remain historical
+evidence; they are not backfilled or described as transport-reconstructible.
+
+The writer does not set or prove a filesystem access-control list. The output
+directory must be access-restricted, and this sidecar must be excluded from
+publication and human-review handoffs because its hashes and internal UUIDs are
+stable correlators even though it contains no source bytes.
+
 When a valid Validator explicitly returns `BLOCKED`, the runner also writes an
 `evidence-review-request.json` artifact when it can safely retain structured
 issues or limitations. It links to the controller/proposal hashes, includes any
@@ -176,6 +192,7 @@ C:\CLASSIFIRE\.venv\Scripts\python.exe `
   --representative-receipt C:\blocked-run\representative-run-receipt.json `
   --controller C:\blocked-run\proposal-controller-receipt.json `
   --proposal C:\blocked-run\proposal.json `
+  --transport-receipts C:\blocked-run\openresponses-transport-receipts.json `
   --openclaw-root C:\Users\operator\.openclaw `
   --output C:\blocked-run-review-handoff `
   --repository-root $PWD
@@ -192,12 +209,20 @@ to a new output directory. The recovery receipt records historical
 `LF_RENDERED_JSON_SHA256` binding explicitly where older Windows outputs used
 that convention.
 
+`--transport-receipts` is required for a v2 representative receipt. Recovery
+verifies its canonical bundle hash, the exact sidecar file bytes and every
+retained preimage against the controller stages, then records only verification
+status, count and hashes in the recovery receipt. For a historical v1 receipt,
+omit this argument; recovery marks the missing capability as
+`LEGACY_TRANSPORT_BINDING_UNAVAILABLE` and rejects an unadvertised sidecar.
+
 This proves correspondence among the retained package, receipts, local sessions
 and payload hashes. It does not replay Gateway authentication, tool attestation,
 tool audit, OpenResponses response identity or external transport, and it does
-not claim that mutable local OpenClaw history is immutable. It performs no
-retrieval, inference, canonical submission, lock, pricing or human-reference
-comparison.
+not replay the malware scanner or prove the referenced clean/latest attestation
+chain. It does not claim that mutable local OpenClaw history is immutable. It
+performs no retrieval, inference, canonical submission, lock, pricing or
+human-reference comparison.
 
 The retained v17 execution used this controlled workflow and ended with
 `VISUAL_PROPOSAL_BLOCKED`. It proved the rollback and authority boundaries but

@@ -8,7 +8,12 @@ from typing import Any
 
 import pytest
 
+from classifire.services.phase8_openresponses_transport import (
+    OPENRESPONSES_TRANSPORT_RECEIPT_SCHEMA,
+    build_phase8_openresponses_transport_receipt_bundle,
+)
 from classifire.services.phase8_representative_run import (
+    LEGACY_REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
     REPRESENTATIVE_RUN_APPROVAL_SCOPE,
     REPRESENTATIVE_RUN_PACKAGE_SCHEMA,
     REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
@@ -27,6 +32,10 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import recover_phase8_evidence_review_request as recovery_cli  # noqa: E402
+
+_STORED_FILE_ID = "00000000-0000-4000-8000-000000000001"
+_SCAN_ATTESTATION_ID = "00000000-0000-4000-8000-000000000002"
+_OTHER_SCAN_ATTESTATION_ID = "00000000-0000-4000-8000-000000000003"
 
 
 def _render(value: object) -> bytes:
@@ -145,7 +154,7 @@ def _stage(
     payload: dict[str, Any],
     run_id: str,
     agent_id: str,
-) -> tuple[dict[str, Any], str]:
+) -> tuple[dict[str, Any], str, dict[str, Any]]:
     request_sha256 = f"{sequence:X}" * 64
     identity = canonical_json_sha256(
         {
@@ -155,23 +164,45 @@ def _stage(
         }
     )
     session_key = f"agent:{agent_id}:classifire-phase8-{identity[:32].lower()}"
-    return (
-        {
+    session_id_sha256 = hashlib.sha256(session_key.encode("utf-8")).hexdigest().upper()
+    payload_sha256 = canonical_json_sha256(payload)
+    transport_receipt = {
+        "schema": OPENRESPONSES_TRANSPORT_RECEIPT_SCHEMA,
+        "request_sha256": request_sha256,
+        "prompt_template_sha256": "7" * 64,
+        "session_id_sha256": session_id_sha256,
+        "attestation_receipt_sha256": "8" * 64,
+        "audit_receipt_sha256": "9" * 64,
+        "evidence": [
+            {
+                "evidence_id": "E-001",
+                "stored_file_id": _STORED_FILE_ID,
+                "malware_scan_attestation_id": _SCAN_ATTESTATION_ID,
+                "malware_scan_attestation_receipt_sha256": "D" * 64,
+                "malware_scan_sequence": 1,
+                "sha256": "E" * 64,
+                "size_bytes": 123,
+                "media_type": "image/jpeg",
+            }
+        ],
+        "openresponses_response_id_sha256": "6" * 64,
+        "payload_sha256": payload_sha256,
+    }
+    stage = {
             "sequence": sequence,
             "stage": name,
             "role": role,
             "request_sha256": request_sha256,
             "response_sha256": "A" * 64,
-            "payload_sha256": canonical_json_sha256(payload),
+            "payload_sha256": payload_sha256,
             "provider": "test-provider",
             "model": "test-model",
-            "session_id_sha256": hashlib.sha256(session_key.encode("utf-8")).hexdigest().upper(),
-            "transport_receipt_sha256": "B" * 64,
+            "session_id_sha256": session_id_sha256,
+            "transport_receipt_sha256": canonical_json_sha256(transport_receipt),
             "protected_state_fingerprint_after": "C" * 64,
             "allowed_tools": [],
-        },
-        session_key,
-    )
+    }
+    return stage, session_key, {"stage": name, "role": role, "receipt": transport_receipt}
 
 
 def _write_transcript(
@@ -221,7 +252,7 @@ def _write_transcript(
     return transcript
 
 
-def _fixture(tmp_path: Path) -> dict[str, Path]:
+def _fixture(tmp_path: Path, *, transport_bound: bool = False) -> dict[str, Path]:
     run_id = "run-001"
     package_id = "package-001"
     approval_reference = "approval-001"
@@ -256,6 +287,7 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
         ),
     ]
     stages: list[dict[str, Any]] = []
+    transport_receipt_records: list[dict[str, Any]] = []
     session_entries: dict[str, dict[str, dict[str, str]]] = {
         "cf-phase8-visual-physical": {},
         "cf-phase8-visual-validator": {},
@@ -263,7 +295,7 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
     paths: dict[str, Path] = {}
     openclaw_root = tmp_path / "openclaw"
     for sequence, (name, role, agent_id, payload) in enumerate(stage_specs, start=1):
-        stage, session_key = _stage(
+        stage, session_key, transport_record = _stage(
             sequence=sequence,
             name=name,
             role=role,
@@ -272,6 +304,7 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
             agent_id=agent_id,
         )
         stages.append(stage)
+        transport_receipt_records.append(transport_record)
         sessions_root = openclaw_root / "agents" / agent_id / "sessions"
         sessions_root.mkdir(parents=True, exist_ok=True)
         session_id = f"session-{sequence}"
@@ -319,6 +352,14 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
         "human_reference_visible_to_inference": False,
     }
     assert validate_phase8_visual_proposal_receipt(controller) == []
+    transport_bundle = (
+        build_phase8_openresponses_transport_receipt_bundle(
+            transport_receipt_records,
+            controller_receipt=controller,
+        )
+        if transport_bound
+        else None
+    )
 
     package = {
         "schema": REPRESENTATIVE_RUN_PACKAGE_SCHEMA,
@@ -359,8 +400,12 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
     controller_raw = _write_json(controller_path, controller)
     proposal_path = tmp_path / "proposal.json"
     proposal_raw = _write_json(proposal_path, proposal)
-    representative = {
-        "schema": REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
+    representative: dict[str, Any] = {
+        "schema": (
+            REPRESENTATIVE_RUN_RECEIPT_SCHEMA
+            if transport_bundle is not None
+            else LEGACY_REPRESENTATIVE_RUN_RECEIPT_SCHEMA
+        ),
         "package_id": package_id,
         "package_sha256": _sha256_bytes(package_raw),
         "approval_reference": approval_reference,
@@ -383,6 +428,10 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
         "physical_model_lock_created": False,
         "human_reference_visible_to_inference": False,
     }
+    if transport_bundle is not None:
+        representative["transport_receipt_bundle_sha256"] = canonical_json_sha256(
+            transport_bundle
+        )
     representative_path = tmp_path / "representative-run-receipt.json"
     representative_raw = _write_json(representative_path, representative)
     completion = {
@@ -394,6 +443,13 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
         },
         "human_reference_comparison_status": f"SKIPPED_{VISUAL_PROPOSAL_BLOCKED}",
     }
+    if transport_bundle is not None:
+        transport_path = tmp_path / "openresponses-transport-receipts.json"
+        transport_raw = _write_json(transport_path, transport_bundle)
+        completion["artifacts"]["openresponses_transport_receipts_sha256"] = (
+            _sha256_bytes(transport_raw)
+        )
+        paths["transport_receipts"] = transport_path
     completion_path = tmp_path / "completion-receipt.json"
     _write_json(completion_path, completion)
     return {
@@ -414,6 +470,7 @@ def _recover(paths: dict[str, Path]) -> recovery_cli.RecoveredEvidenceReview:
         representative_receipt_path=paths["representative"],
         controller_path=paths["controller"],
         proposal_path=paths["proposal"],
+        transport_receipts_path=paths.get("transport_receipts"),
         openclaw_root=paths["openclaw_root"],
         repository_root=REPOSITORY_ROOT,
         recovery_script_path=SCRIPTS / "recover_phase8_evidence_review_request.py",
@@ -428,6 +485,13 @@ def test_hash_bound_all_stage_recovery_writes_only_safe_review_files(
     recovered = _recover(paths)
 
     assert recovered.receipt["status"] == "RECOVERED_HASH_VERIFIED_LOCAL_TRANSCRIPTS"
+    assert recovered.receipt["schema"] == recovery_cli.RECOVERY_RECEIPT_SCHEMA
+    assert recovered.receipt["transport_security_binding"] == {
+        "status": "LEGACY_TRANSPORT_BINDING_UNAVAILABLE",
+        "receipt_count": None,
+        "bundle_actual_file_sha256": None,
+        "bundle_canonical_json_sha256": None,
+    }
     assert len(recovered.receipt["stages"]) == 4
     assert recovered.request["unresolved_blind_observations"][0]["blind_candidate_id"] == "V-O-001"
     output = tmp_path / "recovered"
@@ -449,6 +513,83 @@ def test_hash_bound_all_stage_recovery_writes_only_safe_review_files(
     assert recovered.receipt["inference_request_performed"] is False
     assert recovered.receipt["canonical_submission_performed"] is False
     assert recovered.receipt["physical_model_lock_created"] is False
+
+
+def test_recovery_verifies_advertised_transport_receipt_sidecar(tmp_path: Path) -> None:
+    paths = _fixture(tmp_path, transport_bound=True)
+
+    recovered = _recover(paths)
+
+    binding = recovered.receipt["transport_security_binding"]
+    assert binding["status"] == "VERIFIED_LOCAL_TRANSPORT_PREIMAGE_BINDING"
+    assert binding["receipt_count"] == 4
+    assert binding["bundle_actual_file_sha256"] == _sha256_bytes(
+        paths["transport_receipts"].read_bytes()
+    )
+    assert _SCAN_ATTESTATION_ID not in json.dumps(recovered.receipt)
+    assert _SCAN_ATTESTATION_ID not in json.dumps(recovered.request)
+    assert any(
+        "local hash correspondence" in item
+        for item in recovered.receipt["integrity_scope"]["proved"]
+    )
+
+
+def test_recovery_requires_and_rejects_tampered_advertised_transport_sidecar(
+    tmp_path: Path,
+) -> None:
+    missing_paths = _fixture(tmp_path / "missing", transport_bound=True)
+    missing_paths.pop("transport_receipts")
+    with pytest.raises(recovery_cli.Phase8EvidenceReviewRecoveryError) as missing:
+        _recover(missing_paths)
+    assert missing.value.code == "TRANSPORT_RECEIPTS_REQUIRED"
+
+    tampered_paths = _fixture(tmp_path / "tampered", transport_bound=True)
+    transport_path = tampered_paths["transport_receipts"]
+    bundle = json.loads(transport_path.read_text(encoding="utf-8"))
+    bundle["records"][0]["receipt"]["evidence"][0][
+        "malware_scan_attestation_id"
+    ] = _OTHER_SCAN_ATTESTATION_ID
+    _write_json(transport_path, bundle)
+    with pytest.raises(recovery_cli.Phase8EvidenceReviewRecoveryError) as tampered:
+        _recover(tampered_paths)
+    assert tampered.value.code == "TRANSPORT_RECEIPTS_INVALID"
+
+
+def test_recovery_rejects_v2_downgrade_and_canonical_bundle_hash_drift(
+    tmp_path: Path,
+) -> None:
+    missing_artifact_paths = _fixture(tmp_path / "missing-artifact", transport_bound=True)
+    completion_path = missing_artifact_paths["completion"]
+    completion = json.loads(completion_path.read_text(encoding="utf-8"))
+    del completion["artifacts"]["openresponses_transport_receipts_sha256"]
+    _write_json(completion_path, completion)
+    with pytest.raises(recovery_cli.Phase8EvidenceReviewRecoveryError) as missing:
+        _recover(missing_artifact_paths)
+    assert missing.value.code == "TRANSPORT_RECEIPTS_REQUIRED"
+
+    legacy_paths = _fixture(tmp_path / "legacy")
+    unexpected_sidecar = tmp_path / "legacy" / "unexpected-sidecar.json"
+    _write_json(unexpected_sidecar, {})
+    legacy_paths["transport_receipts"] = unexpected_sidecar
+    with pytest.raises(recovery_cli.Phase8EvidenceReviewRecoveryError) as unexpected:
+        _recover(legacy_paths)
+    assert unexpected.value.code == "TRANSPORT_RECEIPTS_UNEXPECTED"
+
+    hash_drift_paths = _fixture(tmp_path / "hash-drift", transport_bound=True)
+    representative_path = hash_drift_paths["representative"]
+    representative = json.loads(representative_path.read_text(encoding="utf-8"))
+    representative["transport_receipt_bundle_sha256"] = "0" * 64
+    representative_raw = _write_json(representative_path, representative)
+    completion_path = hash_drift_paths["completion"]
+    completion = json.loads(completion_path.read_text(encoding="utf-8"))
+    completion["transport_receipt_bundle_sha256"] = "0" * 64
+    completion["artifacts"]["representative_run_receipt_sha256"] = _sha256_bytes(
+        representative_raw
+    )
+    _write_json(completion_path, completion)
+    with pytest.raises(recovery_cli.Phase8EvidenceReviewRecoveryError) as hash_drift:
+        _recover(hash_drift_paths)
+    assert hash_drift.value.code == "TRANSPORT_RECEIPTS_INVALID"
 
 
 def test_recovery_rejects_tampered_stage_payload(tmp_path: Path) -> None:

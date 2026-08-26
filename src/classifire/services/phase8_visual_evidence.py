@@ -72,7 +72,7 @@ class RetainedVisualEvidenceFile:
     sha256: str
     size_bytes: int
     media_type: str
-    verification_token: VerifiedStoredFile | None = None
+    verification_token: VerifiedStoredFile
 
 
 @dataclass(frozen=True, slots=True)

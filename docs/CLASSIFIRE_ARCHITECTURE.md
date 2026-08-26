@@ -342,6 +342,16 @@ may write only to disposable package-controlled locations:
   and
 - content-safe receipts in the new output directory.
 
+Managed inference receipts include a governed local transport sidecar. It
+retains the exact content-safe preimages behind successful stages' opaque
+transport hashes, including internal scan-attestation references and evidence
+fingerprints but excluding paths, bytes, prompts, responses, URLs and
+credentials. The v2 representative receipt binds the bundle's canonical hash,
+and the completion receipt binds the exact sidecar file bytes. This is run
+provenance, not canonical project state or a public review artifact. The writer
+does not enforce a filesystem ACL: operators must access-restrict the output
+directory and exclude this sidecar from publication and review handoffs.
+
 The runner starts an explicit outer SQLite transaction before retention and
 rolls it back even when validation blocks or inference fails. It then expires
 ORM state and proves that protected counts and the component-level fingerprint
@@ -388,6 +398,15 @@ and recovery does not replay Gateway authentication, runtime tool attestation or
 audit, OpenResponses response identity, or external transport. It proves local
 correspondence among retained artifacts and transcript payloads, not an
 immutable third-party execution ledger.
+
+For a v2 representative receipt, recovery requires the advertised
+transport-receipt sidecar and verifies its canonical bundle hash, exact file
+bytes and every successful controller stage. Its recovery receipt exposes only
+the verification status, count and hashes. Historical v1 receipts remain
+explicitly marked as lacking this transport binding and reject an unadvertised
+sidecar. The sidecar proves the scan-attestation references committed by the
+transport receipt; it does not replay the malware scanner or independently
+prove the referenced clean/latest attestation chain.
 
 ## 10. Canonical physical model
 

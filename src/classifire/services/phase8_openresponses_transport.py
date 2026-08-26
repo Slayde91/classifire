@@ -12,14 +12,20 @@ import hashlib
 import ipaddress
 import json
 import time
-from collections.abc import Callable, Mapping
+import uuid
+from collections.abc import Callable, Mapping, Sequence
+from copy import deepcopy
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
-from .phase8_visual_evidence import RetainedVisualEvidencePacket
+from .phase8_visual_evidence import (
+    RetainedVisualEvidenceFile,
+    RetainedVisualEvidencePacket,
+)
 from .phase8_visual_prompts import (
     Phase8VisualPromptRenderer,
     prompt_profile_field,
@@ -29,9 +35,11 @@ from .phase8_visual_proposal import (
     VISUAL_INFERENCE_RESPONSE_SCHEMA,
     VISUAL_PROPOSAL_POLICY_VERSION,
     canonical_json_sha256,
+    validate_phase8_visual_proposal_receipt,
     validate_visual_evidence_manifest,
     validate_visual_inference_profile,
 )
+from .storage import VerifiedStoredFile
 
 _ALLOWED_ROLES = frozenset({"cf-physical-model", "cf-validator"})
 _ALLOWED_IMAGE_MIMES = frozenset(
@@ -58,6 +66,36 @@ _REQUEST_KEYS = {
 }
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 _AGENT_ID_CHARACTERS = frozenset("abcdefghijklmnopqrstuvwxyz0123456789-_")
+_EVIDENCE_ID_CHARACTERS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._:"
+)
+OPENRESPONSES_TRANSPORT_RECEIPT_SCHEMA = (
+    "CLASSIFIRE-PHASE8-OPENRESPONSES-TRANSPORT-v2"
+)
+OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA = (
+    "CLASSIFIRE-PHASE8-OPENRESPONSES-TRANSPORT-RECEIPTS-v1"
+)
+_TRANSPORT_RECEIPT_KEYS = {
+    "schema",
+    "request_sha256",
+    "prompt_template_sha256",
+    "session_id_sha256",
+    "attestation_receipt_sha256",
+    "audit_receipt_sha256",
+    "evidence",
+    "openresponses_response_id_sha256",
+    "payload_sha256",
+}
+_TRANSPORT_EVIDENCE_KEYS = {
+    "evidence_id",
+    "stored_file_id",
+    "malware_scan_attestation_id",
+    "malware_scan_attestation_receipt_sha256",
+    "malware_scan_sequence",
+    "sha256",
+    "size_bytes",
+    "media_type",
+}
 
 
 class Phase8OpenResponsesTransportError(RuntimeError):
@@ -132,8 +170,32 @@ def _is_agent_id(value: object) -> bool:
     )
 
 
+def _is_canonical_uuid(value: object) -> bool:
+    if not isinstance(value, str) or value != value.strip():
+        return False
+    try:
+        return str(uuid.UUID(value)) == value
+    except ValueError:
+        return False
+
+
+def _is_safe_evidence_id(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and value == value.strip()
+        and 1 <= len(value) <= 128
+        and value[0].isalnum()
+        and all(character in _EVIDENCE_ID_CHARACTERS for character in value)
+    )
+
+
 def _sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest().upper()
+
+
+def _normalised_media_type(value: object) -> str:
+    media_type = str(value or "").split(";", 1)[0].strip().lower()
+    return "image/jpeg" if media_type == "image/jpg" else media_type
 
 
 def _effective_tool_names(value: Any) -> tuple[str, ...]:
@@ -154,6 +216,237 @@ def _effective_tool_names(value: Any) -> tuple[str, ...]:
                 raise Phase8OpenResponsesTransportError("TOOL_ATTESTATION_INVALID")
             names.add(name)
     return tuple(sorted(names))
+
+
+def _nonblank(value: object) -> str:
+    return value.strip() if isinstance(value, str) else ""
+
+
+def _valid_transport_evidence(value: object) -> bool:
+    if not isinstance(value, list) or not value or len(value) > _MAX_IMAGE_COUNT:
+        return False
+    evidence_ids: set[str] = set()
+    total_size_bytes = 0
+    for item in value:
+        if not isinstance(item, dict) or set(item) != _TRANSPORT_EVIDENCE_KEYS:
+            return False
+        evidence_id = _nonblank(item.get("evidence_id"))
+        stored_file_id = _nonblank(item.get("stored_file_id"))
+        scan_attestation_id = _nonblank(item.get("malware_scan_attestation_id"))
+        sequence = item.get("malware_scan_sequence")
+        size_bytes = item.get("size_bytes")
+        if (
+            item.get("evidence_id") != evidence_id
+            or not _is_safe_evidence_id(evidence_id)
+            or evidence_id in evidence_ids
+            or item.get("stored_file_id") != stored_file_id
+            or not _is_canonical_uuid(stored_file_id)
+            or item.get("malware_scan_attestation_id") != scan_attestation_id
+            or not _is_canonical_uuid(scan_attestation_id)
+            or not _is_sha256(item.get("malware_scan_attestation_receipt_sha256"))
+            or isinstance(sequence, bool)
+            or not isinstance(sequence, int)
+            or sequence < 1
+            or not _is_sha256(item.get("sha256"))
+            or isinstance(size_bytes, bool)
+            or not isinstance(size_bytes, int)
+            or not 1 <= size_bytes <= _MAX_IMAGE_BYTES
+            or item.get("media_type") not in _ALLOWED_IMAGE_MIMES
+        ):
+            return False
+        evidence_ids.add(evidence_id)
+        total_size_bytes += size_bytes
+    return total_size_bytes <= _MAX_RAW_IMAGE_BYTES
+
+
+def validate_phase8_openresponses_transport_receipt_bundle(
+    bundle: Any,
+    *,
+    controller_receipt: Any,
+) -> list[str]:
+    """Validate exact retained transport preimages against controller stages."""
+
+    if not isinstance(bundle, dict):
+        return ["transport receipt bundle must be an object"]
+    errors: list[str] = []
+    expected_bundle_keys = {
+        "schema",
+        "run_id",
+        "evidence_manifest_sha256",
+        "controller_receipt_canonical_json_sha256",
+        "records",
+    }
+    if set(bundle) != expected_bundle_keys:
+        errors.append("transport receipt bundle fields do not match the approved schema")
+    if bundle.get("schema") != OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA:
+        errors.append("transport receipt bundle schema is unsupported")
+
+    controller = controller_receipt if isinstance(controller_receipt, dict) else {}
+    if validate_phase8_visual_proposal_receipt(controller_receipt):
+        errors.append("transport receipt bundle controller receipt is invalid")
+    if bundle.get("run_id") != controller.get("run_id"):
+        errors.append("transport receipt bundle run_id does not match the controller")
+    if bundle.get("evidence_manifest_sha256") != controller.get(
+        "evidence_manifest_sha256"
+    ):
+        errors.append("transport receipt bundle evidence manifest does not match the controller")
+    try:
+        controller_sha256 = canonical_json_sha256(controller)
+    except Exception:
+        controller_sha256 = None
+    if bundle.get("controller_receipt_canonical_json_sha256") != controller_sha256:
+        errors.append("transport receipt bundle controller hash does not match")
+
+    controller_stages = controller.get("stages")
+    successful_stages = (
+        [
+            stage
+            for stage in controller_stages
+            if isinstance(stage, dict) and stage.get("failed") is not True
+        ]
+        if isinstance(controller_stages, list)
+        else []
+    )
+    records = bundle.get("records")
+    if not isinstance(records, list):
+        errors.append("transport receipt bundle records must be an array")
+        records = []
+    if not successful_stages or not records:
+        errors.append("transport receipt bundle requires a successful controller stage")
+    if len(records) != len(successful_stages):
+        errors.append("transport receipt bundle does not match successful controller stages")
+
+    baseline_evidence: object = None
+    seen_receipts: set[str] = set()
+    expected_record_keys = {
+        "sequence",
+        "stage",
+        "role",
+        "transport_receipt_sha256",
+        "receipt",
+    }
+    for index, (record, stage) in enumerate(
+        zip(records, successful_stages, strict=False),
+        start=1,
+    ):
+        if not isinstance(record, dict) or set(record) != expected_record_keys:
+            errors.append(f"transport receipt bundle record {index} is invalid")
+            continue
+        if (
+            record.get("sequence") != stage.get("sequence")
+            or record.get("stage") != stage.get("stage")
+            or record.get("role") != stage.get("role")
+        ):
+            errors.append(f"transport receipt bundle record {index} stage identity is invalid")
+        recorded_sha256 = record.get("transport_receipt_sha256")
+        if (
+            not _is_sha256(recorded_sha256)
+            or recorded_sha256 != stage.get("transport_receipt_sha256")
+            or recorded_sha256 in seen_receipts
+        ):
+            errors.append(f"transport receipt bundle record {index} hash binding is invalid")
+        elif isinstance(recorded_sha256, str):
+            seen_receipts.add(recorded_sha256)
+
+        receipt = record.get("receipt")
+        if not isinstance(receipt, dict) or set(receipt) != _TRANSPORT_RECEIPT_KEYS:
+            errors.append(f"transport receipt bundle record {index} preimage is invalid")
+            continue
+        if receipt.get("schema") != OPENRESPONSES_TRANSPORT_RECEIPT_SCHEMA:
+            errors.append(f"transport receipt bundle record {index} schema is invalid")
+        for field_name in (
+            "request_sha256",
+            "prompt_template_sha256",
+            "session_id_sha256",
+            "attestation_receipt_sha256",
+            "audit_receipt_sha256",
+            "openresponses_response_id_sha256",
+            "payload_sha256",
+        ):
+            if not _is_sha256(receipt.get(field_name)):
+                errors.append(
+                    f"transport receipt bundle record {index} requires {field_name}"
+                )
+        for field_name in ("request_sha256", "session_id_sha256", "payload_sha256"):
+            if receipt.get(field_name) != stage.get(field_name):
+                errors.append(
+                    f"transport receipt bundle record {index} {field_name} does not match"
+                )
+        evidence = receipt.get("evidence")
+        if not _valid_transport_evidence(evidence):
+            errors.append(f"transport receipt bundle record {index} evidence is invalid")
+        elif baseline_evidence is None:
+            baseline_evidence = evidence
+        elif evidence != baseline_evidence:
+            errors.append("transport receipt bundle evidence changed between stages")
+        try:
+            actual_sha256 = canonical_json_sha256(receipt)
+        except Exception:
+            actual_sha256 = None
+        if actual_sha256 != recorded_sha256:
+            errors.append(f"transport receipt bundle record {index} preimage hash does not match")
+
+    try:
+        serialized = json.dumps(
+            bundle,
+            allow_nan=False,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    except (TypeError, ValueError):
+        errors.append("transport receipt bundle is not canonical JSON")
+    else:
+        forbidden_fragments = (
+            "http://",
+            "https://",
+            "authorization",
+            "signature=",
+            "key-pair-id=",
+            "input_image",
+            "input_text",
+        )
+        lowered = serialized.casefold()
+        if any(fragment in lowered for fragment in forbidden_fragments):
+            errors.append("transport receipt bundle exposes forbidden content")
+    return list(dict.fromkeys(errors))
+
+
+def build_phase8_openresponses_transport_receipt_bundle(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    controller_receipt: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Build a deterministic sidecar from successful transport preimages."""
+
+    try:
+        retained_records = [
+            {
+                "sequence": index,
+                "stage": record.get("stage"),
+                "role": record.get("role"),
+                "transport_receipt_sha256": canonical_json_sha256(record.get("receipt")),
+                "receipt": deepcopy(record.get("receipt")),
+            }
+            for index, record in enumerate(records, start=1)
+        ]
+        bundle = {
+            "schema": OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA,
+            "run_id": controller_receipt.get("run_id"),
+            "evidence_manifest_sha256": controller_receipt.get("evidence_manifest_sha256"),
+            "controller_receipt_canonical_json_sha256": canonical_json_sha256(
+                controller_receipt
+            ),
+            "records": retained_records,
+        }
+    except Exception:
+        raise Phase8OpenResponsesTransportError("TRANSPORT_RECEIPT_BUNDLE_INVALID") from None
+    if validate_phase8_openresponses_transport_receipt_bundle(
+        bundle,
+        controller_receipt=controller_receipt,
+    ):
+        raise Phase8OpenResponsesTransportError("TRANSPORT_RECEIPT_BUNDLE_INVALID")
+    return bundle
 
 
 class OpenClawGatewayNoToolSessionGuard:
@@ -370,8 +663,10 @@ class Phase8OpenResponsesTransport:
         base_url: str,
         token_provider: Callable[[], str],
         evidence_packet: RetainedVisualEvidencePacket,
+        evidence_packet_verifier: Callable[[RetainedVisualEvidencePacket], None],
         session_guard: NoToolSessionGuard,
         runtime_agent_ids: Mapping[str, str],
+        transport_receipt_sink: Callable[[dict[str, Any]], None] | None = None,
         prompt_renderer: Phase8VisualPromptRenderer | None = None,
         clock_ms: Callable[[], int] | None = None,
     ) -> None:
@@ -379,6 +674,9 @@ class Phase8OpenResponsesTransport:
         self._endpoint = _openresponses_endpoint(base_url)
         self._token_provider = token_provider
         self._packet = evidence_packet
+        if not callable(evidence_packet_verifier):
+            raise Phase8OpenResponsesTransportError("EVIDENCE_PACKET_VERIFIER_INVALID")
+        self._evidence_packet_verifier = evidence_packet_verifier
         self._guard = session_guard
         selected_agent_ids = dict(runtime_agent_ids)
         if (
@@ -388,6 +686,9 @@ class Phase8OpenResponsesTransport:
         ):
             raise Phase8OpenResponsesTransportError("RUNTIME_AGENT_POLICY_INVALID")
         self._runtime_agent_ids = selected_agent_ids
+        if transport_receipt_sink is not None and not callable(transport_receipt_sink):
+            raise Phase8OpenResponsesTransportError("TRANSPORT_RECEIPT_SINK_INVALID")
+        self._transport_receipt_sink = transport_receipt_sink
         self._renderer = prompt_renderer or Phase8VisualPromptRenderer()
         self._clock_ms = clock_ms or (lambda: int(time.time() * 1000))
 
@@ -404,7 +705,17 @@ class Phase8OpenResponsesTransport:
         if rendered.template_sha256.upper() != str(profile[profile_field]).upper():
             raise Phase8OpenResponsesTransportError("PROMPT_PROFILE_MISMATCH")
 
-        content, byte_receipts = self._image_content(request)
+        attestation_receipts = self._attestation_receipts(request)
+        try:
+            self._evidence_packet_verifier(self._packet)
+        except Exception:
+            raise Phase8OpenResponsesTransportError(
+                "EVIDENCE_ATTESTATION_REVALIDATION_FAILED"
+            ) from None
+        content, byte_receipts = self._image_content(
+            request,
+            attestation_receipts=attestation_receipts,
+        )
         runtime_agent_id = self._runtime_agent_ids[role]
         session_key = self._session_key(
             agent_id=runtime_agent_id,
@@ -509,19 +820,27 @@ class Phase8OpenResponsesTransport:
             raise Phase8OpenResponsesTransportError("GATEWAY_REQUEST_FAILED")
         payload, response_id = self._parse_response(response)
 
-        receipt_sha256 = canonical_json_sha256(
-            {
-                "schema": "CLASSIFIRE-PHASE8-OPENRESPONSES-TRANSPORT-v1",
-                "request_sha256": canonical_json_sha256(request),
-                "prompt_template_sha256": rendered.template_sha256,
-                "session_id_sha256": session_id_sha256,
-                "attestation_receipt_sha256": attestation.receipt_sha256,
-                "audit_receipt_sha256": audit.receipt_sha256,
-                "evidence": byte_receipts,
-                "openresponses_response_id_sha256": _sha256_text(response_id),
-                "payload_sha256": canonical_json_sha256(payload),
-            }
-        )
+        receipt = {
+            "schema": OPENRESPONSES_TRANSPORT_RECEIPT_SCHEMA,
+            "request_sha256": canonical_json_sha256(request),
+            "prompt_template_sha256": rendered.template_sha256,
+            "session_id_sha256": session_id_sha256,
+            "attestation_receipt_sha256": attestation.receipt_sha256,
+            "audit_receipt_sha256": audit.receipt_sha256,
+            "evidence": byte_receipts,
+            "openresponses_response_id_sha256": _sha256_text(response_id),
+            "payload_sha256": canonical_json_sha256(payload),
+        }
+        receipt_sha256 = canonical_json_sha256(receipt)
+        if self._transport_receipt_sink is not None:
+            try:
+                self._transport_receipt_sink(
+                    deepcopy({"stage": stage, "role": role, "receipt": receipt})
+                )
+            except Exception:
+                raise Phase8OpenResponsesTransportError(
+                    "TRANSPORT_RECEIPT_RETENTION_FAILED"
+                ) from None
         return {
             "schema": VISUAL_INFERENCE_RESPONSE_SCHEMA,
             "agent_id": role,
@@ -583,23 +902,22 @@ class Phase8OpenResponsesTransport:
     def _image_content(
         self,
         request: dict[str, Any],
+        *,
+        attestation_receipts: list[dict[str, Any]],
     ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         files = self._packet.files
         artifacts = request["evidence_manifest"]["artifacts"]
-        if not files or len(files) != len(artifacts) or len(files) > _MAX_IMAGE_COUNT:
+        if (
+            not files
+            or len(files) != len(artifacts)
+            or len(files) != len(attestation_receipts)
+            or len(files) > _MAX_IMAGE_COUNT
+        ):
             raise Phase8OpenResponsesTransportError("EVIDENCE_FILE_COUNT_INVALID")
         content: list[dict[str, Any]] = []
         receipts: list[dict[str, Any]] = []
         total_bytes = 0
-        for item, artifact in zip(files, artifacts, strict=True):
-            if (
-                item.evidence_id != artifact.get("evidence_id")
-                or item.sha256.casefold() != str(artifact.get("sha256") or "").casefold()
-                or item.size_bytes != artifact.get("size_bytes")
-                or item.media_type != artifact.get("media_type")
-                or item.media_type not in _ALLOWED_IMAGE_MIMES
-            ):
-                raise Phase8OpenResponsesTransportError("EVIDENCE_FILE_METADATA_MISMATCH")
+        for item, attestation_receipt in zip(files, attestation_receipts, strict=True):
             try:
                 if not item.path.is_file():
                     raise OSError
@@ -628,14 +946,72 @@ class Phase8OpenResponsesTransport:
                 }
             )
             receipts.append(
-                {
-                    "evidence_id": item.evidence_id,
+                attestation_receipt
+                | {
                     "sha256": actual_sha256.upper(),
                     "size_bytes": len(raw),
                     "media_type": item.media_type,
                 }
             )
         return content, receipts
+
+    def _attestation_receipts(
+        self,
+        request: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        files = self._packet.files
+        artifacts = request["evidence_manifest"]["artifacts"]
+        if not files or len(files) != len(artifacts) or len(files) > _MAX_IMAGE_COUNT:
+            raise Phase8OpenResponsesTransportError("EVIDENCE_FILE_COUNT_INVALID")
+        receipts: list[dict[str, Any]] = []
+        for item, artifact in zip(files, artifacts, strict=True):
+            if (
+                item.evidence_id != artifact.get("evidence_id")
+                or not _is_sha256(item.sha256)
+                or item.sha256.casefold() != str(artifact.get("sha256") or "").casefold()
+                or isinstance(item.size_bytes, bool)
+                or not isinstance(item.size_bytes, int)
+                or item.size_bytes != artifact.get("size_bytes")
+                or item.media_type != artifact.get("media_type")
+                or item.media_type not in _ALLOWED_IMAGE_MIMES
+            ):
+                raise Phase8OpenResponsesTransportError("EVIDENCE_FILE_METADATA_MISMATCH")
+            token = item.verification_token
+            if not self._token_matches_file(token, item):
+                raise Phase8OpenResponsesTransportError("EVIDENCE_ATTESTATION_INVALID")
+            receipts.append(
+                {
+                    "evidence_id": item.evidence_id,
+                    "stored_file_id": token.stored_file_id,
+                    "malware_scan_attestation_id": token.scan_attestation_id,
+                    "malware_scan_attestation_receipt_sha256": (
+                        token.scan_attestation_sha256.upper()
+                    ),
+                    "malware_scan_sequence": token.scan_sequence,
+                }
+            )
+        return receipts
+
+    @staticmethod
+    def _token_matches_file(token: object, item: RetainedVisualEvidenceFile) -> bool:
+        return (
+            isinstance(token, VerifiedStoredFile)
+            and _is_canonical_uuid(token.stored_file_id)
+            and isinstance(token.path, Path)
+            and token.path == item.path
+            and _is_sha256(token.content_sha256)
+            and token.content_sha256.casefold() == item.sha256.casefold()
+            and isinstance(token.content_size_bytes, int)
+            and not isinstance(token.content_size_bytes, bool)
+            and token.content_size_bytes == item.size_bytes
+            and _normalised_media_type(token.media_type) == item.media_type
+            and token.purpose == "technical_evidence"
+            and _is_canonical_uuid(token.scan_attestation_id)
+            and _is_sha256(token.scan_attestation_sha256)
+            and isinstance(token.scan_sequence, int)
+            and not isinstance(token.scan_sequence, bool)
+            and token.scan_sequence >= 1
+        )
 
     @staticmethod
     def _session_key(
@@ -644,6 +1020,9 @@ class Phase8OpenResponsesTransport:
         stage: str,
         request: dict[str, Any],
     ) -> str:
+        # Recovery reconstructs this established identity from the retained
+        # controller receipt. Malware-scan lineage is instead committed by the
+        # v2 transport receipt and revalidated before every attempted turn.
         identity = canonical_json_sha256(
             {
                 "run_id": request["run_id"],
@@ -777,7 +1156,11 @@ __all__ = [
     "NoToolSessionAttestation",
     "NoToolSessionAudit",
     "NoToolSessionGuard",
+    "OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA",
+    "OPENRESPONSES_TRANSPORT_RECEIPT_SCHEMA",
     "OpenClawGatewayNoToolSessionGuard",
     "Phase8OpenResponsesTransport",
     "Phase8OpenResponsesTransportError",
+    "build_phase8_openresponses_transport_receipt_bundle",
+    "validate_phase8_openresponses_transport_receipt_bundle",
 ]

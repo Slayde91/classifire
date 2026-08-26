@@ -26,7 +26,12 @@ from classifire.blind_visual_inventory import (
 from classifire.services.phase8_evidence_review import (
     build_blocked_visual_evidence_review_request,
 )
+from classifire.services.phase8_openresponses_transport import (
+    OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA,
+    validate_phase8_openresponses_transport_receipt_bundle,
+)
 from classifire.services.phase8_representative_run import (
+    LEGACY_REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
     REPRESENTATIVE_RUN_APPROVAL_SCOPE,
     REPRESENTATIVE_RUN_PACKAGE_SCHEMA,
     REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
@@ -40,7 +45,7 @@ from classifire.services.phase8_visual_proposal import (
 )
 from classifire.visual_validation import validate_visual_validator_payload
 
-RECOVERY_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-EVIDENCE-REVIEW-RECOVERY-v1"
+RECOVERY_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-EVIDENCE-REVIEW-RECOVERY-v2"
 _MAX_JSON_BYTES = 32 * 1024 * 1024
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 _ALLOWED_AGENT_IDS = frozenset(
@@ -253,8 +258,13 @@ def _strict_metadata_package(package: dict[str, Any]) -> tuple[str, str, dict[st
 
 
 def _validate_no_write_receipt(value: dict[str, Any], *, code: str) -> None:
+    schema = value.get("schema")
     if (
-        value.get("schema") != REPRESENTATIVE_RUN_RECEIPT_SCHEMA
+        schema
+        not in {
+            LEGACY_REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
+            REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
+        }
         or value.get("rollback_only") is not True
         or value.get("canonical_submission_performed") is not False
         or value.get("physical_model_lock_created") is not False
@@ -264,6 +274,11 @@ def _validate_no_write_receipt(value: dict[str, Any], *, code: str) -> None:
         or not _is_sha256(_nonblank(value.get("package_sha256")))
     ):
         raise Phase8EvidenceReviewRecoveryError(code)
+    if schema == LEGACY_REPRESENTATIVE_RUN_RECEIPT_SCHEMA:
+        if "transport_receipt_bundle_sha256" in value:
+            raise Phase8EvidenceReviewRecoveryError(code)
+    elif not _is_sha256(value.get("transport_receipt_bundle_sha256")):
+        raise Phase8EvidenceReviewRecoveryError(code)
     protected = value.get("protected_state")
     if (
         not isinstance(protected, dict)
@@ -271,6 +286,60 @@ def _validate_no_write_receipt(value: dict[str, Any], *, code: str) -> None:
         or protected.get("before") != protected.get("after_rollback")
     ):
         raise Phase8EvidenceReviewRecoveryError(code)
+
+
+def _transport_security_binding(
+    *,
+    artifacts: dict[str, Any],
+    representative: dict[str, Any],
+    controller: dict[str, Any],
+    transport_receipts_path: Path | None,
+) -> dict[str, object]:
+    artifact_name = "openresponses_transport_receipts_sha256"
+    schema = representative.get("schema")
+    if schema == LEGACY_REPRESENTATIVE_RUN_RECEIPT_SCHEMA:
+        if artifact_name in artifacts or transport_receipts_path is not None:
+            raise Phase8EvidenceReviewRecoveryError("TRANSPORT_RECEIPTS_UNEXPECTED")
+        return {
+            "status": "LEGACY_TRANSPORT_BINDING_UNAVAILABLE",
+            "receipt_count": None,
+            "bundle_actual_file_sha256": None,
+            "bundle_canonical_json_sha256": None,
+        }
+    if schema != REPRESENTATIVE_RUN_RECEIPT_SCHEMA:
+        raise Phase8EvidenceReviewRecoveryError("TRANSPORT_RECEIPTS_INVALID")
+    if artifact_name not in artifacts:
+        raise Phase8EvidenceReviewRecoveryError("TRANSPORT_RECEIPTS_REQUIRED")
+    if transport_receipts_path is None:
+        raise Phase8EvidenceReviewRecoveryError("TRANSPORT_RECEIPTS_REQUIRED")
+    _, bundle, bundle_raw = _read_json_object(
+        transport_receipts_path,
+        code="TRANSPORT_RECEIPTS_INVALID",
+    )
+    recorded_sha256 = _nonblank(artifacts.get(artifact_name)).upper()
+    actual_sha256 = _sha256_bytes(bundle_raw)
+    bundle_canonical_sha256 = canonical_json_sha256(bundle)
+    if (
+        not _is_sha256(recorded_sha256)
+        or actual_sha256 != recorded_sha256
+        or bundle_canonical_sha256
+        != representative.get("transport_receipt_bundle_sha256")
+        or bundle.get("schema") != OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA
+        or validate_phase8_openresponses_transport_receipt_bundle(
+            bundle,
+            controller_receipt=controller,
+        )
+    ):
+        raise Phase8EvidenceReviewRecoveryError("TRANSPORT_RECEIPTS_INVALID")
+    records = bundle.get("records")
+    if not isinstance(records, list):
+        raise Phase8EvidenceReviewRecoveryError("TRANSPORT_RECEIPTS_INVALID")
+    return {
+        "status": "VERIFIED_LOCAL_TRANSPORT_PREIMAGE_BINDING",
+        "receipt_count": len(records),
+        "bundle_actual_file_sha256": actual_sha256,
+        "bundle_canonical_json_sha256": bundle_canonical_sha256,
+    }
 
 
 def _final_stage(
@@ -405,6 +474,7 @@ def recover_phase8_evidence_review(
     representative_receipt_path: Path,
     controller_path: Path,
     proposal_path: Path,
+    transport_receipts_path: Path | None = None,
     openclaw_root: Path,
     repository_root: Path,
     recovery_script_path: Path | None = None,
@@ -478,6 +548,12 @@ def recover_phase8_evidence_review(
     controller_errors = validate_phase8_visual_proposal_receipt(controller)
     if controller_errors or controller.get("status") != VISUAL_PROPOSAL_BLOCKED:
         raise Phase8EvidenceReviewRecoveryError("CONTROLLER_RECEIPT_INVALID")
+    transport_security_binding = _transport_security_binding(
+        artifacts=artifacts,
+        representative=representative,
+        controller=controller,
+        transport_receipts_path=transport_receipts_path,
+    )
     raw_stages = controller.get("stages")
     if not isinstance(raw_stages, list) or any(not isinstance(stage, dict) for stage in raw_stages):
         raise Phase8EvidenceReviewRecoveryError("CONTROLLER_RECEIPT_INVALID")
@@ -568,6 +644,21 @@ def recover_phase8_evidence_review(
     selected_script = recovery_script_path or Path(__file__)
     _, recovery_script_raw = _read_bytes(selected_script, code="RECOVERY_SOURCE_INVALID")
     review_file = _render_json(review_request)
+    proved = [
+        "package and no-write run-receipt lineage",
+        "controller and proposal content bindings",
+        "deterministic session-key bindings for every successful stage",
+        "local transcript payload hashes for every successful stage",
+        "final blind, proposal, and Validator domain validity",
+    ]
+    if (
+        transport_security_binding["status"]
+        == "VERIFIED_LOCAL_TRANSPORT_PREIMAGE_BINDING"
+    ):
+        proved.append(
+            "local hash correspondence between transport preimages, controller stages, "
+            "and the scan-attestation references recorded in those preimages"
+        )
     recovery_receipt: dict[str, object] = {
         "schema": RECOVERY_RECEIPT_SCHEMA,
         "status": "RECOVERED_HASH_VERIFIED_LOCAL_TRANSCRIPTS",
@@ -587,23 +678,19 @@ def recover_phase8_evidence_review(
         },
         "source_run_implementation_revision": controller["implementation_revision"],
         "stages": [recovered.receipt for recovered in recovered_stages],
+        "transport_security_binding": transport_security_binding,
         "evidence_review_request_file_sha256": _sha256_bytes(review_file),
         "evidence_review_request_canonical_json_sha256": canonical_json_sha256(review_request),
         "recovery_source_tree_sha256": recovery_source_tree_sha256,
         "recovery_script_sha256": _sha256_bytes(recovery_script_raw),
         "integrity_scope": {
-            "proved": [
-                "package and no-write run-receipt lineage",
-                "controller and proposal content bindings",
-                "deterministic session-key bindings for every successful stage",
-                "local transcript payload hashes for every successful stage",
-                "final blind, proposal, and Validator domain validity",
-            ],
+            "proved": proved,
             "not_replayed": [
                 "Gateway authentication",
                 "runtime tool attestation or audit",
                 "OpenResponses response identity",
                 "external inference transport",
+                "malware scanner verdict or attestation chain",
             ],
             "local_session_history_immutable": False,
         },
@@ -649,6 +736,7 @@ def main() -> int:
     parser.add_argument("--representative-receipt", required=True, type=Path)
     parser.add_argument("--controller", required=True, type=Path)
     parser.add_argument("--proposal", required=True, type=Path)
+    parser.add_argument("--transport-receipts", type=Path)
     parser.add_argument("--openclaw-root", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument(
@@ -666,6 +754,7 @@ def main() -> int:
             representative_receipt_path=args.representative_receipt,
             controller_path=args.controller,
             proposal_path=args.proposal,
+            transport_receipts_path=args.transport_receipts,
             openclaw_root=args.openclaw_root,
             repository_root=args.repository_root,
         )

@@ -15,6 +15,15 @@ import run_phase8_representative_package as representative_cli  # noqa: E402
 from classifire.services.phase8_evidence_review import (  # noqa: E402
     EVIDENCE_REVIEW_REQUEST_SCHEMA,
 )
+from classifire.services.phase8_openresponses_transport import (  # noqa: E402
+    OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA,
+)
+from classifire.services.phase8_representative_run import (  # noqa: E402
+    REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
+)
+from classifire.services.phase8_visual_proposal import (  # noqa: E402
+    canonical_json_sha256,
+)
 
 
 class _Session:
@@ -101,12 +110,26 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
         },
         receipt={"schema": "controller-receipt"},
     )
+    transport_receipt_bundle = {
+        "schema": OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA,
+        "run_id": "package-001",
+        "evidence_manifest_sha256": "A" * 64,
+        "controller_receipt_canonical_json_sha256": "B" * 64,
+        "records": [{"retained": True}],
+    }
     result = SimpleNamespace(
         runner_result=SimpleNamespace(
             receipt={"schema": "runner-receipt"},
             visual_result=visual_result,
+            transport_receipt_records=({"retained": True},),
         ),
-        receipt={"schema": "representative-receipt"},
+        transport_receipt_bundle=transport_receipt_bundle,
+        receipt={
+            "schema": REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
+            "transport_receipt_bundle_sha256": canonical_json_sha256(
+                transport_receipt_bundle
+            ),
+        },
     )
     comparison_called = False
 
@@ -167,7 +190,14 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
 
     completion = json.loads((output / "completion-receipt.json").read_text(encoding="utf-8"))
     assert completion["human_reference_comparison_status"] == "SKIPPED_VISUAL_PROPOSAL_BLOCKED"
+    assert completion["schema"] == REPRESENTATIVE_RUN_RECEIPT_SCHEMA
+    assert completion["transport_receipt_bundle_sha256"] == canonical_json_sha256(
+        transport_receipt_bundle
+    )
     assert "human_reference_comparison_sha256" not in completion["artifacts"]
+    assert json.loads(
+        (output / "openresponses-transport-receipts.json").read_text(encoding="utf-8")
+    ) == transport_receipt_bundle
     assert (output / "proposal.json").is_file()
     review_request = json.loads(
         (output / "evidence-review-request.json").read_text(encoding="utf-8")
@@ -206,6 +236,9 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
     assert "https://" not in json.dumps(review_request)
     assert "evidence_review_request_sha256" in completion["artifacts"]
     for artifact_name, filename in {
+        "openresponses_transport_receipts_sha256": (
+            "openresponses-transport-receipts.json"
+        ),
         "controller_receipt_sha256": "proposal-controller-receipt.json",
         "proposal_sha256": "proposal.json",
         "evidence_review_request_sha256": "evidence-review-request.json",

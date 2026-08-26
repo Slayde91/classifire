@@ -653,6 +653,8 @@ class ManagedPhase8VisualRuntime:
         validator_agent_id: str,
         implementation_revision: str,
         evidence_packet: RetainedVisualEvidencePacket,
+        evidence_packet_verifier: Callable[[RetainedVisualEvidencePacket], None],
+        transport_receipt_sink: Callable[[dict[str, Any]], None] | None = None,
         token_provider: Callable[[], str] | None = None,
         http_transport: httpx.BaseTransport | None = None,
         rpc_runner: CommandRunner = subprocess.run,
@@ -702,6 +704,8 @@ class ManagedPhase8VisualRuntime:
                 base_url=base_url,
                 token_provider=gateway_token_provider,
                 evidence_packet=evidence_packet,
+                evidence_packet_verifier=evidence_packet_verifier,
+                transport_receipt_sink=transport_receipt_sink,
                 session_guard=guard,
                 runtime_agent_ids={
                     "cf-physical-model": physical_agent_id,

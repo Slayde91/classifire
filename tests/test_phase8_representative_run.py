@@ -35,10 +35,15 @@ from classifire.services.phase8_human_reference_comparison import (
     HUMAN_REFERENCE_PURPOSE,
     HUMAN_REFERENCE_SCHEMA,
 )
+from classifire.services.phase8_openresponses_transport import (
+    OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA,
+    OPENRESPONSES_TRANSPORT_RECEIPT_SCHEMA,
+)
 from classifire.services.phase8_representative_run import (
     REPRESENTATIVE_RUN_APPROVAL_SCOPE,
     REPRESENTATIVE_RUN_PACKAGE_SCHEMA,
     REPRESENTATIVE_RUN_PREFLIGHT_RECEIPT_SCHEMA,
+    REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
     Phase8RepresentativeRunError,
     load_phase8_representative_run_package,
     phase8_representative_source_tree_sha256,
@@ -47,7 +52,10 @@ from classifire.services.phase8_representative_run import (
 from classifire.services.phase8_representative_run import (
     execute_phase8_representative_run as _execute_phase8_representative_run,
 )
-from classifire.services.phase8_visual_proposal import VISUAL_INFERENCE_RESPONSE_SCHEMA
+from classifire.services.phase8_visual_proposal import (
+    VISUAL_INFERENCE_RESPONSE_SCHEMA,
+    canonical_json_sha256,
+)
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = REPOSITORY_ROOT / "scripts"
@@ -247,7 +255,13 @@ def _matching_human_reference() -> dict[str, Any]:
 
 
 class _Port:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        packet: Any = None,
+        transport_receipt_sink: Any = None,
+    ) -> None:
+        self.packet = packet
+        self.transport_receipt_sink = transport_receipt_sink
         proposal = _proposal()
         blind = _blind(proposal)
         self.responses = {
@@ -279,15 +293,50 @@ class _Port:
         }
 
     def invoke(self, *, role: str, stage: str, request: dict[str, Any]) -> dict[str, Any]:
+        payload = deepcopy(self.responses[stage])
+        transport_receipt_sha256 = "8" * 64
+        if self.transport_receipt_sink is not None:
+            evidence = []
+            for item in self.packet.files:
+                token = item.verification_token
+                evidence.append(
+                    {
+                        "evidence_id": item.evidence_id,
+                        "stored_file_id": token.stored_file_id,
+                        "malware_scan_attestation_id": token.scan_attestation_id,
+                        "malware_scan_attestation_receipt_sha256": (
+                            token.scan_attestation_sha256.upper()
+                        ),
+                        "malware_scan_sequence": token.scan_sequence,
+                        "sha256": item.sha256.upper(),
+                        "size_bytes": item.size_bytes,
+                        "media_type": item.media_type,
+                    }
+                )
+            receipt = {
+                "schema": OPENRESPONSES_TRANSPORT_RECEIPT_SCHEMA,
+                "request_sha256": canonical_json_sha256(request),
+                "prompt_template_sha256": "1" * 64,
+                "session_id_sha256": "7" * 64,
+                "attestation_receipt_sha256": "2" * 64,
+                "audit_receipt_sha256": "3" * 64,
+                "evidence": evidence,
+                "openresponses_response_id_sha256": "4" * 64,
+                "payload_sha256": canonical_json_sha256(payload),
+            }
+            transport_receipt_sha256 = canonical_json_sha256(receipt)
+            self.transport_receipt_sink(
+                {"stage": stage, "role": role, "receipt": receipt}
+            )
         return {
             "schema": VISUAL_INFERENCE_RESPONSE_SCHEMA,
             "agent_id": role,
             "provider": "test-provider",
             "model": "validator-test-model" if role == "cf-validator" else "physical-test-model",
             "session_id_sha256": "7" * 64,
-            "transport_receipt_sha256": "8" * 64,
+            "transport_receipt_sha256": transport_receipt_sha256,
             "tool_calls": [],
-            "payload": deepcopy(self.responses[stage]),
+            "payload": payload,
         }
 
 
@@ -401,13 +450,14 @@ def test_approved_package_runs_only_through_factory_and_rolls_back(
             parent_evidence_id=parent.id,
         )
         package = load_phase8_representative_run_package(package_path)
-        port = _Port()
         packet_count: list[int] = []
         closed: list[bool] = []
 
         @contextmanager
-        def factory(packet):
+        def factory(packet, *, evidence_packet_verifier, transport_receipt_sink):
             packet_count.append(len(packet.files))
+            evidence_packet_verifier(packet)
+            port = _Port(packet, transport_receipt_sink)
             try:
                 yield port
             finally:
@@ -435,11 +485,54 @@ def test_approved_package_runs_only_through_factory_and_rolls_back(
         assert result.receipt["canonical_submission_performed"] is False
         assert result.receipt["physical_model_lock_created"] is False
         assert result.receipt["protected_state"]["unchanged_after_rollback"] is True
+        assert result.receipt["schema"] == REPRESENTATIVE_RUN_RECEIPT_SCHEMA
         assert result.runner_result.visual_result is not None
+        assert result.transport_receipt_bundle is not None
+        assert (
+            result.transport_receipt_bundle["schema"]
+            == OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA
+        )
+        assert len(result.transport_receipt_bundle["records"]) == 3
+        assert result.receipt["transport_receipt_bundle_sha256"] == (
+            canonical_json_sha256(result.transport_receipt_bundle)
+        )
         assert packet_count == [2]
         assert closed == [True]
         assert before.fingerprint == after.fingerprint
         assert before.counts == after.counts
+
+        @contextmanager
+        def factory_without_retention(
+            packet,
+            *,
+            evidence_packet_verifier,
+            transport_receipt_sink,
+        ):
+            del transport_receipt_sink
+            evidence_packet_verifier(packet)
+            yield _Port()
+
+        before_failure = initial_submission_state(session, estimate_id=estimate.id)
+        with pytest.raises(Phase8RepresentativeRunError) as rejected:
+            execute_phase8_representative_run(
+                session,
+                package,
+                actual_git_revision="a" * 40,
+                repository_root=REPOSITORY_ROOT,
+                inference_port_factory=factory_without_retention,
+                transport=lambda _uri, _policy, _resolver: _FetchHop(
+                    status=200,
+                    content_type="image/jpeg",
+                    declared_length=len(_detailed_jpeg()),
+                    body=_detailed_jpeg(),
+                    resolved_address_count=1,
+                    tls_version="TLSv1.3",
+                ),
+            )
+        after_failure = initial_submission_state(session, estimate_id=estimate.id)
+        assert rejected.value.code == "TRANSPORT_RECEIPT_BUNDLE_INVALID"
+        assert before_failure.fingerprint == after_failure.fingerprint
+        assert before_failure.counts == after_failure.counts
 
 
 def test_package_rejects_missing_approval_reference_before_execution(tmp_path: Path) -> None:
@@ -539,7 +632,7 @@ def test_execution_rejects_source_revision_drift_before_retrieval(tmp_path: Path
                 package,
                 actual_git_revision="b" * 40,
                 repository_root=REPOSITORY_ROOT,
-                inference_port_factory=lambda _packet: pytest.fail("must not run"),
+                inference_port_factory=lambda _packet, **_kwargs: pytest.fail("must not run"),
             )
 
         assert caught.value.code == "SOURCE_REVISION_MISMATCH"
@@ -763,7 +856,11 @@ def test_package_command_uses_snapshot_and_rolls_back(
         class _ManagedRuntime:
             def __init__(self, **kwargs: Any) -> None:
                 self.evidence_packet = kwargs["evidence_packet"]
-                self.transport = _Port()
+                kwargs["evidence_packet_verifier"](self.evidence_packet)
+                self.transport = _Port(
+                    self.evidence_packet,
+                    kwargs["transport_receipt_sink"],
+                )
                 runtimes.append(self)
 
             def __enter__(self) -> _ManagedRuntime:

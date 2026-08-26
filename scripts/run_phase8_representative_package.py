@@ -10,7 +10,7 @@ import argparse
 import hashlib
 import json
 import subprocess
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import which
@@ -174,6 +174,9 @@ def main() -> int:
     @contextmanager
     def inference_port_factory(
         packet: RetainedVisualEvidencePacket,
+        *,
+        evidence_packet_verifier: Callable[[RetainedVisualEvidencePacket], None],
+        transport_receipt_sink: Callable[[dict[str, object]], None],
     ) -> Iterator[Phase8VisualInferencePort]:
         with ManagedPhase8VisualRuntime(
             command_prefix=package.gateway_command,
@@ -185,6 +188,8 @@ def main() -> int:
             validator_agent_id=package.validator_agent_id,
             implementation_revision=revision,
             evidence_packet=packet,
+            evidence_packet_verifier=evidence_packet_verifier,
+            transport_receipt_sink=transport_receipt_sink,
         ) as runtime:
             yield runtime.transport
 
@@ -294,6 +299,16 @@ def main() -> int:
     }
     comparison_status = "NOT_RUN"
     visual_result = result.runner_result.visual_result
+    if visual_result is not None:
+        transport_receipt_bundle = result.transport_receipt_bundle
+        if not isinstance(transport_receipt_bundle, dict):
+            raise Phase8RepresentativeRunError("TRANSPORT_RECEIPT_BUNDLE_INVALID")
+        artifacts["openresponses_transport_receipts_sha256"] = _write_json(
+            output / "openresponses-transport-receipts.json",
+            transport_receipt_bundle,
+        )
+    elif result.transport_receipt_bundle is not None:
+        raise Phase8RepresentativeRunError("TRANSPORT_RECEIPT_BUNDLE_INVALID")
     if visual_result is not None:
         artifacts["controller_receipt_sha256"] = _write_json(
             output / "proposal-controller-receipt.json",

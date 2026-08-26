@@ -3,19 +3,23 @@ from __future__ import annotations
 import hashlib
 import json
 from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import pytest
 
 from classifire.services.canonical_submission_state import InitialSubmissionState
 from classifire.services.phase8_openresponses_transport import (
+    OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA,
     NoToolSessionAttestation,
     NoToolSessionAudit,
     OpenClawGatewayNoToolSessionGuard,
     Phase8OpenResponsesTransport,
     Phase8OpenResponsesTransportError,
+    build_phase8_openresponses_transport_receipt_bundle,
+    validate_phase8_openresponses_transport_receipt_bundle,
 )
 from classifire.services.phase8_visual_evidence import (
     RetainedVisualEvidenceFile,
@@ -30,11 +34,18 @@ from classifire.services.phase8_visual_proposal import (
     VISUAL_EVIDENCE_MANIFEST_SCHEMA,
     VISUAL_INFERENCE_REQUEST_SCHEMA,
     VISUAL_PROPOSAL_APPROVED,
+    VISUAL_PROPOSAL_BLOCKED,
     VISUAL_PROPOSAL_POLICY_VERSION,
     ProposalOnlyVisualController,
     canonical_json_sha256,
     validate_visual_inference_response,
 )
+from classifire.services.storage import VerifiedStoredFile
+
+_STORED_FILE_ID = "00000000-0000-4000-8000-000000000001"
+_SCAN_ATTESTATION_ID = "00000000-0000-4000-8000-000000000002"
+_OTHER_STORED_FILE_ID = "00000000-0000-4000-8000-000000000003"
+_OTHER_SCAN_ATTESTATION_ID = "00000000-0000-4000-8000-000000000004"
 
 
 def _sha256_text(value: str) -> str:
@@ -49,6 +60,17 @@ def _packet(
     path = tmp_path / "evidence.png"
     path.write_bytes(data)
     digest = hashlib.sha256(data).hexdigest()
+    verification_token = VerifiedStoredFile(
+        stored_file_id=_STORED_FILE_ID,
+        path=path,
+        content_sha256=digest,
+        content_size_bytes=len(data),
+        media_type="image/png",
+        purpose="technical_evidence",
+        scan_attestation_id=_SCAN_ATTESTATION_ID,
+        scan_attestation_sha256="C" * 64,
+        scan_sequence=1,
+    )
     manifest = {
         "schema": VISUAL_EVIDENCE_MANIFEST_SCHEMA,
         "estimate_id": "EST-001",
@@ -85,9 +107,19 @@ def _packet(
                 sha256=digest,
                 size_bytes=len(data),
                 media_type="image/png",
+                verification_token=verification_token,
             ),
         ),
     )
+
+
+def _replace_verification_token(
+    packet: RetainedVisualEvidencePacket,
+    **changes: Any,
+) -> RetainedVisualEvidencePacket:
+    token = replace(packet.files[0].verification_token, **changes)
+    item = replace(packet.files[0], verification_token=token)
+    return replace(packet, files=(item,))
 
 
 def _profile() -> dict[str, Any]:
@@ -187,6 +219,10 @@ class FakeGuard:
         )
 
 
+def _accept_evidence_packet(_packet: RetainedVisualEvidencePacket) -> None:
+    return None
+
+
 def _transport(
     packet: RetainedVisualEvidencePacket,
     handler,
@@ -194,6 +230,8 @@ def _transport(
     guard: FakeGuard | None = None,
     token_provider=lambda: "secret-token",  # noqa: B008
     runtime_agent_ids: dict[str, str] | None = None,
+    evidence_packet_verifier=None,
+    transport_receipt_sink=None,
 ) -> tuple[Phase8OpenResponsesTransport, FakeGuard]:
     selected_guard = guard or FakeGuard()
     selected_runtime_agent_ids = runtime_agent_ids or {
@@ -206,8 +244,14 @@ def _transport(
             base_url="http://127.0.0.1:18789/v1",
             token_provider=token_provider,
             evidence_packet=packet,
+            evidence_packet_verifier=(
+                evidence_packet_verifier
+                if evidence_packet_verifier is not None
+                else _accept_evidence_packet
+            ),
             session_guard=selected_guard,
             runtime_agent_ids=selected_runtime_agent_ids,
+            transport_receipt_sink=transport_receipt_sink,
             clock_ms=lambda: 1234567890,
         ),
         selected_guard,
@@ -263,6 +307,7 @@ def test_profile_and_rendering_are_deterministic_and_role_bound(tmp_path: Path) 
 def test_success_revalidates_bytes_and_emits_strict_no_tool_request(tmp_path: Path) -> None:
     packet = _packet(tmp_path)
     captured: dict[str, Any] = {}
+    verified: list[RetainedVisualEvidencePacket] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         captured["url"] = str(request.url)
@@ -270,7 +315,7 @@ def test_success_revalidates_bytes_and_emits_strict_no_tool_request(tmp_path: Pa
         captured["body"] = json.loads(request.content)
         return httpx.Response(200, json=_openresponses({"ok": True}))
 
-    transport, guard = _transport(packet, handler)
+    transport, guard = _transport(packet, handler, evidence_packet_verifier=verified.append)
     request = _request(packet)
 
     result = transport.invoke(role="cf-validator", stage="blind_inventory", request=request)
@@ -294,8 +339,245 @@ def test_success_revalidates_bytes_and_emits_strict_no_tool_request(tmp_path: Pa
     assert base64_decode(image["source"]["data"]) == b"synthetic-image-bytes"
     assert len(guard.attestations) == 1
     assert len(guard.audits) == 1
+    assert verified == [packet]
     assert "secret-token" not in str(result)
     assert str(packet.files[0].path) not in str(result)
+
+
+def test_scan_token_accepts_the_existing_jpeg_media_type_alias(tmp_path: Path) -> None:
+    packet = _packet(tmp_path)
+    packet = replace(
+        packet,
+        manifest=deepcopy(packet.manifest),
+        files=(
+            replace(
+                packet.files[0],
+                media_type="image/jpeg",
+                verification_token=replace(
+                    packet.files[0].verification_token,
+                    media_type="image/jpg",
+                ),
+            ),
+        ),
+    )
+    packet.manifest["artifacts"][0]["media_type"] = "image/jpeg"
+    transport, _guard = _transport(
+        packet,
+        lambda _request: httpx.Response(200, json=_openresponses({"ok": True})),
+    )
+
+    result = transport.invoke(
+        role="cf-validator",
+        stage="blind_inventory",
+        request=_request(packet),
+    )
+
+    assert result["payload"] == {"ok": True}
+
+
+@pytest.mark.parametrize("invalid_token", [None, object()])
+def test_missing_or_invalid_scan_token_fails_before_verifier_guard_token_or_http(
+    tmp_path: Path,
+    invalid_token: object,
+) -> None:
+    packet = _packet(tmp_path)
+    packet = replace(
+        packet,
+        files=(
+            replace(
+                packet.files[0],
+                verification_token=cast(VerifiedStoredFile, invalid_token),
+            ),
+        ),
+    )
+    counts = {"verifier": 0, "token": 0, "http": 0}
+
+    def verifier(_packet: RetainedVisualEvidencePacket) -> None:
+        counts["verifier"] += 1
+
+    def token_provider() -> str:
+        counts["token"] += 1
+        return "secret"
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        counts["http"] += 1
+        return httpx.Response(500)
+
+    transport, guard = _transport(
+        packet,
+        handler,
+        token_provider=token_provider,
+        evidence_packet_verifier=verifier,
+    )
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        transport.invoke(
+            role="cf-validator",
+            stage="blind_inventory",
+            request=_request(packet),
+        )
+
+    assert exc_info.value.code == "EVIDENCE_ATTESTATION_INVALID"
+    assert counts == {"verifier": 0, "token": 0, "http": 0}
+    assert guard.attestations == []
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid_value"),
+    [
+        ("stored_file_id", ""),
+        ("stored_file_id", f" {_STORED_FILE_ID} "),
+        ("content_sha256", "D" * 64),
+        ("content_size_bytes", 999),
+        ("media_type", "image/jpeg"),
+        ("purpose", "project_evidence"),
+        ("scan_attestation_id", ""),
+        ("scan_attestation_id", f" {_SCAN_ATTESTATION_ID} "),
+        ("scan_attestation_sha256", "not-a-sha256"),
+        ("scan_sequence", 0),
+        ("scan_sequence", True),
+    ],
+)
+def test_mismatched_scan_token_fails_before_verifier_guard_token_or_http(
+    tmp_path: Path,
+    field: str,
+    invalid_value: object,
+) -> None:
+    packet = _replace_verification_token(_packet(tmp_path), **{field: invalid_value})
+    calls: list[str] = []
+
+    transport, guard = _transport(
+        packet,
+        lambda _request: pytest.fail("HTTP must not run"),
+        token_provider=lambda: pytest.fail("token provider must not run"),
+        evidence_packet_verifier=lambda _packet: calls.append("verifier"),
+    )
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        transport.invoke(
+            role="cf-validator",
+            stage="blind_inventory",
+            request=_request(packet),
+        )
+
+    assert exc_info.value.code == "EVIDENCE_ATTESTATION_INVALID"
+    assert calls == []
+    assert guard.attestations == []
+
+
+def test_scan_token_path_mismatch_fails_before_verifier_guard_or_http(tmp_path: Path) -> None:
+    packet = _replace_verification_token(_packet(tmp_path), path=tmp_path / "other.png")
+    calls: list[str] = []
+    transport, guard = _transport(
+        packet,
+        lambda _request: pytest.fail("HTTP must not run"),
+        token_provider=lambda: pytest.fail("token provider must not run"),
+        evidence_packet_verifier=lambda _packet: calls.append("verifier"),
+    )
+
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        transport.invoke(
+            role="cf-validator",
+            stage="blind_inventory",
+            request=_request(packet),
+        )
+
+    assert exc_info.value.code == "EVIDENCE_ATTESTATION_INVALID"
+    assert calls == []
+    assert guard.attestations == []
+
+
+def test_scan_revalidation_runs_before_every_stage_and_blocks_stale_packet(
+    tmp_path: Path,
+) -> None:
+    packet = _packet(tmp_path)
+    counts = {"verifier": 0, "token": 0, "http": 0}
+
+    def verifier(current_packet: RetainedVisualEvidencePacket) -> None:
+        assert current_packet is packet
+        counts["verifier"] += 1
+        if counts["verifier"] == 2:
+            raise RuntimeError("unsafe database detail")
+
+    def token_provider() -> str:
+        counts["token"] += 1
+        return "secret"
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        counts["http"] += 1
+        return httpx.Response(200, json=_openresponses({"ok": True}))
+
+    transport, guard = _transport(
+        packet,
+        handler,
+        token_provider=token_provider,
+        evidence_packet_verifier=verifier,
+    )
+    transport.invoke(
+        role="cf-validator",
+        stage="blind_inventory",
+        request=_request(packet),
+    )
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        transport.invoke(
+            role="cf-physical-model",
+            stage="physical_proposal",
+            request=_request(packet),
+        )
+
+    assert exc_info.value.code == "EVIDENCE_ATTESTATION_REVALIDATION_FAILED"
+    assert "unsafe database detail" not in str(exc_info.value)
+    assert counts == {"verifier": 2, "token": 1, "http": 1}
+    assert len(guard.attestations) == 1
+    assert len(guard.audits) == 1
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"stored_file_id": _OTHER_STORED_FILE_ID},
+        {"scan_attestation_id": _OTHER_SCAN_ATTESTATION_ID},
+        {"scan_attestation_sha256": "D" * 64},
+        {"scan_sequence": 2},
+    ],
+)
+def test_transport_receipt_binds_scan_identity_without_exposing_it(
+    tmp_path: Path,
+    changes: dict[str, Any],
+) -> None:
+    packet = _packet(tmp_path)
+    changed_packet = _replace_verification_token(packet, **changes)
+    bodies: list[dict[str, Any]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        bodies.append(json.loads(request.content))
+        return httpx.Response(200, json=_openresponses({"ok": True}))
+
+    original_transport, _ = _transport(packet, handler)
+    changed_transport, _ = _transport(changed_packet, handler)
+    original = original_transport.invoke(
+        role="cf-validator",
+        stage="blind_inventory",
+        request=_request(packet),
+    )
+    changed = changed_transport.invoke(
+        role="cf-validator",
+        stage="blind_inventory",
+        request=_request(changed_packet),
+    )
+
+    assert bodies[0] == bodies[1]
+    assert original["session_id_sha256"] == changed["session_id_sha256"]
+    assert original["transport_receipt_sha256"] != changed["transport_receipt_sha256"]
+    scan_values = {
+        packet.files[0].verification_token.stored_file_id,
+        packet.files[0].verification_token.scan_attestation_id,
+        packet.files[0].verification_token.scan_attestation_sha256,
+        changed_packet.files[0].verification_token.stored_file_id,
+        changed_packet.files[0].verification_token.scan_attestation_id,
+        changed_packet.files[0].verification_token.scan_attestation_sha256,
+    }
+    public_output = json.dumps({"bodies": bodies, "responses": [original, changed]})
+    assert all(value not in public_output for value in scan_values)
+    assert str(packet.files[0].path) not in public_output
 
 
 def test_logical_role_uses_dedicated_runtime_agent_identity(tmp_path: Path) -> None:
@@ -356,10 +638,75 @@ def test_invalid_runtime_agent_mapping_is_rejected(
             base_url="http://127.0.0.1:18789/v1",
             token_provider=lambda: "token",
             evidence_packet=packet,
+            evidence_packet_verifier=_accept_evidence_packet,
             session_guard=FakeGuard(),
             runtime_agent_ids=runtime_agent_ids,
         )
     assert exc_info.value.code == "RUNTIME_AGENT_POLICY_INVALID"
+
+
+def test_invalid_evidence_packet_verifier_is_rejected(tmp_path: Path) -> None:
+    packet = _packet(tmp_path)
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        Phase8OpenResponsesTransport(
+            client=httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(500))),
+            base_url="http://127.0.0.1:18789/v1",
+            token_provider=lambda: "token",
+            evidence_packet=packet,
+            evidence_packet_verifier=cast(Any, None),
+            session_guard=FakeGuard(),
+            runtime_agent_ids={
+                "cf-physical-model": "cf-physical-model",
+                "cf-validator": "cf-validator",
+            },
+        )
+
+    assert exc_info.value.code == "EVIDENCE_PACKET_VERIFIER_INVALID"
+
+
+def test_invalid_transport_receipt_sink_is_rejected(tmp_path: Path) -> None:
+    packet = _packet(tmp_path)
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        Phase8OpenResponsesTransport(
+            client=httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(500))),
+            base_url="http://127.0.0.1:18789/v1",
+            token_provider=lambda: "token",
+            evidence_packet=packet,
+            evidence_packet_verifier=_accept_evidence_packet,
+            session_guard=FakeGuard(),
+            runtime_agent_ids={
+                "cf-physical-model": "cf-physical-model",
+                "cf-validator": "cf-validator",
+            },
+            transport_receipt_sink=cast(Any, "not-callable"),
+        )
+
+    assert exc_info.value.code == "TRANSPORT_RECEIPT_SINK_INVALID"
+
+
+def test_transport_receipt_sink_failure_blocks_the_success_response(tmp_path: Path) -> None:
+    packet = _packet(tmp_path)
+
+    def fail_retention(_record: dict[str, Any]) -> None:
+        raise RuntimeError("private sink detail")
+
+    transport, guard = _transport(
+        packet,
+        lambda _request: httpx.Response(200, json=_openresponses({"ok": True})),
+        transport_receipt_sink=fail_retention,
+    )
+
+    with pytest.raises(Phase8OpenResponsesTransportError) as exc_info:
+        transport.invoke(
+            role="cf-validator",
+            stage="blind_inventory",
+            request=_request(packet),
+        )
+
+    assert exc_info.value.code == "TRANSPORT_RECEIPT_RETENTION_FAILED"
+    assert "private sink detail" not in str(exc_info.value)
+    assert len(guard.attestations) == 1
+    assert len(guard.audits) == 1
 
 
 def base64_decode(value: str) -> bytes:
@@ -378,6 +725,7 @@ def test_non_loopback_and_dns_gateway_names_are_rejected(tmp_path: Path) -> None
                 base_url=url,
                 token_provider=lambda: "token",
                 evidence_packet=packet,
+                evidence_packet_verifier=_accept_evidence_packet,
                 session_guard=FakeGuard(),
                 runtime_agent_ids={
                     "cf-physical-model": "cf-physical-model",
@@ -953,11 +1301,16 @@ def _validator() -> dict[str, Any]:
 def test_transport_composes_with_controller_without_write_capability(tmp_path: Path) -> None:
     packet = _packet(tmp_path)
     scripted = iter((_blind_inventory(), _proposal(), _validator()))
+    transport_receipt_records: list[dict[str, Any]] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json=_openresponses(next(scripted)))
 
-    transport, guard = _transport(packet, handler)
+    transport, guard = _transport(
+        packet,
+        handler,
+        transport_receipt_sink=transport_receipt_records.append,
+    )
     state = InitialSubmissionState(
         estimate_id="EST-001",
         fingerprint="D" * 64,
@@ -993,3 +1346,69 @@ def test_transport_composes_with_controller_without_write_capability(tmp_path: P
     assert len({item["session_key"] for item in guard.attestations}) == 3
     assert result.receipt["controller_canonical_write_performed"] is False
     assert result.receipt["write_or_lock_capability_exposed"] is False
+    bundle = build_phase8_openresponses_transport_receipt_bundle(
+        transport_receipt_records,
+        controller_receipt=result.receipt,
+    )
+    assert bundle["schema"] == OPENRESPONSES_TRANSPORT_RECEIPT_BUNDLE_SCHEMA
+    assert validate_phase8_openresponses_transport_receipt_bundle(
+        bundle,
+        controller_receipt=result.receipt,
+    ) == []
+    assert len(bundle["records"]) == 3
+    for record, stage in zip(bundle["records"], result.receipt["stages"], strict=True):
+        assert canonical_json_sha256(record["receipt"]) == stage["transport_receipt_sha256"]
+        assert record["receipt"]["request_sha256"] == stage["request_sha256"]
+        assert record["receipt"]["session_id_sha256"] == stage["session_id_sha256"]
+        assert record["receipt"]["payload_sha256"] == stage["payload_sha256"]
+    serialized = json.dumps(bundle)
+    assert str(packet.files[0].path) not in serialized
+    assert "synthetic-image-bytes" not in serialized
+    assert "input_image" not in serialized
+
+    tampered = deepcopy(bundle)
+    tampered["records"][0]["receipt"]["evidence"][0][
+        "malware_scan_attestation_id"
+    ] = _OTHER_SCAN_ATTESTATION_ID
+    assert validate_phase8_openresponses_transport_receipt_bundle(
+        tampered,
+        controller_receipt=result.receipt,
+    )
+    unsafe_evidence_id = deepcopy(bundle)
+    unsafe_evidence_id["records"][0]["receipt"]["evidence"][0][
+        "evidence_id"
+    ] = "https://example.invalid/evidence"
+    assert validate_phase8_openresponses_transport_receipt_bundle(
+        unsafe_evidence_id,
+        controller_receipt=result.receipt,
+    )
+    missing = deepcopy(bundle)
+    missing["records"].pop()
+    extra = deepcopy(bundle)
+    extra["records"].append(deepcopy(extra["records"][-1]))
+    reordered = deepcopy(bundle)
+    reordered["records"].reverse()
+    request_mismatch = deepcopy(bundle)
+    request_mismatch["records"][0]["receipt"]["request_sha256"] = "0" * 64
+    for invalid_bundle in (missing, extra, reordered, request_mismatch):
+        assert validate_phase8_openresponses_transport_receipt_bundle(
+            invalid_bundle,
+            controller_receipt=result.receipt,
+        )
+
+    no_stage_controller = deepcopy(result.receipt)
+    no_stage_controller["status"] = VISUAL_PROPOSAL_BLOCKED
+    no_stage_controller["stages"] = []
+    no_stage_controller["result_hashes"] = {
+        "blind_inventory_sha256": None,
+        "proposal_sha256": None,
+        "validator_sha256": None,
+    }
+    no_stage_controller["errors"] = ["No successful inference stage was retained."]
+    no_stage_controller["runtime_inference_performed"] = False
+    with pytest.raises(Phase8OpenResponsesTransportError) as empty:
+        build_phase8_openresponses_transport_receipt_bundle(
+            [],
+            controller_receipt=no_stage_controller,
+        )
+    assert empty.value.code == "TRANSPORT_RECEIPT_BUNDLE_INVALID"

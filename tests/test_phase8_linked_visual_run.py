@@ -332,6 +332,7 @@ def _run(
     tmp_path: Path,
     linked: bool = True,
     port: _ScriptedPort | None = None,
+    factory=None,
     parent_map: dict[str, str] | None = None,
     unbound_visual_ids: list[str] | None = None,
 ):
@@ -378,7 +379,8 @@ def _run(
         retrieval_root=retrieval_root,
         operator_reference="Synthetic test operator",
         inference_profile=_profile(),
-        inference_port=selected_port,
+        inference_port=selected_port if factory is None else None,
+        inference_port_factory=factory,
         protected_state_reader=lambda: initial_submission_state(
             session,
             estimate_id=estimate.id,
@@ -848,7 +850,50 @@ def test_runner_rejects_a_newer_infected_attestation_during_inference(
             _run(session, tmp_path=tmp_path, port=port)
 
         assert caught.value.code == "STORED_FILE_ATTESTATION_STALE"
-        assert len(port.calls) == 3
+        assert [call["stage"] for call in port.calls] == ["blind_inventory"]
+
+
+def test_managed_factory_revalidator_blocks_a_newer_attestation_before_next_stage(
+    tmp_path: Path,
+) -> None:
+    with physical_session() as session:
+
+        def mutate() -> None:
+            stored = session.scalar(
+                select(StoredFile).where(
+                    StoredFile.original_filename.like("linked-image-%")
+                )
+            )
+            assert stored is not None
+            payload = Path(stored.storage_path).read_bytes()
+            append_malware_scan_attestation(
+                session,
+                stored_file_id=stored.id,
+                result=malware_scan_result(payload, verdict="infected"),
+                scan_source="governed_rescan",
+                actor=None,
+            )
+
+        port = _ScriptedPort(mutation=mutate)
+        verification_attempts: list[str] = []
+
+        @contextmanager
+        def factory(packet, *, evidence_packet_verifier, transport_receipt_sink):
+            del transport_receipt_sink
+            class _RevalidatingPort:
+                def invoke(self, **kwargs: Any) -> dict[str, Any]:
+                    verification_attempts.append(kwargs["stage"])
+                    evidence_packet_verifier(packet)
+                    return port.invoke(**kwargs)
+
+            yield _RevalidatingPort()
+
+        with pytest.raises(Phase8LinkedVisualRunError) as caught:
+            _run(session, tmp_path=tmp_path, port=port, factory=factory)
+
+        assert caught.value.code == "STORED_FILE_ATTESTATION_STALE"
+        assert verification_attempts == ["blind_inventory", "physical_proposal"]
+        assert [call["stage"] for call in port.calls] == ["blind_inventory"]
 
 
 def test_runner_builds_and_closes_managed_port_from_retained_evidence_packet(
@@ -860,8 +905,10 @@ def test_runner_builds_and_closes_managed_port_from_retained_evidence_packet(
         port = _ScriptedPort()
 
         @contextmanager
-        def factory(packet):
+        def factory(packet, *, evidence_packet_verifier, transport_receipt_sink):
+            del transport_receipt_sink
             created_for.append(packet)
+            evidence_packet_verifier(packet)
             try:
                 yield port
             finally:

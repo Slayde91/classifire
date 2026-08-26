@@ -12,6 +12,7 @@ import json
 from collections import Counter
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractContextManager, contextmanager
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -87,8 +88,29 @@ class Phase8VisualInferencePortFactory(Protocol):
     """
 
     def __call__(
-        self, evidence_packet: RetainedVisualEvidencePacket
+        self,
+        evidence_packet: RetainedVisualEvidencePacket,
+        *,
+        evidence_packet_verifier: Callable[[RetainedVisualEvidencePacket], None],
+        transport_receipt_sink: Callable[[dict[str, Any]], None],
     ) -> AbstractContextManager[Phase8VisualInferencePort, None]: ...
+
+
+@dataclass(frozen=True, slots=True)
+class _EvidenceRevalidatingInferencePort:
+    delegate: Phase8VisualInferencePort
+    evidence_packet: RetainedVisualEvidencePacket
+    verifier: Callable[[RetainedVisualEvidencePacket], None]
+
+    def invoke(
+        self,
+        *,
+        role: str,
+        stage: str,
+        request: dict[str, Any],
+    ) -> Any:
+        self.verifier(self.evidence_packet)
+        return self.delegate.invoke(role=role, stage=stage, request=request)
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,6 +120,7 @@ class Phase8LinkedVisualRunResult:
     evidence_packet: RetainedVisualEvidencePacket | None
     visual_result: Phase8VisualProposalResult | None
     receipt: dict[str, Any]
+    transport_receipt_records: tuple[dict[str, Any], ...] = ()
 
     @property
     def receipt_sha256(self) -> str:
@@ -472,16 +495,26 @@ def _target_parent_evidence_ids(
 def _inference_port_scope(
     *,
     evidence_packet: RetainedVisualEvidencePacket,
+    evidence_packet_verifier: Callable[[RetainedVisualEvidencePacket], None],
+    transport_receipt_sink: Callable[[dict[str, Any]], None],
     inference_port: Phase8VisualInferencePort | None,
     inference_port_factory: Phase8VisualInferencePortFactory | None,
 ) -> Iterator[Phase8VisualInferencePort]:
     if (inference_port is None) == (inference_port_factory is None):
         raise Phase8LinkedVisualRunError("INFERENCE_PORT_CONFIGURATION_INVALID")
     if inference_port is not None:
-        yield inference_port
+        yield _EvidenceRevalidatingInferencePort(
+            delegate=inference_port,
+            evidence_packet=evidence_packet,
+            verifier=evidence_packet_verifier,
+        )
         return
     assert inference_port_factory is not None
-    with inference_port_factory(evidence_packet) as managed_port:
+    with inference_port_factory(
+        evidence_packet,
+        evidence_packet_verifier=evidence_packet_verifier,
+        transport_receipt_sink=transport_receipt_sink,
+    ) as managed_port:
         yield managed_port
 
 
@@ -595,6 +628,7 @@ def run_phase8_linked_visual_proposal(
     estimate_id = _token(estimate_id, code="ESTIMATE_ID_REQUIRED")
     defect_reference = _token(defect_reference, code="DEFECT_REFERENCE_REQUIRED")
     operator_reference = _token(operator_reference, code="OPERATOR_REFERENCE_REQUIRED")
+    transport_receipt_records: list[dict[str, Any]] = []
     if not report.is_file() or not storage_root.is_dir() or not retrieval_root.is_dir():
         raise Phase8LinkedVisualRunError("RUN_INPUT_UNAVAILABLE")
     rows = [dict(row) for row in photo_rows]
@@ -656,6 +690,7 @@ def run_phase8_linked_visual_proposal(
             retentions=(),
             evidence_packet=None,
             visual_result=None,
+            transport_receipt_records=(),
             receipt=receipt,
         )
         return result
@@ -715,8 +750,21 @@ def run_phase8_linked_visual_proposal(
             if not retained_ids.issubset(packet_ids) or not packet_ids.issubset(allowed_packet_ids):
                 raise Phase8LinkedVisualRunError("RETAINED_EVIDENCE_PACKET_MISMATCH")
             try:
+                def evidence_packet_verifier(
+                    current_packet: RetainedVisualEvidencePacket,
+                ) -> None:
+                    if current_packet is not evidence_packet:
+                        raise Phase8VisualEvidenceError("EVIDENCE_PACKET_MISMATCH")
+                    revalidate_retained_visual_evidence_packet(
+                        db,
+                        storage_root=storage_root,
+                        packet=current_packet,
+                    )
+
                 with _inference_port_scope(
                     evidence_packet=evidence_packet,
+                    evidence_packet_verifier=evidence_packet_verifier,
+                    transport_receipt_sink=transport_receipt_records.append,
                     inference_port=inference_port,
                     inference_port_factory=inference_port_factory,
                 ) as selected_inference_port:
@@ -790,6 +838,7 @@ def run_phase8_linked_visual_proposal(
         retentions=retentions,
         evidence_packet=evidence_packet,
         visual_result=visual_result,
+        transport_receipt_records=tuple(deepcopy(transport_receipt_records)),
         receipt=receipt,
     )
 

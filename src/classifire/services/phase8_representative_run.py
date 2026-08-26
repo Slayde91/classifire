@@ -40,6 +40,10 @@ from .phase8_linked_visual_run import (
     Phase8VisualInferencePortFactory,
     run_phase8_linked_visual_proposal,
 )
+from .phase8_openresponses_transport import (
+    Phase8OpenResponsesTransportError,
+    build_phase8_openresponses_transport_receipt_bundle,
+)
 from .phase8_visual_prompts import build_visual_inference_profile
 from .phase8_visual_proposal import canonical_json_sha256
 from .phase8_visual_runtime import (
@@ -50,7 +54,8 @@ from .storage import StoredFileSecurityError, require_clean_stored_file_for_sess
 
 REPRESENTATIVE_RUN_PACKAGE_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-PACKAGE-v1"
 REPRESENTATIVE_RUN_PREFLIGHT_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-PREFLIGHT-v1"
-REPRESENTATIVE_RUN_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-v1"
+LEGACY_REPRESENTATIVE_RUN_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-v1"
+REPRESENTATIVE_RUN_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-v2"
 REPRESENTATIVE_RUN_APPROVAL_SCOPE = "rollback_only_linked_visual_proposal"
 _MAX_PACKAGE_BYTES = 5 * 1024 * 1024
 _GIT_REVISION = re.compile(r"^[0-9a-f]{40}$")
@@ -123,6 +128,7 @@ class Phase8RepresentativeRunResult:
     preflight: Phase8RepresentativeRunPreflight
     runner_result: Phase8LinkedVisualRunResult
     receipt: dict[str, Any]
+    transport_receipt_bundle: dict[str, Any] | None = None
 
     @property
     def receipt_sha256(self) -> str:
@@ -668,6 +674,20 @@ def execute_phase8_representative_run(
         raise failure
     assert runner_result is not None
 
+    transport_receipt_bundle: dict[str, Any] | None = None
+    if runner_result.visual_result is not None:
+        try:
+            transport_receipt_bundle = (
+                build_phase8_openresponses_transport_receipt_bundle(
+                    runner_result.transport_receipt_records,
+                    controller_receipt=runner_result.visual_result.receipt,
+                )
+            )
+        except Phase8OpenResponsesTransportError as exc:
+            raise Phase8RepresentativeRunError(exc.code) from None
+    elif runner_result.transport_receipt_records:
+        raise Phase8RepresentativeRunError("TRANSPORT_RECEIPT_BUNDLE_INVALID")
+
     receipt = {
         "schema": REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
         "package_id": package.package_id,
@@ -686,6 +706,11 @@ def execute_phase8_representative_run(
             if runner_result.visual_result is not None
             else None
         ),
+        "transport_receipt_bundle_sha256": (
+            canonical_json_sha256(transport_receipt_bundle)
+            if transport_receipt_bundle is not None
+            else None
+        ),
         "protected_state": {
             "before": _state_summary(before),
             "after_rollback": _state_summary(after),
@@ -700,6 +725,7 @@ def execute_phase8_representative_run(
         package=package,
         preflight=preflight,
         runner_result=runner_result,
+        transport_receipt_bundle=transport_receipt_bundle,
         receipt=receipt,
     )
 
@@ -709,6 +735,7 @@ __all__ = [
     "Phase8RepresentativeRunPackage",
     "Phase8RepresentativeRunPreflight",
     "Phase8RepresentativeRunResult",
+    "LEGACY_REPRESENTATIVE_RUN_RECEIPT_SCHEMA",
     "REPRESENTATIVE_RUN_APPROVAL_SCOPE",
     "REPRESENTATIVE_RUN_PACKAGE_SCHEMA",
     "REPRESENTATIVE_RUN_PREFLIGHT_RECEIPT_SCHEMA",
