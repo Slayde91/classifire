@@ -1,181 +1,166 @@
 # CLASSIFIRE Session Handoff
 
-**Verified:** 2026-08-25 (AEST)
+**Verified:** 2026-08-27 (AEST)
 
 **Status:** Pre-production implementation and controlled Phase 8 UAT
 
-This handoff records current evidence. It does not authorise inference, retrieval, admission signing or registration, canonical submission, Physical Model Lock creation, deployment, release, commit, or push.
+This handoff records current repository and execution evidence. It does not
+authorise inference, evidence retrieval, admission signing or registration,
+canonical submission, Physical Model Lock creation, commit, push, pull-request
+publication, deployment, merge, or release.
 
-## 1. Current shared-main position
+## 1. Shared and open GitHub state
 
-- Shared `main` and `origin/main`:
-  `1b3d7c976dd726a663c105e99d0b38ab22460d66` (PR #73 merge).
-- Merged Phase 8 work: representative rollback package and recovery,
-  evidence-family and human-review validators, direct legacy-route test
-  isolation, and the durable visual-validation receipt registry/verifier.
-- Open PR #74: `5874dadeac2bca97fdbf366967590e1539c148df`,
-  a committed seven-file `site_observation` evidence-intake candidate; unmerged.
-- Open PR #75: `ef4425422a5d80387626697c1d8d99dcdd9e6bdc`,
-  an assumption-led desk-quote candidate stacked on PR #74; unmerged.
+- Shared `main`: `1b3d7c976dd726a663c105e99d0b38ab22460d66`.
+- Documentation branch before this update:
+  `docs/reconcile-project-state-20260825` at `9823c6c9c483f03878c19f186074a759da2497f5`, clean and pushed with no pull request.
+- PR #74: `9f5dacacadfab02d6c9aaf8ac0add43c5eedfff8`, open and exactly seven files. The second commit corrects the transient contract wording and preserves an evidence-only, non-canonical boundary.
+- PR #75: `ef4425422a5d80387626697c1d8d99dcdd9e6bdc`, open and 13 files. It contains PR #74's older `5874dade` commit, not the current `9f5daca` correction, so it is not the exact current dependent stack.
+- Draft legacy PRs #9-#13 remain open and must not be merged wholesale.
 
-Neither open pull request creates canonical, technical, lock, deployment, or
-release authority.
+GitHub reports PRs #74 and #75 as mergeable/clean but exposes no status-check
+rollup. Mergeability is not test evidence.
 
-The primary checkout remains on `gpt/phase8-linked-original-images` at
-`de0cc5a` with a divergent mixed working tree. It is a legacy evidence and
-development source only. Do not bulk-stage, merge, clean, reset, or use it as a
-publication base; its contents were not touched by this reconciliation.
+## 2. Protected root checkout
 
-Do not cherry-pick from the mixed root or old stacked branches by title alone.
-Their divergent histories may carry superseded migrations, APIs, guards, or
-unrelated working-tree content. Reconstruct or path-review any still-useful
-change against a clean exact-main worktree.
+`C:\CLASSIFIRE` remains on `gpt/phase8-linked-original-images` at `de0cc5a`,
+equal to its upstream. It is 129 commits behind and 378 commits ahead of current
+main and has an interrupted cherry-pick of `c3e4c810`.
 
-## 2. Merged Phase 8 capability
+The root contains staged additions, unrelated tracked modifications, four
+unresolved `DU` paths, more than 67,000 enumerated untracked paths, and
+unreadable legacy pytest caches. Do not edit, stage, resolve, abort, clean,
+reset, commit, or publish from it. Use clean current-main or exact candidate
+worktrees.
 
-Shared main includes the representative-run and recovery capability:
+## 3. Completed shared-main capability
 
-- an explicit rollback-only representative package bound to report, Git revision, executable source tree, snapshot, runtime identities, and no-write flags;
-- verify-only package and snapshot checks plus a non-session-creating local Gateway readiness probe;
-- full-report linked-original resolution with inference allowlisted to current retentions and explicitly mapped ready parents for the selected defect;
-- report-derived parent-evidence checks for report hash, page, photo identity, native dimensions, and crop bounds;
-- exclusion of nonvisual evidence from visual inference packets;
-- a disposable SQLite transaction that always rolls back and rechecks protected-state fingerprints and counts;
-- stricter proposal, blind-inventory, reconciliation, correction-authority, and blocked-receipt validation;
-- content-safe human evidence-review requests; and
-- fully offline recovery from hash-matched retained receipts and local OpenClaw transcripts without rerunning inference.
+Shared main contains the current Phase 8 physical/admission foundations,
+proposal-only visual controller, no-tool runtime identities, linked-original
+retrieval and governed retention, representative rollback package, content-safe
+review handoff, offline recovery, evidence-family/human-review validators,
+durable visual-validation receipt registry/verifier, and offline Android
+admission signer.
 
-The merged representative package excludes unlisted same-Defect visual evidence,
-requires a literal numeric loopback Gateway address before token-capable fallback
-is constructed, rejects symbolic links and Windows junctions from the
-fingerprinted source set on Python 3.11+, pins the relevant raw-byte inputs to
-LF line endings, and reports the completion receipt's exact UTF-8/LF file-byte
-hash. The original representative publication used an explicitly reviewed
-28-file slice; later bounded PRs added provenance and durable-receipt work.
+Migration head on shared main is `0009_visual_validation_receipts`. The
+representative capability is controlled UAT tooling. It cannot create an
+admission, submit canonical physical records, create a Physical Model Lock,
+approve technical/commercial scope, deploy, or release an estimate.
 
-The package approval fields remain trusted human/governance metadata. They are not cryptographic, expiring, single-use production authority. This is controlled UAT tooling, not an untrusted production-ingestion or canonical-write path.
+## 4. August 26 candidate stack
 
-### 2.1 Open evidence and desk-quote candidates
+Eight committed topic changes form a pushed linear candidate stack above main:
 
-PR #74 validates Defect-bound observed facts only when they carry capture and
-governance provenance, per-fact locators, explicit uncertainty, and an immutable
-admissible retained file. The contract content is approved, but the pull request
-remains unmerged and contains no live evidence.
+```text
+1b3d7c9 main
+-> 21585ca active-user session checks
+-> 5d347f9 server-side human sessions and migration 0010
+-> 2dc1687 fail-closed production configuration/bootstrap
+-> 206390a complete schema readiness
+-> 38ed0e5 malware quarantine
+-> cf219a2 durable malware attestations and migration 0011
+-> b812870 scan-bound inference receipts
+-> 8974963 validate every declared package photo row
+```
 
-PR #75 resolves each quote assumption to retained immutable project evidence and
-each allowance to an active hash-bound pricing release. It is a qualified
-commercial proposal only, not technical selection, canonical estimating,
-certification, admission, lock, or release.
+The remote `8974963` photo branch is an eight-commit, 77-file stack; only its
+tip commit has a six-file scope. It has no pull request and is not shared-main
+implementation.
 
-## 3. Retained v17 execution evidence
+Sibling commit `4c18cb25cdd01afdef94ce16644d73b6ff33bbf3` hardens `0011`
+deployment-lineage readiness. The clean committed integration baseline
+`e9b759e53a2d2e9c51bcc1d467ad33fcf24a4faf`
+combines it with the photo stack, reports the single Alembic head
+`0011_malware_scan_attestations`, and has no remote or pull request.
 
-The authorised v17 full-report run completed linked-original retrieval and four proposal-only inference stages.
+A separate worktree on branch
+`gpt/xlsx-output-injection-integration-20260826`, based at `e9b759e`, contains
+an unstaged two-file XLSX candidate that prevents formula, URL, hyperlink, and
+external-link activation while preserving numeric, boolean, and blank cell
+types. The photo/deployment integration worktree remains clean. Other separate
+uncommitted work includes bootstrap adoption, malware/provenance follow-on, an
+alternate deployment-lineage worktree, runtime branding, and PR #75
+output/cache hardening. None belongs in the documentation commit.
 
-| Evidence | Verified result |
-| --- | --- |
-| Required linked originals | 31 of 31 resolved across 41 report photo occurrences |
-| Target-defect visual evidence | 4 retained originals |
-| Controller stages | 4 across separate Physical and Validator roles |
-| Result | `VISUAL_PROPOSAL_BLOCKED` |
-| Human-reference comparison | Correctly skipped because the proposal was not approved |
-| Human review handoff | 7 review items and 4 unresolved blind observations |
-| Protected state | Unchanged after rollback |
-| Canonical submission | Not performed |
-| Physical Model Lock | Not created |
+Current linked-image processing has a separate unresolved exact-byte defect:
+some paths scan or decode one read and later reopen the mutable file for hashes
+or dimensions, while `preferred_verified_linked_path` performs an unbounded
+read before later image-size validation. The general boundary cannot claim
+single-buffer byte identity until one bounded immutable read feeds scanning,
+decode, dimensions, hashing, and transport.
 
-These counts and the fingerprint are retained v17 receipt evidence, not a fresh
-query of a live or current canonical database.
+## 5. Current physical evidence
 
-The protected state before and after rollback was identical:
+The retained v17 run remains the latest real execution evidence:
 
-- fingerprint: `18768A9E368C7D0692A950303FCAC9401AFBE7C3632BE6A063FCB67B9671F8F1`;
-- 10 Defects and 128 EvidenceSources; and
-- 0 Openings, 0 Services, 0 Opening-Service links, and 0 active locks.
+- 31 of 31 required linked originals resolved across 41 report photo occurrences;
+- four retained originals supplied for the selected Defect;
+- four proposal-only stages using separate Physical and Validator roles;
+- result `VISUAL_PROPOSAL_BLOCKED`;
+- seven review items and four unresolved blind observations;
+- protected state unchanged after rollback: 10 Defects, 128 EvidenceSources,
+  zero Openings, Services, links, or active locks; and
+- no canonical submission or Physical Model Lock.
 
-The Validator block is a genuine evidence limitation, not a runtime failure. A later human review resolved the visible service groupings and quantities, flexible-duct count, opening relationships, and close/wide photo relationship. Dimensions, depth and obscured boundaries, exact substrate composition, service labels and documentary material proof, and opposite-face continuity remain unresolved.
+Human review v2 accounts for every retained review decision. A separate local
+no-write validator passes the limited one-Defect 5-Opening, 6-Service, 6-link
+proposal-only record. Neither is site verification or canonical truth. No new
+site, remote-supervised, or documentary evidence is available. Dimensions,
+depth and obscured boundaries, exact substrate, service labels and material
+proof, and opposite-face continuity remain unresolved.
 
-The v17 live run used source-tree fingerprint `5B00545F5A2A7F3F36930B008B3E0802AFB1EBA5D735A7B9123218B5E972CDE1`. Later recovery, review, provenance, and receipt hardening changed the source tree. V17 is therefore historical runtime proof for that exact run source, not a live execution proof for the later merged source.
+Do not rerun unchanged inference. The historical whole-estimate 17/24
+preflight remains separate no-write evidence and cannot approve the 5/6/6
+proposal.
 
-## 4. Later human review v2 evidence
+## 6. Verification evidence
 
-The retained v2 response accounts for all seven review items and four unresolved-observation items exactly once across six consolidated decisions. A separate local no-write validator returned `PASS` for a limited proposal-only record of one Defect, five Openings, six Services, and six links.
+- Shared-main/PR #73 retained evidence: 345 full and 55 focused tests passed,
+  with static, security, Alembic, and diff checks recorded.
+- Current PR #74 head: branch documentation records 380 complete-suite tests;
+  a fresh 14-test focused run passed, along with Ruff, focused Mypy, and diff
+  checks. GitHub has no CI status-check rollup.
+- Exact committed `e9b759e` integration baseline before the current XLSX edits:
+  858 full-suite tests passed, one Alembic head was reported, and the Git diff
+  was clean.
+- Separate `e9b759e`-based worktree with the uncommitted XLSX candidate: 861
+  tests passed with exit code 0. The later Windows temporary-directory cleanup
+  warning did not change the successful exit.
+- XLSX candidate: 3 focused tests plus Ruff, formatting, focused Mypy, Bandit,
+  and independent review passed with no blocker.
 
-The review confirmed two questioned openings as separate openings in the same wall, the close and wide duct photographs as the same location, two flexible ducts through separate wall openings, one shared opening with a metal pipe/two PVC conduits/a cable bundle, and another opening with a visible three-cable bundle.
+Each result applies only to its exact source scope. No August 26 implementation
+candidate has been merged or deployed.
 
-This remains human visual adjudication without a site visit. It is not an approved canonical model, and it does not settle dimensions, depth/boundaries, exact substrate, service labels/material proof, or opposite-face continuity. The v2 review and evidence-family validators are on shared main; the retained response remains local evidence, not canonical state or publication authority. Its recording and validation performed no report/image retrieval, runtime inference, canonical database read or write, Gateway call, admission, canonical submission, or lock.
+## 7. Exact next valid tasks
 
-## 5. Final-source offline recovery proof
+1. Review PR #74 at corrected head `9f5daca` as the seven-file evidence-intake
+   foundation.
+2. Recalculate PR #75 against that corrected contract before reviewing the
+   desk-quote change. The desk quote is nontechnical and noncanonical and cannot
+   approve the 5/6/6 topology.
+3. Review the August 26 hardening stack through bounded, dependency-ordered pull
+   requests. Do not treat its cumulative tip as one six-file feature.
+4. Correct the linked-image exact-byte and bounded-read defect, with regression
+   tests for path substitution and oversized padded images.
+5. Preserve the unresolved physical facts until governed additional evidence or
+   a site visit exists.
 
-The retained offline recovery was rerun as v8 after the completion-file hash correction and mechanical formatting:
+Canonical preflight, external P-256 signing, admission registration, canonical
+submission, signed lock design/creation, deployment, merge, and release remain
+separate authority gates.
 
-- source-tree fingerprint: `EDBA8858B385BD521D43AB15FAE41C5291356985E47B1792ADC40A0ADD6A8D6F`;
-- evidence-review request file SHA-256: `58200866211E15E49087986BC1E893DE5D377E1067E57B242B537A42E22B34E1`;
-- recovery receipt file SHA-256: `D41A424A7D5500E596B73E340E713BC008D2C11830BEC979D1E164B268134BAF`;
-- recovery script SHA-256: `69A926B057900D35F5A509874244A503A0C0CA062F39B72B6C22E4FA6A45B0E2`;
-- output: exactly `evidence-review-request.json` and `recovery-receipt.json`; and
-- retained-report/linked-original file reads, retrieval, inference requests, canonical submission, lock creation, and human-reference exposure: all false; bound local session transcripts were read.
+## 8. Publication boundary
 
-Recovery proved the retained package/no-write receipt lineage, controller and proposal content bindings, deterministic session-key bindings, every successful transcript payload hash, and final blind/proposal/Validator domain validity. The historical v17 representative, controller, and proposal files predate raw-byte writer hardening, so recovery records their `LF_RENDERED_JSON_SHA256` bindings separately from their retained Windows file hashes.
+This documentation reconciliation includes only:
 
-Recovery did not make local OpenClaw history immutable and did not replay Gateway authentication, runtime tool attestation/audit, OpenResponses response identity, or external inference transport. It is hash-correspondence evidence, not cryptographic authentication of mutable local history.
+- `docs/PROJECT_STATE.md`;
+- `docs/CLASSIFIRE_ARCHITECTURE.md`;
+- `docs/CLASSIFIRE_ROADMAP.md`; and
+- `docs/SESSION_HANDOFF.md`.
 
-No real report was rerun after final-source hardening.
-
-## 6. Verification
-
-Retained verification for exact PR #73/shared-main source:
-
-- complete repository suite: **345 passed**, 135 warnings;
-- focused durable-receipt, migration, lock, and admission-boundary set: **55
-  passed**; and
-- Ruff, formatting, Mypy, compilation, Bandit, Alembic one-head
-  (`0009_visual_validation_receipts`), and diff checks passed.
-
-Later branch-candidate evidence is separate:
-
-- PR #74 records **377 passed**, 139 warnings for its complete branch suite and
-  **24 focused tests**, plus Ruff, Mypy, Bandit, compilation, Alembic,
-  documentation-link, and whitespace checks; and
-- PR #75 durably claims **17 focused desk-quote and physical-evidence tests**
-  plus Ruff, service Mypy, Bandit, generated Excel/PDF, and diff checks. Its PR
-  description does not claim an auditable full-suite result.
-
-The recovery v8 result remains successful historical hash-binding evidence for
-its own source. No real report was rerun after the later source hardening.
-
-## 7. Exact next valid task
-
-Do not repeat the completed 7+4 review. No site, remote-supervised, or
-documentary follow-up evidence is currently available. The remaining
-dimensions, depth and boundaries, exact substrate, labels and material proof,
-and opposite-face continuity must stay unresolved.
-
-Review PR #74 as the open evidence-intake foundation. After that branch is
-resolved, recalculate and review PR #75 as the dependent desk-quote change. The
-desk quote may proceed only with explicit qualified assumptions and variation
-limits. It does not resolve physical facts or advance the canonical technical,
-lock, snapshot, or release chain.
-
-Do not rerun unchanged inference or canonicalise the limited 5/6/6 proposal.
-Semantic acceptance and a signed lock-admission boundary remain separate,
-unresolved architecture work. External signing, admission registration,
-canonical submission, and lock creation remain later operations requiring
-separate authority.
-
-## 8. Authority boundaries and exclusions
-
-This handoff records the merged shared-main position. Git history is authoritative for publication results. No deployment, admission, canonical write, Physical Model Lock, or release was performed.
-
-Intentionally excluded from this work and any publication staging:
-
-- every tracked or untracked change in the mixed primary checkout;
-- files already present on `origin/main` or preserved on other remote candidate branches;
-- root-only unreconciled or unsafe admission/UAT variants;
-- `.env`, credentials, keys, tokens, signed URLs, and private signing material;
-- customer reports, images, real-UAT packages, receipts, SQLite/WAL/SHM data, and OpenClaw session history;
-- Android, Gradle, JDK, SDK, dependency, build, and test-cache artefacts;
-- generated reports, editor/workspace files, `agent-definitions/`, and logo assets.
-
-Any later repository change must begin in a clean exact-main worktree and use
-explicit reviewed paths. Commit, push, pull-request, and merge authority remain
-separate; never use bulk staging.
+Exclude every root-checkout change, implementation branch/worktree, PR source,
+customer evidence artifact, database, receipt, session, credential, key, token,
+signed URL, build/cache artifact, generated report, editor file, agent
+definition, and branding asset. Stage explicit paths only; never use bulk
+staging.

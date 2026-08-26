@@ -1,9 +1,10 @@
 # CLASSIFIRE Architecture
 
 **Document status:** Current pre-production architecture reconciled with shared
-`main` at `1b3d7c9`; open PR #74 and PR #75 remain unmerged candidates
+`main` at `1b3d7c9`, corrected PR #74, the still-dependent PR #75, and the
+separate August 26 production-hardening candidates
 
-**Architecture version:** 3.20
+**Architecture version:** 3.21
 
 **Current implementation focus:** Evidence resolution and proposal-only physical modelling for fire seals, blank openings/core holes, and service penetrations
 
@@ -32,7 +33,9 @@ Implementation claims also identify their repository tier:
 | Repository tier | Meaning |
 | --- | --- |
 | **Shared current-main** | Published source on the current shared `main` lineage. |
-| **Branch candidate** | Coherent feature-branch work based on current main; it is not shared-main implementation unless reviewed and merged. |
+| **Pushed branch candidate** | Committed feature work available on a remote branch; it is not shared-main implementation unless reviewed and merged. |
+| **Local integration candidate** | Clean committed local composition used to test candidate compatibility; it is not published, reviewed, or deployed. |
+| **Uncommitted isolated candidate** | Reviewed or tested working-tree work that still has no commit or remote lineage. |
 | **Legacy-root evidence** | Useful later-phase or historical implementation in the materially divergent primary checkout; not a merge or deployment candidate. |
 
 ## 2. Product purpose and governing order
@@ -138,22 +141,57 @@ behaviour. It is not an approved Physical Model.
 
 ### 4.3 Open evidence and desk-quote candidates - Unmerged
 
-PR #74 at `5874dadeac2bca97fdbf366967590e1539c148df` adds strict,
+PR #74 at `9f5dacacadfab02d6c9aaf8ac0add43c5eedfff8` adds strict,
 Defect-bound `site_observation` evidence intake at the existing evidence
 registration boundary. It requires governed capture provenance, per-fact
 locators, explicit uncertainty, and an immutable admissible retained file. It
 records evidence only; it creates no Opening, Service, link, canonical model,
-admission, or lock.
+admission, or lock. Its second commit replaces transient draft wording and
+keeps the contract controlled, non-canonical, and non-authorising.
 
-PR #75 at `ef4425422a5d80387626697c1d8d99dcdd9e6bdc` is stacked on
-PR #74 and adds an assumption-led desk-quote proposal. It resolves evidence to
-active immutable project evidence and rates to an active hash-bound pricing
-release. It is not technical selection, canonical estimating, certification,
-admission, lock, or release.
+PR #75 at `ef4425422a5d80387626697c1d8d99dcdd9e6bdc` adds an
+assumption-led desk-quote proposal. It resolves evidence to active immutable
+project evidence and rates to an active hash-bound pricing release. It contains
+PR #74's older `5874dade` prerequisite but not the current `9f5daca`
+correction, so it is no longer an exact stack on the corrected evidence
+contract. It is not physical approval, technical selection, canonical
+estimating, certification, admission, lock, or release.
 
 Both pull requests are open and are not shared-main implementation.
 
-### 4.4 Legacy later-phase modules - Not current architecture
+### 4.4 August 26 production-hardening candidates - Tested, unmerged
+
+An eight-commit pushed stack above current main adds, in dependency order:
+
+- active-user checks and opaque server-side human sessions, revocation,
+  authentication-generation rotation, governed account changes, audited
+  administrator creation, and migration `0010_human_sessions`;
+- fail-closed production configuration, explicit bootstrap ordering, and
+  complete deployment-schema readiness checks;
+- quarantine-first ClamAV scanning before parsing or immutable promotion;
+- append-only content-bound malware attestations and migration
+  `0011_malware_scan_attestations`;
+- inference receipts bound to current scan evidence, with a restricted
+  transport-receipt sidecar; and
+- validation of every declared package photo row before retrieval, cache reuse,
+  transport, retention, or inference.
+
+The pushed photo-inventory tip `8974963` is a six-file commit on an eight-commit,
+77-file cumulative branch. A sibling pushed commit `4c18cb2` adds detailed
+`0011` deployment-lineage readiness. Clean committed local integration
+`e9b759e` combines those histories and reports a single Alembic head, but has no
+remote branch or pull request. A separate worktree based at `e9b759e` contains
+an uncommitted two-file XLSX candidate that writes text literally and suppresses
+automatic formula, URL, hyperlink, and external-link activation while
+preserving typed cells.
+
+These are tested candidate boundaries, not shared-main, live-migrated,
+deployed, or production-proven architecture. They require bounded review in
+dependency order, operational scanner evidence, clean-machine and existing-
+database migration proof, recovery/monitoring/performance evidence, and
+separate deployment authority.
+
+### 4.5 Legacy later-phase modules - Not current architecture
 
 Historical source contains guarded foundations for
 technical search and Repair Strategy, components and labour, commercial
@@ -237,6 +275,14 @@ thumbnail. The shared-main implementation also supports report-derived parent
 evidence only when the immutable PDF hash, page, photo identity, native
 dimensions, and crop bounds all match. Content-addressed bytes and redacted
 provenance are retained without committing the caller's transaction.
+
+The current general implementation does not yet derive every scan, decode,
+dimension, hash, and transport decision from one bounded immutable byte buffer.
+Several paths reopen a mutable file after scanning or decoding, and
+`preferred_verified_linked_path` performs an unbounded read before later image
+validation. Until that defect is corrected and regression-tested, exact-byte
+identity across the entire linked-image operation is an intended invariant,
+not a fully proven implementation guarantee.
 
 Lower-resolution page context, annotations, and alternate views remain relevant
 when they contain information not present in the linked original. Photograph
@@ -415,6 +461,12 @@ audit, OpenResponses response identity, or external transport. It proves local
 correspondence among retained artifacts and transcript payloads, not an
 immutable third-party execution ledger.
 
+The retained v17 run and v8 recovery predate the August 26 malware-scan and
+transport-sidecar contract. They remain historical proof for their exact
+receipt-bound source and artifacts; later attestations cannot be retrofitted to
+make that older execution evidence conform to a contract that did not yet
+exist.
+
 ## 10. Canonical physical model
 
 The current physical-model scope is:
@@ -538,6 +590,15 @@ The offline admission key and APK release-signing identity are separate trust
 objects. Neither private key belongs in CLASSIFIRE source, configuration,
 receipts, or documentation.
 
+The August 26 candidate architecture adds server-side revocable sessions,
+fail-closed production startup, quarantine-first malware scanning, durable
+content-bound scan attestations, scan-bound inference receipts, validation of
+every declared package photo row, and literal XLSX text output. The pushed
+stacks and local integration prove implementation/test compatibility only. Production
+still requires governed ClamAV operation, retention/deletion policy, migration
+and legacy-database adoption, secrets and bootstrap operations, monitoring,
+backup/recovery, performance, and incident evidence.
+
 ## 14. Current architecture status
 
 | Area | Status | Current boundary |
@@ -548,8 +609,14 @@ receipts, or documentation.
 | Trusted-UAT package and rollback proof | **Completed shared-main capability** | Representative run executed; source and receipt package are merged |
 | Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; site-dependent facts and independent semantic approval remain unresolved |
 | Content-safe evidence review and local recovery | **Completed shared-main capability** | Recovery proof has documented mutability/replay limits |
-| Site-observation evidence intake | **Open branch candidate** | PR #74; unmerged and evidence-only |
-| Assumption-led desk quote | **Open stacked branch candidate** | PR #75; unmerged, noncanonical, and nontechnical |
+| Site-observation evidence intake | **Open branch candidate** | Corrected PR #74 at `9f5daca`; seven files, unmerged and evidence-only |
+| Assumption-led desk quote | **Open branch candidate requiring prerequisite correction** | PR #75 contains old PR #74 contract; unmerged, noncanonical, and nontechnical |
+| Human sessions and production bootstrap | **Pushed branch candidates** | Migration `0010` and fail-closed configuration exist off main; not deployed |
+| Malware quarantine and durable scan evidence | **Pushed branch candidates** | Migration `0011`, scan attestations, and receipt binding exist off main; operational scanner proof remains |
+| Declared-photo-inventory validation | **Pushed branch candidate** | Every declared package photo row is checked before downstream use; tip `8974963` is part of an eight-commit cumulative stack with no PR |
+| Deployment-lineage integration | **Local integration candidate** | `e9b759e`; one Alembic head, no remote or live migration |
+| Literal XLSX output hardening | **Uncommitted isolated candidate** | Focused and integrated tests pass; no commit or push |
+| Linked-image exact-byte identity | **In progress / defect open** | Single bounded immutable buffer is not yet enforced across all reads |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
 | Technical through Human Release | **In progress / blocked** | Basic shared foundations and richer legacy-root foundations exist; upstream Physical Model gate unresolved |
@@ -568,10 +635,17 @@ follow-up evidence is currently available, so the unresolved physical fields
 must remain unresolved. Do not repeat unchanged inference or convert the
 limited proposal into canonical truth.
 
-Review PR #74 as the evidence-intake foundation. After that branch is resolved,
-recalculate and review PR #75 as the dependent desk-quote change. A desk quote
-may use explicit qualified assumptions, but it does not advance the canonical
-Physical Model, technical-selection, lock, snapshot, or Human Release gates.
+Review PR #74 at corrected head `9f5daca` as the exact seven-file
+evidence-intake foundation. Recalculate PR #75 against that corrected contract
+before reviewing its desk-quote behaviour. A desk quote may use explicit
+qualified assumptions, but it does not approve the 5/6/6 topology or advance
+the canonical Physical Model, technical-selection, lock, snapshot, or Human
+Release gates.
+
+Review the August 26 hardening stack as bounded dependency-ordered changes, and
+correct the linked-image exact-byte defect so one bounded immutable buffer feeds
+scan, decode, dimensions, hashing, and transport. Neither task authorises
+deployment, migration of a live database, or reuse of unchanged inference.
 
 The receipt verifier remains a no-write pre-lock check, not signed lock
 admission. Design, approve, and enforce that separate boundary only after the
