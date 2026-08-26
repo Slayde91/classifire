@@ -1,12 +1,12 @@
 # CLASSIFIRE Project State
 
-**Verified snapshot:** 2026-08-26 (AEST)
+**Verified snapshot:** 2026-08-27 (AEST)
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Shared `main` verified:** `1b3d7c976dd726a663c105e99d0b38ab22460d66`, equal to `origin/main` at reconciliation
+**Shared `main` verified:** `20cb72a14dd3b217cfac7670f047fdc385081990`, equal to `origin/main` at reconciliation
 
-**Merged Phase 8 scope:** representative rollback package and recovery, evidence-family and human-review validators, direct legacy-route test isolation, and the durable visual-validation receipt registry/verifier
+**Merged Phase 8 scope:** representative rollback package and recovery, evidence-family and human-review validators, direct legacy-route test isolation, the durable visual-validation receipt registry/verifier, and controlled `site_observation` evidence intake
 
 This record reflects committed shared-main code, the mixed legacy checkout, current tests, migration metadata, retained non-canonical execution receipts, the later local human-review v2 evidence, and refreshed GitHub state. Source, tests, Git, and execution evidence outrank older documentation.
 
@@ -15,10 +15,12 @@ Nothing in this document authorises inference, evidence retrieval, admission sig
 ## 1. Repository and Git position
 
 At reconciliation, shared `main` and `origin/main` both resolve to
-`1b3d7c976dd726a663c105e99d0b38ab22460d66`, the merge of PR #73. The merged
+`20cb72a14dd3b217cfac7670f047fdc385081990`, the merge of PR #74. The merged
 tree includes the earlier representative-run/recovery package, evidence-family
 and human-review validators, the direct legacy-route test isolation, and the
-durable visual-validation receipt registry and verifier.
+durable visual-validation receipt registry and verifier. It also includes the
+strict `site_observation` evidence-intake contract at the existing
+evidence-registration boundary.
 
 The primary checkout remains on `gpt/phase8-linked-original-images` at
 `de0cc5a` with a divergent mixed working tree. It remains a legacy
@@ -26,16 +28,19 @@ evidence/development source only: it must not be bulk-staged, merged, cleaned,
 reset, or used as a publication base. Its modified and untracked contents were
 not touched by this reconciliation.
 
-GitHub remains the canonical shared repository. Issues #42 and #43 and draft
-legacy-stack PRs #9-#13 remain open. Issue #42 still needs a factual external
-update recording the merged work and remaining physical-evidence and lock-design
-blockers; that is an external action requiring separate authority.
+GitHub remains the canonical shared repository. At this snapshot, PR #75 remains
+open and is stacked on superseded site-observation commit `5874dade`, not the
+corrected and reviewed PR #74 head. GitHub reporting it as mergeable does not
+make it safe to merge; it requires a fresh independent review. Issues #42 and
+#43 and draft legacy-stack PRs #9-#13 remain open. Issue #42 still needs a
+factual external update recording the merged work and remaining
+physical-evidence and lock-design blockers; that is a separate external action.
 
 ## 2. Latest verified implementation state
 
 ### 2.1 Completed on shared `main`
 
-Shared `main` at `1b3d7c9` contains:
+Shared `main` at `20cb72a` contains:
 
 - the FastAPI, CLI, SQLAlchemy, Alembic, storage, audit, security, UI, import, release-pinning, calculation, snapshot, PDF/XLSX, and Mission Control foundations;
 - the canonical Defect, EvidenceSource, Opening, Service, Opening-Service link, Physical Model Lock, admission, and submission-receipt records;
@@ -44,6 +49,9 @@ Shared `main` at `1b3d7c9` contains:
 - immutable admission registration, P-256 verification, single-use submission, idempotent receipts, and an explicit no-lock submission boundary;
 - bounded visual correction, proposal-blind inventory, mandatory reconciliation, strict proposal receipts, retained-evidence adaptation, guarded no-tool transport, managed runtime composition, and dedicated Phase 8 identities;
 - guarded linked-original discovery, verification, retention, and the bounded linked-original-to-proposal runner;
+- a strict `site_observation` evidence-intake contract requiring one bound
+  Defect, immutable admissible source evidence, per-fact locators, explicit
+  uncertainty and limitations, and an audit-bound canonical payload digest;
 - a post-inference validation-only human-reference comparator; and
 - the offline Android admission signer and recorded deployment/runbook foundations; and
 - the immutable `VisualValidationReceipt` registry and exact no-write verifier,
@@ -150,28 +158,25 @@ The independent v17 evidence block means the historical 17/24 topology must not 
 
 Current verification evidence for the exact merged source tree:
 
-- `origin/main` and the verified pre-merge combined worktree have identical tree
-  hash `7eb06c1fee6bccb0761d17f4010f6ce1d866953c`;
-- complete repository suite: **371 passed**, 139 warnings, with
-  `CLASSIFIRE_ADJUDICATED_INITIAL_SUBMISSION_ENABLED=true`;
-- focused Phase 8 receipt/provenance tests after the type correction: **57
-  passed**, 32 warnings;
-- Ruff lint and formatting checks on changed paths, Mypy on the changed Phase 8
-  service and associated changed production paths, Bandit, syntax compilation,
-  Alembic one-head check (`0009_visual_validation_receipts`), and `git diff
-  --check` passed; and
-- a whole-repository Ruff/Mypy run still reports inherited baseline debt outside
-  these merged changes (Ruff reformat findings across 39 existing files; Mypy
-  104 errors in 12 existing files). The three new review-service type errors
-  found during that run were corrected before merge.
+- reviewed PR #74 head `9f5dacacadfab02d6c9aaf8ac0add43c5eedfff8`
+  and merge commit `20cb72a14dd3b217cfac7670f047fdc385081990`
+  have identical tree hash `6182cf5e3b3d577c9cc0622bf472b42b9e320b1f`;
+- complete repository suite: **380 passed** with Python 3.12.10 and Pytest 8.4.2;
+- focused evidence-file boundary suite: **14 passed**;
+- Ruff on the changed API and test, Mypy on the changed API, Alembic one-head
+  check (`0009_visual_validation_receipts`), and `git diff --check` passed;
+- GitHub reported no status-check rollup for PR #74, so no CI result is claimed;
+  and
+- whole-repository Ruff and Mypy were not rerun for PR #74. Previously recorded
+  inherited findings outside the changed paths have not been revalidated on
+  current main.
 
 The retained offline recovery v8 remains historical, successful hash-binding
-evidence for its own source fingerprint. PR #74 proposes a controlled
-`site_observation` evidence-intake contract; it is not part of shared main unless
-and until that PR is merged. Its current complete isolated suite passed **380**
-on 26 August. It requires an immutable scanned file, one bound Defect,
-capture/governance provenance, a per-fact evidence locator, explicit uncertainty,
-and an audit payload digest before the existing endpoint can retain the evidence.
+evidence for its own source fingerprint. PR #74's controlled `site_observation`
+evidence-intake contract is now on shared main. It requires an immutable
+admissible technical-evidence file, one bound Defect, capture/governance
+provenance, a per-fact evidence locator, explicit uncertainty, and an audit
+payload digest before the existing endpoint can retain the evidence.
 
 No real report was rerun for this documentation reconciliation or local contract
 work. No admission was created, signed, or registered; no canonical model was
@@ -190,11 +195,10 @@ not create semantic acceptance for the selected Defect, perform a canonical
 write, create a Physical Model Lock, sign or register an admission, deploy, or
 release anything.
 
-The PR #74 branch-proposed site-observation contract adds no database table, no
-new writer, and no live evidence. It validates a narrow payload at the existing
-evidence-registration boundary. Publishing the branch, or later merging the PR,
-does not register evidence or grant canonical-write, lock, deployment, or release
-authority.
+The merged site-observation contract adds no database table, no new writer, and
+no live evidence. It validates a narrow payload at the existing
+evidence-registration boundary. Merging it did not register evidence or grant
+canonical-write, lock, deployment, or release authority.
 
 ## 7. Current blockers and next valid task
 

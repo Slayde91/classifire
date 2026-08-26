@@ -100,6 +100,9 @@ Shared current-main contains the active Phase 8 foundations:
 - bounded Validator-to-Physical correction and strict proposal receipts;
 - retained visual-evidence adaptation;
 - guarded linked-original discovery, retrieval, and retention;
+- strict `site_observation` evidence intake at the existing evidence-registration
+  boundary, with one-Defect binding, immutable source checks, per-fact locators,
+  explicit uncertainty and limitations, and an audit-bound payload digest;
 - literal-loopback, no-tool OpenResponses transport and dedicated Physical and
   Validator runtime identities;
 - a validation-only post-inference human-reference comparator;
@@ -513,6 +516,7 @@ receipts, or documentation.
 | --- | --- | --- |
 | Application, persistence, and current migration lineage | **Completed foundation** | Shared current-main; pre-production |
 | Linked-original retrieval and governed retention | **Completed foundation** | Shared current-main; approved hosts/report formats remain narrow |
+| Site-observation evidence intake | **Completed contract** | Shared current-main; evidence registration only, with no Physical Model write or lock authority |
 | Proposal-only visual controller and no-tool runtime | **Completed foundation** | Shared current-main; production persistence/generalisation incomplete |
 | Trusted-UAT package and rollback proof | **Completed shared-main capability** | Representative run executed; source and receipt package are merged |
 | Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; site-dependent facts and independent semantic approval remain unresolved |
@@ -529,10 +533,12 @@ receipts, or documentation.
 
 ## 15. Next valid architectural action
 
-The representative package, review safeguards, and durable visual-validation
-receipt registry are now on shared main. For the selected Defect, obtain a site
-visit or equivalent newly governed evidence for the facts that human visual
-review could not establish. Do not repeat unchanged inference or convert the
+The representative package, review safeguards, durable visual-validation
+receipt registry, and site-observation evidence-intake contract are now on
+shared main. For the selected Defect, obtain a site visit or equivalent newly
+governed evidence for the facts that human visual review could not establish.
+Retain that evidence immutably and register only the facts it supports through
+the shared-main contract. Do not repeat unchanged inference or convert the
 limited proposal into canonical truth.
 
 The receipt verifier remains a no-write pre-lock check, not signed lock
