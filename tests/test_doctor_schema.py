@@ -44,6 +44,10 @@ def _use_database(
             production_findings=lambda: (),
         ),
     )
+    monkeypatch.setattr(
+        "classifire.cli.require_malware_scanner_ready",
+        lambda _settings: None,
+    )
 
 
 def test_doctor_rejects_0009_without_mutating_the_database(

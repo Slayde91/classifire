@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from dataclasses import dataclass
 from decimal import Decimal
@@ -10,8 +12,15 @@ from pypdf import PdfReader
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from ..models import Opening, Service, TechnicalDocument, TechnicalVariant
+from ..models import (
+    LibraryRelease,
+    Opening,
+    StoredFile,
+    TechnicalDocument,
+    TechnicalVariant,
+)
 from .release_scope import pinned_technical_ids
+from .storage import StoredFileSecurityError, require_clean_stored_file_for_session
 
 
 @dataclass(frozen=True)
@@ -36,6 +45,115 @@ def _compare(project_value: str | None, candidate_value: str | None) -> str:
     return "MATCH" if p_tokens and len(p_tokens & c_tokens) / len(p_tokens) >= 0.6 else "MISMATCH"
 
 
+def governed_unlinked_technical_source(db: Session, variant: TechnicalVariant) -> bool:
+    """Recognise an unlinked legacy record only through approved release lineage."""
+
+    if variant.technical_document_id is not None or not variant.release_id:
+        return False
+    if (
+        not isinstance(variant.source_hash, str)
+        or len(variant.source_hash) != 64
+        or any(character not in "0123456789abcdefABCDEF" for character in variant.source_hash)
+        or not isinstance(variant.source_json, dict)
+        or str(variant.source_json.get("Variant_ID") or "").strip() != variant.variant_id
+        or str(variant.source_json.get("System_ID") or "").strip() != variant.system_id
+    ):
+        return False
+    source_release = db.get(LibraryRelease, variant.release_id)
+    source_manifest = source_release.source_manifest if source_release is not None else None
+    if not (
+        source_release is not None
+        and source_release.library_type == "technical"
+        and source_release.status in {"active", "superseded"}
+        and isinstance(source_release.release_hash, str)
+        and len(source_release.release_hash) == 64
+        and all(character in "0123456789abcdefABCDEF" for character in source_release.release_hash)
+        and isinstance(source_manifest, dict)
+        and isinstance(source_manifest.get("filename"), str)
+        and bool(str(source_manifest["filename"]).strip())
+        and isinstance(source_manifest.get("sha256"), str)
+        and str(source_manifest["sha256"]).casefold()
+        == source_release.release_hash.casefold()
+    ):
+        return False
+
+    approved_releases = db.scalars(
+        select(LibraryRelease).where(
+            LibraryRelease.library_type == "technical",
+            LibraryRelease.status.in_({"active", "superseded"}),
+            LibraryRelease.created_by_id.is_not(None),
+            LibraryRelease.approved_by_id.is_not(None),
+            LibraryRelease.approved_at.is_not(None),
+        )
+    ).all()
+    for approved_release in approved_releases:
+        manifest = approved_release.source_manifest
+        release_hash = approved_release.release_hash
+        if not isinstance(manifest, dict) or not isinstance(release_hash, str):
+            continue
+        if (
+            manifest.get("release_type") != "technical"
+            or manifest.get("version") != approved_release.version
+            or str(manifest.get("created_by_id") or "")
+            != approved_release.created_by_id
+        ):
+            continue
+        canonical_hash = hashlib.sha256(
+            json.dumps(
+                manifest,
+                sort_keys=True,
+                separators=(",", ":"),
+                default=str,
+            ).encode("utf-8")
+        ).hexdigest()
+        if canonical_hash.casefold() != release_hash.casefold():
+            continue
+        records = manifest.get("records")
+        if (
+            not isinstance(records, list)
+            or manifest.get("record_count") != len(records)
+        ):
+            continue
+        if any(
+            isinstance(record, dict)
+            and str(record.get("id") or "") == variant.id
+            and str(record.get("variant_id") or "") == variant.variant_id
+            and str(record.get("system_id") or "") == variant.system_id
+            and str(record.get("source_hash") or "").casefold()
+            == variant.source_hash.casefold()
+            and record.get("record_version") == variant.record_version
+            for record in records
+        ):
+            return True
+    return False
+
+
+def _linked_source_is_admissible(
+    db: Session,
+    variant: TechnicalVariant,
+    cache: dict[str, bool],
+) -> bool:
+    document_id = variant.technical_document_id
+    if document_id is None:
+        return governed_unlinked_technical_source(db, variant)
+    if document_id in cache:
+        return cache[document_id]
+    document = db.get(TechnicalDocument, document_id)
+    stored = db.get(StoredFile, document.stored_file_id) if document is not None else None
+    admissible = document is not None and document.status == "approved" and stored is not None
+    if admissible and stored is not None:
+        try:
+            require_clean_stored_file_for_session(
+                db,
+                stored,
+                allowed_purposes={"technical_evidence"},
+            )
+        except StoredFileSecurityError:
+            admissible = False
+    cache[document_id] = admissible
+    return admissible
+
+
 def search_variants(
     db: Session,
     *,
@@ -47,6 +165,7 @@ def search_variants(
     limit: int = 20,
     include_draft: bool = False,
     release_record_ids: set[str] | None = None,
+    _source_admissibility_cache: dict[str, bool] | None = None,
 ) -> list[Candidate]:
     if release_record_ids is not None:
         stmt = select(TechnicalVariant).where(TechnicalVariant.id.in_(release_record_ids))
@@ -61,8 +180,15 @@ def search_variants(
     if frl:
         stmt = stmt.where(or_(TechnicalVariant.frl == frl, TechnicalVariant.frl.is_(None)))
     variants = db.scalars(stmt.limit(max(limit * 10, 100))).all()
+    source_admissibility_cache = (
+        _source_admissibility_cache
+        if _source_admissibility_cache is not None
+        else {}
+    )
     candidates: list[Candidate] = []
     for variant in variants:
+        if not _linked_source_is_admissible(db, variant, source_admissibility_cache):
+            continue
         comparisons = {
             "service_type": _compare(service_type, variant.service_type),
             "service_material": _compare(service_material, variant.service_material),
@@ -93,6 +219,7 @@ def search_variants(
 def search_for_opening(db: Session, opening: Opening, limit: int = 20) -> dict[str, Any]:
     allowed_ids = pinned_technical_ids(db, opening.estimate)
     per_service: list[dict[str, Any]] = []
+    source_admissibility_cache: dict[str, bool] = {}
     for service in opening.services:
         candidates = search_variants(
             db,
@@ -103,6 +230,7 @@ def search_for_opening(db: Session, opening: Opening, limit: int = 20) -> dict[s
             frl=opening.frl,
             limit=limit,
             release_record_ids=allowed_ids,
+            _source_admissibility_cache=source_admissibility_cache,
         )
         per_service.append(
             {
@@ -144,7 +272,10 @@ def mixed_service_candidate_available(db: Session, opening: Opening) -> dict[str
     )
     variants = db.scalars(stmt.limit(50)).all()
     supported: list[dict[str, Any]] = []
+    source_admissibility_cache: dict[str, bool] = {}
     for variant in variants:
+        if not _linked_source_is_admissible(db, variant, source_admissibility_cache):
+            continue
         substrate_match = _compare(opening.substrate_type, variant.substrate_type)
         frl_match = _compare(opening.frl, variant.frl)
         if substrate_match != "MISMATCH" and frl_match != "MISMATCH":

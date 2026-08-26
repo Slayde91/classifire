@@ -29,7 +29,13 @@ if settings.database_url.startswith("sqlite"):
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.close()
 
-SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False, class_=Session)
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    expire_on_commit=False,
+    class_=Session,
+    info={"retained_storage_root": settings.storage_root},
+)
 
 
 def get_db() -> Generator[Session, None, None]:

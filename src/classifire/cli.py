@@ -51,6 +51,7 @@ from .services.adjudicated_key_policy import (
     AdjudicatedKeyPolicyError,
     resolve_adjudicated_public_key,
 )
+from .services.malware_scanning import MalwareScanError, require_malware_scanner_ready
 from .services.schema_bootstrap import (
     SchemaBootstrapError,
     prepare_application_schema,
@@ -91,6 +92,15 @@ def _prepare_database_schema(settings: Settings | None = None) -> Settings:
     except SchemaBootstrapError as exc:
         raise typer.BadParameter(str(exc)) from exc
     return runtime_settings
+
+
+def _require_malware_scanner_runtime(settings: Settings) -> None:
+    if settings.env != "production":
+        return
+    try:
+        require_malware_scanner_ready(settings)
+    except MalwareScanError as exc:
+        raise typer.BadParameter(f"Production malware scanner rejected: {exc.code}") from exc
 
 
 def _require_seed_ready_for_cli() -> None:
@@ -407,6 +417,7 @@ def start(
             "PRODUCTION_RELOAD_FORBIDDEN: reload is not allowed in production"
         )
     if settings.env == "production":
+        _require_malware_scanner_runtime(settings)
         _prepare_database_schema(settings)
         try:
             with SessionLocal() as db:
@@ -429,7 +440,9 @@ def worker(interval: float = typer.Option(2.0)) -> None:
     """Run the background job worker."""
     from .worker import run_forever
 
-    settings = _prepare_database_schema()
+    settings = _require_runtime_settings()
+    _require_malware_scanner_runtime(settings)
+    settings = _prepare_database_schema(settings)
     if settings.env == "production":
         _require_seed_ready_for_cli()
     run_forever(interval)
@@ -450,11 +463,30 @@ def doctor() -> None:
     calc = root / "knowledge/source/raw-calculator/Penetration Calculator.xlsb"
     for label, path in [("Package 14", p14), ("Package 15 variants", p15), ("Raw calculator", calc)]:
         checks.append((label, str(path), "PASS" if path.exists() else "BLOCKED"))
-    if configuration_findings:
+    scanner_failure: str | None = None
+    if not configuration_findings and settings.env == "production":
+        try:
+            require_malware_scanner_ready(settings)
+        except MalwareScanError as exc:
+            scanner_failure = exc.code
+            checks.append(("Malware scanner", exc.code, "FAIL"))
+        else:
+            checks.append(
+                (
+                    "Malware scanner",
+                    "daemon completed an empty INSTREAM probe",
+                    "PASS",
+                )
+            )
+    if configuration_findings or scanner_failure is not None:
         checks.append(
             (
                 "Database",
-                "not inspected until production configuration is valid",
+                (
+                    "not inspected until production configuration is valid"
+                    if configuration_findings
+                    else "not inspected until the malware scanner is ready"
+                ),
                 "BLOCKED",
             )
         )

@@ -3,23 +3,57 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import replace
+from functools import partial
 from io import BytesIO
 from pathlib import Path
+from typing import BinaryIO
 
 import pytest
 from physical_foundation_support import add_estimate, physical_session
 from PIL import Image
-from sqlalchemy import event, func, select
+from sqlalchemy import func, select
+from sqlalchemy import update as sql_update
+from sqlalchemy.orm.attributes import set_committed_value
 
+import classifire.services.linked_image_evidence as linked_image_evidence_service
 from classifire.models import AuditEvent, StoredFile
 from classifire.physical_models import Defect, EvidenceSource, PhysicalModelLock
 from classifire.services.linked_image_evidence import (
     LINKED_IMAGE_EVIDENCE_SCHEMA,
     LinkedImageEvidenceError,
-    retain_verified_linked_image,
+)
+from classifire.services.linked_image_evidence import (
+    retain_verified_linked_image as _retain_verified_linked_image,
 )
 from classifire.services.linked_image_retrieval import LinkedImageResult
+from classifire.services.malware_scanning import MalwareScanError
 from classifire.services.phase8_visual_evidence import build_retained_visual_evidence_packet
+
+
+class _CleanScanner:
+    def check_ready(self) -> None:
+        pass
+
+    def scan_stream(self, stream: BinaryIO) -> None:
+        stream.read()
+
+
+class _RejectingScanner:
+    def __init__(self, code: str) -> None:
+        self.code = code
+
+    def check_ready(self) -> None:
+        pass
+
+    def scan_stream(self, stream: BinaryIO) -> None:
+        stream.read()
+        raise MalwareScanError(self.code)
+
+
+retain_verified_linked_image = partial(
+    _retain_verified_linked_image,
+    malware_scanner=_CleanScanner(),
+)
 
 
 def _jpeg(size: tuple[int, int], color: tuple[int, int, int]) -> bytes:
@@ -135,6 +169,47 @@ def _verified_result(retrieval_root: Path, embedded_sha256: str) -> LinkedImageR
     )
 
 
+@pytest.mark.parametrize(
+    "code",
+    ["MALWARE_DETECTED", "MALWARE_SCANNER_UNAVAILABLE"],
+)
+def test_retention_scan_failure_creates_no_stored_file_evidence_or_audit(
+    tmp_path: Path,
+    code: str,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
+        result = _verified_result(retrieval_root, embedded_sha256)
+        before = (
+            session.scalar(select(func.count()).select_from(StoredFile)),
+            session.scalar(select(func.count()).select_from(EvidenceSource)),
+            session.scalar(select(func.count()).select_from(AuditEvent)),
+        )
+
+        with pytest.raises(LinkedImageEvidenceError) as captured:
+            _retain_verified_linked_image(
+                session,
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                estimate_id=estimate.id,
+                parent_evidence_source_id=parent.id,
+                result=result,
+                operator_reference="Scanner failure test",
+                malware_scanner=_RejectingScanner(code),
+            )
+
+        assert captured.value.code == code
+        assert (
+            session.scalar(select(func.count()).select_from(StoredFile)),
+            session.scalar(select(func.count()).select_from(EvidenceSource)),
+            session.scalar(select(func.count()).select_from(AuditEvent)),
+        ) == before
+
+
 def _setup_report_derived_parent(session, storage_root: Path):
     estimate = add_estimate(session)
     defect = Defect(
@@ -195,8 +270,8 @@ def test_retention_creates_governed_evidence_without_committing(tmp_path: Path) 
     with physical_session() as session:
         estimate, defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
         result = _verified_result(retrieval_root, embedded_sha256)
-        commits: list[bool] = []
-        event.listen(session, "after_commit", lambda _session: commits.append(True))
+        outer_transaction = session.get_transaction()
+        assert outer_transaction is not None
 
         retained = retain_verified_linked_image(
             session,
@@ -208,7 +283,7 @@ def test_retention_creates_governed_evidence_without_committing(tmp_path: Path) 
             operator_reference="Synthetic test operator",
         )
 
-        assert commits == []
+        assert session.get_transaction() is outer_transaction
         assert retained.evidence_created is True
         assert retained.stored_file_created is True
         assert retained.evidence.defect_id == defect.id
@@ -323,7 +398,10 @@ def test_retention_rejects_report_derived_parent_with_mismatched_photo_bounds(
             session,
             storage_root,
         )
-        parent.source_json["source_bbox"] = [11.0, 10.0, 60.0, 60.0]
+        parent.source_json = {
+            **parent.source_json,
+            "source_bbox": [11.0, 10.0, 60.0, 60.0],
+        }
         session.flush()
         result = _verified_result(retrieval_root, embedded_sha256)
 
@@ -354,7 +432,7 @@ def test_retention_rejects_report_derived_parent_when_both_bounds_are_missing(
         estimate, _defect, parent, embedded_sha256, report_sha256 = _setup_report_derived_parent(
             session, storage_root
         )
-        parent.source_json["source_bbox"] = None
+        parent.source_json = {**parent.source_json, "source_bbox": None}
         session.flush()
         result = replace(
             _verified_result(retrieval_root, embedded_sha256),
@@ -416,6 +494,333 @@ def test_retention_is_idempotent_and_does_not_duplicate_audit(tmp_path: Path) ->
             )
             == 1
         )
+
+
+def test_retention_locks_the_defect_before_checking_replay_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
+        result = _verified_result(retrieval_root, embedded_sha256)
+        real_lock = linked_image_evidence_service._locked_defect
+        real_replay_lookup = linked_image_evidence_service._existing_evidence
+        events: list[str] = []
+
+        def tracked_lock(db, defect_id):  # type: ignore[no-untyped-def]
+            events.append("defect_locked")
+            return real_lock(db, defect_id)
+
+        def tracked_replay_lookup(*args, **kwargs):  # type: ignore[no-untyped-def]
+            assert events == ["defect_locked"]
+            events.append("replay_checked")
+            return real_replay_lookup(*args, **kwargs)
+
+        monkeypatch.setattr(linked_image_evidence_service, "_locked_defect", tracked_lock)
+        monkeypatch.setattr(
+            linked_image_evidence_service,
+            "_existing_evidence",
+            tracked_replay_lookup,
+        )
+        retain_verified_linked_image(
+            session,
+            storage_root=storage_root,
+            retrieval_root=retrieval_root,
+            estimate_id=estimate.id,
+            parent_evidence_source_id=parent.id,
+            result=result,
+            operator_reference="Replay lock ordering",
+        )
+
+        assert events == ["defect_locked", "replay_checked"]
+
+
+def test_different_parent_cannot_duplicate_the_same_linked_replay_identity(
+    tmp_path: Path,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
+        second_parent = EvidenceSource(
+            estimate_id=estimate.id,
+            defect_id=defect.id,
+            stored_file_id=parent.stored_file_id,
+            evidence_type="inspection_photo",
+            source_reference="second-retained-report-thumbnail",
+            page_number="1",
+            region_reference="P001-I01",
+            sha256=embedded_sha256,
+            evidence_class="observed",
+            status="active",
+            source_json=json.loads(json.dumps(parent.source_json)),
+        )
+        session.add(second_parent)
+        session.flush()
+        result = _verified_result(retrieval_root, embedded_sha256)
+        retain_verified_linked_image(
+            session,
+            storage_root=storage_root,
+            retrieval_root=retrieval_root,
+            estimate_id=estimate.id,
+            parent_evidence_source_id=parent.id,
+            result=result,
+            operator_reference="First replay identity",
+        )
+
+        with pytest.raises(LinkedImageEvidenceError) as caught:
+            retain_verified_linked_image(
+                session,
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                estimate_id=estimate.id,
+                parent_evidence_source_id=second_parent.id,
+                result=result,
+                operator_reference="Conflicting replay identity",
+            )
+
+        assert caught.value.code == "EVIDENCE_REPLAY_CONFLICT"
+        assert (
+            session.scalar(
+                select(func.count())
+                .select_from(EvidenceSource)
+                .where(
+                    EvidenceSource.source_reference
+                    == "phase8-linked-original:1:P001-I01"
+                )
+            )
+            == 1
+        )
+
+
+def test_retention_recovers_from_a_concurrent_compatible_stored_file_insert(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
+        result = _verified_result(retrieval_root, embedded_sha256)
+        body = (retrieval_root / str(result.stored_path)).read_bytes()
+        target = (
+            storage_root
+            / str(result.content_sha256)[:2]
+            / str(result.content_sha256)[2:4]
+            / f"{result.content_sha256}.jpg"
+        )
+        target.parent.mkdir(parents=True)
+        target.write_bytes(body)
+        winner = StoredFile(
+            original_filename="linked-image-winner.jpg",
+            media_type="image/jpeg",
+            storage_path=str(target),
+            sha256=str(result.content_sha256),
+            size_bytes=len(body),
+            purpose="technical_evidence",
+            malware_scan_status="clean",
+            immutable=True,
+        )
+        session.add(winner)
+        session.commit()
+        real_lookup = linked_image_evidence_service._locked_stored_file_by_sha
+        lookup_count = 0
+
+        def stale_first_lookup(db, content_sha256):  # type: ignore[no-untyped-def]
+            nonlocal lookup_count
+            lookup_count += 1
+            if lookup_count == 1:
+                return None
+            return real_lookup(db, content_sha256)
+
+        monkeypatch.setattr(
+            linked_image_evidence_service,
+            "_locked_stored_file_by_sha",
+            stale_first_lookup,
+        )
+        retained = retain_verified_linked_image(
+            session,
+            storage_root=storage_root,
+            retrieval_root=retrieval_root,
+            estimate_id=estimate.id,
+            parent_evidence_source_id=parent.id,
+            result=result,
+            operator_reference="Concurrent compatible winner",
+        )
+
+        assert lookup_count == 2
+        assert retained.stored_file.id == winner.id
+        assert retained.stored_file_created is False
+        assert session.scalar(select(func.count()).select_from(StoredFile)) == 2
+
+
+def test_retention_conflict_cannot_reuse_an_infected_stored_file_winner(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
+        result = _verified_result(retrieval_root, embedded_sha256)
+        tombstone = StoredFile(
+            original_filename="linked-image-blocked.jpg",
+            media_type="image/jpeg",
+            storage_path=str(
+                storage_root / ".rejected" / f"{result.content_sha256}.malware-blocked"
+            ),
+            sha256=str(result.content_sha256),
+            size_bytes=int(result.received_bytes),
+            purpose="technical_evidence",
+            malware_scan_status="infected",
+            immutable=True,
+        )
+        session.add(tombstone)
+        session.commit()
+        real_lookup = linked_image_evidence_service._locked_stored_file_by_sha
+        lookup_count = 0
+
+        def stale_first_lookup(db, content_sha256):  # type: ignore[no-untyped-def]
+            nonlocal lookup_count
+            lookup_count += 1
+            if lookup_count == 1:
+                return None
+            return real_lookup(db, content_sha256)
+
+        monkeypatch.setattr(
+            linked_image_evidence_service,
+            "_locked_stored_file_by_sha",
+            stale_first_lookup,
+        )
+        with pytest.raises(LinkedImageEvidenceError) as caught:
+            retain_verified_linked_image(
+                session,
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                estimate_id=estimate.id,
+                parent_evidence_source_id=parent.id,
+                result=result,
+                operator_reference="Concurrent infected winner",
+            )
+
+        assert caught.value.code == "STORED_FILE_INVALID"
+        assert lookup_count == 2
+        promoted = (
+            storage_root
+            / str(result.content_sha256)[:2]
+            / str(result.content_sha256)[2:4]
+            / f"{result.content_sha256}.jpg"
+        )
+        assert not promoted.exists()
+        assert tuple(storage_root.rglob("*.part")) == ()
+        assert session.scalar(select(func.count()).select_from(StoredFile)) == 2
+        assert (
+            session.scalar(
+                select(func.count())
+                .select_from(EvidenceSource)
+                .where(EvidenceSource.source_reference.like("phase8-linked-original:%"))
+            )
+            == 0
+        )
+
+
+def test_retention_locked_refresh_rejects_cached_parent_that_became_infected(
+    tmp_path: Path,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
+        result = _verified_result(retrieval_root, embedded_sha256)
+        session.commit()
+        session.execute(
+            sql_update(StoredFile)
+            .where(StoredFile.id == parent.stored_file_id)
+            .values(malware_scan_status="infected"),
+            execution_options={"synchronize_session": False},
+        )
+        session.commit()
+        cached = session.get(StoredFile, parent.stored_file_id)
+        assert cached is not None and cached.malware_scan_status == "infected"
+        set_committed_value(cached, "malware_scan_status", "clean")
+
+        with pytest.raises(LinkedImageEvidenceError) as caught:
+            retain_verified_linked_image(
+                session,
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                estimate_id=estimate.id,
+                parent_evidence_source_id=parent.id,
+                result=result,
+                operator_reference="Cached parent infection",
+            )
+
+        assert caught.value.code == "PARENT_EVIDENCE_INVALID"
+        assert cached.malware_scan_status == "infected"
+
+
+def test_retention_replay_locked_refresh_rejects_file_that_became_infected(
+    tmp_path: Path,
+) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
+        result = _verified_result(retrieval_root, embedded_sha256)
+        first = retain_verified_linked_image(
+            session,
+            storage_root=storage_root,
+            retrieval_root=retrieval_root,
+            estimate_id=estimate.id,
+            parent_evidence_source_id=parent.id,
+            result=result,
+            operator_reference="Initial retention",
+        )
+        session.commit()
+        session.execute(
+            sql_update(StoredFile)
+            .where(StoredFile.id == first.stored_file.id)
+            .values(malware_scan_status="infected"),
+            execution_options={"synchronize_session": False},
+        )
+        session.commit()
+        cached = session.get(StoredFile, first.stored_file.id)
+        assert cached is not None and cached.malware_scan_status == "infected"
+        set_committed_value(cached, "malware_scan_status", "clean")
+
+        with pytest.raises(LinkedImageEvidenceError) as caught:
+            retain_verified_linked_image(
+                session,
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                estimate_id=estimate.id,
+                parent_evidence_source_id=parent.id,
+                result=result,
+                operator_reference="Replay after infection",
+            )
+
+        assert caught.value.code == "STORED_FILE_INVALID"
+        assert cached.malware_scan_status == "infected"
 
 
 def test_retention_rejects_tampered_verified_source(tmp_path: Path) -> None:
@@ -516,7 +921,12 @@ def test_retention_requires_approved_embedded_parent_metadata(tmp_path: Path) ->
 
     with physical_session() as session:
         estimate, _defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
-        parent.source_json["phase8_visual_inference"]["validation_only"] = True
+        visual_metadata = dict(parent.source_json["phase8_visual_inference"])
+        visual_metadata["validation_only"] = True
+        parent.source_json = {
+            **parent.source_json,
+            "phase8_visual_inference": visual_metadata,
+        }
         session.flush()
         result = _verified_result(retrieval_root, embedded_sha256)
 

@@ -26,7 +26,15 @@ configuration system:
 - `CLASSIFIRE_TRUSTED_HOSTS` containing only the exact host names that may serve
   CLASSIFIRE; and
 - `CLASSIFIRE_ALLOWED_ORIGINS` containing only the exact HTTPS origins that may
-  make browser cross-origin requests.
+  make browser cross-origin requests;
+- `CLASSIFIRE_CLAMAV_HOST` containing the exact private host name or IPv4
+  address of the governed ClamAV daemon;
+- `CLASSIFIRE_CLAMAV_PORT` containing its TCP port, normally `3310`; and
+- `CLASSIFIRE_CLAMAV_TIMEOUT_SECONDS` containing a positive network timeout no
+  greater than 60 seconds, with the default of 10 seconds suitable only after
+  environment-specific verification. The timeout is an overall deadline for
+  each readiness command or upload scan, rather than a fresh allowance for
+  every response chunk.
 
 Install the declared production database driver in the application environment:
 
@@ -46,9 +54,44 @@ runtime boundary.
 Host-header trust. A public bind address is therefore not a substitute for the
 exact trusted-host and allowed-origin lists.
 
-Production startup and database-writing commands must stop before changing the
-database or storage when these requirements are not satisfied. Do not weaken a
-check to force a deployment to continue.
+## Malware-scanner boundary
+
+The ClamAV daemon is part of the production evidence-intake boundary. Its TCP
+protocol provides neither authentication nor encryption, so its port must
+remain on an approved private network path and must never be exposed to an
+untrusted network. Apply the environment's network isolation, access-control,
+monitoring and, where required, protected transport controls around that path.
+
+CLASSIFIRE streams the exact quarantined upload bytes to ClamAV. Configure
+ClamAV's `StreamMaxLength` to be at least `CLASSIFIRE_MAX_UPLOAD_MB`; otherwise
+an otherwise permitted upload can exceed the daemon's scan limit and must fail
+closed. Do not raise either limit without reviewing memory, processing-time and
+denial-of-service consequences.
+
+CLASSIFIRE implements the small required ClamAV protocol boundary with the
+Python standard library. No separate Python ClamAV client package is installed.
+
+Every upload must be scanned. Only an exact clean result may leave quarantine,
+reach a document or image parser, or become admissible project evidence.
+Detected malware, missing scanner configuration, a connection failure, timeout,
+daemon error, malformed response or stream-limit failure must reject the upload
+without promoting it.
+
+Static configuration validation proves only that the endpoint settings are
+well formed. Production startup and `classifire doctor` also require the daemon
+to advertise `INSTREAM` and return a clean result for a bounded empty-stream
+probe before reporting the application ready. That probe proves reachability
+and command execution only: it does not prove signature freshness or that
+`StreamMaxLength` accepts the configured maximum upload. A successful startup
+probe never replaces the per-upload scan because scanner availability can
+change while the application is running.
+
+Production application startup and the production worker stop before schema or
+storage work when live scanner readiness cannot be established. Evidence intake
+also fails closed on every per-file scan. Administrative database commands that
+do not ingest evidence retain their own existing readiness gates; the scanner
+probe is not presented as a prerequisite for unrelated account administration.
+Do not weaken an evidence or startup check to force a deployment to continue.
 
 ## Initial administrator boundary
 

@@ -135,6 +135,11 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
     )
     monkeypatch.setattr(
         representative_cli,
+        "_configured_ready_malware_scanner",
+        lambda: object(),
+    )
+    monkeypatch.setattr(
+        representative_cli,
         "execute_phase8_representative_run",
         lambda *_args, **_kwargs: result,
     )

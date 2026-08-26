@@ -5,6 +5,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any
+from urllib.parse import quote_plus
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -49,6 +50,7 @@ from .services.initial_canonicalisation_boundary import (
     InitialCanonicalisationAdmissionRequired,
     require_admission_bound_initial_canonicalisation,
 )
+from .services.malware_scanning import MalwareDetectedError, MalwareScanError
 from .services.physical_defects import bind_canonical_defect
 from .services.physical_mutation_guard import PhysicalMutationError, require_physical_model_mutation
 from .services.release_pinning import (
@@ -58,7 +60,12 @@ from .services.release_pinning import (
 )
 from .services.rule_engine import evaluate_estimate_rules
 from .services.snapshot import lock_snapshot
-from .services.storage import save_upload
+from .services.storage import (
+    RetainedMalwareQuarantinedError,
+    StoredFileSecurityError,
+    require_clean_stored_file,
+    save_upload,
+)
 from .services.technical import extract_pdf_candidate_metadata, search_for_opening
 from .services.workflow import WorkflowTransitionError
 from .services.workflow_guard import (
@@ -366,12 +373,22 @@ def technical_upload(
     user = _require(request, db, "technical:write")
     try:
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
+        stored_path = require_clean_stored_file(
+            settings.storage_root,
+            stored,
+            allowed_purposes={"technical_evidence"},
+        )
+    except RetainedMalwareQuarantinedError as exc:
+        db.commit()
+        return RedirectResponse(f"/technical?error={quote_plus(exc.code)}", status_code=303)
+    except (MalwareDetectedError, MalwareScanError, StoredFileSecurityError) as exc:
+        return RedirectResponse(f"/technical?error={quote_plus(exc.code)}", status_code=303)
     except ValueError as exc:
-        return RedirectResponse(f"/technical?error={str(exc).replace(' ', '+')}", status_code=303)
+        return RedirectResponse(f"/technical?error={quote_plus(str(exc))}", status_code=303)
     metadata: dict[str, Any] = {"human_review_required": True, "automatic_activation_permitted": False}
-    if Path(stored.storage_path).suffix.lower() == ".pdf":
+    if stored_path.suffix.lower() == ".pdf":
         try:
-            metadata.update(extract_pdf_candidate_metadata(Path(stored.storage_path)))
+            metadata.update(extract_pdf_candidate_metadata(stored_path))
         except Exception as exc:
             metadata["extraction_error"] = str(exc)
     document = TechnicalDocument(

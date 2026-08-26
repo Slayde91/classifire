@@ -6,9 +6,10 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from ..models import Estimate, Opening
+from ..models import Estimate, Opening, StoredFile
 from ..physical_models import EvidenceSource, PhysicalModelLock, ServiceOpeningLink
 from .physical_scope import assess_physical_model_completeness
+from .storage import StoredFileSecurityError, require_clean_stored_file_for_session
 from .workflow import WorkflowFacts, current_stage
 
 _VALID_PHYSICAL_MODEL_LOCK_RESULTS = {"PASS"}
@@ -39,15 +40,37 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
     physical model, and an active PASS Physical Model Lock establish completion.
     Narrative status text and later-stage records are not treated as substitutes.
     """
-    evidence_count = (
-        db.scalar(
-            select(func.count(EvidenceSource.id)).where(
+    active_evidence = list(
+        db.scalars(
+            select(EvidenceSource).where(
                 EvidenceSource.estimate_id == estimate.id,
                 EvidenceSource.status == "active",
             )
-        )
-        or 0
+        ).all()
     )
+    active_evidence_count = len(active_evidence)
+    evidence_count = 0
+    stored_file_integrity_cache: dict[tuple[str, str], bool] = {}
+    for evidence in active_evidence:
+        stored = db.get(StoredFile, evidence.stored_file_id) if evidence.stored_file_id else None
+        if stored is None or not isinstance(evidence.sha256, str) or not evidence.sha256:
+            continue
+        cache_key = (stored.id, evidence.sha256.casefold())
+        if cache_key not in stored_file_integrity_cache:
+            try:
+                require_clean_stored_file_for_session(
+                    db,
+                    stored,
+                    allowed_purposes={"project_evidence", "technical_evidence"},
+                    expected_sha256=evidence.sha256,
+                )
+            except StoredFileSecurityError:
+                stored_file_integrity_cache[cache_key] = False
+            else:
+                stored_file_integrity_cache[cache_key] = True
+        if not stored_file_integrity_cache[cache_key]:
+            continue
+        evidence_count += 1
     physical_completeness = assess_physical_model_completeness(db, estimate.id)
     service_opening_link_count = (
         db.scalar(
@@ -75,7 +98,11 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
         # represents retained state, not attempting to create a replacement lock.
         from .physical_model import build_current_physical_model_lock_payload
 
-        current_payload = build_current_physical_model_lock_payload(db, estimate)
+        current_payload = build_current_physical_model_lock_payload(
+            db,
+            estimate,
+            _stored_file_integrity_cache=stored_file_integrity_cache,
+        )
         current_content_hash = str(current_payload["content_hash"])
         current_payload_is_pass = current_payload.get("validator_result") == "PASS"
     except Exception:  # noqa: BLE001 - inability to prove freshness must fail closed.
@@ -101,6 +128,10 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
     )
     diagnostics = {
         "evidence_source_count": int(evidence_count),
+        "active_evidence_source_count": int(active_evidence_count),
+        "quarantined_or_unbound_active_evidence_source_count": int(
+            active_evidence_count - evidence_count
+        ),
         "opening_count": physical_completeness.opening_count,
         "service_opening_link_count": int(service_opening_link_count),
         "active_physical_model_lock_count": len(active_locks),
@@ -110,7 +141,10 @@ def assess_estimate_workflow(db: Session, estimate: Estimate) -> WorkflowAssessm
         "current_physical_model_lock_evaluation": current_lock_evaluation,
         "scope_aware_physical_completeness": physical_completeness.as_dict(),
         "fail_closed_notes": [
-            "Only active EvidenceSource records count as evidence intake.",
+            (
+                "Only active EvidenceSource records bound to clean, immutable retained "
+                "bytes with matching size and SHA-256 count as evidence intake."
+            ),
             "A blank opening with a service link is inconsistent and incomplete.",
             "A non-blank opening requires at least one canonical ServiceOpeningLink.",
             "Only an active PASS Physical Model Lock permits opening-specific technical search.",

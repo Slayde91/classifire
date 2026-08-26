@@ -21,6 +21,7 @@ def _production_settings(**overrides: object) -> Settings:
         "session_https_only": True,
         "trusted_hosts": ["app.example.com"],
         "allowed_origins": ["https://app.example.com"],
+        "clamav_host": "clamav.internal",
     }
     values.update(overrides)
     return Settings(_env_file=None, **values)
@@ -71,6 +72,25 @@ def test_valid_production_configuration_has_no_findings() -> None:
         (
             {"database_url": "postgresql://user:password@database.example"},
             "PRODUCTION_POSTGRESQL_REQUIRED",
+        ),
+        ({"clamav_host": None}, "PRODUCTION_MALWARE_SCANNER_REQUIRED"),
+        ({"clamav_host": ""}, "PRODUCTION_MALWARE_SCANNER_REQUIRED"),
+        ({"clamav_host": " clamav.internal"}, "PRODUCTION_MALWARE_SCANNER_HOST_INVALID"),
+        ({"clamav_host": "tcp://clamav.internal"}, "PRODUCTION_MALWARE_SCANNER_HOST_INVALID"),
+        ({"clamav_host": "clamav.internal:3310"}, "PRODUCTION_MALWARE_SCANNER_HOST_INVALID"),
+        ({"clamav_host": "*"}, "PRODUCTION_MALWARE_SCANNER_HOST_INVALID"),
+        ({"clamav_port": 0}, "PRODUCTION_MALWARE_SCANNER_PORT_INVALID"),
+        ({"clamav_port": 65536}, "PRODUCTION_MALWARE_SCANNER_PORT_INVALID"),
+        ({"clamav_timeout_seconds": 0}, "PRODUCTION_MALWARE_SCANNER_TIMEOUT_INVALID"),
+        ({"clamav_timeout_seconds": -1}, "PRODUCTION_MALWARE_SCANNER_TIMEOUT_INVALID"),
+        ({"clamav_timeout_seconds": 60.1}, "PRODUCTION_MALWARE_SCANNER_TIMEOUT_INVALID"),
+        (
+            {"clamav_timeout_seconds": float("nan")},
+            "PRODUCTION_MALWARE_SCANNER_TIMEOUT_INVALID",
+        ),
+        (
+            {"clamav_timeout_seconds": float("inf")},
+            "PRODUCTION_MALWARE_SCANNER_TIMEOUT_INVALID",
         ),
         ({"trusted_hosts": []}, "PRODUCTION_TRUSTED_HOSTS_REQUIRED"),
         ({"trusted_hosts": ["*"]}, "PRODUCTION_TRUSTED_HOST_WILDCARD"),
@@ -171,6 +191,16 @@ def test_non_production_keeps_convenient_defaults(environment: str) -> None:
     assert settings.production_findings() == ()
     assert settings.validate_production() == []
     assert require_runtime_configuration(settings) is None
+
+
+def test_valid_production_malware_scanner_bounds_are_accepted() -> None:
+    settings = _production_settings(
+        clamav_host="CLAMAV.INTERNAL",
+        clamav_port=1,
+        clamav_timeout_seconds=60,
+    )
+
+    assert settings.production_findings() == ()
 
 
 def test_constructing_settings_does_not_create_storage_directory(tmp_path: Path) -> None:

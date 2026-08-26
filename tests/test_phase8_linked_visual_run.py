@@ -7,9 +7,10 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from copy import deepcopy
+from functools import partial
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
 import pytest
 from physical_foundation_support import add_estimate, physical_session
@@ -24,8 +25,10 @@ from classifire.services.phase8_linked_visual_run import (
     LINKED_VISUAL_RETRIEVAL_BLOCKED,
     LINKED_VISUAL_RUN_RECEIPT_SCHEMA,
     Phase8LinkedVisualRunError,
-    run_phase8_linked_visual_proposal,
     validate_phase8_linked_visual_run_receipt,
+)
+from classifire.services.phase8_linked_visual_run import (
+    run_phase8_linked_visual_proposal as _run_phase8_linked_visual_proposal,
 )
 from classifire.services.phase8_visual_prompts import build_visual_inference_profile
 from classifire.services.phase8_visual_proposal import (
@@ -39,6 +42,20 @@ from classifire.services.phase8_visual_provenance import (
 from classifire.services.physical_scope import is_blank_opening_type
 
 LEAK_MARKER = "SIGNED-CAPABILITY-MUST-NOT-LEAK"
+
+
+class _CleanScanner:
+    def check_ready(self) -> None:
+        pass
+
+    def scan_stream(self, stream: BinaryIO) -> None:
+        stream.read()
+
+
+run_phase8_linked_visual_proposal = partial(
+    _run_phase8_linked_visual_proposal,
+    malware_scanner=_CleanScanner(),
+)
 
 
 def _uri() -> str:
@@ -648,6 +665,49 @@ def test_runner_rejects_parent_mapping_mismatch_before_evidence_retention(tmp_pa
 
         assert caught.value.code == "PARENT_MAPPING_MISMATCH"
         assert session.scalar(select(func.count()).select_from(EvidenceSource)) == 1
+
+
+def test_runner_rejects_unclean_parent_before_network_access(tmp_path: Path) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+    source = _detailed_jpeg()
+    embedded_path = storage_root / "embedded.jpg"
+    _embedded(source, embedded_path)
+    report = tmp_path / "report.pdf"
+    report_sha256 = _report(report)
+
+    with physical_session() as session:
+        estimate, _defect, parent = _parent(session, storage_root, embedded_path)
+        stored = session.get(StoredFile, parent.stored_file_id)
+        assert stored is not None
+        stored.malware_scan_status = "pending"
+        session.flush()
+
+        with pytest.raises(Phase8LinkedVisualRunError) as caught:
+            run_phase8_linked_visual_proposal(
+                session,
+                run_id="RUN-LINKED-UNCLEAN-PARENT",
+                estimate_id=estimate.id,
+                defect_reference="D-001",
+                report=report,
+                report_sha256=report_sha256,
+                photo_rows=[_photo_row(embedded_path)],
+                parent_evidence_by_photo_id={"P001-I01": parent.id},
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                operator_reference="Synthetic test operator",
+                inference_profile=_profile(),
+                inference_port=_ScriptedPort(),
+                protected_state_reader=lambda: initial_submission_state(
+                    session,
+                    estimate_id=estimate.id,
+                ),
+                transport=lambda *_args: pytest.fail("network must not be reached"),
+            )
+
+        assert caught.value.code == "PARENT_EVIDENCE_INVALID"
 
 
 def test_runner_rejects_nonempty_physical_model_before_network_access(tmp_path: Path) -> None:

@@ -6,18 +6,20 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from .audit import record_audit
+from .config import Settings, get_settings
 from .db import get_db
-from .models import Approval, TechnicalDocument, TechnicalVariant
+from .models import Approval, StoredFile, TechnicalDocument, TechnicalVariant
 from .security import verify_csrf
 from .services.calculation import D
+from .services.storage import StoredFileSecurityError, require_clean_stored_file
+from .services.technical import governed_unlinked_technical_source
 from .ui import _context, _require, templates
-from fastapi import Depends
 
 router = APIRouter(include_in_schema=False)
 Db = Annotated[Session, Depends(get_db)]
@@ -33,6 +35,30 @@ def _date_or_none(value: str | None) -> date | None:
     if not value:
         return None
     return date.fromisoformat(value)
+
+
+def _require_clean_technical_source(
+    db: Session,
+    settings: Settings,
+    document: TechnicalDocument,
+    *,
+    require_approved: bool,
+    error_code: str,
+) -> StoredFile:
+    if require_approved and document.status != "approved":
+        raise HTTPException(409, error_code)
+    stored = db.get(StoredFile, document.stored_file_id)
+    if stored is None:
+        raise HTTPException(409, error_code)
+    try:
+        require_clean_stored_file(
+            settings.storage_root,
+            stored,
+            allowed_purposes={"technical_evidence"},
+        )
+    except StoredFileSecurityError:
+        raise HTTPException(409, error_code) from None
+    return stored
 
 
 def _next_revision_id(db: Session, original: TechnicalVariant) -> str:
@@ -317,6 +343,7 @@ def technical_variant_approve(
     variant_db_id: str,
     request: Request,
     db: Db,
+    settings: Annotated[Settings, Depends(get_settings)],
     csrf_token: Annotated[str, Form()],
     reason: Annotated[str, Form()] = "Technical review completed and approved",
 ) -> RedirectResponse:
@@ -329,6 +356,20 @@ def technical_variant_approve(
         return RedirectResponse(f"/technical/variants/{variant.id}?error=Only+Draft+or+In+Review+variants+can+be+approved", status_code=303)
     if not variant.source_document_reference or not variant.source_page:
         return RedirectResponse(f"/technical/variants/{variant.id}?error=Source+document+reference+and+source+page+are+required+before+approval", status_code=303)
+    if variant.technical_document_id is None:
+        if not governed_unlinked_technical_source(db, variant):
+            raise HTTPException(409, "TECHNICAL_VARIANT_SOURCE_NOT_APPROVED_OR_CLEAN")
+    else:
+        source_document = db.get(TechnicalDocument, variant.technical_document_id)
+        if source_document is None:
+            raise HTTPException(409, "TECHNICAL_VARIANT_SOURCE_NOT_APPROVED_OR_CLEAN")
+        _require_clean_technical_source(
+            db,
+            settings,
+            source_document,
+            require_approved=True,
+            error_code="TECHNICAL_VARIANT_SOURCE_NOT_APPROVED_OR_CLEAN",
+        )
     previous_status = variant.status
     if variant.supersedes_id:
         prior = db.get(TechnicalVariant, variant.supersedes_id)
@@ -420,6 +461,7 @@ def technical_document_approve(
     document_db_id: str,
     request: Request,
     db: Db,
+    settings: Annotated[Settings, Depends(get_settings)],
     csrf_token: Annotated[str, Form()],
     reason: Annotated[str, Form()] = "Technical source document reviewed",
 ) -> RedirectResponse:
@@ -428,6 +470,13 @@ def technical_document_approve(
     document = db.get(TechnicalDocument, document_db_id)
     if not document:
         raise HTTPException(404, "Technical document not found")
+    _require_clean_technical_source(
+        db,
+        settings,
+        document,
+        require_approved=False,
+        error_code="TECHNICAL_DOCUMENT_STORED_FILE_NOT_CLEAN",
+    )
     previous = document.status
     document.status = "approved"
     document.reviewed_by_id = user.id

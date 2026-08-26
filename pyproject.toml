@@ -44,7 +44,6 @@ dev = [
   "pip-audit>=2.9,<3"
 ]
 postgres = ["psycopg[binary]>=3.2,<4"]
-malware = ["clamd>=1.0,<2"]
 
 [project.scripts]
 classifire = "classifire.cli:app"

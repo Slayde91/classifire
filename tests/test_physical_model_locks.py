@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from physical_foundation_support import (
@@ -15,10 +17,11 @@ from physical_foundation_support import (
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from classifire.models import Estimate, Opening
-from classifire.physical_models import Defect, EvidenceSource, PhysicalModelLock
+from classifire.models import Estimate, Opening, StoredFile
+from classifire.physical_models import Defect, PhysicalModelLock
 from classifire.services.physical_model import (
     PhysicalModelLockError,
+    build_current_physical_model_lock_payload,
     create_physical_model_lock,
 )
 from classifire.services.physical_mutation_guard import (
@@ -26,6 +29,7 @@ from classifire.services.physical_mutation_guard import (
     require_physical_model_mutation,
 )
 from classifire.services.workflow import WorkflowAction, WorkflowTransitionError
+from classifire.services.workflow_db import assess_estimate_workflow
 from classifire.services.workflow_guard import check_estimate_action, require_estimate_action
 
 
@@ -137,17 +141,155 @@ def test_lock_rejects_active_evidence_without_a_retained_digest() -> None:
         opening = add_opening(session, estimate)
         service = add_service(session, opening)
         add_service_link(session, service, opening)
-        session.add(
-            EvidenceSource(
-                estimate_id=estimate.id,
-                evidence_type="inspection_photo",
-                status="active",
-            )
-        )
+        evidence = add_evidence(session, estimate)
+        evidence.sha256 = None
         session.flush()
 
-        with pytest.raises(PhysicalModelLockError, match="retained SHA-256"):
+        payload = build_current_physical_model_lock_payload(session, estimate)
+        assert any(
+            "retained SHA-256" in item for item in payload["critical_unknowns"]
+        )
+        with pytest.raises(WorkflowTransitionError, match="evidence intake is not complete"):
             create_physical_model_lock(session, estimate)
+
+
+def test_unclean_active_evidence_does_not_complete_evidence_intake() -> None:
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        evidence = add_evidence(session, estimate)
+        stored = session.get(StoredFile, evidence.stored_file_id)
+        assert stored is not None
+        stored.malware_scan_status = "not_configured"
+        session.flush()
+
+        assessment = assess_estimate_workflow(session, estimate)
+
+        assert assessment.facts.evidence_intake_complete is False
+        assert assessment.diagnostics["evidence_source_count"] == 0
+        assert assessment.diagnostics["active_evidence_source_count"] == 1
+        assert (
+            assessment.diagnostics["quarantined_or_unbound_active_evidence_source_count"] == 1
+        )
+
+        stored.malware_scan_status = "clean"
+        evidence.stored_file_id = None
+        unbound_assessment = assess_estimate_workflow(session, estimate)
+
+    assert unbound_assessment.facts.evidence_intake_complete is False
+    assert unbound_assessment.diagnostics["evidence_source_count"] == 0
+    assert unbound_assessment.diagnostics["active_evidence_source_count"] == 1
+    assert (
+        unbound_assessment.diagnostics["quarantined_or_unbound_active_evidence_source_count"] == 1
+    )
+
+
+def test_current_lock_payload_requires_clean_matching_stored_evidence() -> None:
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        opening = add_opening(session, estimate)
+        service = add_service(session, opening)
+        add_service_link(session, service, opening)
+        evidence = add_evidence(session, estimate)
+        stored = session.get(StoredFile, evidence.stored_file_id)
+        assert stored is not None
+
+        stored.malware_scan_status = "pending"
+        pending_payload = build_current_physical_model_lock_payload(session, estimate)
+        assert pending_payload["validator_result"] == "PROVISIONAL"
+        assert any(
+            "without a clean malware scan" in item
+            for item in pending_payload["critical_unknowns"]
+        )
+
+        stored.malware_scan_status = "clean"
+        evidence.sha256 = "b" * 64
+        mismatched_payload = build_current_physical_model_lock_payload(session, estimate)
+        assert mismatched_payload["validator_result"] == "PROVISIONAL"
+        assert any(
+            "SHA-256 does not match its StoredFile" in item
+            for item in mismatched_payload["critical_unknowns"]
+        )
+
+        evidence.stored_file_id = None
+        unbound_payload = build_current_physical_model_lock_payload(session, estimate)
+        assert unbound_payload["validator_result"] == "PROVISIONAL"
+        assert any(
+            "not bound to a StoredFile" in item
+            for item in unbound_payload["critical_unknowns"]
+        )
+
+
+def test_missing_or_tampered_retained_evidence_cannot_support_workflow_or_lock() -> None:
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        opening = add_opening(session, estimate)
+        service = add_service(session, opening)
+        add_service_link(session, service, opening)
+        evidence = add_evidence(session, estimate)
+        stored = session.get(StoredFile, evidence.stored_file_id)
+        assert stored is not None
+        retained_path = Path(stored.storage_path)
+        retained_path.write_bytes(b"tampered after retention")
+
+        assessment = assess_estimate_workflow(session, estimate)
+        payload = build_current_physical_model_lock_payload(session, estimate)
+
+        assert assessment.facts.evidence_intake_complete is False
+        assert assessment.diagnostics["evidence_source_count"] == 0
+        assert payload["validator_result"] == "PROVISIONAL"
+        assert any(
+            "fail size/SHA-256 integrity" in item
+            for item in payload["critical_unknowns"]
+        )
+
+
+def test_clean_evidence_outside_session_governed_root_cannot_support_workflow() -> None:
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        opening = add_opening(session, estimate)
+        service = add_service(session, opening)
+        add_service_link(session, service, opening)
+        add_evidence(session, estimate)
+        original_root = session.info["retained_storage_root"]
+        governed_root = Path(original_root) / "different-governed-root"
+        governed_root.mkdir()
+        session.info["retained_storage_root"] = governed_root
+
+        assessment = assess_estimate_workflow(session, estimate)
+        payload = build_current_physical_model_lock_payload(session, estimate)
+
+        assert assessment.facts.evidence_intake_complete is False
+        assert assessment.diagnostics["evidence_source_count"] == 0
+        assert payload["validator_result"] == "PROVISIONAL"
+        assert any(
+            "outside the governed storage root" in item
+            for item in payload["critical_unknowns"]
+        )
+
+
+def test_workflow_reuses_one_retained_file_integrity_check() -> None:
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        add_evidence(session, estimate)
+        calls = 0
+
+        from classifire.services import physical_model, workflow_db
+
+        real_check = workflow_db.require_clean_stored_file_for_session
+
+        def counted_check(*args: object, **kwargs: object) -> Path:
+            nonlocal calls
+            calls += 1
+            return real_check(*args, **kwargs)  # type: ignore[arg-type]
+
+        with (
+            patch.object(workflow_db, "require_clean_stored_file_for_session", counted_check),
+            patch.object(physical_model, "require_clean_stored_file_for_session", counted_check),
+        ):
+            assessment = assess_estimate_workflow(session, estimate)
+
+        assert assessment.facts.evidence_intake_complete is True
+        assert calls == 1
 
 
 def test_lock_requires_each_opening_to_have_a_canonical_defect_binding() -> None:

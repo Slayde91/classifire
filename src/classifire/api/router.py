@@ -4,7 +4,6 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from decimal import Decimal
-from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import (
@@ -67,6 +66,7 @@ from ..services.initial_canonicalisation_boundary import (
     InitialCanonicalisationAdmissionRequired,
     require_admission_bound_initial_canonicalisation,
 )
+from ..services.malware_scanning import MalwareDetectedError, MalwareScanError
 from ..services.physical_defects import bind_canonical_defect
 from ..services.physical_mutation_guard import (
     PhysicalMutationError,
@@ -74,7 +74,12 @@ from ..services.physical_mutation_guard import (
 )
 from ..services.rule_engine import evaluate_estimate_rules
 from ..services.snapshot import lock_snapshot
-from ..services.storage import save_upload
+from ..services.storage import (
+    RetainedMalwareQuarantinedError,
+    StoredFileSecurityError,
+    require_clean_stored_file,
+    save_upload,
+)
 from ..services.technical import extract_pdf_candidate_metadata, search_for_opening, search_variants
 from ..services.workflow import WorkflowAction, WorkflowTransitionError
 from ..services.workflow_guard import (
@@ -439,12 +444,26 @@ def upload_technical_document(
         raise HTTPException(status_code=409, detail="Technical Document ID already exists")
     try:
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
+        stored_path = require_clean_stored_file(
+            settings.storage_root,
+            stored,
+            allowed_purposes={"technical_evidence"},
+        )
+    except RetainedMalwareQuarantinedError as exc:
+        db.commit()
+        raise HTTPException(status_code=422, detail=exc.code) from exc
+    except MalwareDetectedError as exc:
+        raise HTTPException(status_code=422, detail=exc.code) from exc
+    except MalwareScanError as exc:
+        raise HTTPException(status_code=503, detail=exc.code) from exc
+    except StoredFileSecurityError as exc:
+        raise HTTPException(status_code=409, detail=exc.code) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     metadata: dict[str, Any] = {"human_review_required": True, "automatic_activation_permitted": False}
-    if Path(stored.storage_path).suffix.lower() == ".pdf":
+    if stored_path.suffix.lower() == ".pdf":
         try:
-            metadata.update(extract_pdf_candidate_metadata(Path(stored.storage_path)))
+            metadata.update(extract_pdf_candidate_metadata(stored_path))
         except Exception as exc:  # preserve file even if parser fails
             metadata.update({"extraction_status": "failed", "extraction_error": str(exc)})
     document = TechnicalDocument(

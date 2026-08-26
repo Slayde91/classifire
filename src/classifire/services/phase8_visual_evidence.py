@@ -37,7 +37,7 @@ _ALLOWED_IMAGE_MIMES = frozenset(
         "image/webp",
     }
 )
-_ALLOWED_SCAN_STATUSES = frozenset({"clean", "not_configured"})
+_ALLOWED_SCAN_STATUSES = frozenset({"clean"})
 _EXPECTED_METADATA_KEYS = frozenset(
     {
         "evidence_role",

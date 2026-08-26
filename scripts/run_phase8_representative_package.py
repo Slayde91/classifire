@@ -19,6 +19,12 @@ from typing import cast
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from classifire.config import get_settings
+from classifire.services.malware_scanning import (
+    MalwareScanError,
+    MalwareScanner,
+    configured_malware_scanner,
+)
 from classifire.services.phase8_evidence_review import (
     build_blocked_visual_evidence_review_request,
 )
@@ -41,6 +47,14 @@ from classifire.services.phase8_visual_runtime import (
 )
 
 RUNTIME_READINESS_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUNTIME-READINESS-v1"
+
+
+def _configured_ready_malware_scanner() -> MalwareScanner:
+    scanner = configured_malware_scanner(get_settings())
+    if scanner is None:
+        raise MalwareScanError("MALWARE_SCANNER_UNAVAILABLE")
+    scanner.check_ready()
+    return scanner
 
 
 def _git_revision(repository_root: Path) -> str:
@@ -196,6 +210,7 @@ def main() -> int:
                 _verify_runtime_readiness(package),
             )
             if not args.verify_only:
+                malware_scanner = _configured_ready_malware_scanner()
                 result = execute_phase8_representative_run(
                     db,
                     package,
@@ -205,6 +220,7 @@ def main() -> int:
                         Phase8VisualInferencePortFactory,
                         inference_port_factory,
                     ),
+                    malware_scanner=malware_scanner,
                 )
     except Exception as exc:
         failure = exc

@@ -19,6 +19,7 @@ from typing import Any, Protocol
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from ..models import StoredFile
 from ..physical_models import Defect, EvidenceSource
 from .canonical_submission_state import InitialSubmissionState
 from .linked_image_evidence import (
@@ -35,6 +36,7 @@ from .linked_image_retrieval import (
     materialize_linked_images,
     resolve_public_addresses,
 )
+from .malware_scanning import MalwareScanner
 from .phase8_visual_evidence import (
     RetainedVisualEvidencePacket,
     build_retained_visual_evidence_packet,
@@ -46,6 +48,7 @@ from .phase8_visual_proposal import (
     ProposalOnlyVisualController,
     canonical_json_sha256,
 )
+from .storage import StoredFileSecurityError, require_clean_stored_file
 
 LINKED_VISUAL_RUN_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-LINKED-VISUAL-RUN-v2"
 LINKED_VISUAL_RETRIEVAL_BLOCKED = "LINKED_VISUAL_RETRIEVAL_BLOCKED"
@@ -399,6 +402,7 @@ def _target_parent_evidence_ids(
     estimate_id: str,
     defect_reference: str,
     parent_map: Mapping[str, str],
+    storage_root: Path,
 ) -> frozenset[str]:
     """Return mapped parents that belong to the selected defect.
 
@@ -425,8 +429,26 @@ def _target_parent_evidence_ids(
     parents: dict[str, EvidenceSource] = {}
     for parent_id in set(parent_map.values()):
         parent = db.get(EvidenceSource, parent_id)
-        if parent is None or parent.estimate_id != estimate_id:
+        if (
+            parent is None
+            or parent.estimate_id != estimate_id
+            or parent.status != "active"
+            or not isinstance(parent.sha256, str)
+            or not parent.sha256.strip()
+        ):
             raise Phase8LinkedVisualRunError("PARENT_EVIDENCE_INVALID")
+        stored = db.get(StoredFile, parent.stored_file_id) if parent.stored_file_id else None
+        if stored is None:
+            raise Phase8LinkedVisualRunError("PARENT_EVIDENCE_INVALID")
+        try:
+            require_clean_stored_file(
+                storage_root,
+                stored,
+                allowed_purposes={"project_evidence", "technical_evidence"},
+                expected_sha256=parent.sha256,
+            )
+        except StoredFileSecurityError:
+            raise Phase8LinkedVisualRunError("PARENT_EVIDENCE_INVALID") from None
         parents[parent_id] = parent
 
     target_parent_ids = frozenset(
@@ -545,6 +567,7 @@ def run_phase8_linked_visual_proposal(
     inference_profile: Mapping[str, Any],
     inference_port: Phase8VisualInferencePort | None,
     protected_state_reader: Callable[[], InitialSubmissionState],
+    malware_scanner: MalwareScanner,
     policy: LinkedImagePolicy = DEFAULT_LINKED_IMAGE_POLICY,
     prior_retrieval_receipt: Mapping[str, Any] | None = None,
     resolver: Resolver = resolve_public_addresses,
@@ -572,6 +595,18 @@ def run_phase8_linked_visual_proposal(
         )
         for photo_id, evidence_id in parent_evidence_by_photo_id.items()
     }
+    photo_ids = {
+        _token(row.get("photo_id"), code="PARENT_MAPPING_INVALID") for row in rows
+    }
+    if set(parent_map) != photo_ids:
+        raise Phase8LinkedVisualRunError("PARENT_MAPPING_MISMATCH")
+    target_parent_ids = _target_parent_evidence_ids(
+        db,
+        estimate_id=estimate_id,
+        defect_reference=defect_reference,
+        parent_map=parent_map,
+        storage_root=storage_root,
+    )
 
     state_before_retrieval = _state(protected_state_reader, estimate_id)
     if not _physical_model_empty(state_before_retrieval):
@@ -581,6 +616,7 @@ def run_phase8_linked_visual_proposal(
         rows,
         retrieval_root,
         report_sha256=report_sha256,
+        malware_scanner=malware_scanner,
         policy=policy,
         prior_receipt=dict(prior_retrieval_receipt) if prior_retrieval_receipt else None,
         resolver=resolver,
@@ -619,14 +655,15 @@ def run_phase8_linked_visual_proposal(
     result_ids = {result.photo_id for result in retrieval.results}
     if set(parent_map) != result_ids:
         raise Phase8LinkedVisualRunError("PARENT_MAPPING_MISMATCH")
-    target_parent_ids = _target_parent_evidence_ids(
-        db,
-        estimate_id=estimate_id,
-        defect_reference=defect_reference,
-        parent_map=parent_map,
-    )
     target_ready = tuple(
-        result for result in ready if parent_map[result.photo_id] in target_parent_ids
+        sorted(
+            (
+                result
+                for result in ready
+                if parent_map[result.photo_id] in target_parent_ids
+            ),
+            key=lambda result: (parent_map[result.photo_id], result.photo_id),
+        )
     )
     if not target_ready:
         raise Phase8LinkedVisualRunError("TARGET_EVIDENCE_REQUIRED")
@@ -642,6 +679,7 @@ def run_phase8_linked_visual_proposal(
                 parent_evidence_source_id=parent_map[result.photo_id],
                 result=result,
                 operator_reference=operator_reference,
+                malware_scanner=malware_scanner,
                 policy=policy,
                 source_report_sha256=report_sha256,
             )

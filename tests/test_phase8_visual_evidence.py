@@ -67,6 +67,7 @@ def _evidence(
     source_json: dict[str, Any] | None = None,
     purpose: str = "technical_evidence",
     page_number: str = "1",
+    scan_status: str = "clean",
 ) -> EvidenceSource:
     stored = StoredFile(
         original_filename=path.name,
@@ -75,7 +76,7 @@ def _evidence(
         sha256=sha256,
         size_bytes=path.stat().st_size,
         purpose=purpose,
-        malware_scan_status="clean",
+        malware_scan_status=scan_status,
         immutable=True,
     )
     session.add(stored)
@@ -242,6 +243,38 @@ def test_adapter_rejects_file_outside_storage_root(tmp_path: Path) -> None:
             )
 
     assert rejected.value.code == "FILE_OUTSIDE_STORAGE_ROOT"
+
+
+@pytest.mark.parametrize("scan_status", ["not_configured", "pending", "infected", "scan_error"])
+def test_adapter_rejects_visual_evidence_without_a_clean_malware_scan(
+    tmp_path: Path,
+    scan_status: str,
+) -> None:
+    storage_root = tmp_path / "storage"
+    storage_root.mkdir()
+    path, sha256 = _image(storage_root, "evidence.png", (10, 20, 30))
+
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        defect = _defect(session, estimate)
+        _evidence(
+            session,
+            estimate=estimate,
+            defect=defect,
+            path=path,
+            sha256=sha256,
+            scan_status=scan_status,
+        )
+
+        with pytest.raises(Phase8VisualEvidenceError) as rejected:
+            build_retained_visual_evidence_packet(
+                session,
+                storage_root=storage_root,
+                estimate_id=estimate.id,
+                defect_reference="D-001",
+            )
+
+    assert rejected.value.code == "STORED_FILE_SCAN_STATUS_FORBIDDEN"
 
 
 @pytest.mark.parametrize(

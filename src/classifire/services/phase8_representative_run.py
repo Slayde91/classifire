@@ -30,6 +30,7 @@ from .linked_image_retrieval import (
     Transport,
     resolve_public_addresses,
 )
+from .malware_scanning import MalwareScanner
 from .phase8_human_reference_comparison import (
     Phase8HumanReferenceComparisonError,
     validate_phase8_human_reference,
@@ -45,6 +46,7 @@ from .phase8_visual_runtime import (
     Phase8GatewayRpcError,
     validate_phase8_loopback_gateway_url,
 )
+from .storage import StoredFileSecurityError, require_clean_stored_file
 
 REPRESENTATIVE_RUN_PACKAGE_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-PACKAGE-v1"
 REPRESENTATIVE_RUN_PREFLIGHT_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-PREFLIGHT-v1"
@@ -510,20 +512,28 @@ def _validate_parent_storage(
     db: Session,
     package: Phase8RepresentativeRunPackage,
 ) -> None:
-    root = package.storage_root.resolve(strict=True)
     for evidence_id in package.parent_evidence_by_photo_id.values():
         evidence = db.get(EvidenceSource, evidence_id)
-        if evidence is None or evidence.estimate_id != package.estimate_id:
+        if (
+            evidence is None
+            or evidence.estimate_id != package.estimate_id
+            or evidence.status != "active"
+            or not isinstance(evidence.sha256, str)
+            or not evidence.sha256.strip()
+        ):
             raise Phase8RepresentativeRunError("PARENT_EVIDENCE_INVALID")
         stored = db.get(StoredFile, evidence.stored_file_id) if evidence.stored_file_id else None
         if stored is None:
             raise Phase8RepresentativeRunError("PARENT_EVIDENCE_INVALID")
         try:
-            stored_path = Path(stored.storage_path).resolve(strict=True)
-        except OSError as exc:
-            raise Phase8RepresentativeRunError("PARENT_EVIDENCE_INVALID") from exc
-        if root != stored_path and root not in stored_path.parents:
-            raise Phase8RepresentativeRunError("STORAGE_SNAPSHOT_INVALID")
+            require_clean_stored_file(
+                package.storage_root,
+                stored,
+                allowed_purposes={"project_evidence", "technical_evidence"},
+                expected_sha256=evidence.sha256,
+            )
+        except StoredFileSecurityError:
+            raise Phase8RepresentativeRunError("PARENT_EVIDENCE_INVALID") from None
 
 
 def verify_phase8_representative_run_package(
@@ -593,6 +603,7 @@ def execute_phase8_representative_run(
     actual_git_revision: str,
     repository_root: Path,
     inference_port_factory: Phase8VisualInferencePortFactory,
+    malware_scanner: MalwareScanner,
     protected_state_reader: Callable[[], InitialSubmissionState] | None = None,
     resolver: Resolver = resolve_public_addresses,
     transport: Transport | None = None,
@@ -638,6 +649,7 @@ def execute_phase8_representative_run(
             inference_port=None,
             inference_port_factory=inference_port_factory,
             protected_state_reader=protected_state_reader,
+            malware_scanner=malware_scanner,
             resolver=resolver,
             transport=transport,
         )

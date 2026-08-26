@@ -111,13 +111,24 @@ C:\CLASSIFIRE\.venv\Scripts\python.exe `
   --verify-only
 ```
 
-Review both `preflight-receipt.json` and `runtime-readiness-receipt.json`, then
-run the approved package with a fresh output directory. If readiness cannot be
-confirmed, the command writes a content-safe `failure-receipt.json` and stops
-before linked-original retrieval:
+Review both `preflight-receipt.json` and `runtime-readiness-receipt.json`. The
+second receipt covers only the no-write local Gateway probe; `--verify-only`
+does not construct or probe the malware scanner because it performs no linked
+retrieval or inference.
+
+Before the real run, configure the governed private ClamAV endpoint described
+in [Production configuration](PRODUCTION_CONFIGURATION.md). The real run
+requires the daemon to advertise and complete `INSTREAM`; it passes that exact
+scanner into report, image, cache and retained-evidence processing. Use a fresh
+output directory. If Gateway or scanner readiness cannot be confirmed, the
+command writes a content-safe `failure-receipt.json` and stops before
+linked-original retrieval:
 
 ```powershell
 $env:PYTHONPATH = "$PWD\src"
+$env:CLASSIFIRE_CLAMAV_HOST = "clamav.internal.example"
+$env:CLASSIFIRE_CLAMAV_PORT = "3310"
+$env:CLASSIFIRE_CLAMAV_TIMEOUT_SECONDS = "10"
 C:\CLASSIFIRE\.venv\Scripts\python.exe `
   scripts\run_phase8_representative_package.py `
   --package C:\approved-package\package.json `

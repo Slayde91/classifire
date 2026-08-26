@@ -34,6 +34,7 @@ from .importers.seed import require_seed_database_ready
 from .library_ui import router as library_ui_router
 from .release_admin import router as release_admin_router
 from .security import HUMAN_SESSION_MAX_AGE_SECONDS
+from .services.malware_scanning import require_malware_scanner_ready
 from .services.schema_bootstrap import prepare_application_schema
 from .technical_admin import router as technical_admin_router
 from .ui import router as ui_router
@@ -83,6 +84,8 @@ class CaseInsensitiveTrustedHostMiddleware(TrustedHostMiddleware):
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     require_runtime_configuration(settings)
+    if settings.env == "production":
+        require_malware_scanner_ready(settings)
     prepare_application_schema(engine, settings.env)
     if settings.env == "production":
         with SessionLocal() as db:

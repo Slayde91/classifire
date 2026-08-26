@@ -19,6 +19,8 @@ from urllib.parse import parse_qsl, unquote, urljoin, urlsplit
 
 from PIL import Image, ImageChops, ImageFilter, ImageOps, ImageStat, UnidentifiedImageError
 
+from .malware_scanning import MalwareScanError, MalwareScanner, require_clean_bytes
+
 LINKED_IMAGE_RECEIPT_SCHEMA = "CLASSIFIRE-REAL-UAT-LINKED-IMAGE-RETRIEVAL-v2"
 READY_STATUSES = frozenset({"VERIFIED", "CACHED"})
 REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
@@ -33,6 +35,13 @@ class LinkedImageError(RuntimeError):
     def __init__(self, code: str) -> None:
         self.code = code
         super().__init__(f"Linked image retrieval failed: {code}")
+
+
+def _require_clean_linked_bytes(malware_scanner: MalwareScanner, payload: bytes) -> None:
+    try:
+        require_clean_bytes(malware_scanner, payload)
+    except MalwareScanError as exc:
+        raise LinkedImageError(exc.code) from None
 
 
 @dataclass(frozen=True)
@@ -452,10 +461,20 @@ def extract_candidates(
     photo_rows: Sequence[Mapping[str, Any]],
     policy: LinkedImagePolicy = DEFAULT_LINKED_IMAGE_POLICY,
     *,
+    malware_scanner: MalwareScanner,
     unresolved_links: list[dict[str, Any]] | None = None,
     secondary_activation_regions: list[dict[str, Any]] | None = None,
+    _report_bytes: bytes | None = None,
 ) -> tuple[dict[str, LinkedImageCandidate], dict[str, str], set[str]]:
     """Map image URI annotations to non-decorative raster occurrences without fetching."""
+
+    try:
+        report_bytes = report.read_bytes() if _report_bytes is None else _report_bytes
+    except OSError:
+        raise LinkedImageError("REPORT_UNAVAILABLE") from None
+    if not isinstance(report_bytes, bytes):
+        raise LinkedImageError("REPORT_UNAVAILABLE")
+    _require_clean_linked_bytes(malware_scanner, report_bytes)
 
     try:
         import pymupdf
@@ -473,7 +492,7 @@ def extract_candidates(
     secondary = secondary_activation_regions if secondary_activation_regions is not None else []
     unmatched_allowed: list[dict[str, Any]] = []
     annotation_count = 0
-    document = pymupdf.open(str(report))
+    document = pymupdf.open(stream=report_bytes, filetype="pdf")
     try:
         for page_number in range(1, len(document) + 1):
             rows = eligible.get(page_number, [])
@@ -829,11 +848,17 @@ def _difference_hash(image: Image.Image) -> int:
     return value
 
 
-def _load_embedded_image(path: Path, policy: LinkedImagePolicy) -> Image.Image:
+def _load_embedded_image(
+    path: Path,
+    policy: LinkedImagePolicy,
+    malware_scanner: MalwareScanner,
+) -> Image.Image:
     try:
+        body = path.read_bytes()
+        _require_clean_linked_bytes(malware_scanner, body)
         with warnings.catch_warnings():
             warnings.simplefilter("error", Image.DecompressionBombWarning)
-            with Image.open(path) as raw:
+            with Image.open(BytesIO(body)) as raw:
                 if int(getattr(raw, "n_frames", 1)) != 1:
                     raise LinkedImageError("EMBEDDED_THUMBNAIL_INVALID")
                 width, height = raw.size
@@ -884,13 +909,18 @@ def _comparison_image(image: Image.Image, policy: LinkedImagePolicy) -> Image.Im
 def _embedded_groups_from_items(
     items: Sequence[tuple[str, Path]],
     policy: LinkedImagePolicy,
+    malware_scanner: MalwareScanner,
 ) -> tuple[_EmbeddedGroup, ...]:
     grouped: dict[str, dict[str, Any]] = {}
     for photo_id, path in items:
         try:
-            image = _load_embedded_image(path, policy)
+            image = _load_embedded_image(path, policy, malware_scanner)
             file_sha256 = _sha256_file(path)
-        except (OSError, LinkedImageError):
+        except OSError:
+            continue
+        except LinkedImageError as exc:
+            if exc.code.startswith("MALWARE_"):
+                raise
             continue
         pixel_sha256 = _canonical_pixel_sha256(image)
         entry = grouped.setdefault(
@@ -922,6 +952,7 @@ def _embedded_groups_from_items(
 def _build_embedded_groups(
     photo_rows: Sequence[Mapping[str, Any]],
     policy: LinkedImagePolicy,
+    malware_scanner: MalwareScanner,
 ) -> tuple[_EmbeddedGroup, ...]:
     items: list[tuple[str, Path]] = []
     for row in photo_rows:
@@ -931,7 +962,7 @@ def _build_embedded_groups(
         native_raw = str(row.get("native_path") or "").strip()
         if photo_id and native_raw:
             items.append((photo_id, Path(native_raw)))
-    return _embedded_groups_from_items(items, policy)
+    return _embedded_groups_from_items(items, policy, malware_scanner)
 
 
 def _mean_rgb_error(left: Image.Image, right: Image.Image) -> float:
@@ -1280,6 +1311,7 @@ def confirm_image_binding(
     embedded_path: Path,
     candidate_jpeg: bytes,
     *,
+    malware_scanner: MalwareScanner,
     alternate_embedded_paths: Sequence[Path] = (),
     policy: LinkedImagePolicy = DEFAULT_LINKED_IMAGE_POLICY,
     require_usable_detail_gain: bool = False,
@@ -1295,14 +1327,15 @@ def confirm_image_binding(
         (f"ALTERNATE-{index:04d}", path)
         for index, path in enumerate(alternate_embedded_paths, start=1)
     )
-    groups = _embedded_groups_from_items(items, policy)
+    groups = _embedded_groups_from_items(items, policy, malware_scanner)
     primary_group = next(
         (group for group in groups if "PRIMARY" in group.photo_ids),
         None,
     )
     if primary_group is None:
         raise LinkedImageError("EMBEDDED_THUMBNAIL_INVALID")
-    embedded = _load_embedded_image(embedded_path, policy)
+    embedded = _load_embedded_image(embedded_path, policy, malware_scanner)
+    _require_clean_linked_bytes(malware_scanner, candidate_jpeg)
     image, width, height = _decoded_jpeg(candidate_jpeg, policy)
     return _confirm_decoded_binding(
         primary_group,
@@ -1321,9 +1354,11 @@ def _validate_image_binding(
     body: bytes,
     policy: LinkedImagePolicy,
     embedded_groups: Sequence[_EmbeddedGroup],
+    malware_scanner: MalwareScanner,
 ) -> ThumbnailBindingEvidence:
     if len(body) > policy.maximum_image_bytes or not body.startswith(b"\xff\xd8\xff"):
         raise LinkedImageError("JPEG_MAGIC_REJECTED")
+    _require_clean_linked_bytes(malware_scanner, body)
     image, width, height = _decoded_jpeg(body, policy)
     embedded_area = candidate.embedded_width * candidate.embedded_height
     if (
@@ -1346,7 +1381,7 @@ def _validate_image_binding(
         primary_group.height,
     ) != (candidate.embedded_width, candidate.embedded_height):
         raise LinkedImageError("EMBEDDED_THUMBNAIL_CHANGED")
-    detail_image = _load_embedded_image(candidate.embedded_path, policy)
+    detail_image = _load_embedded_image(candidate.embedded_path, policy, malware_scanner)
     try:
         current_embedded_sha256 = _sha256_file(candidate.embedded_path)
     except OSError:
@@ -1414,6 +1449,7 @@ def preferred_verified_linked_path(
     row: Mapping[str, Any],
     destination_root: Path,
     *,
+    malware_scanner: MalwareScanner,
     policy: LinkedImagePolicy = DEFAULT_LINKED_IMAGE_POLICY,
 ) -> Path | None:
     status = str(row.get("full_resolution_status") or row.get("status") or "").upper()
@@ -1432,12 +1468,17 @@ def preferred_verified_linked_path(
     expected = (cache_root / sha256[:2] / f"{sha256}.jpg").resolve()
     if candidate != expected or not candidate.is_relative_to(cache_root) or not candidate.is_file():
         return None
-    if _sha256_file(candidate) != sha256:
+    try:
+        body = candidate.read_bytes()
+    except OSError:
         return None
+    if _sha256_bytes(body) != sha256:
+        return None
+    _require_clean_linked_bytes(malware_scanner, body)
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("error", Image.DecompressionBombWarning)
-            with Image.open(candidate) as image:
+            with Image.open(BytesIO(body)) as image:
                 if image.format != "JPEG" or int(getattr(image, "n_frames", 1)) != 1:
                     return None
                 raw_width, raw_height = image.size
@@ -1449,7 +1490,7 @@ def preferred_verified_linked_path(
                 ):
                     return None
                 image.verify()
-            with Image.open(candidate) as image:
+            with Image.open(BytesIO(body)) as image:
                 oriented = ImageOps.exif_transpose(image)
                 oriented.load()
                 width, height = oriented.size
@@ -1500,6 +1541,7 @@ def _prior_result(
     report_sha256: str,
     policy: LinkedImagePolicy,
     embedded_groups: Sequence[_EmbeddedGroup],
+    malware_scanner: MalwareScanner,
 ) -> LinkedImageResult | None:
     if not prior_receipt:
         return None
@@ -1532,7 +1574,11 @@ def _prior_result(
             "full_resolution_width": item.get("decoded_width"),
             "full_resolution_height": item.get("decoded_height"),
         }
-        path = preferred_verified_linked_path(verification_row, destination_root)
+        path = preferred_verified_linked_path(
+            verification_row,
+            destination_root,
+            malware_scanner=malware_scanner,
+        )
         if path is None:
             return None
         try:
@@ -1542,8 +1588,13 @@ def _prior_result(
                 cached_body,
                 policy,
                 embedded_groups,
+                malware_scanner,
             )
-        except (OSError, LinkedImageError):
+        except OSError:
+            return None
+        except LinkedImageError as exc:
+            if exc.code.startswith("MALWARE_"):
+                raise
             return None
         return LinkedImageResult(
             photo_id=candidate.photo_id,
@@ -1588,6 +1639,7 @@ def _retrieve_candidate(
     transport: Transport,
     remaining_run_bytes: int,
     embedded_groups: Sequence[_EmbeddedGroup],
+    malware_scanner: MalwareScanner,
 ) -> tuple[LinkedImageResult, int]:
     last_error = "NETWORK_FAILURE"
     consumed_bytes = 0
@@ -1603,6 +1655,7 @@ def _retrieve_candidate(
                 body,
                 policy,
                 embedded_groups,
+                malware_scanner,
             )
             content_sha256 = _sha256_bytes(body)
             stored_path = _atomic_store(destination_root, body, content_sha256)
@@ -1695,6 +1748,7 @@ def materialize_linked_images(
     destination_root: Path,
     *,
     report_sha256: str,
+    malware_scanner: MalwareScanner,
     policy: LinkedImagePolicy = DEFAULT_LINKED_IMAGE_POLICY,
     prior_receipt: dict | None = None,
     resolver: Resolver = resolve_public_addresses,
@@ -1705,7 +1759,11 @@ def materialize_linked_images(
     photo_ids = [str(row.get("photo_id") or "").strip() for row in photo_rows]
     if any(not photo_id for photo_id in photo_ids) or len(photo_ids) != len(set(photo_ids)):
         raise LinkedImageError("INVALID_PHOTO_INVENTORY")
-    report_digest = _sha256_file(report)
+    try:
+        report_bytes = report.read_bytes()
+    except OSError:
+        raise LinkedImageError("REPORT_UNAVAILABLE") from None
+    report_digest = _sha256_bytes(report_bytes)
     if not _HEX_SHA256.fullmatch(report_sha256.lower()) or report_digest != report_sha256.lower():
         raise LinkedImageError("REPORT_SHA256_MISMATCH")
     selected_transport = transport or _pinned_https_get
@@ -1715,10 +1773,12 @@ def materialize_linked_images(
         report,
         photo_rows,
         policy,
+        malware_scanner=malware_scanner,
         unresolved_links=unresolved_links,
         secondary_activation_regions=secondary_activation_regions,
+        _report_bytes=report_bytes,
     )
-    embedded_groups = _build_embedded_groups(photo_rows, policy)
+    embedded_groups = _build_embedded_groups(photo_rows, policy, malware_scanner)
     rows_by_id = {
         str(row.get("photo_id")): row
         for row in photo_rows
@@ -1752,6 +1812,7 @@ def materialize_linked_images(
             report_digest,
             policy,
             embedded_groups,
+            malware_scanner,
         )
         if cached is not None:
             results_by_id[photo_id] = cached
@@ -1774,6 +1835,7 @@ def materialize_linked_images(
             selected_transport,
             remaining_run_bytes,
             embedded_groups,
+            malware_scanner,
         )
         total_received += received
         if total_received > policy.maximum_run_bytes:

@@ -22,9 +22,8 @@ from classifire.main import (
     add_runtime_security_middleware,
     lifespan,
 )
-from classifire.main import (
-    app as runtime_app,
-)
+from classifire.main import app as runtime_app
+from classifire.services.malware_scanning import MalwareScanError
 
 
 def _production_settings(tmp_path: Path, **updates: Any) -> Settings:
@@ -35,6 +34,7 @@ def _production_settings(tmp_path: Path, **updates: Any) -> Settings:
         "session_https_only": True,
         "trusted_hosts": ["app.example.test"],
         "allowed_origins": ["https://app.example.test"],
+        "clamav_host": "clamav.internal",
         "storage_root": tmp_path / "storage",
     }
     values.update(updates)
@@ -49,6 +49,15 @@ def _unsafe_production_settings(tmp_path: Path) -> Settings:
         session_https_only=False,
         trusted_hosts=["*"],
         allowed_origins=["*"],
+    )
+
+
+@pytest.fixture(autouse=True)
+def _ready_scanner(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "require_malware_scanner_ready", lambda _settings: None)
+    monkeypatch.setattr(
+        "classifire.main.require_malware_scanner_ready",
+        lambda _settings: None,
     )
 
 
@@ -72,6 +81,39 @@ def test_start_rejects_unsafe_production_before_uvicorn_or_filesystem(
     assert "PRODUCTION_SECRET_KEY_WEAK" in result.output
     assert "operator-secret-must-not-leak" not in result.output
     assert "must-not-be-opened" not in result.output
+    assert uvicorn_called is False
+    assert not settings.storage_root.exists()
+
+
+def test_start_rejects_unavailable_scanner_before_schema_or_uvicorn(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = _production_settings(tmp_path)
+    schema_called = False
+    uvicorn_called = False
+
+    def unavailable(_settings: Settings) -> None:
+        raise MalwareScanError("MALWARE_SCANNER_UNAVAILABLE")
+
+    def unexpected_schema(*_args: object, **_kwargs: object) -> None:
+        nonlocal schema_called
+        schema_called = True
+
+    def unexpected_uvicorn(*_args: object, **_kwargs: object) -> None:
+        nonlocal uvicorn_called
+        uvicorn_called = True
+
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    monkeypatch.setattr(cli, "require_malware_scanner_ready", unavailable)
+    monkeypatch.setattr(cli, "prepare_application_schema", unexpected_schema)
+    monkeypatch.setattr(cli.uvicorn, "run", unexpected_uvicorn)
+
+    result = CliRunner().invoke(cli.app, ["start"])
+
+    assert result.exit_code != 0
+    assert "MALWARE_SCANNER_UNAVAILABLE" in result.output
+    assert schema_called is False
     assert uvicorn_called is False
     assert not settings.storage_root.exists()
 
@@ -142,6 +184,38 @@ def test_lifespan_rejects_unsafe_production_before_schema_or_storage(
     assert not settings.storage_root.exists()
 
 
+def test_lifespan_rejects_unavailable_scanner_before_schema_or_storage(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from classifire import main
+
+    settings = _production_settings(tmp_path)
+    schema_called = False
+
+    def unavailable(_settings: Settings) -> None:
+        raise MalwareScanError("MALWARE_SCANNER_UNAVAILABLE")
+
+    def unexpected_schema(*_args: object, **_kwargs: object) -> None:
+        nonlocal schema_called
+        schema_called = True
+
+    async def enter_lifespan() -> None:
+        async with lifespan(runtime_app):
+            pass
+
+    monkeypatch.setattr(main, "settings", settings)
+    monkeypatch.setattr(main, "require_malware_scanner_ready", unavailable)
+    monkeypatch.setattr(main, "prepare_application_schema", unexpected_schema)
+
+    with pytest.raises(MalwareScanError) as rejected:
+        asyncio.run(enter_lifespan())
+
+    assert rejected.value.code == "MALWARE_SCANNER_UNAVAILABLE"
+    assert schema_called is False
+    assert not settings.storage_root.exists()
+
+
 def test_doctor_reports_unsafe_production_without_database_or_secret_disclosure(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -165,6 +239,34 @@ def test_doctor_reports_unsafe_production_without_database_or_secret_disclosure(
     assert "not inspected" in result.output
     assert "operator-secret-must-not-leak" not in result.output
     assert "must-not-be-opened" not in result.output
+    assert database_called is False
+    assert not settings.storage_root.exists()
+
+
+def test_doctor_blocks_database_when_live_scanner_is_unavailable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = _production_settings(tmp_path)
+    database_called = False
+
+    def unavailable(_settings: Settings) -> None:
+        raise MalwareScanError("MALWARE_SCANNER_UNAVAILABLE")
+
+    def unexpected_database(*_args: object, **_kwargs: object) -> object:
+        nonlocal database_called
+        database_called = True
+        raise AssertionError("database must not be inspected before scanner readiness")
+
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    monkeypatch.setattr(cli, "require_malware_scanner_ready", unavailable)
+    monkeypatch.setattr(cli, "_doctor_database_engine", unexpected_database)
+
+    result = CliRunner().invoke(cli.app, ["doctor"], terminal_width=240)
+
+    assert result.exit_code == 1
+    assert "Malware scanner" in result.output
+    assert "MALWARE_SCANNER_UNAVAILABLE" in result.output
     assert database_called is False
     assert not settings.storage_root.exists()
 
@@ -361,6 +463,40 @@ def test_production_worker_requires_initialization_before_running(
         cli.worker(interval=0.1)
 
     assert worker_called is False
+
+
+def test_production_worker_rejects_unavailable_scanner_before_schema(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from classifire import worker as worker_module
+
+    settings = _production_settings(tmp_path)
+    schema_called = False
+    worker_called = False
+
+    def unavailable(_settings: Settings) -> None:
+        raise MalwareScanError("MALWARE_SCANNER_UNAVAILABLE")
+
+    def unexpected_schema(*_args: object, **_kwargs: object) -> None:
+        nonlocal schema_called
+        schema_called = True
+
+    def unexpected_worker(_interval: float) -> None:
+        nonlocal worker_called
+        worker_called = True
+
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    monkeypatch.setattr(cli, "require_malware_scanner_ready", unavailable)
+    monkeypatch.setattr(cli, "prepare_application_schema", unexpected_schema)
+    monkeypatch.setattr(worker_module, "run_forever", unexpected_worker)
+
+    with pytest.raises(typer.BadParameter, match="MALWARE_SCANNER_UNAVAILABLE"):
+        cli.worker(interval=0.1)
+
+    assert schema_called is False
+    assert worker_called is False
+    assert not settings.storage_root.exists()
 
 
 def test_init_reports_explicit_first_administrator_requirement(

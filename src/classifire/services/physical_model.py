@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select
@@ -10,6 +11,10 @@ from sqlalchemy.orm import Session
 
 from ..models import Estimate, Opening, Service, StoredFile
 from ..physical_models import Defect, EvidenceSource, PhysicalModelLock, ServiceOpeningLink
+from .storage import (
+    StoredFileSecurityError,
+    require_clean_stored_file_for_session,
+)
 from .workflow import WorkflowAction
 from .workflow_guard import require_estimate_action
 
@@ -48,7 +53,9 @@ def _active_locks(db: Session, estimate_id: str) -> list[PhysicalModelLock]:
 def _evidence_digest_rows(
     db: Session,
     estimate_id: str,
-) -> tuple[list[EvidenceSource], list[dict[str, Any]]]:
+    storage_root: Path | None = None,
+    integrity_cache: dict[tuple[str, str], bool] | None = None,
+) -> tuple[list[EvidenceSource], list[dict[str, Any]], list[str]]:
     evidence = list(
         db.scalars(
             select(EvidenceSource)
@@ -60,11 +67,62 @@ def _evidence_digest_rows(
         ).all()
     )
     digest_rows: list[dict[str, Any]] = []
+    unbound_ids: list[str] = []
+    unavailable_ids: list[str] = []
+    unclean_ids: list[str] = []
+    mismatched_digest_ids: list[str] = []
+    inadmissible_ids: list[str] = []
+    integrity_invalid_ids: list[str] = []
     for item in evidence:
         digest = item.sha256
-        if not digest and item.stored_file_id:
-            stored = db.get(StoredFile, item.stored_file_id)
-            digest = stored.sha256 if stored else None
+        stored = db.get(StoredFile, item.stored_file_id) if item.stored_file_id else None
+        if not item.stored_file_id:
+            unbound_ids.append(item.id)
+        elif stored is None:
+            unavailable_ids.append(item.id)
+        else:
+            if str(stored.malware_scan_status or "").strip().lower() != "clean":
+                unclean_ids.append(item.id)
+            digest_matches = bool(
+                digest
+                and str(digest).casefold() == str(stored.sha256 or "").casefold()
+            )
+            if digest and not digest_matches:
+                mismatched_digest_ids.append(item.id)
+            if stored.immutable is not True or stored.purpose not in {
+                "project_evidence",
+                "technical_evidence",
+            }:
+                inadmissible_ids.append(item.id)
+            if (
+                str(stored.malware_scan_status or "").strip().lower() == "clean"
+                and stored.immutable is True
+                and stored.purpose in {"project_evidence", "technical_evidence"}
+                and digest_matches
+            ):
+                cache_key = (stored.id, str(digest).casefold())
+                integrity_valid = (
+                    integrity_cache.get(cache_key)
+                    if integrity_cache is not None and cache_key in integrity_cache
+                    else None
+                )
+                if integrity_valid is None:
+                    try:
+                        require_clean_stored_file_for_session(
+                            db,
+                            stored,
+                            storage_root=storage_root,
+                            allowed_purposes={"project_evidence", "technical_evidence"},
+                            expected_sha256=str(digest),
+                        )
+                    except StoredFileSecurityError:
+                        integrity_valid = False
+                    else:
+                        integrity_valid = True
+                    if integrity_cache is not None:
+                        integrity_cache[cache_key] = integrity_valid
+                if not integrity_valid:
+                    integrity_invalid_ids.append(item.id)
         digest_rows.append(
             {
                 "id": item.id,
@@ -80,7 +138,40 @@ def _evidence_digest_rows(
                 "source_json": item.source_json,
             }
         )
-    return evidence, digest_rows
+    binding_unknowns: list[str] = []
+    if unbound_ids:
+        binding_unknowns.append(
+            "Active EvidenceSource records are not bound to a StoredFile: "
+            + ", ".join(sorted(unbound_ids))
+        )
+    if unavailable_ids:
+        binding_unknowns.append(
+            "Active EvidenceSource records reference unavailable StoredFile records: "
+            + ", ".join(sorted(unavailable_ids))
+        )
+    if unclean_ids:
+        binding_unknowns.append(
+            "Active EvidenceSource records are bound to StoredFile records without a clean "
+            "malware scan: "
+            + ", ".join(sorted(unclean_ids))
+        )
+    if mismatched_digest_ids:
+        binding_unknowns.append(
+            "Active EvidenceSource SHA-256 does not match its StoredFile: "
+            + ", ".join(sorted(mismatched_digest_ids))
+        )
+    if inadmissible_ids:
+        binding_unknowns.append(
+            "Active EvidenceSource records are bound to mutable or wrong-purpose "
+            "StoredFile records: " + ", ".join(sorted(inadmissible_ids))
+        )
+    if integrity_invalid_ids:
+        binding_unknowns.append(
+            "Active EvidenceSource retained bytes are missing, outside the governed "
+            "storage root, or fail size/SHA-256 integrity: "
+            + ", ".join(sorted(integrity_invalid_ids))
+        )
+    return evidence, digest_rows, binding_unknowns
 
 
 def _opening_rows(openings: list[Opening]) -> list[dict[str, Any]]:
@@ -174,6 +265,7 @@ def _defect_rows(defects: list[Defect]) -> list[dict[str, Any]]:
 def _critical_unknowns(
     openings: list[Opening],
     evidence_rows: list[dict[str, Any]],
+    evidence_binding_unknowns: list[str],
     services: list[Service],
     legacy_services: list[Service],
     linked_service_opening_pairs: set[tuple[str, str]],
@@ -181,7 +273,7 @@ def _critical_unknowns(
     defects: list[Defect],
     estimate_id: str,
 ) -> list[str]:
-    unknowns: list[str] = []
+    unknowns = list(evidence_binding_unknowns)
     missing_evidence_digest_ids = sorted(
         str(item["id"]) for item in evidence_rows if not item.get("sha256")
     )
@@ -254,6 +346,9 @@ def _critical_unknowns(
 def build_current_physical_model_lock_payload(
     db: Session,
     estimate: Estimate,
+    *,
+    storage_root: Path | None = None,
+    _stored_file_integrity_cache: dict[tuple[str, str], bool] | None = None,
 ) -> dict[str, Any]:
     """Build the current deterministic payload without making a workflow decision.
 
@@ -302,7 +397,12 @@ def build_current_physical_model_lock_payload(
         if opening_ids
         else []
     )
-    _, evidence_rows = _evidence_digest_rows(db, estimate.id)
+    _, evidence_rows, evidence_binding_unknowns = _evidence_digest_rows(
+        db,
+        estimate.id,
+        storage_root,
+        _stored_file_integrity_cache,
+    )
     evidence_hashes = sorted({str(row["sha256"]) for row in evidence_rows if row.get("sha256")})
     defect_ids = sorted({item.canonical_defect_id for item in openings if item.canonical_defect_id})
     defects = (
@@ -313,6 +413,7 @@ def build_current_physical_model_lock_payload(
     critical_unknowns = _critical_unknowns(
         openings,
         evidence_rows,
+        evidence_binding_unknowns,
         services,
         legacy_services,
         {(item.service_id, item.opening_id) for item in links},
@@ -352,22 +453,37 @@ def build_current_physical_model_lock_payload(
     }
 
 
-def build_physical_model_lock_payload(db: Session, estimate: Estimate) -> dict[str, Any]:
+def build_physical_model_lock_payload(
+    db: Session,
+    estimate: Estimate,
+    *,
+    storage_root: Path | None = None,
+) -> dict[str, Any]:
     """Build the deterministic, physical-only lock payload for one estimate."""
     require_estimate_action(db, estimate, WorkflowAction.LOCK_PHYSICAL_MODEL)
-    return build_current_physical_model_lock_payload(db, estimate)
+    return build_current_physical_model_lock_payload(
+        db,
+        estimate,
+        storage_root=storage_root,
+    )
 
 
 def create_physical_model_lock(
     db: Session,
     estimate: Estimate,
+    *,
+    storage_root: Path | None = None,
 ) -> tuple[PhysicalModelLock, bool]:
     """Create an immutable lock or return the same active lock idempotently.
 
     Layer 2 never invalidates, replaces, or re-locks a changed physical model. A
     future governed reopen workflow is required before that capability can exist.
     """
-    payload = build_physical_model_lock_payload(db, estimate)
+    payload = build_physical_model_lock_payload(
+        db,
+        estimate,
+        storage_root=storage_root,
+    )
     active_locks = _active_locks(db, estimate.id)
     for lock in active_locks:
         if lock.content_hash == payload["content_hash"]:

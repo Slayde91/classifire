@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 from ipaddress import ip_address
+from math import isfinite
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
@@ -24,6 +25,10 @@ RuntimeConfigurationCode = Literal[
     "PRODUCTION_ALLOWED_ORIGIN_HTTPS_REQUIRED",
     "PRODUCTION_ALLOWED_ORIGIN_INVALID",
     "PRODUCTION_ALLOWED_ORIGIN_HOST_UNTRUSTED",
+    "PRODUCTION_MALWARE_SCANNER_REQUIRED",
+    "PRODUCTION_MALWARE_SCANNER_HOST_INVALID",
+    "PRODUCTION_MALWARE_SCANNER_PORT_INVALID",
+    "PRODUCTION_MALWARE_SCANNER_TIMEOUT_INVALID",
 ]
 
 
@@ -174,6 +179,7 @@ class Settings(BaseSettings):
     session_https_only: bool = False
     clamav_host: str | None = None
     clamav_port: int = 3310
+    clamav_timeout_seconds: float = 10.0
     mission_control_url: str = "http://127.0.0.1:3000"
     mission_control_api_key: str | None = None
     openclaw_config_path: Path | None = None
@@ -236,6 +242,29 @@ class Settings(BaseSettings):
             add(
                 "PRODUCTION_POSTGRESQL_REQUIRED",
                 "CLASSIFIRE_DATABASE_URL must use PostgreSQL in production",
+            )
+        if not self.clamav_host:
+            add(
+                "PRODUCTION_MALWARE_SCANNER_REQUIRED",
+                "CLASSIFIRE_CLAMAV_HOST must identify the configured malware scanner "
+                "in production",
+            )
+        elif normalise_exact_host(self.clamav_host) is None:
+            add(
+                "PRODUCTION_MALWARE_SCANNER_HOST_INVALID",
+                "CLASSIFIRE_CLAMAV_HOST must contain one exact host name or IPv4 address",
+            )
+        if not 1 <= self.clamav_port <= 65535:
+            add(
+                "PRODUCTION_MALWARE_SCANNER_PORT_INVALID",
+                "CLASSIFIRE_CLAMAV_PORT must be between 1 and 65535",
+            )
+        if not isfinite(self.clamav_timeout_seconds) or not (
+            0 < self.clamav_timeout_seconds <= 60
+        ):
+            add(
+                "PRODUCTION_MALWARE_SCANNER_TIMEOUT_INVALID",
+                "CLASSIFIRE_CLAMAV_TIMEOUT_SECONDS must be greater than 0 and no more than 60",
             )
 
         trusted_hosts: set[str] = set()

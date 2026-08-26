@@ -6,10 +6,11 @@ import stat
 import sys
 from contextlib import contextmanager
 from copy import deepcopy
+from functools import partial
 from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, BinaryIO
 
 import pymupdf
 import pytest
@@ -33,10 +34,12 @@ from classifire.services.phase8_representative_run import (
     REPRESENTATIVE_RUN_PACKAGE_SCHEMA,
     REPRESENTATIVE_RUN_PREFLIGHT_RECEIPT_SCHEMA,
     Phase8RepresentativeRunError,
-    execute_phase8_representative_run,
     load_phase8_representative_run_package,
     phase8_representative_source_tree_sha256,
     verify_phase8_representative_run_package,
+)
+from classifire.services.phase8_representative_run import (
+    execute_phase8_representative_run as _execute_phase8_representative_run,
 )
 from classifire.services.phase8_visual_proposal import VISUAL_INFERENCE_RESPONSE_SCHEMA
 
@@ -46,6 +49,36 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import run_phase8_representative_package as representative_package_cli  # noqa: E402
+
+
+class _CleanScanner:
+    def check_ready(self) -> None:
+        pass
+
+    def scan_stream(self, stream: BinaryIO) -> None:
+        stream.read()
+
+
+execute_phase8_representative_run = partial(
+    _execute_phase8_representative_run,
+    malware_scanner=_CleanScanner(),
+)
+
+
+def test_representative_package_requires_a_configured_scanner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(representative_package_cli, "get_settings", object)
+    monkeypatch.setattr(
+        representative_package_cli,
+        "configured_malware_scanner",
+        lambda _settings: None,
+    )
+
+    with pytest.raises(representative_package_cli.MalwareScanError) as captured:
+        representative_package_cli._configured_ready_malware_scanner()
+
+    assert captured.value.code == "MALWARE_SCANNER_UNAVAILABLE"
 
 
 def _detailed_jpeg() -> bytes:
@@ -647,6 +680,53 @@ def test_package_preflight_validates_snapshot_without_runtime(tmp_path: Path) ->
         assert before.counts == after.counts
 
 
+@pytest.mark.parametrize(
+    "invalid_state",
+    ["pending", "mutable", "wrong_purpose", "digest_mismatch", "tampered"],
+)
+def test_package_preflight_rejects_untrusted_parent_storage(
+    tmp_path: Path,
+    invalid_state: str,
+) -> None:
+    with physical_session() as session:
+        package_dir = tmp_path / "package"
+        storage_root = package_dir / "storage"
+        storage_root.mkdir(parents=True, exist_ok=True)
+        embedded = storage_root / "embedded.jpg"
+        _embedded(_detailed_jpeg(), embedded)
+        estimate, parent, stored = _parent(session, storage_root, embedded)
+        session.commit()
+
+        package = load_phase8_representative_run_package(
+            _package(
+                tmp_path,
+                estimate_id=estimate.id,
+                parent_evidence_id=parent.id,
+            )
+        )
+        if invalid_state == "pending":
+            stored.malware_scan_status = "pending"
+        elif invalid_state == "mutable":
+            stored.immutable = False
+        elif invalid_state == "wrong_purpose":
+            stored.purpose = "unrelated_upload"
+        elif invalid_state == "digest_mismatch":
+            parent.sha256 = "b" * 64
+        else:
+            embedded.write_bytes(b"tampered after retention")
+        session.flush()
+
+        with pytest.raises(Phase8RepresentativeRunError) as rejected:
+            verify_phase8_representative_run_package(
+                session,
+                package,
+                actual_git_revision="a" * 40,
+                repository_root=REPOSITORY_ROOT,
+            )
+
+        assert rejected.value.code == "PARENT_EVIDENCE_INVALID"
+
+
 def test_package_command_uses_snapshot_and_rolls_back(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -696,8 +776,15 @@ def test_package_command_uses_snapshot_and_rolls_back(
 
         source = _detailed_jpeg()
         execute_real = representative_package_cli.execute_phase8_representative_run
+        configured_scanner = _CleanScanner()
+        scanner_configuration_calls: list[bool] = []
+
+        def configured_ready_scanner() -> _CleanScanner:
+            scanner_configuration_calls.append(True)
+            return configured_scanner
 
         def execute_synthetic(*args: Any, **kwargs: Any) -> Any:
+            assert kwargs.get("malware_scanner") is configured_scanner
             return execute_real(
                 *args,
                 transport=lambda _uri, _policy, _resolver: _FetchHop(
@@ -723,6 +810,11 @@ def test_package_command_uses_snapshot_and_rolls_back(
             representative_package_cli,
             "verify_phase8_no_write_gateway_readiness",
             readiness_ready,
+        )
+        monkeypatch.setattr(
+            representative_package_cli,
+            "_configured_ready_malware_scanner",
+            configured_ready_scanner,
         )
 
         preflight_output = tmp_path / "preflight-output"
@@ -756,6 +848,7 @@ def test_package_command_uses_snapshot_and_rolls_back(
         assert preflight_result["runtime_started"] is False
         assert preflight_result["retrieval_performed"] is False
         assert preflight_receipt["schema"] == REPRESENTATIVE_RUN_PREFLIGHT_RECEIPT_SCHEMA
+        assert scanner_configuration_calls == []
         readiness_receipt = json.loads(
             (preflight_output / "runtime-readiness-receipt.json").read_text(encoding="utf-8")
         )
@@ -792,6 +885,7 @@ def test_package_command_uses_snapshot_and_rolls_back(
         )
 
         assert representative_package_cli.main() == 0
+        assert scanner_configuration_calls == [True]
         result = json.loads(capsys.readouterr().out)
         completion = json.loads((output / "completion-receipt.json").read_text(encoding="utf-8"))
         with Session(engine) as session:

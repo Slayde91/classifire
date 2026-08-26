@@ -15,12 +15,13 @@ from ..physical_models import Defect, EvidenceSource
 from ..security import require_permission
 from ..services.physical_model import PhysicalModelLockError, create_physical_model_lock
 from ..services.physical_mutation_guard import PhysicalMutationError, require_evidence_mutation
+from ..services.storage import StoredFileSecurityError, require_clean_stored_file
 from ..services.workflow import WorkflowTransitionError
 
 router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Physical Model"])
 Db = Annotated[Session, Depends(get_db)]
 _ADMISSIBLE_EVIDENCE_FILE_PURPOSES = frozenset({"technical_evidence"})
-_ADMISSIBLE_EVIDENCE_SCAN_STATUSES = frozenset({"clean", "not_configured"})
+_ADMISSIBLE_EVIDENCE_SCAN_STATUSES = frozenset({"clean"})
 
 
 class EvidenceSourceInput(BaseModel):
@@ -81,6 +82,7 @@ def register_evidence_source(
     request: Request,
     db: Db,
     user: Annotated[User, Depends(require_permission("estimate:write"))],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> dict[str, Any]:
     """Register retained evidence before the physical model is locked."""
     estimate = _estimate_or_404(db, estimate_id)
@@ -107,6 +109,17 @@ def register_evidence_source(
     if not stored:
         raise HTTPException(status_code=404, detail="Stored evidence file not found")
     _require_admissible_evidence_file(stored)
+    try:
+        require_clean_stored_file(
+            settings.storage_root,
+            stored,
+            allowed_purposes={"technical_evidence"},
+        )
+    except StoredFileSecurityError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="STORED_EVIDENCE_FILE_INTEGRITY_INVALID",
+        ) from exc
     sha256 = stored.sha256
 
     evidence = EvidenceSource(
@@ -178,7 +191,11 @@ def lock_physical_model(
             ),
         )
     try:
-        lock, created = create_physical_model_lock(db, estimate)
+        lock, created = create_physical_model_lock(
+            db,
+            estimate,
+            storage_root=settings.storage_root,
+        )
     except (WorkflowTransitionError, PhysicalModelLockError) as exc:
         blockers = list(exc.blockers) if isinstance(exc, WorkflowTransitionError) else [str(exc)]
         raise HTTPException(

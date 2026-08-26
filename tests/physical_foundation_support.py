@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Iterator
 from contextlib import contextmanager
 from decimal import Decimal
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from classifire import models, physical_models  # noqa: F401
 from classifire.db import Base
-from classifire.models import Estimate, Opening, Project, Service
+from classifire.models import Estimate, Opening, Project, Service, StoredFile
 from classifire.physical_models import EvidenceSource, ServiceOpeningLink
 from classifire.services.physical_defects import bind_canonical_defect
 
@@ -24,12 +27,14 @@ def physical_session() -> Iterator[Session]:
         poolclass=StaticPool,
     )
     Base.metadata.create_all(engine)
-    session = Session(engine)
-    try:
-        yield session
-    finally:
-        session.close()
-        engine.dispose()
+    with TemporaryDirectory(prefix="classifire-physical-test-") as retained_root:
+        session = Session(engine)
+        session.info["retained_storage_root"] = Path(retained_root)
+        try:
+            yield session
+        finally:
+            session.close()
+            engine.dispose()
 
 
 def add_estimate(session: Session, *, status: str = "draft") -> Estimate:
@@ -105,11 +110,33 @@ def add_service_link(session: Session, service: Service, opening: Opening) -> Se
 
 
 def add_evidence(session: Session, estimate: Estimate) -> EvidenceSource:
+    payload = b"controlled physical-model evidence bytes"
+    digest = hashlib.sha256(payload).hexdigest()
+    storage_root = session.info.get("retained_storage_root")
+    if not isinstance(storage_root, Path):
+        raise AssertionError("physical_session must provide retained storage")
+    retained_path = storage_root / f"{digest}.jpg"
+    retained_path.write_bytes(payload)
+    stored = session.scalar(select(StoredFile).where(StoredFile.sha256 == digest))
+    if stored is None:
+        stored = StoredFile(
+            original_filename="test-report-page-1.jpg",
+            media_type="image/jpeg",
+            storage_path=str(retained_path),
+            sha256=digest,
+            size_bytes=len(payload),
+            purpose="technical_evidence",
+            malware_scan_status="clean",
+            immutable=True,
+        )
+        session.add(stored)
+        session.flush()
     evidence = EvidenceSource(
         estimate_id=estimate.id,
+        stored_file_id=stored.id,
         evidence_type="inspection_photo",
         source_reference="test-report-page-1",
-        sha256="a" * 64,
+        sha256=digest,
         evidence_class="observed",
         confidence=Decimal("0.95"),
     )

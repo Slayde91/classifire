@@ -4,15 +4,56 @@ import json
 import socket
 import traceback
 from dataclasses import replace
+from functools import partial
 from io import BytesIO
 from pathlib import Path
+from typing import BinaryIO
 
 import pytest
 from PIL import Image, ImageDraw, ImageOps
 
 from classifire.services import linked_image_retrieval as linked
+from classifire.services.malware_scanning import MalwareScanError
 
 LEAK_MARKER = "capability-value-that-must-never-leak"
+
+
+class _CleanScanner:
+    def check_ready(self) -> None:
+        pass
+
+    def scan_stream(self, stream: BinaryIO) -> None:
+        stream.read()
+
+
+class _RejectingScanner:
+    def __init__(self, code: str, *, payload: bytes | None = None) -> None:
+        self.code = code
+        self.payload = payload
+
+    def check_ready(self) -> None:
+        pass
+
+    def scan_stream(self, stream: BinaryIO) -> None:
+        body = stream.read()
+        if self.payload is None or body == self.payload:
+            raise MalwareScanError(self.code)
+
+
+@pytest.fixture(autouse=True)
+def _supply_clean_scanner(monkeypatch: pytest.MonkeyPatch) -> None:
+    scanner = _CleanScanner()
+    for name in (
+        "confirm_image_binding",
+        "extract_candidates",
+        "materialize_linked_images",
+        "preferred_verified_linked_path",
+    ):
+        monkeypatch.setattr(
+            linked,
+            name,
+            partial(getattr(linked, name), malware_scanner=scanner),
+        )
 
 
 def _uri(*, host: str = "twiddle.onuptick.com", path: str = "/media/photo.jpg") -> str:
@@ -150,6 +191,146 @@ def _patch_candidate_extraction(
             {candidate.photo_id},
         ),
     )
+
+
+def test_report_malware_is_rejected_before_pdf_parsing(tmp_path: Path) -> None:
+    report, _report_sha256 = _report(tmp_path)
+
+    with pytest.raises(linked.LinkedImageError) as captured:
+        linked.extract_candidates(
+            report,
+            [],
+            malware_scanner=_RejectingScanner("MALWARE_DETECTED"),
+        )
+
+    assert captured.value.code == "MALWARE_DETECTED"
+
+
+def test_infected_native_image_blocks_pillow_network_and_storage(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report, report_sha256 = _report(tmp_path)
+    source = _jpeg_bytes((1000, 1000))
+    embedded = tmp_path / "infected-embedded.jpg"
+    _write_embedded(embedded, source)
+    _patch_candidate_extraction(monkeypatch, _candidate(embedded))
+    monkeypatch.setattr(
+        linked.Image,
+        "open",
+        lambda *_args, **_kwargs: pytest.fail("Pillow must not receive infected bytes"),
+    )
+    monkeypatch.setattr(
+        linked,
+        "_atomic_store",
+        lambda *_args, **_kwargs: pytest.fail("infected bytes must not be stored"),
+    )
+
+    with pytest.raises(linked.LinkedImageError) as captured:
+        linked.materialize_linked_images(
+            report,
+            [_photo_row(embedded)],
+            tmp_path / "infected-native-cache",
+            report_sha256=report_sha256,
+            malware_scanner=_RejectingScanner(
+                "MALWARE_DETECTED",
+                payload=embedded.read_bytes(),
+            ),
+            transport=lambda *_args: pytest.fail("network must not run"),
+        )
+
+    assert captured.value.code == "MALWARE_DETECTED"
+
+
+def test_unavailable_scanner_blocks_fetched_body_before_decode_and_storage(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report, report_sha256 = _report(tmp_path)
+    source = _jpeg_bytes((1000, 1000))
+    embedded = tmp_path / "embedded-for-unavailable.jpg"
+    _write_embedded(embedded, source)
+    _patch_candidate_extraction(monkeypatch, _candidate(embedded))
+    monkeypatch.setattr(
+        linked,
+        "_decoded_jpeg",
+        lambda *_args, **_kwargs: pytest.fail("unscanned bytes must not reach Pillow"),
+    )
+    monkeypatch.setattr(
+        linked,
+        "_atomic_store",
+        lambda *_args, **_kwargs: pytest.fail("unscanned bytes must not be stored"),
+    )
+
+    batch = linked.materialize_linked_images(
+        report,
+        [_photo_row(embedded)],
+        tmp_path / "unavailable-fetch-cache",
+        report_sha256=report_sha256,
+        malware_scanner=_RejectingScanner(
+            "MALWARE_SCANNER_UNAVAILABLE",
+            payload=source,
+        ),
+        transport=lambda *_args: linked._FetchHop(
+            status=200,
+            content_type="image/jpeg",
+            body=source,
+        ),
+    )
+
+    assert batch.ok is False
+    assert batch.results[0].status == "MALWARE_SCANNER_UNAVAILABLE"
+
+
+def test_unavailable_scanner_blocks_cached_body_before_rebinding(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report, report_sha256 = _report(tmp_path)
+    source = _jpeg_bytes((1000, 1000))
+    embedded = tmp_path / "embedded-for-cache.jpg"
+    _write_embedded(embedded, source)
+    _patch_candidate_extraction(monkeypatch, _candidate(embedded))
+    destination = tmp_path / "prior-cache"
+    initial = linked.materialize_linked_images(
+        report,
+        [_photo_row(embedded)],
+        destination,
+        report_sha256=report_sha256,
+        malware_scanner=_CleanScanner(),
+        transport=lambda *_args: linked._FetchHop(
+            status=200,
+            content_type="image/jpeg",
+            body=source,
+        ),
+    )
+    assert initial.ok is True
+    monkeypatch.setattr(
+        linked,
+        "_decoded_jpeg",
+        lambda *_args, **_kwargs: pytest.fail("unscanned cache must not reach Pillow"),
+    )
+    monkeypatch.setattr(
+        linked,
+        "_atomic_store",
+        lambda *_args, **_kwargs: pytest.fail("unscanned cache must not be stored"),
+    )
+
+    with pytest.raises(linked.LinkedImageError) as captured:
+        linked.materialize_linked_images(
+            report,
+            [_photo_row(embedded)],
+            destination,
+            report_sha256=report_sha256,
+            malware_scanner=_RejectingScanner(
+                "MALWARE_SCANNER_UNAVAILABLE",
+                payload=source,
+            ),
+            prior_receipt=initial.receipt,
+            transport=lambda *_args: pytest.fail("cached result must not refetch"),
+        )
+
+    assert captured.value.code == "MALWARE_SCANNER_UNAVAILABLE"
 
 
 def test_candidate_repr_and_receipt_never_contain_raw_signed_uri(tmp_path: Path) -> None:

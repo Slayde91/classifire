@@ -19,25 +19,28 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..audit import record_audit
 from ..models import Estimate, StoredFile
-from ..physical_models import EvidenceSource
+from ..physical_models import Defect, EvidenceSource
 from .linked_image_retrieval import (
     DEFAULT_LINKED_IMAGE_POLICY,
     READY_STATUSES,
+    LinkedImageError,
     LinkedImagePolicy,
     LinkedImageResult,
     preferred_verified_linked_path,
 )
+from .malware_scanning import MalwareScanError, MalwareScanner, require_clean_bytes
 from .phase8_visual_evidence import VISUAL_EVIDENCE_METADATA_KEY
 from .physical_mutation_guard import PhysicalMutationError, require_evidence_intake
 from .workflow import WorkflowTransitionError
 
 LINKED_IMAGE_EVIDENCE_SCHEMA = "CLASSIFIRE-LINKED-IMAGE-EVIDENCE-v1"
 _HEX_SHA256 = frozenset("0123456789abcdef")
-_SAFE_SCAN_STATUSES = frozenset({"clean", "not_configured"})
+_SAFE_SCAN_STATUSES = frozenset({"clean"})
 _VISUAL_MEDIA_TYPES = frozenset({"image/gif", "image/jpeg", "image/png", "image/webp"})
 _PARENT_METADATA_KEYS = frozenset(
     {
@@ -59,6 +62,13 @@ class LinkedImageEvidenceError(RuntimeError):
     def __init__(self, code: str) -> None:
         self.code = code
         super().__init__(f"Linked image evidence retention failed: {code}.")
+
+
+def _require_clean_retained_bytes(malware_scanner: MalwareScanner, payload: bytes) -> None:
+    try:
+        require_clean_bytes(malware_scanner, payload)
+    except MalwareScanError as exc:
+        raise LinkedImageEvidenceError(exc.code) from None
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,6 +126,44 @@ def _validate_stored_file(storage_root: Path, stored: StoredFile, expected_sha25
             raise LinkedImageEvidenceError("STORED_FILE_INVALID")
     except OSError as exc:
         raise LinkedImageEvidenceError("STORED_FILE_INVALID") from exc
+
+
+def _locked_stored_file_by_id(db: Session, stored_file_id: str) -> StoredFile | None:
+    return db.scalar(
+        select(StoredFile)
+        .where(StoredFile.id == stored_file_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+
+
+def _locked_stored_file_by_sha(db: Session, content_sha256: str) -> StoredFile | None:
+    return db.scalar(
+        select(StoredFile)
+        .where(StoredFile.sha256 == content_sha256)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+
+
+def _locked_parent_evidence(db: Session, evidence_id: str) -> EvidenceSource | None:
+    return db.scalar(
+        select(EvidenceSource)
+        .where(EvidenceSource.id == evidence_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+
+
+def _locked_defect(db: Session, defect_id: str) -> Defect | None:
+    """Serialise one defect's linked-evidence replay identity."""
+
+    return db.scalar(
+        select(Defect)
+        .where(Defect.id == defect_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
 
 
 def _validate_parent(
@@ -249,6 +297,7 @@ def _verified_source(
     result: LinkedImageResult,
     retrieval_root: Path,
     policy: LinkedImagePolicy,
+    malware_scanner: MalwareScanner,
 ) -> tuple[bytes, str]:
     if result.status.upper() not in READY_STATUSES:
         raise LinkedImageEvidenceError("RESULT_NOT_VERIFIED")
@@ -298,13 +347,24 @@ def _verified_source(
     ):
         raise LinkedImageEvidenceError("RESULT_PROOF_INCOMPLETE")
     _normalised_sha256(result.embedded_pixel_sha256, code="RESULT_PROOF_INCOMPLETE")
-    path = preferred_verified_linked_path(result.receipt_row(), retrieval_root, policy=policy)
+    try:
+        path = preferred_verified_linked_path(
+            result.receipt_row(),
+            retrieval_root,
+            malware_scanner=malware_scanner,
+            policy=policy,
+        )
+    except LinkedImageError as exc:
+        if exc.code.startswith("MALWARE_"):
+            raise LinkedImageEvidenceError(exc.code) from None
+        raise
     if path is None:
         raise LinkedImageEvidenceError("VERIFIED_SOURCE_INVALID")
     try:
         body = path.read_bytes()
     except OSError as exc:
         raise LinkedImageEvidenceError("VERIFIED_SOURCE_INVALID") from exc
+    _require_clean_retained_bytes(malware_scanner, body)
     if (
         _sha256_bytes(body) != content_sha256
         or len(body) != result.received_bytes
@@ -356,11 +416,14 @@ def _existing_evidence(
     source_json: dict[str, Any],
 ) -> EvidenceSource | None:
     matches = db.scalars(
-        select(EvidenceSource).where(
+        select(EvidenceSource)
+        .where(
             EvidenceSource.estimate_id == estimate_id,
             EvidenceSource.defect_id == defect_id,
             EvidenceSource.source_reference == source_reference,
         )
+        .with_for_update()
+        .execution_options(populate_existing=True)
     ).all()
     if not matches:
         return None
@@ -394,7 +457,7 @@ def _store_bytes(
     body: bytes,
     content_sha256: str,
 ) -> tuple[StoredFile, bool]:
-    existing = db.scalar(select(StoredFile).where(StoredFile.sha256 == content_sha256))
+    existing = _locked_stored_file_by_sha(db, content_sha256)
     if existing is not None:
         _validate_stored_file(storage_root, existing, content_sha256)
         return existing, False
@@ -425,12 +488,37 @@ def _store_bytes(
                 temporary_name = temporary.name
             if _sha256_file(Path(temporary_name)) != content_sha256:
                 raise LinkedImageEvidenceError("STORAGE_HASH_MISMATCH")
-            try:
-                os.rename(temporary_name, target)
-                temporary_name = None
-            except FileExistsError:
-                if not target.is_file() or _sha256_file(target) != content_sha256:
-                    raise LinkedImageEvidenceError("STORAGE_CONTENT_COLLISION") from None
+
+        stored = StoredFile(
+            original_filename=f"linked-image-{content_sha256[:12]}.jpg",
+            media_type="image/jpeg",
+            storage_path=str(target),
+            sha256=content_sha256,
+            size_bytes=len(body),
+            purpose="technical_evidence",
+            malware_scan_status="clean",
+            immutable=True,
+        )
+        try:
+            with db.begin_nested():
+                db.add(stored)
+                db.flush()
+                if temporary_name is not None:
+                    try:
+                        os.rename(temporary_name, target)
+                        temporary_name = None
+                    except FileExistsError:
+                        if not target.is_file() or _sha256_file(target) != content_sha256:
+                            raise LinkedImageEvidenceError(
+                                "STORAGE_CONTENT_COLLISION"
+                            ) from None
+        except IntegrityError as exc:
+            winner = _locked_stored_file_by_sha(db, content_sha256)
+            if winner is None:  # pragma: no cover - database invariant failure.
+                raise LinkedImageEvidenceError("STORAGE_PERSISTENCE_CONFLICT") from exc
+            _validate_stored_file(storage_root, winner, content_sha256)
+            return winner, False
+        return stored, True
     except LinkedImageEvidenceError:
         raise
     except OSError as exc:
@@ -442,20 +530,6 @@ def _store_bytes(
             except OSError:
                 pass
 
-    stored = StoredFile(
-        original_filename=f"linked-image-{content_sha256[:12]}.jpg",
-        media_type="image/jpeg",
-        storage_path=str(target),
-        sha256=content_sha256,
-        size_bytes=len(body),
-        purpose="technical_evidence",
-        malware_scan_status="not_configured",
-        immutable=True,
-    )
-    db.add(stored)
-    db.flush()
-    return stored, True
-
 
 def retain_verified_linked_image(
     db: Session,
@@ -466,6 +540,7 @@ def retain_verified_linked_image(
     parent_evidence_source_id: str,
     result: LinkedImageResult,
     operator_reference: str,
+    malware_scanner: MalwareScanner,
     policy: LinkedImagePolicy = DEFAULT_LINKED_IMAGE_POLICY,
     source_report_sha256: str | None = None,
 ) -> LinkedImageEvidenceRetention:
@@ -487,10 +562,14 @@ def retain_verified_linked_image(
     except (PhysicalMutationError, WorkflowTransitionError) as exc:
         raise LinkedImageEvidenceError("EVIDENCE_MUTATION_FORBIDDEN") from exc
 
-    parent = db.get(EvidenceSource, parent_evidence_source_id)
+    parent = _locked_parent_evidence(db, parent_evidence_source_id)
     if parent is None or parent.estimate_id != estimate.id or parent.defect_id is None:
         raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID")
-    parent_stored = db.get(StoredFile, parent.stored_file_id) if parent.stored_file_id else None
+    parent_stored = (
+        _locked_stored_file_by_id(db, parent.stored_file_id)
+        if parent.stored_file_id
+        else None
+    )
     if parent_stored is None:
         raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID")
     _validate_parent(
@@ -501,7 +580,12 @@ def retain_verified_linked_image(
         source_report_sha256=source_report_sha256,
     )
 
-    body, content_sha256 = _verified_source(result, retrieval_root, policy)
+    body, content_sha256 = _verified_source(
+        result,
+        retrieval_root,
+        policy,
+        malware_scanner,
+    )
     visual_metadata = {
         "evidence_role": "primary_detail",
         "relationship": "linked_original",
@@ -514,6 +598,9 @@ def retain_verified_linked_image(
         "linked_image_retrieval": _provenance(result),
     }
     reference = _source_reference(result)
+    defect = _locked_defect(db, parent.defect_id)
+    if defect is None or defect.estimate_id != estimate.id:
+        raise LinkedImageEvidenceError("PARENT_EVIDENCE_INVALID")
     existing_evidence = _existing_evidence(
         db,
         estimate_id=estimate.id,
@@ -524,7 +611,11 @@ def retain_verified_linked_image(
         source_json=source_json,
     )
     if existing_evidence is not None:
-        existing_stored = db.get(StoredFile, existing_evidence.stored_file_id)
+        existing_stored = (
+            _locked_stored_file_by_id(db, existing_evidence.stored_file_id)
+            if existing_evidence.stored_file_id
+            else None
+        )
         if existing_stored is None:
             raise LinkedImageEvidenceError("EVIDENCE_REPLAY_CONFLICT")
         _validate_stored_file(storage_root, existing_stored, content_sha256)
