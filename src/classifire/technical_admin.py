@@ -17,7 +17,10 @@ from .db import get_db
 from .models import Approval, StoredFile, TechnicalDocument, TechnicalVariant
 from .security import verify_csrf
 from .services.calculation import D
-from .services.storage import StoredFileSecurityError, require_clean_stored_file
+from .services.storage import (
+    StoredFileSecurityError,
+    require_clean_stored_file_for_session,
+)
 from .services.technical import governed_unlinked_technical_source
 from .ui import _context, _require, templates
 
@@ -51,9 +54,10 @@ def _require_clean_technical_source(
     if stored is None:
         raise HTTPException(409, error_code)
     try:
-        require_clean_stored_file(
-            settings.storage_root,
+        require_clean_stored_file_for_session(
+            db,
             stored,
+            storage_root=settings.storage_root,
             allowed_purposes={"technical_evidence"},
         )
     except StoredFileSecurityError:

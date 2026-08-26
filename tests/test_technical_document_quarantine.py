@@ -7,8 +7,10 @@ from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
+from malware_scan_support import append_clean_attestation
 from physical_foundation_support import physical_session
 from sqlalchemy import select
+from sqlalchemy.orm.attributes import set_committed_value
 from starlette.requests import Request
 
 import classifire.services.technical as technical_service
@@ -80,6 +82,8 @@ def _document(
     )
     session.add_all([reviewer, stored])
     session.flush()
+    if scan_status == "clean":
+        append_clean_attestation(session, stored)
     document = TechnicalDocument(
         document_id=f"TECH-DOC-{suffix}",
         stored_file_id=stored.id,
@@ -166,8 +170,9 @@ def test_technical_document_approval_allows_a_clean_stored_file(tmp_path: Path) 
 def test_technical_document_approval_rejects_a_missing_stored_file(tmp_path: Path) -> None:
     with physical_session() as session:
         document, token = _document(session, tmp_path, scan_status="clean")
-        document.stored_file_id = "missing-stored-file"
-        session.flush()
+        # Simulate a corrupt/historical reference without asking the database
+        # to persist an impossible foreign-key value.
+        set_committed_value(document, "stored_file_id", "missing-stored-file")
 
         with pytest.raises(HTTPException) as rejected:
             technical_document_approve(
@@ -377,8 +382,8 @@ def test_technical_search_excludes_active_variant_after_linked_source_becomes_un
         assert {item.variant.id for item in candidates} == {
             clean_variant.id,
             second_clean_variant.id,
-            legacy_variant.id,
         }
+        assert legacy_variant not in {item.variant for item in candidates}
         assert integrity_calls == 2
 
 

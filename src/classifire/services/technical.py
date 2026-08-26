@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import json
 import re
 from dataclasses import dataclass
 from decimal import Decimal
@@ -13,7 +11,6 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from ..models import (
-    LibraryRelease,
     Opening,
     StoredFile,
     TechnicalDocument,
@@ -46,85 +43,8 @@ def _compare(project_value: str | None, candidate_value: str | None) -> str:
 
 
 def governed_unlinked_technical_source(db: Session, variant: TechnicalVariant) -> bool:
-    """Recognise an unlinked legacy record only through approved release lineage."""
+    """Keep unlinked release records as history, never runtime evidence."""
 
-    if variant.technical_document_id is not None or not variant.release_id:
-        return False
-    if (
-        not isinstance(variant.source_hash, str)
-        or len(variant.source_hash) != 64
-        or any(character not in "0123456789abcdefABCDEF" for character in variant.source_hash)
-        or not isinstance(variant.source_json, dict)
-        or str(variant.source_json.get("Variant_ID") or "").strip() != variant.variant_id
-        or str(variant.source_json.get("System_ID") or "").strip() != variant.system_id
-    ):
-        return False
-    source_release = db.get(LibraryRelease, variant.release_id)
-    source_manifest = source_release.source_manifest if source_release is not None else None
-    if not (
-        source_release is not None
-        and source_release.library_type == "technical"
-        and source_release.status in {"active", "superseded"}
-        and isinstance(source_release.release_hash, str)
-        and len(source_release.release_hash) == 64
-        and all(character in "0123456789abcdefABCDEF" for character in source_release.release_hash)
-        and isinstance(source_manifest, dict)
-        and isinstance(source_manifest.get("filename"), str)
-        and bool(str(source_manifest["filename"]).strip())
-        and isinstance(source_manifest.get("sha256"), str)
-        and str(source_manifest["sha256"]).casefold()
-        == source_release.release_hash.casefold()
-    ):
-        return False
-
-    approved_releases = db.scalars(
-        select(LibraryRelease).where(
-            LibraryRelease.library_type == "technical",
-            LibraryRelease.status.in_({"active", "superseded"}),
-            LibraryRelease.created_by_id.is_not(None),
-            LibraryRelease.approved_by_id.is_not(None),
-            LibraryRelease.approved_at.is_not(None),
-        )
-    ).all()
-    for approved_release in approved_releases:
-        manifest = approved_release.source_manifest
-        release_hash = approved_release.release_hash
-        if not isinstance(manifest, dict) or not isinstance(release_hash, str):
-            continue
-        if (
-            manifest.get("release_type") != "technical"
-            or manifest.get("version") != approved_release.version
-            or str(manifest.get("created_by_id") or "")
-            != approved_release.created_by_id
-        ):
-            continue
-        canonical_hash = hashlib.sha256(
-            json.dumps(
-                manifest,
-                sort_keys=True,
-                separators=(",", ":"),
-                default=str,
-            ).encode("utf-8")
-        ).hexdigest()
-        if canonical_hash.casefold() != release_hash.casefold():
-            continue
-        records = manifest.get("records")
-        if (
-            not isinstance(records, list)
-            or manifest.get("record_count") != len(records)
-        ):
-            continue
-        if any(
-            isinstance(record, dict)
-            and str(record.get("id") or "") == variant.id
-            and str(record.get("variant_id") or "") == variant.variant_id
-            and str(record.get("system_id") or "") == variant.system_id
-            and str(record.get("source_hash") or "").casefold()
-            == variant.source_hash.casefold()
-            and record.get("record_version") == variant.record_version
-            for record in records
-        ):
-            return True
     return False
 
 

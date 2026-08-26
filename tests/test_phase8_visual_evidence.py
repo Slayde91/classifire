@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from malware_scan_support import append_clean_attestation
 from physical_foundation_support import add_estimate, physical_session
 from PIL import Image
 
@@ -81,6 +82,8 @@ def _evidence(
     )
     session.add(stored)
     session.flush()
+    if scan_status == "clean":
+        append_clean_attestation(session, stored)
     evidence = EvidenceSource(
         estimate_id=estimate.id,
         defect_id=defect.id,
@@ -274,7 +277,7 @@ def test_adapter_rejects_visual_evidence_without_a_clean_malware_scan(
                 defect_reference="D-001",
             )
 
-    assert rejected.value.code == "STORED_FILE_SCAN_STATUS_FORBIDDEN"
+    assert rejected.value.code == "STORED_FILE_ATTESTATION_INVALID"
 
 
 @pytest.mark.parametrize(

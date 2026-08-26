@@ -46,7 +46,7 @@ def test_human_session_migration_backfills_distinct_generations_and_schema(
             email="second@example.test",
         )
 
-    _upgrade(database_url, environment, "head")
+    _upgrade(database_url, environment, "0010_human_sessions")
 
     inspector = inspect(engine)
     assert "human_sessions" in inspector.get_table_names()
@@ -136,7 +136,7 @@ def test_human_session_migration_downgrade_fails_closed(tmp_path: Path) -> None:
     database_path = tmp_path / "human-sessions-downgrade.sqlite"
     database_url = f"sqlite:///{database_path.as_posix()}"
     environment = _migration_environment(tmp_path, database_url)
-    _upgrade(database_url, environment, "head")
+    _upgrade(database_url, environment, "0010_human_sessions")
 
     rejected = _downgrade(
         database_url,

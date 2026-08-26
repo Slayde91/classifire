@@ -10,10 +10,16 @@ from functools import partial
 from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, BinaryIO
+from typing import Any
 
 import pymupdf
 import pytest
+from malware_scan_support import (
+    CleanMalwareScanner as _CleanScanner,
+)
+from malware_scan_support import (
+    append_clean_attestation,
+)
 from physical_foundation_support import add_estimate, physical_session
 from PIL import Image, ImageDraw
 from sqlalchemy import create_engine
@@ -49,15 +55,6 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import run_phase8_representative_package as representative_package_cli  # noqa: E402
-
-
-class _CleanScanner:
-    def check_ready(self) -> None:
-        pass
-
-    def scan_stream(self, stream: BinaryIO) -> None:
-        stream.read()
-
 
 execute_phase8_representative_run = partial(
     _execute_phase8_representative_run,
@@ -140,6 +137,7 @@ def _parent(session, storage_root: Path, embedded_path: Path):
     )
     session.add(stored)
     session.flush()
+    append_clean_attestation(session, stored)
     evidence = EvidenceSource(
         estimate_id=estimate.id,
         defect_id=defect.id,

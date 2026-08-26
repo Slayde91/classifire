@@ -10,20 +10,22 @@ from pathlib import Path
 from typing import BinaryIO
 
 import pytest
+from malware_scan_support import (
+    CleanMalwareScanner as _CleanScanner,
+)
+from malware_scan_support import (
+    malware_scan_result,
+)
 from PIL import Image, ImageDraw, ImageOps
 
 from classifire.services import linked_image_retrieval as linked
-from classifire.services.malware_scanning import MalwareScanError
+from classifire.services.malware_scanning import (
+    MalwareDetectedError,
+    MalwareScanError,
+    MalwareScanResult,
+)
 
 LEAK_MARKER = "capability-value-that-must-never-leak"
-
-
-class _CleanScanner:
-    def check_ready(self) -> None:
-        pass
-
-    def scan_stream(self, stream: BinaryIO) -> None:
-        stream.read()
 
 
 class _RejectingScanner:
@@ -34,10 +36,15 @@ class _RejectingScanner:
     def check_ready(self) -> None:
         pass
 
-    def scan_stream(self, stream: BinaryIO) -> None:
+    def scan_stream(self, stream: BinaryIO) -> MalwareScanResult:
         body = stream.read()
         if self.payload is None or body == self.payload:
+            if self.code == "MALWARE_DETECTED":
+                raise MalwareDetectedError(
+                    malware_scan_result(body, verdict="infected")
+                )
             raise MalwareScanError(self.code)
+        return malware_scan_result(body)
 
 
 @pytest.fixture(autouse=True)

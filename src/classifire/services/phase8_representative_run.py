@@ -46,7 +46,7 @@ from .phase8_visual_runtime import (
     Phase8GatewayRpcError,
     validate_phase8_loopback_gateway_url,
 )
-from .storage import StoredFileSecurityError, require_clean_stored_file
+from .storage import StoredFileSecurityError, require_clean_stored_file_for_session
 
 REPRESENTATIVE_RUN_PACKAGE_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-PACKAGE-v1"
 REPRESENTATIVE_RUN_PREFLIGHT_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-REPRESENTATIVE-RUN-PREFLIGHT-v1"
@@ -526,9 +526,10 @@ def _validate_parent_storage(
         if stored is None:
             raise Phase8RepresentativeRunError("PARENT_EVIDENCE_INVALID")
         try:
-            require_clean_stored_file(
-                package.storage_root,
+            require_clean_stored_file_for_session(
+                db,
                 stored,
+                storage_root=package.storage_root,
                 allowed_purposes={"project_evidence", "technical_evidence"},
                 expected_sha256=evidence.sha256,
             )

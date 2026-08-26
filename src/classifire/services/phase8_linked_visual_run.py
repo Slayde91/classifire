@@ -24,6 +24,7 @@ from ..physical_models import Defect, EvidenceSource
 from .canonical_submission_state import InitialSubmissionState
 from .linked_image_evidence import (
     LinkedImageEvidenceRetention,
+    LinkedImageMalwareQuarantinedError,
     retain_verified_linked_image,
 )
 from .linked_image_retrieval import (
@@ -36,10 +37,13 @@ from .linked_image_retrieval import (
     materialize_linked_images,
     resolve_public_addresses,
 )
-from .malware_scanning import MalwareScanner
+from .malware_scan_attestations import MalwareScanAttestationError
+from .malware_scanning import MalwareScanError, MalwareScanner
 from .phase8_visual_evidence import (
+    Phase8VisualEvidenceError,
     RetainedVisualEvidencePacket,
     build_retained_visual_evidence_packet,
+    revalidate_retained_visual_evidence_packet,
 )
 from .phase8_visual_proposal import (
     Phase8VisualInferencePort,
@@ -48,7 +52,11 @@ from .phase8_visual_proposal import (
     ProposalOnlyVisualController,
     canonical_json_sha256,
 )
-from .storage import StoredFileSecurityError, require_clean_stored_file
+from .storage import (
+    StoredFileSecurityError,
+    record_detected_sha,
+    require_clean_stored_file_for_session,
+)
 
 LINKED_VISUAL_RUN_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-LINKED-VISUAL-RUN-v2"
 LINKED_VISUAL_RETRIEVAL_BLOCKED = "LINKED_VISUAL_RETRIEVAL_BLOCKED"
@@ -441,9 +449,10 @@ def _target_parent_evidence_ids(
         if stored is None:
             raise Phase8LinkedVisualRunError("PARENT_EVIDENCE_INVALID")
         try:
-            require_clean_stored_file(
-                storage_root,
+            require_clean_stored_file_for_session(
+                db,
                 stored,
+                storage_root=storage_root,
                 allowed_purposes={"project_evidence", "technical_evidence"},
                 expected_sha256=parent.sha256,
             )
@@ -595,9 +604,7 @@ def run_phase8_linked_visual_proposal(
         )
         for photo_id, evidence_id in parent_evidence_by_photo_id.items()
     }
-    photo_ids = {
-        _token(row.get("photo_id"), code="PARENT_MAPPING_INVALID") for row in rows
-    }
+    photo_ids = {_token(row.get("photo_id"), code="PARENT_MAPPING_INVALID") for row in rows}
     if set(parent_map) != photo_ids:
         raise Phase8LinkedVisualRunError("PARENT_MAPPING_MISMATCH")
     target_parent_ids = _target_parent_evidence_ids(
@@ -657,11 +664,7 @@ def run_phase8_linked_visual_proposal(
         raise Phase8LinkedVisualRunError("PARENT_MAPPING_MISMATCH")
     target_ready = tuple(
         sorted(
-            (
-                result
-                for result in ready
-                if parent_map[result.photo_id] in target_parent_ids
-            ),
+            (result for result in ready if parent_map[result.photo_id] in target_parent_ids),
             key=lambda result: (parent_map[result.photo_id], result.photo_id),
         )
     )
@@ -669,66 +672,102 @@ def run_phase8_linked_visual_proposal(
         raise Phase8LinkedVisualRunError("TARGET_EVIDENCE_REQUIRED")
     target_ready_parent_ids = frozenset(parent_map[result.photo_id] for result in target_ready)
 
-    with db.begin_nested():
-        retentions = tuple(
-            retain_verified_linked_image(
+    try:
+        with db.begin_nested():
+            retentions = tuple(
+                retain_verified_linked_image(
+                    db,
+                    storage_root=storage_root,
+                    retrieval_root=retrieval_root,
+                    estimate_id=estimate_id,
+                    parent_evidence_source_id=parent_map[result.photo_id],
+                    result=result,
+                    operator_reference=operator_reference,
+                    malware_scanner=malware_scanner,
+                    policy=policy,
+                    source_report_sha256=report_sha256,
+                )
+                for result in target_ready
+            )
+            state_before_inference = _state(protected_state_reader, estimate_id)
+            if not _physical_counts_unchanged(state_before_retrieval, state_before_inference):
+                raise Phase8LinkedVisualRunError("RETENTION_CHANGED_PHYSICAL_STATE")
+            if state_before_inference.counts.get(
+                "defect_count"
+            ) != state_before_retrieval.counts.get("defect_count"):
+                raise Phase8LinkedVisualRunError("RETENTION_CHANGED_DEFECT_STATE")
+            expected_evidence_count = state_before_retrieval.counts.get("evidence_count", 0) + sum(
+                item.evidence_created for item in retentions
+            )
+            if state_before_inference.counts.get("evidence_count") != expected_evidence_count:
+                raise Phase8LinkedVisualRunError("RETENTION_EVIDENCE_COUNT_INVALID")
+
+            retained_ids = frozenset(item.evidence.id for item in retentions)
+            allowed_packet_ids = retained_ids | target_ready_parent_ids
+            evidence_packet = build_retained_visual_evidence_packet(
                 db,
                 storage_root=storage_root,
-                retrieval_root=retrieval_root,
                 estimate_id=estimate_id,
-                parent_evidence_source_id=parent_map[result.photo_id],
-                result=result,
-                operator_reference=operator_reference,
-                malware_scanner=malware_scanner,
-                policy=policy,
-                source_report_sha256=report_sha256,
+                defect_reference=defect_reference,
+                allowed_evidence_source_ids=allowed_packet_ids,
             )
-            for result in target_ready
-        )
-        state_before_inference = _state(protected_state_reader, estimate_id)
-        if not _physical_counts_unchanged(state_before_retrieval, state_before_inference):
-            raise Phase8LinkedVisualRunError("RETENTION_CHANGED_PHYSICAL_STATE")
-        if state_before_inference.counts.get("defect_count") != state_before_retrieval.counts.get(
-            "defect_count"
-        ):
-            raise Phase8LinkedVisualRunError("RETENTION_CHANGED_DEFECT_STATE")
-        expected_evidence_count = state_before_retrieval.counts.get("evidence_count", 0) + sum(
-            item.evidence_created for item in retentions
-        )
-        if state_before_inference.counts.get("evidence_count") != expected_evidence_count:
-            raise Phase8LinkedVisualRunError("RETENTION_EVIDENCE_COUNT_INVALID")
-
-        retained_ids = frozenset(item.evidence.id for item in retentions)
-        allowed_packet_ids = retained_ids | target_ready_parent_ids
-        evidence_packet = build_retained_visual_evidence_packet(
-            db,
-            storage_root=storage_root,
-            estimate_id=estimate_id,
-            defect_reference=defect_reference,
-            allowed_evidence_source_ids=allowed_packet_ids,
-        )
-        packet_ids = {item.evidence_id for item in evidence_packet.files}
-        if not retained_ids.issubset(packet_ids) or not packet_ids.issubset(allowed_packet_ids):
-            raise Phase8LinkedVisualRunError("RETAINED_EVIDENCE_PACKET_MISMATCH")
+            packet_ids = {item.evidence_id for item in evidence_packet.files}
+            if not retained_ids.issubset(packet_ids) or not packet_ids.issubset(allowed_packet_ids):
+                raise Phase8LinkedVisualRunError("RETAINED_EVIDENCE_PACKET_MISMATCH")
+            try:
+                with _inference_port_scope(
+                    evidence_packet=evidence_packet,
+                    inference_port=inference_port,
+                    inference_port_factory=inference_port_factory,
+                ) as selected_inference_port:
+                    controller = ProposalOnlyVisualController(
+                        run_id=run_id,
+                        estimate_id=estimate_id,
+                        evidence_manifest=evidence_packet.manifest,
+                        inference_profile=dict(inference_profile),
+                        inference_port=selected_inference_port,
+                        protected_state_reader=protected_state_reader,
+                        max_correction_passes=max_correction_passes,
+                    )
+                    visual_result = controller.run()
+                    try:
+                        revalidate_retained_visual_evidence_packet(
+                            db,
+                            storage_root=storage_root,
+                            packet=evidence_packet,
+                        )
+                    except Phase8VisualEvidenceError as exc:
+                        raise Phase8LinkedVisualRunError(exc.code) from None
+            except Phase8VisualProposalError as exc:
+                raise Phase8LinkedVisualRunError(exc.code) from exc
+            state_after_inference = _state(protected_state_reader, estimate_id)
+    except LinkedImageMalwareQuarantinedError as detected:
+        # Retention records the infected identity before raising, but that work
+        # is deliberately rolled back with the atomic retention savepoint. Add
+        # it again in the caller-owned outer transaction so the safety receipt
+        # survives the failed proposal run and can be committed independently.
         try:
-            with _inference_port_scope(
-                evidence_packet=evidence_packet,
-                inference_port=inference_port,
-                inference_port_factory=inference_port_factory,
-            ) as selected_inference_port:
-                controller = ProposalOnlyVisualController(
-                    run_id=run_id,
-                    estimate_id=estimate_id,
-                    evidence_manifest=evidence_packet.manifest,
-                    inference_profile=dict(inference_profile),
-                    inference_port=selected_inference_port,
-                    protected_state_reader=protected_state_reader,
-                    max_correction_passes=max_correction_passes,
-                )
-                visual_result = controller.run()
-        except Phase8VisualProposalError as exc:
-            raise Phase8LinkedVisualRunError(exc.code) from exc
-        state_after_inference = _state(protected_state_reader, estimate_id)
+            record_detected_sha(
+                db,
+                storage_root,
+                sha=detected.result.content_sha256,
+                size=detected.result.content_size_bytes,
+                filename=(f"linked-image-{detected.result.content_sha256[:12]}.jpg"),
+                media_type="image/jpeg",
+                purpose="technical_evidence",
+                user=None,
+                result=detected.result,
+                scan_source="linked_image_retention",
+                actor_type="human_operator",
+                actor_name=operator_reference,
+            )
+        except (
+            MalwareScanAttestationError,
+            MalwareScanError,
+            StoredFileSecurityError,
+        ) as exc:
+            raise Phase8LinkedVisualRunError("MALWARE_CONTAINMENT_FAILED") from exc
+        raise Phase8LinkedVisualRunError("MALWARE_DETECTED") from None
 
     receipt = _receipt(
         run_id=run_id,

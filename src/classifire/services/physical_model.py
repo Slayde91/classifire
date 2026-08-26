@@ -81,8 +81,6 @@ def _evidence_digest_rows(
         elif stored is None:
             unavailable_ids.append(item.id)
         else:
-            if str(stored.malware_scan_status or "").strip().lower() != "clean":
-                unclean_ids.append(item.id)
             digest_matches = bool(
                 digest
                 and str(digest).casefold() == str(stored.sha256 or "").casefold()
@@ -95,8 +93,7 @@ def _evidence_digest_rows(
             }:
                 inadmissible_ids.append(item.id)
             if (
-                str(stored.malware_scan_status or "").strip().lower() == "clean"
-                and stored.immutable is True
+                stored.immutable is True
                 and stored.purpose in {"project_evidence", "technical_evidence"}
                 and digest_matches
             ):
@@ -115,13 +112,15 @@ def _evidence_digest_rows(
                             allowed_purposes={"project_evidence", "technical_evidence"},
                             expected_sha256=str(digest),
                         )
-                    except StoredFileSecurityError:
+                    except StoredFileSecurityError as exc:
                         integrity_valid = False
+                        if exc.code == "STORED_FILE_MALWARE_BLOCKED":
+                            unclean_ids.append(item.id)
                     else:
                         integrity_valid = True
                     if integrity_cache is not None:
                         integrity_cache[cache_key] = integrity_valid
-                if not integrity_valid:
+                if not integrity_valid and item.id not in unclean_ids:
                     integrity_invalid_ids.append(item.id)
         digest_rows.append(
             {

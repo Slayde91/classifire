@@ -9,6 +9,15 @@ from pathlib import Path
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from malware_scan_support import (
+    CleanMalwareScanner as _CleanScanner,
+)
+from malware_scan_support import (
+    InfectedMalwareScanner as _InfectedScanner,
+)
+from malware_scan_support import (
+    UnavailableMalwareScanner as _UnavailableScanner,
+)
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -16,36 +25,18 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from classifire.config import Settings, get_settings
 from classifire.db import Base, get_db
-from classifire.models import AuditEvent, StoredFile, TechnicalDocument, User
+from classifire.models import (
+    AuditEvent,
+    MalwareScanAttestation,
+    StoredFile,
+    TechnicalDocument,
+    User,
+)
 from classifire.security import get_current_user, hash_password
 from classifire.services import storage
-from classifire.services.malware_scanning import MalwareDetectedError, MalwareScanError
 
 api_module = importlib.import_module("classifire.api.router")
 ui_module = importlib.import_module("classifire.ui")
-
-
-class _CleanScanner:
-    def __init__(self) -> None:
-        self.payloads: list[bytes] = []
-
-    def check_ready(self) -> None:
-        return None
-
-    def scan_stream(self, stream) -> None:  # type: ignore[no-untyped-def]
-        self.payloads.append(stream.read())
-
-
-class _InfectedScanner(_CleanScanner):
-    def scan_stream(self, stream) -> None:  # type: ignore[no-untyped-def]
-        self.payloads.append(stream.read())
-        raise MalwareDetectedError
-
-
-class _UnavailableScanner(_CleanScanner):
-    def scan_stream(self, stream) -> None:  # type: ignore[no-untyped-def]
-        self.payloads.append(stream.read())
-        raise MalwareScanError("MALWARE_SCANNER_UNAVAILABLE")
 
 
 def _harness(
@@ -171,6 +162,12 @@ def test_rejected_upload_never_reaches_parser_or_document(
             assert tombstone is not None
             assert tombstone.malware_scan_status == "infected"
             assert not Path(tombstone.storage_path).exists()
+            attestation = db.scalar(select(MalwareScanAttestation))
+            assert attestation is not None and attestation.verdict == "infected"
+        else:
+            assert (
+                db.scalar(select(func.count()).select_from(MalwareScanAttestation)) == 0
+            )
         assert db.scalar(select(func.count()).select_from(TechnicalDocument)) == 0
     assert tuple(path for path in settings.storage_root.rglob("*") if path.is_file()) == ()
 
@@ -203,6 +200,7 @@ def test_clean_upload_reaches_parser_once_and_creates_draft(
         document = db.scalar(select(TechnicalDocument))
         assert stored is not None
         assert stored.malware_scan_status == "clean"
+        assert db.scalar(select(func.count()).select_from(MalwareScanAttestation)) == 1
         assert document is not None
         assert document.stored_file_id == stored.id
         assert document.status == "draft"
@@ -247,7 +245,7 @@ def test_api_duplicate_bytes_cannot_reuse_a_legacy_nonclean_record(
         response = _request(client, payload)
 
     assert response.status_code == 409
-    assert response.json() == {"detail": "STORED_FILE_NOT_PROCESSABLE"}
+    assert response.json() == {"detail": "STORED_FILE_ATTESTATION_REQUIRED"}
     assert scanner.payloads == [payload]
     assert parser_called is False
     with factory() as db:
@@ -285,6 +283,7 @@ def test_api_persists_quarantine_when_new_scan_detects_existing_exact_sha(
         stored = db.scalar(select(StoredFile))
         assert stored is not None
         assert stored.malware_scan_status == "infected"
+        assert db.scalar(select(func.count()).select_from(MalwareScanAttestation)) == 2
         assert db.scalar(select(func.count()).select_from(TechnicalDocument)) == 1
         assert (
             db.scalar(
@@ -374,4 +373,5 @@ def test_ui_clean_upload_is_scanned_before_parser_and_draft(
         stored = db.scalar(select(StoredFile))
         document = db.scalar(select(TechnicalDocument))
         assert stored is not None and stored.malware_scan_status == "clean"
+        assert db.scalar(select(func.count()).select_from(MalwareScanAttestation)) == 1
         assert document is not None and document.stored_file_id == stored.id

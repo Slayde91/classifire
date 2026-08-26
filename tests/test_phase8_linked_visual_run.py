@@ -10,17 +10,29 @@ from copy import deepcopy
 from functools import partial
 from io import BytesIO
 from pathlib import Path
-from typing import Any, BinaryIO
+from typing import Any
 
 import pytest
+from malware_scan_support import (
+    CleanMalwareScanner as _CleanScanner,
+)
+from malware_scan_support import (
+    append_clean_attestation,
+    malware_scan_result,
+)
 from physical_foundation_support import add_estimate, physical_session
 from PIL import Image, ImageDraw
 from sqlalchemy import event, func, select
 
-from classifire.models import Opening, StoredFile
+import classifire.services.phase8_linked_visual_run as linked_run_service
+from classifire.models import MalwareScanAttestation, Opening, StoredFile
 from classifire.physical_models import Defect, EvidenceSource
 from classifire.services.canonical_submission_state import initial_submission_state
+from classifire.services.linked_image_evidence import LinkedImageMalwareQuarantinedError
 from classifire.services.linked_image_retrieval import _FetchHop
+from classifire.services.malware_scan_attestations import (
+    append_malware_scan_attestation,
+)
 from classifire.services.phase8_linked_visual_run import (
     LINKED_VISUAL_RETRIEVAL_BLOCKED,
     LINKED_VISUAL_RUN_RECEIPT_SCHEMA,
@@ -40,16 +52,9 @@ from classifire.services.phase8_visual_provenance import (
     assess_phase8_visual_provenance_completeness,
 )
 from classifire.services.physical_scope import is_blank_opening_type
+from classifire.services.storage import record_detected_sha
 
 LEAK_MARKER = "SIGNED-CAPABILITY-MUST-NOT-LEAK"
-
-
-class _CleanScanner:
-    def check_ready(self) -> None:
-        pass
-
-    def scan_stream(self, stream: BinaryIO) -> None:
-        stream.read()
 
 
 run_phase8_linked_visual_proposal = partial(
@@ -150,6 +155,7 @@ def _parent(session, storage_root: Path, embedded_path: Path):
     )
     session.add(stored)
     session.flush()
+    append_clean_attestation(session, stored)
     evidence = EvidenceSource(
         estimate_id=estimate.id,
         defect_id=defect.id,
@@ -815,6 +821,36 @@ def test_runner_receipt_exposes_inference_time_protected_state_change(tmp_path: 
         assert result.receipt["runner_database_commit_performed"] is False
 
 
+def test_runner_rejects_a_newer_infected_attestation_during_inference(
+    tmp_path: Path,
+) -> None:
+    with physical_session() as session:
+
+        def mutate() -> None:
+            stored = session.scalar(
+                select(StoredFile).where(
+                    StoredFile.original_filename.like("linked-image-%")
+                )
+            )
+            assert stored is not None
+            payload = Path(stored.storage_path).read_bytes()
+            append_malware_scan_attestation(
+                session,
+                stored_file_id=stored.id,
+                result=malware_scan_result(payload, verdict="infected"),
+                scan_source="governed_rescan",
+                actor=None,
+            )
+
+        port = _ScriptedPort(mutation=mutate)
+
+        with pytest.raises(Phase8LinkedVisualRunError) as caught:
+            _run(session, tmp_path=tmp_path, port=port)
+
+        assert caught.value.code == "STORED_FILE_ATTESTATION_STALE"
+        assert len(port.calls) == 3
+
+
 def test_runner_builds_and_closes_managed_port_from_retained_evidence_packet(
     tmp_path: Path,
 ) -> None:
@@ -919,3 +955,75 @@ def test_visual_provenance_cli_assesses_current_content_free_artifacts(tmp_path:
 
         assert command_result.returncode == 0, command_result.stderr
         assert json.loads(command_result.stdout)["complete"] is True
+
+
+def test_infected_retention_receipt_survives_atomic_runner_rollback(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    detected_sha256: list[str] = []
+
+    def reject_after_containment(
+        session,
+        *,
+        storage_root: Path,
+        retrieval_root: Path,
+        result,
+        operator_reference: str,
+        **_kwargs,
+    ):
+        source_path = Path(result.stored_path)
+        if not source_path.is_absolute():
+            source_path = retrieval_root / source_path
+        infected = malware_scan_result(source_path.read_bytes(), verdict="infected")
+        record_detected_sha(
+            session,
+            storage_root,
+            sha=infected.content_sha256,
+            size=infected.content_size_bytes,
+            filename=f"linked-image-{infected.content_sha256[:12]}.jpg",
+            media_type="image/jpeg",
+            purpose="technical_evidence",
+            user=None,
+            result=infected,
+            scan_source="linked_image_retention",
+            actor_type="human_operator",
+            actor_name=operator_reference,
+        )
+        detected_sha256.append(infected.content_sha256)
+        raise LinkedImageMalwareQuarantinedError(infected)
+
+    monkeypatch.setattr(
+        linked_run_service,
+        "retain_verified_linked_image",
+        reject_after_containment,
+    )
+
+    with physical_session() as session:
+        with pytest.raises(Phase8LinkedVisualRunError) as rejected:
+            _run(session, tmp_path=tmp_path)
+
+        assert rejected.value.code == "MALWARE_DETECTED"
+        assert len(detected_sha256) == 1
+        stored = session.scalar(
+            select(StoredFile).where(StoredFile.sha256 == detected_sha256[0])
+        )
+        assert stored is not None
+        assert stored.malware_scan_status == "infected"
+        assert not Path(stored.storage_path).exists()
+        attestations = session.scalars(
+            select(MalwareScanAttestation).where(
+                MalwareScanAttestation.stored_file_id == stored.id
+            )
+        ).all()
+        assert len(attestations) == 1
+        assert attestations[0].verdict == "infected"
+        assert attestations[0].scan_source == "linked_image_retention"
+
+        # The runner still never commits; the caller can durably preserve the
+        # independent safety receipt after the failed proposal transaction.
+        session.commit()
+        session.expire_all()
+        persisted = session.get(StoredFile, stored.id)
+        assert persisted is not None
+        assert persisted.malware_scan_status == "infected"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import secrets
 import uuid
 from datetime import date, datetime, timezone
@@ -7,8 +8,11 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
+    DDL,
     JSON,
+    BigInteger,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
@@ -18,8 +22,9 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from .db import Base
 
@@ -253,6 +258,289 @@ class StoredFile(RecordMixin, Base):
     malware_scan_status: Mapped[str] = mapped_column(String(30), default="not_configured")
     uploaded_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     immutable: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+_SHA256_PATTERN = re.compile(r"^[0-9A-Fa-f]{64}$")
+_CLAMAV_CTIME_PATTERN = re.compile(
+    r"^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) "
+    r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) "
+    r"( [1-9]|[12][0-9]|3[01]) "
+    r"([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]) ([0-9]{4})$"
+)
+_CLAMAV_MONTHS = dict(
+    zip(
+        "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(),
+        range(1, 13),
+        strict=True,
+    )
+)
+_CLAMAV_WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+
+def _sql_sha256_check(column_name: str) -> str:
+    stripped = f"lower({column_name})"
+    for character in "0123456789abcdef":
+        stripped = f"replace({stripped}, '{character}', '')"
+    return f"length({column_name}) = 64 AND length({stripped}) = 0"
+
+
+def _sql_clamav_timestamp_shape(column_name: str) -> str:
+    return (
+        f"length({column_name}) = 24 "
+        f"AND substr({column_name}, 1, 3) "
+        "IN ('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat') "
+        f"AND substr({column_name}, 4, 1) = ' ' "
+        f"AND substr({column_name}, 5, 3) "
+        "IN ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', "
+        "'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec') "
+        f"AND substr({column_name}, 8, 1) = ' ' "
+        f"AND substr({column_name}, 11, 1) = ' ' "
+        f"AND substr({column_name}, 14, 1) = ':' "
+        f"AND substr({column_name}, 17, 1) = ':' "
+        f"AND substr({column_name}, 20, 1) = ' '"
+    )
+
+
+class MalwareScanAttestation(Base):
+    """Append-only, content-bound evidence of one malware scan verdict."""
+
+    __tablename__ = "malware_scan_attestations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=now_utc, nullable=False
+    )
+    stored_file_id: Mapped[str] = mapped_column(
+        ForeignKey("stored_files.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    scan_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    previous_receipt_sha256: Mapped[str | None] = mapped_column(String(64))
+    verdict: Mapped[str] = mapped_column(String(20), index=True, nullable=False)
+    scan_source: Mapped[str] = mapped_column(String(40), nullable=False)
+    scanned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    content_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    scanner_engine: Mapped[str] = mapped_column(String(50), nullable=False)
+    engine_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    definition_version: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    definition_timestamp: Mapped[str] = mapped_column(String(24), nullable=False)
+    protocol: Mapped[str] = mapped_column(String(80), nullable=False)
+    metadata_status: Mapped[str] = mapped_column(String(20), nullable=False)
+    post_scan_engine_version: Mapped[str | None] = mapped_column(String(64))
+    post_scan_definition_version: Mapped[int | None] = mapped_column(BigInteger)
+    post_scan_definition_timestamp: Mapped[str | None] = mapped_column(String(24))
+    receipt_json: Mapped[str] = mapped_column(Text, nullable=False)
+    receipt_sha256: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "scan_sequence > 0",
+            name="ck_malware_scan_attestation_positive_sequence",
+        ),
+        CheckConstraint(
+            "(scan_sequence = 1 AND previous_receipt_sha256 IS NULL) "
+            "OR (scan_sequence > 1 AND previous_receipt_sha256 IS NOT NULL)",
+            name="ck_malware_scan_attestation_previous_receipt",
+        ),
+        CheckConstraint(
+            "previous_receipt_sha256 IS NULL OR "
+            f"({_sql_sha256_check('previous_receipt_sha256')})",
+            name="ck_malware_scan_attestation_previous_receipt_sha256",
+        ),
+        CheckConstraint(
+            "verdict IN ('clean', 'infected')",
+            name="ck_malware_scan_attestation_verdict",
+        ),
+        CheckConstraint(
+            "scanner_engine = 'clamav' "
+            "AND protocol = 'clamd-idsession-instream-v1'",
+            name="ck_malware_scan_attestation_scanner_contract",
+        ),
+        CheckConstraint(
+            "length(engine_version) BETWEEN 1 AND 64 "
+            "AND (post_scan_engine_version IS NULL "
+            "OR length(post_scan_engine_version) BETWEEN 1 AND 64)",
+            name="ck_malware_scan_attestation_engine_version_length",
+        ),
+        CheckConstraint(
+            "scan_source IN ('upload', 'linked_image_retention', 'governed_rescan')",
+            name="ck_malware_scan_attestation_scan_source",
+        ),
+        CheckConstraint(
+            "content_size_bytes >= 0",
+            name="ck_malware_scan_attestation_nonnegative_size",
+        ),
+        CheckConstraint(
+            "definition_version BETWEEN 1 AND 4294967295",
+            name="ck_malware_scan_attestation_positive_definition_version",
+        ),
+        CheckConstraint(
+            "post_scan_definition_version IS NULL OR "
+            "post_scan_definition_version BETWEEN 1 AND 4294967295",
+            name="ck_malware_scan_attestation_post_definition_version",
+        ),
+        CheckConstraint(
+            "metadata_status IN ('stable', 'changed', 'unavailable')",
+            name="ck_malware_scan_attestation_metadata_status",
+        ),
+        CheckConstraint(
+            "(metadata_status = 'stable' "
+            "AND post_scan_engine_version IS NOT NULL "
+            "AND post_scan_definition_version IS NOT NULL "
+            "AND post_scan_definition_timestamp IS NOT NULL "
+            "AND post_scan_engine_version = engine_version "
+            "AND post_scan_definition_version = definition_version "
+            "AND post_scan_definition_timestamp = definition_timestamp) "
+            "OR (metadata_status = 'changed' AND verdict = 'infected' "
+            "AND post_scan_engine_version IS NOT NULL "
+            "AND post_scan_definition_version IS NOT NULL "
+            "AND post_scan_definition_timestamp IS NOT NULL "
+            "AND (post_scan_engine_version != engine_version "
+            "OR post_scan_definition_version != definition_version "
+            "OR post_scan_definition_timestamp != definition_timestamp)) "
+            "OR (metadata_status = 'unavailable' AND verdict = 'infected' "
+            "AND post_scan_engine_version IS NULL "
+            "AND post_scan_definition_version IS NULL "
+            "AND post_scan_definition_timestamp IS NULL)",
+            name="ck_malware_scan_attestation_metadata_consistency",
+        ),
+        CheckConstraint(
+            _sql_sha256_check("content_sha256"),
+            name="ck_malware_scan_attestation_content_sha256",
+        ),
+        CheckConstraint(
+            _sql_sha256_check("receipt_sha256"),
+            name="ck_malware_scan_attestation_receipt_sha256",
+        ),
+        CheckConstraint(
+            _sql_clamav_timestamp_shape("definition_timestamp"),
+            name="ck_malware_scan_attestation_definition_timestamp_shape",
+        ),
+        CheckConstraint(
+            "post_scan_definition_timestamp IS NULL OR "
+            f"({_sql_clamav_timestamp_shape('post_scan_definition_timestamp')})",
+            name="ck_malware_scan_attestation_post_definition_timestamp_shape",
+        ),
+        UniqueConstraint(
+            "stored_file_id",
+            "scan_sequence",
+            name="uq_malware_scan_attestation_file_sequence",
+        ),
+        UniqueConstraint(
+            "receipt_sha256",
+            name="uq_malware_scan_attestation_receipt_sha256",
+        ),
+    )
+
+    @validates("content_sha256", "receipt_sha256")
+    def _validate_sha256(self, field_name: str, value: str) -> str:
+        if not _SHA256_PATTERN.fullmatch(value):
+            raise ValueError(f"{field_name} must be exactly 64 hexadecimal characters")
+        return value
+
+    @validates("previous_receipt_sha256")
+    def _validate_previous_receipt_sha256(
+        self, _field_name: str, value: str | None
+    ) -> str | None:
+        if value is not None and not _SHA256_PATTERN.fullmatch(value):
+            raise ValueError(
+                "previous_receipt_sha256 must be null or exactly 64 hexadecimal characters"
+            )
+        return value
+
+    @validates("definition_timestamp")
+    def _validate_definition_timestamp(self, _field_name: str, value: str) -> str:
+        match = _CLAMAV_CTIME_PATTERN.fullmatch(value)
+        if match is None:
+            raise ValueError("definition_timestamp must be an exact ClamAV ctime value")
+        weekday, month, day, hour, minute, second, year = match.groups()
+        parsed = datetime(
+            int(year),
+            _CLAMAV_MONTHS[month],
+            int(day),
+            int(hour),
+            int(minute),
+            int(second),
+        )
+        if _CLAMAV_WEEKDAYS[parsed.weekday()] != weekday:
+            raise ValueError("definition_timestamp weekday does not match its calendar date")
+        return value
+
+    @validates("post_scan_definition_timestamp")
+    def _validate_post_scan_definition_timestamp(
+        self, _field_name: str, value: str | None
+    ) -> str | None:
+        if value is None:
+            return None
+        return self._validate_definition_timestamp(_field_name, value)
+
+
+@event.listens_for(MalwareScanAttestation, "before_update")
+def _reject_malware_scan_attestation_update(
+    _mapper: Any, _connection: Any, _target: MalwareScanAttestation
+) -> None:
+    raise RuntimeError("Malware scan attestations are append-only and cannot be updated")
+
+
+@event.listens_for(MalwareScanAttestation, "before_delete")
+def _reject_malware_scan_attestation_delete(
+    _mapper: Any, _connection: Any, _target: MalwareScanAttestation
+) -> None:
+    raise RuntimeError("Malware scan attestations are append-only and cannot be deleted")
+
+
+event.listen(
+    MalwareScanAttestation.__table__,
+    "after_create",
+    DDL(
+        "CREATE TRIGGER trg_malware_scan_attestations_no_update "
+        "BEFORE UPDATE ON malware_scan_attestations "
+        "BEGIN SELECT RAISE(ABORT, "
+        "'Malware scan attestations are append-only and cannot be updated'); END"
+    ).execute_if(dialect="sqlite"),
+)
+event.listen(
+    MalwareScanAttestation.__table__,
+    "after_create",
+    DDL(
+        "CREATE TRIGGER trg_malware_scan_attestations_no_delete "
+        "BEFORE DELETE ON malware_scan_attestations "
+        "BEGIN SELECT RAISE(ABORT, "
+        "'Malware scan attestations are append-only and cannot be deleted'); END"
+    ).execute_if(dialect="sqlite"),
+)
+event.listen(
+    MalwareScanAttestation.__table__,
+    "after_create",
+    DDL(
+        "CREATE OR REPLACE FUNCTION "
+        "classifire_reject_malware_scan_attestation_mutation() "
+        "RETURNS trigger LANGUAGE plpgsql AS $$ "
+        "BEGIN RAISE EXCEPTION "
+        "'Malware scan attestations are append-only and cannot be mutated' "
+        "USING ERRCODE = '55000'; END; $$"
+    ).execute_if(dialect="postgresql"),
+)
+event.listen(
+    MalwareScanAttestation.__table__,
+    "after_create",
+    DDL(
+        "CREATE TRIGGER trg_malware_scan_attestations_no_truncate "
+        "BEFORE TRUNCATE ON malware_scan_attestations "
+        "FOR EACH STATEMENT EXECUTE FUNCTION "
+        "classifire_reject_malware_scan_attestation_mutation()"
+    ).execute_if(dialect="postgresql"),
+)
+event.listen(
+    MalwareScanAttestation.__table__,
+    "after_create",
+    DDL(
+        "CREATE TRIGGER trg_malware_scan_attestations_no_mutation "
+        "BEFORE UPDATE OR DELETE ON malware_scan_attestations "
+        "FOR EACH ROW EXECUTE FUNCTION "
+        "classifire_reject_malware_scan_attestation_mutation()"
+    ).execute_if(dialect="postgresql"),
+)
 
 
 class TechnicalDocument(RecordMixin, Base):

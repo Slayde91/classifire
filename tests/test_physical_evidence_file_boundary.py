@@ -5,7 +5,9 @@ from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
+from malware_scan_support import append_clean_attestation
 from physical_foundation_support import add_estimate, physical_session
+from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from classifire.api.physical_model import EvidenceSourceInput, register_evidence_source
@@ -41,6 +43,7 @@ def _settings(tmp_path: Path) -> Settings:
 
 
 def _stored_file(
+    session: Session,
     tmp_path: Path,
     *,
     purpose: str = "technical_evidence",
@@ -50,7 +53,7 @@ def _stored_file(
     payload = b"controlled retained physical evidence"
     retained_path = tmp_path / "evidence.pdf"
     retained_path.write_bytes(payload)
-    return StoredFile(
+    stored = StoredFile(
         original_filename="evidence.pdf",
         media_type="application/pdf",
         storage_path=str(retained_path),
@@ -60,6 +63,11 @@ def _stored_file(
         immutable=immutable,
         malware_scan_status=scan_status,
     )
+    session.add(stored)
+    session.flush()
+    if scan_status == "clean":
+        append_clean_attestation(session, stored)
+    return stored
 
 
 def test_evidence_registration_requires_an_immutable_stored_file(tmp_path: Path) -> None:
@@ -86,9 +94,7 @@ def test_evidence_registration_accepts_an_immutable_scanned_technical_file(
     with physical_session() as session:
         estimate = add_estimate(session)
         user = _user(session)
-        stored = _stored_file(tmp_path)
-        session.add(stored)
-        session.flush()
+        stored = _stored_file(session, tmp_path)
 
         result = register_evidence_source(
             estimate.id,
@@ -108,14 +114,44 @@ def test_evidence_registration_accepts_an_immutable_scanned_technical_file(
 
 
 @pytest.mark.parametrize(
-    ("purpose", "immutable", "scan_status"),
+    ("purpose", "immutable", "scan_status", "expected_detail"),
     [
-        ("unrelated_upload", True, "clean"),
-        ("technical_evidence", False, "clean"),
-        ("technical_evidence", True, "pending"),
-        ("technical_evidence", True, "not_configured"),
-        ("technical_evidence", True, "infected"),
-        ("technical_evidence", True, "scan_error"),
+        (
+            "unrelated_upload",
+            True,
+            "clean",
+            "Stored evidence file is not an immutable technical-evidence file",
+        ),
+        (
+            "technical_evidence",
+            False,
+            "clean",
+            "Stored evidence file must be immutable before it can support a physical model",
+        ),
+        (
+            "technical_evidence",
+            True,
+            "pending",
+            "STORED_FILE_ATTESTATION_REQUIRED",
+        ),
+        (
+            "technical_evidence",
+            True,
+            "not_configured",
+            "STORED_FILE_ATTESTATION_REQUIRED",
+        ),
+        (
+            "technical_evidence",
+            True,
+            "infected",
+            "STORED_FILE_MALWARE_BLOCKED",
+        ),
+        (
+            "technical_evidence",
+            True,
+            "scan_error",
+            "STORED_FILE_ATTESTATION_REQUIRED",
+        ),
     ],
 )
 def test_evidence_registration_rejects_stored_files_outside_the_safe_evidence_class(
@@ -123,19 +159,18 @@ def test_evidence_registration_rejects_stored_files_outside_the_safe_evidence_cl
     purpose: str,
     immutable: bool,
     scan_status: str,
+    expected_detail: str,
 ) -> None:
     with physical_session() as session:
         estimate = add_estimate(session)
         user = _user(session)
         stored = _stored_file(
+            session,
             tmp_path,
             purpose=purpose,
             immutable=immutable,
             scan_status=scan_status,
         )
-        session.add(stored)
-        session.flush()
-
         with pytest.raises(HTTPException) as blocked:
             register_evidence_source(
                 estimate.id,
@@ -150,6 +185,7 @@ def test_evidence_registration_rejects_stored_files_outside_the_safe_evidence_cl
             )
 
         assert blocked.value.status_code == 409
+        assert blocked.value.detail == expected_detail
 
 
 @pytest.mark.parametrize("failure", ["missing", "tampered"])
@@ -160,9 +196,7 @@ def test_evidence_registration_rejects_missing_or_tampered_retained_bytes(
     with physical_session() as session:
         estimate = add_estimate(session)
         user = _user(session)
-        stored = _stored_file(tmp_path)
-        session.add(stored)
-        session.flush()
+        stored = _stored_file(session, tmp_path)
         path = Path(stored.storage_path)
         if failure == "missing":
             path.unlink()
@@ -183,4 +217,4 @@ def test_evidence_registration_rejects_missing_or_tampered_retained_bytes(
             )
 
         assert blocked.value.status_code == 409
-        assert blocked.value.detail == "STORED_EVIDENCE_FILE_INTEGRITY_INVALID"
+        assert blocked.value.detail == "STORED_FILE_INTEGRITY_INVALID"

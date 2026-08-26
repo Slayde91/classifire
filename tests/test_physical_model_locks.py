@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from malware_scan_support import malware_scan_result
 from physical_foundation_support import (
     add_estimate,
     add_evidence,
@@ -14,11 +15,13 @@ from physical_foundation_support import (
     add_service_link,
     physical_session,
 )
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from classifire.models import Estimate, Opening, StoredFile
+from classifire.models import AuditEvent, Estimate, Opening, StoredFile
 from classifire.physical_models import Defect, PhysicalModelLock
+from classifire.services.malware_scan_attestations import append_malware_scan_attestation
 from classifire.services.physical_model import (
     PhysicalModelLockError,
     build_current_physical_model_lock_payload,
@@ -118,6 +121,41 @@ def test_opening_note_change_invalidates_the_active_lock_for_workflow_purposes()
         receipt = check_estimate_action(session, estimate, WorkflowAction.SEARCH_TECHNICAL)
         assert not receipt.allowed
         assert receipt.diagnostics["valid_physical_model_lock_count"] == 0
+
+
+def test_later_infected_receipt_invalidates_an_active_physical_model_lock() -> None:
+    with complete_service_penetration() as (session, estimate, _opening):
+        lock, created = create_physical_model_lock(session, estimate)
+        assert created
+        stored = session.scalar(select(StoredFile))
+        assert stored is not None
+        payload = Path(stored.storage_path).read_bytes()
+
+        infected = append_malware_scan_attestation(
+            session,
+            stored_file_id=stored.id,
+            result=malware_scan_result(payload, verdict="infected"),
+            scan_source="governed_rescan",
+            actor=None,
+        )
+
+        assert infected.scan_sequence == 2
+        assert stored.malware_scan_status == "infected"
+        assert lock.invalidated_at is not None
+        assert infected.receipt_sha256 in str(lock.invalidation_reason)
+        receipt = check_estimate_action(session, estimate, WorkflowAction.SEARCH_TECHNICAL)
+        assert not receipt.allowed
+        assert receipt.diagnostics["valid_physical_model_lock_count"] == 0
+        audit = session.scalar(
+            select(AuditEvent).where(
+                AuditEvent.action
+                == "invalidate_physical_model_lock_after_malware_detection"
+            )
+        )
+        assert audit is not None
+        assert audit.entity_id == lock.id
+        assert audit.new_value is not None
+        assert audit.new_value["malware_scan_attestation_sha256"] == infected.receipt_sha256
 
 
 def test_lock_rejects_crossed_legacy_service_opening_links() -> None:

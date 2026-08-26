@@ -5,8 +5,9 @@ import mimetypes
 import os
 import tempfile
 from collections.abc import Collection
+from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO
+from typing import BinaryIO, NoReturn
 
 from fastapi import UploadFile
 from sqlalchemy import select
@@ -16,11 +17,18 @@ from sqlalchemy.orm import Session
 from ..audit import record_audit
 from ..config import Settings
 from ..models import StoredFile, User
+from .malware_scan_attestations import (
+    MalwareScanAttestationError,
+    append_malware_scan_attestation,
+    require_latest_clean_malware_scan_attestation,
+)
 from .malware_scanning import (
     MalwareDetectedError,
     MalwareScanError,
     MalwareScanner,
+    MalwareScanResult,
     configured_malware_scanner,
+    require_clean_stream,
 )
 
 ALLOWED_EXTENSIONS = {
@@ -53,6 +61,21 @@ class RetainedMalwareQuarantinedError(MalwareDetectedError):
     """A new FOUND verdict has quarantined an existing exact-SHA record."""
 
 
+@dataclass(frozen=True, slots=True)
+class VerifiedStoredFile:
+    """Receipt-bound token for exact retained bytes in one DB transaction."""
+
+    stored_file_id: str
+    path: Path
+    content_sha256: str
+    content_size_bytes: int
+    media_type: str | None
+    purpose: str
+    scan_attestation_id: str
+    scan_attestation_sha256: str
+    scan_sequence: int
+
+
 def sha256_stream(stream: BinaryIO) -> tuple[str, int]:
     digest = hashlib.sha256()
     size = 0
@@ -82,7 +105,7 @@ def _locked_stored_file_by_sha(db: Session, sha: str) -> StoredFile | None:
     )
 
 
-def _require_compatible_clean_upload(
+def _require_compatible_retained_upload(
     settings: Settings,
     stored: StoredFile,
     *,
@@ -91,7 +114,9 @@ def _require_compatible_clean_upload(
     suffix: str,
     sha: str,
 ) -> StoredFile:
-    retained_path = require_clean_stored_file(
+    if str(stored.malware_scan_status or "").strip().lower() == "infected":
+        raise StoredFileSecurityError("STORED_FILE_MALWARE_BLOCKED")
+    retained_path = _require_retained_stored_file(
         settings.storage_root,
         stored,
         allowed_purposes={purpose},
@@ -105,24 +130,38 @@ def _require_compatible_clean_upload(
     return stored
 
 
-def require_clean_stored_file_record(
+def _require_matching_scan_result(
+    result: MalwareScanResult,
+    *,
+    sha: str,
+    size: int,
+) -> None:
+    if (
+        not isinstance(result, MalwareScanResult)
+        or result.content_sha256 != sha
+        or result.content_size_bytes != size
+    ):
+        raise MalwareScanError("MALWARE_SCAN_RESULT_MISMATCH")
+
+
+def _require_retained_stored_file_record(
     stored: StoredFile,
     *,
     allowed_purposes: Collection[str] | None = None,
     expected_sha256: str | None = None,
 ) -> Path:
-    """Verify the clean attestation and exact retained bytes for one StoredFile."""
+    """Verify identity and exact retained bytes without deciding scan status."""
 
     digest = str(stored.sha256 or "").strip().lower()
     if (
-        str(stored.malware_scan_status or "").strip().lower() != "clean"
-        or stored.immutable is not True
+        stored.immutable is not True
         or len(digest) != 64
         or any(character not in _HEX_SHA256 for character in digest)
         or (expected_sha256 is not None and digest != expected_sha256.lower())
-        or (allowed_purposes is not None and stored.purpose not in allowed_purposes)
     ):
-        raise StoredFileSecurityError("STORED_FILE_NOT_PROCESSABLE")
+        raise StoredFileSecurityError("STORED_FILE_INTEGRITY_INVALID")
+    if allowed_purposes is not None and stored.purpose not in allowed_purposes:
+        raise StoredFileSecurityError("STORED_FILE_CONTEXT_CONFLICT")
     try:
         raw_path = Path(stored.storage_path)
         path = (raw_path if raw_path.is_absolute() else Path.cwd() / raw_path).resolve(strict=True)
@@ -137,16 +176,16 @@ def require_clean_stored_file_record(
     return path
 
 
-def require_clean_stored_file(
+def _require_retained_stored_file(
     storage_root: Path,
     stored: StoredFile,
     *,
     allowed_purposes: Collection[str] | None = None,
     expected_sha256: str | None = None,
 ) -> Path:
-    """Return verified clean bytes only when they are inside the governed root."""
+    """Return exact retained bytes only when they are inside the governed root."""
 
-    path = require_clean_stored_file_record(
+    path = _require_retained_stored_file_record(
         stored,
         allowed_purposes=allowed_purposes,
         expected_sha256=expected_sha256,
@@ -158,6 +197,96 @@ def require_clean_stored_file(
     return path
 
 
+def _selected_storage_root(db: Session, storage_root: Path | None) -> Path:
+    selected_root: object = (
+        storage_root if storage_root is not None else db.info.get("retained_storage_root")
+    )
+    if not isinstance(selected_root, (str, os.PathLike)):
+        raise StoredFileSecurityError("STORED_FILE_INTEGRITY_INVALID")
+    return Path(selected_root)
+
+
+def _raise_stored_attestation_error(exc: MalwareScanAttestationError) -> NoReturn:
+    if exc.code == "MALWARE_SCAN_ATTESTATION_REQUIRED":
+        code = "STORED_FILE_ATTESTATION_REQUIRED"
+    elif exc.code == "MALWARE_SCAN_ATTESTATION_NOT_CLEAN":
+        code = "STORED_FILE_MALWARE_BLOCKED"
+    else:
+        code = "STORED_FILE_ATTESTATION_INVALID"
+    raise StoredFileSecurityError(code) from None
+
+
+def load_processable_stored_file(
+    db: Session,
+    stored: StoredFile,
+    *,
+    storage_root: Path | None = None,
+    allowed_purposes: Collection[str] | None = None,
+    expected_sha256: str | None = None,
+) -> VerifiedStoredFile:
+    """Lock and return a receipt-bound token for exact processable bytes."""
+
+    try:
+        locked, attestation = require_latest_clean_malware_scan_attestation(
+            db,
+            stored_file_id=stored.id,
+        )
+    except MalwareScanAttestationError as exc:
+        _raise_stored_attestation_error(exc)
+    path = _require_retained_stored_file(
+        _selected_storage_root(db, storage_root),
+        locked,
+        allowed_purposes=allowed_purposes,
+        expected_sha256=expected_sha256,
+    )
+    return VerifiedStoredFile(
+        stored_file_id=locked.id,
+        path=path,
+        content_sha256=locked.sha256.lower(),
+        content_size_bytes=locked.size_bytes,
+        media_type=locked.media_type,
+        purpose=locked.purpose,
+        scan_attestation_id=attestation.id,
+        scan_attestation_sha256=attestation.receipt_sha256,
+        scan_sequence=attestation.scan_sequence,
+    )
+
+
+def revalidate_processable_stored_file(
+    db: Session,
+    verified: VerifiedStoredFile,
+    *,
+    storage_root: Path | None = None,
+) -> None:
+    """Fail if bytes or effective scan receipt changed after a token was issued."""
+
+    try:
+        locked, attestation = require_latest_clean_malware_scan_attestation(
+            db,
+            stored_file_id=verified.stored_file_id,
+        )
+    except MalwareScanAttestationError as exc:
+        _raise_stored_attestation_error(exc)
+    if (
+        attestation.id != verified.scan_attestation_id
+        or attestation.receipt_sha256 != verified.scan_attestation_sha256
+        or attestation.scan_sequence != verified.scan_sequence
+        or locked.sha256.lower() != verified.content_sha256
+        or locked.size_bytes != verified.content_size_bytes
+        or locked.media_type != verified.media_type
+        or locked.purpose != verified.purpose
+    ):
+        raise StoredFileSecurityError("STORED_FILE_ATTESTATION_STALE")
+    path = _require_retained_stored_file(
+        _selected_storage_root(db, storage_root),
+        locked,
+        allowed_purposes={verified.purpose},
+        expected_sha256=verified.content_sha256,
+    )
+    if path != verified.path:
+        raise StoredFileSecurityError("STORED_FILE_INTEGRITY_INVALID")
+
+
 def require_clean_stored_file_for_session(
     db: Session,
     stored: StoredFile,
@@ -166,21 +295,15 @@ def require_clean_stored_file_for_session(
     allowed_purposes: Collection[str] | None = None,
     expected_sha256: str | None = None,
 ) -> Path:
-    """Verify retained bytes inside the governed root bound to this DB session."""
+    """Compatibility wrapper returning a Path from the receipt-bound gate."""
 
-    selected_root: object = (
-        storage_root
-        if storage_root is not None
-        else db.info.get("retained_storage_root")
-    )
-    if not isinstance(selected_root, (str, os.PathLike)):
-        raise StoredFileSecurityError("STORED_FILE_INTEGRITY_INVALID")
-    return require_clean_stored_file(
-        Path(selected_root),
+    return load_processable_stored_file(
+        db,
         stored,
+        storage_root=storage_root,
         allowed_purposes=allowed_purposes,
         expected_sha256=expected_sha256,
-    )
+    ).path
 
 
 def _require_scanner(
@@ -193,9 +316,9 @@ def _require_scanner(
     return selected
 
 
-def _record_detected_sha(
+def record_detected_sha(
     db: Session,
-    settings: Settings,
+    storage_root: Path,
     *,
     sha: str,
     size: int,
@@ -203,6 +326,10 @@ def _record_detected_sha(
     media_type: str | None,
     purpose: str,
     user: User | None,
+    result: MalwareScanResult,
+    scan_source: str,
+    actor_type: str = "system",
+    actor_name: str = "CLASSIFIRE malware boundary",
 ) -> StoredFile:
     """Persist a no-content tombstone so a concurrent clean verdict cannot win."""
 
@@ -213,12 +340,12 @@ def _record_detected_sha(
             original_filename=filename,
             media_type=media_type,
             storage_path=str(
-                settings.storage_root / ".rejected" / f"{sha}.malware-blocked"
+                storage_root / ".rejected" / f"{sha}.malware-blocked"
             ),
             sha256=sha,
             size_bytes=size,
             purpose=purpose,
-            malware_scan_status="infected",
+            malware_scan_status="pending_attestation",
             uploaded_by_id=user.id if user else None,
             immutable=True,
         )
@@ -237,8 +364,17 @@ def _record_detected_sha(
             existing = tombstone
             created = True
 
+    _require_matching_scan_result(result, sha=sha, size=size)
     previous_status = None if created else str(existing.malware_scan_status or "")
-    existing.malware_scan_status = "infected"
+    attestation = append_malware_scan_attestation(
+        db,
+        stored_file_id=existing.id,
+        result=result,
+        scan_source=scan_source,
+        actor=user,
+        actor_type=actor_type,
+        actor_name=actor_name,
+    )
     record_audit(
         db,
         actor=user,
@@ -249,16 +385,64 @@ def _record_detected_sha(
         new_value={
             "malware_scan_status": "infected",
             "content_retained": False if created else None,
+            "malware_scan_attestation_sha256": attestation.receipt_sha256,
         },
         reason=(
             "A new scan of exact matching bytes returned a malware verdict; "
             "the SHA-256 identity was quarantined fail-closed."
         ),
-        actor_type="user" if user is not None else "system",
-        actor_name=None if user is not None else "CLASSIFIRE malware boundary",
+        actor_type="user" if user is not None else actor_type,
+        actor_name=None if user is not None else actor_name,
     )
     db.flush()
     return existing
+
+
+def _accept_clean_existing_upload(
+    db: Session,
+    settings: Settings,
+    stored: StoredFile,
+    *,
+    purpose: str,
+    media_type: str | None,
+    suffix: str,
+    sha: str,
+    result: MalwareScanResult,
+    user: User | None,
+) -> StoredFile:
+    _require_compatible_retained_upload(
+        settings,
+        stored,
+        purpose=purpose,
+        media_type=media_type,
+        suffix=suffix,
+        sha=sha,
+    )
+    # A new clean verdict may extend an existing trustworthy lineage, but it
+    # must not rehabilitate a pending or legacy status-only row. Establish the
+    # existing file's attested-clean basis before appending the new observation.
+    require_clean_stored_file_for_session(
+        db,
+        stored,
+        storage_root=settings.storage_root,
+        allowed_purposes={purpose},
+        expected_sha256=sha,
+    )
+    append_malware_scan_attestation(
+        db,
+        stored_file_id=stored.id,
+        result=result,
+        scan_source="upload",
+        actor=user,
+    )
+    require_clean_stored_file_for_session(
+        db,
+        stored,
+        storage_root=settings.storage_root,
+        allowed_purposes={purpose},
+        expected_sha256=sha,
+    )
+    return stored
 
 
 def save_upload(
@@ -307,29 +491,41 @@ def save_upload(
         temp_path = Path(temporary_name)
         try:
             with temp_path.open("rb") as quarantined:
-                scanner.scan_stream(quarantined)
-        except MalwareDetectedError:
-            _record_detected_sha(
+                scan_result = require_clean_stream(
+                    scanner,
+                    quarantined,
+                    expected_sha256=sha,
+                    expected_size_bytes=size,
+                )
+        except MalwareDetectedError as detected:
+            _require_matching_scan_result(detected.result, sha=sha, size=size)
+            record_detected_sha(
                 db,
-                settings,
+                settings.storage_root,
                 sha=sha,
                 size=size,
                 filename=filename,
                 media_type=media_type,
                 purpose=purpose,
                 user=user,
+                result=detected.result,
+                scan_source="upload",
             )
-            raise RetainedMalwareQuarantinedError from None
+            raise RetainedMalwareQuarantinedError(detected.result) from None
+        _require_matching_scan_result(scan_result, sha=sha, size=size)
 
         existing = _locked_stored_file_by_sha(db, sha)
         if existing is not None:
-            return _require_compatible_clean_upload(
+            return _accept_clean_existing_upload(
+                db,
                 settings,
                 existing,
                 purpose=purpose,
                 media_type=media_type,
                 suffix=suffix,
                 sha=sha,
+                result=scan_result,
+                user=user,
             )
 
         final_dir = settings.storage_root / sha[:2] / sha[2:4]
@@ -354,7 +550,7 @@ def save_upload(
             sha256=sha,
             size_bytes=size,
             purpose=purpose,
-            malware_scan_status="clean",
+            malware_scan_status="pending_attestation",
             uploaded_by_id=user.id if user else None,
             immutable=True,
         )
@@ -365,6 +561,13 @@ def save_upload(
             with db.begin_nested():
                 db.add(record)
                 db.flush()
+                append_malware_scan_attestation(
+                    db,
+                    stored_file_id=record.id,
+                    result=scan_result,
+                    scan_source="upload",
+                    actor=user,
+                )
                 if promotion_required:
                     os.replace(temp_path, final_path)
                     temporary_name = None
@@ -372,16 +575,26 @@ def save_upload(
             winner = _locked_stored_file_by_sha(db, sha)
             if winner is None:  # pragma: no cover - database invariant failure.
                 raise StoredFileSecurityError("STORED_FILE_PERSISTENCE_CONFLICT") from exc
-            return _require_compatible_clean_upload(
+            return _accept_clean_existing_upload(
+                db,
                 settings,
                 winner,
                 purpose=purpose,
                 media_type=media_type,
                 suffix=suffix,
                 sha=sha,
+                result=scan_result,
+                user=user,
             )
         except OSError as exc:
             raise StoredFileSecurityError("STORED_FILE_STORAGE_FAILURE") from exc
+        require_clean_stored_file_for_session(
+            db,
+            record,
+            storage_root=settings.storage_root,
+            allowed_purposes={purpose},
+            expected_sha256=sha,
+        )
         return record
     finally:
         if temporary_name is not None:
@@ -395,9 +608,11 @@ __all__ = [
     "ALLOWED_EXTENSIONS",
     "RetainedMalwareQuarantinedError",
     "StoredFileSecurityError",
-    "require_clean_stored_file",
+    "VerifiedStoredFile",
+    "load_processable_stored_file",
+    "revalidate_processable_stored_file",
     "require_clean_stored_file_for_session",
-    "require_clean_stored_file_record",
+    "record_detected_sha",
     "save_upload",
     "sha256_stream",
 ]

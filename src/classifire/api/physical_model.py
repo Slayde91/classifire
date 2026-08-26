@@ -15,13 +15,15 @@ from ..physical_models import Defect, EvidenceSource
 from ..security import require_permission
 from ..services.physical_model import PhysicalModelLockError, create_physical_model_lock
 from ..services.physical_mutation_guard import PhysicalMutationError, require_evidence_mutation
-from ..services.storage import StoredFileSecurityError, require_clean_stored_file
+from ..services.storage import (
+    StoredFileSecurityError,
+    require_clean_stored_file_for_session,
+)
 from ..services.workflow import WorkflowTransitionError
 
 router = APIRouter(prefix="/api/v1", tags=["CLASSIFIRE Physical Model"])
 Db = Annotated[Session, Depends(get_db)]
 _ADMISSIBLE_EVIDENCE_FILE_PURPOSES = frozenset({"technical_evidence"})
-_ADMISSIBLE_EVIDENCE_SCAN_STATUSES = frozenset({"clean"})
 
 
 class EvidenceSourceInput(BaseModel):
@@ -52,7 +54,7 @@ def _normalise_token(value: object) -> str:
 
 
 def _require_admissible_evidence_file(stored: StoredFile) -> None:
-    """Accept only immutable, technical-evidence files with a safe scan state.
+    """Accept the narrow immutable technical-evidence class.
 
     StoredFile has no estimate ownership relation in this foundation layer, so the
     endpoint deliberately accepts only the narrow, immutable technical-evidence
@@ -67,11 +69,6 @@ def _require_admissible_evidence_file(stored: StoredFile) -> None:
         raise HTTPException(
             status_code=409,
             detail="Stored evidence file must be immutable before it can support a physical model",
-        )
-    if _normalise_token(stored.malware_scan_status) not in _ADMISSIBLE_EVIDENCE_SCAN_STATUSES:
-        raise HTTPException(
-            status_code=409,
-            detail="Stored evidence file does not have an admissible malware scan status",
         )
 
 
@@ -110,15 +107,16 @@ def register_evidence_source(
         raise HTTPException(status_code=404, detail="Stored evidence file not found")
     _require_admissible_evidence_file(stored)
     try:
-        require_clean_stored_file(
-            settings.storage_root,
+        require_clean_stored_file_for_session(
+            db,
             stored,
+            storage_root=settings.storage_root,
             allowed_purposes={"technical_evidence"},
         )
     except StoredFileSecurityError as exc:
         raise HTTPException(
             status_code=409,
-            detail="STORED_EVIDENCE_FILE_INTEGRITY_INVALID",
+            detail=exc.code,
         ) from exc
     sha256 = stored.sha256
 

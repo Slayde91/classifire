@@ -9,6 +9,13 @@ from pathlib import Path
 from typing import BinaryIO
 
 import pytest
+from malware_scan_support import (
+    CleanMalwareScanner as _CleanScanner,
+)
+from malware_scan_support import (
+    append_clean_attestation,
+    malware_scan_result,
+)
 from physical_foundation_support import add_estimate, physical_session
 from PIL import Image
 from sqlalchemy import func, select
@@ -16,26 +23,23 @@ from sqlalchemy import update as sql_update
 from sqlalchemy.orm.attributes import set_committed_value
 
 import classifire.services.linked_image_evidence as linked_image_evidence_service
-from classifire.models import AuditEvent, StoredFile
+from classifire.models import AuditEvent, MalwareScanAttestation, StoredFile
 from classifire.physical_models import Defect, EvidenceSource, PhysicalModelLock
 from classifire.services.linked_image_evidence import (
     LINKED_IMAGE_EVIDENCE_SCHEMA,
     LinkedImageEvidenceError,
+    LinkedImageMalwareQuarantinedError,
 )
 from classifire.services.linked_image_evidence import (
     retain_verified_linked_image as _retain_verified_linked_image,
 )
 from classifire.services.linked_image_retrieval import LinkedImageResult
-from classifire.services.malware_scanning import MalwareScanError
+from classifire.services.malware_scanning import (
+    MalwareDetectedError,
+    MalwareScanError,
+    MalwareScanResult,
+)
 from classifire.services.phase8_visual_evidence import build_retained_visual_evidence_packet
-
-
-class _CleanScanner:
-    def check_ready(self) -> None:
-        pass
-
-    def scan_stream(self, stream: BinaryIO) -> None:
-        stream.read()
 
 
 class _RejectingScanner:
@@ -45,8 +49,10 @@ class _RejectingScanner:
     def check_ready(self) -> None:
         pass
 
-    def scan_stream(self, stream: BinaryIO) -> None:
-        stream.read()
+    def scan_stream(self, stream: BinaryIO) -> MalwareScanResult:
+        payload = stream.read()
+        if self.code == "MALWARE_DETECTED":
+            raise MalwareDetectedError(malware_scan_result(payload, verdict="infected"))
         raise MalwareScanError(self.code)
 
 
@@ -92,6 +98,7 @@ def _setup_parent(session, storage_root: Path):
     )
     session.add(stored)
     session.flush()
+    append_clean_attestation(session, stored)
     parent = EvidenceSource(
         estimate_id=estimate.id,
         defect_id=defect.id,
@@ -169,13 +176,8 @@ def _verified_result(retrieval_root: Path, embedded_sha256: str) -> LinkedImageR
     )
 
 
-@pytest.mark.parametrize(
-    "code",
-    ["MALWARE_DETECTED", "MALWARE_SCANNER_UNAVAILABLE"],
-)
 def test_retention_scan_failure_creates_no_stored_file_evidence_or_audit(
     tmp_path: Path,
-    code: str,
 ) -> None:
     storage_root = tmp_path / "storage"
     retrieval_root = tmp_path / "retrieval"
@@ -199,15 +201,79 @@ def test_retention_scan_failure_creates_no_stored_file_evidence_or_audit(
                 parent_evidence_source_id=parent.id,
                 result=result,
                 operator_reference="Scanner failure test",
-                malware_scanner=_RejectingScanner(code),
+                malware_scanner=_RejectingScanner("MALWARE_SCANNER_UNAVAILABLE"),
             )
 
-        assert captured.value.code == code
+        assert captured.value.code == "MALWARE_SCANNER_UNAVAILABLE"
         assert (
             session.scalar(select(func.count()).select_from(StoredFile)),
             session.scalar(select(func.count()).select_from(EvidenceSource)),
             session.scalar(select(func.count()).select_from(AuditEvent)),
         ) == before
+
+
+def test_retention_malware_detection_records_an_infected_receipt(tmp_path: Path) -> None:
+    storage_root = tmp_path / "storage"
+    retrieval_root = tmp_path / "retrieval"
+    storage_root.mkdir()
+    retrieval_root.mkdir()
+    with physical_session() as session:
+        estimate, _defect, parent, embedded_sha256 = _setup_parent(session, storage_root)
+        result = _verified_result(retrieval_root, embedded_sha256)
+        evidence_count = session.scalar(select(func.count()).select_from(EvidenceSource))
+        containment_audit_count = session.scalar(
+            select(func.count())
+            .select_from(AuditEvent)
+            .where(
+                AuditEvent.action.in_(
+                    {
+                        "append_malware_scan_attestation",
+                        "quarantine_stored_file_after_malware_detection",
+                    }
+                )
+            )
+        )
+
+        with pytest.raises(LinkedImageMalwareQuarantinedError) as captured:
+            _retain_verified_linked_image(
+                session,
+                storage_root=storage_root,
+                retrieval_root=retrieval_root,
+                estimate_id=estimate.id,
+                parent_evidence_source_id=parent.id,
+                result=result,
+                operator_reference="Malware containment test",
+                malware_scanner=_RejectingScanner("MALWARE_DETECTED"),
+            )
+
+        assert captured.value.code == "MALWARE_DETECTED"
+        blocked = session.scalar(
+            select(StoredFile).where(StoredFile.sha256 == result.content_sha256)
+        )
+        assert blocked is not None
+        assert blocked.malware_scan_status == "infected"
+        assert not Path(blocked.storage_path).exists()
+        attestation = session.scalar(
+            select(MalwareScanAttestation).where(
+                MalwareScanAttestation.stored_file_id == blocked.id
+            )
+        )
+        assert attestation is not None
+        assert attestation.verdict == "infected"
+        assert attestation.scan_source == "linked_image_retention"
+        assert session.scalar(select(func.count()).select_from(EvidenceSource)) == evidence_count
+        assert session.scalar(
+            select(func.count())
+            .select_from(AuditEvent)
+            .where(
+                AuditEvent.action.in_(
+                    {
+                        "append_malware_scan_attestation",
+                        "quarantine_stored_file_after_malware_detection",
+                    }
+                )
+            )
+        ) == containment_audit_count + 2
 
 
 def _setup_report_derived_parent(session, storage_root: Path):
@@ -236,6 +302,7 @@ def _setup_report_derived_parent(session, storage_root: Path):
     )
     session.add(stored)
     session.flush()
+    append_clean_attestation(session, stored)
     parent = EvidenceSource(
         estimate_id=estimate.id,
         defect_id=defect.id,
@@ -633,6 +700,8 @@ def test_retention_recovers_from_a_concurrent_compatible_stored_file_insert(
             immutable=True,
         )
         session.add(winner)
+        session.flush()
+        append_clean_attestation(session, winner)
         session.commit()
         real_lookup = linked_image_evidence_service._locked_stored_file_by_sha
         lookup_count = 0
@@ -663,6 +732,10 @@ def test_retention_recovers_from_a_concurrent_compatible_stored_file_insert(
         assert retained.stored_file.id == winner.id
         assert retained.stored_file_created is False
         assert session.scalar(select(func.count()).select_from(StoredFile)) == 2
+        assert (
+            session.scalar(select(func.count()).select_from(MalwareScanAttestation))
+            == 3
+        )
 
 
 def test_retention_conflict_cannot_reuse_an_infected_stored_file_winner(
@@ -717,7 +790,7 @@ def test_retention_conflict_cannot_reuse_an_infected_stored_file_winner(
                 operator_reference="Concurrent infected winner",
             )
 
-        assert caught.value.code == "STORED_FILE_INVALID"
+        assert caught.value.code == "STORED_FILE_MALWARE_BLOCKED"
         assert lookup_count == 2
         promoted = (
             storage_root
@@ -819,7 +892,7 @@ def test_retention_replay_locked_refresh_rejects_file_that_became_infected(
                 operator_reference="Replay after infection",
             )
 
-        assert caught.value.code == "STORED_FILE_INVALID"
+        assert caught.value.code == "STORED_FILE_MALWARE_BLOCKED"
         assert cached.malware_scan_status == "infected"
 
 

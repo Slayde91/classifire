@@ -19,7 +19,13 @@ from urllib.parse import parse_qsl, unquote, urljoin, urlsplit
 
 from PIL import Image, ImageChops, ImageFilter, ImageOps, ImageStat, UnidentifiedImageError
 
-from .malware_scanning import MalwareScanError, MalwareScanner, require_clean_bytes
+from .malware_scanning import (
+    MalwareDetectedError,
+    MalwareScanError,
+    MalwareScanner,
+    MalwareScanResult,
+    require_clean_bytes,
+)
 
 LINKED_IMAGE_RECEIPT_SCHEMA = "CLASSIFIRE-REAL-UAT-LINKED-IMAGE-RETRIEVAL-v2"
 READY_STATUSES = frozenset({"VERIFIED", "CACHED"})
@@ -37,9 +43,22 @@ class LinkedImageError(RuntimeError):
         super().__init__(f"Linked image retrieval failed: {code}")
 
 
-def _require_clean_linked_bytes(malware_scanner: MalwareScanner, payload: bytes) -> None:
+class LinkedImageMalwareDetectedError(LinkedImageError):
+    """Safe detection result retained across linked-image verification layers."""
+
+    def __init__(self, result: MalwareScanResult) -> None:
+        self.result = result
+        super().__init__("MALWARE_DETECTED")
+
+
+def _require_clean_linked_bytes(
+    malware_scanner: MalwareScanner,
+    payload: bytes,
+) -> MalwareScanResult:
     try:
-        require_clean_bytes(malware_scanner, payload)
+        return require_clean_bytes(malware_scanner, payload)
+    except MalwareDetectedError as exc:
+        raise LinkedImageMalwareDetectedError(exc.result) from None
     except MalwareScanError as exc:
         raise LinkedImageError(exc.code) from None
 

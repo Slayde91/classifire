@@ -7,6 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from malware_scan_support import append_clean_attestation
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -131,6 +132,7 @@ def add_evidence(session: Session, estimate: Estimate) -> EvidenceSource:
         )
         session.add(stored)
         session.flush()
+        append_clean_attestation(session, stored)
     evidence = EvidenceSource(
         estimate_id=estimate.id,
         stored_file_id=stored.id,

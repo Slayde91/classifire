@@ -3,9 +3,23 @@ from __future__ import annotations
 import hashlib
 from io import BytesIO
 from pathlib import Path
+from typing import BinaryIO
 
 import pytest
 from fastapi import UploadFile
+from malware_scan_support import (
+    CleanMalwareScanner as _CleanScanner,
+)
+from malware_scan_support import (
+    InfectedMalwareScanner as _InfectedScanner,
+)
+from malware_scan_support import (
+    UnavailableMalwareScanner as _UnavailableScanner,
+)
+from malware_scan_support import (
+    append_clean_attestation,
+    malware_scan_result,
+)
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
@@ -15,37 +29,14 @@ from starlette.datastructures import Headers
 from classifire import models, physical_models  # noqa: F401 - register full metadata.
 from classifire.config import Settings
 from classifire.db import Base
-from classifire.models import AuditEvent, StoredFile
-from classifire.services.malware_scanning import MalwareDetectedError, MalwareScanError
+from classifire.models import AuditEvent, MalwareScanAttestation, StoredFile
+from classifire.services.malware_scanning import MalwareScanError, MalwareScanResult
 from classifire.services.storage import (
     RetainedMalwareQuarantinedError,
     StoredFileSecurityError,
-    require_clean_stored_file,
+    require_clean_stored_file_for_session,
     save_upload,
 )
-
-
-class _CleanScanner:
-    def __init__(self) -> None:
-        self.payloads: list[bytes] = []
-
-    def check_ready(self) -> None:
-        return None
-
-    def scan_stream(self, stream) -> None:  # type: ignore[no-untyped-def]
-        self.payloads.append(stream.read())
-
-
-class _InfectedScanner(_CleanScanner):
-    def scan_stream(self, stream) -> None:  # type: ignore[no-untyped-def]
-        self.payloads.append(stream.read())
-        raise MalwareDetectedError
-
-
-class _UnavailableScanner(_CleanScanner):
-    def scan_stream(self, stream) -> None:  # type: ignore[no-untyped-def]
-        self.payloads.append(stream.read())
-        raise MalwareScanError("MALWARE_SCANNER_UNAVAILABLE")
 
 
 def _database() -> tuple[Engine, Session]:
@@ -80,6 +71,13 @@ def _incoming_files(settings: Settings) -> tuple[Path, ...]:
     return tuple(incoming.iterdir()) if incoming.exists() else ()
 
 
+class _ReturningInfectedScanner(_CleanScanner):
+    def scan_stream(self, stream: BinaryIO) -> MalwareScanResult:
+        payload = stream.read()
+        self.payloads.append(payload)
+        return malware_scan_result(payload, verdict="infected")
+
+
 def test_clean_upload_is_scanned_before_immutable_promotion(tmp_path: Path) -> None:
     engine, db = _database()
     settings = _settings(tmp_path)
@@ -99,12 +97,14 @@ def test_clean_upload_is_scanned_before_immutable_promotion(tmp_path: Path) -> N
         assert stored.malware_scan_status == "clean"
         assert stored.sha256 == hashlib.sha256(payload).hexdigest()
         assert stored.size_bytes == len(payload)
-        retained = require_clean_stored_file(
-            settings.storage_root,
+        retained = require_clean_stored_file_for_session(
+            db,
             stored,
+            storage_root=settings.storage_root,
             allowed_purposes={"technical_evidence"},
         )
         assert retained.read_bytes() == payload
+        assert db.scalar(select(func.count()).select_from(MalwareScanAttestation)) == 1
         assert _incoming_files(settings) == ()
     finally:
         db.close()
@@ -115,6 +115,7 @@ def test_clean_upload_is_scanned_before_immutable_promotion(tmp_path: Path) -> N
     ("scanner", "expected_code"),
     [
         (_InfectedScanner(), "MALWARE_DETECTED"),
+        (_ReturningInfectedScanner(), "MALWARE_DETECTED"),
         (_UnavailableScanner(), "MALWARE_SCANNER_UNAVAILABLE"),
     ],
 )
@@ -245,9 +246,10 @@ def test_new_detected_verdict_quarantines_existing_exact_sha_with_audit(
         assert event is not None
         assert event.entity_id == stored.id
         with pytest.raises(StoredFileSecurityError):
-            require_clean_stored_file(
-                settings.storage_root,
+            require_clean_stored_file_for_session(
+                db,
                 stored,
+                storage_root=settings.storage_root,
                 allowed_purposes={"technical_evidence"},
             )
     finally:
@@ -281,7 +283,7 @@ def test_detected_sha_tombstone_blocks_a_later_clean_verdict(tmp_path: Path) -> 
                 malware_scanner=_CleanScanner(),
             )
 
-        assert rejected.value.code == "STORED_FILE_NOT_PROCESSABLE"
+        assert rejected.value.code == "STORED_FILE_MALWARE_BLOCKED"
         tombstone = db.scalar(select(StoredFile))
         assert tombstone is not None
         assert tombstone.malware_scan_status == "infected"
@@ -314,6 +316,8 @@ def test_detected_sha_recovers_from_a_concurrent_unique_insert(
         immutable=True,
     )
     db.add(existing)
+    db.flush()
+    append_clean_attestation(db, existing)
     db.commit()
     real_scalar = db.scalar
     lookup_count = 0
@@ -339,7 +343,7 @@ def test_detected_sha_recovers_from_a_concurrent_unique_insert(
         db.commit()
         db.refresh(existing)
 
-        assert lookup_count == 2
+        assert lookup_count == 3
         assert existing.malware_scan_status == "infected"
         assert db.scalar(select(func.count()).select_from(StoredFile)) == 1
     finally:
@@ -369,6 +373,8 @@ def test_clean_sha_recovers_from_a_concurrent_compatible_insert(
         immutable=True,
     )
     db.add(winner)
+    db.flush()
+    append_clean_attestation(db, winner)
     db.commit()
     real_scalar = db.scalar
     lookup_count = 0
@@ -394,9 +400,13 @@ def test_clean_sha_recovers_from_a_concurrent_compatible_insert(
         )
         db.commit()
 
-        assert lookup_count == 2
+        # Two recovery lookups plus three attestation validation/append locks.
+        assert lookup_count == 5
         assert stored.id == winner.id
         assert real_scalar(select(func.count()).select_from(StoredFile)) == 1
+        assert (
+            real_scalar(select(func.count()).select_from(MalwareScanAttestation)) == 2
+        )
     finally:
         db.close()
         engine.dispose()
@@ -445,7 +455,7 @@ def test_clean_sha_conflict_cannot_rehabilitate_infected_winner(
                 malware_scanner=_CleanScanner(),
             )
 
-        assert rejected.value.code == "STORED_FILE_NOT_PROCESSABLE"
+        assert rejected.value.code == "STORED_FILE_MALWARE_BLOCKED"
         assert lookup_count == 2
         assert db.scalar(select(func.count()).select_from(StoredFile)) == 1
         db.refresh(tombstone)
@@ -457,10 +467,20 @@ def test_clean_sha_conflict_cannot_rehabilitate_infected_winner(
         engine.dispose()
 
 
-@pytest.mark.parametrize("status", ["pending", "not_configured", "infected", "failed", ""])
+@pytest.mark.parametrize(
+    ("status", "expected_code"),
+    [
+        ("pending", "STORED_FILE_ATTESTATION_REQUIRED"),
+        ("not_configured", "STORED_FILE_ATTESTATION_REQUIRED"),
+        ("infected", "STORED_FILE_MALWARE_BLOCKED"),
+        ("failed", "STORED_FILE_ATTESTATION_REQUIRED"),
+        ("", "STORED_FILE_ATTESTATION_REQUIRED"),
+    ],
+)
 def test_deduplication_cannot_reuse_nonclean_legacy_row(
     tmp_path: Path,
     status: str,
+    expected_code: str,
 ) -> None:
     engine, db = _database()
     settings = _settings(tmp_path)
@@ -493,7 +513,7 @@ def test_deduplication_cannot_reuse_nonclean_legacy_row(
                 malware_scanner=_CleanScanner(),
             )
 
-        assert rejected.value.code == "STORED_FILE_NOT_PROCESSABLE"
+        assert rejected.value.code == expected_code
         assert db.scalar(select(func.count()).select_from(StoredFile)) == 1
         assert _incoming_files(settings) == ()
     finally:

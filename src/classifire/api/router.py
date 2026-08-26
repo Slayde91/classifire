@@ -77,7 +77,7 @@ from ..services.snapshot import lock_snapshot
 from ..services.storage import (
     RetainedMalwareQuarantinedError,
     StoredFileSecurityError,
-    require_clean_stored_file,
+    require_clean_stored_file_for_session,
     save_upload,
 )
 from ..services.technical import extract_pdf_candidate_metadata, search_for_opening, search_variants
@@ -444,9 +444,10 @@ def upload_technical_document(
         raise HTTPException(status_code=409, detail="Technical Document ID already exists")
     try:
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
-        stored_path = require_clean_stored_file(
-            settings.storage_root,
+        stored_path = require_clean_stored_file_for_session(
+            db,
             stored,
+            storage_root=settings.storage_root,
             allowed_purposes={"technical_evidence"},
         )
     except RetainedMalwareQuarantinedError as exc:

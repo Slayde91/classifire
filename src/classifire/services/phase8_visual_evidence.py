@@ -25,6 +25,12 @@ from .phase8_visual_proposal import (
     canonical_json_sha256,
     validate_visual_evidence_manifest,
 )
+from .storage import (
+    StoredFileSecurityError,
+    VerifiedStoredFile,
+    load_processable_stored_file,
+    revalidate_processable_stored_file,
+)
 
 VISUAL_EVIDENCE_METADATA_KEY = "phase8_visual_inference"
 EVIDENCE_FAMILY_INVENTORY_SCHEMA = "CLASSIFIRE-PHASE8-EVIDENCE-FAMILY-INVENTORY-v1"
@@ -37,7 +43,6 @@ _ALLOWED_IMAGE_MIMES = frozenset(
         "image/webp",
     }
 )
-_ALLOWED_SCAN_STATUSES = frozenset({"clean"})
 _EXPECTED_METADATA_KEYS = frozenset(
     {
         "evidence_role",
@@ -67,6 +72,7 @@ class RetainedVisualEvidenceFile:
     sha256: str
     size_bytes: int
     media_type: str
+    verification_token: VerifiedStoredFile | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,13 +157,17 @@ def _metadata(evidence: EvidenceSource) -> dict[str, Any]:
 
 
 def _storage_path(storage_root: Path, stored: StoredFile) -> Path:
-    root = storage_root.resolve(strict=True)
-    raw_path = Path(stored.storage_path)
-    path = (raw_path if raw_path.is_absolute() else Path.cwd() / raw_path).resolve(strict=True)
     try:
+        root = storage_root.resolve(strict=True)
+        raw_path = Path(stored.storage_path)
+        path = (raw_path if raw_path.is_absolute() else Path.cwd() / raw_path).resolve(
+            strict=True
+        )
         path.relative_to(root)
     except ValueError as exc:
         raise Phase8VisualEvidenceError("FILE_OUTSIDE_STORAGE_ROOT") from exc
+    except OSError as exc:
+        raise Phase8VisualEvidenceError("STORED_FILE_UNAVAILABLE") from exc
     if not path.is_file():
         raise Phase8VisualEvidenceError("STORED_FILE_UNAVAILABLE")
     return path
@@ -377,21 +387,40 @@ def build_retained_visual_evidence_packet(
             raise Phase8VisualEvidenceError("STORED_FILE_PURPOSE_FORBIDDEN")
         if stored.immutable is not True:
             raise Phase8VisualEvidenceError("STORED_FILE_NOT_IMMUTABLE")
-        if str(stored.malware_scan_status or "").strip().lower() not in _ALLOWED_SCAN_STATUSES:
-            raise Phase8VisualEvidenceError("STORED_FILE_SCAN_STATUS_FORBIDDEN")
         media_type = _normalise_mime(stored.media_type)
         if media_type not in _ALLOWED_IMAGE_MIMES:
             raise Phase8VisualEvidenceError("VISUAL_MEDIA_TYPE_FORBIDDEN")
         if stored.size_bytes < 1 or stored.size_bytes > _MAXIMUM_IMAGE_BYTES:
             raise Phase8VisualEvidenceError("IMAGE_SIZE_OUT_OF_POLICY")
 
+        # Preserve cause-specific retained-file failures before the central
+        # attestation gate. These checks inspect identity only; parsing remains
+        # forbidden until the receipt-bound token has been issued below.
         path = _storage_path(storage_root, stored)
-        actual_size = path.stat().st_size
+        try:
+            actual_size = path.stat().st_size
+        except OSError as exc:
+            raise Phase8VisualEvidenceError("STORED_FILE_UNAVAILABLE") from exc
         if actual_size != stored.size_bytes:
             raise Phase8VisualEvidenceError("FILE_SIZE_MISMATCH")
-        actual_sha256 = _sha256(path)
+        try:
+            actual_sha256 = _sha256(path)
+        except OSError as exc:
+            raise Phase8VisualEvidenceError("STORED_FILE_UNAVAILABLE") from exc
         if actual_sha256.casefold() != stored.sha256.casefold():
             raise Phase8VisualEvidenceError("FILE_DIGEST_MISMATCH")
+
+        try:
+            verified_file = load_processable_stored_file(
+                db,
+                stored,
+                storage_root=storage_root,
+                allowed_purposes={"technical_evidence"},
+                expected_sha256=stored.sha256,
+            )
+        except StoredFileSecurityError:
+            raise Phase8VisualEvidenceError("STORED_FILE_ATTESTATION_INVALID") from None
+        path = verified_file.path
         if (
             not isinstance(evidence.sha256, str)
             or actual_sha256.casefold() != evidence.sha256.casefold()
@@ -434,6 +463,7 @@ def build_retained_visual_evidence_packet(
                 sha256=actual_sha256,
                 size_bytes=actual_size,
                 media_type=media_type,
+                verification_token=verified_file,
             )
         )
 
@@ -454,6 +484,27 @@ def build_retained_visual_evidence_packet(
     )
 
 
+def revalidate_retained_visual_evidence_packet(
+    db: Session,
+    *,
+    storage_root: Path,
+    packet: RetainedVisualEvidencePacket,
+) -> None:
+    """Reject a long-running result if any evidence receipt or bytes changed."""
+
+    for item in packet.files:
+        if item.verification_token is None:
+            raise Phase8VisualEvidenceError("STORED_FILE_ATTESTATION_STALE")
+        try:
+            revalidate_processable_stored_file(
+                db,
+                item.verification_token,
+                storage_root=storage_root,
+            )
+        except StoredFileSecurityError:
+            raise Phase8VisualEvidenceError("STORED_FILE_ATTESTATION_STALE") from None
+
+
 __all__ = [
     "EVIDENCE_FAMILY_INVENTORY_SCHEMA",
     "Phase8VisualEvidenceError",
@@ -462,4 +513,5 @@ __all__ = [
     "RetainedVisualEvidencePacket",
     "VISUAL_EVIDENCE_METADATA_KEY",
     "build_retained_visual_evidence_packet",
+    "revalidate_retained_visual_evidence_packet",
 ]
