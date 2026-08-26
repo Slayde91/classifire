@@ -31,14 +31,16 @@ Nothing in a report, fixture, receipt, or attached reference document grants aut
 ### 2.1 Current product position
 
 CLASSIFIRE has a controlled evidence-to-physical-model prototype. Shared `main`
-at `1b3d7c9` contains the canonical runtime,
+at `20cb72a` contains the canonical runtime,
 admission-bound writer, bounded visual correction guard, proposal-blind
 inventory, mandatory blind reconciliation, deterministic proposal-only
 controller and receipt, retained-evidence adapter, guarded linked-original
 retrieval and retention, bounded linked-original-to-proposal runner,
 literal-loopback OpenResponses transport, managed local runtime composition,
 dedicated zero-tool identities, fail-closed provisioning, and the
-post-inference validation-only human-reference comparator.
+post-inference validation-only human-reference comparator. It also contains a
+strict `site_observation` evidence-intake contract at the existing
+evidence-registration boundary.
 
 Shared main also contains the trusted operator-created representative-run
 package, defect-scoped retention from a full-report retrieval pass,
@@ -65,6 +67,7 @@ The prototype is not production-authorised. It does not yet have a corrected act
 | Evidence integrity | Proposal-only runs protect the canonical estimate with a component-level protected-state fingerprint rather than relying on a whole-database file hash. |
 | Image quality | Shared main can discover allowlisted report-provided linked originals, bind them to displayed thumbnails, prove usable additional detail, retain verified bytes as immutable child evidence, preserve lower-resolution context, and feed retained bytes into the proposal-only controller. The retained representative pass retrieved every required original and restricted inference to current retentions plus explicitly mapped ready parents for the selected defect. |
 | Image provenance | Shared main preserves explicit parent-thumbnail and page context for retained linked originals. Automated grouping of duplicates, re-encodes, crops, annotations, and alternate angles remains planned Phase 5 work. |
+| Site-observation intake | Shared main can register an immutable admissible technical-evidence file against one estimate-owned Defect through a strict `site_observation` payload. Each fact requires an evidence locator and explicit uncertainty/limitations, and the canonical payload digest is audit-bound. This is evidence intake only, not Physical Model write or lock authority. |
 | Visual safety | Shared main enforces bounded correction semantics, fail-closed strict-schema receipts, proposal-blind inventory, mandatory reconciliation, ordered role separation, protected-state checks, byte-verified defect-bound retained evidence, no-tool transport semantics, and dedicated runtime identities. Synthetic inference proved the configured no-tool boundary; the representative pass then proved safe abstention by returning a valid Validator block without changing protected state. |
 | Proposal-only safety | The controller has no database, canonical-write, admission, signing, registration, lock, device, or deployment capability. The transport accepts only literal loopback endpoints, rechecks image bytes, requires empty effective server tools, sends `tools: []` with `tool_choice: none`, and audits the exact session after every attempted request. |
 | Reconciliation | Shared main has a post-inference human-reference comparator that binds proposal, strict controller receipt, and validation-only reference inputs by path and SHA-256. It verifies the proposal's canonical JSON binding and detects topology/substrate swaps rather than matching disconnected multisets. It has no database or inference interface. |
@@ -343,6 +346,7 @@ Run and approval visibility is useful and traceable without creating a second mu
 - A verified original is selected as primary detail only after binding it to the report thumbnail; lower-resolution page/crop/annotation variants remain mandatory context when they carry distinct information.
 - Verified or revalidated cached JPEGs can be retained by content hash as immutable technical evidence, bound to an exact active embedded-image parent, page, and photo identity, with redacted retrieval provenance and an audit event. The retention boundary enforces the physical-model mutation guard, is replay-idempotent, and does not commit its caller's transaction.
 - The reviewed local candidate also accepts an exact immutable report-PDF parent only when report hash, page, photo metadata, native dimensions, and source bounds agree. Full-report retrieval remains complete while retention and inference are restricted to current retentions and explicitly mapped ready parents for the selected defect; unlisted same-Defect visual rows are excluded.
+- Shared main accepts a strict `site_observation` payload at the existing evidence-registration boundary only when the source file is immutable and admissible, the Defect belongs to the estimate, every asserted fact has a locator, and uncertainty and limitations are explicit. The audit event binds the canonical payload digest. This creates no Physical Model write or lock authority.
 - Stale low-resolution conclusions are not allowed to suppress high-detail re-review.
 - Model-visible attachments are rehashed immediately before transport to prevent path or byte substitution after earlier validation.
 - The retained representative pass proved that higher-detail retrieval can still end in correct abstention: the originals did not resolve every physical relationship or quantity.
@@ -431,15 +435,19 @@ An independently validated, durable visual receipt is required for every canonic
 5. The newer representative pass retrieved every required linked original, used only the selected defect's retained evidence for inference, and safely stopped at a valid Validator block. Protected state was unchanged after rollback; no canonical submission or lock occurred.
 6. The blocked review request was recovered locally from all receipt-bound successful stages. The recovery is content-safe and hash-bound but expressly does not make mutable local OpenClaw history immutable or replay Gateway and external transport evidence.
 7. Human review v2 accounts for all seven review items and four unresolved observations. Shared-main validators pass the limited 5/6/6 proposal-only record while the retained response and unresolved site-dependent facts remain local evidence.
+8. Shared main now includes the strict `site_observation` evidence-intake contract needed to retain new governed site facts against the relevant Defect without granting Physical Model write, lock, signing, pricing, or release authority.
 
 ### Current gate
 
-The representative package, review safeguards, and durable receipt registry are
-merged on shared main. The next physical-evidence action is a site visit or
-equivalent newly governed evidence for the facts the human review could not
-establish. It is not canonical preflight, signing, submission, locking, pricing,
-or an unchanged rerun. The earlier 17/24 preflight remains historical no-write
-evidence and cannot be reused as admission authority.
+The representative package, review safeguards, durable receipt registry, and
+site-observation evidence-intake contract are merged on shared main. The next
+physical-evidence action is a site visit or equivalent newly governed evidence
+for the facts the human review could not establish. Retain that evidence as an
+immutable admissible technical-evidence file, then register only its supported
+facts through the shared-main contract. This is not canonical preflight, signing,
+submission, locking, pricing, or an unchanged rerun. The earlier 17/24 preflight
+remains historical no-write evidence and cannot be reused as admission
+authority.
 
 Post-run output/recovery hardening changed the source tree. The retained
 representative receipt therefore proves its exact historical source; the later
