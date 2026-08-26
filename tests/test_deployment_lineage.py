@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import (
     Column,
     DateTime,
@@ -15,7 +16,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Session
 
-from classifire.services.deployment_lineage import assess_deployment_lineage
+from classifire.db import Base
+from classifire.services.deployment_lineage import (
+    REQUIRED_COLUMNS,
+    REQUIRED_TABLES,
+    assess_deployment_lineage,
+)
 
 
 def _assessment(  # type: ignore[no-untyped-def]
@@ -34,6 +40,9 @@ def _assessment(  # type: ignore[no-untyped-def]
     user_id_index_unique: bool = False,
     user_fk_ondelete: str | None = "CASCADE",
     legacy_submission_table: bool = False,
+    missing_mapped_table: str | None = None,
+    missing_mapped_column: str | None = None,
+    additional_table: str | None = None,
 ):
     engine = create_engine("sqlite+pysqlite:///:memory:")
     metadata = MetaData()
@@ -87,6 +96,35 @@ def _assessment(  # type: ignore[no-untyped-def]
             )
     if legacy_submission_table:
         Table("physical_model_initial_submissions", metadata, Column("id", String(36)))
+    if additional_table:
+        Table(additional_table, metadata, Column("id", String(36)))
+
+    omitted_tables: set[str] = set()
+    if not human_session_table:
+        omitted_tables.add("human_sessions")
+    if not receipt_table:
+        omitted_tables.update(
+            {"physical_model_submission_receipts", "visual_validation_receipts"}
+        )
+    if missing_mapped_table is not None:
+        omitted_tables.add(missing_mapped_table)
+    for table_name, model_table in Base.metadata.tables.items():
+        if table_name in omitted_tables:
+            continue
+        if table_name in metadata.tables:
+            test_table = metadata.tables[table_name]
+        else:
+            test_table = Table(table_name, metadata)
+        for model_column in model_table.columns:
+            qualified_name = f"{table_name}.{model_column.name}"
+            if qualified_name == "users.auth_generation" and not user_auth_generation:
+                continue
+            if (
+                model_column.name not in test_table.c
+                and qualified_name != missing_mapped_column
+            ):
+                test_table.append_column(Column(model_column.name, String()))
+
     metadata.create_all(engine)
     with engine.begin() as connection:
         connection.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(64))"))
@@ -96,6 +134,17 @@ def _assessment(  # type: ignore[no-untyped-def]
         )
     with Session(engine) as db:
         return assess_deployment_lineage(db)
+
+
+def test_required_inventory_matches_every_registered_model() -> None:
+    expected_columns = {
+        table_name: frozenset(str(column.name) for column in table.columns)
+        for table_name, table in Base.metadata.tables.items()
+    }
+
+    assert REQUIRED_COLUMNS == expected_columns
+    assert REQUIRED_TABLES == frozenset(expected_columns)
+    assert {"customers", "defects"} <= REQUIRED_TABLES
 
 
 def test_clean_stack_head_is_ready_only_with_required_session_and_journal_schema() -> None:
@@ -108,6 +157,48 @@ def test_clean_stack_head_is_ready_only_with_required_session_and_journal_schema
     assert result.status == "READY"
     assert result.code == "CLEAN_STACK_HEAD_CONFIRMED"
     assert result.database_write_performed is False
+
+
+@pytest.mark.parametrize("missing_mapped_table", ("customers", "defects"))
+def test_current_head_requires_every_mapped_table(missing_mapped_table: str) -> None:
+    result = _assessment(
+        "0010_human_sessions",
+        receipt_table=True,
+        human_session_table=True,
+        user_auth_generation=True,
+        missing_mapped_table=missing_mapped_table,
+    )
+    assert result.status == "BLOCKED"
+    assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
+    assert result.missing_tables == (missing_mapped_table,)
+
+
+@pytest.mark.parametrize(
+    "missing_mapped_column", ("customers.legal_name", "defects.description")
+)
+def test_current_head_requires_every_mapped_column(missing_mapped_column: str) -> None:
+    result = _assessment(
+        "0010_human_sessions",
+        receipt_table=True,
+        human_session_table=True,
+        user_auth_generation=True,
+        missing_mapped_column=missing_mapped_column,
+    )
+    assert result.status == "BLOCKED"
+    assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
+    assert result.missing_columns == (missing_mapped_column,)
+
+
+def test_current_head_allows_unrelated_extension_table() -> None:
+    result = _assessment(
+        "0010_human_sessions",
+        receipt_table=True,
+        human_session_table=True,
+        user_auth_generation=True,
+        additional_table="monitoring_extensions",
+    )
+    assert result.status == "READY"
+    assert result.code == "CLEAN_STACK_HEAD_CONFIRMED"
 
 
 def test_previous_head_requires_human_session_migration() -> None:

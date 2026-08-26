@@ -126,3 +126,38 @@ def test_0009_startup_rejection_is_read_only_and_0010_can_still_upgrade(
     assert result.code == "GOVERNED_SCHEMA_CONFIRMED"
     assert result.schema_created is False
     assert result.governed_lineage is True
+
+
+@pytest.mark.parametrize(
+    ("corruption_sql", "expected_detail"),
+    [
+        ("DROP TABLE customers", "missing tables ('customers',)"),
+        (
+            "ALTER TABLE customers DROP COLUMN legal_name",
+            "missing columns ('customers.legal_name',)",
+        ),
+    ],
+    ids=("missing-table", "missing-column"),
+)
+def test_current_head_rejects_incomplete_mapped_schema_without_mutation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    corruption_sql: str,
+    expected_detail: str,
+) -> None:
+    database_path = tmp_path / "incomplete-current-head.sqlite"
+    database_url = f"sqlite:///{database_path.as_posix()}"
+    environment = _migration_environment(tmp_path, database_url)
+    _upgrade(database_url, environment, "head")
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.execute(text(corruption_sql))
+    before = _schema_snapshot(engine)
+    _forbid_create_all(monkeypatch)
+
+    with pytest.raises(SchemaBootstrapError) as rejected:
+        prepare_application_schema(engine, "production")
+
+    assert rejected.value.code == "DEPLOYMENT_SCHEMA_DRIFT"
+    assert expected_detail in str(rejected.value)
+    assert _schema_snapshot(engine) == before

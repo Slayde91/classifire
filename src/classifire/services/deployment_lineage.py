@@ -9,37 +9,19 @@ from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy.orm import Session
 
+from .. import models as _models  # noqa: F401
+from .. import physical_models as _physical_models  # noqa: F401
+from ..db import Base
+
 CLEAN_STACK_HEAD = "0010_human_sessions"
 PREVIOUS_CLEAN_STACK_HEAD = "0009_visual_validation_receipts"
 LEGACY_RETIREMENT_HEAD = "0007_reconcile_adjudicated_admission_lineages"
 LEGACY_ADJUDICATED_HEAD = "0006_adjudicated_canonical_admissions"
-REQUIRED_TABLES = frozenset(
-    {
-        "human_sessions",
-        "physical_model_admissions",
-        "physical_model_submission_receipts",
-        "users",
-        "visual_validation_receipts",
-    }
-)
-REQUIRED_COLUMNS = {
-    "human_sessions": frozenset(
-        {
-            "auth_generation",
-            "created_at",
-            "expires_at",
-            "id",
-            "record_version",
-            "revoked_at",
-            "revoked_reason",
-            "token_hash",
-            "token_hint",
-            "updated_at",
-            "user_id",
-        }
-    ),
-    "users": frozenset({"auth_generation"}),
+REQUIRED_COLUMNS: dict[str, frozenset[str]] = {
+    table_name: frozenset(str(column.name) for column in table.columns)
+    for table_name, table in Base.metadata.tables.items()
 }
+REQUIRED_TABLES = frozenset(REQUIRED_COLUMNS)
 RETIRED_TABLES = frozenset({"physical_model_initial_submissions"})
 
 _COLUMN_CONTRACTS: dict[str, dict[str, tuple[type[object], int | None, bool]]] = {
@@ -166,7 +148,7 @@ def _human_session_constraint_violations(
 
 
 def assess_deployment_schema(bind: Connection | Engine) -> DeploymentSchemaAssessment:
-    """Inspect the current security-critical schema without performing writes."""
+    """Inspect the complete mapped schema and critical constraints without writes."""
 
     inspector = inspect(bind)
     tables = set(inspector.get_table_names())
