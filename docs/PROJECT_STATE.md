@@ -4,7 +4,7 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Shared `main` verified:** `20cb72a14dd3b217cfac7670f047fdc385081990`, equal to `origin/main` at reconciliation
+**Verified application baseline:** `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge); later documentation-only merges do not alter this runtime baseline
 
 **Merged Phase 8 scope:** representative rollback package and recovery, evidence-family and human-review validators, direct legacy-route test isolation, the durable visual-validation receipt registry/verifier, and controlled `site_observation` evidence intake
 
@@ -14,12 +14,16 @@ Nothing in this document authorises inference, evidence retrieval, admission sig
 
 ## 1. Repository and Git position
 
-At reconciliation, shared `main` and `origin/main` both resolve to
-`20cb72a14dd3b217cfac7670f047fdc385081990`, the merge of PR #74. The merged
-tree includes the earlier representative-run/recovery package, evidence-family
-and human-review validators, the direct legacy-route test isolation, and the
-durable visual-validation receipt registry and verifier. It also includes the
-strict `site_observation` evidence-intake contract at the existing
+The shared application baseline reconciled here is
+`20cb72a14dd3b217cfac7670f047fdc385081990`, the merge of PR #74.
+PR #76 advanced `origin/main` to a documentation-only descendant of this
+baseline; later documentation-only merges may advance it again without changing
+the application baseline. Verify the live branch tip directly whenever
+publication state matters. The baseline includes the
+earlier representative-run/recovery package, evidence-family and human-review
+validators, the direct legacy-route test isolation, and the durable
+visual-validation receipt registry and verifier. It also includes the strict
+`site_observation` evidence-intake contract at the existing
 evidence-registration boundary.
 
 The primary checkout remains on `gpt/phase8-linked-original-images` at
@@ -40,7 +44,7 @@ physical-evidence and lock-design blockers; that is a separate external action.
 
 ### 2.1 Completed on shared `main`
 
-Shared `main` at `20cb72a` contains:
+The verified application baseline at `20cb72a` contains:
 
 - the FastAPI, CLI, SQLAlchemy, Alembic, storage, audit, security, UI, import, release-pinning, calculation, snapshot, PDF/XLSX, and Mission Control foundations;
 - the canonical Defect, EvidenceSource, Opening, Service, Opening-Service link, Physical Model Lock, admission, and submission-receipt records;
