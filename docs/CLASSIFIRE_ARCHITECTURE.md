@@ -1,10 +1,11 @@
 # CLASSIFIRE Architecture
 
-**Document status:** Current pre-production architecture reconciled with local implementation
+**Document status:** Current pre-production architecture reconciled with the pushed Git feature-branch candidate
 
-**Architecture version:** 3.19
+**Architecture version:** 3.21
 
-**Current implementation focus:** Evidence resolution and proposal-only physical modelling for fire seals, blank openings/core holes, and service penetrations
+**Current implementation focus:** Evidence-bound physical modelling plus
+authority-neutral multi-report technical intake and field-level Draft authoring
 
 **Deferred physical domains:** Whole-run structural-steel protection and complete fire-rated duct runs
 
@@ -12,9 +13,11 @@
 
 This document describes the architecture CLASSIFIRE is intended to preserve and
 the extent to which the local repository currently implements it. It must be
-read with [PROJECT_STATE.md](./PROJECT_STATE.md) and
-[CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md). Executable source, tests, Git
-state, and retained runtime receipts determine factual implementation status.
+read with [PROJECT_STATE.md](./PROJECT_STATE.md),
+[CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md), and the
+[Technical Intake Draft v1 contract](./TECHNICAL_INTAKE_DRAFT_V1.md).
+Executable source, tests, Git state, and retained runtime receipts determine
+factual implementation status.
 
 The status labels used here are:
 
@@ -92,7 +95,7 @@ Shared current-main contains the active Phase 8 foundations:
 - FastAPI, CLI, SQLAlchemy, and Alembic infrastructure;
 - the current Opening, Service, and Opening-Service relationship model;
 - the reconciled admission lineage through
-  `0008_retire_legacy_initial_submissions`; and
+  `0008_retire_legacy_initial_submissions`;
 - the additive durable visual-validation receipt migration
   `0009_visual_validation_receipts`;
 - component-level protected-state fingerprinting;
@@ -106,9 +109,11 @@ Shared current-main contains the active Phase 8 foundations:
 - literal-loopback, no-tool OpenResponses transport and dedicated Physical and
   Validator runtime identities;
 - a validation-only post-inference human-reference comparator;
-- the bounded linked-original-to-proposal runner; and
+- the bounded linked-original-to-proposal runner;
 - immutable admission registration and one-shot initial submission without lock
-  creation.
+  creation; and
+- runtime revocation of authenticated authority when a human account becomes
+  inactive.
 
 These are completed foundations, not completion of Phase 8 or production
 readiness.
@@ -138,18 +143,108 @@ independent Validator blocked the proposal because material physical facts could
 not be established from the governed evidence. This is valid fail-closed
 behaviour. It is not an approved Physical Model.
 
-### 4.3 Legacy-root later-phase evidence - In progress and not consolidated
+### 4.3 Current-main technical-intake branch candidate - In progress
+
+The isolated `gpt/technical-intake-draft-boundary-20260827` worktree is based
+exactly on shared-main commit `01925237f`, with no intervening unpushed
+commits. Integrated implementation commit
+`d76562e54a7f208c2cab8ea1e9f598065f8e5151`,
+`feat: add governed technical intake and shared malware containment`, was
+pushed to `origin/gpt/technical-intake-draft-boundary-20260827`; local and
+upstream refs were equal at that implementation point. This documentation
+record cannot embed the hash of the commit that contains it; the final Git
+commit/push report and read-only branch ref record that hash. The candidate is
+not shared-main or deployed. Its additive migration lineage reaches head
+`0018_shared_malware_containment`.
+
+The candidate extends the existing application rather than creating a parallel
+technical database:
+
+- upload ingress, storage, malware, configuration, and readiness services retain
+  immutable bytes and fail closed before technical processing;
+- source-document metadata, typed lineage, independent source review, Draft-only
+  import, retirement, release publication, and pinned search preserve separate
+  source, candidate, and runtime-release authority;
+- an owner-bound batch ledger isolates files while preserving exact manifests,
+  replay receipts, retry, restore, and reconciliation;
+- durable extraction runs, pages, artifacts, reservations, terminal receipts,
+  and startup reconciliation preserve exact source/runtime bindings;
+- an injected Linux-rootless OCI controller and dedicated worker boundary remain
+  default-off and test-only; and
+- the owner-bound TechnicalIntakeDraft workspace saves fields, locators, and
+  many-to-many evidence roles against one exact immutable PDF without creating a
+  TechnicalVariant, Approval, or LibraryRelease.
+
+The Draft payload contract is documented in
+[TECHNICAL_INTAKE_DRAFT_V1.md](./TECHNICAL_INTAKE_DRAFT_V1.md). It supports
+manual physical-page locators when preview is unavailable and requires a
+verified digest-bound page event before the browser can reuse a displayed page.
+It contains no status, approval, release, or runtime-eligibility controls.
+
+Clean duplicate content hashes deliberately reuse one verified StoredFile, but
+each TechnicalDocument retains its own identity, metadata, and audit event. A
+later exact scanner-bound malware result from an upload or replay quarantines
+that shared StoredFile
+and moves every previously accepted linked item across every affected batch to
+operator attention. Item-, batch-, and file-level audits bind the transition.
+Every referencing document then fails clean-file download, review, preview,
+extraction, and Draft eligibility until separately governed resolution.
+Quarantine contains shared bytes; it does not erase evidence history or
+manufacture another trusted copy.
+
+The first template must cover eight explicit document families: Full Fire Test
+Report; Regulatory Information Report; Fire Assessment Report; Extended
+Application Report; Field of Application Report; Fire Engineering Report or
+Performance Solution; Certificate or Summary of Assessment; and Test
+Certificate. Family is a reviewed content declaration, not a filename guess.
+
+An earlier eight-file/1,673-page structural set and an additional attached
+ten-report Promat/281-page structural set inform the schema. Every page in the
+additional set was text-bearing, but neither set was ingested into CLASSIFIRE.
+The additional inventory's references to NCC 2022, AS 1530.4:2014, and
+AS 4072.1:2005 are declaration-only attention signals. Their presence is not a
+compliance, currency, applicability, or technical-suitability decision.
+
+The exact full candidate suite completed with 1,545 passed, 15 skipped, and
+140 warnings; focused catalogue/UI and lock/review/containment suites completed
+with 141 and 154 passed respectively, with four new regression cases recorded. JavaScript
+harnesses succeeded and Alembic reported the single head
+`0018_shared_malware_containment`. Disposable authenticated HTTP UAT returned
+HTTP 200 for health, login, the technical catalogue, and synthetic document
+details, while opening, copying, and ingesting no supplied PDF. It confirmed the
+eight current families, readable legacy metadata, and declaration-only standards
+warnings. Rendered-browser UAT remained blocked by
+`windows sandbox failed: helper_unknown_error: setup refresh had errors`, so
+the HTTP and harness evidence is not a visual interaction pass.
+
+Whole-tree Ruff, Mypy, and Bandit remain non-clean at 207 findings, 47 errors in
+9 files, and 7 low-severity findings with 0 medium/high respectively. The
+verified baseline was 329 Ruff findings, 101 Mypy errors in 11 files, and 8 low
+Bandit findings with 0 medium/high. The candidate's numeric counts are lower
+than that baseline, but this does not make the whole-tree checks clean or prove
+the absence of semantic regressions. Focused core Ruff passed, focused Mypy
+checked 26 files cleanly, and focused Bandit reported no issues.
+
+This branch is not Phase 2 completion. It lacks a scanned/image-only
+representative source, real-report database ingestion, a governed
+locator-backed compliance decision, reviewer-owned intake revision and
+materialisation, stateful clean-to-FOUND scanner UAT, rendered-browser UAT,
+eligible rootless-parser UAT, live PostgreSQL two-session concurrency UAT, and
+publication/pinned-runtime UAT.
+
+### 4.4 Legacy-root later-phase evidence - In progress and not consolidated
 
 The materially divergent primary checkout contains guarded foundations for
 technical search and Repair Strategy, components and labour, commercial
 recovery, independent validation, immutable snapshots, richer outputs, and
 human-only release. Focused tests exercise much of that chain.
 
-Those foundations are legacy-root evidence only. They are absent or materially
-different on current main, use a superseded model/API/migration composition in
-places, and must not be merged wholesale. Any useful capability must be
-reconciled phase by phase onto current main with its own review, migrations,
-tests, and acceptance evidence.
+Those foundations are legacy-root evidence only. Except for capabilities
+independently rebuilt in the current-main branch candidate described above,
+they are absent or materially different on current main, use a superseded
+model/API/migration composition in places, and must not be merged wholesale.
+Any useful capability must be reconciled phase by phase onto current main with
+its own review, migrations, tests, and acceptance evidence.
 
 ## 5. System layers
 
@@ -449,13 +544,15 @@ remain separately authorised operations.
 
 ## 12. Technical, quantity, commercial, and release architecture
 
-Shared current-main already contains basic technical-candidate search, pinned
-release records, estimating-rule and line calculation, snapshot locking, and
-PDF/XLSX rendering. Those foundations do not complete the target chain below.
-Richer guarded end-to-end implementations exist only as legacy-root evidence and
-must be reconciled selectively rather than treated as current-main completion.
+Shared current-main contains basic technical-candidate search, pinned release
+records, estimating-rule and line calculation, snapshot locking, and PDF/XLSX
+rendering. The current-main branch candidate adds governed technical-source,
+Draft-intake, extraction, and release-separation foundations. Those foundations
+do not complete the target chain below. Richer guarded end-to-end implementations
+remain legacy-root evidence and must be reconciled selectively rather than
+treated as current-main completion.
 
-### 12.1 Technical authority - Basic shared foundation; richer legacy foundation; blocked
+### 12.1 Technical authority - Shared foundation and local intake candidate; blocked
 
 Technical selection is Opening-specific and uses immutable releases in the
 CLASSIFIRE Technical Authority Registry. Commercial pricing cannot prove
@@ -463,10 +560,18 @@ technical suitability. Every candidate must preserve its source, release,
 system/variant identity, matched attributes, unknowns, mismatches, dependencies,
 and exclusions. Unsupported conditions remain unresolved.
 
-The complete guarded selection and Repair Strategy Lock path is legacy-root
-evidence and is not consolidated on current main. It is also blocked for the
-current estimate because there is no approved, canonical, locked Physical
-Model.
+The branch candidate separates immutable source-document review,
+TechnicalVariant review, and independent registry publication. Extraction,
+imports, and field-level Draft saves cannot make a record searchable. Runtime
+search accepts only the estimate's pinned published release.
+
+The candidate does not yet turn field-level Draft rows into reviewer-owned
+configuration families or controlled TechnicalVariant candidates. It also has
+no governed compliance decision for the declaration-only NCC 2022,
+AS 1530.4:2014, or AS 4072.1:2005 references observed in the attached structural
+set. The complete guarded selection and Repair Strategy Lock path remains
+legacy-root evidence and is blocked for the current estimate because there is
+no approved, canonical, locked Physical Model.
 
 ### 12.2 Components, quantities, and labour - Basic shared calculation; richer legacy foundation; blocked
 
@@ -515,6 +620,9 @@ receipts, or documentation.
 | Area | Status | Current boundary |
 | --- | --- | --- |
 | Application, persistence, and current migration lineage | **Completed foundation** | Shared current-main; pre-production |
+| Technical-source, batch, extraction, and Draft authoring | **Pushed Git branch candidate** | Current-main based; implementation commit `d76562e54a7f208c2cab8ea1e9f598065f8e5151`; additive head `0018_shared_malware_containment`; validated and pushed to its feature branch; not merged or deployed |
+| Parser controller and startup reconciliation | **Test-only candidate** | Default-off; no admitted image, production wiring, or eligible rootless UAT |
+| Representative technical-report coverage | **In progress** | Two structural inventories inform the schema; no real-report ingestion, scanned/image-only source, or compliance decision |
 | Linked-original retrieval and governed retention | **Completed foundation** | Shared current-main; approved hosts/report formats remain narrow |
 | Site-observation evidence intake | **Completed contract** | Shared current-main; evidence registration only, with no Physical Model write or lock authority |
 | Proposal-only visual controller and no-tool runtime | **Completed foundation** | Shared current-main; production persistence/generalisation incomplete |
@@ -523,7 +631,7 @@ receipts, or documentation.
 | Content-safe evidence review and local recovery | **Completed shared-main capability** | Recovery proof has documented mutability/replay limits |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
-| Technical through Human Release | **In progress / blocked** | Basic shared foundations and richer legacy-root foundations exist; upstream Physical Model gate unresolved |
+| Technical through Human Release | **In progress / blocked** | Local intake/release foundations and richer legacy-root foundations exist; materialisation, operational UAT, and the upstream Physical Model gate remain unresolved |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |
 | Structural-steel and full duct-run domains | **Planned / deferred** | Separate schemas, libraries, calculators, and acceptance evidence required |
@@ -533,16 +641,35 @@ receipts, or documentation.
 
 ## 15. Next valid architectural action
 
-The representative package, review safeguards, durable visual-validation
-receipt registry, and site-observation evidence-intake contract are now on
-shared main. For the selected Defect, obtain a site visit or equivalent newly
-governed evidence for the facts that human visual review could not establish.
-Retain that evidence immutably and register only the facts it supports through
-the shared-main contract. Do not repeat unchanged inference or convert the
-limited proposal into canonical truth.
+For the technical-intake workstream, the first operational action is a
+non-production UAT using two live PostgreSQL sessions, isolated storage, and a
+stateful ClamAV-compatible test service. Exercise shared-byte upload/replay,
+download, Draft, and review concurrency, then change the exact digest from clean
+to FOUND and prove that quarantine, linked-item/batch attention, eligibility
+blocking, and audit history are atomic without creating technical or registry-release
+canonical, or lock authority.
 
-The receipt verifier remains a no-write pre-lock check, not signed lock
+After that, exercise the default-off controller and startup reconciliation with
+an admitted parser image on an eligible rootless Linux host, then retry the
+authenticated rendered-browser Draft workflow in a browser environment that can
+start successfully. Pull-request creation, merge, environment migration,
+deployment, real-report ingestion, approval, registry publication, and release
+retain separate authority.
+
+Add reviewer-owned intake revisions, configuration-family authoring, governed
+locator-backed decisions, and controlled materialisation before publication
+UAT. Complete the representative set with a retained primary Full Fire Test
+Report and a scanned/image-only source before freezing the template.
+
+The separate Phase 8 path remains unchanged. For the selected Defect, obtain a
+site visit or equivalent newly governed evidence for the facts that human
+visual review could not establish. Retain only the facts that evidence supports.
+Do not repeat unchanged inference or convert the limited proposal into canonical
+truth.
+
+The visual receipt verifier remains a no-write pre-lock check, not signed lock
 admission. Design, approve, and enforce that separate boundary only after the
 remaining evidence is governed and the proposal is independently and
 semantically accepted. Submission, lock creation, technical selection, pricing,
-output, deployment, and Human Release retain their separate gates.
+output, deployment, registry publication, and Human Release retain separate
+gates.

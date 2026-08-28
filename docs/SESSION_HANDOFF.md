@@ -1,168 +1,365 @@
 # CLASSIFIRE Session Handoff
 
-**Verified:** 2026-08-27 (AEST)
+**Verified:** 2026-08-28 (AEST)
 
-**Status:** Pre-production implementation and controlled Phase 8 UAT
+**Status:** Pre-production implementation; validated technical-intake candidate
+pushed to its Git feature branch, with external pull-request review and
+operational UAT still outstanding
 
-This handoff records current evidence. It does not authorise inference, retrieval, admission signing or registration, canonical submission, Physical Model Lock creation, deployment, release, commit, or push.
+This handoff records the pushed implementation candidate and its final
+validation evidence. Implementation commit
+`d76562e54a7f208c2cab8ea1e9f598065f8e5151` was pushed. This documentation
+record cannot embed the hash of the commit that contains it; the final Git
+commit/push report and read-only branch ref record that hash. This handoff does
+not authorise use of private reports, environment migration, inference,
+approval, registry publication, admission signing or registration, canonical
+submission, Physical Model Lock creation, pull-request creation, merge,
+deployment, or release.
 
-## 1. Current shared-main position
+Read this with [PROJECT_STATE.md](./PROJECT_STATE.md),
+[CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md),
+[CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md), and the
+[Technical Intake Draft v1 contract](./TECHNICAL_INTAKE_DRAFT_V1.md).
 
-- Verified shared-main application baseline:
-  `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge).
-  PR #76 advanced `origin/main` to a documentation-only descendant of this
-  baseline; later documentation-only merges may advance it again without
-  changing the runtime baseline. Verify the live branch tip directly whenever
-  publication state matters.
-- Merged Phase 8 work: representative rollback package and recovery,
-  evidence-family and human-review validators, direct legacy-route test
-  isolation, the durable visual-validation receipt registry/verifier, and the
-  controlled `site_observation` evidence-intake contract.
-- Reviewed PR #74 head `9f5dacacadfab02d6c9aaf8ac0add43c5eedfff8`
-  and the merge commit have identical tree hash
-  `6182cf5e3b3d577c9cc0622bf472b42b9e320b1f`.
-- The merged `site_observation` contract binds each fact to a locator and writes
-  the canonical payload digest into the existing audit event. It has no database
-  migration, new writer, or live evidence.
-- PR #75 remains open and is stacked on superseded site-observation commit
-  `5874dade`, not the corrected and reviewed PR #74 head. GitHub reporting it as
-  mergeable does not make it safe to merge; it requires a fresh review.
+## 1. Repository position
 
-The primary checkout remains on `gpt/phase8-linked-original-images` at
-`de0cc5a` with a divergent mixed working tree. It is a legacy evidence and
-development source only. Do not bulk-stage, merge, clean, reset, or use it as a
-publication base; its contents were not touched by this reconciliation.
+- Verified shared-main baseline:
+  `01925237f953275244f2b63e54564533bee81910` (PR #78 merge).
+- PR #78 includes the earlier Phase 8 foundations and runtime revocation of
+  authenticated authority when a human account becomes inactive.
+- Current isolated branch:
+  `gpt/technical-intake-draft-boundary-20260827`, based exactly on that
+  shared-main commit.
+- There were no prior unpushed commits: the branch was exactly at
+  `01925237f953275244f2b63e54564533bee81910` before implementation commit
+  `d76562e54a7f208c2cab8ea1e9f598065f8e5151`
+  (`feat: add governed technical intake and shared malware containment`).
+- That implementation commit was pushed successfully to
+  `origin/gpt/technical-intake-draft-boundary-20260827`; local and upstream
+  refs were equal at the implementation point. This record intentionally does
+  not name its own containing commit; use the final Git commit/push report and
+  read-only branch ref for the final tip.
+- The primary checkout at `C:\CLASSIFIRE` remains a divergent mixed legacy
+  source and must not be cleaned, reset, bulk-staged, merged, or used as the
+  publication base.
+- PR #75 and issues #42/#43 remain separate open work. A reported mergeable
+  state is not a safety review.
 
-## 2. Merged Phase 8 capability
+## 2. Pushed Git feature-branch candidate boundary
 
-Shared main includes the representative-run and recovery capability:
+The current-main candidate is one integrated foundation:
 
-- an explicit rollback-only representative package bound to report, Git revision, executable source tree, snapshot, runtime identities, and no-write flags;
-- verify-only package and snapshot checks plus a non-session-creating local Gateway readiness probe;
-- full-report linked-original resolution with inference allowlisted to current retentions and explicitly mapped ready parents for the selected defect;
-- report-derived parent-evidence checks for report hash, page, photo identity, native dimensions, and crop bounds;
-- exclusion of nonvisual evidence from visual inference packets;
-- a disposable SQLite transaction that always rolls back and rechecks protected-state fingerprints and counts;
-- stricter proposal, blind-inventory, reconciliation, correction-authority, and blocked-receipt validation;
-- content-safe human evidence-review requests; and
-- fully offline recovery from hash-matched retained receipts and local OpenClaw transcripts without rerunning inference.
+- production configuration, readiness, packaged Alembic migration, upload,
+  storage, malware-screening, and retained-file binding controls;
+- an additive candidate migration lineage through head
+  `0018_shared_malware_containment`;
+- technical-source metadata, typed relationships, independent source review,
+  Draft-only import, retirement, separately published registry releases, and
+  pinned-release search;
+- owner-bound multi-report batch intake with exact manifests, per-file
+  isolation, replay receipts, retry, restore, and reconciliation;
+- durable extraction runs, pages, artifacts, reservations, terminal receipts,
+  and startup reconciliation;
+- a default-off, test-only Linux-rootless OCI controller and dedicated worker
+  boundary; and
+- a versioned owner-bound TechnicalIntakeDraft UI that saves fields, locators,
+  and evidence roles against one exact immutable PDF, supports stale-save
+  recovery, and has no approval or publication controls.
 
-The merged representative package excludes unlisted same-Defect visual evidence,
-requires a literal numeric loopback Gateway address before token-capable fallback
-is constructed, rejects symbolic links and Windows junctions from the
-fingerprinted source set on Python 3.11+, pins the relevant raw-byte inputs to
-LF line endings, and reports the completion receipt's exact UTF-8/LF file-byte
-hash. The original representative publication used an explicitly reviewed
-28-file slice; later bounded PRs added provenance and durable-receipt work.
+Source-document review, TechnicalVariant review, and registry publication are
+separate audited authority boundaries. Extraction, import, and Draft save/resume
+cannot make data runtime-eligible. The ordinary coarse configuration link was
+removed; its retained compatibility route cannot submit UI-policy variants for
+review.
 
-The package approval fields remain trusted human/governance metadata. They are not cryptographic, expiring, single-use production authority. This is controlled UAT tooling, not an untrusted production-ingestion or canonical-write path.
+### Shared duplicate-byte containment
 
-## 3. Retained v17 execution evidence
+Exact duplicate clean bytes share one verified StoredFile, while each
+TechnicalDocument retains its own identifier, metadata, relationship context,
+and upload audit. If a later exact scanner-bound upload or replay detects
+malware, CLASSIFIRE quarantines that shared StoredFile and moves every
+previously accepted linked
+item across every affected batch to `needs_attention`. Item-, batch-, and
+file-level audits bind the transition. Every document referencing those bytes
+then fails clean-file download, review, preview, extraction, and Draft checks.
+The history is retained, and no second copy is silently promoted as trusted.
 
-The authorised v17 full-report run completed linked-original retrieval and four proposal-only inference stages.
+## 3. Representative technical-report evidence
 
-| Evidence | Verified result |
-| --- | --- |
-| Required linked originals | 31 of 31 resolved across 41 report photo occurrences |
-| Target-defect visual evidence | 4 retained originals |
-| Controller stages | 4 across separate Physical and Validator roles |
-| Result | `VISUAL_PROPOSAL_BLOCKED` |
-| Human-reference comparison | Correctly skipped because the proposal was not approved |
-| Human review handoff | 7 review items and 4 unresolved blind observations |
-| Protected state | Unchanged after rollback |
-| Canonical submission | Not performed |
-| Physical Model Lock | Not created |
+The first controlled template must cover eight explicitly reviewed document
+families:
 
-The protected state before and after rollback was identical:
+1. Full Fire Test Report.
+2. Regulatory Information Report.
+3. Fire Assessment Report.
+4. Extended Application Report.
+5. Field of Application Report.
+6. Fire Engineering Report or Performance Solution.
+7. Certificate or Summary of Assessment.
+8. Test Certificate.
 
-- fingerprint: `18768A9E368C7D0692A950303FCAC9401AFBE7C3632BE6A063FCB67B9671F8F1`;
-- 10 Defects and 128 EvidenceSources; and
-- 0 Openings, 0 Services, 0 Opening-Service links, and 0 active locks.
+Do not infer a family from a filename.
 
-The Validator block is a genuine evidence limitation, not a runtime failure. A later human review resolved the visible service groupings and quantities, flexible-duct count, opening relationships, and close/wide photo relationship. Dimensions, depth and obscured boundaries, exact substrate composition, service labels and documentary material proof, and opposite-face continuity remain unresolved.
+Two separate structural evidence sets inform the current schema:
 
-The v17 live run used source-tree fingerprint `5B00545F5A2A7F3F36930B008B3E0802AFB1EBA5D735A7B9123218B5E972CDE1`. Later recovery, review, provenance, and receipt hardening changed the source tree. V17 is therefore historical runtime proof for that exact run source, not a live execution proof for the later merged source.
+- an earlier set of eight supplied files, comprising three
+  regulatory-information reports and five assessment or assessment-bundle
+  reports, totalling 1,673 pages; and
+- an additional attached set of ten Promat reports totalling 281 pages, every
+  page of which was text-bearing in the structural inventory.
 
-## 4. Later human review v2 evidence
+Neither set was ingested into the CLASSIFIRE database. The structural inventory
+created no Draft, TechnicalVariant, Approval, or LibraryRelease.
 
-The retained v2 response accounts for all seven review items and four unresolved-observation items exactly once across six consolidated decisions. A separate local no-write validator returned `PASS` for a limited proposal-only record of one Defect, five Openings, six Services, and six links.
+References to NCC 2022, AS 1530.4:2014, and AS 4072.1:2005 in the additional set
+are declaration-only reviewer-attention flags. Exact-reference presence is not
+a decision that a document complies, is current, applies to a configuration, or
+supports a technical conclusion. That requires retained source bytes, exact
+field-level locators, competent governed review, and the later publication
+gates.
 
-The review confirmed two questioned openings as separate openings in the same wall, the close and wide duct photographs as the same location, two flexible ducts through separate wall openings, one shared opening with a metal pipe/two PVC conduits/a cable bundle, and another opening with a visible three-cable bundle.
+The representative set remains incomplete because it has no retained
+scanned/image-only source. A retained primary Full Fire Test Report is also
+required before the template can be frozen.
 
-This remains human visual adjudication without a site visit. It is not an approved canonical model, and it does not settle dimensions, depth/boundaries, exact substrate, service labels/material proof, or opposite-face continuity. The v2 review and evidence-family validators are on shared main; the retained response remains local evidence, not canonical state or publication authority. Its recording and validation performed no report/image retrieval, runtime inference, canonical database read or write, Gateway call, admission, canonical submission, or lock.
+## 4. Verification evidence
 
-## 5. Final-source offline recovery proof
+The exact implementation candidate has this final validation record:
 
-The retained offline recovery was rerun as v8 after the completion-file hash correction and mechanical formatting:
+- complete suite: **1,545 passed, 15 skipped, and 140 warnings in 3,181.77
+  seconds**;
+- focused catalogue/UI suite: **141 passed**;
+- focused lock/review/containment suite: **154 passed**, with four new
+  regression cases recorded;
+- JavaScript harnesses: all success; and
+- Alembic: one head, `0018_shared_malware_containment`.
 
-- source-tree fingerprint: `EDBA8858B385BD521D43AB15FAE41C5291356985E47B1792ADC40A0ADD6A8D6F`;
-- evidence-review request file SHA-256: `58200866211E15E49087986BC1E893DE5D377E1067E57B242B537A42E22B34E1`;
-- recovery receipt file SHA-256: `D41A424A7D5500E596B73E340E713BC008D2C11830BEC979D1E164B268134BAF`;
-- recovery script SHA-256: `69A926B057900D35F5A509874244A503A0C0CA062F39B72B6C22E4FA6A45B0E2`;
-- output: exactly `evidence-review-request.json` and `recovery-receipt.json`; and
-- retained-report/linked-original file reads, retrieval, inference requests, canonical submission, lock creation, and human-reference exposure: all false; bound local session transcripts were read.
+Focused core Ruff passed, focused Mypy checked 26 files cleanly, and focused
+Bandit reported no issues. Whole-tree checks are not clean and must not be
+described as passes:
 
-Recovery proved the retained package/no-write receipt lineage, controller and proposal content bindings, deterministic session-key bindings, every successful transcript payload hash, and final blind/proposal/Validator domain validity. The historical v17 representative, controller, and proposal files predate raw-byte writer hardening, so recovery records their `LF_RENDERED_JSON_SHA256` bindings separately from their retained Windows file hashes.
+- Ruff: **207 findings**; verified baseline: **329**;
+- Mypy: **47 errors in 9 files**; verified baseline: **101 errors in 11
+  files**; and
+- Bandit: **7 low, 0 medium/high**; verified baseline: **8 low, 0
+  medium/high**.
 
-Recovery did not make local OpenClaw history immutable and did not replay Gateway authentication, runtime tool attestation/audit, OpenResponses response identity, or external inference transport. It is hash-correspondence evidence, not cryptographic authentication of mutable local history.
+The candidate's whole-tree numeric counts are lower than the baseline, but that
+does not make the checks clean or prove the absence of semantic regressions.
+The remaining findings are still technical debt.
 
-No real report was rerun after final-source hardening.
+A disposable local authenticated HTTP UAT used synthetic metadata and isolated
+SQLite/storage. Health, login, the technical catalogue, and both synthetic
+document details returned HTTP 200. The live HTML confirmed all eight current
+upload families, kept three legacy types out of ordinary selection while
+retaining a readable legacy record, and showed the current-minimum standards
+warnings without inferring compliance. No supplied PDF was opened, copied, or
+ingested.
 
-## 6. Verification
+Actual rendered-browser UAT is still unproven. Browser startup was blocked by
+`windows sandbox failed: helper_unknown_error: setup refresh had errors`.
+Authenticated HTTP inspection and successful JavaScript harnesses are useful
+fallback evidence, not a rendered visual/interactions pass.
 
-Current validation evidence for the exact merged source tree:
+The structural inventories are not ingestion UAT. No real supplied report
+entered the database and no governed locator-backed compliance decision was
+recorded. Live PostgreSQL two-session concurrency, a stateful scanner
+clean-to-FOUND transition, an eligible rootless parser, and rendered-browser UAT
+remain outstanding.
 
-- reviewed PR #74 head `9f5dacacadfab02d6c9aaf8ac0add43c5eedfff8`
-  and merge commit `20cb72a14dd3b217cfac7670f047fdc385081990`
-  have identical tree hash `6182cf5e3b3d577c9cc0622bf472b42b9e320b1f`;
-- complete repository suite: **380 passed** with Python 3.12.10 and Pytest 8.4.2;
-- focused evidence-file boundary suite: **14 passed**;
-- Ruff on the changed API and test, Mypy on the changed API, Alembic one-head
-  check (`0009_visual_validation_receipts`), and `git diff --check` passed;
-- GitHub reported no status-check rollup for PR #74, so no CI result is claimed;
-  and
-- whole-repository Ruff and Mypy were not rerun for PR #74. Previously recorded
-  inherited findings outside the changed paths have not been revalidated on
-  current main.
+## 5. Remaining technical-intake work
 
-The recovery v8 result remains successful historical hash-binding evidence for
-its own source. The PR #74 site-observation contract is now on shared main.
-Merging it did not create live evidence or authority, and no real report was
-rerun after the later source hardening.
+Before this candidate can be treated as operational:
 
-## 7. Exact next valid task
+1. Run two-session live PostgreSQL UAT across shared-byte upload, download,
+   Draft, and review operations, including a stateful scanner transition from
+   clean to FOUND for the same digest.
+2. Exercise the default-off parser and startup reconciliation with an admitted
+   image on an eligible rootless Linux host.
+3. Retry authenticated rendered-browser Draft UAT in a browser runtime that can
+   start successfully.
+4. Add reviewer-owned intake revisions, configuration-family authoring,
+   governed locator-backed decisions, and controlled candidate materialisation.
+5. Complete the representative set with primary-test and scanned/image-only
+   evidence, then freeze the versioned template and its mapping/exception
+   package.
+6. Prove that an approved candidate remains runtime-ineligible until a separate
+   authorised publisher includes it in a release and an estimate pins that
+   release.
 
-Do not repeat the completed 7+4 review. The next physical-evidence task for
-the selected Defect is a site visit or equivalent newly governed evidence for
-the remaining dimensions, depth/boundaries, substrate, labels/material proof,
-and opposite-face continuity. Once retained as an immutable admissible
-technical-evidence file, a suitably authorised user can register it against the
-relevant Defect through the shared-main `site_observation` contract in an
-authorised environment; this is evidence intake only.
+Production preview still requires an approved renderer licence/security
+decision and an enforced low-privilege sandbox. No admitted parser/OCR image or
+production worker loop exists.
 
-Do not rerun unchanged inference or canonicalise the limited 5/6/6 proposal.
-The durable visual-validation receipt registry and exact no-write verifier are
-now shared-main safeguards; semantic acceptance and a signed lock-admission
-boundary remain separate, unresolved architecture work. Only after the remaining
-evidence is governed, the proposal is semantically accepted, and the applicable
-boundaries are approved may a fresh preflight be considered. External signing,
-admission registration, canonical submission, and lock creation remain later
-operations requiring separate authority.
+## 6. Phase 8 boundary remains unchanged
 
-## 8. Authority boundaries and exclusions
+The completed 7+4 human review for the representative Defect must not be
+repeated. It records a limited non-canonical 5/6/6 topology but leaves
+dimensions, depth and obscured boundaries, exact substrate, service
+labels/material proof, and opposite-face continuity unresolved.
 
-This handoff records the merged shared-main position. Git history is authoritative for publication results. No deployment, admission, canonical write, Physical Model Lock, or release was performed.
+The next Phase 8 evidence action remains a site visit or equivalent newly
+governed evidence for those facts. Do not rerun unchanged inference or convert
+the limited proposal into canonical truth.
 
-Intentionally excluded from this work and any publication staging:
+The visual-validation receipt registry and exact no-write verifier are
+shared-main safeguards, not semantic acceptance, signed lock admission,
+canonical submission, or lock authority. External signing, admission
+registration, canonical submission, Physical Model Lock creation, and every
+downstream release remain separate operations requiring separate authority.
 
-- every tracked or untracked change in the mixed primary checkout;
-- files already present on `origin/main` or preserved on other remote candidate branches;
-- root-only unreconciled or unsafe admission/UAT variants;
-- `.env`, credentials, keys, tokens, signed URLs, and private signing material;
-- customer reports, images, real-UAT packages, receipts, SQLite/WAL/SHM data, and OpenClaw session history;
-- Android, Gradle, JDK, SDK, dependency, build, and test-cache artefacts;
-- generated reports, editor/workspace files, `agent-definitions/`, and logo assets.
+## 7. Start Here / Next Session
 
-Any later repository change must begin in a clean exact-main worktree and use
-explicit reviewed paths. Commit, push, pull-request, and merge authority remain
-separate; never use bulk staging.
+### First task
+
+Run the first non-production operational UAT for shared duplicate-byte
+containment. Use two independent sessions against disposable live PostgreSQL,
+isolated storage, and a stateful ClamAV-compatible test service. Exercise the
+same digest through concurrent upload/replay, download, Draft, and source-review
+eligibility, then change its scanner-bound verdict from clean to FOUND. Prove
+that containment is atomic, audited, and creates no technical, release,
+canonical, or lock authority.
+
+Do not create a pull request, merge, migrate a shared or production environment,
+deploy, ingest a real report, approve technical data, publish a Technical
+Authority Registry release, or create canonical/lock state without separate
+authority.
+
+### Prerequisites
+
+- Work only in the isolated current-main worktree; preserve the mixed primary
+  checkout.
+- Start from the final pushed branch tip containing this documentation record.
+  Verify that it contains implementation commit
+  `d76562e54a7f208c2cab8ea1e9f598065f8e5151` and that the exact upstream ref
+  matches before UAT.
+- Confirm migration head `0018_shared_malware_containment` and one Alembic
+  head.
+- Use a disposable PostgreSQL database, disposable storage, and an isolated
+  stateful scanner test service. Keep their credentials and paths out of
+  retained documentation.
+- Use repository-generated synthetic input only. Do not copy, open, or ingest a
+  supplied report.
+- Record initial and final TechnicalVariant, Approval, LibraryRelease, canonical
+  model, admission, and Physical Model Lock counts.
+- Keep parser execution default-off/test-only and preview production-disabled.
+
+### Relevant files
+
+- Status and sequencing:
+  `docs/PROJECT_STATE.md`, `docs/CLASSIFIRE_ARCHITECTURE.md`,
+  `docs/CLASSIFIRE_ROADMAP.md`, and this handoff.
+- Draft contract:
+  `docs/TECHNICAL_INTAKE_DRAFT_V1.md`.
+- Intake and containment:
+  `src/classifire/services/technical_intake.py`,
+  `src/classifire/services/technical_intake_batch.py`,
+  `src/classifire/services/technical_intake_draft.py`, and
+  `src/classifire/services/malware_scanning.py`.
+- Eligibility and review:
+  `src/classifire/services/technical_document_review.py`,
+  `src/classifire/services/technical_governance.py`,
+  `src/classifire/technical_admin.py`, and
+  `tests/test_technical_document_download.py`.
+- Extraction safety:
+  `src/classifire/services/technical_extraction.py`,
+  `src/classifire/services/technical_extraction_executor.py`,
+  `src/classifire/services/technical_parser_oci.py`, and
+  `src/classifire/services/technical_parser_reconciliation.py`.
+- UI:
+  `src/classifire/templates/technical_intake_draft.html`,
+  `src/classifire/static/js/technical-intake-draft.js`, and
+  `src/classifire/static/js/technical-preview.js`.
+- Persistence:
+  `src/classifire/migrations/versions/0017_technical_intake_drafts.py`,
+  `src/classifire/migrations/versions/0018_shared_malware_containment.py`,
+  `src/classifire/models.py`, and
+  `src/classifire/services/deployment_lineage.py`.
+
+### Suggested validation commands
+
+Run the read-only branch preflight from the isolated worktree:
+
+```powershell
+git status --short --branch --untracked-files=all
+git rev-parse HEAD
+git rev-parse '@{upstream}'
+git merge-base --is-ancestor d76562e54a7f208c2cab8ea1e9f598065f8e5151 HEAD
+git diff --check
+git diff --stat origin/main...HEAD
+
+$env:PYTHONPATH = (Join-Path $PWD 'src')
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
+```
+
+Before operational UAT, run the focused containment preflight with a unique
+temporary directory:
+
+```powershell
+$env:PYTHONPATH = (Join-Path $PWD 'src')
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -p no:cacheprovider --basetemp C:\CLASSIFIRE\.tmp\pytest-containment-uat-preflight tests/test_technical_upload.py tests/test_technical_intake_batch_service.py tests/test_technical_document_download.py tests/test_technical_intake_draft_service.py tests/test_malware_scanning.py
+```
+
+The 53-minute full suite and whole-tree static tools already have exact results
+above. Rerun them only if source changes or the operational environment exposes
+a defect that requires a code change; documentation-only changes do not
+needlessly rerun them. If the worktree does not contain its own virtual
+environment, use the verified repository environment explicitly while keeping
+`PYTHONPATH` bound to this worktree's `src`.
+
+Configure `classifire migrate`, `classifire doctor`, and `classifire start`
+only against the disposable PostgreSQL/storage/scanner environment. Capture
+redacted two-session request ordering, database outcomes, audit rows, authority
+counts, and teardown. Never run the UAT migration against a shared or production
+database.
+
+### Blockers
+
+- Pull-request creation, merge, environment migration, and deployment remain
+  separate actions requiring separate authority.
+- Live PostgreSQL two-session behaviour and the stateful clean-to-FOUND scanner
+  path are unproven.
+- There is no rendered-browser UAT, eligible rootless-parser UAT, or admitted
+  parser/OCR image.
+- No supplied report has been ingested and no governed locator-backed compliance
+  decision exists.
+- The representative set still lacks a retained primary Full Fire Test Report
+  and a scanned/image-only source.
+- Reviewer-owned intake revision, configuration-family materialisation, and
+  Technical Authority Registry publication/pinned-runtime UAT remain unfinished.
+- Whole-tree Ruff, Mypy, and low-severity Bandit debt remains; the exact counts
+  are recorded in section 4 and must not be described as clean passes.
+
+### Definition of Done
+
+The first operational UAT is complete only when:
+
+1. a disposable environment reaches the single migration head
+   `0018_shared_malware_containment` and passes readiness with its isolated
+   PostgreSQL/storage/scanner dependencies;
+2. two independent database sessions exercise the required duplicate-byte
+   upload/replay, download, Draft, and review interleavings without split trust
+   or lost updates;
+3. a later exact scanner-bound FOUND result quarantines the shared StoredFile,
+   moves every linked accepted item and affected batch to attention, blocks
+   every referencing document from clean-file workflows, and retains complete
+   audit history;
+4. initial/final counts prove zero unintended TechnicalVariant, Approval,
+   LibraryRelease, admission, canonical-model, or Physical Model Lock writes;
+5. redacted digest, transaction, scanner, audit, and teardown evidence is
+   retained without secrets, local capability paths, or customer material; and
+6. failures remain fail-closed and any discovered defect returns to the normal
+   code-review and verification loop before UAT is repeated.
+
+Implementation commit `d76562e54a7f208c2cab8ea1e9f598065f8e5151`
+was already pushed before this documentation reconciliation. This record does
+not embed its own containing commit hash; the final Git commit/push report and
+read-only branch ref provide the final branch tip. A later pull request requires
+separate authority and external review.
+
+## 8. Exclusions
+
+Do not publish customer reports, filenames, references, extracted report
+content, images, databases, receipts, OpenClaw history, local paths,
+credentials, keys, tokens, signed URLs, supplier pricing, generated packages,
+test caches, editor files, or unrelated legacy-root changes.

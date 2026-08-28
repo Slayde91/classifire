@@ -2,7 +2,7 @@
 
 **Document status:** Active working roadmap
 
-**Roadmap version:** 2026-08-24 r16
+**Roadmap version:** 2026-08-28 r18
 
 **Product status:** Pre-production prototype and controlled UAT build
 
@@ -31,7 +31,7 @@ Nothing in a report, fixture, receipt, or attached reference document grants aut
 ### 2.1 Current product position
 
 CLASSIFIRE has a controlled evidence-to-physical-model prototype. The verified
-shared-main application baseline at `20cb72a` contains the canonical runtime,
+shared-main application baseline at `01925237f` (PR #78) contains the canonical runtime,
 admission-bound writer, bounded visual correction guard, proposal-blind
 inventory, mandatory blind reconciliation, deterministic proposal-only
 controller and receipt, retained-evidence adapter, guarded linked-original
@@ -40,7 +40,8 @@ literal-loopback OpenResponses transport, managed local runtime composition,
 dedicated zero-tool identities, fail-closed provisioning, and the
 post-inference validation-only human-reference comparator. It also contains a
 strict `site_observation` evidence-intake contract at the existing
-evidence-registration boundary.
+evidence-registration boundary and revokes authenticated authority when a human
+account becomes inactive.
 
 Shared main also contains the trusted operator-created representative-run
 package, defect-scoped retention from a full-report retrieval pass,
@@ -208,7 +209,7 @@ signature, admission, lock, or deployment.
 | --- | --- | --- |
 | 0. Product and repository baseline | In progress | Auditable private-repository lineage, controlled changes, and reproducible source state. |
 | 1. Domain and workflow governance | In progress | Governed amendments, blank-opening semantics, visual approval, and no destructive scope replacement. |
-| 2. Governed source libraries | In progress | Immutable, published, auditable technical and commercial releases. |
+| 2. Governed source libraries | In progress | Controlled UI intake produces evidence-bound reviewed drafts; only immutable, separately published technical and commercial releases become runtime eligible. |
 | 3. OpenClaw and controlled-write architecture | In progress - Gates A-F locally complete | Revalidate the deployment boundary for other environments; later phases still require their own controlled profiles and approvals. |
 | 4. Mission Control integration | In progress | Visibility/control-plane integration without owning estimate truth. |
 | 5. Evidence intake and evidence resolution | In progress; selected-Defect human review complete with limitations | Every downstream claim traces to retained report, page, image, and verified higher-detail source evidence. |
@@ -278,17 +279,162 @@ Physical records, corrections, lock eligibility, and later amendments are servic
 - FIREFLY Package 15/17 technical lineage and Package 14 commercial lineage remain controlled sources.
 - Technical Authority Registry abstractions must continue to distinguish source identity, release identity, and runtime eligibility.
 - Private source preservation must not leak into public documents, model prompts, or output assets.
+- Shared main provides single-document UI/API upload as immutable hashed Draft evidence, limited PDF candidate extraction, source-document approval, and existing imported-variant governance. The pushed Git feature-branch candidate at implementation commit `d76562e54a7f208c2cab8ea1e9f598065f8e5151` adds a durable owner-bound multi-report ledger, per-file manifests, local SHA-256 binding, isolated outcomes, exact replay receipts, restore/reconciliation, bounded parallel upload, and expired-claim recovery. It also implements separate source review, TechnicalVariant review, and registry publication, with runtime eligibility limited to a pinned published release. This remains a feature-branch foundation: it is validated and pushed, but not merged, deployed, or rendered-browser UAT-proven, and reviewer-owned configuration-family authoring and controlled candidate materialisation are unfinished.
+
+### Planned governed multi-report technical intake and UI workflow
+
+**Status:** In progress - the durable multi-report upload, restore, retry, receipt, and failure-isolation foundation is implemented on the current development branch. The same branch now also contains the durable Draft extraction run/page/artifact schema, strict authority-neutral page-evidence validation, engine-neutral layout/page request and result framing, validator-backed retained derived-artifact storage, durable layout hash and page-geometry binding, initialized-run cancellation, and transaction-safe serial-page orchestration with source rechecks, persisted retry limits, exact post-commit reconciliation, and retained-byte verification before terminal aggregation. A default-off coordinator proves the complete source-to-layout-to-page-to-retention-to-manifest path; its runtime gate permits execution only in the test environment, and it cannot create TechnicalVariant, approval, or release authority. A Linux-rootless-only OCI host controller now implements that injected runner boundary with a preloaded digest reference, per-operation verified private copies of the controller and seccomp policy, a private empty Docker configuration, an explicit rootless Unix socket, exact image/platform/policy inspection, fixed no-network/read-only/non-root limits, exact source framing, bounded output and wall time, created-container profile inspection, whole-process-group termination, fail-closed create-to-remove reconciliation, and a sticky containment-loss circuit breaker. Every v2 parser attempt is now preceded by an immutable coordinator-owned reservation and followed by a canonical terminal receipt containing the expected and observed runtime attestation, known container identity, outcome, output digest and size, and cleanup proof. Acceptance and manifest reconstruction independently reparse and cross-check the request, attempt, receipt, runtime, and retained-byte bindings while preserving complete retry history and legacy v1 manifest compatibility. Runtime attestation v2 also binds the OCI daemon and one host-wide execution fence. Normal execution takes that fence without waiting and reauthorises the exact database reservation immediately before container creation. A separate, independently default-off test-only worker-startup boundary claims only stale unsettled attempts, proves exact cleanup under the same fence, atomically records execution-unknown or lost-output outcomes, fails the affected Draft work without replay, and refuses ordinary parsing while any unsettled attempt remains. Receiptless legacy v1 attempts stay blocked for manual resolution because they lack the daemon and fence identity needed for safe automatic cleanup. Adversarial fake-runtime tests verify the host-owned OCI command and failure contract, and a standard-library WSL2 suite exercises the real POSIX pipe, timeout, process-group, descendant, and thread-start failure paths. The Docker daemon/container isolation profile and startup-reconciliation flow have not been exercised on an eligible rootless Linux deployment. The OCI controller and dedicated worker boundary remain test-only and are not wired into readiness or a production service loop. No admitted parser/OCR worker image exists. Signed supply-chain evidence, production worker wiring, legal/security approval, rootless isolation, resource-enforcement and startup-reconciliation UAT, full report-to-template extraction and configuration-family authoring, reviewer workflow, publication separation UAT, and rendered-browser UAT remain unfinished. A structural review of the eight supplied files - three regulatory-information reports and five assessment or assessment-bundle reports, totalling 1,673 pages - informs the requirements below, including high-cardinality matrices, companion-report lineage, revision conflicts, and mixed portrait/landscape text, table, and drawing layouts. Sampled pages in every supplied file expose native text. The first template is not frozen: visual verification, a retained primary fire-test report, and a scanned/image-only technical report are still required to complete the representative set.
+
+The earlier eight-file/1,673-page review is one structural evidence set. A
+separate inventory examined ten attached Promat reports totalling 281 pages;
+every page in that additional set was text-bearing. Neither set was ingested
+into CLASSIFIRE. The additional inventory records text declarations referring
+to NCC 2022, AS 1530.4:2014, and AS 4072.1:2005 only as reviewer-attention
+signals. Exact-reference presence is not a compliance, currency, applicability,
+or technical-suitability decision; such a decision requires retained evidence,
+field-level locators, and competent governed review.
+
+The feature-branch safety slice also moves the zero-unsettled check and immutable reservation inside the same execution fence, repeats global owner/invocation and daemon checks immediately before container creation, and commits every post-reservation terminal receipt before releasing that fence. Cleanup-unconfirmed containment loss remains durably unsettled until a fresh matching fenced cleanup proof exists. Migration 0016 preserves legacy v1 attestations and every 0015-valid execution-unknown receipt shape without rewriting retained evidence, while unsupported legacy not-started outcome codes stop the migration before schema changes.
+
+Migration 0017 adds the owner-bound, versioned TechnicalIntakeDraft persistence boundary. The pilot UI workspace saves one Draft against one exact retained PDF identity, with field-to-locator evidence links, physical page plus finer source locators, a mandatory save reason, compare-and-swap version control, and digest-based audit history. Rejected stale saves return a private, no-store recovery page with a bounded, escaped copy of valid UTF-8 input and cannot overwrite the persisted Draft. Coarse variants created through the legacy UI are now barred from technical-review submission, while genuine legacy and administrator-imported variants remain compatible with the existing governed path.
+
+The additive candidate migration lineage now reaches head
+`0018_shared_malware_containment`. Exact clean
+duplicate bytes share one verified StoredFile while retaining distinct
+TechnicalDocument identities and upload audits. If a later exact scanner-bound
+upload or replay detects malware, the shared StoredFile is quarantined and every
+previously
+accepted linked item across every affected batch moves to operator attention;
+item-, batch-, and file-level audits bind the transition, and every document
+referencing those bytes fails clean-file eligibility. This containment
+preserves evidence history and does not create a second trusted copy.
+
+The exact full candidate suite completed with 1,545 passed, 15 skipped, and
+140 warnings in 3,181.77 seconds. Focused catalogue/UI tests completed with 141
+passed; focused lock/review/containment tests completed with 154 passed, with
+four new regression cases recorded; every JavaScript harness succeeded; and
+Alembic reported one head at `0018_shared_malware_containment`. The focused
+core Ruff check passed, focused Mypy checked 26 files cleanly, and focused
+Bandit reported no issues.
+
+Whole-tree static analysis is not clean: Ruff reports 207 findings, Mypy reports
+47 errors in 9 files, and Bandit reports 7 low-severity findings with 0
+medium/high. The verified baseline reports 329 Ruff findings, 101 Mypy errors in
+11 files, and 8 low Bandit findings with 0 medium/high. The candidate therefore
+did not increase those counts and improved them numerically, but the remaining
+findings are still debt rather than a pass. Lower numeric counts do not prove
+the absence of semantic regressions.
+
+Disposable authenticated HTTP UAT returned HTTP 200 for health, login, the
+technical catalogue, and synthetic document-detail pages. It confirmed the
+exact eight new-upload families, hidden-but-readable legacy types, and the
+declaration-only NCC 2022, AS 1530.4:2014, and AS 4072.1:2005 warnings. No
+supplied PDF was opened, copied, or ingested. Rendered-browser UAT remains
+unproven because browser startup failed with
+`windows sandbox failed: helper_unknown_error: setup refresh had errors`;
+HTTP and JavaScript-harness evidence is not a rendered-browser pass.
+
+Implementation commit `d76562e54a7f208c2cab8ea1e9f598065f8e5151`,
+`feat: add governed technical intake and shared malware containment`, was
+pushed successfully to
+`origin/gpt/technical-intake-draft-boundary-20260827`. The branch had no prior
+unpushed commits beyond baseline `01925237f`, and local/upstream refs were
+equal at the implementation point. This documentation reconciliation follows
+as the documentation record. It cannot embed the hash of the commit that
+contains it; the final Git commit/push report and read-only branch ref record
+that hash. The candidate has not been merged or deployed, and no supplied
+report was ingested. Pull-request creation, merge, environment migration,
+deployment, real-report ingestion, approval, registry publication, canonical
+writes, and release remain separate actions requiring separate authority.
+
+**Objective:** Let authorised users upload differently structured test reports and assessments, then create reviewed, source-bound Technical Authority Registry candidates through the CLASSIFIRE UI without allowing extraction or import to grant technical authority.
+
+**Required authority sequence:**
+
+Multi-file UI upload -> safely screened immutable TechnicalDocument -> Draft extraction candidates -> human-reviewed intake records -> approved release candidates -> separately published Technical Authority Registry release -> runtime eligibility.
+
+Document review, technical-variant approval, and release publication are separate permissioned and audited gates. A report, extraction result, spreadsheet, JSONL row, or source-supplied active flag must never activate a record or make it runtime-eligible.
+
+#### Representative-report discovery and controlled template
+
+The first template's required coverage contains eight explicit document
+families:
+
+1. Full Fire Test Report.
+2. Regulatory Information Report.
+3. Fire Assessment Report.
+4. Extended Application Report.
+5. Field of Application Report.
+6. Fire Engineering Report or Performance Solution.
+7. Certificate or Summary of Assessment.
+8. Test Certificate.
+
+These families are reviewer-declared content classifications. Do not derive a
+family, authority, applicability, or compliance outcome from a filename.
+
+1. Compare at least five deliberately different representative reports before freezing the first template. The set must include at least one primary fire-test report, one engineering assessment or revalidation, one scanned/image-only PDF, different manufacturers and layouts, tables, drawings, multi-configuration reports, and materially different revision structures.
+2. Produce one versioned canonical intake schema, plain-English data dictionary, worked examples, report-to-template mapping notes, validation rules, a representative-source coverage matrix, and an explicit exceptions register for facts a source does not prove.
+3. Preserve each tested base/configuration family and its assessed variants or permitted variations through explicit inheritance and overrides. Create atomic child variants only where the source proves the combination. Represent repeated service groups, components, construction layers, and configuration limits explicitly; never generate an unsupported cross-product from separate permitted alternatives or discrete size lists.
+4. Keep the UI, Excel, and JSONL interfaces on the same versioned contract. The UI is the primary operating workflow; spreadsheet and JSONL support controlled exchange and bulk preparation, not a bypass around review.
+5. Never silently combine facts from different reports because names appear similar. Cross-report consolidation requires an explicit identity/version relationship, compatible scope, retained provenance for every source, and technical-authority review.
+6. Preserve source labels separately from CLASSIFIRE identifiers. Resolve report identity from content as well as filenames, retain historical aliases, and model revision, revalidation, correction, amendment, assessment-of, configuration addition, evidence addition, identifier change, replacement, partial supersession, withdrawal, retirement, and full supersession as typed events with explicit affected scope, effective date, rationale, and source locator. Never infer identity or supersession from a filename or revision label alone.
+
+**Minimum template coverage:**
+
+- Source identity: immutable supplied-artifact ID, bytes/hash/filename and transformation provenance remain separate from the content-declared report family, title/reference, revision, and issuer-original lineage. Preserve historical aliases, document type and status, sponsor, manufacturer, test laboratory, assessing body, issuing organisation, author/reviewer/authoriser roles, signatory and authenticity state, standard, jurisdiction, and typed document relationships. Preserve test, issue, revision, effective, revalidation, expiry, withdrawal, and supersession dates separately, and distinguish source-document revision, intake-record revision, TechnicalVariant revision, and registry-release version.
+- Claim locator: many-to-many evidence links on each value, range, result, component, limitation, inherited/global rule, and revision event, including source document and revision, PDF and printed page, section/clause, table, stable row and column/header path or cell, footnote, figure/drawing, specimen, option/callout, and a bounded excerpt or region reference where needed. Continuation rows and merged/inherited cells retain their source geometry and reviewer-confirmed relationship. Each link records whether its role is direct, comparison, derived reasoning, conclusion, governing, conflicting, or superseded evidence.
+- System identity and evidence basis: source configuration/group ID and state, including populated, reserved, removed, withdrawn, or superseded; tested-base and assessed-variant hierarchy with explicit inheritance/overrides; atomic CLASSIFIRE variant ID; and product family. Preserve direct tested observations, assessed extensions or field-of-application conclusions, and regulatory-information/revalidation conclusions as different claim types, with many-to-many links to supporting reports, specimens, raw outcomes, reasoning passages, and assigned conclusions. A summary-only regulatory report cannot substitute for its referenced assessment reasoning. A referenced assessment or test that is not itself retained and examined remains bibliographic-only and Unresolved as examined evidence; its result must not be presented as directly reviewed evidence.
+- Supporting construction: wall/floor/soffit plane, orientation, structured substrate layers and build-up, aperture-seal or backing construction, thickness/range, framing/support details, interfaces, exposure direction, and the supporting element's independent performance dependency.
+- Opening and service configuration: opening type, shape and dimensions/ranges; repeated service groups and constituent services with type, material, quantity, bundle/tray/mixed-service arrangement and per-service insulation; annular gap, spacing, edge distance, support and fixing limits. Every measurement preserves the raw source expression beside its normalised value and unit, basis, lower/upper bounds, inclusive flags, tolerance or comparator, and semantics such as exact, enumerated/disjoint set, minimum, maximum, continuous range, nominal, outside diameter, wall thickness, or nominal bore. Tested values remain distinct from assessed permissible ranges.
+- Performance: repeatable structural adequacy, integrity, insulation, and radiation outcomes where applicable; raw observation versus assessed assignment; governing standard and edition; exposure and supporting-construction conditions; duration and units; failure/termination notes; and explicit statuses for exact value, no failure by test end, not applicable, not determined, unavailable, disregarded, or unresolved. A combined FRL may be derived only from preserved supported result fields and rules.
+- Installation: typed components and product codes, ordered layers or steps, quantity and placement, face/side, dimensions, seal geometry, collar/wrap/build-up, fixings, supports, alternatives, component-schedule references, and links from configuration rows to applicable figures or drawings.
+- Applicability: typed dependencies, assumptions, direct-field conditions, hard exclusions, limitations, invalidating changes, contradictory-evidence/review triggers, and effective/expiry dates. Conditional logic preserves explicit AND/cumulative, OR/alternative, dependency, and exclusion semantics rather than flattening them into free text.
+- Review state: extraction confidence, fact-review state, technical-review decision, and registry-release eligibility remain separate dimensions. Confirmed means accurately transcribed and reviewed against the cited source; it does not by itself mean technically applicable, approved, or published authority. Each material fact is Confirmed, Inferred, Provisional, or Unresolved. Conflicts link the exact claims and sources with status, reviewer decision, rationale, and timestamp; an unresolved material conflict blocks eligibility for the affected candidate.
+
+#### Required CLASSIFIRE UI workflow
+
+1. Upload a batch of reports with per-file progress and failure isolation. Parsing and preview start only after each file passes a verified production upload-safety gate: quarantine, file-count/size/type and content-signature checks, a clean malware result, immutable SHA-256/size binding, and isolated safe parsing/OCR. Large-report parsing runs as bounded, resumable background work with durable progress and retry state rather than holding an interactive request open. OCR text remains a derived Draft artefact linked to the exact page image, coordinates, extraction version, and confidence; low-confidence OCR requires human review and never replaces the original page evidence. This gate is a delivery prerequisite, and one failed file must not discard or advance the others.
+2. Detect duplicate content hashes and document revisions without deleting provenance. Let the user link a new revision, assessment, amendment, replacement, or retirement rather than overwrite an approved source.
+3. Show the retained report beside the versioned intake form or grid. Preview must be authenticated and digest-bound to the exact verified immutable source, return only validated re-encoded page images with private no-store/security headers, and never place the raw PDF in an iframe, object, or embed. Support portrait and wide landscape pages, zoom/pan, and linked table, figure, component, and global-clause navigation. Let the reviewer bind each material fact to one or more exact pages, clauses, rows/cells, footnotes, specimens, figures, drawings, or bounded regions and state the evidence relationship. Diagram-dependent claims require visual verification and cannot be confirmed from extracted text alone.
+4. Support configuration families and atomic child variants, repeatable supporting-construction layers, service groups and members, typed components and installation steps, performance outcomes, applicability constraints, and claim-evidence rows. High-cardinality sources require a filterable, paginated or virtualised master/detail grid. Use stable row IDs and ordering; audit row add, clone, split, merge, reorder, change, reserve, withdraw, supersede, and delete actions; show raw source values beside normalised values; preserve inherited/global rules, cumulative requirements versus permitted alternatives, and cross-page continuation relationships; and show when a proposed combination is not directly supported by a source row. Save and resume Draft work without creating active technical data.
+5. Show validation failures, missing evidence, duplicates, conflicts, and cross-report contradictions in a review queue. Missing or contradictory facts remain explicit and must not be defaulted into compatibility.
+6. Provide permissioned submit-for-review, request-changes, approve, reject, revise, supersede, and retire actions with reasons and audit history.
+7. Keep source-document approval, technical-record approval, and inclusion in a separately published registry release visibly distinct. Runtime search must use only the estimate's pinned authorised release.
+8. Allow deterministic Excel/JSONL import and export against the same schema, with a preview and validation report before any Draft records are created.
+
+#### Governance and migration controls
+
+- Extraction and every import path create Draft candidates only. Source-supplied activity or search-eligibility fields are retained only as source provenance, never trusted as CLASSIFIRE authority.
+- Migrate or contain the current direct Approve and Activate behaviour so technical review produces an approved release candidate. Only separate release publication may make a record runtime-eligible.
+- Preserve existing active records, releases, identifiers, and audit history through an explicit compatibility and migration plan; do not rewrite them in place or silently reinterpret historical status.
+- Preserve each original report as immutable evidence. Corrections, replacements, assessments, amendments, supersessions, and retirements create linked records rather than altering source bytes or approved history.
+- Keep confidential reports, extracted content, and manufacturer data within approved storage, prompt, retention, and access boundaries.
+- Keep production preview fail-closed until the renderer runs inside an enforced low-privilege operating-system or container boundary with no application secrets, database authority, or outbound network; hard CPU, memory, wall-time, page, pixel, output, and concurrency limits; whole-worker-tree termination; and independent validation of every returned image receipt.
+- Record legal and security approval for the selected document renderer before production release. If PyMuPDF remains selected, confirm the applicable commercial licence or documented legal acceptance of its AGPL obligations before shipping proprietary CLASSIFIRE functionality that uses it.
+
+#### Acceptance and exit evidence for this workflow
+
+- A versioned template package is visually and structurally demonstrated against the complete representative report set, including primary-test, assessment/revalidation, native-text, and scanned/image-only examples. Mapping notes and unresolved exceptions are retained; customer reports and confidential source contents remain outside the repository.
+- Multi-report UI UAT proves immutable source retention, content-hash/revision handling, report preview, configuration-family and supported atomic-variant authoring, field-level locators, save/resume, review decisions, and audit history.
+- Publication UAT proves an approved candidate remains ineligible until an independent authorised publisher creates a registry release; a newly pinned estimate can use included records, while rejected, excluded, retired, or unpublished records cannot enter runtime search.
+- Extraction may prefill only Draft candidates. Invalid, rejected, conflicting, or partially parsed reports create no active variant and enter no registry release.
+- Every material accepted claim has all required source locators and relationship roles; genuinely missing or contradictory evidence remains Unresolved and prevents unsupported runtime eligibility. The workflow preserves discrete sets, raw observations, assessed assignments, and unavailable/disregarded outcomes without converting them into broader or stronger claims.
+- Approved changes create new revisions and preserve superseded or retired records, source files, decisions, and release lineage.
+- UI, Excel, and JSONL round trips are deterministic for the same schema version and cannot use imported status fields to bypass approval.
+- Automated tests cover permissions and reviewer separation, supplied-artifact versus declared-report identity, transformation lineage, duplicate hashes and revisions, malformed, encrypted and oversized files, source substitution, resumable large-report parsing, parser timeout and output overflow, invalid returned-image metadata, raw-PDF non-exposure, scanned reports and low-confidence OCR, companion-report and internal-reference conflicts, missing linked assessments/tests, tested-versus-assessed-versus-RIR separation, reserved/removed IDs, merged-cell and continuation-row review, discrete ranges and conditional logic, inherited/global rules, unsupported cross-product prevention, schema migration, release pinning, and rollback. Browser UAT also exercises preview authentication, portrait/landscape navigation, zoom, error recovery, keyboard focus, virtualised repeatable-row editing, linked table/figure/component navigation, and source-locator capture.
+- A competent technical reviewer completes representative end-to-end UAT before the workflow may be treated as operational.
 
 ### Remaining work
 
-1. Complete registry-neutral contract migration while keeping needed legacy aliases compatible.
-2. Resolve source-version/count anomalies through governed amendments, never rewrite source evidence.
-3. Validate clean-machine import, hash, release-pin, and rollback procedures.
-4. Extend source governance to future manufacturers without repurposing FIREFLY identifiers.
+1. First run non-production operational UAT with two live PostgreSQL sessions across shared-byte upload/download/Draft/review concurrency and a stateful scanner clean-to-FOUND transition. Then exercise an admitted parser image on an eligible rootless Linux host and retry rendered-browser UAT. External pull-request review, merge, deployment, real-report intake, approval, Technical Authority Registry publication, and release remain later and separately authorised actions.
+2. Complete registry-neutral contract migration while keeping needed legacy aliases compatible.
+3. Resolve source-version/count anomalies through governed amendments, never rewrite source evidence.
+4. Validate clean-machine import, hash, release-pin, and rollback procedures.
+5. Extend source governance to future manufacturers without repurposing FIREFLY identifiers.
 
 ### Exit condition
 
-Every technical or commercial decision cites a versioned, authorised, reproducible source release and the source cannot be silently changed after use.
+Authorised users can turn diverse source reports into evidence-bound reviewed Draft records and approved release candidates through CLASSIFIRE. Independent authorised publication creates a versioned, reproducible registry release, and pinned-runtime UAT proves that only records in that release are eligible. Every technical or commercial decision cites its release, and no source, approval decision, published record, or pinned historical result can be silently changed after use.
 
 ## 7. Phase 3 - OpenClaw and controlled-write architecture
 
@@ -302,7 +448,7 @@ Every technical or commercial decision cites a versioned, authorised, reproducib
 - Visual sessions are isolated and non-mutating during proposal-only UAT.
 - Proposal-only Gateway preflight fails closed rather than restarting the managed Gateway.
 - Image transport has explicit content-type, path, byte-hash, and manifest checks before model upload.
-- The reviewed local candidate adds a read-only `sessions.describe` readiness probe and authenticated literal-loopback Gateway fallback when the pinned CLI cannot provide the required RPC path. The probe creates no session or inference request.
+- Shared main includes a read-only `sessions.describe` readiness probe and authenticated literal-loopback Gateway fallback when the pinned CLI cannot provide the required RPC path. The probe creates no session or inference request.
 - The representative package uses trusted operator-created configuration and a disposable SQLite/storage snapshot. It is controlled UAT tooling, not a cryptographic, expiring, single-use production authorisation format.
 
 ### Remaining work
@@ -345,7 +491,7 @@ Run and approval visibility is useful and traceable without creating a second mu
 - Linked full-resolution images can be discovered from report annotations and materialised under a strict allowlist, DNS, TLS, size, MIME, pixel, and thumbnail-binding policy.
 - A verified original is selected as primary detail only after binding it to the report thumbnail; lower-resolution page/crop/annotation variants remain mandatory context when they carry distinct information.
 - Verified or revalidated cached JPEGs can be retained by content hash as immutable technical evidence, bound to an exact active embedded-image parent, page, and photo identity, with redacted retrieval provenance and an audit event. The retention boundary enforces the physical-model mutation guard, is replay-idempotent, and does not commit its caller's transaction.
-- The reviewed local candidate also accepts an exact immutable report-PDF parent only when report hash, page, photo metadata, native dimensions, and source bounds agree. Full-report retrieval remains complete while retention and inference are restricted to current retentions and explicitly mapped ready parents for the selected defect; unlisted same-Defect visual rows are excluded.
+- Shared main also accepts an exact immutable report-PDF parent only when report hash, page, photo metadata, native dimensions, and source bounds agree. Full-report retrieval remains complete while retention and inference are restricted to current retentions and explicitly mapped ready parents for the selected defect; unlisted same-Defect visual rows are excluded.
 - Shared main accepts a strict `site_observation` payload at the existing evidence-registration boundary only when the source file is immutable and admissible, the Defect belongs to the estimate, every asserted fact has a locator, and uncertainty and limitations are explicit. The audit event binds the canonical payload digest. This creates no Physical Model write or lock authority.
 - Stale low-resolution conclusions are not allowed to suppress high-detail re-review.
 - Model-visible attachments are rehashed immediately before transport to prevent path or byte substitution after earlier validation.
@@ -729,6 +875,8 @@ Fine-tuning is optional. It may begin only when all of the following are satisfi
 
 **Objective:** Select technically applicable systems only from authorised technical releases, Opening by Opening.
 
+Phase 9 may consume only variants contained in the estimate's pinned, separately authorised Phase 2 Technical Authority Registry release. Raw reports, extraction candidates, document approvals, and reviewed-but-unpublished variants are not selectable technical authority.
+
 Shared main contains lower-level technical and rule foundations, while the
 divergent legacy root contains additional guarded-technical and repair-strategy
 modules/APIs. Those root-only modules are review candidates, not current Phase 9
@@ -857,14 +1005,15 @@ No steel or duct calculator data may be imported into the active fire-seal/penet
 
 ## 23. Related documentation
 
-These documents describe the reviewed local candidate and its governed
-boundaries. Runtime receipts and customer evidence remain retained locally and
-must not be published merely because their non-sensitive status is summarised
-here.
+These documents describe the validated pushed Git feature-branch candidate and
+its governed boundaries. Runtime receipts and customer evidence remain retained
+locally and must not enter Git or a Technical Authority Registry release merely
+because their non-sensitive status is summarised here.
 
 - [CLASSIFIRE Architecture](./CLASSIFIRE_ARCHITECTURE.md)
 - [Current Project State](./PROJECT_STATE.md)
 - [Current Session Handoff](./SESSION_HANDOFF.md)
+- [Technical Intake Draft v1 Contract](./TECHNICAL_INTAKE_DRAFT_V1.md)
 - [Phase 8 Representative Run Package](./PHASE8_REPRESENTATIVE_RUN_PACKAGE.md)
 - [Admission-Bound Canonical Writer Deployment Runbook](./ADJUDICATED_CANONICAL_WRITER_DEPLOYMENT_RUNBOOK.md)
 - [External Signer Operating Model for Adjudicated Admissions](./ADJUDICATED_ADMISSION_EXTERNAL_SIGNER_OPERATING_MODEL.md)
