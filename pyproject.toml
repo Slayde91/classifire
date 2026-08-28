@@ -36,6 +36,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "setuptools>=68",
   "pytest>=8.4,<9",
   "pytest-cov>=6.2,<7",
   "ruff>=0.12,<1",
@@ -52,6 +53,9 @@ classifire = "classifire.cli:app"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["classifire*"]
+
+[tool.setuptools.package-data]
+"classifire.migrations" = ["versions/*.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

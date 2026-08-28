@@ -1,8 +1,157 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}{{ document.document_id }} — QUANTIFIRE{% endblock %}
 {% block heading %}Technical source document{% endblock %}
 {% block content %}
-<section class="panel"><div class="panel-head"><h2>{{ document.title }}</h2><span class="badge badge-{{ document.status }}">{{ document.status }}</span></div><div class="form-grid"><div><strong>Document ID</strong><div class="mono">{{ document.document_id }}</div></div><div><strong>Type</strong><div>{{ document.document_type }}</div></div><div><strong>Manufacturer</strong><div>{{ document.manufacturer or '—' }}</div></div><div><strong>Reference</strong><div>{{ document.reference or '—' }}</div></div><div><strong>Revision</strong><div>{{ document.revision or '—' }}</div></div><div><strong>Extraction status</strong><div>{{ document.extraction_status }}</div></div></div></section>
-{% if has_permission('technical:approve') and document.status != 'approved' %}<section class="panel"><form method="post" action="/technical/documents/{{ document.id }}/approve" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input name="reason" value="Technical source document reviewed" required><button class="button button-primary">Approve Source Document</button></form></section>{% endif %}
-<section class="panel"><h2>Linked structured variants</h2><div class="table-wrap"><table><thead><tr><th>Variant</th><th>System</th><th>FRL</th><th>Status</th></tr></thead><tbody>{% for v in linked %}<tr><td><a class="mono" href="/technical/variants/{{ v.id }}">{{ v.variant_id }}</a></td><td>{{ v.system_id }}</td><td>{{ v.frl or '—' }}</td><td>{{ v.status }}</td></tr>{% else %}<tr><td colspan="4" class="empty">No linked variants.</td></tr>{% endfor %}</tbody></table></div></section>
+<div class="callout"><strong>Identity separation.</strong> The CLASSIFIRE source record ID identifies this registration. The report-declared reference and revision identify what the document says it is. The immutable artifact fields identify the exact supplied bytes; none of these identities is inferred from the filename.</div>
+<section class="panel">
+  <div class="panel-head"><h2>Declared source registration</h2></div>
+  <div class="form-grid">
+    <div><strong>CLASSIFIRE source record ID</strong><div class="mono">{{ document.document_id }}</div></div>
+    <div><strong>Report-declared type</strong><div>{{ document_type_label }}</div></div>
+    <div><strong>Declared source role</strong><div>{{ document.declared_source_role or 'Legacy - not classified' }}</div></div>
+    <div><strong>Evidence scope</strong><div>{{ document.evidence_scope or 'Legacy - not classified' }}</div></div>
+    <div><strong>Report-declared reference</strong><div>{{ document.reference or '-' }}</div></div>
+    <div><strong>Report-declared revision</strong><div>{{ document.revision or '-' }}</div></div>
+    <div><strong>Sponsor</strong><div>{{ document.sponsor_organisation or '-' }}</div></div>
+    <div><strong>Issuing organisation</strong><div>{{ document.issuing_organisation or '-' }}</div></div>
+    <div><strong>Artifact provenance</strong><div>{{ document.artifact_provenance_status or 'Legacy - unknown' }}</div></div>
+    <div><strong>Declared standards</strong><div>{{ document.standards | join(', ') if document.standards else 'Not recorded' }}</div></div>
+    <div><strong>Supplied filename</strong><div>{{ stored_file.original_filename if stored_file else 'Missing file record' }}</div></div>
+    <div><strong>Artifact size</strong><div>{{ stored_file.size_bytes if stored_file else '-' }} bytes</div></div>
+    <div><strong>Immutable artifact SHA-256</strong><div class="mono">{{ stored_file.sha256 if stored_file else 'Missing file record' }}</div></div>
+  </div>
+  {% if standards_advisory.evidence_attention_required %}<div class="alert alert-error"><strong>Current minimum standards are not demonstrated by this registration.</strong> No exact declaration was recorded for: {{ standards_advisory.missing_references | join(', ') }}. Do not treat systems in this report as meeting current requirements until a competent reviewer checks the retained report and records exact page or section evidence.</div>{% else %}<div class="callout"><strong>Current references are declared, but compliance is not established.</strong> The registration names NCC 2022, AS 1530.4:2014, and AS 4072.1:2005. A competent reviewer must still verify the retained report, its scope, and exact page or section evidence before any system is treated as applicable.</div>{% endif %}
+  {% if document.artifact_provenance_note %}<p><strong>Artifact provenance note:</strong> {{ document.artifact_provenance_note }}</p>{% endif %}
+  {% if document.evidence_limitations %}<p><strong>Evidence limitations:</strong> {{ document.evidence_limitations }}</p>{% endif %}
+  {% if document.declared_source_role == 'regulatory_summary' or document.evidence_scope == 'summary_only' %}<div class="alert alert-error">This is summary-only evidence. A reviewed v2 full source must be linked using <strong>Summary of</strong> before catalog review. The summary remains ineligible to bind a TechnicalVariant directly.</div>{% endif %}
+  {% if has_permission('technical:write') and document.status in ['draft', 'rejected'] %}
+  <details class="form-panel">
+    <summary>Correct reviewable source classification</summary>
+    <form method="post" action="/technical/documents/{{ document.id }}/metadata" class="stack-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="expected_record_version" value="{{ document.record_version }}">
+      <div class="form-grid">
+        <label>Declared source role
+          <select name="declared_source_role" required>
+            {% for value, label in [('primary_test', 'Primary test evidence'), ('assessment', 'Assessment'), ('regulatory_summary', 'Regulatory summary'), ('supporting_reference', 'Supporting reference'), ('manufacturer_information', 'Manufacturer information'), ('administrative_notice', 'Administrative notice')] %}<option value="{{ value }}"{% if document.declared_source_role == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Evidence scope
+          <select name="evidence_scope" required>
+            {% for value, label in [('full_source', 'Full source'), ('summary_only', 'Summary only'), ('bibliographic_only', 'Bibliographic only')] %}<option value="{{ value }}"{% if document.evidence_scope == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Artifact provenance
+          <select name="artifact_provenance_status" required>
+            {% for value, label in [('issuer_original', 'Issuer original'), ('issuer_copy', 'Issuer copy'), ('transformed_derivative', 'Transformed derivative'), ('unknown', 'Unknown')] %}<option value="{{ value }}"{% if document.artifact_provenance_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Sponsor organisation<input name="sponsor_organisation" maxlength="300" value="{{ document.sponsor_organisation or '' }}"></label>
+        <label class="span-2">Artifact provenance note<textarea name="artifact_provenance_note" maxlength="4000">{{ document.artifact_provenance_note or '' }}</textarea></label>
+        <label class="span-2">Evidence limitations<textarea name="evidence_limitations" maxlength="20000">{{ document.evidence_limitations or '' }}</textarea></label>
+        <label class="span-2">Reason for correction<input name="reason" maxlength="4000" required></label>
+      </div>
+      <button class="button button-secondary" type="submit">Update source classification</button>
+    </form>
+  </details>
+  {% endif %}
+</section>
+<section class="panel"><div class="panel-head"><h2>{{ document.title }}</h2><span class="badge badge-{{ document.status }}">{{ document.status }}</span></div><div class="form-grid"><div><strong>Document ID</strong><div class="mono">{{ document.document_id }}</div></div><div><strong>Type</strong><div>{{ document_type_label }}</div></div><div><strong>Manufacturer</strong><div>{{ document.manufacturer or '—' }}</div></div><div><strong>Reference</strong><div>{{ document.reference or '—' }}</div></div><div><strong>Revision</strong><div>{{ document.revision or '—' }}</div></div><div><strong>Extraction status</strong><div>{{ document.extraction_status }}</div></div><div><strong>File SHA-256</strong><div class="mono">{{ stored_file.sha256 if stored_file else 'Missing file record' }}</div></div><div><strong>Malware screening</strong><div><span class="badge badge-{{ stored_file.malware_scan_status if stored_file else 'error' }}">{{ stored_file.malware_scan_status if stored_file else 'missing' }}</span></div></div></div></section>
+<section class="panel">
+  <div class="panel-head"><h2>Original report</h2>{% if stored_file %}<a class="button button-secondary" href="/technical/documents/{{ document.id }}/download">Download original report</a>{% endif %}</div>
+  {% if preview_supported %}
+  <div
+    class="technical-preview"
+    data-technical-pdf-preview
+    data-preview-url-prefix="/technical/documents/{{ document.id }}/preview/{{ stored_file.sha256 }}/pages/"
+    data-source-sha256="{{ stored_file.sha256 }}"
+    data-source-size="{{ stored_file.size_bytes }}"
+    data-max-pages="{{ preview_max_pages }}"
+    aria-busy="true"
+  >
+    <div class="technical-preview-toolbar" role="group" aria-label="PDF page navigation and size">
+      <button class="button button-secondary" type="button" data-preview-previous aria-controls="technical-preview-stage" disabled>Previous page</button>
+      <label class="technical-preview-page-label">Physical PDF page
+        <input type="number" min="1" max="{{ preview_max_pages }}" value="1" inputmode="numeric" data-preview-page disabled>
+      </label>
+      <button class="button button-secondary" type="button" data-preview-load aria-controls="technical-preview-stage" disabled>Load page</button>
+      <button class="button button-secondary" type="button" data-preview-next aria-controls="technical-preview-stage" disabled>Next page</button>
+      <button class="button button-secondary" type="button" data-preview-fit aria-controls="technical-preview-stage" aria-pressed="true" disabled>Fit page</button>
+      <button class="button button-secondary" type="button" data-preview-actual aria-controls="technical-preview-stage" aria-pressed="false" disabled>Actual size</button>
+      <strong data-preview-page-count>Page 1</strong>
+    </div>
+    <p class="muted" id="technical-preview-status" data-preview-status role="status" aria-live="polite" aria-atomic="true">Preparing a source-bound raster preview...</p>
+    <div class="technical-preview-stage" id="technical-preview-stage" role="region" aria-label="Technical report raster page" aria-describedby="technical-preview-status" tabindex="0">
+      <img class="technical-preview-image-fit" data-preview-image alt="Raster preview of physical PDF page 1" hidden>
+    </div>
+    <noscript><p class="alert alert-error">JavaScript is required for the controlled page preview. Use the original-report download instead.</p></noscript>
+  </div>
+  <p class="muted small"><strong>Viewing aid only.</strong> Each page is rechecked against the retained SHA-256, converted to a bounded PNG in a separate process, and never grants source approval, structured-variant approval, or runtime authority. Interactive links, forms, scripts, attachments, and the original PDF are not placed in this page.</p>
+  <script src="/static/js/technical-preview.js" defer></script>
+  {% elif stored_file and not preview_runtime_enabled %}
+  <p class="muted"><strong>Controlled inline preview is disabled.</strong> It is opt-in for development and controlled testing, and remains forced off in production until an enforced renderer sandbox is available. The original remains attachment-only.</p>
+  {% elif stored_file %}
+  <p class="muted"><strong>Controlled inline preview is unavailable.</strong> The first preview version supports only immutable, malware-screened PDF sources. The original remains attachment-only.</p>
+  {% else %}
+  <p class="muted"><strong>Source file unavailable.</strong> No retained file record can be previewed or downloaded.</p>
+  {% endif %}
+</section>
+<div class="callout"><strong>Separate evidence gate.</strong> A source must be submitted and decided by a different authorised person. Approval confirms only the exact retained report and recorded outgoing lineage; it does not approve a structured variant or publish runtime technical authority.</div>
+{% if exact_content_duplicates %}<div class="callout"><strong>Exact-content match.</strong> These source records contain the same immutable bytes: {% for item in exact_content_duplicates %}<a class="mono" href="/technical/documents/{{ item.id }}">{{ item.document_id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}. Matching bytes do not prove that either record is a revision or replacement.</div>{% endif %}
+<section class="panel">
+  <div class="panel-head"><h2>Source report lineage</h2></div>
+  <p class="muted">These append-only links preserve how reports relate without overwriting or automatically retiring either source. Check every link before submission: an incorrect link requires a replacement Draft source registration. Relationship-bearing sources remain excluded from runtime use until a versioned Technical Authority Registry release binds the lineage graph.</p>
+  {% if has_permission('technical:write') and document.status == 'draft' and available_related_documents %}
+  <form method="post" action="/technical/documents/{{ document.id }}/relationships" class="stack-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-grid">
+      <label>Relationship
+        <select name="relationship_type" required>
+          {% for value, label in relationship_labels.items() %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Related existing source
+        <select name="related_document_id" required>
+          {% for item in available_related_documents %}<option value="{{ item.document_id }}">{{ item.document_id }} - {{ item.title }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Effective date (optional)<input type="date" name="effective_date"></label>
+      <label>Scope (optional)<input name="scope" maxlength="2000" placeholder="Pages, systems, products, or limits covered"></label>
+    </div>
+    <label>Reason and evidence basis<textarea name="reason" maxlength="2000" required></textarea></label>
+    <button class="button button-secondary" type="submit">Record source relationship</button>
+  </form>
+  {% elif document.status == 'draft' and has_permission('technical:write') %}
+  <p class="empty">Upload another source before recording a relationship.</p>
+  {% endif %}
+  <h3>This source refers to</h3>
+  <div class="table-wrap"><table><thead><tr><th>Relationship</th><th>Related source</th><th>Effective</th><th>Scope and reason</th><th>Immutable SHA-256</th></tr></thead><tbody>
+  {% for relationship in outgoing_relationships %}{% set related = lineage_documents.get(relationship.related_document_id) %}{% set related_file = lineage_stored_files.get(related.stored_file_id) if related else none %}<tr><td>{{ relationship_labels.get(relationship.relationship_type, relationship.relationship_type) }}</td><td>{% if related %}<a class="mono" href="/technical/documents/{{ related.id }}">{{ related.document_id }}</a>{% else %}Missing source record{% endif %}</td><td>{{ relationship.effective_date or '-' }}</td><td>{{ relationship.scope or 'All stated scope' }}<div class="muted small">{{ relationship.reason }}</div></td><td class="mono">{{ related_file.sha256 if related_file else 'Missing file record' }}</td></tr>{% else %}<tr><td colspan="5" class="empty">No outgoing source relationships.</td></tr>{% endfor %}
+  </tbody></table></div>
+  <h3>Other sources referring to this one</h3>
+  <div class="table-wrap"><table><thead><tr><th>Relationship</th><th>Source</th><th>Effective</th><th>Scope and reason</th><th>Immutable SHA-256</th></tr></thead><tbody>
+  {% for relationship in incoming_relationships %}{% set related = lineage_documents.get(relationship.document_id) %}{% set related_file = lineage_stored_files.get(related.stored_file_id) if related else none %}<tr><td>{{ relationship_labels.get(relationship.relationship_type, relationship.relationship_type) }}</td><td>{% if related %}<a class="mono" href="/technical/documents/{{ related.id }}">{{ related.document_id }}</a>{% else %}Missing source record{% endif %}</td><td>{{ relationship.effective_date or '-' }}</td><td>{{ relationship.scope or 'All stated scope' }}<div class="muted small">{{ relationship.reason }}</div></td><td class="mono">{{ related_file.sha256 if related_file else 'Missing file record' }}</td></tr>{% else %}<tr><td colspan="5" class="empty">No incoming source relationships.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+<section class="panel"><div class="panel-head"><h2>Independent source review</h2></div>
+{% if has_permission('technical:write') and document.status in ['draft', 'rejected'] and stored_file and stored_file.immutable and stored_file.malware_scan_status == 'clean' %}<form method="post" action="/technical/documents/{{ document.id }}/submit-review" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input name="reason" value="Submit technical source document for independent review" required><button class="button button-secondary">Submit for Review</button></form>{% elif document.status in ['draft', 'rejected'] %}<div class="alert alert-error">This source cannot be submitted until its immutable bytes match the recorded SHA-256 and pass malware screening.</div>{% endif %}
+{% if has_permission('technical:approve') and document.status == 'in_review' %}<form method="post" action="/technical/documents/{{ document.id }}/approve" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input name="reason" value="Exact source evidence and lineage reviewed" required><button class="button button-primary">Approve Source Document</button></form><form method="post" action="/technical/documents/{{ document.id }}/request-changes" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input name="reason" placeholder="Changes required before resubmission" required><button class="button button-secondary">Request Changes</button></form><form method="post" action="/technical/documents/{{ document.id }}/reject" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input name="reason" placeholder="Reason for rejection" required><button class="button button-secondary">Reject</button></form>{% elif document.status == 'in_review' %}<p class="muted">Awaiting an independent authorised reviewer.</p>{% endif %}
+{% if document.status == 'approved' %}<div class="callout"><strong>Reviewed source.</strong> Structured technical candidates and runtime publication still require their own independent gates.</div>{% endif %}</section>
+<section class="panel"><h2>Source approval history</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Requested by</th><th>Requested</th><th>Request reason</th><th>Decided by</th><th>Decided</th><th>Decision reason</th><th>Snapshot SHA-256</th></tr></thead><tbody>{% for approval in approvals %}{% set requester = approval_users.get(approval.requested_by_id) %}{% set decider = approval_users.get(approval.decided_by_id) %}{% set reasons = approval_reasons.get(approval.id, {}) %}<tr><td>{{ approval.status }}</td><td>{{ requester.email if requester else (approval.requested_by_id or '-') }}</td><td>{{ approval.requested_at }}</td><td>{{ reasons.get('request_reason') or '-' }}</td><td>{{ decider.email if decider else (approval.decided_by_id or '-') }}</td><td>{{ approval.decided_at or '-' }}</td><td>{{ reasons.get('decision_reason') or '-' }}</td><td class="mono">{{ approval.snapshot_hash or '-' }}</td></tr>{% else %}<tr><td colspan="8" class="empty">No source review records.</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="panel">
+  <div class="panel-head"><h2>Field-level technical intake Draft</h2></div>
+  <div class="callout"><strong>Draft evidence only.</strong> Saving this workspace records source-bound authoring evidence. It cannot approve the source, create a TechnicalVariant, publish a registry release, or grant runtime eligibility.</div>
+  {% if has_permission('technical:write') and intake_draft_available %}
+  <form method="post" action="/technical/documents/{{ document.id }}/intake-draft" class="inline-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="button button-primary" type="submit">{{ 'Resume my Draft' if current_intake_draft else 'Start my Draft' }}</button>
+    {% if current_intake_draft %}<span class="muted">Saved version {{ current_intake_draft.record_version }}, last updated {{ current_intake_draft.updated_at }}.</span>{% endif %}
+  </form>
+  {% elif has_permission('technical:write') %}
+  <p class="muted">Draft authoring is available only while an immutable, malware-screened PDF source is in Draft, in review, or approved source status.</p>
+  {% else %}
+  <p class="muted">Technical write permission is required to start or resume a Draft.</p>
+  {% endif %}
+</section>
+<section class="panel"><div class="panel-head"><h2>Linked structured variants</h2></div><div class="table-wrap"><table><thead><tr><th>Variant</th><th>System</th><th>FRL</th><th>Status</th></tr></thead><tbody>{% for v in linked %}<tr><td><a class="mono" href="/technical/variants/{{ v.id }}">{{ v.variant_id }}</a></td><td>{{ v.system_id }}</td><td>{{ v.frl or '—' }}</td><td>{{ v.status }}</td></tr>{% else %}<tr><td colspan="4" class="empty">No linked variants.</td></tr>{% endfor %}</tbody></table></div></section>
 {% endblock %}

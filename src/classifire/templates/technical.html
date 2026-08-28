@@ -1,20 +1,79 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Technical evidence — QUANTIFIRE{% endblock %}
 {% block heading %}Technical evidence database{% endblock %}
 {% block content %}
-<div class="toolbar"><a class="button button-primary" href="/technical/variants">Manage technical systems</a></div><div class="callout"><strong>Evidence control.</strong> Uploaded source files are preserved unchanged and hashed. Extracted fields are Draft candidates only. An authorised technical reviewer must verify source pages, applicability and complete configuration before activation.</div>
-{% if has_permission('technical:write') %}<details class="panel form-panel"><summary>Upload test report or fire assessment</summary>
-<form method="post" action="/technical/upload" enctype="multipart/form-data" class="form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<label>Source file<input type="file" name="file" accept=".pdf,.docx,.xlsx,.xlsb" required></label><label>Document ID<input name="document_id" required></label>
-<label>Document type<select name="document_type"><option value="fire_test_report">Fire test report</option><option value="fire_assessment">Fire assessment</option><option value="engineering_assessment">Engineering assessment</option><option value="manufacturer_manual">Manufacturer manual</option><option value="technical_data_sheet">Technical data sheet</option></select></label>
-<label>Title<input name="title" required></label><label>Manufacturer<input name="manufacturer"></label><label>Reference<input name="reference"></label><label>Revision<input name="revision"></label>
-<div class="span-2"><button class="button button-primary">Upload as immutable Draft evidence</button></div></form></details>{% endif %}
-<section class="panel"><div class="panel-head"><h2>Source documents</h2></div><div class="table-wrap"><table><thead><tr><th>Document ID</th><th>Title</th><th>Type</th><th>Manufacturer</th><th>Revision</th><th>Extraction</th><th>Status</th></tr></thead><tbody>
-{% for d in documents %}<tr><td class="mono"><a href="/technical/documents/{{ d.id }}">{{ d.document_id }}</a></td><td>{{ d.title }}</td><td>{{ d.document_type }}</td><td>{{ d.manufacturer or '—' }}</td><td>{{ d.revision or '—' }}</td><td>{{ d.extraction_status }}</td><td><span class="badge badge-{{ d.status }}">{{ d.status }}</span></td></tr>{% else %}<tr><td colspan="7" class="empty">No source documents uploaded through the application.</td></tr>{% endfor %}
+<div class="toolbar"><a class="button button-primary" href="/technical/variants">Manage technical systems</a></div><div class="callout"><strong>Evidence control.</strong> Uploaded source files are preserved unchanged and hashed. Extracted fields are Draft candidates only. Independent technical review may approve a release candidate, but only a separately published Technical Authority Registry release grants runtime eligibility.</div>
+{% if has_permission('technical:write') %}
+<details class="panel form-panel">
+  <summary>Upload test reports or fire assessments</summary>
+  <p class="muted">Choose several reports, then check the identity and any relationship to an existing source. Every file is screened and saved in its own transaction, so one rejected report cannot discard or advance the others.</p>
+  <div class="callout"><strong>Safe extraction boundary.</strong> Accepted files are retained as immutable Draft evidence after a clean malware result. Automatic extraction is paused until an isolated parser is available; a clean scan is not technical approval.</div>
+  <div class="callout"><strong>Current-standards evidence check.</strong> CLASSIFIRE compares only the standards you declare here with NCC 2022, AS 1530.4:2014, and AS 4072.1:2005. Missing declarations produce a warning. Declaring a reference is not proof of compliance or system applicability; a competent reviewer must verify the retained report and record exact page or section evidence.</div>
+  <form id="technical-batch-upload" data-endpoint="/technical/upload" data-batch-create-endpoint="/api/v1/technical/upload-batches" data-batch-read-prefix="/api/v1/technical/upload-batches/" data-batch-lookup-prefix="/api/v1/technical/upload-batches/by-client-request/" data-batch-storage-key="classifire.technical.intake_batch" data-storage-namespace="{{ user.id }}" data-max-files="20" data-request-timeout-ms="120000">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Source reports (up to 20 per batch)
+      <input id="technical-files" type="file" accept=".pdf,.docx,.xlsx,.xlsb" multiple required>
+    </label>
+    <div id="technical-upload-items" class="stack-form" aria-live="polite"></div>
+    <div class="toolbar">
+      <button id="technical-upload-submit" class="button button-primary" type="submit" disabled>Screen and upload selected reports</button>
+      <button id="technical-upload-new-batch" class="button button-secondary" type="button" hidden>Start another batch</button>
+      <span id="technical-upload-summary" class="muted" role="status"></span>
+    </div>
+  </form>
+  <template id="technical-upload-item-template">
+    <fieldset class="panel form-panel technical-upload-item" data-upload-item>
+      <legend data-file-name>Selected report</legend>
+      <div class="form-grid">
+        <label>CLASSIFIRE source registration ID<input data-field="document_id" maxlength="200" required><span class="muted small">Internal record identity; this is not the issuer's report number.</span></label>
+        <label>Declared report type<select data-field="document_type" required><option value="">Select report type</option>{% for value, label in technical_document_type_options %}<option value="{{ value }}">{{ label }}</option>{% endfor %}{% for value, label in technical_legacy_document_type_labels.items() %}<option value="{{ value }}" hidden>{{ label }}</option>{% endfor %}</select></label>
+        <label>Declared source role<select data-field="declared_source_role" required><option value="">Select source role</option><option value="primary_test">Primary test evidence</option><option value="assessment">Assessment</option><option value="regulatory_summary">Regulatory summary</option><option value="supporting_reference">Supporting reference</option><option value="manufacturer_information">Manufacturer information</option><option value="administrative_notice">Administrative notice</option></select></label>
+        <label>Declared evidence scope<select data-field="evidence_scope" required><option value="">Select evidence scope</option><option value="full_source">Full source</option><option value="summary_only">Summary only</option><option value="bibliographic_only">Bibliographic only</option></select></label>
+        <label>Report title<input data-field="title" maxlength="500" placeholder="Enter the title shown inside the report" required></label>
+        <label>Report reference or number<input data-field="reference" maxlength="300"></label>
+        <label>Report revision<input data-field="revision" maxlength="100"></label>
+        <label>Issuing organisation<input data-field="issuing_organisation" maxlength="300"></label>
+        <label>Sponsor organisation<input data-field="sponsor_organisation" maxlength="300"></label>
+        <label>Manufacturer or product owner<input data-field="manufacturer" maxlength="200"></label>
+        <label>Issue or publication date<input data-field="publication_date" type="date"></label>
+        <label>Review date<input data-field="review_date" type="date"></label>
+        <label>Expiry date<input data-field="expiry_date" type="date"></label>
+        <label>Jurisdiction<input data-field="jurisdiction" maxlength="200" value="{{ jurisdiction }}" required></label>
+        <label class="span-2">Standards (comma or line separated)<textarea data-field="standards" rows="2" maxlength="4000"></textarea></label>
+        <label>Artifact provenance<select data-field="artifact_provenance_status" required><option value="unknown">Unknown</option><option value="issuer_original">Issuer original</option><option value="issuer_copy">Issuer copy</option><option value="transformed_derivative">Transformed derivative</option></select></label>
+        <label class="span-2">Artifact provenance note<textarea data-field="artifact_provenance_note" rows="2" maxlength="4000" placeholder="Record how this exact file was obtained or transformed; do not include credentials or private paths."></textarea></label>
+        <label class="span-2">Evidence limitations<textarea data-field="evidence_limitations" rows="3" maxlength="4000" placeholder="Record declared omissions, limitations, or why this source is summary or bibliographic evidence only."></textarea></label>
+        <label>Relationship to an existing source<select data-field="relationship_type"><option value="">Independent source</option><option value="revision_of">Revision of</option><option value="assessment_of">Assessment of</option><option value="summary_of">Summary of</option><option value="amendment_to">Amendment to</option><option value="replaces">Replaces</option><option value="retirement_notice_for">Retirement notice for</option></select></label>
+        <label>Related source document<select data-field="related_document_id"><option value="">Select an existing source</option>{% for d in documents %}<option value="{{ d.document_id }}">{{ d.document_id }} — {{ d.title }}{% if d.revision %} ({{ d.revision }}){% endif %}</option>{% endfor %}</select></label>
+        <label>Relationship effective date<input data-field="relationship_effective_date" type="date"></label>
+        <label class="span-2">Relationship scope<textarea data-field="relationship_scope" rows="2" maxlength="4000" placeholder="Pages, systems, products, or limits covered by this relationship"></textarea></label>
+        <label class="span-2">Relationship reason<input data-field="relationship_reason" maxlength="2000" placeholder="Explain how this report relates to the selected source"></label>
+      </div>
+      <label data-retry-file-control hidden>Reselect this exact report
+        <input data-retry-file type="file" accept=".pdf,.docx,.xlsx,.xlsb">
+        <span class="muted small">The name, size, and SHA-256 digest must match the immutable batch manifest.</span>
+      </label>
+      <output data-upload-status class="muted">Ready</output>
+    </fieldset>
+  </template>
+  <noscript><div class="alert alert-error">JavaScript is required for isolated multi-report upload. The authenticated API remains available for single-report intake.</div></noscript>
+</details>
+{% endif %}
+{% if has_permission('technical:write') %}
+<section class="panel">
+  <div class="panel-head"><h2>My technical intake Drafts</h2></div>
+  <p class="muted">Resume field-level source authoring without creating a TechnicalVariant, approval, release, or runtime authority.</p>
+  <div class="table-wrap"><table><thead><tr><th>Source document</th><th>Draft version</th><th>Last saved</th><th>Source SHA-256</th><th>Action</th></tr></thead><tbody>
+  {% for draft in own_intake_drafts %}{% set source = intake_draft_documents.get(draft.technical_document_id) %}<tr><td>{% if source %}<a class="mono" href="/technical/documents/{{ source.id }}">{{ source.document_id }}</a><div>{{ source.title }}</div>{% else %}<span class="alert alert-error">Source record unavailable</span>{% endif %}</td><td>{{ draft.record_version }}</td><td>{{ draft.updated_at }}</td><td class="mono">{{ draft.source_sha256 }}</td><td><a class="button button-secondary" href="/technical/intake-drafts/{{ draft.id }}">Resume Draft</a></td></tr>{% else %}<tr><td colspan="5" class="empty">No saved intake Drafts. Open a retained PDF source to start one.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+<section class="panel"><div class="panel-head"><h2>Source documents</h2></div><div class="table-wrap"><table><thead><tr><th>Document ID</th><th>Title</th><th>Type</th><th>Current-standards evidence</th><th>Manufacturer</th><th>Revision</th><th>Extraction</th><th>Status</th></tr></thead><tbody>
+{% for d in documents %}{% set advisory = standards_advisories.get(d.id) %}<tr><td class="mono"><a href="/technical/documents/{{ d.id }}">{{ d.document_id }}</a></td><td>{{ d.title }}</td><td>{{ technical_document_type_labels.get(d.document_type, d.document_type) }}</td><td>{% if advisory and advisory.evidence_attention_required %}<span class="badge badge-rejected">Evidence attention</span><div class="muted small">Missing declared reference: {{ advisory.missing_references | join(', ') }}</div>{% else %}<span class="badge badge-draft">Declared only</span><div class="muted small">Independent verification pending</div>{% endif %}</td><td>{{ d.manufacturer or '—' }}</td><td>{{ d.revision or '—' }}</td><td>{{ d.extraction_status }}</td><td><span class="badge badge-{{ d.status }}">{{ d.status }}</span></td></tr>{% else %}<tr><td colspan="8" class="empty">No source documents uploaded through the application.</td></tr>{% endfor %}
 </tbody></table></div></section>
 <section class="panel"><div class="panel-head"><h2>Structured technical variants</h2><form method="get" class="inline-form"><input name="q" value="{{ q }}" placeholder="Search variant, product or Service"><button class="button button-secondary">Search</button></form></div>
 <div class="table-wrap"><table><thead><tr><th>Variant</th><th>System</th><th>Product family</th><th>Service</th><th>Substrate</th><th>FRL</th><th>Source</th><th>Review</th><th>Status</th></tr></thead><tbody>
 {% for v in variants %}<tr><td class="mono"><a href="/technical/variants/{{ v.id }}">{{ v.variant_id }}</a></td><td class="mono">{{ v.system_id }}</td><td>{{ v.product_family or '—' }}</td><td>{{ v.service_type or '—' }}<div class="muted small">{{ v.service_material or '' }}</div></td><td>{{ v.substrate_type or '—' }}</td><td>{{ v.frl or '—' }}</td><td>{{ v.source_document_reference or '—' }} {{ v.source_page or '' }}</td><td>{{ 'Required' if v.expert_review_required else 'No trigger' }}</td><td><span class="badge badge-{{ v.status }}">{{ v.status }}</span></td></tr>{% else %}<tr><td colspan="9" class="empty">No technical variants imported.</td></tr>{% endfor %}
 </tbody></table></div></section>
 {% endblock %}
-
+{% block scripts %}<script src="/static/js/technical-upload.js" defer></script>{% endblock %}

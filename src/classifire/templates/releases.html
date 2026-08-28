@@ -1,26 +1,48 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Library releases — QUANTIFIRE{% endblock %}
 {% block heading %}Library release manager{% endblock %}
 {% block content %}
-<div class="callout"><strong>Immutable release control.</strong> Estimates should ultimately pin to exact approved release IDs. Publishing a release creates a hashed manifest of the active records at that point in time. Technical Drafts cannot be activated from this screen.</div>
+<div class="callout"><strong>Immutable release control.</strong> Runtime technical search uses exact hashed release membership. Technical review creates Approved candidates; only a separately authorised publisher can activate them through a Technical Authority Registry release.</div>
 
 <section class="panel"><div class="panel-head"><h2>Current library state</h2></div>
-<div class="table-wrap"><table><thead><tr><th>Library</th><th>Active</th><th>Draft</th><th>Latest release</th><th>Status</th></tr></thead><tbody>
+<div class="table-wrap"><table><thead><tr><th>Library</th><th>Active</th><th>Approved candidates</th><th>Draft</th><th>Latest release</th><th>Status</th></tr></thead><tbody>
 {% for kind in supported_types %}
 {% set c = counts[kind] %}
 {% set r = latest[kind] %}
-<tr><td>{{ kind|title }}</td><td>{{ c.get('active',0) }}</td><td>{{ c.get('draft',0) }}</td><td>{% if r %}<a href="/releases/{{ r.id }}">{{ r.version }}</a>{% else %}—{% endif %}</td><td>{% if r %}<span class="badge badge-{{ r.status }}">{{ r.status }}</span>{% else %}No release{% endif %}</td></tr>
+<tr><td>{{ kind|title }}</td><td>{{ c.get('active',0) }}</td><td>{{ c.get('approved',0) }}</td><td>{{ c.get('draft',0) }}</td><td>{% if r %}<a href="/releases/{{ r.id }}">{{ r.version }}</a>{% else %}—{% endif %}</td><td>{% if r %}<span class="badge badge-{{ r.status }}">{{ r.status }}</span>{% else %}No release{% endif %}</td></tr>
 {% endfor %}
 </tbody></table></div></section>
 
-{% if has_permission('pricing:approve') or has_permission('technical:approve') or has_permission('rule:approve') %}
+{% if technical_retirements %}
+<section class='panel'>
+<div class='panel-head'><h2>Technical retirement publication review</h2></div>
+<p class='muted'>Ready withdrawals will be applied automatically if this publisher creates the next Technical Authority Registry release. Blocked receipts must be investigated first. Each record remains active until a valid transaction commits.</p>
+<div class='table-wrap'><table>
+<thead><tr><th>Variant</th><th>Logical key</th><th>Request reason</th><th>Decision</th><th>Reviewer</th><th>State</th></tr></thead>
+<tbody>
+{% for item in technical_retirements %}
+<tr>
+<td class='mono'><a href='/technical/variants/{{ item.record_id }}'>{{ item.variant_id }}</a></td>
+<td class='mono'>{{ item.logical_key or '-' }}</td>
+<td>{{ item.request_reason or '-' }}</td>
+<td>{{ item.decision_reason or '-' }}</td>
+<td class='mono'>{{ item.reviewer_id or '-' }}</td>
+<td>{% if item.valid %}<span class='badge badge-approved'>ready</span>{% else %}<span class='badge badge-rejected'>blocked: {{ item.error }}</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+</section>
+{% endif %}
+
+{% if publishable_types %}
 <section class="panel form-panel"><h2>Publish release</h2>
 <form method="post" action="/releases/publish" class="form-grid">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<label>Library type<select name="release_type" required>{% for kind in supported_types %}<option value="{{ kind }}">{{ kind|title }}</option>{% endfor %}</select></label>
+<input type="hidden" name="expected_previous_release_id" value="{{ latest.get('technical').id if latest.get('technical') else '' }}">
+<label>Library type<select name="release_type" required>{% for kind in publishable_types %}<option value="{{ kind }}">{{ kind|title }}</option>{% endfor %}</select></label>
 <label>Version<input name="version" placeholder="QF-PRICING-2026.08.01" required></label>
 <label class="span-2">Notes<input name="notes" placeholder="Approved library release"></label>
-<label class="span-2"><input type="checkbox" name="activate_drafts" value="yes"> Activate eligible Draft records as part of publication (not permitted for Technical)</label>
+<label class="span-2"><input type="checkbox" name="activate_drafts" value="yes"> Activate eligible Draft records as part of publication (Technical uses independently reviewed Approved candidates instead)</label>
 <div class="span-2"><button class="button button-primary">Publish Immutable Release</button></div>
 </form></section>
 {% endif %}
@@ -30,4 +52,3 @@
 {% for r in releases %}<tr><td>{{ r.library_type }}</td><td><a href="/releases/{{ r.id }}">{{ r.version }}</a></td><td>{{ r.effective_date or '—' }}</td><td>{{ (r.source_manifest or {}).get('record_count','—') }}</td><td class="mono">{{ (r.release_hash or '')[:16] }}…</td><td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td></tr>{% else %}<tr><td colspan="6" class="empty">No releases.</td></tr>{% endfor %}
 </tbody></table></div></section>
 {% endblock %}
-

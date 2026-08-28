@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Create Draft configuration — CLASSIFIRE{% endblock %}
+{% block heading %}Create Draft technical configuration{% endblock %}
+{% block content %}
+<div class="callout"><strong>One configuration at a time.</strong> Create a separate Draft record for each distinct tested or assessed configuration. Leave facts blank when this report does not prove them. This action cannot approve the source, approve the configuration, publish a registry release, or make it available to runtime search.</div>
+<section class="panel">
+  <div class="panel-head"><h2>Bound source report</h2><a class="button button-secondary" href="/technical/documents/{{ document.id }}" target="_blank" rel="noopener">Open source viewer</a></div>
+  <div class="form-grid compact">
+    <div><strong>Document ID</strong><div class="mono">{{ document.document_id }}</div></div>
+    <div><strong>Status</strong><div><span class="badge badge-{{ document.status }}">{{ document.status }}</span></div></div>
+    <div><strong>Title</strong><div>{{ document.title }}</div></div>
+    <div><strong>Immutable SHA-256</strong><div class="mono">{{ stored_file.sha256 if stored_file else 'Missing file record' }}</div></div>
+  </div>
+</section>
+<section class="panel form-panel">
+  <form method="post" action="/technical/documents/{{ document.id }}/variants" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Variant ID<input name="variant_id" maxlength="300" required></label>
+    <label>System ID<input name="system_id" maxlength="300" required></label>
+    <label>Manufacturer<input name="manufacturer" maxlength="200" value="{{ document.manufacturer or '' }}"></label>
+    <label>Product family<input name="product_family" maxlength="300"></label>
+    <label>Service type<input name="service_type" maxlength="300"></label>
+    <label>Service material<input name="service_material" maxlength="300"></label>
+    <label>Minimum service size mm<input name="minimum_service_size_mm" type="number" min="0" step="0.0001"></label>
+    <label>Maximum service size mm<input name="maximum_service_size_mm" type="number" min="0" step="0.0001"></label>
+    <label>Permitted service quantity<input name="permitted_service_quantity" maxlength="100"></label>
+    <label>Insulation type<input name="insulation_type" maxlength="500"></label>
+    <label>Insulation thickness mm<input name="insulation_thickness_mm" type="number" min="0" step="0.0001"></label>
+    <label>Installation face<input name="installation_face" maxlength="500"></label>
+    <label class="span-2">Substrate and supporting construction<textarea name="substrate_type" rows="3" maxlength="500"></textarea></label>
+    <label>Minimum substrate thickness mm<input name="minimum_substrate_thickness_mm" type="number" min="0" step="0.0001"></label>
+    <label>Maximum substrate thickness mm<input name="maximum_substrate_thickness_mm" type="number" min="0" step="0.0001"></label>
+    <label>Orientation<input name="orientation" maxlength="500"></label>
+    <label>Opening type<input name="opening_type" maxlength="500"></label>
+    <label class="span-2">Opening dimensions and arrangement<textarea name="opening_dimensions" rows="2" maxlength="4000"></textarea></label>
+    <label>Annular gap min mm<input name="annular_gap_min_mm" type="number" min="0" step="0.0001"></label>
+    <label>Annular gap max mm<input name="annular_gap_max_mm" type="number" min="0" step="0.0001"></label>
+    <label>FRL / fire-resistance result<input name="frl" maxlength="100"></label>
+    <label>Jurisdiction<input name="jurisdiction" maxlength="200" value="{{ document.jurisdiction or '' }}"></label>
+    <label>Effective date<input name="effective_date" type="date"></label>
+    <label>Source page, sheet, or section<input name="source_page" maxlength="100" required></label>
+    <label>Source table or clause<input name="source_table" maxlength="300"></label>
+    <label>Source figure or drawing<input name="source_figure" maxlength="300"></label>
+    <label class="span-2">Service spacing rules<textarea name="service_spacing_rules" rows="3" maxlength="20000"></textarea></label>
+    <label class="span-2">Edge distance rules<textarea name="edge_distance_rules" rows="3" maxlength="20000"></textarea></label>
+    <label class="span-2">Support rules<textarea name="support_rules" rows="3" maxlength="20000"></textarea></label>
+    <label class="span-2">Fixing rules<textarea name="fixing_rules" rows="3" maxlength="20000"></textarea></label>
+    <label class="span-2">Component requirements JSON<textarea name="component_requirements_json" rows="8" maxlength="100000" placeholder="Optional JSON object or array. Leave blank when the report does not prove it."></textarea></label>
+    <label class="span-2">Labour requirements JSON<textarea name="labour_requirements_json" rows="6" maxlength="100000" placeholder="Optional JSON array of activities."></textarea></label>
+    <label class="span-2">Hard exclusions<textarea name="hard_exclusions" rows="3" maxlength="20000"></textarea></label>
+    <label class="span-2">Dependencies<textarea name="dependencies" rows="3" maxlength="20000"></textarea></label>
+    <label class="span-2">Authoring reason<input name="reason" maxlength="4000" value="Create source-bound Draft technical configuration" required></label>
+    <div class="span-2"><button class="button button-primary" type="submit">Create Draft Configuration</button></div>
+  </form>
+</section>
+{% endblock %}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from ..models import Estimate, RuleEvaluation
 from .calculation import recalculate_estimate
+from .release_pinning import validate_estimate_release_basis
 
 
 def _serial(value: Any) -> Any:
@@ -24,7 +25,9 @@ def _serial(value: Any) -> Any:
 
 
 def canonical_json(payload: dict[str, Any]) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), default=_serial, ensure_ascii=False)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), default=_serial, ensure_ascii=False
+    )
 
 
 def build_estimate_snapshot(db: Session, estimate: Estimate) -> dict[str, Any]:
@@ -34,7 +37,7 @@ def build_estimate_snapshot(db: Session, estimate: Estimate) -> dict[str, Any]:
     ).all()
     snapshot = {
         "schema": "QUANTIFIRE-ESTIMATE-SNAPSHOT-v1",
-        "generated_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_utc": datetime.now(UTC).isoformat(),
         "estimate": {
             "id": estimate.id,
             "reference": estimate.reference,
@@ -151,9 +154,12 @@ def build_estimate_snapshot(db: Session, estimate: Estimate) -> dict[str, Any]:
 
 
 def lock_snapshot(db: Session, estimate: Estimate) -> dict[str, Any]:
+    release_errors = validate_estimate_release_basis(db, estimate)
+    if release_errors:
+        raise ValueError("Release basis incomplete: " + "; ".join(release_errors))
     snapshot = build_estimate_snapshot(db, estimate)
     estimate.snapshot_json = snapshot
     estimate.snapshot_hash = snapshot["snapshot_hash"]
-    estimate.locked_at = datetime.now(timezone.utc)
+    estimate.locked_at = datetime.now(UTC)
     estimate.status = "locked"
     return snapshot

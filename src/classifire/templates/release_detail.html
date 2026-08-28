@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}{{ release.version }} — QUANTIFIRE{% endblock %}
 {% block heading %}Library release{% endblock %}
 {% block content %}
@@ -7,11 +7,50 @@
 <div><strong>Library</strong><div>{{ release.library_type }}</div></div>
 <div><strong>Effective</strong><div>{{ release.effective_date or '—' }}</div></div>
 <div><strong>Record count</strong><div>{{ manifest.get('record_count', records|length) }}</div></div>
-<div><strong>Activated Drafts</strong><div>{{ manifest.get('activated_draft_ids',[])|length }}</div></div>
+<div><strong>{% if release.library_type == 'technical' %}Activated approved candidates{% else %}Activated Drafts{% endif %}</strong><div>{% if release.library_type == 'technical' %}{{ manifest.get('activated_candidate_ids',[])|length }}{% else %}{{ manifest.get('activated_draft_ids',[])|length }}{% endif %}</div></div>
+{% if release.library_type == 'technical' %}
+<div><strong>Governance policy</strong><div class="mono">{{ manifest.get('governance_policy','pre-governance') }}</div></div>
+<div><strong>Previous release</strong><div class="mono">{% if manifest.get('previous_release') %}{{ manifest.get('previous_release').get('id') }} / {{ manifest.get('previous_release').get('policy') }}{% else %}None{% endif %}</div></div>
+<div><strong>Carried records</strong><div>{{ manifest.get('carried_record_ids',[])|length }}</div></div>
+<div><strong>Carried v2 records</strong><div>{{ manifest.get('carried_forward_v2_record_ids',[])|length }}</div></div>
+<div><strong>Superseded records</strong><div>{{ manifest.get('superseded_record_ids',[])|length }}</div></div>
+<div><strong>Retired records</strong><div>{{ manifest.get('retired_record_ids',[])|length }}</div></div>
+{% endif %}
 <div class="span-2"><strong>SHA-256 release hash</strong><div class="mono">{{ release.release_hash or '—' }}</div></div>
 <div class="span-2"><strong>Notes</strong><div>{{ release.notes or '—' }}</div></div>
 </div></section>
 <section class="panel"><h2>Manifest records</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Record ID</th><th>Details</th></tr></thead><tbody>
 {% for item in records[:500] %}<tr><td class="mono">{{ item.get('key','—') }}</td><td class="mono">{{ item.get('id','—') }}</td><td><code>{{ item }}</code></td></tr>{% else %}<tr><td colspan="3" class="empty">No manifest records.</td></tr>{% endfor %}
 </tbody></table></div>{% if records|length > 500 %}<p class="muted">Showing first 500 of {{ records|length }} manifest records.</p>{% endif %}</section>
+{% if release.library_type == 'technical' %}
+<section class="panel"><h2>Technical authority bindings</h2><div class="table-wrap"><table><thead><tr><th>Record</th><th>Binding policy</th><th>Source review receipt</th><th>Typed outgoing lineage</th></tr></thead><tbody>
+{% for item in records[:500] %}{% set source_binding = item.get('source_binding') or {} %}{% set source_review = source_binding.get('source_review') or {} %}{% set outgoing = source_binding.get('outgoing_relationships') or [] %}<tr><td class="mono">{{ item.get('id','-') }}</td><td class="mono">{{ item.get('record_binding_policy', manifest.get('governance_policy','pre-governance')) }}</td><td>{% if source_review %}<div class="mono">{{ source_review.get('approval_id', source_review.get('id','-')) }}</div><div>Reviewer: {{ source_review.get('decided_by_id', source_review.get('approved_by_id','-')) }}</div><div class="mono">Snapshot: {{ source_review.get('snapshot_hash','-') }}</div>{% else %}-{% endif %}</td><td><strong>{{ outgoing|length }}</strong>{% for relationship in outgoing %}<div><span class="mono">{{ relationship.get('relationship_type','-') }}</span> to <span class="mono">{{ relationship.get('related_document_id','-') }}</span></div>{% endfor %}</td></tr>{% else %}<tr><td colspan="4" class="empty">No technical authority bindings.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endif %}
+{% if release.library_type == 'technical' %}
+{% set retirement_bindings = manifest.get('retirement_bindings') or [] %}
+{% if retirement_bindings %}
+<section class='panel'>
+<h2>Governed retirement receipts</h2>
+<p class='muted'>These records were withdrawn by this exact hashed release. Their source records and predecessor release remain available for historical inspection, but retired records cannot provide runtime technical authority.</p>
+<div class='table-wrap'><table>
+<thead><tr><th>Retired record</th><th>Logical key</th><th>Request reason</th><th>Decision reason</th><th>Requester</th><th>Reviewer</th><th>Receipt</th></tr></thead>
+<tbody>
+{% for binding in retirement_bindings %}
+{% set context = binding.get('request_context') or {} %}
+{% set approval = binding.get('approval_binding') or {} %}
+<tr>
+<td class='mono'>{{ context.get('predecessor_record_id','-') }}</td>
+<td class='mono'>{{ context.get('logical_key','-') }}</td>
+<td>{{ context.get('request_reason','-') }}</td>
+<td>{{ binding.get('decision_reason','-') }}</td>
+<td class='mono'>{{ approval.get('requested_by_id','-') }}</td>
+<td class='mono'>{{ approval.get('decided_by_id','-') }}</td>
+<td class='mono'>{{ approval.get('id','-') }} / {{ approval.get('snapshot_hash','-') }}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+</section>
+{% endif %}
+{% endif %}
 {% endblock %}

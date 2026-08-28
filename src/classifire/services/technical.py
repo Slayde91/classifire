@@ -10,8 +10,12 @@ from pypdf import PdfReader
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from ..models import Opening, Service, TechnicalDocument, TechnicalVariant
-from .release_scope import pinned_technical_ids
+from ..models import Opening, TechnicalVariant
+from .release_scope import (
+    ReleaseScopeError,
+    active_release_record_ids,
+    pinned_technical_ids,
+)
 
 
 @dataclass(frozen=True)
@@ -48,16 +52,38 @@ def search_variants(
     include_draft: bool = False,
     release_record_ids: set[str] | None = None,
 ) -> list[Candidate]:
+    published_ids: set[str] | None = None
     if release_record_ids is not None:
         stmt = select(TechnicalVariant).where(TechnicalVariant.id.in_(release_record_ids))
-    else:
-        statuses = ["active"] if not include_draft else ["active", "draft", "in_review"]
+        published_ids = release_record_ids
+    elif include_draft:
+        statuses = ["active", "approved", "draft", "in_review"]
         stmt = select(TechnicalVariant).where(TechnicalVariant.status.in_(statuses))
+        try:
+            published_ids = active_release_record_ids(db, "technical")
+        except ReleaseScopeError:
+            published_ids = set()
+    else:
+        try:
+            published_ids = active_release_record_ids(db, "technical")
+        except ReleaseScopeError:
+            return []
+        stmt = select(TechnicalVariant).where(TechnicalVariant.id.in_(published_ids))
     # Broad SQL prefilter; final matching remains explicit and auditable.
     if service_type:
-        stmt = stmt.where(or_(TechnicalVariant.service_type.ilike(f"%{service_type}%"), TechnicalVariant.service_type.is_(None)))
+        stmt = stmt.where(
+            or_(
+                TechnicalVariant.service_type.ilike(f"%{service_type}%"),
+                TechnicalVariant.service_type.is_(None),
+            )
+        )
     if service_material:
-        stmt = stmt.where(or_(TechnicalVariant.service_material.ilike(f"%{service_material}%"), TechnicalVariant.service_material.is_(None)))
+        stmt = stmt.where(
+            or_(
+                TechnicalVariant.service_material.ilike(f"%{service_material}%"),
+                TechnicalVariant.service_material.is_(None),
+            )
+        )
     if frl:
         stmt = stmt.where(or_(TechnicalVariant.frl == frl, TechnicalVariant.frl.is_(None)))
     variants = db.scalars(stmt.limit(max(limit * 10, 100))).all()
@@ -77,6 +103,8 @@ def search_variants(
             blockers.append("expert_review_required")
         if variant.search_eligibility and "EXCLUDE" in variant.search_eligibility.upper():
             blockers.append("search_excluded")
+        if include_draft and published_ids is not None and variant.id not in published_ids:
+            blockers.append("not_in_published_release")
         matches = sum(value == "MATCH" for value in comparisons.values())
         unknowns = sum(value == "UNKNOWN" for value in comparisons.values())
         quality = Decimal(str(variant.quality_score or 0))
@@ -85,7 +113,9 @@ def search_variants(
             score -= Decimal("100")
         cap = Decimal(str(variant.confidence_cap or 75))
         score = min(score, cap)
-        candidates.append(Candidate(variant=variant, score=score, comparisons=comparisons, blockers=blockers))
+        candidates.append(
+            Candidate(variant=variant, score=score, comparisons=comparisons, blockers=blockers)
+        )
     candidates.sort(key=lambda item: item.score, reverse=True)
     return candidates[:limit]
 
@@ -160,7 +190,9 @@ def mixed_service_candidate_available(db: Session, opening: Opening) -> dict[str
     return {
         "available": bool(supported),
         "candidates": supported,
-        "reason": "approved_candidate_requires_exact_configuration_review" if supported else "no_active_candidate_found",
+        "reason": "approved_candidate_requires_exact_configuration_review"
+        if supported
+        else "no_active_candidate_found",
     }
 
 
@@ -174,7 +206,9 @@ def extract_pdf_candidate_metadata(path: Path) -> dict[str, Any]:
         text_parts.append(text)
         pages.append({"page": index + 1, "characters": len(text)})
     text = "\n".join(text_parts)
-    report_refs = sorted(set(re.findall(r"\b(?:FAS|EWFA|FCO|RIR|AS)[-\s]?[A-Z0-9./-]{3,}\b", text, re.I)))[:50]
+    report_refs = sorted(
+        set(re.findall(r"\b(?:FAS|EWFA|FCO|RIR|AS)[-\s]?[A-Z0-9./-]{3,}\b", text, re.I))
+    )[:50]
     frls = sorted(set(re.findall(r"-?\s*/\s*\d{2,3}\s*/\s*\d{2,3}", text)))[:30]
     dimensions = sorted(set(re.findall(r"\b\d{1,4}(?:\.\d+)?\s*mm\b", text, re.I)))[:100]
     return {

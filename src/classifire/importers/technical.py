@@ -7,10 +7,19 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..models import LibraryRelease, TechnicalVariant
+from ..services.technical_governance import PENDING_TECHNICAL_REVIEW
+
+TECHNICAL_IMPORT_POLICY = "technical-draft-intake-v1"
+PENDING_REVIEW_SEARCH_ELIGIBILITY = PENDING_TECHNICAL_REVIEW
+_SOURCE_ACTIVITY_FIELDS = (
+    "Variant_Status",
+    "Search_Index_Status",
+    "Search_Eligibility",
+)
 
 
 def _decimal(value: Any) -> Decimal | None:
@@ -42,8 +51,16 @@ def import_technical_variants(
     path: Path,
     *,
     version: str | None = None,
-    status: str = "active",
+    status: str = "draft",
 ) -> dict[str, Any]:
+    """Import source rows as Draft candidates without granting runtime authority."""
+    requested_status = status.strip().lower()
+    if requested_status != "draft":
+        raise ValueError(
+            "Technical imports can create Draft candidates only. "
+            "Technical approval and release publication are separate gates."
+        )
+
     release_version = version or "source-import"
     release_hash = _hash(path)
     release = db.scalar(
@@ -52,25 +69,63 @@ def import_technical_variants(
             LibraryRelease.version == release_version,
         )
     )
-    if not release:
-        release = LibraryRelease(
-            library_type="technical",
-            version=release_version,
-            status=status,
-            release_hash=release_hash,
-            source_manifest={"filename": path.name, "sha256": release_hash},
-            notes=(
-                "Imported from the supplied Package 15 executable variant index. Active runtime use remains subject "
-                "to source-document availability, exact applicability checks, and authorised technical approval."
-            ),
+    if release:
+        manifest = release.source_manifest or {}
+        if release.release_hash != release_hash or manifest.get("sha256") != release_hash:
+            raise ValueError(
+                f"TECHNICAL_IMPORT_VERSION_COLLISION: version {release_version!r} "
+                "already exists with different source bytes."
+            )
+        if release.status != "draft" or manifest.get("import_policy") != TECHNICAL_IMPORT_POLICY:
+            raise ValueError(
+                "LEGACY_TECHNICAL_IMPORT_REQUIRES_MIGRATION: the matching import "
+                "predates the Draft-only intake policy and was left unchanged."
+            )
+        existing_records = (
+            db.scalar(
+                select(func.count())
+                .select_from(TechnicalVariant)
+                .where(TechnicalVariant.release_id == release.id)
+            )
+            or 0
         )
-        db.add(release)
-        db.flush()
+        return {
+            "release_id": release.id,
+            "release_version": release.version,
+            "release_hash": release.release_hash,
+            "release_status": release.status,
+            "import_policy": TECHNICAL_IMPORT_POLICY,
+            "records_inserted": 0,
+            "records_skipped": existing_records,
+            "invalid_lines": 0,
+        }
+
+    release = LibraryRelease(
+        library_type="technical",
+        version=release_version,
+        status="draft",
+        release_hash=release_hash,
+        source_manifest={
+            "filename": path.name,
+            "sha256": release_hash,
+            "import_policy": TECHNICAL_IMPORT_POLICY,
+            "runtime_eligible": False,
+            "source_activity_fields_authoritative": False,
+        },
+        notes=(
+            "Imported as Draft technical candidates. Source-declared status and search eligibility "
+            "are retained as provenance only. Technical approval and release publication "
+            "remain required."
+        ),
+    )
+    db.add(release)
+    db.flush()
     inserted = 0
     skipped = 0
     invalid = 0
+    source_activity_rows = 0
     with path.open(encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, 1):
+        for line in handle:
             if not line.strip():
                 continue
             try:
@@ -78,17 +133,29 @@ def import_technical_variants(
             except json.JSONDecodeError:
                 invalid += 1
                 continue
+            if not isinstance(row, dict):
+                invalid += 1
+                continue
             variant_id = str(row.get("Variant_ID") or "").strip()
             system_id = str(row.get("System_ID") or "").strip()
             if not variant_id or not system_id:
                 invalid += 1
                 continue
-            if db.scalar(select(TechnicalVariant.id).where(TechnicalVariant.variant_id == variant_id)):
+            row_hash = hashlib.sha256(line.encode("utf-8")).hexdigest()
+            existing = db.scalar(
+                select(TechnicalVariant).where(TechnicalVariant.variant_id == variant_id)
+            )
+            if existing:
+                if existing.source_hash != row_hash or existing.source_json != row:
+                    db.rollback()
+                    raise ValueError(
+                        f"TECHNICAL_VARIANT_ID_COLLISION: variant {variant_id!r} "
+                        "already exists with different source content."
+                    )
                 skipped += 1
                 continue
-            variant_status = str(row.get("Variant_Status") or "DRAFT").lower()
-            search_status = str(row.get("Search_Index_Status") or "")
-            status_value = "active" if variant_status == "active" and search_status == "ACTIVE" else "draft"
+            if any(row.get(field) not in (None, "") for field in _SOURCE_ACTIVITY_FIELDS):
+                source_activity_rows += 1
             record = TechnicalVariant(
                 variant_id=variant_id,
                 system_id=system_id,
@@ -99,7 +166,8 @@ def import_technical_variants(
                 manufacturer=row.get("Manufacturer"),
                 product_family=row.get("Product_Family"),
                 service_type=row.get("Service_Type"),
-                service_material=row.get("Service_Material") or row.get("Canonical_Service_Material"),
+                service_material=row.get("Service_Material")
+                or row.get("Canonical_Service_Material"),
                 minimum_service_size_mm=_decimal(row.get("Minimum_Service_Size_mm")),
                 maximum_service_size_mm=_decimal(row.get("Maximum_Service_Size_mm")),
                 permitted_service_quantity=str(row.get("Permitted_Service_Quantity") or "") or None,
@@ -127,13 +195,12 @@ def import_technical_variants(
                 jurisdiction=row.get("Jurisdiction"),
                 quality_score=_decimal(row.get("Variant_Quality_Score")),
                 confidence_cap=_decimal(row.get("Matching_Confidence_Cap")),
-                search_eligibility=row.get("Search_Eligibility"),
-                expert_review_required=(str(row.get("Expert_Review_Trigger_YN") or "YES").upper() == "YES"),
-                status=status_value,
-                effective_date=_date(row.get("Effective_Date")),
-                expiry_date=_date(row.get("Evidence_Expiry_Date")),
-                source_hash=row.get("Variant_Content_Hash")
-                or hashlib.sha256(line.encode("utf-8")).hexdigest(),
+                search_eligibility=PENDING_REVIEW_SEARCH_ELIGIBILITY,
+                expert_review_required=True,
+                status="draft",
+                effective_date=None,
+                expiry_date=None,
+                source_hash=row_hash,
                 source_json=row,
                 release_id=release.id,
             )
@@ -141,11 +208,21 @@ def import_technical_variants(
             inserted += 1
             if inserted % 250 == 0:
                 db.flush()
+    release.source_manifest = {
+        **(release.source_manifest or {}),
+        "records_inserted": inserted,
+        "records_skipped": skipped,
+        "invalid_lines": invalid,
+        "source_activity_rows": source_activity_rows,
+        "source_activity_fields_retained_in_source_json": True,
+    }
     db.commit()
     return {
         "release_id": release.id,
         "release_version": release.version,
         "release_hash": release.release_hash,
+        "release_status": release.status,
+        "import_policy": TECHNICAL_IMPORT_POLICY,
         "records_inserted": inserted,
         "records_skipped": skipped,
         "invalid_lines": invalid,

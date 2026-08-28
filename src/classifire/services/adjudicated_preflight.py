@@ -126,6 +126,7 @@ def canonical_json_bytes(value: object) -> bytes:
 
 def controlled_boundary_implementation_hashes() -> dict[str, str]:
     repository_root = Path(__file__).resolve().parents[3]
+    migration_versions = Path(__file__).resolve().parents[1] / "migrations" / "versions"
     paths = {
         "preflight_script_sha256": repository_root
         / "scripts"
@@ -145,13 +146,9 @@ def controlled_boundary_implementation_hashes() -> dict[str, str]:
         "canonical_submission_state_module_sha256": Path(state_module.__file__ or ""),
         "deployment_lineage_module_sha256": Path(__file__).with_name("deployment_lineage.py"),
         "submission_payload_schema_module_sha256": Path(payload_schema_module.__file__ or ""),
-        "admission_journal_migration_sha256": repository_root
-        / "migrations"
-        / "versions"
+        "admission_journal_migration_sha256": migration_versions
         / "0005_adjudicated_admission_journal.py",
-        "submission_receipt_migration_sha256": repository_root
-        / "migrations"
-        / "versions"
+        "submission_receipt_migration_sha256": migration_versions
         / "0006_physical_submission_receipts.py",
     }
     if any(not path.is_file() for path in paths.values()):

@@ -30,11 +30,11 @@ ARTIFACT_GROUPS: dict[str, tuple[str, ...]] = {
         "scripts/preflight_adjudicated_canonicalisation.py",
     ),
     "migration_lineage": (
-        "migrations/versions/0003_physical_model_foundation.py",
-        "migrations/versions/0005_adjudicated_admission_journal.py",
-        "migrations/versions/0006_legacy_adjudicated_canonical_admissions.py",
-        "migrations/versions/0007_reconcile_adjudicated_admission_lineages.py",
-        "migrations/versions/0008_retire_legacy_initial_submissions.py",
+        "src/classifire/migrations/versions/0003_physical_model_foundation.py",
+        "src/classifire/migrations/versions/0005_adjudicated_admission_journal.py",
+        "src/classifire/migrations/versions/0006_legacy_adjudicated_canonical_admissions.py",
+        "src/classifire/migrations/versions/0007_reconcile_adjudicated_admission_lineages.py",
+        "src/classifire/migrations/versions/0008_retire_legacy_initial_submissions.py",
         "scripts/check_adjudicated_deployment_lineage.py",
     ),
     "plugin": (

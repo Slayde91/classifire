@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -10,19 +9,22 @@ from typing import Optional
 
 import typer
 import uvicorn
+from alembic import command as alembic_command
+from alembic.config import Config
 from rich.console import Console
 from rich.table import Table
 from sqlalchemy import func, select
+from sqlalchemy.engine import make_url
 
 from . import (
     __version__,
     physical_models,  # noqa: F401
 )
-from .config import get_settings
+from .config import Settings, get_settings
 from .db import Base, SessionLocal, engine
 from .importers import import_pricing_library, import_technical_variants, seed_database
 from .mission_control import MissionControlClient, bootstrap_mission_control
-from .models import PricingLibraryRecord, Product, TechnicalVariant, User
+from .models import PricingLibraryRecord, TechnicalVariant, User
 from .security import hash_password
 from .services.adjudicated_admission import AdmissionVerificationError, admission_identity
 from .services.adjudicated_admission_registration import (
@@ -33,9 +35,51 @@ from .services.adjudicated_key_policy import (
     AdjudicatedKeyPolicyError,
     resolve_adjudicated_public_key,
 )
+from .services.malware_scanning import (
+    MalwareScanError,
+    require_malware_scanner_readiness,
+)
+from .services.readiness import (
+    MIGRATION_SCRIPT_LOCATION,
+    ProductionReadinessError,
+    assess_runtime_readiness,
+    require_production_readiness,
+)
 
 app = typer.Typer(help="CLASSIFIRE administration, import, run and integration commands.", no_args_is_help=True)
 console = Console()
+
+
+def _database_backend_label(settings: Settings) -> str:
+    try:
+        return make_url(settings.database_url).drivername
+    except Exception:
+        return "configured database"
+
+
+def _create_local_schema(settings: Settings) -> None:
+    if settings.env != "production":
+        Base.metadata.create_all(bind=engine)
+
+
+def _require_cli_production_readiness(settings: Settings) -> None:
+    if settings.env != "production":
+        return
+    try:
+        require_production_readiness(settings, session_factory=SessionLocal)
+    except ProductionReadinessError as exc:
+        console.print("[red]Production readiness blocked:[/red] " + ", ".join(exc.codes))
+        raise typer.Exit(1) from None
+
+
+def _malware_scanner_doctor_check(settings: Settings) -> tuple[str, str, str] | None:
+    if settings.env != "production" or not settings.clamav_host or not settings.clamav_host.strip():
+        return None
+    try:
+        response = require_malware_scanner_readiness(settings)
+    except MalwareScanError as exc:
+        return ("Malware scanner", exc.code, "FAIL")
+    return ("Malware scanner", response, "PASS")
 
 
 def repo_root() -> Path:
@@ -56,16 +100,36 @@ def version() -> None:
 def init_database() -> None:
     """Create database tables and seed controlled defaults."""
     settings = get_settings()
+    if settings.env == "production":
+        console.print(
+            "[red]PRODUCTION_DATABASE_INIT_FORBIDDEN:[/red] "
+            "run Alembic migrations and explicit administration commands"
+        )
+        raise typer.Exit(1)
     findings = settings.validate_production()
     if findings:
         console.print("[yellow]Production configuration findings:[/yellow]")
-        for item in findings:
-            console.print(f"  - {item}")
-    Base.metadata.create_all(bind=engine)
+        for item in settings.production_configuration_findings():
+            console.print(f"  - {item.code}: {item.message}")
+    _create_local_schema(settings)
     with SessionLocal() as db:
         result = seed_database(db, settings)
     console.print("[green]Database initialised.[/green]")
     console.print_json(data=result)
+
+
+@app.command("migrate")
+def migrate_database() -> None:
+    """Upgrade the configured database to the exact migration head shipped in this build."""
+
+    config = Config()
+    config.set_main_option("script_location", MIGRATION_SCRIPT_LOCATION)
+    try:
+        alembic_command.upgrade(config, "head")
+    except Exception:
+        console.print("[red]DATABASE_MIGRATION_FAILED[/red]")
+        raise typer.Exit(1) from None
+    console.print("[green]Database migrated to the shipped head.[/green]")
 
 
 @app.command("create-admin")
@@ -75,7 +139,8 @@ def create_admin(
     password: str = typer.Option(..., prompt=True, hide_input=True, confirmation_prompt=True),
 ) -> None:
     """Create or reset an administrator account."""
-    Base.metadata.create_all(bind=engine)
+    settings = get_settings()
+    _create_local_schema(settings)
     with SessionLocal() as db:
         user = db.scalar(select(User).where(User.email == email.lower()))
         if user:
@@ -102,9 +167,11 @@ def import_pricing(
     version: str = typer.Option("2.13"),
 ) -> None:
     """Import Package 14 into the editable versioned pricing database."""
-    Base.metadata.create_all(bind=engine)
+    settings = get_settings()
+    _create_local_schema(settings)
     with SessionLocal() as db:
-        seed_database(db, get_settings())
+        if settings.env != "production":
+            seed_database(db, settings)
         result = import_pricing_library(db, path, version=version)
     console.print_json(data=result)
 
@@ -114,26 +181,30 @@ def import_technical(
     path: Path = typer.Argument(..., exists=True, readable=True),
     version: str = typer.Option("2.13"),
 ) -> None:
-    """Import Package 15 executable variants into the technical database."""
-    Base.metadata.create_all(bind=engine)
+    """Import Package 15 executable variants as review-required Draft candidates."""
+    settings = get_settings()
+    _create_local_schema(settings)
     with SessionLocal() as db:
-        seed_database(db, get_settings())
+        if settings.env != "production":
+            seed_database(db, settings)
         result = import_technical_variants(db, path, version=version)
     console.print_json(data=result)
 
 
 @app.command("import-supplied-v213")
 def import_supplied_v213(source_root: Optional[Path] = None) -> None:
-    """Import the supplied v2.13 pricing and technical libraries."""
+    """Import supplied v2.13 pricing and Draft technical candidates."""
     root = source_root or repo_root() / "knowledge" / "source" / "v2.13"
     pricing = root / "QUANTIFIRE_14_Pricing_Library_v2.13.csv"
     technical = root / "QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl"
     missing = [str(path) for path in (pricing, technical) if not path.exists()]
     if missing:
         raise typer.BadParameter(f"Missing supplied source file(s): {missing}")
-    Base.metadata.create_all(bind=engine)
+    settings = get_settings()
+    _create_local_schema(settings)
     with SessionLocal() as db:
-        seed_database(db, get_settings())
+        if settings.env != "production":
+            seed_database(db, settings)
         p = import_pricing_library(db, pricing, version="2.13")
         t = import_technical_variants(db, technical, version="2.13")
     console.print("[green]Supplied v2.13 libraries imported.[/green]")
@@ -148,6 +219,7 @@ def start(
 ) -> None:
     """Start the CLASSIFIRE application."""
     settings = get_settings()
+    _require_cli_production_readiness(settings)
     uvicorn.run(
         "classifire.main:app",
         host=host or settings.host,
@@ -160,6 +232,7 @@ def start(
 @app.command()
 def worker(interval: float = typer.Option(2.0)) -> None:
     """Run the background job worker."""
+    _require_cli_production_readiness(get_settings())
     from .worker import run_forever
 
     run_forever(interval)
@@ -179,20 +252,28 @@ def doctor() -> None:
     calc = root / "knowledge/source/raw-calculator/Penetration Calculator.xlsb"
     for label, path in [("Package 14", p14), ("Package 15 variants", p15), ("Raw calculator", calc)]:
         checks.append((label, str(path), "PASS" if path.exists() else "BLOCKED"))
+
+    readiness = assess_runtime_readiness(settings, session_factory=SessionLocal)
+    for check in readiness.checks:
+        checks.append(
+            (
+                f"Readiness: {check.component}",
+                check.code,
+                "PASS" if check.status == "READY" else "FAIL",
+            )
+        )
     try:
         with SessionLocal() as db:
             db.execute(select(1))
             users = db.scalar(select(func.count()).select_from(User)) or 0
             pricing = db.scalar(select(func.count()).select_from(PricingLibraryRecord)) or 0
             technical = db.scalar(select(func.count()).select_from(TechnicalVariant)) or 0
-        checks.append(("Database", settings.database_url, "PASS"))
+        checks.append(("Database inventory", _database_backend_label(settings), "PASS"))
         checks.append(("Users", str(users), "PASS" if users else "WARN"))
         checks.append(("Pricing rows", str(pricing), "PASS" if pricing else "WARN"))
         checks.append(("Technical variants", str(technical), "PASS" if technical else "WARN"))
-    except Exception as exc:
-        checks.append(("Database", str(exc), "FAIL"))
-    for finding in settings.validate_production():
-        checks.append(("Production config", finding, "WARN"))
+    except Exception:
+        checks.append(("Database inventory", "DATABASE_UNAVAILABLE", "FAIL"))
     table = Table("Check", "Detail", "Result")
     for item in checks:
         table.add_row(*item)

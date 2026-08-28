@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Technical intake Draft — CLASSIFIRE{% endblock %}
+{% block heading %}Technical intake Draft{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <a class="button button-secondary" href="/technical/documents/{{ document.id }}">Back to source document</a>
+  <a class="button button-secondary" href="/technical/documents/{{ document.id }}/download">Download original report</a>
+</div>
+<div class="callout"><strong>Authority-neutral workspace.</strong> This page saves only owner-bound Draft evidence. It cannot create or approve a TechnicalVariant, publish a registry release, or make technical data available to runtime search.</div>
+<section class="panel">
+  <div class="panel-head"><h2>{{ document.document_id }} — {{ document.title }}</h2><span class="badge badge-draft">Draft version {{ draft.record_version }}</span></div>
+  <div class="form-grid compact">
+    <div><strong>Source SHA-256</strong><div class="mono">{{ draft.source_sha256 }}</div></div>
+    <div><strong>Source size</strong><div>{{ draft.source_size_bytes }} bytes</div></div>
+    <div><strong>Draft owner</strong><div>{{ user.email }}</div></div>
+    <div><strong>Last saved</strong><div>{{ draft.updated_at }}</div></div>
+  </div>
+</section>
+<div class="grid-two">
+  <section class="panel">
+    <div class="panel-head"><h2>Verified source page</h2></div>
+    {% if preview_supported %}
+    <div
+      class="technical-preview"
+      data-technical-pdf-preview
+      data-preview-url-prefix="/technical/documents/{{ document.id }}/preview/{{ stored_file.sha256 }}/pages/"
+      data-source-sha256="{{ stored_file.sha256 }}"
+      data-source-size="{{ stored_file.size_bytes }}"
+      data-max-pages="{{ preview_max_pages }}"
+      aria-busy="true"
+    >
+      <div class="technical-preview-toolbar" role="group" aria-label="PDF page navigation and size">
+        <button class="button button-secondary" type="button" data-preview-previous aria-controls="technical-intake-preview-stage" disabled>Previous page</button>
+        <label class="technical-preview-page-label">Physical PDF page
+          <input type="number" min="1" max="{{ preview_max_pages }}" value="1" inputmode="numeric" data-preview-page disabled>
+        </label>
+        <button class="button button-secondary" type="button" data-preview-load aria-controls="technical-intake-preview-stage" disabled>Load page</button>
+        <button class="button button-secondary" type="button" data-preview-next aria-controls="technical-intake-preview-stage" disabled>Next page</button>
+        <button class="button button-secondary" type="button" data-preview-fit aria-controls="technical-intake-preview-stage" aria-pressed="true" disabled>Fit page</button>
+        <button class="button button-secondary" type="button" data-preview-actual aria-controls="technical-intake-preview-stage" aria-pressed="false" disabled>Actual size</button>
+        <strong data-preview-page-count>Page 1</strong>
+      </div>
+      <p class="muted" id="technical-intake-preview-status" data-preview-status role="status" aria-live="polite" aria-atomic="true">Preparing a source-bound raster preview...</p>
+      <div class="technical-preview-stage" id="technical-intake-preview-stage" role="region" aria-label="Technical report raster page" aria-describedby="technical-intake-preview-status" tabindex="0">
+        <img class="technical-preview-image-fit" data-preview-image alt="Raster preview of physical PDF page 1" hidden>
+      </div>
+      <noscript><p class="alert alert-error">JavaScript is required for controlled page preview. Use the original-report download and enter the physical page manually.</p></noscript>
+    </div>
+    <p class="muted small"><strong>Viewing aid only.</strong> A “Use verified page” action becomes available only after the returned PNG, receipt, source binding, and image digest have all been checked. You must still record a finer locator and decide whether visual verification is required.</p>
+    {% elif stored_file and not preview_runtime_enabled %}
+    <div class="callout"><strong>Controlled preview is disabled.</strong> Download the retained report and enter its physical PDF page and finer locator manually. Draft saving remains available.</div>
+    {% else %}
+    <div class="callout"><strong>Controlled preview is unavailable.</strong> Use the retained-report download and enter the physical PDF page and finer locator manually.</div>
+    {% endif %}
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Source-bound facts</h2><button class="button button-secondary" type="button" data-intake-add-field>Add field</button></div>
+    <p class="muted">Keep copied source wording unchanged in <strong>Raw source value</strong>. Normalisation, interpretation, and limitations remain visibly separate. Confirmed is deliberately unavailable in this Draft workspace.</p>
+    <form
+      method="post"
+      action="/technical/intake-drafts/{{ draft.id }}"
+      class="stack-form"
+      data-technical-intake-draft-form
+      data-technical-document-id="{{ draft.technical_document_id }}"
+      data-source-sha256="{{ draft.source_sha256 }}"
+      data-source-size="{{ draft.source_size_bytes }}"
+      data-preview-available="{{ 'true' if preview_supported else 'false' }}"
+    >
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="expected_record_version" value="{{ draft.record_version }}">
+      <input type="hidden" name="payload_json" data-intake-payload-json value="">
+      <div data-intake-field-host></div>
+      <p class="muted" data-intake-status role="status" aria-live="polite">Add a field, then bind it to one or more exact source locators.</p>
+      <label>Reason for this save
+        <textarea name="reason" maxlength="4000" rows="3" required placeholder="Describe what you added, corrected, or verified in this Draft"></textarea>
+      </label>
+      <div class="toolbar">
+        <button class="button button-primary" type="submit">Save Draft</button>
+        <span class="muted">Saving does not submit, approve, publish, or activate anything.</span>
+      </div>
+    </form>
+  </section>
+</div>
+
+<template data-intake-field-template>
+  <article class="panel" data-intake-field>
+    <div class="panel-head"><h3>Field <span data-intake-field-ordinal></span></h3><button class="button button-secondary" type="button" data-intake-remove-field>Remove field</button></div>
+    <input type="hidden" data-intake-field-row-id>
+    <div class="form-grid compact">
+      <label>Field
+        <select data-intake-field-key required>{% for value in field_keys %}<option value="{{ value }}">{{ value.replace('_', ' ')|title }}</option>{% endfor %}</select>
+      </label>
+      <label>Fact state
+        <select data-intake-fact-state required>{% for value in fact_states %}<option value="{{ value }}">{{ value }}</option>{% endfor %}</select>
+      </label>
+      <label class="span-2">Raw source value
+        <textarea data-intake-raw-value maxlength="20000" rows="3" placeholder="Copy the source wording exactly"></textarea>
+      </label>
+      <label class="span-2">Normalised value
+        <textarea data-intake-normalized-value maxlength="20000" rows="3" placeholder="Optional structured or standardised value"></textarea>
+      </label>
+      <label>Unit<input data-intake-unit maxlength="100" placeholder="mm, minutes, quantity"></label>
+      <label>Value semantics
+        <select data-intake-semantics required>{% for value in semantics %}<option value="{{ value }}">{{ value.replace('_', ' ')|title }}</option>{% endfor %}</select>
+      </label>
+      <label><span><input type="checkbox" data-intake-material> Material fact</span><span class="muted small">Mark facts that could affect technical suitability or scope.</span></label>
+      <label class="span-2">Limitation or unresolved reason
+        <textarea data-intake-limitation maxlength="4000" rows="3" placeholder="Required when the fact state is Unresolved"></textarea>
+      </label>
+    </div>
+    <div data-intake-locator-host></div>
+    <button class="button button-secondary" type="button" data-intake-add-locator>Add source locator</button>
+  </article>
+</template>
+
+<template data-intake-locator-template>
+  <section class="panel" data-intake-locator>
+    <div class="panel-head"><h4>Source locator</h4><button class="button button-secondary" type="button" data-intake-remove-locator>Remove locator</button></div>
+    <input type="hidden" data-intake-locator-row-id>
+    <input type="hidden" data-intake-link-row-id>
+    <div class="form-grid compact">
+      <label>Physical PDF page<input type="number" min="1" max="500" inputmode="numeric" data-intake-physical-page required></label>
+      <div><button class="button button-secondary" type="button" data-intake-use-verified-page disabled>Use verified page</button><div class="muted small" data-intake-verified-page-help>Enter the physical page manually until a preview page is verified.</div></div>
+      <label>Printed page<input data-intake-printed-page maxlength="500"></label>
+      <label>Section<input data-intake-section maxlength="500"></label>
+      <label>Clause<input data-intake-clause maxlength="500"></label>
+      <label>Table<input data-intake-table maxlength="500"></label>
+      <label>Row<input data-intake-row maxlength="500"></label>
+      <label>Column or cell<input data-intake-column maxlength="500"></label>
+      <label>Footnote<input data-intake-footnote maxlength="500"></label>
+      <label>Figure<input data-intake-figure maxlength="500"></label>
+      <label>Drawing<input data-intake-drawing maxlength="500"></label>
+      <label>Specimen<input data-intake-specimen maxlength="500"></label>
+      <label>Option<input data-intake-option maxlength="500"></label>
+      <label>Callout<input data-intake-callout maxlength="500"></label>
+      <label class="span-2">Bounded source excerpt
+        <textarea data-intake-excerpt maxlength="4000" rows="3" placeholder="Copy only the bounded wording needed to identify this claim"></textarea>
+      </label>
+      <label>Evidence role
+        <select data-intake-evidence-role required>{% for value in evidence_roles %}<option value="{{ value }}">{{ value.replace('_', ' ')|title }}</option>{% endfor %}</select>
+      </label>
+      <label>Visual verification
+        <select data-intake-visual-verification required>{% for value in visual_verification_states %}<option value="{{ value }}">{{ value.replace('_', ' ')|title }}</option>{% endfor %}</select>
+      </label>
+    </div>
+    <details>
+      <summary>Optional bounded page region</summary>
+      <p class="muted small">Use normalised page coordinates from 0 to 1. Supply all four values, with x0 less than x1 and y0 less than y1.</p>
+      <div class="form-grid compact">
+        <label>x0<input inputmode="decimal" data-intake-region-x0></label>
+        <label>y0<input inputmode="decimal" data-intake-region-y0></label>
+        <label>x1<input inputmode="decimal" data-intake-region-x1></label>
+        <label>y1<input inputmode="decimal" data-intake-region-y1></label>
+      </div>
+    </details>
+  </section>
+</template>
+<script type="application/json" data-intake-initial-payload>{{ draft.payload_json | tojson }}</script>
+<noscript><div class="alert alert-error">JavaScript is required to construct stable field, locator, and evidence-link rows. Your saved Draft remains unchanged.</div></noscript>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/technical-intake-draft.js" defer></script>
+{% if preview_supported %}<script src="/static/js/technical-preview.js" defer></script>{% endif %}
+{% endblock %}

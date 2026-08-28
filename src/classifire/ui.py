@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timezone
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
+from starlette.datastructures import FormData
+from starlette.datastructures import UploadFile as StarletteUploadFile
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.formparsers import MultiPartException
 
 from .audit import record_audit
 from .config import Settings, get_settings
@@ -55,13 +59,35 @@ from .services.release_pinning import (
 )
 from .services.rule_engine import evaluate_estimate_rules
 from .services.snapshot import lock_snapshot
-from .services.storage import save_upload
-from .services.technical import extract_pdf_candidate_metadata, search_for_opening
+from .services.technical_document_metadata import (
+    technical_current_standards_advisory,
+)
+from .services.technical_intake import (
+    TECHNICAL_DOCUMENT_TYPE_LABELS,
+    TECHNICAL_DOCUMENT_TYPE_OPTIONS,
+    TECHNICAL_LEGACY_DOCUMENT_TYPE_LABELS,
+    TechnicalIntakeError,
+    create_technical_document_draft,
+)
+from .services.technical_intake_batch import (
+    TechnicalIntakeBatchError,
+    claim_technical_intake_batch_item,
+)
+from .services.technical_intake_draft import (
+    TechnicalIntakeDraftError,
+    list_owned_technical_intake_drafts,
+)
+from .services.technical_upload_preflight import (
+    TechnicalUploadPreflightError,
+    preflight_technical_upload,
+    require_matching_technical_upload_identity,
+)
 from .services.workflow import WorkflowTransitionError
 from .services.workflow_guard import (
     PhysicalModelLockRequiredError,
     require_active_physical_model_lock,
 )
+from .upload_ingress import TECHNICAL_UPLOAD_MAX_TEXT_PART_BYTES
 
 router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
@@ -94,7 +120,7 @@ def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
 
 
 @router.get("/login", response_class=HTMLResponse)
-def login_page(request: Request, db: Db, error: str | None = None) -> HTMLResponse:
+def login_page(request: Request, db: Db, error: str | None = None) -> Response:
     if _user(request, db):
         return RedirectResponse("/", status_code=303)
     return templates.TemplateResponse(request, "login.html", _context(request, db, error=error))
@@ -290,8 +316,34 @@ def rule_create(
 
 @router.get("/technical", response_class=HTMLResponse)
 def technical_page(request: Request, db: Db, q: str | None = None) -> HTMLResponse:
-    _require(request, db, "technical:read")
+    user = _require(request, db, "technical:read")
     docs = db.scalars(select(TechnicalDocument).order_by(TechnicalDocument.updated_at.desc()).limit(100)).all()
+    standards_advisories = {
+        document.id: technical_current_standards_advisory(document.standards)
+        for document in docs
+    }
+    try:
+        own_intake_drafts = list_owned_technical_intake_drafts(
+            db,
+            actor=user,
+        )[:100]
+    except TechnicalIntakeDraftError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.code) from None
+    intake_document_ids = {
+        draft.technical_document_id for draft in own_intake_drafts
+    }
+    intake_draft_documents = (
+        {
+            document.id: document
+            for document in db.scalars(
+                select(TechnicalDocument).where(
+                    TechnicalDocument.id.in_(intake_document_ids)
+                )
+            ).all()
+        }
+        if intake_document_ids
+        else {}
+    )
     stmt = select(TechnicalVariant)
     if q:
         stmt = stmt.where(
@@ -300,53 +352,427 @@ def technical_page(request: Request, db: Db, q: str | None = None) -> HTMLRespon
             | TechnicalVariant.service_type.ilike(f"%{q}%")
         )
     variants = db.scalars(stmt.order_by(TechnicalVariant.variant_id).limit(200)).all()
-    return templates.TemplateResponse(request, "technical.html", _context(request, db, documents=docs, variants=variants, q=q or ""))
+    return templates.TemplateResponse(
+        request,
+        "technical.html",
+        _context(
+            request,
+            db,
+            documents=docs,
+            standards_advisories=standards_advisories,
+            technical_document_type_labels=TECHNICAL_DOCUMENT_TYPE_LABELS,
+            technical_document_type_options=TECHNICAL_DOCUMENT_TYPE_OPTIONS,
+            technical_legacy_document_type_labels=(
+                TECHNICAL_LEGACY_DOCUMENT_TYPE_LABELS
+            ),
+            own_intake_drafts=own_intake_drafts,
+            intake_draft_documents=intake_draft_documents,
+            variants=variants,
+            q=q or "",
+            jurisdiction=get_settings().jurisdiction,
+        ),
+    )
+
+
+_TECHNICAL_UPLOAD_FORM_FIELDS = frozenset(
+    {
+        "artifact_provenance_note",
+        "artifact_provenance_status",
+        "batch_id",
+        "declared_source_role",
+        "document_id",
+        "document_type",
+        "evidence_limitations",
+        "evidence_scope",
+        "expiry_date",
+        "file",
+        "issuing_organisation",
+        "item_id",
+        "jurisdiction",
+        "manufacturer",
+        "publication_date",
+        "reference",
+        "related_document_id",
+        "relationship_effective_date",
+        "relationship_reason",
+        "relationship_scope",
+        "relationship_type",
+        "review_date",
+        "revision",
+        "sponsor_organisation",
+        "standards",
+        "title",
+    }
+)
+
+
+def _technical_upload_form_failure(*, wants_json: bool) -> Response:
+    if wants_json:
+        return JSONResponse(
+            {
+                "ok": False,
+                "code": "TECHNICAL_UPLOAD_FORM_INVALID",
+                "retryable": False,
+                "fatal": True,
+            },
+            status_code=422,
+        )
+    raise HTTPException(status_code=422, detail="TECHNICAL_UPLOAD_FORM_INVALID")
+
+
+def _technical_upload_preflight_failure(
+    error: TechnicalUploadPreflightError,
+    *,
+    wants_json: bool,
+) -> Response:
+    if wants_json:
+        return JSONResponse(
+            {
+                "ok": False,
+                "code": error.code,
+                "retryable": error.retryable,
+                "fatal": error.fatal,
+            },
+            status_code=error.status_code,
+        )
+    raise HTTPException(status_code=error.status_code, detail=error.code)
+
+
+def _technical_upload_text(
+    form: FormData,
+    name: str,
+    *,
+    required: bool = False,
+) -> str | None:
+    values = form.getlist(name)
+    if not values:
+        if required:
+            raise ValueError("Missing required technical upload field")
+        return None
+    if len(values) != 1 or not isinstance(values[0], str):
+        raise ValueError("Invalid technical upload field")
+    if required and not values[0].strip():
+        raise ValueError("Empty required technical upload field")
+    return values[0]
 
 
 @router.post("/technical/upload")
-def technical_upload(
+async def technical_upload(
     request: Request,
     db: Db,
     settings: Annotated[Settings, Depends(get_settings)],
-    csrf_token: Annotated[str, Form()],
-    file: UploadFile,
-    document_id: Annotated[str, Form()],
-    document_type: Annotated[str, Form()],
-    title: Annotated[str, Form()],
-    manufacturer: Annotated[str | None, Form()] = None,
-    reference: Annotated[str | None, Form()] = None,
-    revision: Annotated[str | None, Form()] = None,
-) -> RedirectResponse:
-    verify_csrf(request, csrf_token)
-    user = _require(request, db, "technical:write")
+) -> Response:
+    wants_json = "application/json" in request.headers.get("accept", "").lower()
     try:
-        stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
-    except ValueError as exc:
-        return RedirectResponse(f"/technical?error={str(exc).replace(' ', '+')}", status_code=303)
-    metadata: dict[str, Any] = {"human_review_required": True, "automatic_activation_permitted": False}
-    if Path(stored.storage_path).suffix.lower() == ".pdf":
-        try:
-            metadata.update(extract_pdf_candidate_metadata(Path(stored.storage_path)))
-        except Exception as exc:
-            metadata["extraction_error"] = str(exc)
-    document = TechnicalDocument(
-        document_id=document_id,
-        stored_file_id=stored.id,
-        document_type=document_type,
-        manufacturer=manufacturer,
-        title=title,
-        reference=reference,
-        revision=revision,
-        jurisdiction=settings.jurisdiction,
-        status="draft",
-        extraction_status=metadata.get("extraction_status", "not_started"),
-        metadata_json=metadata,
+        user = _require(request, db, "technical:write")
+    except HTTPException as exc:
+        if wants_json and exc.status_code in {401, 403}:
+            code = (
+                "AUTHENTICATION_REQUIRED"
+                if exc.status_code == 401
+                else "PERMISSION_DENIED"
+            )
+            return JSONResponse(
+                {
+                    "ok": False,
+                    "code": code,
+                    "retryable": False,
+                    "fatal": True,
+                },
+                status_code=exc.status_code,
+            )
+        raise
+
+    csrf_values = request.headers.getlist("x-csrf-token")
+    try:
+        verify_csrf(request, csrf_values[0] if len(csrf_values) == 1 else None)
+    except HTTPException:
+        if wants_json:
+            return JSONResponse(
+                {
+                    "ok": False,
+                    "code": "CSRF_INVALID",
+                    "retryable": False,
+                    "fatal": True,
+                },
+                status_code=403,
+            )
+        raise
+
+    content_types = request.headers.getlist("content-type")
+    if (
+        len(content_types) != 1
+        or content_types[0].split(";", 1)[0].strip().lower() != "multipart/form-data"
+    ):
+        return _technical_upload_form_failure(wants_json=wants_json)
+    try:
+        preflight = preflight_technical_upload(
+            request,
+            db,
+            settings,
+            actor=user,
+        )
+    except TechnicalUploadPreflightError as exc:
+        return _technical_upload_preflight_failure(exc, wants_json=wants_json)
+    form: FormData | None = None
+    try:
+        form = await request.form(
+            max_files=1,
+            max_fields=25,
+            max_part_size=TECHNICAL_UPLOAD_MAX_TEXT_PART_BYTES,
+        )
+        if any(name not in _TECHNICAL_UPLOAD_FORM_FIELDS for name, _value in form.multi_items()):
+            raise ValueError("Unexpected technical upload field")
+        files = form.getlist("file")
+        if len(files) != 1 or not isinstance(files[0], StarletteUploadFile):
+            raise ValueError("Exactly one technical upload file is required")
+        file = cast(UploadFile, files[0])
+        document_id = cast(
+            str,
+            _technical_upload_text(form, "document_id", required=True),
+        )
+        document_type = cast(
+            str,
+            _technical_upload_text(form, "document_type", required=True),
+        )
+        declared_source_role = cast(
+            str,
+            _technical_upload_text(form, "declared_source_role", required=True),
+        )
+        artifact_provenance_status = cast(
+            str,
+            _technical_upload_text(
+                form,
+                "artifact_provenance_status",
+                required=True,
+            ),
+        )
+        evidence_scope = cast(
+            str,
+            _technical_upload_text(form, "evidence_scope", required=True),
+        )
+        title = cast(str, _technical_upload_text(form, "title", required=True))
+        manufacturer = _technical_upload_text(form, "manufacturer")
+        reference = _technical_upload_text(form, "reference")
+        revision = _technical_upload_text(form, "revision")
+        sponsor_organisation = _technical_upload_text(form, "sponsor_organisation")
+        issuing_organisation = _technical_upload_text(form, "issuing_organisation")
+        publication_date = _technical_upload_text(form, "publication_date")
+        review_date = _technical_upload_text(form, "review_date")
+        expiry_date = _technical_upload_text(form, "expiry_date")
+        jurisdiction = _technical_upload_text(form, "jurisdiction")
+        standards = _technical_upload_text(form, "standards")
+        artifact_provenance_note = _technical_upload_text(
+            form,
+            "artifact_provenance_note",
+        )
+        evidence_limitations = _technical_upload_text(form, "evidence_limitations")
+        relationship_type = _technical_upload_text(form, "relationship_type")
+        related_document_id = _technical_upload_text(form, "related_document_id")
+        relationship_reason = _technical_upload_text(form, "relationship_reason")
+        relationship_scope = _technical_upload_text(form, "relationship_scope")
+        relationship_effective_date = _technical_upload_text(
+            form,
+            "relationship_effective_date",
+        )
+        batch_id = _technical_upload_text(form, "batch_id")
+        item_id = _technical_upload_text(form, "item_id")
+    except (MultiPartException, StarletteHTTPException, RuntimeError, ValueError):
+        if form is not None:
+            await form.close()
+        return _technical_upload_form_failure(wants_json=wants_json)
+
+    try:
+        batch_claim = None
+        if (batch_id is None) != (item_id is None):
+            raise TechnicalIntakeBatchError(
+                "INTAKE_BATCH_ID_INVALID"
+                if batch_id is None
+                else "INTAKE_BATCH_ITEM_ID_INVALID"
+            )
+        require_matching_technical_upload_identity(
+            preflight,
+            batch_id=batch_id,
+            item_id=item_id,
+        )
+        if item_id is not None:
+            batch_claim = claim_technical_intake_batch_item(
+                db,
+                actor=user,
+                batch_id=batch_id,
+                item_id=item_id,
+                filename=file.filename or "unnamed",
+                registration_snapshot={
+                    "artifact_provenance_note": artifact_provenance_note,
+                    "artifact_provenance_status": (
+                        artifact_provenance_status
+                    ),
+                    "declared_source_role": declared_source_role,
+                    "document_id": document_id,
+                    "document_type": document_type,
+                    "evidence_limitations": evidence_limitations,
+                    "evidence_scope": evidence_scope,
+                    "expiry_date": expiry_date,
+                    "issuing_organisation": issuing_organisation,
+                    "jurisdiction": jurisdiction,
+                    "manufacturer": manufacturer,
+                    "publication_date": publication_date,
+                    "reference": reference,
+                    "related_document_id": related_document_id,
+                    "relationship_effective_date": (
+                        relationship_effective_date
+                    ),
+                    "relationship_reason": relationship_reason,
+                    "relationship_scope": relationship_scope,
+                    "relationship_type": relationship_type,
+                    "review_date": review_date,
+                    "revision": revision,
+                    "sponsor_organisation": sponsor_organisation,
+                    "standards": standards,
+                    "title": title,
+                },
+            )
+        result = create_technical_document_draft(
+            db,
+            settings,
+            actor=user,
+            upload=file,
+            document_id=document_id,
+            document_type=document_type,
+            declared_source_role=declared_source_role,
+            artifact_provenance_status=artifact_provenance_status,
+            evidence_scope=evidence_scope,
+            title=title,
+            manufacturer=manufacturer,
+            reference=reference,
+            revision=revision,
+            sponsor_organisation=sponsor_organisation,
+            issuing_organisation=issuing_organisation,
+            publication_date=publication_date,
+            review_date=review_date,
+            expiry_date=expiry_date,
+            jurisdiction=jurisdiction,
+            standards=standards,
+            artifact_provenance_note=artifact_provenance_note,
+            evidence_limitations=evidence_limitations,
+            relationship_type=relationship_type,
+            related_document_id=related_document_id,
+            relationship_reason=relationship_reason,
+            relationship_scope=relationship_scope,
+            relationship_effective_date=relationship_effective_date,
+            correlation_id=batch_id,
+            source_ip=request.client.host if request.client else None,
+            batch_claim=batch_claim,
+        )
+    except TechnicalIntakeError as exc:
+        if wants_json:
+            return JSONResponse(
+                {
+                    "ok": False,
+                    "code": exc.code,
+                    "retryable": exc.retryable,
+                    "fatal": exc.fatal,
+                },
+                status_code=exc.status_code,
+            )
+        return RedirectResponse(f"/technical?error={exc.code}", status_code=303)
+    except TechnicalIntakeBatchError as exc:
+        if wants_json:
+            return JSONResponse(
+                {
+                    "ok": False,
+                    "code": exc.code,
+                    "retryable": exc.retryable,
+                    "fatal": exc.fatal,
+                },
+                status_code=exc.status_code,
+            )
+        return RedirectResponse(f"/technical?error={exc.code}", status_code=303)
+    except TechnicalUploadPreflightError as exc:
+        return _technical_upload_preflight_failure(exc, wants_json=wants_json)
+    finally:
+        if form is not None:
+            await form.close()
+    if wants_json:
+        receipt = result.receipt if isinstance(result.receipt, dict) else None
+        if result.batch_item_id is not None and receipt is None:
+            raise HTTPException(
+                status_code=500,
+                detail="TECHNICAL_UPLOAD_RECEIPT_INVALID",
+            )
+        relationship = None
+        if receipt is not None:
+            relationship = receipt.get("relationship")
+        elif result.relationship is not None:
+            related = db.get(
+                TechnicalDocument,
+                result.relationship.related_document_id,
+            )
+            if related is None:
+                raise HTTPException(
+                    status_code=500,
+                    detail="TECHNICAL_UPLOAD_RECEIPT_INVALID",
+                )
+            relationship = {
+                "relationship_type": result.relationship.relationship_type,
+                "related_document_id": related.document_id,
+            }
+        payload: dict[str, Any] = {
+            "ok": True,
+            "id": result.document.id,
+            "document_id": result.document.document_id,
+            "document_type": result.document.document_type,
+            "declared_source_role": result.document.declared_source_role,
+            "artifact_provenance_status": (
+                result.document.artifact_provenance_status
+            ),
+            "evidence_scope": result.document.evidence_scope,
+            "status": result.document.status,
+            "file_sha256": result.stored_file.sha256,
+            "malware_scan_status": result.stored_file.malware_scan_status,
+            "extraction_status": result.document.extraction_status,
+            "batch_id": result.correlation_id,
+            "item_id": result.batch_item_id,
+            "idempotent_replay": result.idempotent_replay,
+            "receipt_sha256": result.receipt_sha256,
+            "status_url": receipt.get("status_url") if receipt else None,
+            "relationship": relationship,
+            "exact_content_duplicate_document_ids": list(
+                result.exact_content_duplicate_document_ids
+            ),
+        }
+        if receipt is not None:
+            payload.update(
+                {
+                    "id": receipt["id"],
+                    "document_id": receipt["document_id"],
+                    "document_type": receipt["document_type"],
+                    "declared_source_role": receipt["declared_source_role"],
+                    "artifact_provenance_status": (
+                        receipt["artifact_provenance_status"]
+                    ),
+                    "evidence_scope": receipt["evidence_scope"],
+                    "status": receipt["status"],
+                    "file_sha256": receipt["file_sha256"],
+                    "malware_scan_status": receipt["malware_scan_status"],
+                    "extraction_status": receipt["extraction_status"],
+                    "batch_id": receipt["batch_id"],
+                    "item_id": receipt["item_id"],
+                    "status_url": receipt["status_url"],
+                    "relationship": receipt["relationship"],
+                    "exact_content_duplicate_document_ids": list(
+                        receipt["exact_content_duplicate_document_ids"]
+                    ),
+                }
+            )
+        return JSONResponse(
+            payload,
+            status_code=200 if result.idempotent_replay else 201,
+        )
+    return RedirectResponse(
+        "/technical?success=Technical+evidence+uploaded+as+Draft",
+        status_code=303,
     )
-    db.add(document)
-    db.flush()
-    record_audit(db, actor=user, action="upload", entity_type="technical_document", entity_id=document.id, new_value={"document_id": document_id, "sha256": stored.sha256, "status": "draft"}, reason="Immutable evidence uploaded; extraction remains Draft")
-    db.commit()
-    return RedirectResponse("/technical", status_code=303)
 
 
 @router.get("/projects", response_class=HTMLResponse)

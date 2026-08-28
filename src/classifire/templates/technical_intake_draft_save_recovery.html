@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Draft save rejected — CLASSIFIRE{% endblock %}
+{% block heading %}Draft save rejected{% endblock %}
+{% block content %}
+<div class="alert alert-error" role="alert">
+  <strong>{{ error_message }}</strong>
+  <div class="mono small">{{ error_code }}</div>
+</div>
+<section class="panel">
+  <div class="panel-head"><h2>Recover your unsaved work</h2></div>
+  {% if rejected_payload is not none %}
+  <p>The text below is the exact payload rejected by this request. It is not a saved Draft and carries no approval, release, or runtime authority.</p>
+  <label>Rejected Draft payload
+    <textarea class="mono" rows="20" readonly spellcheck="false">{{ rejected_payload }}</textarea>
+  </label>
+  {% else %}
+  <p>{{ payload_omitted_message }}</p>
+  {% endif %}
+</section>
+<div class="toolbar">
+  <a class="button button-primary" href="/technical/intake-drafts/{{ draft_id }}">Reopen current saved Draft</a>
+  <span class="muted">Reopening loads the persisted version. Nothing from this rejected request was saved.</span>
+</div>
+{% endblock %}

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -28,20 +29,33 @@ from .importers.seed import seed_database
 from .library_ui import router as library_ui_router
 from .models import User
 from .release_admin import router as release_admin_router
+from .services.readiness import assess_cached_runtime_readiness, require_production_readiness
 from .technical_admin import router as technical_admin_router
+from .technical_retirement_admin import router as technical_retirement_admin_router
 from .ui import router as ui_router
+from .upload_ingress import (
+    TechnicalUploadBodyLimitMiddleware,
+    technical_upload_middleware_maximum_body_bytes,
+)
 
 settings = get_settings()
 package_dir = Path(__file__).parent
+_PREVIEW_DATA_PATH = re.compile(
+    r"^/technical/documents/[^/]+/preview/[^/]+/pages/[^/]+$"
+)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Development/local installer convenience. Production deployment must run Alembic first.
-    Base.metadata.create_all(bind=engine)
-    with SessionLocal() as db:
-        if not db.scalar(select(User.id).limit(1)):
-            seed_database(db, settings)
+    if settings.env == "production":
+        require_production_readiness(settings, session_factory=SessionLocal)
+    else:
+        # Development/local installer convenience only. Production schema and
+        # users are operator-controlled and must already exist before startup.
+        Base.metadata.create_all(bind=engine)
+        with SessionLocal() as db:
+            if not db.scalar(select(User.id).limit(1)):
+                seed_database(db, settings)
     yield
 
 
@@ -62,7 +76,16 @@ app.add_middleware(
     https_only=settings.session_https_only,
     max_age=60 * 60 * 12,
 )
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts or ["*"])
+app.add_middleware(
+    TechnicalUploadBodyLimitMiddleware,
+    maximum_body_bytes=technical_upload_middleware_maximum_body_bytes(
+        settings.upload_ingress_ceiling_bytes,
+    ),
+)
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=settings.trusted_hosts or ["127.0.0.1", "localhost"],
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
@@ -74,6 +97,8 @@ app.add_middleware(
         "If-Match",
         "X-CSRF-Token",
         "X-Classifire-Agent-ID",
+        "X-Classifire-Intake-Batch-ID",
+        "X-Classifire-Intake-Item-ID",
     ],
 )
 app.mount("/static", StaticFiles(directory=str(package_dir / "static")), name="static")
@@ -85,11 +110,13 @@ async def security_headers(request: Request, call_next):  # type: ignore[no-unty
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    response.headers["Content-Security-Policy"] = (
+    response.headers.setdefault(
+        "Content-Security-Policy",
         "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; "
-        "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "object-src 'none'; frame-src 'none'; frame-ancestors 'none'; "
+        "base-uri 'self'; form-action 'self'",
     )
     if settings.session_https_only:
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
@@ -98,14 +125,41 @@ async def security_headers(request: Request, call_next):  # type: ignore[no-unty
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    if exc.status_code == 401 and not request.url.path.startswith("/api/"):
+    is_preview_data_request = _PREVIEW_DATA_PATH.fullmatch(request.url.path) is not None
+    if (
+        exc.status_code == 401
+        and not request.url.path.startswith("/api/")
+        and not is_preview_data_request
+    ):
         return RedirectResponse(url=f"/login?next={request.url.path}", status_code=303)
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    headers = dict(exc.headers or {})
+    if request.url.path.startswith("/api/v1/technical/upload-batches"):
+        headers.setdefault("Cache-Control", "private, no-store")
+        headers.setdefault("Pragma", "no-cache")
+    if is_preview_data_request:
+        headers.setdefault("Accept-Ranges", "none")
+        headers.setdefault("Cache-Control", "private, no-store")
+        headers.setdefault("Pragma", "no-cache")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=headers,
+    )
 
 
 @app.get("/healthz", include_in_schema=False)
 def healthz() -> dict[str, str]:
     return {"status": "ok", "product": "QUANTIFIRE", "version": __version__}
+
+
+@app.get("/readyz", include_in_schema=False)
+def readyz() -> JSONResponse:
+    report = assess_cached_runtime_readiness(settings, session_factory=SessionLocal)
+    return JSONResponse(
+        status_code=200 if report.ready else 503,
+        content=report.as_public_dict(),
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 app.include_router(api_router)
@@ -117,4 +171,5 @@ app.include_router(ui_router)
 app.include_router(estimate_pinning_router)
 app.include_router(release_admin_router)
 app.include_router(technical_admin_router)
+app.include_router(technical_retirement_admin_router)
 app.include_router(library_ui_router)
