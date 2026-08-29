@@ -34,9 +34,11 @@ from classifire.services.phase8_representative_run import (
 )
 from classifire.services.phase8_visual_proposal import (
     VISUAL_PROPOSAL_BLOCKED,
+    VISUAL_PROPOSAL_POLICY_VERSION,
     canonical_json_sha256,
+    receipt_bound_visual_evidence_refs,
     validate_phase8_visual_proposal_receipt,
-    validate_visual_physical_proposal,
+    validate_policy_bound_visual_physical_proposal,
 )
 from classifire.visual_validation import validate_visual_validator_payload
 
@@ -405,6 +407,7 @@ def recover_phase8_evidence_review(
     representative_receipt_path: Path,
     controller_path: Path,
     proposal_path: Path,
+    evidence_manifest_path: Path | None = None,
     openclaw_root: Path,
     repository_root: Path,
     recovery_script_path: Path | None = None,
@@ -478,6 +481,43 @@ def recover_phase8_evidence_review(
     controller_errors = validate_phase8_visual_proposal_receipt(controller)
     if controller_errors or controller.get("status") != VISUAL_PROPOSAL_BLOCKED:
         raise Phase8EvidenceReviewRecoveryError("CONTROLLER_RECEIPT_INVALID")
+    selected_manifest_path = evidence_manifest_path
+    if (
+        selected_manifest_path is None
+        and controller.get("policy_version") == VISUAL_PROPOSAL_POLICY_VERSION
+    ):
+        selected_manifest_path = controller_path.with_name("evidence-manifest.json")
+    allowed_evidence_refs: frozenset[str] | None = None
+    if selected_manifest_path is not None:
+        _, evidence_manifest, evidence_manifest_raw = _read_json_object(
+            selected_manifest_path,
+            code="EVIDENCE_MANIFEST_INVALID",
+        )
+        _artifact_binding(
+            value=evidence_manifest,
+            raw=evidence_manifest_raw,
+            recorded_sha256=artifacts.get("evidence_manifest_file_sha256"),
+            code="EVIDENCE_MANIFEST_ARTIFACT_HASH_MISMATCH",
+        )
+        recorded_manifest_canonical = artifacts.get(
+            "evidence_manifest_canonical_sha256"
+        )
+        actual_manifest_canonical = canonical_json_sha256(evidence_manifest)
+        if (
+            controller.get("policy_version") == VISUAL_PROPOSAL_POLICY_VERSION
+            or recorded_manifest_canonical is not None
+        ) and actual_manifest_canonical != _nonblank(
+            recorded_manifest_canonical
+        ).upper():
+            raise Phase8EvidenceReviewRecoveryError(
+                "EVIDENCE_MANIFEST_CANONICAL_HASH_MISMATCH"
+            )
+        allowed_evidence_refs, manifest_errors = receipt_bound_visual_evidence_refs(
+            receipt=controller,
+            evidence_manifest=evidence_manifest,
+        )
+        if manifest_errors:
+            raise Phase8EvidenceReviewRecoveryError("EVIDENCE_MANIFEST_INVALID")
     raw_stages = controller.get("stages")
     if not isinstance(raw_stages, list) or any(not isinstance(stage, dict) for stage in raw_stages):
         raise Phase8EvidenceReviewRecoveryError("CONTROLLER_RECEIPT_INVALID")
@@ -534,11 +574,17 @@ def recover_phase8_evidence_review(
         raise Phase8EvidenceReviewRecoveryError("RESULT_HASH_MISMATCH")
     if (
         validate_blind_visual_inventory_payload(blind)
-        or validate_visual_physical_proposal(
+        or validate_policy_bound_visual_physical_proposal(
             proposal,
             defect_reference=_nonblank(controller.get("defect_reference")),
+            policy_version=_nonblank(controller.get("policy_version")),
+            allowed_evidence_refs=allowed_evidence_refs,
         )
-        or validate_visual_validator_payload(validator, proposal)
+        or validate_visual_validator_payload(
+            validator,
+            proposal,
+            allowed_evidence_refs=allowed_evidence_refs,
+        )
         or validate_blind_reconciliation_payload(blind, proposal, validator)
         or _nonblank(validator.get("verdict")).upper() != "BLOCKED"
     ):
@@ -649,6 +695,7 @@ def main() -> int:
     parser.add_argument("--representative-receipt", required=True, type=Path)
     parser.add_argument("--controller", required=True, type=Path)
     parser.add_argument("--proposal", required=True, type=Path)
+    parser.add_argument("--evidence-manifest", type=Path)
     parser.add_argument("--openclaw-root", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument(
@@ -666,6 +713,7 @@ def main() -> int:
             representative_receipt_path=args.representative_receipt,
             controller_path=args.controller,
             proposal_path=args.proposal,
+            evidence_manifest_path=args.evidence_manifest,
             openclaw_root=args.openclaw_root,
             repository_root=args.repository_root,
         )

@@ -16,6 +16,7 @@ def main() -> int:
     parser.add_argument("--proposal", type=Path, required=True)
     parser.add_argument("--controller-receipt", type=Path, required=True)
     parser.add_argument("--reference", type=Path, required=True)
+    parser.add_argument("--evidence-manifest", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
@@ -23,6 +24,7 @@ def main() -> int:
         proposal_path=args.proposal,
         controller_receipt_path=args.controller_receipt,
         reference_path=args.reference,
+        evidence_manifest_path=args.evidence_manifest,
     )
     rendered = json.dumps(result, indent=2, ensure_ascii=False) + "\n"
     if args.output is not None:

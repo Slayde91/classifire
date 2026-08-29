@@ -13,6 +13,7 @@ import ipaddress
 import json
 import time
 from collections.abc import Callable, Mapping
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import urlsplit, urlunsplit
@@ -22,6 +23,7 @@ import httpx
 from .phase8_visual_evidence import RetainedVisualEvidencePacket
 from .phase8_visual_prompts import (
     Phase8VisualPromptRenderer,
+    current_visual_prompt_profile_hashes,
     prompt_profile_field,
 )
 from .phase8_visual_proposal import (
@@ -398,18 +400,35 @@ class Phase8OpenResponsesTransport:
         stage: str,
         request: dict[str, Any],
     ) -> dict[str, Any]:
-        profile = self._validate_request(role=role, stage=stage, request=request)
-        rendered = self._renderer.render(role=role, stage=stage, request=request)
+        trusted_request = deepcopy(request)
+        profile = self._validate_request(
+            role=role,
+            stage=stage,
+            request=trusted_request,
+        )
+        trusted_rendered = Phase8VisualPromptRenderer().render(
+            role=role,
+            stage=stage,
+            request=trusted_request,
+        )
+        rendered = self._renderer.render(
+            role=role,
+            stage=stage,
+            request=deepcopy(trusted_request),
+        )
+        if rendered != trusted_rendered:
+            raise Phase8OpenResponsesTransportError("PROMPT_RENDERING_MISMATCH")
+        rendered = trusted_rendered
         profile_field = prompt_profile_field(stage)
         if rendered.template_sha256.upper() != str(profile[profile_field]).upper():
             raise Phase8OpenResponsesTransportError("PROMPT_PROFILE_MISMATCH")
 
-        content, byte_receipts = self._image_content(request)
+        content, byte_receipts = self._image_content(trusted_request)
         runtime_agent_id = self._runtime_agent_ids[role]
         session_key = self._session_key(
             agent_id=runtime_agent_id,
             stage=stage,
-            request=request,
+            request=trusted_request,
         )
         session_id_sha256 = _sha256_text(session_key)
         expected_model = (
@@ -512,7 +531,7 @@ class Phase8OpenResponsesTransport:
         receipt_sha256 = canonical_json_sha256(
             {
                 "schema": "CLASSIFIRE-PHASE8-OPENRESPONSES-TRANSPORT-v1",
-                "request_sha256": canonical_json_sha256(request),
+                "request_sha256": canonical_json_sha256(trusted_request),
                 "prompt_template_sha256": rendered.template_sha256,
                 "session_id_sha256": session_id_sha256,
                 "attestation_receipt_sha256": attestation.receipt_sha256,
@@ -572,6 +591,10 @@ class Phase8OpenResponsesTransport:
             not isinstance(profile, dict)
             or validate_visual_inference_profile(profile)
             or canonical_json_sha256(profile) != request.get("inference_profile_sha256")
+            or any(
+                str(profile.get(field) or "").upper() != expected
+                for field, expected in current_visual_prompt_profile_hashes().items()
+            )
         ):
             raise Phase8OpenResponsesTransportError("INFERENCE_PROFILE_MISMATCH")
         try:

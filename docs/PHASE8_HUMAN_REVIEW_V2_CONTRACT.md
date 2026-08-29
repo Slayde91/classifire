@@ -49,8 +49,16 @@ may support a service in that revision.
 
 Use the existing local-only command:
 
-    C:\CLASSIFIRE\.venv\Scripts\python.exe scripts\validate_phase8_human_adjudicated_proposal.py --source-proposal C:\path\to\proposal.json --source-controller-receipt C:\path\to\proposal-controller-receipt.json --human-review-request C:\path\to\evidence-review-request-v2.json --human-review-response C:\path\to\human-review-response-v2.json --revised-proposal C:\path\to\human-adjudicated-proposal.json
+    C:\CLASSIFIRE\.venv\Scripts\python.exe scripts\validate_phase8_human_adjudicated_proposal.py --source-proposal C:\path\to\proposal.json --source-controller-receipt C:\path\to\proposal-controller-receipt.json --source-evidence-manifest C:\path\to\evidence-manifest.json --human-review-request C:\path\to\evidence-review-request-v2.json --human-review-response C:\path\to\human-review-response-v2.json --revised-proposal C:\path\to\human-adjudicated-proposal.json
 
 PASS proves the submitted JSON artifacts are structurally valid and hash-bound.
 It does not independently prove reviewer competence, make an unconfirmed fact
 certain, or authorize any canonical operation.
+
+For the current v2 policy, the Validator also binds the evidence manifest to the
+controller receipt and rejects any proposal evidence reference outside that
+manifest. If the explicit argument is omitted, it looks for
+`evidence-manifest.json` beside the controller receipt; supplying the path is
+recommended so the reviewed input is unambiguous. Historical v1 artifacts remain
+verifiable only with their paired v1 policy and receipt behavior. A current v2
+result cannot be relabelled as v1, and v1 history does not gain v2 coverage.

@@ -80,6 +80,66 @@ def test_unknown_issue_code_cannot_pass_the_gate() -> None:
     assert any("unsupported code" in issue for issue in issues)
 
 
+def test_property_assessment_issue_requires_an_existing_exact_target() -> None:
+    proposal = _proposal()
+    proposal["openings"][0]["property_assessments"] = {"size": {}}
+    issue = {
+        "code": "UNSUPPORTED_PROPERTY_ASSESSMENT",
+        "detail": "The range is supportable but the certainty label is too strong.",
+        "evidence_refs": ["E-001"],
+        "subject": "Opening",
+        "subject_code": "O-A",
+        "property": "size",
+    }
+    payload = {
+        "verdict": "REJECTED",
+        "observed_opening_count": 2,
+        "observed_service_group_count": 3,
+        "issues": [issue],
+        "limitations": [],
+    }
+
+    assert validate_visual_validator_payload(payload, proposal) == []
+
+    payload["issues"][0]["subject_code"] = "O-OTHER"
+    errors = validate_visual_validator_payload(payload, proposal)
+    assert any("property target does not exist" in error for error in errors)
+
+
+def test_property_issue_evidence_must_be_unique_strings_from_manifest() -> None:
+    proposal = _proposal()
+    proposal["openings"][0]["property_assessments"] = {"size": {}}
+    payload = {
+        "verdict": "REJECTED",
+        "issues": [
+            {
+                "code": "UNSUPPORTED_PROPERTY_ASSESSMENT",
+                "detail": "The certainty label is unsupported.",
+                "evidence_refs": ["E-OUTSIDE", "E-OUTSIDE"],
+                "subject": "Opening",
+                "subject_code": "O-A",
+                "property": "size",
+            }
+        ],
+        "limitations": [],
+    }
+
+    errors = validate_visual_validator_payload(
+        payload,
+        proposal,
+        allowed_evidence_refs={"E-001"},
+    )
+
+    assert any("unique non-empty string" in error for error in errors)
+    payload["issues"][0]["evidence_refs"] = ["E-OUTSIDE"]
+    errors = validate_visual_validator_payload(
+        payload,
+        proposal,
+        allowed_evidence_refs={"E-001"},
+    )
+    assert any("outside the approved manifest" in error for error in errors)
+
+
 def test_blocked_visual_receipt_must_explain_blocker() -> None:
     payload = {"verdict": "BLOCKED", "issues": [], "limitations": []}
     issues = validate_visual_validator_payload(payload, _proposal())

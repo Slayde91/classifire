@@ -9,6 +9,24 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from test_phase8_visual_proposal import (
+    ScriptedInferencePort as _V2ScriptedInferencePort,
+)
+from test_phase8_visual_proposal import (
+    _blind_inventory as _v2_blind_inventory,
+)
+from test_phase8_visual_proposal import (
+    _controller as _v2_controller,
+)
+from test_phase8_visual_proposal import (
+    _manifest as _v2_manifest,
+)
+from test_phase8_visual_proposal import (
+    _proposal as _v2_proposal,
+)
+from test_phase8_visual_proposal import (
+    _validator as _v2_validator,
+)
 
 from classifire.services import phase8_human_adjudicated_proposal as human_adjudication
 from classifire.services.phase8_human_adjudicated_proposal import (
@@ -26,9 +44,9 @@ from classifire.services.phase8_human_adjudicated_proposal import (
 )
 from classifire.services.phase8_human_review_v2 import build_phase8_human_review_request_v2
 from classifire.services.phase8_visual_proposal import (
+    LEGACY_VISUAL_PROPOSAL_POLICY_VERSION,
+    LEGACY_VISUAL_PROPOSAL_RECEIPT_SCHEMA,
     VISUAL_PROPOSAL_BLOCKED,
-    VISUAL_PROPOSAL_POLICY_VERSION,
-    VISUAL_PROPOSAL_RECEIPT_SCHEMA,
     canonical_json_sha256,
 )
 from classifire.services.phase8_visual_provenance import Phase8VisualProvenanceCompleteness
@@ -110,8 +128,8 @@ def _source_receipt(proposal: dict[str, Any]) -> dict[str, Any]:
     ]
 
     return {
-        "schema": VISUAL_PROPOSAL_RECEIPT_SCHEMA,
-        "policy_version": VISUAL_PROPOSAL_POLICY_VERSION,
+        "schema": LEGACY_VISUAL_PROPOSAL_RECEIPT_SCHEMA,
+        "policy_version": LEGACY_VISUAL_PROPOSAL_POLICY_VERSION,
         "status": VISUAL_PROPOSAL_BLOCKED,
         "run_id": "RUN-001",
         "estimate_id": "EST-001",
@@ -279,6 +297,66 @@ def _artifact_paths(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
     return proposal_path, receipt_path, review_path, revision_path, request_path
 
 
+def _current_artifact_paths(
+    tmp_path: Path,
+    *,
+    out_of_manifest_assessment: bool = False,
+) -> tuple[tuple[Path, Path, Path, Path, Path], Path]:
+    visual_result = _v2_controller(
+        _V2ScriptedInferencePort(
+            {
+                "blind_inventory": [_v2_blind_inventory()],
+                "physical_proposal": [_v2_proposal()],
+                "conditioned_validator_0": [
+                    _v2_validator(
+                        verdict="BLOCKED",
+                        issue_code="WRONG_SERVICE_QUANTITY",
+                    )
+                ],
+            }
+        ),
+        max_correction_passes=0,
+    ).run()
+    assert visual_result.status == VISUAL_PROPOSAL_BLOCKED
+    assert visual_result.proposal is not None
+    source = deepcopy(visual_result.proposal)
+    receipt = deepcopy(visual_result.receipt)
+    if out_of_manifest_assessment:
+        source["services"][0]["property_assessments"]["material"]["evidence_refs"] = [
+            "E-OUTSIDE"
+        ]
+        proposal_hash = canonical_json_sha256(source)
+        receipt["result_hashes"]["proposal_sha256"] = proposal_hash
+        for stage in receipt["stages"]:
+            if stage["stage"] == "physical_proposal":
+                stage["payload_sha256"] = proposal_hash
+
+    proposal_path = tmp_path / "source-proposal.json"
+    receipt_path = tmp_path / "source-receipt.json"
+    manifest_path = tmp_path / "evidence-manifest.json"
+    request_path = tmp_path / "request.json"
+    review_path = tmp_path / "review.json"
+    revision_path = tmp_path / "revision.json"
+    _write_json(proposal_path, source)
+    _write_json(receipt_path, receipt)
+    _write_json(manifest_path, _v2_manifest())
+    _write_json(request_path, _review_request(proposal_path, receipt_path))
+    review = _review()
+    review["review_request"] = {
+        "path": "request.json",
+        "file_sha256": hashlib.sha256(request_path.read_bytes()).hexdigest().upper(),
+    }
+    _write_json(review_path, review)
+    _write_json(revision_path, _revision(proposal_path, review_path))
+    return (
+        proposal_path,
+        receipt_path,
+        review_path,
+        revision_path,
+        request_path,
+    ), manifest_path
+
+
 def _validate(paths: tuple[Path, Path, Path, Path, Path]) -> dict[str, Any]:
     return validate_phase8_human_adjudicated_proposal(
         source_proposal_path=paths[0],
@@ -323,6 +401,56 @@ def test_validates_hash_bound_proposal_only_human_revision(tmp_path: Path) -> No
         "human_reference_visible_to_inference",
     ):
         assert result[field_name] is False
+
+
+def test_current_policy_adjudication_accepts_receipt_bound_manifest(
+    tmp_path: Path,
+) -> None:
+    paths, manifest_path = _current_artifact_paths(tmp_path)
+
+    result = _validate(paths)
+
+    assert result["status"] == "PASS"
+    assert (
+        result["input_bindings"]["source_evidence_manifest"]["sha256"]
+        == hashlib.sha256(manifest_path.read_bytes()).hexdigest().upper()
+    )
+
+
+def test_current_policy_adjudication_rejects_missing_manifest(tmp_path: Path) -> None:
+    paths, manifest_path = _current_artifact_paths(tmp_path)
+    manifest_path.unlink()
+
+    with pytest.raises(Phase8HumanAdjudicatedProposalError) as rejected:
+        _validate(paths)
+
+    assert rejected.value.code == "ARTIFACT_MISSING"
+
+
+def test_current_policy_adjudication_rejects_tampered_manifest(tmp_path: Path) -> None:
+    paths, manifest_path = _current_artifact_paths(tmp_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["artifacts"][0]["sha256"] = "F" * 64
+    _write_json(manifest_path, manifest)
+
+    with pytest.raises(Phase8HumanAdjudicatedProposalError) as rejected:
+        _validate(paths)
+
+    assert rejected.value.code == "SOURCE_EVIDENCE_MANIFEST_INVALID"
+
+
+def test_current_policy_adjudication_rejects_out_of_manifest_assessment(
+    tmp_path: Path,
+) -> None:
+    paths, _manifest_path = _current_artifact_paths(
+        tmp_path,
+        out_of_manifest_assessment=True,
+    )
+
+    with pytest.raises(Phase8HumanAdjudicatedProposalError) as rejected:
+        _validate(paths)
+
+    assert rejected.value.code == "SOURCE_PROPOSAL_INVALID"
 
 
 def test_strict_provenance_mode_binds_current_visual_receipt_and_stays_proposal_only(

@@ -6,14 +6,20 @@ from typing import Any
 import pytest
 
 from classifire.services.canonical_submission_state import InitialSubmissionState
+from classifire.services.phase8_property_assessments import PROPERTY_ASSESSMENT_SCHEMA
+from classifire.services.phase8_visual_prompts import current_visual_prompt_profile_hashes
 from classifire.services.phase8_visual_proposal import (
+    LEGACY_VISUAL_PROPOSAL_POLICY_VERSION,
+    LEGACY_VISUAL_PROPOSAL_RECEIPT_SCHEMA,
     VISUAL_EVIDENCE_MANIFEST_SCHEMA,
     VISUAL_INFERENCE_PROFILE_SCHEMA,
     VISUAL_INFERENCE_RESPONSE_SCHEMA,
     VISUAL_PROPOSAL_APPROVED,
     VISUAL_PROPOSAL_BLOCKED,
     VISUAL_PROPOSAL_FAILED,
+    VISUAL_PROPOSAL_POLICY_VERSION,
     VISUAL_PROPOSAL_PROTECTED_STATE_CHANGED,
+    VISUAL_PROPOSAL_RECEIPT_SCHEMA,
     Phase8VisualProposalError,
     ProposalOnlyVisualController,
     canonical_json_sha256,
@@ -62,11 +68,7 @@ def _profile() -> dict[str, Any]:
         "provider": "test-provider",
         "physical_model": "physical-test-model",
         "validator_model": "validator-test-model",
-        "blind_prompt_sha256": "2" * 64,
-        "physical_prompt_sha256": "3" * 64,
-        "validator_prompt_sha256": "4" * 64,
-        "correction_prompt_sha256": "5" * 64,
-        "runtime_policy_sha256": "6" * 64,
+        **current_visual_prompt_profile_hashes(),
     }
 
 
@@ -115,35 +117,90 @@ def _blind_inventory() -> dict[str, Any]:
     }
 
 
+def _assessment(value: object) -> dict[str, Any]:
+    return {
+        "status": "UNKNOWN" if value is None else "CONFIRMED",
+        "confidence": None,
+        "reasoning": (
+            "The supplied view cannot support this value."
+            if value is None
+            else "The supplied synthetic evidence directly supports this value."
+        ),
+        "evidence_refs": ["E-001"],
+        "credible_alternative": None,
+        "additional_evidence_required": None,
+    }
+
+
 def _proposal(*, quantity: int = 1) -> dict[str, Any]:
+    opening = {
+        "external_defect_id": "D-001",
+        "opening_code": "O-001",
+        "shape": "circular",
+        "size": {"value": 100, "unit": "mm"},
+        "opening_type": "service_penetration",
+        "substrate_plane": "wall",
+        "substrate_type": "concrete",
+        "substrate_specific_type": "solid concrete wall",
+        "substrate_thickness": {"value": 100, "unit": "mm"},
+        "orientation": "vertical",
+        "opening_boundary": "visible circular boundary",
+        "opposite_face_continuity": None,
+    }
+    service = {
+        "service_code": "S-001",
+        "quantity": quantity,
+        "service_type": "pipe",
+        "material": "PVC",
+        "size": {"value": 50, "unit": "mm"},
+        "insulation_or_covering": "uninsulated",
+        "arrangement": "single service",
+        "primary_opening_code": "O-001",
+        "opening_codes": ["O-001"],
+        "link_type": "penetrates",
+        "relationship_status": "confirmed",
+        "concealed_continuity": None,
+        "evidence_status": "confirmed",
+        "source_reference": "E-001",
+        "confidence": "0.95",
+    }
+    opening["property_assessments"] = {
+        field: _assessment(opening[field])
+        for field in (
+            "shape",
+            "size",
+            "opening_type",
+            "substrate_plane",
+            "substrate_type",
+            "substrate_specific_type",
+            "substrate_thickness",
+            "orientation",
+            "opening_boundary",
+            "opposite_face_continuity",
+        )
+    }
+    service["property_assessments"] = {
+        field: _assessment(service[field])
+        for field in (
+            "quantity",
+            "service_type",
+            "material",
+            "size",
+            "insulation_or_covering",
+            "arrangement",
+            "primary_opening_code",
+            "opening_codes",
+            "link_type",
+            "relationship_status",
+            "concealed_continuity",
+        )
+    }
     return {
         "status": "MODEL_SUPPORTED",
+        "assessment_schema": PROPERTY_ASSESSMENT_SCHEMA,
         "limitations": [],
-        "openings": [
-            {
-                "external_defect_id": "D-001",
-                "opening_code": "O-001",
-                "substrate_type": "concrete",
-                "substrate_plane": "wall",
-                "orientation": "vertical",
-                "opening_type": "service_penetration",
-            }
-        ],
-        "services": [
-            {
-                "service_code": "S-001",
-                "service_type": "pipe",
-                "material": "PVC",
-                "quantity": quantity,
-                "primary_opening_code": "O-001",
-                "opening_codes": ["O-001"],
-                "evidence_status": "confirmed",
-                "relationship_status": "confirmed",
-                "link_type": "penetrates",
-                "source_reference": "E-001",
-                "confidence": "0.95",
-            }
-        ],
+        "openings": [opening],
+        "services": [service],
     }
 
 
@@ -152,17 +209,24 @@ def _validator(
     verdict: str = "APPROVED",
     issue_code: str | None = None,
 ) -> dict[str, Any]:
-    issues = (
-        [
-            {
-                "code": issue_code,
-                "detail": "structured correction required",
-                "evidence_refs": ["E-001"],
-            }
-        ]
+    issue = (
+        {
+            "code": issue_code,
+            "detail": "structured correction required",
+            "evidence_refs": ["E-001"],
+        }
         if issue_code
-        else []
+        else None
     )
+    if issue is not None and issue_code == "WRONG_SERVICE_QUANTITY":
+        issue.update(
+            {
+                "subject": "Service",
+                "subject_code": "S-001",
+                "property": "quantity",
+            }
+        )
+    issues = [issue] if issue is not None else []
     return {
         "verdict": verdict,
         "issues": issues,
@@ -315,6 +379,25 @@ def test_inference_profile_requires_prompt_runtime_and_implementation_bindings()
 
     assert any("implementation revision" in error for error in errors)
     assert any("validator_prompt_sha256" in error for error in errors)
+
+
+def test_controller_rejects_noncurrent_policy_hashes_before_any_port_call() -> None:
+    profile = _profile()
+    profile["runtime_policy_sha256"] = "F" * 64
+    port = ScriptedInferencePort({})
+
+    with pytest.raises(Phase8VisualProposalError) as caught:
+        ProposalOnlyVisualController(
+            run_id="RUN-001",
+            estimate_id="EST-001",
+            evidence_manifest=_manifest(),
+            inference_profile=profile,
+            inference_port=port,
+            protected_state_reader=_state,
+        )
+
+    assert caught.value.code == "INFERENCE_PROFILE_POLICY_MISMATCH"
+    assert port.calls == []
 
 
 def test_inference_response_rejects_wrong_model_and_tool_calls() -> None:
@@ -475,8 +558,62 @@ def test_controller_approves_only_after_independent_blind_and_conditioned_passes
     for call in port.calls:
         assert call["request"]["allowed_tools"] == []
         assert call["request"]["human_reference_visible"] is False
+        assert call["request"]["policy_version"] == VISUAL_PROPOSAL_POLICY_VERSION
         assert call["request"]["inference_profile"] == _profile()
         assert call["request"]["inference_profile_sha256"] == canonical_json_sha256(_profile())
+    assert result.receipt["policy_version"] == VISUAL_PROPOSAL_POLICY_VERSION
+
+
+@pytest.mark.parametrize("failure", ["missing", "outside"])
+def test_current_policy_blocks_missing_or_out_of_manifest_assessments(failure: str) -> None:
+    proposal = _proposal()
+    if failure == "missing":
+        del proposal["services"][0]["property_assessments"]["arrangement"]
+    else:
+        proposal["services"][0]["property_assessments"]["arrangement"]["evidence_refs"] = [
+            "E-OUTSIDE"
+        ]
+    result = _controller(
+        ScriptedInferencePort(
+            {
+                "blind_inventory": [_blind_inventory()],
+                "physical_proposal": [proposal],
+            }
+        ),
+        max_correction_passes=0,
+    ).run()
+
+    assert result.status == VISUAL_PROPOSAL_BLOCKED
+    assert result.approved is False
+
+
+def test_receipt_validator_keeps_literal_v1_history_and_rejects_future_policy() -> None:
+    result = _controller(
+        ScriptedInferencePort(
+            {
+                "blind_inventory": [_blind_inventory()],
+                "physical_proposal": [_proposal()],
+                "conditioned_validator_0": [_validator()],
+            }
+        )
+    ).run()
+    historical = deepcopy(result.receipt)
+    historical["schema"] = LEGACY_VISUAL_PROPOSAL_RECEIPT_SCHEMA
+    historical["policy_version"] = LEGACY_VISUAL_PROPOSAL_POLICY_VERSION
+    assert validate_phase8_visual_proposal_receipt(historical) == []
+    relabelled = deepcopy(result.receipt)
+    relabelled["policy_version"] = LEGACY_VISUAL_PROPOSAL_POLICY_VERSION
+    assert any(
+        "schema does not match policy version" in error
+        for error in validate_phase8_visual_proposal_receipt(relabelled)
+    )
+    assert result.receipt["schema"] == VISUAL_PROPOSAL_RECEIPT_SCHEMA
+
+    future = deepcopy(result.receipt)
+    future["policy_version"] = "CLASSIFIRE-PHASE8-VISUAL-PROPOSAL-v999"
+    assert "visual proposal receipt policy version is unsupported" in (
+        validate_phase8_visual_proposal_receipt(future)
+    )
 
 
 def test_receipt_is_deterministic_for_identical_inputs_and_responses() -> None:
@@ -537,6 +674,9 @@ def test_incomplete_physical_proposal_retries_without_seeing_blind_inventory() -
 
 def test_rejected_validator_allows_one_in_scope_quantity_correction() -> None:
     corrected = _proposal(quantity=2)
+    corrected["services"][0]["property_assessments"]["quantity"]["reasoning"] = (
+        "The corrected synthetic evidence supports two service groups."
+    )
     port = ScriptedInferencePort(
         {
             "blind_inventory": [_blind_inventory()],
@@ -609,6 +749,9 @@ def test_out_of_scope_physical_correction_is_rejected() -> None:
 
 def test_incomplete_scoped_correction_is_terminal_without_structural_retry() -> None:
     corrected = _proposal(quantity=0)
+    corrected["services"][0]["property_assessments"]["quantity"]["reasoning"] = (
+        "This deliberately invalid correction must reach structural validation."
+    )
     port = ScriptedInferencePort(
         {
             "blind_inventory": [_blind_inventory()],
@@ -735,6 +878,12 @@ def test_inference_port_failure_is_audited_and_returns_failed_receipt() -> None:
     assert result.receipt["stages"][0]["failed"] is True
     assert any("INFERENCE_PORT_FAILED" in error for error in result.errors)
     assert validate_phase8_visual_proposal_receipt(result.receipt) == []
+    relabelled = deepcopy(result.receipt)
+    relabelled["policy_version"] = LEGACY_VISUAL_PROPOSAL_POLICY_VERSION
+    assert any(
+        "schema does not match policy version" in error
+        for error in validate_phase8_visual_proposal_receipt(relabelled)
+    )
 
 
 def test_controller_stops_when_transport_reports_any_tool_call() -> None:

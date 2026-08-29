@@ -17,13 +17,19 @@ from classifire.services.phase8_openresponses_transport import (
     Phase8OpenResponsesTransport,
     Phase8OpenResponsesTransportError,
 )
+from classifire.services.phase8_property_assessments import PROPERTY_ASSESSMENT_SCHEMA
 from classifire.services.phase8_visual_evidence import (
     RetainedVisualEvidenceFile,
     RetainedVisualEvidencePacket,
 )
 from classifire.services.phase8_visual_prompts import (
+    LEGACY_BLIND_PROMPT_TEMPLATE,
+    LEGACY_CORRECTION_PROMPT_TEMPLATE,
+    LEGACY_PHYSICAL_PROMPT_TEMPLATE,
+    LEGACY_VALIDATOR_PROMPT_TEMPLATE,
     VISUAL_RUNTIME_POLICY,
     Phase8VisualPromptRenderer,
+    RenderedVisualPrompt,
     build_visual_inference_profile,
 )
 from classifire.services.phase8_visual_proposal import (
@@ -194,6 +200,7 @@ def _transport(
     guard: FakeGuard | None = None,
     token_provider=lambda: "secret-token",  # noqa: B008
     runtime_agent_ids: dict[str, str] | None = None,
+    prompt_renderer: object | None = None,
 ) -> tuple[Phase8OpenResponsesTransport, FakeGuard]:
     selected_guard = guard or FakeGuard()
     selected_runtime_agent_ids = runtime_agent_ids or {
@@ -208,10 +215,131 @@ def _transport(
             evidence_packet=packet,
             session_guard=selected_guard,
             runtime_agent_ids=selected_runtime_agent_ids,
+            prompt_renderer=prompt_renderer,
             clock_ms=lambda: 1234567890,
         ),
         selected_guard,
     )
+
+
+def test_literal_legacy_v1_prompt_and_runtime_fingerprints_are_frozen() -> None:
+    assert _sha256_text(LEGACY_BLIND_PROMPT_TEMPLATE) == (
+        "D5EBEB80B3FF6F60FED3131BF136ECEBC65E20C30A674C807EC9FA9DB5F67785"
+    )
+    assert _sha256_text(LEGACY_PHYSICAL_PROMPT_TEMPLATE) == (
+        "22E3E5F3F59585992162D3FC03B3AF8DBBF692880CD03A11CEF42EABA02A820F"
+    )
+    assert _sha256_text(LEGACY_VALIDATOR_PROMPT_TEMPLATE) == (
+        "2987072B49A84E2AE4F91E1D3AC397CF5D1B75D2A17239FAAF5985EF207FCC5F"
+    )
+    assert _sha256_text(LEGACY_CORRECTION_PROMPT_TEMPLATE) == (
+        "7E7BA92613EC0B776226597F595AC9CFD27D6508AED2105091909F19A35F9258"
+    )
+    assert _sha256_text(VISUAL_RUNTIME_POLICY) == (
+        "4F7710D5005D45696DDECFC1CA75238E881EBDC401002A8D87F8D3FD164A053C"
+    )
+
+
+def test_mixed_policy_profile_fails_before_guard_token_or_http(tmp_path: Path) -> None:
+    packet = _packet(tmp_path)
+    request = _request(packet)
+    request["inference_profile"]["correction_prompt_sha256"] = _sha256_text(
+        LEGACY_CORRECTION_PROMPT_TEMPLATE
+    )
+    request["inference_profile_sha256"] = canonical_json_sha256(
+        request["inference_profile"]
+    )
+    guard = FakeGuard()
+    token_called = False
+
+    def token_provider() -> str:
+        nonlocal token_called
+        token_called = True
+        return "secret-token"
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        pytest.fail("HTTP must not run for a mixed policy profile")
+
+    transport, _ = _transport(
+        packet,
+        handler,
+        guard=guard,
+        token_provider=token_provider,
+    )
+
+    with pytest.raises(Phase8OpenResponsesTransportError) as caught:
+        transport.invoke(role="cf-validator", stage="blind_inventory", request=request)
+
+    assert caught.value.code == "INFERENCE_PROFILE_MISMATCH"
+    assert guard.attestations == []
+    assert token_called is False
+
+
+def test_renderer_cannot_claim_a_hash_for_different_prompt_bytes(tmp_path: Path) -> None:
+    packet = _packet(tmp_path)
+    request = _request(packet)
+    guard = FakeGuard()
+
+    class _FalseHashRenderer:
+        def render(self, *, role: str, stage: str, request: dict[str, Any]):
+            trusted = Phase8VisualPromptRenderer().render(
+                role=role,
+                stage=stage,
+                request=request,
+            )
+            return RenderedVisualPrompt(
+                text=trusted.text + "unbound instruction\n",
+                template_sha256=trusted.template_sha256,
+            )
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        pytest.fail("HTTP must not run for untrusted prompt bytes")
+
+    transport, _ = _transport(
+        packet,
+        handler,
+        guard=guard,
+        prompt_renderer=_FalseHashRenderer(),
+    )
+
+    with pytest.raises(Phase8OpenResponsesTransportError) as caught:
+        transport.invoke(role="cf-validator", stage="blind_inventory", request=request)
+
+    assert caught.value.code == "PROMPT_RENDERING_MISMATCH"
+    assert guard.attestations == []
+
+
+def test_renderer_cannot_mutate_request_after_validation(tmp_path: Path) -> None:
+    packet = _packet(tmp_path)
+    request = _request(packet)
+    original = deepcopy(request)
+    guard = FakeGuard()
+
+    class _MutatingRenderer:
+        def render(self, *, role: str, stage: str, request: dict[str, Any]):
+            request["stage_input"]["injected_after_validation"] = "untrusted instruction"
+            return Phase8VisualPromptRenderer().render(
+                role=role,
+                stage=stage,
+                request=request,
+            )
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        pytest.fail("HTTP must not run for a renderer-mutated request")
+
+    transport, _ = _transport(
+        packet,
+        handler,
+        guard=guard,
+        prompt_renderer=_MutatingRenderer(),
+    )
+
+    with pytest.raises(Phase8OpenResponsesTransportError) as caught:
+        transport.invoke(role="cf-validator", stage="blind_inventory", request=request)
+
+    assert caught.value.code == "PROMPT_RENDERING_MISMATCH"
+    assert request == original
+    assert guard.attestations == []
 
 
 def test_profile_and_rendering_are_deterministic_and_role_bound(tmp_path: Path) -> None:
@@ -477,7 +605,7 @@ def test_manifest_and_prompt_profile_tampering_fail_before_http(tmp_path: Path) 
             stage="blind_inventory",
             request=bad_prompt,
         )
-    assert prompt_error.value.code == "PROMPT_PROFILE_MISMATCH"
+    assert prompt_error.value.code == "INFERENCE_PROFILE_MISMATCH"
     assert http_calls == 0
     assert guard.attestations == []
 
@@ -892,35 +1020,90 @@ def _blind_inventory() -> dict[str, Any]:
     }
 
 
+def _assessment(value: object) -> dict[str, Any]:
+    return {
+        "status": "UNKNOWN" if value is None else "CONFIRMED",
+        "confidence": None,
+        "reasoning": (
+            "The supplied view cannot support this value."
+            if value is None
+            else "The supplied synthetic evidence directly supports this value."
+        ),
+        "evidence_refs": ["E-001"],
+        "credible_alternative": None,
+        "additional_evidence_required": None,
+    }
+
+
 def _proposal() -> dict[str, Any]:
+    opening = {
+        "external_defect_id": "D-001",
+        "opening_code": "O-001",
+        "shape": "circular",
+        "size": {"value": 100, "unit": "mm"},
+        "opening_type": "service_penetration",
+        "substrate_plane": "wall",
+        "substrate_type": "concrete",
+        "substrate_specific_type": "solid concrete wall",
+        "substrate_thickness": {"value": 100, "unit": "mm"},
+        "orientation": "vertical",
+        "opening_boundary": "visible circular boundary",
+        "opposite_face_continuity": None,
+    }
+    service = {
+        "service_code": "S-001",
+        "quantity": 1,
+        "service_type": "pipe",
+        "material": "PVC",
+        "size": {"value": 50, "unit": "mm"},
+        "insulation_or_covering": "uninsulated",
+        "arrangement": "single service",
+        "primary_opening_code": "O-001",
+        "opening_codes": ["O-001"],
+        "link_type": "penetrates",
+        "relationship_status": "confirmed",
+        "concealed_continuity": None,
+        "evidence_status": "confirmed",
+        "source_reference": "E-001",
+        "confidence": "0.9",
+    }
+    opening["property_assessments"] = {
+        field: _assessment(opening[field])
+        for field in (
+            "shape",
+            "size",
+            "opening_type",
+            "substrate_plane",
+            "substrate_type",
+            "substrate_specific_type",
+            "substrate_thickness",
+            "orientation",
+            "opening_boundary",
+            "opposite_face_continuity",
+        )
+    }
+    service["property_assessments"] = {
+        field: _assessment(service[field])
+        for field in (
+            "quantity",
+            "service_type",
+            "material",
+            "size",
+            "insulation_or_covering",
+            "arrangement",
+            "primary_opening_code",
+            "opening_codes",
+            "link_type",
+            "relationship_status",
+            "concealed_continuity",
+        )
+    }
     return {
         "status": "MODEL_SUPPORTED",
+        "assessment_schema": PROPERTY_ASSESSMENT_SCHEMA,
         "limitations": [],
-        "openings": [
-            {
-                "external_defect_id": "D-001",
-                "opening_code": "O-001",
-                "substrate_type": "concrete",
-                "substrate_plane": "wall",
-                "orientation": "vertical",
-                "opening_type": "service_penetration",
-            }
-        ],
-        "services": [
-            {
-                "service_code": "S-001",
-                "service_type": "pipe",
-                "material": "PVC",
-                "quantity": 1,
-                "primary_opening_code": "O-001",
-                "opening_codes": ["O-001"],
-                "evidence_status": "confirmed",
-                "relationship_status": "confirmed",
-                "link_type": "penetrates",
-                "source_reference": "E-001",
-                "confidence": "0.9",
-            }
-        ],
+        "openings": [opening],
+        "services": [service],
     }
 
 

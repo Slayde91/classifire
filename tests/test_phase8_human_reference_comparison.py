@@ -17,6 +17,8 @@ from classifire.services.phase8_human_reference_comparison import (
     Phase8HumanReferenceComparisonError,
     compare_phase8_human_reference,
 )
+from classifire.services.phase8_property_assessments import PROPERTY_ASSESSMENT_SCHEMA
+from classifire.services.phase8_visual_prompts import current_visual_prompt_profile_hashes
 from classifire.services.phase8_visual_proposal import (
     VISUAL_EVIDENCE_MANIFEST_SCHEMA,
     VISUAL_INFERENCE_PROFILE_SCHEMA,
@@ -71,11 +73,7 @@ def _profile() -> dict[str, Any]:
         "provider": "test-provider",
         "physical_model": "physical-test-model",
         "validator_model": "validator-test-model",
-        "blind_prompt_sha256": "2" * 64,
-        "physical_prompt_sha256": "3" * 64,
-        "validator_prompt_sha256": "4" * 64,
-        "correction_prompt_sha256": "5" * 64,
-        "runtime_policy_sha256": "6" * 64,
+        **current_visual_prompt_profile_hashes(),
     }
 
 
@@ -95,41 +93,101 @@ def _state() -> InitialSubmissionState:
     )
 
 
+def _property_assessment(value: object) -> dict[str, Any]:
+    return {
+        "status": "UNKNOWN" if value is None else "CONFIRMED",
+        "confidence": None,
+        "reasoning": "Synthetic evidence supports this test assessment.",
+        "evidence_refs": ["E-001"],
+        "credible_alternative": None,
+        "additional_evidence_required": None,
+    }
+
+
 def _proposal(
     *,
     openings: list[dict[str, Any]] | None = None,
     services: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    opening_rows = deepcopy(openings) if openings is not None else [
+        {
+            "external_defect_id": "D-001",
+            "opening_code": "O-001",
+            "substrate_type": "concrete",
+            "substrate_plane": "wall",
+            "orientation": "vertical",
+            "opening_type": "service_penetration",
+        }
+    ]
+    service_rows = deepcopy(services) if services is not None else [
+        {
+            "service_code": "S-001",
+            "service_type": "pipe",
+            "material": "PVC",
+            "quantity": 1,
+            "primary_opening_code": "O-001",
+            "opening_codes": ["O-001"],
+            "evidence_status": "confirmed",
+            "relationship_status": "confirmed",
+            "link_type": "penetrates",
+            "source_reference": "E-001",
+            "confidence": "0.95",
+        }
+    ]
+    opening_fields = (
+        "shape",
+        "size",
+        "opening_type",
+        "substrate_plane",
+        "substrate_type",
+        "substrate_specific_type",
+        "substrate_thickness",
+        "orientation",
+        "opening_boundary",
+        "opposite_face_continuity",
+    )
+    for opening in opening_rows:
+        opening.setdefault("shape", "circular")
+        opening.setdefault("size", None)
+        opening.setdefault("substrate_specific_type", opening.get("substrate_type"))
+        opening.setdefault("substrate_thickness", None)
+        opening.setdefault("opening_boundary", "visible boundary")
+        opening.setdefault("opposite_face_continuity", None)
+        opening["property_assessments"] = {
+            field: _property_assessment(opening.get(field)) for field in opening_fields
+        }
+    service_fields = (
+        "quantity",
+        "service_type",
+        "material",
+        "size",
+        "insulation_or_covering",
+        "arrangement",
+        "primary_opening_code",
+        "opening_codes",
+        "link_type",
+        "relationship_status",
+        "concealed_continuity",
+    )
+    for service in service_rows:
+        service.setdefault("size", None)
+        service.setdefault("insulation_or_covering", None)
+        service.setdefault("arrangement", "service group")
+        service.setdefault("concealed_continuity", None)
+        fields = list(service_fields)
+        if service.get("service_type") == "cable_bundle":
+            service.setdefault("cable_count", None)
+            service.setdefault("bundle_size_class", "medium")
+            fields.extend(("cable_count", "bundle_size_class"))
+        service["property_assessments"] = {
+            field: _property_assessment(service.get(field)) for field in fields
+        }
     return {
         "status": "MODEL_SUPPORTED",
+        "assessment_schema": PROPERTY_ASSESSMENT_SCHEMA,
         "limitations": [],
-        "openings": openings
-        or [
-            {
-                "external_defect_id": "D-001",
-                "opening_code": "O-001",
-                "substrate_type": "concrete",
-                "substrate_plane": "wall",
-                "orientation": "vertical",
-                "opening_type": "service_penetration",
-            }
-        ],
-        "services": services
-        or [
-            {
-                "service_code": "S-001",
-                "service_type": "pipe",
-                "material": "PVC",
-                "quantity": 1,
-                "primary_opening_code": "O-001",
-                "opening_codes": ["O-001"],
-                "evidence_status": "confirmed",
-                "relationship_status": "confirmed",
-                "link_type": "penetrates",
-                "source_reference": "E-001",
-                "confidence": "0.95",
-            }
-        ],
+        "openings": opening_rows,
+        "services": service_rows,
     }
 
 
@@ -270,9 +328,11 @@ def _artifact_paths(
     proposal_path = tmp_path / "proposal.json"
     receipt_path = tmp_path / "controller-receipt.json"
     reference_path = tmp_path / "human-reference.json"
+    manifest_path = tmp_path / "evidence-manifest.json"
     _write_json(proposal_path, proposal)
     _write_json(receipt_path, receipt)
     _write_json(reference_path, reference)
+    _write_json(manifest_path, _manifest())
     return proposal_path, receipt_path, reference_path
 
 
@@ -324,6 +384,10 @@ def test_comparison_runs_after_inference_and_binds_all_input_bytes(
         result["input_bindings"]["human_reference"]["sha256"]
         == hashlib.sha256(reference_path.read_bytes()).hexdigest().upper()
     )
+    assert (
+        result["input_bindings"]["evidence_manifest"]["canonical_json_sha256"]
+        == canonical_json_sha256(_manifest())
+    )
     assert all(call["request"]["human_reference_visible"] is False for call in port.calls)
     assert all(
         call["request"]["evidence_manifest"]["human_reference_included"] is False
@@ -334,6 +398,7 @@ def test_comparison_runs_after_inference_and_binds_all_input_bytes(
 def test_comparison_preserves_explicit_unknown_service_quantity(tmp_path: Path) -> None:
     proposal = _proposal()
     proposal["services"][0]["quantity"] = None
+    proposal["services"][0]["property_assessments"]["quantity"] = _property_assessment(None)
     receipt, _ = _completed_controller(proposal)
     reference = _reference(
         [

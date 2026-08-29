@@ -2,7 +2,7 @@
 
 **Document status:** Current pre-production architecture reconciled with local implementation
 
-**Architecture version:** 3.19
+**Architecture version:** 3.22
 
 **Current implementation focus:** Evidence resolution and proposal-only physical modelling for fire seals, blank openings/core holes, and service penetrations
 
@@ -33,6 +33,59 @@ Implementation claims also identify their repository tier:
 | **Shared current-main** | Published source on the current shared `main` lineage. |
 | **Branch candidate** | Coherent feature-branch work based on current main; it is not shared-main implementation unless reviewed and merged. |
 | **Legacy-root evidence** | Useful later-phase or historical implementation in the materially divergent primary checkout; not a merge or deployment candidate. |
+
+## 1.1 Audit reconciliation - 30 August 2026
+
+The architecture remains governed by the evidence-to-human-release chain, but
+repository tiers must not be confused with implementation completion.
+
+- **Shared current-main (`c8b06d1`)** is the active published foundation. It
+  contains the PR #74 application baseline, PR #78 human-session revocation
+  hardening, and PR #79's documentation-only recovery decision. Its single
+  migration head is `0009_visual_validation_receipts`.
+- **The primary legacy checkout is quarantined source-control evidence, not a
+  deployable/current implementation tier.** PR #79 records the isolated decision
+  to retain the four accepted current-main conflict-path versions and not
+  transplant the stale cherry-pick. The checkout itself still has an active
+  cherry-pick and unmerged files, so it remains invalid for publication,
+  canonical writes, or deployment.
+- **One report-assessment contract is complete on the current branch candidate.**
+  `gpt/phase8-assessment-contract-20260830` selects the bounded
+  `property_assessments` v2 design, retains paired historical v1 verification,
+  and adds a hash-bound proposal-review artifact. It passed the complete
+  435-test suite and changed-file checks. It is not shared-main implementation
+  until reviewed and merged.
+- **The cable semantics are current-branch behaviour, not shared-main truth.** A
+  cable bundle's `quantity` counts bundles; a defensible individual cable count
+  is separate. Without that count, a bundle may be classified small, medium, or
+  large. A cable tray remains a distinct service with estimated tray dimensions.
+- **Technical intake and production hardening remain separate candidates.** The
+  Draft-bound technical-intake commits (`d76562e`, `0edeaac`) and proposed
+  `0019_technical_intake_materializations` migration are not on main. The
+  production-boundary commit `a3de490` is also local-only. Neither changes the
+  current architecture until reconciled, reviewed, and published.
+
+### Architecture follow-up required
+
+Before the first implementation item below, independently review the exact
+assessment-contract branch and publish it only if accepted. The adapter must
+extend one accepted contract, not create another competing assessment path.
+
+1. Build the contained, project-owned, report-SHA-bound evidence adapter on top
+   of the completed branch contract. Make shared-byte quarantine and the bytes
+   read/served one atomic trust decision; bind reports to a Project or Estimate;
+   normalise report text, tables, captions, drawings, annotations, metadata, and
+   governed images; and emit exactly one safe review per report-labelled Defect.
+2. Keep storage ownership, containment, package preparation, inference, API, and
+   UI as reviewable layers. Do not transplant the broad report-context or dirty
+   technical-intake continuation wholesale.
+3. Continue technical-intake normalization/materialization only after its shared
+   containment dependency is reconciled as a separate migration boundary.
+4. Reconcile production bootstrap and security hardening from `a3de490` on
+   current main as a separate change, preserving all existing authority gates.
+5. Keep report-derived inference, human review, canonical submission, Physical
+   Model Lock, technical approval, commercial approval, and Human Release as
+   separate authorities.
 
 ## 2. Product purpose and governing order
 
@@ -282,11 +335,44 @@ Physical Model Lock, technical selection, quantity completion, or release.
 The retained v2 review for the selected representative Defect demonstrates this
 boundary as local execution evidence: all seven review items and four unresolved
 observations are accounted for, and the visible topology is represented as five
-Openings, six Services, and six links. Site-dependent dimensions, depth and
-obscured boundaries, exact substrate composition, labels/material proof, and
-opposite-face continuity remain unresolved. The provenance and evidence-family
+Openings, six Services, and six links. Report-evidence-limited dimensions, depth
+and obscured boundaries, exact substrate composition, labels/material proof,
+and opposite-face continuity remain unresolved. The provenance and evidence-family
 review validators are on shared main. The retained v2 response remains local
 human-review evidence; it is neither canonical state nor publication authority.
+
+### 7.2 Property assessment and proposal review - Completed branch candidate
+
+The current branch adds a strict v2 property-assessment layer without changing
+canonical persistence:
+
+```text
+Evidence manifest
+-> v2 Physical proposal with property assessments
+-> independent Validator and bounded correction
+-> proposal-only controller receipt
+-> hash-bound JSON review
+-> inert Markdown human review
+```
+
+Every declared opening, service, and substrate property has an assessment. A
+value is Confirmed, Approximate, Inferred, or Unknown; Approximate and Inferred
+values carry confidence; all non-Unknown conclusions retain reasoning and
+allowed-manifest evidence references. Measurements may use defensible ranges,
+and credible alternatives remain explicit. Additional evidence is requested
+only when required, not automatically for every Unknown value.
+
+The proposal schema rejects undeclared technical-system, product, commercial,
+canonical, lock, and release fields. Fresh runs use the exact v2 prompt/runtime
+profile and v2 receipt pairing. Historical v1 prompt bytes and paired v1
+policy/receipt records remain verifiable, but a v2 result cannot be relabelled
+as v1. Review status and proposal outcome are cross-checked, and invalid,
+insufficient-evidence, or no-proposal cases cannot be relabelled as successful.
+
+The current representative runner creates review files only after a visual
+result exists. It does not yet ingest general documentary report evidence or
+guarantee a review artifact for retrieval-blocked Defects. Those are the next
+adapter responsibilities, not reasons to weaken the v2 contract.
 
 ## 8. Trusted-UAT representative package
 
@@ -468,6 +554,13 @@ evidence and is not consolidated on current main. It is also blocked for the
 current estimate because there is no approved, canonical, locked Physical
 Model.
 
+Current-main technical approval is only a basic prototype boundary: a Draft or
+In Review variant can be activated directly, requester and decider separation is
+not enforced, and source/page evidence is not a full governed authority
+registry. There are no current-main `tests/test_technical*` files. The
+Draft-bound approval, revision, and shared containment candidate must therefore
+be reviewed and tested before technical records are production-trusted.
+
 ### 12.2 Components, quantities, and labour - Basic shared calculation; richer legacy foundation; blocked
 
 A selected technical variant generates distinct required components and labour
@@ -496,7 +589,10 @@ but may not recalculate or reinterpret scope.
 Human Release remains human-only and must accept the exact snapshot and output
 hashes. Current-main snapshots and renderers remain basic and retain legacy
 compatibility names; they are not full validation certificates or Human Release.
-The current estimate has no eligible downstream state.
+The snapshot builder also includes the current generation timestamp in the
+hashed payload and has no snapshot-focused regression suite, so reproducible
+snapshot identity is not yet proven. The current estimate has no eligible
+downstream state.
 
 ## 13. Security and confidentiality
 
@@ -510,6 +606,18 @@ The offline admission key and APK release-signing identity are separate trust
 objects. Neither private key belongs in CLASSIFIRE source, configuration,
 receipts, or documentation.
 
+Current-main application startup unconditionally calls SQLAlchemy
+`create_all()` and seeds an administrator, including in production mode.
+Production configuration findings are reported as warnings rather than an
+enforced startup gate, and admission-bound initial submission defaults off.
+Upload storage does not scan bytes itself and permits `not_configured`
+evidence; same-hash records are returned without purpose rebinding. Migrations
+are not packaged with the installed Python package, and current main has no
+Docker/Compose deployment definition. These are pre-production boundaries.
+Project-owned report intake, clean-only production evidence use, atomic
+quarantine, migration-only production startup, and fail-closed configuration
+must be proven before deployment.
+
 ## 14. Current architecture status
 
 | Area | Status | Current boundary |
@@ -518,12 +626,17 @@ receipts, or documentation.
 | Linked-original retrieval and governed retention | **Completed foundation** | Shared current-main; approved hosts/report formats remain narrow |
 | Site-observation evidence intake | **Completed contract** | Shared current-main; evidence registration only, with no Physical Model write or lock authority |
 | Proposal-only visual controller and no-tool runtime | **Completed foundation** | Shared current-main; production persistence/generalisation incomplete |
+| Property-assessment and proposal-review contract | **Completed branch candidate** | Exact current-main-derived branch; 435 tests pass; no migration or canonical-write interface; not shared main until reviewed and merged |
 | Trusted-UAT package and rollback proof | **Completed shared-main capability** | Representative run executed; source and receipt package are merged |
-| Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; site-dependent facts and independent semantic approval remain unresolved |
+| Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; report-evidence-limited facts and independent semantic approval remain unresolved |
 | Content-safe evidence review and local recovery | **Completed shared-main capability** | Recovery proof has documented mutability/replay limits |
+| Report storage ownership and malware containment | **In progress / local candidates only** | Main has no StoredFile project/estimate owner and does not prove clean-only atomic read/preview; cross-project and quarantine-race tests are required |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
-| Technical through Human Release | **In progress / blocked** | Basic shared foundations and richer legacy-root foundations exist; upstream Physical Model gate unresolved |
+| Technical authority | **Basic prototype / blocked** | Current main lacks enforced approval-role separation and focused technical tests; governed candidate work is not merged |
+| Snapshot and Human Release | **Basic prototype / blocked** | Snapshot reproducibility and full validation certificate are not proven; upstream Physical Model gate unresolved |
+| Production bootstrap and security gates | **In progress / local candidate only** | Main uses unconditional `create_all`/seed and warning-only production findings; `a3de490` is unpushed |
+| Continuous integration | **Not started** | No GitHub workflow or recorded status-check run exists on current main |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |
 | Structural-steel and full duct-run domains | **Planned / deferred** | Separate schemas, libraries, calculators, and acceptance evidence required |
@@ -533,16 +646,31 @@ receipts, or documentation.
 
 ## 15. Next valid architectural action
 
-The representative package, review safeguards, durable visual-validation
-receipt registry, and site-observation evidence-intake contract are now on
-shared main. For the selected Defect, obtain a site visit or equivalent newly
-governed evidence for the facts that human visual review could not establish.
-Retain that evidence immutably and register only the facts it supports through
-the shared-main contract. Do not repeat unchanged inference or convert the
-limited proposal into canonical truth.
+The next repository action is independent review of the exact assessment-contract
+branch and publication only if it is accepted. Once that gate passes, build the
+contained, project-owned, report-SHA-bound evidence adapter and deterministic
+per-Defect review flow on top of the accepted contract.
+The ordered boundary is:
+
+1. atomically bind malware state and content hash to the bytes read or served,
+   propagating unsafe shared-byte state across every referencing row;
+2. bind each report and generated package to its Project or Estimate and reject
+   cross-project access;
+3. give report text, tables, captions, drawings, annotations, metadata, page
+   context, and governed images stable report/page/item locators;
+4. generate exactly one review artifact for every selected report-labelled
+   Defect, including deterministic retrieval-blocked, malformed, and
+   insufficient-evidence outcomes; and
+5. bind each review to its report/package, manifest, prompt/runtime profile,
+   proposal, and controller receipt; make the later completion receipt hash
+   every preceding emitted artifact; and prove protected state is unchanged.
+
+This work may require one small additive ownership migration. It must not expose
+the broad candidate UI, select a technical system, price work, write a canonical
+model, create a lock, deploy, or release. A site visit remains conditional only
+after report evidence is exhausted or a later governed decision requires
+confirmation.
 
 The receipt verifier remains a no-write pre-lock check, not signed lock
-admission. Design, approve, and enforce that separate boundary only after the
-remaining evidence is governed and the proposal is independently and
-semantically accepted. Submission, lock creation, technical selection, pricing,
-output, deployment, and Human Release retain their separate gates.
+admission. Submission, lock creation, technical selection, pricing, output,
+deployment, and Human Release retain their separate gates.

@@ -27,6 +27,7 @@ from classifire.services.phase8_linked_visual_run import (
     run_phase8_linked_visual_proposal,
     validate_phase8_linked_visual_run_receipt,
 )
+from classifire.services.phase8_property_assessments import PROPERTY_ASSESSMENT_SCHEMA
 from classifire.services.phase8_visual_prompts import build_visual_inference_profile
 from classifire.services.phase8_visual_proposal import (
     VISUAL_INFERENCE_RESPONSE_SCHEMA,
@@ -174,35 +175,86 @@ def _photo_row(embedded_path: Path) -> dict[str, Any]:
     }
 
 
+def _property_assessment(value: object) -> dict[str, Any]:
+    return {
+        "status": "UNKNOWN" if value is None else "CONFIRMED",
+        "confidence": None,
+        "reasoning": "The synthetic evidence supports this value.",
+        "evidence_refs": ["synthetic-evidence"],
+        "credible_alternative": None,
+        "additional_evidence_required": None,
+    }
+
+
 def _proposal() -> dict[str, Any]:
+    opening = {
+        "external_defect_id": "D-001",
+        "opening_code": "O-001",
+        "shape": "circular",
+        "size": {"value": 100, "unit": "mm"},
+        "opening_type": "service_penetration",
+        "substrate_plane": "wall",
+        "substrate_type": "concrete",
+        "substrate_specific_type": "solid concrete wall",
+        "substrate_thickness": {"value": 100, "unit": "mm"},
+        "orientation": "vertical",
+        "opening_boundary": "visible circular boundary",
+        "opposite_face_continuity": None,
+    }
+    service = {
+        "service_code": "S-001",
+        "quantity": 1,
+        "service_type": "pipe",
+        "material": "PVC",
+        "size": {"value": 50, "unit": "mm"},
+        "insulation_or_covering": "uninsulated",
+        "arrangement": "single service",
+        "primary_opening_code": "O-001",
+        "opening_codes": ["O-001"],
+        "link_type": "penetrates",
+        "relationship_status": "confirmed",
+        "concealed_continuity": None,
+        "evidence_status": "confirmed",
+        "source_reference": "synthetic-evidence",
+        "confidence": "0.95",
+    }
+    opening["property_assessments"] = {
+        field: _property_assessment(opening[field])
+        for field in (
+            "shape",
+            "size",
+            "opening_type",
+            "substrate_plane",
+            "substrate_type",
+            "substrate_specific_type",
+            "substrate_thickness",
+            "orientation",
+            "opening_boundary",
+            "opposite_face_continuity",
+        )
+    }
+    service["property_assessments"] = {
+        field: _property_assessment(service[field])
+        for field in (
+            "quantity",
+            "service_type",
+            "material",
+            "size",
+            "insulation_or_covering",
+            "arrangement",
+            "primary_opening_code",
+            "opening_codes",
+            "link_type",
+            "relationship_status",
+            "concealed_continuity",
+        )
+    }
     return {
         "status": "MODEL_SUPPORTED",
+        "assessment_schema": PROPERTY_ASSESSMENT_SCHEMA,
         "limitations": [],
-        "openings": [
-            {
-                "external_defect_id": "D-001",
-                "opening_code": "O-001",
-                "substrate_type": "concrete",
-                "substrate_plane": "wall",
-                "orientation": "vertical",
-                "opening_type": "service_penetration",
-            }
-        ],
-        "services": [
-            {
-                "service_code": "S-001",
-                "service_type": "pipe",
-                "material": "PVC",
-                "quantity": 1,
-                "primary_opening_code": "O-001",
-                "opening_codes": ["O-001"],
-                "evidence_status": "confirmed",
-                "relationship_status": "confirmed",
-                "link_type": "penetrates",
-                "source_reference": "synthetic-evidence",
-                "confidence": "0.95",
-            }
-        ],
+        "openings": [opening],
+        "services": [service],
     }
 
 
@@ -272,6 +324,19 @@ class _ScriptedPort:
         self.calls: list[dict[str, Any]] = []
         self.mutation = mutation
 
+    def _payload_for_request(self, *, stage: str, request: dict[str, Any]) -> dict[str, Any]:
+        payload = deepcopy(self.responses[stage])
+        if stage not in {"physical_proposal", "physical_correction_1"}:
+            return payload
+        evidence_id = request["evidence_manifest"]["artifacts"][0]["evidence_id"]
+        for collection in ("openings", "services"):
+            for record in payload.get(collection, []):
+                if collection == "services":
+                    record["source_reference"] = evidence_id
+                for assessment in record.get("property_assessments", {}).values():
+                    assessment["evidence_refs"] = [evidence_id]
+        return payload
+
     def invoke(
         self,
         *,
@@ -290,7 +355,7 @@ class _ScriptedPort:
             "session_id_sha256": "7" * 64,
             "transport_receipt_sha256": "8" * 64,
             "tool_calls": [],
-            "payload": deepcopy(self.responses[stage]),
+            "payload": self._payload_for_request(stage=stage, request=request),
         }
 
 

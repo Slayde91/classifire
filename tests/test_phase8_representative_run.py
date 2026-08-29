@@ -28,6 +28,7 @@ from classifire.services.phase8_human_reference_comparison import (
     HUMAN_REFERENCE_PURPOSE,
     HUMAN_REFERENCE_SCHEMA,
 )
+from classifire.services.phase8_property_assessments import PROPERTY_ASSESSMENT_SCHEMA
 from classifire.services.phase8_representative_run import (
     REPRESENTATIVE_RUN_APPROVAL_SCOPE,
     REPRESENTATIVE_RUN_PACKAGE_SCHEMA,
@@ -38,7 +39,10 @@ from classifire.services.phase8_representative_run import (
     phase8_representative_source_tree_sha256,
     verify_phase8_representative_run_package,
 )
-from classifire.services.phase8_visual_proposal import VISUAL_INFERENCE_RESPONSE_SCHEMA
+from classifire.services.phase8_visual_proposal import (
+    VISUAL_INFERENCE_RESPONSE_SCHEMA,
+    VISUAL_PROPOSAL_APPROVED,
+)
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = REPOSITORY_ROOT / "scripts"
@@ -133,39 +137,94 @@ def _parent(session, storage_root: Path, embedded_path: Path):
     return estimate, evidence, stored
 
 
-def _proposal() -> dict[str, Any]:
+def _assessment(value: object, *, evidence_id: str) -> dict[str, Any]:
     return {
-        "status": "MODEL_SUPPORTED",
-        "limitations": [],
-        "openings": [
-            {
-                "external_defect_id": "D-001",
-                "opening_code": "O-001",
-                "substrate_type": "concrete",
-                "substrate_plane": "wall",
-                "orientation": "vertical",
-                "opening_type": "service_penetration",
-            }
-        ],
-        "services": [
-            {
-                "service_code": "S-001",
-                "service_type": "pipe",
-                "material": "PVC",
-                "quantity": 1,
-                "primary_opening_code": "O-001",
-                "opening_codes": ["O-001"],
-                "evidence_status": "confirmed",
-                "relationship_status": "confirmed",
-                "link_type": "penetrates",
-                "source_reference": "synthetic-evidence",
-                "confidence": "0.95",
-            }
-        ],
+        "status": "UNKNOWN" if value is None else "CONFIRMED",
+        "confidence": None,
+        "reasoning": (
+            "The supplied view cannot support this value."
+            if value is None
+            else "The supplied synthetic evidence directly supports this value."
+        ),
+        "evidence_refs": [evidence_id],
+        "credible_alternative": None,
+        "additional_evidence_required": None,
     }
 
 
-def _blind(proposal: dict[str, Any]) -> dict[str, Any]:
+def _proposal(evidence_id: str) -> dict[str, Any]:
+    opening = {
+        "external_defect_id": "D-001",
+        "opening_code": "O-001",
+        "shape": "circular",
+        "size": {"value": 100, "unit": "mm"},
+        "opening_type": "service_penetration",
+        "substrate_plane": "wall",
+        "substrate_type": "concrete",
+        "substrate_specific_type": "solid concrete wall",
+        "substrate_thickness": {"value": 100, "unit": "mm"},
+        "orientation": "vertical",
+        "opening_boundary": "visible circular boundary",
+        "opposite_face_continuity": None,
+    }
+    service = {
+        "service_code": "S-001",
+        "service_type": "pipe",
+        "material": "PVC",
+        "quantity": 1,
+        "size": {"value": 50, "unit": "mm"},
+        "insulation_or_covering": "uninsulated",
+        "arrangement": "single service",
+        "primary_opening_code": "O-001",
+        "opening_codes": ["O-001"],
+        "evidence_status": "confirmed",
+        "relationship_status": "confirmed",
+        "link_type": "penetrates",
+        "concealed_continuity": None,
+        "source_reference": evidence_id,
+        "confidence": "0.95",
+    }
+    opening["property_assessments"] = {
+        field: _assessment(opening[field], evidence_id=evidence_id)
+        for field in (
+            "shape",
+            "size",
+            "opening_type",
+            "substrate_plane",
+            "substrate_type",
+            "substrate_specific_type",
+            "substrate_thickness",
+            "orientation",
+            "opening_boundary",
+            "opposite_face_continuity",
+        )
+    }
+    service["property_assessments"] = {
+        field: _assessment(service[field], evidence_id=evidence_id)
+        for field in (
+            "quantity",
+            "service_type",
+            "material",
+            "size",
+            "insulation_or_covering",
+            "arrangement",
+            "primary_opening_code",
+            "opening_codes",
+            "link_type",
+            "relationship_status",
+            "concealed_continuity",
+        )
+    }
+    return {
+        "status": "MODEL_SUPPORTED",
+        "assessment_schema": PROPERTY_ASSESSMENT_SCHEMA,
+        "limitations": [],
+        "openings": [opening],
+        "services": [service],
+    }
+
+
+def _blind(evidence_id: str) -> dict[str, Any]:
     return {
         "status": "COMPLETE",
         "observed_opening_count": 1,
@@ -175,7 +234,7 @@ def _blind(proposal: dict[str, Any]) -> dict[str, Any]:
                 "candidate_id": "V-O-001",
                 "blank": False,
                 "detail": "synthetic opening",
-                "evidence_refs": ["synthetic-evidence"],
+                "evidence_refs": [evidence_id],
             }
         ],
         "candidate_services": [
@@ -186,7 +245,7 @@ def _blind(proposal: dict[str, Any]) -> dict[str, Any]:
                 "quantity": 1,
                 "candidate_opening_ids": ["V-O-001"],
                 "detail": "synthetic service",
-                "evidence_refs": ["synthetic-evidence"],
+                "evidence_refs": [evidence_id],
             }
         ],
         "unresolved_candidates": [],
@@ -216,9 +275,9 @@ def _matching_human_reference() -> dict[str, Any]:
 
 
 class _Port:
-    def __init__(self) -> None:
-        proposal = _proposal()
-        blind = _blind(proposal)
+    def __init__(self, *, evidence_id: str) -> None:
+        proposal = _proposal(evidence_id)
+        blind = _blind(evidence_id)
         self.responses = {
             "blind_inventory": blind,
             "physical_proposal": proposal,
@@ -234,14 +293,14 @@ class _Port:
                         "disposition": "ACCOUNTED_FOR",
                         "proposal_refs": ["O-001"],
                         "detail": "synthetic opening accounted for",
-                        "evidence_refs": ["synthetic-evidence"],
+                        "evidence_refs": [evidence_id],
                     },
                     {
                         "blind_candidate_id": "V-S-001",
                         "disposition": "ACCOUNTED_FOR",
                         "proposal_refs": ["S-001"],
                         "detail": "synthetic service accounted for",
-                        "evidence_refs": ["synthetic-evidence"],
+                        "evidence_refs": [evidence_id],
                     },
                 ],
             },
@@ -370,13 +429,13 @@ def test_approved_package_runs_only_through_factory_and_rolls_back(
             parent_evidence_id=parent.id,
         )
         package = load_phase8_representative_run_package(package_path)
-        port = _Port()
         packet_count: list[int] = []
         closed: list[bool] = []
 
         @contextmanager
         def factory(packet):
             packet_count.append(len(packet.files))
+            port = _Port(evidence_id=packet.manifest["artifacts"][0]["evidence_id"])
             try:
                 yield port
             finally:
@@ -405,6 +464,8 @@ def test_approved_package_runs_only_through_factory_and_rolls_back(
         assert result.receipt["physical_model_lock_created"] is False
         assert result.receipt["protected_state"]["unchanged_after_rollback"] is True
         assert result.runner_result.visual_result is not None
+        assert result.runner_result.visual_result.status == VISUAL_PROPOSAL_APPROVED
+        assert result.runner_result.visual_result.approved is True
         assert packet_count == [2]
         assert closed == [True]
         assert before.fingerprint == after.fingerprint
@@ -685,7 +746,8 @@ def test_package_command_uses_snapshot_and_rolls_back(
         class _ManagedRuntime:
             def __init__(self, **kwargs: Any) -> None:
                 self.evidence_packet = kwargs["evidence_packet"]
-                self.transport = _Port()
+                evidence_id = self.evidence_packet.manifest["artifacts"][0]["evidence_id"]
+                self.transport = _Port(evidence_id=evidence_id)
                 runtimes.append(self)
 
             def __enter__(self) -> _ManagedRuntime:
