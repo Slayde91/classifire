@@ -2,7 +2,7 @@
 
 **Document status:** Current pre-production architecture reconciled with local implementation
 
-**Architecture version:** 3.19
+**Architecture version:** 3.21
 
 **Current implementation focus:** Evidence resolution and proposal-only physical modelling for fire seals, blank openings/core holes, and service penetrations
 
@@ -33,6 +33,56 @@ Implementation claims also identify their repository tier:
 | **Shared current-main** | Published source on the current shared `main` lineage. |
 | **Branch candidate** | Coherent feature-branch work based on current main; it is not shared-main implementation unless reviewed and merged. |
 | **Legacy-root evidence** | Useful later-phase or historical implementation in the materially divergent primary checkout; not a merge or deployment candidate. |
+
+## 1.1 Audit reconciliation - 30 August 2026
+
+The architecture remains governed by the evidence-to-human-release chain, but
+repository tiers must not be confused with implementation completion.
+
+- **Shared current-main (`c8b06d1`)** is the active published foundation. It
+  contains the PR #74 application baseline, PR #78 human-session revocation
+  hardening, and PR #79's documentation-only recovery decision. Its single
+  migration head is `0009_visual_validation_receipts`.
+- **The primary legacy checkout is quarantined source-control evidence, not a
+  deployable/current implementation tier.** PR #79 records the isolated decision
+  to retain the four accepted current-main conflict-path versions and not
+  transplant the stale cherry-pick. The checkout itself still has an active
+  cherry-pick and unmerged files, so it remains invalid for publication,
+  canonical writes, or deployment.
+- **Report assessment is implemented only in overlapping local candidates.**
+  `phase8_property_assessments.py` and the competing `field_assessments`
+  contract both model evidence-labelled values, while the report-context
+  candidate also mixes a much larger storage, API, UI, package-preparation, and
+  inference surface. Focused tests pass for those candidate boundaries, but no
+  single assessment schema is reviewed or present on shared main.
+- **The cable semantics are candidate behaviour, not current-main truth.** A
+  cable bundle's `quantity` counts bundles; a defensible individual cable count
+  is separate. Without that count, a bundle may be classified small, medium, or
+  large. A cable tray remains a distinct service with estimated tray dimensions.
+- **Technical intake and production hardening remain separate candidates.** The
+  Draft-bound technical-intake commits (`d76562e`, `0edeaac`) and proposed
+  `0019_technical_intake_materializations` migration are not on main. The
+  production-boundary commit `a3de490` is also local-only. Neither changes the
+  current architecture until reconciled, reviewed, and published.
+
+### Architecture follow-up required
+
+1. Reconcile one bounded proposal-only assessment contract on current main.
+   Reuse the existing proposal boundary and preserve evidence status,
+   confidence, reasoning, source references, credible alternatives, and
+   unit/range handling without gaining canonical write authority.
+2. Split report storage, package preparation, inference, API, and UI work into
+   reviewable layers. Before API/UI publication, bind stored reports to their
+   project or estimate, enforce the `project_evidence` purpose, and make the
+   malware-state/hash check atomic with the bytes being parsed or served.
+3. Review the technical-intake schema and migration chain, shared-file
+   quarantine transitions, and download/preview race behaviour as one separate
+   containment boundary; do not mix it with Phase 8 proposal work.
+4. Reconcile production bootstrap and security hardening from `a3de490` on
+   current main as a separate change, preserving all existing authority gates.
+5. Keep report-derived inference, human review, canonical submission, Physical
+   Model Lock, technical approval, commercial approval, and Human Release as
+   separate authorities.
 
 ## 2. Product purpose and governing order
 
@@ -468,6 +518,13 @@ evidence and is not consolidated on current main. It is also blocked for the
 current estimate because there is no approved, canonical, locked Physical
 Model.
 
+Current-main technical approval is only a basic prototype boundary: a Draft or
+In Review variant can be activated directly, requester and decider separation is
+not enforced, and source/page evidence is not a full governed authority
+registry. There are no current-main `tests/test_technical*` files. The
+Draft-bound approval, revision, and shared containment candidate must therefore
+be reviewed and tested before technical records are production-trusted.
+
 ### 12.2 Components, quantities, and labour - Basic shared calculation; richer legacy foundation; blocked
 
 A selected technical variant generates distinct required components and labour
@@ -496,7 +553,10 @@ but may not recalculate or reinterpret scope.
 Human Release remains human-only and must accept the exact snapshot and output
 hashes. Current-main snapshots and renderers remain basic and retain legacy
 compatibility names; they are not full validation certificates or Human Release.
-The current estimate has no eligible downstream state.
+The snapshot builder also includes the current generation timestamp in the
+hashed payload and has no snapshot-focused regression suite, so reproducible
+snapshot identity is not yet proven. The current estimate has no eligible
+downstream state.
 
 ## 13. Security and confidentiality
 
@@ -510,6 +570,18 @@ The offline admission key and APK release-signing identity are separate trust
 objects. Neither private key belongs in CLASSIFIRE source, configuration,
 receipts, or documentation.
 
+Current-main application startup unconditionally calls SQLAlchemy
+`create_all()` and seeds an administrator, including in production mode.
+Production configuration findings are reported as warnings rather than an
+enforced startup gate, and admission-bound initial submission defaults off.
+Upload storage does not scan bytes itself and permits `not_configured`
+evidence; same-hash records are returned without purpose rebinding. Migrations
+are not packaged with the installed Python package, and current main has no
+Docker/Compose deployment definition. These are pre-production boundaries.
+Project-owned report intake, clean-only production evidence use, atomic
+quarantine, migration-only production startup, and fail-closed configuration
+must be proven before deployment.
+
 ## 14. Current architecture status
 
 | Area | Status | Current boundary |
@@ -519,11 +591,15 @@ receipts, or documentation.
 | Site-observation evidence intake | **Completed contract** | Shared current-main; evidence registration only, with no Physical Model write or lock authority |
 | Proposal-only visual controller and no-tool runtime | **Completed foundation** | Shared current-main; production persistence/generalisation incomplete |
 | Trusted-UAT package and rollback proof | **Completed shared-main capability** | Representative run executed; source and receipt package are merged |
-| Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; site-dependent facts and independent semantic approval remain unresolved |
+| Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; report-evidence-limited facts and independent semantic approval remain unresolved |
 | Content-safe evidence review and local recovery | **Completed shared-main capability** | Recovery proof has documented mutability/replay limits |
+| Report storage ownership and malware containment | **In progress / local candidates only** | Main has no StoredFile project/estimate owner and does not prove clean-only atomic read/preview; cross-project and quarantine-race tests are required |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
-| Technical through Human Release | **In progress / blocked** | Basic shared foundations and richer legacy-root foundations exist; upstream Physical Model gate unresolved |
+| Technical authority | **Basic prototype / blocked** | Current main lacks enforced approval-role separation and focused technical tests; governed candidate work is not merged |
+| Snapshot and Human Release | **Basic prototype / blocked** | Snapshot reproducibility and full validation certificate are not proven; upstream Physical Model gate unresolved |
+| Production bootstrap and security gates | **In progress / local candidate only** | Main uses unconditional `create_all`/seed and warning-only production findings; `a3de490` is unpushed |
+| Continuous integration | **Not started** | No GitHub workflow or recorded status-check run exists on current main |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |
 | Structural-steel and full duct-run domains | **Planned / deferred** | Separate schemas, libraries, calculators, and acceptance evidence required |
@@ -533,16 +609,25 @@ receipts, or documentation.
 
 ## 15. Next valid architectural action
 
-The representative package, review safeguards, durable visual-validation
-receipt registry, and site-observation evidence-intake contract are now on
-shared main. For the selected Defect, obtain a site visit or equivalent newly
-governed evidence for the facts that human visual review could not establish.
-Retain that evidence immutably and register only the facts it supports through
-the shared-main contract. Do not repeat unchanged inference or convert the
-limited proposal into canonical truth.
+Reconcile and publish one bounded proposal-only report assessment contract from
+the overlapping local candidates. It must let CLASSIFIRE make the strongest
+defensible opening, service, substrate, quantity, and size assessment from the
+controlled report package, while labelling each value **Confirmed**,
+**Approximate**, **Inferred**, or **Unknown** and retaining confidence, reasoning,
+source references, credible alternatives, and unit/range semantics. The first
+slice must not include report storage, UI, technical selection, commercial
+logic, canonical submission, or lock creation.
+
+Completion requires one schema and one deterministic validation path on current
+main; independent binding to the proposal bytes and allowed evidence manifest;
+regression tests for tampered hashes, out-of-manifest evidence, evidence labels,
+uncertainty, credible alternatives, cable-bundle quantity versus cable count,
+the null/Unknown cable-count case with a required bundle size class, and
+cable-tray separation; and an inspected per-defect review render showing
+provenance and unresolved facts. Additional site evidence is requested only
+when the report package cannot support a defensible assessment or confirmation
+is essential to a later governed decision.
 
 The receipt verifier remains a no-write pre-lock check, not signed lock
-admission. Design, approve, and enforce that separate boundary only after the
-remaining evidence is governed and the proposal is independently and
-semantically accepted. Submission, lock creation, technical selection, pricing,
-output, deployment, and Human Release retain their separate gates.
+admission. Submission, lock creation, technical selection, pricing, output,
+deployment, and Human Release retain their separate gates.

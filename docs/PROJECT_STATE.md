@@ -1,10 +1,12 @@
 # CLASSIFIRE Project State
 
-**Verified snapshot:** 2026-08-27 (AEST)
+**Verified snapshot:** 2026-08-30 (AEST)
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified application baseline:** `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge); later documentation-only merges do not alter this runtime baseline
+**Verified shared-main tip:** `c8b06d17678b58f49f2ea816f3b12ba2e4af0095` (PR #79 merge)
+
+**Verified application baseline:** `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge), plus the human-session revocation hardening in `db404b3`; PR #79 adds the reviewed source-control recovery record without changing application code
 
 **Merged Phase 8 scope:** representative rollback package and recovery, evidence-family and human-review validators, direct legacy-route test isolation, the durable visual-validation receipt registry/verifier, and controlled `site_observation` evidence intake
 
@@ -12,14 +14,80 @@ This record reflects committed shared-main code, the mixed legacy checkout, curr
 
 Nothing in this document authorises inference, evidence retrieval, admission signing or registration, canonical submission, Physical Model Lock creation, deployment, or release.
 
+## Audit update - 30 August 2026
+
+This section supersedes earlier working-tree counts and next-action wording in
+this document where they conflict. It is based on the live primary checkout,
+its Git index, all visible isolated worktrees, current `origin/main`, current
+open GitHub pull requests, current migration metadata, and focused checks.
+
+### Verified repository reality
+
+| Area | Status | Evidence and consequence |
+| --- | --- | --- |
+| Shared application | **Completed foundation / in progress overall** | `origin/main` is `c8b06d1`. It contains the PR #74 runtime baseline, PR #78 human-session revocation hardening, and PR #79's documentation-only recovery decision. Alembic reports the single head `0009_visual_validation_receipts`; 48 selected current-main tests pass. |
+| Primary checkout | **Quarantined legacy evidence** | `gpt/phase8-linked-original-images` remains at `de0cc5a`, 378 commits ahead and 141 behind `origin/main`, with active cherry-pick `c3e4c81`, 46 unstaged tracked changes (`+1,668/-894`), 14 staged additions (`+3,183`), four unmerged files, and an incomplete untracked inventory because protected pytest directories cannot be read. PR #79 records the reviewed decision to retain current-main versions; it deliberately does not alter this checkout. |
+| Report-assessment candidates | **In progress, overlapping, local only** | Three current-main-based worktrees implement overlapping concepts: `gpt/phase8-quote-review-run-20260829` adds `property_assessments` and proposal review; `gpt/field-inference-proposal-20260829` adds `field_assessments`; and `gpt/report-evidence-context-20260829` adds a much larger report intake, evidence, API, UI, and inference surface. Their selected focused suites passed during this audit, but none is a bounded reviewed commit and the competing assessment schemas are not reconciled. |
+| Technical-intake candidate | **In progress, separately pushed then continued locally** | `gpt/technical-intake-draft-boundary-20260827` is pushed at `0edeaac` with `0018_shared_malware_containment`; its worktree now includes substantial uncommitted continuation, including proposed `0019_technical_intake_materializations`. Selected materialization and draft-persistence tests pass, but this is not shared-main implementation. |
+| Current-main technical authority | **Basic prototype / not production-safe** | A Draft or In Review `TechnicalVariant` can be activated without enforced requester/decider separation, and current main has no `tests/test_technical*` coverage. Richer Draft/review/source-lineage controls exist only in candidates. |
+| Snapshot and output identity | **Basic prototype / blocked** | `build_estimate_snapshot()` hashes a payload containing the current `generated_utc`, so reproducible snapshot identity is not proven, and no focused snapshot suite exists. Downstream validation, output, and Human Release remain blocked. |
+| Production-hardening candidate | **Local-only candidate** | `gpt/production-boundary-post-pr78-20260827` contains local commit `a3de490` across 28 files and is one commit ahead and three behind current main. It is unpushed and requires current-main review and decomposition before publication. |
+| Current-main production/runtime boundary | **Pre-production only** | Startup always runs `Base.metadata.create_all()` and administrator seeding; production findings are warning-only; signed initial submission defaults off; uploads are not scanned by current-main code; migrations are not packaged with the installed Python package; and no Docker/Compose deployment definition exists. |
+| GitHub review surface | **Requires review** | PR #75 targets `main`; draft legacy PRs #9-#13 remain open on obsolete stacked lineage. Issues #42 and #43 remain open. Issue #42's latest site-visit-first wording is stale against the report-first evidence rule and needs a separate factual update. The branch-protection API returned a plan-limited 403, so no protection state is claimed. None of these items should be treated as complete or merged wholesale. |
+| Continuous integration | **Not started on current main** | No `.github` workflow exists, `gh run list` is empty, and the open PRs have no status-check rollup. Local test evidence is useful, but GitHub mergeability is not CI evidence. |
+
+PR #79 completed the isolated recovery decision: keep the accepted current-main
+versions of the four conflicted paths and do not transplant `c3e4c81`. The root
+itself remains intentionally untouched and unusable for publication. This audit
+therefore uses a clean current-main worktree and does not adopt candidate code.
+
+### Recommended Next Actions
+
+#### Immediate next actions
+
+1. **Reconcile one bounded report-only assessment contract on current main.**
+   - **Objective:** choose one proposal-only representation for opening, service, substrate, quantity, size, and confidence assessments from the overlapping `property_assessments`, `field_assessments`, and report-context candidates.
+   - **Why:** all three candidates have passing focused tests, but they duplicate schemas and change overlapping validators, prompts, runners, and tests. Publishing one wholesale would create competing domain contracts.
+   - **Scope:** start with `phase8_property_assessments.py`, `phase8_proposal_review.py`, the bounded parts of `phase8_visual_proposal.py`, `phase8_visual_prompts.py`, and `visual_validation.py`, plus their focused tests. Preserve bundle quantity separately from cable count; always assess cable count, using null plus Unknown when it is not defensible and requiring a small/medium/large bundle class then; keep cable trays distinct with estimated tray dimensions.
+   - **Dependencies/blockers:** compare all three candidates from a clean `c8b06d1` worktree; decide the single field name/schema and proposal-policy version/legacy-receipt compatibility rule; exclude report ingestion, UI, canonical writes, technical selection, and commercial logic from the first slice.
+   - **Completion criteria:** one reviewable current-main branch; one assessment schema with units/ranges and credible alternatives; explicit Confirmed/Approximate/Inferred/Unknown states with confidence, reasoning, and evidence; proposal bytes/hash and every evidence reference independently verified against the allowed manifest; no canonical-state interface; and no unrelated candidate changes.
+   - **Validation:** fail-closed tests for tampered proposal hashes and out-of-manifest references; compatibility fixtures for historical receipt policy versions; property/proposal-review, visual-proposal, human-reference, linked-run, OpenResponses, representative-run, evidence, and runtime tests; Ruff on changed Python; `git diff --check`; inspect a rendered per-defect review record.
+   - **Uncertainty:** the repository does not yet establish whether `field_assessments` or `property_assessments` is the durable public name. It also does not decide how v1 historical receipts remain verifiable after the candidate policy changes. Resolve both before publication.
+
+#### Near-term actions
+
+2. **Reconcile the shared-byte malware containment boundary required by report intake.**
+   - **Why:** the local report reader checks scan state and hash before parsing, but it does not prove those checks and the bytes read are one atomic operation. The pushed `0018_shared_malware_containment` candidate addresses the same shared-file boundary and must be reviewed as a narrow dependency, not merged wholesale.
+   - **Done when:** clean-to-FOUND transitions quarantine every row sharing the bytes, accepted rows cannot drift to unsafe content, download/preview/read races fail closed, and disposable two-session PostgreSQL tests pass.
+3. **Extract project-owned report storage and deterministic package preparation.**
+   - **Why:** `gpt/report-evidence-context-20260829` contains useful stored-report, register, measurement, evidence-draft, API, UI, and package-preparation work, but its 14,000-plus-line uncommitted diff is not a safe review unit. Its current reader uses `technical_evidence` for project reports, accepts arbitrary stored-file IDs under `project:read`, and has no StoredFile project/estimate ownership binding.
+   - **Done when:** stored reports use the agreed `project_evidence` purpose; every file/package is bound to a project or estimate; cross-project read tests fail; immutable storage/provenance and deterministic package preparation are separate, small current-main slices; and report-derived facts remain Draft/proposal evidence.
+4. **Continue Draft technical normalization/materialization separately.**
+   - **Why:** pushed `0018` containment work and local proposed `0019_technical_intake_materializations` have different review, schema, and migration boundaries.
+   - **Done when:** the materialization slice has one migration path, Draft evidence cannot silently activate a `TechnicalVariant`, and focused persistence/migration tests pass.
+5. **Review the local production-hardening commit on current main.**
+   - **Why:** `a3de490` is security-relevant but unpushed, broad, and three main commits behind.
+   - **Done when:** its 28-file diff is decomposed or justified; production startup does not depend on unconditional `create_all`/seed behaviour; migrations are available from the installed package; production findings and admission-bound initial-submission defaults fail closed as approved; current-main startup/schema/security tests pass; and no unrelated output/UI changes are included.
+6. **Independently rebase, transplant, or supersede PR #75.**
+   - **Done when:** its actual current-main diff, evidence bindings, output safety, and tests are reviewed; GitHub mergeability alone is not acceptance evidence.
+7. **Add a minimal, secret-free pull-request validation workflow.**
+   - **Why:** current main has no GitHub workflow or recorded status checks.
+   - **Done when:** a supported Python environment runs the agreed Pytest policy, Ruff, and the Alembic one-head check; a deliberately failing change produces a failed check; and a passing branch records reproducible checks without customer evidence or secrets.
+
+#### Later or dependency-bound actions
+
+8. **Run a fresh controlled report-only review only after the bounded assessment and package contracts are published and separate run authority exists.** Use all retained report evidence before asking for site confirmation; keep technical compatibility, pricing, canonicalisation, and release unresolved.
+9. **Advance canonical Physical UAT and the signed Physical Model Lock boundary only after evidence resolution and semantic approval.** Phases 9-14 remain blocked until that lock exists; signing, registration, write, lock, deployment, and release each require their own authority.
+10. **Make snapshot identity deterministic when Phase 12 becomes eligible.** Exclude volatile generation time from the semantic identity or define an explicit two-hash contract, add snapshot/output regression tests, and keep Human Release bound to the exact validated snapshot and rendered outputs.
+
 ## 1. Repository and Git position
 
 The shared application baseline reconciled here is
 `20cb72a14dd3b217cfac7670f047fdc385081990`, the merge of PR #74.
-PR #76 advanced `origin/main` to a documentation-only descendant of this
-baseline; later documentation-only merges may advance it again without changing
-the application baseline. Verify the live branch tip directly whenever
-publication state matters. The baseline includes the
+PR #78 added human-session revocation hardening and documentation-only PR #79
+advanced `origin/main` to `c8b06d1` without changing the application
+workflow. Verify the live branch tip directly whenever publication state
+matters. The application baseline includes the
 earlier representative-run/recovery package, evidence-family and human-review
 validators, the direct legacy-route test isolation, and the durable
 visual-validation receipt registry and verifier. It also includes the strict
@@ -150,9 +218,9 @@ The independent v17 evidence block means the historical 17/24 topology must not 
 | 3 | In progress: controlled writer and zero-tool foundations exist; shared main includes trusted UAT package/readiness/recovery tooling; production recovery and deployment proof remain incomplete |
 | 4 | In progress: Mission Control client/bootstrap scaffolding exists but does not own estimate truth |
 | 5 | In progress: one approved report/source path demonstrated full-report linked-original resolution; evidence families, other formats/hosts, retention policy, and multi-report proof remain |
-| 6 | In progress and evidence-limited: a local human-adjudicated proposal records the visible 5/6/6 topology for one Defect, but site-dependent facts remain unresolved and no accepted canonical model exists |
+| 6 | In progress and evidence-limited: a local human-adjudicated proposal records the visible 5/6/6 topology for one Defect, but report-package assessment and unresolved facts remain incomplete and no accepted canonical model exists |
 | 7 | In progress: representative safety/rollback and limited human review are proven; the durable receipt registry and verifier are merged, but signed lock enforcement is not implemented |
-| 8 | In progress and blocked on site evidence, semantic acceptance, and separate canonical/lock authority; no canonical model or replacement Physical Model Lock exists |
+| 8 | In progress and blocked on controlled report-package evidence resolution or essential governed confirmation, semantic acceptance, and separate canonical/lock authority; no canonical model or replacement Physical Model Lock exists |
 | 8C | Planned; only charter/taxonomy/rights preparation is allowed before its admission gates |
 | 9-14 | Basic current-main foundations and richer legacy-only foundations exist; operationally blocked and not architecture-complete |
 | 15 | In progress: security, recovery, scale, monitoring, and release hardening remain |
@@ -160,7 +228,7 @@ The independent v17 evidence block means the historical 17/24 topology must not 
 
 ## 5. Verification for this reconciliation
 
-Current verification evidence for the exact merged source tree:
+Historical verification evidence for the PR #74 application-baseline tree:
 
 - reviewed PR #74 head `9f5dacacadfab02d6c9aaf8ac0add43c5eedfff8`
   and merge commit `20cb72a14dd3b217cfac7670f047fdc385081990`
@@ -174,6 +242,15 @@ Current verification evidence for the exact merged source tree:
 - whole-repository Ruff and Mypy were not rerun for PR #74. Previously recorded
   inherited findings outside the changed paths have not been revalidated on
   current main.
+
+Current audit verification on shared-main tip `c8b06d1`:
+
+- Alembic reports one head: `0009_visual_validation_receipts`;
+- **48 selected current-main tests passed** across human-session security,
+  evidence-family review, human-adjudicated proposal, visual evidence, and the
+  linked visual runner; and
+- no current full-suite, whole-repository Ruff, Mypy, Bandit, deployment, or
+  real-report execution result is claimed by this reconciliation.
 
 The retained offline recovery v8 remains historical, successful hash-binding
 evidence for its own source fingerprint. PR #74's controlled `site_observation`
@@ -207,9 +284,16 @@ canonical-write, lock, deployment, or release authority.
 ## 7. Current blockers and next valid task
 
 The retained 7+4 human review is complete and must not be repeated. The next
-physical-evidence action for the selected Defect is a site visit or equivalent
-newly governed evidence for dimensions, depth/boundaries, exact substrate,
-service labels/material proof, and opposite-face continuity.
+engineering task is Action 1 above: reconcile one bounded, proposal-only report
+assessment contract on current main. Until that contract and the later
+project-owned/contained package boundary are published, another real-report run
+would test overlapping local designs rather than an accepted CLASSIFIRE path.
+
+After those prerequisites and separate run authority exist, the next
+physical-evidence action is controlled report-package assessment using all
+retained report text, photographs, drawings, and context. Request a site visit
+or equivalent newly governed evidence only when the package cannot support a
+defensible estimate or confirmation is essential for a later governed decision.
 
 Do not rerun unchanged inference or convert the limited 5/6/6 record into
 canonical truth. The durable visual-validation receipt registry and exact
