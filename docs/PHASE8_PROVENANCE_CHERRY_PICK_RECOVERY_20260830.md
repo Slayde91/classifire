@@ -2,7 +2,8 @@
 
 ## Scope
 
-This record resolves the four delete-versus-add conflicts left by the
+This record documents an isolated recovery decision for the four
+delete-versus-add conflicts left by the
 interrupted cherry-pick of `c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`
 (`feat(phase8): add reviewed visual provenance`) in the legacy root checkout.
 It is a source-control recovery record only. It creates no canonical evidence,
@@ -28,8 +29,7 @@ the stage-3 versions from `c3e4c810`.
 
 Reason: current main already includes the accepted successor
 `e99b91b5cb62e76b9b1068954cfdc71fad678ec5` with the same feature subject,
-merged by PR #71, and later shared-main commits further hardened these files.
-The older commit is not an ancestor of current main and differs materially from
+merged by PR #71. The older commit is not an ancestor of current main and differs materially from
 the accepted successor. Reapplying it would regress the newer implementation
 and its tests.
 
@@ -37,8 +37,8 @@ and its tests.
 
 | Conflicted path | Resolution |
 | --- | --- |
-| `phase8_linked_visual_run.py` | Retain the current-main implementation, including later evidence/receipt hardening. |
-| `phase8_visual_evidence.py` | Retain the current-main implementation, including later retained-evidence and malware-containment hardening. |
+| `phase8_linked_visual_run.py` | Retain the accepted current-main implementation. |
+| `phase8_visual_evidence.py` | Retain the accepted current-main implementation. |
 | `test_phase8_linked_visual_run.py` | Retain the current-main regression suite. |
 | `test_phase8_visual_evidence.py` | Retain the current-main regression suite. |
 
