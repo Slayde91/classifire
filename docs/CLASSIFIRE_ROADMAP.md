@@ -265,7 +265,9 @@ it before adapter work if review finds a defect; do not create a second schema.
    at submission and approval. PR #91 repeats that source-integrity check
    immediately before a linked `TechnicalVariant` becomes active. PR #93 makes
    new Package 15 imports Draft-only and runtime-ineligible, retaining any
-   source-declared activity as provenance rather than authority.
+   source-declared activity as provenance rather than authority. PR #95 requires
+   an active pinned technical release at runtime, and PR #96 rejects a release
+   whose manifest includes missing or non-active variants.
 4. **Review production hardening in contained slices on current main.** Independently review the validated migration-packaging and CLI-bootstrap candidate before publication; then decompose or justify the remaining `a3de490` scope, preserving the merged fail-closed startup boundary.
 5. **Resolve PR #75 independently.** Rebase it on current main or replace it with a small reviewed successor; GitHub mergeability alone is not acceptance evidence.
 6. **Add minimal pull-request validation.** Run the agreed Pytest policy, Ruff, and Alembic one-head check without secrets or customer evidence; prove both a deliberate failure and a reproducible pass.
@@ -302,6 +304,21 @@ deployment, live-report, canonical-write, or release proof.
 The remaining production-hardening candidate is the separate broad `a3de490`
 scope. The next operational action remains a controlled report-only assessment
 only after separate run authority, followed by human review of every artifact.
+
+### 2.12 Post-PR #96 technical release-scope update
+
+PR #95 and PR #96 add narrow, fail-closed runtime safeguards to the existing
+technical-release path. Technical search and estimate release-basis validation
+now require the pinned immutable technical release to be active, and reject the
+whole release if any manifest record is missing or no longer an active
+`TechnicalVariant`. The PR workflow passed for final heads `758ba46` and
+`d140898` before their respective merges.
+
+This does not create a new technical release, automatically supersede an old
+one, or complete Draft intake, source-lineage, approval, and technical-authority
+governance. The next operational action remains a controlled, proposal-only
+report assessment only after separate run authority, followed by human review of
+every artifact.
 
 ## 3. Master roadmap at a glance
 
