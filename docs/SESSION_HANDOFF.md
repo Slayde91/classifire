@@ -7,8 +7,9 @@ adapter and narrow production-startup hardening, PR #82 merged migration
 packaging plus production schema-readiness safeguards, and PR #83 merged
 browser, diagnostic, containment-test, and technical-activation safeguards into
 shared main. PR #91 additionally rechecks a linked technical source immediately
-before activation. There is still no approved canonical Physical Model or active
-replacement Physical Model Lock.
+before activation, and PR #93 makes new technical-library imports Draft-only.
+There is still no approved canonical Physical Model or active replacement
+Physical Model Lock.
 
 PR #82 has no authority to upgrade a production, UAT, or customer database.
 
@@ -21,8 +22,9 @@ This handoff is a factual audit record. It does not grant authority to run infer
   contract, PR #81's contained report-evidence adapter/startup hardening, and
   PR #82's migration packaging/schema-readiness boundary, and PR #83's browser,
   diagnostic, containment-test, and technical-activation safeguards. PR #84
-  reconciled their shared-main status documentation. Fetch `origin/main` before
-  any publication-sensitive decision.
+  reconciled their shared-main status documentation. PR #93 then made imported
+  technical rows Draft-only evidence. Fetch `origin/main` before any
+  publication-sensitive decision.
 - Current shared-main Alembic state has one head: `0011_report_evidence_locators` on `legacy_adjudicated_lineage`. The technical-intake candidate migration is not on main.
 - The final PR #81 `CLASSIFIRE pull request validation` workflow completed
   successfully for `4ebc531` at 2026-08-30 12:50:43 UTC: 500 tests passed,
@@ -37,6 +39,8 @@ This handoff is a factual audit record. It does not grant authority to run infer
   for `828076c` in 1m37s before its documentation-only merge.
 - PR #91's `CLASSIFIRE pull request validation` workflow completed successfully
   for `3777dea` in 1m37s before it merged at `cf12ed5`.
+- PR #93's `CLASSIFIRE pull request validation` workflow completed successfully
+  for `7b63a9f` in 1m59s before it merged at `143c5b5`.
 - The report ownership/bytes, stable locators, deterministic review packages,
   report-aware assessment bindings, managed no-tool runtime, migration
   packaging, production schema-readiness safeguards, browser boundary,
@@ -75,6 +79,7 @@ did not modify it.
 | Governed technical intake | **Separate pushed candidate plus local continuation** | `d76562e` and `0edeaac` are not on shared main. Their worktree has proposed `0019` and substantial uncommitted follow-on material, so it is not a clean merge candidate. |
 | Technical activation separation | **Merged shared-main hardening (PRs #83 and #91)** | The existing UI workflow now requires `in_review`, a pending request, a different deciding user, and an approved linked source document before a variant can become active. PR #91 also requires the linked retained source to still be clean, immutable, and unchanged at that decision point. It remains a narrow fail-closed guard, not full technical-intake authority or production proof. |
 | Technical-document review separation | **Merged shared-main hardening (PRs #86 and #88)** | New Draft or Rejected source documents must have clean, immutable, unchanged retained bytes, be submitted for review, then be independently approved or rejected through the existing Approval record before they can carry an approved status. It does not create a migration, canonical authority, or complete source-lineage governance. |
+| Technical-library import boundary | **Merged shared-main hardening (PR #93)** | A Package 15 import is now Draft evidence even when source rows claim active status. Source activity remains retained provenance, while normal search, active release snapshots, and runtime use stay blocked pending later governance. Existing active records remain unchanged. |
 | Production startup boundary | **Merged narrow hardening** | Main rejects unsafe production configuration before filesystem or lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
 | Installed migration packaging and CLI bootstrap | **Merged shared-main hardening** | PR #82 moved immutable history under `classifire.migrations`; `classifire-migrate` explicitly upgrades only to its current head, while production CLI setup/import commands refuse to create schema or seed defaults. Production startup and database-writing CLI paths require the configured database to prove the exact packaged migration head before proceeding. Source, wheel, focused, full-suite, and PR CI checks used no production, UAT, or customer database. |
 | Production browser configuration and diagnostics | **Merged shared-main hardening (PR #83)** | Documented CSV/JSON `trusted_hosts` and `allowed_origins` inputs parse correctly, while unsafe production host/origin configuration fails before lifespan storage work. The read-only `doctor` command reports only the database type and a generic connection failure, never a raw database URL or exception. This is not deployment or production proof. |
