@@ -39,12 +39,14 @@ Implementation claims also identify their repository tier:
 The architecture remains governed by the evidence-to-human-release chain, but
 repository tiers must not be confused with implementation completion.
 
-- **Shared current-main (`e894a17`)** is the active published foundation. It
+- **Shared current-main** is the active published foundation through PR #84. It
   contains the PR #74 application baseline, PR #78 human-session revocation
   hardening, PR #79's recovery decision, PR #80's bounded v2 assessment/review
   contract, PR #81's contained report-evidence adapter and production-startup
-  guard, PR #82's migration packaging and schema-readiness boundary, and the
-  secret-free pull-request validation workflow. Its single
+  guard, PR #82's migration packaging and schema-readiness boundary, PR #83's
+  browser-boundary, diagnostic-redaction, containment-test, and
+  technical-activation hardening, and the secret-free pull-request validation
+  workflow. Its single
   migration head is `0011_report_evidence_locators`.
 - **The primary legacy checkout is quarantined source-control evidence, not a
   deployable/current implementation tier.** PR #79 records the isolated decision
@@ -74,10 +76,11 @@ repository tiers must not be confused with implementation completion.
   exact packaged migration-head readiness. The remaining candidates do not
   change shared-main
   architecture until separately reviewed and published.
-- **A current-branch production browser-boundary candidate is unmerged.** It
-  repairs documented CSV/JSON host/origin settings parsing and rejects unsafe
-  production Trusted Host/CORS configuration before lifespan storage work. It
-  changes no canonical authority and is not deployment evidence.
+- **PR #83 merged the production browser boundary and diagnostic redaction.**
+  It repairs documented CSV/JSON host/origin settings parsing, rejects unsafe
+  production Trusted Host/CORS configuration before lifespan storage work, and
+  prevents `doctor` from disclosing database connection details. It changes no
+  canonical authority and is not deployment evidence.
 - **PR #83 merged the technical-activation guard.** It uses the
   existing Approval workflow to reject direct Draft activation, self-approval,
   absent pending requests, and missing or non-approved linked technical documents. It does not
@@ -651,11 +654,11 @@ CI-proven; they are not deployment or live-report proof.
 | Report storage ownership and malware containment | **Merged shared-main / pre-production** | PR #81 binds StoredFiles to Project/Estimate evidence and verifies clean-byte reads; its disposable PostgreSQL quarantine-race test passed in CI |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
-| Technical authority | **Basic prototype / blocked** | Current main lacks enforced approval-role separation and focused technical tests; governed candidate work is not merged |
+| Technical authority | **Narrow shared-main hardening / blocked** | PR #83 requires In Review status, a pending request, a different approver, and an approved linked source document before activation. Full Draft intake, source lineage, and technical-authority governance remain incomplete. |
 | Snapshot and Human Release | **Basic prototype / blocked** | Snapshot reproducibility and full validation certificate are not proven; upstream Physical Model gate unresolved |
 | Production bootstrap and security gates | **Merged limited hardening** | Main rejects unsafe production settings before filesystem or lifecycle work, suppresses production `create_all`/seed, packages immutable migrations, adds an explicit upgrade command, blocks production CLI setup/import seeding, and requires the exact packaged migration head before production storage or database-writing CLI work. Deployment proof and the remaining `a3de490` scope are still unreviewed. |
-| Production browser boundary | **Current-branch candidate** | Documented CSV/JSON host/origin settings parse deterministically; unsafe production Trusted Host/CORS settings fail before storage work. It is not shared-main, deployment, or production proof. |
-| Continuous integration | **Established on shared main** | The secret-free pull-request workflow passed for PRs #80, #81, and #82; PR #81 included the disposable PostgreSQL race. |
+| Production browser boundary | **Merged limited hardening** | PR #83 makes documented CSV/JSON host/origin settings parse deterministically and rejects unsafe production Trusted Host/CORS settings before storage work. It is not deployment or production proof. |
+| Continuous integration | **Established on shared main** | The secret-free pull-request workflow passed for PRs #80 through #84; PRs #81 and #83 included the disposable PostgreSQL race. |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |
 | Structural-steel and full duct-run domains | **Planned / deferred** | Separate schemas, libraries, calculators, and acceptance evidence required |

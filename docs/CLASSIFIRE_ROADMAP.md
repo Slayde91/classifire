@@ -280,6 +280,21 @@ pre-publication audit record.
 | Continuous integration | **Established on shared main.** The secret-free pull-request workflow succeeded for PRs #80, #81, and #82. | Each later branch still needs its own CI result; a prior green result is not blanket approval. |
 | Report-only UAT | **Blocked by separate authority.** No real report, OpenClaw, or provider call occurred while building or testing this candidate. | After the database proof and independent review, obtain separate authority for one controlled proposal-only assessment and human-review every resulting artifact. |
 
+### 2.11 Post-PR #83 shared-main update
+
+This update supersedes the present-tense production-browser, continuous-
+integration, and report-only-UAT wording in section 2.10. PR #83 merged the
+documented browser-boundary validation, database-diagnostic redaction,
+containment-test opt-in guard, and technical-activation separation guard. PR #84
+recorded that merge in the project status documents. The PR workflow passed for
+each of PRs #80 through #84; PR #83's successful run included the disposable
+PostgreSQL containment race. These remain pre-production source safeguards, not
+deployment, live-report, canonical-write, or release proof.
+
+The remaining production-hardening candidate is the separate broad `a3de490`
+scope. The next operational action remains a controlled report-only assessment
+only after separate run authority, followed by human review of every artifact.
+
 ## 3. Master roadmap at a glance
 
 | Phase | Status | Primary exit condition |
@@ -428,7 +443,7 @@ Run and approval visibility is useful and traceable without creating a second mu
 - Stale low-resolution conclusions are not allowed to suppress high-detail re-review.
 - Model-visible attachments are rehashed immediately before transport to prevent path or byte substitution after earlier validation.
 - The retained representative pass proved that higher-detail retrieval can still end in correct abstention: the originals did not resolve every physical relationship or quantity.
-- The current branch candidate adds one manifest-bound v2 property-assessment
+- PR #80 merged one manifest-bound v2 property-assessment
   and proposal-review contract. It preserves evidence status, confidence,
   reasoning, ranges, alternatives, cable semantics, and historical v1
   verification without adding persistence authority.
@@ -460,7 +475,7 @@ Each physical claim has a durable source trail to the relevant report text, page
 - Barrier substrate, plane, orientation, FRL/assumption, service type, material, quantity, and link evidence must remain independently represented.
 - Unknown, contested, or occluded facts must be withheld or marked provisional rather than inferred from image count alone.
 - Exact opening/service counts do not prove topology correctness.
-- The branch-candidate v2 contract assesses every declared opening, service, and
+- The shared-main v2 contract assesses every declared opening, service, and
   substrate field independently and rejects undeclared technical or commercial
   conclusions. This is proposal structure, not an accepted Physical Model.
 
@@ -495,7 +510,7 @@ Every known defect has a defensible physical model or an explicit evidence limit
 - A post-inference validation-only comparator binds proposal, controller receipt, and reference inputs by path and SHA-256 and detects topology/substrate swaps. It has no database or inference interface, and no real-UAT human reference fixture was copied to main.
 - A representative rollback-only pass completed through the independent Validator. Retrieval succeeded, the result was `VISUAL_PROPOSAL_BLOCKED`, human-reference comparison was correctly skipped, and protected canonical state remained unchanged.
 - Current local recovery tooling can reconstruct the blocked review request from receipt-bound local sessions without another inference request. Recovery proves the recorded local lineage and payload hashes, not immutable session custody or replay of Gateway/transport guarantees.
-- The current branch candidate binds fresh v2 prompt/runtime profiles, proposal
+- The shared-main v2 contract binds fresh v2 prompt/runtime profiles, proposal
   receipts, evidence manifests, property assessments, recovery, and human
   adjudication, while preserving paired historical v1 verification. Its
   hash-bound JSON and inert Markdown review outputs cannot grant authority.
@@ -528,20 +543,17 @@ An independently validated, durable visual receipt is required for every canonic
 6. The blocked review request was recovered locally from all receipt-bound successful stages. The recovery is content-safe and hash-bound but expressly does not make mutable local OpenClaw history immutable or replay Gateway and external transport evidence.
 7. Human review v2 accounts for all seven review items and four unresolved observations. Shared-main validators pass the limited 5/6/6 proposal-only record while the retained response and unresolved report-evidence-limited facts remain local evidence.
 8. Shared main now includes the strict `site_observation` evidence-intake contract needed to retain new governed site facts against the relevant Defect without granting Physical Model write, lock, signing, pricing, or release authority.
-9. The current branch candidate completes the bounded v2 property-assessment and
-   proposal-review contract with full-suite and changed-file verification. It
-   has not run the approved report and is not shared main until reviewed and
-   merged.
+9. PR #80 merged the bounded v2 property-assessment and proposal-review contract
+   with full-suite and changed-file verification. It has not run the approved
+   report and remains proposal-only shared-main source.
 
 ### Current gate
 
 The representative package, review safeguards, durable receipt registry, and
-site-observation evidence-intake contract are merged on shared main. The bounded
-v2 assessment/review contract is complete on the current branch candidate. The
-next engineering task is the contained, project-owned, report-SHA evidence
-adapter and exactly-one-review-per-Defect flow in Section 2.9. Only after that
-path is published and separate run authority exists is the next
-physical-evidence action a controlled report-package assessment. Request a
+site-observation evidence-intake contract, bounded v2 assessment/review contract,
+and contained report-SHA evidence adapter are merged on shared main. The next
+physical-evidence action is a controlled report-package assessment only after
+separate run authority exists. Request a
 site visit or equivalent newly governed evidence only for facts that cannot be
 defensibly estimated from that package or need confirmation for a later governed
 decision. Retain any such evidence as an

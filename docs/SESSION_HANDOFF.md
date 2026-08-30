@@ -4,9 +4,10 @@
 
 **Status:** Pre-production prototype; PR #81 merged the contained report-evidence
 adapter and narrow production-startup hardening, PR #82 merged migration
-packaging plus production schema-readiness safeguards, and PR #83 merged the
-technical-activation separation guard into shared main. There is still no
-approved canonical Physical Model or active replacement Physical Model Lock.
+packaging plus production schema-readiness safeguards, and PR #83 merged
+browser, diagnostic, containment-test, and technical-activation safeguards into
+shared main. There is still no approved canonical Physical Model or active
+replacement Physical Model Lock.
 
 PR #82 has no authority to upgrade a production, UAT, or customer database.
 
@@ -14,12 +15,13 @@ This handoff is a factual audit record. It does not grant authority to run infer
 
 ## 1. Verified shared state
 
-- `origin/main` is `ac7de2c6f544088de0092a3b4d9bfdc0aec64b6d`
-  (PR #83). It contains the PR #74 application baseline, `db404b3` human-session
+- Shared main includes the PR #74 application baseline, `db404b3` human-session
   hardening, the PR #79 recovery decision, PR #80's bounded assessment/review
   contract, PR #81's contained report-evidence adapter/startup hardening, and
-  PR #82's migration packaging/schema-readiness boundary, and PR #83's
-  technical-activation separation guard.
+  PR #82's migration packaging/schema-readiness boundary, and PR #83's browser,
+  diagnostic, containment-test, and technical-activation safeguards. PR #84
+  reconciled their shared-main status documentation. Fetch `origin/main` before
+  any publication-sensitive decision.
 - Current shared-main Alembic state has one head: `0011_report_evidence_locators` on `legacy_adjudicated_lineage`. The technical-intake candidate migration is not on main.
 - The final PR #81 `CLASSIFIRE pull request validation` workflow completed
   successfully for `4ebc531` at 2026-08-30 12:50:43 UTC: 500 tests passed,
@@ -30,12 +32,17 @@ This handoff is a factual audit record. It does not grant authority to run infer
   boundary before the PR merged at `e894a17`.
 - PR #83's `CLASSIFIRE pull request validation` workflow completed successfully
   for `70f8df5` in 2m13s before the PR merged at `ac7de2c`.
+- PR #84's `CLASSIFIRE pull request validation` workflow completed successfully
+  for `828076c` in 1m37s before its documentation-only merge.
 - The report ownership/bytes, stable locators, deterministic review packages,
   report-aware assessment bindings, managed no-tool runtime, migration
-  packaging, and production schema-readiness safeguards are shared-main source.
+  packaging, production schema-readiness safeguards, browser boundary,
+  diagnostic redaction, containment-test guard, and technical-activation guard
+  are shared-main source.
 - Open GitHub work remains reviewable rather than automatically mergeable: PR #75 is open; PRs #9-#13 are retained draft stack work; issues #42 and #43 are open. Issue #42 still has stale site-visit-first wording.
-- Current main has the secret-free pull-request workflow. Its successful PR #80 run
-  is CI evidence for that exact head, not a blanket approval for later branches.
+- Current main has the secret-free pull-request workflow. Its successful PR #80
+  through #84 runs are evidence for their exact heads, not blanket approval for
+  later branches.
 - GitHub's branch-protection endpoint returned a plan-limited 403, so this audit
   does not claim that main is protected or unprotected.
 
@@ -66,14 +73,14 @@ did not modify it.
 | Technical activation separation | **Merged shared-main hardening (PR #83)** | The existing UI workflow now requires `in_review`, a pending request, a different deciding user, and an approved linked source document before a variant can become active. It remains a narrow fail-closed guard, not full technical-intake authority or production proof. |
 | Production startup boundary | **Merged narrow hardening** | Main rejects unsafe production configuration before filesystem or lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
 | Installed migration packaging and CLI bootstrap | **Merged shared-main hardening** | PR #82 moved immutable history under `classifire.migrations`; `classifire-migrate` explicitly upgrades only to its current head, while production CLI setup/import commands refuse to create schema or seed defaults. Production startup and database-writing CLI paths require the configured database to prove the exact packaged migration head before proceeding. Source, wheel, focused, full-suite, and PR CI checks used no production, UAT, or customer database. |
-| Production browser configuration and diagnostics | **Validated current-branch candidate** | Documented CSV/JSON `trusted_hosts` and `allowed_origins` inputs parse correctly, while unsafe production host/origin configuration fails before lifespan storage work. The read-only `doctor` command reports only the database type and a generic connection failure, never a raw database URL or exception. This remains unshared-main code, not deployment or production proof. |
+| Production browser configuration and diagnostics | **Merged shared-main hardening (PR #83)** | Documented CSV/JSON `trusted_hosts` and `allowed_origins` inputs parse correctly, while unsafe production host/origin configuration fails before lifespan storage work. The read-only `doctor` command reports only the database type and a generic connection failure, never a raw database URL or exception. This is not deployment or production proof. |
 | Report review / UAT | **Proposal-only, authority-gated** | A report package can support cautious evidence assessment, but it cannot create technical compatibility truth, commercial truth, a canonical model, a lock, or a release. |
 
 ## 4. Start Here / Next Session
 
 **Required first gate:** obtain separate authority for one controlled,
 proposal-only report assessment, then human-review every resulting artifact.
-PRs #81 and #82 are reviewed, merged, and CI-proven; their source publication
+PRs #81 through #84 are reviewed, merged, and CI-proven; their source publication
 does not grant run authority.
 
 **Recommended next engineering task:** obtain separate authority for one
@@ -170,9 +177,9 @@ downstream authority interface.
    only with separate run authority, then human-review every generated file.
 2. **Continue Draft technical materialization separately.** Review proposed
    migration `0019` without silently activating a `TechnicalVariant`.
-3. **Independently review the current production browser-boundary candidate.**
-   Keep it separate from the broader `a3de490` work and do not treat it as
-   deployment proof.
+3. **Independently review the remaining broad `a3de490` production-hardening
+   candidate.** Keep it separate from the merged browser boundary and do not
+   treat either as deployment proof.
 4. **Review or supersede PR #75 independently.** A mergeable label is not
    acceptance evidence.
 5. **Keep canonical UAT, signed lock admission, downstream technical/commercial
