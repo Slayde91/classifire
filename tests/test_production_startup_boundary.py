@@ -11,6 +11,7 @@ from classifire.config import (
     Settings,
     require_production_configuration,
 )
+from classifire.migrations import MigrationReadinessError
 
 
 def _safe_production_settings(tmp_path: Path) -> Settings:
@@ -69,6 +70,7 @@ def test_production_lifespan_never_creates_schema_or_seeds_database(
 
     monkeypatch.setattr(main.Base.metadata, "create_all", unexpected_write)
     monkeypatch.setattr(main, "SessionLocal", unexpected_write)
+    monkeypatch.setattr(main, "require_current_migration_head", lambda _settings: None)
 
     async def run_lifespan() -> None:
         async with main.lifespan(main.app):
@@ -76,6 +78,28 @@ def test_production_lifespan_never_creates_schema_or_seeds_database(
 
     asyncio.run(run_lifespan())
     assert settings.storage_root.is_dir()
+
+
+def test_production_lifespan_refuses_unmigrated_database_before_storage(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = _safe_production_settings(tmp_path)
+    monkeypatch.setattr(main, "settings", settings)
+
+    def missing_head(_settings: Settings) -> None:
+        raise MigrationReadinessError("DATABASE_MIGRATION_REQUIRED")
+
+    monkeypatch.setattr(main, "require_current_migration_head", missing_head)
+
+    async def run_lifespan() -> None:
+        async with main.lifespan(main.app):
+            pass
+
+    with pytest.raises(MigrationReadinessError, match="DATABASE_MIGRATION_REQUIRED"):
+        asyncio.run(run_lifespan())
+
+    assert not settings.storage_root.exists()
 
 
 def test_unsafe_production_lifespan_does_not_create_storage_root(

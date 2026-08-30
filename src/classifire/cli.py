@@ -24,6 +24,7 @@ from .config import (
 )
 from .db import Base, SessionLocal, engine
 from .importers import import_pricing_library, import_technical_variants, seed_database
+from .migrations import MigrationReadinessError, require_current_migration_head
 from .mission_control import MissionControlClient, bootstrap_mission_control
 from .models import PricingLibraryRecord, TechnicalVariant, User
 from .security import hash_password
@@ -68,8 +69,13 @@ def _prepare_cli_write(*, seeds_controlled_defaults: bool = False) -> Settings:
 def _ensure_cli_schema(settings: Settings) -> None:
     """Keep development setup convenient without permitting production schema creation."""
 
-    if settings.env != "production":
-        Base.metadata.create_all(bind=engine)
+    if settings.env == "production":
+        try:
+            require_current_migration_head(settings)
+        except MigrationReadinessError as exc:
+            raise typer.BadParameter(exc.code) from exc
+        return
+    Base.metadata.create_all(bind=engine)
 
 
 @app.command()
@@ -185,7 +191,8 @@ def start(
 @app.command()
 def worker(interval: float = typer.Option(2.0)) -> None:
     """Run the background job worker."""
-    _prepare_cli_write()
+    settings = _prepare_cli_write()
+    _ensure_cli_schema(settings)
     from .worker import run_forever
 
     run_forever(interval)
@@ -307,6 +314,7 @@ def register_adjudicated_admission(
 ) -> None:
     """Register one verified admission without a canonical write or physical lock."""
     settings = _prepare_cli_write()
+    _ensure_cli_schema(settings)
     if not settings.adjudicated_initial_submission_enabled:
         raise typer.BadParameter("ADJUDICATED_SUBMISSION_DISABLED")
 

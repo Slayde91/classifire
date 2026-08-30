@@ -7,8 +7,13 @@ from alembic.config import Config
 from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, text
 
-from classifire.config import get_settings
-from classifire.migrations import SCRIPT_LOCATION
+from classifire.config import Settings, get_settings
+from classifire.migrations import (
+    SCRIPT_LOCATION,
+    MigrationReadinessError,
+    require_current_migration_head,
+    upgrade_to_head,
+)
 from classifire.migrations import main as migration_main
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,3 +66,18 @@ def test_migration_command_refuses_unsafe_production_before_creating_database(
     assert raised.value.code == 2
     assert "PostgreSQL is required for multi-user production deployment" in capsys.readouterr().err
     assert not database_path.exists()
+
+
+def test_migration_readiness_requires_exact_packaged_head(tmp_path: Path) -> None:
+    database_path = tmp_path / "readiness.sqlite"
+    settings = Settings(
+        env="test",
+        database_url=f"sqlite:///{database_path.as_posix()}",
+    )
+
+    with pytest.raises(MigrationReadinessError, match="DATABASE_MIGRATION_REQUIRED"):
+        require_current_migration_head(settings)
+
+    upgrade_to_head(settings)
+
+    require_current_migration_head(settings)

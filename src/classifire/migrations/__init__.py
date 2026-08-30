@@ -6,6 +6,10 @@ import sys
 
 from alembic import command
 from alembic.config import Config
+from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 
 from classifire.config import (
     ProductionConfigurationError,
@@ -15,6 +19,14 @@ from classifire.config import (
 )
 
 SCRIPT_LOCATION = "classifire:migrations"
+
+
+class MigrationReadinessError(RuntimeError):
+    """The configured database cannot prove it is at the packaged migration head."""
+
+    def __init__(self, code: str) -> None:
+        self.code = code
+        super().__init__(code)
 
 
 def migration_config(settings: Settings) -> Config:
@@ -31,6 +43,24 @@ def upgrade_to_head(settings: Settings) -> None:
     """Explicitly apply the packaged migration history through its current head."""
 
     command.upgrade(migration_config(settings), "head")
+
+
+def require_current_migration_head(settings: Settings) -> None:
+    """Fail closed unless the configured database is exactly at every packaged head."""
+
+    config = migration_config(settings)
+    expected_heads = frozenset(ScriptDirectory.from_config(config).get_heads())
+    engine = create_engine(settings.database_url)
+    try:
+        with engine.connect() as connection:
+            actual_heads = frozenset(MigrationContext.configure(connection).get_current_heads())
+    except SQLAlchemyError as exc:
+        raise MigrationReadinessError("DATABASE_MIGRATION_UNAVAILABLE") from exc
+    finally:
+        engine.dispose()
+
+    if actual_heads != expected_heads:
+        raise MigrationReadinessError("DATABASE_MIGRATION_REQUIRED")
 
 
 def main() -> None:

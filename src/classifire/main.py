@@ -26,6 +26,7 @@ from .db import Base, SessionLocal, engine
 from .estimate_pinning import router as estimate_pinning_router
 from .importers.seed import seed_database
 from .library_ui import router as library_ui_router
+from .migrations import require_current_migration_head
 from .models import User
 from .release_admin import router as release_admin_router
 from .technical_admin import router as technical_admin_router
@@ -38,6 +39,8 @@ package_dir = Path(__file__).parent
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     require_production_configuration(settings)
+    if settings.env == "production":
+        require_current_migration_head(settings)
     settings.storage_root.mkdir(parents=True, exist_ok=True)
     if settings.env != "production":
         # Development/local installer convenience. Production deployment must run Alembic first.

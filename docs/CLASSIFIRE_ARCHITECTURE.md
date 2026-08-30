@@ -617,7 +617,9 @@ and administrator password, HTTPS-only sessions, and PostgreSQL; it never
 calls `create_all()` or seeds an administrator. This branch has a separate,
 validated but unmerged candidate that packages the immutable Alembic history,
 exposes an explicit installed upgrade command, and refuses production CLI
-setup/import commands before they can create schema or seed defaults. Shared
+setup/import commands before they can create schema or seed defaults. It also
+requires exact packaged migration-head readiness before production storage setup
+or database-writing CLI work. Shared
 main still lacks those boundaries, and live deployment proof and the remaining
 broader hardening work are still pre-production boundaries. Project-owned
 report intake, clean-only evidence use, and atomic quarantine are source and
@@ -640,7 +642,7 @@ CI-proven; they are not deployment or live-report proof.
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
 | Technical authority | **Basic prototype / blocked** | Current main lacks enforced approval-role separation and focused technical tests; governed candidate work is not merged |
 | Snapshot and Human Release | **Basic prototype / blocked** | Snapshot reproducibility and full validation certificate are not proven; upstream Physical Model gate unresolved |
-| Production bootstrap and security gates | **Merged limited hardening plus unmerged CLI/migration candidate** | Main rejects unsafe production settings before filesystem or lifecycle work and suppresses production `create_all`/seed; this branch packages immutable migrations, adds an explicit upgrade command, and blocks production CLI setup/import seeding, but deployment proof and the remaining `a3de490` scope are still unreviewed |
+| Production bootstrap and security gates | **Merged limited hardening plus unmerged CLI/migration candidate** | Main rejects unsafe production settings before filesystem or lifecycle work and suppresses production `create_all`/seed; this branch packages immutable migrations, adds an explicit upgrade command, blocks production CLI setup/import seeding, and requires the exact packaged migration head before production storage or database-writing CLI work. Deployment proof and the remaining `a3de490` scope are still unreviewed. |
 | Continuous integration | **Established on shared main** | The secret-free pull-request workflow passed for PR #80 and the final PR #81 head, including the disposable PostgreSQL race |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |
