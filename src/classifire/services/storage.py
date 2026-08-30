@@ -486,6 +486,8 @@ def save_upload(
     existing = db.scalar(select(StoredFile).where(StoredFile.sha256 == sha))
     if existing:
         temp_path.unlink(missing_ok=True)
+        if existing.purpose != purpose:
+            raise ValueError("File content is already retained for a different evidence purpose")
         return existing
     final_dir = settings.storage_root / sha[:2] / sha[2:4]
     final_dir.mkdir(parents=True, exist_ok=True)
