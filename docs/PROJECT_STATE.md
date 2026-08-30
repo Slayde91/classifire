@@ -4,17 +4,21 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main code baseline:** PR #96 (`2dca286`) is the latest
+**Verified shared-main code baseline:** PR #99 (`cb32317`) is the latest
 shared-main merge. PR #93 (`143c5b5`) makes every new technical-library import
 Draft-only evidence, regardless of a source row's claimed activity. PR #95
 requires the pinned immutable technical release to be active before search or
-release-basis validation can use it, and PR #96 rejects a release whose manifest
-contains any inactive or missing TechnicalVariant. These build on PR #91's
-activation-time source-integrity check, PR #83's approval separation, PRs #86
-and #88's document-review safeguards, and PR #90's cross-purpose file-reuse
-rejection. Fetch `origin/main` before any publication-sensitive decision.
+release-basis validation can use it; PR #96 rejects a release whose manifest
+contains any inactive or missing TechnicalVariant; and PR #98 rejects that same
+invalid release before it can be written as an editable estimate's refreshed
+release basis. PR #99 updates the pull-request workflow from the deprecated
+Node 20 action runtime to Node 24-compatible action versions. These build on
+PR #91's activation-time source-integrity check, PR #83's approval separation,
+PRs #86 and #88's document-review safeguards, and PR #90's cross-purpose
+file-reuse rejection. Fetch `origin/main` before any publication-sensitive
+decision.
 
-**Verified application baseline:** `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge), plus human-session revocation hardening in `db404b3`, the PR #79 recovery record, PR #80's merged `efd4641` Phase 8 assessment/review contract, PR #81's merged report-evidence adapter/startup hardening, PR #82's migration packaging and production schema-readiness boundary, PR #83's browser, diagnostics, containment-test, and technical-activation safeguards, and PRs #86, #88, #90, #91, #93, #95, and #96's technical-source and release-scope safeguards
+**Verified application baseline:** `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge), plus human-session revocation hardening in `db404b3`, the PR #79 recovery record, PR #80's merged `efd4641` Phase 8 assessment/review contract, PR #81's merged report-evidence adapter/startup hardening, PR #82's migration packaging and production schema-readiness boundary, PR #83's browser, diagnostics, containment-test, and technical-activation safeguards, PRs #86, #88, #90, #91, #93, #95, #96, and #98's technical-source and release-scope safeguards, and PR #99's Node 24-compatible pull-request workflow
 
 **Merged Phase 8 scope:** representative rollback package and recovery, evidence-family and human-review validators, direct legacy-route test isolation, the durable visual-validation receipt registry/verifier, controlled `site_observation` evidence intake, the bounded v2 assessment/review contract, project-owned report evidence with deterministic per-Defect reviews, narrow fail-closed production startup, packaged-migration/CLI schema-readiness safeguards, and technical-activation requester/decider separation
 
@@ -64,7 +68,8 @@ pre-PR #80 audit, not the current repository state.
 | Technical activation separation | Shared main (PR #83): a technical variant now reaches `active` only from `in_review`, with a pending activation request, a different deciding user, and an approved linked technical document where one exists. PR #91 rechecks that linked document's retained source bytes are clean, immutable, and unchanged immediately before activation. | This is a fail-closed guard around the existing UI workflow, not full Draft technical-intake/source-lineage governance or production proof. |
 | Technical-document review separation | Shared main (PRs #86 and #88): a Draft or Rejected technical source document must be submitted for review, then receive a pending-review decision from a different user before approval. Its retained source bytes must be clean, immutable, and unchanged at submission and approval. | This reuses the existing Approval record without a migration. It is not full source-lineage governance or production proof. |
 | Technical-library import boundary | Shared main (PR #93): imported technical rows, even if the source calls them active, become Draft candidates with retained source flags, a source hash, and runtime exclusion. Source/version and variant-content collisions fail without overwriting existing data. | Existing active imports are left unchanged, while the broader Draft intake, source lineage, approval, and release-publication model remains incomplete. |
-| Technical release runtime boundary | Shared main (PRs #95 and #96): technical search and release-basis validation require an active immutable pinned technical release, and every record identifier in its manifest must still resolve to an active TechnicalVariant. A retired, superseded, rejected, Draft, or missing variant makes the whole technical release fail closed while that record remains inactive or missing. | This does not automate release supersession or publication, and it does not complete the broader Draft intake, source lineage, approval, or technical-authority model. |
+| Technical release runtime boundary | Shared main (PRs #95, #96, and #98): technical search and release-basis validation require an active immutable pinned technical release, and every record identifier in its manifest must still resolve to an active TechnicalVariant. A retired, superseded, rejected, Draft, or missing variant makes the whole technical release fail closed while that record remains inactive or missing. PR #98 applies that check before a release-basis refresh mutates an editable estimate. | This does not automate release supersession or publication, and it does not complete the broader Draft intake, source lineage, approval, or technical-authority model. |
+| Pull-request CI runtime | Shared main (PR #99): the secret-free workflow now uses Node 24-compatible checkout and Python setup actions. Its hosted run completed checkout, setup, style, tests, PostgreSQL containment setup, and migration-head validation successfully. | CI evidence is not deployment, live-report, or production-operation proof. |
 
 **Current next action:** obtain separate authority for one controlled,
 proposal-only report assessment and human-review every resulting artifact. That

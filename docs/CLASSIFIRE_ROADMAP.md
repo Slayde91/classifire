@@ -320,6 +320,20 @@ governance. The next operational action remains a controlled, proposal-only
 report assessment only after separate run authority, followed by human review of
 every artifact.
 
+### 2.13 Post-PR #99 release-pinning and CI-runtime update
+
+PR #98 extends the existing release-scope safeguard to the editable estimate
+boundary: a release-basis refresh now validates the active technical release,
+its immutable manifest, and every active TechnicalVariant before it changes any
+pin. An invalid active release therefore fails before it can be stored,
+preventing it from blocking later work.
+
+PR #99 updates the secret-free pull-request workflow to Node 24-compatible
+checkout and Python setup actions. Its hosted run passed source checkout, Python
+setup, style, tests, disposable PostgreSQL containment setup, and the one-head
+migration check. Neither change authorises a report run, canonical write, lock,
+deployment, or release.
+
 ## 3. Master roadmap at a glance
 
 | Phase | Status | Primary exit condition |
