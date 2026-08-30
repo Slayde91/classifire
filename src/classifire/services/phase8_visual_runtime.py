@@ -28,6 +28,13 @@ from .phase8_openresponses_transport import (
     OpenClawGatewayNoToolSessionGuard,
     Phase8OpenResponsesTransport,
 )
+from .phase8_report_assessment_prompts import (
+    build_report_assessment_inference_profile,
+)
+from .phase8_report_openresponses_transport import (
+    Phase8ReportOpenResponsesTransport,
+)
+from .phase8_report_runtime_input import Phase8ReportRuntimeInput
 from .phase8_visual_evidence import RetainedVisualEvidencePacket
 from .phase8_visual_prompts import build_visual_inference_profile
 
@@ -722,8 +729,107 @@ class ManagedPhase8VisualRuntime:
         self.close()
 
 
+class ManagedPhase8ReportAssessmentRuntime:
+    """Own the bounded report-assessment profiles, guard, and transport lifecycle.
+
+    Construction has no inference side effect.  It keeps the visual controller
+    profile separate from the report-aware prompt profile, while binding both to
+    the same configured provider, models, implementation revision, and no-tool
+    Gateway policy.
+    """
+
+    def __init__(
+        self,
+        *,
+        command_prefix: Sequence[str | Path],
+        base_url: str,
+        provider: str,
+        physical_model: str,
+        validator_model: str,
+        physical_agent_id: str,
+        validator_agent_id: str,
+        implementation_revision: str,
+        runtime_input: Phase8ReportRuntimeInput,
+        token_provider: Callable[[], str] | None = None,
+        http_transport: httpx.BaseTransport | None = None,
+        rpc_runner: CommandRunner = subprocess.run,
+        gateway_timeout_seconds: float = 10.0,
+        inference_timeout_seconds: float = 120.0,
+    ) -> None:
+        if (
+            not isinstance(inference_timeout_seconds, (int, float))
+            or isinstance(inference_timeout_seconds, bool)
+            or not 0 < inference_timeout_seconds <= 600
+        ):
+            raise Phase8GatewayRpcError("HTTP_TIMEOUT_INVALID")
+        self.visual_profile = build_visual_inference_profile(
+            implementation_revision=implementation_revision,
+            provider=provider,
+            physical_model=physical_model,
+            validator_model=validator_model,
+        )
+        self.report_assessment_profile = build_report_assessment_inference_profile(
+            implementation_revision=implementation_revision,
+            provider=provider,
+            physical_model=physical_model,
+            validator_model=validator_model,
+        )
+        gateway_token_provider = (
+            token_provider if token_provider is not None else EnvironmentGatewayTokenProvider()
+        )
+        rpc = _gateway_rpc_with_loopback_fallback(
+            command_prefix=command_prefix,
+            base_url=base_url,
+            token_provider=gateway_token_provider,
+            timeout_seconds=gateway_timeout_seconds,
+            runner=rpc_runner,
+        )
+        guard = OpenClawGatewayNoToolSessionGuard(
+            gateway_rpc=rpc,
+            provider=provider,
+            agent_models={
+                physical_agent_id: physical_model,
+                validator_agent_id: validator_model,
+            },
+            policy_revision_sha256=self.report_assessment_profile[
+                "runtime_policy_sha256"
+            ],
+        )
+        self._client = httpx.Client(
+            transport=http_transport,
+            timeout=inference_timeout_seconds,
+            follow_redirects=False,
+            trust_env=False,
+        )
+        try:
+            self.transport = Phase8ReportOpenResponsesTransport(
+                client=self._client,
+                base_url=base_url,
+                token_provider=gateway_token_provider,
+                runtime_input=runtime_input,
+                session_guard=guard,
+                runtime_agent_ids={
+                    "cf-physical-model": physical_agent_id,
+                    "cf-validator": validator_agent_id,
+                },
+            )
+        except BaseException:
+            self._client.close()
+            raise
+
+    def close(self) -> None:
+        self._client.close()
+
+    def __enter__(self) -> ManagedPhase8ReportAssessmentRuntime:
+        return self
+
+    def __exit__(self, *_exc_info: object) -> None:
+        self.close()
+
+
 __all__ = [
     "EnvironmentGatewayTokenProvider",
+    "ManagedPhase8ReportAssessmentRuntime",
     "ManagedPhase8VisualRuntime",
     "OpenClawCliGatewayRpc",
     "OpenClawLoopbackGatewayRpc",

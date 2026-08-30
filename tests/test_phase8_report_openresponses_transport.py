@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import subprocess
 from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
@@ -45,6 +46,9 @@ from classifire.services.phase8_visual_proposal import (
     VISUAL_INFERENCE_REQUEST_SCHEMA,
     VISUAL_PROPOSAL_POLICY_VERSION,
     canonical_json_sha256,
+)
+from classifire.services.phase8_visual_runtime import (
+    ManagedPhase8ReportAssessmentRuntime,
 )
 
 
@@ -354,3 +358,101 @@ def test_report_transport_fails_closed_when_the_post_turn_audit_records_a_tool(
 
     assert raised.value.code == "SERVER_TOOL_ACTION_DETECTED"
     assert len(guard.attestations) == len(guard.audits) == 1
+
+
+def test_managed_report_runtime_uses_report_policy_before_token_or_http(
+    tmp_path: Path,
+) -> None:
+    runtime_input, _image_bytes = _runtime(tmp_path)
+    executable = tmp_path / "node.exe"
+    executable.write_bytes(b"synthetic executable")
+    rpc_calls: list[tuple[str, dict[str, Any]]] = []
+    counts = {"token": 0, "http": 0}
+    session_created = False
+
+    def runner(args, **_kwargs):
+        nonlocal session_created
+        method = args[3]
+        params = json.loads(args[args.index("--params") + 1])
+        rpc_calls.append((method, params))
+        if method == "sessions.create":
+            session_created = True
+            payload: dict[str, Any] = {
+                "ok": True,
+                "key": params["key"],
+                "sessionId": "session-id",
+                "entry": {"sessionId": "session-id"},
+                "runStarted": False,
+            }
+        elif method == "sessions.describe":
+            payload = (
+                {"session": None}
+                if not session_created
+                else {
+                    "session": {
+                        "key": params["key"],
+                        "sessionId": "session-id",
+                        "modelProvider": "test-provider",
+                        "model": "validator-test-model",
+                    }
+                }
+            )
+        else:
+            payload = {
+                "groups": [
+                    {
+                        "name": "classifire",
+                        "tools": [{"id": "classifire_evidence_read"}],
+                    }
+                ]
+            }
+        return subprocess.CompletedProcess(args, 0, json.dumps(payload), "")
+
+    def token_provider() -> str:
+        counts["token"] += 1
+        return "secret"
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        counts["http"] += 1
+        return httpx.Response(500)
+
+    request = _request(runtime_input)
+    with ManagedPhase8ReportAssessmentRuntime(
+        command_prefix=(executable,),
+        base_url="http://127.0.0.1:18789/v1",
+        provider="test-provider",
+        physical_model="physical-test-model",
+        validator_model="validator-test-model",
+        physical_agent_id="cf-phase8-report-physical",
+        validator_agent_id="cf-phase8-report-validator",
+        implementation_revision="a" * 40,
+        runtime_input=runtime_input,
+        token_provider=token_provider,
+        http_transport=httpx.MockTransport(handler),
+        rpc_runner=runner,
+    ) as runtime:
+        assert runtime.visual_profile == _visual_profile()
+        assert runtime.report_assessment_profile == _report_profile()
+        with pytest.raises(Phase8OpenResponsesTransportError) as raised:
+            runtime.transport.invoke(
+                role="cf-validator",
+                stage="blind_inventory",
+                request=request,
+                rendered_prompt=_render(runtime_input, request),
+                runtime_input=runtime_input,
+                report_assessment_inference_profile=runtime.report_assessment_profile,
+            )
+        assert raised.value.code == "SERVER_TOOLS_NOT_EMPTY"
+        client = runtime._client
+
+    assert [method for method, _params in rpc_calls] == [
+        "sessions.describe",
+        "sessions.create",
+        "sessions.describe",
+        "tools.effective",
+    ]
+    assert rpc_calls[1][1]["agentId"] == "cf-phase8-report-validator"
+    assert rpc_calls[1][1]["model"] == "test-provider/validator-test-model"
+    assert "classifire-phase8-report" in rpc_calls[0][1]["key"]
+    assert counts == {"token": 0, "http": 0}
+    assert client.is_closed
