@@ -260,7 +260,9 @@ it before adapter work if review finds a defect; do not create a second schema.
 3. **Continue Draft technical normalization/materialization separately.** Review proposed migration `0019_technical_intake_materializations` only after the shared containment dependency. Done means one migration path, no silent `TechnicalVariant` activation, and focused persistence/migration checks pass.
    PR #86 delivered a separate,
    no-migration UI safeguard: it requires a pending request and a different
-   technical reviewer before a new source document can become approved.
+   technical reviewer before a new source document can become approved. PR #88
+   also requires its retained source bytes to be clean, immutable, and unchanged
+   at submission and approval.
 4. **Review production hardening in contained slices on current main.** Independently review the validated migration-packaging and CLI-bootstrap candidate before publication; then decompose or justify the remaining `a3de490` scope, preserving the merged fail-closed startup boundary.
 5. **Resolve PR #75 independently.** Rebase it on current main or replace it with a small reviewed successor; GitHub mergeability alone is not acceptance evidence.
 6. **Add minimal pull-request validation.** Run the agreed Pytest policy, Ruff, and Alembic one-head check without secrets or customer evidence; prove both a deliberate failure and a reproducible pass.
