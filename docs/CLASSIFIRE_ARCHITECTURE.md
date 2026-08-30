@@ -74,6 +74,10 @@ repository tiers must not be confused with implementation completion.
   exact packaged migration-head readiness. The remaining candidates do not
   change shared-main
   architecture until separately reviewed and published.
+- **A current-branch production browser-boundary candidate is unmerged.** It
+  repairs documented CSV/JSON host/origin settings parsing and rejects unsafe
+  production Trusted Host/CORS configuration before lifespan storage work. It
+  changes no canonical authority and is not deployment evidence.
 
 ### Architecture follow-up required
 
@@ -645,6 +649,7 @@ CI-proven; they are not deployment or live-report proof.
 | Technical authority | **Basic prototype / blocked** | Current main lacks enforced approval-role separation and focused technical tests; governed candidate work is not merged |
 | Snapshot and Human Release | **Basic prototype / blocked** | Snapshot reproducibility and full validation certificate are not proven; upstream Physical Model gate unresolved |
 | Production bootstrap and security gates | **Merged limited hardening** | Main rejects unsafe production settings before filesystem or lifecycle work, suppresses production `create_all`/seed, packages immutable migrations, adds an explicit upgrade command, blocks production CLI setup/import seeding, and requires the exact packaged migration head before production storage or database-writing CLI work. Deployment proof and the remaining `a3de490` scope are still unreviewed. |
+| Production browser boundary | **Current-branch candidate** | Documented CSV/JSON host/origin settings parse deterministically; unsafe production Trusted Host/CORS settings fail before storage work. It is not shared-main, deployment, or production proof. |
 | Continuous integration | **Established on shared main** | The secret-free pull-request workflow passed for PRs #80, #81, and #82; PR #81 included the disposable PostgreSQL race. |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |

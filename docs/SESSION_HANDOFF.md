@@ -62,6 +62,7 @@ did not modify it.
 | Governed technical intake | **Separate pushed candidate plus local continuation** | `d76562e` and `0edeaac` are not on shared main. Their worktree has proposed `0019` and substantial uncommitted follow-on material, so it is not a clean merge candidate. |
 | Production startup boundary | **Merged narrow hardening** | Main rejects unsafe production configuration before filesystem or lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
 | Installed migration packaging and CLI bootstrap | **Merged shared-main hardening** | PR #82 moved immutable history under `classifire.migrations`; `classifire-migrate` explicitly upgrades only to its current head, while production CLI setup/import commands refuse to create schema or seed defaults. Production startup and database-writing CLI paths require the configured database to prove the exact packaged migration head before proceeding. Source, wheel, focused, full-suite, and PR CI checks used no production, UAT, or customer database. |
+| Production browser configuration | **Validated current-branch candidate** | Documented CSV/JSON `trusted_hosts` and `allowed_origins` inputs parse correctly, while unsafe production host/origin configuration fails before lifespan storage work. It is not shared-main, deployment, or production proof. |
 | Report review / UAT | **Proposal-only, authority-gated** | A report package can support cautious evidence assessment, but it cannot create technical compatibility truth, commercial truth, a canonical model, a lock, or a release. |
 
 ## 4. Start Here / Next Session
@@ -162,9 +163,12 @@ downstream authority interface.
    only with separate run authority, then human-review every generated file.
 2. **Continue Draft technical materialization separately.** Review proposed
    migration `0019` without silently activating a `TechnicalVariant`.
-3. **Review or supersede PR #75 independently.** A mergeable label is not
+3. **Independently review the current production browser-boundary candidate.**
+   Keep it separate from the broader `a3de490` work and do not treat it as
+   deployment proof.
+4. **Review or supersede PR #75 independently.** A mergeable label is not
    acceptance evidence.
-4. **Keep canonical UAT, signed lock admission, downstream technical/commercial
+5. **Keep canonical UAT, signed lock admission, downstream technical/commercial
    work, deterministic snapshots, deployment, and Human Release behind their
    documented prerequisites and separate authorities.**
 
