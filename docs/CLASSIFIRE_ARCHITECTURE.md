@@ -78,7 +78,7 @@ repository tiers must not be confused with implementation completion.
   repairs documented CSV/JSON host/origin settings parsing and rejects unsafe
   production Trusted Host/CORS configuration before lifespan storage work. It
   changes no canonical authority and is not deployment evidence.
-- **A current-branch technical-activation guard is unmerged.** It uses the
+- **PR #83 merged the technical-activation guard.** It uses the
   existing Approval workflow to reject direct Draft activation, self-approval,
   absent pending requests, and missing or non-approved linked technical documents. It does not
   turn the basic technical-intake prototype into a complete source-lineage or
