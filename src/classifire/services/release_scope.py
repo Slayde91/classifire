@@ -66,25 +66,46 @@ def release_record_ids(db: Session, estimate: Estimate, library_type: str) -> se
 
 def pinned_product(db: Session, estimate: Estimate, sku: str) -> Product:
     ids = release_record_ids(db, estimate, "products")
-    item = db.scalar(select(Product).where(Product.id.in_(ids), Product.sku == sku))
+    item = db.scalar(
+        select(Product).where(Product.id.in_(ids), Product.sku == sku)
+    )
     if not item:
-        raise ReleaseScopeError(f"Product/material {sku!r} is not present in the pinned Products release.")
+        raise ReleaseScopeError(
+            f"Product/material {sku!r} is not present in the pinned Products release."
+        )
     return item
 
 
-def pinned_labour(db: Session, estimate: Estimate, code: str) -> LabourComponent:
+def pinned_labour(
+    db: Session, estimate: Estimate, code: str
+) -> LabourComponent:
     ids = release_record_ids(db, estimate, "labour")
-    item = db.scalar(select(LabourComponent).where(LabourComponent.id.in_(ids), LabourComponent.code == code))
+    item = db.scalar(
+        select(LabourComponent).where(
+            LabourComponent.id.in_(ids), LabourComponent.code == code
+        )
+    )
     if not item:
-        raise ReleaseScopeError(f"Labour component {code!r} is not present in the pinned Labour release.")
+        raise ReleaseScopeError(
+            f"Labour component {code!r} is not present in the pinned Labour release."
+        )
     return item
 
 
-def pinned_pricing_record(db: Session, estimate: Estimate, pkb_entry_id: str) -> PricingLibraryRecord:
+def pinned_pricing_record(
+    db: Session, estimate: Estimate, pkb_entry_id: str
+) -> PricingLibraryRecord:
     ids = release_record_ids(db, estimate, "pricing")
-    item = db.scalar(select(PricingLibraryRecord).where(PricingLibraryRecord.id.in_(ids), PricingLibraryRecord.pkb_entry_id == pkb_entry_id))
+    item = db.scalar(
+        select(PricingLibraryRecord).where(
+            PricingLibraryRecord.id.in_(ids),
+            PricingLibraryRecord.pkb_entry_id == pkb_entry_id,
+        )
+    )
     if not item:
-        raise ReleaseScopeError(f"Pricing record {pkb_entry_id!r} is not present in the pinned Pricing release.")
+        raise ReleaseScopeError(
+            f"Pricing record {pkb_entry_id!r} is not present in the pinned Pricing release."
+        )
     return item
 
 
@@ -106,7 +127,12 @@ def pinned_rule_ids(db: Session, estimate: Estimate) -> set[str]:
 
 def pinned_rules(db: Session, estimate: Estimate) -> list[EstimatingRule]:
     ids = pinned_rule_ids(db, estimate)
-    return list(db.scalars(select(EstimatingRule).where(EstimatingRule.id.in_(ids)).order_by(EstimatingRule.priority.asc(), EstimatingRule.rule_code.asc())).all())
+    stmt = (
+        select(EstimatingRule)
+        .where(EstimatingRule.id.in_(ids))
+        .order_by(EstimatingRule.priority.asc(), EstimatingRule.rule_code.asc())
+    )
+    return list(db.scalars(stmt).all())
 
 
 def validate_runtime_scope(db: Session, estimate: Estimate) -> list[str]:
