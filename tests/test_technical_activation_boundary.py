@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+from pathlib import Path
+from types import SimpleNamespace
+
 import pytest
 from physical_foundation_support import physical_session
 from sqlalchemy.orm import Session
@@ -48,13 +52,27 @@ def _pending_approval(db: Session, variant: TechnicalVariant, requester: User) -
     return approval
 
 
-def _technical_document(db: Session, *, status: str) -> TechnicalDocument:
+def _technical_document(
+    db: Session,
+    *,
+    status: str,
+    source_root: Path | None = None,
+) -> TechnicalDocument:
+    content = b"technical activation source evidence"
+    digest = hashlib.sha256(content).hexdigest()
+    if source_root is None:
+        storage_path = "technical/source.pdf"
+    else:
+        path = source_root / digest[:2] / digest[2:4] / f"{digest}.pdf"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+        storage_path = str(path)
     stored = StoredFile(
         original_filename="source.pdf",
         media_type="application/pdf",
-        storage_path="technical/source.pdf",
-        sha256="a" * 64,
-        size_bytes=1,
+        storage_path=storage_path,
+        sha256=digest,
+        size_bytes=len(content),
         purpose="technical_evidence",
         malware_scan_status="clean",
         immutable=True,
@@ -75,6 +93,18 @@ def _technical_document(db: Session, *, status: str) -> TechnicalDocument:
 
 def _request() -> object:
     return object()
+
+
+@pytest.fixture
+def technical_storage_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    storage_root = tmp_path / "storage"
+    storage_root.mkdir()
+    monkeypatch.setattr(
+        technical_admin,
+        "get_settings",
+        lambda: SimpleNamespace(storage_root=storage_root),
+    )
+    return storage_root
 
 
 @pytest.fixture
@@ -155,12 +185,19 @@ def test_technical_activation_requires_an_approved_linked_document(activate_as) 
         assert approval.decided_by_id is None
 
 
-def test_technical_activation_activates_an_independently_reviewed_variant(activate_as) -> None:
+def test_technical_activation_activates_an_independently_reviewed_variant(
+    activate_as,
+    technical_storage_root: Path,
+) -> None:
     with physical_session() as db:
         requester = _user(db, "requester@example.test")
         approver = _user(db, "approver@example.test")
         variant = _variant(db)
-        document = _technical_document(db, status="approved")
+        document = _technical_document(
+            db,
+            status="approved",
+            source_root=technical_storage_root,
+        )
         variant.technical_document_id = document.id
         approval = _pending_approval(db, variant, requester)
 
@@ -172,3 +209,33 @@ def test_technical_activation_activates_an_independently_reviewed_variant(activa
         assert approval.status == "approved"
         assert approval.decided_by_id == approver.id
         assert approval.decided_at is not None
+
+
+def test_technical_activation_rechecks_the_linked_document_source(
+    activate_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        requester = _user(db, "requester@example.test")
+        approver = _user(db, "approver@example.test")
+        variant = _variant(db)
+        document = _technical_document(
+            db,
+            status="approved",
+            source_root=technical_storage_root,
+        )
+        variant.technical_document_id = document.id
+        approval = _pending_approval(db, variant, requester)
+        stored = db.get(StoredFile, document.stored_file_id)
+        assert stored is not None
+        Path(stored.storage_path).write_bytes(b"altered technical activation source")
+
+        result = activate_as(db, variant, approver)
+
+        assert (
+            "Linked+technical+document+source+must+be+clean+and+unchanged"
+            in result.headers["location"]
+        )
+        assert variant.status == "in_review"
+        assert approval.status == "pending"
+        assert approval.decided_by_id is None
