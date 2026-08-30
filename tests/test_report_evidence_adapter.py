@@ -5,6 +5,7 @@ import io
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import replace
 
 import pymupdf
@@ -13,6 +14,7 @@ from PIL import Image
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
+from test_phase8_visual_proposal import _proposal
 
 from classifire import physical_models  # noqa: F401
 from classifire.db import Base
@@ -28,11 +30,15 @@ from classifire.models import (
 from classifire.physical_models import Defect
 from classifire.services.project_evidence import bind_project_evidence
 from classifire.services.report_evidence_adapter import (
+    ReportDefectEvidencePacket,
     ReportEvidenceAdapterError,
     _register_report_evidence_locators,
     _table_shape,
     bind_report_defect_scope,
+    build_report_defect_evidence_packet,
     normalise_verified_pdf_report,
+    validate_report_defect_evidence_packet,
+    validate_report_defect_v2_proposal,
 )
 from classifire.services.storage import VerifiedStoredFileContent
 
@@ -192,6 +198,46 @@ def _defect(db: Session, estimate: Estimate, reference: str = 'D-001') -> Defect
     return defect
 
 
+def _scoped_report_packet(
+    db: Session,
+    *,
+    ordinal: int,
+) -> tuple[Project, Estimate, StoredFile, Defect, tuple[ReportEvidenceLocator, ...]]:
+    project = _project(db, ordinal)
+    estimate = _estimate(db, project, ordinal)
+    content = _report_content()
+    stored = _bound_report(db, project, content)
+    defect = _defect(db, estimate)
+    records = _register_report_evidence_locators(
+        db,
+        stored_file_id=stored.id,
+        project_id=project.id,
+        estimate_id=estimate.id,
+        report=normalise_verified_pdf_report(content),
+    )
+    page_records = tuple(record for record in records if record.page_number == 1)
+    bind_report_defect_scope(
+        db,
+        stored_file_id=stored.id,
+        project_id=project.id,
+        estimate_id=estimate.id,
+        defect_id=defect.id,
+        report_defect_label='D-001',
+        start_locator_key=page_records[0].locator_key,
+        end_locator_key=page_records[-1].locator_key,
+    )
+    return project, estimate, stored, defect, records
+
+
+def _documentary_v2_proposal(evidence_ref: str) -> dict[str, object]:
+    proposal = deepcopy(_proposal())
+    for collection in ('openings', 'services'):
+        for row in proposal[collection]:
+            for assessment in row['property_assessments'].values():
+                assessment['evidence_refs'] = [evidence_ref]
+    return proposal
+
+
 def test_locators_and_selected_defect_scope_are_idempotent_and_noncanonical() -> None:
     content = _report_content()
     report = normalise_verified_pdf_report(content)
@@ -247,6 +293,89 @@ def test_locators_and_selected_defect_scope_are_idempotent_and_noncanonical() ->
         assert db.scalar(select(func.count()).select_from(ReportDefectScope)) == 1
         assert db.scalar(select(func.count()).select_from(Opening)) == 0
         assert db.scalar(select(func.count()).select_from(Service)) == 0
+
+
+def test_selected_report_scope_is_content_safe_and_feeds_existing_v2_policy() -> None:
+    with adapter_session() as db:
+        project, estimate, stored, defect, records = _scoped_report_packet(db, ordinal=4)
+        packet = build_report_defect_evidence_packet(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            defect_id=defect.id,
+        )
+        repeated = build_report_defect_evidence_packet(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            defect_id=defect.id,
+        )
+        assert packet.manifest == repeated.manifest
+        assert validate_report_defect_evidence_packet(packet) == []
+        assert packet.manifest['report_sha256'] == stored.sha256
+        assert packet.manifest['defect_reference'] == 'D-001'
+        assert len(packet.evidence_refs) == len(packet.manifest['artifacts'])
+        assert all(
+            reference.startswith('report-locator:') for reference in packet.evidence_refs
+        )
+        serialised = json.dumps(packet.manifest, sort_keys=True)
+        assert 'Private report heading' not in serialised
+        assert 'Private annotation content' not in serialised
+        assert 'Defect D-001 is described' not in serialised
+        proposal = _documentary_v2_proposal(next(iter(packet.evidence_refs)))
+        assert validate_report_defect_v2_proposal(packet, proposal) == []
+        metadata = next(record for record in records if record.page_number is None)
+        proposal['openings'][0]['property_assessments']['size']['evidence_refs'] = [
+            f'report-locator:{metadata.locator_key}'
+        ]
+        errors = validate_report_defect_v2_proposal(packet, proposal)
+        assert any('outside the approved manifest' in error for error in errors)
+        tampered = ReportDefectEvidencePacket(
+            manifest=deepcopy(packet.manifest),
+            manifest_sha256=packet.manifest_sha256,
+        )
+        tampered.manifest['artifacts'][0]['locator']['raw_text'] = 'tampered packet text'
+        assert any(
+            'hash does not match' in error
+            for error in validate_report_defect_evidence_packet(tampered)
+        )
+        assert validate_report_defect_v2_proposal(tampered, proposal)
+        assert db.scalar(select(func.count()).select_from(Opening)) == 0
+        assert db.scalar(select(func.count()).select_from(Service)) == 0
+
+
+def test_selected_report_scope_fails_closed_on_cross_project_and_tampered_locator() -> None:
+    with adapter_session() as db:
+        project, estimate, stored, defect, records = _scoped_report_packet(db, ordinal=5)
+        other_project = _project(db, 6)
+        other_estimate = _estimate(db, other_project, 6)
+        with pytest.raises(ReportEvidenceAdapterError) as cross_project:
+            build_report_defect_evidence_packet(
+                db,
+                stored_file_id=stored.id,
+                project_id=other_project.id,
+                estimate_id=other_estimate.id,
+                defect_id=defect.id,
+            )
+        scoped_record = next(record for record in records if record.page_number == 1)
+        scoped_record.locator_json = {
+            **scoped_record.locator_json,
+            'raw_text': 'must never enter a report packet',
+        }
+        db.flush()
+        with pytest.raises(ReportEvidenceAdapterError) as tampered_locator:
+            build_report_defect_evidence_packet(
+                db,
+                stored_file_id=stored.id,
+                project_id=project.id,
+                estimate_id=estimate.id,
+                defect_id=defect.id,
+            )
+
+    assert cross_project.value.code == 'PROJECT_EVIDENCE_CROSS_PROJECT_FORBIDDEN'
+    assert tampered_locator.value.code == 'REPORT_EVIDENCE_LOCATOR_INVALID'
 
 
 def test_locator_registration_and_scope_fail_closed_on_conflict_or_wrong_project() -> None:

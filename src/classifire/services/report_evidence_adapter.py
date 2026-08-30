@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 import unicodedata
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, NoReturn
@@ -26,6 +27,12 @@ from ..models import (
     ReportEvidenceLocator,
 )
 from ..physical_models import Defect
+from .phase8_visual_proposal import (
+    VISUAL_PROPOSAL_POLICY_VERSION,
+    Phase8VisualProposalError,
+    canonical_json_sha256,
+    validate_policy_bound_visual_physical_proposal,
+)
 from .project_evidence import (
     read_project_evidence_for_update,
     require_project_evidence_access,
@@ -33,6 +40,7 @@ from .project_evidence import (
 from .storage import VerifiedStoredFileContent
 
 REPORT_EVIDENCE_LOCATOR_SCHEMA = 'CLASSIFIRE-REPORT-EVIDENCE-LOCATORS-v1'
+REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA = 'CLASSIFIRE-REPORT-DEFECT-EVIDENCE-PACKET-v1'
 _PDF_MEDIA_TYPE = 'application/pdf'
 _HEX_SHA256 = frozenset('0123456789abcdef')
 _ITEM_KIND_ORDER = {
@@ -106,6 +114,27 @@ class NormalisedReportEvidence:
                 for item in self.locators
             ],
         }
+
+
+@dataclass(frozen=True, slots=True)
+class ReportDefectEvidencePacket:
+    '''Content-safe, selected-Defect documentary evidence for v2 validation.'''
+
+    manifest: dict[str, Any]
+    manifest_sha256: str
+
+    @property
+    def evidence_refs(self) -> frozenset[str]:
+        artifacts = self.manifest.get('artifacts')
+        if not isinstance(artifacts, list):
+            return frozenset()
+        refs: set[str] = set()
+        for item in artifacts:
+            if isinstance(item, dict):
+                evidence_id = item.get('evidence_id')
+                if isinstance(evidence_id, str):
+                    refs.add(evidence_id)
+        return frozenset(refs)
 
 
 def _canonical_sha256(value: object) -> str:
@@ -782,6 +811,295 @@ def _required_text(value: object, *, code: str, maximum: int) -> str:
     return text
 
 
+def _defect_reference(defect: Defect) -> str:
+    for value in (defect.external_defect_id, defect.defect_code):
+        if isinstance(value, str) and value.strip() and len(value.strip()) <= 150:
+            return value.strip()
+    _fail('REPORT_EVIDENCE_DEFECT_REFERENCE_INVALID')
+
+
+def _scope_locator_records(
+    db: Session,
+    *,
+    evidence: ProjectEvidence,
+    scope: ReportDefectScope,
+) -> tuple[ReportEvidenceLocator, ...]:
+    start = db.get(ReportEvidenceLocator, scope.start_locator_id)
+    end = db.get(ReportEvidenceLocator, scope.end_locator_id)
+    if (
+        start is None
+        or end is None
+        or start.project_evidence_id != evidence.id
+        or end.project_evidence_id != evidence.id
+        or start.source_sha256 != evidence.source_sha256
+        or end.source_sha256 != evidence.source_sha256
+        or start.sequence > end.sequence
+    ):
+        _fail('REPORT_EVIDENCE_SCOPE_BINDING_INVALID')
+    records = tuple(
+        db.scalars(
+            select(ReportEvidenceLocator)
+            .where(
+                ReportEvidenceLocator.project_evidence_id == evidence.id,
+                ReportEvidenceLocator.sequence >= start.sequence,
+                ReportEvidenceLocator.sequence <= end.sequence,
+            )
+            .order_by(ReportEvidenceLocator.sequence)
+        ).all()
+    )
+    if (
+        not records
+        or records[0].id != start.id
+        or records[-1].id != end.id
+        or len(records) != end.sequence - start.sequence + 1
+    ):
+        _fail('REPORT_EVIDENCE_SCOPE_BINDING_INVALID')
+    return records
+
+
+def _packet_artifact(
+    record: ReportEvidenceLocator,
+    *,
+    source_sha256: str,
+    previous_sequence: int | None,
+) -> dict[str, Any]:
+    if (
+        record.source_sha256 != source_sha256
+        or not isinstance(record.locator_json, dict)
+        or previous_sequence is not None
+        and record.sequence != previous_sequence + 1
+    ):
+        _fail('REPORT_EVIDENCE_LOCATOR_INVALID')
+    item = ReportEvidenceLocatorItem(
+        locator_key=record.locator_key,
+        item_kind=record.item_kind,
+        page_number=record.page_number,
+        content_sha256=record.content_sha256,
+        locator=deepcopy(record.locator_json),
+    )
+    if not _valid_locator(item, sequence=record.sequence):
+        _fail('REPORT_EVIDENCE_LOCATOR_INVALID')
+    return {
+        'evidence_id': f'report-locator:{item.locator_key}',
+        'sequence': record.sequence,
+        'locator_key': item.locator_key,
+        'item_kind': item.item_kind,
+        'page_number': item.page_number,
+        'content_sha256': item.content_sha256,
+        'locator': item.locator,
+    }
+
+
+def validate_report_defect_evidence_packet(packet: object) -> list[str]:
+    '''Validate a selected-Defect report manifest before v2 proposal validation.'''
+
+    if not isinstance(packet, ReportDefectEvidencePacket):
+        return ['report defect evidence packet has an unsupported type']
+    manifest = packet.manifest
+    if not isinstance(manifest, dict):
+        return ['report defect evidence manifest must be an object']
+    expected = {
+        'schema',
+        'project_evidence_id',
+        'report_sha256',
+        'source_size_bytes',
+        'estimate_id',
+        'defect_id',
+        'defect_reference',
+        'report_defect_label',
+        'scope_id',
+        'start_locator_key',
+        'end_locator_key',
+        'artifacts',
+    }
+    errors: list[str] = []
+    if set(manifest) != expected:
+        errors.append('report defect evidence manifest fields are unsupported')
+    if manifest.get('schema') != REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA:
+        errors.append('report defect evidence manifest schema is unsupported')
+    for field, maximum in (
+        ('project_evidence_id', 36),
+        ('estimate_id', 36),
+        ('defect_id', 36),
+        ('defect_reference', 150),
+        ('report_defect_label', _MAX_REPORT_LABEL),
+        ('scope_id', 36),
+        ('start_locator_key', 300),
+        ('end_locator_key', 300),
+    ):
+        value = manifest.get(field)
+        if not isinstance(value, str) or not value.strip() or len(value) > maximum:
+            errors.append(f'report defect evidence manifest {field} is invalid')
+    try:
+        _normalise_sha256(manifest.get('report_sha256'))
+    except ReportEvidenceAdapterError:
+        errors.append('report defect evidence manifest report_sha256 is invalid')
+    if not _positive_integer(manifest.get('source_size_bytes')):
+        errors.append('report defect evidence manifest source_size_bytes is invalid')
+    artifacts = manifest.get('artifacts')
+    if not isinstance(artifacts, list) or not artifacts or len(artifacts) > _MAX_REPORT_LOCATORS:
+        return [*errors, 'report defect evidence manifest artifacts are invalid']
+    previous_sequence: int | None = None
+    artifact_ids: set[str] = set()
+    for index, artifact in enumerate(artifacts, start=1):
+        if not isinstance(artifact, dict):
+            errors.append(f'report defect evidence artifact {index} is invalid')
+            continue
+        expected_artifact = {
+            'evidence_id',
+            'sequence',
+            'locator_key',
+            'item_kind',
+            'page_number',
+            'content_sha256',
+            'locator',
+        }
+        if set(artifact) != expected_artifact:
+            errors.append(f'report defect evidence artifact {index} fields are unsupported')
+            continue
+        evidence_id = artifact.get('evidence_id')
+        locator_key = artifact.get('locator_key')
+        item_kind = artifact.get('item_kind')
+        page_number = artifact.get('page_number')
+        content_sha256 = artifact.get('content_sha256')
+        locator = artifact.get('locator')
+        sequence = artifact.get('sequence')
+        if (
+            not isinstance(evidence_id, str)
+            or not isinstance(locator_key, str)
+            or not isinstance(item_kind, str)
+            or page_number is not None
+            and not isinstance(page_number, int)
+            or not isinstance(content_sha256, str)
+            or not isinstance(locator, dict)
+            or evidence_id != f'report-locator:{locator_key}'
+            or evidence_id in artifact_ids
+            or not isinstance(sequence, int)
+            or not _positive_integer(sequence)
+            or previous_sequence is not None
+            and sequence != previous_sequence + 1
+        ):
+            errors.append(f'report defect evidence artifact {index} identity is invalid')
+            continue
+        item = ReportEvidenceLocatorItem(
+            locator_key=locator_key,
+            item_kind=item_kind,
+            page_number=page_number,
+            content_sha256=content_sha256,
+            locator=locator,
+        )
+        if not _valid_locator(item, sequence=sequence):
+            errors.append(f'report defect evidence artifact {index} locator is invalid')
+            continue
+        artifact_ids.add(evidence_id)
+        previous_sequence = sequence
+    if artifacts and isinstance(artifacts[0], dict) and isinstance(artifacts[-1], dict):
+        if artifacts[0].get('locator_key') != manifest.get('start_locator_key'):
+            errors.append('report defect evidence start locator does not match artifacts')
+        if artifacts[-1].get('locator_key') != manifest.get('end_locator_key'):
+            errors.append('report defect evidence end locator does not match artifacts')
+    try:
+        manifest_sha256 = canonical_json_sha256(manifest)
+    except Phase8VisualProposalError:
+        errors.append('report defect evidence manifest must contain JSON values only')
+    else:
+        if (
+            not isinstance(packet.manifest_sha256, str)
+            or len(packet.manifest_sha256) != 64
+            or packet.manifest_sha256 != manifest_sha256
+        ):
+            errors.append('report defect evidence manifest hash does not match its contents')
+    return list(dict.fromkeys(errors))
+
+
+def build_report_defect_evidence_packet(
+    db: Session,
+    *,
+    stored_file_id: str,
+    project_id: str,
+    estimate_id: str,
+    defect_id: str,
+) -> ReportDefectEvidencePacket:
+    '''Expose one report-selected Defect range as v2-approved documentary refs.'''
+
+    estimate_id = _required_text(estimate_id, code='REPORT_EVIDENCE_ESTIMATE_INVALID', maximum=36)
+    defect_id = _required_text(defect_id, code='REPORT_EVIDENCE_DEFECT_INVALID', maximum=36)
+    evidence = _report_owner(
+        db,
+        stored_file_id=stored_file_id,
+        project_id=project_id,
+        estimate_id=estimate_id,
+    )
+    defect = db.get(Defect, defect_id)
+    if defect is None:
+        _fail('REPORT_EVIDENCE_DEFECT_NOT_FOUND')
+    if defect.estimate_id != estimate_id:
+        _fail('REPORT_EVIDENCE_DEFECT_SCOPE_FORBIDDEN')
+    scope = db.scalar(
+        select(ReportDefectScope).where(
+            ReportDefectScope.project_evidence_id == evidence.id,
+            ReportDefectScope.defect_id == defect.id,
+        )
+    )
+    if scope is None:
+        _fail('REPORT_EVIDENCE_DEFECT_SCOPE_REQUIRED')
+    if scope.source_sha256 != evidence.source_sha256:
+        _fail('REPORT_EVIDENCE_SCOPE_BINDING_INVALID')
+    records = _scope_locator_records(db, evidence=evidence, scope=scope)
+    artifacts: list[dict[str, Any]] = []
+    previous_sequence: int | None = None
+    for record in records:
+        artifacts.append(
+            _packet_artifact(
+                record,
+                source_sha256=evidence.source_sha256,
+                previous_sequence=previous_sequence,
+            )
+        )
+        previous_sequence = record.sequence
+    manifest = {
+        'schema': REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA,
+        'project_evidence_id': evidence.id,
+        'report_sha256': evidence.source_sha256,
+        'source_size_bytes': evidence.source_size_bytes,
+        'estimate_id': estimate_id,
+        'defect_id': defect.id,
+        'defect_reference': _defect_reference(defect),
+        'report_defect_label': scope.report_defect_label,
+        'scope_id': scope.id,
+        'start_locator_key': records[0].locator_key,
+        'end_locator_key': records[-1].locator_key,
+        'artifacts': artifacts,
+    }
+    packet = ReportDefectEvidencePacket(
+        manifest=manifest,
+        manifest_sha256=canonical_json_sha256(manifest),
+    )
+    errors = validate_report_defect_evidence_packet(packet)
+    if errors:
+        _fail('REPORT_EVIDENCE_PACKET_INVALID')
+    return packet
+
+
+def validate_report_defect_v2_proposal(
+    packet: object,
+    proposal: object,
+) -> list[str]:
+    '''Apply the existing v2 proposal policy to exactly one report-selected range.'''
+
+    if not isinstance(packet, ReportDefectEvidencePacket):
+        return ['report defect evidence packet has an unsupported type']
+    errors = validate_report_defect_evidence_packet(packet)
+    if errors:
+        return errors
+    return validate_policy_bound_visual_physical_proposal(
+        proposal,
+        defect_reference=str(packet.manifest['defect_reference']),
+        policy_version=VISUAL_PROPOSAL_POLICY_VERSION,
+        allowed_evidence_refs=packet.evidence_refs,
+    )
+
+
 def bind_report_defect_scope(
     db: Session,
     *,
@@ -876,10 +1194,15 @@ def bind_report_defect_scope(
 
 __all__ = [
     'NormalisedReportEvidence',
+    'REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA',
     'REPORT_EVIDENCE_LOCATOR_SCHEMA',
+    'ReportDefectEvidencePacket',
     'ReportEvidenceAdapterError',
     'ReportEvidenceLocatorItem',
     'bind_report_defect_scope',
+    'build_report_defect_evidence_packet',
     'materialise_project_report_locators_for_update',
     'normalise_verified_pdf_report',
+    'validate_report_defect_evidence_packet',
+    'validate_report_defect_v2_proposal',
 ]
