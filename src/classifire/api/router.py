@@ -42,7 +42,13 @@ from ..models import (
     TechnicalVariant,
     User,
 )
-from ..outputs import render_estimate_pdf, render_proposal_workbook, render_technical_workbook
+from ..outputs import (
+    render_desk_quote_pdf,
+    render_desk_quote_workbook,
+    render_estimate_pdf,
+    render_proposal_workbook,
+    render_technical_workbook,
+)
 from ..physical_models import ServiceOpeningLink
 from ..schemas import (
     ChangeProposalInput,
@@ -63,6 +69,13 @@ from ..schemas import (
 )
 from ..security import get_current_user, require_permission
 from ..services.calculation import D, calculate_estimate_line, recalculate_estimate
+from ..services.desk_quote import (
+    DeskQuoteError,
+    DeskQuoteProposal,
+    build_desk_quote_snapshot,
+    resolve_desk_quote_pricing_bindings,
+    resolve_desk_quote_project_evidence,
+)
 from ..services.initial_canonicalisation_boundary import (
     InitialCanonicalisationAdmissionRequired,
     require_admission_bound_initial_canonicalisation,
@@ -863,3 +876,85 @@ def export_estimate(
         renderer(estimate.snapshot_json, path)
     media_type = "application/pdf" if path.suffix == ".pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     return FileResponse(path, filename=filename, media_type=media_type)
+
+
+@router.post("/desk-quotes/export/{artifact_type}")
+def export_desk_quote(
+    artifact_type: str,
+    payload: DeskQuoteProposal,
+    request: Request,
+    db: Db,
+    user: Annotated[User, Depends(require_permission("estimate:write"))],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> FileResponse:
+    """Render a source-linked desk quote without opening the canonical estimate path."""
+
+    try:
+        resolve_desk_quote_project_evidence(db, payload)
+        pricing_bindings = resolve_desk_quote_pricing_bindings(db, payload)
+        snapshot = build_desk_quote_snapshot(payload, pricing_bindings=pricing_bindings)
+    except DeskQuoteError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    mapping = {
+        "desk-quote-xlsx": (
+            f"CLASSIFIRE_{payload.quote_reference}_Desk_Quote.xlsx",
+            render_desk_quote_workbook,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ),
+        "desk-quote-pdf": (
+            f"CLASSIFIRE_{payload.quote_reference}_Desk_Quote.pdf",
+            render_desk_quote_pdf,
+            "application/pdf",
+        ),
+    }
+    if artifact_type not in mapping:
+        raise HTTPException(status_code=404, detail="Unknown desk-quote artifact type")
+    filename, renderer, media_type = mapping[artifact_type]
+    safe_filename = "".join(char if char.isalnum() or char in "-_." else "_" for char in filename)
+    output_dir = settings.storage_root / "desk-quote-exports" / snapshot["snapshot_hash"]
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / safe_filename
+    if not output_path.exists():
+        renderer(snapshot, output_path)
+
+    project_id = db.scalar(select(Project.id).where(Project.reference == payload.project_reference))
+    record_audit(
+        db,
+        actor=user,
+        action="render_desk_quote",
+        entity_type="desk_quote",
+        entity_id=snapshot["snapshot_hash"],
+        project_id=project_id,
+        new_value={
+            "artifact_type": artifact_type,
+            "document_class": snapshot["document_class"],
+            "technical_position": snapshot["technical_position"],
+            "quote_reference": payload.quote_reference,
+            "project_reference": payload.project_reference,
+            "pricing_release_id": payload.pricing_release_id,
+            "pricing_release_version": snapshot["pricing_bindings"][0]["pricing_release_version"],
+            "pricing_release_hash": snapshot["pricing_bindings"][0]["pricing_release_hash"],
+            "evidence_source_ids": sorted(
+                {
+                    locator.evidence_source_id
+                    for assumption in payload.assumptions
+                    for locator in assumption.evidence_locators
+                }
+            ),
+            "evidence_file_sha256": sorted(
+                {
+                    locator.file_sha256.lower()
+                    for assumption in payload.assumptions
+                    for locator in assumption.evidence_locators
+                }
+            ),
+            "snapshot_hash": snapshot["snapshot_hash"],
+        },
+        reason=(
+            "Rendered assumption-led desk quote; no canonical Physical Model or technical "
+            "approval created"
+        ),
+        source_ip=request.client.host if request.client else None,
+    )
+    db.commit()
+    return FileResponse(output_path, filename=safe_filename, media_type=media_type)
