@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -47,7 +47,7 @@ class Phase8ReportAssessmentInput:
     '''One exact report scope paired with verified visual evidence, without a run.'''
 
     report_packet: ReportDefectEvidencePacket
-    visual_packet: RetainedVisualEvidencePacket
+    visual_packet: RetainedVisualEvidencePacket = field(repr=False)
     manifest: dict[str, Any]
     manifest_sha256: str
 

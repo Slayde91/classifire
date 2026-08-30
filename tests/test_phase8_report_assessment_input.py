@@ -76,6 +76,7 @@ def test_combined_input_is_deterministic_content_free_and_no_run() -> None:
     rendered = str(first.manifest)
     assert 'Private report heading' not in rendered
     assert 'retained/visual-evidence.jpg' not in rendered
+    assert 'retained/visual-evidence.jpg' not in str(first)
 
 
 def test_combined_input_rejects_scope_collision_and_tampering() -> None:
