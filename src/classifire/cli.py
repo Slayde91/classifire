@@ -155,7 +155,7 @@ def import_technical(
     path: Path = typer.Argument(..., exists=True, readable=True),
     version: str = typer.Option("2.13"),
 ) -> None:
-    """Import Package 15 executable variants into the technical database."""
+    """Import Package 15 executable variants as review-required Draft candidates."""
     settings = _prepare_cli_write(seeds_controlled_defaults=True)
     _ensure_cli_schema(settings)
     with SessionLocal() as db:
@@ -166,7 +166,7 @@ def import_technical(
 
 @app.command("import-supplied-v213")
 def import_supplied_v213(source_root: Path | None = None) -> None:
-    """Import the supplied v2.13 pricing and technical libraries."""
+    """Import supplied v2.13 pricing and Draft technical candidates."""
     settings = _prepare_cli_write(seeds_controlled_defaults=True)
     root = source_root or repo_root() / "knowledge" / "source" / "v2.13"
     pricing = root / "QUANTIFIRE_14_Pricing_Library_v2.13.csv"
