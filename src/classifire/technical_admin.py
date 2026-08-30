@@ -532,10 +532,80 @@ def technical_document_detail(document_db_id: str, request: Request, db: Db) -> 
         .where(TechnicalVariant.technical_document_id == document.id)
         .order_by(TechnicalVariant.variant_id)
     ).all()
+    approvals = db.scalars(
+        select(Approval)
+        .where(Approval.entity_type == "technical_document", Approval.entity_id == document.id)
+        .order_by(Approval.created_at.desc())
+    ).all()
     return templates.TemplateResponse(
         request,
         "technical_document_detail.html",
-        _context(request, db, document=document, linked=linked),
+        _context(request, db, document=document, linked=linked, approvals=approvals),
+    )
+
+
+@router.post("/technical/documents/{document_db_id}/submit-review")
+def technical_document_submit_review(
+    document_db_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    reason: Annotated[str, Form()] = "Submit technical source document for review",
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "technical:write")
+    document = db.get(TechnicalDocument, document_db_id)
+    if not document:
+        raise HTTPException(404, "Technical document not found")
+    if document.status not in {"draft", "rejected"}:
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error="
+            "Only+Draft+or+Rejected+documents+can+be+submitted",
+            status_code=303,
+        )
+    previous_status = document.status
+    document.status = "in_review"
+    approval = db.scalar(
+        select(Approval)
+        .where(
+            Approval.entity_type == "technical_document",
+            Approval.entity_id == document.id,
+            Approval.approval_type == "technical_document_review",
+        )
+        .order_by(Approval.created_at.desc())
+    )
+    if approval:
+        approval.status = "pending"
+        approval.requested_by_id = user.id
+        approval.requested_at = datetime.now(UTC)
+        approval.decided_by_id = None
+        approval.decided_at = None
+        approval.decision_reason = reason
+    else:
+        db.add(
+            Approval(
+                entity_type="technical_document",
+                entity_id=document.id,
+                approval_type="technical_document_review",
+                status="pending",
+                requested_by_id=user.id,
+                decision_reason=reason,
+            )
+        )
+    record_audit(
+        db,
+        actor=user,
+        action="submit_review",
+        entity_type="technical_document",
+        entity_id=document.id,
+        previous_value={"status": previous_status},
+        new_value={"status": "in_review"},
+        reason=reason,
+    )
+    db.commit()
+    return RedirectResponse(
+        f"/technical/documents/{document.id}?success=Submitted+for+technical+review",
+        status_code=303,
     )
 
 
@@ -552,11 +622,41 @@ def technical_document_approve(
     document = db.get(TechnicalDocument, document_db_id)
     if not document:
         raise HTTPException(404, "Technical document not found")
+    if document.status != "in_review":
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error=Only+In+Review+documents+can+be+approved",
+            status_code=303,
+        )
+    approval = db.scalar(
+        select(Approval)
+        .where(
+            Approval.entity_type == "technical_document",
+            Approval.entity_id == document.id,
+            Approval.approval_type == "technical_document_review",
+        )
+        .order_by(Approval.created_at.desc())
+    )
+    if not approval or approval.status != "pending" or not approval.requested_by_id:
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error="
+            "Pending+technical+document+review+required",
+            status_code=303,
+        )
+    if approval.requested_by_id == user.id:
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error="
+            "Technical+document+requester+and+approver+must+be+different+users",
+            status_code=303,
+        )
     previous = document.status
     document.status = "approved"
     document.reviewed_by_id = user.id
     document.approved_by_id = user.id
     document.approved_at = datetime.now(UTC)
+    approval.status = "approved"
+    approval.decided_by_id = user.id
+    approval.decided_at = datetime.now(UTC)
+    approval.decision_reason = reason
     record_audit(
         db,
         actor=user,
@@ -570,5 +670,70 @@ def technical_document_approve(
     db.commit()
     return RedirectResponse(
         f"/technical/documents/{document.id}?success=Technical+source+document+approved",
+        status_code=303,
+    )
+
+
+@router.post("/technical/documents/{document_db_id}/reject")
+def technical_document_reject(
+    document_db_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    reason: Annotated[str, Form()],
+) -> RedirectResponse:
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "technical:approve")
+    document = db.get(TechnicalDocument, document_db_id)
+    if not document:
+        raise HTTPException(404, "Technical document not found")
+    if document.status != "in_review":
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error=Only+In+Review+documents+can+be+rejected",
+            status_code=303,
+        )
+    approval = db.scalar(
+        select(Approval)
+        .where(
+            Approval.entity_type == "technical_document",
+            Approval.entity_id == document.id,
+            Approval.approval_type == "technical_document_review",
+        )
+        .order_by(Approval.created_at.desc())
+    )
+    if not approval or approval.status != "pending" or not approval.requested_by_id:
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error="
+            "Pending+technical+document+review+required",
+            status_code=303,
+        )
+    if approval.requested_by_id == user.id:
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error="
+            "Technical+document+requester+and+approver+must+be+different+users",
+            status_code=303,
+        )
+    previous = document.status
+    document.status = "rejected"
+    document.reviewed_by_id = user.id
+    document.approved_by_id = None
+    document.approved_at = None
+    approval.status = "rejected"
+    approval.decided_by_id = user.id
+    approval.decided_at = datetime.now(UTC)
+    approval.decision_reason = reason
+    record_audit(
+        db,
+        actor=user,
+        action="reject",
+        entity_type="technical_document",
+        entity_id=document.id,
+        previous_value={"status": previous},
+        new_value={"status": "rejected"},
+        reason=reason,
+    )
+    db.commit()
+    return RedirectResponse(
+        f"/technical/documents/{document.id}?success=Technical+source+document+rejected",
         status_code=303,
     )
