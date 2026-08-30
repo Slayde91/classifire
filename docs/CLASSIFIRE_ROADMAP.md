@@ -31,7 +31,7 @@ Nothing in a report, fixture, receipt, or attached reference document grants aut
 ### 2.1 Current product position
 
 CLASSIFIRE has a controlled evidence-to-physical-model prototype. The verified
-shared-main tip is `b77617422bfa444b6c6da73e4955400db3c96e27` (PR #81).
+shared-main tip is `e894a1776befd2ccc147a7958ca45d43343a6567` (PR #82).
 Its application baseline at `20cb72a`, plus human-session revocation hardening
 in `db404b3`, contains the canonical runtime,
 admission-bound writer, bounded visual correction guard, proposal-blind
@@ -63,6 +63,12 @@ deterministic per-Defect review flow, report-bound assessment contracts, and
 managed no-tool runtime. Its final pull-request workflow run passed 500 tests,
 including the configured disposable PostgreSQL containment-race environment.
 This is shared-main proposal-only source, not a real report or canonical result.
+
+PR #82 packaged the immutable Alembic history, added the explicit installed
+migration command, and made production startup plus database-writing CLI paths
+fail closed unless the configured database proves the exact packaged migration
+head. Its pull-request validation succeeded. No production, UAT, or customer
+database was upgraded.
 
 A retained representative rollback-only run completed against an approved
 report and linked-original source. Retrieval succeeded, but the independent
@@ -270,8 +276,8 @@ pre-publication audit record.
 | --- | --- | --- |
 | Assessment/review contract | **Merged in PR #80.** `e394f29` merged `efd4641` and the `571f1cd` workflow; the recorded pull-request validation run succeeded for that exact PR head. | Treat it as shared proposal-only source, never as live-run or canonical authority. |
 | Report-evidence adapter | **Merged in PR #81.** Shared main has project ownership, exact clean-byte containment, report-SHA locators/scopes, deterministic review packages, report-aware assessment binding, a no-tool transport, a managed runtime, and a disposable PostgreSQL CI service. | Obtain separate authority for one controlled proposal-only report assessment and human-review every resulting artifact. |
-| Production startup boundary | **Merged narrow hardening plus unmerged CLI/migration candidate.** Main rejects unsafe production configuration before filesystem or lifecycle work and prohibits production schema creation/default administrator seeding. The contained candidate also requires the exact packaged migration head before production storage setup or database-writing CLI work. | Review the contained candidate separately; keep the rest of `a3de490` and live deployment proof as separate work. Do not treat this as production readiness. |
-| Continuous integration | **Started on shared main.** The secret-free pull-request workflow exists and its PR #80 run succeeded. | A later branch needs its own PR run; do not extend the earlier green result to this candidate. |
+| Production startup boundary | **Merged limited hardening.** Main rejects unsafe production configuration before filesystem or lifecycle work, prohibits production schema creation/default administrator seeding, packages the migration history, and requires the exact packaged migration head before production storage setup or database-writing CLI work. | Keep the rest of `a3de490` and live deployment proof as separate work. Do not treat this as production readiness. |
+| Continuous integration | **Established on shared main.** The secret-free pull-request workflow succeeded for PRs #80, #81, and #82. | Each later branch still needs its own CI result; a prior green result is not blanket approval. |
 | Report-only UAT | **Blocked by separate authority.** No real report, OpenClaw, or provider call occurred while building or testing this candidate. | After the database proof and independent review, obtain separate authority for one controlled proposal-only assessment and human-review every resulting artifact. |
 
 ## 3. Master roadmap at a glance
