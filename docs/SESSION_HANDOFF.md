@@ -3,10 +3,10 @@
 **Verified:** 2026-08-30 (AEST)
 
 **Status:** Pre-production prototype; PR #81 merged the contained report-evidence
-adapter and narrow production-startup hardening, and PR #82 merged migration
-packaging plus production schema-readiness safeguards into shared main. There is
-still no approved canonical Physical Model or active replacement Physical Model
-Lock.
+adapter and narrow production-startup hardening, PR #82 merged migration
+packaging plus production schema-readiness safeguards, and PR #83 merged the
+technical-activation separation guard into shared main. There is still no
+approved canonical Physical Model or active replacement Physical Model Lock.
 
 PR #82 has no authority to upgrade a production, UAT, or customer database.
 
@@ -14,11 +14,12 @@ This handoff is a factual audit record. It does not grant authority to run infer
 
 ## 1. Verified shared state
 
-- `origin/main` is `e894a1776befd2ccc147a7958ca45d43343a6567`
-  (PR #82). It contains the PR #74 application baseline, `db404b3` human-session
+- `origin/main` is `ac7de2c6f544088de0092a3b4d9bfdc0aec64b6d`
+  (PR #83). It contains the PR #74 application baseline, `db404b3` human-session
   hardening, the PR #79 recovery decision, PR #80's bounded assessment/review
   contract, PR #81's contained report-evidence adapter/startup hardening, and
-  PR #82's migration packaging/schema-readiness boundary.
+  PR #82's migration packaging/schema-readiness boundary, and PR #83's
+  technical-activation separation guard.
 - Current shared-main Alembic state has one head: `0011_report_evidence_locators` on `legacy_adjudicated_lineage`. The technical-intake candidate migration is not on main.
 - The final PR #81 `CLASSIFIRE pull request validation` workflow completed
   successfully for `4ebc531` at 2026-08-30 12:50:43 UTC: 500 tests passed,
@@ -27,6 +28,8 @@ This handoff is a factual audit record. It does not grant authority to run infer
 - PR #82's `CLASSIFIRE pull request validation` workflow completed successfully
   for `9ad6ca7` at 2026-08-30 14:25:21 UTC. It validated the migration/CLI
   boundary before the PR merged at `e894a17`.
+- PR #83's `CLASSIFIRE pull request validation` workflow completed successfully
+  for `70f8df5` in 2m13s before the PR merged at `ac7de2c`.
 - The report ownership/bytes, stable locators, deterministic review packages,
   report-aware assessment bindings, managed no-tool runtime, migration
   packaging, and production schema-readiness safeguards are shared-main source.
@@ -60,7 +63,7 @@ did not modify it.
 | Report assessment and cable semantics | **Merged in PR #80** | `property_assessments` v2, historical-v1 verification, manifest-bound reviews, and bundle/tray rules are shared-main source. They remain proposal-only and do not create canonical truth. |
 | Report-evidence adapter | **Merged shared-main foundation** | PR #81 binds project ownership, verified clean bytes, report-SHA locators/scopes, deterministic review packages, and a guarded report transport/runtime. The disposable PostgreSQL shared-byte race passed in CI. |
 | Governed technical intake | **Separate pushed candidate plus local continuation** | `d76562e` and `0edeaac` are not on shared main. Their worktree has proposed `0019` and substantial uncommitted follow-on material, so it is not a clean merge candidate. |
-| Technical activation separation | **Validated current-branch candidate** | The existing UI workflow now requires `in_review`, a pending request, a different deciding user, and an approved linked source document before a variant can become active. It remains a narrow fail-closed guard, not full technical-intake authority or shared-main proof. |
+| Technical activation separation | **Merged shared-main hardening (PR #83)** | The existing UI workflow now requires `in_review`, a pending request, a different deciding user, and an approved linked source document before a variant can become active. It remains a narrow fail-closed guard, not full technical-intake authority or production proof. |
 | Production startup boundary | **Merged narrow hardening** | Main rejects unsafe production configuration before filesystem or lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
 | Installed migration packaging and CLI bootstrap | **Merged shared-main hardening** | PR #82 moved immutable history under `classifire.migrations`; `classifire-migrate` explicitly upgrades only to its current head, while production CLI setup/import commands refuse to create schema or seed defaults. Production startup and database-writing CLI paths require the configured database to prove the exact packaged migration head before proceeding. Source, wheel, focused, full-suite, and PR CI checks used no production, UAT, or customer database. |
 | Production browser configuration and diagnostics | **Validated current-branch candidate** | Documented CSV/JSON `trusted_hosts` and `allowed_origins` inputs parse correctly, while unsafe production host/origin configuration fails before lifespan storage work. The read-only `doctor` command reports only the database type and a generic connection failure, never a raw database URL or exception. This remains unshared-main code, not deployment or production proof. |
