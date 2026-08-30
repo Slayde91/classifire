@@ -1,18 +1,26 @@
 from __future__ import annotations
 
 import hashlib
+from io import BytesIO
 from pathlib import Path
 
 import pytest
-from sqlalchemy import create_engine
+from fastapi import UploadFile
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
+from starlette.datastructures import Headers
 
+from classifire import models, physical_models  # noqa: F401
+from classifire.config import Settings
+from classifire.db import Base
 from classifire.models import StoredFile
 from classifire.services.storage import (
     StoredFileBindingError,
     quarantine_stored_file_bytes_for_update,
     read_clean_stored_file_for_update,
     read_verified_stored_file,
+    save_upload,
 )
 
 
@@ -183,3 +191,87 @@ def test_serialized_containment_rejects_a_non_postgresql_transaction() -> None:
                 )
 
     assert raised.value.code == 'STORED_FILE_CONTAINMENT_SERIALIZATION_UNAVAILABLE'
+
+
+def _upload(filename: str, content: bytes) -> UploadFile:
+    return UploadFile(
+        file=BytesIO(content),
+        filename=filename,
+        headers=Headers({"content-type": "application/pdf"}),
+    )
+
+
+def test_upload_refuses_identical_bytes_for_a_different_evidence_purpose(
+    tmp_path: Path,
+) -> None:
+    engine = create_engine(
+        'sqlite+pysqlite://',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    settings = Settings(storage_root=tmp_path / 'storage')
+    payload = b'identical retained source bytes\n'
+    try:
+        with Session(engine) as db:
+            project_source = save_upload(
+                db,
+                settings,
+                _upload('report.pdf', payload),
+                purpose='project_evidence',
+                user=None,
+            )
+            db.commit()
+
+            with pytest.raises(ValueError, match='different evidence purpose'):
+                save_upload(
+                    db,
+                    settings,
+                    _upload('technical.pdf', payload),
+                    purpose='technical_evidence',
+                    user=None,
+                )
+
+            retained = list(db.scalars(select(StoredFile)))
+            assert retained == [project_source]
+            assert project_source.purpose == 'project_evidence'
+            assert list((settings.storage_root / '.incoming').iterdir()) == []
+    finally:
+        engine.dispose()
+
+
+def test_upload_reuses_identical_bytes_for_the_same_evidence_purpose(
+    tmp_path: Path,
+) -> None:
+    engine = create_engine(
+        'sqlite+pysqlite://',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    settings = Settings(storage_root=tmp_path / 'storage')
+    payload = b'identical retained technical source bytes\n'
+    try:
+        with Session(engine) as db:
+            first = save_upload(
+                db,
+                settings,
+                _upload('technical.pdf', payload),
+                purpose='technical_evidence',
+                user=None,
+            )
+            db.commit()
+
+            second = save_upload(
+                db,
+                settings,
+                _upload('technical-copy.pdf', payload),
+                purpose='technical_evidence',
+                user=None,
+            )
+
+            assert second.id == first.id
+            assert list(db.scalars(select(StoredFile))) == [first]
+            assert list((settings.storage_root / '.incoming').iterdir()) == []
+    finally:
+        engine.dispose()
