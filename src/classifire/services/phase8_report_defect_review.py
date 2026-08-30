@@ -44,6 +44,7 @@ _BINDING_FIELDS = (
     'controller_receipt_file_sha256',
     'controller_receipt_canonical_sha256',
     'visual_evidence_manifest_canonical_sha256',
+    'documentary_packet_canonical_sha256',
     'inference_profile_sha256',
     'proposal_file_sha256',
     'proposal_canonical_sha256',
@@ -102,6 +103,9 @@ def _phase8_binding(
     input_bindings = review.get('input_bindings')
     if not isinstance(input_bindings, dict):
         _fail('REPORT_DEFECT_REVIEW_PHASE8_REVIEW_INVALID')
+    documentary_packet_sha256 = canonical_json_sha256(manifest)
+    if input_bindings.get('documentary_packet_canonical_sha256') != documentary_packet_sha256:
+        _fail('REPORT_DEFECT_REVIEW_DOCUMENTARY_BINDING_INVALID')
     return {
         'phase8_proposal_review_canonical_sha256': canonical_json_sha256(review),
         'phase8_review_status': str(review['review_status']),
@@ -115,6 +119,7 @@ def _phase8_binding(
         'visual_evidence_manifest_canonical_sha256': str(
             input_bindings['evidence_manifest_canonical_sha256']
         ),
+        'documentary_packet_canonical_sha256': documentary_packet_sha256,
         'inference_profile_sha256': str(input_bindings['inference_profile_sha256']),
         'proposal_file_sha256': (
             str(input_bindings['proposal_file_sha256'])

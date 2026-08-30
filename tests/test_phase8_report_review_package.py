@@ -44,8 +44,11 @@ def _packet_for(
     )
 
 
-def _phase8_review() -> dict[str, object]:
-    return build_phase8_proposal_review(**_review_inputs(_proposal()))
+def _phase8_review(packet: ReportDefectEvidencePacket) -> dict[str, object]:
+    return build_phase8_proposal_review(
+        **_review_inputs(_proposal()),
+        documentary_evidence_packet=packet,
+    )
 
 
 def _package(
@@ -70,7 +73,7 @@ def _package(
     )
     selected_packets = packets or [second, first]
     selected_outcomes = outcomes or {
-        'SCOPE-001': ReportDefectReviewOutcome(phase8_proposal_review=_phase8_review()),
+        'SCOPE-001': ReportDefectReviewOutcome(phase8_proposal_review=_phase8_review(first)),
         'SCOPE-002': ReportDefectReviewOutcome(
             no_proposal_status='RETRIEVAL_BLOCKED',
             blocker_code='ACTIVE_VISUAL_EVIDENCE_REQUIRED',
@@ -101,7 +104,7 @@ def test_package_emits_one_deterministic_artifact_per_selected_scope() -> None:
         scope_id='SCOPE-002',
     )
     outcomes = {
-        'SCOPE-001': ReportDefectReviewOutcome(phase8_proposal_review=_phase8_review()),
+        'SCOPE-001': ReportDefectReviewOutcome(phase8_proposal_review=_phase8_review(first)),
         'SCOPE-002': ReportDefectReviewOutcome(
             no_proposal_status='RETRIEVAL_BLOCKED',
             blocker_code='ACTIVE_VISUAL_EVIDENCE_REQUIRED',
@@ -158,7 +161,7 @@ def test_package_rejects_missing_duplicate_cross_package_and_changed_state() -> 
         report_label='D-001',
         scope_id='SCOPE-001',
     )
-    phase8_review = _phase8_review()
+    phase8_review = _phase8_review(first)
 
     with pytest.raises(
         Phase8ReportReviewPackageError,

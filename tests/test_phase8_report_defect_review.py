@@ -6,7 +6,10 @@ import pytest
 from test_phase8_proposal_review import _review_inputs
 from test_phase8_visual_proposal import _proposal
 
-from classifire.services.phase8_proposal_review import build_phase8_proposal_review
+from classifire.services.phase8_proposal_review import (
+    Phase8ProposalReviewError,
+    build_phase8_proposal_review,
+)
 from classifire.services.phase8_report_defect_review import (
     PHASE8_REPORT_DEFECT_REVIEW_SCHEMA,
     Phase8ReportDefectReviewError,
@@ -62,7 +65,10 @@ def _packet() -> ReportDefectEvidencePacket:
 
 def test_report_defect_review_binds_a_valid_phase8_review_without_copying_content() -> None:
     packet = _packet()
-    phase8_review = build_phase8_proposal_review(**_review_inputs(_proposal()))
+    phase8_review = build_phase8_proposal_review(
+        **_review_inputs(_proposal()),
+        documentary_evidence_packet=packet,
+    )
 
     review = build_phase8_report_defect_review(
         packet=packet,
@@ -81,6 +87,10 @@ def test_report_defect_review_binds_a_valid_phase8_review_without_copying_conten
         == canonical_json_sha256(phase8_review)
     )
     assert review['phase8_review_binding']['phase8_review_status'] == 'ASSESSMENT_AVAILABLE'
+    assert (
+        review['phase8_review_binding']['documentary_packet_canonical_sha256']
+        == canonical_json_sha256(packet.manifest)
+    )
     assert review['blocker_code'] is None
     assert validate_phase8_report_defect_review(review) == []
     assert '# CLASSIFIRE report Defect proposal-only review' in markdown
@@ -130,6 +140,19 @@ def test_report_defect_review_rejects_unbound_assessment_statuses_and_tampering(
 
     with pytest.raises(
         Phase8ReportDefectReviewError,
+        match='REPORT_DEFECT_REVIEW_DOCUMENTARY_BINDING_INVALID',
+    ):
+        build_phase8_report_defect_review(
+            packet=packet,
+            phase8_proposal_review=phase8_review,
+        )
+    phase8_review = build_phase8_proposal_review(
+        **_review_inputs(_proposal()),
+        documentary_evidence_packet=packet,
+    )
+
+    with pytest.raises(
+        Phase8ReportDefectReviewError,
         match='REPORT_DEFECT_REVIEW_NO_PROPOSAL_INVALID',
     ):
         build_phase8_report_defect_review(
@@ -145,12 +168,39 @@ def test_report_defect_review_rejects_unbound_assessment_statuses_and_tampering(
         manifest_sha256=canonical_json_sha256(mismatched_manifest),
     )
     with pytest.raises(
+        Phase8ProposalReviewError,
+        match='PROPOSAL_REVIEW_REPORT_PACKET_SCOPE_MISMATCH',
+    ):
+        build_phase8_proposal_review(
+            **_review_inputs(_proposal()),
+            documentary_evidence_packet=mismatched_packet,
+        )
+    with pytest.raises(
         Phase8ReportDefectReviewError,
         match='REPORT_DEFECT_REVIEW_PHASE8_SCOPE_MISMATCH',
     ):
         build_phase8_report_defect_review(
             packet=mismatched_packet,
             phase8_proposal_review=phase8_review,
+        )
+
+    different_scope_manifest = deepcopy(packet.manifest)
+    different_scope_manifest['scope_id'] = 'SCOPE-OTHER'
+    different_scope_packet = ReportDefectEvidencePacket(
+        manifest=different_scope_manifest,
+        manifest_sha256=canonical_json_sha256(different_scope_manifest),
+    )
+    wrong_scope_review = build_phase8_proposal_review(
+        **_review_inputs(_proposal()),
+        documentary_evidence_packet=different_scope_packet,
+    )
+    with pytest.raises(
+        Phase8ReportDefectReviewError,
+        match='REPORT_DEFECT_REVIEW_DOCUMENTARY_BINDING_INVALID',
+    ):
+        build_phase8_report_defect_review(
+            packet=packet,
+            phase8_proposal_review=wrong_scope_review,
         )
 
     no_proposal = build_phase8_report_defect_review(
@@ -185,7 +235,10 @@ def test_report_defect_review_carries_insufficient_evidence_only_from_bound_revi
     proposal['limitations'] = ['The selected images do not show the opposite face.']
     proposal['openings'] = []
     proposal['services'] = []
-    phase8_review = build_phase8_proposal_review(**_review_inputs(proposal))
+    phase8_review = build_phase8_proposal_review(
+        **_review_inputs(proposal),
+        documentary_evidence_packet=_packet(),
+    )
 
     review = build_phase8_report_defect_review(
         packet=_packet(),
