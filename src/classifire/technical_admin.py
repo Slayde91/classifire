@@ -534,7 +534,11 @@ def technical_document_detail(document_db_id: str, request: Request, db: Db) -> 
     ).all()
     approvals = db.scalars(
         select(Approval)
-        .where(Approval.entity_type == "technical_document", Approval.entity_id == document.id)
+        .where(
+            Approval.entity_type == "technical_document",
+            Approval.entity_id == document.id,
+            Approval.approval_type == "technical_document_review",
+        )
         .order_by(Approval.created_at.desc())
     ).all()
     return templates.TemplateResponse(
