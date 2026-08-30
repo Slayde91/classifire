@@ -11,6 +11,8 @@ import uvicorn
 from rich.console import Console
 from rich.table import Table
 from sqlalchemy import func, select
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 
 from . import (
     __version__,
@@ -76,6 +78,16 @@ def _ensure_cli_schema(settings: Settings) -> None:
             raise typer.BadParameter(exc.code) from exc
         return
     Base.metadata.create_all(bind=engine)
+
+
+def _database_diagnostic(database_url: str) -> str:
+    """Describe the configured database without disclosing connection details."""
+
+    try:
+        backend = make_url(database_url).get_backend_name()
+    except ArgumentError:
+        return "Configured database (invalid URL)"
+    return f"Configured {backend} database"
 
 
 @app.command()
@@ -227,12 +239,12 @@ def doctor() -> None:
             users = db.scalar(select(func.count()).select_from(User)) or 0
             pricing = db.scalar(select(func.count()).select_from(PricingLibraryRecord)) or 0
             technical = db.scalar(select(func.count()).select_from(TechnicalVariant)) or 0
-        checks.append(("Database", settings.database_url, "PASS"))
+        checks.append(("Database", _database_diagnostic(settings.database_url), "PASS"))
         checks.append(("Users", str(users), "PASS" if users else "WARN"))
         checks.append(("Pricing rows", str(pricing), "PASS" if pricing else "WARN"))
         checks.append(("Technical variants", str(technical), "PASS" if technical else "WARN"))
-    except Exception as exc:
-        checks.append(("Database", str(exc), "FAIL"))
+    except Exception:
+        checks.append(("Database", "Connection failed (details withheld)", "FAIL"))
     for finding in settings.validate_production():
         checks.append(("Production config", finding, "WARN"))
     table = Table("Check", "Detail", "Result")
