@@ -12,10 +12,12 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from .audit import record_audit
+from .config import get_settings
 from .db import get_db
-from .models import Approval, TechnicalDocument, TechnicalVariant
+from .models import Approval, StoredFile, TechnicalDocument, TechnicalVariant
 from .security import verify_csrf
 from .services.calculation import D
+from .services.storage import StoredFileBindingError, read_verified_stored_file
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -52,6 +54,21 @@ def _json_or_existing(value: str | None, existing: Any) -> Any:
     if value is None or value.strip() == "":
         return copy.deepcopy(existing)
     return json.loads(value)
+
+
+def _technical_document_source_is_reviewable(db: Session, document: TechnicalDocument) -> bool:
+    stored = db.get(StoredFile, document.stored_file_id)
+    if not stored:
+        return False
+    try:
+        read_verified_stored_file(
+            stored,
+            storage_root=get_settings().storage_root,
+            required_purpose="technical_evidence",
+        )
+    except StoredFileBindingError:
+        return False
+    return True
 
 
 @router.get("/technical/variants", response_class=HTMLResponse)
@@ -567,6 +584,12 @@ def technical_document_submit_review(
             "Only+Draft+or+Rejected+documents+can+be+submitted",
             status_code=303,
         )
+    if not _technical_document_source_is_reviewable(db, document):
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error="
+            "Technical+source+file+must+be+clean+and+unchanged+before+review",
+            status_code=303,
+        )
     previous_status = document.status
     document.status = "in_review"
     approval = db.scalar(
@@ -629,6 +652,12 @@ def technical_document_approve(
     if document.status != "in_review":
         return RedirectResponse(
             f"/technical/documents/{document.id}?error=Only+In+Review+documents+can+be+approved",
+            status_code=303,
+        )
+    if not _technical_document_source_is_reviewable(db, document):
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error="
+            "Technical+source+file+must+be+clean+and+unchanged+before+review",
             status_code=303,
         )
     approval = db.scalar(
