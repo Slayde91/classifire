@@ -229,6 +229,9 @@ def _receipt(
         'visual_controller_receipt': deepcopy(visual_receipt),
         'visual_controller_receipt_sha256': canonical_json_sha256(visual_receipt),
         'report_runtime_input_manifest_sha256': runtime_input.manifest_sha256,
+        'report_packet_manifest_sha256': (
+            runtime_input.assessment_input.report_packet.manifest_sha256
+        ),
         'report_documentary_context_manifest_sha256': (
             runtime_input.documentary_context.manifest_sha256
         ),
@@ -250,7 +253,8 @@ def validate_phase8_report_assessment_receipt(receipt: object) -> list[str]:
     expected = {
         'schema', 'status', 'run_id', 'estimate_id', 'defect_reference',
         'visual_controller_receipt', 'visual_controller_receipt_sha256',
-        'report_runtime_input_manifest_sha256', 'report_documentary_context_manifest_sha256',
+        'report_runtime_input_manifest_sha256', 'report_packet_manifest_sha256',
+        'report_documentary_context_manifest_sha256',
         'report_assessment_inference_profile_sha256', 'stages', 'runtime_inference_performed',
         *_NOOP_FLAGS,
     }
@@ -310,6 +314,7 @@ def validate_phase8_report_assessment_receipt(receipt: object) -> list[str]:
                     errors.append('report assessment receipt stage is not visual-receipt bound')
     for field in (
         'visual_controller_receipt_sha256', 'report_runtime_input_manifest_sha256',
+        'report_packet_manifest_sha256',
         'report_documentary_context_manifest_sha256', 'report_assessment_inference_profile_sha256',
     ):
         if not _valid_hash(receipt.get(field)):

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from copy import deepcopy
 from dataclasses import replace
 
@@ -12,6 +14,11 @@ from test_phase8_visual_proposal import _proposal
 from test_report_evidence_adapter import _report_content
 
 from classifire.services.canonical_submission_state import InitialSubmissionState
+from classifire.services.phase8_proposal_review import (
+    Phase8ProposalReviewError,
+    build_phase8_proposal_review,
+    validate_phase8_proposal_review,
+)
 from classifire.services.phase8_report_assessment_controller import (
     Phase8ReportAssessmentController,
     Phase8ReportAssessmentControllerError,
@@ -174,3 +181,46 @@ def test_receipt_rejects_a_prompt_stage_detached_from_its_visual_request() -> No
     errors = validate_phase8_report_assessment_receipt(forged)
 
     assert any('not visual-receipt bound' in error for error in errors)
+
+
+def test_proposal_review_requires_the_matching_report_aware_receipt() -> None:
+    runtime = _runtime()
+    result = Phase8ReportAssessmentController(
+        run_id='REPORT-RUN-001',
+        runtime_input=runtime,
+        visual_inference_profile=visual_profile(),
+        report_assessment_inference_profile=_report_profile(),
+        inference_port=_ReportPort(_documentary_grounded_proposal(runtime)),
+        protected_state_reader=_state,
+        max_correction_passes=0,
+    ).run()
+    assert result.visual_result.proposal is not None
+    proposal_bytes = json.dumps(result.visual_result.proposal, sort_keys=True).encode('utf-8')
+    visual_receipt_bytes = json.dumps(result.visual_result.receipt, sort_keys=True).encode('utf-8')
+    report_receipt_bytes = json.dumps(result.receipt, sort_keys=True).encode('utf-8')
+    inputs = {
+        'package_id': 'PACKAGE-REPORT-001',
+        'package_sha256': '9' * 64,
+        'approval_reference': 'report-aware proposal-only review',
+        'proposal_file_bytes': proposal_bytes,
+        'proposal_file_sha256': hashlib.sha256(proposal_bytes).hexdigest(),
+        'controller_receipt_file_bytes': visual_receipt_bytes,
+        'controller_receipt_file_sha256': hashlib.sha256(visual_receipt_bytes).hexdigest(),
+        'evidence_manifest': runtime.visual_packet.manifest,
+        'documentary_evidence_packet': runtime.assessment_input.report_packet,
+        'report_assessment_controller_receipt_file_bytes': report_receipt_bytes,
+        'report_assessment_controller_receipt_file_sha256': hashlib.sha256(
+            report_receipt_bytes
+        ).hexdigest(),
+    }
+
+    review = build_phase8_proposal_review(**inputs)
+
+    assert validate_phase8_proposal_review(review) == []
+    assert review['input_bindings']['report_runtime_input_manifest_sha256'] == (
+        runtime.manifest_sha256
+    )
+    inputs['report_assessment_controller_receipt_file_bytes'] += b' '
+    with pytest.raises(Phase8ProposalReviewError) as tampered:
+        build_phase8_proposal_review(**inputs)
+    assert tampered.value.code == 'PROPOSAL_REVIEW_REPORT_RECEIPT_TAMPERED'
