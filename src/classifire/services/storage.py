@@ -35,6 +35,8 @@ ALLOWED_EXTENSIONS = {
 
 _HEX_SHA256 = frozenset('0123456789abcdef')
 _REPARSE_POINT_ATTRIBUTE = getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 0x0400)
+_CLEAN_SCAN_STATUS = 'clean'
+_MALWARE_DETECTED_SCAN_STATUS = 'malware_detected'
 
 
 class StoredFileBindingError(RuntimeError):
@@ -53,6 +55,16 @@ class VerifiedStoredFileContent:
     size_bytes: int
     media_type: str | None
     content: bytes
+
+
+@dataclass(frozen=True, slots=True)
+class StoredFileQuarantineResult:
+    '''The rows quarantined after one exact retained-byte malware verdict.'''
+
+    sha256: str
+    size_bytes: int
+    quarantined_file_ids: tuple[str, ...]
+    binding_mismatch_file_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -157,6 +169,60 @@ def _normalise_scan_statuses(statuses: Collection[str]) -> frozenset[str]:
     if not values or any(not isinstance(value, str) or value != value.strip() for value in values):
         raise ValueError('allowed_scan_statuses must be a non-empty collection of status strings')
     return frozenset(value.casefold() for value in values)
+
+
+def _normalise_sha256_argument(value: object, *, field_name: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or value != value.casefold()
+        or any(character not in _HEX_SHA256 for character in value)
+    ):
+        raise ValueError(f'{field_name} must be a lower-case SHA-256 string')
+    return value
+
+
+def _require_serialized_containment_transaction(db: Session) -> None:
+    if not db.in_transaction():
+        raise _binding_error('STORED_FILE_CONTAINMENT_TRANSACTION_REQUIRED')
+    if str(db.get_bind().dialect.name).casefold() != 'postgresql':
+        raise _binding_error('STORED_FILE_CONTAINMENT_SERIALIZATION_UNAVAILABLE')
+
+
+def _current_stored_file_by_id(db: Session, stored_file_id: str) -> StoredFile | None:
+    return db.scalar(
+        select(StoredFile)
+        .where(StoredFile.id == stored_file_id)
+        .execution_options(populate_existing=True)
+    )
+
+
+def _locked_stored_files_by_sha256(db: Session, sha256: str) -> tuple[StoredFile, ...]:
+    return tuple(
+        db.scalars(
+            select(StoredFile)
+            .where(StoredFile.sha256 == sha256)
+            .order_by(StoredFile.id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+    )
+
+
+def _require_stored_file_id(stored_file_id: object) -> str:
+    if not isinstance(stored_file_id, str) or not stored_file_id.strip():
+        raise ValueError('stored_file_id must be a non-empty string')
+    return stored_file_id
+
+
+def _stored_file_from_locked_group(
+    stored_file_id: str,
+    shared_files: Collection[StoredFile],
+) -> StoredFile:
+    for shared in shared_files:
+        if shared.id == stored_file_id:
+            return shared
+    raise _binding_error('STORED_FILE_SCAN_RESULT_MISMATCH')
 
 
 def _stored_file_read_context(
@@ -288,6 +354,96 @@ def read_verified_stored_file(
         size_bytes=context.size_bytes,
         media_type=stored.media_type,
         content=content,
+    )
+
+
+def read_clean_stored_file_for_update(
+    db: Session,
+    *,
+    stored_file_id: str,
+    storage_root: Path,
+    required_purpose: str,
+) -> VerifiedStoredFileContent:
+    '''Read exact clean bytes while holding every matching retained-file row lock.
+
+    The caller must own an open PostgreSQL transaction and must not release it
+    until the consuming operation has finished. A concurrent malware verdict
+    uses the same SHA-256 row set and therefore serializes before or after this
+    read; it cannot turn the decision into a check-then-open race.
+    '''
+
+    _require_serialized_containment_transaction(db)
+    stored_file_id = _require_stored_file_id(stored_file_id)
+    current = _current_stored_file_by_id(db, stored_file_id)
+    if current is None:
+        raise _binding_error('STORED_FILE_NOT_FOUND')
+    shared_files = _locked_stored_files_by_sha256(db, current.sha256)
+    if not shared_files or any(
+        not isinstance(shared.malware_scan_status, str)
+        or shared.malware_scan_status.casefold() != _CLEAN_SCAN_STATUS
+        for shared in shared_files
+    ):
+        raise _binding_error('STORED_FILE_SHARED_SCAN_STATUS_FORBIDDEN')
+    stored = _stored_file_from_locked_group(stored_file_id, shared_files)
+    return read_verified_stored_file(
+        stored,
+        storage_root=storage_root,
+        required_purpose=required_purpose,
+        allowed_scan_statuses=(_CLEAN_SCAN_STATUS,),
+    )
+
+
+def quarantine_stored_file_bytes_for_update(
+    db: Session,
+    *,
+    stored_file_id: str,
+    observed_sha256: str,
+    observed_size_bytes: int,
+) -> StoredFileQuarantineResult:
+    '''Quarantine every row sharing malware-confirmed bytes without committing.
+
+    The caller must commit this transaction even when the result identifies a
+    size-binding mismatch. That mismatch is returned for later attention rather
+    than raised, so it cannot roll back the exact-byte quarantine.
+    '''
+
+    _require_serialized_containment_transaction(db)
+    expected_sha256 = _normalise_sha256_argument(
+        observed_sha256,
+        field_name='observed_sha256',
+    )
+    if (
+        not isinstance(observed_size_bytes, int)
+        or isinstance(observed_size_bytes, bool)
+        or observed_size_bytes < 1
+    ):
+        raise ValueError('observed_size_bytes must be a positive integer')
+    stored_file_id = _require_stored_file_id(stored_file_id)
+    shared_files = _locked_stored_files_by_sha256(db, expected_sha256)
+    if not shared_files:
+        raise _binding_error('STORED_FILE_NOT_FOUND')
+    stored = _stored_file_from_locked_group(stored_file_id, shared_files)
+    if (
+        not isinstance(stored.sha256, str)
+        or stored.sha256.casefold() != expected_sha256
+        or stored.size_bytes != observed_size_bytes
+    ):
+        raise _binding_error('STORED_FILE_SCAN_RESULT_MISMATCH')
+
+    for shared in shared_files:
+        shared.malware_scan_status = _MALWARE_DETECTED_SCAN_STATUS
+    db.flush()
+
+    mismatches = tuple(
+        shared.id
+        for shared in shared_files
+        if shared.size_bytes != observed_size_bytes
+    )
+    return StoredFileQuarantineResult(
+        sha256=expected_sha256,
+        size_bytes=observed_size_bytes,
+        quarantined_file_ids=tuple(shared.id for shared in shared_files),
+        binding_mismatch_file_ids=mismatches,
     )
 
 

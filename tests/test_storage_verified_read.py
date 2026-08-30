@@ -4,10 +4,14 @@ import hashlib
 from pathlib import Path
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from classifire.models import StoredFile
 from classifire.services.storage import (
     StoredFileBindingError,
+    quarantine_stored_file_bytes_for_update,
+    read_clean_stored_file_for_update,
     read_verified_stored_file,
 )
 
@@ -150,3 +154,32 @@ def test_verified_read_rejects_symbolic_linked_retained_file(tmp_path: Path) -> 
         )
 
     assert raised.value.code == 'STORED_FILE_PATH_UNSAFE'
+
+
+def test_serialized_clean_read_requires_an_open_transaction() -> None:
+    engine = create_engine('sqlite+pysqlite:///:memory:')
+    with Session(engine) as db:
+        with pytest.raises(StoredFileBindingError) as raised:
+            read_clean_stored_file_for_update(
+                db,
+                stored_file_id='stored-file-id',
+                storage_root=Path('storage'),
+                required_purpose='project_evidence',
+            )
+
+    assert raised.value.code == 'STORED_FILE_CONTAINMENT_TRANSACTION_REQUIRED'
+
+
+def test_serialized_containment_rejects_a_non_postgresql_transaction() -> None:
+    engine = create_engine('sqlite+pysqlite:///:memory:')
+    with Session(engine) as db:
+        with db.begin():
+            with pytest.raises(StoredFileBindingError) as raised:
+                quarantine_stored_file_bytes_for_update(
+                    db,
+                    stored_file_id='stored-file-id',
+                    observed_sha256='a' * 64,
+                    observed_size_bytes=1,
+                )
+
+    assert raised.value.code == 'STORED_FILE_CONTAINMENT_SERIALIZATION_UNAVAILABLE'
