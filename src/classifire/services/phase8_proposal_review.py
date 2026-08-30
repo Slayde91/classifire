@@ -14,6 +14,9 @@ from .phase8_property_assessments import (
     required_physical_property_fields_for_subject,
     validate_physical_property_value,
 )
+from .phase8_report_assessment_controller import (
+    validate_phase8_report_assessment_receipt,
+)
 from .phase8_visual_proposal import (
     LEGACY_VISUAL_PROPOSAL_POLICY_VERSION,
     VISUAL_PROPOSAL_APPROVED,
@@ -27,6 +30,10 @@ from .phase8_visual_proposal import (
     validate_visual_evidence_manifest,
 )
 from .physical_scope import is_cable_bundle_service, is_cable_tray_service
+from .report_evidence_adapter import (
+    ReportDefectEvidencePacket,
+    validate_report_defect_evidence_packet,
+)
 
 PHASE8_PROPOSAL_REVIEW_SCHEMA = "CLASSIFIRE-PHASE8-PROPOSAL-REVIEW-v2"
 _HASH = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -42,6 +49,14 @@ _NOOP_FLAGS = (
     "commercial_pricing_performed",
     "physical_model_lock_created",
     "human_release_performed",
+)
+_REPORT_ASSESSMENT_BINDING_FIELDS = (
+    'report_assessment_controller_receipt_file_sha256',
+    'report_assessment_controller_receipt_canonical_sha256',
+    'report_runtime_input_manifest_sha256',
+    'report_packet_manifest_sha256',
+    'report_documentary_context_manifest_sha256',
+    'report_assessment_inference_profile_sha256',
 )
 
 _OPENING_LABELS = {
@@ -216,7 +231,21 @@ def _review_base(
     manifest_sha256: str,
     proposal_file_sha256: str | None,
     proposal_canonical_sha256: str | None,
+    documentary_packet_sha256: str | None,
+    report_assessment_binding: dict[str, str] | None,
 ) -> dict[str, Any]:
+    input_bindings: dict[str, str | None] = {
+        "controller_receipt_file_sha256": receipt_file_sha256,
+        "controller_receipt_canonical_sha256": canonical_json_sha256(receipt),
+        "evidence_manifest_canonical_sha256": manifest_sha256,
+        "inference_profile_sha256": receipt["inference_profile_sha256"],
+        "proposal_file_sha256": proposal_file_sha256,
+        "proposal_canonical_sha256": proposal_canonical_sha256,
+    }
+    if documentary_packet_sha256 is not None:
+        input_bindings["documentary_packet_canonical_sha256"] = documentary_packet_sha256
+    if report_assessment_binding is not None:
+        input_bindings.update(report_assessment_binding)
     return {
         "schema": PHASE8_PROPOSAL_REVIEW_SCHEMA,
         "review_status": "UNAVAILABLE",
@@ -232,14 +261,7 @@ def _review_base(
             "NONE" if proposal_file_sha256 is None else "INVALID"
         ),
         "implementation_revision": receipt["implementation_revision"],
-        "input_bindings": {
-            "controller_receipt_file_sha256": receipt_file_sha256,
-            "controller_receipt_canonical_sha256": canonical_json_sha256(receipt),
-            "evidence_manifest_canonical_sha256": manifest_sha256,
-            "inference_profile_sha256": receipt["inference_profile_sha256"],
-            "proposal_file_sha256": proposal_file_sha256,
-            "proposal_canonical_sha256": proposal_canonical_sha256,
-        },
+        "input_bindings": input_bindings,
         "proposal_only": True,
         "canonical_submission_performed": False,
         "technical_selection_performed": False,
@@ -255,6 +277,84 @@ def _review_base(
     }
 
 
+def _documentary_packet_binding(
+    value: object,
+    *,
+    estimate_id: str,
+    defect_reference: str,
+) -> tuple[frozenset[str], str | None]:
+    if value is None:
+        return frozenset(), None
+    if not isinstance(value, ReportDefectEvidencePacket):
+        raise Phase8ProposalReviewError("PROPOSAL_REVIEW_REPORT_PACKET_INVALID")
+    if validate_report_defect_evidence_packet(value):
+        raise Phase8ProposalReviewError("PROPOSAL_REVIEW_REPORT_PACKET_INVALID")
+    manifest = value.manifest
+    if (
+        manifest.get("estimate_id") != estimate_id
+        or manifest.get("defect_reference") != defect_reference
+    ):
+        raise Phase8ProposalReviewError("PROPOSAL_REVIEW_REPORT_PACKET_SCOPE_MISMATCH")
+    refs = value.evidence_refs
+    if not refs:
+        raise Phase8ProposalReviewError("PROPOSAL_REVIEW_REPORT_PACKET_INVALID")
+    return refs, canonical_json_sha256(manifest)
+
+
+def _report_assessment_binding(
+    *,
+    receipt_file_bytes: object | None,
+    receipt_file_sha256: object | None,
+    visual_receipt: dict[str, Any],
+    documentary_packet_sha256: str | None,
+) -> dict[str, str] | None:
+    if receipt_file_bytes is None and receipt_file_sha256 is None:
+        return None
+    if receipt_file_bytes is None or receipt_file_sha256 is None:
+        raise Phase8ProposalReviewError('PROPOSAL_REVIEW_REPORT_RECEIPT_INPUT_CONFLICT')
+    expected_hash = _hash(
+        receipt_file_sha256,
+        code='PROPOSAL_REVIEW_REPORT_RECEIPT_HASH_INVALID',
+    )
+    if (
+        not isinstance(receipt_file_bytes, bytes)
+        or _sha256_bytes(receipt_file_bytes) != expected_hash
+    ):
+        raise Phase8ProposalReviewError('PROPOSAL_REVIEW_REPORT_RECEIPT_TAMPERED')
+    report_receipt = _json_object(
+        receipt_file_bytes,
+        code='PROPOSAL_REVIEW_REPORT_RECEIPT_INVALID',
+    )
+    if validate_phase8_report_assessment_receipt(report_receipt):
+        raise Phase8ProposalReviewError('PROPOSAL_REVIEW_REPORT_RECEIPT_INVALID')
+    if (
+        report_receipt['visual_controller_receipt'] != visual_receipt
+        or report_receipt['visual_controller_receipt_sha256']
+        != canonical_json_sha256(visual_receipt)
+    ):
+        raise Phase8ProposalReviewError('PROPOSAL_REVIEW_REPORT_RECEIPT_VISUAL_MISMATCH')
+    if documentary_packet_sha256 is None or (
+        report_receipt['report_packet_manifest_sha256'] != documentary_packet_sha256
+    ):
+        raise Phase8ProposalReviewError('PROPOSAL_REVIEW_REPORT_RECEIPT_DOCUMENTARY_MISMATCH')
+    return {
+        'report_assessment_controller_receipt_file_sha256': expected_hash,
+        'report_assessment_controller_receipt_canonical_sha256': canonical_json_sha256(
+            report_receipt
+        ),
+        'report_runtime_input_manifest_sha256': report_receipt[
+            'report_runtime_input_manifest_sha256'
+        ],
+        'report_packet_manifest_sha256': report_receipt['report_packet_manifest_sha256'],
+        'report_documentary_context_manifest_sha256': report_receipt[
+            'report_documentary_context_manifest_sha256'
+        ],
+        'report_assessment_inference_profile_sha256': report_receipt[
+            'report_assessment_inference_profile_sha256'
+        ],
+    }
+
+
 def build_phase8_proposal_review(
     *,
     package_id: object,
@@ -265,6 +365,9 @@ def build_phase8_proposal_review(
     controller_receipt_file_bytes: object,
     controller_receipt_file_sha256: object,
     evidence_manifest: object,
+    documentary_evidence_packet: object | None = None,
+    report_assessment_controller_receipt_file_bytes: object | None = None,
+    report_assessment_controller_receipt_file_sha256: object | None = None,
 ) -> dict[str, Any]:
     """Build one review from the exact receipt, proposal bytes, and manifest."""
 
@@ -310,6 +413,17 @@ def build_phase8_proposal_review(
         raise Phase8ProposalReviewError("PROPOSAL_REVIEW_MANIFEST_TAMPERED")
     if evidence_manifest.get("defect_reference") != receipt.get("defect_reference"):
         raise Phase8ProposalReviewError("PROPOSAL_REVIEW_DEFECT_MISMATCH")
+    documentary_refs, documentary_packet_sha256 = _documentary_packet_binding(
+        documentary_evidence_packet,
+        estimate_id=str(receipt["estimate_id"]),
+        defect_reference=str(receipt["defect_reference"]),
+    )
+    report_assessment_binding = _report_assessment_binding(
+        receipt_file_bytes=report_assessment_controller_receipt_file_bytes,
+        receipt_file_sha256=report_assessment_controller_receipt_file_sha256,
+        visual_receipt=receipt,
+        documentary_packet_sha256=documentary_packet_sha256,
+    )
 
     result_hashes = receipt.get("result_hashes")
     if not isinstance(result_hashes, dict):
@@ -348,6 +462,8 @@ def build_phase8_proposal_review(
         manifest_sha256=manifest_sha256,
         proposal_file_sha256=proposal_raw_hash,
         proposal_canonical_sha256=proposal_canonical_hash,
+        documentary_packet_sha256=documentary_packet_sha256,
+        report_assessment_binding=report_assessment_binding,
     )
     if proposal is None:
         review["review_status"] = "NO_PROPOSAL"
@@ -383,7 +499,7 @@ def build_phase8_proposal_review(
         str(item["evidence_id"]).strip()
         for item in evidence_manifest["artifacts"]
         if isinstance(item, dict)
-    }
+    } | documentary_refs
     proposal_errors = validate_policy_bound_visual_physical_proposal(
         proposal,
         defect_reference=str(receipt["defect_reference"]),
@@ -520,7 +636,14 @@ def validate_phase8_proposal_review(review: Any) -> list[str]:
         "proposal_file_sha256",
         "proposal_canonical_sha256",
     }
-    if not isinstance(bindings, dict) or set(bindings) != binding_fields:
+    documentary_binding_field = "documentary_packet_canonical_sha256"
+    report_assessment_binding_fields = set(_REPORT_ASSESSMENT_BINDING_FIELDS)
+    supported_binding_fields = {
+        frozenset(binding_fields),
+        frozenset({*binding_fields, documentary_binding_field}),
+        frozenset({*binding_fields, documentary_binding_field, *report_assessment_binding_fields}),
+    }
+    if not isinstance(bindings, dict) or frozenset(bindings) not in supported_binding_fields:
         errors.append("proposal review input bindings are invalid")
     else:
         for field, value in bindings.items():

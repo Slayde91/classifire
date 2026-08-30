@@ -2,23 +2,27 @@
 
 **Verified:** 2026-08-30 (AEST)
 
-**Status:** Pre-production prototype; shared main has controlled Phase 8 foundations, and the current branch has a completed proposal-only assessment/review candidate, but no approved canonical Physical Model or active replacement Physical Model Lock.
+**Status:** Pre-production prototype; PR #80 has merged the bounded assessment/review contract into shared main, and the current branch contains the contained report-evidence adapter candidate. There is still no approved canonical Physical Model or active replacement Physical Model Lock.
 
 This handoff is a factual audit record. It does not grant authority to run inference, retrieve report evidence, write canonical data, sign or register an admission, create a lock, deploy, release, merge, or open a pull request.
 
 ## 1. Verified shared state
 
-- `origin/main` is `c8b06d17678b58f49f2ea816f3b12ba2e4af0095`
-  (PR #79). The application baseline is `20cb72a`; `db404b3` later hardened
-  human-session revocation; PR #79 adds only the reviewed root-recovery decision.
-- Current shared-main Alembic state has one head: `0009_visual_validation_receipts` on `legacy_adjudicated_lineage`. The technical-intake candidate migration is not on main.
-- A focused current-main suite covering human-session security, evidence-family review, human-adjudicated proposal, visual evidence, and linked visual runs passed: **48 tests**.
-- The current `gpt/phase8-assessment-contract-20260830` branch is based exactly
-  on `c8b06d1`. Its 24-file implementation candidate passed the complete
-  **435-test** suite plus Ruff, Mypy, syntax, Bandit, diff, and independent
-  architecture/policy checks. It is not shared main until reviewed and merged.
+- `origin/main` is `e394f298821fbd04ffa466f2fd16e53480a68fd3`
+  (PR #80). It contains the PR #74 application baseline, `db404b3` human-session
+  hardening, the PR #79 recovery decision, and `efd4641`'s bounded assessment/review contract.
+- Current shared-main Alembic state has one head: `0011_report_evidence_locators` on `legacy_adjudicated_lineage`. The technical-intake candidate migration is not on main.
+- The PR #80 `CLASSIFIRE pull request validation` workflow completed successfully
+  for `571f1cd` at 2026-08-30 05:28:56 UTC.
+- The current `gpt/phase8-report-evidence-adapter-20260830` branch is based on
+  `e394f29`. It adds contained report ownership/bytes, stable locators, deterministic
+  review packages, report-aware assessment bindings, and a managed no-tool runtime.
+  Its full local suite exits 0 with two configured skips; its PostgreSQL quarantine/read
+  race remains skipped locally. The branch PR workflow will provision the dedicated
+  disposable database, but no run has yet proved that configuration.
 - Open GitHub work remains reviewable rather than automatically mergeable: PR #75 is open; PRs #9-#13 are retained draft stack work; issues #42 and #43 are open. Issue #42 still has stale site-visit-first wording.
-- Current main has no GitHub workflow, recorded Actions run, or PR status-check rollup. Mergeability is not CI evidence.
+- Current main has the secret-free pull-request workflow. Its successful PR #80 run
+  is CI evidence for that exact head, not a blanket approval for later branches.
 - GitHub's branch-protection endpoint returned a plan-limited 403, so this audit
   does not claim that main is protected or unprotected.
 
@@ -43,33 +47,35 @@ did not modify it.
 | --- | --- | --- |
 | Shared-main Phase 8 foundations | **Merged and focused-tested** | Controlled evidence, visual-proposal, review, and rollback safeguards exist for their stated scope. They do not authorise canonicalisation or release. |
 | Root Phase 8 continuation | **Quarantined / superseded as a build path** | The recovery decision is complete in PR #79. The conflicted checkout remains evidence only and is no longer the next current-main blocker. |
-| Report assessment | **Completed branch candidate / not shared main** | The current branch selects `property_assessments` v2, retains paired historical v1 verification, and adds manifest-bound JSON/Markdown proposal reviews. |
-| Cable semantics | **Completed branch candidate / not shared main** | Bundle quantity counts bundles, cable count is separate, an indefensible count is null/Unknown with a required small/medium/large bundle class, and cable trays remain trays with their own dimensions. |
-| Report intake | **Broad local candidate / blocked on containment and ownership** | Stored reports are not project/estimate-bound, use a conflicting evidence purpose, and do not prove an atomic clean-byte read. Do not expose its generic readout/UI yet. |
+| Report assessment and cable semantics | **Merged in PR #80** | `property_assessments` v2, historical-v1 verification, manifest-bound reviews, and bundle/tray rules are shared-main source. They remain proposal-only and do not create canonical truth. |
+| Report-evidence adapter | **Completed branch candidate / not shared main** | The current branch binds project ownership, verified clean bytes, report-SHA locators/scopes, deterministic review packages, and a guarded report transport/runtime. The outstanding verification is the disposable PostgreSQL shared-byte race. |
 | Governed technical intake | **Separate pushed candidate plus local continuation** | `d76562e` and `0edeaac` are not on shared main. Their worktree has proposed `0019` and substantial uncommitted follow-on material, so it is not a clean merge candidate. |
-| Production hardening | **Local-only commit** | `a3de490` is unpushed, broad, one commit ahead and three behind main. Main remains pre-production with unconditional schema/seed startup and warning-only production findings. |
+| Production startup boundary | **Completed branch candidate / not shared main** | The current branch rejects unsafe production configuration before lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
 | Report review / UAT | **Proposal-only, authority-gated** | A report package can support cautious evidence assessment, but it cannot create technical compatibility truth, commercial truth, a canonical model, a lock, or a release. |
 
 ## 4. Start Here / Next Session
 
 **Required first gate:** independently review the exact
-`gpt/phase8-assessment-contract-20260830` branch and merge it only if accepted.
-If review finds a defect, correct or supersede this branch before extending it.
+`gpt/phase8-report-evidence-adapter-20260830` branch, then create a pull request
+only with separate authority. Its disposable PostgreSQL CI service must pass the
+shared-byte quarantine/read race before the candidate can be accepted.
 
-**Recommended first engineering task after that gate:** build the contained,
-project-owned, report-SHA-bound evidence adapter and deterministic per-Defect
-review flow on a clean current-main branch.
+**Recommended next engineering task after that gate:** obtain separate authority
+for a controlled proposal-only report assessment. Do not use that authority for
+canonical submission, technical selection, pricing, locking, deployment, or release.
 
-### Prerequisites
+### Prerequisites for the next authorised step
 
-1. Begin from the reviewed assessment-contract branch or its eventual shared-main
-   merge. Do not use or modify the root.
-2. Review the narrow shared-byte containment commit and broad report-context
-   candidate as evidence only; do not copy either worktree wholesale.
-3. Decide the smallest additive StoredFile/report ownership migration and the
-   stable documentary-evidence locator schema before exposing an API or UI.
-4. Keep technical selection, pricing, canonical submission, lock creation,
-   deployment, and release outside this task.
+1. Do not use or modify the root checkout.
+2. The PR workflow supplies only a disposable PostgreSQL database for the
+   containment race. A local rerun, if needed, must use
+   `CLASSIFIRE_POSTGRES_TEST_URL` and must not point at a project, production,
+   or UAT database.
+3. Independently review the adapter branch before and after the CI race. It must
+   remain proposal-only and its diff must not acquire a canonical-write path.
+4. Obtain separate authority before a controlled report assessment. Technical
+   selection, pricing, canonical submission, lock creation, deployment, and
+   release remain outside that authority.
 
 ### Relevant files
 
@@ -91,7 +97,7 @@ review flow on a clean current-main branch.
   `tests/test_phase8_proposal_review.py`, and
   `tests/test_run_phase8_representative_package.py` regression coverage
 
-### Implementation order
+### Completed candidate implementation order
 
 1. Make malware state, content hash, and the exact bytes read/served one atomic
    trust decision. A clean-to-FOUND transition must quarantine every row sharing
@@ -132,7 +138,7 @@ checks, the complete suite, Ruff, Mypy, Bandit, `git diff --check`, report-hash
 and locator tampering, cross-project access, blocked-result cardinality, and
 inspection of representative review files.
 
-**Done means:** one contained current-main change; one Project/Estimate-owned
+**Candidate done means:** one contained branch change; one Project/Estimate-owned
 report and package boundary; atomic safe-byte reads; stable documentary and
 visual locators; exactly one safe review per selected Defect; passing focused,
 database, full-suite, and static checks; inspected output; and no canonical or

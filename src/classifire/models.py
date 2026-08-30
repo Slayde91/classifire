@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     Numeric,
@@ -28,12 +30,14 @@ def new_id() -> str:
 
 
 def now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class RecordMixin:
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=now_utc, nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=now_utc, onupdate=now_utc, nullable=False
     )
@@ -90,7 +94,11 @@ class AgentServicePrincipal(RecordMixin, Base):
 
 class LibraryRelease(RecordMixin, Base):
     __tablename__ = "library_releases"
-    __table_args__ = (UniqueConstraint("library_type", "version", name="uq_library_release_type_version"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "library_type", "version", name="uq_library_release_type_version"
+        ),
+    )
 
     library_type: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
     version: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -128,7 +136,9 @@ class Product(RecordMixin, Base):
     sku: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     name: Mapped[str] = mapped_column(String(300), index=True, nullable=False)
-    item_type: Mapped[str] = mapped_column(String(30), default="product", index=True, nullable=False)
+    item_type: Mapped[str] = mapped_column(
+        String(30), default="product", index=True, nullable=False
+    )
     category: Mapped[str | None] = mapped_column(String(150), index=True)
     manufacturer: Mapped[str | None] = mapped_column(String(200), index=True)
     supplier: Mapped[str | None] = mapped_column(String(200), index=True)
@@ -140,7 +150,9 @@ class Product(RecordMixin, Base):
     base_cost: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="AUD", nullable=False)
     tax_treatment: Mapped[str] = mapped_column(String(30), default="exclusive", nullable=False)
-    waste_factor: Mapped[Decimal] = mapped_column(Numeric(9, 6), default=Decimal("0"), nullable=False)
+    waste_factor: Mapped[Decimal] = mapped_column(
+        Numeric(9, 6), default=Decimal("0"), nullable=False
+    )
     default_markup: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
     regional_pricing: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     source_reference: Mapped[str | None] = mapped_column(Text)
@@ -165,7 +177,9 @@ class LabourComponent(RecordMixin, Base):
     category: Mapped[str | None] = mapped_column(String(150), index=True)
     unit: Mapped[str] = mapped_column(String(30), default="person_hour", nullable=False)
     base_rate: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
-    default_hours: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"), nullable=False)
+    default_hours: Mapped[Decimal] = mapped_column(
+        Numeric(18, 6), default=Decimal("0"), nullable=False
+    )
     crew_size: Mapped[Decimal] = mapped_column(Numeric(9, 3), default=Decimal("1"), nullable=False)
     default_markup: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
     productivity_source: Mapped[str | None] = mapped_column(Text)
@@ -185,7 +199,9 @@ class PricingLibraryRecord(RecordMixin, Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     system_description: Mapped[str | None] = mapped_column(Text)
     unit: Mapped[str] = mapped_column(String(100), default="each", nullable=False)
-    rate_ex_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    rate_ex_tax: Mapped[Decimal] = mapped_column(
+        Numeric(18, 4), default=Decimal("0"), nullable=False
+    )
     direct_labour_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     direct_material_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     material_markup: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
@@ -214,12 +230,23 @@ class PricingLibraryRecord(RecordMixin, Base):
     supersedes_id: Mapped[str | None] = mapped_column(ForeignKey("pricing_library_records.id"))
 
     __table_args__ = (
-        UniqueConstraint("pkb_entry_id", "entry_version", "release_id", name="uq_pkb_entry_release"),
+        UniqueConstraint(
+            "pkb_entry_id", "entry_version", "release_id", name="uq_pkb_entry_release"
+        ),
         Index("ix_pricing_search", "service_type", "service_material", "substrate", "frl"),
     )
 
 
 class StoredFile(RecordMixin, Base):
+    __table_args__ = (
+        UniqueConstraint(
+            'id',
+            'sha256',
+            'size_bytes',
+            name='uq_stored_file_id_sha256_size',
+        ),
+    )
+
     __tablename__ = "stored_files"
 
     original_filename: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -231,6 +258,126 @@ class StoredFile(RecordMixin, Base):
     malware_scan_status: Mapped[str] = mapped_column(String(30), default="not_configured")
     uploaded_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     immutable: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class ProjectEvidence(RecordMixin, Base):
+    '''One immutable report or package binding to exactly one project context.'''
+
+    __tablename__ = 'project_evidence'
+    __table_args__ = (
+        CheckConstraint(
+            '(project_id IS NOT NULL AND estimate_id IS NULL) '
+            'OR (project_id IS NULL AND estimate_id IS NOT NULL)',
+            name='ck_project_evidence_single_owner',
+        ),
+        CheckConstraint(
+            'source_size_bytes > 0',
+            name='ck_project_evidence_source_size',
+        ),
+        ForeignKeyConstraint(
+            ['stored_file_id', 'source_sha256', 'source_size_bytes'],
+            ['stored_files.id', 'stored_files.sha256', 'stored_files.size_bytes'],
+            name='fk_project_evidence_source_bytes',
+        ),
+        UniqueConstraint('id', 'source_sha256', name='uq_project_evidence_id_source_sha256'),
+        UniqueConstraint('stored_file_id', name='uq_project_evidence_stored_file'),
+        Index('ix_project_evidence_project_id', 'project_id'),
+        Index('ix_project_evidence_estimate_id', 'estimate_id'),
+    )
+
+    project_id: Mapped[str | None] = mapped_column(ForeignKey('projects.id'))
+    estimate_id: Mapped[str | None] = mapped_column(ForeignKey('estimates.id'))
+    stored_file_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class ReportEvidenceLocator(RecordMixin, Base):
+    '''A hash-bound, content-safe position inside one retained project report.'''
+
+    __tablename__ = 'report_evidence_locators'
+    __table_args__ = (
+        CheckConstraint('sequence > 0', name='ck_report_evidence_locator_sequence'),
+        CheckConstraint(
+            'page_number IS NULL OR page_number > 0',
+            name='ck_report_evidence_locator_page_number',
+        ),
+        CheckConstraint(
+            'item_kind IN (\'metadata\', \'page\', \'text\', \'table\', \'caption\', '
+            '\'drawing\', \'annotation\', \'image\')',
+            name='ck_report_evidence_locator_item_kind',
+        ),
+        ForeignKeyConstraint(
+            ['project_evidence_id', 'source_sha256'],
+            ['project_evidence.id', 'project_evidence.source_sha256'],
+            name='fk_report_evidence_locator_source',
+        ),
+        UniqueConstraint(
+            'id',
+            'project_evidence_id',
+            name='uq_report_evidence_locator_id_project_evidence',
+        ),
+        UniqueConstraint(
+            'project_evidence_id',
+            'sequence',
+            name='uq_report_evidence_locator_sequence',
+        ),
+        UniqueConstraint(
+            'project_evidence_id',
+            'locator_key',
+            name='uq_report_evidence_locator_key',
+        ),
+        Index('ix_report_evidence_locator_project_page', 'project_evidence_id', 'page_number'),
+    )
+
+    project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    locator_key: Mapped[str] = mapped_column(String(300), nullable=False)
+    item_kind: Mapped[str] = mapped_column(String(30), nullable=False)
+    page_number: Mapped[int | None] = mapped_column(Integer)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    locator_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
+class ReportDefectScope(RecordMixin, Base):
+    '''One selected range from a hash-bound report for an existing Defect.'''
+
+    __tablename__ = 'report_defect_scopes'
+    __table_args__ = (
+        CheckConstraint(
+            'length(trim(report_defect_label)) > 0',
+            name='ck_report_defect_scope_label',
+        ),
+        ForeignKeyConstraint(
+            ['project_evidence_id', 'source_sha256'],
+            ['project_evidence.id', 'project_evidence.source_sha256'],
+            name='fk_report_defect_scope_source',
+        ),
+        ForeignKeyConstraint(
+            ['start_locator_id', 'project_evidence_id'],
+            ['report_evidence_locators.id', 'report_evidence_locators.project_evidence_id'],
+            name='fk_report_defect_scope_start_locator',
+        ),
+        ForeignKeyConstraint(
+            ['end_locator_id', 'project_evidence_id'],
+            ['report_evidence_locators.id', 'report_evidence_locators.project_evidence_id'],
+            name='fk_report_defect_scope_end_locator',
+        ),
+        UniqueConstraint(
+            'project_evidence_id',
+            'defect_id',
+            name='uq_report_defect_scope_report_defect',
+        ),
+        Index('ix_report_defect_scope_defect_id', 'defect_id'),
+    )
+
+    project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    defect_id: Mapped[str] = mapped_column(ForeignKey('defects.id'), nullable=False)
+    report_defect_label: Mapped[str] = mapped_column(String(150), nullable=False)
+    start_locator_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    end_locator_id: Mapped[str] = mapped_column(String(36), nullable=False)
 
 
 class TechnicalDocument(RecordMixin, Base):
@@ -370,7 +517,9 @@ class Customer(RecordMixin, Base):
     billing_address: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(30), default="active", index=True)
 
-    contacts: Mapped[list[Contact]] = relationship(back_populates="customer", cascade="all, delete-orphan")
+    contacts: Mapped[list[Contact]] = relationship(
+        back_populates="customer", cascade="all, delete-orphan"
+    )
     projects: Mapped[list[Project]] = relationship(back_populates="customer")
 
 
@@ -407,7 +556,9 @@ class Project(RecordMixin, Base):
 
 class Estimate(RecordMixin, Base):
     __tablename__ = "estimates"
-    __table_args__ = (UniqueConstraint("project_id", "revision", name="uq_project_estimate_revision"),)
+    __table_args__ = (
+        UniqueConstraint("project_id", "revision", name="uq_project_estimate_revision"),
+    )
 
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
     revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
@@ -468,7 +619,9 @@ class Opening(RecordMixin, Base):
     frl: Mapped[str | None] = mapped_column(String(100), index=True)
     physical_model_status: Mapped[str] = mapped_column(String(30), default="draft")
     technical_status: Mapped[str] = mapped_column(String(50), default="not_assessed")
-    selected_technical_variant_id: Mapped[str | None] = mapped_column(ForeignKey("technical_variants.id"))
+    selected_technical_variant_id: Mapped[str | None] = mapped_column(
+        ForeignKey("technical_variants.id")
+    )
     notes: Mapped[str | None] = mapped_column(Text)
 
     estimate: Mapped[Estimate] = relationship(back_populates="openings")
@@ -476,7 +629,9 @@ class Opening(RecordMixin, Base):
         back_populates="opening", cascade="all, delete-orphan", order_by="Service.created_at"
     )
 
-    __table_args__ = (UniqueConstraint("estimate_id", "opening_code", name="uq_estimate_opening_code"),)
+    __table_args__ = (
+        UniqueConstraint("estimate_id", "opening_code", name="uq_estimate_opening_code"),
+    )
 
 
 class Service(RecordMixin, Base):
@@ -502,7 +657,9 @@ class Service(RecordMixin, Base):
 
     opening: Mapped[Opening] = relationship(back_populates="services")
 
-    __table_args__ = (UniqueConstraint("opening_id", "service_code", name="uq_opening_service_code"),)
+    __table_args__ = (
+        UniqueConstraint("opening_id", "service_code", name="uq_opening_service_code"),
+    )
 
 
 class EstimateLine(RecordMixin, Base):
@@ -535,7 +692,9 @@ class EstimateLine(RecordMixin, Base):
 
     estimate: Mapped[Estimate] = relationship(back_populates="lines")
 
-    __table_args__ = (UniqueConstraint("estimate_id", "line_number", name="uq_estimate_line_number"),)
+    __table_args__ = (
+        UniqueConstraint("estimate_id", "line_number", name="uq_estimate_line_number"),
+    )
 
 
 class RuleEvaluation(RecordMixin, Base):
@@ -543,7 +702,9 @@ class RuleEvaluation(RecordMixin, Base):
 
     estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
     opening_id: Mapped[str | None] = mapped_column(ForeignKey("openings.id"), index=True)
-    rule_id: Mapped[str] = mapped_column(ForeignKey("estimating_rules.id"), index=True, nullable=False)
+    rule_id: Mapped[str] = mapped_column(
+        ForeignKey("estimating_rules.id"), index=True, nullable=False
+    )
     result: Mapped[str] = mapped_column(String(30), index=True, nullable=False)
     severity: Mapped[str] = mapped_column(String(30), nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False)

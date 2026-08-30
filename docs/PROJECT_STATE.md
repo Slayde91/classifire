@@ -4,13 +4,13 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main tip:** `c8b06d17678b58f49f2ea816f3b12ba2e4af0095` (PR #79 merge)
+**Verified shared-main tip:** `e394f298821fbd04ffa466f2fd16e53480a68fd3` (PR #80 merge)
 
-**Verified application baseline:** `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge), plus the human-session revocation hardening in `db404b3`; PR #79 adds the reviewed source-control recovery record without changing application code
+**Verified application baseline:** `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge), plus human-session revocation hardening in `db404b3`, the PR #79 recovery record, and the merged `efd4641` Phase 8 assessment/review contract from PR #80
 
-**Merged Phase 8 scope:** representative rollback package and recovery, evidence-family and human-review validators, direct legacy-route test isolation, the durable visual-validation receipt registry/verifier, and controlled `site_observation` evidence intake
+**Merged Phase 8 scope:** representative rollback package and recovery, evidence-family and human-review validators, direct legacy-route test isolation, the durable visual-validation receipt registry/verifier, controlled `site_observation` evidence intake, and the bounded v2 assessment/review contract
 
-**Current branch candidate:** `gpt/phase8-assessment-contract-20260830` adds the bounded v2 property-assessment and per-defect proposal-review contract described below; it is not shared-main implementation unless reviewed and merged
+**Current branch candidate:** `gpt/phase8-report-evidence-adapter-20260830`, based on `e394f29`, adds contained report ownership, exact clean-byte reads, stable locators, deterministic report review packages, and a separately guarded report-assessment transport/runtime. It remains a branch candidate, not shared-main implementation.
 
 This record reflects committed shared-main code, the mixed legacy checkout, current tests, migration metadata, retained non-canonical execution receipts, the later local human-review v2 evidence, and refreshed GitHub state. Source, tests, Git, and execution evidence outrank older documentation.
 
@@ -39,6 +39,24 @@ open GitHub pull requests, current migration metadata, and focused checks.
 | GitHub review surface | **Requires review** | PR #75 targets `main`; draft legacy PRs #9-#13 remain open on obsolete stacked lineage. Issues #42 and #43 remain open. Issue #42's latest site-visit-first wording is stale against the report-first evidence rule and needs a separate factual update. The branch-protection API returned a plan-limited 403, so no protection state is claimed. None of these items should be treated as complete or merged wholesale. |
 | Continuous integration | **Not started on current main** | No `.github` workflow exists, `gh run list` is empty, and the open PRs have no status-check rollup. Local test evidence is useful, but GitHub mergeability is not CI evidence. |
 
+### Later same-day publication and adapter update
+
+This later update supersedes the present-tense shared-main, assessment-contract,
+report-adapter, and CI statements above. The earlier rows remain a record of the
+pre-PR #80 audit, not the current repository state.
+
+| Area | Verified current position | Remaining limit |
+| --- | --- | --- |
+| Shared main | `e394f29` merged PR #80 at 2026-08-30 05:36:45 UTC. It contains `efd4641`, the bounded v2 assessment/review contract, and `571f1cd`'s pull-request validation workflow. Alembic now has the single `0011_report_evidence_locators` head. | The merge is source publication only; it does not approve a live report run or canonical state change. |
+| GitHub validation | The `CLASSIFIRE pull request validation` workflow completed successfully for the PR #80 head `571f1cd` at 2026-08-30 05:28:56 UTC. | No workflow run exists for this report-adapter branch because no pull request was created. |
+| Report-evidence adapter candidate | `gpt/phase8-report-evidence-adapter-20260830` is based on `e394f29` and contains contained-byte quarantine/read code, Project/Estimate ownership, report-SHA locators and scopes, deterministic per-Defect review packaging, report-bound prompts/receipts, a managed no-tool report runtime, and PR workflow wiring for a disposable PostgreSQL race database. The full local suite exits 0 with two configured skips. | The PostgreSQL shared-byte quarantine/read race is specifically skipped locally until `CLASSIFIRE_POSTGRES_TEST_URL` names a disposable test database. The next authorised PR will provision one in CI, but that run has not happened. No real report, OpenClaw, or provider run was made. |
+| Production startup boundary candidate | The current branch now refuses unsafe production settings before lifespan work and never calls schema creation or administrator seeding in production. Focused startup/security checks and the full suite pass. | This is a narrow branch candidate only. It does not package migrations, prove a live production deployment, or adopt the remaining broad `a3de490` changes. |
+
+**Current next action:** independently review this branch, then create a pull
+request only with separate authority so CI can run the disposable PostgreSQL
+containment race. A real report-only assessment still needs separate run
+authority after that review.
+
 PR #79 completed the isolated recovery decision: keep the accepted current-main
 versions of the four conflicted paths and do not transplant `c3e4c81`. The root
 itself remains intentionally untouched and unusable for publication. This
@@ -47,7 +65,7 @@ slice in the isolated current-main worktree; it does not adopt the overlapping
 report-context, technical-intake continuation, production-hardening, or root
 changes.
 
-### Recommended Next Actions
+### Historical pre-PR #80 recommended actions
 
 #### Immediate next actions
 
@@ -161,7 +179,7 @@ Current main also contains basic technical search, pinned release records, estim
 
 The primary legacy checkout contains richer guarded implementations and tests for parts of Phases 9-14, but its lineage is divergent and unsafe to merge wholesale. It is implementation evidence to review later, not current-main completion.
 
-### 2.4 Completed on the current branch candidate
+### 2.4 Completed on the pre-PR #80 branch candidate
 
 The isolated `gpt/phase8-assessment-contract-20260830` candidate is based
 exactly on `c8b06d1` and adds one bounded proposal-only contract:

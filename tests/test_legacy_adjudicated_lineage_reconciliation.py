@@ -55,7 +55,7 @@ def test_empty_legacy_journal_reconciles_to_one_clean_head(tmp_path: Path) -> No
     assert "artifact_manifest_sha256" not in admission_columns
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0009_visual_validation_receipts"
+            "0011_report_evidence_locators"
         )
         assert (
             connection.execute(text("SELECT COUNT(*) FROM physical_model_admissions")).scalar_one()

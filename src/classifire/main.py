@@ -21,7 +21,7 @@ from .api.agent_api import router as agent_api_router
 from .api.physical_model import router as physical_model_router
 from .api.workflow import router as workflow_router
 from .api.workflow_actions import router as workflow_actions_router
-from .config import get_settings
+from .config import get_settings, require_production_configuration
 from .db import Base, SessionLocal, engine
 from .estimate_pinning import router as estimate_pinning_router
 from .importers.seed import seed_database
@@ -37,11 +37,14 @@ package_dir = Path(__file__).parent
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Development/local installer convenience. Production deployment must run Alembic first.
-    Base.metadata.create_all(bind=engine)
-    with SessionLocal() as db:
-        if not db.scalar(select(User.id).limit(1)):
-            seed_database(db, settings)
+    require_production_configuration(settings)
+    settings.storage_root.mkdir(parents=True, exist_ok=True)
+    if settings.env != "production":
+        # Development/local installer convenience. Production deployment must run Alembic first.
+        Base.metadata.create_all(bind=engine)
+        with SessionLocal() as db:
+            if not db.scalar(select(User.id).limit(1)):
+                seed_database(db, settings)
     yield
 
 
