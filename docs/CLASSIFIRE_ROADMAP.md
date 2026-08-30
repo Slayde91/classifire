@@ -325,8 +325,8 @@ every artifact.
 PR #98 extends the existing release-scope safeguard to the editable estimate
 boundary: a release-basis refresh now validates the active technical release,
 its immutable manifest, and every active TechnicalVariant before it changes any
-pin. An invalid active release therefore fails before it can be stored and then
-block later work.
+pin. An invalid active release therefore fails before it can be stored,
+preventing it from blocking later work.
 
 PR #99 updates the secret-free pull-request workflow to Node 24-compatible
 checkout and Python setup actions. Its hosted run passed source checkout, Python
