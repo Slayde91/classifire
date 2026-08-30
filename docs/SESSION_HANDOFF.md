@@ -10,6 +10,9 @@ shared main. PR #91 additionally rechecks a linked technical source immediately
 before activation, and PR #93 makes new technical-library imports Draft-only.
 PR #95 requires the pinned technical release to be active at runtime, and PR #96
 rejects a release that now contains an inactive or missing TechnicalVariant.
+PR #98 makes that same check before a refreshed release basis can change an
+editable estimate, and PR #99 updates the pull-request workflow to
+Node 24-compatible actions.
 There is still no approved canonical Physical Model or active replacement
 Physical Model Lock.
 
@@ -27,8 +30,9 @@ This handoff is a factual audit record. It does not grant authority to run infer
   reconciled their shared-main status documentation. PR #93 then made imported
   technical rows Draft-only evidence. PR #95 requires an active pinned technical
   release, and PR #96 rejects a release whose manifest now contains an inactive
-  or missing variant. Fetch `origin/main` before any publication-sensitive
-  decision.
+  or missing variant. PR #98 applies that check before refreshed pins can be
+  saved, and PR #99 updates the workflow's action runtime. Fetch `origin/main`
+  before any publication-sensitive decision.
 - Current shared-main Alembic state has one head: `0011_report_evidence_locators` on `legacy_adjudicated_lineage`. The technical-intake candidate migration is not on main.
 - The final PR #81 `CLASSIFIRE pull request validation` workflow completed
   successfully for `4ebc531` at 2026-08-30 12:50:43 UTC: 500 tests passed,
@@ -49,6 +53,10 @@ This handoff is a factual audit record. It does not grant authority to run infer
   successfully for `758ba46` before it merged at `9d643e3`.
 - PR #96's `CLASSIFIRE pull request validation` workflow completed
   successfully for `d140898` before it merged at `2dca286`.
+- PR #98's `CLASSIFIRE pull request validation` workflow completed
+  successfully for `6ab0b43` in 1m39s before it merged at `a7f362e`.
+- PR #99's `CLASSIFIRE pull request validation` workflow completed
+  successfully for `205be5e` in 1m31s before it merged at `cb32317`.
 - The report ownership/bytes, stable locators, deterministic review packages,
   report-aware assessment bindings, managed no-tool runtime, migration
   packaging, production schema-readiness safeguards, browser boundary,
@@ -88,7 +96,8 @@ did not modify it.
 | Technical activation separation | **Merged shared-main hardening (PRs #83 and #91)** | The existing UI workflow now requires `in_review`, a pending request, a different deciding user, and an approved linked source document before a variant can become active. PR #91 also requires the linked retained source to still be clean, immutable, and unchanged at that decision point. It remains a narrow fail-closed guard, not full technical-intake authority or production proof. |
 | Technical-document review separation | **Merged shared-main hardening (PRs #86 and #88)** | New Draft or Rejected source documents must have clean, immutable, unchanged retained bytes, be submitted for review, then be independently approved or rejected through the existing Approval record before they can carry an approved status. It does not create a migration, canonical authority, or complete source-lineage governance. |
 | Technical-library import boundary | **Merged shared-main hardening (PR #93)** | A Package 15 import is now Draft evidence even when source rows claim active status. Source activity remains retained provenance, while normal search, active release snapshots, and runtime use stay blocked pending later governance. Existing active records remain unchanged. |
-| Technical release runtime boundary | **Merged shared-main hardening (PRs #95 and #96)** | Technical search and release-basis validation require an active immutable pinned technical release, and every record in its manifest must still be an active TechnicalVariant. A release with an inactive or missing record fails closed while that record remains inactive or missing. This does not automate publication or complete technical-authority governance. |
+| Technical release runtime boundary | **Merged shared-main hardening (PRs #95, #96, and #98)** | Technical search and release-basis validation require an active immutable pinned technical release, and every record in its manifest must still be an active TechnicalVariant. A release with an inactive or missing record fails closed while that record remains inactive or missing. PR #98 applies the same check before a refreshed release basis mutates an editable estimate. This does not automate publication or complete technical-authority governance. |
+| Pull-request CI runtime | **Merged shared-main maintenance (PR #99)** | The secret-free workflow now uses Node 24-compatible checkout and Python setup actions. Its hosted validation completed successfully with the normal source, PostgreSQL containment, test, and migration-head checks. |
 | Production startup boundary | **Merged narrow hardening** | Main rejects unsafe production configuration before filesystem or lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
 | Installed migration packaging and CLI bootstrap | **Merged shared-main hardening** | PR #82 moved immutable history under `classifire.migrations`; `classifire-migrate` explicitly upgrades only to its current head, while production CLI setup/import commands refuse to create schema or seed defaults. Production startup and database-writing CLI paths require the configured database to prove the exact packaged migration head before proceeding. Source, wheel, focused, full-suite, and PR CI checks used no production, UAT, or customer database. |
 | Production browser configuration and diagnostics | **Merged shared-main hardening (PR #83)** | Documented CSV/JSON `trusted_hosts` and `allowed_origins` inputs parse correctly, while unsafe production host/origin configuration fails before lifespan storage work. The read-only `doctor` command reports only the database type and a generic connection failure, never a raw database URL or exception. This is not deployment or production proof. |

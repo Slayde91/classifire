@@ -39,7 +39,7 @@ Implementation claims also identify their repository tier:
 The architecture remains governed by the evidence-to-human-release chain, but
 repository tiers must not be confused with implementation completion.
 
-- **Shared current-main** is the active published foundation through PR #96. It
+- **Shared current-main** is the active published foundation through PR #99. It
   contains the PR #74 application baseline, PR #78 human-session revocation
   hardening, PR #79's recovery decision, PR #80's bounded v2 assessment/review
   contract, PR #81's contained report-evidence adapter and production-startup
@@ -101,6 +101,12 @@ repository tiers must not be confused with implementation completion.
   the whole release while that record remains inactive or missing. These are
   fail-closed runtime checks, not automatic release publication or complete
   technical authority governance.
+- **PR #98 closes the pre-pinning gap.** The same technical-release eligibility
+  check now occurs before release-basis refresh changes an editable estimate, so
+  an already-invalid active release cannot be saved and then fail only later.
+- **PR #99 keeps the shared validation workflow current.** Its checkout and
+  Python setup actions now use Node 24-compatible versions. The hosted workflow
+  passed with the same source, PostgreSQL-containment, and migration-head checks.
 
 ### Architecture follow-up required
 
@@ -669,11 +675,11 @@ CI-proven; they are not deployment or live-report proof.
 | Report storage ownership and malware containment | **Merged shared-main / pre-production** | PR #81 binds StoredFiles to Project/Estimate evidence and verifies clean-byte reads; its disposable PostgreSQL quarantine-race test passed in CI |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
-| Technical authority | **Narrow shared-main hardening / blocked** | PR #83 requires In Review status, a pending request, a different approver, and an approved linked source document before activation. PR #86 applies the same pending-request and independent-decision rule to new technical-document reviews, while PR #88 requires their retained source bytes to be clean, immutable, and unchanged at submission and approval. PR #91 repeats that source check immediately before activation. PR #93 makes new imported technical rows Draft-only and runtime-ineligible. PRs #95 and #96 require an active immutable pinned technical release and reject any release that now contains a missing or non-active variant. Full Draft intake, source lineage, release publication, and technical-authority governance remain incomplete. |
+| Technical authority | **Narrow shared-main hardening / blocked** | PR #83 requires In Review status, a pending request, a different approver, and an approved linked source document before activation. PR #86 applies the same pending-request and independent-decision rule to new technical-document reviews, while PR #88 requires their retained source bytes to be clean, immutable, and unchanged at submission and approval. PR #91 repeats that source check immediately before activation. PR #93 makes new imported technical rows Draft-only and runtime-ineligible. PRs #95 and #96 require an active immutable pinned technical release and reject any release that now contains a missing or non-active variant; PR #98 applies that same check before refreshed release pins can be saved. Full Draft intake, source lineage, release publication, and technical-authority governance remain incomplete. |
 | Snapshot and Human Release | **Basic prototype / blocked** | Snapshot reproducibility and full validation certificate are not proven; upstream Physical Model gate unresolved |
 | Production bootstrap and security gates | **Merged limited hardening** | Main rejects unsafe production settings before filesystem or lifecycle work, suppresses production `create_all`/seed, packages immutable migrations, adds an explicit upgrade command, blocks production CLI setup/import seeding, and requires the exact packaged migration head before production storage or database-writing CLI work. Deployment proof and the remaining `a3de490` scope are still unreviewed. |
 | Production browser boundary | **Merged limited hardening** | PR #83 makes documented CSV/JSON host/origin settings parse deterministically and rejects unsafe production Trusted Host/CORS settings before storage work. It is not deployment or production proof. |
-| Continuous integration | **Established on shared main** | The secret-free pull-request workflow passed for PRs #80 through #84; PRs #81 and #83 included the disposable PostgreSQL race. |
+| Continuous integration | **Established on shared main** | The secret-free pull-request workflow uses Node 24-compatible checkout and Python setup actions after PR #99. Its hosted validation passed for PR #99; PRs #81 and #83 included the disposable PostgreSQL race. |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |
 | Structural-steel and full duct-run domains | **Planned / deferred** | Separate schemas, libraries, calculators, and acceptance evidence required |
