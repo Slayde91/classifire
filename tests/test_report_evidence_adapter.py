@@ -36,6 +36,7 @@ from classifire.services.report_evidence_adapter import (
     _table_shape,
     bind_report_defect_scope,
     build_report_defect_evidence_packet,
+    build_report_defect_evidence_packets,
     normalise_verified_pdf_report,
     validate_report_defect_evidence_packet,
     validate_report_defect_v2_proposal,
@@ -344,6 +345,76 @@ def test_selected_report_scope_is_content_safe_and_feeds_existing_v2_policy() ->
         assert validate_report_defect_v2_proposal(tampered, proposal)
         assert db.scalar(select(func.count()).select_from(Opening)) == 0
         assert db.scalar(select(func.count()).select_from(Service)) == 0
+
+
+def test_all_selected_report_scopes_are_returned_in_stable_package_order() -> None:
+    with adapter_session() as db:
+        project, estimate, stored, first_defect, records = _scoped_report_packet(db, ordinal=45)
+        second_defect = _defect(db, estimate, reference='D-002')
+        page_records = tuple(record for record in records if record.page_number == 1)
+        second_scope = bind_report_defect_scope(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            defect_id=second_defect.id,
+            report_defect_label='D-002',
+            start_locator_key=page_records[0].locator_key,
+            end_locator_key=page_records[-1].locator_key,
+        )
+        first_packet = build_report_defect_evidence_packet(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            defect_id=first_defect.id,
+        )
+
+        packets = build_report_defect_evidence_packets(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+        )
+        repeated = build_report_defect_evidence_packets(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+        )
+
+        assert [packet.manifest['report_defect_label'] for packet in packets] == ['D-001', 'D-002']
+        assert [packet.manifest['defect_id'] for packet in packets] == [
+            first_defect.id,
+            second_defect.id,
+        ]
+        assert {packet.manifest['scope_id'] for packet in packets} == {
+            second_scope.id,
+            first_packet.manifest['scope_id'],
+        }
+        assert [packet.manifest_sha256 for packet in packets] == [
+            packet.manifest_sha256 for packet in repeated
+        ]
+        assert all(validate_report_defect_evidence_packet(packet) == [] for packet in packets)
+        assert db.scalar(select(func.count()).select_from(Opening)) == 0
+        assert db.scalar(select(func.count()).select_from(Service)) == 0
+
+
+def test_all_selected_report_scopes_fail_closed_when_none_are_bound() -> None:
+    with adapter_session() as db:
+        project = _project(db, 46)
+        estimate = _estimate(db, project, 46)
+        stored = _bound_report(db, project, _report_content())
+
+        with pytest.raises(ReportEvidenceAdapterError) as raised:
+            build_report_defect_evidence_packets(
+                db,
+                stored_file_id=stored.id,
+                project_id=project.id,
+                estimate_id=estimate.id,
+            )
+
+    assert raised.value.code == 'REPORT_EVIDENCE_DEFECT_SCOPE_REQUIRED'
 
 
 def test_selected_report_scope_fails_closed_on_cross_project_and_tampered_locator() -> None:

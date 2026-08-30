@@ -1012,37 +1012,14 @@ def validate_report_defect_evidence_packet(packet: object) -> list[str]:
     return list(dict.fromkeys(errors))
 
 
-def build_report_defect_evidence_packet(
+def _build_report_defect_evidence_packet(
     db: Session,
     *,
-    stored_file_id: str,
-    project_id: str,
+    evidence: ProjectEvidence,
     estimate_id: str,
-    defect_id: str,
+    defect: Defect,
+    scope: ReportDefectScope,
 ) -> ReportDefectEvidencePacket:
-    '''Expose one report-selected Defect range as v2-approved documentary refs.'''
-
-    estimate_id = _required_text(estimate_id, code='REPORT_EVIDENCE_ESTIMATE_INVALID', maximum=36)
-    defect_id = _required_text(defect_id, code='REPORT_EVIDENCE_DEFECT_INVALID', maximum=36)
-    evidence = _report_owner(
-        db,
-        stored_file_id=stored_file_id,
-        project_id=project_id,
-        estimate_id=estimate_id,
-    )
-    defect = db.get(Defect, defect_id)
-    if defect is None:
-        _fail('REPORT_EVIDENCE_DEFECT_NOT_FOUND')
-    if defect.estimate_id != estimate_id:
-        _fail('REPORT_EVIDENCE_DEFECT_SCOPE_FORBIDDEN')
-    scope = db.scalar(
-        select(ReportDefectScope).where(
-            ReportDefectScope.project_evidence_id == evidence.id,
-            ReportDefectScope.defect_id == defect.id,
-        )
-    )
-    if scope is None:
-        _fail('REPORT_EVIDENCE_DEFECT_SCOPE_REQUIRED')
     if scope.source_sha256 != evidence.source_sha256:
         _fail('REPORT_EVIDENCE_SCOPE_BINDING_INVALID')
     records = _scope_locator_records(db, evidence=evidence, scope=scope)
@@ -1079,6 +1056,100 @@ def build_report_defect_evidence_packet(
     if errors:
         _fail('REPORT_EVIDENCE_PACKET_INVALID')
     return packet
+
+
+def build_report_defect_evidence_packet(
+    db: Session,
+    *,
+    stored_file_id: str,
+    project_id: str,
+    estimate_id: str,
+    defect_id: str,
+) -> ReportDefectEvidencePacket:
+    '''Expose one report-selected Defect range as v2-approved documentary refs.'''
+
+    estimate_id = _required_text(estimate_id, code='REPORT_EVIDENCE_ESTIMATE_INVALID', maximum=36)
+    defect_id = _required_text(defect_id, code='REPORT_EVIDENCE_DEFECT_INVALID', maximum=36)
+    evidence = _report_owner(
+        db,
+        stored_file_id=stored_file_id,
+        project_id=project_id,
+        estimate_id=estimate_id,
+    )
+    defect = db.get(Defect, defect_id)
+    if defect is None:
+        _fail('REPORT_EVIDENCE_DEFECT_NOT_FOUND')
+    if defect.estimate_id != estimate_id:
+        _fail('REPORT_EVIDENCE_DEFECT_SCOPE_FORBIDDEN')
+    scope = db.scalar(
+        select(ReportDefectScope).where(
+            ReportDefectScope.project_evidence_id == evidence.id,
+            ReportDefectScope.defect_id == defect.id,
+        )
+    )
+    if scope is None:
+        _fail('REPORT_EVIDENCE_DEFECT_SCOPE_REQUIRED')
+    return _build_report_defect_evidence_packet(
+        db,
+        evidence=evidence,
+        estimate_id=estimate_id,
+        defect=defect,
+        scope=scope,
+    )
+
+
+def build_report_defect_evidence_packets(
+    db: Session,
+    *,
+    stored_file_id: str,
+    project_id: str,
+    estimate_id: str,
+) -> tuple[ReportDefectEvidencePacket, ...]:
+    '''Expose every selected Defect range for one owned report and estimate.'''
+
+    estimate_id = _required_text(estimate_id, code='REPORT_EVIDENCE_ESTIMATE_INVALID', maximum=36)
+    evidence = _report_owner(
+        db,
+        stored_file_id=stored_file_id,
+        project_id=project_id,
+        estimate_id=estimate_id,
+    )
+    scopes = tuple(
+        db.scalars(
+            select(ReportDefectScope)
+            .where(ReportDefectScope.project_evidence_id == evidence.id)
+            .order_by(ReportDefectScope.report_defect_label, ReportDefectScope.id)
+        ).all()
+    )
+    if not scopes:
+        _fail('REPORT_EVIDENCE_DEFECT_SCOPE_REQUIRED')
+    selections: list[tuple[ReportDefectScope, Defect]] = []
+    for scope in scopes:
+        if scope.source_sha256 != evidence.source_sha256:
+            _fail('REPORT_EVIDENCE_SCOPE_BINDING_INVALID')
+        defect = db.get(Defect, scope.defect_id)
+        if defect is None:
+            _fail('REPORT_EVIDENCE_SCOPE_BINDING_INVALID')
+        if defect.estimate_id != estimate_id:
+            _fail('REPORT_EVIDENCE_DEFECT_SCOPE_FORBIDDEN')
+        selections.append((scope, defect))
+    return tuple(
+        _build_report_defect_evidence_packet(
+            db,
+            evidence=evidence,
+            estimate_id=estimate_id,
+            defect=defect,
+            scope=scope,
+        )
+        for scope, defect in sorted(
+            selections,
+            key=lambda selection: (
+                selection[0].report_defect_label.casefold(),
+                _defect_reference(selection[1]),
+                selection[0].id,
+            ),
+        )
+    )
 
 
 def validate_report_defect_v2_proposal(
@@ -1201,6 +1272,7 @@ __all__ = [
     'ReportEvidenceLocatorItem',
     'bind_report_defect_scope',
     'build_report_defect_evidence_packet',
+    'build_report_defect_evidence_packets',
     'materialise_project_report_locators_for_update',
     'normalise_verified_pdf_report',
     'validate_report_defect_evidence_packet',
