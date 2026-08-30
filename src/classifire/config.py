@@ -8,6 +8,14 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+class ProductionConfigurationError(RuntimeError):
+    """Production startup was refused before any application mutation."""
+
+    def __init__(self, findings: list[str]) -> None:
+        self.findings = tuple(findings)
+        super().__init__("Unsafe production configuration: " + "; ".join(findings))
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -79,15 +87,32 @@ class Settings(BaseSettings):
     def validate_production(self) -> list[str]:
         findings: list[str] = []
         if self.env == "production":
-            if self.secret_key in {"development-only-change-me", "change-me"} or len(self.secret_key) < 32:
-                findings.append("CLASSIFIRE_SECRET_KEY must be a random value of at least 32 characters")
+            if (
+                self.secret_key in {"development-only-change-me", "change-me"}
+                or len(self.secret_key) < 32
+            ):
+                findings.append(
+                    "CLASSIFIRE_SECRET_KEY must be a random value of at least 32 characters"
+                )
             if self.admin_password == "change-me-immediately":
                 findings.append("Default administrator password must be replaced")
             if not self.session_https_only:
-                findings.append("CLASSIFIRE_SESSION_HTTPS_ONLY should be true behind production TLS")
-            if self.database_url.startswith("sqlite"):
-                findings.append("PostgreSQL is recommended for multi-user production deployment")
+                findings.append(
+                    "CLASSIFIRE_SESSION_HTTPS_ONLY should be true behind production TLS"
+                )
+            if not self.database_url.startswith("postgresql"):
+                findings.append("PostgreSQL is required for multi-user production deployment")
         return findings
+
+
+def require_production_configuration(settings: Settings) -> None:
+    """Refuse a production server with unsafe settings before it touches state."""
+
+    if settings.env != "production":
+        return
+    findings = settings.validate_production()
+    if findings:
+        raise ProductionConfigurationError(findings)
 
 
 @lru_cache(maxsize=1)

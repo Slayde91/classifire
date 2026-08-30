@@ -63,11 +63,14 @@ repository tiers must not be confused with implementation completion.
   cable bundle's `quantity` counts bundles; a defensible individual cable count
   is separate. Without that count, a bundle may be classified small, medium, or
   large. A cable tray remains a distinct service with estimated tray dimensions.
-- **Technical intake and production hardening remain separate candidates.** The
+- **Technical intake and most production hardening remain separate candidates.** The
   Draft-bound technical-intake commits (`d76562e`, `0edeaac`) and proposed
   `0019_technical_intake_materializations` migration are not on main. The
-  production-boundary commit `a3de490` is also local-only. Neither changes the
-  current architecture until reconciled, reviewed, and published.
+  production-boundary commit `a3de490` is also local-only. This branch extracts
+  only a narrow production-startup guard: unsafe production settings fail before
+  lifecycle writes, and production never creates schema or seeds an administrator.
+  Neither the remaining candidates nor this branch change shared-main architecture
+  until reviewed and published.
 
 ### Architecture follow-up required
 
@@ -637,7 +640,7 @@ must be proven before deployment.
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
 | Technical authority | **Basic prototype / blocked** | Current main lacks enforced approval-role separation and focused technical tests; governed candidate work is not merged |
 | Snapshot and Human Release | **Basic prototype / blocked** | Snapshot reproducibility and full validation certificate are not proven; upstream Physical Model gate unresolved |
-| Production bootstrap and security gates | **In progress / local candidate only** | Main uses unconditional `create_all`/seed and warning-only production findings; `a3de490` is unpushed |
+| Production bootstrap and security gates | **In progress / bounded branch candidate** | The current branch rejects unsafe production settings and suppresses production `create_all`/seed; migration packaging, deployment proof, and the remaining `a3de490` scope are still unreviewed |
 | Continuous integration | **Not started** | No GitHub workflow or recorded status-check run exists on current main |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |

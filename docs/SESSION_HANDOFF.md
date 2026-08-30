@@ -50,7 +50,7 @@ did not modify it.
 | Report assessment and cable semantics | **Merged in PR #80** | `property_assessments` v2, historical-v1 verification, manifest-bound reviews, and bundle/tray rules are shared-main source. They remain proposal-only and do not create canonical truth. |
 | Report-evidence adapter | **Completed branch candidate / not shared main** | The current branch binds project ownership, verified clean bytes, report-SHA locators/scopes, deterministic review packages, and a guarded report transport/runtime. The outstanding verification is the disposable PostgreSQL shared-byte race. |
 | Governed technical intake | **Separate pushed candidate plus local continuation** | `d76562e` and `0edeaac` are not on shared main. Their worktree has proposed `0019` and substantial uncommitted follow-on material, so it is not a clean merge candidate. |
-| Production hardening | **Local-only commit** | `a3de490` is unpushed, broad, one commit ahead and three behind main. Main remains pre-production with unconditional schema/seed startup and warning-only production findings. |
+| Production startup boundary | **Completed branch candidate / not shared main** | The current branch rejects unsafe production configuration before lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
 | Report review / UAT | **Proposal-only, authority-gated** | A report package can support cautious evidence assessment, but it cannot create technical compatibility truth, commercial truth, a canonical model, a lock, or a release. |
 
 ## 4. Start Here / Next Session
