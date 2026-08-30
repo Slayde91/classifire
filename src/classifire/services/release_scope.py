@@ -37,6 +37,23 @@ def _manifest_hash(manifest: dict[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def _validate_release_integrity(release: LibraryRelease, library_type: str) -> None:
+    if release.library_type != library_type:
+        raise ReleaseScopeError(f"Pinned release type mismatch for {library_type}.")
+    if not release.release_hash or not release.source_manifest:
+        raise ReleaseScopeError(f"Pinned {library_type} release is not immutable.")
+    if _manifest_hash(release.source_manifest) != release.release_hash:
+        raise ReleaseScopeError(f"Pinned {library_type} release hash does not match its manifest.")
+
+
+def _manifest_record_ids(release: LibraryRelease, library_type: str) -> set[str]:
+    records = (release.source_manifest or {}).get("records", [])
+    ids = {str(item["id"]) for item in records if isinstance(item, dict) and item.get("id")}
+    if not ids:
+        raise ReleaseScopeError(f"Pinned {library_type} release contains no record identifiers.")
+    return ids
+
+
 def pinned_release(db: Session, estimate: Estimate, library_type: str) -> LibraryRelease:
     field = PIN_FIELDS.get(library_type)
     if not field:
@@ -47,22 +64,13 @@ def pinned_release(db: Session, estimate: Estimate, library_type: str) -> Librar
     release = db.get(LibraryRelease, release_id)
     if not release:
         raise ReleaseScopeError(f"Pinned {library_type} release record is missing.")
-    if release.library_type != library_type:
-        raise ReleaseScopeError(f"Pinned release type mismatch for {library_type}.")
-    if not release.release_hash or not release.source_manifest:
-        raise ReleaseScopeError(f"Pinned {library_type} release is not immutable.")
-    if _manifest_hash(release.source_manifest) != release.release_hash:
-        raise ReleaseScopeError(f"Pinned {library_type} release hash does not match its manifest.")
+    _validate_release_integrity(release, library_type)
     return release
 
 
 def release_record_ids(db: Session, estimate: Estimate, library_type: str) -> set[str]:
     release = pinned_release(db, estimate, library_type)
-    records = (release.source_manifest or {}).get("records", [])
-    ids = {str(item["id"]) for item in records if isinstance(item, dict) and item.get("id")}
-    if not ids:
-        raise ReleaseScopeError(f"Pinned {library_type} release contains no record identifiers.")
-    return ids
+    return _manifest_record_ids(release, library_type)
 
 
 def pinned_product(db: Session, estimate: Estimate, sku: str) -> Product:
@@ -115,11 +123,10 @@ def pinned_markup_profiles(db: Session, estimate: Estimate) -> list[MarkupProfil
     return list(db.scalars(select(MarkupProfile).where(MarkupProfile.id.in_(ids))).all())
 
 
-def pinned_technical_ids(db: Session, estimate: Estimate) -> set[str]:
-    release = pinned_release(db, estimate, "technical")
+def _active_technical_variant_ids(db: Session, release: LibraryRelease) -> set[str]:
     if release.status != "active":
         raise ReleaseScopeError("Pinned technical release is not active.")
-    record_ids = release_record_ids(db, estimate, "technical")
+    record_ids = _manifest_record_ids(release, "technical")
     active_ids = set(
         db.scalars(
             select(TechnicalVariant.id).where(
@@ -133,6 +140,16 @@ def pinned_technical_ids(db: Session, estimate: Estimate) -> set[str]:
             "Pinned technical release contains inactive or missing variants."
         )
     return active_ids
+
+
+def active_technical_release_ids(db: Session, release: LibraryRelease) -> set[str]:
+    _validate_release_integrity(release, "technical")
+    return _active_technical_variant_ids(db, release)
+
+
+def pinned_technical_ids(db: Session, estimate: Estimate) -> set[str]:
+    release = pinned_release(db, estimate, "technical")
+    return _active_technical_variant_ids(db, release)
 
 
 def pinned_rule_ids(db: Session, estimate: Estimate) -> set[str]:

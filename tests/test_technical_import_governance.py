@@ -19,7 +19,12 @@ from classifire.importers.technical import (
 )
 from classifire.models import Estimate, LibraryRelease, Opening, Project, Service, TechnicalVariant
 from classifire.release_admin import _snapshot_records
-from classifire.services.release_pinning import active_release, validate_estimate_release_basis
+from classifire.services.release_pinning import (
+    PIN_FIELDS,
+    active_release,
+    pin_current_releases,
+    validate_estimate_release_basis,
+)
 from classifire.services.release_scope import ReleaseScopeError, pinned_technical_ids
 from classifire.services.technical import (
     mixed_service_candidate_available,
@@ -137,6 +142,30 @@ def _active_release_with_variant(
     return release, variant
 
 
+def _active_non_technical_releases(db) -> None:
+    for release_type in sorted(set(PIN_FIELDS) - {"technical"}):
+        db.add(
+            LibraryRelease(
+                library_type=release_type,
+                version=f"{release_type}-pinning-v1",
+                status="active",
+            )
+        )
+    db.flush()
+
+
+def _editable_estimate(db) -> Estimate:
+    project = Project(reference="PINNING-PROJECT", name="Release pinning test")
+    estimate = Estimate(
+        project=project,
+        reference="PINNING-ESTIMATE",
+        title="Release pinning test",
+    )
+    db.add(estimate)
+    db.flush()
+    return estimate
+
+
 def test_source_activation_flags_cannot_activate_imported_candidate(db, tmp_path) -> None:
     row = _active_source_row()
     path, payload = _source_file(tmp_path, [row])
@@ -234,6 +263,32 @@ def test_active_release_with_current_variant_remains_searchable(db) -> None:
     assert "Pinned technical release contains inactive or missing variants." not in (
         validate_estimate_release_basis(db, opening.estimate)
     )
+
+
+def test_release_basis_refresh_rejects_an_active_release_with_retired_variants(db) -> None:
+    _active_release_with_variant(db, variant_status="retired")
+    _active_non_technical_releases(db)
+    estimate = _editable_estimate(db)
+
+    with pytest.raises(
+        ValueError,
+        match="Pinned technical release contains inactive or missing variants",
+    ):
+        pin_current_releases(db, estimate)
+
+    assert all(getattr(estimate, field) is None for field in PIN_FIELDS.values())
+
+
+def test_release_basis_refresh_pins_an_active_release_with_active_variants(db) -> None:
+    release, _variant = _active_release_with_variant(db, variant_status="active")
+    _active_non_technical_releases(db)
+    estimate = _editable_estimate(db)
+
+    basis = pin_current_releases(db, estimate)
+
+    assert basis["technical"]["release_id"] == release.id
+    assert estimate.technical_release_id == release.id
+    assert all(getattr(estimate, field) is not None for field in PIN_FIELDS.values())
 
 
 def test_cli_has_no_activation_override() -> None:
