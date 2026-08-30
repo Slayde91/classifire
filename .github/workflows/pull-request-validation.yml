@@ -1,0 +1,46 @@
+name: CLASSIFIRE pull request validation
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    name: Python validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLASSIFIRE_ENV: test
+      CLASSIFIRE_DATABASE_URL: sqlite:///./classifire-ci.db
+      CLASSIFIRE_STORAGE_ROOT: .classifire-ci-storage
+      PYTHONPATH: src
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install application and development tools
+        run: python -m pip install -e .[dev]
+
+      - name: Check changed Python code style
+        shell: bash
+        run: |
+          git diff -z --name-only --diff-filter=ACMR origin/$GITHUB_BASE_REF...HEAD -- '*.py' |
+            xargs -0 --no-run-if-empty python -m ruff check --no-cache
+
+      - name: Run tests
+        run: python -m pytest -p no:cacheprovider --basetemp .pytest-ci
+
+      - name: Verify one Alembic migration head
+        shell: bash
+        run: |
+          python -m alembic heads |
+            awk 'NF { count += 1 } END { exit count == 1 ? 0 : 1 }'
