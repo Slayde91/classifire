@@ -29,6 +29,7 @@ jobs:
       CLASSIFIRE_ENV: test
       CLASSIFIRE_DATABASE_URL: sqlite:///./classifire-ci.db
       CLASSIFIRE_POSTGRES_TEST_URL: postgresql+psycopg://classifire_test@127.0.0.1:5432/classifire_containment_test
+      CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN: classifire-containment-test-drop-all
       CLASSIFIRE_STORAGE_ROOT: .classifire-ci-storage
       PYTHONPATH: src
     steps:

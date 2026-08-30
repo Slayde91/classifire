@@ -19,6 +19,8 @@ def _safe_production_settings(tmp_path: Path) -> Settings:
         secret_key="production-session-" + "secret-0123456789",
         admin_password="approved-administrator-" + "password",
         session_https_only=True,
+        trusted_hosts=["app.example.test"],
+        allowed_origins=["https://app.example.test"],
         storage_root=tmp_path / "storage",
     )
 

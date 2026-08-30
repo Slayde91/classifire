@@ -2,11 +2,11 @@
 
 import copy
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -17,7 +17,6 @@ from .models import Approval, TechnicalDocument, TechnicalVariant
 from .security import verify_csrf
 from .services.calculation import D
 from .ui import _context, _require, templates
-from fastapi import Depends
 
 router = APIRouter(include_in_schema=False)
 Db = Annotated[Session, Depends(get_db)]
@@ -26,7 +25,7 @@ Db = Annotated[Session, Depends(get_db)]
 def _decimal_or_none(value: str | None) -> Decimal | None:
     if value is None or value.strip() == "":
         return None
-    return D(value)
+    return Decimal(D(value))
 
 
 def _date_or_none(value: str | None) -> date | None:
@@ -100,7 +99,8 @@ def technical_variant_detail(variant_db_id: str, request: Request, db: Db) -> HT
     variant = db.get(TechnicalVariant, variant_db_id)
     if not variant:
         raise HTTPException(404, "Technical variant not found")
-    root_id = (variant.source_json or {}).get("original_variant_id") or variant.variant_id.split("-QFREV")[0]
+    original_variant_id = (variant.source_json or {}).get("original_variant_id")
+    root_id = original_variant_id or variant.variant_id.split("-QFREV")[0]
     history = db.scalars(
         select(TechnicalVariant)
         .where(
@@ -136,8 +136,16 @@ def technical_variant_revision_page(variant_db_id: str, request: Request, db: Db
             request,
             db,
             variant=variant,
-            component_json=json.dumps(variant.component_requirements, indent=2, ensure_ascii=False) if variant.component_requirements is not None else "",
-            labour_json=json.dumps(variant.labour_requirements, indent=2, ensure_ascii=False) if variant.labour_requirements is not None else "",
+            component_json=(
+                json.dumps(variant.component_requirements, indent=2, ensure_ascii=False)
+                if variant.component_requirements is not None
+                else ""
+            ),
+            labour_json=(
+                json.dumps(variant.labour_requirements, indent=2, ensure_ascii=False)
+                if variant.labour_requirements is not None
+                else ""
+            ),
         ),
     )
 
@@ -186,16 +194,29 @@ def technical_variant_revision(
     if not old:
         raise HTTPException(404, "Technical variant not found")
     try:
-        component_requirements = _json_or_existing(component_requirements_json, old.component_requirements)
-        labour_requirements = _json_or_existing(labour_requirements_json, old.labour_requirements)
+        component_requirements = _json_or_existing(
+            component_requirements_json,
+            old.component_requirements,
+        )
+        labour_requirements = _json_or_existing(
+            labour_requirements_json,
+            old.labour_requirements,
+        )
     except json.JSONDecodeError:
-        return RedirectResponse(f"/technical/variants/{variant_db_id}/revise?error=Component+and+labour+requirements+must+be+valid+JSON", status_code=303)
+        return RedirectResponse(
+            f"/technical/variants/{variant_db_id}/revise?error="
+            "Component+and+labour+requirements+must+be+valid+JSON",
+            status_code=303,
+        )
 
     new_variant_id = _next_revision_id(db, old)
     source_json = copy.deepcopy(old.source_json or {})
     source_json.update(
         {
-            "original_variant_id": (old.source_json or {}).get("original_variant_id") or old.variant_id.split("-QFREV")[0],
+            "original_variant_id": (
+                (old.source_json or {}).get("original_variant_id")
+                or old.variant_id.split("-QFREV")[0]
+            ),
             "user_revision": True,
             "revision_reason": reason,
             "supersedes_record_id": old.id,
@@ -258,7 +279,9 @@ def technical_variant_revision(
         approval_type="technical_activation",
         status="pending",
         requested_by_id=user.id,
-        decision_reason="Draft technical revision requires authorised technical review before activation.",
+        decision_reason=(
+            "Draft technical revision requires authorised technical review before activation."
+        ),
     )
     db.add(approval)
     record_audit(
@@ -272,7 +295,10 @@ def technical_variant_revision(
         reason=reason,
     )
     db.commit()
-    return RedirectResponse(f"/technical/variants/{new.id}?success=Draft+technical+revision+created", status_code=303)
+    return RedirectResponse(
+        f"/technical/variants/{new.id}?success=Draft+technical+revision+created",
+        status_code=303,
+    )
 
 
 @router.post("/technical/variants/{variant_db_id}/submit-review")
@@ -289,7 +315,11 @@ def technical_variant_submit_review(
     if not variant:
         raise HTTPException(404, "Technical variant not found")
     if variant.status not in {"draft", "rejected"}:
-        return RedirectResponse(f"/technical/variants/{variant.id}?error=Only+Draft+or+Rejected+variants+can+be+submitted", status_code=303)
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Only+Draft+or+Rejected+variants+can+be+submitted",
+            status_code=303,
+        )
     variant.status = "in_review"
     approval = db.scalar(
         select(Approval)
@@ -303,13 +333,34 @@ def technical_variant_submit_review(
     if approval:
         approval.status = "pending"
         approval.requested_by_id = user.id
-        approval.requested_at = datetime.now(timezone.utc)
+        approval.requested_at = datetime.now(UTC)
         approval.decision_reason = reason
     else:
-        db.add(Approval(entity_type="technical_variant", entity_id=variant.id, approval_type="technical_activation", status="pending", requested_by_id=user.id, decision_reason=reason))
-    record_audit(db, actor=user, action="submit_review", entity_type="technical_variant", entity_id=variant.id, previous_value={"status": "draft"}, new_value={"status": "in_review"}, reason=reason)
+        db.add(
+            Approval(
+                entity_type="technical_variant",
+                entity_id=variant.id,
+                approval_type="technical_activation",
+                status="pending",
+                requested_by_id=user.id,
+                decision_reason=reason,
+            )
+        )
+    record_audit(
+        db,
+        actor=user,
+        action="submit_review",
+        entity_type="technical_variant",
+        entity_id=variant.id,
+        previous_value={"status": "draft"},
+        new_value={"status": "in_review"},
+        reason=reason,
+    )
     db.commit()
-    return RedirectResponse(f"/technical/variants/{variant.id}?success=Submitted+for+technical+review", status_code=303)
+    return RedirectResponse(
+        f"/technical/variants/{variant.id}?success=Submitted+for+technical+review",
+        status_code=303,
+    )
 
 
 @router.post("/technical/variants/{variant_db_id}/approve")
@@ -325,18 +376,11 @@ def technical_variant_approve(
     variant = db.get(TechnicalVariant, variant_db_id)
     if not variant:
         raise HTTPException(404, "Technical variant not found")
-    if variant.status not in {"draft", "in_review"}:
-        return RedirectResponse(f"/technical/variants/{variant.id}?error=Only+Draft+or+In+Review+variants+can+be+approved", status_code=303)
-    if not variant.source_document_reference or not variant.source_page:
-        return RedirectResponse(f"/technical/variants/{variant.id}?error=Source+document+reference+and+source+page+are+required+before+approval", status_code=303)
-    previous_status = variant.status
-    if variant.supersedes_id:
-        prior = db.get(TechnicalVariant, variant.supersedes_id)
-        if prior and prior.status == "active":
-            prior.status = "superseded"
-    variant.status = "active"
-    variant.expert_review_required = False
-    variant.effective_date = variant.effective_date or date.today()
+    if variant.status != "in_review":
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error=Only+In+Review+variants+can+be+approved",
+            status_code=303,
+        )
     approval = db.scalar(
         select(Approval)
         .where(
@@ -346,16 +390,56 @@ def technical_variant_approve(
         )
         .order_by(Approval.created_at.desc())
     )
-    if approval:
-        approval.status = "approved"
-        approval.decided_by_id = user.id
-        approval.decided_at = datetime.now(timezone.utc)
-        approval.decision_reason = reason
-    else:
-        db.add(Approval(entity_type="technical_variant", entity_id=variant.id, approval_type="technical_activation", status="approved", requested_by_id=user.id, decided_by_id=user.id, decided_at=datetime.now(timezone.utc), decision_reason=reason))
-    record_audit(db, actor=user, action="approve", entity_type="technical_variant", entity_id=variant.id, previous_value={"status": previous_status}, new_value={"status": "active"}, reason=reason)
+    if not approval or approval.status != "pending" or not approval.requested_by_id:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error=Pending+technical+approval+request+required",
+            status_code=303,
+        )
+    if approval.requested_by_id == user.id:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error=Technical+requester+and+approver+must+be+different+users",
+            status_code=303,
+        )
+    if variant.technical_document_id:
+        document = db.get(TechnicalDocument, variant.technical_document_id)
+        if not document or document.status != "approved":
+            return RedirectResponse(
+                f"/technical/variants/{variant.id}?error=Linked+technical+document+must+be+approved",
+                status_code=303,
+            )
+    if not variant.source_document_reference or not variant.source_page:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Source+document+reference+and+source+page+are+required+before+approval",
+            status_code=303,
+        )
+    previous_status = variant.status
+    if variant.supersedes_id:
+        prior = db.get(TechnicalVariant, variant.supersedes_id)
+        if prior and prior.status == "active":
+            prior.status = "superseded"
+    variant.status = "active"
+    variant.expert_review_required = False
+    variant.effective_date = variant.effective_date or date.today()
+    approval.status = "approved"
+    approval.decided_by_id = user.id
+    approval.decided_at = datetime.now(UTC)
+    approval.decision_reason = reason
+    record_audit(
+        db,
+        actor=user,
+        action="approve",
+        entity_type="technical_variant",
+        entity_id=variant.id,
+        previous_value={"status": previous_status},
+        new_value={"status": "active"},
+        reason=reason,
+    )
     db.commit()
-    return RedirectResponse(f"/technical/variants/{variant.id}?success=Technical+variant+approved+and+activated", status_code=303)
+    return RedirectResponse(
+        f"/technical/variants/{variant.id}?success=Technical+variant+approved+and+activated",
+        status_code=303,
+    )
 
 
 @router.post("/technical/variants/{variant_db_id}/reject")
@@ -373,15 +457,35 @@ def technical_variant_reject(
         raise HTTPException(404, "Technical variant not found")
     previous = variant.status
     variant.status = "rejected"
-    approval = db.scalar(select(Approval).where(Approval.entity_type == "technical_variant", Approval.entity_id == variant.id, Approval.approval_type == "technical_activation").order_by(Approval.created_at.desc()))
+    approval = db.scalar(
+        select(Approval)
+        .where(
+            Approval.entity_type == "technical_variant",
+            Approval.entity_id == variant.id,
+            Approval.approval_type == "technical_activation",
+        )
+        .order_by(Approval.created_at.desc())
+    )
     if approval:
         approval.status = "rejected"
         approval.decided_by_id = user.id
-        approval.decided_at = datetime.now(timezone.utc)
+        approval.decided_at = datetime.now(UTC)
         approval.decision_reason = reason
-    record_audit(db, actor=user, action="reject", entity_type="technical_variant", entity_id=variant.id, previous_value={"status": previous}, new_value={"status": "rejected"}, reason=reason)
+    record_audit(
+        db,
+        actor=user,
+        action="reject",
+        entity_type="technical_variant",
+        entity_id=variant.id,
+        previous_value={"status": previous},
+        new_value={"status": "rejected"},
+        reason=reason,
+    )
     db.commit()
-    return RedirectResponse(f"/technical/variants/{variant.id}?success=Technical+variant+rejected", status_code=303)
+    return RedirectResponse(
+        f"/technical/variants/{variant.id}?success=Technical+variant+rejected",
+        status_code=303,
+    )
 
 
 @router.post("/technical/variants/{variant_db_id}/retire")
@@ -400,9 +504,21 @@ def technical_variant_retire(
     previous = variant.status
     variant.status = "retired"
     variant.expiry_date = date.today()
-    record_audit(db, actor=user, action="retire", entity_type="technical_variant", entity_id=variant.id, previous_value={"status": previous}, new_value={"status": "retired"}, reason=reason)
+    record_audit(
+        db,
+        actor=user,
+        action="retire",
+        entity_type="technical_variant",
+        entity_id=variant.id,
+        previous_value={"status": previous},
+        new_value={"status": "retired"},
+        reason=reason,
+    )
     db.commit()
-    return RedirectResponse(f"/technical/variants/{variant.id}?success=Technical+variant+retired", status_code=303)
+    return RedirectResponse(
+        f"/technical/variants/{variant.id}?success=Technical+variant+retired",
+        status_code=303,
+    )
 
 
 @router.get("/technical/documents/{document_db_id}", response_class=HTMLResponse)
@@ -411,8 +527,16 @@ def technical_document_detail(document_db_id: str, request: Request, db: Db) -> 
     document = db.get(TechnicalDocument, document_db_id)
     if not document:
         raise HTTPException(404, "Technical document not found")
-    linked = db.scalars(select(TechnicalVariant).where(TechnicalVariant.technical_document_id == document.id).order_by(TechnicalVariant.variant_id)).all()
-    return templates.TemplateResponse(request, "technical_document_detail.html", _context(request, db, document=document, linked=linked))
+    linked = db.scalars(
+        select(TechnicalVariant)
+        .where(TechnicalVariant.technical_document_id == document.id)
+        .order_by(TechnicalVariant.variant_id)
+    ).all()
+    return templates.TemplateResponse(
+        request,
+        "technical_document_detail.html",
+        _context(request, db, document=document, linked=linked),
+    )
 
 
 @router.post("/technical/documents/{document_db_id}/approve")
@@ -432,7 +556,19 @@ def technical_document_approve(
     document.status = "approved"
     document.reviewed_by_id = user.id
     document.approved_by_id = user.id
-    document.approved_at = datetime.now(timezone.utc)
-    record_audit(db, actor=user, action="approve", entity_type="technical_document", entity_id=document.id, previous_value={"status": previous}, new_value={"status": "approved"}, reason=reason)
+    document.approved_at = datetime.now(UTC)
+    record_audit(
+        db,
+        actor=user,
+        action="approve",
+        entity_type="technical_document",
+        entity_id=document.id,
+        previous_value={"status": previous},
+        new_value={"status": "approved"},
+        reason=reason,
+    )
     db.commit()
-    return RedirectResponse(f"/technical/documents/{document.id}?success=Technical+source+document+approved", status_code=303)
+    return RedirectResponse(
+        f"/technical/documents/{document.id}?success=Technical+source+document+approved",
+        status_code=303,
+    )

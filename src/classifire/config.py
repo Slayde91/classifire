@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import json
+import re
 from functools import lru_cache
+from ipaddress import ip_address
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class ProductionConfigurationError(RuntimeError):
@@ -14,6 +18,71 @@ class ProductionConfigurationError(RuntimeError):
     def __init__(self, findings: list[str]) -> None:
         self.findings = tuple(findings)
         super().__init__("Unsafe production configuration: " + "; ".join(findings))
+
+
+def _canonical_host(value: str) -> str | None:
+    """Return one exact hostname/IP spelling, rejecting wildcard-like aliases."""
+
+    if not value or value != value.strip() or any(character in value for character in "/*"):
+        return None
+    candidate = value[1:-1] if value.startswith("[") and value.endswith("]") else value
+    try:
+        return ip_address(candidate).compressed
+    except ValueError:
+        pass
+
+    numeric_labels = candidate.split(".")
+    if all(re.fullmatch(r"(?:0[xX][0-9a-fA-F]+|[0-9]+)", label) for label in numeric_labels):
+        return None
+    if ":" in candidate or len(candidate) > 253 or candidate.endswith("."):
+        return None
+    try:
+        ascii_host = candidate.encode("idna").decode("ascii").lower()
+    except UnicodeError:
+        return None
+    labels = ascii_host.split(".")
+    if any(
+        not label
+        or len(label) > 63
+        or label.startswith("-")
+        or label.endswith("-")
+        or not all(character.isalnum() or character == "-" for character in label)
+        for label in labels
+    ):
+        return None
+    return ascii_host
+
+
+def _canonical_https_origin(value: str) -> tuple[str, str] | None:
+    """Return an exact HTTPS origin and its host for production CORS checks."""
+
+    if value != value.strip():
+        return None
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme != "https"
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path
+        or parsed.query
+        or parsed.fragment
+    ):
+        return None
+    host = _canonical_host(parsed.hostname)
+    if host is None:
+        return None
+    display_host = f"[{host}]" if ":" in host else host
+    canonical = f"https://{display_host}"
+    if port not in {None, 443}:
+        canonical = f"{canonical}:{port}"
+    if value != canonical:
+        return None
+    return canonical, host
 
 
 class Settings(BaseSettings):
@@ -33,10 +102,12 @@ class Settings(BaseSettings):
     port: int = 8787
     storage_root: Path = Path("./data/storage")
     max_upload_mb: int = 100
-    allowed_origins: list[str] = Field(
+    allowed_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://127.0.0.1:8787", "http://localhost:8787"]
     )
-    trusted_hosts: list[str] = Field(default_factory=lambda: ["127.0.0.1", "localhost"])
+    trusted_hosts: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["127.0.0.1", "localhost"]
+    )
     session_https_only: bool = False
     clamav_host: str | None = None
     clamav_port: int = 3310
@@ -58,6 +129,12 @@ class Settings(BaseSettings):
     @classmethod
     def split_csv(cls, value: object) -> object:
         if isinstance(value, str):
+            stripped = value.strip()
+            if stripped.startswith("["):
+                try:
+                    return json.loads(stripped)
+                except json.JSONDecodeError:
+                    pass
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
@@ -88,7 +165,7 @@ class Settings(BaseSettings):
                 findings.append(
                     "CLASSIFIRE_SECRET_KEY must be a random value of at least 32 characters"
                 )
-            if self.admin_password == "change-me-immediately":  # noqa: S105
+            if self.admin_password == "change-me-immediately":  # noqa: S105  # nosec B105
                 findings.append("Default administrator password must be replaced")
             if not self.session_https_only:
                 findings.append(
@@ -96,6 +173,37 @@ class Settings(BaseSettings):
                 )
             if not self.database_url.startswith("postgresql"):
                 findings.append("PostgreSQL is required for multi-user production deployment")
+            canonical_trusted_hosts: set[str] = set()
+            if not self.trusted_hosts:
+                findings.append("CLASSIFIRE_TRUSTED_HOSTS must contain at least one explicit host")
+            for configured_host in self.trusted_hosts:
+                if "*" in configured_host:
+                    findings.append("CLASSIFIRE_TRUSTED_HOSTS may not contain wildcards")
+                    continue
+                canonical_host = _canonical_host(configured_host)
+                if canonical_host is None or canonical_host != configured_host:
+                    findings.append(
+                        "CLASSIFIRE_TRUSTED_HOSTS must contain canonical host names or IP addresses"
+                    )
+                    continue
+                canonical_trusted_hosts.add(canonical_host)
+
+            if not self.allowed_origins:
+                findings.append(
+                    "CLASSIFIRE_ALLOWED_ORIGINS must contain at least one exact HTTPS origin"
+                )
+            for configured_origin in self.allowed_origins:
+                if "*" in configured_origin:
+                    findings.append("CLASSIFIRE_ALLOWED_ORIGINS may not contain wildcards")
+                    continue
+                canonical_origin = _canonical_https_origin(configured_origin)
+                if canonical_origin is None:
+                    findings.append("CLASSIFIRE_ALLOWED_ORIGINS must contain exact HTTPS origins")
+                    continue
+                if canonical_origin[1] not in canonical_trusted_hosts:
+                    findings.append(
+                        "Each allowed origin host must also appear in CLASSIFIRE_TRUSTED_HOSTS"
+                    )
         return findings
 
 

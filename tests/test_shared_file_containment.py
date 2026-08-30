@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 from sqlalchemy.orm import Session, sessionmaker
 
 from classifire import physical_models  # noqa: F401
@@ -24,18 +25,116 @@ from classifire.services.storage import (
     quarantine_stored_file_bytes_for_update,
 )
 
-_POSTGRES_TEST_URL = os.environ.get('CLASSIFIRE_POSTGRES_TEST_URL')
+_POSTGRES_TEST_URL_ENV = 'CLASSIFIRE_POSTGRES_TEST_URL'
+_POSTGRES_TEST_DESTRUCTIVE_OPT_IN_ENV = 'CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN'
+_POSTGRES_TEST_DESTRUCTIVE_OPT_IN = 'classifire-containment-test-drop-all'
+_LOOPBACK_POSTGRES_HOSTS = frozenset({'127.0.0.1', '::1'})
 
 
 def _postgres_test_url() -> str:
-    if not _POSTGRES_TEST_URL:
-        pytest.skip('CLASSIFIRE_POSTGRES_TEST_URL is required for the PostgreSQL race test')
-    parsed = make_url(_POSTGRES_TEST_URL)
+    url = os.environ.get(_POSTGRES_TEST_URL_ENV)
+    if not url:
+        pytest.skip(f'{_POSTGRES_TEST_URL_ENV} is required for the PostgreSQL race test')
+    if (
+        os.environ.get(_POSTGRES_TEST_DESTRUCTIVE_OPT_IN_ENV)
+        != _POSTGRES_TEST_DESTRUCTIVE_OPT_IN
+    ):
+        pytest.fail(
+            f'{_POSTGRES_TEST_DESTRUCTIVE_OPT_IN_ENV} must explicitly allow the '
+            'destructive containment-race database reset'
+        )
+    try:
+        parsed = make_url(url)
+    except ArgumentError:  # pragma: no cover - SQLAlchemy owns URL parsing detail.
+        pytest.fail('The shared-file containment race test requires a valid PostgreSQL URL')
     if parsed.get_backend_name() != 'postgresql':
         pytest.fail('The shared-file containment race test requires PostgreSQL')
     if parsed.database != 'classifire_containment_test':
         pytest.fail('The shared-file containment race test requires its dedicated test database')
-    return _POSTGRES_TEST_URL
+    if parsed.host not in _LOOPBACK_POSTGRES_HOSTS:
+        pytest.fail(
+            'The shared-file containment race test requires a literal loopback '
+            'PostgreSQL host'
+        )
+    return url
+
+
+def test_postgresql_race_requires_explicit_destructive_opt_in(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(
+        _POSTGRES_TEST_URL_ENV,
+        'postgresql+psycopg://classifire_test@127.0.0.1:5432/classifire_containment_test',
+    )
+    monkeypatch.delenv(_POSTGRES_TEST_DESTRUCTIVE_OPT_IN_ENV, raising=False)
+
+    with pytest.raises(pytest.fail.Exception, match=_POSTGRES_TEST_DESTRUCTIVE_OPT_IN_ENV):
+        _postgres_test_url()
+
+
+@pytest.mark.parametrize(
+    ('url', 'expected_message'),
+    [
+        (
+            'sqlite+pysqlite:///:memory:',
+            'requires PostgreSQL',
+        ),
+        (
+            'postgresql+psycopg://classifire_test@127.0.0.1:5432/classifire',
+            'requires its dedicated test database',
+        ),
+        (
+            'postgresql+psycopg://classifire_test@localhost:5432/classifire_containment_test',
+            'requires a literal loopback PostgreSQL host',
+        ),
+        (
+            'postgresql+psycopg://classifire_test@203.0.113.20:5432/classifire_containment_test',
+            'requires a literal loopback PostgreSQL host',
+        ),
+    ],
+)
+def test_postgresql_race_refuses_non_disposable_endpoints(
+    monkeypatch: pytest.MonkeyPatch,
+    url: str,
+    expected_message: str,
+) -> None:
+    monkeypatch.setenv(_POSTGRES_TEST_URL_ENV, url)
+    monkeypatch.setenv(
+        _POSTGRES_TEST_DESTRUCTIVE_OPT_IN_ENV,
+        _POSTGRES_TEST_DESTRUCTIVE_OPT_IN,
+    )
+
+    with pytest.raises(pytest.fail.Exception, match=expected_message):
+        _postgres_test_url()
+
+
+def test_postgresql_race_does_not_echo_an_invalid_endpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    endpoint_marker = 'endpoint-value-must-not-appear-in-test-output'
+    monkeypatch.setenv(_POSTGRES_TEST_URL_ENV, f'not-a-postgresql-url-{endpoint_marker}')
+    monkeypatch.setenv(
+        _POSTGRES_TEST_DESTRUCTIVE_OPT_IN_ENV,
+        _POSTGRES_TEST_DESTRUCTIVE_OPT_IN,
+    )
+
+    with pytest.raises(pytest.fail.Exception, match='requires a valid PostgreSQL URL') as raised:
+        _postgres_test_url()
+
+    assert endpoint_marker not in str(raised.value)
+
+
+def test_postgresql_race_accepts_the_explicit_loopback_disposable_endpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url = 'postgresql+psycopg://classifire_test@127.0.0.1:5432/classifire_containment_test'
+    monkeypatch.setenv(_POSTGRES_TEST_URL_ENV, url)
+    monkeypatch.setenv(
+        _POSTGRES_TEST_DESTRUCTIVE_OPT_IN_ENV,
+        _POSTGRES_TEST_DESTRUCTIVE_OPT_IN,
+    )
+
+    assert _postgres_test_url() == url
 
 
 @pytest.fixture
