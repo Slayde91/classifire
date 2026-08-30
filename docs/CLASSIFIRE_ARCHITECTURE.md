@@ -614,9 +614,11 @@ receipts, or documentation.
 Current-main production startup now fails closed before it creates storage,
 schema, or a default administrator. Production requires a non-default secret
 and administrator password, HTTPS-only sessions, and PostgreSQL; it never
-calls `create_all()` or seeds an administrator. Upload storage, migration
-packaging for installed operation, live deployment proof, and the remaining
-broader hardening work are still pre-production boundaries. Project-owned
+calls `create_all()` or seeds an administrator. This branch has a separate,
+validated but unmerged candidate that packages the immutable Alembic history
+and exposes an explicit installed upgrade command. Shared main still lacks that
+packaging, and live deployment proof and the remaining broader hardening work
+are still pre-production boundaries. Project-owned
 report intake, clean-only evidence use, and atomic quarantine are source and
 CI-proven; they are not deployment or live-report proof.
 
@@ -637,7 +639,7 @@ CI-proven; they are not deployment or live-report proof.
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
 | Technical authority | **Basic prototype / blocked** | Current main lacks enforced approval-role separation and focused technical tests; governed candidate work is not merged |
 | Snapshot and Human Release | **Basic prototype / blocked** | Snapshot reproducibility and full validation certificate are not proven; upstream Physical Model gate unresolved |
-| Production bootstrap and security gates | **Merged limited hardening / pre-production** | Main rejects unsafe production settings before filesystem or lifecycle work and suppresses production `create_all`/seed; migration packaging, deployment proof, and the remaining `a3de490` scope are still unreviewed |
+| Production bootstrap and security gates | **Merged limited hardening plus unmerged packaging candidate** | Main rejects unsafe production settings before filesystem or lifecycle work and suppresses production `create_all`/seed; this branch packages immutable migrations and an explicit upgrade command, but deployment proof and the remaining `a3de490` scope are still unreviewed |
 | Continuous integration | **Established on shared main** | The secret-free pull-request workflow passed for PR #80 and the final PR #81 head, including the disposable PostgreSQL race |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |
