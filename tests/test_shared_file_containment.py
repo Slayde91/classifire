@@ -14,11 +14,14 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from classifire import physical_models  # noqa: F401
 from classifire.db import Base
-from classifire.models import StoredFile
+from classifire.models import Project, StoredFile
+from classifire.services.project_evidence import (
+    bind_project_evidence,
+    read_project_evidence_for_update,
+)
 from classifire.services.storage import (
     StoredFileBindingError,
     quarantine_stored_file_bytes_for_update,
-    read_clean_stored_file_for_update,
 )
 
 _POSTGRES_TEST_URL = os.environ.get('CLASSIFIRE_POSTGRES_TEST_URL')
@@ -50,13 +53,19 @@ def postgresql_session_factory() -> Iterator[sessionmaker[Session]]:
 def _add_clean_stored_file(
     factory: sessionmaker[Session],
     storage_root: Path,
-) -> tuple[str, bytes]:
+) -> tuple[str, str, bytes]:
     payload = b'known retained report content\n'
     storage_root.mkdir()
     path = storage_root / 'report.pdf'
     path.write_bytes(payload)
     with factory() as db:
         with db.begin():
+            project = Project(
+                reference='POSTGRES-CONTAINMENT-PROJECT',
+                name='PostgreSQL containment project',
+            )
+            db.add(project)
+            db.flush()
             stored = StoredFile(
                 original_filename='report.pdf',
                 media_type='application/pdf',
@@ -70,7 +79,9 @@ def _add_clean_stored_file(
             db.add(stored)
             db.flush()
             stored_file_id = stored.id
-    return stored_file_id, payload
+            bind_project_evidence(db, stored_file_id=stored.id, project_id=project.id)
+            project_id = project.id
+    return project_id, stored_file_id, payload
 
 
 def _wait_until_reader_blocks(db: Session, reader_pid: int) -> None:
@@ -91,7 +102,10 @@ def test_postgresql_quarantine_blocks_and_then_denies_concurrent_clean_read(
     tmp_path: Path,
 ) -> None:
     storage_root = tmp_path / 'storage'
-    stored_file_id, payload = _add_clean_stored_file(postgresql_session_factory, storage_root)
+    project_id, stored_file_id, payload = _add_clean_stored_file(
+        postgresql_session_factory,
+        storage_root,
+    )
     reader_ready = threading.Event()
     reader_finished = threading.Event()
     reader_result: dict[str, object] = {}
@@ -103,11 +117,11 @@ def test_postgresql_quarantine_blocks_and_then_denies_concurrent_clean_read(
                     db.execute(text('SET LOCAL lock_timeout = 5000'))
                     reader_result['pid'] = int(db.scalar(text('SELECT pg_backend_pid()')))
                     reader_ready.set()
-                    reader_result['content'] = read_clean_stored_file_for_update(
+                    reader_result['content'] = read_project_evidence_for_update(
                         db,
                         stored_file_id=stored_file_id,
+                        project_id=project_id,
                         storage_root=storage_root,
-                        required_purpose='project_evidence',
                     ).content
         except StoredFileBindingError as exc:
             reader_result['code'] = exc.code

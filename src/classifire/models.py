@@ -8,9 +8,11 @@ from typing import Any
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     Numeric,
@@ -220,6 +222,15 @@ class PricingLibraryRecord(RecordMixin, Base):
 
 
 class StoredFile(RecordMixin, Base):
+    __table_args__ = (
+        UniqueConstraint(
+            'id',
+            'sha256',
+            'size_bytes',
+            name='uq_stored_file_id_sha256_size',
+        ),
+    )
+
     __tablename__ = "stored_files"
 
     original_filename: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -231,6 +242,37 @@ class StoredFile(RecordMixin, Base):
     malware_scan_status: Mapped[str] = mapped_column(String(30), default="not_configured")
     uploaded_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     immutable: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class ProjectEvidence(RecordMixin, Base):
+    '''One immutable report or package binding to exactly one project context.'''
+
+    __tablename__ = 'project_evidence'
+    __table_args__ = (
+        CheckConstraint(
+            '(project_id IS NOT NULL AND estimate_id IS NULL) '
+            'OR (project_id IS NULL AND estimate_id IS NOT NULL)',
+            name='ck_project_evidence_single_owner',
+        ),
+        CheckConstraint(
+            'source_size_bytes > 0',
+            name='ck_project_evidence_source_size',
+        ),
+        ForeignKeyConstraint(
+            ['stored_file_id', 'source_sha256', 'source_size_bytes'],
+            ['stored_files.id', 'stored_files.sha256', 'stored_files.size_bytes'],
+            name='fk_project_evidence_source_bytes',
+        ),
+        UniqueConstraint('stored_file_id', name='uq_project_evidence_stored_file'),
+        Index('ix_project_evidence_project_id', 'project_id'),
+        Index('ix_project_evidence_estimate_id', 'estimate_id'),
+    )
+
+    project_id: Mapped[str | None] = mapped_column(ForeignKey('projects.id'))
+    estimate_id: Mapped[str | None] = mapped_column(ForeignKey('estimates.id'))
+    stored_file_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 class TechnicalDocument(RecordMixin, Base):
