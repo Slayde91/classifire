@@ -1,12 +1,13 @@
 # CLASSIFIRE Session Handoff
 
-**Verified:** 2026-08-30 (AEST)
+**Verified:** 2026-08-31 (AEST)
 
 **Status:** Pre-production prototype; PR #81 merged the contained report-evidence
 adapter and narrow production-startup hardening, PR #82 merged migration
 packaging plus production schema-readiness safeguards, and PR #83 merged
 browser, diagnostic, containment-test, and technical-activation safeguards into
-shared main. There is still no approved canonical Physical Model or active
+shared main. PR #91 additionally rechecks a linked technical source immediately
+before activation. There is still no approved canonical Physical Model or active
 replacement Physical Model Lock.
 
 PR #82 has no authority to upgrade a production, UAT, or customer database.
@@ -34,6 +35,8 @@ This handoff is a factual audit record. It does not grant authority to run infer
   for `70f8df5` in 2m13s before the PR merged at `ac7de2c`.
 - PR #84's `CLASSIFIRE pull request validation` workflow completed successfully
   for `828076c` in 1m37s before its documentation-only merge.
+- PR #91's `CLASSIFIRE pull request validation` workflow completed successfully
+  for `3777dea` in 1m37s before it merged at `cf12ed5`.
 - The report ownership/bytes, stable locators, deterministic review packages,
   report-aware assessment bindings, managed no-tool runtime, migration
   packaging, production schema-readiness safeguards, browser boundary,
@@ -70,7 +73,7 @@ did not modify it.
 | Report assessment and cable semantics | **Merged in PR #80** | `property_assessments` v2, historical-v1 verification, manifest-bound reviews, and bundle/tray rules are shared-main source. They remain proposal-only and do not create canonical truth. |
 | Report-evidence adapter | **Merged shared-main foundation** | PR #81 binds project ownership, verified clean bytes, report-SHA locators/scopes, deterministic review packages, and a guarded report transport/runtime. The disposable PostgreSQL shared-byte race passed in CI. |
 | Governed technical intake | **Separate pushed candidate plus local continuation** | `d76562e` and `0edeaac` are not on shared main. Their worktree has proposed `0019` and substantial uncommitted follow-on material, so it is not a clean merge candidate. |
-| Technical activation separation | **Merged shared-main hardening (PR #83)** | The existing UI workflow now requires `in_review`, a pending request, a different deciding user, and an approved linked source document before a variant can become active. It remains a narrow fail-closed guard, not full technical-intake authority or production proof. |
+| Technical activation separation | **Merged shared-main hardening (PRs #83 and #91)** | The existing UI workflow now requires `in_review`, a pending request, a different deciding user, and an approved linked source document before a variant can become active. PR #91 also requires the linked retained source to still be clean, immutable, and unchanged at that decision point. It remains a narrow fail-closed guard, not full technical-intake authority or production proof. |
 | Technical-document review separation | **Merged shared-main hardening (PRs #86 and #88)** | New Draft or Rejected source documents must have clean, immutable, unchanged retained bytes, be submitted for review, then be independently approved or rejected through the existing Approval record before they can carry an approved status. It does not create a migration, canonical authority, or complete source-lineage governance. |
 | Production startup boundary | **Merged narrow hardening** | Main rejects unsafe production configuration before filesystem or lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
 | Installed migration packaging and CLI bootstrap | **Merged shared-main hardening** | PR #82 moved immutable history under `classifire.migrations`; `classifire-migrate` explicitly upgrades only to its current head, while production CLI setup/import commands refuse to create schema or seed defaults. Production startup and database-writing CLI paths require the configured database to prove the exact packaged migration head before proceeding. Source, wheel, focused, full-suite, and PR CI checks used no production, UAT, or customer database. |
