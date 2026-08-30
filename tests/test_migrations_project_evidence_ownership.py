@@ -43,7 +43,7 @@ def test_project_evidence_migration_upgrades_existing_0009_database(tmp_path: Pa
     )
 
     _upgrade(database_url, environment, '0009_visual_validation_receipts')
-    _upgrade(database_url, environment, 'head')
+    _upgrade(database_url, environment, '0010_project_evidence_ownership')
 
     engine = create_engine(database_url)
     inspector = inspect(engine)

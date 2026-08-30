@@ -263,6 +263,7 @@ class ProjectEvidence(RecordMixin, Base):
             ['stored_files.id', 'stored_files.sha256', 'stored_files.size_bytes'],
             name='fk_project_evidence_source_bytes',
         ),
+        UniqueConstraint('id', 'source_sha256', name='uq_project_evidence_id_source_sha256'),
         UniqueConstraint('stored_file_id', name='uq_project_evidence_stored_file'),
         Index('ix_project_evidence_project_id', 'project_id'),
         Index('ix_project_evidence_estimate_id', 'estimate_id'),
@@ -273,6 +274,94 @@ class ProjectEvidence(RecordMixin, Base):
     stored_file_id: Mapped[str] = mapped_column(String(36), nullable=False)
     source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     source_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class ReportEvidenceLocator(RecordMixin, Base):
+    '''A hash-bound, content-safe position inside one retained project report.'''
+
+    __tablename__ = 'report_evidence_locators'
+    __table_args__ = (
+        CheckConstraint('sequence > 0', name='ck_report_evidence_locator_sequence'),
+        CheckConstraint(
+            'page_number IS NULL OR page_number > 0',
+            name='ck_report_evidence_locator_page_number',
+        ),
+        CheckConstraint(
+            'item_kind IN (\'metadata\', \'page\', \'text\', \'table\', \'caption\', '
+            '\'drawing\', \'annotation\', \'image\')',
+            name='ck_report_evidence_locator_item_kind',
+        ),
+        ForeignKeyConstraint(
+            ['project_evidence_id', 'source_sha256'],
+            ['project_evidence.id', 'project_evidence.source_sha256'],
+            name='fk_report_evidence_locator_source',
+        ),
+        UniqueConstraint(
+            'id',
+            'project_evidence_id',
+            name='uq_report_evidence_locator_id_project_evidence',
+        ),
+        UniqueConstraint(
+            'project_evidence_id',
+            'sequence',
+            name='uq_report_evidence_locator_sequence',
+        ),
+        UniqueConstraint(
+            'project_evidence_id',
+            'locator_key',
+            name='uq_report_evidence_locator_key',
+        ),
+        Index('ix_report_evidence_locator_project_page', 'project_evidence_id', 'page_number'),
+    )
+
+    project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    locator_key: Mapped[str] = mapped_column(String(300), nullable=False)
+    item_kind: Mapped[str] = mapped_column(String(30), nullable=False)
+    page_number: Mapped[int | None] = mapped_column(Integer)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    locator_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
+class ReportDefectScope(RecordMixin, Base):
+    '''One selected range from a hash-bound report for an existing Defect.'''
+
+    __tablename__ = 'report_defect_scopes'
+    __table_args__ = (
+        CheckConstraint(
+            'length(trim(report_defect_label)) > 0',
+            name='ck_report_defect_scope_label',
+        ),
+        ForeignKeyConstraint(
+            ['project_evidence_id', 'source_sha256'],
+            ['project_evidence.id', 'project_evidence.source_sha256'],
+            name='fk_report_defect_scope_source',
+        ),
+        ForeignKeyConstraint(
+            ['start_locator_id', 'project_evidence_id'],
+            ['report_evidence_locators.id', 'report_evidence_locators.project_evidence_id'],
+            name='fk_report_defect_scope_start_locator',
+        ),
+        ForeignKeyConstraint(
+            ['end_locator_id', 'project_evidence_id'],
+            ['report_evidence_locators.id', 'report_evidence_locators.project_evidence_id'],
+            name='fk_report_defect_scope_end_locator',
+        ),
+        UniqueConstraint(
+            'project_evidence_id',
+            'defect_id',
+            name='uq_report_defect_scope_report_defect',
+        ),
+        Index('ix_report_defect_scope_defect_id', 'defect_id'),
+    )
+
+    project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    defect_id: Mapped[str] = mapped_column(ForeignKey('defects.id'), nullable=False)
+    report_defect_label: Mapped[str] = mapped_column(String(150), nullable=False)
+    start_locator_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    end_locator_id: Mapped[str] = mapped_column(String(36), nullable=False)
 
 
 class TechnicalDocument(RecordMixin, Base):
