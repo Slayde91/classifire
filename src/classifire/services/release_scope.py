@@ -15,6 +15,7 @@ from ..models import (
     MarkupProfile,
     PricingLibraryRecord,
     Product,
+    TechnicalVariant,
 )
 
 PIN_FIELDS = {
@@ -118,7 +119,20 @@ def pinned_technical_ids(db: Session, estimate: Estimate) -> set[str]:
     release = pinned_release(db, estimate, "technical")
     if release.status != "active":
         raise ReleaseScopeError("Pinned technical release is not active.")
-    return release_record_ids(db, estimate, "technical")
+    record_ids = release_record_ids(db, estimate, "technical")
+    active_ids = set(
+        db.scalars(
+            select(TechnicalVariant.id).where(
+                TechnicalVariant.id.in_(record_ids),
+                TechnicalVariant.status == "active",
+            )
+        ).all()
+    )
+    if active_ids != record_ids:
+        raise ReleaseScopeError(
+            "Pinned technical release contains inactive or missing variants."
+        )
+    return active_ids
 
 
 def pinned_rule_ids(db: Session, estimate: Estimate) -> set[str]:
