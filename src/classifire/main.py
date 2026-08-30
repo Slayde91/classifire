@@ -38,6 +38,7 @@ package_dir = Path(__file__).parent
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     require_production_configuration(settings)
+    settings.storage_root.mkdir(parents=True, exist_ok=True)
     if settings.env != "production":
         # Development/local installer convenience. Production deployment must run Alembic first.
         Base.metadata.create_all(bind=engine)

@@ -74,12 +74,6 @@ class Settings(BaseSettings):
             raise ValueError("must be a JSON object")
         return value
 
-    @field_validator("storage_root", mode="after")
-    @classmethod
-    def ensure_storage_root(cls, value: Path) -> Path:
-        value.mkdir(parents=True, exist_ok=True)
-        return value
-
     @property
     def max_upload_bytes(self) -> int:
         return self.max_upload_mb * 1024 * 1024
