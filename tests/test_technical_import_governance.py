@@ -17,10 +17,15 @@ from classifire.importers.technical import (
     TECHNICAL_IMPORT_POLICY,
     import_technical_variants,
 )
-from classifire.models import LibraryRelease, TechnicalVariant
+from classifire.models import Estimate, LibraryRelease, Opening, Project, Service, TechnicalVariant
 from classifire.release_admin import _snapshot_records
-from classifire.services.release_pinning import active_release
-from classifire.services.technical import search_variants
+from classifire.services.release_pinning import active_release, validate_estimate_release_basis
+from classifire.services.release_scope import ReleaseScopeError
+from classifire.services.technical import (
+    mixed_service_candidate_available,
+    search_for_opening,
+    search_variants,
+)
 
 
 @pytest.fixture
@@ -69,6 +74,39 @@ def _source_file(
     return path, payload
 
 
+def _release_manifest_hash(manifest: dict[str, object]) -> str:
+    encoded = json.dumps(manifest, sort_keys=True, separators=(",", ":"), default=str).encode(
+        "utf-8"
+    )
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _opening_with_directly_pinned_technical_release(db, release_id: str) -> Opening:
+    project = Project(reference="DIRECT-PIN-PROJECT", name="Direct pin scope test")
+    estimate = Estimate(
+        project=project,
+        reference="DIRECT-PIN-ESTIMATE",
+        title="Direct pin scope test",
+        technical_release_id=release_id,
+    )
+    opening = Opening(
+        estimate=estimate,
+        opening_code="DIRECT-PIN-OPENING",
+        substrate_type="concrete",
+        orientation="wall",
+        frl="-/120/120",
+    )
+    opening.services.extend(
+        [
+            Service(service_code="DIRECT-PIN-PIPE", service_type="pipe", material="steel"),
+            Service(service_code="DIRECT-PIN-CABLE", service_type="cable", material="copper"),
+        ]
+    )
+    db.add(opening)
+    db.flush()
+    return opening
+
+
 def test_source_activation_flags_cannot_activate_imported_candidate(db, tmp_path) -> None:
     row = _active_source_row()
     path, payload = _source_file(tmp_path, [row])
@@ -114,6 +152,26 @@ def test_imported_candidate_is_excluded_from_search_and_release_snapshot(db, tmp
             .where(LibraryRelease.library_type == "technical", LibraryRelease.status == "active")
         )
         == 0
+    )
+
+
+def test_draft_import_cannot_be_searched_through_a_directly_pinned_release(db, tmp_path) -> None:
+    path, _payload = _source_file(tmp_path, [_active_source_row()])
+    result = import_technical_variants(db, path, version="intake-v1")
+    release = db.get(LibraryRelease, result["release_id"])
+    assert release is not None
+    assert release.source_manifest is not None
+    # Exercise the separate activity guard with a valid immutable Draft release.
+    release.release_hash = _release_manifest_hash(release.source_manifest)
+    db.flush()
+    opening = _opening_with_directly_pinned_technical_release(db, result["release_id"])
+
+    with pytest.raises(ReleaseScopeError, match="Pinned technical release is not active"):
+        search_for_opening(db, opening)
+    with pytest.raises(ReleaseScopeError, match="Pinned technical release is not active"):
+        mixed_service_candidate_available(db, opening)
+    assert "Pinned technical release is not active." in validate_estimate_release_basis(
+        db, opening.estimate
     )
 
 
