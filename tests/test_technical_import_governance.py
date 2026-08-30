@@ -20,7 +20,7 @@ from classifire.importers.technical import (
 from classifire.models import Estimate, LibraryRelease, Opening, Project, Service, TechnicalVariant
 from classifire.release_admin import _snapshot_records
 from classifire.services.release_pinning import active_release, validate_estimate_release_basis
-from classifire.services.release_scope import ReleaseScopeError
+from classifire.services.release_scope import ReleaseScopeError, pinned_technical_ids
 from classifire.services.technical import (
     mixed_service_candidate_available,
     search_for_opening,
@@ -107,6 +107,36 @@ def _opening_with_directly_pinned_technical_release(db, release_id: str) -> Open
     return opening
 
 
+def _active_release_with_variant(
+    db, *, variant_status: str
+) -> tuple[LibraryRelease, TechnicalVariant]:
+    release = LibraryRelease(
+        library_type="technical",
+        version=f"{variant_status}-variant-scope-v1",
+        status="active",
+    )
+    db.add(release)
+    db.flush()
+    variant = TechnicalVariant(
+        variant_id=f"{variant_status.upper()}-VARIANT-001",
+        system_id=f"{variant_status.upper()}-SYSTEM-001",
+        service_type="pipe",
+        service_material="steel",
+        frl="-/120/120",
+        status=variant_status,
+        expert_review_required=False,
+        source_json={"fixture": f"{variant_status}-variant-scope"},
+        release_id=release.id,
+    )
+    db.add(variant)
+    db.flush()
+    manifest = {"records": [{"id": variant.id}]}
+    release.source_manifest = manifest
+    release.release_hash = _release_manifest_hash(manifest)
+    db.flush()
+    return release, variant
+
+
 def test_source_activation_flags_cannot_activate_imported_candidate(db, tmp_path) -> None:
     row = _active_source_row()
     path, payload = _source_file(tmp_path, [row])
@@ -172,6 +202,37 @@ def test_draft_import_cannot_be_searched_through_a_directly_pinned_release(db, t
         mixed_service_candidate_available(db, opening)
     assert "Pinned technical release is not active." in validate_estimate_release_basis(
         db, opening.estimate
+    )
+
+
+def test_active_release_with_a_retired_variant_fails_closed(db) -> None:
+    release, _variant = _active_release_with_variant(db, variant_status="retired")
+    opening = _opening_with_directly_pinned_technical_release(db, release.id)
+
+    with pytest.raises(
+        ReleaseScopeError,
+        match="Pinned technical release contains inactive or missing variants",
+    ):
+        search_for_opening(db, opening)
+    with pytest.raises(
+        ReleaseScopeError,
+        match="Pinned technical release contains inactive or missing variants",
+    ):
+        mixed_service_candidate_available(db, opening)
+    assert "Pinned technical release contains inactive or missing variants." in (
+        validate_estimate_release_basis(db, opening.estimate)
+    )
+
+
+def test_active_release_with_current_variant_remains_searchable(db) -> None:
+    release, variant = _active_release_with_variant(db, variant_status="active")
+    opening = _opening_with_directly_pinned_technical_release(db, release.id)
+
+    assert pinned_technical_ids(db, opening.estimate) == {variant.id}
+    result = search_for_opening(db, opening)
+    assert result["services"][0]["candidates"][0]["variant_id"] == variant.variant_id
+    assert "Pinned technical release contains inactive or missing variants." not in (
+        validate_estimate_release_basis(db, opening.estimate)
     )
 
 
