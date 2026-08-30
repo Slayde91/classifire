@@ -39,10 +39,11 @@ Implementation claims also identify their repository tier:
 The architecture remains governed by the evidence-to-human-release chain, but
 repository tiers must not be confused with implementation completion.
 
-- **Shared current-main (`e394f29`)** is the active published foundation. It
+- **Shared current-main (`b776174`)** is the active published foundation. It
   contains the PR #74 application baseline, PR #78 human-session revocation
   hardening, PR #79's recovery decision, PR #80's bounded v2 assessment/review
-  contract, and the secret-free pull-request validation workflow. Its single
+  contract, PR #81's contained report-evidence adapter and production-startup
+  guard, and the secret-free pull-request validation workflow. Its single
   migration head is `0011_report_evidence_locators`.
 - **The primary legacy checkout is quarantined source-control evidence, not a
   deployable/current implementation tier.** PR #79 records the isolated decision
@@ -53,12 +54,11 @@ repository tiers must not be confused with implementation completion.
 - **The bounded report-assessment contract is shared-main source.** PR #80
   merged `efd4641` after its successful workflow run; it remains proposal-only
   and does not authorise a real report run or canonical state change.
-- **The contained report-evidence adapter is the current branch candidate.**
-  `gpt/phase8-report-evidence-adapter-20260830`, based on `e394f29`, adds exact
-  clean-byte/project ownership, stable locators, deterministic report review,
-  report-bound prompt/receipt contracts, a managed no-tool runtime, and a PR
-  workflow service for the configured PostgreSQL race. That CI race is still
-  required; no real report or provider run has been performed.
+- **The contained report-evidence adapter is shared-main source.** PR #81
+  merged exact clean-byte/project ownership, stable locators, deterministic
+  report review, report-bound prompt/receipt contracts, a managed no-tool
+  runtime, and the disposable PostgreSQL race service. Its final CI run passed
+  500 tests. No real report or provider run has been performed.
 - **The cable semantics are shared-main behaviour.** A
   cable bundle's `quantity` counts bundles; a defensible individual cable count
   is separate. Without that count, a bundle may be classified small, medium, or
@@ -66,21 +66,21 @@ repository tiers must not be confused with implementation completion.
 - **Technical intake and most production hardening remain separate candidates.** The
   Draft-bound technical-intake commits (`d76562e`, `0edeaac`) and proposed
   `0019_technical_intake_materializations` migration are not on main. The
-  production-boundary commit `a3de490` is also local-only. This branch extracts
-  only a narrow production-startup guard: unsafe production settings fail before
-  lifecycle writes, and production never creates schema or seeds an administrator.
-  Neither the remaining candidates nor this branch change shared-main architecture
-  until reviewed and published.
+  production-boundary commit `a3de490` is also local-only. PR #81 separately
+  merged only a narrow startup guard: unsafe production settings fail before
+  filesystem or lifecycle writes, and production never creates schema or seeds
+  an administrator. The remaining candidates do not change shared-main
+  architecture until separately reviewed and published.
 
 ### Architecture follow-up required
 
-Before any report assessment, independently review the exact adapter branch and
-obtain separate authority to open its pull request. Its CI service must then run
-the configured PostgreSQL containment race against a disposable database. The
+Before any report assessment, obtain separate authority for the controlled
+proposal-only run and human review. PR #81 has already been independently
+reviewed and its disposable PostgreSQL containment race passed in CI. The
 adapter extends the merged contract and must not create a competing path.
 
-1. Validate the completed contained adapter with the configured PostgreSQL
-   quarantine/read race, then independently review it before publication.
+1. Keep the completed contained adapter limited to project-owned, hash-bound
+   proposal evidence; a controlled report run remains a separate authority.
 2. Keep storage ownership, containment, package preparation, inference, API, and
    UI as reviewable layers. Do not transplant the broad report-context or dirty
    technical-intake continuation wholesale.
@@ -346,9 +346,9 @@ and opposite-face continuity remain unresolved. The provenance and evidence-fami
 review validators are on shared main. The retained v2 response remains local
 human-review evidence; it is neither canonical state nor publication authority.
 
-### 7.2 Property assessment and proposal review - Completed branch candidate
+### 7.2 Property assessment and proposal review - Merged shared-main foundation
 
-The current branch adds a strict v2 property-assessment layer without changing
+Shared main has a strict v2 property-assessment layer without changing
 canonical persistence:
 
 ```text
@@ -374,10 +374,10 @@ policy/receipt records remain verifiable, but a v2 result cannot be relabelled
 as v1. Review status and proposal outcome are cross-checked, and invalid,
 insufficient-evidence, or no-proposal cases cannot be relabelled as successful.
 
-The current representative runner creates review files only after a visual
-result exists. It does not yet ingest general documentary report evidence or
-guarantee a review artifact for retrieval-blocked Defects. Those are the next
-adapter responsibilities, not reasons to weaken the v2 contract.
+The merged report adapter now binds general documentary report evidence and
+emits deterministic review artifacts for selected report Defects, including
+retrieval-blocked and insufficient-evidence outcomes. It does not weaken the
+v2 contract or grant canonical persistence authority.
 
 ## 8. Trusted-UAT representative package
 
@@ -611,17 +611,19 @@ The offline admission key and APK release-signing identity are separate trust
 objects. Neither private key belongs in CLASSIFIRE source, configuration,
 receipts, or documentation.
 
-Current-main application startup unconditionally calls SQLAlchemy
-`create_all()` and seeds an administrator, including in production mode.
-Production configuration findings are reported as warnings rather than an
-enforced startup gate, and admission-bound initial submission defaults off.
-Upload storage does not scan bytes itself and permits `not_configured`
-evidence; same-hash records are returned without purpose rebinding. Migrations
-are not packaged with the installed Python package, and current main has no
-Docker/Compose deployment definition. These are pre-production boundaries.
-Project-owned report intake, clean-only production evidence use, atomic
-quarantine, migration-only production startup, and fail-closed configuration
-must be proven before deployment.
+Current-main production startup now fails closed before it creates storage,
+schema, or a default administrator. Production requires a non-default secret
+and administrator password, HTTPS-only sessions, and PostgreSQL; it never
+calls `create_all()` or seeds an administrator. This branch has a separate,
+validated but unmerged candidate that packages the immutable Alembic history,
+exposes an explicit installed upgrade command, and refuses production CLI
+setup/import commands before they can create schema or seed defaults. It also
+requires exact packaged migration-head readiness before production storage setup
+or database-writing CLI work. Shared
+main still lacks those boundaries, and live deployment proof and the remaining
+broader hardening work are still pre-production boundaries. Project-owned
+report intake, clean-only evidence use, and atomic quarantine are source and
+CI-proven; they are not deployment or live-report proof.
 
 ## 14. Current architecture status
 
@@ -635,13 +637,13 @@ must be proven before deployment.
 | Trusted-UAT package and rollback proof | **Completed shared-main capability** | Representative run executed; source and receipt package are merged |
 | Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; report-evidence-limited facts and independent semantic approval remain unresolved |
 | Content-safe evidence review and local recovery | **Completed shared-main capability** | Recovery proof has documented mutability/replay limits |
-| Report storage ownership and malware containment | **In progress / local candidates only** | Main has no StoredFile project/estimate owner and does not prove clean-only atomic read/preview; cross-project and quarantine-race tests are required |
+| Report storage ownership and malware containment | **Merged shared-main / pre-production** | PR #81 binds StoredFiles to Project/Estimate evidence and verifies clean-byte reads; its disposable PostgreSQL quarantine-race test passed in CI |
 | Canonical Physical Model for the current estimate | **Blocked** | No approved proposal or separately authorised submission |
 | Replacement Physical Model Lock | **Blocked** | Separate signed lock-admission design and authority required |
 | Technical authority | **Basic prototype / blocked** | Current main lacks enforced approval-role separation and focused technical tests; governed candidate work is not merged |
 | Snapshot and Human Release | **Basic prototype / blocked** | Snapshot reproducibility and full validation certificate are not proven; upstream Physical Model gate unresolved |
-| Production bootstrap and security gates | **In progress / bounded branch candidate** | The current branch rejects unsafe production settings and suppresses production `create_all`/seed; migration packaging, deployment proof, and the remaining `a3de490` scope are still unreviewed |
-| Continuous integration | **Not started** | No GitHub workflow or recorded status-check run exists on current main |
+| Production bootstrap and security gates | **Merged limited hardening plus unmerged CLI/migration candidate** | Main rejects unsafe production settings before filesystem or lifecycle work and suppresses production `create_all`/seed; this branch packages immutable migrations, adds an explicit upgrade command, blocks production CLI setup/import seeding, and requires the exact packaged migration head before production storage or database-writing CLI work. Deployment proof and the remaining `a3de490` scope are still unreviewed. |
+| Continuous integration | **Established on shared main** | The secret-free pull-request workflow passed for PR #80 and the final PR #81 head, including the disposable PostgreSQL race |
 | Evidence-family taxonomy and multi-report accuracy | **In progress** | One approved source and representative Defect do not prove generalisation |
 | Governed accuracy/learning programme | **Planned** | No training before the roadmap admission gates |
 | Structural-steel and full duct-run domains | **Planned / deferred** | Separate schemas, libraries, calculators, and acceptance evidence required |
@@ -651,10 +653,11 @@ must be proven before deployment.
 
 ## 15. Next valid architectural action
 
-The next repository action is independent review of the exact assessment-contract
-branch and publication only if it is accepted. Once that gate passes, build the
-contained, project-owned, report-SHA-bound evidence adapter and deterministic
-per-Defect review flow on top of the accepted contract.
+The next repository action is a separately authorised, controlled,
+proposal-only report assessment followed by human review. The assessment
+contract and contained report-evidence adapter are already merged; that does
+not authorise technical selection, pricing, canonicalisation, locking,
+deployment, or release.
 The ordered boundary is:
 
 1. atomically bind malware state and content hash to the bytes read or served,

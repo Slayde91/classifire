@@ -48,7 +48,9 @@ jobs:
       - name: Check changed Python code style
         shell: bash
         run: |
-          git diff -z --name-only --diff-filter=ACMR origin/$GITHUB_BASE_REF...HEAD -- '*.py' |
+          # A structural migration relocation is a pure rename. New or modified
+          # migration modules must still receive the normal changed-file style check.
+          git diff -z --name-only --diff-filter=ACM origin/$GITHUB_BASE_REF...HEAD -- '*.py' |
             xargs -0 --no-run-if-empty python -m ruff check --no-cache
 
       - name: Run tests

@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
-import subprocess
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 import uvicorn
@@ -18,11 +16,17 @@ from . import (
     __version__,
     physical_models,  # noqa: F401
 )
-from .config import get_settings
+from .config import (
+    ProductionConfigurationError,
+    Settings,
+    get_settings,
+    require_production_configuration,
+)
 from .db import Base, SessionLocal, engine
 from .importers import import_pricing_library, import_technical_variants, seed_database
+from .migrations import MigrationReadinessError, require_current_migration_head
 from .mission_control import MissionControlClient, bootstrap_mission_control
-from .models import PricingLibraryRecord, Product, TechnicalVariant, User
+from .models import PricingLibraryRecord, TechnicalVariant, User
 from .security import hash_password
 from .services.adjudicated_admission import AdmissionVerificationError, admission_identity
 from .services.adjudicated_admission_registration import (
@@ -34,7 +38,10 @@ from .services.adjudicated_key_policy import (
     resolve_adjudicated_public_key,
 )
 
-app = typer.Typer(help="CLASSIFIRE administration, import, run and integration commands.", no_args_is_help=True)
+app = typer.Typer(
+    help="CLASSIFIRE administration, import, run and integration commands.",
+    no_args_is_help=True,
+)
 console = Console()
 
 
@@ -46,6 +53,31 @@ def repo_root() -> Path:
     return Path.cwd()
 
 
+def _prepare_cli_write(*, seeds_controlled_defaults: bool = False) -> Settings:
+    """Validate production settings before a CLI command can change state."""
+
+    settings = get_settings()
+    try:
+        require_production_configuration(settings)
+    except ProductionConfigurationError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if settings.env == "production" and seeds_controlled_defaults:
+        raise typer.BadParameter("PRODUCTION_SEEDING_FORBIDDEN_USE_CLASSIFIRE_MIGRATE")
+    return settings
+
+
+def _ensure_cli_schema(settings: Settings) -> None:
+    """Keep development setup convenient without permitting production schema creation."""
+
+    if settings.env == "production":
+        try:
+            require_current_migration_head(settings)
+        except MigrationReadinessError as exc:
+            raise typer.BadParameter(exc.code) from exc
+        return
+    Base.metadata.create_all(bind=engine)
+
+
 @app.command()
 def version() -> None:
     """Print the installed CLASSIFIRE version."""
@@ -54,14 +86,9 @@ def version() -> None:
 
 @app.command("init")
 def init_database() -> None:
-    """Create database tables and seed controlled defaults."""
-    settings = get_settings()
-    findings = settings.validate_production()
-    if findings:
-        console.print("[yellow]Production configuration findings:[/yellow]")
-        for item in findings:
-            console.print(f"  - {item}")
-    Base.metadata.create_all(bind=engine)
+    """Create development tables and seed controlled defaults."""
+    settings = _prepare_cli_write(seeds_controlled_defaults=True)
+    _ensure_cli_schema(settings)
     with SessionLocal() as db:
         result = seed_database(db, settings)
     console.print("[green]Database initialised.[/green]")
@@ -74,8 +101,9 @@ def create_admin(
     full_name: str = typer.Option("CLASSIFIRE Administrator"),
     password: str = typer.Option(..., prompt=True, hide_input=True, confirmation_prompt=True),
 ) -> None:
-    """Create or reset an administrator account."""
-    Base.metadata.create_all(bind=engine)
+    """Create or reset an administrator after production schema migration."""
+    settings = _prepare_cli_write()
+    _ensure_cli_schema(settings)
     with SessionLocal() as db:
         user = db.scalar(select(User).where(User.email == email.lower()))
         if user:
@@ -102,9 +130,10 @@ def import_pricing(
     version: str = typer.Option("2.13"),
 ) -> None:
     """Import Package 14 into the editable versioned pricing database."""
-    Base.metadata.create_all(bind=engine)
+    settings = _prepare_cli_write(seeds_controlled_defaults=True)
+    _ensure_cli_schema(settings)
     with SessionLocal() as db:
-        seed_database(db, get_settings())
+        seed_database(db, settings)
         result = import_pricing_library(db, path, version=version)
     console.print_json(data=result)
 
@@ -115,25 +144,27 @@ def import_technical(
     version: str = typer.Option("2.13"),
 ) -> None:
     """Import Package 15 executable variants into the technical database."""
-    Base.metadata.create_all(bind=engine)
+    settings = _prepare_cli_write(seeds_controlled_defaults=True)
+    _ensure_cli_schema(settings)
     with SessionLocal() as db:
-        seed_database(db, get_settings())
+        seed_database(db, settings)
         result = import_technical_variants(db, path, version=version)
     console.print_json(data=result)
 
 
 @app.command("import-supplied-v213")
-def import_supplied_v213(source_root: Optional[Path] = None) -> None:
+def import_supplied_v213(source_root: Path | None = None) -> None:
     """Import the supplied v2.13 pricing and technical libraries."""
+    settings = _prepare_cli_write(seeds_controlled_defaults=True)
     root = source_root or repo_root() / "knowledge" / "source" / "v2.13"
     pricing = root / "QUANTIFIRE_14_Pricing_Library_v2.13.csv"
     technical = root / "QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl"
     missing = [str(path) for path in (pricing, technical) if not path.exists()]
     if missing:
         raise typer.BadParameter(f"Missing supplied source file(s): {missing}")
-    Base.metadata.create_all(bind=engine)
+    _ensure_cli_schema(settings)
     with SessionLocal() as db:
-        seed_database(db, get_settings())
+        seed_database(db, settings)
         p = import_pricing_library(db, pricing, version="2.13")
         t = import_technical_variants(db, technical, version="2.13")
     console.print("[green]Supplied v2.13 libraries imported.[/green]")
@@ -142,8 +173,8 @@ def import_supplied_v213(source_root: Optional[Path] = None) -> None:
 
 @app.command()
 def start(
-    host: Optional[str] = typer.Option(None),
-    port: Optional[int] = typer.Option(None),
+    host: str | None = typer.Option(None),
+    port: int | None = typer.Option(None),
     reload: bool = typer.Option(False),
 ) -> None:
     """Start the CLASSIFIRE application."""
@@ -160,6 +191,8 @@ def start(
 @app.command()
 def worker(interval: float = typer.Option(2.0)) -> None:
     """Run the background job worker."""
+    settings = _prepare_cli_write()
+    _ensure_cli_schema(settings)
     from .worker import run_forever
 
     run_forever(interval)
@@ -171,13 +204,22 @@ def doctor() -> None:
     settings = get_settings()
     root = repo_root()
     checks: list[tuple[str, str, str]] = []
-    checks.append(("Python", sys.version.split()[0], "PASS" if sys.version_info >= (3, 11) else "FAIL"))
-    checks.append(("Repository", str(root), "PASS" if (root / "pyproject.toml").exists() else "WARN"))
-    checks.append(("Approved logo", str(root / "assets/brand/quantifire-logo-master.png"), "PASS" if (root / "assets/brand/quantifire-logo-master.png").exists() else "FAIL"))
+    checks.append(
+        ("Python", sys.version.split()[0], "PASS" if sys.version_info >= (3, 11) else "FAIL")
+    )
+    checks.append(
+        ("Repository", str(root), "PASS" if (root / "pyproject.toml").exists() else "WARN")
+    )
+    logo_path = root / "assets/brand/quantifire-logo-master.png"
+    checks.append(("Approved logo", str(logo_path), "PASS" if logo_path.exists() else "FAIL"))
     p14 = root / "knowledge/source/v2.13/QUANTIFIRE_14_Pricing_Library_v2.13.csv"
     p15 = root / "knowledge/source/v2.13/QUANTIFIRE_17_Technical_System_Variants_v2.13.jsonl"
     calc = root / "knowledge/source/raw-calculator/Penetration Calculator.xlsb"
-    for label, path in [("Package 14", p14), ("Package 15 variants", p15), ("Raw calculator", calc)]:
+    for label, path in [
+        ("Package 14", p14),
+        ("Package 15 variants", p15),
+        ("Raw calculator", calc),
+    ]:
         checks.append((label, str(path), "PASS" if path.exists() else "BLOCKED"))
     try:
         with SessionLocal() as db:
@@ -203,8 +245,8 @@ def doctor() -> None:
 
 @app.command("mission-control-bootstrap")
 def mission_control_bootstrap(
-    url: Optional[str] = typer.Option(None),
-    api_key: Optional[str] = typer.Option(None, envvar="CLASSIFIRE_MISSION_CONTROL_API_KEY"),
+    url: str | None = typer.Option(None),
+    api_key: str | None = typer.Option(None, envvar="CLASSIFIRE_MISSION_CONTROL_API_KEY"),
     repo_url: str = typer.Option("https://github.com/Slayde91/classifire"),
     create_tasks: bool = typer.Option(
         False,
@@ -213,7 +255,7 @@ def mission_control_bootstrap(
     ),
 ) -> None:
     """Register CLASSIFIRE agent records in Mission Control; task seeding is opt-in."""
-    settings = get_settings()
+    settings = _prepare_cli_write()
     key = api_key or settings.mission_control_api_key
     if not key:
         raise typer.BadParameter("Mission Control API key is required")
@@ -231,8 +273,14 @@ def mission_control_bootstrap(
 @app.command("branding-audit")
 def branding_audit() -> None:
     """Run the repository branding compliance scanner."""
+    # This uses only the fixed repository-local branding audit script.
     script = repo_root() / "scripts" / "branding_audit.py"
-    raise typer.Exit(subprocess.call([sys.executable, str(script), str(repo_root())]))
+    # The interpreter, script, and root are fixed to this checkout.
+    raise typer.Exit(
+        subprocess.call(  # noqa: S603  # nosec B603
+            [sys.executable, str(script), str(repo_root())]
+        )
+    )
 
 
 @app.command("source-hashes")
@@ -246,7 +294,13 @@ def source_hashes() -> None:
         with path.open("rb") as handle:
             for chunk in iter(lambda: handle.read(1024 * 1024), b""):
                 digest.update(chunk)
-        rows.append({"path": path.relative_to(root).as_posix(), "size": path.stat().st_size, "sha256": digest.hexdigest()})
+        rows.append(
+            {
+                "path": path.relative_to(root).as_posix(),
+                "size": path.stat().st_size,
+                "sha256": digest.hexdigest(),
+            }
+        )
     output = root / "knowledge" / "SOURCE_SHA256_MANIFEST.json"
     output.write_text(json.dumps(rows, indent=2), encoding="utf-8")
     console.print(f"[green]Wrote {len(rows)} source hashes:[/green] {output}")
@@ -259,7 +313,8 @@ def register_adjudicated_admission(
     operator_reference: str = typer.Option(..., "--operator-reference"),
 ) -> None:
     """Register one verified admission without a canonical write or physical lock."""
-    settings = get_settings()
+    settings = _prepare_cli_write()
+    _ensure_cli_schema(settings)
     if not settings.adjudicated_initial_submission_enabled:
         raise typer.BadParameter("ADJUDICATED_SUBMISSION_DISABLED")
 

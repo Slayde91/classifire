@@ -4,13 +4,13 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main tip:** `e394f298821fbd04ffa466f2fd16e53480a68fd3` (PR #80 merge)
+**Verified shared-main tip:** `b77617422bfa444b6c6da73e4955400db3c96e27` (PR #81 merge)
 
-**Verified application baseline:** `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge), plus human-session revocation hardening in `db404b3`, the PR #79 recovery record, and the merged `efd4641` Phase 8 assessment/review contract from PR #80
+**Verified application baseline:** `20cb72a14dd3b217cfac7670f047fdc385081990` (PR #74 merge), plus human-session revocation hardening in `db404b3`, the PR #79 recovery record, PR #80's merged `efd4641` Phase 8 assessment/review contract, and PR #81's merged report-evidence adapter/startup hardening
 
-**Merged Phase 8 scope:** representative rollback package and recovery, evidence-family and human-review validators, direct legacy-route test isolation, the durable visual-validation receipt registry/verifier, controlled `site_observation` evidence intake, and the bounded v2 assessment/review contract
+**Merged Phase 8 scope:** representative rollback package and recovery, evidence-family and human-review validators, direct legacy-route test isolation, the durable visual-validation receipt registry/verifier, controlled `site_observation` evidence intake, the bounded v2 assessment/review contract, project-owned report evidence with deterministic per-Defect reviews, and narrow fail-closed production startup
 
-**Current branch candidate:** `gpt/phase8-report-evidence-adapter-20260830`, based on `e394f29`, adds contained report ownership, exact clean-byte reads, stable locators, deterministic report review packages, and a separately guarded report-assessment transport/runtime. It remains a branch candidate, not shared-main implementation.
+**Merged report-evidence scope:** PR #81 merged contained report ownership, exact clean-byte reads, stable locators, deterministic report review packages, and a separately guarded report-assessment transport/runtime. These remain proposal-only shared-main source, not live-report or canonical implementation.
 
 This record reflects committed shared-main code, the mixed legacy checkout, current tests, migration metadata, retained non-canonical execution receipts, the later local human-review v2 evidence, and refreshed GitHub state. Source, tests, Git, and execution evidence outrank older documentation.
 
@@ -47,15 +47,16 @@ pre-PR #80 audit, not the current repository state.
 
 | Area | Verified current position | Remaining limit |
 | --- | --- | --- |
-| Shared main | `e394f29` merged PR #80 at 2026-08-30 05:36:45 UTC. It contains `efd4641`, the bounded v2 assessment/review contract, and `571f1cd`'s pull-request validation workflow. Alembic now has the single `0011_report_evidence_locators` head. | The merge is source publication only; it does not approve a live report run or canonical state change. |
-| GitHub validation | The `CLASSIFIRE pull request validation` workflow completed successfully for the PR #80 head `571f1cd` at 2026-08-30 05:28:56 UTC. | No workflow run exists for this report-adapter branch because no pull request was created. |
-| Report-evidence adapter candidate | `gpt/phase8-report-evidence-adapter-20260830` is based on `e394f29` and contains contained-byte quarantine/read code, Project/Estimate ownership, report-SHA locators and scopes, deterministic per-Defect review packaging, report-bound prompts/receipts, a managed no-tool report runtime, and PR workflow wiring for a disposable PostgreSQL race database. The full local suite exits 0 with two configured skips. | The PostgreSQL shared-byte quarantine/read race is specifically skipped locally until `CLASSIFIRE_POSTGRES_TEST_URL` names a disposable test database. The next authorised PR will provision one in CI, but that run has not happened. No real report, OpenClaw, or provider run was made. |
-| Production startup boundary candidate | The current branch now refuses unsafe production settings before lifespan work and never calls schema creation or administrator seeding in production. Focused startup/security checks and the full suite pass. | This is a narrow branch candidate only. It does not package migrations, prove a live production deployment, or adopt the remaining broad `a3de490` changes. |
+| Shared main | `b776174` merged PR #81 at 2026-08-30 12:52:12 UTC. It contains PR #80's bounded v2 assessment/review contract plus the project-owned report-evidence adapter, production-startup guard, and PostgreSQL CI service. Alembic has the single `0011_report_evidence_locators` head. | The merge is source publication only; it does not approve a live report run or canonical state change. |
+| GitHub validation | The `CLASSIFIRE pull request validation` workflow completed successfully for the final PR #81 head `4ebc531`: 500 tests passed, changed-file style passed, and one Alembic head was verified. | The configured disposable PostgreSQL URL enabled the shared-byte quarantine/read race. This is CI evidence, not a deployment or live-report result. |
+| Report-evidence adapter | PR #81 merged the contained-byte quarantine/read code, Project/Estimate ownership, report-SHA locators/scopes, deterministic per-Defect review packaging, report-bound prompts/receipts, and managed no-tool runtime into shared main. | No real report, OpenClaw, or provider run was made. A controlled report-only assessment still requires separate authority. |
+| Production startup boundary | Shared main now refuses unsafe production settings before filesystem, schema, or seed work. Valid production startup creates storage only after validation and never creates schema or a default administrator. | Shared main still does not package migrations, prove a live production deployment, or adopt the remaining broad `a3de490` changes. |
+| Installed migration packaging and CLI bootstrap boundary | This branch moves the immutable Alembic history into `classifire.migrations`, exposes explicit `classifire-migrate` head upgrades, preserves protected preflight/audit hashes, and makes production CLI setup/import commands fail before schema creation or default seeding. Before production storage setup or a database-writing CLI command proceeds, it now requires the configured database to prove it is exactly at the packaged Alembic head. Source, wheel, focused, and full-suite checks are recorded for the candidate. | It is an unmerged branch candidate. No production, UAT, or customer database was upgraded. |
 
-**Current next action:** independently review this branch, then create a pull
-request only with separate authority so CI can run the disposable PostgreSQL
-containment race. A real report-only assessment still needs separate run
-authority after that review.
+**Current next action:** obtain separate authority for one controlled,
+proposal-only report assessment and human-review every resulting artifact. That
+authority must not be used for technical selection, pricing, canonical writes,
+locking, deployment, or release.
 
 PR #79 completed the isolated recovery decision: keep the accepted current-main
 versions of the four conflicted paths and do not transplant `c3e4c81`. The root

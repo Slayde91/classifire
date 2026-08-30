@@ -2,24 +2,33 @@
 
 **Verified:** 2026-08-30 (AEST)
 
-**Status:** Pre-production prototype; PR #80 has merged the bounded assessment/review contract into shared main, and the current branch contains the contained report-evidence adapter candidate. There is still no approved canonical Physical Model or active replacement Physical Model Lock.
+**Status:** Pre-production prototype; PR #81 has merged the contained
+report-evidence adapter and narrow production-startup hardening into shared
+main. There is still no approved canonical Physical Model or active replacement
+Physical Model Lock.
+
+This branch also contains a separately validated, unmerged candidate for
+installed Alembic migration packaging and CLI bootstrap hardening. It has no
+authority to upgrade a production, UAT, or customer database.
 
 This handoff is a factual audit record. It does not grant authority to run inference, retrieve report evidence, write canonical data, sign or register an admission, create a lock, deploy, release, merge, or open a pull request.
 
 ## 1. Verified shared state
 
-- `origin/main` is `e394f298821fbd04ffa466f2fd16e53480a68fd3`
-  (PR #80). It contains the PR #74 application baseline, `db404b3` human-session
-  hardening, the PR #79 recovery decision, and `efd4641`'s bounded assessment/review contract.
+- `origin/main` is `b77617422bfa444b6c6da73e4955400db3c96e27`
+  (PR #81). It contains the PR #74 application baseline, `db404b3` human-session
+  hardening, the PR #79 recovery decision, PR #80's bounded assessment/review
+  contract, and PR #81's contained report-evidence adapter/startup hardening.
 - Current shared-main Alembic state has one head: `0011_report_evidence_locators` on `legacy_adjudicated_lineage`. The technical-intake candidate migration is not on main.
-- The PR #80 `CLASSIFIRE pull request validation` workflow completed successfully
-  for `571f1cd` at 2026-08-30 05:28:56 UTC.
-- The current `gpt/phase8-report-evidence-adapter-20260830` branch is based on
-  `e394f29`. It adds contained report ownership/bytes, stable locators, deterministic
-  review packages, report-aware assessment bindings, and a managed no-tool runtime.
-  Its full local suite exits 0 with two configured skips; its PostgreSQL quarantine/read
-  race remains skipped locally. The branch PR workflow will provision the dedicated
-  disposable database, but no run has yet proved that configuration.
+- The final PR #81 `CLASSIFIRE pull request validation` workflow completed
+  successfully for `4ebc531` at 2026-08-30 12:50:43 UTC: 500 tests passed,
+  changed-file style passed, and one Alembic head was verified. The disposable
+  PostgreSQL configuration enabled the shared-byte quarantine/read race.
+- `gpt/phase8-report-evidence-adapter-20260830` contains merged report-evidence
+  source plus a later, unmerged migration-packaging candidate. The report
+  ownership/bytes, stable locators, deterministic review packages, report-aware
+  assessment bindings, and managed no-tool runtime are shared-main
+  proposal-only source; the packaging candidate still needs its own review.
 - Open GitHub work remains reviewable rather than automatically mergeable: PR #75 is open; PRs #9-#13 are retained draft stack work; issues #42 and #43 are open. Issue #42 still has stale site-visit-first wording.
 - Current main has the secret-free pull-request workflow. Its successful PR #80 run
   is CI evidence for that exact head, not a blanket approval for later branches.
@@ -48,21 +57,24 @@ did not modify it.
 | Shared-main Phase 8 foundations | **Merged and focused-tested** | Controlled evidence, visual-proposal, review, and rollback safeguards exist for their stated scope. They do not authorise canonicalisation or release. |
 | Root Phase 8 continuation | **Quarantined / superseded as a build path** | The recovery decision is complete in PR #79. The conflicted checkout remains evidence only and is no longer the next current-main blocker. |
 | Report assessment and cable semantics | **Merged in PR #80** | `property_assessments` v2, historical-v1 verification, manifest-bound reviews, and bundle/tray rules are shared-main source. They remain proposal-only and do not create canonical truth. |
-| Report-evidence adapter | **Completed branch candidate / not shared main** | The current branch binds project ownership, verified clean bytes, report-SHA locators/scopes, deterministic review packages, and a guarded report transport/runtime. The outstanding verification is the disposable PostgreSQL shared-byte race. |
+| Report-evidence adapter | **Merged shared-main foundation** | PR #81 binds project ownership, verified clean bytes, report-SHA locators/scopes, deterministic review packages, and a guarded report transport/runtime. The disposable PostgreSQL shared-byte race passed in CI. |
 | Governed technical intake | **Separate pushed candidate plus local continuation** | `d76562e` and `0edeaac` are not on shared main. Their worktree has proposed `0019` and substantial uncommitted follow-on material, so it is not a clean merge candidate. |
-| Production startup boundary | **Completed branch candidate / not shared main** | The current branch rejects unsafe production configuration before lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
+| Production startup boundary | **Merged narrow hardening** | Main rejects unsafe production configuration before filesystem or lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
+| Installed migration packaging and CLI bootstrap | **Validated unmerged candidate** | The immutable history now lives under `classifire.migrations`; `classifire-migrate` explicitly upgrades only to its current head, while production CLI setup/import commands refuse to create schema or seed defaults. Production startup and database-writing CLI paths require the configured database to prove the exact packaged migration head before proceeding. Source, wheel, focused, and full-suite checks use disposable SQLite only. |
 | Report review / UAT | **Proposal-only, authority-gated** | A report package can support cautious evidence assessment, but it cannot create technical compatibility truth, commercial truth, a canonical model, a lock, or a release. |
 
 ## 4. Start Here / Next Session
 
-**Required first gate:** independently review the exact
-`gpt/phase8-report-evidence-adapter-20260830` branch, then create a pull request
-only with separate authority. Its disposable PostgreSQL CI service must pass the
-shared-byte quarantine/read race before the candidate can be accepted.
+**Required first gate:** obtain separate authority for one controlled,
+proposal-only report assessment, then human-review every resulting artifact.
+PR #81 is already reviewed, merged, and CI-proven; its source publication does
+not grant run authority.
 
-**Recommended next engineering task after that gate:** obtain separate authority
-for a controlled proposal-only report assessment. Do not use that authority for
-canonical submission, technical selection, pricing, locking, deployment, or release.
+**Recommended next engineering task:** independently review the contained
+migration-packaging and CLI-bootstrap candidate and, if accepted, authorise a
+pull request. A controlled assessment still separately requires run authority
+and must not be used for canonical submission, technical selection, pricing,
+locking, deployment, or release.
 
 ### Prerequisites for the next authorised step
 
@@ -150,9 +162,9 @@ downstream authority interface.
    only with separate run authority, then human-review every generated file.
 2. **Continue Draft technical materialization separately.** Review proposed
    migration `0019` without silently activating a `TechnicalVariant`.
-3. **Review `a3de490` on current main.** Make production startup migration-only
-   and fail closed on unsafe configuration/admission defaults; package migrations
-   for installed operation.
+3. **Review the contained migration-packaging and CLI-bootstrap candidate
+   independently.** Keep its narrow scope separate from the remaining broad
+   `a3de490` review; do not treat either as deployment proof.
 4. **Review or supersede PR #75 independently.** A mergeable label is not
    acceptance evidence.
 5. **Add minimal secret-free PR validation.** Run the agreed Pytest policy, Ruff,
