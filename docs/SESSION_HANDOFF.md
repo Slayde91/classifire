@@ -81,9 +81,12 @@ pricing, locking, deployment, or release.
 
 1. Do not use or modify the root checkout.
 2. The PR workflow supplies only a disposable PostgreSQL database for the
-   containment race. A local rerun, if needed, must use
-   `CLASSIFIRE_POSTGRES_TEST_URL` and must not point at a project, production,
-   or UAT database.
+   containment race. A local rerun, if needed, must use a literal-loopback
+   `CLASSIFIRE_POSTGRES_TEST_URL` for the dedicated
+   `classifire_containment_test` database and set the explicit
+   `CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN` acknowledgement. The test
+   rejects any other host or database before it resets tables, and must never
+   point at a project, production, or UAT database.
 3. Keep the merged report adapter proposal-only; any controlled run must not
    acquire a canonical-write path.
 4. Obtain separate authority before a controlled report assessment. Technical
