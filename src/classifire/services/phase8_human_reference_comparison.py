@@ -17,9 +17,11 @@ from typing import Any
 
 from .phase8_visual_proposal import (
     VISUAL_PROPOSAL_APPROVED,
+    VISUAL_PROPOSAL_POLICY_VERSION,
     canonical_json_sha256,
+    receipt_bound_visual_evidence_refs,
     validate_phase8_visual_proposal_receipt,
-    validate_visual_physical_proposal,
+    validate_policy_bound_visual_physical_proposal,
 )
 from .physical_scope import is_blank_opening_type
 
@@ -246,10 +248,14 @@ def _proposal_openings(
     proposal: dict[str, Any],
     *,
     defect_reference: str,
+    policy_version: str,
+    allowed_evidence_refs: frozenset[str] | None,
 ) -> list[dict[str, Any]]:
-    errors = validate_visual_physical_proposal(
+    errors = validate_policy_bound_visual_physical_proposal(
         proposal,
         defect_reference=defect_reference,
+        policy_version=policy_version,
+        allowed_evidence_refs=allowed_evidence_refs,
     )
     if errors or _nonblank(proposal.get("status")).upper() != "MODEL_SUPPORTED":
         detail = "; ".join(errors) if errors else "status is not MODEL_SUPPORTED"
@@ -458,6 +464,7 @@ def compare_phase8_human_reference(
     proposal_path: Path,
     controller_receipt_path: Path,
     reference_path: Path,
+    evidence_manifest_path: Path | None = None,
 ) -> dict[str, Any]:
     """Compare one completed proposal with one validation-only reference row."""
 
@@ -474,9 +481,39 @@ def compare_phase8_human_reference(
         proposal_path=proposal_path,
         proposal_sha256=proposal_sha256,
     )
+    selected_manifest_path = evidence_manifest_path
+    if (
+        selected_manifest_path is None
+        and controller_receipt.get("policy_version") == VISUAL_PROPOSAL_POLICY_VERSION
+    ):
+        selected_manifest_path = controller_receipt_path.with_name("evidence-manifest.json")
+    allowed_evidence_refs: frozenset[str] | None = None
+    if selected_manifest_path is not None:
+        evidence_manifest, evidence_manifest_file_sha256 = _read_json_object(
+            selected_manifest_path,
+            label="evidence manifest",
+        )
+        allowed_evidence_refs, manifest_errors = receipt_bound_visual_evidence_refs(
+            receipt=controller_receipt,
+            evidence_manifest=evidence_manifest,
+        )
+        if manifest_errors:
+            raise Phase8HumanReferenceComparisonError(
+                "EVIDENCE_MANIFEST_INVALID",
+                "; ".join(manifest_errors),
+            )
+        bindings["evidence_manifest"] = {
+            "path": str(selected_manifest_path.resolve()),
+            "sha256": evidence_manifest_file_sha256,
+            "canonical_json_sha256": canonical_json_sha256(evidence_manifest),
+        }
+    elif controller_receipt.get("policy_version") == VISUAL_PROPOSAL_POLICY_VERSION:
+        raise Phase8HumanReferenceComparisonError("EVIDENCE_MANIFEST_REQUIRED")
     candidate_openings = _proposal_openings(
         proposal,
         defect_reference=defect_reference,
+        policy_version=str(controller_receipt["policy_version"]),
+        allowed_evidence_refs=allowed_evidence_refs,
     )
     reference, reference_by_external, reference_sha256 = _load_reference(reference_path)
     expected = reference_by_external.get(defect_reference)

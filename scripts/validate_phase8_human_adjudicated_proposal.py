@@ -16,6 +16,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-proposal", type=Path, required=True)
     parser.add_argument("--source-controller-receipt", type=Path, required=True)
+    parser.add_argument("--source-evidence-manifest", type=Path)
     parser.add_argument("--human-review-response", type=Path, required=True)
     parser.add_argument("--human-review-request", type=Path, required=True)
     parser.add_argument("--revised-proposal", type=Path, required=True)
@@ -30,6 +31,7 @@ def main() -> int:
     common = {
         "source_proposal_path": args.source_proposal,
         "source_controller_receipt_path": args.source_controller_receipt,
+        "source_evidence_manifest_path": args.source_evidence_manifest,
         "human_review_response_path": args.human_review_response,
         "human_review_request_path": args.human_review_request,
         "revised_proposal_path": args.revised_proposal,

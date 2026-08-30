@@ -11,10 +11,14 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import run_phase8_representative_package as representative_cli  # noqa: E402
+from test_phase8_proposal_review import _manifest, _review_inputs  # noqa: E402
+from test_phase8_visual_proposal import _proposal  # noqa: E402
 
 from classifire.services.phase8_evidence_review import (  # noqa: E402
     EVIDENCE_REVIEW_REQUEST_SCHEMA,
 )
+from classifire.services.phase8_proposal_review import Phase8ProposalReviewError  # noqa: E402
+from classifire.services.phase8_visual_proposal import canonical_json_sha256  # noqa: E402
 
 
 class _Session:
@@ -38,6 +42,7 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
     output = tmp_path / "output"
     package = SimpleNamespace(
         package_id="package-001",
+        package_sha256="9" * 64,
         approval_reference="TEST-APPROVAL-001",
         database_copy_path=tmp_path / "snapshot.db",
         human_reference_path=tmp_path / "human-reference.json",
@@ -49,10 +54,16 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
         physical_agent_id="cf-phase8-visual-physical",
         validator_agent_id="cf-phase8-visual-validator",
     )
+    proposal = _proposal()
+    review_inputs = _review_inputs(proposal)
+    controller_receipt = json.loads(review_inputs["controller_receipt_file_bytes"])
+    controller_receipt["status"] = "VISUAL_PROPOSAL_BLOCKED"
+    controller_receipt["errors"] = ["Validator blocked the proposal."]
+    manifest = _manifest()
     visual_result = SimpleNamespace(
         status="VISUAL_PROPOSAL_BLOCKED",
         approved=False,
-        proposal={"schema": "proposal"},
+        proposal=proposal,
         validator={
             "verdict": "BLOCKED",
             "issues": [
@@ -99,12 +110,16 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
             "unresolved_candidates": [],
             "limitations": [],
         },
-        receipt={"schema": "controller-receipt"},
+        receipt=controller_receipt,
     )
     result = SimpleNamespace(
         runner_result=SimpleNamespace(
             receipt={"schema": "runner-receipt"},
             visual_result=visual_result,
+            evidence_packet=SimpleNamespace(
+                manifest=manifest,
+                manifest_sha256=canonical_json_sha256(manifest),
+            ),
         ),
         receipt={"schema": "representative-receipt"},
     )
@@ -164,6 +179,9 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
     assert completion["human_reference_comparison_status"] == "SKIPPED_VISUAL_PROPOSAL_BLOCKED"
     assert "human_reference_comparison_sha256" not in completion["artifacts"]
     assert (output / "proposal.json").is_file()
+    assert (output / "evidence-manifest.json").is_file()
+    assert (output / "proposal-review.json").is_file()
+    assert (output / "proposal-review.md").is_file()
     review_request = json.loads(
         (output / "evidence-review-request.json").read_text(encoding="utf-8")
     )
@@ -203,12 +221,20 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
     for artifact_name, filename in {
         "controller_receipt_sha256": "proposal-controller-receipt.json",
         "proposal_sha256": "proposal.json",
+        "evidence_manifest_file_sha256": "evidence-manifest.json",
+        "proposal_review_sha256": "proposal-review.json",
+        "proposal_review_markdown_sha256": "proposal-review.md",
         "evidence_review_request_sha256": "evidence-review-request.json",
     }.items():
         assert (
             completion["artifacts"][artifact_name]
             == hashlib.sha256((output / filename).read_bytes()).hexdigest().upper()
         )
+    assert completion["artifacts"]["evidence_manifest_canonical_sha256"] == (
+        canonical_json_sha256(
+            json.loads((output / "evidence-manifest.json").read_text(encoding="utf-8"))
+        )
+    )
     summary = json.loads(capsys.readouterr().out)
     assert summary["status"] == "VISUAL_PROPOSAL_BLOCKED"
     assert summary["comparison_status"] == "SKIPPED_VISUAL_PROPOSAL_BLOCKED"
@@ -216,3 +242,33 @@ def test_blocked_visual_proposal_writes_completion_without_human_comparison(
         summary["completion_receipt_sha256"]
         == hashlib.sha256((output / "completion-receipt.json").read_bytes()).hexdigest().upper()
     )
+
+    failure_output = tmp_path / "review-failure-output"
+
+    def fail_review(**_kwargs: object) -> dict[str, object]:
+        raise Phase8ProposalReviewError("SYNTHETIC_REVIEW_FAILURE")
+
+    monkeypatch.setattr(representative_cli, "build_phase8_proposal_review", fail_review)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_phase8_representative_package.py",
+            "--package",
+            str(tmp_path / "package.json"),
+            "--output",
+            str(failure_output),
+            "--repository-root",
+            str(tmp_path),
+        ],
+    )
+
+    assert representative_cli.main() == 2
+    failure_summary = json.loads(capsys.readouterr().out)
+    failure_receipt = json.loads(
+        (failure_output / "failure-receipt.json").read_text(encoding="utf-8")
+    )
+    assert failure_summary["status"] == "EXECUTION_FAILED"
+    assert failure_summary["failure_code"] == "SYNTHETIC_REVIEW_FAILURE"
+    assert failure_receipt["failure_code"] == "SYNTHETIC_REVIEW_FAILURE"
+    assert not (failure_output / "completion-receipt.json").exists()

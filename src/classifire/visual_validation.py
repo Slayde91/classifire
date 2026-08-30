@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Collection
 from typing import Any
 
 VISUAL_VALIDATOR_ISSUE_CODES = frozenset(
@@ -17,11 +18,14 @@ VISUAL_VALIDATOR_ISSUE_CODES = frozenset(
         "WRONG_SERVICE_GROUPING",
         "WRONG_SERVICE_QUANTITY",
         "WRONG_SERVICE_OPENING_LINK",
+        "WRONG_OPENING_SHAPE",
         "PHOTO_DUPLICATE_COUNTED",
         "OPPOSITE_FACE_DOUBLE_COUNTED",
         "UNSUPPORTED_MATERIAL",
         "UNSUPPORTED_DIMENSION",
+        "UNSUPPORTED_FRL",
         "UNSUPPORTED_SIZE_OR_QUANTITY",
+        "UNSUPPORTED_PROPERTY_ASSESSMENT",
     }
 )
 
@@ -81,6 +85,27 @@ _SERVICE_MATERIAL_FIELDS = frozenset(
 )
 
 
+def _property_target_exists(
+    proposal: dict[str, Any],
+    *,
+    subject: str,
+    subject_code: str,
+    field: str,
+) -> bool:
+    collection, code_field = (
+        ("openings", "opening_code") if subject == "Opening" else ("services", "service_code")
+    )
+    rows = proposal.get(collection)
+    if not isinstance(rows, list):
+        return False
+    for row in rows:
+        if not isinstance(row, dict) or str(row.get(code_field) or "").strip() != subject_code:
+            continue
+        assessments = row.get("property_assessments")
+        return isinstance(assessments, dict) and field in assessments
+    return False
+
+
 def proposal_topology_counts(proposal: Any) -> tuple[int, int]:
     if not isinstance(proposal, dict):
         return (-1, -1)
@@ -96,6 +121,8 @@ def proposal_topology_counts(proposal: Any) -> tuple[int, int]:
 def validate_visual_validator_payload(
     payload: Any,
     proposal: Any,
+    *,
+    allowed_evidence_refs: Collection[str] | None = None,
 ) -> list[str]:
     """Validate one independent visual-validator receipt.
 
@@ -121,6 +148,11 @@ def validate_visual_validator_payload(
         issues.append("validator issues must be an array")
         raw_issues = []
 
+    allowed_refs = (
+        frozenset(item.strip() for item in allowed_evidence_refs if isinstance(item, str))
+        if allowed_evidence_refs is not None
+        else None
+    )
     for index, item in enumerate(raw_issues, start=1):
         if not isinstance(item, dict):
             issues.append(f"validator issue {index} is not an object")
@@ -134,7 +166,47 @@ def validate_visual_validator_payload(
         refs = item.get("evidence_refs")
         if refs is not None and not isinstance(refs, list):
             issues.append(f"validator issue {index} evidence_refs must be an array when supplied")
-
+        normalised_refs = (
+            [item.strip() for item in refs if isinstance(item, str)]
+            if isinstance(refs, list)
+            else []
+        )
+        if code == "UNSUPPORTED_PROPERTY_ASSESSMENT" or allowed_refs is not None:
+            if (
+                not isinstance(refs, list)
+                or not refs
+                or len(normalised_refs) != len(refs)
+                or any(not item for item in normalised_refs)
+                or len(normalised_refs) != len(set(normalised_refs))
+            ):
+                issues.append(
+                    f"validator issue {index} requires unique non-empty string evidence_refs"
+                )
+            elif allowed_refs is not None and not set(normalised_refs).issubset(allowed_refs):
+                issues.append(
+                    f"validator issue {index} references evidence outside the approved manifest"
+                )
+        target_values = {
+            "subject": str(item.get("subject") or "").strip(),
+            "subject_code": str(item.get("subject_code") or "").strip(),
+            "property": str(item.get("property") or "").strip(),
+        }
+        has_target = any(target_values.values())
+        if code == "UNSUPPORTED_PROPERTY_ASSESSMENT" or has_target:
+            if not all(target_values.values()):
+                issues.append(
+                    f"validator issue {index} property target must include subject, "
+                    "subject_code, and property"
+                )
+            elif target_values["subject"] not in {"Opening", "Service"}:
+                issues.append(f"validator issue {index} property target subject is invalid")
+            elif not _property_target_exists(
+                proposal,
+                subject=target_values["subject"],
+                subject_code=target_values["subject_code"],
+                field=target_values["property"],
+            ):
+                issues.append(f"validator issue {index} property target does not exist")
     expected_openings, expected_services = proposal_topology_counts(proposal)
     for field_name, expected in (
         ("observed_opening_count", expected_openings),
@@ -165,11 +237,20 @@ def validate_visual_validator_payload(
     return list(dict.fromkeys(issues))
 
 
-def visual_validator_approved(payload: Any, proposal: Any) -> bool:
+def visual_validator_approved(
+    payload: Any,
+    proposal: Any,
+    *,
+    allowed_evidence_refs: Collection[str] | None = None,
+) -> bool:
     return (
         isinstance(payload, dict)
         and str(payload.get("verdict") or "").strip().upper() == "APPROVED"
-        and not validate_visual_validator_payload(payload, proposal)
+        and not validate_visual_validator_payload(
+            payload,
+            proposal,
+            allowed_evidence_refs=allowed_evidence_refs,
+        )
     )
 
 
@@ -340,10 +421,19 @@ def validate_visual_correction_scope(
         before = previous_openings[code]
         after = corrected_openings[code]
         fields = set(before) | set(after)
-        for field in sorted(fields - {"opening_code"}):
+        assessed_fields = {
+            field
+            for row in (before, after)
+            for assessments in [row.get("property_assessments")]
+            if isinstance(assessments, dict)
+            for field in assessments
+        }
+        for field in sorted(fields - {"opening_code", "property_assessments"}):
             if _normalised_topology_value(field, before.get(field)) == _normalised_topology_value(
                 field, after.get(field)
             ):
+                continue
+            if field in assessed_fields:
                 continue
             if field in _OPENING_BARRIER_FIELDS and may_change_barrier_fields:
                 continue
@@ -369,10 +459,19 @@ def validate_visual_correction_scope(
         before = previous_services[code]
         after = corrected_services[code]
         fields = set(before) | set(after)
-        for field in sorted(fields - {"service_code"}):
+        assessed_fields = {
+            field
+            for row in (before, after)
+            for assessments in [row.get("property_assessments")]
+            if isinstance(assessments, dict)
+            for field in assessments
+        }
+        for field in sorted(fields - {"service_code", "property_assessments"}):
             if _normalised_topology_value(field, before.get(field)) == _normalised_topology_value(
                 field, after.get(field)
             ):
+                continue
+            if field in assessed_fields:
                 continue
             if field in _SERVICE_LINK_FIELDS and may_change_links:
                 continue

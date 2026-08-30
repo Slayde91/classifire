@@ -133,10 +133,15 @@ It fails if those values differ.
 
 The human reference is never provided to the inference runtime. Only an approved
 visual result is compared after the runtime closes. A blocked result records the
-comparison as skipped and produces no comparison receipt. The output directory
-contains only the hashed artifacts actually produced for that outcome. A zero
-exit status requires both an approved visual result and a passing post-inference
-human-reference comparison.
+comparison as skipped and produces no comparison receipt. When governed evidence
+was resolved, the runner writes `evidence-manifest.json`. When a visual result
+exists, it also writes `proposal-controller-receipt.json`, an optional
+`proposal.json`, and hash-bound `proposal-review.json` plus inert
+`proposal-review.md`. The review is produced for approved, blocked, and invalid
+visual outcomes; a retrieval-blocked run currently has no visual result and
+therefore no proposal-review artifact. `completion-receipt.json` records hashes
+for every preceding artifact actually emitted. A zero exit status requires both an
+approved visual result and a passing post-inference human-reference comparison.
 
 When a valid Validator explicitly returns `BLOCKED`, the runner also writes an
 `evidence-review-request.json` artifact when it can safely retain structured
@@ -165,6 +170,7 @@ C:\CLASSIFIRE\.venv\Scripts\python.exe `
   --representative-receipt C:\blocked-run\representative-run-receipt.json `
   --controller C:\blocked-run\proposal-controller-receipt.json `
   --proposal C:\blocked-run\proposal.json `
+  --evidence-manifest C:\blocked-run\evidence-manifest.json `
   --openclaw-root C:\Users\operator\.openclaw `
   --output C:\blocked-run-review-handoff `
   --repository-root $PWD
@@ -179,7 +185,12 @@ payload, validates the final blind inventory, proposal and Validator response,
 and writes exactly `evidence-review-request.json` and `recovery-receipt.json`
 to a new output directory. The recovery receipt records historical
 `LF_RENDERED_JSON_SHA256` binding explicitly where older Windows outputs used
-that convention.
+that convention. Current v2 recovery requires the receipt-bound evidence
+manifest, verifies both its file and canonical hashes, and rejects evidence
+references outside it. If `--evidence-manifest` is omitted for a current v2
+controller, the command looks for `evidence-manifest.json` beside the controller
+receipt. Historical v1 artifacts remain checked under their paired legacy
+policy; they are not relabelled as v2.
 
 This proves correspondence among the retained package, receipts, local sessions
 and payload hashes. It does not replay Gateway authentication, tool attestation,

@@ -8,12 +8,16 @@ from typing import Any
 
 import pytest
 
+from classifire.services.phase8_property_assessments import PROPERTY_ASSESSMENT_SCHEMA
 from classifire.services.phase8_representative_run import (
     REPRESENTATIVE_RUN_APPROVAL_SCOPE,
     REPRESENTATIVE_RUN_PACKAGE_SCHEMA,
     REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
 )
 from classifire.services.phase8_visual_proposal import (
+    LEGACY_VISUAL_PROPOSAL_POLICY_VERSION,
+    LEGACY_VISUAL_PROPOSAL_RECEIPT_SCHEMA,
+    VISUAL_EVIDENCE_MANIFEST_SCHEMA,
     VISUAL_PROPOSAL_BLOCKED,
     VISUAL_PROPOSAL_POLICY_VERSION,
     VISUAL_PROPOSAL_RECEIPT_SCHEMA,
@@ -100,6 +104,119 @@ def _proposal() -> dict[str, Any]:
                 "link_type": "penetrates",
                 "source_reference": "E-001",
                 "confidence": "0.95",
+            }
+        ],
+    }
+
+
+def _assessment(value: object, *, evidence_ref: str) -> dict[str, Any]:
+    return {
+        "status": "UNKNOWN" if value is None else "CONFIRMED",
+        "confidence": None,
+        "reasoning": "The supplied evidence supports this bounded assessment.",
+        "evidence_refs": [evidence_ref],
+        "credible_alternative": None,
+        "additional_evidence_required": None,
+    }
+
+
+def _current_proposal(*, evidence_ref: str) -> dict[str, Any]:
+    opening = {
+        "external_defect_id": "D-001",
+        "opening_code": "O-001",
+        "shape": "circular",
+        "size": {"value": 100, "unit": "mm"},
+        "opening_type": "service_penetration",
+        "substrate_plane": "wall",
+        "substrate_type": "concrete",
+        "substrate_specific_type": "solid concrete wall",
+        "substrate_thickness": {"value": 100, "unit": "mm"},
+        "orientation": "vertical",
+        "opening_boundary": "visible circular edge",
+        "opposite_face_continuity": None,
+    }
+    service = {
+        "service_code": "S-001",
+        "quantity": 1,
+        "service_type": "pipe",
+        "material": "PVC",
+        "size": {"value": 50, "unit": "mm"},
+        "insulation_or_covering": "uninsulated",
+        "arrangement": "single service",
+        "primary_opening_code": "O-001",
+        "opening_codes": ["O-001"],
+        "link_type": "penetrates",
+        "relationship_status": "confirmed",
+        "concealed_continuity": None,
+        "evidence_status": "confirmed",
+        "source_reference": "E-001",
+        "confidence": "0.95",
+    }
+    opening["property_assessments"] = {
+        field: _assessment(opening[field], evidence_ref=evidence_ref)
+        for field in (
+            "shape",
+            "size",
+            "opening_type",
+            "substrate_plane",
+            "substrate_type",
+            "substrate_specific_type",
+            "substrate_thickness",
+            "orientation",
+            "opening_boundary",
+            "opposite_face_continuity",
+        )
+    }
+    service["property_assessments"] = {
+        field: _assessment(service[field], evidence_ref=evidence_ref)
+        for field in (
+            "quantity",
+            "service_type",
+            "material",
+            "size",
+            "insulation_or_covering",
+            "arrangement",
+            "primary_opening_code",
+            "opening_codes",
+            "link_type",
+            "relationship_status",
+            "concealed_continuity",
+        )
+    }
+    return {
+        "status": "MODEL_SUPPORTED",
+        "assessment_schema": PROPERTY_ASSESSMENT_SCHEMA,
+        "limitations": [],
+        "openings": [opening],
+        "services": [service],
+    }
+
+
+def _evidence_manifest() -> dict[str, Any]:
+    return {
+        "schema": VISUAL_EVIDENCE_MANIFEST_SCHEMA,
+        "estimate_id": "EST-001",
+        "defect_reference": "D-001",
+        "human_reference_included": False,
+        "artifacts": [
+            {
+                "evidence_id": "E-001",
+                "sha256": "1" * 64,
+                "size_bytes": 1024,
+                "media_type": "image/jpeg",
+                "inference_allowed": True,
+                "validation_only": False,
+                "provenance": {
+                    "source_reference": "report.pdf#page=1-image=1",
+                    "page_number": 1,
+                    "region_reference": "image-1",
+                    "evidence_class": "observed",
+                    "evidence_role": "primary_detail",
+                    "relationship": "embedded_image",
+                    "parent_evidence_id": None,
+                    "pixel_width": 1600,
+                    "pixel_height": 1200,
+                },
             }
         ],
     }
@@ -221,12 +338,22 @@ def _write_transcript(
     return transcript
 
 
-def _fixture(tmp_path: Path) -> dict[str, Path]:
+def _fixture(
+    tmp_path: Path,
+    *,
+    current_policy: bool = False,
+    assessment_ref: str = "E-001",
+) -> dict[str, Path]:
     run_id = "run-001"
     package_id = "package-001"
     approval_reference = "approval-001"
     blind = _blind_inventory()
-    proposal = _proposal()
+    proposal = (
+        _current_proposal(evidence_ref=assessment_ref)
+        if current_policy
+        else _proposal()
+    )
+    evidence_manifest = _evidence_manifest() if current_policy else None
     malformed_validator = {"verdict": "BLOCKED"}
     validator = _blocked_validator()
     stage_specs = [
@@ -289,13 +416,25 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
 
     protected_summary = {"fingerprint": "D" * 64, "counts": {}}
     controller = {
-        "schema": VISUAL_PROPOSAL_RECEIPT_SCHEMA,
-        "policy_version": VISUAL_PROPOSAL_POLICY_VERSION,
+        "schema": (
+            VISUAL_PROPOSAL_RECEIPT_SCHEMA
+            if current_policy
+            else LEGACY_VISUAL_PROPOSAL_RECEIPT_SCHEMA
+        ),
+        "policy_version": (
+            VISUAL_PROPOSAL_POLICY_VERSION
+            if current_policy
+            else LEGACY_VISUAL_PROPOSAL_POLICY_VERSION
+        ),
         "status": VISUAL_PROPOSAL_BLOCKED,
         "run_id": run_id,
         "estimate_id": "EST-001",
         "defect_reference": "D-001",
-        "evidence_manifest_sha256": "E" * 64,
+        "evidence_manifest_sha256": (
+            canonical_json_sha256(evidence_manifest)
+            if evidence_manifest is not None
+            else "E" * 64
+        ),
         "inference_profile_sha256": "F" * 64,
         "implementation_revision": "a" * 40,
         "stages": stages,
@@ -359,6 +498,12 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
     controller_raw = _write_json(controller_path, controller)
     proposal_path = tmp_path / "proposal.json"
     proposal_raw = _write_json(proposal_path, proposal)
+    manifest_path = tmp_path / "evidence-manifest.json"
+    manifest_raw = (
+        _write_json(manifest_path, evidence_manifest)
+        if evidence_manifest is not None
+        else None
+    )
     representative = {
         "schema": REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
         "package_id": package_id,
@@ -385,13 +530,23 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
     }
     representative_path = tmp_path / "representative-run-receipt.json"
     representative_raw = _write_json(representative_path, representative)
+    artifacts = {
+        "representative_run_receipt_sha256": _sha256_bytes(representative_raw),
+        "controller_receipt_sha256": _sha256_bytes(controller_raw),
+        "proposal_sha256": _sha256_bytes(proposal_raw),
+    }
+    if evidence_manifest is not None and manifest_raw is not None:
+        artifacts.update(
+            {
+                "evidence_manifest_file_sha256": _sha256_bytes(manifest_raw),
+                "evidence_manifest_canonical_sha256": canonical_json_sha256(
+                    evidence_manifest
+                ),
+            }
+        )
     completion = {
         **representative,
-        "artifacts": {
-            "representative_run_receipt_sha256": _sha256_bytes(representative_raw),
-            "controller_receipt_sha256": _sha256_bytes(controller_raw),
-            "proposal_sha256": _sha256_bytes(proposal_raw),
-        },
+        "artifacts": artifacts,
         "human_reference_comparison_status": f"SKIPPED_{VISUAL_PROPOSAL_BLOCKED}",
     }
     completion_path = tmp_path / "completion-receipt.json"
@@ -402,6 +557,7 @@ def _fixture(tmp_path: Path) -> dict[str, Path]:
         "representative": representative_path,
         "controller": controller_path,
         "proposal": proposal_path,
+        "manifest": manifest_path,
         "openclaw_root": openclaw_root,
         **paths,
     }
@@ -449,6 +605,55 @@ def test_hash_bound_all_stage_recovery_writes_only_safe_review_files(
     assert recovered.receipt["inference_request_performed"] is False
     assert recovered.receipt["canonical_submission_performed"] is False
     assert recovered.receipt["physical_model_lock_created"] is False
+
+
+def test_current_policy_recovery_requires_and_accepts_receipt_bound_manifest(
+    tmp_path: Path,
+) -> None:
+    paths = _fixture(tmp_path, current_policy=True)
+
+    recovered = _recover(paths)
+
+    assert recovered.receipt["status"] == "RECOVERED_HASH_VERIFIED_LOCAL_TRANSCRIPTS"
+
+
+def test_current_policy_recovery_rejects_missing_manifest(tmp_path: Path) -> None:
+    paths = _fixture(tmp_path, current_policy=True)
+    paths["manifest"].unlink()
+
+    with pytest.raises(recovery_cli.Phase8EvidenceReviewRecoveryError) as rejected:
+        _recover(paths)
+
+    assert rejected.value.code == "EVIDENCE_MANIFEST_INVALID"
+
+
+def test_current_policy_recovery_rejects_manifest_canonical_hash_mismatch(
+    tmp_path: Path,
+) -> None:
+    paths = _fixture(tmp_path, current_policy=True)
+    completion = json.loads(paths["completion"].read_text(encoding="utf-8"))
+    completion["artifacts"]["evidence_manifest_canonical_sha256"] = "F" * 64
+    _write_json(paths["completion"], completion)
+
+    with pytest.raises(recovery_cli.Phase8EvidenceReviewRecoveryError) as rejected:
+        _recover(paths)
+
+    assert rejected.value.code == "EVIDENCE_MANIFEST_CANONICAL_HASH_MISMATCH"
+
+
+def test_current_policy_recovery_rejects_out_of_manifest_assessment_reference(
+    tmp_path: Path,
+) -> None:
+    paths = _fixture(
+        tmp_path,
+        current_policy=True,
+        assessment_ref="E-OUTSIDE",
+    )
+
+    with pytest.raises(recovery_cli.Phase8EvidenceReviewRecoveryError) as rejected:
+        _recover(paths)
+
+    assert rejected.value.code == "BLOCKED_PAYLOAD_INVALID"
 
 
 def test_recovery_rejects_tampered_stage_payload(tmp_path: Path) -> None:

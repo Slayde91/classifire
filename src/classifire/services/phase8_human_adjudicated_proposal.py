@@ -17,9 +17,11 @@ from typing import Any
 from .phase8_visual_proposal import (
     VISUAL_PROPOSAL_APPROVED,
     VISUAL_PROPOSAL_BLOCKED,
+    VISUAL_PROPOSAL_POLICY_VERSION,
     canonical_json_sha256,
+    receipt_bound_visual_evidence_refs,
     validate_phase8_visual_proposal_receipt,
-    validate_visual_physical_proposal,
+    validate_policy_bound_visual_physical_proposal,
 )
 from .phase8_visual_provenance import assess_phase8_visual_provenance_completeness
 from .physical_scope import is_blank_opening_type
@@ -395,6 +397,7 @@ def validate_phase8_human_adjudicated_proposal(
     human_review_request_path: Path,
     human_review_response_path: Path,
     revised_proposal_path: Path,
+    source_evidence_manifest_path: Path | None = None,
 ) -> dict[str, Any]:
     """Validate hash-bound human adjudication without performing any write or inference."""
 
@@ -430,8 +433,40 @@ def validate_phase8_human_adjudicated_proposal(
     defect_reference = _nonblank(controller_receipt.get("defect_reference"))
     if not source_run_id or not estimate_id or not defect_reference:
         raise Phase8HumanAdjudicatedProposalError("SOURCE_CONTROLLER_RECEIPT_IDENTITY_INVALID")
-    source_proposal_errors = validate_visual_physical_proposal(
-        source_proposal, defect_reference=defect_reference
+    selected_manifest_path = source_evidence_manifest_path
+    if (
+        selected_manifest_path is None
+        and controller_receipt.get("policy_version") == VISUAL_PROPOSAL_POLICY_VERSION
+    ):
+        selected_manifest_path = source_controller_receipt_path.with_name(
+            "evidence-manifest.json"
+        )
+    allowed_evidence_refs: frozenset[str] | None = None
+    evidence_manifest_binding: dict[str, Any] | None = None
+    if selected_manifest_path is not None:
+        evidence_manifest, evidence_manifest_file_sha256 = _read_json_object(
+            selected_manifest_path,
+            label="source evidence manifest",
+        )
+        allowed_evidence_refs, manifest_errors = receipt_bound_visual_evidence_refs(
+            receipt=controller_receipt,
+            evidence_manifest=evidence_manifest,
+        )
+        if manifest_errors:
+            raise Phase8HumanAdjudicatedProposalError(
+                "SOURCE_EVIDENCE_MANIFEST_INVALID",
+                "; ".join(manifest_errors),
+            )
+        evidence_manifest_binding = {
+            "path": str(selected_manifest_path.resolve()),
+            "sha256": evidence_manifest_file_sha256,
+            "canonical_json_sha256": canonical_json_sha256(evidence_manifest),
+        }
+    source_proposal_errors = validate_policy_bound_visual_physical_proposal(
+        source_proposal,
+        defect_reference=defect_reference,
+        policy_version=str(controller_receipt["policy_version"]),
+        allowed_evidence_refs=allowed_evidence_refs,
     )
     if source_proposal_errors:
         raise Phase8HumanAdjudicatedProposalError(
@@ -566,6 +601,11 @@ def validate_phase8_human_adjudicated_proposal(
                 "sha256": controller_receipt_sha256,
                 "proposal_canonical_json_binding": "VERIFIED",
             },
+            **(
+                {"source_evidence_manifest": evidence_manifest_binding}
+                if evidence_manifest_binding is not None
+                else {}
+            ),
             "human_review_request": {
                 "path": str(human_review_request_path.resolve()),
                 "sha256": review_request_sha256,
@@ -600,6 +640,7 @@ def validate_phase8_human_adjudicated_proposal_with_visual_provenance(
     revised_proposal_path: Path,
     linked_visual_run_receipt_path: Path,
     evidence_family_inventory_path: Path,
+    source_evidence_manifest_path: Path | None = None,
 ) -> dict[str, Any]:
     """Require current visual provenance for a proposal-only human revision.
 
@@ -615,6 +656,7 @@ def validate_phase8_human_adjudicated_proposal_with_visual_provenance(
         human_review_request_path=human_review_request_path,
         human_review_response_path=human_review_response_path,
         revised_proposal_path=revised_proposal_path,
+        source_evidence_manifest_path=source_evidence_manifest_path,
     )
     controller_receipt, _controller_receipt_file_sha256 = _read_json_object(
         source_controller_receipt_path,

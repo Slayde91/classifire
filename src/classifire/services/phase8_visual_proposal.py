@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from copy import deepcopy
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
@@ -26,14 +26,25 @@ from ..visual_validation import (
     visual_validator_approved,
 )
 from .canonical_submission_state import InitialSubmissionState
+from .phase8_property_assessments import (
+    validate_physical_property_assessments,
+    validate_property_assessment_correction_scope,
+)
 from .physical_scope import is_blank_opening_type
 
-VISUAL_PROPOSAL_POLICY_VERSION = "CLASSIFIRE-PHASE8-VISUAL-PROPOSAL-v1"
+LEGACY_VISUAL_PROPOSAL_POLICY_VERSION = "CLASSIFIRE-PHASE8-VISUAL-PROPOSAL-v1"
+VISUAL_PROPOSAL_POLICY_VERSION = "CLASSIFIRE-PHASE8-VISUAL-PROPOSAL-v2"
+SUPPORTED_VISUAL_PROPOSAL_POLICY_VERSIONS = frozenset(
+    {LEGACY_VISUAL_PROPOSAL_POLICY_VERSION, VISUAL_PROPOSAL_POLICY_VERSION}
+)
 VISUAL_EVIDENCE_MANIFEST_SCHEMA = "CLASSIFIRE-PHASE8-INFERENCE-EVIDENCE-v1"
 VISUAL_INFERENCE_PROFILE_SCHEMA = "CLASSIFIRE-PHASE8-VISUAL-INFERENCE-PROFILE-v1"
 VISUAL_INFERENCE_REQUEST_SCHEMA = "CLASSIFIRE-PHASE8-VISUAL-INFERENCE-REQUEST-v1"
 VISUAL_INFERENCE_RESPONSE_SCHEMA = "CLASSIFIRE-PHASE8-VISUAL-INFERENCE-RESPONSE-v1"
-VISUAL_PROPOSAL_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-VISUAL-PROPOSAL-RECEIPT-v1"
+LEGACY_VISUAL_PROPOSAL_RECEIPT_SCHEMA = (
+    "CLASSIFIRE-PHASE8-VISUAL-PROPOSAL-RECEIPT-v1"
+)
+VISUAL_PROPOSAL_RECEIPT_SCHEMA = "CLASSIFIRE-PHASE8-VISUAL-PROPOSAL-RECEIPT-v2"
 
 VISUAL_PROPOSAL_APPROVED = "VISUAL_PROPOSAL_APPROVED"
 VISUAL_PROPOSAL_BLOCKED = "VISUAL_PROPOSAL_BLOCKED"
@@ -477,6 +488,7 @@ def validate_visual_physical_proposal(
     payload: Any,
     *,
     defect_reference: str,
+    _allow_assessed_unknowns: bool = False,
 ) -> list[str]:
     """Validate one defect-level Physical proposal before visual approval."""
 
@@ -538,6 +550,10 @@ def validate_visual_physical_proposal(
             "orientation",
             "opening_type",
         ):
+            if _allow_assessed_unknowns and field_name in item:
+                value = item.get(field_name)
+                if value is None or _nonblank(value):
+                    continue
             if not _nonblank(item.get(field_name)):
                 errors.append(f"Opening {code} requires {field_name}")
 
@@ -553,7 +569,11 @@ def validate_visual_physical_proposal(
             errors.append(f"Service code is duplicated: {service_code}")
         else:
             service_codes.add(service_code)
-        if not _nonblank(item.get("service_type")):
+        if not (
+            _allow_assessed_unknowns
+            and "service_type" in item
+            and item.get("service_type") is None
+        ) and not _nonblank(item.get("service_type")):
             errors.append(f"Service {service_code or index} requires service_type")
         if "material" not in item:
             errors.append(f"Service {service_code or index} must state material or null")
@@ -605,6 +625,54 @@ def validate_visual_physical_proposal(
             )
 
     return list(dict.fromkeys(errors))
+
+
+def validate_policy_bound_visual_physical_proposal(
+    payload: Any,
+    *,
+    defect_reference: str,
+    policy_version: str,
+    allowed_evidence_refs: Collection[str] | None = None,
+) -> list[str]:
+    """Validate a proposal using the semantic policy recorded by its controller."""
+
+    if policy_version == LEGACY_VISUAL_PROPOSAL_POLICY_VERSION:
+        errors = validate_visual_physical_proposal(
+            payload,
+            defect_reference=defect_reference,
+        )
+        if isinstance(payload, dict):
+            if "assessment_schema" in payload:
+                errors.append("legacy visual proposal cannot contain a v2 assessment schema")
+            for collection in ("openings", "services"):
+                rows = payload.get(collection)
+                if isinstance(rows, list) and any(
+                    isinstance(row, dict) and "property_assessments" in row
+                    for row in rows
+                ):
+                    errors.append(
+                        "legacy visual proposal cannot contain v2 property assessments"
+                    )
+        return list(dict.fromkeys(errors))
+    if policy_version != VISUAL_PROPOSAL_POLICY_VERSION:
+        return ["visual proposal policy version is unsupported"]
+    if allowed_evidence_refs is None:
+        return ["v2 visual proposal requires receipt-bound evidence references"]
+    return list(
+        dict.fromkeys(
+            [
+                *validate_visual_physical_proposal(
+                    payload,
+                    defect_reference=defect_reference,
+                    _allow_assessed_unknowns=True,
+                ),
+                *validate_physical_property_assessments(
+                    payload,
+                    allowed_evidence_refs=allowed_evidence_refs,
+                ),
+            ]
+        )
+    )
 
 
 def validate_visual_inference_response(
@@ -684,10 +752,18 @@ def validate_phase8_visual_proposal_receipt(receipt: Any) -> list[str]:
     }
     if set(receipt) != expected_receipt_keys:
         errors.append("visual proposal receipt fields do not match the approved schema")
-    if receipt.get("schema") != VISUAL_PROPOSAL_RECEIPT_SCHEMA:
-        errors.append("visual proposal receipt schema is unsupported")
-    if receipt.get("policy_version") != VISUAL_PROPOSAL_POLICY_VERSION:
+    policy_version = receipt.get("policy_version")
+    if policy_version not in SUPPORTED_VISUAL_PROPOSAL_POLICY_VERSIONS:
         errors.append("visual proposal receipt policy version is unsupported")
+    expected_schema = (
+        LEGACY_VISUAL_PROPOSAL_RECEIPT_SCHEMA
+        if policy_version == LEGACY_VISUAL_PROPOSAL_POLICY_VERSION
+        else VISUAL_PROPOSAL_RECEIPT_SCHEMA
+        if policy_version == VISUAL_PROPOSAL_POLICY_VERSION
+        else None
+    )
+    if receipt.get("schema") != expected_schema:
+        errors.append("visual proposal receipt schema does not match policy version")
     status = receipt.get("status")
     if status not in _RECEIPT_STATUSES:
         errors.append("visual proposal receipt status is unsupported")
@@ -869,6 +945,40 @@ def validate_phase8_visual_proposal_receipt(receipt: Any) -> list[str]:
     return list(dict.fromkeys(errors))
 
 
+def receipt_bound_visual_evidence_refs(
+    *,
+    receipt: Any,
+    evidence_manifest: Any,
+) -> tuple[frozenset[str], list[str]]:
+    """Validate the manifest named by a receipt and return its exact evidence IDs."""
+
+    if not isinstance(receipt, dict):
+        return frozenset(), ["visual proposal receipt must be an object"]
+    errors = validate_visual_evidence_manifest(
+        evidence_manifest,
+        estimate_id=_nonblank(receipt.get("estimate_id")),
+    )
+    if not isinstance(evidence_manifest, dict):
+        return frozenset(), list(dict.fromkeys(errors))
+    try:
+        manifest_sha256 = canonical_json_sha256(evidence_manifest)
+    except Phase8VisualProposalError:
+        errors.append("visual evidence manifest must contain JSON values only")
+        manifest_sha256 = ""
+    if manifest_sha256 != _nonblank(receipt.get("evidence_manifest_sha256")).upper():
+        errors.append("visual evidence manifest does not match the controller receipt")
+    if evidence_manifest.get("defect_reference") != receipt.get("defect_reference"):
+        errors.append("visual evidence manifest defect does not match the controller receipt")
+    refs = frozenset(
+        _nonblank(item.get("evidence_id"))
+        for item in evidence_manifest.get("artifacts", [])
+        if isinstance(item, dict) and _nonblank(item.get("evidence_id"))
+    )
+    if not refs:
+        errors.append("visual evidence manifest has no evidence references")
+    return refs, list(dict.fromkeys(errors))
+
+
 class _ProtectedStateChanged(RuntimeError):
     pass
 
@@ -910,12 +1020,25 @@ class ProposalOnlyVisualController:
         self.evidence_manifest = deepcopy(evidence_manifest)
         self.defect_reference = str(evidence_manifest["defect_reference"]).strip()
         self.evidence_manifest_sha256 = canonical_json_sha256(self.evidence_manifest)
+        self.property_assessment_evidence_refs = frozenset(
+            str(item["evidence_id"]).strip()
+            for item in self.evidence_manifest["artifacts"]
+            if isinstance(item, dict)
+        )
         profile_errors = validate_visual_inference_profile(inference_profile)
         if profile_errors:
             raise Phase8VisualProposalError(
                 "INFERENCE_PROFILE_INVALID",
                 "; ".join(profile_errors),
             )
+        from .phase8_visual_prompts import current_visual_prompt_profile_hashes
+
+        expected_policy_hashes = current_visual_prompt_profile_hashes()
+        if any(
+            str(inference_profile.get(field) or "").upper() != expected.upper()
+            for field, expected in expected_policy_hashes.items()
+        ):
+            raise Phase8VisualProposalError("INFERENCE_PROFILE_POLICY_MISMATCH")
         self.inference_profile = deepcopy(inference_profile)
         self.inference_profile_sha256 = canonical_json_sha256(self.inference_profile)
         self.inference_port = inference_port
@@ -1140,8 +1263,8 @@ class ProposalOnlyVisualController:
             receipt=receipt,
         )
 
-    @staticmethod
     def _validator_errors(
+        self,
         blind_inventory: Any,
         proposal: Any,
         validator: Any,
@@ -1149,7 +1272,11 @@ class ProposalOnlyVisualController:
         return list(
             dict.fromkeys(
                 [
-                    *validate_visual_validator_payload(validator, proposal),
+                    *validate_visual_validator_payload(
+                        validator,
+                        proposal,
+                        allowed_evidence_refs=self.property_assessment_evidence_refs,
+                    ),
                     *validate_blind_reconciliation_payload(
                         blind_inventory,
                         proposal,
@@ -1211,9 +1338,11 @@ class ProposalOnlyVisualController:
         validator: Any = None
 
         for pass_index in range(self.max_correction_passes + 1):
-            proposal_errors = validate_visual_physical_proposal(
+            proposal_errors = validate_policy_bound_visual_physical_proposal(
                 proposal,
                 defect_reference=self.defect_reference,
+                policy_version=VISUAL_PROPOSAL_POLICY_VERSION,
+                allowed_evidence_refs=self.property_assessment_evidence_refs,
             )
             proposal_status = (
                 _nonblank(proposal.get("status")).upper() if isinstance(proposal, dict) else ""
@@ -1286,7 +1415,11 @@ class ProposalOnlyVisualController:
                     validator=validator,
                 )
 
-            if visual_validator_approved(validator, proposal):
+            if visual_validator_approved(
+                validator,
+                proposal,
+                allowed_evidence_refs=self.property_assessment_evidence_refs,
+            ):
                 return self._finish(
                     status=VISUAL_PROPOSAL_APPROVED,
                     errors=[],
@@ -1316,11 +1449,14 @@ class ProposalOnlyVisualController:
                     validator=validator,
                 )
 
-            correction_preflight_errors = validate_visual_correction_scope(
-                proposal,
-                proposal,
-                validator,
-            )
+            correction_preflight_errors = [
+                *validate_visual_correction_scope(proposal, proposal, validator),
+                *validate_property_assessment_correction_scope(
+                    proposal,
+                    proposal,
+                    validator=validator,
+                ),
+            ]
             if correction_preflight_errors:
                 return self._finish(
                     status=VISUAL_PROPOSAL_BLOCKED,
@@ -1342,11 +1478,18 @@ class ProposalOnlyVisualController:
                     "validator": validator,
                 },
             )
-            correction_scope_errors = validate_visual_correction_scope(
-                proposal,
-                corrected_proposal,
-                validator,
-            )
+            correction_scope_errors = [
+                *validate_visual_correction_scope(
+                    proposal,
+                    corrected_proposal,
+                    validator,
+                ),
+                *validate_property_assessment_correction_scope(
+                    proposal,
+                    corrected_proposal,
+                    validator=validator,
+                ),
+            ]
             if correction_scope_errors:
                 return self._finish(
                     status=VISUAL_PROPOSAL_BLOCKED,
@@ -1358,9 +1501,11 @@ class ProposalOnlyVisualController:
                     proposal=corrected_proposal,
                     validator=validator,
                 )
-            corrected_errors = validate_visual_physical_proposal(
+            corrected_errors = validate_policy_bound_visual_physical_proposal(
                 corrected_proposal,
                 defect_reference=self.defect_reference,
+                policy_version=VISUAL_PROPOSAL_POLICY_VERSION,
+                allowed_evidence_refs=self.property_assessment_evidence_refs,
             )
             corrected_status = (
                 _nonblank(corrected_proposal.get("status")).upper()
@@ -1418,10 +1563,13 @@ class ProposalOnlyVisualController:
 
 
 __all__ = [
+    "LEGACY_VISUAL_PROPOSAL_POLICY_VERSION",
+    "LEGACY_VISUAL_PROPOSAL_RECEIPT_SCHEMA",
     "Phase8VisualInferencePort",
     "Phase8VisualProposalError",
     "Phase8VisualProposalResult",
     "ProposalOnlyVisualController",
+    "SUPPORTED_VISUAL_PROPOSAL_POLICY_VERSIONS",
     "VISUAL_EVIDENCE_MANIFEST_SCHEMA",
     "VISUAL_INFERENCE_PROFILE_SCHEMA",
     "VISUAL_INFERENCE_RESPONSE_SCHEMA",
@@ -1433,6 +1581,8 @@ __all__ = [
     "VISUAL_PROPOSAL_RECEIPT_SCHEMA",
     "canonical_json_sha256",
     "validate_phase8_visual_proposal_receipt",
+    "receipt_bound_visual_evidence_refs",
+    "validate_policy_bound_visual_physical_proposal",
     "validate_visual_evidence_manifest",
     "validate_visual_inference_profile",
     "validate_visual_inference_response",
