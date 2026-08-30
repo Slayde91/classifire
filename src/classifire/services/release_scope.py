@@ -94,6 +94,9 @@ def pinned_markup_profiles(db: Session, estimate: Estimate) -> list[MarkupProfil
 
 
 def pinned_technical_ids(db: Session, estimate: Estimate) -> set[str]:
+    release = pinned_release(db, estimate, "technical")
+    if release.status != "active":
+        raise ReleaseScopeError("Pinned technical release is not active.")
     return release_record_ids(db, estimate, "technical")
 
 
@@ -108,17 +111,23 @@ def pinned_rules(db: Session, estimate: Estimate) -> list[EstimatingRule]:
 
 def validate_runtime_scope(db: Session, estimate: Estimate) -> list[str]:
     errors: list[str] = []
+    technical_ids: set[str] | None = None
     for kind in PIN_FIELDS:
         try:
-            release_record_ids(db, estimate, kind)
+            if kind == "technical":
+                technical_ids = pinned_technical_ids(db, estimate)
+            else:
+                release_record_ids(db, estimate, kind)
         except ReleaseScopeError as exc:
             errors.append(str(exc))
-    if estimate.technical_release_id:
-        try:
-            allowed = pinned_technical_ids(db, estimate)
-            for opening in estimate.openings:
-                if opening.selected_technical_variant_id and opening.selected_technical_variant_id not in allowed:
-                    errors.append(f"Opening {opening.opening_code}: selected technical variant is not in the pinned Technical release.")
-        except ReleaseScopeError:
-            pass
+    if technical_ids is not None:
+        for opening in estimate.openings:
+            if (
+                opening.selected_technical_variant_id
+                and opening.selected_technical_variant_id not in technical_ids
+            ):
+                errors.append(
+                    f"Opening {opening.opening_code}: selected technical variant is not in "
+                    "the pinned Technical release."
+                )
     return errors
