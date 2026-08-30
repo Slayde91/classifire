@@ -424,6 +424,12 @@ def technical_variant_approve(
                 f"/technical/variants/{variant.id}?error=Linked+technical+document+must+be+approved",
                 status_code=303,
             )
+        if not _technical_document_source_is_reviewable(db, document):
+            return RedirectResponse(
+                f"/technical/variants/{variant.id}?error="
+                "Linked+technical+document+source+must+be+clean+and+unchanged",
+                status_code=303,
+            )
     if not variant.source_document_reference or not variant.source_page:
         return RedirectResponse(
             f"/technical/variants/{variant.id}?error="
