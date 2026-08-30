@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -30,12 +30,14 @@ def new_id() -> str:
 
 
 def now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class RecordMixin:
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=now_utc, nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=now_utc, onupdate=now_utc, nullable=False
     )
@@ -92,7 +94,11 @@ class AgentServicePrincipal(RecordMixin, Base):
 
 class LibraryRelease(RecordMixin, Base):
     __tablename__ = "library_releases"
-    __table_args__ = (UniqueConstraint("library_type", "version", name="uq_library_release_type_version"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "library_type", "version", name="uq_library_release_type_version"
+        ),
+    )
 
     library_type: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
     version: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -130,7 +136,9 @@ class Product(RecordMixin, Base):
     sku: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     name: Mapped[str] = mapped_column(String(300), index=True, nullable=False)
-    item_type: Mapped[str] = mapped_column(String(30), default="product", index=True, nullable=False)
+    item_type: Mapped[str] = mapped_column(
+        String(30), default="product", index=True, nullable=False
+    )
     category: Mapped[str | None] = mapped_column(String(150), index=True)
     manufacturer: Mapped[str | None] = mapped_column(String(200), index=True)
     supplier: Mapped[str | None] = mapped_column(String(200), index=True)
@@ -142,7 +150,9 @@ class Product(RecordMixin, Base):
     base_cost: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="AUD", nullable=False)
     tax_treatment: Mapped[str] = mapped_column(String(30), default="exclusive", nullable=False)
-    waste_factor: Mapped[Decimal] = mapped_column(Numeric(9, 6), default=Decimal("0"), nullable=False)
+    waste_factor: Mapped[Decimal] = mapped_column(
+        Numeric(9, 6), default=Decimal("0"), nullable=False
+    )
     default_markup: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
     regional_pricing: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     source_reference: Mapped[str | None] = mapped_column(Text)
@@ -167,7 +177,9 @@ class LabourComponent(RecordMixin, Base):
     category: Mapped[str | None] = mapped_column(String(150), index=True)
     unit: Mapped[str] = mapped_column(String(30), default="person_hour", nullable=False)
     base_rate: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
-    default_hours: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"), nullable=False)
+    default_hours: Mapped[Decimal] = mapped_column(
+        Numeric(18, 6), default=Decimal("0"), nullable=False
+    )
     crew_size: Mapped[Decimal] = mapped_column(Numeric(9, 3), default=Decimal("1"), nullable=False)
     default_markup: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
     productivity_source: Mapped[str | None] = mapped_column(Text)
@@ -187,7 +199,9 @@ class PricingLibraryRecord(RecordMixin, Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     system_description: Mapped[str | None] = mapped_column(Text)
     unit: Mapped[str] = mapped_column(String(100), default="each", nullable=False)
-    rate_ex_tax: Mapped[Decimal] = mapped_column(Numeric(18, 4), default=Decimal("0"), nullable=False)
+    rate_ex_tax: Mapped[Decimal] = mapped_column(
+        Numeric(18, 4), default=Decimal("0"), nullable=False
+    )
     direct_labour_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     direct_material_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     material_markup: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
@@ -216,7 +230,9 @@ class PricingLibraryRecord(RecordMixin, Base):
     supersedes_id: Mapped[str | None] = mapped_column(ForeignKey("pricing_library_records.id"))
 
     __table_args__ = (
-        UniqueConstraint("pkb_entry_id", "entry_version", "release_id", name="uq_pkb_entry_release"),
+        UniqueConstraint(
+            "pkb_entry_id", "entry_version", "release_id", name="uq_pkb_entry_release"
+        ),
         Index("ix_pricing_search", "service_type", "service_material", "substrate", "frl"),
     )
 
@@ -501,7 +517,9 @@ class Customer(RecordMixin, Base):
     billing_address: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(30), default="active", index=True)
 
-    contacts: Mapped[list[Contact]] = relationship(back_populates="customer", cascade="all, delete-orphan")
+    contacts: Mapped[list[Contact]] = relationship(
+        back_populates="customer", cascade="all, delete-orphan"
+    )
     projects: Mapped[list[Project]] = relationship(back_populates="customer")
 
 
@@ -538,7 +556,9 @@ class Project(RecordMixin, Base):
 
 class Estimate(RecordMixin, Base):
     __tablename__ = "estimates"
-    __table_args__ = (UniqueConstraint("project_id", "revision", name="uq_project_estimate_revision"),)
+    __table_args__ = (
+        UniqueConstraint("project_id", "revision", name="uq_project_estimate_revision"),
+    )
 
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
     revision: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
@@ -599,7 +619,9 @@ class Opening(RecordMixin, Base):
     frl: Mapped[str | None] = mapped_column(String(100), index=True)
     physical_model_status: Mapped[str] = mapped_column(String(30), default="draft")
     technical_status: Mapped[str] = mapped_column(String(50), default="not_assessed")
-    selected_technical_variant_id: Mapped[str | None] = mapped_column(ForeignKey("technical_variants.id"))
+    selected_technical_variant_id: Mapped[str | None] = mapped_column(
+        ForeignKey("technical_variants.id")
+    )
     notes: Mapped[str | None] = mapped_column(Text)
 
     estimate: Mapped[Estimate] = relationship(back_populates="openings")
@@ -607,7 +629,9 @@ class Opening(RecordMixin, Base):
         back_populates="opening", cascade="all, delete-orphan", order_by="Service.created_at"
     )
 
-    __table_args__ = (UniqueConstraint("estimate_id", "opening_code", name="uq_estimate_opening_code"),)
+    __table_args__ = (
+        UniqueConstraint("estimate_id", "opening_code", name="uq_estimate_opening_code"),
+    )
 
 
 class Service(RecordMixin, Base):
@@ -633,7 +657,9 @@ class Service(RecordMixin, Base):
 
     opening: Mapped[Opening] = relationship(back_populates="services")
 
-    __table_args__ = (UniqueConstraint("opening_id", "service_code", name="uq_opening_service_code"),)
+    __table_args__ = (
+        UniqueConstraint("opening_id", "service_code", name="uq_opening_service_code"),
+    )
 
 
 class EstimateLine(RecordMixin, Base):
@@ -666,7 +692,9 @@ class EstimateLine(RecordMixin, Base):
 
     estimate: Mapped[Estimate] = relationship(back_populates="lines")
 
-    __table_args__ = (UniqueConstraint("estimate_id", "line_number", name="uq_estimate_line_number"),)
+    __table_args__ = (
+        UniqueConstraint("estimate_id", "line_number", name="uq_estimate_line_number"),
+    )
 
 
 class RuleEvaluation(RecordMixin, Base):
@@ -674,7 +702,9 @@ class RuleEvaluation(RecordMixin, Base):
 
     estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
     opening_id: Mapped[str | None] = mapped_column(ForeignKey("openings.id"), index=True)
-    rule_id: Mapped[str] = mapped_column(ForeignKey("estimating_rules.id"), index=True, nullable=False)
+    rule_id: Mapped[str] = mapped_column(
+        ForeignKey("estimating_rules.id"), index=True, nullable=False
+    )
     result: Mapped[str] = mapped_column(String(30), index=True, nullable=False)
     severity: Mapped[str] = mapped_column(String(30), nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False)

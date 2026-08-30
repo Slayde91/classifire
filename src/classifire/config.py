@@ -26,9 +26,9 @@ class Settings(BaseSettings):
 
     env: Literal["development", "test", "production"] = "development"
     database_url: str = "sqlite:///./data/classifire.db"
-    secret_key: str = "development-only-change-me"
+    secret_key: str = "development-only-change-me"  # noqa: S105
     admin_email: str = "admin@example.com"
-    admin_password: str = "change-me-immediately"
+    admin_password: str = "change-me-immediately"  # noqa: S105
     host: str = "127.0.0.1"
     port: int = 8787
     storage_root: Path = Path("./data/storage")
@@ -94,7 +94,7 @@ class Settings(BaseSettings):
                 findings.append(
                     "CLASSIFIRE_SECRET_KEY must be a random value of at least 32 characters"
                 )
-            if self.admin_password == "change-me-immediately":
+            if self.admin_password == "change-me-immediately":  # noqa: S105
                 findings.append("Default administrator password must be replaced")
             if not self.session_https_only:
                 findings.append(
