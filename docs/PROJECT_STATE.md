@@ -49,11 +49,12 @@ pre-PR #80 audit, not the current repository state.
 | --- | --- | --- |
 | Shared main | `e394f29` merged PR #80 at 2026-08-30 05:36:45 UTC. It contains `efd4641`, the bounded v2 assessment/review contract, and `571f1cd`'s pull-request validation workflow. Alembic now has the single `0011_report_evidence_locators` head. | The merge is source publication only; it does not approve a live report run or canonical state change. |
 | GitHub validation | The `CLASSIFIRE pull request validation` workflow completed successfully for the PR #80 head `571f1cd` at 2026-08-30 05:28:56 UTC. | No workflow run exists for this report-adapter branch because no pull request was created. |
-| Report-evidence adapter candidate | `gpt/phase8-report-evidence-adapter-20260830` is based on `e394f29` and contains contained-byte quarantine/read code, Project/Estimate ownership, report-SHA locators and scopes, deterministic per-Defect review packaging, report-bound prompts/receipts, and a managed no-tool report runtime. The full local suite exits 0 with two configured skips. | The PostgreSQL shared-byte quarantine/read race is specifically skipped until `CLASSIFIRE_POSTGRES_TEST_URL` names a disposable test database. No real report, OpenClaw, or provider run was made. |
+| Report-evidence adapter candidate | `gpt/phase8-report-evidence-adapter-20260830` is based on `e394f29` and contains contained-byte quarantine/read code, Project/Estimate ownership, report-SHA locators and scopes, deterministic per-Defect review packaging, report-bound prompts/receipts, a managed no-tool report runtime, and PR workflow wiring for a disposable PostgreSQL race database. The full local suite exits 0 with two configured skips. | The PostgreSQL shared-byte quarantine/read race is specifically skipped locally until `CLASSIFIRE_POSTGRES_TEST_URL` names a disposable test database. The next authorised PR will provision one in CI, but that run has not happened. No real report, OpenClaw, or provider run was made. |
 
-**Current next action:** run the disposable PostgreSQL containment race, then
-independently review this branch before creating a pull request. A real
-report-only assessment still needs separate run authority after that review.
+**Current next action:** independently review this branch, then create a pull
+request only with separate authority so CI can run the disposable PostgreSQL
+containment race. A real report-only assessment still needs separate run
+authority after that review.
 
 PR #79 completed the isolated recovery decision: keep the accepted current-main
 versions of the four conflicted paths and do not transplant `c3e4c81`. The root

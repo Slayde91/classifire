@@ -56,9 +56,9 @@ repository tiers must not be confused with implementation completion.
 - **The contained report-evidence adapter is the current branch candidate.**
   `gpt/phase8-report-evidence-adapter-20260830`, based on `e394f29`, adds exact
   clean-byte/project ownership, stable locators, deterministic report review,
-  report-bound prompt/receipt contracts, and a managed no-tool runtime. The
-  configured PostgreSQL race is still required; no real report or provider run
-  has been performed.
+  report-bound prompt/receipt contracts, a managed no-tool runtime, and a PR
+  workflow service for the configured PostgreSQL race. That CI race is still
+  required; no real report or provider run has been performed.
 - **The cable semantics are shared-main behaviour.** A
   cable bundle's `quantity` counts bundles; a defensible individual cable count
   is separate. Without that count, a bundle may be classified small, medium, or
@@ -71,9 +71,10 @@ repository tiers must not be confused with implementation completion.
 
 ### Architecture follow-up required
 
-Before any report assessment, run the configured PostgreSQL containment race
-against a disposable database and independently review the exact adapter branch.
-The adapter extends the merged contract and must not create a competing path.
+Before any report assessment, independently review the exact adapter branch and
+obtain separate authority to open its pull request. Its CI service must then run
+the configured PostgreSQL containment race against a disposable database. The
+adapter extends the merged contract and must not create a competing path.
 
 1. Validate the completed contained adapter with the configured PostgreSQL
    quarantine/read race, then independently review it before publication.

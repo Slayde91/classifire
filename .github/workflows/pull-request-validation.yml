@@ -11,9 +11,24 @@ jobs:
     name: Python validation
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      containment-postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: classifire_containment_test
+          POSTGRES_USER: classifire_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U classifire_test -d classifire_containment_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     env:
       CLASSIFIRE_ENV: test
       CLASSIFIRE_DATABASE_URL: sqlite:///./classifire-ci.db
+      CLASSIFIRE_POSTGRES_TEST_URL: postgresql+psycopg://classifire_test@127.0.0.1:5432/classifire_containment_test
       CLASSIFIRE_STORAGE_ROOT: .classifire-ci-storage
       PYTHONPATH: src
     steps:
@@ -28,7 +43,7 @@ jobs:
           python-version: 3.11
 
       - name: Install application and development tools
-        run: python -m pip install -e .[dev]
+        run: python -m pip install -e ".[dev,postgres]"
 
       - name: Check changed Python code style
         shell: bash

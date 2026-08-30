@@ -18,7 +18,8 @@ This handoff is a factual audit record. It does not grant authority to run infer
   `e394f29`. It adds contained report ownership/bytes, stable locators, deterministic
   review packages, report-aware assessment bindings, and a managed no-tool runtime.
   Its full local suite exits 0 with two configured skips; its PostgreSQL quarantine/read
-  race remains skipped until `CLASSIFIRE_POSTGRES_TEST_URL` names a disposable database.
+  race remains skipped locally. The branch PR workflow will provision the dedicated
+  disposable database, but no run has yet proved that configuration.
 - Open GitHub work remains reviewable rather than automatically mergeable: PR #75 is open; PRs #9-#13 are retained draft stack work; issues #42 and #43 are open. Issue #42 still has stale site-visit-first wording.
 - Current main has the secret-free pull-request workflow. Its successful PR #80 run
   is CI evidence for that exact head, not a blanket approval for later branches.
@@ -54,9 +55,10 @@ did not modify it.
 
 ## 4. Start Here / Next Session
 
-**Required first gate:** run the isolated PostgreSQL shared-byte quarantine/read
-race against a disposable database, then independently review the exact
-`gpt/phase8-report-evidence-adapter-20260830` branch before creating a pull request.
+**Required first gate:** independently review the exact
+`gpt/phase8-report-evidence-adapter-20260830` branch, then create a pull request
+only with separate authority. Its disposable PostgreSQL CI service must pass the
+shared-byte quarantine/read race before the candidate can be accepted.
 
 **Recommended next engineering task after that gate:** obtain separate authority
 for a controlled proposal-only report assessment. Do not use that authority for
@@ -65,10 +67,11 @@ canonical submission, technical selection, pricing, locking, deployment, or rele
 ### Prerequisites for the next authorised step
 
 1. Do not use or modify the root checkout.
-2. Provide only a disposable PostgreSQL database through
-   `CLASSIFIRE_POSTGRES_TEST_URL` for the containment race; do not point the
-   test at a project, production, or UAT database.
-3. Independently review the adapter branch after the race has passed. It must
+2. The PR workflow supplies only a disposable PostgreSQL database for the
+   containment race. A local rerun, if needed, must use
+   `CLASSIFIRE_POSTGRES_TEST_URL` and must not point at a project, production,
+   or UAT database.
+3. Independently review the adapter branch before and after the CI race. It must
    remain proposal-only and its diff must not acquire a canonical-write path.
 4. Obtain separate authority before a controlled report assessment. Technical
    selection, pricing, canonical submission, lock creation, deployment, and
