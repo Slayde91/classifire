@@ -38,6 +38,9 @@ _NOOP_FLAGS = (
 _BINDING_FIELDS = (
     'phase8_proposal_review_canonical_sha256',
     'phase8_review_status',
+    'package_id',
+    'package_sha256',
+    'approval_reference',
     'controller_receipt_file_sha256',
     'controller_receipt_canonical_sha256',
     'visual_evidence_manifest_canonical_sha256',
@@ -102,6 +105,9 @@ def _phase8_binding(
     return {
         'phase8_proposal_review_canonical_sha256': canonical_json_sha256(review),
         'phase8_review_status': str(review['review_status']),
+        'package_id': str(review['package_id']),
+        'package_sha256': str(review['package_sha256']),
+        'approval_reference': str(review['approval_reference']),
         'controller_receipt_file_sha256': str(input_bindings['controller_receipt_file_sha256']),
         'controller_receipt_canonical_sha256': str(
             input_bindings['controller_receipt_canonical_sha256']
@@ -240,10 +246,21 @@ def validate_phase8_report_defect_review(review: object) -> list[str]:
     elif status == 'PHASE8_REVIEW_AVAILABLE':
         if binding.get('phase8_review_status') not in _PHASE8_REVIEW_STATUSES:
             errors.append('report Defect review Phase 8 status is invalid')
+        if _safe_text(binding.get('package_id'), maximum=200) is None:
+            errors.append('report Defect review package id is invalid')
+        if not _CANONICAL_HASH.fullmatch(str(binding.get('package_sha256') or '')):
+            errors.append('report Defect review package hash is invalid')
+        if _safe_text(binding.get('approval_reference'), maximum=500) is None:
+            errors.append('report Defect review approval reference is invalid')
         for field, value in binding.items():
             if field in {'proposal_file_sha256', 'proposal_canonical_sha256'} and value is None:
                 continue
-            if field == 'phase8_review_status':
+            if field in {
+                'phase8_review_status',
+                'package_id',
+                'package_sha256',
+                'approval_reference',
+            }:
                 continue
             if not _CANONICAL_HASH.fullmatch(str(value or '')):
                 errors.append(f'report Defect review binding {field} is invalid')
