@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import hashlib
+from pathlib import Path
+from types import SimpleNamespace
+
 import pytest
 from physical_foundation_support import physical_session
 from sqlalchemy import select
@@ -21,15 +25,26 @@ def _user(db: Session, email: str) -> User:
     return user
 
 
-def _document(db: Session, *, status: str = "draft") -> TechnicalDocument:
+def _document(
+    db: Session,
+    *,
+    source_root: Path,
+    status: str = "draft",
+    scan_status: str = "clean",
+) -> TechnicalDocument:
+    content = b"technical source evidence"
+    digest = hashlib.sha256(content).hexdigest()
+    path = source_root / digest[:2] / digest[2:4] / f"{digest}.pdf"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
     stored = StoredFile(
         original_filename="source.pdf",
         media_type="application/pdf",
-        storage_path="technical/source.pdf",
-        sha256="a" * 64,
-        size_bytes=1,
+        storage_path=str(path),
+        sha256=digest,
+        size_bytes=len(content),
         purpose="technical_evidence",
-        malware_scan_status="clean",
+        malware_scan_status=scan_status,
         immutable=True,
     )
     db.add(stored)
@@ -44,6 +59,18 @@ def _document(db: Session, *, status: str = "draft") -> TechnicalDocument:
     db.add(document)
     db.flush()
     return document
+
+
+@pytest.fixture
+def technical_storage_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    storage_root = tmp_path / "storage"
+    storage_root.mkdir()
+    monkeypatch.setattr(
+        technical_admin,
+        "get_settings",
+        lambda: SimpleNamespace(storage_root=storage_root),
+    )
+    return storage_root
 
 
 def _pending_review(db: Session, document: TechnicalDocument, requester: User) -> Approval:
@@ -82,10 +109,13 @@ def review_as(monkeypatch: pytest.MonkeyPatch):
     return review
 
 
-def test_technical_document_submission_creates_a_pending_review(review_as) -> None:
+def test_technical_document_submission_creates_a_pending_review(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
     with physical_session() as db:
         requester = _user(db, "requester@example.test")
-        document = _document(db)
+        document = _document(db, source_root=technical_storage_root)
 
         result = review_as(db, document, requester, "submit")
 
@@ -103,10 +133,13 @@ def test_technical_document_submission_creates_a_pending_review(review_as) -> No
         assert approval.decided_by_id is None
 
 
-def test_technical_document_submission_does_not_reuse_another_approval_type(review_as) -> None:
+def test_technical_document_submission_does_not_reuse_another_approval_type(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
     with physical_session() as db:
         requester = _user(db, "requester@example.test")
-        document = _document(db)
+        document = _document(db, source_root=technical_storage_root)
         unrelated = Approval(
             entity_type="technical_document",
             entity_id=document.id,
@@ -131,10 +164,13 @@ def test_technical_document_submission_does_not_reuse_another_approval_type(revi
         assert review.status == "pending"
 
 
-def test_technical_document_approval_refuses_a_draft_document(review_as) -> None:
+def test_technical_document_approval_refuses_a_draft_document(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
     with physical_session() as db:
         approver = _user(db, "approver@example.test")
-        document = _document(db)
+        document = _document(db, source_root=technical_storage_root)
 
         result = review_as(db, document, approver, "approve")
 
@@ -142,10 +178,13 @@ def test_technical_document_approval_refuses_a_draft_document(review_as) -> None
         assert document.status == "draft"
 
 
-def test_technical_document_approval_requires_a_pending_review(review_as) -> None:
+def test_technical_document_approval_requires_a_pending_review(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
     with physical_session() as db:
         approver = _user(db, "approver@example.test")
-        document = _document(db, status="in_review")
+        document = _document(db, source_root=technical_storage_root, status="in_review")
 
         result = review_as(db, document, approver, "approve")
 
@@ -153,10 +192,13 @@ def test_technical_document_approval_requires_a_pending_review(review_as) -> Non
         assert document.status == "in_review"
 
 
-def test_technical_document_approval_requires_a_separate_approver(review_as) -> None:
+def test_technical_document_approval_requires_a_separate_approver(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
     with physical_session() as db:
         requester = _user(db, "requester@example.test")
-        document = _document(db, status="in_review")
+        document = _document(db, source_root=technical_storage_root, status="in_review")
         approval = _pending_review(db, document, requester)
 
         result = review_as(db, document, requester, "approve")
@@ -170,11 +212,14 @@ def test_technical_document_approval_requires_a_separate_approver(review_as) -> 
         assert approval.decided_by_id is None
 
 
-def test_technical_document_approval_records_an_independent_decision(review_as) -> None:
+def test_technical_document_approval_records_an_independent_decision(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
     with physical_session() as db:
         requester = _user(db, "requester@example.test")
         approver = _user(db, "approver@example.test")
-        document = _document(db)
+        document = _document(db, source_root=technical_storage_root)
 
         review_as(db, document, requester, "submit")
         result = review_as(db, document, approver, "approve")
@@ -196,11 +241,14 @@ def test_technical_document_approval_records_an_independent_decision(review_as) 
         assert approval.decided_at is not None
 
 
-def test_technical_document_rejection_requires_an_independent_decision(review_as) -> None:
+def test_technical_document_rejection_requires_an_independent_decision(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
     with physical_session() as db:
         requester = _user(db, "requester@example.test")
         reviewer = _user(db, "reviewer@example.test")
-        document = _document(db)
+        document = _document(db, source_root=technical_storage_root)
 
         review_as(db, document, requester, "submit")
         result = review_as(db, document, reviewer, "reject")
@@ -220,3 +268,62 @@ def test_technical_document_rejection_requires_an_independent_decision(review_as
         assert approval.status == "rejected"
         assert approval.decided_by_id == reviewer.id
         assert approval.decided_at is not None
+
+
+def test_technical_document_submission_requires_a_clean_source(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        requester = _user(db, "requester@example.test")
+        document = _document(
+            db,
+            source_root=technical_storage_root,
+            scan_status="pending",
+        )
+
+        result = review_as(db, document, requester, "submit")
+
+        assert (
+            "Technical+source+file+must+be+clean+and+unchanged+before+review"
+            in result.headers["location"]
+        )
+        assert document.status == "draft"
+        assert db.scalar(
+            select(Approval).where(
+                Approval.entity_type == "technical_document",
+                Approval.entity_id == document.id,
+            )
+        ) is None
+
+
+def test_technical_document_approval_rechecks_the_retained_source(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        requester = _user(db, "requester@example.test")
+        approver = _user(db, "approver@example.test")
+        document = _document(db, source_root=technical_storage_root)
+
+        review_as(db, document, requester, "submit")
+        stored = db.get(StoredFile, document.stored_file_id)
+        assert stored is not None
+        Path(stored.storage_path).write_bytes(b"tampered technical source evidence")
+
+        result = review_as(db, document, approver, "approve")
+
+        approval = db.scalar(
+            select(Approval).where(
+                Approval.entity_type == "technical_document",
+                Approval.entity_id == document.id,
+                Approval.approval_type == "technical_document_review",
+            )
+        )
+        assert (
+            "Technical+source+file+must+be+clean+and+unchanged+before+review"
+            in result.headers["location"]
+        )
+        assert document.status == "in_review"
+        assert approval is not None
+        assert approval.status == "pending"
