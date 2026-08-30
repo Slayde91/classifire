@@ -39,23 +39,27 @@ Implementation claims also identify their repository tier:
 The architecture remains governed by the evidence-to-human-release chain, but
 repository tiers must not be confused with implementation completion.
 
-- **Shared current-main (`c8b06d1`)** is the active published foundation. It
+- **Shared current-main (`e394f29`)** is the active published foundation. It
   contains the PR #74 application baseline, PR #78 human-session revocation
-  hardening, and PR #79's documentation-only recovery decision. Its single
-  migration head is `0009_visual_validation_receipts`.
+  hardening, PR #79's recovery decision, PR #80's bounded v2 assessment/review
+  contract, and the secret-free pull-request validation workflow. Its single
+  migration head is `0011_report_evidence_locators`.
 - **The primary legacy checkout is quarantined source-control evidence, not a
   deployable/current implementation tier.** PR #79 records the isolated decision
   to retain the four accepted current-main conflict-path versions and not
   transplant the stale cherry-pick. The checkout itself still has an active
   cherry-pick and unmerged files, so it remains invalid for publication,
   canonical writes, or deployment.
-- **One report-assessment contract is complete on the current branch candidate.**
-  `gpt/phase8-assessment-contract-20260830` selects the bounded
-  `property_assessments` v2 design, retains paired historical v1 verification,
-  and adds a hash-bound proposal-review artifact. It passed the complete
-  435-test suite and changed-file checks. It is not shared-main implementation
-  until reviewed and merged.
-- **The cable semantics are current-branch behaviour, not shared-main truth.** A
+- **The bounded report-assessment contract is shared-main source.** PR #80
+  merged `efd4641` after its successful workflow run; it remains proposal-only
+  and does not authorise a real report run or canonical state change.
+- **The contained report-evidence adapter is the current branch candidate.**
+  `gpt/phase8-report-evidence-adapter-20260830`, based on `e394f29`, adds exact
+  clean-byte/project ownership, stable locators, deterministic report review,
+  report-bound prompt/receipt contracts, and a managed no-tool runtime. The
+  configured PostgreSQL race is still required; no real report or provider run
+  has been performed.
+- **The cable semantics are shared-main behaviour.** A
   cable bundle's `quantity` counts bundles; a defensible individual cable count
   is separate. Without that count, a bundle may be classified small, medium, or
   large. A cable tray remains a distinct service with estimated tray dimensions.
@@ -67,15 +71,12 @@ repository tiers must not be confused with implementation completion.
 
 ### Architecture follow-up required
 
-Before the first implementation item below, independently review the exact
-assessment-contract branch and publish it only if accepted. The adapter must
-extend one accepted contract, not create another competing assessment path.
+Before any report assessment, run the configured PostgreSQL containment race
+against a disposable database and independently review the exact adapter branch.
+The adapter extends the merged contract and must not create a competing path.
 
-1. Build the contained, project-owned, report-SHA-bound evidence adapter on top
-   of the completed branch contract. Make shared-byte quarantine and the bytes
-   read/served one atomic trust decision; bind reports to a Project or Estimate;
-   normalise report text, tables, captions, drawings, annotations, metadata, and
-   governed images; and emit exactly one safe review per report-labelled Defect.
+1. Validate the completed contained adapter with the configured PostgreSQL
+   quarantine/read race, then independently review it before publication.
 2. Keep storage ownership, containment, package preparation, inference, API, and
    UI as reviewable layers. Do not transplant the broad report-context or dirty
    technical-intake continuation wholesale.
@@ -626,7 +627,7 @@ must be proven before deployment.
 | Linked-original retrieval and governed retention | **Completed foundation** | Shared current-main; approved hosts/report formats remain narrow |
 | Site-observation evidence intake | **Completed contract** | Shared current-main; evidence registration only, with no Physical Model write or lock authority |
 | Proposal-only visual controller and no-tool runtime | **Completed foundation** | Shared current-main; production persistence/generalisation incomplete |
-| Property-assessment and proposal-review contract | **Completed branch candidate** | Exact current-main-derived branch; 435 tests pass; no migration or canonical-write interface; not shared main until reviewed and merged |
+| Property-assessment and proposal-review contract | **Merged shared-main foundation** | PR #80 merged `efd4641`; the contract remains proposal-only, with no canonical-write interface |
 | Trusted-UAT package and rollback proof | **Completed shared-main capability** | Representative run executed; source and receipt package are merged |
 | Representative physical proposal | **Reviewed with limitations / non-canonical** | Human review records a local 5/6/6 proposal-only topology; report-evidence-limited facts and independent semantic approval remain unresolved |
 | Content-safe evidence review and local recovery | **Completed shared-main capability** | Recovery proof has documented mutability/replay limits |
