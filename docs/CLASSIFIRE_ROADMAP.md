@@ -31,7 +31,7 @@ Nothing in a report, fixture, receipt, or attached reference document grants aut
 ### 2.1 Current product position
 
 CLASSIFIRE has a controlled evidence-to-physical-model prototype. The verified
-shared-main tip is `e394f298821fbd04ffa466f2fd16e53480a68fd3` (PR #80).
+shared-main tip is `b77617422bfa444b6c6da73e4955400db3c96e27` (PR #81).
 Its application baseline at `20cb72a`, plus human-session revocation hardening
 in `db404b3`, contains the canonical runtime,
 admission-bound writer, bounded visual correction guard, proposal-blind
@@ -58,12 +58,11 @@ adjudication and recovery, hash-bound JSON/Markdown proposal reviews, and a
 secret-free pull-request validation workflow. This remains proposal-only source
 and has no canonical-write interface.
 
-The current `gpt/phase8-report-evidence-adapter-20260830` branch is based on
-`e394f29`. It implements the contained, project-owned report-SHA evidence
-adapter, deterministic per-Defect review flow, report-bound assessment contracts,
-and a managed no-tool runtime. Its PR workflow will provision the configured
-PostgreSQL containment race; that run and independent review remain pending, so
-it is not shared-main implementation.
+PR #81 merged the contained, project-owned report-SHA evidence adapter,
+deterministic per-Defect review flow, report-bound assessment contracts, and
+managed no-tool runtime. Its final pull-request workflow run passed 500 tests,
+including the configured disposable PostgreSQL containment-race environment.
+This is shared-main proposal-only source, not a real report or canonical result.
 
 A retained representative rollback-only run completed against an approved
 report and linked-original source. Retrieval succeeded, but the independent
@@ -89,7 +88,7 @@ The prototype is not production-authorised. It does not yet have a corrected act
 | Reconciliation | Shared main has a post-inference human-reference comparator that binds proposal, strict controller receipt, and validation-only reference inputs by path and SHA-256. It verifies the proposal's canonical JSON binding and detects topology/substrate swaps rather than matching disconnected multisets. It has no database or inference interface. |
 | Human adjudication | Shared main includes the provenance-bound v2 review and evidence-family validators. The retained local proposal-only record accounts for all seven review items and four unresolved observations exactly once, contains five Openings, six Services, and six links for the selected Defect, preserves report-evidence-limited facts, and leaves canonical state unchanged. |
 | Property assessment and proposal review | Shared main has the v2 Confirmed/Approximate/Inferred/Unknown contract with confidence, reasoning, credible alternatives, allowed-manifest evidence, ranges/units, cable semantics, v1 historical compatibility, and inert per-defect review output. It has not run the approved real report. |
-| Report-evidence adapter | The current branch candidate binds project ownership, exact verified clean bytes, stable report/page/item locators, per-Defect review packaging, report-aware prompts/receipts, and a managed no-tool runtime. Its local full suite exits 0; its pull-request workflow will provision the configured PostgreSQL containment race, but no run exists yet. |
+| Report-evidence adapter | Shared main binds project ownership, exact verified clean bytes, stable report/page/item locators, per-Defect review packaging, report-aware prompts/receipts, and a managed no-tool runtime. PR #81 CI passed 500 tests with the configured disposable PostgreSQL containment-race environment. |
 | Representative rollback proof | The retained pass resolved all required linked originals, retained only the selected defect's governed evidence, completed four proposal-only inference stages, and stopped at `VISUAL_PROPOSAL_BLOCKED`. The rollback receipt records unchanged protected state and no canonical write or lock. |
 | Evidence-review recovery | The current local tooling can recover a content-safe human review request from the exact package, receipts, proposal, and locally retained controller sessions without opening the retained report or linked-original files and without another inference request. It does read the bound local session transcripts and records that this history is mutable and that Gateway authentication, tool attestation, response identity, and external transport are not replayed. |
 | Controlled-writer Gate A | The last completed exact-main audit was on `74346c5`, with reproducible admission-only plugin artifact SHA-256 `38812E99...AEE4` and clean candidate fingerprint `1B710710...F8CC`. Shared main and the local candidate are newer, so another exact-source Gate A candidate is required before any deployment decision. The audit itself remains review-only. |
@@ -270,8 +269,8 @@ pre-publication audit record.
 | Workstream | Verified state | Current next step |
 | --- | --- | --- |
 | Assessment/review contract | **Merged in PR #80.** `e394f29` merged `efd4641` and the `571f1cd` workflow; the recorded pull-request validation run succeeded for that exact PR head. | Treat it as shared proposal-only source, never as live-run or canonical authority. |
-| Report-evidence adapter | **Completed branch candidate.** `gpt/phase8-report-evidence-adapter-20260830` builds project ownership, exact clean-byte containment, report-SHA locators/scopes, deterministic review packages, report-aware assessment binding, a no-tool transport, a managed runtime, and a disposable PostgreSQL CI service. | Independently review the candidate, then obtain separate authority to open a pull request. That PR's CI race must pass before acceptance. |
-| Production startup boundary | **Completed branch candidate.** The current branch stops unsafe production configuration before lifecycle work and prohibits production schema creation/default administrator seeding. | Keep the rest of `a3de490`, migration packaging, and live deployment proof as separate work; do not treat this narrow guard as production readiness. |
+| Report-evidence adapter | **Merged in PR #81.** Shared main has project ownership, exact clean-byte containment, report-SHA locators/scopes, deterministic review packages, report-aware assessment binding, a no-tool transport, a managed runtime, and a disposable PostgreSQL CI service. | Obtain separate authority for one controlled proposal-only report assessment and human-review every resulting artifact. |
+| Production startup boundary | **Merged narrow hardening.** Main rejects unsafe production configuration before filesystem or lifecycle work and prohibits production schema creation/default administrator seeding. | Keep the rest of `a3de490`, migration packaging, and live deployment proof as separate work; do not treat this narrow guard as production readiness. |
 | Continuous integration | **Started on shared main.** The secret-free pull-request workflow exists and its PR #80 run succeeded. | A later branch needs its own PR run; do not extend the earlier green result to this candidate. |
 | Report-only UAT | **Blocked by separate authority.** No real report, OpenClaw, or provider call occurred while building or testing this candidate. | After the database proof and independent review, obtain separate authority for one controlled proposal-only assessment and human-review every resulting artifact. |
 
