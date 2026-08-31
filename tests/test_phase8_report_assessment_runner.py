@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
@@ -35,6 +36,7 @@ from classifire.services.phase8_report_assessment_runner import (
     execute_phase8_report_assessment_runner,
 )
 from classifire.services.phase8_report_review_package import (
+    REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA,
     materialise_phase8_report_review_package,
     validate_phase8_report_review_package,
 )
@@ -228,6 +230,13 @@ def test_runner_composes_exact_report_context_and_deterministic_success_package(
         phase8_review_path = "phase8-proposal-reviews/0001.json"
         assert phase8_review_path in first.package.files
         assert phase8_review_path in first.package.completion_receipt["artifacts"]
+        expected_labels_path = "expected-report-defect-labels.json"
+        assert expected_labels_path in first.package.files
+        assert expected_labels_path in first.package.completion_receipt["artifacts"]
+        expected_labels = json.loads(first.package.files[expected_labels_path])
+        assert expected_labels["schema"] == REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA
+        assert expected_labels["expected_report_defect_labels"] == ["D-001"]
+
         assert first.package.artifacts[0].supporting_files is not None
         assert "Private report heading" not in str(first.package)
         assert "Private annotation content" not in str(first.package)

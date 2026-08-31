@@ -346,10 +346,11 @@ exception messages, report content, and secrets remain suppressed.
 
 **Priority 2 - Bounded report-assessment runner (implemented locally).** The
 runner requires exact project, estimate, report SHA, package/profile, and
-expected-label bindings. It holds the established clean-byte transaction through
-documentary-context preparation and every injected no-tool port call, validates
-every scope before the first call, and emits exactly one proposal-only outcome
-per expected label. Its completion receipt hashes the controller receipts, full
+expected-label bindings. It turns the verified scope-label set into a
+deterministic receipt-bound manifest before it holds the established clean-byte
+transaction through documentary-context preparation and every injected no-tool
+port call. It emits exactly one proposal-only outcome per expected label. Its
+completion receipt hashes the expected-label manifest, controller receipts, full
 Phase 8 review, proposal when present, report packet, review, and Markdown.
 
 It exposes no canonical, technical, commercial, lock, deployment, or release

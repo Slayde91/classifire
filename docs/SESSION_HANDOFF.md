@@ -95,12 +95,13 @@ credentials, and report content. Historical receipts remain valid and type-only.
 ### Priority 2 - Bounded report-assessment operator flow (implemented locally)
 
 `execute_phase8_report_assessment_runner()` requires exact project, estimate,
-retained-report SHA, package/profile, and expected-label bindings. It keeps the
+retained-report SHA, package/profile, and expected-label bindings. It turns the
+verified labels into a deterministic receipt-bound manifest before keeping the
 existing PostgreSQL clean-byte transaction through all documentary-context work
-and injected no-tool port calls, while validating every selected scope before the
-first call. It produces one deterministic proposal-only review per expected label
-and a completion receipt that hashes the controller receipts, Phase 8 review,
-proposal when present, packet, review, and Markdown.
+and injected no-tool port calls. It produces one deterministic proposal-only
+review per expected label and a completion receipt that hashes the expected-label
+manifest, controller receipts, Phase 8 review, proposal when present, packet,
+review, and Markdown.
 
 Focused synthetic tests cover success, retrieval-blocked, malformed-input,
 insufficient-evidence, safe transport failure, and receipt tampering. The full

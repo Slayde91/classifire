@@ -32,6 +32,7 @@ from .phase8_report_assessment_input import (
 from .phase8_report_assessment_prompts import validate_report_assessment_inference_profile
 from .phase8_report_documentary_context import build_phase8_report_documentary_context
 from .phase8_report_review_package import (
+    REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA,
     Phase8ReportReviewPackage,
     ReportDefectReviewOutcome,
     ReportDefectReviewSupportingFiles,
@@ -226,6 +227,40 @@ def _selected_packets(
     return by_label
 
 
+def _expected_label_manifest_bytes(
+    *,
+    packets_by_label: Mapping[str, ReportDefectEvidencePacket],
+    package_id: str,
+    package_sha256: str,
+    approval_reference: str,
+) -> bytes:
+    packets = tuple(
+        sorted(
+            packets_by_label.values(),
+            key=lambda packet: (
+                str(packet.manifest["report_defect_label"]).casefold(),
+                str(packet.manifest["defect_reference"]),
+                str(packet.manifest["scope_id"]),
+            ),
+        )
+    )
+    first = packets[0].manifest
+    return _json_bytes(
+        {
+            "schema": REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA,
+            "project_evidence_id": first["project_evidence_id"],
+            "report_sha256": first["report_sha256"],
+            "estimate_id": first["estimate_id"],
+            "package_id": package_id,
+            "package_sha256": package_sha256,
+            "approval_reference": approval_reference,
+            "expected_report_defect_labels": [
+                packet.manifest["report_defect_label"] for packet in packets
+            ],
+        }
+    )
+
+
 def _json_bytes(value: object) -> bytes:
     try:
         return (
@@ -368,6 +403,13 @@ def execute_phase8_report_assessment_runner(
         report_sha256=expected_sha,
         expected_labels=expected_labels,
     )
+    expected_label_manifest_file_bytes = _expected_label_manifest_bytes(
+        packets_by_label=packets_by_label,
+        package_id=package_identifier,
+        package_sha256=package_hash,
+        approval_reference=approval,
+    )
+
 
     documentary_contexts = {
         label: build_phase8_report_documentary_context(
@@ -441,6 +483,7 @@ def execute_phase8_report_assessment_runner(
         outcomes_by_scope=outcomes,
         protected_state_before=before,
         protected_state_after=after,
+        expected_label_manifest_file_bytes=expected_label_manifest_file_bytes,
     )
     return Phase8ReportAssessmentRunnerResult(package=package)
 
