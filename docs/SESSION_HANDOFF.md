@@ -1,285 +1,226 @@
 # CLASSIFIRE Session Handoff
 
-**Verified:** 2026-08-31 (AEST)
+**Prepared:** 2026-09-01 (AEST)
 
-**Status:** Pre-production prototype; PR #81 merged the contained report-evidence
-adapter and narrow production-startup hardening, PR #82 merged migration
-packaging plus production schema-readiness safeguards, and PR #83 merged
-browser, diagnostic, containment-test, and technical-activation safeguards into
-shared main. PR #91 additionally rechecks a linked technical source immediately
-before activation, and PR #93 makes new technical-library imports Draft-only.
-PR #95 requires the pinned technical release to be active at runtime, and PR #96
-rejects a release that now contains an inactive or missing TechnicalVariant.
-PR #98 makes that same check before a refreshed release basis can change an
-editable estimate, and PR #99 updates the pull-request workflow to
-Node 24-compatible actions.
-There is still no approved canonical Physical Model or active replacement
-Physical Model Lock.
+**Safe worktree:**
+`C:\CLASSIFIRE\.tmp\phase8-report-evidence-adapter-20260830`
 
-PR #82 has no authority to upgrade a production, UAT, or customer database.
+**Branch:** `gpt/phase8-report-evidence-adapter-20260830`
 
-This handoff is a factual audit record. It does not grant authority to run inference, retrieve report evidence, write canonical data, sign or register an admission, create a lock, deploy, release, merge, or open a pull request.
+**Shared-main baseline used for review:**
+`db28c6384f624cee09fb74dd1c01ea35702fd295` (PR #100)
 
-## 1. Verified shared state
+This handoff is a factual resume point. It does not authorise a report/provider
+run, canonical write, signing, registration, lock, deployment, technical or
+commercial approval, or release.
 
-- Shared main includes the PR #74 application baseline, `db404b3` human-session
-  hardening, the PR #79 recovery decision, PR #80's bounded assessment/review
-  contract, PR #81's contained report-evidence adapter/startup hardening, and
-  PR #82's migration packaging/schema-readiness boundary, and PR #83's browser,
-  diagnostic, containment-test, and technical-activation safeguards. PR #84
-  reconciled their shared-main status documentation. PR #93 then made imported
-  technical rows Draft-only evidence. PR #95 requires an active pinned technical
-  release, and PR #96 rejects a release whose manifest now contains an inactive
-  or missing variant. PR #98 applies that check before refreshed pins can be
-  saved, and PR #99 updates the workflow's action runtime. Fetch `origin/main`
-  before any publication-sensitive decision.
-- Current shared-main Alembic state has one head: `0011_report_evidence_locators` on `legacy_adjudicated_lineage`. The technical-intake candidate migration is not on main.
-- The final PR #81 `CLASSIFIRE pull request validation` workflow completed
-  successfully for `4ebc531` at 2026-08-30 12:50:43 UTC: 500 tests passed,
-  changed-file style passed, and one Alembic head was verified. The disposable
-  PostgreSQL configuration enabled the shared-byte quarantine/read race.
-- PR #82's `CLASSIFIRE pull request validation` workflow completed successfully
-  for `9ad6ca7` at 2026-08-30 14:25:21 UTC. It validated the migration/CLI
-  boundary before the PR merged at `e894a17`.
-- PR #83's `CLASSIFIRE pull request validation` workflow completed successfully
-  for `70f8df5` in 2m13s before the PR merged at `ac7de2c`.
-- PR #84's `CLASSIFIRE pull request validation` workflow completed successfully
-  for `828076c` in 1m37s before its documentation-only merge.
-- PR #91's `CLASSIFIRE pull request validation` workflow completed successfully
-  for `3777dea` in 1m37s before it merged at `cf12ed5`.
-- PR #93's `CLASSIFIRE pull request validation` workflow completed successfully
-  for `7b63a9f` in 1m59s before it merged at `143c5b5`.
-- PR #95's `CLASSIFIRE pull request validation` workflow completed
-  successfully for `758ba46` before it merged at `9d643e3`.
-- PR #96's `CLASSIFIRE pull request validation` workflow completed
-  successfully for `d140898` before it merged at `2dca286`.
-- PR #98's `CLASSIFIRE pull request validation` workflow completed
-  successfully for `6ab0b43` in 1m39s before it merged at `a7f362e`.
-- PR #99's `CLASSIFIRE pull request validation` workflow completed
-  successfully for `205be5e` in 1m31s before it merged at `cb32317`.
-- The report ownership/bytes, stable locators, deterministic review packages,
-  report-aware assessment bindings, managed no-tool runtime, migration
-  packaging, production schema-readiness safeguards, browser boundary,
-  diagnostic redaction, containment-test guard, and technical-activation guard
-  are shared-main source.
-- Open GitHub work remains reviewable rather than automatically mergeable: PR #75 is open; PRs #9-#13 are retained draft stack work; issues #42 and #43 are open. Issue #42 still has stale site-visit-first wording.
-- Current main has the secret-free pull-request workflow. Its successful PR #80
-  through #84 runs are evidence for their exact heads, not blanket approval for
-  later branches.
-- GitHub's branch-protection endpoint returned a plan-limited 403, so this audit
-  does not claim that main is protected or unprotected.
+## Start Here / Next Session
 
-## 2. What must not be used as a publication source
+### Priority 0 - harden desk-quote evidence reads
 
-The primary checkout is on `gpt/phase8-linked-original-images` at `de0cc5a`. It is **not** a safe branch for staging, committing, or merging:
+PR #75 merged a useful assumption-led desk-quote PDF/XLSX endpoint. Before any
+operational use, narrow this slice to `project_evidence` and make its resolver
+use the established ProjectEvidence ownership and atomic PostgreSQL clean-byte
+contract. Keep `technical_evidence` rejected unless a separate Estimate-owned
+exact-byte contract is designed and approved.
 
-- it is 378 commits ahead and 141 commits behind `origin/main`;
-- it has an active interrupted cherry-pick for `c3e4c810`;
-- four files are unmerged: `phase8_linked_visual_run.py`, `phase8_visual_evidence.py`, and their two tests;
-- it has 46 unstaged tracked modifications (+1,668/-894) and 14 staged added files (+3,183), plus generated/untracked artefacts.
+**Problem to solve:**
 
-PR #79 records the isolated decision to keep the accepted current-main versions
-of the four conflict paths and not transplant the stale cherry-pick. It does not
-resolve or clean the root itself. Do not run bulk staging, clean, reset, force
-operations, or normal publication from that checkout. This audit deliberately
-did not modify it.
+- `resolve_desk_quote_project_evidence()` currently checks database metadata
+  without opening/re-hashing the retained file;
+- it accepts malware state `not_configured`;
+- caller locator text is not matched to persisted EvidenceSource page/region or
+  `ReportEvidenceLocator` data;
+- existing tests use nonexistent metadata-only file paths;
+- existing cached exports are reused without a byte-hash check and the audit
+  records the snapshot hash rather than the artifact-byte hash; and
+- failure behavior is not proven against quarantine/read races or cached output.
 
-## 3. Current work, classified honestly
+**Relevant files:**
 
-| Workstream | State | Meaning |
-| --- | --- | --- |
-| Shared-main Phase 8 foundations | **Merged and focused-tested** | Controlled evidence, visual-proposal, review, and rollback safeguards exist for their stated scope. They do not authorise canonicalisation or release. |
-| Root Phase 8 continuation | **Quarantined / superseded as a build path** | The recovery decision is complete in PR #79. The conflicted checkout remains evidence only and is no longer the next current-main blocker. |
-| Report assessment and cable semantics | **Merged in PR #80** | `property_assessments` v2, historical-v1 verification, manifest-bound reviews, and bundle/tray rules are shared-main source. They remain proposal-only and do not create canonical truth. |
-| Report-evidence adapter | **Merged shared-main foundation** | PR #81 binds project ownership, verified clean bytes, report-SHA locators/scopes, deterministic review packages, and a guarded report transport/runtime. The disposable PostgreSQL shared-byte race passed in CI. |
-| Governed technical intake | **Separate pushed candidate plus local continuation** | `d76562e` and `0edeaac` are not on shared main. Their worktree has proposed `0019` and substantial uncommitted follow-on material, so it is not a clean merge candidate. |
-| Technical activation separation | **Merged shared-main hardening (PRs #83 and #91)** | The existing UI workflow now requires `in_review`, a pending request, a different deciding user, and an approved linked source document before a variant can become active. PR #91 also requires the linked retained source to still be clean, immutable, and unchanged at that decision point. It remains a narrow fail-closed guard, not full technical-intake authority or production proof. |
-| Technical-document review separation | **Merged shared-main hardening (PRs #86 and #88)** | New Draft or Rejected source documents must have clean, immutable, unchanged retained bytes, be submitted for review, then be independently approved or rejected through the existing Approval record before they can carry an approved status. It does not create a migration, canonical authority, or complete source-lineage governance. |
-| Technical-library import boundary | **Merged shared-main hardening (PR #93)** | A Package 15 import is now Draft evidence even when source rows claim active status. Source activity remains retained provenance, while normal search, active release snapshots, and runtime use stay blocked pending later governance. Existing active records remain unchanged. |
-| Technical release runtime boundary | **Merged shared-main hardening (PRs #95, #96, and #98)** | Technical search and release-basis validation require an active immutable pinned technical release, and every record in its manifest must still be an active TechnicalVariant. A release with an inactive or missing record fails closed while that record remains inactive or missing. PR #98 applies the same check before a refreshed release basis mutates an editable estimate. This does not automate publication or complete technical-authority governance. |
-| Pull-request CI runtime | **Merged shared-main maintenance (PR #99)** | The secret-free workflow now uses Node 24-compatible checkout and Python setup actions. Its hosted validation completed successfully with the normal source, PostgreSQL containment, test, and migration-head checks. |
-| Production startup boundary | **Merged narrow hardening** | Main rejects unsafe production configuration before filesystem or lifespan work and skips schema creation/administrator seeding in production. The remaining broad `a3de490` changes are still local-only and unreviewed. |
-| Installed migration packaging and CLI bootstrap | **Merged shared-main hardening** | PR #82 moved immutable history under `classifire.migrations`; `classifire-migrate` explicitly upgrades only to its current head, while production CLI setup/import commands refuse to create schema or seed defaults. Production startup and database-writing CLI paths require the configured database to prove the exact packaged migration head before proceeding. Source, wheel, focused, full-suite, and PR CI checks used no production, UAT, or customer database. |
-| Production browser configuration and diagnostics | **Merged shared-main hardening (PR #83)** | Documented CSV/JSON `trusted_hosts` and `allowed_origins` inputs parse correctly, while unsafe production host/origin configuration fails before lifespan storage work. The read-only `doctor` command reports only the database type and a generic connection failure, never a raw database URL or exception. This is not deployment or production proof. |
-| Report review / UAT | **Proposal-only, authority-gated** | A report package can support cautious evidence assessment, but it cannot create technical compatibility truth, commercial truth, a canonical model, a lock, or a release. |
-
-## 4. Start Here / Next Session
-
-**Required first gate:** obtain separate authority for one controlled,
-proposal-only report assessment, then human-review every resulting artifact.
-PRs #81 through #84 are reviewed, merged, and CI-proven; their source publication
-does not grant run authority.
-
-**Recommended next engineering task:** obtain separate authority for one
-controlled, proposal-only report assessment and human-review every resulting
-artifact. It must not be used for canonical submission, technical selection,
-pricing, locking, deployment, or release.
-
-### Prerequisites for the next authorised step
-
-1. Do not use or modify the root checkout.
-2. The PR workflow supplies only a disposable PostgreSQL database for the
-   containment race. A local rerun, if needed, must use a literal-loopback
-   `CLASSIFIRE_POSTGRES_TEST_URL` for the dedicated
-   `classifire_containment_test` database and set the explicit
-   `CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN` acknowledgement. The test
-   rejects any other host or database before it resets tables, and must never
-   point at a project, production, or UAT database.
-3. Keep the merged report adapter proposal-only; any controlled run must not
-   acquire a canonical-write path.
-4. Obtain separate authority before a controlled report assessment. Technical
-   selection, pricing, canonical submission, lock creation, deployment, and
-   release remain outside that authority.
-
-### Relevant files
-
-- `src/classifire/models.py` and the next additive migration
+- `src/classifire/services/desk_quote.py`
+- `src/classifire/api/router.py`
 - `src/classifire/services/storage.py`
-- the narrow shared-byte containment service from the technical-intake candidate
-- bounded report-document/package services extracted from
-  `gpt/report-evidence-context-20260829`
-- `src/classifire/services/phase8_visual_evidence.py`
-- `src/classifire/services/phase8_linked_visual_run.py`
-- `src/classifire/services/phase8_property_assessments.py`
-- `src/classifire/services/phase8_proposal_review.py`
-- `scripts/run_phase8_representative_package.py`
-- new `tests/test_shared_file_containment.py`,
-  `tests/test_report_evidence_ownership.py`, and
-  `tests/test_report_evidence_adapter.py` coverage
-- existing `tests/test_physical_evidence_file_boundary.py`,
-  `tests/test_phase8_property_assessments.py`,
-  `tests/test_phase8_proposal_review.py`, and
-  `tests/test_run_phase8_representative_package.py` regression coverage
+- `src/classifire/services/project_evidence.py`
+- `tests/test_desk_quote.py`
+- `tests/test_shared_file_containment.py`
 
-### Completed candidate implementation order
+**Definition of done:**
 
-1. Make malware state, content hash, and the exact bytes read/served one atomic
-   trust decision. A clean-to-FOUND transition must quarantine every row sharing
-   those bytes, and concurrent preview/download/read must fail closed.
-2. Bind each report StoredFile and generated package to its Project or Estimate
-   under the agreed `project_evidence` purpose. Reject cross-project access.
-3. Bind the approved report SHA-256 and selected Defect range. Give report text,
-   tables, captions, drawings, annotations, metadata, pages, and governed images
-   stable report/page/item locators.
-4. Feed those locators through the existing v2 assessment/review boundary
-   without weakening its evidence, confidence, range, cable, prompt, policy,
-   receipt, or historical-v1 rules.
-5. Emit exactly one deterministic review artifact per selected report-labelled
-   Defect, including retrieval-blocked, malformed, and insufficient-evidence
-   outcomes.
-6. Bind each review to its report/package, manifest, prompt/runtime profile,
-   proposal, and controller receipt. Make the later completion receipt hash
-   every preceding emitted artifact, and prove protected state is unchanged.
+1. require Project/Estimate ownership, immutable `clean` state, and exact bytes
+   through the existing locked reader;
+2. reject missing/tampered/outside-root/symlink/reparse evidence and every scan
+   state except `clean`;
+3. bind the quote locator to persisted evidence location data;
+4. reject cross-project and cross-estimate evidence;
+5. preserve serialization against the PostgreSQL quarantine race;
+6. verify new and cached export bytes and record their hash in the audit;
+7. prove failure creates no export/cached artifact, audit event, canonical state,
+   technical decision, pricing mutation, or lock; and
+8. pass focused tests, the PostgreSQL race, full suite, Ruff, Mypy, one Alembic
+   head, and `git diff --check`.
+
+Use synthetic evidence in a disposable storage/database fixture. Do not use a
+real customer report or quote.
 
 ### Suggested validation
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
-$focusedTests = @(
-  'tests/test_shared_file_containment.py',
-  'tests/test_report_evidence_ownership.py',
-  'tests/test_report_evidence_adapter.py',
-  'tests/test_physical_evidence_file_boundary.py',
-  'tests/test_phase8_property_assessments.py',
-  'tests/test_phase8_proposal_review.py',
-  'tests/test_run_phase8_representative_package.py'
-)
-& C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest $focusedTests -q -p no:cacheprovider --basetemp C:\CLASSIFIRE\.tmp\pytest-report-evidence-adapter
+$env:PYTHONDONTWRITEBYTECODE = '1'
+$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
+$deskQuoteTestTemp = Join-Path 'C:\CLASSIFIRE\.tmp' `
+  ('pytest-desk-quote-' + [guid]::NewGuid().ToString('N'))
+& C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest `
+  tests/test_desk_quote.py `
+  tests/test_storage_verified_read.py `
+  tests/test_report_evidence_ownership.py `
+  tests/test_shared_file_containment.py `
+  -q -p no:cacheprovider `
+  --basetemp $deskQuoteTestTemp
 ```
 
-Also run disposable two-session PostgreSQL race tests, Alembic upgrade/head
-checks, the complete suite, Ruff, Mypy, Bandit, `git diff --check`, report-hash
-and locator tampering, cross-project access, blocked-result cardinality, and
-inspection of representative review files.
+The PostgreSQL containment tests require their explicit disposable loopback
+database URL and destructive-test opt-in. Never point them at project, UAT, or
+production data.
 
-**Candidate done means:** one contained branch change; one Project/Estimate-owned
-report and package boundary; atomic safe-byte reads; stable documentary and
-visual locators; exactly one safe review per selected Defect; passing focused,
-database, full-suite, and static checks; inspected output; and no canonical or
-downstream authority interface.
+## Then, in order
 
-## 5. Then, in order
+### Priority 1 - Receipt-safe Phase 8 transport codes (implemented on this branch)
 
-1. **Run the approved report package through the controlled report-only flow**
-   only with separate run authority, then human-review every generated file.
-2. **Continue Draft technical materialization separately.** Review proposed
-   migration `0019` without silently activating a `TechnicalVariant`.
-3. **Independently review the remaining broad `a3de490` production-hardening
-   candidate.** Keep it separate from the merged browser boundary and do not
-   treat either as deployment proof.
-4. **Review or supersede PR #75 independently.** A mergeable label is not
-   acceptance evidence.
-5. **Keep canonical UAT, signed lock admission, downstream technical/commercial
-   work, deterministic snapshots, deployment, and Human Release behind their
-   documented prerequisites and separate authorities.**
+Commit `afb9de1` carries only the established safe code through new
+`INFERENCE_PORT_FAILED` receipts and suppresses exception text, response content,
+credentials, and report content. Historical receipts remain valid and type-only.
 
-## 6. Report-only evidence rule
+### Priority 2 - Compose the report-assessment operator flow
 
-For a proposal-only review, use the supplied report package first: report text, defect register, photographs, annotations, drawings, page context, visible scale clues, repeated items, and normal industry dimensions where they do not contradict evidence. Do not default a field to Unknown solely because it lacks an exact measurement.
+Require exact project, estimate, report SHA, package/profile, and expected Defect
+labels; use the merged clean-byte, locator, context, assessment, and deterministic
+review services; expose no downstream authority.
 
-Label each conclusion as **Confirmed**, **Approximate**, **Inferred**, or **Unknown**, and give a confidence level for Approximate or Inferred values. Ask for extra evidence only after these methods are exhausted, or where confirmation is essential to a later governed technical or commercial decision. A site visit is one possible confirmation route, not the immediate default.
+The no-write review-package assembly now rejects a mismatched report SHA and an
+omitted or duplicate expected label before package construction. It is a bounded
+preflight slice only; it does not retrieve bytes, invoke a provider, or create
+canonical, technical, commercial, lock, deployment, or release authority.
 
-## 7. Important architectural boundary
+3. **Add a small report review UI.** Only after the runner is deterministic and
+   fail-closed; show evidence, confidence, alternatives, unresolved facts, and
+   receipt state.
+4. **Continue technical intake and snapshot work separately.** Complete Draft
+   materialisation/source-lineage publication and define a deterministic
+   semantic snapshot hash.
+5. **Seek new report-run authority only after the diagnostic and runner changes
+   are reviewed.** A successful transport still requires human semantic review.
+6. **Keep canonical submission, replacement lock, Phases 9-14, deployment, and
+   release behind their documented independent gates.**
 
-The required order remains:
+## Verified current state
 
-**Evidence -> physical model proposal -> technical-system search -> compatibility validation -> commercial applicability -> quantities/labour -> reconciliation -> estimate/scope -> human release.**
+### Shared main
 
-A rate, a product, chat context, or a proposal-only visual inference cannot make a technical system compatible or turn uncertain physical facts into approved truth. Keep uncertain facts explicit and do not let transient inference overwrite approved data.
+Shared main at `db28c638` includes:
 
-## 8. Audit verification performed
+- PR #80's v2 Phase 8 assessment/review contract;
+- PR #81's report ownership, exact-byte containment, PDF locators/scopes,
+  report assessment components, deterministic review packages, and PostgreSQL
+  CI service;
+- PR #82's packaged migrations and production schema-readiness boundary;
+- PR #83 and later technical review/source/import/release safeguards through
+  PR #98;
+- PR #75's assumption-led desk-quote proposal/export path;
+- PR #99's Node 24-compatible workflow; and
+- PR #100's documentation reconciliation of the release-pinning boundary.
 
-- fetched and reconciled the current remote branch and open pull requests;
-- checked root branch divergence, interrupted cherry-pick, conflict paths, and working-tree classifications without changing them;
-- checked the current-main migration head, production startup, upload/storage,
-  technical approval, snapshot, and deployment/CI boundaries;
-- inspected the separate report-assessment, report-context, technical-intake,
-  production-hardening, and PR #75 candidate worktrees;
-- verified the unchanged Alembic head
-  `0009_visual_validation_receipts (legacy_adjudicated_lineage)`;
-- ran the exact current-branch complete suite: **435 passed, 139 warnings**;
-- passed Ruff on all 24 implementation/test files, Mypy and syntax compilation
-  on all 13 production/script files, Bandit with no finding, `git diff --check`,
-  and a credential-pattern scan;
-- inspected a representative rendered proposal review; and
-- obtained independent architecture and policy audits with no remaining blocker
-  in the bounded contract.
+The packaged Alembic lineage has one head:
+`0011_report_evidence_locators (legacy_adjudicated_lineage)`.
 
-No canonical database, report package, model endpoint, OpenClaw token, external
-inference service, migration, deployment, or root source file was changed. No
-fresh real-report review was executed.
+PR #100 run `33330916501` passed 577 tests with 140 warnings, changed-Python
+Ruff, PostgreSQL containment setup, and the one-head check. This is exact PR-head
+evidence. The workflow is pull-request-only; GitHub has no check attached to the
+`db28c638` merge commit, and `main` has no required checks or branch protection.
 
-## 9. Publication record
+### Report-assessment integration limit
 
-This handoff and implementation were prepared in
-`C:\CLASSIFIRE\.tmp\phase8-assessment-contract-20260830` on
-`gpt/phase8-assessment-contract-20260830`, based exactly on current
-`origin/main` at `c8b06d1`.
+The new report path is service-only. Source exists for owned report bytes,
+stable PDF locators/scopes, transient documentary context, report-aware runtime
+input, assessment/review controllers, and deterministic packages. No supported
+CLI, API, script, or application service composes the whole sequence.
 
-The intended publication scope is exactly 30 files:
+PDF text, table, and annotation content are supported. Drawings and embedded
+images are locator/hash-only in documentary context, with visual bytes supplied
+separately. Captions are rejected and not extracted. No approved expected-label
+manifest proves omission before database scope creation.
 
-- four scripts:
-  `compare_phase8_human_reference.py`,
-  `recover_phase8_evidence_review_request.py`,
-  `run_phase8_representative_package.py`, and
-  `validate_phase8_human_adjudicated_proposal.py`;
-- nine production service/validation files:
-  `phase8_human_adjudicated_proposal.py`,
-  `phase8_human_reference_comparison.py`,
-  `phase8_openresponses_transport.py`,
-  `phase8_property_assessments.py`,
-  `phase8_proposal_review.py`,
-  `phase8_visual_prompts.py`,
-  `phase8_visual_proposal.py`, `physical_scope.py`, and
-  `visual_validation.py`;
-- eleven corresponding Phase 8 test files; and
-- six documentation files: `docs/PROJECT_STATE.md`,
-  `docs/CLASSIFIRE_ARCHITECTURE.md`, `docs/CLASSIFIRE_ROADMAP.md`,
-  `docs/SESSION_HANDOFF.md`, `docs/PHASE8_REPRESENTATIVE_RUN_PACKAGE.md`, and
-  `docs/PHASE8_HUMAN_REVIEW_V2_CONTRACT.md`.
+### Latest controlled attempt
 
-The conflicted root, earlier overlapping assessment/report-context worktrees,
-technical-intake continuation, `a3de490`, the dirty PR #75 continuation,
-customer evidence, generated artifacts, and every other local worktree remain
-excluded and untouched. No migration, dependency, configuration, UI, report,
-image, database, token, or generated review file belongs in this publication.
+The one authorised 2026-09-01 proposal-only attempt started inference and failed
+at the first `blind_inventory` stage:
+
+- final controller status: `VISUAL_PROPOSAL_FAILED`;
+- outer failure: `INFERENCE_PORT_FAILED: blind_inventory:`
+  `Phase8OpenResponsesTransportError`;
+- human comparison: `NOT_RUN`;
+- rollback-only: true;
+- controller/runner database or canonical write: false;
+- Physical Model Lock: false;
+- write/lock capability exposed: false; and
+- completion receipt SHA-256:
+  `F0572917AB321BF27A645F10F4EB75BDFD022042E347D6DC584C4113059423EC`.
+
+The underlying transport reason for the historical receipt remains unknown
+because its controller discarded the transport's safe code. Preserve the
+receipts. Do not rerun the report,
+OpenClaw, Gateway, or provider workflow without new explicit authority.
+
+### Product limits
+
+- No semantically approved replacement canonical Physical Model or active lock
+  exists for the current UAT estimate.
+- Technical review/import/release safeguards are real but do not complete the
+  full technical authority registry.
+- Desk quotes are proposal-only and currently have the evidence-read gap above.
+- Full system-derived components, productivity, and commercial recovery ledger
+  are incomplete.
+- Estimate snapshot identity remains volatile because `generated_utc` is hashed.
+- The development UI does not expose a supported report-assessment/review flow.
+- Production deployment, backup/recovery, observability, data-rights, and
+  performance proof remain incomplete.
+
+## Local Git and worktree safety
+
+At review start, the isolated branch was clean at `be04258` and matched its
+upstream. It was safely fast-forwarded to current `origin/main` at `db28c638`.
+The 23 commits in that fast-forward were already public on main; they introduced
+no unique unpublished implementation. The documentation reconciliation should
+stage only the four files named below.
+
+The root `C:\CLASSIFIRE` checkout remains quarantined at `de0cc5a` with an
+interrupted cherry-pick, four unmerged files, 50 tracked paths with unstaged or
+unmerged differences, 14 staged additions, and an incomplete untracked inventory
+because protected pytest directories are unreadable. It was inventoried
+read-only and not edited, resolved, reset, staged, or copied.
+
+Open draft PRs #9-#13 are obsolete feature-to-feature stack work with no checks
+and large divergence from main. They are not current-main publication candidates.
+
+## Documentation reconciliation scope
+
+Only these files belong to the documentation commit:
+
+- `docs/PROJECT_STATE.md`
+- `docs/CLASSIFIRE_ARCHITECTURE.md`
+- `docs/CLASSIFIRE_ROADMAP.md`
+- `docs/SESSION_HANDOFF.md`
+
+No root changes, generated receipts, customer evidence, implementation files,
+configuration, migrations, dependencies, UI files, database files, or secrets
+belong in the commit.
+
+Before continuing in another session:
+
+1. follow the workspace-supplied repository instructions and read these four
+   documents;
+2. fetch `origin`;
+3. verify branch, upstream, HEAD, and worktree diff;
+4. confirm GitHub/main and CI evidence have not changed; and
+5. define task-specific done criteria before editing.

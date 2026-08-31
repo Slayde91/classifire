@@ -143,6 +143,16 @@ def _is_git_revision(value: object) -> bool:
 def _nonblank(value: object) -> str:
     return value.strip() if isinstance(value, str) else ""
 
+def _receipt_safe_transport_error_code(error: Exception) -> str | None:
+    """Allow only established OpenClaw transport codes into a public receipt."""
+
+    # This import is deliberately lazy because the transport imports this controller.
+    # The controller needs the transport type only after a port call has failed.
+    from .phase8_openresponses_transport import Phase8OpenResponsesTransportError
+
+    if isinstance(error, Phase8OpenResponsesTransportError):
+        return error.receipt_safe_code
+    return None
 
 def _positive_number_or_none(value: object) -> bool:
     if value is None:
@@ -1106,6 +1116,9 @@ class ProposalOnlyVisualController:
         except Exception as exc:
             current_state = self._read_protected_state()
             failure = {"error_type": type(exc).__name__}
+            transport_error_code = _receipt_safe_transport_error_code(exc)
+            if transport_error_code is not None:
+                failure["transport_error_code"] = transport_error_code
             self._stages.append(
                 {
                     "sequence": len(self._stages) + 1,
@@ -1119,9 +1132,12 @@ class ProposalOnlyVisualController:
                 }
             )
             self._require_state_unchanged(current_state)
+            detail = f"{stage}: {type(exc).__name__}"
+            if transport_error_code is not None:
+                detail += f": {transport_error_code}"
             raise Phase8VisualProposalError(
                 "INFERENCE_PORT_FAILED",
-                f"{stage}: {type(exc).__name__}",
+                detail,
             ) from exc
         response = deepcopy(response)
         try:

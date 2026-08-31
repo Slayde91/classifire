@@ -60,6 +60,56 @@ _REQUEST_KEYS = {
 }
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 _AGENT_ID_CHARACTERS = frozenset("abcdefghijklmnopqrstuvwxyz0123456789-_")
+_RECEIPT_SAFE_ERROR_CODES = frozenset(
+    {
+        "ASSISTANT_OUTPUT_COUNT_INVALID",
+        "ASSISTANT_OUTPUT_INVALID",
+        "ASSISTANT_OUTPUT_NOT_JSON",
+        "CLIENT_TOOL_CALL_DETECTED",
+        "CONTROLLER_REQUEST_INVALID",
+        "EVIDENCE_FILE_CHANGED",
+        "EVIDENCE_FILE_COUNT_INVALID",
+        "EVIDENCE_FILE_METADATA_MISMATCH",
+        "EVIDENCE_FILE_TOO_LARGE",
+        "EVIDENCE_FILE_UNAVAILABLE",
+        "EVIDENCE_PACKET_MISMATCH",
+        "EVIDENCE_PACKET_TOO_LARGE",
+        "GATEWAY_REQUEST_FAILED",
+        "GATEWAY_RESPONSE_INVALID",
+        "GATEWAY_RESPONSE_NOT_JSON",
+        "GATEWAY_STATUS_REJECTED",
+        "GATEWAY_TIMEOUT",
+        "GATEWAY_TOKEN_UNAVAILABLE",
+        "GATEWAY_URL_FORBIDDEN",
+        "GUARD_MODEL_POLICY_INVALID",
+        "GUARD_POLICY_REVISION_INVALID",
+        "INFERENCE_PROFILE_MISMATCH",
+        "PROMPT_PROFILE_MISMATCH",
+        "PROMPT_RENDERING_MISMATCH",
+        "REPORT_EVIDENCE_PACKET_MISMATCH",
+        "REPORT_INFERENCE_PROFILE_MISMATCH",
+        "REPORT_PROMPT_INVALID",
+        "REPORT_PROMPT_PROFILE_MISMATCH",
+        "REPORT_PROMPT_RENDERING_MISMATCH",
+        "REPORT_RUNTIME_INPUT_INVALID",
+        "REQUEST_BODY_TOO_LARGE",
+        "REQUEST_SERIALIZATION_FAILED",
+        "RUNTIME_AGENT_POLICY_INVALID",
+        "SERVER_TOOL_ACTION_DETECTED",
+        "SERVER_TOOLS_NOT_EMPTY",
+        "STAGE_INPUT_INVALID",
+        "STAGE_ROLE_FORBIDDEN",
+        "TOOL_ATTESTATION_INVALID",
+        "TOOL_ATTESTATION_MISMATCH",
+        "TOOL_ATTESTATION_MODEL_MISMATCH",
+        "TOOL_ATTESTATION_SESSION_EXISTS",
+        "TOOL_ATTESTATION_SESSION_INVALID",
+        "TOOL_ATTESTATION_UNAVAILABLE",
+        "TOOL_AUDIT_INVALID",
+        "TOOL_AUDIT_MISMATCH",
+        "TOOL_AUDIT_UNAVAILABLE",
+    }
+)
 
 
 class Phase8OpenResponsesTransportError(RuntimeError):
@@ -69,6 +119,12 @@ class Phase8OpenResponsesTransportError(RuntimeError):
         self.code = code
         super().__init__(f"Phase 8 OpenResponses transport failed: {code}.")
 
+
+    @property
+    def receipt_safe_code(self) -> str | None:
+        """Return the fixed code that may safely enter a proposal receipt."""
+
+        return self.code if self.code in _RECEIPT_SAFE_ERROR_CODES else None
 
 @dataclass(frozen=True, slots=True)
 class NoToolSessionAttestation:

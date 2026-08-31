@@ -6,6 +6,9 @@ from typing import Any
 import pytest
 
 from classifire.services.canonical_submission_state import InitialSubmissionState
+from classifire.services.phase8_openresponses_transport import (
+    Phase8OpenResponsesTransportError,
+)
 from classifire.services.phase8_property_assessments import PROPERTY_ASSESSMENT_SCHEMA
 from classifire.services.phase8_visual_prompts import current_visual_prompt_profile_hashes
 from classifire.services.phase8_visual_proposal import (
@@ -869,7 +872,9 @@ def test_protected_state_count_change_still_produces_a_valid_failure_receipt() -
 
 
 def test_inference_port_failure_is_audited_and_returns_failed_receipt() -> None:
-    port = ScriptedInferencePort({"blind_inventory": [RuntimeError("transport failed")]})
+    port = ScriptedInferencePort(
+        {"blind_inventory": [RuntimeError("report content and secret token")]}
+    )
 
     result = _controller(port).run()
 
@@ -877,6 +882,7 @@ def test_inference_port_failure_is_audited_and_returns_failed_receipt() -> None:
     assert result.approved is False
     assert result.receipt["stages"][0]["failed"] is True
     assert any("INFERENCE_PORT_FAILED" in error for error in result.errors)
+    assert "report content and secret token" not in str(result.receipt)
     assert validate_phase8_visual_proposal_receipt(result.receipt) == []
     relabelled = deepcopy(result.receipt)
     relabelled["policy_version"] = LEGACY_VISUAL_PROPOSAL_POLICY_VERSION
@@ -884,6 +890,52 @@ def test_inference_port_failure_is_audited_and_returns_failed_receipt() -> None:
         "schema does not match policy version" in error
         for error in validate_phase8_visual_proposal_receipt(relabelled)
     )
+
+
+def test_safe_transport_code_is_receipt_bound_deterministically() -> None:
+    responses = {
+        "blind_inventory": [Phase8OpenResponsesTransportError("GATEWAY_TIMEOUT")]
+    }
+
+    first = _controller(ScriptedInferencePort(responses)).run()
+    second = _controller(ScriptedInferencePort(responses)).run()
+
+    expected_error = (
+        "INFERENCE_PORT_FAILED: blind_inventory: "
+        "Phase8OpenResponsesTransportError: GATEWAY_TIMEOUT"
+    )
+    assert first.status == VISUAL_PROPOSAL_FAILED
+    assert first.receipt["errors"] == [expected_error]
+    assert first.errors == (expected_error,)
+    assert first.receipt == second.receipt
+    assert first.receipt_sha256 == second.receipt_sha256
+    assert validate_phase8_visual_proposal_receipt(first.receipt) == []
+
+    historical = deepcopy(first.receipt)
+    historical["errors"] = [
+        "INFERENCE_PORT_FAILED: blind_inventory: Phase8OpenResponsesTransportError"
+    ]
+    historical["stages"][0]["response_sha256"] = canonical_json_sha256(
+        {"error_type": "Phase8OpenResponsesTransportError"}
+    )
+    assert validate_phase8_visual_proposal_receipt(historical) == []
+
+
+def test_unsafe_transport_error_code_is_not_retained_in_receipt() -> None:
+    unsafe_code = "GATEWAY_TIMEOUT: report-content token=secret"
+    result = _controller(
+        ScriptedInferencePort(
+            {"blind_inventory": [Phase8OpenResponsesTransportError(unsafe_code)]}
+        )
+    ).run()
+
+    assert result.status == VISUAL_PROPOSAL_FAILED
+    assert result.receipt["errors"] == [
+        "INFERENCE_PORT_FAILED: blind_inventory: Phase8OpenResponsesTransportError"
+    ]
+    assert unsafe_code not in str(result.receipt)
+    assert "token=secret" not in str(result.receipt)
+    assert validate_phase8_visual_proposal_receipt(result.receipt) == []
 
 
 def test_controller_stops_when_transport_reports_any_tool_call() -> None:

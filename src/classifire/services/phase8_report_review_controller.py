@@ -7,7 +7,7 @@ reports, invoke inference, materialise files, or write canonical state.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import NoReturn
 
 from sqlalchemy.orm import Session
@@ -41,6 +41,37 @@ def _identifier(value: object, *, code: str) -> str:
     return identifier
 
 
+def _report_sha256(value: object) -> str:
+    if not isinstance(value, str):
+        _fail('REPORT_REVIEW_CONTROLLER_REPORT_SHA_INVALID')
+    sha256 = value.strip().casefold()
+    if (
+        len(sha256) != 64
+        or any(character not in '0123456789abcdef' for character in sha256)
+    ):
+        _fail('REPORT_REVIEW_CONTROLLER_REPORT_SHA_INVALID')
+    return sha256
+
+
+def _expected_report_defect_labels(value: object) -> frozenset[str]:
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        _fail('REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_INVALID')
+    labels: set[str] = set()
+    for raw_label in value:
+        if not isinstance(raw_label, str):
+            _fail('REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_INVALID')
+        label = raw_label.strip()
+        if not label or len(label) > 150:
+            _fail('REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_INVALID')
+        normalised = label.casefold()
+        if normalised in labels:
+            _fail('REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_INVALID')
+        labels.add(normalised)
+    if not labels:
+        _fail('REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_INVALID')
+    return frozenset(labels)
+
+
 def _require_clean_session(db: Session) -> None:
     if db.new or db.dirty or db.deleted:
         _fail('REPORT_REVIEW_CONTROLLER_SESSION_DIRTY')
@@ -68,6 +99,8 @@ def assemble_phase8_report_review_package(
     stored_file_id: object,
     project_id: object,
     estimate_id: object,
+    report_sha256: object,
+    expected_report_defect_labels: object,
     package_id: object,
     package_sha256: object,
     approval_reference: object,
@@ -91,6 +124,8 @@ def assemble_phase8_report_review_package(
         code='REPORT_REVIEW_CONTROLLER_ESTIMATE_INVALID',
     )
     _require_clean_session(db)
+    expected_report_sha256 = _report_sha256(report_sha256)
+    expected_labels = _expected_report_defect_labels(expected_report_defect_labels)
     if protected_state_reader is None:
 
         def protected_state_reader() -> InitialSubmissionState:
@@ -108,6 +143,15 @@ def assemble_phase8_report_review_package(
         after_selection = _state(protected_state_reader, estimate_id=selected_estimate_id)
         if after_selection != before:
             _fail('REPORT_REVIEW_CONTROLLER_PROTECTED_STATE_CHANGED')
+        actual_report_sha256 = str(packets[0].manifest['report_sha256'])
+        if actual_report_sha256 != expected_report_sha256:
+            _fail('REPORT_REVIEW_CONTROLLER_REPORT_SHA_MISMATCH')
+        actual_labels = frozenset(
+            str(packet.manifest['report_defect_label']).casefold()
+            for packet in packets
+        )
+        if actual_labels != expected_labels:
+            _fail('REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_MISMATCH')
         package = build_phase8_report_review_package(
             package_id=package_id,
             package_sha256=package_sha256,
