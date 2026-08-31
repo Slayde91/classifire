@@ -84,16 +84,17 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ### Immediate next actions
 
-#### Priority 0 - Harden desk-quote evidence before operational use
+#### Priority 0 - Harden desk-quote evidence before operational use (implemented locally)
 
-**Objective:** narrow the current desk-quote slice to `project_evidence` and make
-every reference use the same ProjectEvidence-owned, atomic, exact clean-byte
-boundary as the report adapter. Keep `technical_evidence` rejected unless a
-separate Estimate-owned exact-byte contract is designed and approved.
+**Local result:** the resolver now requires an explicit Project/Estimate binding,
+uses only immutable, `clean` ProjectEvidence-owned `project_evidence`, reopens
+the exact retained bytes through the shared atomic reader, and checks caller
+locators against persisted EvidenceSource or ReportEvidenceLocator data.
+`technical_evidence` remains rejected.
 
-**Why now:** PR #75 is merged and exposes a tangible PDF/XLSX API, but its
-resolver currently trusts metadata, accepts `not_configured`, and does not
-verify the caller's locator against persisted page/region or report locators.
+**Verification:** new and cached bytes are re-hashed before return and their
+hash/size are audited. Synthetic tests cover missing, altered, unsafe-path,
+quarantined, cross-estimate, locator, cache-tamper, and PostgreSQL race cases.
 
 **Relevant components:**
 
@@ -121,7 +122,9 @@ verify the caller's locator against persisted page/region or report locators.
 8. focused tests, PostgreSQL race, full suite, Ruff, Mypy, Alembic head, and
    `git diff --check` pass.
 
-No real customer report or quote is required for verification.
+No real customer report, quote, OpenClaw, Gateway, or provider run was used.
+The local implementation now requires normal commit publication, shared PR CI,
+review, and operational approval before it can be used.
 
 #### Priority 1 - Preserve secret-safe Phase 8 transport diagnostics (implemented on this branch)
 
@@ -288,9 +291,9 @@ Project/Estimate ownership, exact clean-byte reads, shared-byte quarantine,
 PDF text/table/annotation and drawing/image locators, ordered scopes, report-
 aware inputs, and deterministic review artifacts.
 
-**Remaining:** Priority 0 desk-quote byte/locator safety, Priority 2 approved
-expected-label-source proof, caption/multi-format support, multi-report
-evidence-family accuracy, retention/redaction/deletion policy, and user review.
+**Remaining:** Priority 2 approved expected-label-source proof, caption/
+multi-format support, multi-report evidence-family accuracy, retention/
+redaction/deletion policy, and user review.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -426,8 +429,8 @@ import them into the active fire-seal/penetration runtime prematurely.
 
 - The conflicted root checkout as a publication, deployment, or bulk-merge path.
 - Draft PRs #9-#13 as current-main candidates without selective reconstruction.
-- PR #75 as open work; it merged at `348bce5` and is now a bounded prototype
-  requiring Priority 0 hardening.
+- PR #75 as open work; it merged at `348bce5` and remains a bounded
+  proposal-only prototype, with Priority 0 hardening verified locally.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
 - Building the report adapter as future work; its components are merged, while

@@ -10,6 +10,7 @@ from typing import Any
 from zipfile import ZipFile
 
 import pytest
+from fastapi import HTTPException
 from physical_foundation_support import physical_session
 from pydantic import ValidationError
 from pypdf import PdfReader
@@ -24,11 +25,14 @@ from classifire.models import (
     LibraryRelease,
     PricingLibraryRecord,
     Project,
+    ProjectEvidence,
+    ReportEvidenceLocator,
     StoredFile,
     User,
 )
 from classifire.outputs import render_desk_quote_pdf, render_desk_quote_workbook
 from classifire.physical_models import EvidenceSource, PhysicalModelLock
+from classifire.services import desk_quote as desk_quote_module
 from classifire.services.desk_quote import (
     DESK_QUOTE_DOCUMENT_CLASS,
     DESK_QUOTE_TECHNICAL_POSITION,
@@ -39,6 +43,8 @@ from classifire.services.desk_quote import (
     resolve_desk_quote_project_evidence,
     verify_desk_quote_snapshot,
 )
+from classifire.services.project_evidence import bind_project_evidence
+from classifire.services.storage import StoredFileBindingError, VerifiedStoredFileContent
 
 
 def _proposal(
@@ -46,6 +52,8 @@ def _proposal(
     pricing_release_id: str = "pricing-release-1001",
     pricing_record_id: str = "pricing-record-1001",
     evidence_source_ids: tuple[str, str] = ("evidence-source-1001", "evidence-source-1002"),
+    estimate_reference: str = "DQ-TEST-ESTIMATE",
+    evidence_file_sha256s: tuple[str, str] = ("A" * 64, "B" * 64),
 ) -> dict[str, Any]:
     return {
         "schema_version": "CLASSIFIRE_DESK_QUOTE_V1",
@@ -53,6 +61,7 @@ def _proposal(
         "title": "Report-based fire-stopping allowance",
         "project_reference": "PROJECT-1001",
         "project_name": "Example Building",
+        "estimate_reference": estimate_reference,
         "site_address": "1 Example Street",
         "client_name": "Example Client",
         "pricing_release_id": pricing_release_id,
@@ -70,7 +79,7 @@ def _proposal(
                     {
                         "evidence_source_id": evidence_source_ids[0],
                         "evidence_reference": "Inspection report REP-1001",
-                        "file_sha256": "A" * 64,
+                        "file_sha256": evidence_file_sha256s[0],
                         "locator": "page 8, photo 2",
                         "description": "Wall penetration image without a scale.",
                     }
@@ -98,7 +107,7 @@ def _proposal(
                     {
                         "evidence_source_id": evidence_source_ids[1],
                         "evidence_reference": "Inspection report REP-1001",
-                        "file_sha256": "B" * 64,
+                        "file_sha256": evidence_file_sha256s[1],
                         "locator": "page 9, photo 4",
                     }
                 ],
@@ -208,7 +217,9 @@ def _active_pricing_release(session: Any) -> tuple[LibraryRelease, PricingLibrar
 
 def _retained_project_evidence(
     session: Any,
-) -> tuple[Project, tuple[EvidenceSource, EvidenceSource]]:
+    *,
+    storage_root: Path,
+) -> tuple[Project, Estimate, tuple[EvidenceSource, EvidenceSource]]:
     project = Project(reference="PROJECT-1001", name="Example Building")
     session.add(project)
     session.flush()
@@ -220,25 +231,35 @@ def _retained_project_evidence(
     session.add(estimate)
     session.flush()
 
+    storage_root.mkdir()
     evidence: list[EvidenceSource] = []
-    for index, digest in enumerate(("A" * 64, "B" * 64), start=1):
+    locations = (("8", "photo 2"), ("9", "photo 4"))
+    for index, (page_number, region_reference) in enumerate(locations, start=1):
+        content = f"synthetic retained report {index}\\n".encode()
+        path = storage_root / "project-evidence" / f"inspection-report-{index}.pdf"
+        path.parent.mkdir(exist_ok=True)
+        path.write_bytes(content)
+        digest = hashlib.sha256(content).hexdigest()
         stored = StoredFile(
-            original_filename=f"inspection-report-{index}.pdf",
+            original_filename=path.name,
             media_type="application/pdf",
-            storage_path=f"project-evidence/inspection-report-{index}.pdf",
+            storage_path=str(path),
             sha256=digest,
-            size_bytes=1024,
+            size_bytes=len(content),
             purpose="project_evidence",
             malware_scan_status="clean",
             immutable=True,
         )
         session.add(stored)
         session.flush()
+        bind_project_evidence(session, stored_file_id=stored.id, estimate_id=estimate.id)
         item = EvidenceSource(
             estimate_id=estimate.id,
             stored_file_id=stored.id,
             evidence_type="inspection_report",
             source_reference="Inspection report REP-1001",
+            page_number=page_number,
+            region_reference=region_reference,
             sha256=digest,
             evidence_class="observed",
             status="active",
@@ -246,7 +267,7 @@ def _retained_project_evidence(
         session.add(item)
         evidence.append(item)
     session.flush()
-    return project, (evidence[0], evidence[1])
+    return project, estimate, (evidence[0], evidence[1])
 
 
 def _request() -> Request:
@@ -258,6 +279,41 @@ def _request() -> Request:
             "client": ("127.0.0.1", 50000),
         }
     )
+
+
+def _evidence_proposal(
+    estimate: Estimate,
+    evidence: tuple[EvidenceSource, EvidenceSource],
+) -> DeskQuoteProposal:
+    return DeskQuoteProposal.model_validate(
+        _proposal(
+            estimate_reference=estimate.reference,
+            evidence_source_ids=(evidence[0].id, evidence[1].id),
+            evidence_file_sha256s=(str(evidence[0].sha256), str(evidence[1].sha256)),
+        )
+    )
+
+
+def _fake_clean_reader(session: Any, calls: list[tuple[str, str, str, Path]]):
+    def read(
+        _db: Any,
+        *,
+        stored_file_id: str,
+        project_id: str,
+        estimate_id: str,
+        storage_root: Path,
+    ) -> VerifiedStoredFileContent:
+        stored = session.get(StoredFile, stored_file_id)
+        assert stored is not None
+        calls.append((stored_file_id, project_id, estimate_id, storage_root))
+        return VerifiedStoredFileContent(
+            sha256=stored.sha256.lower(),
+            size_bytes=stored.size_bytes,
+            media_type=stored.media_type,
+            content=b'synthetic verified content',
+        )
+
+    return read
 
 
 def test_desk_quote_snapshot_binds_assumptions_allowances_and_qualifications() -> None:
@@ -347,24 +403,46 @@ def test_desk_quote_pricing_resolver_requires_active_hash_bound_records() -> Non
             resolve_desk_quote_pricing_bindings(session, proposal)
 
 
-def test_desk_quote_evidence_resolver_requires_retained_project_evidence() -> None:
+def test_desk_quote_evidence_resolver_requires_retained_project_evidence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     with physical_session() as session:
-        project, evidence = _retained_project_evidence(session)
-        proposal = DeskQuoteProposal.model_validate(
-            _proposal(evidence_source_ids=(evidence[0].id, evidence[1].id))
+        storage_root = tmp_path / "storage"
+        project, estimate, evidence = _retained_project_evidence(
+            session,
+            storage_root=storage_root,
+        )
+        proposal = _evidence_proposal(estimate, evidence)
+        calls: list[tuple[str, str, str, Path]] = []
+        monkeypatch.setattr(
+            desk_quote_module,
+            "read_project_evidence_for_update",
+            _fake_clean_reader(session, calls),
         )
 
-        resolved = resolve_desk_quote_project_evidence(session, proposal)
+        def resolve(value: DeskQuoteProposal) -> Project:
+            return resolve_desk_quote_project_evidence(
+                session,
+                value,
+                storage_root=storage_root,
+            )
+
+        resolved = resolve(proposal)
         assert resolved.id == project.id
+        assert {(item[0], item[1], item[2]) for item in calls} == {
+            (evidence[0].stored_file_id, project.id, estimate.id),
+            (evidence[1].stored_file_id, project.id, estimate.id),
+        }
 
         missing = _proposal(evidence_source_ids=("missing-evidence-source", evidence[1].id))
         with pytest.raises(DeskQuoteError, match="evidence source is missing"):
-            resolve_desk_quote_project_evidence(session, DeskQuoteProposal.model_validate(missing))
+            resolve(DeskQuoteProposal.model_validate(missing))
 
         evidence[0].status = "draft"
         session.flush()
         with pytest.raises(DeskQuoteError, match="evidence source is not active"):
-            resolve_desk_quote_project_evidence(session, proposal)
+            resolve(proposal)
 
         evidence[0].status = "active"
         stored = session.get(StoredFile, evidence[0].stored_file_id)
@@ -372,31 +450,90 @@ def test_desk_quote_evidence_resolver_requires_retained_project_evidence() -> No
         stored.immutable = False
         session.flush()
         with pytest.raises(DeskQuoteError, match="retained evidence file is not immutable"):
-            resolve_desk_quote_project_evidence(session, proposal)
+            resolve(proposal)
 
         stored.immutable = True
-        evidence[0].sha256 = "C" * 64
+        original_sha256 = str(evidence[0].sha256)
+        evidence[0].sha256 = "c" * 64
         session.flush()
         with pytest.raises(DeskQuoteError, match="source digest does not match"):
-            resolve_desk_quote_project_evidence(session, proposal)
+            resolve(proposal)
 
-        evidence[0].sha256 = "A" * 64
-        mismatched_digest = _proposal(evidence_source_ids=(evidence[0].id, evidence[1].id))
-        mismatched_digest["assumptions"][0]["evidence_locators"][0]["file_sha256"] = "C" * 64
+        evidence[0].sha256 = original_sha256
+        mismatched_digest = _proposal(
+            estimate_reference=estimate.reference,
+            evidence_source_ids=(evidence[0].id, evidence[1].id),
+            evidence_file_sha256s=("c" * 64, str(evidence[1].sha256)),
+        )
         with pytest.raises(DeskQuoteError, match="locator digest does not match"):
-            resolve_desk_quote_project_evidence(
-                session, DeskQuoteProposal.model_validate(mismatched_digest)
-            )
+            resolve(DeskQuoteProposal.model_validate(mismatched_digest))
 
-        mismatched_reference = _proposal(evidence_source_ids=(evidence[0].id, evidence[1].id))
+        mismatched_reference = _proposal(
+            estimate_reference=estimate.reference,
+            evidence_source_ids=(evidence[0].id, evidence[1].id),
+            evidence_file_sha256s=(str(evidence[0].sha256), str(evidence[1].sha256)),
+        )
         mismatched_reference["assumptions"][0]["evidence_locators"][0]["evidence_reference"] = (
             "Other report"
         )
         with pytest.raises(DeskQuoteError, match="reference does not match"):
-            resolve_desk_quote_project_evidence(
-                session, DeskQuoteProposal.model_validate(mismatched_reference)
-            )
+            resolve(DeskQuoteProposal.model_validate(mismatched_reference))
 
+        mismatched_locator = _proposal(
+            estimate_reference=estimate.reference,
+            evidence_source_ids=(evidence[0].id, evidence[1].id),
+            evidence_file_sha256s=(str(evidence[0].sha256), str(evidence[1].sha256)),
+        )
+        mismatched_locator["assumptions"][0]["evidence_locators"][0]["locator"] = "page 8, photo 3"
+        calls.clear()
+        with pytest.raises(DeskQuoteError, match="locator does not match"):
+            resolve(DeskQuoteProposal.model_validate(mismatched_locator))
+        assert calls == []
+
+        bound = session.scalar(
+            select(ProjectEvidence).where(
+                ProjectEvidence.stored_file_id == evidence[0].stored_file_id
+            )
+        )
+        assert bound is not None
+        report_locator = ReportEvidenceLocator(
+            project_evidence_id=bound.id,
+            source_sha256=bound.source_sha256,
+            sequence=1,
+            locator_key="report-locator-for-desk-quote",
+            item_kind="page",
+            page_number=8,
+            content_sha256="d" * 64,
+            locator_json={"item_kind": "page", "page_number": 8, "sequence": 1},
+        )
+        session.add(report_locator)
+        evidence[0].page_number = None
+        evidence[0].region_reference = None
+        session.flush()
+        stable_locator = _proposal(
+            estimate_reference=estimate.reference,
+            evidence_source_ids=(evidence[0].id, evidence[1].id),
+            evidence_file_sha256s=(str(evidence[0].sha256), str(evidence[1].sha256)),
+        )
+        stable_locator["assumptions"][0]["evidence_locators"][0]["locator"] = (
+            report_locator.locator_key
+        )
+        resolve(DeskQuoteProposal.model_validate(stable_locator))
+
+        evidence[0].page_number = "8"
+        evidence[0].region_reference = "photo 2"
+        stored.malware_scan_status = "not_configured"
+        session.flush()
+        with pytest.raises(DeskQuoteError, match="unsafe scan status"):
+            resolve(proposal)
+
+        stored.malware_scan_status = "clean"
+        stored.purpose = "technical_evidence"
+        session.flush()
+        with pytest.raises(DeskQuoteError, match="wrong purpose"):
+            resolve(proposal)
+
+        stored.purpose = "project_evidence"
         foreign_project = Project(reference="OTHER-PROJECT", name="Other project")
         session.add(foreign_project)
         session.flush()
@@ -409,8 +546,33 @@ def test_desk_quote_evidence_resolver_requires_retained_project_evidence() -> No
         session.flush()
         evidence[0].estimate_id = foreign_estimate.id
         session.flush()
-        with pytest.raises(DeskQuoteError, match="does not belong to the project"):
-            resolve_desk_quote_project_evidence(session, proposal)
+        with pytest.raises(DeskQuoteError, match="does not belong to the estimate"):
+            resolve(proposal)
+
+        evidence[0].estimate_id = estimate.id
+        session.flush()
+
+        def unavailable_reader(*_args: Any, **_kwargs: Any) -> VerifiedStoredFileContent:
+            raise StoredFileBindingError("STORED_FILE_HASH_MISMATCH")
+
+        monkeypatch.setattr(
+            desk_quote_module,
+            "read_project_evidence_for_update",
+            unavailable_reader,
+        )
+        with pytest.raises(DeskQuoteError, match="STORED_FILE_HASH_MISMATCH"):
+            resolve(proposal)
+
+        bound = session.scalar(
+            select(ProjectEvidence).where(
+                ProjectEvidence.stored_file_id == evidence[0].stored_file_id
+            )
+        )
+        assert bound is not None
+        session.delete(bound)
+        session.flush()
+        with pytest.raises(DeskQuoteError, match="PROJECT_EVIDENCE_NOT_FOUND"):
+            resolve(proposal)
 
 
 def test_desk_quote_outputs_show_assumption_led_position_and_fail_closed_on_tamper(
@@ -460,12 +622,17 @@ def test_desk_quote_outputs_show_assumption_led_position_and_fail_closed_on_tamp
         render_desk_quote_workbook(hash_tampered, tmp_path / "tampered-hash.xlsx")
 
 
-def test_desk_quote_export_route_renders_and_audits_without_a_physical_model_lock(
+def test_desk_quote_export_route_returns_audited_exact_bytes_and_rejects_tampered_cache(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     with physical_session() as session:
+        storage_root = tmp_path / "storage"
         release, record = _active_pricing_release(session)
-        _, evidence = _retained_project_evidence(session)
+        project, estimate, evidence = _retained_project_evidence(
+            session,
+            storage_root=storage_root,
+        )
         user = User(
             email="desk-quote@example.test",
             full_name="Desk Quote Estimator",
@@ -474,32 +641,138 @@ def test_desk_quote_export_route_renders_and_audits_without_a_physical_model_loc
         )
         session.add(user)
         session.flush()
+        proposal = DeskQuoteProposal.model_validate(
+            _proposal(
+                pricing_release_id=release.id,
+                pricing_record_id=record.id,
+                estimate_reference=estimate.reference,
+                evidence_source_ids=(evidence[0].id, evidence[1].id),
+                evidence_file_sha256s=(str(evidence[0].sha256), str(evidence[1].sha256)),
+            )
+        )
+        calls: list[tuple[str, str, str, Path]] = []
+        monkeypatch.setattr(
+            desk_quote_module,
+            "read_project_evidence_for_update",
+            _fake_clean_reader(session, calls),
+        )
+        fixed_snapshot = build_desk_quote_snapshot(
+            proposal,
+            pricing_bindings=resolve_desk_quote_pricing_bindings(session, proposal),
+            generated_utc=datetime(2026, 8, 31, 12, 0, tzinfo=UTC),
+        )
+        monkeypatch.setitem(
+            export_desk_quote.__globals__,
+            "build_desk_quote_snapshot",
+            lambda _proposal, *, pricing_bindings: fixed_snapshot,
+        )
+        settings = Settings(storage_root=storage_root)
 
         response = export_desk_quote(
             "desk-quote-pdf",
-            DeskQuoteProposal.model_validate(
-                _proposal(
-                    pricing_release_id=release.id,
-                    pricing_record_id=record.id,
-                    evidence_source_ids=(evidence[0].id, evidence[1].id),
-                )
-            ),
+            proposal,
             _request(),
             session,
             user,
-            Settings(storage_root=tmp_path),
+            settings,
         )
 
-        output_path = Path(response.path)
+        output_path = (
+            storage_root
+            / "desk-quote-exports"
+            / fixed_snapshot["snapshot_hash"]
+            / "CLASSIFIRE_DQ-1001_Desk_Quote.pdf"
+        )
         assert output_path.exists()
-        assert "desk-quote-exports" in output_path.parts
+        assert response.body == output_path.read_bytes()
         audit = session.scalar(select(AuditEvent).where(AuditEvent.action == "render_desk_quote"))
         assert audit is not None
         assert audit.entity_type == "desk_quote"
+        assert audit.new_value["artifact_sha256"] == hashlib.sha256(response.body).hexdigest()
+        assert audit.new_value["artifact_size_bytes"] == len(response.body)
         assert audit.new_value["technical_position"] == DESK_QUOTE_TECHNICAL_POSITION
+        assert audit.new_value["estimate_reference"] == estimate.reference
         assert audit.new_value["pricing_release_id"] == release.id
         assert audit.new_value["pricing_release_version"] == release.version
         assert audit.new_value["pricing_release_hash"] == release.release_hash
         assert audit.new_value["evidence_source_ids"] == sorted(item.id for item in evidence)
-        assert audit.new_value["evidence_file_sha256"] == ["a" * 64, "b" * 64]
+        assert audit.new_value["evidence_file_sha256"] == sorted(
+            str(item.sha256) for item in evidence
+        )
+        assert session.scalar(select(PhysicalModelLock)) is None
+        assert {item[1] for item in calls} == {project.id}
+
+        cached = export_desk_quote(
+            "desk-quote-pdf",
+            proposal,
+            _request(),
+            session,
+            user,
+            settings,
+        )
+        assert cached.body == response.body
+        assert len(list(session.scalars(select(AuditEvent)))) == 2
+
+        output_path.write_bytes(b"tampered cached export")
+        with pytest.raises(HTTPException, match="cached export bytes do not match"):
+            export_desk_quote(
+                "desk-quote-pdf",
+                proposal,
+                _request(),
+                session,
+                user,
+                settings,
+            )
+        assert len(list(session.scalars(select(AuditEvent)))) == 2
+
+
+def test_desk_quote_failed_evidence_read_creates_no_export_or_audit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with physical_session() as session:
+        storage_root = tmp_path / "storage"
+        release, record = _active_pricing_release(session)
+        _project, estimate, evidence = _retained_project_evidence(
+            session,
+            storage_root=storage_root,
+        )
+        user = User(
+            email="desk-quote-failure@example.test",
+            full_name="Desk Quote Estimator",
+            password_hash="not-used-by-direct-handler-test",  # noqa: S106
+            role="administrator",
+        )
+        session.add(user)
+        session.flush()
+        proposal = DeskQuoteProposal.model_validate(
+            _proposal(
+                pricing_release_id=release.id,
+                pricing_record_id=record.id,
+                estimate_reference=estimate.reference,
+                evidence_source_ids=(evidence[0].id, evidence[1].id),
+                evidence_file_sha256s=(str(evidence[0].sha256), str(evidence[1].sha256)),
+            )
+        )
+
+        def unavailable_reader(*_args: Any, **_kwargs: Any) -> VerifiedStoredFileContent:
+            raise StoredFileBindingError("STORED_FILE_HASH_MISMATCH")
+
+        monkeypatch.setattr(
+            desk_quote_module,
+            "read_project_evidence_for_update",
+            unavailable_reader,
+        )
+        with pytest.raises(HTTPException, match="STORED_FILE_HASH_MISMATCH"):
+            export_desk_quote(
+                "desk-quote-pdf",
+                proposal,
+                _request(),
+                session,
+                user,
+                Settings(storage_root=storage_root),
+            )
+
+        assert not (storage_root / "desk-quote-exports").exists()
+        assert list(session.scalars(select(AuditEvent))) == []
         assert session.scalar(select(PhysicalModelLock)) is None

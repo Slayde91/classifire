@@ -15,7 +15,13 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from classifire import physical_models  # noqa: F401
 from classifire.db import Base
-from classifire.models import Project, StoredFile
+from classifire.models import Estimate, Project, StoredFile
+from classifire.physical_models import EvidenceSource
+from classifire.services.desk_quote import (
+    DeskQuoteError,
+    DeskQuoteProposal,
+    resolve_desk_quote_project_evidence,
+)
 from classifire.services.project_evidence import (
     bind_project_evidence,
     read_project_evidence_for_update,
@@ -183,6 +189,94 @@ def _add_clean_stored_file(
     return project_id, stored_file_id, payload
 
 
+def _add_desk_quote_evidence_source(
+    factory: sessionmaker[Session],
+    *,
+    project_id: str,
+    stored_file_id: str,
+) -> tuple[str, str, str]:
+    with factory() as db:
+        with db.begin():
+            project = db.get(Project, project_id)
+            stored = db.get(StoredFile, stored_file_id)
+            assert project is not None
+            assert stored is not None
+            estimate = Estimate(
+                project_id=project.id,
+                reference='POSTGRES-CONTAINMENT-DESK-QUOTE',
+                title='PostgreSQL desk-quote containment test',
+            )
+            db.add(estimate)
+            db.flush()
+            source = EvidenceSource(
+                estimate_id=estimate.id,
+                stored_file_id=stored.id,
+                evidence_type='inspection_report',
+                source_reference='PostgreSQL retained report',
+                page_number='1',
+                region_reference='photo 1',
+                sha256=stored.sha256,
+                evidence_class='observed',
+                status='active',
+            )
+            db.add(source)
+            db.flush()
+            return project.reference, estimate.reference, source.id
+
+
+def _desk_quote_proposal(
+    *,
+    project_reference: str,
+    estimate_reference: str,
+    evidence_source_id: str,
+    sha256: str,
+) -> DeskQuoteProposal:
+    return DeskQuoteProposal.model_validate(
+        {
+            'schema_version': 'CLASSIFIRE_DESK_QUOTE_V1',
+            'quote_reference': 'POSTGRES-DESK-QUOTE',
+            'title': 'PostgreSQL desk-quote containment test',
+            'project_reference': project_reference,
+            'estimate_reference': estimate_reference,
+            'project_name': 'PostgreSQL containment project',
+            'pricing_release_id': 'not-read-by-evidence-resolver',
+            'report_scope': 'One retained report locator only.',
+            'assumptions': [
+                {
+                    'assumption_id': 'A-001',
+                    'subject_reference': 'Defect D-001',
+                    'fact_type': 'other_scope_condition',
+                    'status': 'inferred',
+                    'value': 'synthetic containment test condition',
+                    'probability_percent': 50,
+                    'confidence': 'medium',
+                    'evidence_locators': [
+                        {
+                            'evidence_source_id': evidence_source_id,
+                            'evidence_reference': 'PostgreSQL retained report',
+                            'file_sha256': sha256,
+                            'locator': 'page 1, photo 1',
+                        }
+                    ],
+                    'rationale': 'Synthetic lock-serialization coverage.',
+                    'alternative_explanation': 'Synthetic test only.',
+                    'commercial_treatment': 'included_allowance',
+                    'verification_action': 'Verify before operational use.',
+                }
+            ],
+            'allowances': [
+                {
+                    'allowance_id': 'AL-001',
+                    'description': 'Synthetic containment allowance',
+                    'quantity': '1',
+                    'pricing_record_id': 'not-read-by-evidence-resolver',
+                    'assumption_ids': ['A-001'],
+                }
+            ],
+        }
+    )
+
+
 def _wait_until_reader_blocks(db: Session, reader_pid: int) -> None:
     deadline = time.monotonic() + 5
     while time.monotonic() < deadline:
@@ -253,3 +347,68 @@ def test_postgresql_quarantine_blocks_and_then_denies_concurrent_clean_read(
         stored = db.get(StoredFile, stored_file_id)
         assert stored is not None
         assert stored.malware_scan_status == 'malware_detected'
+def test_postgresql_quarantine_blocks_and_then_denies_desk_quote_evidence_read(
+    postgresql_session_factory: sessionmaker[Session],
+    tmp_path: Path,
+) -> None:
+    storage_root = tmp_path / 'storage'
+    project_id, stored_file_id, payload = _add_clean_stored_file(
+        postgresql_session_factory,
+        storage_root,
+    )
+    project_reference, estimate_reference, source_id = _add_desk_quote_evidence_source(
+        postgresql_session_factory,
+        project_id=project_id,
+        stored_file_id=stored_file_id,
+    )
+    proposal = _desk_quote_proposal(
+        project_reference=project_reference,
+        estimate_reference=estimate_reference,
+        evidence_source_id=source_id,
+        sha256=hashlib.sha256(payload).hexdigest(),
+    )
+    reader_ready = threading.Event()
+    reader_finished = threading.Event()
+    reader_result: dict[str, object] = {}
+
+    def read_in_second_session() -> None:
+        try:
+            with postgresql_session_factory() as db:
+                with db.begin():
+                    db.execute(text('SET LOCAL lock_timeout = 5000'))
+                    reader_result['pid'] = int(db.scalar(text('SELECT pg_backend_pid()')))
+                    reader_ready.set()
+                    resolve_desk_quote_project_evidence(
+                        db,
+                        proposal,
+                        storage_root=storage_root,
+                    )
+        except DeskQuoteError as error:
+            reader_result['error'] = str(error)
+        finally:
+            reader_finished.set()
+
+    reader = threading.Thread(target=read_in_second_session, daemon=True)
+    with postgresql_session_factory() as quarantining_db:
+        with quarantining_db.begin():
+            quarantine = quarantine_stored_file_bytes_for_update(
+                quarantining_db,
+                stored_file_id=stored_file_id,
+                observed_sha256=hashlib.sha256(payload).hexdigest(),
+                observed_size_bytes=len(payload),
+            )
+            assert quarantine.quarantined_file_ids == (stored_file_id,)
+            reader.start()
+            assert reader_ready.wait(5)
+            _wait_until_reader_blocks(quarantining_db, int(reader_result['pid']))
+            assert not reader_finished.is_set()
+
+    reader.join(5)
+    assert reader_finished.is_set()
+    assert reader_result == {
+        'pid': reader_result['pid'],
+        'error': (
+            'desk-quote project evidence is unavailable: '
+            'STORED_FILE_SHARED_SCAN_STATUS_FORBIDDEN'
+        ),
+    }

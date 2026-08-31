@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, TypeGuard
 
 from fastapi import (
     APIRouter,
@@ -18,7 +18,7 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -26,6 +26,7 @@ from ..audit import record_audit
 from ..config import Settings, get_settings
 from ..db import get_db
 from ..models import (
+    AuditEvent,
     ChangeProposal,
     Estimate,
     EstimateLine,
@@ -87,7 +88,7 @@ from ..services.physical_mutation_guard import (
 )
 from ..services.rule_engine import evaluate_estimate_rules
 from ..services.snapshot import lock_snapshot
-from ..services.storage import save_upload
+from ..services.storage import StoredFileBindingError, read_hashed_storage_artifact, save_upload
 from ..services.technical import extract_pdf_candidate_metadata, search_for_opening, search_variants
 from ..services.workflow import WorkflowAction, WorkflowTransitionError
 from ..services.workflow_guard import (
@@ -878,6 +879,60 @@ def export_estimate(
     return FileResponse(path, filename=filename, media_type=media_type)
 
 
+def _is_sha256(value: object) -> TypeGuard[str]:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in '0123456789abcdef' for character in value.casefold())
+    )
+
+
+def _cached_desk_quote_artifact_binding(
+    db: Session,
+    *,
+    project_id: str,
+    snapshot_hash: str,
+    artifact_type: str,
+) -> tuple[str, int] | None:
+    events = db.scalars(
+        select(AuditEvent)
+        .where(
+            AuditEvent.action == 'render_desk_quote',
+            AuditEvent.entity_type == 'desk_quote',
+            AuditEvent.entity_id == snapshot_hash,
+            AuditEvent.project_id == project_id,
+        )
+        .order_by(AuditEvent.created_at.desc(), AuditEvent.id.desc())
+    ).all()
+    for event in events:
+        payload = event.new_value
+        if not isinstance(payload, dict) or payload.get('artifact_type') != artifact_type:
+            continue
+        sha256 = payload.get('artifact_sha256')
+        size_bytes = payload.get('artifact_size_bytes')
+        if _is_sha256(sha256) and isinstance(size_bytes, int) and size_bytes > 0:
+            return sha256.casefold(), size_bytes
+        return None
+    return None
+
+
+def _read_desk_quote_artifact(
+    *,
+    settings: Settings,
+    path: Path,
+    expected_binding: tuple[str, int] | None = None,
+):
+    try:
+        artifact = read_hashed_storage_artifact(storage_root=settings.storage_root, path=path)
+    except StoredFileBindingError as error:
+        raise DeskQuoteError(f'desk-quote export bytes cannot be verified: {error.code}') from error
+    if expected_binding is not None and (
+        artifact.sha256 != expected_binding[0] or artifact.size_bytes != expected_binding[1]
+    ):
+        raise DeskQuoteError('desk-quote cached export bytes do not match their audit binding')
+    return artifact
+
+
 @router.post("/desk-quotes/export/{artifact_type}")
 def export_desk_quote(
     artifact_type: str,
@@ -886,15 +941,9 @@ def export_desk_quote(
     db: Db,
     user: Annotated[User, Depends(require_permission("estimate:write"))],
     settings: Annotated[Settings, Depends(get_settings)],
-) -> FileResponse:
+) -> Response:
     """Render a source-linked desk quote without opening the canonical estimate path."""
 
-    try:
-        resolve_desk_quote_project_evidence(db, payload)
-        pricing_bindings = resolve_desk_quote_pricing_bindings(db, payload)
-        snapshot = build_desk_quote_snapshot(payload, pricing_bindings=pricing_bindings)
-    except DeskQuoteError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
     mapping = {
         "desk-quote-xlsx": (
             f"CLASSIFIRE_{payload.quote_reference}_Desk_Quote.xlsx",
@@ -909,28 +958,64 @@ def export_desk_quote(
     }
     if artifact_type not in mapping:
         raise HTTPException(status_code=404, detail="Unknown desk-quote artifact type")
+    try:
+        project = resolve_desk_quote_project_evidence(
+            db,
+            payload,
+            storage_root=settings.storage_root,
+        )
+        pricing_bindings = resolve_desk_quote_pricing_bindings(db, payload)
+        snapshot = build_desk_quote_snapshot(payload, pricing_bindings=pricing_bindings)
+    except DeskQuoteError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     filename, renderer, media_type = mapping[artifact_type]
     safe_filename = "".join(char if char.isalnum() or char in "-_." else "_" for char in filename)
     output_dir = settings.storage_root / "desk-quote-exports" / snapshot["snapshot_hash"]
-    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / safe_filename
-    if not output_path.exists():
-        renderer(snapshot, output_path)
+    try:
+        if output_path.exists():
+            cached_binding = _cached_desk_quote_artifact_binding(
+                db,
+                project_id=project.id,
+                snapshot_hash=snapshot["snapshot_hash"],
+                artifact_type=artifact_type,
+            )
+            if cached_binding is None:
+                raise DeskQuoteError("desk-quote cached export has no verified audit binding")
+            artifact = _read_desk_quote_artifact(
+                settings=settings,
+                path=output_path,
+                expected_binding=cached_binding,
+            )
+        else:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            temporary_path = output_path.with_name(f".{safe_filename}.tmp")
+            try:
+                renderer(snapshot, temporary_path)
+                artifact = _read_desk_quote_artifact(settings=settings, path=temporary_path)
+                temporary_path.replace(output_path)
+            finally:
+                temporary_path.unlink(missing_ok=True)
+    except DeskQuoteError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    project_id = db.scalar(select(Project.id).where(Project.reference == payload.project_reference))
     record_audit(
         db,
         actor=user,
         action="render_desk_quote",
         entity_type="desk_quote",
         entity_id=snapshot["snapshot_hash"],
-        project_id=project_id,
+        project_id=project.id,
         new_value={
             "artifact_type": artifact_type,
+            "artifact_sha256": artifact.sha256,
+            "artifact_size_bytes": artifact.size_bytes,
             "document_class": snapshot["document_class"],
             "technical_position": snapshot["technical_position"],
             "quote_reference": payload.quote_reference,
             "project_reference": payload.project_reference,
+            "estimate_reference": payload.estimate_reference,
             "pricing_release_id": payload.pricing_release_id,
             "pricing_release_version": snapshot["pricing_bindings"][0]["pricing_release_version"],
             "pricing_release_hash": snapshot["pricing_bindings"][0]["pricing_release_hash"],
@@ -957,4 +1042,8 @@ def export_desk_quote(
         source_ip=request.client.host if request.client else None,
     )
     db.commit()
-    return FileResponse(output_path, filename=safe_filename, media_type=media_type)
+    return Response(
+        content=artifact.content,
+        media_type=media_type,
+        headers={"content-disposition": f'attachment; filename="{safe_filename}"'},
+    )

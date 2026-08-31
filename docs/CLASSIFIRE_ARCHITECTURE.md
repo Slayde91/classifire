@@ -286,14 +286,19 @@ bindings, tamper-checked receipt rendering, client qualifications, PDF/XLSX
 outputs, and audit events. A desk quote cannot claim an observed site condition,
 technical system, canonical model, lock, approved estimate, or release.
 
-The current evidence resolver is pre-production: it checks database metadata,
-accepts `not_configured` as a scan state, does not open and hash the retained
-bytes through the atomic PostgreSQL reader, and does not prove that the caller's
-locator matches persisted page/region or report-locator data. Test fixtures use
-metadata-only retained files, so missing/tampered bytes and containment races are
-not covered. Existing exports are also reused without re-hashing their bytes,
-while the audit records the snapshot hash rather than an artifact-byte hash. The
-path must be hardened before operational use.
+The current implementation requires an explicit Project and Estimate reference,
+accepts only ProjectEvidence-owned, immutable `project_evidence` with a `clean`
+scan state, and reads every retained source through the atomic PostgreSQL
+clean-byte reader. It rejects missing, changed, outside-root, link/reparse,
+quarantined, wrong-purpose, and cross-estimate evidence. A caller locator must
+match a persisted EvidenceSource page/region value or ReportEvidenceLocator.
+
+Both new and cached exports are atomically read and hash-checked before their
+bytes are returned. The audit binds the artifact hash and size. An evidence or
+cache mismatch fails before an output or audit event; the proposal-only endpoint
+still cannot create canonical state, a lock, a technical decision, or a release.
+Synthetic SQLite and PostgreSQL race tests cover this boundary. Shared PR CI and
+review remain necessary before operational use.
 
 Desk quotes also do not complete the canonical rate-inclusion/recovery ledger
 and do not mark Phase 11 or Phase 13 complete.
@@ -331,13 +336,11 @@ desk assumption or model estimate into a confirmed canonical fact.
 
 ### Immediate
 
-**Priority 0 - Harden desk-quote evidence reads.** Narrow the current slice to
-`project_evidence`, reuse ProjectEvidence ownership and the atomic clean-byte
-PostgreSQL reader, reject `not_configured`, bind each locator to persisted
-page/region or `ReportEvidenceLocator` data, verify new and cached export bytes
-and audit their hash, and fail before output/audit/canonical effects on any
-mismatch. Keep `technical_evidence` rejected unless a separate owned exact-byte
-contract is approved.
+**Priority 0 - Desk-quote evidence reads (implemented locally).** The bounded
+proposal route now uses the ProjectEvidence atomic clean-byte boundary, persisted
+locators, and artifact-byte audit bindings. `technical_evidence` remains rejected
+unless a separate owned exact-byte contract is approved; PR CI/review and normal
+operational approval remain outstanding.
 
 **Priority 1 - Receipt-safe transport codes (implemented on this branch).** New
 proposal-only receipts carry only the established, validated transport code into

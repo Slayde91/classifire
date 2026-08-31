@@ -19,6 +19,7 @@ from classifire.services.storage import (
     StoredFileBindingError,
     quarantine_stored_file_bytes_for_update,
     read_clean_stored_file_for_update,
+    read_hashed_storage_artifact,
     read_verified_stored_file,
     save_upload,
 )
@@ -162,6 +163,33 @@ def test_verified_read_rejects_symbolic_linked_retained_file(tmp_path: Path) -> 
         )
 
     assert raised.value.code == 'STORED_FILE_PATH_UNSAFE'
+
+
+def test_hashed_storage_artifact_returns_exact_safe_bytes(tmp_path: Path) -> None:
+    storage_root = tmp_path / 'storage'
+    storage_root.mkdir()
+    path = storage_root / 'desk-quote.pdf'
+    payload = b'generated desk quote bytes\n'
+    path.write_bytes(payload)
+
+    result = read_hashed_storage_artifact(storage_root=storage_root, path=path)
+
+    assert result.content == payload
+    assert result.size_bytes == len(payload)
+    assert result.sha256 == hashlib.sha256(payload).hexdigest()
+    assert result.media_type is None
+
+
+def test_hashed_storage_artifact_rejects_paths_outside_storage_root(tmp_path: Path) -> None:
+    storage_root = tmp_path / 'storage'
+    storage_root.mkdir()
+    outside = tmp_path / 'outside.pdf'
+    outside.write_bytes(b'outside storage root')
+
+    with pytest.raises(StoredFileBindingError) as raised:
+        read_hashed_storage_artifact(storage_root=storage_root, path=outside)
+
+    assert raised.value.code == 'STORED_FILE_PATH_OUTSIDE_ROOT'
 
 
 def test_serialized_clean_read_requires_an_open_transaction() -> None:

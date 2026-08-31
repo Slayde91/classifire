@@ -68,10 +68,12 @@ The following boundaries are implemented and tested for their stated scope:
 - Technical-document review separation, source-byte rechecks, Draft-only new
   technical imports, independent TechnicalVariant activation, active immutable
   technical-release requirements, and release-manifest eligibility rechecks.
-- Governed assumption-led desk-quote PDF/XLSX outputs from PR #75. They bind
-  evidence metadata and active pricing records and remain explicitly
-  non-technical, proposal-only commercial scenarios. Their retained-byte and
-  locator boundary still requires hardening before operational use.
+- Governed assumption-led desk-quote PDF/XLSX outputs from PR #75. They remain
+  explicitly non-technical, proposal-only commercial scenarios. The current
+  branch requires Project/Estimate-owned immutable `clean` ProjectEvidence,
+  exact atomic retained-byte reads, persisted locators, and artifact-byte audit
+  bindings; `technical_evidence` remains rejected. Synthetic verification passed
+  locally, while shared CI/review and operational approval remain separate.
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
@@ -141,16 +143,17 @@ run has been consumed and must not be repeated without new authority.
 
 ### Immediate next actions
 
-#### Priority 0 - Harden desk-quote evidence before operational use
+#### Priority 0 - Desk-quote evidence hardening (implemented locally)
 
-**Objective:** narrow the current desk-quote slice to `project_evidence`, then
-use ProjectEvidence ownership, the atomic PostgreSQL exact clean-byte reader,
-and persisted evidence locators. Keep `technical_evidence` rejected unless a
-separate Estimate-owned exact-byte contract is designed and approved.
+**Local result:** the resolver requires an explicit project/estimate reference,
+accepts only ProjectEvidence-owned immutable `clean` `project_evidence`, verifies
+the exact bytes in the locked reader, and verifies persisted locators. Missing,
+tampered, unsafe-path, quarantined, cross-project, cross-estimate, wrong-purpose,
+and locator-mismatched evidence fails before export or audit.
 
-**Why:** the endpoint is a tangible PDF/XLSX feature, so accepting metadata-only
-or `not_configured` evidence is a higher immediate risk than expanding another
-workflow.
+New and cached artifact bytes are atomically re-read, hash-checked, and recorded
+with their hash and size in the audit. This leaves canonical state, technical
+decisions, locks, pricing records, and release authority untouched.
 
 **Relevant files:**
 
@@ -161,12 +164,12 @@ workflow.
 - `tests/test_desk_quote.py`
 - `tests/test_shared_file_containment.py`
 
-**Done when:** only owned, immutable, `clean`, exact retained bytes are accepted;
-missing/tampered/unsafe-path/quarantined sources and locator mismatches fail
-before export/cache/audit; cross-project and cross-estimate evidence fails;
-rendered/cached artifact bytes are verified and their hash is audited; the
-PostgreSQL quarantine race stays serialized; and focused, full, Ruff, Mypy,
-Alembic-head, and diff checks pass using disposable synthetic data.
+**Verified locally:** 32 focused tests passed (3 expected PostgreSQL skips), the
+disposable PostgreSQL containment suite passed 9 tests, and the full suite passed
+594 tests with 3 expected skips. Ruff, Mypy, Bandit, one Alembic head, and diff
+integrity checks passed. No real customer report, quote, OpenClaw, Gateway, or
+provider run was used. Publication, shared PR CI/review, and operational approval
+remain separate.
 
 #### Priority 1 - Receipt-safe transport diagnostics (implemented on this branch)
 

@@ -16,52 +16,30 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Priority 0 - harden desk-quote evidence reads
+### Priority 0 - desk-quote evidence reads (implemented locally)
 
-PR #75 merged a useful assumption-led desk-quote PDF/XLSX endpoint. Before any
-operational use, narrow this slice to `project_evidence` and make its resolver
-use the established ProjectEvidence ownership and atomic PostgreSQL clean-byte
-contract. Keep `technical_evidence` rejected unless a separate Estimate-owned
-exact-byte contract is designed and approved.
+The current branch now requires an explicit Project and Estimate reference and
+accepts only ProjectEvidence-owned, immutable `project_evidence` with a `clean`
+scan state. Every referenced file is reopened through the atomic PostgreSQL
+clean-byte reader; missing, changed, unsafe-path, quarantined, wrong-purpose,
+cross-estimate, and locator-mismatched sources fail before an export or audit.
+`technical_evidence` remains rejected unless an independently approved owned
+exact-byte contract is introduced.
 
-**Problem to solve:**
+Caller locators must match stored EvidenceSource page/region data or a stable
+ReportEvidenceLocator. New and cached output bytes are atomically re-read and
+hash-checked; their hash and size are recorded in the existing audit event.
+This remains proposal-only and does not introduce canonical writes, locks,
+technical decisions, pricing mutations, or release authority.
 
-- `resolve_desk_quote_project_evidence()` currently checks database metadata
-  without opening/re-hashing the retained file;
-- it accepts malware state `not_configured`;
-- caller locator text is not matched to persisted EvidenceSource page/region or
-  `ReportEvidenceLocator` data;
-- existing tests use nonexistent metadata-only file paths;
-- existing cached exports are reused without a byte-hash check and the audit
-  records the snapshot hash rather than the artifact-byte hash; and
-- failure behavior is not proven against quarantine/read races or cached output.
+**Local verification:** 32 focused tests passed with 3 expected PostgreSQL
+skips; the disposable PostgreSQL containment suite passed 9 tests; the full
+suite passed 594 tests with 3 expected skips. Ruff, Mypy, Bandit, one Alembic
+head, and `git diff --check` passed. No real customer report, quote, OpenClaw,
+Gateway, or provider run was used.
 
-**Relevant files:**
-
-- `src/classifire/services/desk_quote.py`
-- `src/classifire/api/router.py`
-- `src/classifire/services/storage.py`
-- `src/classifire/services/project_evidence.py`
-- `tests/test_desk_quote.py`
-- `tests/test_shared_file_containment.py`
-
-**Definition of done:**
-
-1. require Project/Estimate ownership, immutable `clean` state, and exact bytes
-   through the existing locked reader;
-2. reject missing/tampered/outside-root/symlink/reparse evidence and every scan
-   state except `clean`;
-3. bind the quote locator to persisted evidence location data;
-4. reject cross-project and cross-estimate evidence;
-5. preserve serialization against the PostgreSQL quarantine race;
-6. verify new and cached export bytes and record their hash in the audit;
-7. prove failure creates no export/cached artifact, audit event, canonical state,
-   technical decision, pricing mutation, or lock; and
-8. pass focused tests, the PostgreSQL race, full suite, Ruff, Mypy, one Alembic
-   head, and `git diff --check`.
-
-Use synthetic evidence in a disposable storage/database fixture. Do not use a
-real customer report or quote.
+Commit publication, shared PR CI/review, and operational approval remain
+separate. Use only synthetic evidence in disposable storage/database fixtures.
 
 ### Suggested validation
 
@@ -185,7 +163,8 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
   exists for the current UAT estimate.
 - Technical review/import/release safeguards are real but do not complete the
   full technical authority registry.
-- Desk quotes are proposal-only and currently have the evidence-read gap above.
+- Desk quotes are proposal-only; the evidence-read hardening is locally verified
+  but still requires shared PR CI/review and operational approval.
 - Full system-derived components, productivity, and commercial recovery ledger
   are incomplete.
 - Estimate snapshot identity remains volatile because `generated_utc` is hashed.
