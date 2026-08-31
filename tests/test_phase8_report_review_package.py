@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from copy import deepcopy
 from dataclasses import replace
 
@@ -11,6 +12,7 @@ from test_phase8_visual_proposal import _proposal
 
 from classifire.services.phase8_proposal_review import build_phase8_proposal_review
 from classifire.services.phase8_report_review_package import (
+    REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA,
     Phase8ReportReviewPackageError,
     ReportDefectReviewOutcome,
     build_phase8_report_review_package,
@@ -51,6 +53,35 @@ def _phase8_review(packet: ReportDefectEvidencePacket) -> dict[str, object]:
     )
 
 
+def _expected_label_manifest_file(
+    packet: ReportDefectEvidencePacket,
+    *,
+    labels: list[str] | None = None,
+) -> bytes:
+    manifest = packet.manifest
+    return (
+        json.dumps(
+            {
+                'schema': REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA,
+                'project_evidence_id': manifest['project_evidence_id'],
+                'report_sha256': manifest['report_sha256'],
+                'estimate_id': manifest['estimate_id'],
+                'package_id': 'PACKAGE-001',
+                'package_sha256': '9' * 64,
+                'approval_reference': 'proposal-only approval',
+                'expected_report_defect_labels': (
+                    labels if labels is not None else [manifest['report_defect_label']]
+                ),
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            indent=2,
+            allow_nan=False,
+        )
+        + '\n'
+    ).encode('utf-8')
+
+
 def _package(
     *,
     packets: list[ReportDefectEvidencePacket] | None = None,
@@ -58,6 +89,7 @@ def _package(
     before_fingerprint: str = 'A' * 64,
     after_fingerprint: str = 'A' * 64,
     package_id: str = 'PACKAGE-001',
+    expected_label_manifest_file_bytes: bytes | None = None,
 ) -> object:
     first = _packet_for(
         defect_id='DEFECT-001',
@@ -87,6 +119,7 @@ def _package(
         outcomes_by_scope=selected_outcomes,
         protected_state_before=replace(_state(), fingerprint=before_fingerprint),
         protected_state_after=replace(_state(), fingerprint=after_fingerprint),
+        expected_label_manifest_file_bytes=expected_label_manifest_file_bytes,
     )
 
 
@@ -220,6 +253,52 @@ def test_package_validator_detects_tampered_preceding_artifact_bytes() -> None:
     errors = validate_phase8_report_review_package(forged)
 
     assert any('file bytes are invalid' in error for error in errors)
+
+
+def test_package_binds_and_hashes_expected_label_manifest_without_changing_history() -> None:
+    first = _packet_for(
+        defect_id='DEFECT-001',
+        defect_reference='D-001',
+        report_label='D-001',
+        scope_id='SCOPE-001',
+    )
+    outcomes = {
+        'SCOPE-001': ReportDefectReviewOutcome(phase8_proposal_review=_phase8_review(first))
+    }
+    historical = _package(packets=[first], outcomes=outcomes)
+    expected_label_manifest_file_bytes = _expected_label_manifest_file(first)
+    package = _package(
+        packets=[first],
+        outcomes=outcomes,
+        expected_label_manifest_file_bytes=expected_label_manifest_file_bytes,
+    )
+
+    assert validate_phase8_report_review_package(historical) == []
+    assert 'expected-report-defect-labels.json' not in historical.files
+    assert validate_phase8_report_review_package(package) == []
+    assert package.files['expected-report-defect-labels.json'] == expected_label_manifest_file_bytes
+    assert (
+        package.completion_receipt['artifacts']['expected-report-defect-labels.json']
+        == hashlib.sha256(expected_label_manifest_file_bytes).hexdigest().upper()
+    )
+
+    files = dict(package.files)
+    files['expected-report-defect-labels.json'] += b' '
+    errors = validate_phase8_report_review_package(replace(package, files=files))
+    assert any('file bytes are invalid' in error for error in errors)
+
+    with pytest.raises(
+        Phase8ReportReviewPackageError,
+        match='REPORT_REVIEW_PACKAGE_EXPECTED_LABEL_MANIFEST_INVALID',
+    ):
+        _package(
+            packets=[first],
+            outcomes=outcomes,
+            expected_label_manifest_file_bytes=_expected_label_manifest_file(
+                first,
+                labels=['D-002'],
+            ),
+        )
 
 
 def test_package_materialises_exact_files_without_overwriting_output(tmp_path) -> None:

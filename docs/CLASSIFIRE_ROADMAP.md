@@ -170,10 +170,15 @@ canonical, lock, deployment, or release capability.
 - fake-transport integration, report-focused tests, PostgreSQL containment,
   full suite, static checks, Alembic head, and output inspection pass.
 
-Current branch progress: review-package assembly now requires the selected report
-SHA and an exact, non-duplicated expected-label set before package construction.
-It is not yet the complete runner and has no retrieval, transport, canonical,
-technical, pricing, lock, deployment, or release capability.
+Current branch progress: `execute_phase8_report_assessment_runner()` now composes
+the contained report reader, packets, documentary contexts, retained visual
+packets, report-aware controller, proposal review, and deterministic package. It
+preflights all scopes before an injected fake port and retains/hash-covers the
+resulting expected-label manifest plus every controller, Phase 8 review, proposal,
+packet, review, and Markdown artifact. The full offline suite, focused static
+checks, Alembic head, and the dedicated two-session containment race pass locally.
+Fresh shared CI and any real-provider run remain required gates; no downstream
+authority was added.
 
 ### Near-term actions
 
@@ -256,7 +261,7 @@ release and its source cannot silently change after use.
 loopback transports, evidence rehashing, tool attestation/audit, proposal-only
 receipts, admission registration, and one-shot submission boundaries.
 
-**Remaining:** Priority 2 operator composition, clean-machine runbooks,
+**Remaining:** PostgreSQL containment execution, clean-machine runbooks,
 credential custody, recovery/timeout evidence, and separate lock-admission
 design.
 
@@ -283,8 +288,8 @@ Project/Estimate ownership, exact clean-byte reads, shared-byte quarantine,
 PDF text/table/annotation and drawing/image locators, ordered scopes, report-
 aware inputs, and deterministic review artifacts.
 
-**Remaining:** Priority 0 desk-quote byte/locator safety, Priority 2 operational
-composition and expected-label proof, caption/multi-format support, multi-report
+**Remaining:** Priority 0 desk-quote byte/locator safety, Priority 2 approved
+expected-label-source proof, caption/multi-format support, multi-report
 evidence-family accuracy, retention/redaction/deletion policy, and user review.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable

@@ -92,16 +92,23 @@ Commit `afb9de1` carries only the established safe code through new
 `INFERENCE_PORT_FAILED` receipts and suppresses exception text, response content,
 credentials, and report content. Historical receipts remain valid and type-only.
 
-### Priority 2 - Compose the report-assessment operator flow
+### Priority 2 - Bounded report-assessment operator flow (implemented locally)
 
-Require exact project, estimate, report SHA, package/profile, and expected Defect
-labels; use the merged clean-byte, locator, context, assessment, and deterministic
-review services; expose no downstream authority.
+`execute_phase8_report_assessment_runner()` requires exact project, estimate,
+retained-report SHA, package/profile, and expected-label bindings. It turns the
+verified labels into a deterministic receipt-bound manifest before keeping the
+existing PostgreSQL clean-byte transaction through all documentary-context work
+and injected no-tool port calls. It produces one deterministic proposal-only
+review per expected label and a completion receipt that hashes the expected-label
+manifest, controller receipts, Phase 8 review, proposal when present, packet,
+review, and Markdown.
 
-The no-write review-package assembly now rejects a mismatched report SHA and an
-omitted or duplicate expected label before package construction. It is a bounded
-preflight slice only; it does not retrieve bytes, invoke a provider, or create
-canonical, technical, commercial, lock, deployment, or release authority.
+Focused synthetic tests cover success, retrieval-blocked, malformed-input,
+insufficient-evidence, safe transport failure, and receipt tampering. The full
+offline suite, focused static checks, Alembic head, and dedicated two-session
+PostgreSQL containment race passed locally. It adds no canonical, technical,
+commercial, lock, deployment, or release authority. Fresh shared CI and any
+real-provider run remain separate gates.
 
 3. **Add a small report review UI.** Only after the runner is deterministic and
    fail-closed; show evidence, confidence, alternatives, unresolved facts, and
