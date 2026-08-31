@@ -86,17 +86,22 @@ production data.
 
 ## Then, in order
 
-### Priority 1 - Preserve receipt-safe Phase 8 transport codes
+### Priority 1 - Receipt-safe Phase 8 transport codes (implemented on this branch)
 
-Carry only the established safe code through `INFERENCE_PORT_FAILED`; suppress
-exception text, response content, credentials, and report content. Verify with
-fake ports only.
+Commit `afb9de1` carries only the established safe code through new
+`INFERENCE_PORT_FAILED` receipts and suppresses exception text, response content,
+credentials, and report content. Historical receipts remain valid and type-only.
 
 ### Priority 2 - Compose the report-assessment operator flow
 
 Require exact project, estimate, report SHA, package/profile, and expected Defect
 labels; use the merged clean-byte, locator, context, assessment, and deterministic
 review services; expose no downstream authority.
+
+The no-write review-package assembly now rejects a mismatched report SHA and an
+omitted or duplicate expected label before package construction. It is a bounded
+preflight slice only; it does not retrieve bytes, invoke a provider, or create
+canonical, technical, commercial, lock, deployment, or release authority.
 
 3. **Add a small report review UI.** Only after the runner is deterministic and
    fail-closed; show evidence, confidence, alternatives, unresolved facts, and
@@ -162,8 +167,9 @@ at the first `blind_inventory` stage:
 - completion receipt SHA-256:
   `F0572917AB321BF27A645F10F4EB75BDFD022042E347D6DC584C4113059423EC`.
 
-The underlying transport reason remains unknown because the controller discarded
-the transport's safe code. Preserve the receipts. Do not rerun the report,
+The underlying transport reason for the historical receipt remains unknown
+because its controller discarded the transport's safe code. Preserve the
+receipts. Do not rerun the report,
 OpenClaw, Gateway, or provider workflow without new explicit authority.
 
 ### Product limits

@@ -217,10 +217,10 @@ only, exposed no write/lock capability, and performed no database write,
 canonical submission, or lock creation.
 
 `Phase8OpenResponsesTransportError` owns a stable code intended to exclude
-secrets and response content. The current controller records only the exception
-class under `INFERENCE_PORT_FAILED`, so the retained receipt cannot identify the
-actual safe transport reason. Arbitrary exception text must remain excluded;
-only an explicit, validated safe-code contract may cross this boundary.
+secrets and response content. Historical receipts recorded only the exception
+class under `INFERENCE_PORT_FAILED`, so they cannot identify the actual safe
+transport reason. New proposal-only receipts retain only codes from the explicit
+validated safe-code set; arbitrary exception text remains excluded.
 
 ## 7. Human review and canonicalisation
 
@@ -339,15 +339,20 @@ and audit their hash, and fail before output/audit/canonical effects on any
 mismatch. Keep `technical_evidence` rejected unless a separate owned exact-byte
 contract is approved.
 
-**Priority 1 - Preserve receipt-safe transport codes.** Carry only the
-established, validated transport code into `INFERENCE_PORT_FAILED`; continue
-suppressing arbitrary exception messages, report content, and secrets. Verify
-entirely with synthetic ports.
+**Priority 1 - Receipt-safe transport codes (implemented on this branch).** New
+proposal-only receipts carry only the established, validated transport code into
+`INFERENCE_PORT_FAILED`; historical receipts remain verifiable and arbitrary
+exception messages, report content, and secrets remain suppressed.
 
 **Priority 2 - Compose one bounded report-assessment runner.** Require exact
 project, estimate, report SHA, package/profile, and expected Defect labels; hold
 clean-byte trust through context consumption; emit one deterministic outcome per
 expected label; expose no canonical/technical/commercial/lock/release capability.
+
+The existing no-write package assembly now rejects a mismatched report SHA and
+an omitted or duplicate expected label before package construction. This is only
+the preflight portion; clean-byte context consumption and fake-transport
+composition remain separate work.
 
 ### Near term
 

@@ -112,11 +112,12 @@ report package was attempted on 2026-09-01. Current local receipts prove:
   `F0572917AB321BF27A645F10F4EB75BDFD022042E347D6DC584C4113059423EC`.
 
 This is a safe failed attempt, not an assessment result and not evidence that the
-report is technically unsuitable. The current controller records the transport
-exception type but discards the transport's stable safe code. The receipt cannot
-distinguish a timeout from a rejected status, malformed response, audit failure,
-or another transport code. The authorised run has been consumed and must not be
-repeated without new authority.
+report is technically unsuitable. Its historical receipt records the transport
+exception type but not the transport's stable safe code, so it cannot distinguish
+a timeout from a rejected status, malformed response, audit failure, or another
+transport code. New proposal-only receipts on this branch retain only an
+established safe code; arbitrary exception text remains excluded. The authorised
+run has been consumed and must not be repeated without new authority.
 
 ## 4. Roadmap position
 
@@ -125,7 +126,7 @@ repeated without new authority.
 | 0. Repository/change control | **In progress** | Quarantined root, unprotected `main`, and PR-only CI remain. |
 | 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
 | 2. Governed libraries | **In progress** | Narrow technical and pricing-release safeguards exist; full intake/publication governance remains. |
-| 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries exist; operational report orchestration and diagnosable transport receipts remain incomplete. |
+| 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe future receipt codes exist; operational report orchestration remains incomplete. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
 | 5. Evidence intake/resolution | **In progress** | PDF report services are merged; expected-label completeness, caption/multi-format support, and an operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
@@ -167,14 +168,15 @@ rendered/cached artifact bytes are verified and their hash is audited; the
 PostgreSQL quarantine race stays serialized; and focused, full, Ruff, Mypy,
 Alembic-head, and diff checks pass using disposable synthetic data.
 
-#### Priority 1 - Preserve receipt-safe transport diagnostics
+#### Priority 1 - Receipt-safe transport diagnostics (implemented on this branch)
 
 **Objective:** retain the existing stable `Phase8OpenResponsesTransportError`
 code in the outer failed receipt while continuing to exclude arbitrary exception
 messages, response content, credentials, and report content.
 
-**Why:** the authorised attempt failed safely, but the current receipt discarded
-the only safe diagnostic needed to identify the failing transport layer.
+**Result:** commit `afb9de1` retains established transport codes such as
+`GATEWAY_TIMEOUT` in new proposal-only failure receipts. It does not change the
+historical receipt, expose exception content, or authorise another report run.
 
 **Relevant files:**
 
@@ -210,6 +212,11 @@ review-package, and completion-receipt sequence as one operation.
 **Expected outcome:** one deterministic safe outcome for every approved label,
 including retrieval-blocked, malformed, insufficient-evidence, and transport-
 failed cases, with every artifact hash-bound and protected state unchanged.
+
+The existing review-package assembly now rejects a mismatched report SHA or an
+omitted/duplicate expected label before it builds a package. This is a
+proposal-only preflight slice, not the complete runner: it does not retrieve
+bytes, invoke a provider, or add any downstream authority.
 
 **Dependencies:** Priority 1; an explicit package/expected-label contract;
 PostgreSQL for the atomic clean-byte transaction; fake transport for normal

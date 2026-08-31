@@ -50,8 +50,9 @@ post-merge run, required checks, or branch protection.
 The newest controlled Phase 8 attempt is not a proposal result. Runtime
 inference began, then failed at the first blind-inventory call with
 `VISUAL_PROPOSAL_FAILED` / `INFERENCE_PORT_FAILED`. Rollback/no-write/no-lock
-boundaries held. The receipt retained only the transport exception type, not
-its stable safe code. No rerun is authorised.
+boundaries held. Its historical receipt retained only the transport exception
+type, not the stable safe code. New proposal-only receipts retain established
+safe codes without exposing exception content. No rerun is authorised.
 
 ## 3. Roadmap at a glance
 
@@ -122,10 +123,11 @@ verify the caller's locator against persisted page/region or report locators.
 
 No real customer report or quote is required for verification.
 
-#### Priority 1 - Preserve secret-safe Phase 8 transport diagnostics
+#### Priority 1 - Preserve secret-safe Phase 8 transport diagnostics (implemented on this branch)
 
-**Objective:** propagate only the established safe transport code through the
-outer `INFERENCE_PORT_FAILED` receipt.
+**Result:** commit `afb9de1` propagates only the established safe transport code
+through new outer `INFERENCE_PORT_FAILED` receipts. Historical receipts remain
+valid and content-free.
 
 **Why now:** the authorised assessment failed safely, but the receipt cannot
 identify the transport failure class beyond the Python exception type.
@@ -140,6 +142,9 @@ identify the transport failure class beyond the Python exception type.
   remain valid; and
 - synthetic/fake-port tests, focused regressions, Ruff, and the full suite pass
   without report, OpenClaw, Gateway, or provider execution.
+
+The code and focused synthetic tests satisfy the implementation criteria above;
+full-suite and shared-main CI evidence remain required before any merge claim.
 
 #### Priority 2 - Compose one bounded report-assessment runner
 
@@ -164,6 +169,11 @@ canonical, lock, deployment, or release capability.
 - captions remain unsupported until separately implemented and tested; and
 - fake-transport integration, report-focused tests, PostgreSQL containment,
   full suite, static checks, Alembic head, and output inspection pass.
+
+Current branch progress: review-package assembly now requires the selected report
+SHA and an exact, non-duplicated expected-label set before package construction.
+It is not yet the complete runner and has no retrieval, transport, canonical,
+technical, pricing, lock, deployment, or release capability.
 
 ### Near-term actions
 
@@ -246,9 +256,9 @@ release and its source cannot silently change after use.
 loopback transports, evidence rehashing, tool attestation/audit, proposal-only
 receipts, admission registration, and one-shot submission boundaries.
 
-**Remaining:** Priority 1 diagnostics, Priority 2 operator composition, clean-
-machine runbooks, credential custody, recovery/timeout evidence, and separate
-lock-admission design.
+**Remaining:** Priority 2 operator composition, clean-machine runbooks,
+credential custody, recovery/timeout evidence, and separate lock-admission
+design.
 
 **Exit:** every operation has minimum authority, safe diagnostics, exact inputs,
 reproducible setup, attribution, and tested recovery.
