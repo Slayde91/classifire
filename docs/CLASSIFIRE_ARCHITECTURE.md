@@ -81,7 +81,7 @@ Approval for one operation never grants a later authority.
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
-| Report assessment | Ownership, PDF locators, scopes, context, runtime input, assessment controller, deterministic review packages | Service components are not yet composed into one supported operator flow |
+| Report assessment | Ownership, PDF locators, scopes, context, runtime input, assessment controller, deterministic review packages, and one proposal-only runner | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, UI, or real-provider run exists |
 | Technical governance | Document review, source-byte checks, Draft import, independent activation, pinned active releases | Full intake/materialisation/publication governance incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
@@ -344,15 +344,17 @@ proposal-only receipts carry only the established, validated transport code into
 `INFERENCE_PORT_FAILED`; historical receipts remain verifiable and arbitrary
 exception messages, report content, and secrets remain suppressed.
 
-**Priority 2 - Compose one bounded report-assessment runner.** Require exact
-project, estimate, report SHA, package/profile, and expected Defect labels; hold
-clean-byte trust through context consumption; emit one deterministic outcome per
-expected label; expose no canonical/technical/commercial/lock/release capability.
+**Priority 2 - Bounded report-assessment runner (implemented locally).** The
+runner requires exact project, estimate, report SHA, package/profile, and
+expected-label bindings. It holds the established clean-byte transaction through
+documentary-context preparation and every injected no-tool port call, validates
+every scope before the first call, and emits exactly one proposal-only outcome
+per expected label. Its completion receipt hashes the controller receipts, full
+Phase 8 review, proposal when present, report packet, review, and Markdown.
 
-The existing no-write package assembly now rejects a mismatched report SHA and
-an omitted or duplicate expected label before package construction. This is only
-the preflight portion; clean-byte context consumption and fake-transport
-composition remain separate work.
+It exposes no canonical, technical, commercial, lock, deployment, or release
+capability. PostgreSQL containment execution, full-suite/static evidence, shared
+CI, and a separately authorised real-provider run remain distinct work.
 
 ### Near term
 

@@ -65,6 +65,17 @@ class ReportDefectReviewOutcome:
     phase8_proposal_review: object | None = None
     no_proposal_status: object | None = None
     blocker_code: object | None = None
+    supporting_files: object | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ReportDefectReviewSupportingFiles:
+    '''Exact files whose hashes are bound by one retained Phase 8 review.'''
+
+    visual_controller_receipt_file_bytes: bytes
+    report_assessment_controller_receipt_file_bytes: bytes
+    phase8_proposal_review_file_bytes: bytes
+    proposal_file_bytes: bytes | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +85,7 @@ class ReportDefectReviewArtifact:
     packet: ReportDefectEvidencePacket
     review: dict[str, Any]
     markdown: str
+    supporting_files: ReportDefectReviewSupportingFiles | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -238,6 +250,55 @@ def _phase8_review_matches_package(
         _fail('REPORT_REVIEW_PACKAGE_PHASE8_PACKAGE_MISMATCH')
 
 
+def _supporting_files(
+    value: object,
+    *,
+    review: object,
+) -> ReportDefectReviewSupportingFiles | None:
+    if value is None:
+        return None
+    if not isinstance(value, ReportDefectReviewSupportingFiles) or not isinstance(review, dict):
+        _fail('REPORT_REVIEW_PACKAGE_SUPPORTING_FILES_INVALID')
+    phase8_review_file = value.phase8_proposal_review_file_bytes
+    if not isinstance(phase8_review_file, bytes):
+        _fail('REPORT_REVIEW_PACKAGE_SUPPORTING_FILES_INVALID')
+    try:
+        phase8_review = json.loads(phase8_review_file)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        _fail('REPORT_REVIEW_PACKAGE_SUPPORTING_FILES_INVALID')
+    if not isinstance(phase8_review, dict) or validate_phase8_proposal_review(phase8_review):
+        _fail('REPORT_REVIEW_PACKAGE_SUPPORTING_FILES_INVALID')
+    report_binding = review.get('phase8_review_binding')
+    if (
+        not isinstance(report_binding, dict)
+        or canonical_json_sha256(phase8_review)
+        != report_binding.get('phase8_proposal_review_canonical_sha256')
+    ):
+        _fail('REPORT_REVIEW_PACKAGE_SUPPORTING_FILES_INVALID')
+    input_bindings = phase8_review.get('input_bindings')
+    if not isinstance(input_bindings, dict):
+        _fail('REPORT_REVIEW_PACKAGE_SUPPORTING_FILES_INVALID')
+    visual_receipt = value.visual_controller_receipt_file_bytes
+    report_receipt = value.report_assessment_controller_receipt_file_bytes
+    proposal = value.proposal_file_bytes
+    if (
+        not isinstance(visual_receipt, bytes)
+        or not isinstance(report_receipt, bytes)
+        or _sha256_bytes(visual_receipt)
+        != input_bindings.get('controller_receipt_file_sha256')
+        or _sha256_bytes(report_receipt)
+        != input_bindings.get('report_assessment_controller_receipt_file_sha256')
+    ):
+        _fail('REPORT_REVIEW_PACKAGE_SUPPORTING_FILES_INVALID')
+    expected_proposal_hash = input_bindings.get('proposal_file_sha256')
+    if expected_proposal_hash is None:
+        if proposal is not None:
+            _fail('REPORT_REVIEW_PACKAGE_SUPPORTING_FILES_INVALID')
+    elif not isinstance(proposal, bytes) or _sha256_bytes(proposal) != expected_proposal_hash:
+        _fail('REPORT_REVIEW_PACKAGE_SUPPORTING_FILES_INVALID')
+    return value
+
+
 def _artifact(
     packet: ReportDefectEvidencePacket,
     *,
@@ -261,10 +322,12 @@ def _artifact(
     )
     if validate_phase8_report_defect_review(review):
         _fail('REPORT_REVIEW_PACKAGE_REVIEW_INVALID')
+    supporting_files = _supporting_files(outcome.supporting_files, review=review)
     return ReportDefectReviewArtifact(
         packet=packet,
         review=review,
         markdown=render_phase8_report_defect_review_markdown(review),
+        supporting_files=supporting_files,
     )
 
 
@@ -327,6 +390,24 @@ def _base_files(
         files[packet_path] = _json_file_bytes(artifact.packet.manifest)
         files[review_path] = _json_file_bytes(artifact.review)
         files[markdown_path] = artifact.markdown.encode('utf-8')
+        if artifact.supporting_files is not None:
+            prefix = f'{ordinal:04d}'
+            supporting = artifact.supporting_files
+            files.update(
+                {
+                    f'visual-controller-receipts/{prefix}.json': (
+                        supporting.visual_controller_receipt_file_bytes
+                    ),
+                    f'report-assessment-controller-receipts/{prefix}.json': (
+                        supporting.report_assessment_controller_receipt_file_bytes
+                    ),
+                    f'phase8-proposal-reviews/{prefix}.json': (
+                        supporting.phase8_proposal_review_file_bytes
+                    ),
+                }
+            )
+            if supporting.proposal_file_bytes is not None:
+                files[f'phase8-proposals/{prefix}.json'] = supporting.proposal_file_bytes
     return files
 
 
@@ -550,6 +631,11 @@ def validate_phase8_report_review_package(package: object) -> list[str]:
             continue
         if artifact.markdown != render_phase8_report_defect_review_markdown(artifact.review):
             errors.append(f'report review package Markdown {ordinal} is invalid')
+        try:
+            _supporting_files(artifact.supporting_files, review=artifact.review)
+        except Phase8ReportReviewPackageError:
+            errors.append(f'report review package supporting files {ordinal} are invalid')
+            continue
         identity = _packet_identity(artifact.packet)
         if any(
             artifact.review.get(field) != identity[field]
@@ -671,6 +757,7 @@ __all__ = [
     'REPORT_REVIEW_PACKAGE_SCHEMA',
     'ReportDefectReviewArtifact',
     'ReportDefectReviewOutcome',
+    'ReportDefectReviewSupportingFiles',
     'build_phase8_report_review_package',
     'materialise_phase8_report_review_package',
     'validate_phase8_report_review_package',

@@ -83,8 +83,8 @@ The current packaged migration lineage has one head:
 | Area | Evidence-backed limit |
 | --- | --- |
 | Desk-quote evidence/output safety | The resolver trusts stored metadata, accepts `not_configured`, does not open/re-hash bytes through the atomic PostgreSQL reader, and does not match caller locator text to persisted page/region or report-locator data. Cached exports are reused without re-hashing their bytes, and the audit records the snapshot hash rather than the artifact hash. Current tests use metadata-only nonexistent file paths. |
-| Report assessment operation | The report ownership, locator, context, assessment, runtime-input, controller, and review-package services exist, but no application service, CLI, API, or script composes them into one supported operator flow. The existing representative-package script does not call the new report adapter. |
-| Report completeness | Cardinality is enforced over report scopes already stored in the database, but no approved expected-Defect-label manifest proves that all intended labels were created before assessment. |
+| Report assessment operation | The current branch has one proposal-only application service. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and an exact expected-label list; it validates every documentary scope before calling an injected no-tool port. Its package receipt hashes the controller receipts, full Phase 8 review, proposal when present, report packet, review, and Markdown. There is still no CLI, API, UI, or real-provider run. |
+| Report completeness | The runner rejects a selected scope that differs from its supplied expected-label set before any port call. The list is a caller-supplied contract, not yet a persisted proof that an approved report register created every intended label. |
 | Report formats and content | Normalisation is PDF-only. Text, page, table, and annotation content are supported. Drawings and embedded images are locator/hash records with no documentary payload; visual bytes come through a separate governed packet. Caption extraction is explicitly rejected. XLSX, DOCX, and multi-report generalisation are not implemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
 | Technical authority | Important fail-closed review, activation, source-integrity, import, and release checks exist. Full governed technical intake, materialisation, source-lineage publication, supersession, and production authority remain incomplete. |
@@ -205,18 +205,20 @@ historical receipt, expose exception content, or authorise another report run.
 with an offline/fake-transport preflight and an approved expected-Defect-label
 manifest.
 
-**Why:** the primitives are well tested but service-only. There is no supported
-entry point proving the intended report-SHA, ownership, locator, assessment,
-review-package, and completion-receipt sequence as one operation.
+**Local implementation:** the runner now proves the intended report-SHA,
+ownership, locator, assessment, review-package, and completion-receipt sequence
+as one proposal-only service. It validates all documentary scopes before an
+injected fake port can run, and produces exactly one safe outcome per supplied
+expected label: success, retrieval-blocked, malformed-input,
+insufficient-evidence, or transport-failed.
 
-**Expected outcome:** one deterministic safe outcome for every approved label,
-including retrieval-blocked, malformed, insufficient-evidence, and transport-
-failed cases, with every artifact hash-bound and protected state unchanged.
+The completion receipt hash-covers the controller receipts, full Phase 8 review,
+proposal when present, packet, report review, and Markdown. No report, provider,
+OpenClaw, canonical, technical, commercial, lock, deployment, or release action
+was used for this implementation or its synthetic tests.
 
-The existing review-package assembly now rejects a mismatched report SHA or an
-omitted/duplicate expected label before it builds a package. This is a
-proposal-only preflight slice, not the complete runner: it does not retrieve
-bytes, invoke a provider, or add any downstream authority.
+The expected labels are still caller-supplied rather than a persisted approval
+manifest, and there is no CLI, API, or UI operator surface.
 
 **Dependencies:** Priority 1; an explicit package/expected-label contract;
 PostgreSQL for the atomic clean-byte transaction; fake transport for normal
