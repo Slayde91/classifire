@@ -34,9 +34,10 @@ technical decisions, pricing mutations, or release authority.
 
 **Local verification:** 32 focused tests passed with 3 expected PostgreSQL
 skips; the disposable PostgreSQL containment suite passed 9 tests; the full
-suite passed 594 tests with 3 expected skips. Ruff, Mypy, Bandit, one Alembic
-head, and `git diff --check` passed. No real customer report, quote, OpenClaw,
-Gateway, or provider run was used.
+suite passed 594 tests with 3 expected skips. Targeted Ruff checks for changed
+services, tests, and the new router section, plus Mypy, Bandit, one Alembic head,
+and `git diff --check` passed. No real customer report, quote, OpenClaw, Gateway,
+or provider run was used.
 
 Commit publication, shared PR CI/review, and operational approval remain
 separate. Use only synthetic evidence in disposable storage/database fixtures.
