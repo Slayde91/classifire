@@ -36,6 +36,7 @@ from classifire.services.phase8_report_assessment_runner import (
 )
 from classifire.services.phase8_report_review_package import (
     materialise_phase8_report_review_package,
+    validate_phase8_report_review_package,
 )
 from classifire.services.phase8_visual_evidence import RetainedVisualEvidencePacket
 from classifire.services.report_evidence_adapter import (
@@ -248,6 +249,44 @@ def test_runner_composes_exact_report_context_and_deterministic_success_package(
         assert (output / phase8_review_path).read_bytes() == first.package.files[phase8_review_path]
         assert db.scalars(select(Opening)).all() == []
         assert db.scalars(select(Service)).all() == []
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "visual-controller-receipts/0001.json",
+        "report-assessment-controller-receipts/0001.json",
+        "phase8-proposal-reviews/0001.json",
+    ),
+)
+def test_runner_receipt_hashes_every_supporting_artifact(
+    monkeypatch: pytest.MonkeyPatch,
+    path: str,
+) -> None:
+    with adapter_session() as db:
+        project, estimate, stored, content = _scoped_report(db)
+
+        monkeypatch.setattr(
+            runner_module,
+            "read_project_evidence_for_update",
+            lambda *_args, **_kwargs: content,
+        )
+
+        result = _run(
+            db,
+            project=project,
+            estimate=estimate,
+            stored=stored,
+            content=content,
+            visual_packets={"D-001": _visual_packet(estimate_id=estimate.id)},
+            factory=lambda runtime: _ReportPort(_documentary_proposal(runtime)),
+        )
+        files = dict(result.package.files)
+        files[path] += b" "
+
+        errors = validate_phase8_report_review_package(replace(result.package, files=files))
+
+        assert any("file bytes are invalid" in error for error in errors)
 
 
 @pytest.mark.parametrize(
