@@ -103,9 +103,11 @@ and a completion receipt that hashes the controller receipts, Phase 8 review,
 proposal when present, packet, review, and Markdown.
 
 Focused synthetic tests cover success, retrieval-blocked, malformed-input,
-insufficient-evidence, and safe transport failure. It adds no canonical,
-technical, commercial, lock, deployment, or release authority. PostgreSQL
-containment execution, shared CI, and any real-provider run remain separate gates.
+insufficient-evidence, safe transport failure, and receipt tampering. The full
+offline suite, focused static checks, Alembic head, and dedicated two-session
+PostgreSQL containment race passed locally. It adds no canonical, technical,
+commercial, lock, deployment, or release authority. Fresh shared CI and any
+real-provider run remain separate gates.
 
 3. **Add a small report review UI.** Only after the runner is deterministic and
    fail-closed; show evidence, confidence, alternatives, unresolved facts, and

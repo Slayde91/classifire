@@ -175,9 +175,9 @@ the contained report reader, packets, documentary contexts, retained visual
 packets, report-aware controller, proposal review, and deterministic package. It
 preflights all scopes before an injected fake port and retains/hash-covers every
 preceding controller, Phase 8 review, proposal, packet, review, and Markdown
-artifact. PostgreSQL containment execution, full-suite/static evidence, shared
-CI, and any real-provider run remain required gates; no downstream authority was
-added.
+artifact. The full offline suite, focused static checks, Alembic head, and the
+dedicated two-session containment race pass locally. Fresh shared CI and any
+real-provider run remain required gates; no downstream authority was added.
 
 ### Near-term actions
 

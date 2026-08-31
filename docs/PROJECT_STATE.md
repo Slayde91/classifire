@@ -224,10 +224,12 @@ manifest, and there is no CLI, API, or UI operator surface.
 PostgreSQL for the atomic clean-byte transaction; fake transport for normal
 implementation tests. A real provider run still requires separate authority.
 
-**Validation:** cross-project, report-hash, locator, expected-label, profile,
-and source-byte tamper tests; fake-transport end-to-end tests; the PostgreSQL
-two-session containment race; focused/full suites; Ruff, Mypy, Alembic head,
-and output inspection.
+**Branch-local verification:** cross-project, report-hash, locator,
+expected-label, profile, source-byte, and supporting-receipt tamper tests;
+fake-transport end-to-end tests; focused report tests; full offline suite;
+focused Ruff/Mypy; Alembic head; and output inspection passed. The dedicated
+two-session PostgreSQL containment race passed all eight checks against a
+disposable loopback-only test database.
 
 ### Near-term actions
 

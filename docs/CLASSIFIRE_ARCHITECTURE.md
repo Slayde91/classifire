@@ -353,8 +353,9 @@ per expected label. Its completion receipt hashes the controller receipts, full
 Phase 8 review, proposal when present, report packet, review, and Markdown.
 
 It exposes no canonical, technical, commercial, lock, deployment, or release
-capability. PostgreSQL containment execution, full-suite/static evidence, shared
-CI, and a separately authorised real-provider run remain distinct work.
+capability. The full offline suite, focused static checks, Alembic head, and the
+dedicated two-session containment race all pass locally. Fresh shared CI and a
+separately authorised real-provider run remain distinct work.
 
 ### Near term
 
