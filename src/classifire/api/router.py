@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import hashlib
-import json
-from datetime import datetime, timezone
-from decimal import Decimal
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, TypeGuard
 
@@ -38,9 +35,7 @@ from ..models import (
     Project,
     RuleEvaluation,
     Service,
-    StoredFile,
     TechnicalDocument,
-    TechnicalVariant,
     User,
 )
 from ..outputs import (
@@ -69,7 +64,7 @@ from ..schemas import (
     TechnicalVariantSearch,
 )
 from ..security import get_current_user, require_permission
-from ..services.calculation import D, calculate_estimate_line, recalculate_estimate
+from ..services.calculation import calculate_estimate_line, recalculate_estimate
 from ..services.desk_quote import (
     DeskQuoteError,
     DeskQuoteProposal,
@@ -118,7 +113,7 @@ def health(db: Db, settings: Annotated[Settings, Depends(get_settings)]) -> dict
         "version": "0.1.0",
         "environment": settings.env,
         "production_findings": settings.validate_production(),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 
@@ -179,7 +174,12 @@ def revise_product(
     user: Annotated[User, Depends(require_permission("pricing:write"))],
 ) -> Product:
     previous: Product = _get_or_404(db, Product, product_id, "Product")
-    latest_revision = db.scalar(select(func.max(Product.revision)).where(Product.sku == previous.sku)) or 0
+    latest_revision = (
+        db.scalar(
+            select(func.max(Product.revision)).where(Product.sku == previous.sku)
+        )
+        or 0
+    )
     revision = Product(
         **payload.model_dump(),
         sku=previous.sku,
@@ -228,7 +228,10 @@ def create_labour(
     user: Annotated[User, Depends(require_permission("pricing:write"))],
 ) -> LabourComponent:
     existing = db.scalar(
-        select(LabourComponent).where(LabourComponent.code == payload.code, LabourComponent.revision == 1)
+        select(LabourComponent).where(
+            LabourComponent.code == payload.code,
+            LabourComponent.revision == 1,
+        )
     )
     if existing:
         raise HTTPException(status_code=409, detail="Labour code already exists; create a revision")
@@ -312,7 +315,9 @@ def create_rule(
     user: Annotated[User, Depends(require_permission("rule:write"))],
 ) -> EstimatingRule:
     max_version = db.scalar(
-        select(func.max(EstimatingRule.version)).where(EstimatingRule.rule_code == payload.rule_code)
+        select(func.max(EstimatingRule.version)).where(
+            EstimatingRule.rule_code == payload.rule_code
+        )
     ) or 0
     rule = EstimatingRule(
         **payload.model_dump(),
@@ -352,7 +357,7 @@ def approve_rule(
     rule.status = "active"
     rule.reviewer_id = user.id
     rule.approver_id = user.id
-    rule.approved_at = datetime.now(timezone.utc)
+    rule.approved_at = datetime.now(UTC)
     record_audit(
         db,
         actor=user,
@@ -457,7 +462,10 @@ def upload_technical_document(
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    metadata: dict[str, Any] = {"human_review_required": True, "automatic_activation_permitted": False}
+    metadata: dict[str, Any] = {
+        "human_review_required": True,
+        "automatic_activation_permitted": False,
+    }
     if Path(stored.storage_path).suffix.lower() == ".pdf":
         try:
             metadata.update(extract_pdf_candidate_metadata(Path(stored.storage_path)))
@@ -545,7 +553,12 @@ def create_estimate(
     user: Annotated[User, Depends(require_permission("estimate:write"))],
 ) -> Estimate:
     project: Project = _get_or_404(db, Project, payload.project_id, "Project")
-    revision = db.scalar(select(func.max(Estimate.revision)).where(Estimate.project_id == project.id)) or 0
+    revision = (
+        db.scalar(
+            select(func.max(Estimate.revision)).where(Estimate.project_id == project.id)
+        )
+        or 0
+    )
     estimate = Estimate(**payload.model_dump(), revision=int(revision) + 1, status="draft")
     db.add(estimate)
     db.flush()
@@ -601,7 +614,10 @@ def add_opening(
         settings = get_settings()
     estimate = _load_estimate(db, estimate_id)
     if estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
+        raise HTTPException(
+            status_code=409,
+            detail="Locked or released estimates cannot be modified",
+        )
     try:
         require_physical_model_mutation(db, estimate)
         require_admission_bound_initial_canonicalisation(
@@ -648,7 +664,10 @@ def add_service(
 ) -> dict[str, Any]:
     opening: Opening = _get_or_404(db, Opening, opening_id, "Opening")
     if opening.estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
+        raise HTTPException(
+            status_code=409,
+            detail="Locked or released estimates cannot be modified",
+        )
     try:
         require_physical_model_mutation(db, opening.estimate)
     except (PhysicalMutationError, WorkflowTransitionError) as exc:
@@ -692,8 +711,18 @@ def add_line(
     except PhysicalModelLockRequiredError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     if estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
-    next_number = (db.scalar(select(func.max(EstimateLine.line_number)).where(EstimateLine.estimate_id == estimate.id)) or 0) + 1
+        raise HTTPException(
+            status_code=409,
+            detail="Locked or released estimates cannot be modified",
+        )
+    next_number = (
+        db.scalar(
+            select(func.max(EstimateLine.line_number)).where(
+                EstimateLine.estimate_id == estimate.id
+            )
+        )
+        or 0
+    ) + 1
     line = EstimateLine(estimate_id=estimate.id, line_number=next_number, **payload.model_dump())
     db.add(line)
     db.flush()
@@ -706,7 +735,11 @@ def add_line(
         entity_type="estimate_line",
         entity_id=line.id,
         project_id=estimate.project_id,
-        new_value={**payload.model_dump(mode="json"), "applied_markup": str(line.applied_markup), "markup_source": line.markup_source},
+        new_value={
+            **payload.model_dump(mode="json"),
+            "applied_markup": str(line.applied_markup),
+            "markup_source": line.markup_source,
+        },
         source_ip=request.client.host if request.client else None,
     )
     db.commit()
@@ -732,7 +765,10 @@ def recalculate(
     except PhysicalModelLockRequiredError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     if estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot be recalculated")
+        raise HTTPException(
+            status_code=409,
+            detail="Locked or released estimates cannot be recalculated",
+        )
     recalculate_estimate(db, estimate)
     record_audit(
         db,
@@ -808,7 +844,10 @@ def opening_technical_search(
     try:
         require_estimate_action(db, opening.estimate, WorkflowAction.SEARCH_TECHNICAL)
     except WorkflowTransitionError as exc:
-        raise HTTPException(status_code=409, detail={"action": "search_technical", "blockers": list(exc.blockers)}) from exc
+        raise HTTPException(
+            status_code=409,
+            detail={"action": "search_technical", "blockers": list(exc.blockers)},
+        ) from exc
     return search_for_opening(db, opening)
 
 
@@ -825,8 +864,14 @@ def lock_estimate(
         require_active_physical_model_lock(db, estimate)
     except PhysicalModelLockRequiredError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    evaluations = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)).all()
-    blocking = [item for item in evaluations if item.result == "BLOCKED" or item.severity == "blocking_error"]
+    evaluations = db.scalars(
+        select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)
+    ).all()
+    blocking = [
+        item
+        for item in evaluations
+        if item.result == "BLOCKED" or item.severity == "blocking_error"
+    ]
     if blocking:
         raise HTTPException(status_code=409, detail="Estimate has blocking rule results")
     snapshot = lock_snapshot(db, estimate)
@@ -864,10 +909,22 @@ def export_estimate(
     export_dir.mkdir(parents=True, exist_ok=True)
     safe_ref = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in estimate.reference)
     mapping = {
-        "technical-xlsx": (f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.xlsx", render_technical_workbook),
-        "proposal-xlsx": (f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.xlsx", render_proposal_workbook),
-        "technical-pdf": (f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.pdf", lambda s, p: render_estimate_pdf(s, p, proposal=False)),
-        "proposal-pdf": (f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.pdf", lambda s, p: render_estimate_pdf(s, p, proposal=True)),
+        "technical-xlsx": (
+            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.xlsx",
+            render_technical_workbook,
+        ),
+        "proposal-xlsx": (
+            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.xlsx",
+            render_proposal_workbook,
+        ),
+        "technical-pdf": (
+            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.pdf",
+            lambda snapshot, output: render_estimate_pdf(snapshot, output, proposal=False),
+        ),
+        "proposal-pdf": (
+            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.pdf",
+            lambda snapshot, output: render_estimate_pdf(snapshot, output, proposal=True),
+        ),
     }
     if artifact_type not in mapping:
         raise HTTPException(status_code=404, detail="Unknown artifact type")
@@ -875,7 +932,11 @@ def export_estimate(
     path = export_dir / filename
     if not path.exists():
         renderer(estimate.snapshot_json, path)
-    media_type = "application/pdf" if path.suffix == ".pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    media_type = (
+        "application/pdf"
+        if path.suffix == ".pdf"
+        else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
     return FileResponse(path, filename=filename, media_type=media_type)
 
 
