@@ -35,6 +35,11 @@ Shared main now includes:
 - Project/Estimate report ownership, atomic PostgreSQL clean-byte handling,
   stable PDF locators/scopes, report assessment components, and deterministic
   review packages;
+- the PR #103 desk-quote evidence-read hardening;
+
+The current branch, not shared main, adds expected-label manifests, atomic scope
+admission, and the `main` push CI trigger.
+
 - production configuration, migration-head, browser, and diagnostic hardening;
 - independent technical-document/variant review, source rechecks, Draft-only
   imports, and active pinned technical-release safeguards;
@@ -43,10 +48,12 @@ Shared main now includes:
 - pull-request CI with Ruff, full tests, PostgreSQL containment, and Alembic
   one-head validation.
 
-The latest hosted evidence is PR #103 run `33492628353`: Python validation passed.
-It proves the exact PR head, not the `d9b19fc` merge commit. This branch adds a
-`main` push validation trigger, but it has no hosted post-merge result until it is
-reviewed and merged; `main` still has no required checks or branch protection.
+The latest hosted evidence is PR #103 run `33492628353`: Python validation
+passed. It proves the exact PR head, not the `d9b19fc` merge commit. The current
+candidate adds a `main` push validation trigger, but it has no hosted result until
+reviewed and merged. GitHub's branch-protection endpoint returns HTTP 403 because
+the current private-repository plan requires GitHub Pro or public visibility for
+that configuration; no required-check configuration is verified.
 
 The newest controlled Phase 8 attempt is not a proposal result. Runtime
 inference began, then failed at the first blind-inventory call with
@@ -83,11 +90,42 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ## 4. Prioritised build plan
 
-### Immediate next actions
+### Immediate next action
 
-#### Priority 0 - Harden desk-quote evidence before operational use (implemented locally)
+#### Priority 0 - Integrate and prove the published candidate
 
-**Local result:** the resolver now requires an explicit Project/Estimate binding,
+**Objective:** review `origin/main...HEAD`, create a current-main pull request,
+merge only after it is green, and record the first hosted `push` validation run
+for that merge on `main`.
+
+**Why this comes first:** commits `b36ebb5`, `9a4c2d2`, and `e9ac8f0` provide
+the new expected-label governance, runner preflight, and post-merge validation,
+but are not shared-main evidence. Their first safe next step is review and
+integration, not a real report/provider run or downstream canonical work.
+
+**Relevant components:** migrations `0012` and `0013`,
+`report_expected_label_manifest.py`, `report_evidence_adapter.py`,
+`phase8_report_assessment_runner.py`, their synthetic tests, and the CI workflow.
+
+**Dependencies:** fresh review and separately granted merge authority. GitHub's
+current plan prevents native branch-protection configuration.
+
+**Done when:** the PR validates the exact range, the merge lands on `main`, and
+a hosted `push` run for that merge passes the full suite and one-head migration
+check. Record the run URL and SHA; do not substitute a local pass for it.
+
+**Validation:** fetch; inspect the range and `git diff --check`; run focused
+synthetic report tests and `python -m alembic heads`; then inspect GitHub PR and
+workflow results.
+
+**Uncertainty:** no current evidence says whether the owner will upgrade the
+GitHub plan or adopt an alternative documented protection control.
+
+### Completed and published foundations (not next actions)
+
+#### Completed on shared main - Desk-quote evidence hardening (PR #103)
+
+**Shared-main result:** the resolver now requires an explicit Project/Estimate binding,
 uses only immutable, `clean` ProjectEvidence-owned `project_evidence`, reopens
 the exact retained bytes through the shared atomic reader, and checks caller
 locators against persisted EvidenceSource or ReportEvidenceLocator data.
@@ -124,10 +162,10 @@ quarantined, cross-estimate, locator, cache-tamper, and PostgreSQL race cases.
    `git diff --check` pass.
 
 No real customer report, quote, OpenClaw, Gateway, or provider run was used.
-The local implementation now requires normal commit publication, shared PR CI,
-review, and operational approval before it can be used.
+PR #103 passed CI and review; operational approval remains a separate gate before
+use.
 
-#### Priority 1 - Preserve secret-safe Phase 8 transport diagnostics (implemented on this branch)
+#### Completed on shared main - Secret-safe Phase 8 transport diagnostics
 
 **Result:** commit `afb9de1` propagates only the established safe transport code
 through new outer `INFERENCE_PORT_FAILED` receipts. Historical receipts remain
@@ -147,13 +185,13 @@ identify the transport failure class beyond the Python exception type.
 - synthetic/fake-port tests, focused regressions, Ruff, and the full suite pass
   without report, OpenClaw, Gateway, or provider execution.
 
-The code and focused synthetic tests satisfy the implementation criteria above;
-full-suite and shared-main CI evidence remain required before any merge claim.
+Commit `afb9de1` is an ancestor of shared `main`; historical receipts remain
+verifiable and no real report/provider operation was used for this change.
 
-#### Priority 2 - Compose one bounded report-assessment runner
+#### Published candidate - Bounded report-assessment runner
 
-**Objective:** turn the merged service components into a supported proposal-only
-operator flow with a fake-transport preflight.
+**Current state:** `execute_phase8_report_assessment_runner()` composes the
+service components as a proposal-only application service with fake-port tests.
 
 **Required contract:** exact project, estimate, report SHA, package/policy/
 profile, and a persisted human-approved expected Defect-label manifest bound to
@@ -191,23 +229,26 @@ authority was added.
 
 ### Near-term actions
 
-3. Add a minimal report review UI after Priority 2. It must expose source
-   locators, confidence, alternatives, unresolved facts, and receipt status
-   without write authority.
-4. Complete Draft technical materialisation, source lineage, publication, and
+1. Define and implement a minimal immutable proposal-review package record before
+   adding a UI. It must retain safe hashes, source/approval bindings, uncertainty,
+   and a storage locator; test isolation, redaction, tamper failure, and absence
+   of canonical authority. Retention/deletion and reviewer-access ownership are
+   an unresolved design prerequisite.
+2. Complete Draft technical materialisation, source lineage, publication, and
    supersession through separate migrations and reviews.
-5. Define a semantic snapshot hash independent of `generated_utc`; add snapshot
+3. Define a semantic snapshot hash independent of `generated_utc`; add snapshot
    and output regression tests before Phase 12.
-6. Add required pull-request checks and protect `main` after repository-owner
-   approval. The current workflow already provides the candidate check set.
-7. Expand report evidence beyond PDF, add captions only with a real provenance
+4. Scope full-repository Ruff remediation separately from changed-file CI, then
+   have the repository owner decide on an upgrade or equivalent documented
+   default-branch protection control.
+5. Expand report evidence beyond PDF, add captions only with a real provenance
    contract, and prove multiple independent report formats.
 
 ### Later or dependency-bound actions
 
-8. After Priorities 1-2 are reviewed and the transport path is understood,
-   obtain new explicit authority for one proposal-only report assessment. Review
-   every artifact; a successful call is not semantic approval.
+6. After the candidate is integrated and synthetic transport behaviour is
+   understood, obtain new explicit authority for one proposal-only report assessment.
+   Review every artifact; a successful call is not semantic approval.
 9. Resolve remaining physical uncertainty and obtain independent semantic
    approval before any canonical preflight.
 10. Keep admission signing, registration, canonical submission, and Physical
@@ -226,9 +267,10 @@ authority was added.
 private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
-**Remaining:** the root checkout is conflicted recovery evidence; `main` lacks
-required checks and branch protection; the candidate post-merge workflow has no
-hosted result until it is reviewed and merged; clean-machine/release reproducibility remains incomplete.
+**Remaining:** the root checkout is conflicted recovery evidence; the candidate
+post-merge workflow has no hosted result until it is reviewed and merged; the
+current GitHub plan prevents branch-protection configuration; clean-machine and
+release reproducibility remain incomplete.
 
 **Exit:** every publishable change starts from clean current main, is reviewed,
 passes required checks, and is traceable without secrets or customer evidence.
@@ -295,11 +337,17 @@ database or approval workflow.
 **Completed foundations:** retained evidence, linked-original controls,
 Project/Estimate ownership, exact clean-byte reads, shared-byte quarantine,
 PDF text/table/annotation and drawing/image locators, ordered scopes, report-
-aware inputs, and deterministic review artifacts.
+aware inputs, deterministic review artifacts, and PR #103's desk-quote
+exact-byte/locator/artifact-audit checks.
 
-**Remaining:** legacy-scope transition or retirement, caption/multi-format
-support, multi-report evidence-family accuracy, retention/redaction/deletion
-policy, and user review.
+**Published candidate:** expected-label manifests bound to report bytes and
+estimate; atomic complete-label scope admission; V2 approval-bound packets; and
+runner preflight that rejects legacy/unbound packets before a no-tool port call.
+
+**Remaining:** integration of the candidate, legacy-scope transition or
+retirement, package retention/redaction/deletion policy, persistent reviewer
+package ownership, caption/multi-format support, multi-report evidence-family
+accuracy, and user review.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -337,7 +385,7 @@ exists. Rollback and no-write/no-lock safeguards held.
 
 **Ordered gate:**
 
-1. complete Priorities 1-2 with synthetic evidence only;
+1. integrate the published candidate and diagnose only with synthetic/fake ports;
 2. obtain new run authority;
 3. produce and human-review one outcome for every approved label;
 4. resolve or retain physical uncertainty;
@@ -436,11 +484,12 @@ import them into the active fire-seal/penetration runtime prematurely.
 - The conflicted root checkout as a publication, deployment, or bulk-merge path.
 - Draft PRs #9-#13 as current-main candidates without selective reconstruction.
 - PR #75 as open work; it merged at `348bce5` and remains a bounded
-  proposal-only prototype, with Priority 0 hardening verified locally.
+  proposal-only prototype, with PR #103 evidence-read hardening on shared main.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
-- Building the report adapter as future work; its components are merged, while
-  operator composition and legacy-scope transition remain.
+- Building the report runner as future work; the candidate already composes it.
+  The remaining work is candidate integration, package persistence/reviewer
+  ownership, and legacy-scope transition.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.
 - Count equality, whole-file database hashing, or a model answer as semantic

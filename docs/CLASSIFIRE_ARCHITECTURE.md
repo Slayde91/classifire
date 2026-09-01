@@ -77,11 +77,11 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Current branch head: `0013_report_defect_scope_admissions` |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared `main` ends at `0011`; published candidate adds heads `0012` and `0013` |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
-| Report assessment | Ownership, PDF locators, scopes, context, runtime input, assessment controller, deterministic review packages, and one proposal-only runner | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, UI, or real-provider run exists |
+| Report assessment | Shared components plus the candidate's expected-label admission and proposal-only runner | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, UI, persisted package record, or real-provider run exists |
 | Technical governance | Document review, source-byte checks, Draft import, independent activation, pinned active releases | Full intake/materialisation/publication governance incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
@@ -157,7 +157,7 @@ governed retained visual packet. Caption items are currently rejected, and no
 caption extractor exists. XLSX, DOCX, general report formats, and multi-report
 generalisability remain planned.
 
-Cardinality is deterministic for the report scopes that already exist in the
+On the published candidate branch, cardinality is deterministic for the report scopes that already exist in the
 database. An approved expected-label manifest record is now source-bound to the
 report bytes and estimate for runner completeness. New report scopes are admitted
 only as one complete, exact label set matching that approval record, and every new
@@ -208,9 +208,11 @@ Owned clean report bytes
 -> completion receipt over preceding artifacts
 ```
 
-These pieces are implemented, but no supported application service, CLI, API,
-or script currently composes that full sequence. The existing representative
-package runner follows the older linked-visual path.
+`execute_phase8_report_assessment_runner()` composes this sequence as a
+proposal-only application service on the published candidate branch. It is not an
+operator surface: callers must provide the transaction and no-tool port, and no
+CLI, API, UI, or persistent review-package record invokes it. No real-provider
+run is implemented or authorised.
 
 ### Latest operational evidence
 
@@ -301,8 +303,8 @@ Both new and cached exports are atomically read and hash-checked before their
 bytes are returned. The audit binds the artifact hash and size. An evidence or
 cache mismatch fails before an output or audit event; the proposal-only endpoint
 still cannot create canonical state, a lock, a technical decision, or a release.
-Synthetic SQLite and PostgreSQL race tests cover this boundary. Shared PR CI and
-review remain necessary before operational use.
+Synthetic SQLite and PostgreSQL race tests cover this boundary. PR #103 review
+and CI passed; operational approval remains necessary before use.
 
 Desk quotes also do not complete the canonical rate-inclusion/recovery ledger
 and do not mark Phase 11 or Phase 13 complete.
@@ -338,50 +340,42 @@ desk assumption or model estimate into a confirmed canonical fact.
 
 ## 12. Current architectural gaps and follow-up
 
-### Immediate
+### Immediate integration gate
 
-**Priority 0 - Desk-quote evidence reads (implemented locally).** The bounded
-proposal route now uses the ProjectEvidence atomic clean-byte boundary, persisted
-locators, and artifact-byte audit bindings. `technical_evidence` remains rejected
-unless a separate owned exact-byte contract is approved; PR CI/review and normal
-operational approval remain outstanding.
+**Priority 0 - integrate the published candidate before further Phase 5 design.**
+The branch contains two new persistent evidence-governance migrations and the
+first `main` push CI path. Review and merge that exact range, then observe the
+first hosted `main` push run. Until then, the expected-label manifest and runner
+preflight are not shared-main architecture. GitHub protection configuration is
+unavailable on the current private-repository plan, so that external review and
+recorded CI result are the practical boundary.
 
-**Priority 1 - Receipt-safe transport codes (implemented on this branch).** New
-proposal-only receipts carry only the established, validated transport code into
-`INFERENCE_PORT_FAILED`; historical receipts remain verifiable and arbitrary
-exception messages, report content, and secrets remain suppressed.
+### Required design before a review UI
 
-**Priority 2 - Bounded report-assessment runner (implemented locally).** The
-runner requires exact project, estimate, report SHA, package/profile, and an
-approved expected-label manifest record bound to the report bytes and estimate.
-It loads that record after the clean-byte check, then requires every selected
-scope packet to be V2 and tied to that exact approval record before
-documentary-context preparation or any injected no-tool port call. New scope
-batches consume the complete approved label set atomically. It emits exactly one
-outcome per expected label. Its V2 completion receipt binds the approval record
-ID, hash, and reference as well as the expected-label manifest, controller
-receipts, full Phase 8 review, proposal when present, report packet, review, and Markdown.
-
-It exposes no canonical, technical, commercial, lock, deployment, or release
-capability. The full offline suite, focused static checks, Alembic head, and the
-dedicated two-session containment race all pass locally. Fresh shared CI and a
-separately authorised real-provider run remain distinct work.
+**Priority 1 - define proposal-review package ownership and persistence.** The
+runner returns a deterministic in-memory `Phase8ReportReviewPackage`; the
+materialiser writes only to a caller-selected directory. There is no persistent
+package aggregate, retention/redaction rule, reviewer-access policy, API route,
+or UI route. Decide those ownership and lifecycle rules first, then add a narrow
+immutable record that retains only safe hashes, locators, uncertainty, and
+receipt/source bindings. It must remain proposal-only and cannot add canonical,
+technical, commercial, lock, deployment, or release authority.
 
 ### Near term
 
-3. Add a review UI only after the operator flow is deterministic and fail-closed.
-4. Complete Draft technical materialisation/source-lineage publication as
-   separate reviewed migrations.
-5. Separate semantic snapshot identity from volatile generation metadata.
-6. Add required pull-request checks and branch protection after repository-owner
-   approval.
+Complete Draft technical materialisation/source-lineage publication in separate
+reviewed migrations, and separate semantic snapshot identity from volatile
+generation metadata. Treat full-repository lint remediation as its own debt
+slice; the CI workflow deliberately checks only changed Python files because the
+current repository is not globally Ruff-clean.
 
 ### Dependency-bound
 
-7. Seek new authority for another report/provider attempt only after the
-   diagnostics and runner are reviewed and the failure path is understood.
-8. Keep canonical submission, lock creation, Phases 9-14, deployment, and Human
-   Release behind their existing evidence and authority gates.
+Another report/provider attempt requires fresh explicit authority after synthetic
+transport diagnosis. Canonical submission, lock creation, Phases 9-14,
+deployment, and Human Release remain behind their existing evidence and human
+authority gates. Detailed execution order and acceptance criteria are in
+[PROJECT_STATE.md](./PROJECT_STATE.md).
 
 ## 13. Deprecated or superseded paths
 
