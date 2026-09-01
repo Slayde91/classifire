@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main baseline:** `d9b19fc` (PR #103 merge,
+**Verified shared-main implementation:** `b6409a5` (PR #104 merge,
 2026-09-01)
 
 This document separates the architecture that is implemented now from the
@@ -77,11 +77,11 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared `main` ends at `0011`; published candidate adds heads `0012` and `0013` |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared `main` has one Alembic head: `0013_report_defect_scope_admissions` |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
-| Report assessment | Shared components plus the candidate's expected-label admission and proposal-only runner | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, UI, persisted package record, or real-provider run exists |
+| Report assessment | Shared components, expected-label admission, and proposal-only runner | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, UI, persisted package record, or real-provider run exists |
 | Technical governance | Document review, source-byte checks, Draft import, independent activation, pinned active releases | Full intake/materialisation/publication governance incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
@@ -157,8 +157,8 @@ governed retained visual packet. Caption items are currently rejected, and no
 caption extractor exists. XLSX, DOCX, general report formats, and multi-report
 generalisability remain planned.
 
-On the published candidate branch, cardinality is deterministic for the report scopes that already exist in the
-database. An approved expected-label manifest record is now source-bound to the
+On shared main, cardinality is deterministic for the report scopes that already exist in the
+database. An approved expected-label manifest record is source-bound to the
 report bytes and estimate for runner completeness. New report scopes are admitted
 only as one complete, exact label set matching that approval record, and every new
 scope retains its approval-record ID. Bound packets emit V2 approval details.
@@ -209,8 +209,8 @@ Owned clean report bytes
 ```
 
 `execute_phase8_report_assessment_runner()` composes this sequence as a
-proposal-only application service on the published candidate branch. It is not an
-operator surface: callers must provide the transaction and no-tool port, and no
+proposal-only application service on shared main. It is not an operator surface:
+callers must provide the transaction and no-tool port, and no
 CLI, API, UI, or persistent review-package record invokes it. No real-provider
 run is implemented or authorised.
 
@@ -340,15 +340,19 @@ desk assumption or model estimate into a confirmed canonical fact.
 
 ## 12. Current architectural gaps and follow-up
 
-### Immediate integration gate
+### Completed report-governance integration
 
-**Priority 0 - integrate the published candidate before further Phase 5 design.**
-The branch contains two new persistent evidence-governance migrations and the
-first `main` push CI path. Review and merge that exact range, then observe the
-first hosted `main` push run. Until then, the expected-label manifest and runner
-preflight are not shared-main architecture. GitHub protection configuration is
-unavailable on the current private-repository plan, so that external review and
-recorded CI result are the practical boundary.
+PR #104 merged the expected-label manifest, atomic scope admission, V2 runner
+preflight, migration-head readiness, and `main` push validation into
+`b6409a5`. Pull-request validation passed on `0f6c252`, and the first observed
+`main` validation passed on the merge commit (`33516292114`), including tests
+and the one-head Alembic check. These are implementation and CI facts only: the
+services remain proposal-only and no operator/UI surface or downstream authority
+was added.
+
+GitHub protection configuration is still unavailable to inspect on the current
+private-repository plan. The standard merge and hosted validation were accepted;
+that does not prove a configured required-review or required-check rule.
 
 ### Required design before a review UI
 

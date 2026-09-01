@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main baseline:** `d9b19fc` (PR #103 merge, 2026-09-01)
+**Verified shared-main implementation:** `b6409a5` (PR #104 merge, 2026-09-01)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -36,10 +36,8 @@ Shared main now includes:
   stable PDF locators/scopes, report assessment components, and deterministic
   review packages;
 - the PR #103 desk-quote evidence-read hardening;
-
-The current branch, not shared main, adds expected-label manifests, atomic scope
-admission, and the `main` push CI trigger.
-
+- PR #104's expected-label manifests, atomic scope admission, V2 runner
+  preflight, migration-head readiness, and `main` push validation; and
 - production configuration, migration-head, browser, and diagnostic hardening;
 - independent technical-document/variant review, source rechecks, Draft-only
   imports, and active pinned technical-release safeguards;
@@ -48,12 +46,12 @@ admission, and the `main` push CI trigger.
 - pull-request CI with Ruff, full tests, PostgreSQL containment, and Alembic
   one-head validation.
 
-The latest hosted evidence is PR #103 run `33492628353`: Python validation
-passed. It proves the exact PR head, not the `d9b19fc` merge commit. The current
-candidate adds a `main` push validation trigger, but it has no hosted result until
-reviewed and merged. GitHub's branch-protection endpoint returns HTTP 403 because
-the current private-repository plan requires GitHub Pro or public visibility for
-that configuration; no required-check configuration is verified.
+PR #104 validation run `33515411987` passed on its exact head `0f6c252`. Its
+first observed `main` push run `33516292114` also passed on merge `b6409a5`,
+including tests and the one-head Alembic check. GitHub's branch-protection
+endpoint still returns HTTP 403 because the current private-repository plan
+requires GitHub Pro or public visibility for that configuration; required-check
+configuration remains unverified.
 
 The newest controlled Phase 8 attempt is not a proposal result. Runtime
 inference began, then failed at the first blind-inventory call with
@@ -92,36 +90,43 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ### Immediate next action
 
-#### Priority 0 - Integrate and prove the published candidate
+#### Priority 0 - Define proposal-review package ownership before a UI
 
-**Objective:** review `origin/main...HEAD`, create a current-main pull request,
-merge only after it is green, and record the first hosted `push` validation run
-for that merge on `main`.
+**Objective:** agree the minimum retention, redaction/deletion, reviewer-access,
+and safe storage-locator contract for generated proposal-review packages before
+creating a persistence migration or reviewer UI.
 
-**Why this comes first:** commits `b36ebb5`, `9a4c2d2`, and `e9ac8f0` provide
-the new expected-label governance, runner preflight, and post-merge validation,
-but are not shared-main evidence. Their first safe next step is review and
-integration, not a real report/provider run or downstream canonical work.
+**Why this comes first:** PR #104 has integrated the runner and approval
+boundary, but its deterministic package remains in memory or caller-selected
+files. A UI or database record created before ownership is defined would create
+an ungoverned second source of truth for proposal evidence.
 
-**Relevant components:** migrations `0012` and `0013`,
-`report_expected_label_manifest.py`, `report_evidence_adapter.py`,
-`phase8_report_assessment_runner.py`, their synthetic tests, and the CI workflow.
+**Scope:** retain only hash-bound package metadata, receipt/source/approval
+references, reviewer-visible uncertainty, and a safe locator. The design must
+remain proposal-only and add no canonical, technical, commercial, lock,
+deployment, or release authority.
 
-**Dependencies:** fresh review and separately granted merge authority. GitHub's
-current plan prevents native branch-protection configuration.
+**Done when:** a reviewed lifecycle contract defines owner, reader, retention,
+redaction/deletion, and tamper response; a later narrow migration and reviewer
+surface can be tested against that contract without inventing policy.
 
-**Done when:** the PR validates the exact range, the merge lands on `main`, and
-a hosted `push` run for that merge passes the full suite and one-head migration
-check. Record the run URL and SHA; do not substitute a local pass for it.
-
-**Validation:** fetch; inspect the range and `git diff --check`; run focused
-synthetic report tests and `python -m alembic heads`; then inspect GitHub PR and
-workflow results.
-
-**Uncertainty:** no current evidence says whether the owner will upgrade the
-GitHub plan or adopt an alternative documented protection control.
+**Uncertainty:** no existing evidence defines this lifecycle policy. It needs a
+product/records-ownership decision before implementation.
 
 ### Completed and published foundations (not next actions)
+
+#### Completed on shared main - Report governance and main validation (PR #104)
+
+**Shared-main result:** expected-label manifests are bound to retained report
+bytes and an Estimate. Complete exact label sets are admitted atomically, each
+new scope carries the approval binding, and the runner rejects legacy or unbound
+scope packets before proposal-only execution. Migration and deployment-lineage
+expectations now require the single packaged `0013` head.
+
+**Verification:** PR run `33515411987` passed on `0f6c252`; post-merge `main`
+run `33516292114` passed on `b6409a5`, including tests and the one-head Alembic
+check. The change remains proposal-only and adds no canonical, technical,
+commercial, lock, deployment, or release authority.
 
 #### Completed on shared main - Desk-quote evidence hardening (PR #103)
 
@@ -188,7 +193,7 @@ identify the transport failure class beyond the Python exception type.
 Commit `afb9de1` is an ancestor of shared `main`; historical receipts remain
 verifiable and no real report/provider operation was used for this change.
 
-#### Published candidate - Bounded report-assessment runner
+#### Completed on shared main - Bounded report-assessment runner
 
 **Current state:** `execute_phase8_report_assessment_runner()` composes the
 service components as a proposal-only application service with fake-port tests.
@@ -216,24 +221,23 @@ or release capability.
 - fake-transport integration, report-focused tests, PostgreSQL containment,
   full suite, static checks, Alembic head, and output inspection pass.
 
-Current branch progress: `execute_phase8_report_assessment_runner()` composes the
+Shared-main behaviour: `execute_phase8_report_assessment_runner()` composes the
 contained report reader, packets, documentary contexts, retained visual packets,
 report-aware controller, proposal review, and deterministic package. It admits
 new scopes only from the complete approved expected-label record, retains that
 binding, then loads the same record after its clean-byte check and preflights V2
 scope packets before an injected fake port. It emits a V2 receipt artifact bound
 to that record. The full offline suite, focused static checks, Alembic head, and
-the dedicated two-session containment race pass locally.
-Fresh shared CI and any real-provider run remain required gates; no downstream
-authority was added.
+the dedicated two-session containment race passed locally; PR and post-merge
+shared CI also passed. Any real-provider run remains a separate gate, and no
+downstream authority was added.
 
 ### Near-term actions
 
-1. Define and implement a minimal immutable proposal-review package record before
-   adding a UI. It must retain safe hashes, source/approval bindings, uncertainty,
-   and a storage locator; test isolation, redaction, tamper failure, and absence
-   of canonical authority. Retention/deletion and reviewer-access ownership are
-   an unresolved design prerequisite.
+1. After the lifecycle contract is approved, implement a minimal immutable
+   proposal-review package record before adding a UI. It must retain safe hashes,
+   source/approval bindings, uncertainty, and a storage locator; test isolation,
+   redaction, tamper failure, and absence of canonical authority.
 2. Complete Draft technical materialisation, source lineage, publication, and
    supersession through separate migrations and reviews.
 3. Define a semantic snapshot hash independent of `generated_utc`; add snapshot
@@ -246,9 +250,9 @@ authority was added.
 
 ### Later or dependency-bound actions
 
-6. After the candidate is integrated and synthetic transport behaviour is
-   understood, obtain new explicit authority for one proposal-only report assessment.
-   Review every artifact; a successful call is not semantic approval.
+6. After synthetic transport behaviour is understood, obtain new explicit
+   authority for one proposal-only report assessment. Review every artifact; a
+   successful call is not semantic approval.
 9. Resolve remaining physical uncertainty and obtain independent semantic
    approval before any canonical preflight.
 10. Keep admission signing, registration, canonical submission, and Physical
@@ -267,10 +271,10 @@ authority was added.
 private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
-**Remaining:** the root checkout is conflicted recovery evidence; the candidate
-post-merge workflow has no hosted result until it is reviewed and merged; the
-current GitHub plan prevents branch-protection configuration; clean-machine and
-release reproducibility remain incomplete.
+**Remaining:** the root checkout is conflicted recovery evidence; the first
+hosted `main` validation passed, but the current GitHub plan prevents
+branch-protection configuration; clean-machine and release reproducibility
+remain incomplete.
 
 **Exit:** every publishable change starts from clean current main, is reviewed,
 passes required checks, and is traceable without secrets or customer evidence.
@@ -340,14 +344,14 @@ PDF text/table/annotation and drawing/image locators, ordered scopes, report-
 aware inputs, deterministic review artifacts, and PR #103's desk-quote
 exact-byte/locator/artifact-audit checks.
 
-**Published candidate:** expected-label manifests bound to report bytes and
+**Completed foundations:** expected-label manifests bound to report bytes and
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
 runner preflight that rejects legacy/unbound packets before a no-tool port call.
 
-**Remaining:** integration of the candidate, legacy-scope transition or
-retirement, package retention/redaction/deletion policy, persistent reviewer
-package ownership, caption/multi-format support, multi-report evidence-family
-accuracy, and user review.
+**Remaining:** legacy-scope transition or retirement, package
+retention/redaction/deletion policy, persistent reviewer package ownership,
+caption/multi-format support, multi-report evidence-family accuracy, and user
+review.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -385,7 +389,7 @@ exists. Rollback and no-write/no-lock safeguards held.
 
 **Ordered gate:**
 
-1. integrate the published candidate and diagnose only with synthetic/fake ports;
+1. diagnose only with synthetic/fake ports;
 2. obtain new run authority;
 3. produce and human-review one outcome for every approved label;
 4. resolve or retain physical uncertainty;
@@ -487,9 +491,9 @@ import them into the active fire-seal/penetration runtime prematurely.
   proposal-only prototype, with PR #103 evidence-read hardening on shared main.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
-- Building the report runner as future work; the candidate already composes it.
-  The remaining work is candidate integration, package persistence/reviewer
-  ownership, and legacy-scope transition.
+- Building the report runner as future work; shared main already composes it.
+  The remaining work is package persistence/reviewer ownership and legacy-scope
+  transition.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.
 - Count equality, whole-file database hashing, or a model answer as semantic

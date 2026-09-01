@@ -1,11 +1,11 @@
 # CLASSIFIRE Project State
 
-**Verified snapshot:** 2026-09-01 (AEST)
+**Verified snapshot:** 2026-09-02 (AEST)
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Shared-main baseline:** `d9b19fcee60fd82d0d317eae2f94f22b2a0ac7ab`
-(merge of PR #103)
+**Verified shared-main implementation:** `b6409a5c86a7dcd1103eb02ceaab6fe550d1d964`
+(merge of PR #104, 2026-09-01)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -19,10 +19,10 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared `main` | PR #103 is merged at `d9b19fc`. | This is the current shared implementation baseline. |
-| Current branch | `gpt/phase8-report-evidence-adapter-20260830` is clean, matches its upstream, and has published candidate commits `b36ebb5`, `9a4c2d2`, and `e9ac8f0` beyond `main`. | They remain candidate evidence until a new PR is reviewed and merged. |
-| Pull-request CI | PR #103 run `33492628353` passed Python validation. | This proves the exact PR head, not a post-merge run of `d9b19fc`. |
-| Default-branch governance | Commit `e9ac8f0` adds a `main` push validation trigger, but it is not yet merged. GitHub's branch-protection API returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | There is no hosted `main` push result and no verified required-check configuration. |
+| Shared `main` | PR #104 is merged at `b6409a5`. | The report-governance implementation and its migration/readiness corrections are shared-main evidence. |
+| Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
+| Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
+| Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
 
@@ -73,10 +73,11 @@ The following boundaries are implemented and tested for their stated scope:
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-Shared `main` packages migrations through `0011_report_evidence_locators`. It
-has not yet received the current branch's two report-governance migrations.
+Shared `main` packages migrations through
+`0013_report_defect_scope_admissions`. It has one head:
+`0013_report_defect_scope_admissions (legacy_adjudicated_lineage)`.
 
-### Published candidate on the current branch, not yet shared main
+### Completed report-governance integration on shared main (PR #104)
 
 - `b36ebb5` introduces an immutable, human-approved expected-label manifest
   bound to retained report bytes and an estimate
@@ -87,17 +88,16 @@ has not yet received the current branch's two report-governance migrations.
   V1 receipts remain verifiable.
 - `e9ac8f0` adds the GitHub Actions `push` validation path for merged `main`
   changes. It intentionally lints only changed Python files because full-
-  repository Ruff currently reports pre-existing violations outside this candidate.
-
-The current branch's packaged migration lineage has one head:
-`0013_report_defect_scope_admissions (legacy_adjudicated_lineage)`.
+  repository Ruff currently reports pre-existing violations outside this range.
+- `58c5946` and `0f6c252` align migration-head expectations and deployment
+  readiness with `0013`; `4cba603` reconciles the preceding factual records.
 
 ### In progress or incomplete
 
 | Area | Evidence-backed limit |
 | --- | --- |
 | Desk-quote evidence/output safety | PR #103's shared-main resolver requires a Project/Estimate-owned immutable `clean` `project_evidence` record, verifies retained bytes under the atomic reader, validates stored locators, re-hashes new and cached export bytes, and audits artifact hash/size. Missing, changed, wrong-purpose, cross-project, cross-estimate, unsafe-path, quarantined, and locator-mismatched evidence fails before export or audit. `technical_evidence` remains rejected pending a separately designed owned-byte contract. |
-| Report assessment operation | The current branch has one proposal-only application service, `execute_phase8_report_assessment_runner()`. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a human-approved expected-label manifest bound to report bytes and estimate; it checks the same approval on every V2 scope packet before an injected no-tool port call. There is no API/CLI/UI route, persisted review-package record, or real-provider run. |
+| Report assessment operation | Shared main has one proposal-only application service, `execute_phase8_report_assessment_runner()`. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a human-approved expected-label manifest bound to report bytes and estimate; it checks the same approval on every V2 scope packet before an injected no-tool port call. There is no API/CLI/UI route, persisted review-package record, or real-provider run. |
 | Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. The runner rejects legacy V1/unbound scope packets or a different approval record before any port call. Historical V1 packets remain verifiable. |
 | Report formats and content | Normalisation is PDF-only. Text, page, table, and annotation content are supported. Drawings and embedded images are locator/hash records with no documentary payload; visual bytes come through a separate governed packet. Caption extraction is explicitly rejected. XLSX, DOCX, and multi-report generalisation are not implemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
@@ -137,12 +137,12 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; candidate-only `main` push CI; GitHub plan prevents branch-protection configuration. |
+| 0. Repository/change control | **In progress** | Quarantined root; the first `main` push validation passed; GitHub plan prevents branch-protection configuration. |
 | 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
 | 2. Governed libraries | **In progress** | Narrow technical and pricing-release safeguards exist; full intake/publication governance remains. |
-| 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is candidate-only and no operator route or real report operation exists. |
+| 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
-| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services; the candidate adds atomic expected-label scope admission and runner verification. Legacy-scope transition, package persistence, caption/multi-format support, and an operator flow remain. |
+| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, atomic expected-label scope admission, and runner verification. Legacy-scope transition, package persistence, caption/multi-format support, and an operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
@@ -155,40 +155,28 @@ run has been consumed and must not be repeated without new authority.
 
 ### Immediate next action
 
-#### Priority 0 - Integrate and prove the published report-governance candidate
+#### Priority 0 - Define proposal-review package ownership before a UI
 
-**Objective:** review the complete `origin/main...HEAD` range, create a current-
-main pull request, merge only after it is green, then record the first hosted
-`push` validation result for the merge on `main`.
+**Objective:** agree the minimum retention, redaction/deletion, reviewer-access,
+and safe storage-locator contract for generated proposal-review packages before
+creating a persistence migration or reviewer UI.
 
-**Why this is first:** the candidate contains the expected-label approval,
-atomic scope-admission, and post-merge CI changes needed to make Phase 5 safer,
-but none is shared-main evidence yet. The new `push` workflow cannot produce its
-first `main` result until that same candidate is merged. This is a publication
-and verification action, not a report, OpenClaw, provider, canonical, lock, or
-release operation.
+**Why this is first:** PR #104 has integrated the runner and approval boundary,
+but its deterministic package remains in memory or caller-selected files. A UI
+or database record created before ownership is defined would create an
+ungoverned second source of truth for proposal evidence.
 
-**Relevant components:** `0012_report_expected_label_manifests`,
-`0013_report_defect_scope_admissions`, `report_expected_label_manifest.py`,
-`report_evidence_adapter.py`, `phase8_report_assessment_runner.py`, their
-focused tests, and `.github/workflows/pull-request-validation.yml`.
+**Scope:** retain only hash-bound package metadata, receipt/source/approval
+references, reviewer-visible uncertainty, and a safe locator. The design must
+remain proposal-only and add no canonical, technical, commercial, lock,
+deployment, or release authority.
 
-**Dependencies and blockers:** fresh reviewer approval and separate merge
-authority; GitHub's current private-repository plan prevents branch-protection
-rules, so review discipline and observed CI are the available controls.
+**Done when:** a reviewed lifecycle contract defines owner, reader, retention,
+redaction/deletion, and tamper response; a later narrow migration and reviewer
+surface can be tested against that contract without inventing policy.
 
-**Done when:** the PR covers only the reviewed range, GitHub validates it, the
-merge lands on `main`, a `push` run for that merge passes the full test and
-one-head migration jobs, and the run URL/SHA are recorded. A clean local test is
-not a substitute for the hosted post-merge result.
-
-**Validation:** fetch first; inspect `git diff origin/main...HEAD`; run the
-focused report tests with synthetic fixtures, `python -m alembic heads`, and
-`git diff --check`; then inspect the GitHub PR and `main` workflow result.
-
-**Uncertainty:** the protection API does not reveal a usable rule set because of
-the GitHub plan. It is unknown whether the repository owner will change that
-plan or use another documented protection mechanism.
+**Uncertainty:** no existing evidence defines this lifecycle policy. It needs a
+product/records-ownership decision before implementation.
 
 ### Near-term actions
 
@@ -223,12 +211,11 @@ need to bypass the Phase 8 lock gate.
 
 #### Priority 3 - Make CI debt and default-branch governance explicit
 
-Keep changed-file Ruff in the candidate workflow until a separate full-repository
+Keep changed-file Ruff in the shared workflow until a separate full-repository
 lint remediation is scoped; full `ruff check .` currently fails outside this
-candidate. After the first `main` push result, decide whether the repository
-owner will upgrade/configure GitHub protection or document an equivalent review
-control. Do not present changed-file lint as proof that the whole repository is
-lint-clean.
+range. Decide whether the repository owner will upgrade/configure GitHub
+protection or document an equivalent review control. Do not present changed-file
+lint as proof that the whole repository is lint-clean.
 
 ### Later or dependency-bound actions
 
@@ -251,7 +238,8 @@ This reconciliation verified:
 - the single packaged Alembic head `0013_report_defect_scope_admissions`;
 - current models, API/UI routes, report services, storage/containment, technical
   guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
-- PR #103's successful hosted Python validation result;
+- PR #104's successful pull-request validation on `0f6c252` and successful
+  post-merge `main` validation on `b6409a5`;
 - the retained assessment status and no-write/no-lock flags; and
 - the receipt code and tests that retain only validated safe transport codes in
   new receipts while historical receipts remain verifiable.
