@@ -4,8 +4,8 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Shared-main baseline:** `db28c6384f624cee09fb74dd1c01ea35702fd295`
-(merge of PR #100)
+**Shared-main baseline:** `d9b19fcee60fd82d0d317eae2f94f22b2a0ac7ab`
+(merge of PR #103)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -19,10 +19,10 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared `main` | PR #100 is merged at `db28c638`. | This is the current shared implementation baseline. |
-| Documentation branch | `gpt/phase8-report-evidence-adapter-20260830` was clean and fast-forwarded locally from `be04258` to `db28c638` before this reconciliation. | The 23 fast-forward commits were already public on `main`; no unpublished implementation was imported. |
-| Pull-request CI | PR #100 run `33330916501` passed 577 tests, changed-Python Ruff, the PostgreSQL containment setup, and the single Alembic-head check. | This proves the exact PR head, not a post-merge run of `db28c638`. |
-| Default-branch governance | The workflow runs on pull requests only. GitHub reports no required checks or branch protection on `main`. | A direct branch push does not create CI evidence; this remains a repository-governance gap. |
+| Shared `main` | PR #103 is merged at `d9b19fc`. | This is the current shared implementation baseline. |
+| Current branch | `gpt/phase8-report-evidence-adapter-20260830` is based on `d9b19fc` and contains separately reviewed candidate commits. | Candidate changes remain distinct from shared-main evidence until merged. |
+| Pull-request CI | PR #103 run `33492628353` passed Python validation. | This proves the exact PR head, not a post-merge run of `d9b19fc`. |
+| Default-branch governance | This branch adds a `main` push validation trigger; GitHub `main` still has no required checks or branch protection. | No hosted post-merge evidence exists until this configuration is reviewed and merged. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
 
@@ -78,7 +78,7 @@ The following boundaries are implemented and tested for their stated scope:
   disposable PostgreSQL 16 service.
 
 The current packaged migration lineage has one head:
-`0011_report_evidence_locators (legacy_adjudicated_lineage)`.
+`0013_report_defect_scope_admissions (legacy_adjudicated_lineage)`.
 
 ### In progress or incomplete
 
@@ -267,10 +267,10 @@ This reconciliation verified:
 - fetched Git refs, branch/upstream relationships, recent commits, open PRs, and
   issues;
 - the clean isolated worktree and the read-only legacy-root classification;
-- the single packaged Alembic head `0011_report_evidence_locators`;
+- the single packaged Alembic head `0013_report_defect_scope_admissions`;
 - current models, API/UI routes, report services, storage/containment, technical
   guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
-- PR #100's successful hosted result: 577 passed, 140 warnings;
+- PR #103's successful hosted Python validation result;
 - the retained assessment status and no-write/no-lock flags; and
 - the exact controller code that drops the nested safe transport code.
 

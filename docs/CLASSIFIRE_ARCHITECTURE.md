@@ -4,8 +4,8 @@
 
 **Architecture version:** 4.0
 
-**Verified implementation baseline:** `db28c638` (PR #100 merge,
-2026-09-01 review)
+**Verified shared-main baseline:** `d9b19fc` (PR #103 merge,
+2026-09-01)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -77,7 +77,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | One head: `0011_report_evidence_locators` |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Current branch head: `0013_report_defect_scope_admissions` |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |

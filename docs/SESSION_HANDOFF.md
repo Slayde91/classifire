@@ -8,7 +8,7 @@
 **Branch:** `gpt/phase8-report-evidence-adapter-20260830`
 
 **Shared-main baseline used for review:**
-`db28c6384f624cee09fb74dd1c01ea35702fd295` (PR #100)
+`d9b19fcee60fd82d0d317eae2f94f22b2a0ac7ab` (PR #103)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -106,7 +106,7 @@ real-provider run remain separate gates.
 
 ### Shared main
 
-Shared main at `db28c638` includes:
+Shared main at `d9b19fc` includes:
 
 - PR #80's v2 Phase 8 assessment/review contract;
 - PR #81's report ownership, exact-byte containment, PDF locators/scopes,
@@ -116,16 +116,17 @@ Shared main at `db28c638` includes:
 - PR #83 and later technical review/source/import/release safeguards through
   PR #98;
 - PR #75's assumption-led desk-quote proposal/export path;
-- PR #99's Node 24-compatible workflow; and
-- PR #100's documentation reconciliation of the release-pinning boundary.
-
+- PR #99's Node 24-compatible workflow;
+- PR #100's documentation reconciliation of the release-pinning boundary;
+- PR #101's report review hash/label binding;
+- PR #102's bounded report-assessment evidence receipts; and
+- PR #103's desk-quote evidence-read hardening.
 The packaged Alembic lineage has one head:
-`0011_report_evidence_locators (legacy_adjudicated_lineage)`.
+`0013_report_defect_scope_admissions (legacy_adjudicated_lineage)`.
 
-PR #100 run `33330916501` passed 577 tests with 140 warnings, changed-Python
-Ruff, PostgreSQL containment setup, and the one-head check. This is exact PR-head
-evidence. The workflow is pull-request-only; GitHub has no check attached to the
-`db28c638` merge commit, and `main` has no required checks or branch protection.
+PR #103 run `33492628353` passed Python validation. This is exact PR-head evidence.
+This branch adds a `main` push validation trigger, but it has no hosted post-merge
+result until review and merge; `main` still has no required checks or branch protection.
 
 ### Report-assessment integration limit
 

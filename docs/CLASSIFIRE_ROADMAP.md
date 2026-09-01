@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified baseline:** `db28c638` (PR #100 merge, reviewed 2026-09-01)
+**Verified shared-main baseline:** `d9b19fc` (PR #103 merge, 2026-09-01)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -43,9 +43,10 @@ Shared main now includes:
 - pull-request CI with Ruff, full tests, PostgreSQL containment, and Alembic
   one-head validation.
 
-The latest hosted evidence is PR #100 run `33330916501`: 577 tests passed with
-140 warnings. The workflow validates pull-request heads only; `main` has no
-post-merge run, required checks, or branch protection.
+The latest hosted evidence is PR #103 run `33492628353`: Python validation passed.
+It proves the exact PR head, not the `d9b19fc` merge commit. This branch adds a
+`main` push validation trigger, but it has no hosted post-merge result until it is
+reviewed and merged; `main` still has no required checks or branch protection.
 
 The newest controlled Phase 8 attempt is not a proposal result. Runtime
 inference began, then failed at the first blind-inventory call with
@@ -226,8 +227,8 @@ private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
 **Remaining:** the root checkout is conflicted recovery evidence; `main` lacks
-required checks and branch protection; the workflow has no post-merge run;
-clean-machine/release reproducibility remains incomplete.
+required checks and branch protection; the candidate post-merge workflow has no
+hosted result until it is reviewed and merged; clean-machine/release reproducibility remains incomplete.
 
 **Exit:** every publishable change starts from clean current main, is reviewed,
 passes required checks, and is traceable without secrets or customer evidence.
