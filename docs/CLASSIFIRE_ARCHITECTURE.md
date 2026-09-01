@@ -159,7 +159,11 @@ generalisability remain planned.
 
 Cardinality is deterministic for the report scopes that already exist in the
 database. An approved expected-label manifest record is now source-bound to the
-report bytes and estimate for runner completeness; scope creation does not yet require it.
+report bytes and estimate for runner completeness. New report scopes are admitted
+only as one complete, exact label set matching that approval record, and every new
+scope retains its approval-record ID. Bound packets emit V2 approval details.
+Historical unbound scope packets remain verifiable as V1, but the proposal runner
+rejects them rather than treating them as approved coverage.
 
 ### 5.3 Linked originals and visual evidence
 
@@ -350,8 +354,10 @@ exception messages, report content, and secrets remain suppressed.
 **Priority 2 - Bounded report-assessment runner (implemented locally).** The
 runner requires exact project, estimate, report SHA, package/profile, and an
 approved expected-label manifest record bound to the report bytes and estimate.
-It loads that record after the clean-byte check and before documentary-context
-preparation or any injected no-tool port call. It emits exactly one proposal-only
+It loads that record after the clean-byte check, then requires every selected
+scope packet to be V2 and tied to that exact approval record before
+documentary-context preparation or any injected no-tool port call. New scope
+batches consume the complete approved label set atomically. It emits exactly one
 outcome per expected label. Its V2 completion receipt binds the approval record
 ID, hash, and reference as well as the expected-label manifest, controller
 receipts, full Phase 8 review, proposal when present, report packet, review, and Markdown.

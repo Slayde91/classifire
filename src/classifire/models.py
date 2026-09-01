@@ -370,12 +370,19 @@ class ReportDefectScope(RecordMixin, Base):
             name='uq_report_defect_scope_report_defect',
         ),
         Index('ix_report_defect_scope_defect_id', 'defect_id'),
+        Index(
+            'ix_report_defect_scope_expected_label_manifest_id',
+            'approved_expected_label_manifest_id',
+        ),
     )
 
     project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
     source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     defect_id: Mapped[str] = mapped_column(ForeignKey('defects.id'), nullable=False)
     report_defect_label: Mapped[str] = mapped_column(String(150), nullable=False)
+    approved_expected_label_manifest_id: Mapped[str | None] = mapped_column(
+        ForeignKey('report_expected_label_manifests.id')
+    )
     start_locator_id: Mapped[str] = mapped_column(String(36), nullable=False)
     end_locator_id: Mapped[str] = mapped_column(String(36), nullable=False)
 

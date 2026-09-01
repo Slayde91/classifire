@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 import unicodedata
+from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
@@ -37,10 +38,16 @@ from .project_evidence import (
     read_project_evidence_for_update,
     require_project_evidence_access,
 )
+from .report_expected_label_manifest import (
+    ApprovedReportExpectedLabelManifest,
+    ReportExpectedLabelManifestError,
+    require_approved_report_expected_label_manifest,
+)
 from .storage import VerifiedStoredFileContent
 
 REPORT_EVIDENCE_LOCATOR_SCHEMA = 'CLASSIFIRE-REPORT-EVIDENCE-LOCATORS-v1'
 REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA = 'CLASSIFIRE-REPORT-DEFECT-EVIDENCE-PACKET-v1'
+REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2 = 'CLASSIFIRE-REPORT-DEFECT-EVIDENCE-PACKET-v2'
 _PDF_MEDIA_TYPE = 'application/pdf'
 _HEX_SHA256 = frozenset('0123456789abcdef')
 _ITEM_KIND_ORDER = {
@@ -114,6 +121,15 @@ class NormalisedReportEvidence:
                 for item in self.locators
             ],
         }
+
+@dataclass(frozen=True, slots=True)
+class ReportDefectScopeBinding:
+    '''One proposed report range admitted only as part of an approved label set.'''
+
+    defect_id: str
+    report_defect_label: str
+    start_locator_key: str
+    end_locator_key: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -898,7 +914,7 @@ def validate_report_defect_evidence_packet(packet: object) -> list[str]:
     manifest = packet.manifest
     if not isinstance(manifest, dict):
         return ['report defect evidence manifest must be an object']
-    expected = {
+    legacy_expected = {
         'schema',
         'project_evidence_id',
         'report_sha256',
@@ -912,10 +928,24 @@ def validate_report_defect_evidence_packet(packet: object) -> list[str]:
         'end_locator_key',
         'artifacts',
     }
+    schema = manifest.get('schema')
+    if schema == REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA:
+        expected = legacy_expected
+    elif schema == REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2:
+        expected = legacy_expected | {
+            'approved_expected_label_manifest_id',
+            'approved_expected_label_manifest_sha256',
+            'approved_expected_label_manifest_approval_reference',
+        }
+    else:
+        expected = set()
     errors: list[str] = []
     if set(manifest) != expected:
         errors.append('report defect evidence manifest fields are unsupported')
-    if manifest.get('schema') != REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA:
+    if schema not in {
+        REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA,
+        REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2,
+    }:
         errors.append('report defect evidence manifest schema is unsupported')
     for field, maximum in (
         ('project_evidence_id', 36),
@@ -936,6 +966,22 @@ def validate_report_defect_evidence_packet(packet: object) -> list[str]:
         errors.append('report defect evidence manifest report_sha256 is invalid')
     if not _positive_integer(manifest.get('source_size_bytes')):
         errors.append('report defect evidence manifest source_size_bytes is invalid')
+    if schema == REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2:
+        for field, maximum in (
+            ('approved_expected_label_manifest_id', 36),
+            ('approved_expected_label_manifest_approval_reference', 500),
+        ):
+            value = manifest.get(field)
+            if not isinstance(value, str) or not value.strip() or len(value) > maximum:
+                errors.append(f'report defect evidence manifest {field} is invalid')
+        approval_hash = manifest.get('approved_expected_label_manifest_sha256')
+        if (
+            not isinstance(approval_hash, str)
+            or len(approval_hash) != 64
+            or approval_hash != approval_hash.upper()
+            or any(character not in _HEX_SHA256 for character in approval_hash.casefold())
+        ):
+            errors.append('report defect evidence manifest approval hash is invalid')
     artifacts = manifest.get('artifacts')
     if not isinstance(artifacts, list) or not artifacts or len(artifacts) > _MAX_REPORT_LOCATORS:
         return [*errors, 'report defect evidence manifest artifacts are invalid']
@@ -1012,10 +1058,44 @@ def validate_report_defect_evidence_packet(packet: object) -> list[str]:
     return list(dict.fromkeys(errors))
 
 
+def _scope_admission_packet_binding(
+    db: Session,
+    *,
+    project_id: str,
+    stored_file_id: str,
+    evidence: ProjectEvidence,
+    estimate_id: str,
+    scope: ReportDefectScope,
+) -> dict[str, str]:
+    manifest_id = scope.approved_expected_label_manifest_id
+    if manifest_id is None:
+        return {}
+    try:
+        approved = require_approved_report_expected_label_manifest(
+            db,
+            expected_label_manifest_id=manifest_id,
+            project_id=project_id,
+            estimate_id=estimate_id,
+            stored_file_id=stored_file_id,
+            report_sha256=evidence.source_sha256,
+        )
+    except ReportExpectedLabelManifestError as exc:
+        raise ReportEvidenceAdapterError('REPORT_EVIDENCE_SCOPE_BINDING_INVALID') from exc
+    if scope.report_defect_label not in approved.expected_report_defect_labels:
+        _fail('REPORT_EVIDENCE_SCOPE_BINDING_INVALID')
+    return {
+        'approved_expected_label_manifest_id': approved.id,
+        'approved_expected_label_manifest_sha256': approved.manifest_sha256,
+        'approved_expected_label_manifest_approval_reference': approved.approval_reference,
+    }
+
+
 def _build_report_defect_evidence_packet(
     db: Session,
     *,
     evidence: ProjectEvidence,
+    project_id: str,
+    stored_file_id: str,
     estimate_id: str,
     defect: Defect,
     scope: ReportDefectScope,
@@ -1023,6 +1103,15 @@ def _build_report_defect_evidence_packet(
     if scope.source_sha256 != evidence.source_sha256:
         _fail('REPORT_EVIDENCE_SCOPE_BINDING_INVALID')
     records = _scope_locator_records(db, evidence=evidence, scope=scope)
+    admission_binding = _scope_admission_packet_binding(
+        db,
+        project_id=project_id,
+        stored_file_id=stored_file_id,
+        evidence=evidence,
+        estimate_id=estimate_id,
+        scope=scope,
+    )
+
     artifacts: list[dict[str, Any]] = []
     previous_sequence: int | None = None
     for record in records:
@@ -1035,7 +1124,11 @@ def _build_report_defect_evidence_packet(
         )
         previous_sequence = record.sequence
     manifest = {
-        'schema': REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA,
+        'schema': (
+            REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2
+            if admission_binding
+            else REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA
+        ),
         'project_evidence_id': evidence.id,
         'report_sha256': evidence.source_sha256,
         'source_size_bytes': evidence.source_size_bytes,
@@ -1048,6 +1141,7 @@ def _build_report_defect_evidence_packet(
         'end_locator_key': records[-1].locator_key,
         'artifacts': artifacts,
     }
+    manifest.update(admission_binding)
     packet = ReportDefectEvidencePacket(
         manifest=manifest,
         manifest_sha256=canonical_json_sha256(manifest),
@@ -1092,6 +1186,8 @@ def build_report_defect_evidence_packet(
     return _build_report_defect_evidence_packet(
         db,
         evidence=evidence,
+        project_id=project_id,
+        stored_file_id=stored_file_id,
         estimate_id=estimate_id,
         defect=defect,
         scope=scope,
@@ -1137,6 +1233,8 @@ def build_report_defect_evidence_packets(
         _build_report_defect_evidence_packet(
             db,
             evidence=evidence,
+            project_id=project_id,
+            stored_file_id=stored_file_id,
             estimate_id=estimate_id,
             defect=defect,
             scope=scope,
@@ -1171,7 +1269,7 @@ def validate_report_defect_v2_proposal(
     )
 
 
-def bind_report_defect_scope(
+def _bind_report_defect_scope(
     db: Session,
     *,
     stored_file_id: str,
@@ -1181,6 +1279,7 @@ def bind_report_defect_scope(
     report_defect_label: str,
     start_locator_key: str,
     end_locator_key: str,
+    approved_expected_label_manifest_id: str,
 ) -> ReportDefectScope:
     '''Bind one ordered locator range to an existing Defect without model writes.'''
 
@@ -1200,6 +1299,11 @@ def bind_report_defect_scope(
         end_locator_key,
         code='REPORT_EVIDENCE_RANGE_INVALID',
         maximum=300,
+    )
+    approved_expected_label_manifest_id = _required_text(
+        approved_expected_label_manifest_id,
+        code='REPORT_EVIDENCE_EXPECTED_LABEL_MANIFEST_INVALID',
+        maximum=36,
     )
     evidence = _report_owner(
         db,
@@ -1243,6 +1347,7 @@ def bind_report_defect_scope(
             and existing.report_defect_label == report_defect_label
             and existing.start_locator_id == start.id
             and existing.end_locator_id == end.id
+            and existing.approved_expected_label_manifest_id == approved_expected_label_manifest_id
         ):
             return existing
         _fail('REPORT_EVIDENCE_DEFECT_SCOPE_CONFLICT')
@@ -1251,6 +1356,7 @@ def bind_report_defect_scope(
         source_sha256=evidence.source_sha256,
         defect_id=defect.id,
         report_defect_label=report_defect_label,
+        approved_expected_label_manifest_id=approved_expected_label_manifest_id,
         start_locator_id=start.id,
         end_locator_id=end.id,
     )
@@ -1263,6 +1369,155 @@ def bind_report_defect_scope(
     return scope
 
 
+def _normalised_scope_bindings(value: object) -> tuple[ReportDefectScopeBinding, ...]:
+    if isinstance(value, (bytes, str)) or not isinstance(value, Sequence):
+        _fail('REPORT_EVIDENCE_SCOPE_ADMISSION_INVALID')
+    raw_bindings = tuple(value)
+    if not raw_bindings or len(raw_bindings) > _MAX_REPORT_LOCATORS:
+        _fail('REPORT_EVIDENCE_SCOPE_ADMISSION_INVALID')
+    bindings: list[ReportDefectScopeBinding] = []
+    label_keys: set[str] = set()
+    defect_ids: set[str] = set()
+    for value in raw_bindings:
+        if not isinstance(value, ReportDefectScopeBinding):
+            _fail('REPORT_EVIDENCE_SCOPE_ADMISSION_INVALID')
+        defect_id = _required_text(
+            value.defect_id,
+            code='REPORT_EVIDENCE_DEFECT_INVALID',
+            maximum=36,
+        )
+        label = _required_text(
+            value.report_defect_label,
+            code='REPORT_EVIDENCE_DEFECT_LABEL_INVALID',
+            maximum=_MAX_REPORT_LABEL,
+        )
+        start_locator_key = _required_text(
+            value.start_locator_key,
+            code='REPORT_EVIDENCE_RANGE_INVALID',
+            maximum=300,
+        )
+        end_locator_key = _required_text(
+            value.end_locator_key,
+            code='REPORT_EVIDENCE_RANGE_INVALID',
+            maximum=300,
+        )
+        label_key = label.casefold()
+        if label_key in label_keys or defect_id in defect_ids:
+            _fail('REPORT_EVIDENCE_SCOPE_ADMISSION_INVALID')
+        label_keys.add(label_key)
+        defect_ids.add(defect_id)
+        bindings.append(
+            ReportDefectScopeBinding(
+                defect_id=defect_id,
+                report_defect_label=label,
+                start_locator_key=start_locator_key,
+                end_locator_key=end_locator_key,
+            )
+        )
+    return tuple(sorted(bindings, key=lambda binding: binding.report_defect_label.casefold()))
+
+
+def _approved_scope_manifest(
+    db: Session,
+    *,
+    expected_label_manifest_id: object,
+    project_id: str,
+    estimate_id: str,
+    stored_file_id: str,
+    evidence: ProjectEvidence,
+    bindings: tuple[ReportDefectScopeBinding, ...],
+) -> ApprovedReportExpectedLabelManifest:
+    try:
+        approved = require_approved_report_expected_label_manifest(
+            db,
+            expected_label_manifest_id=expected_label_manifest_id,
+            project_id=project_id,
+            estimate_id=estimate_id,
+            stored_file_id=stored_file_id,
+            report_sha256=evidence.source_sha256,
+        )
+    except ReportExpectedLabelManifestError as exc:
+        raise ReportEvidenceAdapterError(
+            'REPORT_EVIDENCE_EXPECTED_LABEL_MANIFEST_INVALID'
+        ) from exc
+    if tuple(binding.report_defect_label for binding in bindings) != (
+        approved.expected_report_defect_labels
+    ):
+        _fail('REPORT_EVIDENCE_EXPECTED_LABELS_MISMATCH')
+    return approved
+
+
+def bind_approved_report_defect_scopes(
+    db: Session,
+    *,
+    stored_file_id: object,
+    project_id: object,
+    estimate_id: object,
+    expected_label_manifest_id: object,
+    scope_bindings: object,
+) -> tuple[ReportDefectScope, ...]:
+    '''Atomically admit every scope from one source-bound approved label set.'''
+
+    stored_file = _required_text(
+        stored_file_id,
+        code='REPORT_EVIDENCE_STORED_FILE_INVALID',
+        maximum=36,
+    )
+    project = _required_text(project_id, code='REPORT_EVIDENCE_PROJECT_INVALID', maximum=36)
+    estimate = _required_text(estimate_id, code='REPORT_EVIDENCE_ESTIMATE_INVALID', maximum=36)
+    bindings = _normalised_scope_bindings(scope_bindings)
+    evidence = _report_owner(
+        db,
+        stored_file_id=stored_file,
+        project_id=project,
+        estimate_id=estimate,
+    )
+    approved = _approved_scope_manifest(
+        db,
+        expected_label_manifest_id=expected_label_manifest_id,
+        project_id=project,
+        estimate_id=estimate,
+        stored_file_id=stored_file,
+        evidence=evidence,
+        bindings=bindings,
+    )
+    existing = tuple(
+        db.scalars(
+            select(ReportDefectScope).where(
+                ReportDefectScope.project_evidence_id == evidence.id
+            )
+        ).all()
+    )
+    binding_defect_ids = {binding.defect_id for binding in bindings}
+    if existing and (
+        len(existing) != len(bindings)
+        or {scope.defect_id for scope in existing} != binding_defect_ids
+        or any(
+            scope.approved_expected_label_manifest_id != approved.id for scope in existing
+        )
+    ):
+        _fail('REPORT_EVIDENCE_DEFECT_SCOPE_CONFLICT')
+    try:
+        with db.begin_nested():
+            scopes = tuple(
+                _bind_report_defect_scope(
+                    db,
+                    stored_file_id=stored_file,
+                    project_id=project,
+                    estimate_id=estimate,
+                    defect_id=binding.defect_id,
+                    report_defect_label=binding.report_defect_label,
+                    start_locator_key=binding.start_locator_key,
+                    end_locator_key=binding.end_locator_key,
+                    approved_expected_label_manifest_id=approved.id,
+                )
+                for binding in bindings
+            )
+    except IntegrityError:
+        _fail('REPORT_EVIDENCE_DEFECT_SCOPE_CONFLICT')
+    return scopes
+
+
 __all__ = [
     'NormalisedReportEvidence',
     'REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA',
@@ -1270,7 +1525,8 @@ __all__ = [
     'ReportDefectEvidencePacket',
     'ReportEvidenceAdapterError',
     'ReportEvidenceLocatorItem',
-    'bind_report_defect_scope',
+    'ReportDefectScopeBinding',
+    'bind_approved_report_defect_scopes',
     'build_report_defect_evidence_packet',
     'build_report_defect_evidence_packets',
     'materialise_project_report_locators_for_update',

@@ -46,6 +46,7 @@ from .phase8_report_runtime_input import (
 from .phase8_visual_proposal import validate_visual_inference_profile
 from .project_evidence import read_project_evidence_for_update
 from .report_evidence_adapter import (
+    REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2,
     ReportDefectEvidencePacket,
     build_report_defect_evidence_packets,
 )
@@ -411,6 +412,18 @@ def execute_phase8_report_assessment_runner(
         report_sha256=expected_sha,
         expected_labels=expected_labels,
     )
+    for packet in packets_by_label.values():
+        manifest = packet.manifest
+        if (
+            manifest.get('schema') != REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2
+            or manifest.get('approved_expected_label_manifest_id')
+            != approved_expected_label_manifest.id
+            or manifest.get('approved_expected_label_manifest_sha256')
+            != approved_expected_label_manifest.manifest_sha256
+            or manifest.get('approved_expected_label_manifest_approval_reference')
+            != approved_expected_label_manifest.approval_reference
+        ):
+            _fail('REPORT_RUNNER_EXPECTED_LABEL_MANIFEST_INVALID')
     expected_label_manifest_file_bytes = _expected_label_manifest_bytes(
         packets_by_label=packets_by_label,
         package_id=package_identifier,

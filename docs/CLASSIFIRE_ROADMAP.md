@@ -156,15 +156,19 @@ operator flow with a fake-transport preflight.
 
 **Required contract:** exact project, estimate, report SHA, package/policy/
 profile, and a persisted human-approved expected Defect-label manifest bound to
-report evidence/source SHA and estimate; atomic clean-byte trust held through
-context consumption; one deterministic outcome per expected label; completion
-receipt over every preceding artifact; no technical, pricing, canonical, lock, deployment, or release capability.
+report evidence/source SHA and estimate; every new scope batch atomically admits
+the complete exact approved label set and retains that approval record; V2 scope
+packets and the completion receipt bind the approval ID, SHA, and reference;
+atomic clean-byte trust held through context consumption; one deterministic
+outcome per expected label; no technical, pricing, canonical, lock, deployment,
+or release capability.
 
 **Acceptance criteria:**
 
 - cross-project, hash, locator, label, profile, and byte drift fail before a
   provider call;
-- omitted expected labels are detected;
+- omitted, duplicate, foreign, or mismatched expected labels are rejected before
+  scope admission;
 - retrieval-blocked, malformed, insufficient-evidence, transport-failed, and
   successful fake results each produce exactly one safe outcome;
 - drawing/image locator-only and separately governed visual-byte semantics are
@@ -175,11 +179,12 @@ receipt over every preceding artifact; no technical, pricing, canonical, lock, d
 
 Current branch progress: `execute_phase8_report_assessment_runner()` composes the
 contained report reader, packets, documentary contexts, retained visual packets,
-report-aware controller, proposal review, and deterministic package. It loads the
-persisted approved expected-label record after its clean-byte check, preflights
-all scopes before an injected fake port, and emits a V2 receipt artifact bound to
-that record. The full offline suite, focused static checks, Alembic head, and the
-dedicated two-session containment race pass locally.
+report-aware controller, proposal review, and deterministic package. It admits
+new scopes only from the complete approved expected-label record, retains that
+binding, then loads the same record after its clean-byte check and preflights V2
+scope packets before an injected fake port. It emits a V2 receipt artifact bound
+to that record. The full offline suite, focused static checks, Alembic head, and
+the dedicated two-session containment race pass locally.
 Fresh shared CI and any real-provider run remain required gates; no downstream
 authority was added.
 
@@ -291,9 +296,9 @@ Project/Estimate ownership, exact clean-byte reads, shared-byte quarantine,
 PDF text/table/annotation and drawing/image locators, ordered scopes, report-
 aware inputs, and deterministic review artifacts.
 
-**Remaining:** scope-admission enforcement of the approved expected-label record,
-caption/multi-format support, multi-report evidence-family accuracy, retention/
-redaction/deletion policy, and user review.
+**Remaining:** legacy-scope transition or retirement, caption/multi-format
+support, multi-report evidence-family accuracy, retention/redaction/deletion
+policy, and user review.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -434,7 +439,7 @@ import them into the active fire-seal/penetration runtime prematurely.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
 - Building the report adapter as future work; its components are merged, while
-  operator composition and scope-admission proof remain.
+  operator composition and legacy-scope transition remain.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.
 - Count equality, whole-file database hashing, or a model answer as semantic

@@ -48,7 +48,8 @@ from classifire.services.phase8_report_review_package import (
 )
 from classifire.services.phase8_visual_evidence import RetainedVisualEvidencePacket
 from classifire.services.report_evidence_adapter import (
-    bind_report_defect_scope,
+    ReportDefectScopeBinding,
+    bind_approved_report_defect_scopes,
     normalise_verified_pdf_report,
 )
 from classifire.services.report_expected_label_manifest import (
@@ -110,7 +111,7 @@ def _scoped_report(db: Session) -> tuple[object, object, object, object]:
     estimate = _estimate(db, project, 901)
     stored = _bound_report(db, project, content)
     reviewer = _reviewer(db)
-    record_approved_report_expected_label_manifest(
+    approved_manifest = record_approved_report_expected_label_manifest(
         db,
         project_id=project.id,
         estimate_id=estimate.id,
@@ -129,15 +130,20 @@ def _scoped_report(db: Session) -> tuple[object, object, object, object]:
         report=normalise_verified_pdf_report(content),
     )
     page_locators = tuple(locator for locator in locators if locator.page_number == 1)
-    bind_report_defect_scope(
+    bind_approved_report_defect_scopes(
         db,
         stored_file_id=stored.id,
         project_id=project.id,
         estimate_id=estimate.id,
-        defect_id=defect.id,
-        report_defect_label="D-001",
-        start_locator_key=page_locators[0].locator_key,
-        end_locator_key=page_locators[-1].locator_key,
+        expected_label_manifest_id=approved_manifest.id,
+        scope_bindings=(
+            ReportDefectScopeBinding(
+                defect_id=defect.id,
+                report_defect_label="D-001",
+                start_locator_key=page_locators[0].locator_key,
+                end_locator_key=page_locators[-1].locator_key,
+            ),
+        ),
     )
     return project, estimate, stored, content
 
@@ -431,6 +437,56 @@ def test_runner_emits_one_safe_outcome_for_each_synthetic_case(
                 "visual-controller-receipts/0001.json"
             ].decode("utf-8")
             assert "GATEWAY_TIMEOUT" in controller_receipt
+
+def test_runner_rejects_a_scope_admitted_under_a_different_manifest_before_port(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with adapter_session() as db:
+        project, estimate, stored, content = _scoped_report(db)
+        original = db.scalar(
+            select(ReportExpectedLabelManifest).where(
+                ReportExpectedLabelManifest.estimate_id == estimate.id
+            )
+        )
+        assert isinstance(original, ReportExpectedLabelManifest)
+        alternate = record_approved_report_expected_label_manifest(
+            db,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            stored_file_id=stored.id,
+            report_sha256=content.sha256,
+            expected_report_defect_labels=['D-001'],
+            approval_reference='synthetic alternate expected-label approval',
+            approved_by_user_id=original.approved_by_user_id,
+        )
+        calls = 0
+
+        monkeypatch.setattr(
+            runner_module,
+            'read_project_evidence_for_update',
+            lambda *_args, **_kwargs: content,
+        )
+
+        def factory(_runtime: object) -> _ReportPort:
+            nonlocal calls
+            calls += 1
+            return _ReportPort(_proposal())
+
+        with pytest.raises(Phase8ReportAssessmentRunnerError) as raised:
+            _run(
+                db,
+                project=project,
+                estimate=estimate,
+                stored=stored,
+                content=content,
+                visual_packets={'D-001': _visual_packet(estimate_id=estimate.id)},
+                factory=factory,
+                approved_expected_label_manifest_id=alternate.id,
+            )
+
+        assert raised.value.code == 'REPORT_RUNNER_EXPECTED_LABEL_MANIFEST_INVALID'
+        assert calls == 0
+
 
 
 def test_runner_rejects_hash_label_profile_and_locator_drift_before_port_invocation(

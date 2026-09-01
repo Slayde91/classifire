@@ -4,7 +4,11 @@ from dataclasses import replace
 
 import pytest
 from sqlalchemy import func, select
-from test_report_evidence_adapter import _defect, _scoped_report_packet, adapter_session
+from test_report_evidence_adapter import (
+    _multi_scoped_report_packet,
+    _scoped_report_packet,
+    adapter_session,
+)
 
 from classifire.models import Opening, ReportDefectScope, Service
 from classifire.services.canonical_submission_state import initial_submission_state
@@ -16,23 +20,15 @@ from classifire.services.phase8_report_review_package import (
     ReportDefectReviewOutcome,
     validate_phase8_report_review_package,
 )
-from classifire.services.report_evidence_adapter import bind_report_defect_scope
 
 
 def test_controller_selects_every_owned_scope_and_proves_no_write() -> None:
     with adapter_session() as db:
-        project, estimate, stored, first_defect, records = _scoped_report_packet(db, ordinal=51)
-        second_defect = _defect(db, estimate, reference='D-002')
-        page_records = tuple(record for record in records if record.page_number == 1)
-        second_scope = bind_report_defect_scope(
-            db,
-            stored_file_id=stored.id,
-            project_id=project.id,
-            estimate_id=estimate.id,
-            defect_id=second_defect.id,
-            report_defect_label='D-002',
-            start_locator_key=page_records[0].locator_key,
-            end_locator_key=page_records[-1].locator_key,
+        project, estimate, stored, first_defect, second_defect, _records, admitted_scopes = (
+            _multi_scoped_report_packet(db, ordinal=51)
+        )
+        second_scope = next(
+            scope for scope in admitted_scopes if scope.defect_id == second_defect.id
         )
 
         state = initial_submission_state(db, estimate_id=estimate.id)
@@ -178,18 +174,8 @@ def test_controller_rejects_a_wrong_report_hash_before_package_assembly() -> Non
 
 def test_controller_rejects_missing_or_duplicate_expected_labels() -> None:
     with adapter_session() as db:
-        project, estimate, stored, _first_defect, records = _scoped_report_packet(db, ordinal=54)
-        second_defect = _defect(db, estimate, reference='D-002')
-        page_records = tuple(record for record in records if record.page_number == 1)
-        bind_report_defect_scope(
-            db,
-            stored_file_id=stored.id,
-            project_id=project.id,
-            estimate_id=estimate.id,
-            defect_id=second_defect.id,
-            report_defect_label='D-002',
-            start_locator_key=page_records[0].locator_key,
-            end_locator_key=page_records[-1].locator_key,
+        project, estimate, stored, _first_defect, _second_defect, _records, _scopes = (
+            _multi_scoped_report_packet(db, ordinal=54)
         )
 
         with pytest.raises(Phase8ReportReviewControllerError) as omitted:

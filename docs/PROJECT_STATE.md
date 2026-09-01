@@ -85,8 +85,8 @@ The current packaged migration lineage has one head:
 | Area | Evidence-backed limit |
 | --- | --- |
 | Desk-quote evidence/output safety | The resolver trusts stored metadata, accepts `not_configured`, does not open/re-hash bytes through the atomic PostgreSQL reader, and does not match caller locator text to persisted page/region or report-locator data. Cached exports are reused without re-hashing their bytes, and the audit records the snapshot hash rather than the artifact hash. Current tests use metadata-only nonexistent file paths. |
-| Report assessment operation | The current branch has one proposal-only application service. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a recorded human-approved expected-label manifest bound to the report bytes and estimate; it validates every documentary scope before calling an injected no-tool port. Its V2 package receipt binds the approved-manifest ID, hash, and approval reference as well as controller receipts, the full Phase 8 review, proposal when present, report packet, review, and Markdown. There is still no CLI, API, UI, or real-provider run. |
-| Report completeness | The runner rejects a selected scope that differs from the recorded approved expected-label set before any port call. Its receipt binds that record, but database scope creation does not yet require the record, so it is not proof that an approved report register created every intended label. |
+| Report assessment operation | The current branch has one proposal-only application service. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a recorded human-approved expected-label manifest bound to the report bytes and estimate; new report scopes are admitted only as the complete matching set. It validates the same approval binding on every V2 scope packet before calling an injected no-tool port. Its V2 package receipt binds the approval record, controller receipts, full Phase 8 review, proposal when present, report packet, review, and Markdown. There is still no CLI, API, UI, or real-provider run. |
+| Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. The runner rejects legacy V1/unbound scope packets or a different approval record before any port call. Historical V1 packets remain verifiable. |
 | Report formats and content | Normalisation is PDF-only. Text, page, table, and annotation content are supported. Drawings and embedded images are locator/hash records with no documentary payload; visual bytes come through a separate governed packet. Caption extraction is explicitly rejected. XLSX, DOCX, and multi-report generalisation are not implemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
 | Technical authority | Important fail-closed review, activation, source-integrity, import, and release checks exist. Full governed technical intake, materialisation, source-lineage publication, supersession, and production authority remain incomplete. |
@@ -130,7 +130,7 @@ run has been consumed and must not be repeated without new authority.
 | 2. Governed libraries | **In progress** | Narrow technical and pricing-release safeguards exist; full intake/publication governance remains. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe future receipt codes exist; operational report orchestration remains incomplete. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
-| 5. Evidence intake/resolution | **In progress** | PDF report services and runner-side expected-label approval exist; scope-admission linkage, caption/multi-format support, and an operator flow remain. |
+| 5. Evidence intake/resolution | **In progress** | PDF report services, atomic expected-label scope admission, and runner verification exist; legacy-scope transition, caption/multi-format support, and an operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
@@ -221,8 +221,8 @@ receipts, full Phase 8 review, proposal when present, packet, report review, and
 Markdown. No report, provider, OpenClaw, canonical, technical, commercial, lock,
 deployment, or release action was used for this implementation or its synthetic tests.
 
-The runner now requires a persisted approval record, but database scope admission
-does not yet consume it, and there is no CLI, API, or UI operator surface.
+New scope admission now consumes one complete persisted approval record and retains it
+on every scope; historical unbound scopes remain readable only outside the proposal runner. There is no CLI, API, or UI operator surface.
 
 **Dependencies:** Priority 1; an explicit package/expected-label contract;
 PostgreSQL for the atomic clean-byte transaction; fake transport for normal

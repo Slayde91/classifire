@@ -76,7 +76,9 @@ credentials, and report content. Historical receipts remain valid and type-only.
 `execute_phase8_report_assessment_runner()` requires exact project, estimate,
 retained-report SHA, package/profile, and a persisted human-approved expected-label
 manifest record bound to report evidence/source SHA and estimate. It loads that
-record after the existing PostgreSQL clean-byte check and before all documentary
+record after the existing PostgreSQL clean-byte check. New scopes are admitted
+only as the complete approved label set and retain its ID; the runner requires
+each selected packet to carry the same V2 approval binding before all documentary
 context work and injected no-tool port calls. It produces one deterministic
 proposal-only review per expected label and a V2 completion receipt that binds the
 manifest ID, deterministic hash, and approval reference with controller receipts,
@@ -135,7 +137,9 @@ CLI, API, script, or application service composes the whole sequence.
 PDF text, table, and annotation content are supported. Drawings and embedded
 images are locator/hash-only in documentary context, with visual bytes supplied
 separately. Captions are rejected and not extracted. The persisted approval record
-protects runner completeness, but database scope creation does not yet require it.
+now protects scope admission as well as runner completeness. Historical unbound
+scopes remain readable for historical receipt verification but are rejected by the
+proposal runner until a separately designed transition is implemented.
 
 ### Latest controlled attempt
 
