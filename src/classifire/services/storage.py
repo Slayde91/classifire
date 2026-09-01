@@ -323,6 +323,49 @@ def _read_verified_retained_bytes(context: _StoredFileReadContext) -> tuple[byte
             pass
 
 
+def read_hashed_storage_artifact(
+    *,
+    storage_root: Path,
+    path: Path,
+) -> VerifiedStoredFileContent:
+    '''Read one regular storage artifact safely and return its exact bytes and hash.
+
+    This is for generated artifacts that do not have a StoredFile row.  It uses
+    the same root, link/reparse-point, and stable-during-read safeguards as a
+    retained source file, but records the observed byte identity rather than
+    comparing it with a database binding.
+    '''
+
+    raw_root, root = _absolute_lexical(storage_root)
+    if raw_root != root:
+        raise _binding_error('STORAGE_ROOT_INVALID')
+    _require_safe_storage_root(root)
+    raw_path, resolved_path = _absolute_lexical(path)
+    if raw_path != resolved_path:
+        raise _binding_error('STORED_FILE_PATH_INVALID')
+    try:
+        resolved_path.relative_to(root)
+    except ValueError:
+        raise _binding_error('STORED_FILE_PATH_OUTSIDE_ROOT') from None
+    initial = _require_safe_retained_path(root, resolved_path)
+    if initial.st_size < 1:
+        raise _binding_error('STORAGE_ARTIFACT_EMPTY')
+    context = _StoredFileReadContext(
+        root=root,
+        path=resolved_path,
+        initial=initial,
+        sha256='',
+        size_bytes=initial.st_size,
+    )
+    content, sha256, size_bytes = _read_verified_retained_bytes(context)
+    return VerifiedStoredFileContent(
+        sha256=sha256,
+        size_bytes=size_bytes,
+        media_type=None,
+        content=content,
+    )
+
+
 def read_verified_stored_file(
     stored: StoredFile,
     *,

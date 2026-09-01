@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import hashlib
-import json
-from datetime import datetime, timezone
-from decimal import Decimal
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, TypeGuard
 
 from fastapi import (
     APIRouter,
@@ -18,7 +15,7 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -26,6 +23,7 @@ from ..audit import record_audit
 from ..config import Settings, get_settings
 from ..db import get_db
 from ..models import (
+    AuditEvent,
     ChangeProposal,
     Estimate,
     EstimateLine,
@@ -37,9 +35,7 @@ from ..models import (
     Project,
     RuleEvaluation,
     Service,
-    StoredFile,
     TechnicalDocument,
-    TechnicalVariant,
     User,
 )
 from ..outputs import (
@@ -68,7 +64,7 @@ from ..schemas import (
     TechnicalVariantSearch,
 )
 from ..security import get_current_user, require_permission
-from ..services.calculation import D, calculate_estimate_line, recalculate_estimate
+from ..services.calculation import calculate_estimate_line, recalculate_estimate
 from ..services.desk_quote import (
     DeskQuoteError,
     DeskQuoteProposal,
@@ -87,7 +83,7 @@ from ..services.physical_mutation_guard import (
 )
 from ..services.rule_engine import evaluate_estimate_rules
 from ..services.snapshot import lock_snapshot
-from ..services.storage import save_upload
+from ..services.storage import StoredFileBindingError, read_hashed_storage_artifact, save_upload
 from ..services.technical import extract_pdf_candidate_metadata, search_for_opening, search_variants
 from ..services.workflow import WorkflowAction, WorkflowTransitionError
 from ..services.workflow_guard import (
@@ -117,7 +113,7 @@ def health(db: Db, settings: Annotated[Settings, Depends(get_settings)]) -> dict
         "version": "0.1.0",
         "environment": settings.env,
         "production_findings": settings.validate_production(),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 
@@ -178,7 +174,12 @@ def revise_product(
     user: Annotated[User, Depends(require_permission("pricing:write"))],
 ) -> Product:
     previous: Product = _get_or_404(db, Product, product_id, "Product")
-    latest_revision = db.scalar(select(func.max(Product.revision)).where(Product.sku == previous.sku)) or 0
+    latest_revision = (
+        db.scalar(
+            select(func.max(Product.revision)).where(Product.sku == previous.sku)
+        )
+        or 0
+    )
     revision = Product(
         **payload.model_dump(),
         sku=previous.sku,
@@ -227,7 +228,10 @@ def create_labour(
     user: Annotated[User, Depends(require_permission("pricing:write"))],
 ) -> LabourComponent:
     existing = db.scalar(
-        select(LabourComponent).where(LabourComponent.code == payload.code, LabourComponent.revision == 1)
+        select(LabourComponent).where(
+            LabourComponent.code == payload.code,
+            LabourComponent.revision == 1,
+        )
     )
     if existing:
         raise HTTPException(status_code=409, detail="Labour code already exists; create a revision")
@@ -311,7 +315,9 @@ def create_rule(
     user: Annotated[User, Depends(require_permission("rule:write"))],
 ) -> EstimatingRule:
     max_version = db.scalar(
-        select(func.max(EstimatingRule.version)).where(EstimatingRule.rule_code == payload.rule_code)
+        select(func.max(EstimatingRule.version)).where(
+            EstimatingRule.rule_code == payload.rule_code
+        )
     ) or 0
     rule = EstimatingRule(
         **payload.model_dump(),
@@ -351,7 +357,7 @@ def approve_rule(
     rule.status = "active"
     rule.reviewer_id = user.id
     rule.approver_id = user.id
-    rule.approved_at = datetime.now(timezone.utc)
+    rule.approved_at = datetime.now(UTC)
     record_audit(
         db,
         actor=user,
@@ -456,7 +462,10 @@ def upload_technical_document(
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    metadata: dict[str, Any] = {"human_review_required": True, "automatic_activation_permitted": False}
+    metadata: dict[str, Any] = {
+        "human_review_required": True,
+        "automatic_activation_permitted": False,
+    }
     if Path(stored.storage_path).suffix.lower() == ".pdf":
         try:
             metadata.update(extract_pdf_candidate_metadata(Path(stored.storage_path)))
@@ -544,7 +553,12 @@ def create_estimate(
     user: Annotated[User, Depends(require_permission("estimate:write"))],
 ) -> Estimate:
     project: Project = _get_or_404(db, Project, payload.project_id, "Project")
-    revision = db.scalar(select(func.max(Estimate.revision)).where(Estimate.project_id == project.id)) or 0
+    revision = (
+        db.scalar(
+            select(func.max(Estimate.revision)).where(Estimate.project_id == project.id)
+        )
+        or 0
+    )
     estimate = Estimate(**payload.model_dump(), revision=int(revision) + 1, status="draft")
     db.add(estimate)
     db.flush()
@@ -600,7 +614,10 @@ def add_opening(
         settings = get_settings()
     estimate = _load_estimate(db, estimate_id)
     if estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
+        raise HTTPException(
+            status_code=409,
+            detail="Locked or released estimates cannot be modified",
+        )
     try:
         require_physical_model_mutation(db, estimate)
         require_admission_bound_initial_canonicalisation(
@@ -647,7 +664,10 @@ def add_service(
 ) -> dict[str, Any]:
     opening: Opening = _get_or_404(db, Opening, opening_id, "Opening")
     if opening.estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
+        raise HTTPException(
+            status_code=409,
+            detail="Locked or released estimates cannot be modified",
+        )
     try:
         require_physical_model_mutation(db, opening.estimate)
     except (PhysicalMutationError, WorkflowTransitionError) as exc:
@@ -691,8 +711,18 @@ def add_line(
     except PhysicalModelLockRequiredError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     if estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot be modified")
-    next_number = (db.scalar(select(func.max(EstimateLine.line_number)).where(EstimateLine.estimate_id == estimate.id)) or 0) + 1
+        raise HTTPException(
+            status_code=409,
+            detail="Locked or released estimates cannot be modified",
+        )
+    next_number = (
+        db.scalar(
+            select(func.max(EstimateLine.line_number)).where(
+                EstimateLine.estimate_id == estimate.id
+            )
+        )
+        or 0
+    ) + 1
     line = EstimateLine(estimate_id=estimate.id, line_number=next_number, **payload.model_dump())
     db.add(line)
     db.flush()
@@ -705,7 +735,11 @@ def add_line(
         entity_type="estimate_line",
         entity_id=line.id,
         project_id=estimate.project_id,
-        new_value={**payload.model_dump(mode="json"), "applied_markup": str(line.applied_markup), "markup_source": line.markup_source},
+        new_value={
+            **payload.model_dump(mode="json"),
+            "applied_markup": str(line.applied_markup),
+            "markup_source": line.markup_source,
+        },
         source_ip=request.client.host if request.client else None,
     )
     db.commit()
@@ -731,7 +765,10 @@ def recalculate(
     except PhysicalModelLockRequiredError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     if estimate.status not in {"draft", "in_review"}:
-        raise HTTPException(status_code=409, detail="Locked or released estimates cannot be recalculated")
+        raise HTTPException(
+            status_code=409,
+            detail="Locked or released estimates cannot be recalculated",
+        )
     recalculate_estimate(db, estimate)
     record_audit(
         db,
@@ -807,7 +844,10 @@ def opening_technical_search(
     try:
         require_estimate_action(db, opening.estimate, WorkflowAction.SEARCH_TECHNICAL)
     except WorkflowTransitionError as exc:
-        raise HTTPException(status_code=409, detail={"action": "search_technical", "blockers": list(exc.blockers)}) from exc
+        raise HTTPException(
+            status_code=409,
+            detail={"action": "search_technical", "blockers": list(exc.blockers)},
+        ) from exc
     return search_for_opening(db, opening)
 
 
@@ -824,8 +864,14 @@ def lock_estimate(
         require_active_physical_model_lock(db, estimate)
     except PhysicalModelLockRequiredError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    evaluations = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)).all()
-    blocking = [item for item in evaluations if item.result == "BLOCKED" or item.severity == "blocking_error"]
+    evaluations = db.scalars(
+        select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)
+    ).all()
+    blocking = [
+        item
+        for item in evaluations
+        if item.result == "BLOCKED" or item.severity == "blocking_error"
+    ]
     if blocking:
         raise HTTPException(status_code=409, detail="Estimate has blocking rule results")
     snapshot = lock_snapshot(db, estimate)
@@ -863,10 +909,22 @@ def export_estimate(
     export_dir.mkdir(parents=True, exist_ok=True)
     safe_ref = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in estimate.reference)
     mapping = {
-        "technical-xlsx": (f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.xlsx", render_technical_workbook),
-        "proposal-xlsx": (f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.xlsx", render_proposal_workbook),
-        "technical-pdf": (f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.pdf", lambda s, p: render_estimate_pdf(s, p, proposal=False)),
-        "proposal-pdf": (f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.pdf", lambda s, p: render_estimate_pdf(s, p, proposal=True)),
+        "technical-xlsx": (
+            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.xlsx",
+            render_technical_workbook,
+        ),
+        "proposal-xlsx": (
+            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.xlsx",
+            render_proposal_workbook,
+        ),
+        "technical-pdf": (
+            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Technical_Estimate.pdf",
+            lambda snapshot, output: render_estimate_pdf(snapshot, output, proposal=False),
+        ),
+        "proposal-pdf": (
+            f"QUANTIFIRE_{safe_ref}_R{estimate.revision}_Proposal.pdf",
+            lambda snapshot, output: render_estimate_pdf(snapshot, output, proposal=True),
+        ),
     }
     if artifact_type not in mapping:
         raise HTTPException(status_code=404, detail="Unknown artifact type")
@@ -874,8 +932,66 @@ def export_estimate(
     path = export_dir / filename
     if not path.exists():
         renderer(estimate.snapshot_json, path)
-    media_type = "application/pdf" if path.suffix == ".pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    media_type = (
+        "application/pdf"
+        if path.suffix == ".pdf"
+        else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
     return FileResponse(path, filename=filename, media_type=media_type)
+
+
+def _is_sha256(value: object) -> TypeGuard[str]:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in '0123456789abcdef' for character in value.casefold())
+    )
+
+
+def _cached_desk_quote_artifact_binding(
+    db: Session,
+    *,
+    project_id: str,
+    snapshot_hash: str,
+    artifact_type: str,
+) -> tuple[str, int] | None:
+    events = db.scalars(
+        select(AuditEvent)
+        .where(
+            AuditEvent.action == 'render_desk_quote',
+            AuditEvent.entity_type == 'desk_quote',
+            AuditEvent.entity_id == snapshot_hash,
+            AuditEvent.project_id == project_id,
+        )
+        .order_by(AuditEvent.created_at.desc(), AuditEvent.id.desc())
+    ).all()
+    for event in events:
+        payload = event.new_value
+        if not isinstance(payload, dict) or payload.get('artifact_type') != artifact_type:
+            continue
+        sha256 = payload.get('artifact_sha256')
+        size_bytes = payload.get('artifact_size_bytes')
+        if _is_sha256(sha256) and isinstance(size_bytes, int) and size_bytes > 0:
+            return sha256.casefold(), size_bytes
+        return None
+    return None
+
+
+def _read_desk_quote_artifact(
+    *,
+    settings: Settings,
+    path: Path,
+    expected_binding: tuple[str, int] | None = None,
+):
+    try:
+        artifact = read_hashed_storage_artifact(storage_root=settings.storage_root, path=path)
+    except StoredFileBindingError as error:
+        raise DeskQuoteError(f'desk-quote export bytes cannot be verified: {error.code}') from error
+    if expected_binding is not None and (
+        artifact.sha256 != expected_binding[0] or artifact.size_bytes != expected_binding[1]
+    ):
+        raise DeskQuoteError('desk-quote cached export bytes do not match their audit binding')
+    return artifact
 
 
 @router.post("/desk-quotes/export/{artifact_type}")
@@ -886,15 +1002,9 @@ def export_desk_quote(
     db: Db,
     user: Annotated[User, Depends(require_permission("estimate:write"))],
     settings: Annotated[Settings, Depends(get_settings)],
-) -> FileResponse:
+) -> Response:
     """Render a source-linked desk quote without opening the canonical estimate path."""
 
-    try:
-        resolve_desk_quote_project_evidence(db, payload)
-        pricing_bindings = resolve_desk_quote_pricing_bindings(db, payload)
-        snapshot = build_desk_quote_snapshot(payload, pricing_bindings=pricing_bindings)
-    except DeskQuoteError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
     mapping = {
         "desk-quote-xlsx": (
             f"CLASSIFIRE_{payload.quote_reference}_Desk_Quote.xlsx",
@@ -909,28 +1019,64 @@ def export_desk_quote(
     }
     if artifact_type not in mapping:
         raise HTTPException(status_code=404, detail="Unknown desk-quote artifact type")
+    try:
+        project = resolve_desk_quote_project_evidence(
+            db,
+            payload,
+            storage_root=settings.storage_root,
+        )
+        pricing_bindings = resolve_desk_quote_pricing_bindings(db, payload)
+        snapshot = build_desk_quote_snapshot(payload, pricing_bindings=pricing_bindings)
+    except DeskQuoteError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     filename, renderer, media_type = mapping[artifact_type]
     safe_filename = "".join(char if char.isalnum() or char in "-_." else "_" for char in filename)
     output_dir = settings.storage_root / "desk-quote-exports" / snapshot["snapshot_hash"]
-    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / safe_filename
-    if not output_path.exists():
-        renderer(snapshot, output_path)
+    try:
+        if output_path.exists():
+            cached_binding = _cached_desk_quote_artifact_binding(
+                db,
+                project_id=project.id,
+                snapshot_hash=snapshot["snapshot_hash"],
+                artifact_type=artifact_type,
+            )
+            if cached_binding is None:
+                raise DeskQuoteError("desk-quote cached export has no verified audit binding")
+            artifact = _read_desk_quote_artifact(
+                settings=settings,
+                path=output_path,
+                expected_binding=cached_binding,
+            )
+        else:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            temporary_path = output_path.with_name(f".{safe_filename}.tmp")
+            try:
+                renderer(snapshot, temporary_path)
+                artifact = _read_desk_quote_artifact(settings=settings, path=temporary_path)
+                temporary_path.replace(output_path)
+            finally:
+                temporary_path.unlink(missing_ok=True)
+    except DeskQuoteError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    project_id = db.scalar(select(Project.id).where(Project.reference == payload.project_reference))
     record_audit(
         db,
         actor=user,
         action="render_desk_quote",
         entity_type="desk_quote",
         entity_id=snapshot["snapshot_hash"],
-        project_id=project_id,
+        project_id=project.id,
         new_value={
             "artifact_type": artifact_type,
+            "artifact_sha256": artifact.sha256,
+            "artifact_size_bytes": artifact.size_bytes,
             "document_class": snapshot["document_class"],
             "technical_position": snapshot["technical_position"],
             "quote_reference": payload.quote_reference,
             "project_reference": payload.project_reference,
+            "estimate_reference": payload.estimate_reference,
             "pricing_release_id": payload.pricing_release_id,
             "pricing_release_version": snapshot["pricing_bindings"][0]["pricing_release_version"],
             "pricing_release_hash": snapshot["pricing_bindings"][0]["pricing_release_hash"],
@@ -957,4 +1103,8 @@ def export_desk_quote(
         source_ip=request.client.host if request.client else None,
     )
     db.commit()
-    return FileResponse(output_path, filename=safe_filename, media_type=media_type)
+    return Response(
+        content=artifact.content,
+        media_type=media_type,
+        headers={"content-disposition": f'attachment; filename="{safe_filename}"'},
+    )
