@@ -50,6 +50,6 @@ def test_expected_label_manifest_migration_upgrades_existing_0011_database(
     )
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0012_report_expected_label_manifests"
+            "0013_report_defect_scope_admissions"
         )
     engine.dispose()
