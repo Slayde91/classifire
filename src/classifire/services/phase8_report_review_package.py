@@ -31,6 +31,7 @@ from .report_evidence_adapter import (
 REPORT_REVIEW_PACKAGE_SCHEMA = 'CLASSIFIRE-PHASE8-REPORT-REVIEW-PACKAGE-v1'
 REPORT_REVIEW_COMPLETION_RECEIPT_SCHEMA = 'CLASSIFIRE-PHASE8-REPORT-REVIEW-COMPLETION-v1'
 REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA = 'CLASSIFIRE-PHASE8-REPORT-EXPECTED-LABELS-v1'
+REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA_V2 = 'CLASSIFIRE-PHASE8-REPORT-EXPECTED-LABELS-v2'
 
 _PACKAGE_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$')
 _UPPER_SHA256 = re.compile(r'^[0-9A-F]{64}$')
@@ -315,7 +316,7 @@ def _expected_label_manifest_file(
         expected_label_manifest = json.loads(value)
     except (json.JSONDecodeError, UnicodeDecodeError):
         _fail('REPORT_REVIEW_PACKAGE_EXPECTED_LABEL_MANIFEST_INVALID')
-    expected_fields = {
+    legacy_expected_fields = {
         'schema',
         'project_evidence_id',
         'report_sha256',
@@ -325,10 +326,22 @@ def _expected_label_manifest_file(
         'approval_reference',
         'expected_report_defect_labels',
     }
+    schema = None
+    if isinstance(expected_label_manifest, dict):
+        schema = expected_label_manifest.get('schema')
+    if schema == REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA:
+        expected_fields = legacy_expected_fields
+    elif schema == REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA_V2:
+        expected_fields = legacy_expected_fields | {
+            'approved_expected_label_manifest_id',
+            'approved_expected_label_manifest_sha256',
+            'approved_expected_label_manifest_approval_reference',
+        }
+    else:
+        _fail('REPORT_REVIEW_PACKAGE_EXPECTED_LABEL_MANIFEST_INVALID')
     if (
         not isinstance(expected_label_manifest, dict)
         or set(expected_label_manifest) != expected_fields
-        or expected_label_manifest.get('schema') != REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA
     ):
         _fail('REPORT_REVIEW_PACKAGE_EXPECTED_LABEL_MANIFEST_INVALID')
     try:
@@ -353,6 +366,22 @@ def _expected_label_manifest_file(
     ]
     if labels != expected_labels:
         _fail('REPORT_REVIEW_PACKAGE_EXPECTED_LABEL_MANIFEST_INVALID')
+    if schema == REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA_V2:
+        _required_text(
+            expected_label_manifest.get('approved_expected_label_manifest_id'),
+            code='REPORT_REVIEW_PACKAGE_EXPECTED_LABEL_MANIFEST_INVALID',
+            maximum=36,
+        )
+        _sha256(
+            expected_label_manifest.get('approved_expected_label_manifest_sha256'),
+            code='REPORT_REVIEW_PACKAGE_EXPECTED_LABEL_MANIFEST_INVALID',
+        )
+        _required_text(
+            expected_label_manifest.get('approved_expected_label_manifest_approval_reference'),
+            code='REPORT_REVIEW_PACKAGE_EXPECTED_LABEL_MANIFEST_INVALID',
+            maximum=500,
+        )
+
     return value
 
 
@@ -839,6 +868,7 @@ __all__ = [
     'Phase8ReportReviewPackage',
     'Phase8ReportReviewPackageError',
     'REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA',
+    'REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA_V2',
     'REPORT_REVIEW_COMPLETION_RECEIPT_SCHEMA',
     'REPORT_REVIEW_PACKAGE_SCHEMA',
     'ReportDefectReviewArtifact',

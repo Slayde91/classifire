@@ -158,8 +158,8 @@ caption extractor exists. XLSX, DOCX, general report formats, and multi-report
 generalisability remain planned.
 
 Cardinality is deterministic for the report scopes that already exist in the
-database. An approved expected-label manifest is still needed to prove that no
-intended Defect label was omitted before scope creation.
+database. An approved expected-label manifest record is now source-bound to the
+report bytes and estimate for runner completeness; scope creation does not yet require it.
 
 ### 5.3 Linked originals and visual evidence
 
@@ -348,13 +348,13 @@ proposal-only receipts carry only the established, validated transport code into
 exception messages, report content, and secrets remain suppressed.
 
 **Priority 2 - Bounded report-assessment runner (implemented locally).** The
-runner requires exact project, estimate, report SHA, package/profile, and
-expected-label bindings. It turns the verified scope-label set into a
-deterministic receipt-bound manifest before it holds the established clean-byte
-transaction through documentary-context preparation and every injected no-tool
-port call. It emits exactly one proposal-only outcome per expected label. Its
-completion receipt hashes the expected-label manifest, controller receipts, full
-Phase 8 review, proposal when present, report packet, review, and Markdown.
+runner requires exact project, estimate, report SHA, package/profile, and an
+approved expected-label manifest record bound to the report bytes and estimate.
+It loads that record after the clean-byte check and before documentary-context
+preparation or any injected no-tool port call. It emits exactly one proposal-only
+outcome per expected label. Its V2 completion receipt binds the approval record
+ID, hash, and reference as well as the expected-label manifest, controller
+receipts, full Phase 8 review, proposal when present, report packet, review, and Markdown.
 
 It exposes no canonical, technical, commercial, lock, deployment, or release
 capability. The full offline suite, focused static checks, Alembic head, and the

@@ -155,10 +155,10 @@ full-suite and shared-main CI evidence remain required before any merge claim.
 operator flow with a fake-transport preflight.
 
 **Required contract:** exact project, estimate, report SHA, package/policy/
-profile, and approved expected Defect-label list; atomic clean-byte trust held
-through context consumption; one deterministic outcome per expected label;
-completion receipt over every preceding artifact; no technical, pricing,
-canonical, lock, deployment, or release capability.
+profile, and a persisted human-approved expected Defect-label manifest bound to
+report evidence/source SHA and estimate; atomic clean-byte trust held through
+context consumption; one deterministic outcome per expected label; completion
+receipt over every preceding artifact; no technical, pricing, canonical, lock, deployment, or release capability.
 
 **Acceptance criteria:**
 
@@ -173,13 +173,13 @@ canonical, lock, deployment, or release capability.
 - fake-transport integration, report-focused tests, PostgreSQL containment,
   full suite, static checks, Alembic head, and output inspection pass.
 
-Current branch progress: `execute_phase8_report_assessment_runner()` now composes
-the contained report reader, packets, documentary contexts, retained visual
-packets, report-aware controller, proposal review, and deterministic package. It
-preflights all scopes before an injected fake port and retains/hash-covers the
-resulting expected-label manifest plus every controller, Phase 8 review, proposal,
-packet, review, and Markdown artifact. The full offline suite, focused static
-checks, Alembic head, and the dedicated two-session containment race pass locally.
+Current branch progress: `execute_phase8_report_assessment_runner()` composes the
+contained report reader, packets, documentary contexts, retained visual packets,
+report-aware controller, proposal review, and deterministic package. It loads the
+persisted approved expected-label record after its clean-byte check, preflights
+all scopes before an injected fake port, and emits a V2 receipt artifact bound to
+that record. The full offline suite, focused static checks, Alembic head, and the
+dedicated two-session containment race pass locally.
 Fresh shared CI and any real-provider run remain required gates; no downstream
 authority was added.
 
@@ -291,8 +291,8 @@ Project/Estimate ownership, exact clean-byte reads, shared-byte quarantine,
 PDF text/table/annotation and drawing/image locators, ordered scopes, report-
 aware inputs, and deterministic review artifacts.
 
-**Remaining:** Priority 2 approved expected-label-source proof, caption/
-multi-format support, multi-report evidence-family accuracy, retention/
+**Remaining:** scope-admission enforcement of the approved expected-label record,
+caption/multi-format support, multi-report evidence-family accuracy, retention/
 redaction/deletion policy, and user review.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
@@ -434,7 +434,7 @@ import them into the active fire-seal/penetration runtime prematurely.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
 - Building the report adapter as future work; its components are merged, while
-  operator composition and expected-label proof remain.
+  operator composition and scope-admission proof remain.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.
 - Count equality, whole-file database hashing, or a model answer as semantic

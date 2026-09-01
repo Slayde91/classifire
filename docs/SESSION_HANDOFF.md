@@ -74,13 +74,13 @@ credentials, and report content. Historical receipts remain valid and type-only.
 ### Priority 2 - Bounded report-assessment operator flow (implemented locally)
 
 `execute_phase8_report_assessment_runner()` requires exact project, estimate,
-retained-report SHA, package/profile, and expected-label bindings. It turns the
-verified labels into a deterministic receipt-bound manifest before keeping the
-existing PostgreSQL clean-byte transaction through all documentary-context work
-and injected no-tool port calls. It produces one deterministic proposal-only
-review per expected label and a completion receipt that hashes the expected-label
-manifest, controller receipts, Phase 8 review, proposal when present, packet,
-review, and Markdown.
+retained-report SHA, package/profile, and a persisted human-approved expected-label
+manifest record bound to report evidence/source SHA and estimate. It loads that
+record after the existing PostgreSQL clean-byte check and before all documentary
+context work and injected no-tool port calls. It produces one deterministic
+proposal-only review per expected label and a V2 completion receipt that binds the
+manifest ID, deterministic hash, and approval reference with controller receipts,
+Phase 8 review, proposal when present, packet, review, and Markdown.
 
 Focused synthetic tests cover success, retrieval-blocked, malformed-input,
 insufficient-evidence, safe transport failure, and receipt tampering. The full
@@ -134,8 +134,8 @@ CLI, API, script, or application service composes the whole sequence.
 
 PDF text, table, and annotation content are supported. Drawings and embedded
 images are locator/hash-only in documentary context, with visual bytes supplied
-separately. Captions are rejected and not extracted. No approved expected-label
-manifest proves omission before database scope creation.
+separately. Captions are rejected and not extracted. The persisted approval record
+protects runner completeness, but database scope creation does not yet require it.
 
 ### Latest controlled attempt
 
