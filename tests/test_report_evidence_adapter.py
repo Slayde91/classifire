@@ -26,20 +26,25 @@ from classifire.models import (
     ReportEvidenceLocator,
     Service,
     StoredFile,
+    User,
 )
 from classifire.physical_models import Defect
 from classifire.services.project_evidence import bind_project_evidence
 from classifire.services.report_evidence_adapter import (
     ReportDefectEvidencePacket,
+    ReportDefectScopeBinding,
     ReportEvidenceAdapterError,
     _register_report_evidence_locators,
     _table_shape,
-    bind_report_defect_scope,
+    bind_approved_report_defect_scopes,
     build_report_defect_evidence_packet,
     build_report_defect_evidence_packets,
     normalise_verified_pdf_report,
     validate_report_defect_evidence_packet,
     validate_report_defect_v2_proposal,
+)
+from classifire.services.report_expected_label_manifest import (
+    record_approved_report_expected_label_manifest,
 )
 from classifire.services.storage import VerifiedStoredFileContent
 
@@ -198,6 +203,36 @@ def _defect(db: Session, estimate: Estimate, reference: str = 'D-001') -> Defect
     db.flush()
     return defect
 
+def _approved_expected_label_manifest_id(
+    db: Session,
+    *,
+    project: Project,
+    estimate: Estimate,
+    stored: StoredFile,
+    labels: list[str],
+    ordinal: int,
+) -> str:
+    reviewer = User(
+        email=f'report-scope-reviewer-{ordinal}@example.test',
+        full_name='Report scope reviewer',
+        password_hash='not-used-by-synthetic-tests',  # noqa: S106
+        role='reviewer',
+    )
+    db.add(reviewer)
+    db.flush()
+    approved = record_approved_report_expected_label_manifest(
+        db,
+        project_id=project.id,
+        estimate_id=estimate.id,
+        stored_file_id=stored.id,
+        report_sha256=stored.sha256,
+        expected_report_defect_labels=labels,
+        approval_reference=f'synthetic report scope approval {ordinal}',
+        approved_by_user_id=reviewer.id,
+    )
+    return approved.id
+
+
 
 def _scoped_report_packet(
     db: Session,
@@ -217,17 +252,89 @@ def _scoped_report_packet(
         report=normalise_verified_pdf_report(content),
     )
     page_records = tuple(record for record in records if record.page_number == 1)
-    bind_report_defect_scope(
+    manifest_id = _approved_expected_label_manifest_id(
+        db,
+        project=project,
+        estimate=estimate,
+        stored=stored,
+        labels=['D-001'],
+        ordinal=ordinal,
+    )
+    bind_approved_report_defect_scopes(
         db,
         stored_file_id=stored.id,
         project_id=project.id,
         estimate_id=estimate.id,
-        defect_id=defect.id,
-        report_defect_label='D-001',
-        start_locator_key=page_records[0].locator_key,
-        end_locator_key=page_records[-1].locator_key,
+        expected_label_manifest_id=manifest_id,
+        scope_bindings=(
+            ReportDefectScopeBinding(
+                defect_id=defect.id,
+                report_defect_label='D-001',
+                start_locator_key=page_records[0].locator_key,
+                end_locator_key=page_records[-1].locator_key,
+            ),
+        ),
     )
     return project, estimate, stored, defect, records
+
+def _multi_scoped_report_packet(
+    db: Session,
+    *,
+    ordinal: int,
+) -> tuple[
+    Project,
+    Estimate,
+    StoredFile,
+    Defect,
+    Defect,
+    tuple[ReportEvidenceLocator, ...],
+    tuple[ReportDefectScope, ...],
+]:
+    project = _project(db, ordinal)
+    estimate = _estimate(db, project, ordinal)
+    content = _report_content()
+    stored = _bound_report(db, project, content)
+    first_defect = _defect(db, estimate, reference='D-001')
+    second_defect = _defect(db, estimate, reference='D-002')
+    records = _register_report_evidence_locators(
+        db,
+        stored_file_id=stored.id,
+        project_id=project.id,
+        estimate_id=estimate.id,
+        report=normalise_verified_pdf_report(content),
+    )
+    page_records = tuple(record for record in records if record.page_number == 1)
+    manifest_id = _approved_expected_label_manifest_id(
+        db,
+        project=project,
+        estimate=estimate,
+        stored=stored,
+        labels=['D-001', 'D-002'],
+        ordinal=ordinal,
+    )
+    scopes = bind_approved_report_defect_scopes(
+        db,
+        stored_file_id=stored.id,
+        project_id=project.id,
+        estimate_id=estimate.id,
+        expected_label_manifest_id=manifest_id,
+        scope_bindings=(
+            ReportDefectScopeBinding(
+                defect_id=first_defect.id,
+                report_defect_label='D-001',
+                start_locator_key=page_records[0].locator_key,
+                end_locator_key=page_records[-1].locator_key,
+            ),
+            ReportDefectScopeBinding(
+                defect_id=second_defect.id,
+                report_defect_label='D-002',
+                start_locator_key=page_records[0].locator_key,
+                end_locator_key=page_records[-1].locator_key,
+            ),
+        ),
+    )
+    return project, estimate, stored, first_defect, second_defect, records, scopes
+
 
 
 def _documentary_v2_proposal(evidence_ref: str) -> dict[str, object]:
@@ -263,26 +370,36 @@ def test_locators_and_selected_defect_scope_are_idempotent_and_noncanonical() ->
             report=report,
         )
         page_locators = [record for record in first if record.page_number == 1]
-        scope = bind_report_defect_scope(
+        manifest_id = _approved_expected_label_manifest_id(
             db,
-            stored_file_id=stored.id,
-            project_id=project.id,
-            estimate_id=estimate.id,
+            project=project,
+            estimate=estimate,
+            stored=stored,
+            labels=['D-001'],
+            ordinal=1,
+        )
+        binding = ReportDefectScopeBinding(
             defect_id=defect.id,
             report_defect_label='D-001',
             start_locator_key=page_locators[0].locator_key,
             end_locator_key=page_locators[-1].locator_key,
         )
-        repeated_scope = bind_report_defect_scope(
+        scope = bind_approved_report_defect_scopes(
             db,
             stored_file_id=stored.id,
             project_id=project.id,
             estimate_id=estimate.id,
-            defect_id=defect.id,
-            report_defect_label='D-001',
-            start_locator_key=page_locators[0].locator_key,
-            end_locator_key=page_locators[-1].locator_key,
-        )
+            expected_label_manifest_id=manifest_id,
+            scope_bindings=(binding,),
+        )[0]
+        repeated_scope = bind_approved_report_defect_scopes(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            expected_label_manifest_id=manifest_id,
+            scope_bindings=(binding,),
+        )[0]
 
         assert [record.id for record in first] == [record.id for record in second]
         assert scope.id == repeated_scope.id
@@ -295,7 +412,134 @@ def test_locators_and_selected_defect_scope_are_idempotent_and_noncanonical() ->
         assert db.scalar(select(func.count()).select_from(Opening)) == 0
         assert db.scalar(select(func.count()).select_from(Service)) == 0
 
+def test_scope_admission_requires_the_complete_approved_set_and_retains_its_binding() -> None:
+    content = _report_content()
+    with adapter_session() as db:
+        project = _project(db, 1101)
+        estimate = _estimate(db, project, 1101)
+        stored = _bound_report(db, project, content)
+        first_defect = _defect(db, estimate, reference='D-001')
+        second_defect = _defect(db, estimate, reference='D-002')
+        records = _register_report_evidence_locators(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            report=normalise_verified_pdf_report(content),
+        )
+        page_records = tuple(record for record in records if record.page_number == 1)
+        manifest_id = _approved_expected_label_manifest_id(
+            db,
+            project=project,
+            estimate=estimate,
+            stored=stored,
+            labels=['D-001', 'D-002'],
+            ordinal=1101,
+        )
+        first_binding = ReportDefectScopeBinding(
+            defect_id=first_defect.id,
+            report_defect_label='D-001',
+            start_locator_key=page_records[0].locator_key,
+            end_locator_key=page_records[-1].locator_key,
+        )
+        second_binding = ReportDefectScopeBinding(
+            defect_id=second_defect.id,
+            report_defect_label='D-002',
+            start_locator_key=page_records[0].locator_key,
+            end_locator_key=page_records[-1].locator_key,
+        )
 
+        with pytest.raises(ReportEvidenceAdapterError) as incomplete:
+            bind_approved_report_defect_scopes(
+                db,
+                stored_file_id=stored.id,
+                project_id=project.id,
+                estimate_id=estimate.id,
+                expected_label_manifest_id=manifest_id,
+                scope_bindings=(first_binding,),
+            )
+
+        assert incomplete.value.code == 'REPORT_EVIDENCE_EXPECTED_LABELS_MISMATCH'
+        assert db.scalar(select(func.count()).select_from(ReportDefectScope)) == 0
+
+        scopes = bind_approved_report_defect_scopes(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            expected_label_manifest_id=manifest_id,
+            scope_bindings=(second_binding, first_binding),
+        )
+        packets = build_report_defect_evidence_packets(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+        )
+
+        assert [scope.report_defect_label for scope in scopes] == ['D-001', 'D-002']
+        assert {scope.approved_expected_label_manifest_id for scope in scopes} == {manifest_id}
+        assert all(
+            packet.manifest['schema'] == 'CLASSIFIRE-REPORT-DEFECT-EVIDENCE-PACKET-v2'
+            for packet in packets
+        )
+        assert {
+            packet.manifest['approved_expected_label_manifest_id'] for packet in packets
+        } == {manifest_id}
+        assert all(validate_report_defect_evidence_packet(packet) == [] for packet in packets)
+
+
+
+def test_scope_admission_rolls_back_every_scope_if_one_range_is_invalid() -> None:
+    content = _report_content()
+    with adapter_session() as db:
+        project = _project(db, 1102)
+        estimate = _estimate(db, project, 1102)
+        stored = _bound_report(db, project, content)
+        first_defect = _defect(db, estimate, reference='D-001')
+        second_defect = _defect(db, estimate, reference='D-002')
+        records = _register_report_evidence_locators(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            report=normalise_verified_pdf_report(content),
+        )
+        page_records = tuple(record for record in records if record.page_number == 1)
+        manifest_id = _approved_expected_label_manifest_id(
+            db,
+            project=project,
+            estimate=estimate,
+            stored=stored,
+            labels=['D-001', 'D-002'],
+            ordinal=1102,
+        )
+
+        with pytest.raises(ReportEvidenceAdapterError) as invalid_range:
+            bind_approved_report_defect_scopes(
+                db,
+                stored_file_id=stored.id,
+                project_id=project.id,
+                estimate_id=estimate.id,
+                expected_label_manifest_id=manifest_id,
+                scope_bindings=(
+                    ReportDefectScopeBinding(
+                        defect_id=first_defect.id,
+                        report_defect_label='D-001',
+                        start_locator_key=page_records[0].locator_key,
+                        end_locator_key=page_records[-1].locator_key,
+                    ),
+                    ReportDefectScopeBinding(
+                        defect_id=second_defect.id,
+                        report_defect_label='D-002',
+                        start_locator_key=page_records[-1].locator_key,
+                        end_locator_key=page_records[0].locator_key,
+                    ),
+                ),
+            )
+
+        assert invalid_range.value.code == 'REPORT_EVIDENCE_RANGE_INVALID'
+        assert db.scalar(select(func.count()).select_from(ReportDefectScope)) == 0
 def test_selected_report_scope_is_content_safe_and_feeds_existing_v2_policy() -> None:
     with adapter_session() as db:
         project, estimate, stored, defect, records = _scoped_report_packet(db, ordinal=4)
@@ -349,19 +593,10 @@ def test_selected_report_scope_is_content_safe_and_feeds_existing_v2_policy() ->
 
 def test_all_selected_report_scopes_are_returned_in_stable_package_order() -> None:
     with adapter_session() as db:
-        project, estimate, stored, first_defect, records = _scoped_report_packet(db, ordinal=45)
-        second_defect = _defect(db, estimate, reference='D-002')
-        page_records = tuple(record for record in records if record.page_number == 1)
-        second_scope = bind_report_defect_scope(
-            db,
-            stored_file_id=stored.id,
-            project_id=project.id,
-            estimate_id=estimate.id,
-            defect_id=second_defect.id,
-            report_defect_label='D-002',
-            start_locator_key=page_records[0].locator_key,
-            end_locator_key=page_records[-1].locator_key,
+        project, estimate, stored, first_defect, second_defect, _records, scopes = (
+            _multi_scoped_report_packet(db, ordinal=45)
         )
+        second_scope = next(scope for scope in scopes if scope.defect_id == second_defect.id)
         first_packet = build_report_defect_evidence_packet(
             db,
             stored_file_id=stored.id,
@@ -465,6 +700,20 @@ def test_locator_registration_and_scope_fail_closed_on_conflict_or_wrong_project
             report=report,
         )
         page_locators = [record for record in locators if record.page_number == 1]
+        manifest_id = _approved_expected_label_manifest_id(
+            db,
+            project=project,
+            estimate=estimate,
+            stored=stored,
+            labels=['D-001'],
+            ordinal=2,
+        )
+        binding = ReportDefectScopeBinding(
+            defect_id=defect.id,
+            report_defect_label='D-001',
+            start_locator_key=page_locators[0].locator_key,
+            end_locator_key=page_locators[-1].locator_key,
+        )
         other_project = _project(db, 3)
         other_estimate = _estimate(db, other_project, 3)
 
@@ -502,26 +751,28 @@ def test_locator_registration_and_scope_fail_closed_on_conflict_or_wrong_project
                 report=unsafe_report,
             )
         with pytest.raises(ReportEvidenceAdapterError) as cross_project:
-            bind_report_defect_scope(
+            bind_approved_report_defect_scopes(
                 db,
                 stored_file_id=stored.id,
                 project_id=other_project.id,
                 estimate_id=other_estimate.id,
-                defect_id=defect.id,
-                report_defect_label='D-001',
-                start_locator_key=page_locators[0].locator_key,
-                end_locator_key=page_locators[-1].locator_key,
+                expected_label_manifest_id=manifest_id,
+                scope_bindings=(binding,),
             )
         with pytest.raises(ReportEvidenceAdapterError) as reversed_range:
-            bind_report_defect_scope(
+            bind_approved_report_defect_scopes(
                 db,
                 stored_file_id=stored.id,
                 project_id=project.id,
                 estimate_id=estimate.id,
-                defect_id=defect.id,
-                report_defect_label='D-001',
-                start_locator_key=page_locators[-1].locator_key,
-                end_locator_key=page_locators[0].locator_key,
+                expected_label_manifest_id=manifest_id,
+                scope_bindings=(
+                    replace(
+                        binding,
+                        start_locator_key=page_locators[-1].locator_key,
+                        end_locator_key=page_locators[0].locator_key,
+                    ),
+                ),
             )
 
     assert changed_manifest.value.code == 'REPORT_EVIDENCE_LOCATOR_CONFLICT'

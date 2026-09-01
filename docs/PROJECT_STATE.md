@@ -4,8 +4,8 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Shared-main baseline:** `db28c6384f624cee09fb74dd1c01ea35702fd295`
-(merge of PR #100)
+**Shared-main baseline:** `d9b19fcee60fd82d0d317eae2f94f22b2a0ac7ab`
+(merge of PR #103)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -19,29 +19,25 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared `main` | PR #100 is merged at `db28c638`. | This is the current shared implementation baseline. |
-| Documentation branch | `gpt/phase8-report-evidence-adapter-20260830` was clean and fast-forwarded locally from `be04258` to `db28c638` before this reconciliation. | The 23 fast-forward commits were already public on `main`; no unpublished implementation was imported. |
-| Pull-request CI | PR #100 run `33330916501` passed 577 tests, changed-Python Ruff, the PostgreSQL containment setup, and the single Alembic-head check. | This proves the exact PR head, not a post-merge run of `db28c638`. |
-| Default-branch governance | The workflow runs on pull requests only. GitHub reports no required checks or branch protection on `main`. | A direct branch push does not create CI evidence; this remains a repository-governance gap. |
+| Shared `main` | PR #103 is merged at `d9b19fc`. | This is the current shared implementation baseline. |
+| Current branch | `gpt/phase8-report-evidence-adapter-20260830` is clean, matches its upstream, and has published candidate commits `b36ebb5`, `9a4c2d2`, and `e9ac8f0` beyond `main`. | They remain candidate evidence until a new PR is reviewed and merged. |
+| Pull-request CI | PR #103 run `33492628353` passed Python validation. | This proves the exact PR head, not a post-merge run of `d9b19fc`. |
+| Default-branch governance | Commit `e9ac8f0` adds a `main` push validation trigger, but it is not yet merged. GitHub's branch-protection API returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | There is no hosted `main` push result and no verified required-check configuration. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
 
 ### Quarantined root checkout
 
 The root checkout at `C:\CLASSIFIRE` remains recovery evidence on
-`gpt/phase8-linked-original-images` at `de0cc5a`. The read-only inventory found:
-
-- an active interrupted cherry-pick;
-- four unmerged Phase 8 files;
-- 50 tracked paths with unstaged or unmerged differences;
-- 14 staged additions; and
-- an incomplete untracked inventory because protected pytest directories could
-  not be read.
+`gpt/phase8-linked-original-images` at `de0cc5a`. It still has an interrupted
+cherry-pick, unmerged paths, tracked changes, and an incomplete untracked
+inventory because protected pytest directories cannot be read. Its exact dirty
+inventory is deliberately not treated as current implementation evidence.
 
 The root contains substantial unfinished Phase 8, plugin, script, UI, and test
-work. Its conflicted and partially understood state makes it unsuitable for this
-commit, publication, deployment, or canonical operations. None of it was edited,
-resolved, staged, or copied into the clean worktree.
+work. Its conflicted state makes it unsuitable for this commit, publication,
+deployment, or canonical operations. None of it was edited, resolved, staged,
+or copied into the isolated worktree.
 
 ## 2. Current implementation
 
@@ -60,8 +56,8 @@ The following boundaries are implemented and tested for their stated scope:
   receipt contracts.
 - Project/Estimate-owned retained report evidence, exact clean-byte reads,
   cross-project rejection, shared-byte quarantine, stable PDF locators, bounded
-  report scopes, deterministic review packages, and no-write report assessment
-  service components.
+  report scopes, deterministic review packages, and no-write report-assessment
+  components.
 - Production configuration checks before filesystem work, no production
   `create_all()` or default-administrator seeding, packaged migration history,
   an explicit migration command, and exact migration-head readiness checks.
@@ -70,23 +66,39 @@ The following boundaries are implemented and tested for their stated scope:
   technical-release requirements, and release-manifest eligibility rechecks.
 - Governed assumption-led desk-quote PDF/XLSX outputs from PR #75. They remain
   explicitly non-technical, proposal-only commercial scenarios. The current
-  branch requires Project/Estimate-owned immutable `clean` ProjectEvidence,
+  shared-main resolver requires Project/Estimate-owned immutable `clean` ProjectEvidence,
   exact atomic retained-byte reads, persisted locators, and artifact-byte audit
-  bindings; `technical_evidence` remains rejected. Synthetic verification passed
-  locally, while shared CI/review and operational approval remain separate.
+  bindings; `technical_evidence` remains rejected. PR #103's checks passed;
+  operational approval remains separate.
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-The current packaged migration lineage has one head:
-`0011_report_evidence_locators (legacy_adjudicated_lineage)`.
+Shared `main` packages migrations through `0011_report_evidence_locators`. It
+has not yet received the current branch's two report-governance migrations.
+
+### Published candidate on the current branch, not yet shared main
+
+- `b36ebb5` introduces an immutable, human-approved expected-label manifest
+  bound to retained report bytes and an estimate
+  (`0012_report_expected_label_manifests`).
+- `9a4c2d2` admits a complete exact approved label set atomically, retains that
+  manifest on every new report scope, and prevents V1/unbound scope packets from
+  reaching a proposal run (`0013_report_defect_scope_admissions`). Historical
+  V1 receipts remain verifiable.
+- `e9ac8f0` adds the GitHub Actions `push` validation path for merged `main`
+  changes. It intentionally lints only changed Python files because full-
+  repository Ruff currently reports pre-existing violations outside this candidate.
+
+The current branch's packaged migration lineage has one head:
+`0013_report_defect_scope_admissions (legacy_adjudicated_lineage)`.
 
 ### In progress or incomplete
 
 | Area | Evidence-backed limit |
 | --- | --- |
-| Desk-quote evidence/output safety | The resolver trusts stored metadata, accepts `not_configured`, does not open/re-hash bytes through the atomic PostgreSQL reader, and does not match caller locator text to persisted page/region or report-locator data. Cached exports are reused without re-hashing their bytes, and the audit records the snapshot hash rather than the artifact hash. Current tests use metadata-only nonexistent file paths. |
-| Report assessment operation | The current branch has one proposal-only application service. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and an exact expected-label list; it validates every documentary scope before calling an injected no-tool port. Its package receipt hashes a deterministic expected-label manifest, controller receipts, full Phase 8 review, proposal when present, report packet, review, and Markdown. There is still no CLI, API, UI, or real-provider run. |
-| Report completeness | The runner rejects a selected scope that differs from its supplied expected-label set before any port call and retains a hash-bound copy of that list. The list remains caller-supplied, not proof that an approved report register created every intended label. |
+| Desk-quote evidence/output safety | PR #103's shared-main resolver requires a Project/Estimate-owned immutable `clean` `project_evidence` record, verifies retained bytes under the atomic reader, validates stored locators, re-hashes new and cached export bytes, and audits artifact hash/size. Missing, changed, wrong-purpose, cross-project, cross-estimate, unsafe-path, quarantined, and locator-mismatched evidence fails before export or audit. `technical_evidence` remains rejected pending a separately designed owned-byte contract. |
+| Report assessment operation | The current branch has one proposal-only application service, `execute_phase8_report_assessment_runner()`. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a human-approved expected-label manifest bound to report bytes and estimate; it checks the same approval on every V2 scope packet before an injected no-tool port call. There is no API/CLI/UI route, persisted review-package record, or real-provider run. |
+| Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. The runner rejects legacy V1/unbound scope packets or a different approval record before any port call. Historical V1 packets remain verifiable. |
 | Report formats and content | Normalisation is PDF-only. Text, page, table, and annotation content are supported. Drawings and embedded images are locator/hash records with no documentary payload; visual bytes come through a separate governed packet. Caption extraction is explicitly rejected. XLSX, DOCX, and multi-report generalisation are not implemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
 | Technical authority | Important fail-closed review, activation, source-integrity, import, and release checks exist. Full governed technical intake, materialisation, source-lineage publication, supersession, and production authority remain incomplete. |
@@ -125,12 +137,12 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root, unprotected `main`, and PR-only CI remain. |
+| 0. Repository/change control | **In progress** | Quarantined root; candidate-only `main` push CI; GitHub plan prevents branch-protection configuration. |
 | 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
 | 2. Governed libraries | **In progress** | Narrow technical and pricing-release safeguards exist; full intake/publication governance remains. |
-| 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe future receipt codes exist; operational report orchestration remains incomplete. |
+| 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is candidate-only and no operator route or real report operation exists. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
-| 5. Evidence intake/resolution | **In progress** | PDF report services are merged; expected-label completeness, caption/multi-format support, and an operator flow remain. |
+| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services; the candidate adds atomic expected-label scope admission and runner verification. Legacy-scope transition, package persistence, caption/multi-format support, and an operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
@@ -141,124 +153,93 @@ run has been consumed and must not be repeated without new authority.
 
 ## 5. Recommended Next Actions
 
-### Immediate next actions
+### Immediate next action
 
-#### Priority 0 - Desk-quote evidence hardening (implemented locally)
+#### Priority 0 - Integrate and prove the published report-governance candidate
 
-**Local result:** the resolver requires an explicit project/estimate reference,
-accepts only ProjectEvidence-owned immutable `clean` `project_evidence`, verifies
-the exact bytes in the locked reader, and verifies persisted locators. Missing,
-tampered, unsafe-path, quarantined, cross-project, cross-estimate, wrong-purpose,
-and locator-mismatched evidence fails before export or audit.
+**Objective:** review the complete `origin/main...HEAD` range, create a current-
+main pull request, merge only after it is green, then record the first hosted
+`push` validation result for the merge on `main`.
 
-New and cached artifact bytes are atomically re-read, hash-checked, and recorded
-with their hash and size in the audit. This leaves canonical state, technical
-decisions, locks, pricing records, and release authority untouched.
+**Why this is first:** the candidate contains the expected-label approval,
+atomic scope-admission, and post-merge CI changes needed to make Phase 5 safer,
+but none is shared-main evidence yet. The new `push` workflow cannot produce its
+first `main` result until that same candidate is merged. This is a publication
+and verification action, not a report, OpenClaw, provider, canonical, lock, or
+release operation.
 
-**Relevant files:**
+**Relevant components:** `0012_report_expected_label_manifests`,
+`0013_report_defect_scope_admissions`, `report_expected_label_manifest.py`,
+`report_evidence_adapter.py`, `phase8_report_assessment_runner.py`, their
+focused tests, and `.github/workflows/pull-request-validation.yml`.
 
-- `src/classifire/services/desk_quote.py`
-- `src/classifire/api/router.py`
-- `src/classifire/services/storage.py`
-- `src/classifire/services/project_evidence.py`
-- `tests/test_desk_quote.py`
-- `tests/test_shared_file_containment.py`
+**Dependencies and blockers:** fresh reviewer approval and separate merge
+authority; GitHub's current private-repository plan prevents branch-protection
+rules, so review discipline and observed CI are the available controls.
 
-**Verified locally:** 32 focused tests passed (3 expected PostgreSQL skips), the
-disposable PostgreSQL containment suite passed 9 tests, and the full suite passed
-594 tests with 3 expected skips. Targeted Ruff checks for the changed services,
-tests, and new router section, plus Mypy, Bandit, one Alembic head, and diff
-integrity checks passed. No real customer report, quote, OpenClaw, Gateway, or
-provider run was used. Publication, shared PR CI/review, and operational approval
-remain separate.
+**Done when:** the PR covers only the reviewed range, GitHub validates it, the
+merge lands on `main`, a `push` run for that merge passes the full test and
+one-head migration jobs, and the run URL/SHA are recorded. A clean local test is
+not a substitute for the hosted post-merge result.
 
-#### Priority 1 - Receipt-safe transport diagnostics (implemented on this branch)
+**Validation:** fetch first; inspect `git diff origin/main...HEAD`; run the
+focused report tests with synthetic fixtures, `python -m alembic heads`, and
+`git diff --check`; then inspect the GitHub PR and `main` workflow result.
 
-**Objective:** retain the existing stable `Phase8OpenResponsesTransportError`
-code in the outer failed receipt while continuing to exclude arbitrary exception
-messages, response content, credentials, and report content.
-
-**Result:** commit `afb9de1` retains established transport codes such as
-`GATEWAY_TIMEOUT` in new proposal-only failure receipts. It does not change the
-historical receipt, expose exception content, or authorise another report run.
-
-**Relevant files:**
-
-- `src/classifire/services/phase8_visual_proposal.py`
-- `src/classifire/services/phase8_openresponses_transport.py`
-- `tests/test_phase8_visual_proposal.py`
-- `tests/test_phase8_openresponses_transport.py`
-- `tests/test_phase8_report_openresponses_transport.py`
-- `tests/test_phase8_report_assessment_controller.py`
-
-**Done when:**
-
-1. an explicitly safe code such as `GATEWAY_TIMEOUT` is retained under
-   `INFERENCE_PORT_FAILED`;
-2. generic exception messages and malformed or secret-like codes remain absent;
-3. historical receipt verification remains valid, new receipts deterministically
-   hash the safe code, and protected-state/no-write semantics remain valid;
-4. focused tests, Ruff, the report/visual regression suite, the complete suite,
-   Alembic one-head, and `git diff --check` pass; and
-5. no report, Gateway, OpenClaw, provider, canonical, lock, deployment, or
-   release operation is performed to verify the code change.
-
-#### Priority 2 - Add one bounded report-assessment operator flow
-
-**Objective:** compose the merged report services into one proposal-only runner
-with an offline/fake-transport preflight and an approved expected-Defect-label
-manifest.
-
-**Local implementation:** the runner now proves the intended report-SHA,
-ownership, locator, assessment, review-package, and completion-receipt sequence
-as one proposal-only service. It validates all documentary scopes before an
-injected fake port can run, and produces exactly one safe outcome per supplied
-expected label: success, retrieval-blocked, malformed-input,
-insufficient-evidence, or transport-failed.
-
-The completion receipt hash-covers the expected-label manifest, controller
-receipts, full Phase 8 review, proposal when present, packet, report review, and
-Markdown. No report, provider, OpenClaw, canonical, technical, commercial, lock,
-deployment, or release action was used for this implementation or its synthetic tests.
-
-The expected labels are still caller-supplied rather than a persisted approval
-manifest, and there is no CLI, API, or UI operator surface.
-
-**Dependencies:** Priority 1; an explicit package/expected-label contract;
-PostgreSQL for the atomic clean-byte transaction; fake transport for normal
-implementation tests. A real provider run still requires separate authority.
-
-**Branch-local verification:** cross-project, report-hash, locator,
-expected-label, profile, source-byte, and supporting-receipt tamper tests;
-fake-transport end-to-end tests; focused report tests; full offline suite;
-focused Ruff/Mypy; Alembic head; and output inspection passed. The dedicated
-two-session PostgreSQL containment race passed all eight checks against a
-disposable loopback-only test database.
+**Uncertainty:** the protection API does not reveal a usable rule set because of
+the GitHub plan. It is unknown whether the repository owner will change that
+plan or use another documented protection mechanism.
 
 ### Near-term actions
 
-3. Add a small user-facing report review surface only after the operator flow is
-   deterministic and fail-closed. It must show evidence locators, confidence,
-   alternatives, unresolved facts, and receipt status without creating canonical
-   authority.
-4. Reconcile Draft technical materialisation and source-lineage publication as
-   separate migrations and reviews; never activate imported Draft evidence
-   automatically.
-5. Define deterministic semantic snapshot identity separately from generation
-   metadata and add focused snapshot/output regression tests before Phase 12.
-6. Add required pull-request checks and branch protection to `main` after the
-   repository owner approves the governance change.
+#### Priority 1 - Add governed persistence before a report-review UI
+
+**Objective:** define and implement the smallest immutable, proposal-only
+storage contract for a generated report-review package, then expose it through a
+read-only reviewer surface.
+
+**Why:** the runner builds a deterministic in-memory package and can materialise
+files only to a caller-supplied path. `models.py`, `api/`, and `ui.py` contain no
+`ReportReviewPackage` record or report-review route, so building a UI first would
+create a second, ungoverned source of truth.
+
+**Scope and acceptance:** retain only hash-bound package metadata, receipt and
+source/approval references, reviewer-visible uncertainty, and a safe storage
+locator. Prove immutable reads, project/estimate isolation, redaction, tamper
+failure, and absence of canonical, technical, commercial, lock, or release
+authority with a migration, service, route/UI tests, and synthetic fixtures.
+
+**Dependencies and uncertainty:** first decide retention, redaction/deletion,
+and reviewer-access ownership for proposal artifacts. No evidence currently
+defines that policy, so this design decision must precede a migration.
+
+#### Priority 2 - Close demonstrated Phase 2 and Phase 12 gaps separately
+
+Complete Draft technical materialisation/source-lineage publication in separately
+reviewed migrations, without automatic activation. In parallel, split semantic
+snapshot identity from `generated_utc` in `services/snapshot.py` and add focused
+snapshot/output regression tests. These have clear source-level gaps and do not
+need to bypass the Phase 8 lock gate.
+
+#### Priority 3 - Make CI debt and default-branch governance explicit
+
+Keep changed-file Ruff in the candidate workflow until a separate full-repository
+lint remediation is scoped; full `ruff check .` currently fails outside this
+candidate. After the first `main` push result, decide whether the repository
+owner will upgrade/configure GitHub protection or document an equivalent review
+control. Do not present changed-file lint as proof that the whole repository is
+lint-clean.
 
 ### Later or dependency-bound actions
 
-7. After Priorities 1-2 pass and the transport problem is understood, seek new
-   authority for one controlled proposal-only assessment. Human-review every
-   artifact; do not treat a successful transport as semantic approval.
-8. Advance canonical submission and a separately signed Physical Model Lock
-   only after evidence resolution, semantic approval, fresh preflight, external
-   signature, admission registration, and separate write/lock authorities.
-9. Keep Phases 9-14 blocked until the replacement lock exists. Continue Phase 15
-   operational hardening independently where it cannot bypass upstream gates.
+1. Diagnose any remaining transport behaviour with synthetic/fake ports only,
+   then seek fresh explicit authority before a further proposal-only report run.
+   A successful transport call is not semantic approval.
+2. Advance canonical submission and a separately signed Physical Model Lock only
+   after evidence resolution, semantic approval, a fresh no-write preflight,
+   admission registration, and separate write/lock authorities.
+3. Keep Phases 9-14 blocked until the replacement lock exists. Continue Phase 15
+   hardening only where it cannot bypass the upstream gates.
 
 ## 6. Validation evidence for this snapshot
 
@@ -267,12 +248,13 @@ This reconciliation verified:
 - fetched Git refs, branch/upstream relationships, recent commits, open PRs, and
   issues;
 - the clean isolated worktree and the read-only legacy-root classification;
-- the single packaged Alembic head `0011_report_evidence_locators`;
+- the single packaged Alembic head `0013_report_defect_scope_admissions`;
 - current models, API/UI routes, report services, storage/containment, technical
   guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
-- PR #100's successful hosted result: 577 passed, 140 warnings;
+- PR #103's successful hosted Python validation result;
 - the retained assessment status and no-write/no-lock flags; and
-- the exact controller code that drops the nested safe transport code.
+- the receipt code and tests that retain only validated safe transport codes in
+  new receipts while historical receipts remain verifiable.
 
 No real report, retained image, Gateway token, provider response, customer data,
 database, canonical model, lock, deployment, or release was opened or changed by

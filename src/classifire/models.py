@@ -370,15 +370,55 @@ class ReportDefectScope(RecordMixin, Base):
             name='uq_report_defect_scope_report_defect',
         ),
         Index('ix_report_defect_scope_defect_id', 'defect_id'),
+        Index(
+            'ix_report_defect_scope_expected_label_manifest_id',
+            'approved_expected_label_manifest_id',
+        ),
     )
 
     project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
     source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     defect_id: Mapped[str] = mapped_column(ForeignKey('defects.id'), nullable=False)
     report_defect_label: Mapped[str] = mapped_column(String(150), nullable=False)
+    approved_expected_label_manifest_id: Mapped[str | None] = mapped_column(
+        ForeignKey('report_expected_label_manifests.id')
+    )
     start_locator_id: Mapped[str] = mapped_column(String(36), nullable=False)
     end_locator_id: Mapped[str] = mapped_column(String(36), nullable=False)
 
+
+class ReportExpectedLabelManifest(RecordMixin, Base):
+    '''One immutable, human-approved expected Defect-label set for a retained report.'''
+
+    __tablename__ = 'report_expected_label_manifests'
+    __table_args__ = (
+        CheckConstraint(
+            'length(trim(approval_reference)) > 0',
+            name='ck_report_expected_label_manifest_approval_reference',
+        ),
+        ForeignKeyConstraint(
+            ['project_evidence_id', 'source_sha256'],
+            ['project_evidence.id', 'project_evidence.source_sha256'],
+            name='fk_report_expected_label_manifest_source',
+        ),
+        UniqueConstraint(
+            'project_evidence_id',
+            'manifest_sha256',
+            'approval_reference',
+            'approved_by_user_id',
+            name='uq_report_expected_label_manifest_approval',
+        ),
+        Index('ix_report_expected_label_manifest_estimate_id', 'estimate_id'),
+    )
+
+    project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey('estimates.id'), nullable=False)
+    expected_report_defect_labels: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    approval_reference: Mapped[str] = mapped_column(String(500), nullable=False)
+    approved_by_user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), nullable=False)
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 class TechnicalDocument(RecordMixin, Base):
     __tablename__ = "technical_documents"

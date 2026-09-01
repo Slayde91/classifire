@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, NoReturn
@@ -32,7 +32,7 @@ from .phase8_report_assessment_input import (
 from .phase8_report_assessment_prompts import validate_report_assessment_inference_profile
 from .phase8_report_documentary_context import build_phase8_report_documentary_context
 from .phase8_report_review_package import (
-    REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA,
+    REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA_V2,
     Phase8ReportReviewPackage,
     ReportDefectReviewOutcome,
     ReportDefectReviewSupportingFiles,
@@ -46,13 +46,18 @@ from .phase8_report_runtime_input import (
 from .phase8_visual_proposal import validate_visual_inference_profile
 from .project_evidence import read_project_evidence_for_update
 from .report_evidence_adapter import (
+    REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2,
     ReportDefectEvidencePacket,
     build_report_defect_evidence_packets,
+)
+from .report_expected_label_manifest import (
+    ApprovedReportExpectedLabelManifest,
+    ReportExpectedLabelManifestError,
+    require_approved_report_expected_label_manifest,
 )
 
 _PACKAGE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
-_MAXIMUM_EXPECTED_LABELS = 50_000
 
 
 class Phase8ReportAssessmentRunnerError(RuntimeError):
@@ -135,26 +140,6 @@ def _package_binding(
     return identifier, package_hash.upper(), approval
 
 
-def _expected_labels(value: object) -> dict[str, str]:
-    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
-        _fail("REPORT_RUNNER_EXPECTED_LABELS_INVALID")
-    labels = tuple(value)
-    if not labels or len(labels) > _MAXIMUM_EXPECTED_LABELS:
-        _fail("REPORT_RUNNER_EXPECTED_LABELS_INVALID")
-    result: dict[str, str] = {}
-    for raw in labels:
-        label = _required_text(
-            raw,
-            code="REPORT_RUNNER_EXPECTED_LABELS_INVALID",
-            maximum=150,
-        )
-        normalised = label.casefold()
-        if normalised in result:
-            _fail("REPORT_RUNNER_EXPECTED_LABELS_INVALID")
-        result[normalised] = label
-    return result
-
-
 def _profiles(
     *,
     visual_inference_profile: object,
@@ -233,6 +218,7 @@ def _expected_label_manifest_bytes(
     package_id: str,
     package_sha256: str,
     approval_reference: str,
+    approved_expected_label_manifest: ApprovedReportExpectedLabelManifest,
 ) -> bytes:
     packets = tuple(
         sorted(
@@ -247,13 +233,20 @@ def _expected_label_manifest_bytes(
     first = packets[0].manifest
     return _json_bytes(
         {
-            "schema": REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA,
+            "schema": REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA_V2,
             "project_evidence_id": first["project_evidence_id"],
             "report_sha256": first["report_sha256"],
             "estimate_id": first["estimate_id"],
             "package_id": package_id,
             "package_sha256": package_sha256,
             "approval_reference": approval_reference,
+            "approved_expected_label_manifest_id": approved_expected_label_manifest.id,
+            "approved_expected_label_manifest_sha256": (
+                approved_expected_label_manifest.manifest_sha256
+            ),
+            "approved_expected_label_manifest_approval_reference": (
+                approved_expected_label_manifest.approval_reference
+            ),
             "expected_report_defect_labels": [
                 packet.manifest["report_defect_label"] for packet in packets
             ],
@@ -339,7 +332,7 @@ def execute_phase8_report_assessment_runner(
     package_id: object,
     package_sha256: object,
     approval_reference: object,
-    expected_report_defect_labels: object,
+    approved_expected_label_manifest_id: object,
     visual_packets_by_report_defect_label: object,
     visual_inference_profile: object,
     report_assessment_inference_profile: object,
@@ -369,14 +362,9 @@ def execute_phase8_report_assessment_runner(
         package_sha256=package_sha256,
         approval_reference=approval_reference,
     )
-    expected_labels = _expected_labels(expected_report_defect_labels)
     visual_profile, report_profile = _profiles(
         visual_inference_profile=visual_inference_profile,
         report_assessment_inference_profile=report_assessment_inference_profile,
-    )
-    visual_packets = _visual_packets(
-        visual_packets_by_report_defect_label,
-        expected_labels=expected_labels,
     )
     if not callable(inference_port_factory) or not callable(protected_state_reader):
         _fail("REPORT_RUNNER_EXECUTION_CAPABILITY_INVALID")
@@ -390,6 +378,27 @@ def execute_phase8_report_assessment_runner(
     )
     if verified_content.sha256 != expected_sha:
         _fail("REPORT_RUNNER_REPORT_SHA_MISMATCH")
+    try:
+        approved_expected_label_manifest = require_approved_report_expected_label_manifest(
+            db,
+            expected_label_manifest_id=approved_expected_label_manifest_id,
+            project_id=project,
+            estimate_id=estimate,
+            stored_file_id=stored_file,
+            report_sha256=expected_sha,
+        )
+    except ReportExpectedLabelManifestError as exc:
+        raise Phase8ReportAssessmentRunnerError(
+            "REPORT_RUNNER_EXPECTED_LABEL_MANIFEST_INVALID"
+        ) from exc
+    expected_labels = {
+        label.casefold(): label
+        for label in approved_expected_label_manifest.expected_report_defect_labels
+    }
+    visual_packets = _visual_packets(
+        visual_packets_by_report_defect_label,
+        expected_labels=expected_labels,
+    )
     packets = build_report_defect_evidence_packets(
         db,
         stored_file_id=stored_file,
@@ -403,13 +412,25 @@ def execute_phase8_report_assessment_runner(
         report_sha256=expected_sha,
         expected_labels=expected_labels,
     )
+    for packet in packets_by_label.values():
+        manifest = packet.manifest
+        if (
+            manifest.get('schema') != REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2
+            or manifest.get('approved_expected_label_manifest_id')
+            != approved_expected_label_manifest.id
+            or manifest.get('approved_expected_label_manifest_sha256')
+            != approved_expected_label_manifest.manifest_sha256
+            or manifest.get('approved_expected_label_manifest_approval_reference')
+            != approved_expected_label_manifest.approval_reference
+        ):
+            _fail('REPORT_RUNNER_EXPECTED_LABEL_MANIFEST_INVALID')
     expected_label_manifest_file_bytes = _expected_label_manifest_bytes(
         packets_by_label=packets_by_label,
         package_id=package_identifier,
         package_sha256=package_hash,
         approval_reference=approval,
+        approved_expected_label_manifest=approved_expected_label_manifest,
     )
-
 
     documentary_contexts = {
         label: build_phase8_report_documentary_context(
