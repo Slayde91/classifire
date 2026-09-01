@@ -1,14 +1,14 @@
 # CLASSIFIRE Session Handoff
 
-**Prepared:** 2026-09-01 (AEST)
+**Prepared:** 2026-09-02 (AEST)
 
 **Safe worktree:**
 `C:\CLASSIFIRE\.tmp\phase8-report-evidence-adapter-20260830`
 
-**Branch:** `gpt/phase8-report-evidence-adapter-20260830`
+**Reconciliation branch:** `docs/post-pr104-state-reconciliation-20260902`
 
-**Shared-main baseline used for review:**
-`d9b19fcee60fd82d0d317eae2f94f22b2a0ac7ab` (PR #103)
+**Verified shared-main implementation:**
+`b6409a5c86a7dcd1103eb02ceaab6fe550d1d964` (PR #104)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -16,31 +16,24 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Priority 0 - Integrate and prove the published candidate
+### Completed - Report-governance integration and main validation (PR #104)
 
-The branch is clean and matches its upstream at `e9ac8f0`. It has three published
-commits beyond `origin/main` (`b36ebb5`, `9a4c2d2`, and `e9ac8f0`): expected-label
-approval records, atomic report-scope admission/preflight, and a `main` push CI
-trigger. They are not shared-main evidence until a new PR is reviewed and merged.
+PR #104 merged the six reviewed commits `b36ebb5`, `9a4c2d2`, `e9ac8f0`,
+`4cba603`, `58c5946`, and `0f6c252` into `main` as `b6409a5`. This made the
+human-approved expected-label manifest, atomic report-scope admission, V2 runner
+preflight, migration-head readiness, and `main` push validation shared-main
+behaviour.
 
-**Why first:** the candidate's first hosted post-merge check cannot exist until
-the candidate is merged. This resolves the immediate Phase 0/5 integration gap
-without running a report, OpenClaw, Gateway, provider, canonical write, lock,
-deployment, or release.
+**Hosted evidence:** PR validation run `33515411987` passed on `0f6c252`.
+Post-merge `main` validation run `33516292114` passed on `b6409a5`, including
+the test and one-head Alembic jobs. This is implementation/CI evidence only: it
+adds no report/provider operation, canonical write, lock, deployment, technical
+or commercial approval, or release authority.
 
-**Prerequisites:** fetch and inspect the complete `origin/main...HEAD` range;
-obtain separate PR-review and merge authority. GitHub's protection API returns
+**Remaining governance uncertainty:** GitHub's protection API still returns
 HTTP 403 because the current private-repository plan does not support that
-configuration.
-
-**Do:** run focused synthetic report tests, `python -m alembic heads`, and
-`git diff --check`; create a PR only with explicit authority; after merge, verify
-the GitHub `push` workflow ran for the merge SHA and passed the full test and
-one-head migration jobs.
-
-**Done:** one reviewed PR covers the exact range, the merge is on `main`, and its
-hosted `push` run URL/SHA is recorded. Local results do not replace hosted
-post-merge evidence.
+configuration. The standard merge and observed CI succeeded, but no required-
+check configuration is independently verified.
 
 **Do not:** repeat the consumed report assessment or grant any downstream
 authority. Real execution requires fresh explicit authority after synthetic
@@ -93,7 +86,7 @@ The PostgreSQL containment tests require their explicit disposable loopback
 database URL and destructive-test opt-in. Never point them at project, UAT, or
 production data.
 
-## Published candidate and near-term work
+## Completed report governance and near-term work
 
 ### Completed on shared main - Receipt-safe Phase 8 transport codes
 
@@ -101,7 +94,7 @@ Commit `afb9de1` carries only the established safe code through new
 `INFERENCE_PORT_FAILED` receipts and suppresses exception text, response content,
 credentials, and report content. Historical receipts remain valid and type-only.
 
-### Published candidate - Bounded report-assessment application service
+### Completed on shared main - Bounded report-assessment application service
 
 `execute_phase8_report_assessment_runner()` requires exact project, estimate,
 retained-report SHA, package/profile, and a persisted human-approved expected-label
@@ -117,9 +110,9 @@ Phase 8 review, proposal when present, packet, review, and Markdown.
 Focused synthetic tests cover success, retrieval-blocked, malformed-input,
 insufficient-evidence, safe transport failure, and receipt tampering. The full
 offline suite, focused static checks, Alembic head, and dedicated two-session
-PostgreSQL containment race passed locally. It adds no canonical, technical,
-commercial, lock, deployment, or release authority. Fresh shared CI and any
-real-provider run remain separate gates.
+PostgreSQL containment race passed locally; PR and post-merge shared CI also
+passed. It adds no canonical, technical, commercial, lock, deployment, or
+release authority. Any real-provider run remains a separate gate.
 
 1. **Persist proposal-review packages before building a UI.** Define retention,
    redaction/deletion, reviewer access, and immutable safe-hash ownership first;
@@ -129,9 +122,8 @@ real-provider run remain separate gates.
    snapshot hash with focused regression tests.
 3. **Treat full-repository Ruff debt separately from changed-file CI.** Decide
    whether to upgrade GitHub protection or document an equivalent review control.
-4. **Seek new report-run authority only after candidate integration and synthetic
-   transport diagnosis.** A successful transport still requires human semantic
-   review.
+4. **Seek new report-run authority only after synthetic transport diagnosis.** A
+   successful transport still requires human semantic review.
 5. **Keep canonical submission, replacement lock, Phases 9-14, deployment, and
    release behind their documented independent gates.**
 
@@ -139,7 +131,7 @@ real-provider run remain separate gates.
 
 ### Shared main
 
-Shared main at `d9b19fc` includes:
+Shared main includes:
 
 - PR #80's v2 Phase 8 assessment/review contract;
 - PR #81's report ownership, exact-byte containment, PDF locators/scopes,
@@ -152,27 +144,27 @@ Shared main at `d9b19fc` includes:
 - PR #99's Node 24-compatible workflow;
 - PR #100's documentation reconciliation of the release-pinning boundary;
 - PR #101's report review hash/label binding;
-- PR #102's bounded report-assessment evidence receipts; and
-- PR #103's desk-quote evidence-read hardening.
-Shared `main` packages migrations through `0011_report_evidence_locators`.
-The published candidate adds:
+- PR #102's bounded report-assessment evidence receipts;
+- PR #103's desk-quote evidence-read hardening; and
+- PR #104's expected-label manifests, atomic scope admission, V2 runner
+  preflight, migration-head readiness, and `main` push validation.
 
-- `0012_report_expected_label_manifests`; and
-- `0013_report_defect_scope_admissions` (the current candidate head).
+Shared `main` packages migrations through
+`0013_report_defect_scope_admissions` (one head).
 
-PR #103 run `33492628353` passed Python validation. This is exact PR-head
-evidence. The candidate adds a `main` push validation trigger, but it has no
-hosted post-merge result until review and merge. GitHub's protection API returns
-HTTP 403 because the private repository needs GitHub Pro or public visibility for
-that configuration; no required-check configuration is verified.
+PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
+`main` run `33516292114` passed on `b6409a5`, including tests and the one-head
+Alembic check. GitHub's protection API returns HTTP 403 because the private
+repository needs GitHub Pro or public visibility for that configuration; no
+required-check configuration is verified.
 
 ### Report-assessment integration limit
 
 The new report path is service-only. Source exists for owned report bytes,
 stable PDF locators/scopes, transient documentary context, report-aware runtime
-input, assessment/review controllers, and deterministic packages. The candidate
-runner composes the whole sequence, but no supported CLI, API, UI, or persisted
-proposal-review package record invokes it.
+input, assessment/review controllers, and deterministic packages. The shared-
+main runner composes the whole sequence, but no supported CLI, API, UI, or
+persisted proposal-review package record invokes it.
 
 PDF text, table, and annotation content are supported. Drawings and embedded
 images are locator/hash-only in documentary context, with visual bytes supplied
@@ -219,10 +211,10 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
 
 ## Local Git and worktree safety
 
-At this reconciliation's start, the isolated branch was clean at `e9ac8f0` and
-matched its upstream. No pre-existing staged, unstaged, deleted, or untracked
-paths existed in this worktree. This documentation update changes only the four
-files named below.
+At this reconciliation's start, the isolated documentation branch was clean and
+based on `b6409a5`. No pre-existing staged, unstaged, deleted, or untracked paths
+existed in this worktree. This documentation update changes only the four files
+named below.
 
 The root `C:\CLASSIFIRE` checkout remains quarantined at `de0cc5a` with an
 interrupted cherry-pick, unmerged/tracked changes, and an incomplete untracked
