@@ -6,7 +6,7 @@ from typing import Any
 
 from ..services.snapshot import verify_estimate_snapshot
 
-ATTRIBUTION = "QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP."
+ATTRIBUTION = "CLASSIFIRE is an estimating system produced and developed by Ceasefire PFP."
 
 
 def d(value: Any) -> Decimal:
@@ -20,6 +20,9 @@ def verify_snapshot(snapshot: dict[str, Any]) -> None:
 def logo_path() -> Path:
     package_root = Path(__file__).resolve().parents[3]
     candidates = [
+        Path(__file__).resolve().parents[1] / "static" / "brand" / "classifire-logo-master.png",
+        package_root / "assets" / "brand" / "classifire-logo-master.png",
+        Path.cwd() / "assets" / "brand" / "classifire-logo-master.png",
         Path(__file__).resolve().parents[1] / "static" / "brand" / "quantifire-logo-master.png",
         package_root / "assets" / "brand" / "quantifire-logo-master.png",
         Path.cwd() / "assets" / "brand" / "quantifire-logo-master.png",
@@ -27,4 +30,4 @@ def logo_path() -> Path:
     for candidate in candidates:
         if candidate.exists():
             return candidate
-    raise FileNotFoundError("Approved QUANTIFIRE logo asset not found")
+    raise FileNotFoundError("Approved CLASSIFIRE logo asset not found")
