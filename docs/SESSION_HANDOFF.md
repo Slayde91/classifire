@@ -5,10 +5,10 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** `origin/main` at `1e437568`
+**Reconciliation baseline:** `origin/main` at `075c9c5f`
 
 **Verified shared-main implementation:**
-`1e43756865407350c636ee8dd4fe19aaf6947a05` (PR #138)
+`075c9c5f56d113fe8021317dbb813072480a48cc` (PR #140)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -16,7 +16,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#138
+### Current shared main - PRs #104-#140
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -39,10 +39,13 @@ identity, digest, and locator, or an explicit legacy-unbound state; it rejects
 later source-lineage drift from pinned runtime use. PR #137 reconciled the
 factual records. PR #138 presents the immutable published source lineage on
 TechnicalRelease detail screens without re-reading bytes or granting source
-approval, activation, publication, or release authority. Each pull-request check
-and corresponding `main` validation run passed; the latest PR run is
-`33690769753` on `efe8d40`, and the latest `main` run is `33691006065` on
-`1e43756`.
+approval, activation, publication, or release authority. PR #139 reconciled the
+factual records. PR #140 safely links an eligible bound document ID to the
+existing current read-only document record while preserving the published binding;
+legacy, malformed, and unrecognised bindings remain non-links. Each pull-request
+check and corresponding `main` validation run passed; the latest PR run is
+`33693213662` on `bb129c8`, and the latest `main` run is `33693439846` on
+`075c9c5`.
 
 PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
@@ -227,18 +230,17 @@ Shared main includes:
 - PR #125's hosted full-Ruff validation; and
 - PR #126's hosted full-Bandit validation and explicit Phase 8 fail-closed
   invariant errors; and
-- PRs #127-#138's verified-byte extraction, Draft metadata refresh,
+- PRs #127-#140's verified-byte extraction, Draft metadata refresh,
   current-authority safeguards and reviewer visibility, factual reconciliation,
-  immutable published technical source-lineage checks, and structured technical
-  release-lineage display.
+  immutable published technical source-lineage checks, structured technical release-lineage display, and safe navigation from an eligible bound record to the existing read-only document record.
 
 Shared `main` packages migrations through
 `0013_report_defect_scope_admissions` (one head).
 
 PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
 `main` run `33516292114` passed on `b6409a5`, including tests and the one-head
-Alembic check. Each PR #105-#138 check and corresponding `main` run also passed,
-ending with run `33691006065` on `1e43756`. GitHub's protection API returns HTTP
+Alembic check. Each PR #105-#140 check and corresponding `main` run also passed,
+ending with run `33693439846` on `075c9c5`. GitHub's protection API returns HTTP
 403 because the private repository needs GitHub Pro or public visibility for
 that configuration; no required-check configuration is verified.
 
