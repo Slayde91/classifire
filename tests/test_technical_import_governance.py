@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from inspect import signature
+from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, func, select
@@ -17,8 +19,19 @@ from classifire.importers.technical import (
     TECHNICAL_IMPORT_POLICY,
     import_technical_variants,
 )
-from classifire.models import Estimate, LibraryRelease, Opening, Project, Service, TechnicalVariant
-from classifire.release_admin import _snapshot_records
+from classifire.models import (
+    Estimate,
+    EstimatingRule,
+    LabourComponent,
+    LibraryRelease,
+    Opening,
+    PricingLibraryRecord,
+    Product,
+    Project,
+    Service,
+    TechnicalVariant,
+)
+from classifire.release_admin import _activate_drafts, _snapshot_records, _technical_logical_key
 from classifire.services.release_pinning import (
     PIN_FIELDS,
     active_release,
@@ -69,17 +82,17 @@ def _active_source_row(variant_id: str = "VAR-001", system_id: str = "SYS-001") 
 
 
 def _source_file(
-    tmp_path,
+    tmp_path: Path,
     rows: list[dict[str, str]],
     filename: str = "technical.jsonl",
-) -> tuple[object, str]:
+) -> tuple[Path, str]:
     path = tmp_path / filename
     payload = "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)
     path.write_text(payload, encoding="utf-8", newline="\n")
     return path, payload
 
 
-def _release_manifest_hash(manifest: dict[str, object]) -> str:
+def _release_manifest_hash(manifest: Mapping[str, object]) -> str:
     encoded = json.dumps(manifest, sort_keys=True, separators=(",", ":"), default=str).encode(
         "utf-8"
     )
@@ -212,6 +225,93 @@ def test_imported_candidate_is_excluded_from_search_and_release_snapshot(db, tmp
         )
         == 0
     )
+
+
+def test_release_admin_never_activates_a_technical_draft(db) -> None:
+    variant = TechnicalVariant(
+        variant_id="DRAFT-VARIANT-QFREV2",
+        system_id="DRAFT-SYSTEM",
+        status="draft",
+        source_json={"fixture": "technical-draft"},
+    )
+    db.add(variant)
+    db.flush()
+
+    assert _technical_logical_key(variant) == "DRAFT-VARIANT"
+    assert _activate_drafts(db, "technical") == []
+    assert variant.status == "draft"
+    assert _snapshot_records(db, "technical") == []
+
+
+def test_release_admin_activates_only_non_technical_drafts(db) -> None:
+    pricing_active = PricingLibraryRecord(
+        pkb_entry_id="RATE-001",
+        entry_version="v1",
+        description="Active pricing record",
+        source_json={"fixture": "active-pricing"},
+        status="active",
+    )
+    pricing_draft = PricingLibraryRecord(
+        pkb_entry_id="RATE-001",
+        entry_version="v2",
+        description="Draft pricing record",
+        source_json={"fixture": "draft-pricing"},
+        status="draft",
+    )
+    rule_active = EstimatingRule(
+        rule_code="RULE-001",
+        version=1,
+        name="Active rule",
+        category="test",
+        description="Active rule",
+        conditions={},
+        actions={},
+        status="active",
+    )
+    rule_draft = EstimatingRule(
+        rule_code="RULE-001",
+        version=2,
+        name="Draft rule",
+        category="test",
+        description="Draft rule",
+        conditions={},
+        actions={},
+        status="draft",
+    )
+    labour_active = LabourComponent(
+        code="LAB-001", revision=1, name="Active labour", status="active"
+    )
+    labour_draft = LabourComponent(code="LAB-001", revision=2, name="Draft labour", status="draft")
+    product_active = Product(sku="PROD-001", revision=1, name="Active product", status="active")
+    product_draft = Product(sku="PROD-001", revision=2, name="Draft product", status="draft")
+    db.add_all(
+        [
+            pricing_active,
+            pricing_draft,
+            rule_active,
+            rule_draft,
+            labour_active,
+            labour_draft,
+            product_active,
+            product_draft,
+        ]
+    )
+    db.flush()
+
+    assert _activate_drafts(db, "pricing") == [pricing_draft.id]
+    assert _activate_drafts(db, "rules") == [rule_draft.id]
+    assert _activate_drafts(db, "labour") == [labour_draft.id]
+    assert _activate_drafts(db, "products") == [product_draft.id]
+
+    assert pricing_active.status == "superseded"
+    assert pricing_draft.status == "active"
+    assert rule_active.status == "superseded"
+    assert rule_draft.status == "active"
+    assert rule_draft.approved_at is not None
+    assert labour_active.status == "superseded"
+    assert labour_draft.status == "active"
+    assert product_active.status == "superseded"
+    assert product_draft.status == "active"
 
 
 def test_draft_import_cannot_be_searched_through_a_directly_pinned_release(db, tmp_path) -> None:
