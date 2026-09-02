@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** `5639e26` (PR #122 merge, 2026-09-02)
+**Verified shared-main implementation:** `b33246a` (PR #126 merge, 2026-09-03)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -53,9 +53,9 @@ Shared main now includes:
 
 PR #104 validation run `33515411987` passed on its exact head `0f6c252`. Its
 first observed `main` push run `33516292114` also passed on merge `b6409a5`,
-including tests and the one-head Alembic check. Every PR #105-#125 check and
+including tests and the one-head Alembic check. Every PR #105-#126 check and
 corresponding `main` validation then passed; the latest post-merge run is
-`33664228459` on `7e26c2f`. GitHub's branch-protection endpoint still returns
+`33667477950` on `b33246a`. GitHub's branch-protection endpoint still returns
 HTTP 403 because the current private-repository plan requires GitHub Pro or
 public visibility for that configuration; required-check configuration remains
 unverified.
@@ -304,7 +304,7 @@ private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
 **Remaining:** the root checkout is conflicted recovery evidence; hosted `main`
-validation passed through PR #122, but the current GitHub plan prevents
+validation passed through PR #126, but the current GitHub plan prevents
 branch-protection configuration; clean-machine and release reproducibility
 remain incomplete.
 

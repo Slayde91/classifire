@@ -4,8 +4,8 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `5639e26` (PR #122 merge,
-2026-09-02)
+**Verified shared-main implementation:** `b33246a` (PR #126 merge,
+2026-09-03)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -367,10 +367,11 @@ identity, retained-source safeguards, source-bound Draft materialisation, and
 contained type-safety hardening through `14ed594`. PR #119 reconciled the
 preceding factual records; PR #120 moved PDF timestamps to an aware UTC clock;
 PRs #121-#122 applied current CLASSIFIRE display branding; PR #123 reconciled
-factual records; PR #124 added full hosted Mypy validation; and PR #125
-established full hosted Ruff validation. Their pull-
-request checks and corresponding `main` validation runs passed; the latest
-post-merge run is `33664228459` on `7e26c2f`. The technical changes require
+factual records; PR #124 added full hosted Mypy validation; PR #125 established
+full hosted Ruff validation; and PR #126 added full hosted Bandit validation
+and explicit Phase 8 fail-closed invariant errors. Their pull-request checks
+and corresponding `main` validation runs passed; the latest post-merge run is
+`33667477950` on `b33246a`. The technical changes require
 retained source identity and locator, preserve exact Draft/revision source
 binding, and retain content-safe
 extraction diagnostics. PR #113 makes admission rejection helpers explicitly
