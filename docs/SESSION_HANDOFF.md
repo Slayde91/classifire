@@ -34,8 +34,9 @@ PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
 PRs #107-#111 require retained technical sources for activation, bind Draft
 variants and revisions to the exact source document, require a source locator
-before review, and suppress content from extraction-failure diagnostics. PR #112
-materialises a Draft variant only from a clean retained source document. PR #113
+before review, derive candidate metadata only from clean hash-verified bytes,
+and suppress content from extraction-failure diagnostics. PR #112 materialises a
+Draft variant only from a clean retained source document. PR #113
 makes admission rejection helpers explicitly non-returning without weakening
 their fail-closed safe-code behaviour. PR #114 makes rule and UI response types
 explicit, rejects non-text rule operators deterministically, and proves existing
@@ -186,8 +187,8 @@ Shared main includes:
 - PR #105's factual state reconciliation;
 - PR #106's V2 semantic snapshot identity and document-integrity boundary; and
 - PRs #107-#112's retained-source activation, Draft/revision source binding,
-  source-locator review, content-safe extraction diagnostics, and source-bound
-  Draft materialisation;
+  source-locator review, clean-byte candidate extraction, content-safe extraction
+  diagnostics, and source-bound Draft materialisation;
 - PR #113's explicit non-returning admission-rejection helpers;
 - PR #114's explicit rule/UI response typing and focused library-page coverage;
 - PR #115's factual state reconciliation;
@@ -255,8 +256,9 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
 - No semantically approved replacement canonical Physical Model or active lock
   exists for the current UAT estimate.
 - Technical review/import/release safeguards now include retained-source
-  activation, Draft/revision source binding, source-locator review, content-safe
-  extraction diagnostics, and source-bound Draft materialisation; they do not
+  activation, Draft/revision source binding, source-locator review, clean-byte
+  candidate extraction, content-safe extraction diagnostics, and source-bound Draft
+  materialisation; they do not
   complete the full technical authority registry.
 - Desk quotes are proposal-only; PR #103 merged the evidence-read hardening and
   passed CI/review, while operational approval remains separate.

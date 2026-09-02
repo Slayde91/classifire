@@ -3,7 +3,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from decimal import Decimal
-from pathlib import Path
+from io import BytesIO
+from pathlib import PurePath
 from typing import Any
 
 from pypdf import PdfReader
@@ -178,9 +179,9 @@ def mixed_service_candidate_available(db: Session, opening: Opening) -> dict[str
     }
 
 
-def extract_pdf_candidate_metadata(path: Path) -> dict[str, Any]:
+def extract_pdf_candidate_metadata(content: bytes) -> dict[str, Any]:
     """Extract only candidate metadata. The result is never approved automatically."""
-    reader = PdfReader(str(path))
+    reader = PdfReader(BytesIO(content))
     text_parts: list[str] = []
     pages: list[dict[str, Any]] = []
     for index, page in enumerate(reader.pages):
@@ -206,21 +207,38 @@ def extract_pdf_candidate_metadata(path: Path) -> dict[str, Any]:
 
 
 TECHNICAL_DOCUMENT_EXTRACTION_FAILURE_CODE = "TECHNICAL_DOCUMENT_EXTRACTION_FAILED"
+TECHNICAL_DOCUMENT_EXTRACTION_DEFERRED_CODE = (
+    "TECHNICAL_DOCUMENT_EXTRACTION_DEFERRED_PENDING_CLEAN_SOURCE"
+)
 
 
-def build_technical_document_draft_metadata(path: Path) -> dict[str, Any]:
-    """Build safe Draft metadata without persisting parser exception content."""
+def build_technical_document_extraction_deferred_metadata() -> dict[str, Any]:
+    """Describe a retained Draft source that must not be parsed yet."""
+    return {
+        "human_review_required": True,
+        "automatic_activation_permitted": False,
+        "extraction_status": "deferred_pending_clean_source",
+        "extraction_deferred_code": TECHNICAL_DOCUMENT_EXTRACTION_DEFERRED_CODE,
+    }
+
+
+def build_technical_document_draft_metadata_from_verified_content(
+    *,
+    content: bytes,
+    filename: str,
+) -> dict[str, Any]:
+    """Build safe Draft metadata from exact bytes returned by the storage verifier."""
     metadata: dict[str, Any] = {
         "human_review_required": True,
         "automatic_activation_permitted": False,
     }
-    if path.suffix.lower() != ".pdf":
+    if PurePath(filename).suffix.lower() != ".pdf":
         return metadata
     try:
-        metadata.update(extract_pdf_candidate_metadata(path))
+        metadata.update(extract_pdf_candidate_metadata(content))
     except Exception:
-        # Candidate extraction is optional; retain the immutable Draft source but not
-        # arbitrary parser text, which may contain filesystem or source content.
+        # Candidate extraction is optional; retain the immutable Draft source but
+        # not arbitrary parser text, which may contain source content.
         metadata.update(
             {
                 "extraction_status": "failed",

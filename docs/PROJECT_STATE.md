@@ -63,12 +63,12 @@ The following boundaries are implemented and tested for their stated scope:
 - Production configuration checks before filesystem work, no production
   `create_all()` or default-administrator seeding, packaged migration history,
   an explicit migration command, and exact migration-head readiness checks.
-- Technical-document review separation, clean source-byte rechecks, Draft-only
-  imports, source-document-bound Draft variants, source-preserving revisions,
-  nonblank source locators before review, source-bound manual Draft
-  materialisation, independent activation, active immutable technical-release
-  requirements, and release-manifest eligibility rechecks. Technical extraction
-  failures retain only content-safe diagnostics.
+- Technical-document review separation, clean source-byte rechecks, verified-byte
+  candidate metadata extraction, Draft-only imports, source-document-bound Draft
+  variants, source-preserving revisions, nonblank source locators before review,
+  source-bound manual Draft materialisation, independent activation, active
+  immutable technical-release requirements, and release-manifest eligibility
+  rechecks. Technical extraction failures retain only content-safe diagnostics.
 - Governed assumption-led desk-quote PDF/XLSX outputs from PR #75. They remain
   explicitly non-technical, proposal-only commercial scenarios. The current
   shared-main resolver requires Project/Estimate-owned immutable `clean` ProjectEvidence,
@@ -136,7 +136,7 @@ prices work, creates a lock, or releases an estimate.
 | Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. The runner rejects legacy V1/unbound scope packets or a different approval record before any port call. Historical V1 packets remain verifiable. |
 | Report formats and content | Normalisation is PDF-only. Text, page, table, and annotation content are supported. Drawings and embedded images are locator/hash records with no documentary payload; visual bytes come through a separate governed packet. Caption extraction is explicitly rejected. XLSX, DOCX, and multi-report generalisation are not implemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
-| Technical authority | Review, activation, Draft source binding, revision lineage, source-locator, manual Draft materialisation, import, and release checks fail closed. Extraction-assisted and manufacturer-neutral lineage, governed publication/supersession, and production authority remain incomplete. |
+| Technical authority | Review, activation, Draft source binding, revision lineage, source-locator, clean-byte candidate metadata extraction, manual Draft materialisation, import, and release checks fail closed. Extraction-assisted and manufacturer-neutral lineage, governed publication/supersession, and production authority remain incomplete. |
 | Quantity and labour | Basic estimate calculation exists; the complete selected-system-to-components-to-productivity chain is not implemented on current main. |
 | Commercial recovery | Desk quotes and basic estimating rules exist, but the full component-level rate-inclusion/recovery ledger remains incomplete. |
 | Snapshot and release | Estimate snapshot V2 separates semantic identity from `generated_utc`: `snapshot_hash` excludes that volatile generation metadata, while `snapshot_document_hash` still binds the complete displayed document. V1 snapshots retain their historical full-payload verification. Focused synthetic tests cover semantic stability, metadata/semantic tampering, and unsupported schemas. Full independent validation certificates and Human Release are not proven. |
