@@ -13,6 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 
 from classifire.db import Base, get_db
+from classifire.library_ui import router as library_ui_router
 from classifire.models import Product, User
 from classifire.security import get_current_user, get_optional_user, hash_password
 from classifire.ui import router as ui_router
@@ -41,7 +42,7 @@ def _add_admin(factory: sessionmaker[Session]) -> str:
         db.add(user)
         db.commit()
         db.refresh(user)
-        return user.id
+        return str(user.id)
 
 
 def _request(session: dict[str, object]) -> Request:
@@ -68,6 +69,7 @@ def _test_app(factory: sessionmaker[Session]) -> FastAPI:
         secret_key="human-session-security-test-secret",  # noqa: S106 - isolated fixture
     )
     app.include_router(ui_router)
+    app.include_router(library_ui_router)
 
     def override_db() -> Iterator[Session]:
         with factory() as db:
@@ -154,6 +156,8 @@ def test_inactive_user_cannot_complete_a_protected_ui_write() -> None:
 
         products_page = client.get("/products")
         assert products_page.status_code == 200
+        pricing_page = client.get("/pricing")
+        assert pricing_page.status_code == 200
         csrf_token = _csrf_token(products_page.text)
 
         with factory() as db:

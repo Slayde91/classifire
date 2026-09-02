@@ -95,8 +95,10 @@ def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
     }
 
 
-@router.get("/login", response_class=HTMLResponse)
-def login_page(request: Request, db: Db, error: str | None = None) -> HTMLResponse:
+@router.get("/login", response_class=HTMLResponse, response_model=None)
+def login_page(
+    request: Request, db: Db, error: str | None = None
+) -> HTMLResponse | RedirectResponse:
     if _user(request, db):
         return RedirectResponse("/", status_code=303)
     return templates.TemplateResponse(request, "login.html", _context(request, db, error=error))
@@ -306,9 +308,7 @@ def rule_create(
         )
     version = (
         db.scalar(
-            select(func.max(EstimatingRule.version)).where(
-                EstimatingRule.rule_code == rule_code
-            )
+            select(func.max(EstimatingRule.version)).where(EstimatingRule.rule_code == rule_code)
         )
         or 0
     ) + 1
@@ -415,9 +415,7 @@ def technical_upload(
 def projects_page(request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "project:read")
     projects = db.scalars(
-        select(Project)
-        .options(selectinload(Project.estimates))
-        .order_by(Project.updated_at.desc())
+        select(Project).options(selectinload(Project.estimates)).order_by(Project.updated_at.desc())
     ).all()
     return templates.TemplateResponse(
         request, "projects.html", _context(request, db, projects=projects)
@@ -469,8 +467,7 @@ def estimate_create(
     if not project:
         raise HTTPException(404, "Project not found")
     revision = (
-        db.scalar(select(func.max(Estimate.revision)).where(Estimate.project_id == project.id))
-        or 0
+        db.scalar(select(func.max(Estimate.revision)).where(Estimate.project_id == project.id)) or 0
     ) + 1
     estimate = Estimate(
         project_id=project.id,
@@ -697,9 +694,7 @@ def estimate_add_line(
         unit=unit,
         base_unit_cost=D(base_unit_cost),
         markup_override=(
-            D(markup_override_percent) / Decimal("100")
-            if markup_override_percent
-            else None
+            D(markup_override_percent) / Decimal("100") if markup_override_percent else None
         ),
         pricing_method=pricing_method,
         commercial_recovery_status="separately_priced",
