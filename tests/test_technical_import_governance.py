@@ -521,6 +521,16 @@ def test_active_release_with_current_variant_remains_searchable(db) -> None:
     assert "Pinned technical release contains inactive or missing variants." not in (
         validate_estimate_release_basis(db, opening.estimate)
     )
+    assert _snapshot_records(db, "technical")[0]["source_binding"] == {
+        "schema": "technical-release-source-binding-v1",
+        "state": "legacy_unbound",
+        "source_locator": {
+            "document_reference": None,
+            "page": None,
+            "table": None,
+            "figure": None,
+        },
+    }
 
 
 def test_active_release_with_a_current_bound_source_remains_searchable(db) -> None:
@@ -533,6 +543,74 @@ def test_active_release_with_a_current_bound_source_remains_searchable(db) -> No
     result = search_for_opening(db, opening)
     assert result["services"][0]["candidates"][0]["variant_id"] == variant.variant_id
     assert [record["id"] for record in _snapshot_records(db, "technical")] == [variant.id]
+
+
+def test_technical_snapshot_binds_retained_source_document_file_and_locator(db) -> None:
+    _release, variant = _active_release_with_variant(db, variant_status="active")
+    document = _technical_document(db)
+    stored = db.get(StoredFile, document.stored_file_id)
+    assert stored is not None
+    document.reference = "ASSESSMENT-2026-001"
+    document.revision = "Rev 3"
+    variant.technical_document_id = document.id
+    variant.source_document_reference = document.document_id
+    variant.source_page = "42"
+    variant.source_table = "Table 7"
+    variant.source_figure = "Figure 2"
+    variant.source_hash = stored.sha256
+    db.flush()
+
+    record = _snapshot_records(db, "technical")[0]
+
+    assert record["source_binding"] == {
+        "schema": "technical-release-source-binding-v1",
+        "state": "bound",
+        "technical_document": {
+            "id": document.id,
+            "document_id": document.document_id,
+            "reference": "ASSESSMENT-2026-001",
+            "revision": "Rev 3",
+            "stored_file": {
+                "id": stored.id,
+                "sha256": stored.sha256,
+                "size_bytes": stored.size_bytes,
+            },
+        },
+        "source_locator": {
+            "document_reference": document.document_id,
+            "page": "42",
+            "table": "Table 7",
+            "figure": "Figure 2",
+        },
+    }
+
+
+def test_pinned_technical_release_rejects_source_lineage_drift(db) -> None:
+    release, variant = _active_release_with_variant(db, variant_status="active")
+    document = _technical_document(db)
+    stored = db.get(StoredFile, document.stored_file_id)
+    assert stored is not None
+    variant.technical_document_id = document.id
+    variant.source_document_reference = document.document_id
+    variant.source_page = "42"
+    variant.source_hash = stored.sha256
+    db.flush()
+    manifest = {"records": _snapshot_records(db, "technical")}
+    release.source_manifest = manifest
+    release.release_hash = _release_manifest_hash(manifest)
+    db.flush()
+    opening = _opening_with_directly_pinned_technical_release(db, release.id)
+
+    assert pinned_technical_ids(db, opening.estimate) == {variant.id}
+
+    stored.sha256 = "b" * 64
+    db.flush()
+
+    with pytest.raises(
+        ReleaseScopeError,
+        match="Pinned technical release source lineage does not match the published manifest",
+    ):
+        pinned_technical_ids(db, opening.estimate)
 
 
 def test_release_basis_refresh_rejects_an_active_release_with_retired_variants(db) -> None:
