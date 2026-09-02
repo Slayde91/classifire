@@ -11,7 +11,13 @@
 <div class="span-2"><strong>SHA-256 release hash</strong><div class="mono">{{ release.release_hash or '—' }}</div></div>
 <div class="span-2"><strong>Notes</strong><div>{{ release.notes or '—' }}</div></div>
 </div></section>
+{% if release.library_type == 'technical' %}
+<section class="panel"><div class="panel-head"><div><h2>Published technical source lineage</h2><p class="muted">Immutable source binding captured when this release was published. It does not approve a source or prove current technical authority.</p></div></div><div class="table-wrap"><table><thead><tr><th>Technical variant</th><th>Published source state</th><th>Retained document and file</th><th>Source locator</th><th>Manifest record</th></tr></thead><tbody>
+{% for row in technical_lineage[:500] %}<tr><td><div class="mono">{{ row.variant_id }}</div><div class="muted mono">{{ row.key }}</div></td><td><span class="badge badge-{{ row.source_state_badge }}">{{ row.source_state }}</span></td><td><div><strong>{{ row.document_id }}</strong></div><div class="muted">Reference: {{ row.document_reference }} · Revision: {{ row.document_revision }}</div><div class="mono">File SHA-256: {{ row.stored_file_sha256 }}</div><div class="muted">File size: {{ row.stored_file_size_bytes }} bytes</div><div class="mono">Variant source hash: {{ row.variant_source_hash }}</div></td><td><div>Document: {{ row.source_document_reference }}</div><div>Page: {{ row.source_page }} · Table: {{ row.source_table }} · Figure: {{ row.source_figure }}</div></td><td class="mono">{{ row.record_id }}</td></tr>{% else %}<tr><td colspan="5" class="empty">No technical manifest records.</td></tr>{% endfor %}
+</tbody></table></div>{% if records|length > 500 %}<p class="muted">Showing first 500 of {{ records|length }} manifest records.</p>{% endif %}</section>
+{% else %}
 <section class="panel"><h2>Manifest records</h2><div class="table-wrap"><table><thead><tr><th>Key</th><th>Record ID</th><th>Details</th></tr></thead><tbody>
 {% for item in records[:500] %}<tr><td class="mono">{{ item.get('key','—') }}</td><td class="mono">{{ item.get('id','—') }}</td><td><code>{{ item }}</code></td></tr>{% else %}<tr><td colspan="3" class="empty">No manifest records.</td></tr>{% endfor %}
 </tbody></table></div>{% if records|length > 500 %}<p class="muted">Showing first 500 of {{ records|length }} manifest records.</p>{% endif %}</section>
+{% endif %}
 {% endblock %}
