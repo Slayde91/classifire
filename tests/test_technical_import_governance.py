@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from datetime import date, timedelta
 from inspect import signature
 from pathlib import Path
 
@@ -351,6 +352,36 @@ def test_active_release_with_a_retired_variant_fails_closed(db) -> None:
     assert "Pinned technical release contains inactive or missing variants." in (
         validate_estimate_release_basis(db, opening.estimate)
     )
+
+
+@pytest.mark.parametrize(
+    ("field_name", "field_value", "expected_blocker"),
+    [
+        ("effective_date", date.today() + timedelta(days=1), "not_yet_effective"),
+        ("expiry_date", date.today() - timedelta(days=1), "expired"),
+    ],
+)
+def test_active_release_with_a_temporally_ineligible_variant_fails_closed(
+    db,
+    field_name: str,
+    field_value: date,
+    expected_blocker: str,
+) -> None:
+    release, variant = _active_release_with_variant(db, variant_status="active")
+    setattr(variant, field_name, field_value)
+    db.flush()
+    opening = _opening_with_directly_pinned_technical_release(db, release.id)
+
+    with pytest.raises(
+        ReleaseScopeError,
+        match="Pinned technical release contains inactive or missing variants",
+    ):
+        search_for_opening(db, opening)
+    assert search_variants(db, service_type="pipe") == []
+    admin_candidates = search_variants(db, service_type="pipe", include_draft=True)
+    assert len(admin_candidates) == 1
+    assert expected_blocker in admin_candidates[0].blockers
+    assert _snapshot_records(db, "technical") == []
 
 
 def test_active_release_with_current_variant_remains_searchable(db) -> None:

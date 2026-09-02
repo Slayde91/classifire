@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from ..models import Opening, TechnicalVariant
 from .release_scope import pinned_technical_ids
+from .technical_validity import technical_variant_temporal_blockers
 
 
 @dataclass(frozen=True)
@@ -74,6 +75,12 @@ def search_variants(
     variants = db.scalars(stmt.limit(max(limit * 10, 100))).all()
     candidates: list[Candidate] = []
     for variant in variants:
+        temporal_blockers = technical_variant_temporal_blockers(
+            effective_date=variant.effective_date,
+            expiry_date=variant.expiry_date,
+        )
+        if temporal_blockers and not include_draft:
+            continue
         comparisons = {
             "service_type": _compare(service_type, variant.service_type),
             "service_material": _compare(service_material, variant.service_material),
@@ -81,7 +88,7 @@ def search_variants(
             "orientation": _compare(orientation, variant.orientation),
             "frl": _compare(frl, variant.frl),
         }
-        blockers: list[str] = []
+        blockers = list(temporal_blockers)
         if "MISMATCH" in comparisons.values():
             blockers.append("critical_field_mismatch")
         if variant.expert_review_required:

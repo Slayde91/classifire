@@ -17,6 +17,7 @@ from ..models import (
     Product,
     TechnicalVariant,
 )
+from .technical_validity import technical_variant_temporal_blockers
 
 PIN_FIELDS = {
     "pricing": "pricing_release_id",
@@ -127,14 +128,18 @@ def _active_technical_variant_ids(db: Session, release: LibraryRelease) -> set[s
     if release.status != "active":
         raise ReleaseScopeError("Pinned technical release is not active.")
     record_ids = _manifest_record_ids(release, "technical")
-    active_ids = set(
-        db.scalars(
-            select(TechnicalVariant.id).where(
-                TechnicalVariant.id.in_(record_ids),
-                TechnicalVariant.status == "active",
-            )
-        ).all()
-    )
+    variants = db.scalars(
+        select(TechnicalVariant).where(TechnicalVariant.id.in_(record_ids))
+    ).all()
+    active_ids = {
+        variant.id
+        for variant in variants
+        if variant.status == "active"
+        and not technical_variant_temporal_blockers(
+            effective_date=variant.effective_date,
+            expiry_date=variant.expiry_date,
+        )
+    }
     if active_ids != record_ids:
         raise ReleaseScopeError(
             "Pinned technical release contains inactive or missing variants."

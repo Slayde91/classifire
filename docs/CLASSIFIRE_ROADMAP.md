@@ -332,7 +332,8 @@ audited, and cannot be changed by an unauthorised role.
 **Status:** In progress
 
 **Completed foundations:** independent technical document/variant decisions,
-clean-source rechecks, verified-byte candidate extraction and Draft-only
+clean-source rechecks, current effective/expiry windows, verified-byte candidate
+extraction and Draft-only
 metadata refresh after a clean-source recheck, Draft-only imports,
 source-bound variants and revisions, source-locator review gates, source-bound
 manual Draft materialisation from

@@ -34,7 +34,9 @@ PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
 PRs #107-#111 require retained technical sources for activation, bind Draft
 variants and revisions to the exact source document, require a source locator
-before review, derive candidate metadata only from clean hash-verified bytes and permit Draft-only metadata refresh after the same recheck,
+before review, enforce current technical-variant effective/expiry windows, derive
+candidate metadata only from clean hash-verified bytes and permit Draft-only
+metadata refresh after the same recheck,
 and suppress content from extraction-failure diagnostics. PR #112 materialises a
 Draft variant only from a clean retained source document. PR #113
 makes admission rejection helpers explicitly non-returning without weakening

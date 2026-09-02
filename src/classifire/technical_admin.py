@@ -21,6 +21,7 @@ from .security import verify_csrf
 from .services.calculation import D
 from .services.storage import StoredFileBindingError, read_verified_stored_file
 from .services.technical import build_technical_document_draft_metadata_from_verified_content
+from .services.technical_validity import technical_variant_temporal_blockers
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -632,6 +633,20 @@ def technical_variant_approve(
         return RedirectResponse(
             f"/technical/variants/{variant.id}?error="
             "Linked+technical+document+must+match+the+source+document+reference",
+            status_code=303,
+        )
+    temporal_blockers = technical_variant_temporal_blockers(
+        effective_date=variant.effective_date,
+        expiry_date=variant.expiry_date,
+    )
+    if "not_yet_effective" in temporal_blockers:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error=Technical+variant+is+not+yet+effective",
+            status_code=303,
+        )
+    if "expired" in temporal_blockers:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error=Technical+variant+has+expired",
             status_code=303,
         )
     previous_status = variant.status

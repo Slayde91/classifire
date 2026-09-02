@@ -252,7 +252,8 @@ technical release; commercial pricing cannot prove compatibility.
 Current shared-main safeguards include:
 
 - independent technical-document submission and decision;
-- clean, immutable, unchanged source-byte checks at review and activation;
+- clean, immutable, unchanged source-byte checks and current technical-variant
+  effective/expiry windows at review and activation;
 - a retained source document on every Draft variant and preserved exact binding
   through a Draft revision;
 - a nonblank source locator before technical review, clean hash-verified bytes

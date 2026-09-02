@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from datetime import date, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -520,6 +521,50 @@ def test_technical_activation_activates_an_independently_reviewed_variant(
         assert approval.status == "approved"
         assert approval.decided_by_id == approver.id
         assert approval.decided_at is not None
+
+
+@pytest.mark.parametrize(
+    ("field_name", "field_value", "error_fragment"),
+    [
+        (
+            "effective_date",
+            date.today() + timedelta(days=1),
+            "Technical+variant+is+not+yet+effective",
+        ),
+        (
+            "expiry_date",
+            date.today() - timedelta(days=1),
+            "Technical+variant+has+expired",
+        ),
+    ],
+)
+def test_technical_activation_refuses_a_temporally_ineligible_variant(
+    activate_as,
+    technical_storage_root: Path,
+    field_name: str,
+    field_value: date,
+    error_fragment: str,
+) -> None:
+    with physical_session() as db:
+        requester = _user(db, "requester@example.test")
+        approver = _user(db, "approver@example.test")
+        variant = _variant(db)
+        document = _technical_document(
+            db,
+            status="approved",
+            source_root=technical_storage_root,
+        )
+        variant.technical_document_id = document.id
+        setattr(variant, field_name, field_value)
+        approval = _pending_approval(db, variant, requester)
+
+        result = activate_as(db, variant, approver)
+
+        assert error_fragment in result.headers["location"]
+        assert variant.status == "in_review"
+        assert variant.expert_review_required is True
+        assert approval.status == "pending"
+        assert approval.decided_by_id is None
 
 
 def test_revision_with_changed_source_reference_drops_inherited_document_binding(
