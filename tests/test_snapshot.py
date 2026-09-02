@@ -5,6 +5,7 @@ import json
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, cast
 from zipfile import ZipFile
 
 import pytest
@@ -13,7 +14,7 @@ from pypdf import PdfReader
 
 from classifire.outputs.common import verify_snapshot
 from classifire.outputs.pdf import render_estimate_pdf
-from classifire.outputs.xlsx import render_proposal_workbook
+from classifire.outputs.xlsx import render_proposal_workbook, render_technical_workbook
 from classifire.services.snapshot import (
     ESTIMATE_SNAPSHOT_SCHEMA,
     LEGACY_ESTIMATE_SNAPSHOT_SCHEMA,
@@ -23,14 +24,16 @@ from classifire.services.snapshot import (
 )
 
 
-def _new_snapshot(generated_utc: datetime) -> dict[str, object]:
+def _new_snapshot(generated_utc: datetime) -> dict[str, Any]:
     with physical_session() as session:
         estimate = add_estimate(session)
-        return build_estimate_snapshot(session, estimate, generated_utc=generated_utc)
+        return cast(
+            dict[str, Any], build_estimate_snapshot(session, estimate, generated_utc=generated_utc)
+        )
 
 
-def _legacy_snapshot() -> dict[str, object]:
-    snapshot: dict[str, object] = {
+def _legacy_snapshot() -> dict[str, Any]:
+    snapshot: dict[str, Any] = {
         "schema": LEGACY_ESTIMATE_SNAPSHOT_SCHEMA,
         "generated_utc": "2026-09-02T00:00:00+00:00",
         "estimate": {"reference": "LEGACY-001", "revision": 1},
@@ -70,9 +73,11 @@ def test_v2_snapshot_renders_xlsx_and_pdf_outputs(tmp_path: Path) -> None:
     snapshot = _new_snapshot(datetime(2026, 9, 2, 0, 0, tzinfo=UTC))
 
     workbook_path = render_proposal_workbook(snapshot, tmp_path / "proposal.xlsx")
+    technical_workbook_path = render_technical_workbook(snapshot, tmp_path / "technical.xlsx")
     pdf_path = render_estimate_pdf(snapshot, tmp_path / "proposal.pdf", proposal=True)
 
     assert workbook_path.exists()
+    assert technical_workbook_path.exists()
     assert pdf_path.exists()
 
     with ZipFile(workbook_path) as workbook:
@@ -82,6 +87,14 @@ def test_v2_snapshot_renders_xlsx_and_pdf_outputs(tmp_path: Path) -> None:
             if name.endswith(".xml")
         )
     assert str(snapshot[SNAPSHOT_HASH_FIELD]) in workbook_text
+
+    with ZipFile(technical_workbook_path) as technical_workbook:
+        technical_workbook_text = "\n".join(
+            technical_workbook.read(name).decode("utf-8", errors="ignore")
+            for name in technical_workbook.namelist()
+            if name.endswith(".xml")
+        )
+    assert str(snapshot[SNAPSHOT_HASH_FIELD]) in technical_workbook_text
 
     pdf_text = "\n".join(page.extract_text() or "" for page in PdfReader(pdf_path).pages)
     assert snapshot["estimate"]["reference"] in pdf_text
