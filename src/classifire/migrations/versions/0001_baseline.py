@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0001_baseline"
 down_revision = None
@@ -44,7 +44,9 @@ def _baseline_metadata() -> sa.MetaData:
         "audit_events",
         md,
         *_record_columns(),
-        sa.Column("actor_user_id", sa.String(36), sa.ForeignKey("users.id"), nullable=True, index=True),
+        sa.Column(
+            "actor_user_id", sa.String(36), sa.ForeignKey("users.id"), nullable=True, index=True
+        ),
         sa.Column("actor_type", sa.String(30), nullable=False),
         sa.Column("actor_name", sa.String(200), nullable=False),
         sa.Column("action", sa.String(100), nullable=False, index=True),
@@ -73,7 +75,12 @@ def _baseline_metadata() -> sa.MetaData:
         sa.Column("created_by_id", sa.String(36), sa.ForeignKey("users.id"), nullable=True),
         sa.Column("approved_by_id", sa.String(36), sa.ForeignKey("users.id"), nullable=True),
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("supersedes_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True),
+        sa.Column(
+            "supersedes_release_id",
+            sa.String(36),
+            sa.ForeignKey("library_releases.id"),
+            nullable=True,
+        ),
         sa.UniqueConstraint("library_type", "version", name="uq_library_release_type_version"),
     )
 
@@ -121,7 +128,13 @@ def _baseline_metadata() -> sa.MetaData:
         sa.Column("status", sa.String(30), nullable=False, index=True),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("source_json", sa.JSON(), nullable=True),
-        sa.Column("release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True, index=True),
+        sa.Column(
+            "release_id",
+            sa.String(36),
+            sa.ForeignKey("library_releases.id"),
+            nullable=True,
+            index=True,
+        ),
         sa.Column("supersedes_id", sa.String(36), sa.ForeignKey("products.id"), nullable=True),
         sa.UniqueConstraint("sku", "revision", name="uq_product_sku_revision"),
     )
@@ -145,8 +158,16 @@ def _baseline_metadata() -> sa.MetaData:
         sa.Column("expiry_date", sa.Date(), nullable=True),
         sa.Column("status", sa.String(30), nullable=False, index=True),
         sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column("release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True, index=True),
-        sa.Column("supersedes_id", sa.String(36), sa.ForeignKey("labour_components.id"), nullable=True),
+        sa.Column(
+            "release_id",
+            sa.String(36),
+            sa.ForeignKey("library_releases.id"),
+            nullable=True,
+            index=True,
+        ),
+        sa.Column(
+            "supersedes_id", sa.String(36), sa.ForeignKey("labour_components.id"), nullable=True
+        ),
         sa.UniqueConstraint("code", "revision", name="uq_labour_code_revision"),
     )
 
@@ -184,9 +205,22 @@ def _baseline_metadata() -> sa.MetaData:
         sa.Column("expiry_date", sa.Date(), nullable=True),
         sa.Column("source_hash", sa.String(64), nullable=True),
         sa.Column("source_json", sa.JSON(), nullable=False),
-        sa.Column("release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True, index=True),
-        sa.Column("supersedes_id", sa.String(36), sa.ForeignKey("pricing_library_records.id"), nullable=True),
-        sa.UniqueConstraint("pkb_entry_id", "entry_version", "release_id", name="uq_pkb_entry_release"),
+        sa.Column(
+            "release_id",
+            sa.String(36),
+            sa.ForeignKey("library_releases.id"),
+            nullable=True,
+            index=True,
+        ),
+        sa.Column(
+            "supersedes_id",
+            sa.String(36),
+            sa.ForeignKey("pricing_library_records.id"),
+            nullable=True,
+        ),
+        sa.UniqueConstraint(
+            "pkb_entry_id", "entry_version", "release_id", name="uq_pkb_entry_release"
+        ),
         sa.Index("ix_pricing_search", "service_type", "service_material", "substrate", "frl"),
     )
 
@@ -210,7 +244,9 @@ def _baseline_metadata() -> sa.MetaData:
         md,
         *_record_columns(),
         sa.Column("document_id", sa.String(200), nullable=False, unique=True, index=True),
-        sa.Column("stored_file_id", sa.String(36), sa.ForeignKey("stored_files.id"), nullable=False),
+        sa.Column(
+            "stored_file_id", sa.String(36), sa.ForeignKey("stored_files.id"), nullable=False
+        ),
         sa.Column("document_type", sa.String(100), nullable=False, index=True),
         sa.Column("manufacturer", sa.String(200), nullable=True, index=True),
         sa.Column("title", sa.String(500), nullable=False),
@@ -225,7 +261,12 @@ def _baseline_metadata() -> sa.MetaData:
         sa.Column("status", sa.String(30), nullable=False, index=True),
         sa.Column("extraction_status", sa.String(50), nullable=False),
         sa.Column("metadata_json", sa.JSON(), nullable=True),
-        sa.Column("supersedes_document_id", sa.String(36), sa.ForeignKey("technical_documents.id"), nullable=True),
+        sa.Column(
+            "supersedes_document_id",
+            sa.String(36),
+            sa.ForeignKey("technical_documents.id"),
+            nullable=True,
+        ),
         sa.Column("reviewed_by_id", sa.String(36), sa.ForeignKey("users.id"), nullable=True),
         sa.Column("approved_by_id", sa.String(36), sa.ForeignKey("users.id"), nullable=True),
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
@@ -237,7 +278,12 @@ def _baseline_metadata() -> sa.MetaData:
         *_record_columns(),
         sa.Column("variant_id", sa.String(300), nullable=False, unique=True, index=True),
         sa.Column("system_id", sa.String(300), nullable=False, index=True),
-        sa.Column("technical_document_id", sa.String(36), sa.ForeignKey("technical_documents.id"), nullable=True),
+        sa.Column(
+            "technical_document_id",
+            sa.String(36),
+            sa.ForeignKey("technical_documents.id"),
+            nullable=True,
+        ),
         sa.Column("source_document_reference", sa.String(300), nullable=True, index=True),
         sa.Column("source_page", sa.String(100), nullable=True),
         sa.Column("source_table", sa.String(300), nullable=True),
@@ -279,8 +325,16 @@ def _baseline_metadata() -> sa.MetaData:
         sa.Column("expiry_date", sa.Date(), nullable=True),
         sa.Column("source_hash", sa.String(64), nullable=True),
         sa.Column("source_json", sa.JSON(), nullable=False),
-        sa.Column("release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True, index=True),
-        sa.Column("supersedes_id", sa.String(36), sa.ForeignKey("technical_variants.id"), nullable=True),
+        sa.Column(
+            "release_id",
+            sa.String(36),
+            sa.ForeignKey("library_releases.id"),
+            nullable=True,
+            index=True,
+        ),
+        sa.Column(
+            "supersedes_id", sa.String(36), sa.ForeignKey("technical_variants.id"), nullable=True
+        ),
         sa.Index("ix_technical_search", "service_type", "service_material", "frl", "status"),
     )
 
@@ -309,8 +363,16 @@ def _baseline_metadata() -> sa.MetaData:
         sa.Column("reviewer_id", sa.String(36), sa.ForeignKey("users.id"), nullable=True),
         sa.Column("approver_id", sa.String(36), sa.ForeignKey("users.id"), nullable=True),
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True, index=True),
-        sa.Column("supersedes_id", sa.String(36), sa.ForeignKey("estimating_rules.id"), nullable=True),
+        sa.Column(
+            "release_id",
+            sa.String(36),
+            sa.ForeignKey("library_releases.id"),
+            nullable=True,
+            index=True,
+        ),
+        sa.Column(
+            "supersedes_id", sa.String(36), sa.ForeignKey("estimating_rules.id"), nullable=True
+        ),
         sa.UniqueConstraint("rule_code", "version", name="uq_rule_code_version"),
     )
 
@@ -349,7 +411,9 @@ def _baseline_metadata() -> sa.MetaData:
         "contacts",
         md,
         *_record_columns(),
-        sa.Column("customer_id", sa.String(36), sa.ForeignKey("customers.id"), nullable=False, index=True),
+        sa.Column(
+            "customer_id", sa.String(36), sa.ForeignKey("customers.id"), nullable=False, index=True
+        ),
         sa.Column("name", sa.String(300), nullable=False),
         sa.Column("email", sa.String(320), nullable=True),
         sa.Column("phone", sa.String(100), nullable=True),
@@ -361,7 +425,9 @@ def _baseline_metadata() -> sa.MetaData:
         "projects",
         md,
         *_record_columns(),
-        sa.Column("customer_id", sa.String(36), sa.ForeignKey("customers.id"), nullable=True, index=True),
+        sa.Column(
+            "customer_id", sa.String(36), sa.ForeignKey("customers.id"), nullable=True, index=True
+        ),
         sa.Column("reference", sa.String(100), nullable=False, unique=True, index=True),
         sa.Column("name", sa.String(300), nullable=False),
         sa.Column("site_address", sa.Text(), nullable=True),
@@ -377,7 +443,9 @@ def _baseline_metadata() -> sa.MetaData:
         "estimates",
         md,
         *_record_columns(),
-        sa.Column("project_id", sa.String(36), sa.ForeignKey("projects.id"), nullable=False, index=True),
+        sa.Column(
+            "project_id", sa.String(36), sa.ForeignKey("projects.id"), nullable=False, index=True
+        ),
         sa.Column("revision", sa.Integer(), nullable=False),
         sa.Column("reference", sa.String(150), nullable=False, unique=True, index=True),
         sa.Column("title", sa.String(300), nullable=False),
@@ -391,11 +459,24 @@ def _baseline_metadata() -> sa.MetaData:
         sa.Column("assumptions", sa.JSON(), nullable=True),
         sa.Column("exclusions", sa.JSON(), nullable=True),
         sa.Column("qualifications", sa.JSON(), nullable=True),
-        sa.Column("pricing_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True),
-        sa.Column("technical_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True),
-        sa.Column("rules_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True),
-        sa.Column("formula_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True),
-        sa.Column("brand_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True),
+        sa.Column(
+            "pricing_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True
+        ),
+        sa.Column(
+            "technical_release_id",
+            sa.String(36),
+            sa.ForeignKey("library_releases.id"),
+            nullable=True,
+        ),
+        sa.Column(
+            "rules_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True
+        ),
+        sa.Column(
+            "formula_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True
+        ),
+        sa.Column(
+            "brand_release_id", sa.String(36), sa.ForeignKey("library_releases.id"), nullable=True
+        ),
         sa.Column("subtotal_ex_tax", sa.Numeric(18, 4), nullable=False),
         sa.Column("tax_total", sa.Numeric(18, 4), nullable=False),
         sa.Column("total_incl_tax", sa.Numeric(18, 4), nullable=False),
@@ -411,7 +492,9 @@ def _baseline_metadata() -> sa.MetaData:
         "openings",
         md,
         *_record_columns(),
-        sa.Column("estimate_id", sa.String(36), sa.ForeignKey("estimates.id"), nullable=False, index=True),
+        sa.Column(
+            "estimate_id", sa.String(36), sa.ForeignKey("estimates.id"), nullable=False, index=True
+        ),
         sa.Column("defect_id", sa.String(100), nullable=True, index=True),
         sa.Column("opening_code", sa.String(100), nullable=False, index=True),
         sa.Column("location", sa.Text(), nullable=True),
@@ -426,7 +509,12 @@ def _baseline_metadata() -> sa.MetaData:
         sa.Column("frl", sa.String(100), nullable=True, index=True),
         sa.Column("physical_model_status", sa.String(30), nullable=False),
         sa.Column("technical_status", sa.String(50), nullable=False),
-        sa.Column("selected_technical_variant_id", sa.String(36), sa.ForeignKey("technical_variants.id"), nullable=True),
+        sa.Column(
+            "selected_technical_variant_id",
+            sa.String(36),
+            sa.ForeignKey("technical_variants.id"),
+            nullable=True,
+        ),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.UniqueConstraint("estimate_id", "opening_code", name="uq_estimate_opening_code"),
     )
@@ -435,7 +523,9 @@ def _baseline_metadata() -> sa.MetaData:
         "services",
         md,
         *_record_columns(),
-        sa.Column("opening_id", sa.String(36), sa.ForeignKey("openings.id"), nullable=False, index=True),
+        sa.Column(
+            "opening_id", sa.String(36), sa.ForeignKey("openings.id"), nullable=False, index=True
+        ),
         sa.Column("service_code", sa.String(100), nullable=False, index=True),
         sa.Column("service_type", sa.String(200), nullable=False, index=True),
         sa.Column("material", sa.String(200), nullable=True, index=True),
@@ -458,9 +548,15 @@ def _baseline_metadata() -> sa.MetaData:
         "estimate_lines",
         md,
         *_record_columns(),
-        sa.Column("estimate_id", sa.String(36), sa.ForeignKey("estimates.id"), nullable=False, index=True),
-        sa.Column("opening_id", sa.String(36), sa.ForeignKey("openings.id"), nullable=True, index=True),
-        sa.Column("service_id", sa.String(36), sa.ForeignKey("services.id"), nullable=True, index=True),
+        sa.Column(
+            "estimate_id", sa.String(36), sa.ForeignKey("estimates.id"), nullable=False, index=True
+        ),
+        sa.Column(
+            "opening_id", sa.String(36), sa.ForeignKey("openings.id"), nullable=True, index=True
+        ),
+        sa.Column(
+            "service_id", sa.String(36), sa.ForeignKey("services.id"), nullable=True, index=True
+        ),
         sa.Column("line_number", sa.Integer(), nullable=False),
         sa.Column("component_type", sa.String(50), nullable=False, index=True),
         sa.Column("component_reference", sa.String(200), nullable=True, index=True),
@@ -489,9 +585,19 @@ def _baseline_metadata() -> sa.MetaData:
         "rule_evaluations",
         md,
         *_record_columns(),
-        sa.Column("estimate_id", sa.String(36), sa.ForeignKey("estimates.id"), nullable=False, index=True),
-        sa.Column("opening_id", sa.String(36), sa.ForeignKey("openings.id"), nullable=True, index=True),
-        sa.Column("rule_id", sa.String(36), sa.ForeignKey("estimating_rules.id"), nullable=False, index=True),
+        sa.Column(
+            "estimate_id", sa.String(36), sa.ForeignKey("estimates.id"), nullable=False, index=True
+        ),
+        sa.Column(
+            "opening_id", sa.String(36), sa.ForeignKey("openings.id"), nullable=True, index=True
+        ),
+        sa.Column(
+            "rule_id",
+            sa.String(36),
+            sa.ForeignKey("estimating_rules.id"),
+            nullable=False,
+            index=True,
+        ),
         sa.Column("result", sa.String(30), nullable=False, index=True),
         sa.Column("severity", sa.String(30), nullable=False),
         sa.Column("explanation", sa.Text(), nullable=False),

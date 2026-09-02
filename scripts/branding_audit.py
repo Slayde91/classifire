@@ -39,19 +39,50 @@ def main() -> int:
         if any(part in EXCLUDED_PARTS for part in rel.parts):
             continue
         if path.suffix.lower() in IMAGE_SUFFIXES and path.name not in APPROVED_LOGO_NAMES:
-            findings.append({"severity": "error", "path": rel.as_posix(), "finding": "Unapproved image asset", "sha256": sha256(path)})
-        if rel.as_posix() in {"scripts/branding_audit.py", "docs/reports/branding-audit-current.json"}:
+            findings.append(
+                {
+                    "severity": "error",
+                    "path": rel.as_posix(),
+                    "finding": "Unapproved image asset",
+                    "sha256": sha256(path),
+                }
+            )
+        if rel.as_posix() in {
+            "scripts/branding_audit.py",
+            "docs/reports/branding-audit-current.json",
+        }:
             continue
-        if path.suffix.lower() in {".py", ".md", ".txt", ".html", ".css", ".js", ".json", ".yaml", ".yml", ".toml"}:
+        if path.suffix.lower() in {
+            ".py",
+            ".md",
+            ".txt",
+            ".html",
+            ".css",
+            ".js",
+            ".json",
+            ".yaml",
+            ".yml",
+            ".toml",
+        }:
             try:
                 text = path.read_text(encoding="utf-8", errors="ignore")
             except OSError:
                 continue
             for term in LEGACY_TERMS:
                 if term.lower() in text.lower():
-                    findings.append({"severity": "review", "path": rel.as_posix(), "finding": f"Legacy term: {term}"})
+                    findings.append(
+                        {
+                            "severity": "review",
+                            "path": rel.as_posix(),
+                            "finding": f"Legacy term: {term}",
+                        }
+                    )
 
-    report = {"root": str(root), "approved_logo_names": sorted(APPROVED_LOGO_NAMES), "findings": findings}
+    report = {
+        "root": str(root),
+        "approved_logo_names": sorted(APPROVED_LOGO_NAMES),
+        "findings": findings,
+    }
     if args.json_path:
         Path(args.json_path).write_text(json.dumps(report, indent=2), encoding="utf-8")
     for finding in findings:

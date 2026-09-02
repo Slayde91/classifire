@@ -48,14 +48,14 @@ Shared main now includes:
   manual Draft materialisation, and active pinned technical-release safeguards;
 - assumption-led desk-quote PDF/XLSX output as a parallel non-technical
   proposal path; and
-- pull-request CI with Ruff, full tests, PostgreSQL containment, and Alembic
-  one-head validation.
+- pull-request CI with changed-file and full-repository Ruff, full Mypy, full
+  tests, PostgreSQL containment, and Alembic one-head validation.
 
 PR #104 validation run `33515411987` passed on its exact head `0f6c252`. Its
 first observed `main` push run `33516292114` also passed on merge `b6409a5`,
-including tests and the one-head Alembic check. Every PR #105-#122 check and
+including tests and the one-head Alembic check. Every PR #105-#124 check and
 corresponding `main` validation then passed; the latest post-merge run is
-`33657134992` on `5639e26`. GitHub's branch-protection endpoint still returns
+`33660787524` on `ff1278f`. GitHub's branch-protection endpoint still returns
 HTTP 403 because the current private-repository plan requires GitHub Pro or
 public visibility for that configuration; required-check configuration remains
 unverified.
@@ -274,9 +274,9 @@ downstream authority was added.
    formula, recovery, and release integrity before Phase 12. Snapshot V2 already
    separates `generated_utc` from semantic identity while preserving full
    document integrity and V1 verification.
-4. Scope full-repository Ruff remediation separately from changed-file CI, then
-   have the repository owner decide on an upgrade or equivalent documented
-   default-branch protection control.
+4. Maintain the full-repository Ruff and Mypy checks beside the changed-file
+   Ruff fast-path, then have the repository owner decide on an upgrade or
+   equivalent documented default-branch protection control.
 5. Expand report evidence beyond PDF, add captions only with a real provenance
    contract, and prove multiple independent report formats.
 

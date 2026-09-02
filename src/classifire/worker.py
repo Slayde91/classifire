@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
@@ -20,7 +20,7 @@ def run_once() -> bool:
         if not job:
             return False
         job.status = "running"
-        job.started_at = datetime.now(timezone.utc)
+        job.started_at = datetime.now(UTC)
         job.attempts += 1
         db.commit()
         try:
@@ -33,7 +33,7 @@ def run_once() -> bool:
             job.status = "failed"
             job.error = str(exc)
         finally:
-            job.finished_at = datetime.now(timezone.utc)
+            job.finished_at = datetime.now(UTC)
             db.commit()
         return True
 

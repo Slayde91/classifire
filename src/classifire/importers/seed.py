@@ -19,7 +19,9 @@ from ..models import (
 from ..security import hash_password
 
 
-def ensure_release(db: Session, library_type: str, version: str, status: str = "active") -> LibraryRelease:
+def ensure_release(
+    db: Session, library_type: str, version: str, status: str = "active"
+) -> LibraryRelease:
     release = db.scalar(
         select(LibraryRelease).where(
             LibraryRelease.library_type == library_type,
@@ -61,7 +63,9 @@ def seed_database(db: Session, settings: Settings) -> dict[str, str]:
     brand_release = ensure_release(db, "brand", "QF-BRAND-1")
 
     global_markup = db.scalar(
-        select(MarkupProfile).where(MarkupProfile.scope_type == "global", MarkupProfile.scope_id.is_(None))
+        select(MarkupProfile).where(
+            MarkupProfile.scope_type == "global", MarkupProfile.scope_id.is_(None)
+        )
     )
     if not global_markup:
         db.add(
@@ -102,7 +106,9 @@ def seed_database(db: Session, settings: Settings) -> dict[str, str]:
         )
 
     proximity_rule = db.scalar(
-        select(EstimatingRule).where(EstimatingRule.rule_code == "QF-PROX-001", EstimatingRule.version == 1)
+        select(EstimatingRule).where(
+            EstimatingRule.rule_code == "QF-PROX-001", EstimatingRule.version == 1
+        )
     )
     if not proximity_rule:
         db.add(
@@ -112,8 +118,9 @@ def seed_database(db: Session, settings: Settings) -> dict[str, str]:
                 name="Configurable service proximity review",
                 category="service_proximity",
                 description=(
-                    "Evaluate edge-to-edge separation between Services. The initial 40 mm value is a configurable "
-                    "estimating assumption and review trigger, not a universal law or automatic technical approval."
+                    "Evaluate edge-to-edge separation between Services. The initial "
+                    "40 mm value is a configurable estimating assumption and review "
+                    "trigger, not a universal law or automatic technical approval."
                 ),
                 conditions={
                     "minimum_separation_mm": 40,
@@ -123,14 +130,20 @@ def seed_database(db: Session, settings: Settings) -> dict[str, str]:
                     "allow_jurisdiction_override": True,
                 },
                 actions={
-                    "message": "Review mixed-service evidence or a technically approved bulkhead/construction strategy.",
+                    "message": (
+                        "Review mixed-service evidence or a technically approved "
+                        "bulkhead/construction strategy."
+                    ),
                     "mixed_service_search_required": True,
                     "bulkhead_allowance_permitted_only_as_provisional": True,
                     "automatic_solution_approved": False,
                 },
                 severity="hold",
                 jurisdiction=settings.jurisdiction,
-                source_reference="Authorised user-configurable estimating assumption; technical system evidence controls.",
+                source_reference=(
+                    "Authorised user-configurable estimating assumption; "
+                    "technical system evidence controls."
+                ),
                 priority=10,
                 status="active",
                 effective_date=date.today(),

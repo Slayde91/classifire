@@ -4,8 +4,8 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main implementation:** `5639e26a9a8b2973d0581b418983dd5dc113d0af`
-(merge of PR #122, 2026-09-02)
+**Verified shared-main implementation:** `ff1278f40436b42b714eb5d5e0a29b6c5f8c5ba0`
+(merge of PR #124, 2026-09-03)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -19,11 +19,11 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared `main` | PR #122 is merged at `5639e26`; it includes the reviewed PR #104-#122 lineage. | Report governance, snapshot integrity, technical-source safeguards, output/client type safety, current CLASSIFIRE branding, and factual documentation are shared-main evidence. |
+| Shared `main` | PR #124 is merged at `ff1278f`; it includes the reviewed PR #104-#124 lineage. | Report governance, snapshot integrity, technical-source safeguards, output/client type safety, current CLASSIFIRE branding, factual documentation, and full hosted Mypy validation are shared-main evidence. |
 | Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
 | Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
-| Post-PR #104 maintenance series | PRs #105-#122 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, and `5639e26`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, and Mission Control task-response validation were strengthened without granting technical, commercial, lock, or release authority. |
-| Subsequent hosted validation | Each PR #105-#122 check and each corresponding `main` push run passed; the latest is run `33657134992` on `5639e26`. | Hosted validation is current through the PR #122 merge, while required-check configuration remains unverified. |
+| Post-PR #104 maintenance series | PRs #105-#124 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, `5639e26`, `90f701c`, and `ff1278f`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, Mission Control task-response validation, and hosted full-Mypy validation were strengthened without granting technical, commercial, lock, or release authority. |
+| Subsequent hosted validation | Each PR #105-#124 check and each corresponding `main` push run passed; the latest is run `33660787524` on `ff1278f`. | Hosted validation is current through the PR #124 merge, while required-check configuration remains unverified. |
 | Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
@@ -95,8 +95,8 @@ Shared `main` packages migrations through
   reaching a proposal run (`0013_report_defect_scope_admissions`). Historical
   V1 receipts remain verifiable.
 - `e9ac8f0` adds the GitHub Actions `push` validation path for merged `main`
-  changes. It intentionally lints only changed Python files because full-
-  repository Ruff currently reports pre-existing violations outside this range.
+  changes. Changed-file Ruff remains a fast delta check; full-repository Ruff
+  and Mypy are separately run for every pull request and `main` push.
 - `58c5946` and `0f6c252` align migration-head expectations and deployment
   readiness with `0013`; `4cba603` reconciles the preceding factual records.
 
@@ -142,7 +142,7 @@ prices work, creates a lock, or releases an estimate.
 | Snapshot and release | Estimate snapshot V2 separates semantic identity from `generated_utc`: `snapshot_hash` excludes that volatile generation metadata, while `snapshot_document_hash` still binds the complete displayed document. V1 snapshots retain their historical full-payload verification. Focused synthetic tests cover semantic stability, metadata/semantic tampering, and unsupported schemas. Full independent validation certificates and Human Release are not proven. |
 | Product UI | A development UI exists for projects, estimates, libraries, and basic outputs; its browser-facing labels and approved served logo use CLASSIFIRE. There is no supported user-facing report-assessment/review workflow for the merged Phase 8 report services. |
 | Production operation | Narrow fail-closed startup/browser/diagnostic controls are merged. Clean-machine deployment, observability, backup/restore, performance, incident response, data-rights controls, and production proof remain incomplete. |
-| Static analysis | Full `mypy src` passes across 114 source files with maintained PyYAML and ReportLab stubs; hosted CI runs that full check after tests. | This is a type-safety gate, not proof of production readiness. Full-repository Ruff debt remains separate, so changed-file Ruff must not be presented as whole-repository lint proof. |
+| Static analysis | Full `ruff check .` and `mypy src` pass; Mypy covers 114 source files with maintained PyYAML and ReportLab stubs. Hosted CI runs both checks after tests. | These are static-analysis gates, not proof of production readiness or operational authority. |
 
 ## 3. Latest controlled Phase 8 execution evidence
 
@@ -247,13 +247,13 @@ the remaining Phase 12 work is independent physical, technical, quantity,
 commercial, formula, recovery, and release validation. Neither activity may
 bypass the Phase 8 lock gate.
 
-#### Priority 3 - Make CI debt and default-branch governance explicit
+#### Priority 3 - Maintain full static checks and default-branch governance
 
-Keep changed-file Ruff in the shared workflow until a separate full-repository
-lint remediation is scoped; full `ruff check .` currently fails outside this
-range. Decide whether the repository owner will upgrade/configure GitHub
-protection or document an equivalent review control. Do not present changed-file
-lint as proof that the whole repository is lint-clean.
+The repository is now full-Ruff-clean. Keep the changed-file Ruff fast-path and
+full `ruff check .` and `mypy src` checks in the shared workflow. Decide whether
+the repository owner will upgrade/configure GitHub protection or document an
+equivalent review control; hosted runs alone do not prove required-check
+configuration.
 
 ### Later or dependency-bound actions
 
