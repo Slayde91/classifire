@@ -250,6 +250,19 @@ def technical_variant_revision(
         )
 
     new_variant_id = _next_revision_id(db, old)
+    source_document_reference = (source_document_reference or "").strip() or None
+    inherited_document = (
+        db.get(TechnicalDocument, old.technical_document_id)
+        if old.technical_document_id
+        else None
+    )
+    inherited_document_id = (
+        inherited_document.id
+        if inherited_document
+        and inherited_document.document_id == source_document_reference
+        else None
+    )
+    preserve_document_binding = inherited_document_id is not None
     source_json = copy.deepcopy(old.source_json or {})
     source_json.update(
         {
@@ -261,12 +274,18 @@ def technical_variant_revision(
             "revision_reason": reason,
             "supersedes_record_id": old.id,
             "source_authority_preserved": True,
+            "technical_document_binding": {
+                "previous_document_id": old.technical_document_id,
+                "inherited": preserve_document_binding,
+                "requires_exact_rebinding": bool(old.technical_document_id)
+                and not preserve_document_binding,
+            },
         }
     )
     new = TechnicalVariant(
         variant_id=new_variant_id,
         system_id=old.system_id,
-        technical_document_id=old.technical_document_id,
+        technical_document_id=inherited_document_id,
         source_document_reference=source_document_reference,
         source_page=source_page,
         source_table=source_table,
@@ -449,6 +468,12 @@ def technical_variant_submit_review(
             "Bound+technical+source+file+must+be+clean+and+unchanged+before+review",
             status_code=303,
         )
+    if (variant.source_document_reference or "").strip() != document.document_id:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Bound+technical+source+document+must+match+the+source+document+reference",
+            status_code=303,
+        )
     variant.status = "in_review"
     approval = db.scalar(
         select(Approval)
@@ -545,6 +570,12 @@ def technical_variant_approve(
         return RedirectResponse(
             f"/technical/variants/{variant.id}?error="
             "Linked+technical+document+source+must+be+clean+and+unchanged",
+            status_code=303,
+        )
+    if (variant.source_document_reference or "").strip() != document.document_id:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Linked+technical+document+must+match+the+source+document+reference",
             status_code=303,
         )
     if not variant.source_document_reference or not variant.source_page:
