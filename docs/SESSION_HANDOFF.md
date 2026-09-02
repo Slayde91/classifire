@@ -5,10 +5,10 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** `origin/main` at `075c9c5f`
+**Reconciliation baseline:** `origin/main` at `abe8bdecc`
 
 **Verified shared-main implementation:**
-`075c9c5f56d113fe8021317dbb813072480a48cc` (PR #140)
+`abe8bdecc4e1eb6d6dd956fc7e4b5871dadb2380` (PR #142)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -16,7 +16,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#140
+### Current shared main - PRs #104-#142
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -42,10 +42,13 @@ TechnicalRelease detail screens without re-reading bytes or granting source
 approval, activation, publication, or release authority. PR #139 reconciled the
 factual records. PR #140 safely links an eligible bound document ID to the
 existing current read-only document record while preserving the published binding;
-legacy, malformed, and unrecognised bindings remain non-links. Each pull-request
-check and corresponding `main` validation run passed; the latest PR run is
-`33693213662` on `bb129c8`, and the latest `main` run is `33693439846` on
-`075c9c5`.
+legacy, malformed, and unrecognised bindings remain non-links. PR #141 reconciles
+those factual records. PR #142 makes every TechnicalVariant revision's existing
+retained-document binding and cited document/page/table/figure locator visible
+read-only; it links only existing retained document records and labels missing
+bindings or legacy-unbound records. Each pull-request check and corresponding
+`main` validation run passed; the latest PR run is `33695410954` on `cdf4236`,
+and the latest `main` run is `33695636744` on `abe8bde`.
 
 PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
@@ -230,17 +233,19 @@ Shared main includes:
 - PR #125's hosted full-Ruff validation; and
 - PR #126's hosted full-Bandit validation and explicit Phase 8 fail-closed
   invariant errors; and
-- PRs #127-#140's verified-byte extraction, Draft metadata refresh,
+- PRs #127-#142's verified-byte extraction, Draft metadata refresh,
   current-authority safeguards and reviewer visibility, factual reconciliation,
-  immutable published technical source-lineage checks, structured technical release-lineage display, and safe navigation from an eligible bound record to the existing read-only document record.
+  immutable published technical source-lineage checks, structured technical
+  release-lineage display, safe navigation from an eligible bound record to the
+  existing read-only document record, and read-only revision-source visibility.
 
 Shared `main` packages migrations through
 `0013_report_defect_scope_admissions` (one head).
 
 PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
 `main` run `33516292114` passed on `b6409a5`, including tests and the one-head
-Alembic check. Each PR #105-#140 check and corresponding `main` run also passed,
-ending with run `33693439846` on `075c9c5`. GitHub's protection API returns HTTP
+Alembic check. Each PR #105-#142 check and corresponding `main` run also passed,
+ending with run `33695636744` on `abe8bde`. GitHub's protection API returns HTTP
 403 because the private repository needs GitHub Pro or public visibility for
 that configuration; no required-check configuration is verified.
 
@@ -288,9 +293,9 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
   activation, Draft/revision source binding, source-locator review, current
   source-document status/expiry and retained-file metadata plus TechnicalVariant
   date-window checks, clean-byte candidate extraction, content-safe extraction
-  diagnostics, and source-bound
-  Draft materialisation; they do not complete the full technical authority
-  registry.
+  diagnostics, source-bound Draft materialisation, and read-only per-revision
+  retained-document/locator visibility; they do not complete the full technical
+  authority registry.
 - Desk quotes are proposal-only; PR #103 merged the evidence-read hardening and
   passed CI/review, while operational approval remains separate.
 - Full system-derived components, productivity, and commercial recovery ledger
