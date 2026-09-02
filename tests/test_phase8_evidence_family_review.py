@@ -183,6 +183,25 @@ def test_builds_hash_bound_proposal_context_overlay_without_mutating_inventory()
     )
 
 
+def test_overlay_fails_closed_if_internal_validation_contract_is_bypassed(monkeypatch) -> None:
+    inventory = _inventory()
+    review = _review(inventory)
+    review["relationship_declarations"] = {}
+
+    monkeypatch.setattr(
+        "classifire.services.phase8_evidence_family_review.validate_phase8_evidence_family_review",
+        lambda **_kwargs: {},
+    )
+
+    with pytest.raises(Phase8EvidenceFamilyReviewError) as caught:
+        build_phase8_evidence_family_review_overlay(
+            evidence_family_inventory=inventory,
+            review=review,
+        )
+
+    assert caught.value.code == "EVIDENCE_FAMILY_DECLARATIONS_INVALID"
+
+
 def test_rejects_tampered_or_stale_proposal_context_overlay() -> None:
     inventory = _inventory()
     review = _review(inventory)

@@ -289,7 +289,7 @@ def branding_audit() -> None:
     script = repo_root() / "scripts" / "branding_audit.py"
     # The interpreter, script, and root are fixed to this checkout.
     raise typer.Exit(
-        subprocess.call(  # noqa: S603  # nosec B603
+        subprocess.call(  # noqa: S603  # nosec
             [sys.executable, str(script), str(repo_root())]
         )
     )

@@ -14,7 +14,8 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import AgentServicePrincipal
 
-TOKEN_PREFIX = "cfa_"  # noqa: S105 - identifier prefix, not a credential.
+# Identifier prefix, not a credential.
+TOKEN_PREFIX = "cfa_"  # noqa: S105  # nosec B105
 
 # Layer 3 identities remain read-only except for the dedicated Layer 5 writer,
 # whose single scope can consume a pre-registered signed admission. It cannot

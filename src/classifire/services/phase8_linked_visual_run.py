@@ -449,7 +449,8 @@ def _inference_port_scope(
     if inference_port is not None:
         yield inference_port
         return
-    assert inference_port_factory is not None
+    if inference_port_factory is None:
+        raise Phase8LinkedVisualRunError("INFERENCE_PORT_CONFIGURATION_INVALID")
     with inference_port_factory(evidence_packet) as managed_port:
         yield managed_port
 

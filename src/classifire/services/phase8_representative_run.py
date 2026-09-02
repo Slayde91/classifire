@@ -653,7 +653,8 @@ def execute_phase8_representative_run(
         raise Phase8RepresentativeRunError("ROLLBACK_STATE_CHANGED")
     if failure is not None:
         raise failure
-    assert runner_result is not None
+    if runner_result is None:
+        raise Phase8RepresentativeRunError("RUNNER_RESULT_INVALID")
 
     receipt = {
         "schema": REPRESENTATIVE_RUN_RECEIPT_SCHEMA,
