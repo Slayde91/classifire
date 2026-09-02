@@ -1,20 +1,44 @@
 # CLASSIFIRE Session Handoff
 
-**Prepared:** 2026-09-02 (AEST)
+**Prepared:** 2026-09-03 (AEST)
 
-**Safe worktree:**
-`C:\CLASSIFIRE\.tmp\phase8-report-evidence-adapter-20260830`
+**Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
+never use the conflicted root checkout as a publication source.
 
-**Reconciliation branch:** `docs/post-pr104-state-reconciliation-20260902`
+**Reconciliation baseline:** `origin/main` at `14c2269`
 
 **Verified shared-main implementation:**
-`b6409a5c86a7dcd1103eb02ceaab6fe550d1d964` (PR #104)
+`14c2269fc0ff9dcb353cd89f2cb4c37fb5641d76` (PR #114)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
 commercial approval, or release.
 
 ## Start Here / Next Session
+
+### Current shared main - PRs #104-#114
+
+PR #104 remains the report-governance integration. PRs #105-#114 then merged
+the factual reconciliation, semantic snapshot identity, retained technical
+source safeguards, source-bound Draft materialisation, admission rejection type
+safety, and UI/rule typing into `main`, ending at `14c2269`. Each pull-request
+check and each corresponding `main` validation run passed; the latest is run
+`33645172423`.
+
+PR #106 keeps semantic snapshot identity stable across volatile generation
+metadata while retaining a full-document integrity hash and V1 verification.
+PRs #107-#111 require retained technical sources for activation, bind Draft
+variants and revisions to the exact source document, require a source locator
+before review, and suppress content from extraction-failure diagnostics. PR #112
+materialises a Draft variant only from a clean retained source document. PR #113
+makes admission rejection helpers explicitly non-returning without weakening
+their fail-closed safe-code behaviour. PR #114 makes rule and UI response types
+explicit, rejects non-text rule operators deterministically, and proves existing
+library-page rendering.
+
+These safeguards do not create a technical approval, technical-release
+publication, pricing decision, canonical submission, lock, deployment, or
+Human Release.
 
 ### Completed - Report-governance integration and main validation (PR #104)
 
@@ -117,9 +141,10 @@ release authority. Any real-provider run remains a separate gate.
 1. **Persist proposal-review packages before building a UI.** Define retention,
    redaction/deletion, reviewer access, and immutable safe-hash ownership first;
    then test isolation, tamper failure, and absence of canonical authority.
-2. **Continue technical intake and snapshot work separately.** Complete Draft
-   materialisation/source-lineage publication and define a deterministic semantic
-   snapshot hash with focused regression tests.
+2. **Continue technical intake separately.** Complete extraction-assisted and
+   manufacturer-neutral lineage plus publication and supersession. The
+   deterministic semantic snapshot hash and manual Draft materialisation are
+   already shared-main evidence.
 3. **Treat full-repository Ruff debt separately from changed-file CI.** Decide
    whether to upgrade GitHub protection or document an equivalent review control.
 4. **Seek new report-run authority only after synthetic transport diagnosis.** A
@@ -147,14 +172,23 @@ Shared main includes:
 - PR #102's bounded report-assessment evidence receipts;
 - PR #103's desk-quote evidence-read hardening; and
 - PR #104's expected-label manifests, atomic scope admission, V2 runner
-  preflight, migration-head readiness, and `main` push validation.
+  preflight, migration-head readiness, and `main` push validation;
+- PR #105's factual state reconciliation;
+- PR #106's V2 semantic snapshot identity and document-integrity boundary; and
+- PRs #107-#112's retained-source activation, Draft/revision source binding,
+  source-locator review, content-safe extraction diagnostics, and source-bound
+  Draft materialisation;
+- PR #113's explicit non-returning admission-rejection helpers; and
+- PR #114's explicit rule/UI response typing and focused library-page coverage.
 
 Shared `main` packages migrations through
 `0013_report_defect_scope_admissions` (one head).
 
 PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
 `main` run `33516292114` passed on `b6409a5`, including tests and the one-head
-Alembic check. GitHub's protection API returns HTTP 403 because the private
+Alembic check. Each PR #105-#114 check and corresponding `main` run also passed,
+ending with run 33645172423 on 14c2269. GitHub's protection API returns HTTP 403
+because the private
 repository needs GitHub Pro or public visibility for that configuration; no
 required-check configuration is verified.
 
@@ -198,13 +232,15 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
 
 - No semantically approved replacement canonical Physical Model or active lock
   exists for the current UAT estimate.
-- Technical review/import/release safeguards are real but do not complete the
-  full technical authority registry.
+- Technical review/import/release safeguards now include retained-source
+  activation, Draft/revision source binding, source-locator review, content-safe
+  extraction diagnostics, and source-bound Draft materialisation; they do not
+  complete the full technical authority registry.
 - Desk quotes are proposal-only; PR #103 merged the evidence-read hardening and
   passed CI/review, while operational approval remains separate.
 - Full system-derived components, productivity, and commercial recovery ledger
   are incomplete.
-- Estimate snapshot V2 now has a stable semantic hash, a separate full-document
+- Estimate snapshot V2 has a stable semantic hash, a separate full-document
   integrity hash, and legacy V1 compatibility. It does not prove the independent
   Phase 12 validation inputs or Human Release.
 - The development UI does not expose a supported report-assessment/review flow.
@@ -213,10 +249,6 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
 
 ## Local Git and worktree safety
 
-At this snapshot-integrity candidate's start, the isolated worktree was clean
-and based on `6ecd0a6`. The candidate adds only the V2 snapshot service/output
-contract, focused synthetic regression tests, and the factual documents named
-below.
 
 The root `C:\CLASSIFIRE` checkout remains quarantined at `de0cc5a` with an
 interrupted cherry-pick, unmerged/tracked changes, and an incomplete untracked
@@ -225,23 +257,6 @@ not edited, resolved, reset, staged, or copied.
 
 Open draft PRs #9-#13 are obsolete feature-to-feature stack work with no checks
 and large divergence from main. They are not current-main publication candidates.
-
-## Documentation reconciliation scope
-
-This candidate contains only these ready/intended files:
-
-- `src/classifire/services/snapshot.py`
-- `src/classifire/outputs/common.py`
-- `src/classifire/outputs/pdf.py`
-- `tests/test_snapshot.py`
-- `docs/PROJECT_STATE.md`
-- `docs/CLASSIFIRE_ARCHITECTURE.md`
-- `docs/CLASSIFIRE_ROADMAP.md`
-- `docs/SESSION_HANDOFF.md`
-
-No root changes, generated receipts, customer evidence, configuration,
-migrations, dependencies, UI files, database files, or secrets belong in the
-candidate.
 
 Before continuing in another session:
 

@@ -4,8 +4,8 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `b6409a5` (PR #104 merge,
-2026-09-01)
+**Verified shared-main implementation:** `14c2269` (PR #114 merge,
+2026-09-02)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -82,7 +82,7 @@ Approval for one operation never grants a later authority.
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, and proposal-only runner | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, UI, persisted package record, or real-provider run exists |
-| Technical governance | Document review, source-byte checks, Draft import, independent activation, pinned active releases | Full intake/materialisation/publication governance incomplete |
+| Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, source locators, independent activation, pinned active releases | Manufacturer-neutral lineage and governed publication/supersession remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
 
@@ -253,6 +253,10 @@ Current shared-main safeguards include:
 
 - independent technical-document submission and decision;
 - clean, immutable, unchanged source-byte checks at review and activation;
+- a retained source document on every Draft variant and preserved exact binding
+  through a Draft revision;
+- a nonblank source locator before technical review and content-safe extraction
+  failure diagnostics;
 - independent TechnicalVariant activation from `in_review`;
 - Draft-only new technical-library imports regardless of source-declared state;
 - runtime use only through an active immutable pinned technical release;
@@ -358,6 +362,18 @@ GitHub protection configuration is still unavailable to inspect on the current
 private-repository plan. The standard merge and hosted validation were accepted;
 that does not prove a configured required-review or required-check rule.
 
+PRs #105-#114 then merged documentation reconciliation, semantic snapshot
+identity, retained-source safeguards, and source-bound Draft materialisation
+through `14c2269`. Their pull-request checks and corresponding `main` validation
+runs passed; the latest post-merge run is `33645172423`. The technical changes
+require retained source identity and locator, preserve exact Draft/revision
+source binding, and retain content-safe extraction diagnostics. PR #113 makes
+admission rejection helpers explicitly non-returning without altering their
+fail-closed safe-code behaviour. PR #114 makes rule and UI response types
+explicit, rejects non-text rule operators deterministically, and proves
+existing library-page rendering. These safeguards do not approve a system,
+publish a release, price work, create a lock, deploy, or release an estimate.
+
 ### Required design before a review UI
 
 **Priority 1 - define proposal-review package ownership and persistence.** The
@@ -371,8 +387,8 @@ technical, commercial, lock, deployment, or release authority.
 
 ### Near term
 
-Complete Draft technical materialisation/source-lineage publication in separate
-reviewed migrations. Treat full-repository lint remediation as its own debt
+Complete governed technical-source lineage publication and supersession in
+separate reviewed migrations. Treat full-repository lint remediation as its own debt
 slice; the CI workflow deliberately checks only changed Python files because the
 current repository is not globally Ruff-clean.
 
