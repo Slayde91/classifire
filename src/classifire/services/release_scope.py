@@ -21,6 +21,7 @@ from ..models import (
 )
 from .technical_validity import (
     technical_document_authority_blockers,
+    technical_release_source_binding,
     technical_variant_temporal_blockers,
 )
 
@@ -170,6 +171,11 @@ def _active_technical_variant_ids(db: Session, release: LibraryRelease) -> set[s
         )
         for document in documents_by_id.values()
     }
+    manifest_records_by_id = {
+        str(record["id"]): record
+        for record in (release.source_manifest or {}).get("records", [])
+        if isinstance(record, dict) and record.get("id")
+    }
     active_ids = {
         variant.id
         for variant in variants
@@ -190,6 +196,36 @@ def _active_technical_variant_ids(db: Session, release: LibraryRelease) -> set[s
         raise ReleaseScopeError(
             "Pinned technical release contains inactive or missing variants."
         )
+    for variant in variants:
+        manifest_record = manifest_records_by_id[variant.id]
+        if (
+            "source_hash" in manifest_record
+            and manifest_record["source_hash"] != variant.source_hash
+        ):
+            raise ReleaseScopeError(
+                "Pinned technical release source lineage does not match the published manifest."
+            )
+        if "source_binding" not in manifest_record:
+            continue
+        document = documents_by_id.get(variant.technical_document_id or "")
+        stored = stored_files_by_id.get(document.stored_file_id) if document else None
+        expected_binding = technical_release_source_binding(
+            technical_document_id=variant.technical_document_id,
+            technical_document_key=document.document_id if document else None,
+            technical_document_reference=document.reference if document else None,
+            technical_document_revision=document.revision if document else None,
+            stored_file_id=document.stored_file_id if document else None,
+            stored_file_sha256=stored.sha256 if stored else None,
+            stored_file_size_bytes=stored.size_bytes if stored else None,
+            source_document_reference=variant.source_document_reference,
+            source_page=variant.source_page,
+            source_table=variant.source_table,
+            source_figure=variant.source_figure,
+        )
+        if manifest_record["source_binding"] != expected_binding:
+            raise ReleaseScopeError(
+                "Pinned technical release source lineage does not match the published manifest."
+            )
     return active_ids
 
 

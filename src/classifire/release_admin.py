@@ -26,6 +26,7 @@ from .models import (
 from .security import verify_csrf
 from .services.technical_validity import (
     technical_document_authority_blockers,
+    technical_release_source_binding,
     technical_variant_temporal_blockers,
 )
 from .ui import _context, _require, templates
@@ -208,6 +209,23 @@ def _snapshot_records(db: Session, release_type: str) -> list[dict[str, Any]]:
             )
             for document in documents_by_id.values()
         }
+        def source_binding(technical_record: TechnicalVariant) -> dict[str, Any]:
+            document = documents_by_id.get(technical_record.technical_document_id or "")
+            stored = stored_files_by_id.get(document.stored_file_id) if document else None
+            return technical_release_source_binding(
+                technical_document_id=technical_record.technical_document_id,
+                technical_document_key=document.document_id if document else None,
+                technical_document_reference=document.reference if document else None,
+                technical_document_revision=document.revision if document else None,
+                stored_file_id=document.stored_file_id if document else None,
+                stored_file_sha256=stored.sha256 if stored else None,
+                stored_file_size_bytes=stored.size_bytes if stored else None,
+                source_document_reference=technical_record.source_document_reference,
+                source_page=technical_record.source_page,
+                source_table=technical_record.source_table,
+                source_figure=technical_record.source_figure,
+            )
+
         technical_chosen: dict[str, TechnicalVariant] = {}
         for technical_record in technical_records:
             if technical_variant_temporal_blockers(
@@ -235,6 +253,7 @@ def _snapshot_records(db: Session, release_type: str) -> list[dict[str, Any]]:
                 "source_page": technical_record.source_page,
                 "source_hash": technical_record.source_hash,
                 "record_version": technical_record.record_version,
+                "source_binding": source_binding(technical_record),
             }
             for technical_record in technical_chosen.values()
         ]
