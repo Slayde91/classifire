@@ -23,11 +23,19 @@ def _table_names() -> set[str]:
 
 
 def _column_names(table: str) -> set[str]:
-    return {column["name"] for column in sa.inspect(op.get_bind()).get_columns(table)}
+    return {
+        name
+        for column in sa.inspect(op.get_bind()).get_columns(table)
+        if isinstance(name := column["name"], str)
+    }
 
 
 def _index_names(table: str) -> set[str]:
-    return {index["name"] for index in sa.inspect(op.get_bind()).get_indexes(table)}
+    return {
+        name
+        for index in sa.inspect(op.get_bind()).get_indexes(table)
+        if isinstance(name := index["name"], str)
+    }
 
 
 def _has_fk(table: str, constrained: list[str], referred_table: str) -> bool:
