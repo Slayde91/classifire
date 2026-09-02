@@ -62,7 +62,7 @@ def _technical_document(
     *,
     status: str,
     source_root: Path | None = None,
-    document_id: str = "TECH-DOC-ACTIVATION-TEST",
+    document_id: str = "TECH-SOURCE-TEST",
 ) -> TechnicalDocument:
     content = b"technical activation source evidence"
     digest = hashlib.sha256(content).hexdigest()
@@ -165,6 +165,31 @@ def submit_review_as(monkeypatch: pytest.MonkeyPatch):
         )
 
     return submit
+
+
+@pytest.fixture
+def revise_as(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(technical_admin, "verify_csrf", lambda *_args: None)
+    monkeypatch.setattr(technical_admin, "record_audit", lambda *_args, **_kwargs: None)
+
+    def revise(
+        db: Session,
+        variant: TechnicalVariant,
+        user: User,
+        source_document_reference: str,
+    ):
+        monkeypatch.setattr(technical_admin, "_require", lambda *_args: user)
+        return technical_admin.technical_variant_revision(
+            variant.id,
+            _request(),  # type: ignore[arg-type]
+            db,
+            "csrf-token",
+            source_document_reference=source_document_reference,
+            source_page="13",
+            reason="Correct technical source reference",
+        )
+
+    return revise
 
 
 def test_technical_activation_refuses_a_draft_variant(activate_as) -> None:
@@ -430,6 +455,104 @@ def test_technical_activation_activates_an_independently_reviewed_variant(
         assert approval.status == "approved"
         assert approval.decided_by_id == approver.id
         assert approval.decided_at is not None
+
+
+def test_revision_with_changed_source_reference_drops_inherited_document_binding(
+    revise_as,
+) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        original = _variant(db, status="active")
+        document = _technical_document(db, status="approved")
+        original.technical_document_id = document.id
+
+        result = revise_as(db, original, writer, "TECH-SOURCE-OTHER")
+
+        revision = db.query(TechnicalVariant).filter_by(supersedes_id=original.id).one()
+        assert "success=Draft+technical+revision+created" in result.headers["location"]
+        assert revision.status == "draft"
+        assert revision.source_document_reference == "TECH-SOURCE-OTHER"
+        assert revision.technical_document_id is None
+        assert revision.source_json["technical_document_binding"] == {
+            "previous_document_id": document.id,
+            "inherited": False,
+            "requires_exact_rebinding": True,
+        }
+
+
+def test_revision_with_matching_source_reference_preserves_document_binding(revise_as) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        original = _variant(db, status="active")
+        document = _technical_document(db, status="approved")
+        original.technical_document_id = document.id
+
+        revise_as(db, original, writer, "TECH-SOURCE-TEST")
+
+        revision = db.query(TechnicalVariant).filter_by(supersedes_id=original.id).one()
+        assert revision.status == "draft"
+        assert revision.technical_document_id == document.id
+        assert revision.source_json["technical_document_binding"] == {
+            "previous_document_id": document.id,
+            "inherited": True,
+            "requires_exact_rebinding": False,
+        }
+
+
+def test_technical_review_requires_document_reference_match(
+    submit_review_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        variant = _variant(
+            db,
+            status="draft",
+            source_document_reference="TECH-SOURCE-OTHER",
+        )
+        document = _technical_document(
+            db,
+            status="draft",
+            source_root=technical_storage_root,
+        )
+        variant.technical_document_id = document.id
+
+        result = submit_review_as(db, variant, writer)
+
+        assert (
+            "Bound+technical+source+document+must+match+the+source+document+reference"
+            in result.headers["location"]
+        )
+        assert variant.status == "draft"
+
+
+def test_technical_activation_requires_document_reference_match(
+    activate_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        requester = _user(db, "requester@example.test")
+        approver = _user(db, "approver@example.test")
+        variant = _variant(
+            db,
+            source_document_reference="TECH-SOURCE-OTHER",
+        )
+        document = _technical_document(
+            db,
+            status="approved",
+            source_root=technical_storage_root,
+        )
+        variant.technical_document_id = document.id
+        approval = _pending_approval(db, variant, requester)
+
+        result = activate_as(db, variant, approver)
+
+        assert (
+            "Linked+technical+document+must+match+the+source+document+reference"
+            in result.headers["location"]
+        )
+        assert variant.status == "in_review"
+        assert approval.status == "pending"
 
 
 def test_technical_activation_rechecks_the_linked_document_source(
