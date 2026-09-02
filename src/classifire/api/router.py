@@ -83,9 +83,15 @@ from ..services.physical_mutation_guard import (
 )
 from ..services.rule_engine import evaluate_estimate_rules
 from ..services.snapshot import lock_snapshot
-from ..services.storage import StoredFileBindingError, read_hashed_storage_artifact, save_upload
+from ..services.storage import (
+    StoredFileBindingError,
+    read_hashed_storage_artifact,
+    read_verified_stored_file,
+    save_upload,
+)
 from ..services.technical import (
-    build_technical_document_draft_metadata,
+    build_technical_document_draft_metadata_from_verified_content,
+    build_technical_document_extraction_deferred_metadata,
     search_for_opening,
     search_variants,
 )
@@ -466,7 +472,19 @@ def upload_technical_document(
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    metadata = build_technical_document_draft_metadata(Path(stored.storage_path))
+    try:
+        verified = read_verified_stored_file(
+            stored,
+            storage_root=settings.storage_root,
+            required_purpose="technical_evidence",
+        )
+    except StoredFileBindingError:
+        metadata = build_technical_document_extraction_deferred_metadata()
+    else:
+        metadata = build_technical_document_draft_metadata_from_verified_content(
+            content=verified.content,
+            filename=stored.original_filename,
+        )
     document = TechnicalDocument(
         document_id=document_id,
         stored_file_id=stored.id,

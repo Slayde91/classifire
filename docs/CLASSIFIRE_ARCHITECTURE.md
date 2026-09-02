@@ -255,8 +255,8 @@ Current shared-main safeguards include:
 - clean, immutable, unchanged source-byte checks at review and activation;
 - a retained source document on every Draft variant and preserved exact binding
   through a Draft revision;
-- a nonblank source locator before technical review and content-safe extraction
-  failure diagnostics;
+- a nonblank source locator before technical review, clean hash-verified bytes
+  before candidate extraction, and content-safe extraction failure diagnostics;
 - independent TechnicalVariant activation from `in_review`;
 - Draft-only new technical-library imports regardless of source-declared state;
 - runtime use only through an active immutable pinned technical release;
@@ -373,8 +373,8 @@ and explicit Phase 8 fail-closed invariant errors. Their pull-request checks
 and corresponding `main` validation runs passed; the latest post-merge run is
 `33667477950` on `b33246a`. The technical changes require
 retained source identity and locator, preserve exact Draft/revision source
-binding, and retain content-safe
-extraction diagnostics. PR #113 makes admission rejection helpers explicitly
+binding, and derive candidate metadata only from clean hash-verified bytes with
+content-safe extraction diagnostics. PR #113 makes admission rejection helpers explicitly
 non-returning without altering their fail-closed safe-code behaviour. PR #114
 makes rule and UI response types explicit, rejects non-text rule operators
 deterministically, and proves existing library-page rendering. PR #116 preserves

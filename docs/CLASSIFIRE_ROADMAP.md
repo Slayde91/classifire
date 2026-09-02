@@ -44,7 +44,8 @@ Shared main now includes:
   Control task-response validation;
 - production configuration, migration-head, browser, and diagnostic hardening;
 - independent technical-document/variant review, clean source rechecks,
-  Draft-only imports, source-bound variants and revisions, source locators,
+  verified-byte candidate extraction, Draft-only imports, source-bound variants
+  and revisions, source locators,
   manual Draft materialisation, and active pinned technical-release safeguards;
 - assumption-led desk-quote PDF/XLSX output as a parallel non-technical
   proposal path; and
@@ -330,8 +331,9 @@ audited, and cannot be changed by an unauthorised role.
 **Status:** In progress
 
 **Completed foundations:** independent technical document/variant decisions,
-clean-source rechecks, Draft-only imports, source-bound variants and revisions,
-source-locator review gates, source-bound manual Draft materialisation from
+clean-source rechecks, verified-byte candidate extraction, Draft-only imports,
+source-bound variants and revisions, source-locator review gates, source-bound
+manual Draft materialisation from
 clean retained documents, active immutable technical releases, manifest
 eligibility checks, and active hash-bound pricing records.
 
