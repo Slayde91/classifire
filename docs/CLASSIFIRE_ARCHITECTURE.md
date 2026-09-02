@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `f9dea2a` (PR #134 merge,
+**Verified shared-main implementation:** `8c21f18` (PR #136 merge,
 2026-09-03)
 
 This document separates the architecture that is implemented now from the
@@ -265,6 +265,9 @@ Current shared-main safeguards include:
 - independent TechnicalVariant activation from `in_review`;
 - Draft-only new technical-library imports regardless of source-declared state;
 - runtime use only through an active immutable pinned technical release;
+- each newly published technical manifest fixes a safe source state: bound
+  document/file identity, digest, and locator, or an explicit legacy-unbound
+  state; pinned runtime rejects a later source-hash or source-binding mismatch; and
 - rejection when any manifest TechnicalVariant is missing, inactive, or no
   longer current because its bound source is missing/ineligible or its own date
   window has expired; and
@@ -273,7 +276,7 @@ Current shared-main safeguards include:
   detail screens. Those displays reuse metadata checks only: they do not read
   source bytes or grant approval, activation, publication, or release authority.
 
-Full Draft intake/materialisation, manufacturer-neutral source lineage,
+Extraction-assisted and manufacturer-neutral source lineage, governed
 publication/supersession automation, and production technical authority are not
 complete. Unsupported compatibility remains unresolved.
 
@@ -406,8 +409,9 @@ technical, commercial, lock, deployment, or release authority.
 
 ### Near term
 
-Complete governed technical-source lineage publication and supersession in
-separate reviewed migrations. Maintain full-repository Ruff, Mypy, and Bandit checks
+Complete the remaining extraction-assisted and manufacturer-neutral technical-source
+lineage plus governed publication and supersession in separate reviewed migrations.
+Maintain full-repository Ruff, Mypy, and Bandit checks
 alongside the changed-file Ruff fast-path; static checks do not grant product or
 release authority.
 
