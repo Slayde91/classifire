@@ -1,0 +1,121 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from copy import deepcopy
+from datetime import UTC, datetime
+from pathlib import Path
+from zipfile import ZipFile
+
+import pytest
+from physical_foundation_support import add_estimate, physical_session
+from pypdf import PdfReader
+
+from classifire.outputs.common import verify_snapshot
+from classifire.outputs.pdf import render_estimate_pdf
+from classifire.outputs.xlsx import render_proposal_workbook
+from classifire.services.snapshot import (
+    ESTIMATE_SNAPSHOT_SCHEMA,
+    LEGACY_ESTIMATE_SNAPSHOT_SCHEMA,
+    SNAPSHOT_DOCUMENT_HASH_FIELD,
+    SNAPSHOT_HASH_FIELD,
+    build_estimate_snapshot,
+)
+
+
+def _new_snapshot(generated_utc: datetime) -> dict[str, object]:
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        return build_estimate_snapshot(session, estimate, generated_utc=generated_utc)
+
+
+def _legacy_snapshot() -> dict[str, object]:
+    snapshot: dict[str, object] = {
+        "schema": LEGACY_ESTIMATE_SNAPSHOT_SCHEMA,
+        "generated_utc": "2026-09-02T00:00:00+00:00",
+        "estimate": {"reference": "LEGACY-001", "revision": 1},
+        "project": {"reference": "PROJECT-001"},
+    }
+    snapshot[SNAPSHOT_HASH_FIELD] = hashlib.sha256(
+        json.dumps(snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+    return snapshot
+
+
+def test_v2_snapshot_hash_is_semantic_and_document_hash_binds_generation_time() -> None:
+    with physical_session() as session:
+        estimate = add_estimate(session)
+        first = build_estimate_snapshot(
+            session,
+            estimate,
+            generated_utc=datetime(2026, 9, 2, 0, 0, tzinfo=UTC),
+        )
+        second = build_estimate_snapshot(
+            session,
+            estimate,
+            generated_utc=datetime(2026, 9, 2, 0, 1, tzinfo=UTC),
+        )
+
+    assert first["schema"] == ESTIMATE_SNAPSHOT_SCHEMA
+    assert first[SNAPSHOT_HASH_FIELD] == second[SNAPSHOT_HASH_FIELD]
+    assert first[SNAPSHOT_DOCUMENT_HASH_FIELD] != second[SNAPSHOT_DOCUMENT_HASH_FIELD]
+
+    verify_snapshot(first)
+    verify_snapshot(second)
+
+
+def test_v2_snapshot_renders_xlsx_and_pdf_outputs(tmp_path: Path) -> None:
+    snapshot = _new_snapshot(datetime(2026, 9, 2, 0, 0, tzinfo=UTC))
+
+    workbook_path = render_proposal_workbook(snapshot, tmp_path / "proposal.xlsx")
+    pdf_path = render_estimate_pdf(snapshot, tmp_path / "proposal.pdf", proposal=True)
+
+    assert workbook_path.exists()
+    assert pdf_path.exists()
+
+    with ZipFile(workbook_path) as workbook:
+        workbook_text = "\n".join(
+            workbook.read(name).decode("utf-8", errors="ignore")
+            for name in workbook.namelist()
+            if name.endswith(".xml")
+        )
+    assert str(snapshot[SNAPSHOT_HASH_FIELD]) in workbook_text
+
+    pdf_text = "\n".join(page.extract_text() or "" for page in PdfReader(pdf_path).pages)
+    assert snapshot["estimate"]["reference"] in pdf_text
+    assert str(snapshot[SNAPSHOT_HASH_FIELD]) in pdf_text
+
+
+def test_v2_snapshot_output_validation_rejects_timestamp_and_semantic_tampering() -> None:
+    snapshot = _new_snapshot(datetime(2026, 9, 2, 0, 0, tzinfo=UTC))
+
+    timestamp_tampered = deepcopy(snapshot)
+    timestamp_tampered["generated_utc"] = "2026-09-02T00:05:00+00:00"
+    with pytest.raises(ValueError, match="Snapshot document hash"):
+        verify_snapshot(timestamp_tampered)
+
+    semantic_tampered = deepcopy(snapshot)
+    semantic_tampered["estimate"]["title"] = "Changed after lock"
+    with pytest.raises(ValueError, match="Snapshot hash"):
+        verify_snapshot(semantic_tampered)
+
+
+def test_v1_snapshots_remain_valid_and_bind_generation_time() -> None:
+    snapshot = _legacy_snapshot()
+    verify_snapshot(snapshot)
+
+    tampered = deepcopy(snapshot)
+    tampered["generated_utc"] = "2026-09-02T00:05:00+00:00"
+    with pytest.raises(ValueError, match="Snapshot hash"):
+        verify_snapshot(tampered)
+
+
+@pytest.mark.parametrize("schema", ["QUANTIFIRE-ESTIMATE-SNAPSHOT-v999", []])
+def test_unsupported_snapshot_schema_fails_closed_at_the_output_boundary(schema: object) -> None:
+    snapshot = _new_snapshot(datetime(2026, 9, 2, 0, 0, tzinfo=UTC))
+    snapshot["schema"] = schema
+
+    with pytest.raises(ValueError, match="schema is unsupported"):
+        verify_snapshot(snapshot)

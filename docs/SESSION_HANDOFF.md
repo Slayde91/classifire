@@ -204,17 +204,19 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
   passed CI/review, while operational approval remains separate.
 - Full system-derived components, productivity, and commercial recovery ledger
   are incomplete.
-- Estimate snapshot identity remains volatile because `generated_utc` is hashed.
+- Estimate snapshot V2 now has a stable semantic hash, a separate full-document
+  integrity hash, and legacy V1 compatibility. It does not prove the independent
+  Phase 12 validation inputs or Human Release.
 - The development UI does not expose a supported report-assessment/review flow.
 - Production deployment, backup/recovery, observability, data-rights, and
   performance proof remain incomplete.
 
 ## Local Git and worktree safety
 
-At this reconciliation's start, the isolated documentation branch was clean and
-based on `b6409a5`. No pre-existing staged, unstaged, deleted, or untracked paths
-existed in this worktree. This documentation update changes only the four files
-named below.
+At this snapshot-integrity candidate's start, the isolated worktree was clean
+and based on `6ecd0a6`. The candidate adds only the V2 snapshot service/output
+contract, focused synthetic regression tests, and the factual documents named
+below.
 
 The root `C:\CLASSIFIRE` checkout remains quarantined at `de0cc5a` with an
 interrupted cherry-pick, unmerged/tracked changes, and an incomplete untracked
@@ -226,16 +228,20 @@ and large divergence from main. They are not current-main publication candidates
 
 ## Documentation reconciliation scope
 
-Only these files belong to the documentation commit:
+This candidate contains only these ready/intended files:
 
+- `src/classifire/services/snapshot.py`
+- `src/classifire/outputs/common.py`
+- `src/classifire/outputs/pdf.py`
+- `tests/test_snapshot.py`
 - `docs/PROJECT_STATE.md`
 - `docs/CLASSIFIRE_ARCHITECTURE.md`
 - `docs/CLASSIFIRE_ROADMAP.md`
 - `docs/SESSION_HANDOFF.md`
 
-No root changes, generated receipts, customer evidence, implementation files,
-configuration, migrations, dependencies, UI files, database files, or secrets
-belong in the commit.
+No root changes, generated receipts, customer evidence, configuration,
+migrations, dependencies, UI files, database files, or secrets belong in the
+candidate.
 
 Before continuing in another session:
 

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import hashlib
-import json
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+
+from ..services.snapshot import verify_estimate_snapshot
 
 ATTRIBUTION = "QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP."
 
@@ -14,16 +14,7 @@ def d(value: Any) -> Decimal:
 
 
 def verify_snapshot(snapshot: dict[str, Any]) -> None:
-    expected = snapshot.get("snapshot_hash")
-    payload = dict(snapshot)
-    payload.pop("snapshot_hash", None)
-    actual = hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str, ensure_ascii=False).encode(
-            "utf-8"
-        )
-    ).hexdigest()
-    if not expected or expected != actual:
-        raise ValueError("Snapshot hash is missing or invalid; output generation is blocked")
+    verify_estimate_snapshot(snapshot)
 
 
 def logo_path() -> Path:
