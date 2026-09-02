@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `b33246a` (PR #126 merge,
+**Verified shared-main implementation:** `f9dea2a` (PR #134 merge,
 2026-09-03)
 
 This document separates the architecture that is implemented now from the
@@ -268,7 +268,10 @@ Current shared-main safeguards include:
 - rejection when any manifest TechnicalVariant is missing, inactive, or no
   longer current because its bound source is missing/ineligible or its own date
   window has expired; and
-- the same eligibility check before refreshing an editable estimate's pins.
+- the same eligibility check before refreshing an editable estimate's pins; and
+- read-only current-authority displays on TechnicalVariant and TechnicalDocument
+  detail screens. Those displays reuse metadata checks only: they do not read
+  source bytes or grant approval, activation, publication, or release authority.
 
 Full Draft intake/materialisation, manufacturer-neutral source lineage,
 publication/supersession automation, and production technical authority are not

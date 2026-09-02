@@ -5,10 +5,10 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** `origin/main` at `b33246a`
+**Reconciliation baseline:** `origin/main` at `f9dea2a`
 
 **Verified shared-main implementation:**
-`b33246ac027c52ce7e85918d1e40c0946b63dc03` (PR #126)
+`f9dea2a1c07f4694e05b9785fbae9e844af4ac40` (PR #134)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -16,7 +16,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#126
+### Current shared main - PRs #104-#134
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -27,8 +27,15 @@ PR #120 moved PDF timestamps to an aware UTC clock; PRs #121-#122 applied
 CLASSIFIRE display branding; PR #123 reconciled factual records; PR #124 added
 full hosted Mypy validation; PR #125 established full hosted Ruff validation;
 and PR #126 established full hosted Bandit validation with explicit Phase 8
-fail-closed invariant errors. Each pull-request check and corresponding `main`
-validation run passed; the latest is run `33667477950` on `b33246a`.
+fail-closed invariant errors. PR #127 then reconciled that baseline. PR #128
+requires clean hash-verified retained bytes for extraction; PR #129 refreshes
+Draft metadata only from a fresh verified source; PR #130 applies current
+TechnicalVariant dates; PR #131 rejects expired source authority; PR #132 gates
+current bound source document/retained-file metadata; and PRs #133-#134 show
+those current metadata results read-only on technical variant and document
+detail screens. Each pull-request check and corresponding `main` validation run
+passed; the latest PR run is `33685265403` on `3f11010`, and the latest `main`
+run is `33685535377` on `f9dea2a`.
 
 PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
@@ -49,7 +56,11 @@ library-page rendering. PR #115 reconciles the preceding state documents. PR
 boundaries; PR #117 clarifies XLSX row handling; PR #118 rejects non-object
 successful Mission Control task responses; PR #120 preserves the PDF timestamp
 form with an aware UTC clock; and PRs #121-#122 apply current CLASSIFIRE display
-branding without changing legacy persisted identifiers.
+branding without changing legacy persisted identifiers. PRs #128-#132 add
+current-use gates for verified bytes, refreshed Draft metadata, variant dates,
+source expiry, approval, and retained-file metadata; PRs #133-#134 make the
+same state visible to reviewers without re-reading source bytes or changing
+technical authority.
 
 These safeguards do not create a technical approval, technical-release
 publication, pricing decision, canonical submission, lock, deployment, or
