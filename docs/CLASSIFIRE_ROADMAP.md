@@ -300,10 +300,11 @@ audited, and cannot be changed by an unauthorised role.
 **Status:** In progress
 
 **Completed foundations:** independent technical document/variant decisions,
-clean-source rechecks, Draft-only imports, active immutable technical releases,
-manifest eligibility checks, and active hash-bound pricing records.
+clean-source rechecks, Draft-only imports, source-bound manual Draft
+materialisation from clean retained documents, active immutable technical
+releases, manifest eligibility checks, and active hash-bound pricing records.
 
-**Remaining:** Draft materialisation, manufacturer-neutral lineage, governed
+**Remaining:** extraction-assisted and manufacturer-neutral lineage, governed
 publication/supersession, clean-machine import/recovery, and full commercial
 rate-inclusion/recovery rules.
 
