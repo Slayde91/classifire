@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timezone
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any
@@ -56,7 +56,7 @@ from .services.release_pinning import (
 from .services.rule_engine import evaluate_estimate_rules
 from .services.snapshot import lock_snapshot
 from .services.storage import save_upload
-from .services.technical import extract_pdf_candidate_metadata, search_for_opening
+from .services.technical import build_technical_document_draft_metadata
 from .services.workflow import WorkflowTransitionError
 from .services.workflow_guard import (
     PhysicalModelLockRequiredError,
@@ -87,7 +87,9 @@ def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
         "request": request,
         "user": user,
         "csrf_token": create_csrf_token(request),
-        "attribution": "QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP.",
+        "attribution": (
+            "QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP."
+        ),
         "has_permission": lambda permission: bool(user and has_permission(user, permission)),
         **values,
     }
@@ -142,12 +144,26 @@ def dashboard(request: Request, db: Db) -> HTMLResponse:
         .order_by(Estimate.updated_at.desc())
         .limit(8)
     ).all()
-    releases = db.scalars(select(LibraryRelease).order_by(LibraryRelease.created_at.desc()).limit(12)).all()
-    open_changes = db.scalars(
-        select(ChangeProposal).where(ChangeProposal.status.in_(["draft", "in_review"])).order_by(ChangeProposal.updated_at.desc()).limit(8)
+    releases = db.scalars(
+        select(LibraryRelease).order_by(LibraryRelease.created_at.desc()).limit(12)
     ).all()
-    return templates.TemplateResponse(request, "dashboard.html",
-        _context(request, db, counts=counts, recent_estimates=recent_estimates, releases=releases, open_changes=open_changes),
+    open_changes = db.scalars(
+        select(ChangeProposal)
+        .where(ChangeProposal.status.in_(["draft", "in_review"]))
+        .order_by(ChangeProposal.updated_at.desc())
+        .limit(8)
+    ).all()
+    return templates.TemplateResponse(
+        request,
+        "dashboard.html",
+        _context(
+            request,
+            db,
+            counts=counts,
+            recent_estimates=recent_estimates,
+            releases=releases,
+            open_changes=open_changes,
+        ),
     )
 
 
@@ -158,7 +174,9 @@ def products_page(request: Request, db: Db, q: str | None = None) -> HTMLRespons
     if q:
         stmt = stmt.where(Product.name.ilike(f"%{q}%") | Product.sku.ilike(f"%{q}%"))
     products = db.scalars(stmt.order_by(Product.name).limit(500)).all()
-    return templates.TemplateResponse(request, "products.html", _context(request, db, products=products, q=q or ""))
+    return templates.TemplateResponse(
+        request, "products.html", _context(request, db, products=products, q=q or "")
+    )
 
 
 @router.post("/products")
@@ -194,7 +212,15 @@ def products_create(
     )
     db.add(product)
     db.flush()
-    record_audit(db, actor=user, action="create", entity_type="product", entity_id=product.id, new_value={"sku": sku, "name": name}, reason=reason)
+    record_audit(
+        db,
+        actor=user,
+        action="create",
+        entity_type="product",
+        entity_id=product.id,
+        new_value={"sku": sku, "name": name},
+        reason=reason,
+    )
     db.commit()
     return RedirectResponse("/products", status_code=303)
 
@@ -233,7 +259,15 @@ def labour_create(
     )
     db.add(component)
     db.flush()
-    record_audit(db, actor=user, action="create", entity_type="labour_component", entity_id=component.id, new_value={"code": code, "name": name}, reason=reason)
+    record_audit(
+        db,
+        actor=user,
+        action="create",
+        entity_type="labour_component",
+        entity_id=component.id,
+        new_value={"code": code, "name": name},
+        reason=reason,
+    )
     db.commit()
     return RedirectResponse("/labour", status_code=303)
 
@@ -241,7 +275,9 @@ def labour_create(
 @router.get("/rules", response_class=HTMLResponse)
 def rules_page(request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "rule:read")
-    rules = db.scalars(select(EstimatingRule).order_by(EstimatingRule.priority, EstimatingRule.rule_code)).all()
+    rules = db.scalars(
+        select(EstimatingRule).order_by(EstimatingRule.priority, EstimatingRule.rule_code)
+    ).all()
     return templates.TemplateResponse(request, "rules.html", _context(request, db, rules=rules))
 
 
@@ -265,8 +301,17 @@ def rule_create(
         conditions = json.loads(conditions_json)
         actions = json.loads(actions_json)
     except json.JSONDecodeError:
-        return RedirectResponse("/rules?error=Conditions+and+actions+must+be+valid+JSON", status_code=303)
-    version = (db.scalar(select(func.max(EstimatingRule.version)).where(EstimatingRule.rule_code == rule_code)) or 0) + 1
+        return RedirectResponse(
+            "/rules?error=Conditions+and+actions+must+be+valid+JSON", status_code=303
+        )
+    version = (
+        db.scalar(
+            select(func.max(EstimatingRule.version)).where(
+                EstimatingRule.rule_code == rule_code
+            )
+        )
+        or 0
+    ) + 1
     rule = EstimatingRule(
         rule_code=rule_code,
         version=version,
@@ -283,7 +328,15 @@ def rule_create(
     )
     db.add(rule)
     db.flush()
-    record_audit(db, actor=user, action="create_revision", entity_type="estimating_rule", entity_id=rule.id, new_value={"rule_code": rule_code, "version": version}, reason=reason)
+    record_audit(
+        db,
+        actor=user,
+        action="create_revision",
+        entity_type="estimating_rule",
+        entity_id=rule.id,
+        new_value={"rule_code": rule_code, "version": version},
+        reason=reason,
+    )
     db.commit()
     return RedirectResponse("/rules", status_code=303)
 
@@ -291,7 +344,9 @@ def rule_create(
 @router.get("/technical", response_class=HTMLResponse)
 def technical_page(request: Request, db: Db, q: str | None = None) -> HTMLResponse:
     _require(request, db, "technical:read")
-    docs = db.scalars(select(TechnicalDocument).order_by(TechnicalDocument.updated_at.desc()).limit(100)).all()
+    docs = db.scalars(
+        select(TechnicalDocument).order_by(TechnicalDocument.updated_at.desc()).limit(100)
+    ).all()
     stmt = select(TechnicalVariant)
     if q:
         stmt = stmt.where(
@@ -300,7 +355,11 @@ def technical_page(request: Request, db: Db, q: str | None = None) -> HTMLRespon
             | TechnicalVariant.service_type.ilike(f"%{q}%")
         )
     variants = db.scalars(stmt.order_by(TechnicalVariant.variant_id).limit(200)).all()
-    return templates.TemplateResponse(request, "technical.html", _context(request, db, documents=docs, variants=variants, q=q or ""))
+    return templates.TemplateResponse(
+        request,
+        "technical.html",
+        _context(request, db, documents=docs, variants=variants, q=q or ""),
+    )
 
 
 @router.post("/technical/upload")
@@ -323,12 +382,7 @@ def technical_upload(
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
     except ValueError as exc:
         return RedirectResponse(f"/technical?error={str(exc).replace(' ', '+')}", status_code=303)
-    metadata: dict[str, Any] = {"human_review_required": True, "automatic_activation_permitted": False}
-    if Path(stored.storage_path).suffix.lower() == ".pdf":
-        try:
-            metadata.update(extract_pdf_candidate_metadata(Path(stored.storage_path)))
-        except Exception as exc:
-            metadata["extraction_error"] = str(exc)
+    metadata = build_technical_document_draft_metadata(Path(stored.storage_path))
     document = TechnicalDocument(
         document_id=document_id,
         stored_file_id=stored.id,
@@ -344,7 +398,15 @@ def technical_upload(
     )
     db.add(document)
     db.flush()
-    record_audit(db, actor=user, action="upload", entity_type="technical_document", entity_id=document.id, new_value={"document_id": document_id, "sha256": stored.sha256, "status": "draft"}, reason="Immutable evidence uploaded; extraction remains Draft")
+    record_audit(
+        db,
+        actor=user,
+        action="upload",
+        entity_type="technical_document",
+        entity_id=document.id,
+        new_value={"document_id": document_id, "sha256": stored.sha256, "status": "draft"},
+        reason="Immutable evidence uploaded; extraction remains Draft",
+    )
     db.commit()
     return RedirectResponse("/technical", status_code=303)
 
@@ -352,8 +414,14 @@ def technical_upload(
 @router.get("/projects", response_class=HTMLResponse)
 def projects_page(request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "project:read")
-    projects = db.scalars(select(Project).options(selectinload(Project.estimates)).order_by(Project.updated_at.desc())).all()
-    return templates.TemplateResponse(request, "projects.html", _context(request, db, projects=projects))
+    projects = db.scalars(
+        select(Project)
+        .options(selectinload(Project.estimates))
+        .order_by(Project.updated_at.desc())
+    ).all()
+    return templates.TemplateResponse(
+        request, "projects.html", _context(request, db, projects=projects)
+    )
 
 
 @router.post("/projects")
@@ -368,10 +436,20 @@ def project_create(
 ) -> RedirectResponse:
     verify_csrf(request, csrf_token)
     user = _require(request, db, "project:write")
-    project = Project(reference=reference, name=name, site_address=site_address, jurisdiction=jurisdiction)
+    project = Project(
+        reference=reference, name=name, site_address=site_address, jurisdiction=jurisdiction
+    )
     db.add(project)
     db.flush()
-    record_audit(db, actor=user, action="create", entity_type="project", entity_id=project.id, project_id=project.id, new_value={"reference": reference, "name": name})
+    record_audit(
+        db,
+        actor=user,
+        action="create",
+        entity_type="project",
+        entity_id=project.id,
+        project_id=project.id,
+        new_value={"reference": reference, "name": name},
+    )
     db.commit()
     return RedirectResponse("/projects", status_code=303)
 
@@ -390,16 +468,38 @@ def estimate_create(
     project = db.get(Project, project_id)
     if not project:
         raise HTTPException(404, "Project not found")
-    revision = (db.scalar(select(func.max(Estimate.revision)).where(Estimate.project_id == project.id)) or 0) + 1
-    estimate = Estimate(project_id=project.id, revision=revision, reference=reference, title=title, status="draft", currency=get_settings().currency, tax_name=get_settings().tax_name, tax_rate=D(get_settings().tax_rate))
+    revision = (
+        db.scalar(select(func.max(Estimate.revision)).where(Estimate.project_id == project.id))
+        or 0
+    ) + 1
+    estimate = Estimate(
+        project_id=project.id,
+        revision=revision,
+        reference=reference,
+        title=title,
+        status="draft",
+        currency=get_settings().currency,
+        tax_name=get_settings().tax_name,
+        tax_rate=D(get_settings().tax_rate),
+    )
     db.add(estimate)
     db.flush()
     try:
         pin_current_releases(db, estimate)
     except ValueError as exc:
         db.rollback()
-        return RedirectResponse(f"/projects?error={str(exc).replace(chr(32), chr(43))}", status_code=303)
-    record_audit(db, actor=user, action="create", entity_type="estimate", entity_id=estimate.id, project_id=project.id, new_value={"reference": reference, "revision": revision})
+        return RedirectResponse(
+            f"/projects?error={str(exc).replace(chr(32), chr(43))}", status_code=303
+        )
+    record_audit(
+        db,
+        actor=user,
+        action="create",
+        entity_type="estimate",
+        entity_id=estimate.id,
+        project_id=project.id,
+        new_value={"reference": reference, "revision": revision},
+    )
     db.commit()
     return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
 
@@ -423,9 +523,17 @@ def _estimate(db: Session, estimate_id: str) -> Estimate:
 def estimate_page(estimate_id: str, request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "estimate:read")
     estimate = _estimate(db, estimate_id)
-    evaluations = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)).all()
+    evaluations = db.scalars(
+        select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)
+    ).all()
     release_basis = release_basis_for_estimate(db, estimate)
-    return templates.TemplateResponse(request, "estimate.html", _context(request, db, estimate=estimate, evaluations=evaluations, release_basis=release_basis))
+    return templates.TemplateResponse(
+        request,
+        "estimate.html",
+        _context(
+            request, db, estimate=estimate, evaluations=evaluations, release_basis=release_basis
+        ),
+    )
 
 
 @router.post("/estimates/{estimate_id}/openings")
@@ -475,7 +583,15 @@ def estimate_add_opening(
     )
     db.add(opening)
     db.flush()
-    record_audit(db, actor=user, action="create", entity_type="opening", entity_id=opening.id, project_id=estimate.project_id, new_value={"opening_code": opening_code})
+    record_audit(
+        db,
+        actor=user,
+        action="create",
+        entity_type="opening",
+        entity_id=opening.id,
+        project_id=estimate.project_id,
+        new_value={"opening_code": opening_code},
+    )
     db.commit()
     return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
 
@@ -504,7 +620,16 @@ def opening_add_service(
         require_physical_model_mutation(db, opening.estimate)
     except (PhysicalMutationError, WorkflowTransitionError) as exc:
         raise HTTPException(409, str(exc)) from exc
-    service = Service(opening_id=opening.id, service_code=service_code, service_type=service_type, material=material, outside_diameter_mm=D(outside_diameter_mm) if outside_diameter_mm else None, centre_x_mm=D(centre_x_mm) if centre_x_mm else None, centre_y_mm=D(centre_y_mm) if centre_y_mm else None, evidence_status="provisional")
+    service = Service(
+        opening_id=opening.id,
+        service_code=service_code,
+        service_type=service_type,
+        material=material,
+        outside_diameter_mm=D(outside_diameter_mm) if outside_diameter_mm else None,
+        centre_x_mm=D(centre_x_mm) if centre_x_mm else None,
+        centre_y_mm=D(centre_y_mm) if centre_y_mm else None,
+        evidence_status="provisional",
+    )
     db.add(service)
     db.flush()
     db.add(
@@ -515,7 +640,15 @@ def opening_add_service(
             confidence=service.confidence,
         )
     )
-    record_audit(db, actor=user, action="create", entity_type="service", entity_id=service.id, project_id=opening.estimate.project_id, new_value={"service_code": service_code, "service_type": service_type})
+    record_audit(
+        db,
+        actor=user,
+        action="create",
+        entity_type="service",
+        entity_id=service.id,
+        project_id=opening.estimate.project_id,
+        new_value={"service_code": service_code, "service_type": service_type},
+    )
     db.commit()
     return RedirectResponse(f"/estimates/{opening.estimate_id}", status_code=303)
 
@@ -544,8 +677,33 @@ def estimate_add_line(
         require_active_physical_model_lock(db, estimate)
     except PhysicalModelLockRequiredError as exc:
         raise HTTPException(409, str(exc)) from exc
-    line_number = (db.scalar(select(func.max(EstimateLine.line_number)).where(EstimateLine.estimate_id == estimate.id)) or 0) + 1
-    line = EstimateLine(estimate_id=estimate.id, line_number=line_number, opening_id=opening_id or None, service_id=service_id or None, component_type=component_type, component_reference=component_reference or None, description=description, quantity=D(quantity), unit=unit, base_unit_cost=D(base_unit_cost), markup_override=(D(markup_override_percent) / Decimal("100") if markup_override_percent else None), pricing_method=pricing_method, commercial_recovery_status="separately_priced")
+    line_number = (
+        db.scalar(
+            select(func.max(EstimateLine.line_number)).where(
+                EstimateLine.estimate_id == estimate.id
+            )
+        )
+        or 0
+    ) + 1
+    line = EstimateLine(
+        estimate_id=estimate.id,
+        line_number=line_number,
+        opening_id=opening_id or None,
+        service_id=service_id or None,
+        component_type=component_type,
+        component_reference=component_reference or None,
+        description=description,
+        quantity=D(quantity),
+        unit=unit,
+        base_unit_cost=D(base_unit_cost),
+        markup_override=(
+            D(markup_override_percent) / Decimal("100")
+            if markup_override_percent
+            else None
+        ),
+        pricing_method=pricing_method,
+        commercial_recovery_status="separately_priced",
+    )
     db.add(line)
     db.flush()
     try:
@@ -555,13 +713,30 @@ def estimate_add_line(
         db.rollback()
         message = str(exc).replace(" ", "+")
         return RedirectResponse(f"/estimates/{estimate.id}?error={message}", status_code=303)
-    record_audit(db, actor=user, action="create", entity_type="estimate_line", entity_id=line.id, project_id=estimate.project_id, new_value={"description": description, "applied_markup": str(line.applied_markup), "markup_source": line.markup_source})
+    record_audit(
+        db,
+        actor=user,
+        action="create",
+        entity_type="estimate_line",
+        entity_id=line.id,
+        project_id=estimate.project_id,
+        new_value={
+            "description": description,
+            "applied_markup": str(line.applied_markup),
+            "markup_source": line.markup_source,
+        },
+    )
     db.commit()
     return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
 
 
 @router.post("/estimates/{estimate_id}/evaluate")
-def estimate_evaluate(estimate_id: str, request: Request, db: Db, csrf_token: Annotated[str, Form()]) -> RedirectResponse:
+def estimate_evaluate(
+    estimate_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+) -> RedirectResponse:
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:write")
     estimate = _estimate(db, estimate_id)
@@ -570,13 +745,27 @@ def estimate_evaluate(estimate_id: str, request: Request, db: Db, csrf_token: An
     except PhysicalModelLockRequiredError as exc:
         raise HTTPException(409, str(exc)) from exc
     results = evaluate_estimate_rules(db, estimate)
-    record_audit(db, actor=user, action="evaluate_rules", entity_type="estimate", entity_id=estimate.id, project_id=estimate.project_id, new_value={"count": len(results)})
+    record_audit(
+        db,
+        actor=user,
+        action="evaluate_rules",
+        entity_type="estimate",
+        entity_id=estimate.id,
+        project_id=estimate.project_id,
+        new_value={"count": len(results)},
+    )
     db.commit()
     return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
 
 
 @router.post("/estimates/{estimate_id}/lock")
-def estimate_lock(estimate_id: str, request: Request, db: Db, csrf_token: Annotated[str, Form()], reason: Annotated[str, Form()]) -> RedirectResponse:
+def estimate_lock(
+    estimate_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    reason: Annotated[str, Form()],
+) -> RedirectResponse:
     verify_csrf(request, csrf_token)
     user = _require(request, db, "estimate:approve")
     estimate = _estimate(db, estimate_id)
@@ -588,16 +777,33 @@ def estimate_lock(estimate_id: str, request: Request, db: Db, csrf_token: Annota
     if basis_errors:
         message = ("Release basis incomplete: " + "; ".join(basis_errors)).replace(" ", "+")
         return RedirectResponse(f"/estimates/{estimate.id}?error={message}", status_code=303)
-    blockers = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id, RuleEvaluation.result == "BLOCKED")).all()
+    blockers = db.scalars(
+        select(RuleEvaluation).where(
+            RuleEvaluation.estimate_id == estimate.id,
+            RuleEvaluation.result == "BLOCKED",
+        )
+    ).all()
     if blockers:
-        return RedirectResponse(f"/estimates/{estimate.id}?error=Blocking+rule+results+must+be+resolved", status_code=303)
+        return RedirectResponse(
+            f"/estimates/{estimate.id}?error=Blocking+rule+results+must+be+resolved",
+            status_code=303,
+        )
     try:
         snapshot = lock_snapshot(db, estimate)
     except ValueError as exc:
         db.rollback()
         message = str(exc).replace(" ", "+")
         return RedirectResponse(f"/estimates/{estimate.id}?error={message}", status_code=303)
-    record_audit(db, actor=user, action="lock_snapshot", entity_type="estimate", entity_id=estimate.id, project_id=estimate.project_id, new_value={"snapshot_hash": snapshot["snapshot_hash"]}, reason=reason)
+    record_audit(
+        db,
+        actor=user,
+        action="lock_snapshot",
+        entity_type="estimate",
+        entity_id=estimate.id,
+        project_id=estimate.project_id,
+        new_value={"snapshot_hash": snapshot["snapshot_hash"]},
+        reason=reason,
+    )
     db.commit()
     return RedirectResponse(f"/estimates/{estimate.id}", status_code=303)
 
