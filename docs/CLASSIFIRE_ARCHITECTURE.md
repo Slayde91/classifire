@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `14ed594` (PR #118 merge,
+**Verified shared-main implementation:** `5639e26` (PR #122 merge,
 2026-09-02)
 
 This document separates the architecture that is implemented now from the
@@ -364,9 +364,12 @@ that does not prove a configured required-review or required-check rule.
 
 PRs #105-#118 then merged documentation reconciliation, semantic snapshot
 identity, retained-source safeguards, source-bound Draft materialisation, and
-contained type-safety hardening through `14ed594`. Their pull-request checks and
-corresponding `main` validation runs passed; the latest post-merge run is
-`33651676333`. The technical changes require retained source identity and
+contained type-safety hardening through `14ed594`. PR #119 reconciled the
+preceding factual records; PR #120 moved PDF timestamps to an aware UTC clock;
+and PRs #121-#122 applied current CLASSIFIRE display branding to generated
+artifacts and the browser workspace. Their pull-request checks and corresponding
+`main` validation runs passed; the latest post-merge run is `33657134992` on
+`5639e26`. The technical changes require retained source identity and
 locator, preserve exact Draft/revision source binding, and retain content-safe
 extraction diagnostics. PR #113 makes admission rejection helpers explicitly
 non-returning without altering their fail-closed safe-code behaviour. PR #114

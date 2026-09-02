@@ -5,10 +5,10 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** `origin/main` at `14ed594`
+**Reconciliation baseline:** `origin/main` at `5639e26`
 
 **Verified shared-main implementation:**
-`14ed594a6a1227fc1bb7780070d6f8aad574e38f` (PR #118)
+`5639e26a9a8b2973d0581b418983dd5dc113d0af` (PR #122)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -22,8 +22,11 @@ PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
 source safeguards, source-bound Draft materialisation, admission/UI/rule/release
 administration type safety, XLSX row handling, and Mission Control task-response
-validation into `main`, ending at `14ed594`. Each pull-request check and each
-corresponding `main` validation run passed; the latest is run `33651676333`.
+validation into `main`, ending at `14ed594`. PR #119 reconciled those records;
+PR #120 moved PDF timestamps to an aware UTC clock; and PRs #121-#122 applied
+CLASSIFIRE display branding to generated artifacts and the browser workspace.
+Each pull-request check and each corresponding `main` validation run passed; the
+latest is run `33657134992` on `5639e26`.
 
 PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
@@ -36,8 +39,10 @@ their fail-closed safe-code behaviour. PR #114 makes rule and UI response types
 explicit, rejects non-text rule operators deterministically, and proves existing
 library-page rendering. PR #115 reconciles the preceding state documents. PR
 #116 preserves existing release-administration guards while clarifying their type
-boundaries; PR #117 clarifies XLSX row handling; and PR #118 rejects non-object
-successful Mission Control task responses.
+boundaries; PR #117 clarifies XLSX row handling; PR #118 rejects non-object
+successful Mission Control task responses; PR #120 preserves the PDF timestamp
+form with an aware UTC clock; and PRs #121-#122 apply current CLASSIFIRE display
+branding without changing legacy persisted identifiers.
 
 These safeguards do not create a technical approval, technical-release
 publication, pricing decision, canonical submission, lock, deployment, or
@@ -187,15 +192,18 @@ Shared main includes:
 - PR #116's release-administration type-boundary hardening;
 - PR #117's XLSX row-handling clarification and technical-workbook output
   coverage; and
-- PR #118's Mission Control task-response JSON-object validation.
+- PR #118's Mission Control task-response JSON-object validation;
+- PR #119's factual documentation reconciliation;
+- PR #120's timezone-aware PDF timestamps; and
+- PRs #121-#122's current CLASSIFIRE output and browser branding.
 
 Shared `main` packages migrations through
 `0013_report_defect_scope_admissions` (one head).
 
 PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
 `main` run `33516292114` passed on `b6409a5`, including tests and the one-head
-Alembic check. Each PR #105-#118 check and corresponding `main` run also passed,
-ending with run `33651676333` on `14ed594`. GitHub's protection API returns HTTP
+Alembic check. Each PR #105-#122 check and corresponding `main` run also passed,
+ending with run `33657134992` on `5639e26`. GitHub's protection API returns HTTP
 403 because the private repository needs GitHub Pro or public visibility for
 that configuration; no required-check configuration is verified.
 
