@@ -4,8 +4,8 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main implementation:** `14c2269fc0ff9dcb353cd89f2cb4c37fb5641d76`
-(merge of PR #114, 2026-09-02)
+**Verified shared-main implementation:** `14ed594a6a1227fc1bb7780070d6f8aad574e38f`
+(merge of PR #118, 2026-09-02)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -19,11 +19,11 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared `main` | PR #114 is merged at `14c2269`; it includes the reviewed PR #104-#114 lineage. | Report governance, snapshot integrity, technical-source safeguards, and type-safety improvements are shared-main evidence. |
+| Shared `main` | PR #118 is merged at `14ed594`; it includes the reviewed PR #104-#118 lineage. | Report governance, snapshot integrity, technical-source safeguards, output/client type safety, and factual documentation are shared-main evidence. |
 | Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
 | Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
-| Post-PR #104 integrity series | PRs #105-#114 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, and `14c2269`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, admission rejection typing, and UI/rule typing were strengthened without granting technical, commercial, lock, or release authority. |
-| Subsequent hosted validation | Each PR #105-#114 check and each corresponding `main` push run passed; the latest is run `33645172423` on `14c2269`. | Hosted validation is current through the PR #114 merge, while required-check configuration remains unverified. |
+| Post-PR #104 integrity series | PRs #105-#118 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, and `14ed594`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, admission/UI/rule/release-administration type safety, XLSX row handling, and Mission Control task-response validation were strengthened without granting technical, commercial, lock, or release authority. |
+| Subsequent hosted validation | Each PR #105-#118 check and each corresponding `main` push run passed; the latest is run `33651676333` on `14ed594`. | Hosted validation is current through the PR #118 merge, while required-check configuration remains unverified. |
 | Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
@@ -97,7 +97,7 @@ Shared `main` packages migrations through
 - `58c5946` and `0f6c252` align migration-head expectations and deployment
   readiness with `0013`; `4cba603` reconciles the preceding factual records.
 
-### Completed integrity follow-up on shared main (PRs #105-#114)
+### Completed integrity follow-up on shared main (PRs #105-#118)
 
 - PR #106 separates semantic snapshot identity from volatile generation metadata
   while retaining a full-document integrity hash and V1 verification.
@@ -110,8 +110,14 @@ Shared `main` packages migrations through
   altering their fail-closed safe-code behaviour.
 - PR #114 makes rule and UI response types explicit, rejects non-text rule
   operators deterministically, and adds focused geometry/library-page coverage.
-  None of these safeguards approves a technical system, publishes a release,
-  prices work, creates a lock, or releases an estimate.
+- PR #115 reconciles the preceding factual project documents. PR #116 hardens
+  release-administration typing without changing the underlying release guards.
+- PR #117 clarifies XLSX row handling and adds technical-workbook output
+  coverage. PR #118 rejects a non-object successful task response at the Mission
+  Control client boundary.
+
+None of these safeguards approves a technical system, publishes a release,
+prices work, creates a lock, or releases an estimate.
 
 ### In progress or incomplete
 
@@ -128,7 +134,7 @@ Shared `main` packages migrations through
 | Snapshot and release | Estimate snapshot V2 separates semantic identity from `generated_utc`: `snapshot_hash` excludes that volatile generation metadata, while `snapshot_document_hash` still binds the complete displayed document. V1 snapshots retain their historical full-payload verification. Focused synthetic tests cover semantic stability, metadata/semantic tampering, and unsupported schemas. Full independent validation certificates and Human Release are not proven. |
 | Product UI | A development UI exists for projects, estimates, libraries, and basic outputs. There is no supported user-facing report-assessment/review workflow for the merged Phase 8 report services. |
 | Production operation | Narrow fail-closed startup/browser/diagnostic controls are merged. Clean-machine deployment, observability, backup/restore, performance, incident response, data-rights controls, and production proof remain incomplete. |
-| Static-analysis debt | Changed-file checks pass in hosted CI, and a current full `mypy src` run on `14c2269` reports 70 errors across 6 files. | Global type cleanliness is a separate remediation programme; changed-file CI must not be presented as full static proof. |
+| Static-analysis debt | Changed-file checks pass in hosted CI, and a current full `mypy src` run on `14ed594` reports 8 errors across 3 files: one historical migration type mismatch and missing third-party stubs for PyYAML and ReportLab. | Global type cleanliness is a separate remediation programme; changed-file CI must not be presented as full static proof. |
 
 ## 3. Latest controlled Phase 8 execution evidence
 
@@ -159,7 +165,7 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; `main` validation passed through PR #114; GitHub plan prevents branch-protection configuration. |
+| 0. Repository/change control | **In progress** | Quarantined root; `main` validation passed through PR #118; GitHub plan prevents branch-protection configuration. |
 | 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards and pricing-release controls exist; manufacturer-neutral lineage and publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
@@ -264,7 +270,7 @@ This reconciliation verified:
   guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
 - PR #104's successful pull-request validation on `0f6c252` and successful
   post-merge `main` validation on `b6409a5`, plus successful PR and `main`
-  validation through PR #114 / `14c2269` (latest `main` run `33645172423`);
+  validation through PR #118 / `14ed594` (latest `main` run `33651676333`);
 - the retained assessment status and no-write/no-lock flags; and
 - the receipt code and tests that retain only validated safe transport codes in
   new receipts while historical receipts remain verifiable; and

@@ -5,10 +5,10 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** `origin/main` at `14c2269`
+**Reconciliation baseline:** `origin/main` at `14ed594`
 
 **Verified shared-main implementation:**
-`14c2269fc0ff9dcb353cd89f2cb4c37fb5641d76` (PR #114)
+`14ed594a6a1227fc1bb7780070d6f8aad574e38f` (PR #118)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -16,14 +16,14 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#114
+### Current shared main - PRs #104-#118
 
-PR #104 remains the report-governance integration. PRs #105-#114 then merged
+PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
-source safeguards, source-bound Draft materialisation, admission rejection type
-safety, and UI/rule typing into `main`, ending at `14c2269`. Each pull-request
-check and each corresponding `main` validation run passed; the latest is run
-`33645172423`.
+source safeguards, source-bound Draft materialisation, admission/UI/rule/release
+administration type safety, XLSX row handling, and Mission Control task-response
+validation into `main`, ending at `14ed594`. Each pull-request check and each
+corresponding `main` validation run passed; the latest is run `33651676333`.
 
 PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
@@ -34,7 +34,10 @@ materialises a Draft variant only from a clean retained source document. PR #113
 makes admission rejection helpers explicitly non-returning without weakening
 their fail-closed safe-code behaviour. PR #114 makes rule and UI response types
 explicit, rejects non-text rule operators deterministically, and proves existing
-library-page rendering.
+library-page rendering. PR #115 reconciles the preceding state documents. PR
+#116 preserves existing release-administration guards while clarifying their type
+boundaries; PR #117 clarifies XLSX row handling; and PR #118 rejects non-object
+successful Mission Control task responses.
 
 These safeguards do not create a technical approval, technical-release
 publication, pricing decision, canonical submission, lock, deployment, or
@@ -178,19 +181,23 @@ Shared main includes:
 - PRs #107-#112's retained-source activation, Draft/revision source binding,
   source-locator review, content-safe extraction diagnostics, and source-bound
   Draft materialisation;
-- PR #113's explicit non-returning admission-rejection helpers; and
-- PR #114's explicit rule/UI response typing and focused library-page coverage.
+- PR #113's explicit non-returning admission-rejection helpers;
+- PR #114's explicit rule/UI response typing and focused library-page coverage;
+- PR #115's factual state reconciliation;
+- PR #116's release-administration type-boundary hardening;
+- PR #117's XLSX row-handling clarification and technical-workbook output
+  coverage; and
+- PR #118's Mission Control task-response JSON-object validation.
 
 Shared `main` packages migrations through
 `0013_report_defect_scope_admissions` (one head).
 
 PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
 `main` run `33516292114` passed on `b6409a5`, including tests and the one-head
-Alembic check. Each PR #105-#114 check and corresponding `main` run also passed,
-ending with run 33645172423 on 14c2269. GitHub's protection API returns HTTP 403
-because the private
-repository needs GitHub Pro or public visibility for that configuration; no
-required-check configuration is verified.
+Alembic check. Each PR #105-#118 check and corresponding `main` run also passed,
+ending with run `33651676333` on `14ed594`. GitHub's protection API returns HTTP
+403 because the private repository needs GitHub Pro or public visibility for
+that configuration; no required-check configuration is verified.
 
 ### Report-assessment integration limit
 
