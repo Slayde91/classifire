@@ -417,19 +417,24 @@ def technical_variant_approve(
             f"/technical/variants/{variant.id}?error=Technical+requester+and+approver+must+be+different+users",
             status_code=303,
         )
-    if variant.technical_document_id:
-        document = db.get(TechnicalDocument, variant.technical_document_id)
-        if not document or document.status != "approved":
-            return RedirectResponse(
-                f"/technical/variants/{variant.id}?error=Linked+technical+document+must+be+approved",
-                status_code=303,
-            )
-        if not _technical_document_source_is_reviewable(db, document):
-            return RedirectResponse(
-                f"/technical/variants/{variant.id}?error="
-                "Linked+technical+document+source+must+be+clean+and+unchanged",
-                status_code=303,
-            )
+    if not variant.technical_document_id:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Technical+variant+must+be+bound+to+an+approved+technical+document",
+            status_code=303,
+        )
+    document = db.get(TechnicalDocument, variant.technical_document_id)
+    if not document or document.status != "approved":
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error=Linked+technical+document+must+be+approved",
+            status_code=303,
+        )
+    if not _technical_document_source_is_reviewable(db, document):
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Linked+technical+document+source+must+be+clean+and+unchanged",
+            status_code=303,
+        )
     if not variant.source_document_reference or not variant.source_page:
         return RedirectResponse(
             f"/technical/variants/{variant.id}?error="
