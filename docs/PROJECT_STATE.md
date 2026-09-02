@@ -63,7 +63,8 @@ The following boundaries are implemented and tested for their stated scope:
 - Production configuration checks before filesystem work, no production
   `create_all()` or default-administrator seeding, packaged migration history,
   an explicit migration command, and exact migration-head readiness checks.
-- Technical-document review separation, clean source-byte rechecks, verified-byte
+- Technical-document review separation, clean source-byte rechecks, current
+  technical-variant effective/expiry windows, verified-byte
   candidate metadata extraction and Draft-only metadata refresh after a clean
   source recheck, Draft-only imports, source-document-bound Draft
   variants, source-preserving revisions, nonblank source locators before review,

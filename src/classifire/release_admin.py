@@ -22,6 +22,7 @@ from .models import (
     TechnicalVariant,
 )
 from .security import verify_csrf
+from .services.technical_validity import technical_variant_temporal_blockers
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -170,6 +171,11 @@ def _snapshot_records(db: Session, release_type: str) -> list[dict[str, Any]]:
         ).all()
         technical_chosen: dict[str, TechnicalVariant] = {}
         for technical_record in technical_records:
+            if technical_variant_temporal_blockers(
+                effective_date=technical_record.effective_date,
+                expiry_date=technical_record.expiry_date,
+            ):
+                continue
             key = _technical_logical_key(technical_record)
             existing = technical_chosen.get(key)
             if existing is None or technical_record.created_at > existing.created_at:
