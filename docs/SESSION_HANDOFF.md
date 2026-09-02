@@ -5,10 +5,10 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** `origin/main` at `7e26c2f`
+**Reconciliation baseline:** `origin/main` at `b33246a`
 
 **Verified shared-main implementation:**
-`7e26c2f93896dcccd2da743d8956ea38863b6d8f` (PR #125)
+`b33246ac027c52ce7e85918d1e40c0946b63dc03` (PR #126)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -16,7 +16,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#118
+### Current shared main - PRs #104-#126
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -24,9 +24,11 @@ source safeguards, source-bound Draft materialisation, admission/UI/rule/release
 administration type safety, XLSX row handling, and Mission Control task-response
 validation into `main`, ending at `14ed594`. PR #119 reconciled those records;
 PR #120 moved PDF timestamps to an aware UTC clock; PRs #121-#122 applied
-CLASSIFIRE display branding; PR #123 reconciled factual records; PR #124
-added full hosted Mypy validation; and PR #125 established full hosted Ruff validation. Each pull-request check and corresponding
-`main` validation run passed; the latest is run `33664228459` on `7e26c2f`.
+CLASSIFIRE display branding; PR #123 reconciled factual records; PR #124 added
+full hosted Mypy validation; PR #125 established full hosted Ruff validation;
+and PR #126 established full hosted Bandit validation with explicit Phase 8
+fail-closed invariant errors. Each pull-request check and corresponding `main`
+validation run passed; the latest is run `33667477950` on `b33246a`.
 
 PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
@@ -197,16 +199,18 @@ Shared main includes:
 - PR #120's timezone-aware PDF timestamps;
 - PRs #121-#122's current CLASSIFIRE output and browser branding;
 - PR #123's factual documentation reconciliation; and
-- PR #124's hosted full-Mypy validation; and
-- PR #125's hosted full-Ruff validation.
+- PR #124's hosted full-Mypy validation;
+- PR #125's hosted full-Ruff validation; and
+- PR #126's hosted full-Bandit validation and explicit Phase 8 fail-closed
+  invariant errors.
 
 Shared `main` packages migrations through
 `0013_report_defect_scope_admissions` (one head).
 
 PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
 `main` run `33516292114` passed on `b6409a5`, including tests and the one-head
-Alembic check. Each PR #105-#125 check and corresponding `main` run also passed,
-ending with run `33664228459` on `7e26c2f`. GitHub's protection API returns HTTP
+Alembic check. Each PR #105-#126 check and corresponding `main` run also passed,
+ending with run `33667477950` on `b33246a`. GitHub's protection API returns HTTP
 403 because the private repository needs GitHub Pro or public visibility for
 that configuration; no required-check configuration is verified.
 
