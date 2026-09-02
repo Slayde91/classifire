@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from typing import Annotated, Any
 
@@ -46,6 +47,64 @@ def _technical_logical_key(record: TechnicalVariant) -> str:
     source = record.source_json or {}
     original_variant_id = source.get("original_variant_id")
     return str(original_variant_id or record.variant_id.split("-QFREV")[0])
+
+
+def _manifest_mapping(value: object) -> Mapping[str, object]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _manifest_display_value(value: object) -> str:
+    if isinstance(value, str):
+        return value.strip() or "—"
+    if isinstance(value, int) and not isinstance(value, bool):
+        return str(value)
+    return "—"
+
+
+def _technical_release_lineage_rows(records: list[object]) -> list[dict[str, str]]:
+    """Prepare safe, immutable technical-release source lineage for read-only display."""
+    rows: list[dict[str, str]] = []
+    for raw_record in records:
+        record = _manifest_mapping(raw_record)
+        binding = _manifest_mapping(record.get("source_binding"))
+        locator = _manifest_mapping(binding.get("source_locator"))
+        document = _manifest_mapping(binding.get("technical_document"))
+        stored_file = _manifest_mapping(document.get("stored_file"))
+        binding_state = binding.get("state")
+        if binding_state == "bound":
+            source_state = "Bound retained source"
+            source_state_badge = "active"
+        elif binding_state == "legacy_unbound":
+            source_state = "Legacy unbound"
+            source_state_badge = "draft"
+        elif binding:
+            source_state = "Unrecognised source state"
+            source_state_badge = "blocked"
+        else:
+            source_state = "Legacy manifest without source binding"
+            source_state_badge = "draft"
+        rows.append(
+            {
+                "key": _manifest_display_value(record.get("key")),
+                "variant_id": _manifest_display_value(record.get("variant_id")),
+                "record_id": _manifest_display_value(record.get("id")),
+                "source_state": source_state,
+                "source_state_badge": source_state_badge,
+                "document_id": _manifest_display_value(document.get("document_id")),
+                "document_reference": _manifest_display_value(document.get("reference")),
+                "document_revision": _manifest_display_value(document.get("revision")),
+                "stored_file_sha256": _manifest_display_value(stored_file.get("sha256")),
+                "stored_file_size_bytes": _manifest_display_value(stored_file.get("size_bytes")),
+                "variant_source_hash": _manifest_display_value(record.get("source_hash")),
+                "source_document_reference": _manifest_display_value(
+                    locator.get("document_reference")
+                ),
+                "source_page": _manifest_display_value(locator.get("page")),
+                "source_table": _manifest_display_value(locator.get("table")),
+                "source_figure": _manifest_display_value(locator.get("figure")),
+            }
+        )
+    return rows
 
 
 def _latest_release(db: Session, release_type: str) -> LibraryRelease | None:
@@ -380,11 +439,24 @@ def release_detail(release_id: str, request: Request, db: Db) -> HTMLResponse:
     if not release:
         raise HTTPException(404, "Release not found")
     manifest = release.source_manifest or {}
-    records = manifest.get("records", [])
+    raw_records = manifest.get("records", [])
+    records = raw_records if isinstance(raw_records, list) else []
+    technical_lineage = (
+        _technical_release_lineage_rows(records)
+        if release.library_type == "technical"
+        else []
+    )
     return templates.TemplateResponse(
         request,
         "release_detail.html",
-        _context(request, db, release=release, manifest=manifest, records=records),
+        _context(
+            request,
+            db,
+            release=release,
+            manifest=manifest,
+            records=records,
+            technical_lineage=technical_lineage,
+        ),
     )
 
 
