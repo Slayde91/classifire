@@ -44,7 +44,8 @@ Shared main now includes:
   Control task-response validation;
 - production configuration, migration-head, browser, and diagnostic hardening;
 - independent technical-document/variant review, clean source rechecks,
-  current source-document expiry and technical-variant date-window checks,
+  current approved/unexpired source-document and stored-file metadata checks,
+  technical-variant date-window checks,
   verified-byte candidate extraction and Draft-only metadata refresh after a
   clean-source recheck, Draft-only imports, source-bound variants and revisions,
   source locators, manual Draft materialisation, and active pinned
@@ -333,8 +334,9 @@ audited, and cannot be changed by an unauthorised role.
 **Status:** In progress
 
 **Completed foundations:** independent technical document/variant decisions,
-clean-source rechecks, current source-document expiry and TechnicalVariant
-effective/expiry checks, verified-byte candidate extraction and Draft-only
+clean-source rechecks, current approved/unexpired source-document and retained-
+file metadata checks, TechnicalVariant effective/expiry checks, verified-byte
+candidate extraction and Draft-only
 metadata refresh after a clean-source recheck, Draft-only imports, source-bound
 variants and revisions, source-locator review gates, source-bound manual Draft
 materialisation from clean retained documents, active immutable technical

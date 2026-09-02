@@ -158,26 +158,34 @@ def _active_release_with_variant(
     return release, variant
 
 
-def _expired_technical_document(db) -> TechnicalDocument:
+def _technical_document(
+    db,
+    *,
+    status: str = "approved",
+    expiry_date: date | None = None,
+    stored_purpose: str = "technical_evidence",
+    stored_scan_status: str = "clean",
+    stored_immutable: bool = True,
+) -> TechnicalDocument:
     stored = StoredFile(
-        original_filename="expired-source.pdf",
+        original_filename="technical-source.pdf",
         media_type="application/pdf",
-        storage_path="technical/expired-source.pdf",
+        storage_path="technical/source.pdf",
         sha256="a" * 64,
         size_bytes=1,
-        purpose="technical_evidence",
-        malware_scan_status="clean",
-        immutable=True,
+        purpose=stored_purpose,
+        malware_scan_status=stored_scan_status,
+        immutable=stored_immutable,
     )
     db.add(stored)
     db.flush()
     document = TechnicalDocument(
-        document_id="EXPIRED-TECHNICAL-SOURCE-001",
+        document_id="TECHNICAL-SOURCE-001",
         stored_file_id=stored.id,
         document_type="assessment",
-        title="Expired technical source",
-        status="approved",
-        expiry_date=date.today() - timedelta(days=1),
+        title="Technical source",
+        status=status,
+        expiry_date=expiry_date,
     )
     db.add(document)
     db.flush()
@@ -414,7 +422,10 @@ def test_active_release_with_a_temporally_ineligible_variant_fails_closed(
 
 def test_active_release_with_an_expired_bound_source_fails_closed(db) -> None:
     release, variant = _active_release_with_variant(db, variant_status="active")
-    variant.technical_document_id = _expired_technical_document(db).id
+    variant.technical_document_id = _technical_document(
+        db,
+        expiry_date=date.today() - timedelta(days=1),
+    ).id
     db.flush()
     opening = _opening_with_directly_pinned_technical_release(db, release.id)
 
@@ -427,6 +438,58 @@ def test_active_release_with_an_expired_bound_source_fails_closed(db) -> None:
     admin_candidates = search_variants(db, service_type="pipe", include_draft=True)
     assert len(admin_candidates) == 1
     assert "source_document_expired" in admin_candidates[0].blockers
+    assert _snapshot_records(db, "technical") == []
+
+
+@pytest.mark.parametrize(
+    (
+        "document_status",
+        "stored_purpose",
+        "stored_scan_status",
+        "stored_immutable",
+        "stored_file_present",
+        "expected_blocker",
+    ),
+    [
+        ("in_review", "technical_evidence", "clean", True, True, "source_document_not_approved"),
+        ("approved", "technical_evidence", "malware_detected", True, True, "source_file_not_clean"),
+        ("approved", "technical_evidence", "clean", False, True, "source_file_not_immutable"),
+        ("approved", "project_evidence", "clean", True, True, "source_file_wrong_purpose"),
+        ("approved", "technical_evidence", "clean", True, False, "source_file_missing"),
+    ],
+)
+def test_active_release_with_an_unsafe_bound_source_fails_closed(
+    db,
+    document_status: str,
+    stored_purpose: str,
+    stored_scan_status: str,
+    stored_immutable: bool,
+    stored_file_present: bool,
+    expected_blocker: str,
+) -> None:
+    release, variant = _active_release_with_variant(db, variant_status="active")
+    document = _technical_document(
+        db,
+        status=document_status,
+        stored_purpose=stored_purpose,
+        stored_scan_status=stored_scan_status,
+        stored_immutable=stored_immutable,
+    )
+    if not stored_file_present:
+        document.stored_file_id = "missing-source-file"
+    variant.technical_document_id = document.id
+    db.flush()
+    opening = _opening_with_directly_pinned_technical_release(db, release.id)
+
+    with pytest.raises(
+        ReleaseScopeError,
+        match="Pinned technical release contains inactive or missing variants",
+    ):
+        search_for_opening(db, opening)
+    assert search_variants(db, service_type="pipe") == []
+    admin_candidates = search_variants(db, service_type="pipe", include_draft=True)
+    assert len(admin_candidates) == 1
+    assert expected_blocker in admin_candidates[0].blockers
     assert _snapshot_records(db, "technical") == []
 
 
@@ -458,6 +521,18 @@ def test_active_release_with_current_variant_remains_searchable(db) -> None:
     assert "Pinned technical release contains inactive or missing variants." not in (
         validate_estimate_release_basis(db, opening.estimate)
     )
+
+
+def test_active_release_with_a_current_bound_source_remains_searchable(db) -> None:
+    release, variant = _active_release_with_variant(db, variant_status="active")
+    variant.technical_document_id = _technical_document(db).id
+    db.flush()
+    opening = _opening_with_directly_pinned_technical_release(db, release.id)
+
+    assert pinned_technical_ids(db, opening.estimate) == {variant.id}
+    result = search_for_opening(db, opening)
+    assert result["services"][0]["candidates"][0]["variant_id"] == variant.variant_id
+    assert [record["id"] for record in _snapshot_records(db, "technical")] == [variant.id]
 
 
 def test_release_basis_refresh_rejects_an_active_release_with_retired_variants(db) -> None:
