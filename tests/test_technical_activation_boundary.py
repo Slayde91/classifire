@@ -168,6 +168,24 @@ def test_technical_activation_requires_a_separate_approver(activate_as) -> None:
         assert approval.decided_by_id is None
 
 
+def test_technical_activation_requires_a_linked_document(activate_as) -> None:
+    with physical_session() as db:
+        requester = _user(db, "requester@example.test")
+        approver = _user(db, "approver@example.test")
+        variant = _variant(db)
+        approval = _pending_approval(db, variant, requester)
+
+        result = activate_as(db, variant, approver)
+
+        assert (
+            "Technical+variant+must+be+bound+to+an+approved+technical+document"
+            in result.headers["location"]
+        )
+        assert variant.status == "in_review"
+        assert approval.status == "pending"
+        assert approval.decided_by_id is None
+
+
 def test_technical_activation_requires_an_approved_linked_document(activate_as) -> None:
     with physical_session() as db:
         requester = _user(db, "requester@example.test")
