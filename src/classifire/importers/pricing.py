@@ -89,7 +89,12 @@ def import_pricing_library(
         ("Product_Mastic_Source", "Mastic_Unit_Price_AUD_EX_GST", "material", "mastic"),
         ("Product_Framing_Source", "Framing_Unit_Price_AUD_EX_GST", "material", "framing"),
         ("Product_Wrap_Source", "Wrap_Unit_Price_AUD_EX_GST", "product", "wrap"),
-        ("Product_Other_Material_Source", "Other_Material_Unit_Price_AUD_EX_GST", "material", "other"),
+        (
+            "Product_Other_Material_Source",
+            "Other_Material_Unit_Price_AUD_EX_GST",
+            "material",
+            "other",
+        ),
     ]
     with path.open(encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
@@ -119,7 +124,8 @@ def import_pricing_library(
                 for key in row
                 if key.endswith("_Parsed")
                 or key.startswith("Package15_")
-                or key in {
+                or key
+                in {
                     "Opening_Level_Reconciliation_Required_YN",
                     "Duplicate_Recovery_Risk_Class",
                     "Critical_Fields_Complete_YN",
@@ -202,7 +208,9 @@ def import_pricing_library(
                     base_cost=values["base_cost"],
                     currency="AUD",
                     tax_treatment="exclusive",
-                    default_markup=Decimal("0.30") if values["item_type"] in {"product", "material"} else None,
+                    default_markup=Decimal("0.30")
+                    if values["item_type"] in {"product", "material"}
+                    else None,
                     status="active",
                     effective_date=release.effective_date,
                     source_reference=f"Derived from {path.name}",

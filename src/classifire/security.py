@@ -3,7 +3,7 @@ from __future__ import annotations
 import hmac
 import secrets
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 from argon2 import PasswordHasher
@@ -88,7 +88,7 @@ def authenticate_user(db: Session, email: str, password: str) -> User | None:
     user = db.scalar(select(User).where(User.email == email.lower(), User.is_active.is_(True)))
     if not user or not verify_password(password, user.password_hash):
         return None
-    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(UTC)
     db.commit()
     return user
 

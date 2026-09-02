@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from math import ceil
-from typing import Iterable
 
 from sqlalchemy.orm import Session
 
@@ -82,24 +82,50 @@ class MarkupDecision:
     source: str
 
 
-def _scope_profile(db: Session, estimate: Estimate, scope_type: str, scope_id: str | None, component_type: str) -> MarkupDecision | None:
+def _scope_profile(
+    db: Session, estimate: Estimate, scope_type: str, scope_id: str | None, component_type: str
+) -> MarkupDecision | None:
     profiles = pinned_markup_profiles(db, estimate)
     matching = [p for p in profiles if p.scope_type == scope_type and p.scope_id == scope_id]
-    matching.sort(key=lambda p: (p.effective_date is not None, p.effective_date, p.created_at), reverse=True)
+    matching.sort(
+        key=lambda p: (p.effective_date is not None, p.effective_date, p.created_at), reverse=True
+    )
     if not matching:
         return None
     profile: MarkupProfile = matching[0]
-    attr = {"product": "product_markup", "material": "material_markup", "labour": "labour_markup"}.get(component_type, "material_markup")
+    attr = {
+        "product": "product_markup",
+        "material": "material_markup",
+        "labour": "labour_markup",
+    }.get(component_type, "material_markup")
     value = getattr(profile, attr)
     release = pinned_release(db, estimate, "markups")
-    return MarkupDecision(D(value), f"markups_release:{release.version}:{scope_type}:{scope_id or 'default'}") if value is not None else None
+    return (
+        MarkupDecision(
+            D(value), f"markups_release:{release.version}:{scope_type}:{scope_id or 'default'}"
+        )
+        if value is not None
+        else None
+    )
 
 
-def resolve_markup(db: Session, *, estimate: Estimate, component_type: str, line_override: Decimal | None = None, item: Product | None = None, category: str | None = None) -> MarkupDecision:
+def resolve_markup(
+    db: Session,
+    *,
+    estimate: Estimate,
+    component_type: str,
+    line_override: Decimal | None = None,
+    item: Product | None = None,
+    category: str | None = None,
+) -> MarkupDecision:
     if line_override is not None:
         return MarkupDecision(rate(D(line_override)), "estimate_line_override")
 
-    attr = {"product": "product_markup_override", "material": "material_markup_override", "labour": "labour_markup_override"}.get(component_type, "material_markup_override")
+    attr = {
+        "product": "product_markup_override",
+        "material": "material_markup_override",
+        "labour": "labour_markup_override",
+    }.get(component_type, "material_markup_override")
 
     estimate_value = getattr(estimate, attr)
     if estimate_value is not None:
@@ -143,12 +169,26 @@ def resolve_markup(db: Session, *, estimate: Estimate, component_type: str, line
         f"markups_release:{release.version}:fallback_zero",
     )
 
-def calculate_line(*, quantity_value: Decimal, base_unit_cost: Decimal, waste_factor: Decimal, markup: Decimal, tax_rate: Decimal) -> dict[str, Decimal]:
+
+def calculate_line(
+    *,
+    quantity_value: Decimal,
+    base_unit_cost: Decimal,
+    waste_factor: Decimal,
+    markup: Decimal,
+    tax_rate: Decimal,
+) -> dict[str, Decimal]:
     q_with_waste = apply_waste(D(quantity_value), D(waste_factor))
     unit_sell = sell_from_markup(D(base_unit_cost), D(markup))
     subtotal = money(q_with_waste * unit_sell)
     tax = money(subtotal * D(tax_rate))
-    return {"quantity_with_waste": q_with_waste, "unit_sell": unit_sell, "subtotal_ex_tax": subtotal, "tax": tax, "total_incl_tax": money(subtotal + tax)}
+    return {
+        "quantity_with_waste": q_with_waste,
+        "unit_sell": unit_sell,
+        "subtotal_ex_tax": subtotal,
+        "tax": tax,
+        "total_incl_tax": money(subtotal + tax),
+    }
 
 
 def _library_rate_line(db: Session, estimate: Estimate, line: EstimateLine) -> EstimateLine:
@@ -156,7 +196,13 @@ def _library_rate_line(db: Session, estimate: Estimate, line: EstimateLine) -> E
         raise ReleaseScopeError("A Package 14 PKB Entry ID is required for library-rate pricing.")
     record = pinned_pricing_record(db, estimate, line.component_reference)
     release = pinned_release(db, estimate, "pricing")
-    values = calculate_line(quantity_value=D(line.quantity), base_unit_cost=D(record.rate_ex_tax), waste_factor=D(line.waste_factor), markup=Decimal("0"), tax_rate=D(estimate.tax_rate))
+    values = calculate_line(
+        quantity_value=D(line.quantity),
+        base_unit_cost=D(record.rate_ex_tax),
+        waste_factor=D(line.waste_factor),
+        markup=Decimal("0"),
+        tax_rate=D(estimate.tax_rate),
+    )
     line.base_unit_cost = D(record.rate_ex_tax)
     line.applied_markup = Decimal("0")
     line.markup_source = "included_in_pinned_library_rate"
@@ -164,7 +210,10 @@ def _library_rate_line(db: Session, estimate: Estimate, line: EstimateLine) -> E
     line.subtotal_ex_tax = values["subtotal_ex_tax"]
     line.tax = values["tax"]
     line.total_incl_tax = values["total_incl_tax"]
-    line.rate_source = f"pricing_release:{release.version}:{record.pkb_entry_id}:{record.entry_version or 'unversioned'}"
+    line.rate_source = (
+        f"pricing_release:{release.version}:{record.pkb_entry_id}:"
+        f"{record.entry_version or 'unversioned'}"
+    )
     line.formula_version = "QF-LIBRARY-RATE-1"
     return line
 
@@ -179,7 +228,10 @@ def calculate_estimate_line(db: Session, estimate: Estimate, line: EstimateLine)
         line.rate_source = "expert_estimate:user_input"
     elif line.component_type in {"product", "material"}:
         if not line.component_reference:
-            raise ReleaseScopeError("Product/material component-built pricing requires a reference from the pinned Products release.")
+            raise ReleaseScopeError(
+                "Product/material component-built pricing requires a reference from "
+                "the pinned Products release."
+            )
         item = pinned_product(db, estimate, line.component_reference)
         category = item.category
         line.base_unit_cost = D(item.base_cost)
@@ -188,7 +240,9 @@ def calculate_estimate_line(db: Session, estimate: Estimate, line: EstimateLine)
         line.rate_source = f"products_release:{release.version}:{item.sku}:r{item.revision}"
     elif line.component_type == "labour":
         if not line.component_reference:
-            raise ReleaseScopeError("Labour component-built pricing requires a code from the pinned Labour release.")
+            raise ReleaseScopeError(
+                "Labour component-built pricing requires a code from the pinned Labour release."
+            )
         labour = pinned_labour(db, estimate, line.component_reference)
         line.base_unit_cost = D(labour.base_rate)
         release = pinned_release(db, estimate, "labour")
@@ -196,8 +250,21 @@ def calculate_estimate_line(db: Session, estimate: Estimate, line: EstimateLine)
     else:
         line.rate_source = f"{line.component_type}:user_input"
 
-    decision = resolve_markup(db, estimate=estimate, component_type=line.component_type, line_override=D(line.markup_override) if line.markup_override is not None else None, item=item, category=category)
-    values = calculate_line(quantity_value=D(line.quantity), base_unit_cost=D(line.base_unit_cost), waste_factor=D(line.waste_factor), markup=decision.value, tax_rate=D(estimate.tax_rate))
+    decision = resolve_markup(
+        db,
+        estimate=estimate,
+        component_type=line.component_type,
+        line_override=D(line.markup_override) if line.markup_override is not None else None,
+        item=item,
+        category=category,
+    )
+    values = calculate_line(
+        quantity_value=D(line.quantity),
+        base_unit_cost=D(line.base_unit_cost),
+        waste_factor=D(line.waste_factor),
+        markup=decision.value,
+        tax_rate=D(estimate.tax_rate),
+    )
     line.applied_markup = decision.value
     line.markup_source = decision.source
     line.unit_sell = values["unit_sell"]
@@ -211,7 +278,9 @@ def calculate_estimate_line(db: Session, estimate: Estimate, line: EstimateLine)
 def recalculate_estimate(db: Session, estimate: Estimate) -> Estimate:
     for line in estimate.lines:
         calculate_estimate_line(db, estimate, line)
-    estimate.subtotal_ex_tax = money(sum((D(x.subtotal_ex_tax) for x in estimate.lines), Decimal("0")))
+    estimate.subtotal_ex_tax = money(
+        sum((D(x.subtotal_ex_tax) for x in estimate.lines), Decimal("0"))
+    )
     estimate.tax_total = money(sum((D(x.tax) for x in estimate.lines), Decimal("0")))
     estimate.total_incl_tax = money(estimate.subtotal_ex_tax + estimate.tax_total)
     return estimate

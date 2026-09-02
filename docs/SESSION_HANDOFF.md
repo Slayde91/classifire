@@ -5,10 +5,10 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** `origin/main` at `5639e26`
+**Reconciliation baseline:** `origin/main` at `ff1278f`
 
 **Verified shared-main implementation:**
-`5639e26a9a8b2973d0581b418983dd5dc113d0af` (PR #122)
+`ff1278f40436b42b714eb5d5e0a29b6c5f8c5ba0` (PR #124)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -23,10 +23,10 @@ the factual reconciliation, semantic snapshot identity, retained technical
 source safeguards, source-bound Draft materialisation, admission/UI/rule/release
 administration type safety, XLSX row handling, and Mission Control task-response
 validation into `main`, ending at `14ed594`. PR #119 reconciled those records;
-PR #120 moved PDF timestamps to an aware UTC clock; and PRs #121-#122 applied
-CLASSIFIRE display branding to generated artifacts and the browser workspace.
-Each pull-request check and each corresponding `main` validation run passed; the
-latest is run `33657134992` on `5639e26`.
+PR #120 moved PDF timestamps to an aware UTC clock; PRs #121-#122 applied
+CLASSIFIRE display branding; PR #123 reconciled factual records; and PR #124
+added full hosted Mypy validation. Each pull-request check and corresponding
+`main` validation run passed; the latest is run `33660787524` on `ff1278f`.
 
 PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
@@ -153,8 +153,8 @@ release authority. Any real-provider run remains a separate gate.
    manufacturer-neutral lineage plus publication and supersession. The
    deterministic semantic snapshot hash and manual Draft materialisation are
    already shared-main evidence.
-3. **Treat full-repository Ruff debt separately from changed-file CI.** Decide
-   whether to upgrade GitHub protection or document an equivalent review control.
+3. **Maintain full Ruff and Mypy CI.** Decide whether to upgrade GitHub
+   protection or document an equivalent review control.
 4. **Seek new report-run authority only after synthetic transport diagnosis.** A
    successful transport still requires human semantic review.
 5. **Keep canonical submission, replacement lock, Phases 9-14, deployment, and
@@ -194,16 +194,18 @@ Shared main includes:
   coverage; and
 - PR #118's Mission Control task-response JSON-object validation;
 - PR #119's factual documentation reconciliation;
-- PR #120's timezone-aware PDF timestamps; and
-- PRs #121-#122's current CLASSIFIRE output and browser branding.
+- PR #120's timezone-aware PDF timestamps;
+- PRs #121-#122's current CLASSIFIRE output and browser branding;
+- PR #123's factual documentation reconciliation; and
+- PR #124's hosted full-Mypy validation.
 
 Shared `main` packages migrations through
 `0013_report_defect_scope_admissions` (one head).
 
 PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
 `main` run `33516292114` passed on `b6409a5`, including tests and the one-head
-Alembic check. Each PR #105-#122 check and corresponding `main` run also passed,
-ending with run `33657134992` on `5639e26`. GitHub's protection API returns HTTP
+Alembic check. Each PR #105-#124 check and corresponding `main` run also passed,
+ending with run `33660787524` on `ff1278f`. GitHub's protection API returns HTTP
 403 because the private repository needs GitHub Pro or public visibility for
 that configuration; no required-check configuration is verified.
 

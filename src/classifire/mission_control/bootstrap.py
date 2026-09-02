@@ -7,7 +7,6 @@ import yaml
 
 from .client import MissionControlClient
 
-
 DEFAULT_AGENTS: list[dict[str, Any]] = [
     {
         "name": "qf-orchestrator",
@@ -57,12 +56,32 @@ DEFAULT_AGENTS: list[dict[str, Any]] = [
 ]
 
 DEFAULT_TASKS = [
-    ("QF-ARCH-001", "Confirm OpenClaw and Mission Control compatibility", "qf-platform-governance", "high"),
+    (
+        "QF-ARCH-001",
+        "Confirm OpenClaw and Mission Control compatibility",
+        "qf-platform-governance",
+        "high",
+    ),
     ("QF-DATA-001", "Validate source corpus inventory and hashes", "qf-intake-evidence", "high"),
     ("QF-XLS-001", "Run Windows Excel formula and macro parity suite", "qf-validator", "high"),
-    ("QF-P15-001", "Link Active technical variants to immutable source documents", "qf-technical-system", "high"),
-    ("QF-P14-001", "Review Package 14 records requiring expert commercial review", "qf-commercial-engine", "high"),
-    ("QF-SEC-001", "Complete production security hardening and backup test", "qf-platform-governance", "high"),
+    (
+        "QF-P15-001",
+        "Link Active technical variants to immutable source documents",
+        "qf-technical-system",
+        "high",
+    ),
+    (
+        "QF-P14-001",
+        "Review Package 14 records requiring expert commercial review",
+        "qf-commercial-engine",
+        "high",
+    ),
+    (
+        "QF-SEC-001",
+        "Complete production security hardening and backup test",
+        "qf-platform-governance",
+        "high",
+    ),
     ("QF-UAT-001", "Run reference-project acceptance and regression suite", "qf-validator", "high"),
 ]
 
