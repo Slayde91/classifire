@@ -21,7 +21,10 @@ from .security import verify_csrf
 from .services.calculation import D
 from .services.storage import StoredFileBindingError, read_verified_stored_file
 from .services.technical import build_technical_document_draft_metadata_from_verified_content
-from .services.technical_validity import technical_variant_temporal_blockers
+from .services.technical_validity import (
+    technical_document_temporal_blockers,
+    technical_variant_temporal_blockers,
+)
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -623,6 +626,11 @@ def technical_variant_approve(
             f"/technical/variants/{variant.id}?error=Linked+technical+document+must+be+approved",
             status_code=303,
         )
+    if technical_document_temporal_blockers(expiry_date=document.expiry_date):
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error=Linked+technical+document+has+expired",
+            status_code=303,
+        )
     if not _technical_document_source_is_reviewable(db, document):
         return RedirectResponse(
             f"/technical/variants/{variant.id}?error="
@@ -1154,6 +1162,11 @@ def technical_document_approve(
     if document.status != "in_review":
         return RedirectResponse(
             f"/technical/documents/{document.id}?error=Only+In+Review+documents+can+be+approved",
+            status_code=303,
+        )
+    if technical_document_temporal_blockers(expiry_date=document.expiry_date):
+        return RedirectResponse(
+            f"/technical/documents/{document.id}?error=Technical+source+document+has+expired",
             status_code=303,
         )
     if not _technical_document_source_is_reviewable(db, document):

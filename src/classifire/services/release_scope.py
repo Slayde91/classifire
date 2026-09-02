@@ -15,9 +15,13 @@ from ..models import (
     MarkupProfile,
     PricingLibraryRecord,
     Product,
+    TechnicalDocument,
     TechnicalVariant,
 )
-from .technical_validity import technical_variant_temporal_blockers
+from .technical_validity import (
+    technical_document_temporal_blockers,
+    technical_variant_temporal_blockers,
+)
 
 PIN_FIELDS = {
     "pricing": "pricing_release_id",
@@ -131,6 +135,19 @@ def _active_technical_variant_ids(db: Session, release: LibraryRelease) -> set[s
     variants = db.scalars(
         select(TechnicalVariant).where(TechnicalVariant.id.in_(record_ids))
     ).all()
+    bound_document_ids = {
+        variant.technical_document_id
+        for variant in variants
+        if variant.technical_document_id
+    }
+    documents_by_id: dict[str, TechnicalDocument] = {}
+    if bound_document_ids:
+        documents_by_id = {
+            document.id: document
+            for document in db.scalars(
+                select(TechnicalDocument).where(TechnicalDocument.id.in_(bound_document_ids))
+            ).all()
+        }
     active_ids = {
         variant.id
         for variant in variants
@@ -138,6 +155,13 @@ def _active_technical_variant_ids(db: Session, release: LibraryRelease) -> set[s
         and not technical_variant_temporal_blockers(
             effective_date=variant.effective_date,
             expiry_date=variant.expiry_date,
+        )
+        and (
+            not variant.technical_document_id
+            or (
+                (document := documents_by_id.get(variant.technical_document_id)) is not None
+                and not technical_document_temporal_blockers(expiry_date=document.expiry_date)
+            )
         )
     }
     if active_ids != record_ids:

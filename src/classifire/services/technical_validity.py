@@ -3,6 +3,20 @@ from __future__ import annotations
 from datetime import date
 
 
+def technical_document_temporal_blockers(
+    *,
+    expiry_date: date | None,
+    as_of: date | None = None,
+) -> tuple[str, ...]:
+    """Return safe reasons a retained technical source is not currently usable.
+
+    A source remains usable on its expiry date. Its retained bytes and review
+    history remain available; this function only controls current authority.
+    """
+    current_day = as_of or date.today()
+    return ("source_document_expired",) if expiry_date and expiry_date < current_day else ()
+
+
 def technical_variant_temporal_blockers(
     *,
     effective_date: date | None,

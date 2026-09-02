@@ -30,6 +30,8 @@ from classifire.models import (
     Product,
     Project,
     Service,
+    StoredFile,
+    TechnicalDocument,
     TechnicalVariant,
 )
 from classifire.release_admin import _activate_drafts, _snapshot_records, _technical_logical_key
@@ -154,6 +156,32 @@ def _active_release_with_variant(
     release.release_hash = _release_manifest_hash(manifest)
     db.flush()
     return release, variant
+
+
+def _expired_technical_document(db) -> TechnicalDocument:
+    stored = StoredFile(
+        original_filename="expired-source.pdf",
+        media_type="application/pdf",
+        storage_path="technical/expired-source.pdf",
+        sha256="a" * 64,
+        size_bytes=1,
+        purpose="technical_evidence",
+        malware_scan_status="clean",
+        immutable=True,
+    )
+    db.add(stored)
+    db.flush()
+    document = TechnicalDocument(
+        document_id="EXPIRED-TECHNICAL-SOURCE-001",
+        stored_file_id=stored.id,
+        document_type="assessment",
+        title="Expired technical source",
+        status="approved",
+        expiry_date=date.today() - timedelta(days=1),
+    )
+    db.add(document)
+    db.flush()
+    return document
 
 
 def _active_non_technical_releases(db) -> None:
@@ -381,6 +409,42 @@ def test_active_release_with_a_temporally_ineligible_variant_fails_closed(
     admin_candidates = search_variants(db, service_type="pipe", include_draft=True)
     assert len(admin_candidates) == 1
     assert expected_blocker in admin_candidates[0].blockers
+    assert _snapshot_records(db, "technical") == []
+
+
+def test_active_release_with_an_expired_bound_source_fails_closed(db) -> None:
+    release, variant = _active_release_with_variant(db, variant_status="active")
+    variant.technical_document_id = _expired_technical_document(db).id
+    db.flush()
+    opening = _opening_with_directly_pinned_technical_release(db, release.id)
+
+    with pytest.raises(
+        ReleaseScopeError,
+        match="Pinned technical release contains inactive or missing variants",
+    ):
+        search_for_opening(db, opening)
+    assert search_variants(db, service_type="pipe") == []
+    admin_candidates = search_variants(db, service_type="pipe", include_draft=True)
+    assert len(admin_candidates) == 1
+    assert "source_document_expired" in admin_candidates[0].blockers
+    assert _snapshot_records(db, "technical") == []
+
+
+def test_active_release_with_a_missing_bound_source_fails_closed(db) -> None:
+    release, variant = _active_release_with_variant(db, variant_status="active")
+    variant.technical_document_id = "missing-technical-document"
+    db.flush()
+    opening = _opening_with_directly_pinned_technical_release(db, release.id)
+
+    with pytest.raises(
+        ReleaseScopeError,
+        match="Pinned technical release contains inactive or missing variants",
+    ):
+        search_for_opening(db, opening)
+    assert search_variants(db, service_type="pipe") == []
+    admin_candidates = search_variants(db, service_type="pipe", include_draft=True)
+    assert len(admin_candidates) == 1
+    assert "source_document_missing" in admin_candidates[0].blockers
     assert _snapshot_records(db, "technical") == []
 
 

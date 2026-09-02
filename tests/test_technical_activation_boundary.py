@@ -497,6 +497,32 @@ def test_technical_activation_requires_an_approved_linked_document(activate_as) 
         assert approval.decided_by_id is None
 
 
+def test_technical_activation_refuses_an_expired_linked_document(
+    activate_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        requester = _user(db, "requester@example.test")
+        approver = _user(db, "approver@example.test")
+        variant = _variant(db)
+        document = _technical_document(
+            db,
+            status="approved",
+            source_root=technical_storage_root,
+        )
+        document.expiry_date = date.today() - timedelta(days=1)
+        variant.technical_document_id = document.id
+        approval = _pending_approval(db, variant, requester)
+
+        result = activate_as(db, variant, approver)
+
+        assert "Linked+technical+document+has+expired" in result.headers["location"]
+        assert variant.status == "in_review"
+        assert variant.expert_review_required is True
+        assert approval.status == "pending"
+        assert approval.decided_by_id is None
+
+
 def test_technical_activation_activates_an_independently_reviewed_variant(
     activate_as,
     technical_storage_root: Path,
