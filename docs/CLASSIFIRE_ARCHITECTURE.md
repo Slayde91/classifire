@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `1e43756` (PR #138 merge,
+**Verified shared-main implementation:** `075c9c5` (PR #140 merge,
 2026-09-03)
 
 This document separates the architecture that is implemented now from the
@@ -274,7 +274,7 @@ Current shared-main safeguards include:
 - the same eligibility check before refreshing an editable estimate's pins; and
 - read-only current-authority displays on TechnicalVariant and TechnicalDocument
   detail screens, plus structured immutable source-lineage rows on
-  TechnicalRelease detail screens. Those displays reuse metadata checks only:
+  TechnicalRelease detail screens. An eligible bound record safely links to the existing current read-only TechnicalDocument record without changing its published binding. Those displays reuse metadata checks only:
   they do not read source bytes or grant approval, activation, publication, or
   release authority.
 

@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** `1e43756` (PR #138 merge, 2026-09-03)
+**Verified shared-main implementation:** `075c9c5` (PR #140 merge, 2026-09-03)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -149,7 +149,7 @@ validation passed; the latest `main` run is `33657134992` on `5639e26`. These
 are safeguards only: no technical decision, release publication, pricing,
 canonical submission, lock, deployment, or Human Release was added.
 
-#### Completed on shared main - Current technical-source safeguards and release lineage (PRs #127-#138)
+#### Completed on shared main - Current technical-source safeguards and release lineage (PRs #127-#140)
 
 **Shared-main result:** PR #127 reconciles factual records through the hosted
 validation baseline. PR #128 permits extraction only from clean hash-verified
@@ -164,11 +164,14 @@ document/file identity, digest, and locator, or an explicit legacy-unbound state
 it rejects later source-lineage drift from pinned runtime use. PR #137 reconciles
 those factual records. PR #138 displays the immutable published source lineage
 on TechnicalRelease detail screens without granting source approval or current-use
-authority.
+authority. PR #139 reconciles the factual records. PR #140 safely links an
+eligible bound document ID to the existing current read-only document record; it
+URL-escapes the row ID and leaves legacy, malformed, and unrecognised bindings
+as non-links.
 
-**Verification:** every PR #127-#138 check and each corresponding `main` push
-validation passed. The latest PR check is `33690769753` on `efe8d40`; the latest
-`main` run is `33691006065` on `1e43756`.
+**Verification:** every PR #127-#140 check and each corresponding `main` push
+validation passed. The latest PR check is `33693213662` on `bb129c8`; the latest
+`main` run is `33693439846` on `075c9c5`.
 
 **Authority boundary:** these changes do not approve a source, activate a
 variant, re-read source bytes, publish a technical release, price work, create
