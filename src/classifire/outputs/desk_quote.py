@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any
 
 import xlsxwriter  # type: ignore[import-untyped]
-from reportlab.lib import colors  # type: ignore[import-untyped]
-from reportlab.lib.units import mm  # type: ignore[import-untyped]
-from reportlab.platypus import (  # type: ignore[import-untyped]
+from reportlab.lib import colors
+from reportlab.lib.units import mm
+from reportlab.platypus import (
     Image,
     Paragraph,
     SimpleDocTemplate,
@@ -284,7 +284,9 @@ def render_desk_quote_pdf(snapshot: dict[str, Any], output_path: Path) -> Path:
     )
     story.extend([info_table, Spacer(1, 7 * mm)])
     story.append(Paragraph("Commercial allowances", styles["h1"]))
-    allowance_rows = [["Allowance", "Description", "Qty", "Unit", "Ex tax", "Assumptions"]]
+    allowance_rows: list[list[str | Paragraph]] = [
+        ["Allowance", "Description", "Qty", "Unit", "Ex tax", "Assumptions"]
+    ]
     for allowance in snapshot["allowances"]:
         subtotal = Decimal(allowance["quantity"]) * Decimal(allowance["unit_rate_ex_tax"])
         allowance_rows.append(
@@ -355,7 +357,7 @@ def render_desk_quote_pdf(snapshot: dict[str, Any], output_path: Path) -> Path:
             )
         )
     story.extend([Spacer(1, 7 * mm), Paragraph("Assumption register", styles["h1"])])
-    assumption_rows = [
+    assumption_rows: list[list[str | Paragraph]] = [
         ["ID", "Assumed condition", "Evidence", "Probability", "Treatment", "Verification"]
     ]
     for assumption in snapshot["assumptions"]:

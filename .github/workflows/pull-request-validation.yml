@@ -70,6 +70,9 @@ jobs:
       - name: Run tests
         run: python -m pytest -p no:cacheprovider --basetemp .pytest-ci
 
+      - name: Run full type check
+        run: python -m mypy src
+
       - name: Verify one Alembic migration head
         shell: bash
         run: |

@@ -185,7 +185,9 @@ def render_estimate_pdf(
     story.append(Spacer(1, 8 * mm))
 
     story.append(Paragraph("Estimate lines", styles["h1"]))
-    line_rows = [["Line", "Description", "Qty", "Unit", "Markup", "Ex tax"]]
+    line_rows: list[list[str | Paragraph]] = [
+        ["Line", "Description", "Qty", "Unit", "Markup", "Ex tax"]
+    ]
     for line in snapshot.get("lines", []):
         line_rows.append(
             [
@@ -279,7 +281,9 @@ def render_estimate_pdf(
             story.append(KeepTogether(block))
 
         story.append(Paragraph("Rule evaluation", styles["h1"]))
-        rule_rows = [["Result", "Severity", "Rule version", "Explanation"]]
+        rule_rows: list[list[str | Paragraph]] = [
+            ["Result", "Severity", "Rule version", "Explanation"]
+        ]
         for item in snapshot.get("rule_evaluations", []):
             rule_rows.append(
                 [
