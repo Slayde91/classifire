@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
 from typing import Any
 
 import httpx
@@ -68,7 +68,9 @@ class MissionControlClient:
 
         return findings
 
-    def register_agent(self, name: str, role: str, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+    def register_agent(
+        self, name: str, role: str, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         payload = {"name": name, "role": role, **(metadata or {})}
 
         # Mission Control self-registration is rate-limited to 5 requests/minute
@@ -129,4 +131,7 @@ class MissionControlClient:
             raise MissionControlError(
                 f"Task creation failed ({response.status_code}): {response.text[:500]}"
             )
-        return response.json()
+        task = response.json()
+        if not isinstance(task, dict):
+            raise MissionControlError("Task creation returned a non-object JSON response")
+        return task
