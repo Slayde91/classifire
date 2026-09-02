@@ -367,9 +367,10 @@ identity, retained-source safeguards, source-bound Draft materialisation, and
 contained type-safety hardening through `14ed594`. PR #119 reconciled the
 preceding factual records; PR #120 moved PDF timestamps to an aware UTC clock;
 PRs #121-#122 applied current CLASSIFIRE display branding; PR #123 reconciled
-factual records; and PR #124 added full hosted Mypy validation. Their pull-
+factual records; PR #124 added full hosted Mypy validation; and PR #125
+established full hosted Ruff validation. Their pull-
 request checks and corresponding `main` validation runs passed; the latest
-post-merge run is `33660787524` on `ff1278f`. The technical changes require
+post-merge run is `33664228459` on `7e26c2f`. The technical changes require
 retained source identity and locator, preserve exact Draft/revision source
 binding, and retain content-safe
 extraction diagnostics. PR #113 makes admission rejection helpers explicitly
@@ -395,7 +396,7 @@ technical, commercial, lock, deployment, or release authority.
 ### Near term
 
 Complete governed technical-source lineage publication and supersession in
-separate reviewed migrations. Maintain full-repository Ruff and Mypy checks
+separate reviewed migrations. Maintain full-repository Ruff, Mypy, and Bandit checks
 alongside the changed-file Ruff fast-path; static checks do not grant product or
 release authority.
 

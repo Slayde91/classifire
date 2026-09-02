@@ -328,7 +328,8 @@ def build_phase8_evidence_family_review_overlay(
         code="EVIDENCE_FAMILY_REVIEW_FIELDS_INVALID",
     )
     declarations = review_record["relationship_declarations"]
-    assert isinstance(declarations, list)  # established by the validator above
+    if not isinstance(declarations, list):
+        raise Phase8EvidenceFamilyReviewError("EVIDENCE_FAMILY_DECLARATIONS_INVALID")
     proposal_relationships: list[dict[str, str]] = []
     for declaration in sorted(declarations, key=lambda value: str(value["declaration_id"])):
         item = _require_exact_fields(

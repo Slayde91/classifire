@@ -76,6 +76,9 @@ jobs:
       - name: Run full type check
         run: python -m mypy src
 
+      - name: Run full security scan
+        run: python -m bandit -q -r src
+
       - name: Verify one Alembic migration head
         shell: bash
         run: |

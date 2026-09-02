@@ -13,7 +13,7 @@ import ipaddress
 import json
 import os
 import socket
-import subprocess
+import subprocess  # nosec B404
 import time
 import uuid
 from collections.abc import Callable, Mapping, Sequence
@@ -38,6 +38,7 @@ from .phase8_report_runtime_input import Phase8ReportRuntimeInput
 from .phase8_visual_evidence import RetainedVisualEvidencePacket
 from .phase8_visual_prompts import build_visual_inference_profile
 
+# OpenClawCliGatewayRpc validates an absolute executable prefix and never uses a shell.
 _ALLOWED_RPC_METHODS = frozenset(
     {
         "sessions.create",
