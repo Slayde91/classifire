@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -70,6 +72,15 @@ def _test_app(factory: sessionmaker[Session]) -> FastAPI:
     )
     app.include_router(ui_router)
     app.include_router(library_ui_router)
+    app.mount(
+        "/brand",
+        StaticFiles(
+            directory=str(
+                Path(__file__).resolve().parents[1] / "src" / "classifire" / "static" / "brand"
+            )
+        ),
+        name="brand",
+    )
 
     def override_db() -> Iterator[Session]:
         with factory() as db:
@@ -186,3 +197,26 @@ def test_inactive_user_cannot_complete_a_protected_ui_write() -> None:
 
     with factory() as db:
         assert db.scalar(select(func.count()).select_from(Product)) == 0
+
+
+def test_browser_ui_uses_classifire_branding_and_serves_current_logo() -> None:
+    factory = _session_factory()
+    app = _test_app(factory)
+    repository_root = Path(__file__).resolve().parents[1]
+    template_dir = repository_root / "src" / "classifire" / "templates"
+
+    assert all(
+        "QUANTIFIRE" not in template.read_text(encoding="utf-8")
+        for template in template_dir.glob("*.html")
+    )
+
+    with TestClient(app) as client:
+        login_page = client.get("/login")
+        logo = client.get("/brand/classifire-logo-master.png")
+
+    assert login_page.status_code == 200
+    assert "CLASSIFIRE" in login_page.text
+    assert "QUANTIFIRE" not in login_page.text
+    assert logo.status_code == 200
+    assert logo.headers["content-type"] == "image/png"
+    assert logo.content.startswith(b"\x89PNG\r\n\x1a\n")

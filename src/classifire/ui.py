@@ -33,6 +33,7 @@ from .models import (
     TechnicalVariant,
     User,
 )
+from .outputs.common import ATTRIBUTION
 from .physical_models import ServiceOpeningLink
 from .security import (
     authenticate_user,
@@ -87,9 +88,7 @@ def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
         "request": request,
         "user": user,
         "csrf_token": create_csrf_token(request),
-        "attribution": (
-            "QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP."
-        ),
+        "attribution": ATTRIBUTION,
         "has_permission": lambda permission: bool(user and has_permission(user, permission)),
         **values,
     }
