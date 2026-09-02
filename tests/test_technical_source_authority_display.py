@@ -93,6 +93,16 @@ def test_variant_detail_displays_current_bound_source_authority(monkeypatch) -> 
         assert context["source_authority_messages"] == ()
 
 
+def test_variant_detail_maps_each_revision_to_its_retained_document(monkeypatch) -> None:
+    with physical_session() as db:
+        document = _document(db)
+        variant = _variant(db, technical_document_id=document.id)
+
+        context = _detail_context(monkeypatch, db, variant)
+
+        assert context["history_documents_by_id"] == {document.id: document}
+
+
 def test_variant_detail_displays_safe_reasons_when_bound_source_is_blocked(monkeypatch) -> None:
     with physical_session() as db:
         document = _document(
@@ -139,6 +149,7 @@ def test_variant_detail_template_renders_current_blocked_and_unbound_source_auth
             expert_review_required=True,
         ),
         "history": (),
+        "history_documents_by_id": {},
         "approvals": (),
         "linked_document": None,
         "matching_document": None,
@@ -165,6 +176,113 @@ def test_variant_detail_template_renders_current_blocked_and_unbound_source_auth
     assert "The source document has expired." in blocked_html
     assert 'badge badge-blocked">Blocked' in blocked_html
     assert "Unbound legacy record" in unbound_html
+
+
+def test_variant_detail_template_renders_read_only_revision_source_lineage() -> None:
+    template = technical_admin.templates.get_template("technical_variant_detail.html")
+    document = SimpleNamespace(
+        id="document-record-id",
+        document_id="TECH-SOURCE-AUTHORITY-TEST",
+    )
+    history = (
+        SimpleNamespace(
+            id="revision-record-id",
+            variant_id="TECH-SOURCE-AUTHORITY-TEST-QFREV1",
+            frl="- / 120 / 120",
+            status="draft",
+            technical_document_id=document.id,
+            source_document_reference=document.document_id,
+            source_page="42",
+            source_table="Table 7",
+            source_figure="Figure 2",
+            created_at="2026-09-03T00:00:00Z",
+        ),
+    )
+
+    template_context = {"csrf_token": "test-csrf-token"}
+    html = template.render(
+        request=SimpleNamespace(query_params=QueryParams()),
+        user=SimpleNamespace(full_name="Technical reviewer", role="administrator"),
+        **template_context,
+        attribution="CLASSIFIRE",
+        has_permission=lambda _permission: False,
+        variant=SimpleNamespace(
+            id="variant-record-id",
+            variant_id="TECH-SOURCE-AUTHORITY-TEST",
+            status="active",
+            system_id="SYSTEM-SOURCE-AUTHORITY-TEST",
+            expert_review_required=True,
+        ),
+        history=history,
+        history_documents_by_id={document.id: document},
+        approvals=(),
+        linked_document=None,
+        matching_document=None,
+        source_authority_state="unbound",
+        source_authority_messages=(),
+    )
+
+    assert "read-only evidence lineage; it does not approve or activate a variant" in html
+    assert 'href="/technical/documents/document-record-id"' in html
+    assert "TECH-SOURCE-AUTHORITY-TEST" in html
+    assert "Document: TECH-SOURCE-AUTHORITY-TEST" in html
+    assert "Page: 42 · Table: Table 7 · Figure: Figure 2" in html
+
+
+def test_variant_detail_template_marks_unbound_and_missing_revision_sources() -> None:
+    template = technical_admin.templates.get_template("technical_variant_detail.html")
+    history = (
+        SimpleNamespace(
+            id="legacy-record-id",
+            variant_id="TECH-SOURCE-AUTHORITY-TEST",
+            frl=None,
+            status="superseded",
+            technical_document_id=None,
+            source_document_reference="LEGACY-REF",
+            source_page="7",
+            source_table=None,
+            source_figure=None,
+            created_at="2026-09-02T00:00:00Z",
+        ),
+        SimpleNamespace(
+            id="missing-document-record-id",
+            variant_id="TECH-SOURCE-AUTHORITY-TEST-QFREV1",
+            frl=None,
+            status="draft",
+            technical_document_id="missing-document-id",
+            source_document_reference="MISSING-REF",
+            source_page="8",
+            source_table=None,
+            source_figure=None,
+            created_at="2026-09-03T00:00:00Z",
+        ),
+    )
+
+    template_context = {"csrf_token": "test-csrf-token"}
+    html = template.render(
+        request=SimpleNamespace(query_params=QueryParams()),
+        user=SimpleNamespace(full_name="Technical reviewer", role="administrator"),
+        **template_context,
+        attribution="CLASSIFIRE",
+        has_permission=lambda _permission: False,
+        variant=SimpleNamespace(
+            id="variant-record-id",
+            variant_id="TECH-SOURCE-AUTHORITY-TEST",
+            status="active",
+            system_id="SYSTEM-SOURCE-AUTHORITY-TEST",
+            expert_review_required=True,
+        ),
+        history=history,
+        history_documents_by_id={},
+        approvals=(),
+        linked_document=None,
+        matching_document=None,
+        source_authority_state="unbound",
+        source_authority_messages=(),
+    )
+
+    assert "Unbound legacy record" in html
+    assert "Missing bound document" in html
 
 
 def _document_detail_context(

@@ -213,6 +213,19 @@ def technical_variant_detail(variant_db_id: str, request: Request, db: Db) -> HT
         )
         .order_by(TechnicalVariant.created_at.desc())
     ).all()
+    history_document_ids = {
+        row.technical_document_id for row in history if row.technical_document_id
+    }
+    history_documents_by_id: dict[str, TechnicalDocument] = {}
+    if history_document_ids:
+        history_documents_by_id = {
+            document.id: document
+            for document in db.scalars(
+                select(TechnicalDocument).where(
+                    TechnicalDocument.id.in_(history_document_ids)
+                )
+            ).all()
+        }
     approvals = db.scalars(
         select(Approval)
         .where(Approval.entity_type == "technical_variant", Approval.entity_id == variant.id)
@@ -246,6 +259,7 @@ def technical_variant_detail(variant_db_id: str, request: Request, db: Db) -> HT
             db,
             variant=variant,
             history=history,
+            history_documents_by_id=history_documents_by_id,
             approvals=approvals,
             linked_document=linked_document,
             matching_document=matching_document,
