@@ -104,7 +104,7 @@ Shared `main` packages migrations through
 | Technical authority | Important fail-closed review, activation, source-integrity, import, and release checks exist. Full governed technical intake, materialisation, source-lineage publication, supersession, and production authority remain incomplete. |
 | Quantity and labour | Basic estimate calculation exists; the complete selected-system-to-components-to-productivity chain is not implemented on current main. |
 | Commercial recovery | Desk quotes and basic estimating rules exist, but the full component-level rate-inclusion/recovery ledger remains incomplete. |
-| Snapshot and release | `build_estimate_snapshot()` includes the current generation time in the hashed payload and has no focused snapshot regression suite. Reproducible semantic identity, full validation certificates, and Human Release are not proven. |
+| Snapshot and release | Estimate snapshot V2 separates semantic identity from `generated_utc`: `snapshot_hash` excludes that volatile generation metadata, while `snapshot_document_hash` still binds the complete displayed document. V1 snapshots retain their historical full-payload verification. Focused synthetic tests cover semantic stability, metadata/semantic tampering, and unsupported schemas. Full independent validation certificates and Human Release are not proven. |
 | Product UI | A development UI exists for projects, estimates, libraries, and basic outputs. There is no supported user-facing report-assessment/review workflow for the merged Phase 8 report services. |
 | Production operation | Narrow fail-closed startup/browser/diagnostic controls are merged. Clean-machine deployment, observability, backup/restore, performance, incident response, data-rights controls, and production proof remain incomplete. |
 
@@ -204,10 +204,11 @@ defines that policy, so this design decision must precede a migration.
 #### Priority 2 - Close demonstrated Phase 2 and Phase 12 gaps separately
 
 Complete Draft technical materialisation/source-lineage publication in separately
-reviewed migrations, without automatic activation. In parallel, split semantic
-snapshot identity from `generated_utc` in `services/snapshot.py` and add focused
-snapshot/output regression tests. These have clear source-level gaps and do not
-need to bypass the Phase 8 lock gate.
+reviewed migrations, without automatic activation. Snapshot V2 now separates
+semantic identity from volatile generation metadata and preserves V1 validation;
+the remaining Phase 12 work is independent physical, technical, quantity,
+commercial, formula, recovery, and release validation. Neither activity may
+bypass the Phase 8 lock gate.
 
 #### Priority 3 - Make CI debt and default-branch governance explicit
 
@@ -242,7 +243,10 @@ This reconciliation verified:
   post-merge `main` validation on `b6409a5`;
 - the retained assessment status and no-write/no-lock flags; and
 - the receipt code and tests that retain only validated safe transport codes in
-  new receipts while historical receipts remain verifiable.
+  new receipts while historical receipts remain verifiable; and
+- the snapshot V2 semantic/document hash contract, V1 compatibility, focused
+  synthetic regression suite, current scoped static checks, and the full
+  synthetic suite.
 
 No real report, retained image, Gateway token, provider response, customer data,
 database, canonical model, lock, deployment, or release was opened or changed by

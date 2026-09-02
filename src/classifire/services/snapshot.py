@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -11,6 +11,11 @@ from sqlalchemy.orm import Session
 
 from ..models import Estimate, RuleEvaluation
 from .calculation import recalculate_estimate
+
+LEGACY_ESTIMATE_SNAPSHOT_SCHEMA = "QUANTIFIRE-ESTIMATE-SNAPSHOT-v1"
+ESTIMATE_SNAPSHOT_SCHEMA = "QUANTIFIRE-ESTIMATE-SNAPSHOT-v2"
+SNAPSHOT_HASH_FIELD = "snapshot_hash"
+SNAPSHOT_DOCUMENT_HASH_FIELD = "snapshot_document_hash"
 
 
 def _serial(value: Any) -> Any:
@@ -24,17 +29,89 @@ def _serial(value: Any) -> Any:
 
 
 def canonical_json(payload: dict[str, Any]) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), default=_serial, ensure_ascii=False)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), default=_serial, ensure_ascii=False
+    )
 
 
-def build_estimate_snapshot(db: Session, estimate: Estimate) -> dict[str, Any]:
+def _snapshot_digest(payload: dict[str, Any]) -> str:
+    return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def _snapshot_schema(snapshot: dict[str, Any]) -> str:
+    schema = snapshot.get("schema")
+    if not isinstance(schema, str) or schema not in {
+        LEGACY_ESTIMATE_SNAPSHOT_SCHEMA,
+        ESTIMATE_SNAPSHOT_SCHEMA,
+    }:
+        raise ValueError("Snapshot schema is unsupported; output generation is blocked")
+    return schema
+
+
+def _without_fields(snapshot: dict[str, Any], *fields: str) -> dict[str, Any]:
+    payload = dict(snapshot)
+    for field in fields:
+        payload.pop(field, None)
+    return payload
+
+
+def calculate_snapshot_hash(snapshot: dict[str, Any]) -> str:
+    """Return the versioned semantic identity for an estimate snapshot."""
+    schema = _snapshot_schema(snapshot)
+    if schema == LEGACY_ESTIMATE_SNAPSHOT_SCHEMA:
+        return _snapshot_digest(_without_fields(snapshot, SNAPSHOT_HASH_FIELD))
+    return _snapshot_digest(
+        _without_fields(
+            snapshot,
+            SNAPSHOT_HASH_FIELD,
+            SNAPSHOT_DOCUMENT_HASH_FIELD,
+            "generated_utc",
+        )
+    )
+
+
+def calculate_snapshot_document_hash(snapshot: dict[str, Any]) -> str:
+    """Return the full-payload integrity hash for a version 2 snapshot."""
+    if _snapshot_schema(snapshot) != ESTIMATE_SNAPSHOT_SCHEMA:
+        raise ValueError("Snapshot document hashes require the version 2 schema")
+    return _snapshot_digest(_without_fields(snapshot, SNAPSHOT_DOCUMENT_HASH_FIELD))
+
+
+def verify_estimate_snapshot(snapshot: dict[str, Any]) -> None:
+    """Fail closed unless the snapshot matches its schema-specific integrity contract."""
+    schema = _snapshot_schema(snapshot)
+    expected = snapshot.get(SNAPSHOT_HASH_FIELD)
+    if not isinstance(expected, str) or expected != calculate_snapshot_hash(snapshot):
+        raise ValueError("Snapshot hash is missing or invalid; output generation is blocked")
+
+    if schema == ESTIMATE_SNAPSHOT_SCHEMA:
+        expected_document_hash = snapshot.get(SNAPSHOT_DOCUMENT_HASH_FIELD)
+        if not isinstance(
+            expected_document_hash, str
+        ) or expected_document_hash != calculate_snapshot_document_hash(snapshot):
+            raise ValueError(
+                "Snapshot document hash is missing or invalid; output generation is blocked"
+            )
+
+
+def build_estimate_snapshot(
+    db: Session,
+    estimate: Estimate,
+    *,
+    generated_utc: datetime | None = None,
+) -> dict[str, Any]:
+    generated_at = generated_utc or datetime.now(UTC)
+    if generated_at.tzinfo is None:
+        raise ValueError("generated_utc must be timezone-aware")
     recalculate_estimate(db, estimate)
     evaluations = db.scalars(
-        select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)
+        select(RuleEvaluation)
+        .where(RuleEvaluation.estimate_id == estimate.id)
+        .order_by(RuleEvaluation.created_at, RuleEvaluation.id)
     ).all()
     snapshot = {
-        "schema": "QUANTIFIRE-ESTIMATE-SNAPSHOT-v1",
-        "generated_utc": datetime.now(timezone.utc).isoformat(),
+        "schema": ESTIMATE_SNAPSHOT_SCHEMA,
+        "generated_utc": generated_at.astimezone(UTC).isoformat(),
         "estimate": {
             "id": estimate.id,
             "reference": estimate.reference,
@@ -146,7 +223,8 @@ def build_estimate_snapshot(db: Session, estimate: Estimate) -> dict[str, Any]:
             for item in evaluations
         ],
     }
-    snapshot["snapshot_hash"] = hashlib.sha256(canonical_json(snapshot).encode("utf-8")).hexdigest()
+    snapshot[SNAPSHOT_HASH_FIELD] = calculate_snapshot_hash(snapshot)
+    snapshot[SNAPSHOT_DOCUMENT_HASH_FIELD] = calculate_snapshot_document_hash(snapshot)
     return snapshot
 
 
@@ -154,6 +232,6 @@ def lock_snapshot(db: Session, estimate: Estimate) -> dict[str, Any]:
     snapshot = build_estimate_snapshot(db, estimate)
     estimate.snapshot_json = snapshot
     estimate.snapshot_hash = snapshot["snapshot_hash"]
-    estimate.locked_at = datetime.now(timezone.utc)
+    estimate.locked_at = datetime.now(UTC)
     estimate.status = "locked"
     return snapshot

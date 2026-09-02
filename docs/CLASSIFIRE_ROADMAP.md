@@ -240,8 +240,10 @@ downstream authority was added.
    redaction, tamper failure, and absence of canonical authority.
 2. Complete Draft technical materialisation, source lineage, publication, and
    supersession through separate migrations and reviews.
-3. Define a semantic snapshot hash independent of `generated_utc`; add snapshot
-   and output regression tests before Phase 12.
+3. Independently validate physical, technical, quantity, labour, commercial,
+   formula, recovery, and release integrity before Phase 12. Snapshot V2 already
+   separates `generated_utc` from semantic identity while preserving full
+   document integrity and V1 verification.
 4. Scope full-repository Ruff remediation separately from changed-file CI, then
    have the repository owner decide on an upgrade or equivalent documented
    default-branch protection control.
@@ -446,8 +448,9 @@ parallel assumption-led allowance and does not satisfy this exit.
 
 **Status:** Blocked by Phases 8-11
 
-Resolve snapshot identity so volatile generation metadata does not change the
-semantic hash. Independently validate physical, technical, quantity, labour,
+Snapshot V2 now keeps volatile generation metadata out of the semantic hash and
+binds the complete document with a separate integrity hash; V1 snapshots remain
+verifiable. Independently validate physical, technical, quantity, labour,
 commercial, formula, recovery, and release integrity.
 
 ### Phase 13 - Canonical output generation

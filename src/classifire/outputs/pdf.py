@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
@@ -104,17 +104,37 @@ def render_estimate_pdf(
         subject="Passive-fire estimate",
     )
     story: list[Any] = []
-    logo = Image(str(logo_path()))
-    logo.drawHeight = 35 * mm
-    logo.drawWidth = 35 * mm * (logo.imageWidth / logo.imageHeight)
-    story.append(Table([[logo]], colWidths=[170 * mm], style=TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER")])) )
+    logo_source = str(logo_path())
+    logo_probe = Image(logo_source)
+    logo = Image(
+        logo_source,
+        width=35 * mm * (logo_probe.imageWidth / logo_probe.imageHeight),
+        height=35 * mm,
+    )
+    logo.hAlign = "CENTER"
+    story.append(logo)
     story.append(Paragraph(title.upper(), styles["title"]))
     story.append(Paragraph(ATTRIBUTION, styles["subtitle"]))
     info = [
         ["Project", project.get("name") or "Not provided", "Estimate", estimate["reference"]],
-        ["Project reference", project.get("reference") or "Not provided", "Revision", str(estimate["revision"])],
-        ["Client", project.get("customer") or "Not provided", "Generated", snapshot.get("generated_utc", "")[:19]],
-        ["Site", project.get("site_address") or "Not provided", "Jurisdiction", project.get("jurisdiction") or "Not provided"],
+        [
+            "Project reference",
+            project.get("reference") or "Not provided",
+            "Revision",
+            str(estimate["revision"]),
+        ],
+        [
+            "Client",
+            project.get("customer") or "Not provided",
+            "Generated",
+            snapshot.get("generated_utc", "")[:19],
+        ],
+        [
+            "Site",
+            project.get("site_address") or "Not provided",
+            "Jurisdiction",
+            project.get("jurisdiction") or "Not provided",
+        ],
         ["Snapshot", snapshot["snapshot_hash"], "Status", estimate.get("status", "")],
     ]
     info_table = Table(info, colWidths=[28 * mm, 58 * mm, 25 * mm, 59 * mm])
@@ -177,7 +197,11 @@ def render_estimate_pdf(
                 _currency(line["subtotal_ex_tax"], currency),
             ]
         )
-    lines_table = Table(line_rows, colWidths=[11 * mm, 82 * mm, 16 * mm, 18 * mm, 24 * mm, 28 * mm], repeatRows=1)
+    lines_table = Table(
+        line_rows,
+        colWidths=[11 * mm, 82 * mm, 16 * mm, 18 * mm, 24 * mm, 28 * mm],
+        repeatRows=1,
+    )
     lines_table.setStyle(
         TableStyle(
             [
@@ -201,17 +225,40 @@ def render_estimate_pdf(
         story.extend([PageBreak(), Paragraph("Physical and technical model", styles["h1"])])
         for opening in snapshot.get("openings", []):
             service_lines = "<br/>".join(
-                f"{s['service_code']}: {s['service_type']} — {s.get('material') or 'material not confirmed'}"
+                (
+                    f"{s['service_code']}: {s['service_type']} — "
+                    f"{s.get('material') or 'material not confirmed'}"
+                )
                 for s in opening.get("services", [])
             ) or "No Services recorded"
             block = [
                 Paragraph(f"Opening {opening['opening_code']}", styles["h2"]),
                 Table(
                     [
-                        ["Defect", opening.get("defect_id") or "Not provided", "Location", opening.get("location") or "Not provided"],
-                        ["Substrate", opening.get("substrate_type") or "Not confirmed", "Plane", opening.get("substrate_plane") or "Not confirmed"],
-                        ["Orientation", opening.get("orientation") or "Not confirmed", "FRL", opening.get("frl") or "Not confirmed"],
-                        ["Services", Paragraph(service_lines, styles["small"]), "Technical status", opening.get("technical_status") or "not assessed"],
+                        [
+                            "Defect",
+                            opening.get("defect_id") or "Not provided",
+                            "Location",
+                            opening.get("location") or "Not provided",
+                        ],
+                        [
+                            "Substrate",
+                            opening.get("substrate_type") or "Not confirmed",
+                            "Plane",
+                            opening.get("substrate_plane") or "Not confirmed",
+                        ],
+                        [
+                            "Orientation",
+                            opening.get("orientation") or "Not confirmed",
+                            "FRL",
+                            opening.get("frl") or "Not confirmed",
+                        ],
+                        [
+                            "Services",
+                            Paragraph(service_lines, styles["small"]),
+                            "Technical status",
+                            opening.get("technical_status") or "not assessed",
+                        ],
                     ],
                     colWidths=[24 * mm, 62 * mm, 28 * mm, 58 * mm],
                     style=TableStyle(
@@ -260,13 +307,24 @@ def render_estimate_pdf(
 
     story.extend([Spacer(1, 7 * mm), Paragraph("Qualifications", styles["h1"])])
     qualifications = estimate.get("qualifications") or [
-        "Technical candidates and cost allowances do not constitute independent approval of a fire-stopping system.",
-        "All technical applicability must be verified against the cited source evidence and project configuration.",
+        (
+            "Technical candidates and cost allowances do not constitute independent approval "
+            "of a fire-stopping system."
+        ),
+        (
+            "All technical applicability must be verified against the cited source evidence "
+            "and project configuration."
+        ),
     ]
     for item in qualifications:
         story.append(Paragraph(f"• {item}", styles["body"]))
     story.append(Spacer(1, 7 * mm))
     story.append(Paragraph(f"Snapshot hash: {snapshot['snapshot_hash']}", styles["small"]))
-    story.append(Paragraph(f"Generated by QUANTIFIRE on {datetime.utcnow().isoformat(timespec='seconds')}Z", styles["small"]))
+    story.append(
+        Paragraph(
+            f"Generated by QUANTIFIRE on {datetime.utcnow().isoformat(timespec='seconds')}Z",
+            styles["small"],
+        )
+    )
     doc.build(story, onFirstPage=_page, onLaterPages=_page)
     return output_path

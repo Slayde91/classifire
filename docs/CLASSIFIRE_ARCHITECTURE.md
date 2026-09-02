@@ -281,9 +281,13 @@ Locked Physical Model
 
 Shared main has basic calculation, releases, estimate lines, PDF/XLSX rendering,
 and snapshots. It does not yet implement the complete system-derived component,
-productivity, and rate-inclusion/recovery ledger. `build_estimate_snapshot()`
-hashes volatile `generated_utc` and lacks a focused snapshot regression suite,
-so semantic snapshot reproducibility is not proven.
+productivity, and rate-inclusion/recovery ledger. Estimate snapshot V2 keeps
+`generated_utc` for audit display but excludes it from `snapshot_hash`; a
+separate `snapshot_document_hash` still binds every displayed field, including
+that timestamp. The output boundary accepts legacy V1 full-payload hashes and
+fails closed for invalid V1/V2 or unsupported packets. This establishes snapshot
+integrity foundations only; it does not prove the independent Phase 12 inputs or
+Human Release.
 
 ### Desk-quote exception boundary
 
@@ -368,8 +372,7 @@ technical, commercial, lock, deployment, or release authority.
 ### Near term
 
 Complete Draft technical materialisation/source-lineage publication in separate
-reviewed migrations, and separate semantic snapshot identity from volatile
-generation metadata. Treat full-repository lint remediation as its own debt
+reviewed migrations. Treat full-repository lint remediation as its own debt
 slice; the CI workflow deliberately checks only changed Python files because the
 current repository is not globally Ruff-clean.
 
