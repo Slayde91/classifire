@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** `14c2269` (PR #114 merge, 2026-09-02)
+**Verified shared-main implementation:** `14ed594` (PR #118 merge, 2026-09-02)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -38,9 +38,10 @@ Shared main now includes:
 - the PR #103 desk-quote evidence-read hardening;
 - PR #104's expected-label manifests, atomic scope admission, V2 runner
   preflight, migration-head readiness, and `main` push validation;
-- PRs #105-#114's factual reconciliation, semantic snapshot identity,
-  retained-source safeguards, source-bound Draft materialisation, admission
-  rejection type safety, and UI/rule typing;
+- PRs #105-#118's factual reconciliation, semantic snapshot identity,
+  retained-source safeguards, source-bound Draft materialisation, admission/
+  UI/rule/release-administration type safety, XLSX row handling, and Mission
+  Control task-response validation;
 - production configuration, migration-head, browser, and diagnostic hardening;
 - independent technical-document/variant review, clean source rechecks,
   Draft-only imports, source-bound variants and revisions, source locators,
@@ -52,9 +53,9 @@ Shared main now includes:
 
 PR #104 validation run `33515411987` passed on its exact head `0f6c252`. Its
 first observed `main` push run `33516292114` also passed on merge `b6409a5`,
-including tests and the one-head Alembic check. Every PR #105-#114 check and
+including tests and the one-head Alembic check. Every PR #105-#118 check and
 corresponding `main` validation then passed; the latest post-merge run is
-`33645172423` on `14c2269`. GitHub's branch-protection endpoint still returns
+`33651676333` on `14ed594`. GitHub's branch-protection endpoint still returns
 HTTP 403 because the current private-repository plan requires GitHub Pro or
 public visibility for that configuration; required-check configuration remains
 unverified.
@@ -121,7 +122,7 @@ product/records-ownership decision before implementation.
 
 ### Completed and published foundations (not next actions)
 
-#### Completed on shared main - Snapshot, technical-source, and type-safety safeguards (PRs #105-#114)
+#### Completed on shared main - Snapshot, technical-source, and type-safety safeguards (PRs #105-#118)
 
 **Shared-main result:** PR #106 makes V2 snapshot identity stable across volatile
 generation metadata while retaining a full-document integrity hash and V1
@@ -132,10 +133,12 @@ source-bound Draft variants only from clean retained documents. PR #113 makes
 admission rejection helpers explicitly non-returning without weakening their
 safe-code failure. PR #114 makes existing rule and UI response types explicit,
 rejects non-text rule operators deterministically, and proves existing
-library-page rendering.
+library-page rendering. PR #116 preserves the existing release-administration
+guards while clarifying their type boundaries; PR #117 clarifies XLSX row
+handling; and PR #118 validates Mission Control task responses as JSON objects.
 
-**Verification:** every PR #105-#114 check and its corresponding `main` push
-validation passed; the latest `main` run is `33645172423` on `14c2269`. These
+**Verification:** every PR #105-#118 check and its corresponding `main` push
+validation passed; the latest `main` run is `33651676333` on `14ed594`. These
 are safeguards only: no technical decision, release publication, pricing,
 canonical submission, lock, deployment, or Human Release was added.
 
@@ -298,7 +301,7 @@ private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
 **Remaining:** the root checkout is conflicted recovery evidence; hosted `main`
-validation passed through PR #114, but the current GitHub plan prevents
+validation passed through PR #118, but the current GitHub plan prevents
 branch-protection configuration; clean-machine and release reproducibility
 remain incomplete.
 

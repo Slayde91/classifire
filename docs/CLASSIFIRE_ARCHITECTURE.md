@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `14c2269` (PR #114 merge,
+**Verified shared-main implementation:** `14ed594` (PR #118 merge,
 2026-09-02)
 
 This document separates the architecture that is implemented now from the
@@ -362,17 +362,20 @@ GitHub protection configuration is still unavailable to inspect on the current
 private-repository plan. The standard merge and hosted validation were accepted;
 that does not prove a configured required-review or required-check rule.
 
-PRs #105-#114 then merged documentation reconciliation, semantic snapshot
-identity, retained-source safeguards, and source-bound Draft materialisation
-through `14c2269`. Their pull-request checks and corresponding `main` validation
-runs passed; the latest post-merge run is `33645172423`. The technical changes
-require retained source identity and locator, preserve exact Draft/revision
-source binding, and retain content-safe extraction diagnostics. PR #113 makes
-admission rejection helpers explicitly non-returning without altering their
-fail-closed safe-code behaviour. PR #114 makes rule and UI response types
-explicit, rejects non-text rule operators deterministically, and proves
-existing library-page rendering. These safeguards do not approve a system,
-publish a release, price work, create a lock, deploy, or release an estimate.
+PRs #105-#118 then merged documentation reconciliation, semantic snapshot
+identity, retained-source safeguards, source-bound Draft materialisation, and
+contained type-safety hardening through `14ed594`. Their pull-request checks and
+corresponding `main` validation runs passed; the latest post-merge run is
+`33651676333`. The technical changes require retained source identity and
+locator, preserve exact Draft/revision source binding, and retain content-safe
+extraction diagnostics. PR #113 makes admission rejection helpers explicitly
+non-returning without altering their fail-closed safe-code behaviour. PR #114
+makes rule and UI response types explicit, rejects non-text rule operators
+deterministically, and proves existing library-page rendering. PR #116 preserves
+release-administration guards while making their type boundaries explicit; PR
+#117 clarifies XLSX row handling; and PR #118 rejects non-object task responses
+from Mission Control. These safeguards do not approve a system, publish a
+release, price work, create a lock, deploy, or release an estimate.
 
 ### Required design before a review UI
 
