@@ -56,6 +56,13 @@ def _json_or_existing(value: str | None, existing: Any) -> Any:
     return json.loads(value)
 
 
+def _source_locator_is_complete(
+    source_document_reference: str | None,
+    source_page: str | None,
+) -> bool:
+    return bool((source_document_reference or "").strip() and (source_page or "").strip())
+
+
 def _technical_document_source_is_reviewable(db: Session, document: TechnicalDocument) -> bool:
     stored = db.get(StoredFile, document.stored_file_id)
     if not stored:
@@ -249,8 +256,15 @@ def technical_variant_revision(
             status_code=303,
         )
 
-    new_variant_id = _next_revision_id(db, old)
     source_document_reference = (source_document_reference or "").strip() or None
+    source_page = (source_page or "").strip() or None
+    if not _source_locator_is_complete(source_document_reference, source_page):
+        return RedirectResponse(
+            f"/technical/variants/{variant_db_id}/revise?error="
+            "Source+document+reference+and+source+page+are+required+to+create+a+revision",
+            status_code=303,
+        )
+    new_variant_id = _next_revision_id(db, old)
     inherited_document = (
         db.get(TechnicalDocument, old.technical_document_id)
         if old.technical_document_id
@@ -455,6 +469,15 @@ def technical_variant_submit_review(
             "Only+Draft+or+Rejected+variants+can+be+submitted",
             status_code=303,
         )
+    if not _source_locator_is_complete(
+        variant.source_document_reference,
+        variant.source_page,
+    ):
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Source+document+reference+and+source+page+are+required+before+review",
+            status_code=303,
+        )
     if not variant.technical_document_id:
         return RedirectResponse(
             f"/technical/variants/{variant.id}?error="
@@ -554,6 +577,15 @@ def technical_variant_approve(
             f"/technical/variants/{variant.id}?error=Technical+requester+and+approver+must+be+different+users",
             status_code=303,
         )
+    if not _source_locator_is_complete(
+        variant.source_document_reference,
+        variant.source_page,
+    ):
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Source+document+reference+and+source+page+are+required+before+approval",
+            status_code=303,
+        )
     if not variant.technical_document_id:
         return RedirectResponse(
             f"/technical/variants/{variant.id}?error="
@@ -576,12 +608,6 @@ def technical_variant_approve(
         return RedirectResponse(
             f"/technical/variants/{variant.id}?error="
             "Linked+technical+document+must+match+the+source+document+reference",
-            status_code=303,
-        )
-    if not variant.source_document_reference or not variant.source_page:
-        return RedirectResponse(
-            f"/technical/variants/{variant.id}?error="
-            "Source+document+reference+and+source+page+are+required+before+approval",
             status_code=303,
         )
     previous_status = variant.status

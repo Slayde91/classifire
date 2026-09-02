@@ -29,12 +29,13 @@ def _variant(
     *,
     status: str = "in_review",
     source_document_reference: str = "TECH-SOURCE-TEST",
+    source_page: str = "12",
 ) -> TechnicalVariant:
     variant = TechnicalVariant(
         variant_id="TECH-ACTIVATION-TEST",
         system_id="SYSTEM-ACTIVATION-TEST",
         source_document_reference=source_document_reference,
-        source_page="12",
+        source_page=source_page,
         source_json={"fixture": "technical-activation"},
         status=status,
         expert_review_required=True,
@@ -177,6 +178,7 @@ def revise_as(monkeypatch: pytest.MonkeyPatch):
         variant: TechnicalVariant,
         user: User,
         source_document_reference: str,
+        source_page: str = "13",
     ):
         monkeypatch.setattr(technical_admin, "_require", lambda *_args: user)
         return technical_admin.technical_variant_revision(
@@ -185,7 +187,7 @@ def revise_as(monkeypatch: pytest.MonkeyPatch):
             db,
             "csrf-token",
             source_document_reference=source_document_reference,
-            source_page="13",
+            source_page=source_page,
             reason="Correct technical source reference",
         )
 
@@ -366,6 +368,69 @@ def test_unbound_draft_variant_cannot_enter_technical_review(submit_review_as) -
             in result.headers["location"]
         )
         assert variant.status == "draft"
+
+
+def test_revision_requires_a_nonblank_source_locator(revise_as) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        original = _variant(db, status="active")
+
+        result = revise_as(db, original, writer, "TECH-SOURCE-TEST", "   ")
+
+        assert (
+            "Source+document+reference+and+source+page+are+required+to+create+a+revision"
+            in result.headers["location"]
+        )
+        assert db.query(TechnicalVariant).filter_by(supersedes_id=original.id).one_or_none() is None
+
+
+def test_technical_review_requires_a_nonblank_source_locator(
+    submit_review_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        variant = _variant(db, status="draft", source_page="   ")
+        document = _technical_document(
+            db,
+            status="draft",
+            source_root=technical_storage_root,
+        )
+        variant.technical_document_id = document.id
+
+        result = submit_review_as(db, variant, writer)
+
+        assert (
+            "Source+document+reference+and+source+page+are+required+before+review"
+            in result.headers["location"]
+        )
+        assert variant.status == "draft"
+
+
+def test_technical_activation_requires_a_nonblank_source_locator(
+    activate_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        requester = _user(db, "requester@example.test")
+        approver = _user(db, "approver@example.test")
+        variant = _variant(db, source_page="   ")
+        document = _technical_document(
+            db,
+            status="approved",
+            source_root=technical_storage_root,
+        )
+        variant.technical_document_id = document.id
+        approval = _pending_approval(db, variant, requester)
+
+        result = activate_as(db, variant, approver)
+
+        assert (
+            "Source+document+reference+and+source+page+are+required+before+approval"
+            in result.headers["location"]
+        )
+        assert variant.status == "in_review"
+        assert approval.status == "pending"
 
 
 def test_technical_activation_requires_a_pending_request(activate_as) -> None:
