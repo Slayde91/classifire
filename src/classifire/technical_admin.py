@@ -110,13 +110,34 @@ def _technical_document_source_is_reviewable(db: Session, document: TechnicalDoc
 
 _SOURCE_AUTHORITY_MESSAGES = {
     "source_document_missing": "The bound source document record is missing.",
-    "source_document_not_approved": "The bound source document is not approved.",
-    "source_document_expired": "The bound source document has expired.",
+    "source_document_not_approved": "The source document is not approved.",
+    "source_document_expired": "The source document has expired.",
     "source_file_missing": "The retained source file record is missing.",
     "source_file_wrong_purpose": "The retained file is not registered as technical evidence.",
     "source_file_not_immutable": "The retained file is not marked immutable.",
     "source_file_not_clean": "The retained file does not have a clean scan state.",
 }
+
+
+def _technical_document_source_authority(
+    db: Session,
+    document: TechnicalDocument,
+) -> tuple[str, tuple[str, ...]]:
+    """Return the read-only current-authority display state for one document.
+
+    This reuses the current metadata guard without reading source bytes or
+    changing a document, variant, approval, or release state.
+    """
+    stored_file = db.get(StoredFile, document.stored_file_id)
+    blockers = technical_document_authority_blockers(
+        status=document.status,
+        expiry_date=document.expiry_date,
+        stored_file_present=stored_file is not None,
+        stored_file_purpose=stored_file.purpose if stored_file else None,
+        stored_file_scan_status=stored_file.malware_scan_status if stored_file else None,
+        stored_file_immutable=stored_file.immutable if stored_file else None,
+    )
+    return ("blocked" if blockers else "current"), blockers
 
 
 def _technical_variant_source_authority(
@@ -133,16 +154,7 @@ def _technical_variant_source_authority(
         return "unbound", ()
     if not linked_document:
         return "blocked", ("source_document_missing",)
-    stored_file = db.get(StoredFile, linked_document.stored_file_id)
-    blockers = technical_document_authority_blockers(
-        status=linked_document.status,
-        expiry_date=linked_document.expiry_date,
-        stored_file_present=stored_file is not None,
-        stored_file_purpose=stored_file.purpose if stored_file else None,
-        stored_file_scan_status=stored_file.malware_scan_status if stored_file else None,
-        stored_file_immutable=stored_file.immutable if stored_file else None,
-    )
-    return ("blocked" if blockers else "current"), blockers
+    return _technical_document_source_authority(db, linked_document)
 
 
 @router.get("/technical/variants", response_class=HTMLResponse)
@@ -822,6 +834,10 @@ def technical_document_detail(document_db_id: str, request: Request, db: Db) -> 
     document = db.get(TechnicalDocument, document_db_id)
     if not document:
         raise HTTPException(404, "Technical document not found")
+    source_authority_state, source_authority_blockers = _technical_document_source_authority(
+        db,
+        document,
+    )
     linked = db.scalars(
         select(TechnicalVariant)
         .where(TechnicalVariant.technical_document_id == document.id)
@@ -839,7 +855,21 @@ def technical_document_detail(document_db_id: str, request: Request, db: Db) -> 
     return templates.TemplateResponse(
         request,
         "technical_document_detail.html",
-        _context(request, db, document=document, linked=linked, approvals=approvals),
+        _context(
+            request,
+            db,
+            document=document,
+            linked=linked,
+            approvals=approvals,
+            source_authority_state=source_authority_state,
+            source_authority_messages=tuple(
+                _SOURCE_AUTHORITY_MESSAGES.get(
+                    blocker,
+                    "The source document is not currently eligible.",
+                )
+                for blocker in source_authority_blockers
+            ),
+        ),
     )
 
 
