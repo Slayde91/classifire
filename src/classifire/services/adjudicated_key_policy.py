@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping, Sequence
+from typing import NoReturn
 
 from .adjudicated_admission import AdmissionVerificationError, validate_p256_public_key
 
@@ -50,5 +51,5 @@ def _valid_identifier(value: object) -> bool:
     return isinstance(value, str) and _IDENTIFIER.fullmatch(value) is not None
 
 
-def _fail(code: str) -> None:
+def _fail(code: str) -> NoReturn:
     raise AdjudicatedKeyPolicyError(code)
