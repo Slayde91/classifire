@@ -4,8 +4,8 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main implementation:** `f9dea2a1c07f4694e05b9785fbae9e844af4ac40`
-(merge of PR #134, 2026-09-03)
+**Verified shared-main implementation:** `8c21f18f4a3b051d15bd762408ca332f692a55f4`
+(merge of PR #136, 2026-09-03)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -19,12 +19,12 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared `main` | PR #134 is merged at `f9dea2a`; it includes the reviewed PR #104-#134 lineage. | Report governance, snapshot integrity, technical-source safeguards and reviewer visibility, output/client type safety, current CLASSIFIRE branding, factual documentation, full hosted Ruff/Mypy/Bandit validation, and explicit Phase 8 fail-closed invariant errors are shared-main evidence. |
+| Shared `main` | PR #136 is merged at `8c21f18`; it includes the reviewed PR #104-#136 lineage. | Report governance, snapshot integrity, technical-source safeguards and reviewer visibility, published technical source-lineage binding, output/client type safety, current CLASSIFIRE branding, factual documentation, full hosted Ruff/Mypy/Bandit validation, and explicit Phase 8 fail-closed invariant errors are shared-main evidence. |
 | Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
 | Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
 | Post-PR #104 maintenance series | PRs #105-#126 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, `5639e26`, `90f701c`, `ff1278f`, `7e26c2f`, and `b33246a`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, Mission Control task-response validation, hosted full-Ruff/Mypy/Bandit validation, and explicit Phase 8 invariant errors were strengthened without granting technical, commercial, lock, or release authority. |
-| Current technical-source safeguards | PRs #127-#134 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, and `f9dea2a`. | Factual records, verified-byte extraction, Draft metadata refresh, variant and source current-authority gates, and read-only reviewer visibility were added without granting technical, commercial, lock, canonical, or release authority. |
-| Subsequent hosted validation | Each PR #105-#134 check and each corresponding `main` push run passed; the latest is run `33685535377` on `f9dea2a`. | Hosted validation is current through the PR #134 merge, while required-check configuration remains unverified. |
+| Current technical-source safeguards | PRs #127-#136 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, `f9dea2a`, `f3c6d92`, and `8c21f18`. | Factual records, verified-byte extraction, Draft metadata refresh, variant and source current-authority gates, read-only reviewer visibility, and immutable published source-lineage binding were added without granting technical selection, commercial, lock, canonical, or release authority. |
+| Subsequent hosted validation | Each PR #105-#136 check and each corresponding `main` push run passed; the latest is run `33688783428` on `8c21f18`. | Hosted validation is current through the PR #136 merge, while required-check configuration remains unverified. |
 | Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
@@ -72,7 +72,8 @@ The following boundaries are implemented and tested for their stated scope:
   source-document-bound Draft variants, source-preserving revisions, nonblank
   source locators before review, source-bound manual Draft materialisation,
   independent activation, active immutable technical-release requirements,
-  release-manifest eligibility rechecks, and read-only current-authority displays
+  release-manifest eligibility and published source-lineage rechecks, and
+  read-only current-authority displays
   on linked TechnicalVariant and TechnicalDocument detail screens. Technical
   extraction failures retain only content-safe diagnostics.
 - Governed assumption-led desk-quote PDF/XLSX outputs from PR #75. They remain
@@ -130,7 +131,7 @@ Shared `main` packages migrations through
   PDF/XLSX artifacts, and PR #122 applies it to the browser workspace and serves
   the approved current logo.
 
-### Completed current technical-source safeguards on shared main (PRs #127-#134)
+### Completed current technical-source safeguards on shared main (PRs #127-#136)
 
 - PR #127 reconciles factual records through the full hosted validation baseline.
 - PR #128 requires clean, hash-verified retained bytes before extraction. PR #129
@@ -140,9 +141,12 @@ Shared `main` packages migrations through
   approval and retained-file metadata at current-use boundaries.
 - PR #133 exposes that current bound-source metadata result on TechnicalVariant
   detail screens. PR #134 exposes the same read-only result on TechnicalDocument
-  detail screens and uses the defined blocked visual state.
+  detail screens and uses the defined blocked visual state. PR #135 reconciles
+  those factual records. PR #136 freezes each newly published technical release's
+  safe source state: bound document/file identity and locator, or an explicit
+  legacy-unbound state; it rejects later source-lineage drift from a pinned release.
 
-These safeguards are metadata/current-use checks. They do not approve a source,
+These safeguards are current-use and published-manifest lineage checks. They do not approve a source,
 activate a variant, re-read source bytes, publish a release, price work, create
 canonical state, create a lock, deploy, or Human Release.
 
@@ -158,7 +162,7 @@ prices work, creates a lock, or releases an estimate.
 | Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. The runner rejects legacy V1/unbound scope packets or a different approval record before any port call. Historical V1 packets remain verifiable. |
 | Report formats and content | Normalisation is PDF-only. Text, page, table, and annotation content are supported. Drawings and embedded images are locator/hash records with no documentary payload; visual bytes come through a separate governed packet. Caption extraction is explicitly rejected. XLSX, DOCX, and multi-report generalisation are not implemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
-| Technical authority | Review, source-document current state, activation, Draft source binding, revision lineage, source-locator, clean-byte candidate metadata extraction and Draft-only refresh after a clean source recheck, manual Draft materialisation, import, and release checks fail closed. A bound source is excluded from normal search, new technical release snapshots, and pinned runtime use when its document is missing, unapproved, or expired, or its retained-file metadata is missing, unsafe, or for another evidence purpose. TechnicalVariant and TechnicalDocument detail screens expose the same current metadata result read-only. Extraction-assisted and manufacturer-neutral lineage, governed publication/supersession, and production authority remain incomplete. |
+| Technical authority | Review, source-document current state, activation, Draft source binding, revision lineage, source-locator, clean-byte candidate metadata extraction and Draft-only refresh after a clean source recheck, manual Draft materialisation, import, and release checks fail closed. A bound source is excluded from normal search, new technical release snapshots, and pinned runtime use when its document is missing, unapproved, or expired, or its retained-file metadata is missing, unsafe, or for another evidence purpose. Newly published technical manifests fix a safe source state: bound document/file identity, digest, and locator, or an explicit legacy-unbound state; pinned runtime rejects later binding or source-hash drift. TechnicalVariant and TechnicalDocument detail screens expose the current metadata result read-only. Extraction-assisted and manufacturer-neutral lineage, governed publication/supersession, and production authority remain incomplete. |
 | Quantity and labour | Basic estimate calculation exists; the complete selected-system-to-components-to-productivity chain is not implemented on current main. |
 | Commercial recovery | Desk quotes and basic estimating rules exist, but the full component-level rate-inclusion/recovery ledger remains incomplete. |
 | Snapshot and release | Estimate snapshot V2 separates semantic identity from `generated_utc`: `snapshot_hash` excludes that volatile generation metadata, while `snapshot_document_hash` still binds the complete displayed document. V1 snapshots retain their historical full-payload verification. Focused synthetic tests cover semantic stability, metadata/semantic tampering, and unsupported schemas. Full independent validation certificates and Human Release are not proven. |
@@ -195,9 +199,9 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; `main` validation passed through PR #134; GitHub plan prevents branch-protection configuration. |
+| 0. Repository/change control | **In progress** | Quarantined root; `main` validation passed through PR #136; GitHub plan prevents branch-protection configuration. |
 | 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
-| 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, current-authority gates and reviewer visibility, and pricing-release controls exist; manufacturer-neutral lineage and publication governance remain. |
+| 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
 | 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, atomic expected-label scope admission, and runner verification. Legacy-scope transition, package persistence, caption/multi-format support, and an operator flow remain. |
@@ -261,9 +265,9 @@ defines that policy, so this design decision must precede a migration.
 
 #### Priority 2 - Close demonstrated Phase 2 and Phase 12 gaps separately
 
-Complete extraction-assisted and manufacturer-neutral lineage plus
-publication/supersession in separately reviewed migrations, without automatic
-activation. Snapshot V2 now separates
+Complete the remaining extraction-assisted and manufacturer-neutral lineage plus
+governed publication/supersession in separately reviewed migrations, without
+automatic activation. Snapshot V2 now separates
 semantic identity from volatile generation metadata and preserves V1 validation;
 the remaining Phase 12 work is independent physical, technical, quantity,
 commercial, formula, recovery, and release validation. Neither activity may
@@ -300,7 +304,7 @@ This reconciliation verified:
   guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
 - PR #104's successful pull-request validation on `0f6c252` and successful
   post-merge `main` validation on `b6409a5`, plus successful PR and `main`
-  validation through PR #134 / `f9dea2a` (latest `main` run `33685535377`,
+  validation through PR #136 / `8c21f18` (latest `main` run `33688783428`,
   including full Bandit);
 - the retained assessment status and no-write/no-lock flags; and
 - the receipt code and tests that retain only validated safe transport codes in

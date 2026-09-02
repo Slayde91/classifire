@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** `f9dea2a` (PR #134 merge, 2026-09-03)
+**Verified shared-main implementation:** `8c21f18` (PR #136 merge, 2026-09-03)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -149,7 +149,7 @@ validation passed; the latest `main` run is `33657134992` on `5639e26`. These
 are safeguards only: no technical decision, release publication, pricing,
 canonical submission, lock, deployment, or Human Release was added.
 
-#### Completed on shared main - Current technical-source safeguards and reviewer visibility (PRs #127-#134)
+#### Completed on shared main - Current technical-source safeguards and release lineage (PRs #127-#136)
 
 **Shared-main result:** PR #127 reconciles factual records through the hosted
 validation baseline. PR #128 permits extraction only from clean hash-verified
@@ -158,11 +158,14 @@ source recheck. PR #130 enforces current TechnicalVariant date windows. PR #131
 rejects expired source authority, and PR #132 rechecks bound source-document
 approval and retained-file metadata at current-use boundaries. PRs #133-#134
 show those same metadata results read-only on TechnicalVariant and
-TechnicalDocument detail screens.
+TechnicalDocument detail screens. PR #135 reconciles the factual baseline. PR
+#136 fixes a safe source state in each newly published technical manifest: bound
+document/file identity, digest, and locator, or an explicit legacy-unbound state;
+it rejects later source-lineage drift from pinned runtime use.
 
-**Verification:** every PR #127-#134 check and each corresponding `main` push
-validation passed. The latest PR check is `33685265403` on `3f11010`; the latest
-`main` run is `33685535377` on `f9dea2a`.
+**Verification:** every PR #127-#136 check and each corresponding `main` push
+validation passed. The latest PR check is `33688463813` on `e90cba7`; the latest
+`main` run is `33688783428` on `8c21f18`.
 
 **Authority boundary:** these changes do not approve a source, activate a
 variant, re-read source bytes, publish a technical release, price work, create
@@ -359,9 +362,9 @@ candidate extraction and Draft-only
 metadata refresh after a clean-source recheck, Draft-only imports, source-bound
 variants and revisions, source-locator review gates, source-bound manual Draft
 materialisation from clean retained documents, active immutable technical
-releases, manifest eligibility checks, active hash-bound pricing records, and
-read-only current-authority visibility on TechnicalVariant and TechnicalDocument
-detail screens.
+releases, manifest eligibility checks, immutable published technical source-lineage
+checks, active hash-bound pricing records, and read-only current-authority
+visibility on TechnicalVariant and TechnicalDocument detail screens.
 
 **Remaining:** extraction-assisted and manufacturer-neutral lineage, governed
 publication/supersession, clean-machine import/recovery, and full commercial
