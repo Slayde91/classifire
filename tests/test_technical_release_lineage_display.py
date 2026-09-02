@@ -49,17 +49,43 @@ def test_technical_release_lineage_rows_preserve_bound_and_legacy_states() -> No
                 "source_binding": {"state": "legacy_unbound"},
             },
             {"id": "legacy-record-id", "variant_id": "LEGACY-001"},
+            {
+                "id": "unknown-binding-record-id",
+                "source_binding": {
+                    "state": "unexpected",
+                    "technical_document": {"id": "unexpected-document-id"},
+                },
+            },
         ]
     )
 
     assert rows[0]["source_state"] == "Bound retained source"
     assert rows[0]["source_state_badge"] == "active"
     assert rows[0]["document_id"] == "ASSESSMENT-001"
+    assert rows[0]["document_detail_href"] == "/technical/documents/technical-document-row-id"
     assert rows[0]["stored_file_sha256"] == "f" * 64
     assert rows[0]["source_page"] == "42"
     assert rows[1]["source_state"] == "Legacy unbound"
     assert rows[1]["document_id"] == "—"
+    assert rows[1]["document_detail_href"] == ""
     assert rows[2]["source_state"] == "Legacy manifest without source binding"
+    assert rows[3]["source_state"] == "Unrecognised source state"
+    assert rows[3]["document_detail_href"] == ""
+
+
+def test_technical_release_lineage_escapes_bound_document_detail_path() -> None:
+    rows = release_admin._technical_release_lineage_rows(
+        [
+            {
+                "source_binding": {
+                    "state": "bound",
+                    "technical_document": {"id": "document / ? #", "document_id": "SAFE-001"},
+                }
+            }
+        ]
+    )
+
+    assert rows[0]["document_detail_href"] == "/technical/documents/document%20%2F%20%3F%20%23"
 
 
 def test_release_detail_template_renders_technical_lineage_without_claiming_authority() -> None:
@@ -103,6 +129,11 @@ def test_release_detail_template_renders_technical_lineage_without_claiming_auth
     assert "It does not approve a source or prove current technical authority." in technical_html
     assert "Bound retained source" in technical_html
     assert "ASSESSMENT-001" in technical_html
+    assert 'href="/technical/documents/technical-document-row-id"' in technical_html
+    assert (
+        "current read-only document record without changing the published binding"
+        in technical_html
+    )
     assert "File SHA-256" in technical_html
     assert "Manifest records" in pricing_html
     assert "Published technical source lineage" not in pricing_html

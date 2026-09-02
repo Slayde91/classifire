@@ -5,6 +5,7 @@ import json
 from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from typing import Annotated, Any
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -61,6 +62,24 @@ def _manifest_display_value(value: object) -> str:
     return "—"
 
 
+def _technical_document_detail_href(
+    document: Mapping[str, object], *, binding_state: object
+) -> str:
+    """Return a safe read-only document-detail path for a bound manifest record."""
+    if binding_state != "bound":
+        return ""
+    document_key = document.get("document_id")
+    document_db_id = document.get("id")
+    if (
+        not isinstance(document_key, str)
+        or not document_key.strip()
+        or not isinstance(document_db_id, str)
+        or not document_db_id.strip()
+    ):
+        return ""
+    return f"/technical/documents/{quote(document_db_id.strip(), safe='')}"
+
+
 def _technical_release_lineage_rows(records: list[object]) -> list[dict[str, str]]:
     """Prepare safe, immutable technical-release source lineage for read-only display."""
     rows: list[dict[str, str]] = []
@@ -91,6 +110,10 @@ def _technical_release_lineage_rows(records: list[object]) -> list[dict[str, str
                 "source_state": source_state,
                 "source_state_badge": source_state_badge,
                 "document_id": _manifest_display_value(document.get("document_id")),
+                "document_detail_href": _technical_document_detail_href(
+                    document,
+                    binding_state=binding_state,
+                ),
                 "document_reference": _manifest_display_value(document.get("reference")),
                 "document_revision": _manifest_display_value(document.get("revision")),
                 "stored_file_sha256": _manifest_display_value(stored_file.get("sha256")),
