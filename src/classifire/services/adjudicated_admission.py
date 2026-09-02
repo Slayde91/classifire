@@ -17,7 +17,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from types import MappingProxyType
-from typing import Any
+from typing import Any, NoReturn
 from uuid import UUID
 
 from cryptography.exceptions import InvalidSignature
@@ -384,5 +384,5 @@ def _require_equal(actual: object, expected: object, code: str) -> None:
         _fail(code)
 
 
-def _fail(code: str) -> None:
+def _fail(code: str) -> NoReturn:
     raise AdmissionVerificationError(code)
