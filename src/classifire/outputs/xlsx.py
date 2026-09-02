@@ -56,7 +56,7 @@ def render_technical_workbook(snapshot: dict[str, Any], output_path: Path) -> Pa
     f = _formats(wb)
     wb.set_properties(
         {
-            "title": f"QUANTIFIRE Technical Estimate — {snapshot['estimate']['reference']}",
+            "title": f"CLASSIFIRE Technical Estimate — {snapshot['estimate']['reference']}",
             "author": "Ceasefire PFP",
             "comments": ATTRIBUTION,
         }
@@ -68,7 +68,7 @@ def render_technical_workbook(snapshot: dict[str, Any], output_path: Path) -> Pa
     summary.set_column("C:C", 24)
     summary.set_column("D:D", 52)
     summary.set_row(0, 85)
-    summary.write("A6", "QUANTIFIRE Technical Estimate", f["title"])
+    summary.write("A6", "CLASSIFIRE Technical Estimate", f["title"])
     summary.write("A7", ATTRIBUTION, f["subtitle"])
     summary_rows = [
         (
@@ -289,7 +289,7 @@ def render_proposal_workbook(snapshot: dict[str, Any], output_path: Path) -> Pat
     summary.set_column("B:B", 60)
     summary.set_column("C:C", 24)
     summary.set_column("D:D", 32)
-    summary.write("A6", "QUANTIFIRE Proposal", f["title"])
+    summary.write("A6", "CLASSIFIRE Proposal", f["title"])
     summary.write("A7", ATTRIBUTION, f["subtitle"])
     data = [
         ("Project", snapshot["project"].get("name")),
