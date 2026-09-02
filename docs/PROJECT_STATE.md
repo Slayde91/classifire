@@ -4,8 +4,8 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main implementation:** `8c21f18f4a3b051d15bd762408ca332f692a55f4`
-(merge of PR #136, 2026-09-03)
+**Verified shared-main implementation:** `1e43756865407350c636ee8dd4fe19aaf6947a05`
+(merge of PR #138, 2026-09-03)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -19,12 +19,12 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared `main` | PR #136 is merged at `8c21f18`; it includes the reviewed PR #104-#136 lineage. | Report governance, snapshot integrity, technical-source safeguards and reviewer visibility, published technical source-lineage binding, output/client type safety, current CLASSIFIRE branding, factual documentation, full hosted Ruff/Mypy/Bandit validation, and explicit Phase 8 fail-closed invariant errors are shared-main evidence. |
+| Shared `main` | PR #138 is merged at `1e43756`; it includes the reviewed PR #104-#138 lineage. | Report governance, snapshot integrity, technical-source safeguards and reviewer visibility, published technical source-lineage binding and structured technical-release lineage display, output/client type safety, current CLASSIFIRE branding, factual documentation, full hosted Ruff/Mypy/Bandit validation, and explicit Phase 8 fail-closed invariant errors are shared-main evidence. |
 | Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
 | Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
 | Post-PR #104 maintenance series | PRs #105-#126 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, `5639e26`, `90f701c`, `ff1278f`, `7e26c2f`, and `b33246a`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, Mission Control task-response validation, hosted full-Ruff/Mypy/Bandit validation, and explicit Phase 8 invariant errors were strengthened without granting technical, commercial, lock, or release authority. |
-| Current technical-source safeguards | PRs #127-#136 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, `f9dea2a`, `f3c6d92`, and `8c21f18`. | Factual records, verified-byte extraction, Draft metadata refresh, variant and source current-authority gates, read-only reviewer visibility, and immutable published source-lineage binding were added without granting technical selection, commercial, lock, canonical, or release authority. |
-| Subsequent hosted validation | Each PR #105-#136 check and each corresponding `main` push run passed; the latest is run `33688783428` on `8c21f18`. | Hosted validation is current through the PR #136 merge, while required-check configuration remains unverified. |
+| Current technical-source safeguards | PRs #127-#138 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, `f9dea2a`, `f3c6d92`, `8c21f18`, `9771ff7`, and `1e43756`. | Factual records, verified-byte extraction, Draft metadata refresh, variant and source current-authority gates, read-only reviewer visibility, immutable published source-lineage binding, factual reconciliation, and structured technical-release lineage display were added without granting technical selection, commercial, lock, canonical, or release authority. |
+| Subsequent hosted validation | Each PR #105-#138 check and each corresponding `main` push run passed; the latest is run `33691006065` on `1e43756`. | Hosted validation is current through the PR #138 merge, while required-check configuration remains unverified. |
 | Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
@@ -74,8 +74,9 @@ The following boundaries are implemented and tested for their stated scope:
   independent activation, active immutable technical-release requirements,
   release-manifest eligibility and published source-lineage rechecks, and
   read-only current-authority displays
-  on linked TechnicalVariant and TechnicalDocument detail screens. Technical
-  extraction failures retain only content-safe diagnostics.
+  on linked TechnicalVariant and TechnicalDocument detail screens, plus a
+  structured immutable source-lineage view on TechnicalRelease detail screens.
+  Technical extraction failures retain only content-safe diagnostics.
 - Governed assumption-led desk-quote PDF/XLSX outputs from PR #75. They remain
   explicitly non-technical, proposal-only commercial scenarios. The current
   shared-main resolver requires Project/Estimate-owned immutable `clean` ProjectEvidence,
@@ -131,7 +132,7 @@ Shared `main` packages migrations through
   PDF/XLSX artifacts, and PR #122 applies it to the browser workspace and serves
   the approved current logo.
 
-### Completed current technical-source safeguards on shared main (PRs #127-#136)
+### Completed current technical-source safeguards on shared main (PRs #127-#138)
 
 - PR #127 reconciles factual records through the full hosted validation baseline.
 - PR #128 requires clean, hash-verified retained bytes before extraction. PR #129
@@ -145,6 +146,9 @@ Shared `main` packages migrations through
   those factual records. PR #136 freezes each newly published technical release's
   safe source state: bound document/file identity and locator, or an explicit
   legacy-unbound state; it rejects later source-lineage drift from a pinned release.
+  PR #137 reconciles those factual records. PR #138 shows the same published
+  source lineage in a structured technical-release detail view without granting
+  approval or current-use authority.
 
 These safeguards are current-use and published-manifest lineage checks. They do not approve a source,
 activate a variant, re-read source bytes, publish a release, price work, create
@@ -166,7 +170,7 @@ prices work, creates a lock, or releases an estimate.
 | Quantity and labour | Basic estimate calculation exists; the complete selected-system-to-components-to-productivity chain is not implemented on current main. |
 | Commercial recovery | Desk quotes and basic estimating rules exist, but the full component-level rate-inclusion/recovery ledger remains incomplete. |
 | Snapshot and release | Estimate snapshot V2 separates semantic identity from `generated_utc`: `snapshot_hash` excludes that volatile generation metadata, while `snapshot_document_hash` still binds the complete displayed document. V1 snapshots retain their historical full-payload verification. Focused synthetic tests cover semantic stability, metadata/semantic tampering, and unsupported schemas. Full independent validation certificates and Human Release are not proven. |
-| Product UI | A development UI exists for projects, estimates, libraries, and basic outputs; its browser-facing labels and approved served logo use CLASSIFIRE. Technical source and variant detail screens now show a read-only current source-authority result. There is no supported user-facing report-assessment/review workflow for the merged Phase 8 report services. |
+| Product UI | A development UI exists for projects, estimates, libraries, and basic outputs; its browser-facing labels and approved served logo use CLASSIFIRE. Technical source and variant detail screens show a read-only current source-authority result, and technical-release details show immutable published source lineage. There is no supported user-facing report-assessment/review workflow for the merged Phase 8 report services. |
 | Production operation | Narrow fail-closed startup/browser/diagnostic controls are merged. Clean-machine deployment, observability, backup/restore, performance, incident response, data-rights controls, and production proof remain incomplete. |
 | Static analysis | Full `ruff check .`, `mypy src`, and `bandit -q -r src` pass; Mypy covers 115 source files with maintained PyYAML and ReportLab stubs. Hosted CI runs all three checks after tests. | These are static-analysis gates, not proof of production readiness or operational authority. |
 
@@ -199,7 +203,7 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; `main` validation passed through PR #136; GitHub plan prevents branch-protection configuration. |
+| 0. Repository/change control | **In progress** | Quarantined root; `main` validation passed through PR #138; GitHub plan prevents branch-protection configuration. |
 | 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
@@ -304,7 +308,7 @@ This reconciliation verified:
   guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
 - PR #104's successful pull-request validation on `0f6c252` and successful
   post-merge `main` validation on `b6409a5`, plus successful PR and `main`
-  validation through PR #136 / `8c21f18` (latest `main` run `33688783428`,
+  validation through PR #138 / `1e43756` (latest `main` run `33691006065`,
   including full Bandit);
 - the retained assessment status and no-write/no-lock flags; and
 - the receipt code and tests that retain only validated safe transport codes in

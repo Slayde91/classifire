@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `8c21f18` (PR #136 merge,
+**Verified shared-main implementation:** `1e43756` (PR #138 merge,
 2026-09-03)
 
 This document separates the architecture that is implemented now from the
@@ -273,8 +273,10 @@ Current shared-main safeguards include:
   window has expired; and
 - the same eligibility check before refreshing an editable estimate's pins; and
 - read-only current-authority displays on TechnicalVariant and TechnicalDocument
-  detail screens. Those displays reuse metadata checks only: they do not read
-  source bytes or grant approval, activation, publication, or release authority.
+  detail screens, plus structured immutable source-lineage rows on
+  TechnicalRelease detail screens. Those displays reuse metadata checks only:
+  they do not read source bytes or grant approval, activation, publication, or
+  release authority.
 
 Extraction-assisted and manufacturer-neutral source lineage, governed
 publication/supersession automation, and production technical authority are not
