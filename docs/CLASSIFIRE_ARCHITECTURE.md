@@ -256,7 +256,8 @@ Current shared-main safeguards include:
 - a retained source document on every Draft variant and preserved exact binding
   through a Draft revision;
 - a nonblank source locator before technical review, clean hash-verified bytes
-  before candidate extraction, and content-safe extraction failure diagnostics;
+  before candidate extraction and Draft-only metadata refresh, and content-safe
+  extraction failure diagnostics;
 - independent TechnicalVariant activation from `in_review`;
 - Draft-only new technical-library imports regardless of source-declared state;
 - runtime use only through an active immutable pinned technical release;

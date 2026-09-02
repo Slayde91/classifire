@@ -20,6 +20,7 @@ from .models import Approval, StoredFile, TechnicalDocument, TechnicalVariant
 from .security import verify_csrf
 from .services.calculation import D
 from .services.storage import StoredFileBindingError, read_verified_stored_file
+from .services.technical import build_technical_document_draft_metadata_from_verified_content
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -765,6 +766,74 @@ def technical_document_detail(document_db_id: str, request: Request, db: Db) -> 
         request,
         "technical_document_detail.html",
         _context(request, db, document=document, linked=linked, approvals=approvals),
+    )
+
+
+@router.post("/technical/documents/{document_db_id}/refresh-draft-metadata")
+def technical_document_refresh_draft_metadata(
+    document_db_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    reason: Annotated[str, Form()] = "Refresh Draft candidate metadata from clean retained source",
+) -> RedirectResponse:
+    """Refresh Draft-only candidate metadata from verified retained bytes.
+
+    This deliberately does not change document review, variant eligibility, or
+    technical release authority.
+    """
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "technical:write")
+    document = db.get(TechnicalDocument, document_db_id)
+    if not document:
+        raise HTTPException(404, "Technical document not found")
+    destination = f"/technical/documents/{document.id}"
+    if document.status != "draft":
+        return RedirectResponse(
+            f"{destination}?error=Only+Draft+technical+documents+can+refresh+candidate+metadata",
+            status_code=303,
+        )
+    stored = db.get(StoredFile, document.stored_file_id)
+    if not stored:
+        return RedirectResponse(
+            f"{destination}?error=Technical+source+file+is+missing",
+            status_code=303,
+        )
+    try:
+        verified = read_verified_stored_file(
+            stored,
+            storage_root=get_settings().storage_root,
+            required_purpose="technical_evidence",
+        )
+    except StoredFileBindingError:
+        return RedirectResponse(
+            f"{destination}?error=Technical+source+file+must+be+clean+and+unchanged",
+            status_code=303,
+        )
+    previous_status = document.extraction_status
+    metadata = build_technical_document_draft_metadata_from_verified_content(
+        content=verified.content,
+        filename=stored.original_filename,
+    )
+    document.metadata_json = metadata
+    document.extraction_status = metadata.get("extraction_status", "not_started")
+    record_audit(
+        db,
+        actor=user,
+        action="refresh_draft_metadata",
+        entity_type="technical_document",
+        entity_id=document.id,
+        previous_value={"extraction_status": previous_status},
+        new_value={
+            "extraction_status": document.extraction_status,
+            "source_sha256": verified.sha256,
+        },
+        reason=reason,
+    )
+    db.commit()
+    return RedirectResponse(
+        f"{destination}?success=Draft+candidate+metadata+refreshed+from+clean+retained+source",
+        status_code=303,
     )
 
 
