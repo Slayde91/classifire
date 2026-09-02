@@ -1,8 +1,8 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import hashlib
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -35,19 +35,10 @@ def _canonical_hash(payload: dict[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def _logical_key(record: Any, release_type: str) -> str:
-    if release_type == "pricing":
-        return record.pkb_entry_id
-    if release_type == "rules":
-        return record.rule_code
-    if release_type == "labour":
-        return record.code
-    if release_type == "products":
-        return record.sku
-    if release_type == "technical":
-        source = record.source_json or {}
-        return source.get("original_variant_id") or record.variant_id.split("-QFREV")[0]
-    return record.id
+def _technical_logical_key(record: TechnicalVariant) -> str:
+    source = record.source_json or {}
+    original_variant_id = source.get("original_variant_id")
+    return str(original_variant_id or record.variant_id.split("-QFREV")[0])
 
 
 def _latest_release(db: Session, release_type: str) -> LibraryRelease | None:
@@ -71,72 +62,78 @@ def _activate_drafts(db: Session, release_type: str) -> list[str]:
     activated_ids: list[str] = []
 
     if release_type == "pricing":
-        drafts = db.scalars(select(PricingLibraryRecord).where(PricingLibraryRecord.status == "draft")).all()
-        for draft in drafts:
-            prior = db.scalars(
+        pricing_drafts = db.scalars(
+            select(PricingLibraryRecord).where(PricingLibraryRecord.status == "draft")
+        ).all()
+        for pricing_draft in pricing_drafts:
+            pricing_prior = db.scalars(
                 select(PricingLibraryRecord).where(
-                    PricingLibraryRecord.pkb_entry_id == draft.pkb_entry_id,
+                    PricingLibraryRecord.pkb_entry_id == pricing_draft.pkb_entry_id,
                     PricingLibraryRecord.status == "active",
-                    PricingLibraryRecord.id != draft.id,
+                    PricingLibraryRecord.id != pricing_draft.id,
                 )
             ).all()
-            for item in prior:
-                item.status = "superseded"
-            draft.status = "active"
-            draft.effective_date = draft.effective_date or date.today()
-            activated_ids.append(draft.id)
+            for pricing_item in pricing_prior:
+                pricing_item.status = "superseded"
+            pricing_draft.status = "active"
+            pricing_draft.effective_date = pricing_draft.effective_date or date.today()
+            activated_ids.append(pricing_draft.id)
 
     elif release_type == "rules":
-        drafts = db.scalars(select(EstimatingRule).where(EstimatingRule.status == "draft")).all()
-        for draft in drafts:
-            prior = db.scalars(
+        rule_drafts = db.scalars(
+            select(EstimatingRule).where(EstimatingRule.status == "draft")
+        ).all()
+        for rule_draft in rule_drafts:
+            rule_prior = db.scalars(
                 select(EstimatingRule).where(
-                    EstimatingRule.rule_code == draft.rule_code,
+                    EstimatingRule.rule_code == rule_draft.rule_code,
                     EstimatingRule.status == "active",
-                    EstimatingRule.id != draft.id,
+                    EstimatingRule.id != rule_draft.id,
                 )
             ).all()
-            for item in prior:
-                item.status = "superseded"
-                item.expiry_date = date.today()
-            draft.status = "active"
-            draft.effective_date = draft.effective_date or date.today()
-            draft.approved_at = draft.approved_at or datetime.now(timezone.utc)
-            activated_ids.append(draft.id)
+            for rule_item in rule_prior:
+                rule_item.status = "superseded"
+                rule_item.expiry_date = date.today()
+            rule_draft.status = "active"
+            rule_draft.effective_date = rule_draft.effective_date or date.today()
+            rule_draft.approved_at = rule_draft.approved_at or datetime.now(UTC)
+            activated_ids.append(rule_draft.id)
 
     elif release_type == "labour":
-        drafts = db.scalars(select(LabourComponent).where(LabourComponent.status == "draft")).all()
-        for draft in drafts:
-            prior = db.scalars(
+        labour_drafts = db.scalars(
+            select(LabourComponent).where(LabourComponent.status == "draft")
+        ).all()
+        for labour_draft in labour_drafts:
+            labour_prior = db.scalars(
                 select(LabourComponent).where(
-                    LabourComponent.code == draft.code,
+                    LabourComponent.code == labour_draft.code,
                     LabourComponent.status == "active",
-                    LabourComponent.id != draft.id,
+                    LabourComponent.id != labour_draft.id,
                 )
             ).all()
-            for item in prior:
-                item.status = "superseded"
-                item.expiry_date = date.today()
-            draft.status = "active"
-            draft.effective_date = draft.effective_date or date.today()
-            activated_ids.append(draft.id)
+            for labour_item in labour_prior:
+                labour_item.status = "superseded"
+                labour_item.expiry_date = date.today()
+            labour_draft.status = "active"
+            labour_draft.effective_date = labour_draft.effective_date or date.today()
+            activated_ids.append(labour_draft.id)
 
     elif release_type == "products":
-        drafts = db.scalars(select(Product).where(Product.status == "draft")).all()
-        for draft in drafts:
-            prior = db.scalars(
+        product_drafts = db.scalars(select(Product).where(Product.status == "draft")).all()
+        for product_draft in product_drafts:
+            product_prior = db.scalars(
                 select(Product).where(
-                    Product.sku == draft.sku,
+                    Product.sku == product_draft.sku,
                     Product.status == "active",
-                    Product.id != draft.id,
+                    Product.id != product_draft.id,
                 )
             ).all()
-            for item in prior:
-                item.status = "superseded"
-                item.expiry_date = date.today()
-            draft.status = "active"
-            draft.effective_date = draft.effective_date or date.today()
-            activated_ids.append(draft.id)
+            for product_item in product_prior:
+                product_item.status = "superseded"
+                product_item.expiry_date = date.today()
+            product_draft.status = "active"
+            product_draft.effective_date = product_draft.effective_date or date.today()
+            activated_ids.append(product_draft.id)
 
     # Technical records must already have passed their dedicated approval gate.
     # Markup profiles are already activated through the markup workflow.
@@ -145,126 +142,134 @@ def _activate_drafts(db: Session, release_type: str) -> list[str]:
 
 def _snapshot_records(db: Session, release_type: str) -> list[dict[str, Any]]:
     if release_type == "pricing":
-        records = db.scalars(
-            select(PricingLibraryRecord).where(PricingLibraryRecord.status == "active")
+        pricing_records = db.scalars(
+            select(PricingLibraryRecord)
+            .where(PricingLibraryRecord.status == "active")
             .order_by(PricingLibraryRecord.pkb_entry_id, PricingLibraryRecord.created_at.desc())
         ).all()
-        chosen: dict[str, PricingLibraryRecord] = {}
-        for r in records:
-            chosen.setdefault(r.pkb_entry_id, r)
+        pricing_chosen: dict[str, PricingLibraryRecord] = {}
+        for pricing_record in pricing_records:
+            pricing_chosen.setdefault(pricing_record.pkb_entry_id, pricing_record)
         return [
             {
-                "id": r.id,
-                "key": r.pkb_entry_id,
-                "entry_version": r.entry_version,
-                "rate_ex_tax": str(r.rate_ex_tax),
-                "source_hash": r.source_hash,
-                "record_version": r.record_version,
+                "id": pricing_record.id,
+                "key": pricing_record.pkb_entry_id,
+                "entry_version": pricing_record.entry_version,
+                "rate_ex_tax": str(pricing_record.rate_ex_tax),
+                "source_hash": pricing_record.source_hash,
+                "record_version": pricing_record.record_version,
             }
-            for r in chosen.values()
+            for pricing_record in pricing_chosen.values()
         ]
 
     if release_type == "technical":
-        records = db.scalars(
-            select(TechnicalVariant).where(TechnicalVariant.status == "active")
+        technical_records = db.scalars(
+            select(TechnicalVariant)
+            .where(TechnicalVariant.status == "active")
             .order_by(TechnicalVariant.variant_id)
         ).all()
-        chosen: dict[str, TechnicalVariant] = {}
-        for r in records:
-            key = _logical_key(r, release_type)
-            existing = chosen.get(key)
-            if existing is None or r.created_at > existing.created_at:
-                chosen[key] = r
+        technical_chosen: dict[str, TechnicalVariant] = {}
+        for technical_record in technical_records:
+            key = _technical_logical_key(technical_record)
+            existing = technical_chosen.get(key)
+            if existing is None or technical_record.created_at > existing.created_at:
+                technical_chosen[key] = technical_record
         return [
             {
-                "id": r.id,
-                "key": _logical_key(r, release_type),
-                "variant_id": r.variant_id,
-                "system_id": r.system_id,
-                "frl": r.frl,
-                "source_document_reference": r.source_document_reference,
-                "source_page": r.source_page,
-                "source_hash": r.source_hash,
-                "record_version": r.record_version,
+                "id": technical_record.id,
+                "key": _technical_logical_key(technical_record),
+                "variant_id": technical_record.variant_id,
+                "system_id": technical_record.system_id,
+                "frl": technical_record.frl,
+                "source_document_reference": technical_record.source_document_reference,
+                "source_page": technical_record.source_page,
+                "source_hash": technical_record.source_hash,
+                "record_version": technical_record.record_version,
             }
-            for r in chosen.values()
+            for technical_record in technical_chosen.values()
         ]
 
     if release_type == "rules":
-        records = db.scalars(
-            select(EstimatingRule).where(EstimatingRule.status == "active")
+        rule_records = db.scalars(
+            select(EstimatingRule)
+            .where(EstimatingRule.status == "active")
             .order_by(EstimatingRule.rule_code, EstimatingRule.version.desc())
         ).all()
-        chosen: dict[str, EstimatingRule] = {}
-        for r in records:
-            chosen.setdefault(r.rule_code, r)
+        rule_chosen: dict[str, EstimatingRule] = {}
+        for rule_record in rule_records:
+            rule_chosen.setdefault(rule_record.rule_code, rule_record)
         return [
             {
-                "id": r.id,
-                "key": r.rule_code,
-                "version": r.version,
-                "conditions": r.conditions,
-                "actions": r.actions,
-                "record_version": r.record_version,
+                "id": rule_record.id,
+                "key": rule_record.rule_code,
+                "version": rule_record.version,
+                "conditions": rule_record.conditions,
+                "actions": rule_record.actions,
+                "record_version": rule_record.record_version,
             }
-            for r in chosen.values()
+            for rule_record in rule_chosen.values()
         ]
 
     if release_type == "labour":
-        records = db.scalars(
-            select(LabourComponent).where(LabourComponent.status == "active")
+        labour_records = db.scalars(
+            select(LabourComponent)
+            .where(LabourComponent.status == "active")
             .order_by(LabourComponent.code, LabourComponent.revision.desc())
         ).all()
-        chosen: dict[str, LabourComponent] = {}
-        for r in records:
-            chosen.setdefault(r.code, r)
+        labour_chosen: dict[str, LabourComponent] = {}
+        for labour_record in labour_records:
+            labour_chosen.setdefault(labour_record.code, labour_record)
         return [
             {
-                "id": r.id,
-                "key": r.code,
-                "revision": r.revision,
-                "base_rate": str(r.base_rate),
-                "default_markup": str(r.default_markup or 0),
-                "record_version": r.record_version,
+                "id": labour_record.id,
+                "key": labour_record.code,
+                "revision": labour_record.revision,
+                "base_rate": str(labour_record.base_rate),
+                "default_markup": str(labour_record.default_markup or 0),
+                "record_version": labour_record.record_version,
             }
-            for r in chosen.values()
+            for labour_record in labour_chosen.values()
         ]
 
     if release_type == "products":
-        records = db.scalars(
-            select(Product).where(Product.status == "active")
+        product_records = db.scalars(
+            select(Product)
+            .where(Product.status == "active")
             .order_by(Product.sku, Product.revision.desc())
         ).all()
-        chosen: dict[str, Product] = {}
-        for r in records:
-            chosen.setdefault(r.sku, r)
+        product_chosen: dict[str, Product] = {}
+        for product_record in product_records:
+            product_chosen.setdefault(product_record.sku, product_record)
         return [
             {
-                "id": r.id,
-                "key": r.sku,
-                "revision": r.revision,
-                "base_cost": str(r.base_cost),
-                "default_markup": str(r.default_markup or 0),
-                "record_version": r.record_version,
+                "id": product_record.id,
+                "key": product_record.sku,
+                "revision": product_record.revision,
+                "base_cost": str(product_record.base_cost),
+                "default_markup": str(product_record.default_markup or 0),
+                "record_version": product_record.record_version,
             }
-            for r in chosen.values()
+            for product_record in product_chosen.values()
         ]
 
     if release_type == "markups":
-        records = db.scalars(
-            select(MarkupProfile).where(MarkupProfile.status == "active")
-            .order_by(MarkupProfile.scope_type, MarkupProfile.scope_id, MarkupProfile.created_at.desc())
+        markup_records = db.scalars(
+            select(MarkupProfile)
+            .where(MarkupProfile.status == "active")
+            .order_by(
+                MarkupProfile.scope_type, MarkupProfile.scope_id, MarkupProfile.created_at.desc()
+            )
         ).all()
         return [
             {
-                "id": r.id,
-                "key": f"{r.scope_type}:{r.scope_id or 'global'}",
-                "product_markup": str(r.product_markup or 0),
-                "material_markup": str(r.material_markup or 0),
-                "labour_markup": str(r.labour_markup or 0),
-                "record_version": r.record_version,
+                "id": markup_record.id,
+                "key": f"{markup_record.scope_type}:{markup_record.scope_id or 'global'}",
+                "product_markup": str(markup_record.product_markup or 0),
+                "material_markup": str(markup_record.material_markup or 0),
+                "labour_markup": str(markup_record.labour_markup or 0),
+                "record_version": markup_record.record_version,
             }
-            for r in records
+            for markup_record in markup_records
         ]
 
     raise ValueError(f"Unsupported release type: {release_type}")
@@ -325,7 +330,15 @@ def publish_release(
     activate_drafts: Annotated[str | None, Form()] = None,
 ) -> RedirectResponse:
     verify_csrf(request, csrf_token)
-    user = _require(request, db, "pricing:approve" if release_type in {"pricing", "labour", "products", "markups"} else "technical:approve" if release_type == "technical" else "rule:approve")
+    user = _require(
+        request,
+        db,
+        "pricing:approve"
+        if release_type in {"pricing", "labour", "products", "markups"}
+        else "technical:approve"
+        if release_type == "technical"
+        else "rule:approve",
+    )
 
     if release_type not in SUPPORTED_TYPES:
         raise HTTPException(400, "Unsupported release type")
@@ -342,18 +355,23 @@ def publish_release(
     activated_ids: list[str] = []
     if activate_drafts == "yes":
         if release_type == "technical":
-            return RedirectResponse("/releases?error=Technical+Drafts+must+be+approved+through+the+Technical+Systems+workflow+before+release", status_code=303)
+            return RedirectResponse(
+                "/releases?error=Technical+Drafts+must+be+approved+through+the+Technical+Systems+workflow+before+release",
+                status_code=303,
+            )
         activated_ids = _activate_drafts(db, release_type)
 
     records = _snapshot_records(db, release_type)
     if not records:
-        return RedirectResponse("/releases?error=No+eligible+records+exist+for+this+release", status_code=303)
+        return RedirectResponse(
+            "/releases?error=No+eligible+records+exist+for+this+release", status_code=303
+        )
 
     previous = _latest_release(db, release_type)
     payload = {
         "release_type": release_type,
         "version": version,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "created_by_id": user.id,
         "record_count": len(records),
         "activated_draft_ids": activated_ids,
@@ -376,7 +394,7 @@ def publish_release(
         notes=notes,
         created_by_id=user.id,
         approved_by_id=user.id,
-        approved_at=datetime.now(timezone.utc),
+        approved_at=datetime.now(UTC),
         supersedes_release_id=previous.id if previous else None,
     )
     db.add(release)
@@ -385,25 +403,25 @@ def publish_release(
     # Associate newly activated Draft records with the newly published release.
     if release_type == "pricing":
         for rid in activated_ids:
-            item = db.get(PricingLibraryRecord, rid)
-            if item:
-                item.release_id = release.id
+            pricing_item = db.get(PricingLibraryRecord, rid)
+            if pricing_item:
+                pricing_item.release_id = release.id
     elif release_type == "rules":
         for rid in activated_ids:
-            item = db.get(EstimatingRule, rid)
-            if item:
-                item.release_id = release.id
-                item.approver_id = user.id
+            rule_item = db.get(EstimatingRule, rid)
+            if rule_item:
+                rule_item.release_id = release.id
+                rule_item.approver_id = user.id
     elif release_type == "labour":
         for rid in activated_ids:
-            item = db.get(LabourComponent, rid)
-            if item:
-                item.release_id = release.id
+            labour_item = db.get(LabourComponent, rid)
+            if labour_item:
+                labour_item.release_id = release.id
     elif release_type == "products":
         for rid in activated_ids:
-            item = db.get(Product, rid)
-            if item:
-                item.release_id = release.id
+            product_item = db.get(Product, rid)
+            if product_item:
+                product_item.release_id = release.id
 
     record_audit(
         db,
@@ -411,7 +429,9 @@ def publish_release(
         action="publish_release",
         entity_type="library_release",
         entity_id=release.id,
-        previous_value={"release_id": previous.id, "version": previous.version} if previous else None,
+        previous_value={"release_id": previous.id, "version": previous.version}
+        if previous
+        else None,
         new_value={
             "release_type": release_type,
             "version": version,
