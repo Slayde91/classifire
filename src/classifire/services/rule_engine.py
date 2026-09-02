@@ -11,8 +11,8 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from ..models import Estimate, EstimatingRule, Opening, RuleEvaluation, Service
-from .technical import mixed_service_candidate_available
 from .release_scope import pinned_rules
+from .technical import mixed_service_candidate_available
 
 
 @dataclass(frozen=True)
@@ -45,7 +45,7 @@ def edge_gap_mm(a: Service, b: Service) -> Decimal | None:
     ax, ay = _numeric(a.centre_x_mm), _numeric(a.centre_y_mm)
     bx, by = _numeric(b.centre_x_mm), _numeric(b.centre_y_mm)
     ar, br = _service_radius(a), _service_radius(b)
-    if None in {ax, ay, bx, by, ar, br}:
+    if ax is None or ay is None or bx is None or by is None or ar is None or br is None:
         return None
     centre_distance = Decimal(str(math.hypot(float(ax - bx), float(ay - by))))
     return centre_distance - ar - br
@@ -70,15 +70,24 @@ def _condition(condition: dict[str, Any], context: dict[str, Any]) -> bool:
     left = _lookup_path(context, condition.get("field", ""))
     right = condition.get("value")
     op = condition.get("operator", "eq")
+    if not isinstance(op, str):
+        raise ValueError("Rule operator must be text")
     if op in {"lt", "lte", "gt", "gte"}:
         if left is None:
             return False
-        l, r = Decimal(str(left)), Decimal(str(right))
-        return {"lt": l < r, "lte": l <= r, "gt": l > r, "gte": l >= r}[op]
+        left_number, right_number = Decimal(str(left)), Decimal(str(right))
+        return bool(
+            {
+                "lt": left_number < right_number,
+                "lte": left_number <= right_number,
+                "gt": left_number > right_number,
+                "gte": left_number >= right_number,
+            }[op]
+        )
     if op == "eq":
-        return left == right
+        return bool(left == right)
     if op == "neq":
-        return left != right
+        return bool(left != right)
     if op == "in":
         return left in (right or [])
     if op == "contains":
@@ -149,25 +158,31 @@ def evaluate_proximity_rule(db: Session, rule: EstimatingRule, opening: Opening)
             result="BLOCKED",
             severity="hold",
             explanation=(
-                "Service separation cannot be evaluated because coordinates or service dimensions are missing. "
-                "This is a technical-evidence gap, not a pass."
+                "Service separation cannot be evaluated because coordinates or service "
+                "dimensions are missing. This is a technical-evidence gap, not a pass."
             ),
             inputs=inputs,
-            output={"required_action": "capture_service_geometry", "automatic_solution_approved": False},
+            output={
+                "required_action": "capture_service_geometry",
+                "automatic_solution_approved": False,
+            },
         )
     if below:
         mixed = mixed_service_candidate_available(db, opening)
         if mixed["available"]:
             message = (
-                f"One or more service pairs are closer than the configured {threshold} mm assumption. "
-                "An Active mixed-service candidate exists, but exact applicability and human technical approval are required."
+                f"One or more service pairs are closer than the configured {threshold} mm "
+                "assumption. An Active mixed-service candidate exists, but exact "
+                "applicability and human technical approval are required."
             )
             action = "review_mixed_service_candidate"
         else:
             message = (
-                f"One or more service pairs are closer than the configured {threshold} mm assumption and no Active "
-                "mixed-service candidate was found. Create a provisional bulkhead/construction allowance only if authorised, "
-                "including separate service treatments where required, and obtain a technically approved solution."
+                f"One or more service pairs are closer than the configured {threshold} mm "
+                "assumption and no Active mixed-service candidate was found. Create a "
+                "provisional bulkhead/construction allowance only if authorised, including "
+                "separate service treatments where required, and obtain a technically "
+                "approved solution."
             )
             action = "technical_hold_and_bulkhead_allowance_review"
         return Evaluation(
@@ -187,8 +202,9 @@ def evaluate_proximity_rule(db: Session, rule: EstimatingRule, opening: Opening)
         result="PASS",
         severity="information",
         explanation=(
-            f"All measurable service pairs meet or exceed the configured {threshold} mm assumption. "
-            "This does not independently prove compliance with a selected technical system."
+            f"All measurable service pairs meet or exceed the configured {threshold} mm "
+            "assumption. This does not independently prove compliance with a selected "
+            "technical system."
         ),
         inputs=inputs,
         output={"exact_threshold_pairs": exact, "above_threshold_pairs": above},
@@ -206,11 +222,17 @@ def active_rules(db: Session, jurisdiction: str | None = None) -> list[Estimatin
         stmt = stmt.where(
             or_(EstimatingRule.jurisdiction.is_(None), EstimatingRule.jurisdiction == jurisdiction)
         )
-    return list(db.scalars(stmt.order_by(EstimatingRule.priority.asc(), EstimatingRule.rule_code.asc())).all())
+    return list(
+        db.scalars(
+            stmt.order_by(EstimatingRule.priority.asc(), EstimatingRule.rule_code.asc())
+        ).all()
+    )
 
 
 def evaluate_estimate_rules(db: Session, estimate: Estimate) -> list[RuleEvaluation]:
-    existing = db.scalars(select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)).all()
+    existing = db.scalars(
+        select(RuleEvaluation).where(RuleEvaluation.estimate_id == estimate.id)
+    ).all()
     for item in existing:
         db.delete(item)
     results: list[RuleEvaluation] = []

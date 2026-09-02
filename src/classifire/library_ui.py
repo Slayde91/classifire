@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from datetime import date
@@ -19,9 +19,9 @@ from .models import (
     PricingLibraryRecord,
     Product,
 )
-from .services.calculation import D
-from .ui import _context, _require
 from .security import verify_csrf
+from .services.calculation import D
+from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
 Db = Annotated[Session, Depends(get_db)]
@@ -34,11 +34,14 @@ def _date_or_none(value: str | None) -> date | None:
 
 
 def _next_pricing_version(db: Session, record: PricingLibraryRecord) -> str:
-    count = db.scalar(
-        select(func.count())
-        .select_from(PricingLibraryRecord)
-        .where(PricingLibraryRecord.pkb_entry_id == record.pkb_entry_id)
-    ) or 0
+    count = (
+        db.scalar(
+            select(func.count())
+            .select_from(PricingLibraryRecord)
+            .where(PricingLibraryRecord.pkb_entry_id == record.pkb_entry_id)
+        )
+        or 0
+    )
     return f"user-r{count + 1}"
 
 
@@ -67,9 +70,11 @@ def pricing_library(
     if status:
         stmt = stmt.where(PricingLibraryRecord.status == status)
     records = db.scalars(
-        stmt.order_by(PricingLibraryRecord.pkb_entry_id, PricingLibraryRecord.created_at.desc()).limit(897)
+        stmt.order_by(
+            PricingLibraryRecord.pkb_entry_id, PricingLibraryRecord.created_at.desc()
+        ).limit(897)
     ).all()
-    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return templates.TemplateResponse(
         request,
         "pricing.html",
         _context(request, db, records=records, q=q or "", status=status or ""),
@@ -87,7 +92,7 @@ def pricing_record_page(record_id: str, request: Request, db: Db) -> HTMLRespons
         .where(PricingLibraryRecord.pkb_entry_id == record.pkb_entry_id)
         .order_by(PricingLibraryRecord.created_at.desc())
     ).all()
-    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return templates.TemplateResponse(
         request,
         "pricing_edit.html",
         _context(request, db, record=record, history=history),
@@ -122,7 +127,9 @@ def pricing_record_revision(
         rate_ex_tax=D(rate_ex_tax),
         direct_labour_cost=D(direct_labour_cost) if direct_labour_cost else None,
         direct_material_cost=D(direct_material_cost) if direct_material_cost else None,
-        material_markup=(D(material_markup_percent) / Decimal("100")) if material_markup_percent else None,
+        material_markup=(D(material_markup_percent) / Decimal("100"))
+        if material_markup_percent
+        else None,
         currency=original.currency,
         tax_basis=original.tax_basis,
         service_type=original.service_type,
@@ -161,11 +168,17 @@ def pricing_record_revision(
         entity_type="pricing_library_record",
         entity_id=revision.id,
         previous_value={"record_id": original.id, "rate_ex_tax": str(original.rate_ex_tax)},
-        new_value={"record_id": revision.id, "rate_ex_tax": str(revision.rate_ex_tax), "status": "draft"},
+        new_value={
+            "record_id": revision.id,
+            "rate_ex_tax": str(revision.rate_ex_tax),
+            "status": "draft",
+        },
         reason=reason,
     )
     db.commit()
-    return RedirectResponse(f"/pricing/{revision.id}?success=Draft+revision+created", status_code=303)
+    return RedirectResponse(
+        f"/pricing/{revision.id}?success=Draft+revision+created", status_code=303
+    )
 
 
 @router.get("/products/{product_id}/edit", response_class=HTMLResponse)
@@ -177,7 +190,7 @@ def product_edit_page(product_id: str, request: Request, db: Db) -> HTMLResponse
     history = db.scalars(
         select(Product).where(Product.sku == product.sku).order_by(Product.revision.desc())
     ).all()
-    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return templates.TemplateResponse(
         request,
         "product_edit.html",
         _context(request, db, product=product, history=history),
@@ -208,7 +221,9 @@ def product_revision(
     old = db.get(Product, product_id)
     if not old:
         raise HTTPException(404, "Product not found")
-    next_revision = (db.scalar(select(func.max(Product.revision)).where(Product.sku == old.sku)) or 0) + 1
+    next_revision = (
+        db.scalar(select(func.max(Product.revision)).where(Product.sku == old.sku)) or 0
+    ) + 1
     new = Product(
         sku=old.sku,
         revision=next_revision,
@@ -245,11 +260,18 @@ def product_revision(
         entity_type="product",
         entity_id=new.id,
         previous_value={"id": old.id, "revision": old.revision, "base_cost": str(old.base_cost)},
-        new_value={"id": new.id, "revision": new.revision, "base_cost": str(new.base_cost), "status": "draft"},
+        new_value={
+            "id": new.id,
+            "revision": new.revision,
+            "base_cost": str(new.base_cost),
+            "status": "draft",
+        },
         reason=reason,
     )
     db.commit()
-    return RedirectResponse(f"/products/{new.id}/edit?success=Draft+revision+created", status_code=303)
+    return RedirectResponse(
+        f"/products/{new.id}/edit?success=Draft+revision+created", status_code=303
+    )
 
 
 @router.get("/labour/{labour_id}/edit", response_class=HTMLResponse)
@@ -259,9 +281,11 @@ def labour_edit_page(labour_id: str, request: Request, db: Db) -> HTMLResponse:
     if not item:
         raise HTTPException(404, "Labour component not found")
     history = db.scalars(
-        select(LabourComponent).where(LabourComponent.code == item.code).order_by(LabourComponent.revision.desc())
+        select(LabourComponent)
+        .where(LabourComponent.code == item.code)
+        .order_by(LabourComponent.revision.desc())
     ).all()
-    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return templates.TemplateResponse(
         request,
         "labour_edit.html",
         _context(request, db, item=item, history=history),
@@ -290,7 +314,12 @@ def labour_revision(
     old = db.get(LabourComponent, labour_id)
     if not old:
         raise HTTPException(404, "Labour component not found")
-    next_revision = (db.scalar(select(func.max(LabourComponent.revision)).where(LabourComponent.code == old.code)) or 0) + 1
+    next_revision = (
+        db.scalar(
+            select(func.max(LabourComponent.revision)).where(LabourComponent.code == old.code)
+        )
+        or 0
+    ) + 1
     new = LabourComponent(
         code=old.code,
         revision=next_revision,
@@ -319,11 +348,18 @@ def labour_revision(
         entity_type="labour_component",
         entity_id=new.id,
         previous_value={"id": old.id, "revision": old.revision, "base_rate": str(old.base_rate)},
-        new_value={"id": new.id, "revision": new.revision, "base_rate": str(new.base_rate), "status": "draft"},
+        new_value={
+            "id": new.id,
+            "revision": new.revision,
+            "base_rate": str(new.base_rate),
+            "status": "draft",
+        },
         reason=reason,
     )
     db.commit()
-    return RedirectResponse(f"/labour/{new.id}/edit?success=Draft+revision+created", status_code=303)
+    return RedirectResponse(
+        f"/labour/{new.id}/edit?success=Draft+revision+created", status_code=303
+    )
 
 
 @router.get("/rules/{rule_id}/edit", response_class=HTMLResponse)
@@ -333,9 +369,11 @@ def rule_edit_page(rule_id: str, request: Request, db: Db) -> HTMLResponse:
     if not rule:
         raise HTTPException(404, "Rule not found")
     history = db.scalars(
-        select(EstimatingRule).where(EstimatingRule.rule_code == rule.rule_code).order_by(EstimatingRule.version.desc())
+        select(EstimatingRule)
+        .where(EstimatingRule.rule_code == rule.rule_code)
+        .order_by(EstimatingRule.version.desc())
     ).all()
-    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return templates.TemplateResponse(
         request,
         "rule_edit.html",
         _context(
@@ -375,8 +413,18 @@ def rule_revision(
         conditions = json.loads(conditions_json)
         actions = json.loads(actions_json)
     except json.JSONDecodeError:
-        return RedirectResponse(f"/rules/{rule_id}/edit?error=Conditions+and+actions+must+be+valid+JSON", status_code=303)
-    next_version = (db.scalar(select(func.max(EstimatingRule.version)).where(EstimatingRule.rule_code == old.rule_code)) or 0) + 1
+        return RedirectResponse(
+            f"/rules/{rule_id}/edit?error=Conditions+and+actions+must+be+valid+JSON",
+            status_code=303,
+        )
+    next_version = (
+        db.scalar(
+            select(func.max(EstimatingRule.version)).where(
+                EstimatingRule.rule_code == old.rule_code
+            )
+        )
+        or 0
+    ) + 1
     new = EstimatingRule(
         rule_code=old.rule_code,
         version=next_version,
@@ -421,15 +469,13 @@ def rule_revision(
 @router.get("/markups", response_class=HTMLResponse)
 def markup_settings(request: Request, db: Db) -> HTMLResponse:
     _require(request, db, "library:read")
-    profiles = db.scalars(
-        select(MarkupProfile).order_by(MarkupProfile.created_at.desc())
-    ).all()
+    profiles = db.scalars(select(MarkupProfile).order_by(MarkupProfile.created_at.desc())).all()
     active_global = db.scalar(
         select(MarkupProfile)
         .where(MarkupProfile.scope_type == "global", MarkupProfile.status == "active")
         .order_by(MarkupProfile.created_at.desc())
     )
-    return __import__("classifire.ui", fromlist=["templates"]).templates.TemplateResponse(
+    return templates.TemplateResponse(
         request,
         "markups.html",
         _context(request, db, profiles=profiles, active_global=active_global),
