@@ -1,5 +1,5 @@
 ﻿{% extends "base.html" %}
-{% block title %}{{ document.document_id }} — QUANTIFIRE{% endblock %}
+{% block title %}{{ document.document_id }} — CLASSIFIRE{% endblock %}
 {% block heading %}Technical source document{% endblock %}
 {% block content %}
 <section class="panel"><div class="panel-head"><h2>{{ document.title }}</h2><span class="badge badge-{{ document.status }}">{{ document.status }}</span></div><div class="form-grid"><div><strong>Document ID</strong><div class="mono">{{ document.document_id }}</div></div><div><strong>Type</strong><div>{{ document.document_type }}</div></div><div><strong>Manufacturer</strong><div>{{ document.manufacturer or '—' }}</div></div><div><strong>Reference</strong><div>{{ document.reference or '—' }}</div></div><div><strong>Revision</strong><div>{{ document.revision or '—' }}</div></div><div><strong>Extraction status</strong><div>{{ document.extraction_status }}</div></div></div></section>
