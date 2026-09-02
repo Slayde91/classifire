@@ -34,9 +34,10 @@ PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
 PRs #107-#111 require retained technical sources for activation, bind Draft
 variants and revisions to the exact source document, require a source locator
-before review, enforce current technical-variant effective/expiry windows, derive
-candidate metadata only from clean hash-verified bytes and permit Draft-only
-metadata refresh after the same recheck,
+before review, enforce current source-document expiry and TechnicalVariant
+effective/expiry windows at current-authority gates, derive candidate metadata
+only from clean hash-verified bytes and permit Draft-only metadata refresh after
+the same recheck,
 and suppress content from extraction-failure diagnostics. PR #112 materialises a
 Draft variant only from a clean retained source document. PR #113
 makes admission rejection helpers explicitly non-returning without weakening
@@ -258,10 +259,11 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
 - No semantically approved replacement canonical Physical Model or active lock
   exists for the current UAT estimate.
 - Technical review/import/release safeguards now include retained-source
-  activation, Draft/revision source binding, source-locator review, clean-byte
-  candidate extraction, content-safe extraction diagnostics, and source-bound Draft
-  materialisation; they do not
-  complete the full technical authority registry.
+  activation, Draft/revision source binding, source-locator review, current
+  source-document expiry and TechnicalVariant date-window checks, clean-byte
+  candidate extraction, content-safe extraction diagnostics, and source-bound
+  Draft materialisation; they do not complete the full technical authority
+  registry.
 - Desk quotes are proposal-only; PR #103 merged the evidence-read hardening and
   passed CI/review, while operational approval remains separate.
 - Full system-derived components, productivity, and commercial recovery ledger

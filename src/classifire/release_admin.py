@@ -19,10 +19,14 @@ from .models import (
     MarkupProfile,
     PricingLibraryRecord,
     Product,
+    TechnicalDocument,
     TechnicalVariant,
 )
 from .security import verify_csrf
-from .services.technical_validity import technical_variant_temporal_blockers
+from .services.technical_validity import (
+    technical_document_temporal_blockers,
+    technical_variant_temporal_blockers,
+)
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -169,6 +173,19 @@ def _snapshot_records(db: Session, release_type: str) -> list[dict[str, Any]]:
             .where(TechnicalVariant.status == "active")
             .order_by(TechnicalVariant.variant_id)
         ).all()
+        bound_document_ids = {
+            technical_record.technical_document_id
+            for technical_record in technical_records
+            if technical_record.technical_document_id
+        }
+        documents_by_id: dict[str, TechnicalDocument] = {}
+        if bound_document_ids:
+            documents_by_id = {
+                document.id: document
+                for document in db.scalars(
+                    select(TechnicalDocument).where(TechnicalDocument.id.in_(bound_document_ids))
+                ).all()
+            }
         technical_chosen: dict[str, TechnicalVariant] = {}
         for technical_record in technical_records:
             if technical_variant_temporal_blockers(
@@ -176,6 +193,12 @@ def _snapshot_records(db: Session, release_type: str) -> list[dict[str, Any]]:
                 expiry_date=technical_record.expiry_date,
             ):
                 continue
+            if technical_record.technical_document_id:
+                document = documents_by_id.get(technical_record.technical_document_id)
+                if not document or technical_document_temporal_blockers(
+                    expiry_date=document.expiry_date
+                ):
+                    continue
             key = _technical_logical_key(technical_record)
             existing = technical_chosen.get(key)
             if existing is None or technical_record.created_at > existing.created_at:

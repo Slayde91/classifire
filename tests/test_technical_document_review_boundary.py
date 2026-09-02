@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from datetime import date, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -207,6 +208,29 @@ def test_technical_document_approval_requires_a_separate_approver(
             "Technical+document+requester+and+approver+must+be+different+users"
             in result.headers["location"]
         )
+        assert document.status == "in_review"
+        assert approval.status == "pending"
+        assert approval.decided_by_id is None
+
+
+def test_technical_document_approval_refuses_an_expired_source(
+    review_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        requester = _user(db, "requester@example.test")
+        approver = _user(db, "approver@example.test")
+        document = _document(
+            db,
+            source_root=technical_storage_root,
+            status="in_review",
+        )
+        document.expiry_date = date.today() - timedelta(days=1)
+        approval = _pending_review(db, document, requester)
+
+        result = review_as(db, document, approver, "approve")
+
+        assert "Technical+source+document+has+expired" in result.headers["location"]
         assert document.status == "in_review"
         assert approval.status == "pending"
         assert approval.decided_by_id is None
