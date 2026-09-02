@@ -24,11 +24,16 @@ def _user(db: Session, email: str) -> User:
     return user
 
 
-def _variant(db: Session, *, status: str = "in_review") -> TechnicalVariant:
+def _variant(
+    db: Session,
+    *,
+    status: str = "in_review",
+    source_document_reference: str = "TECH-SOURCE-TEST",
+) -> TechnicalVariant:
     variant = TechnicalVariant(
         variant_id="TECH-ACTIVATION-TEST",
         system_id="SYSTEM-ACTIVATION-TEST",
-        source_document_reference="TECH-SOURCE-TEST",
+        source_document_reference=source_document_reference,
         source_page="12",
         source_json={"fixture": "technical-activation"},
         status=status,
@@ -57,6 +62,7 @@ def _technical_document(
     *,
     status: str,
     source_root: Path | None = None,
+    document_id: str = "TECH-DOC-ACTIVATION-TEST",
 ) -> TechnicalDocument:
     content = b"technical activation source evidence"
     digest = hashlib.sha256(content).hexdigest()
@@ -80,7 +86,7 @@ def _technical_document(
     db.add(stored)
     db.flush()
     document = TechnicalDocument(
-        document_id="TECH-DOC-ACTIVATION-TEST",
+        document_id=document_id,
         stored_file_id=stored.id,
         document_type="assessment",
         title="Technical source",
@@ -125,6 +131,42 @@ def activate_as(monkeypatch: pytest.MonkeyPatch):
     return activate
 
 
+@pytest.fixture
+def bind_as(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(technical_admin, "verify_csrf", lambda *_args: None)
+    monkeypatch.setattr(technical_admin, "record_audit", lambda *_args, **_kwargs: None)
+
+    def bind(db: Session, variant: TechnicalVariant, user: User):
+        monkeypatch.setattr(technical_admin, "_require", lambda *_args: user)
+        return technical_admin.technical_variant_bind_source_document(
+            variant.id,
+            _request(),  # type: ignore[arg-type]
+            db,
+            "csrf-token",
+            "Bind source document",
+        )
+
+    return bind
+
+
+@pytest.fixture
+def submit_review_as(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(technical_admin, "verify_csrf", lambda *_args: None)
+    monkeypatch.setattr(technical_admin, "record_audit", lambda *_args, **_kwargs: None)
+
+    def submit(db: Session, variant: TechnicalVariant, user: User):
+        monkeypatch.setattr(technical_admin, "_require", lambda *_args: user)
+        return technical_admin.technical_variant_submit_review(
+            variant.id,
+            _request(),  # type: ignore[arg-type]
+            db,
+            "csrf-token",
+            "Submit technical variant for review",
+        )
+
+    return submit
+
+
 def test_technical_activation_refuses_a_draft_variant(activate_as) -> None:
     with physical_session() as db:
         requester = _user(db, "requester@example.test")
@@ -138,6 +180,167 @@ def test_technical_activation_refuses_a_draft_variant(activate_as) -> None:
         assert variant.status == "draft"
         assert approval.status == "pending"
         assert approval.decided_by_id is None
+
+
+def test_draft_variant_binds_only_its_exact_retained_source_document(
+    bind_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        variant = _variant(
+            db,
+            status="draft",
+            source_document_reference="TECH-SOURCE-TEST",
+        )
+        document = _technical_document(
+            db,
+            status="draft",
+            source_root=technical_storage_root,
+            document_id="TECH-SOURCE-TEST",
+        )
+
+        result = bind_as(db, variant, writer)
+
+        assert "success=Exact+technical+source+document+bound" in result.headers["location"]
+        assert variant.status == "draft"
+        assert variant.technical_document_id == document.id
+        assert document.status == "draft"
+
+
+def test_bound_draft_variant_can_enter_review_without_activation(
+    bind_as,
+    submit_review_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        variant = _variant(
+            db,
+            status="draft",
+            source_document_reference="TECH-SOURCE-TEST",
+        )
+        document = _technical_document(
+            db,
+            status="draft",
+            source_root=technical_storage_root,
+            document_id="TECH-SOURCE-TEST",
+        )
+
+        bind_as(db, variant, writer)
+        result = submit_review_as(db, variant, writer)
+
+        approval = db.query(Approval).one()
+        assert "success=Submitted+for+technical+review" in result.headers["location"]
+        assert variant.status == "in_review"
+        assert document.status == "draft"
+        assert approval.status == "pending"
+        assert approval.requested_by_id == writer.id
+
+
+def test_draft_variant_cannot_bind_an_altered_retained_source_document(
+    bind_as,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        variant = _variant(
+            db,
+            status="draft",
+            source_document_reference="TECH-SOURCE-TEST",
+        )
+        document = _technical_document(
+            db,
+            status="draft",
+            source_root=technical_storage_root,
+            document_id="TECH-SOURCE-TEST",
+        )
+        stored = db.get(StoredFile, document.stored_file_id)
+        assert stored is not None
+        Path(stored.storage_path).write_bytes(b"altered technical source evidence")
+
+        result = bind_as(db, variant, writer)
+
+        assert (
+            "Exact+technical+source+file+must+be+clean+and+unchanged+before+binding"
+            in result.headers["location"]
+        )
+        assert variant.status == "draft"
+        assert variant.technical_document_id is None
+
+
+def test_source_binding_audits_the_exact_retained_document(
+    monkeypatch: pytest.MonkeyPatch,
+    technical_storage_root: Path,
+) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        variant = _variant(
+            db,
+            status="draft",
+            source_document_reference="TECH-SOURCE-TEST",
+        )
+        document = _technical_document(
+            db,
+            status="draft",
+            source_root=technical_storage_root,
+            document_id="TECH-SOURCE-TEST",
+        )
+        audited: list[dict[str, object]] = []
+        monkeypatch.setattr(technical_admin, "verify_csrf", lambda *_args: None)
+        monkeypatch.setattr(technical_admin, "_require", lambda *_args: writer)
+        monkeypatch.setattr(
+            technical_admin,
+            "record_audit",
+            lambda *_args, **kwargs: audited.append(kwargs),
+        )
+
+        technical_admin.technical_variant_bind_source_document(
+            variant.id,
+            _request(),  # type: ignore[arg-type]
+            db,
+            "csrf-token",
+            "Bind source document",
+        )
+
+        assert len(audited) == 1
+        assert audited[0]["action"] == "bind_source_document"
+        assert audited[0]["new_value"] == {
+            "technical_document_id": document.id,
+            "document_id": "TECH-SOURCE-TEST",
+            "stored_file_sha256": hashlib.sha256(
+                b"technical activation source evidence"
+            ).hexdigest(),
+        }
+
+
+def test_draft_variant_cannot_bind_a_missing_exact_source_document(bind_as) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        variant = _variant(db, status="draft")
+
+        result = bind_as(db, variant, writer)
+
+        assert (
+            "Exact+retained+technical+source+document+was+not+found"
+            in result.headers["location"]
+        )
+        assert variant.status == "draft"
+        assert variant.technical_document_id is None
+
+
+def test_unbound_draft_variant_cannot_enter_technical_review(submit_review_as) -> None:
+    with physical_session() as db:
+        writer = _user(db, "writer@example.test")
+        variant = _variant(db, status="draft")
+
+        result = submit_review_as(db, variant, writer)
+
+        assert (
+            "Exact+retained+technical+source+document+must+be+bound+before+review"
+            in result.headers["location"]
+        )
+        assert variant.status == "draft"
 
 
 def test_technical_activation_requires_a_pending_request(activate_as) -> None:
