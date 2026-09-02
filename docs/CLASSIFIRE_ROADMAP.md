@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** `b6409a5` (PR #104 merge, 2026-09-01)
+**Verified shared-main implementation:** `14c2269` (PR #114 merge, 2026-09-02)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -37,10 +37,14 @@ Shared main now includes:
   review packages;
 - the PR #103 desk-quote evidence-read hardening;
 - PR #104's expected-label manifests, atomic scope admission, V2 runner
-  preflight, migration-head readiness, and `main` push validation; and
+  preflight, migration-head readiness, and `main` push validation;
+- PRs #105-#114's factual reconciliation, semantic snapshot identity,
+  retained-source safeguards, source-bound Draft materialisation, admission
+  rejection type safety, and UI/rule typing;
 - production configuration, migration-head, browser, and diagnostic hardening;
-- independent technical-document/variant review, source rechecks, Draft-only
-  imports, and active pinned technical-release safeguards;
+- independent technical-document/variant review, clean source rechecks,
+  Draft-only imports, source-bound variants and revisions, source locators,
+  manual Draft materialisation, and active pinned technical-release safeguards;
 - assumption-led desk-quote PDF/XLSX output as a parallel non-technical
   proposal path; and
 - pull-request CI with Ruff, full tests, PostgreSQL containment, and Alembic
@@ -48,10 +52,12 @@ Shared main now includes:
 
 PR #104 validation run `33515411987` passed on its exact head `0f6c252`. Its
 first observed `main` push run `33516292114` also passed on merge `b6409a5`,
-including tests and the one-head Alembic check. GitHub's branch-protection
-endpoint still returns HTTP 403 because the current private-repository plan
-requires GitHub Pro or public visibility for that configuration; required-check
-configuration remains unverified.
+including tests and the one-head Alembic check. Every PR #105-#114 check and
+corresponding `main` validation then passed; the latest post-merge run is
+`33645172423` on `14c2269`. GitHub's branch-protection endpoint still returns
+HTTP 403 because the current private-repository plan requires GitHub Pro or
+public visibility for that configuration; required-check configuration remains
+unverified.
 
 The newest controlled Phase 8 attempt is not a proposal result. Runtime
 inference began, then failed at the first blind-inventory call with
@@ -114,6 +120,24 @@ surface can be tested against that contract without inventing policy.
 product/records-ownership decision before implementation.
 
 ### Completed and published foundations (not next actions)
+
+#### Completed on shared main - Snapshot, technical-source, and type-safety safeguards (PRs #105-#114)
+
+**Shared-main result:** PR #106 makes V2 snapshot identity stable across volatile
+generation metadata while retaining a full-document integrity hash and V1
+verification. PRs #107-#111 require retained technical sources at activation,
+bind Draft variants and revisions to that exact source, require a source locator
+before review, and keep extraction failures content-safe. PR #112 materialises
+source-bound Draft variants only from clean retained documents. PR #113 makes
+admission rejection helpers explicitly non-returning without weakening their
+safe-code failure. PR #114 makes existing rule and UI response types explicit,
+rejects non-text rule operators deterministically, and proves existing
+library-page rendering.
+
+**Verification:** every PR #105-#114 check and its corresponding `main` push
+validation passed; the latest `main` run is `33645172423` on `14c2269`. These
+are safeguards only: no technical decision, release publication, pricing,
+canonical submission, lock, deployment, or Human Release was added.
 
 #### Completed on shared main - Report governance and main validation (PR #104)
 
@@ -238,8 +262,8 @@ downstream authority was added.
    proposal-review package record before adding a UI. It must retain safe hashes,
    source/approval bindings, uncertainty, and a storage locator; test isolation,
    redaction, tamper failure, and absence of canonical authority.
-2. Complete Draft technical materialisation, source lineage, publication, and
-   supersession through separate migrations and reviews.
+2. Complete extraction-assisted and manufacturer-neutral lineage, publication,
+   and supersession through separate migrations and reviews.
 3. Independently validate physical, technical, quantity, labour, commercial,
    formula, recovery, and release integrity before Phase 12. Snapshot V2 already
    separates `generated_utc` from semantic identity while preserving full
@@ -273,8 +297,8 @@ downstream authority was added.
 private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
-**Remaining:** the root checkout is conflicted recovery evidence; the first
-hosted `main` validation passed, but the current GitHub plan prevents
+**Remaining:** the root checkout is conflicted recovery evidence; hosted `main`
+validation passed through PR #114, but the current GitHub plan prevents
 branch-protection configuration; clean-machine and release reproducibility
 remain incomplete.
 
@@ -300,9 +324,10 @@ audited, and cannot be changed by an unauthorised role.
 **Status:** In progress
 
 **Completed foundations:** independent technical document/variant decisions,
-clean-source rechecks, Draft-only imports, source-bound manual Draft
-materialisation from clean retained documents, active immutable technical
-releases, manifest eligibility checks, and active hash-bound pricing records.
+clean-source rechecks, Draft-only imports, source-bound variants and revisions,
+source-locator review gates, source-bound manual Draft materialisation from
+clean retained documents, active immutable technical releases, manifest
+eligibility checks, and active hash-bound pricing records.
 
 **Remaining:** extraction-assisted and manufacturer-neutral lineage, governed
 publication/supersession, clean-machine import/recovery, and full commercial
