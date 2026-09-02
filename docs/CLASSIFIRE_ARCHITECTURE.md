@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `075c9c5` (PR #140 merge,
+**Verified shared-main implementation:** `abe8bde` (PR #142 merge,
 2026-09-03)
 
 This document separates the architecture that is implemented now from the
@@ -82,7 +82,7 @@ Approval for one operation never grants a later authority.
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, and proposal-only runner | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, UI, persisted package record, or real-provider run exists |
-| Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, source locators, independent activation, pinned active releases | Manufacturer-neutral lineage and governed publication/supersession remain incomplete |
+| Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, source locators, independent activation, pinned active releases, and read-only revision lineage | Manufacturer-neutral lineage and governed publication/supersession remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
 
@@ -273,10 +273,13 @@ Current shared-main safeguards include:
   window has expired; and
 - the same eligibility check before refreshing an editable estimate's pins; and
 - read-only current-authority displays on TechnicalVariant and TechnicalDocument
-  detail screens, plus structured immutable source-lineage rows on
-  TechnicalRelease detail screens. An eligible bound record safely links to the existing current read-only TechnicalDocument record without changing its published binding. Those displays reuse metadata checks only:
-  they do not read source bytes or grant approval, activation, publication, or
-  release authority.
+  detail screens, structured immutable source-lineage rows on TechnicalRelease
+  detail screens, and each TechnicalVariant revision's existing retained document
+  plus cited document/page/table/figure locator. An eligible bound record safely
+  links to the existing current read-only TechnicalDocument record without
+  changing its published binding. Those displays reuse metadata or existing
+  persisted locator values only: they do not read source bytes or grant approval,
+  activation, publication, or release authority.
 
 Extraction-assisted and manufacturer-neutral source lineage, governed
 publication/supersession automation, and production technical authority are not
@@ -397,6 +400,14 @@ release-administration guards while making their type boundaries explicit; PR
 #117 clarifies XLSX row handling; and PR #118 rejects non-object task responses
 from Mission Control. These safeguards do not approve a system, publish a
 release, price work, create a lock, deploy, or release an estimate.
+
+PRs #127-#142 then added verified-byte extraction, Draft refresh and
+current-authority safeguards, reviewer visibility, immutable published source
+lineage, factual reconciliations, and read-only source-document/locator
+visibility for every TechnicalVariant revision. PR #142 validated successfully
+on `cdf4236` (run `33695410954`) and after merge into `main` as `abe8bde`
+(run `33695636744`). Those validations prove source/test/static/migration checks,
+not technical, commercial, canonical, lock, deployment, or release authority.
 
 ### Required design before a review UI
 
