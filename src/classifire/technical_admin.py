@@ -9,11 +9,13 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .audit import record_audit
 from .config import get_settings
 from .db import get_db
+from .importers.technical import PENDING_REVIEW_SEARCH_ELIGIBILITY
 from .models import Approval, StoredFile, TechnicalDocument, TechnicalVariant
 from .security import verify_csrf
 from .services.calculation import D
@@ -54,6 +56,28 @@ def _json_or_existing(value: str | None, existing: Any) -> Any:
     if value is None or value.strip() == "":
         return copy.deepcopy(existing)
     return json.loads(value)
+
+
+def _optional_text(value: str | None) -> str | None:
+    return (value or "").strip() or None
+
+
+def _optional_component_requirements(value: str | None) -> dict[str, Any] | list[Any] | None:
+    if not value or not value.strip():
+        return None
+    parsed = json.loads(value)
+    if not isinstance(parsed, (dict, list)):
+        raise ValueError("Component requirements must be a JSON object or array")
+    return parsed
+
+
+def _optional_labour_requirements(value: str | None) -> list[str] | None:
+    if not value or not value.strip():
+        return None
+    parsed = json.loads(value)
+    if not isinstance(parsed, list) or not all(isinstance(item, str) for item in parsed):
+        raise ValueError("Labour requirements must be a JSON array of strings")
+    return parsed
 
 
 def _source_locator_is_complete(
@@ -104,12 +128,11 @@ def technical_variants_manager(
     if status:
         stmt = stmt.where(TechnicalVariant.status == status)
     variants = db.scalars(stmt.order_by(TechnicalVariant.variant_id).limit(500)).all()
-    counts = dict(
-        db.execute(
-            select(TechnicalVariant.status, func.count())
-            .group_by(TechnicalVariant.status)
-        ).all()
-    )
+    counts: dict[str, int] = {}
+    for row in db.execute(
+        select(TechnicalVariant.status, func.count()).group_by(TechnicalVariant.status)
+    ).all():
+        counts[row[0]] = row[1]
     return templates.TemplateResponse(
         request,
         "technical_variants_manager.html",
@@ -744,6 +767,221 @@ def technical_document_detail(document_db_id: str, request: Request, db: Db) -> 
         _context(request, db, document=document, linked=linked, approvals=approvals),
     )
 
+
+@router.get("/technical/documents/{document_db_id}/materialise", response_class=HTMLResponse)
+def technical_document_materialisation_page(
+    document_db_id: str,
+    request: Request,
+    db: Db,
+) -> HTMLResponse:
+    _require(request, db, "technical:write")
+    document = db.get(TechnicalDocument, document_db_id)
+    if not document:
+        raise HTTPException(404, "Technical document not found")
+    if document.status not in {"draft", "approved"}:
+        raise HTTPException(
+            409,
+            "Only Draft or approved technical documents can materialise Draft variants",
+        )
+    if not _technical_document_source_is_reviewable(db, document):
+        raise HTTPException(409, "Technical source file must be clean and unchanged")
+    return templates.TemplateResponse(
+        request,
+        "technical_document_materialisation.html",
+        _context(request, db, document=document),
+    )
+
+
+@router.post("/technical/documents/{document_db_id}/materialise")
+def technical_document_materialise(
+    document_db_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    variant_id: Annotated[str, Form()],
+    system_id: Annotated[str, Form()],
+    source_page: Annotated[str, Form()],
+    manufacturer: Annotated[str | None, Form()] = None,
+    product_family: Annotated[str | None, Form()] = None,
+    service_type: Annotated[str | None, Form()] = None,
+    service_material: Annotated[str | None, Form()] = None,
+    minimum_service_size_mm: Annotated[str | None, Form()] = None,
+    maximum_service_size_mm: Annotated[str | None, Form()] = None,
+    permitted_service_quantity: Annotated[str | None, Form()] = None,
+    insulation_type: Annotated[str | None, Form()] = None,
+    insulation_thickness_mm: Annotated[str | None, Form()] = None,
+    substrate_type: Annotated[str | None, Form()] = None,
+    minimum_substrate_thickness_mm: Annotated[str | None, Form()] = None,
+    maximum_substrate_thickness_mm: Annotated[str | None, Form()] = None,
+    orientation: Annotated[str | None, Form()] = None,
+    installation_face: Annotated[str | None, Form()] = None,
+    opening_type: Annotated[str | None, Form()] = None,
+    opening_dimensions: Annotated[str | None, Form()] = None,
+    annular_gap_min_mm: Annotated[str | None, Form()] = None,
+    annular_gap_max_mm: Annotated[str | None, Form()] = None,
+    service_spacing_rules: Annotated[str | None, Form()] = None,
+    edge_distance_rules: Annotated[str | None, Form()] = None,
+    support_rules: Annotated[str | None, Form()] = None,
+    fixing_rules: Annotated[str | None, Form()] = None,
+    component_requirements_json: Annotated[str | None, Form()] = None,
+    labour_requirements_json: Annotated[str | None, Form()] = None,
+    hard_exclusions: Annotated[str | None, Form()] = None,
+    dependencies: Annotated[str | None, Form()] = None,
+    frl: Annotated[str | None, Form()] = None,
+    jurisdiction: Annotated[str | None, Form()] = None,
+    source_table: Annotated[str | None, Form()] = None,
+    source_figure: Annotated[str | None, Form()] = None,
+    reason: Annotated[str, Form()] = "Materialise retained technical source as Draft candidate",
+) -> RedirectResponse:
+    """Create a source-bound Draft candidate without granting technical authority."""
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "technical:write")
+    document = db.get(TechnicalDocument, document_db_id)
+    if not document:
+        raise HTTPException(404, "Technical document not found")
+    destination = f"/technical/documents/{document.id}/materialise"
+    if document.status not in {"draft", "approved"}:
+        return RedirectResponse(
+            f"{destination}?error=Only+Draft+or+approved+technical+documents+can+materialise+Draft+variants",
+            status_code=303,
+        )
+    if not _technical_document_source_is_reviewable(db, document):
+        return RedirectResponse(
+            f"{destination}?error=Technical+source+file+must+be+clean+and+unchanged",
+            status_code=303,
+        )
+    materialised_variant_id = _optional_text(variant_id)
+    materialised_system_id = _optional_text(system_id)
+    materialised_source_page = _optional_text(source_page)
+    if not materialised_variant_id or not materialised_system_id or not materialised_source_page:
+        return RedirectResponse(
+            f"{destination}?error=Variant+ID,+system+ID,+and+source+page+are+required",
+            status_code=303,
+        )
+    if db.scalar(
+        select(TechnicalVariant.id).where(
+            TechnicalVariant.variant_id == materialised_variant_id
+        )
+    ):
+        return RedirectResponse(
+            f"{destination}?error=Technical+variant+ID+already+exists",
+            status_code=303,
+        )
+    try:
+        component_requirements = _optional_component_requirements(component_requirements_json)
+        labour_requirements = _optional_labour_requirements(labour_requirements_json)
+        numeric_fields = {
+            "minimum_service_size_mm": _decimal_or_none(minimum_service_size_mm),
+            "maximum_service_size_mm": _decimal_or_none(maximum_service_size_mm),
+            "insulation_thickness_mm": _decimal_or_none(insulation_thickness_mm),
+            "minimum_substrate_thickness_mm": _decimal_or_none(
+                minimum_substrate_thickness_mm
+            ),
+            "maximum_substrate_thickness_mm": _decimal_or_none(
+                maximum_substrate_thickness_mm
+            ),
+            "annular_gap_min_mm": _decimal_or_none(annular_gap_min_mm),
+            "annular_gap_max_mm": _decimal_or_none(annular_gap_max_mm),
+        }
+    except (ArithmeticError, json.JSONDecodeError, ValueError):
+        return RedirectResponse(
+            f"{destination}?error=Numeric+fields+must+be+valid+and+requirements+must+use+the+documented+JSON+shapes",
+            status_code=303,
+        )
+    stored = db.get(StoredFile, document.stored_file_id)
+    if not stored:
+        raise RuntimeError("Verified technical document unexpectedly has no stored file")
+    source_table = _optional_text(source_table)
+    source_figure = _optional_text(source_figure)
+    variant = TechnicalVariant(
+        variant_id=materialised_variant_id,
+        system_id=materialised_system_id,
+        technical_document_id=document.id,
+        source_document_reference=document.document_id,
+        source_page=materialised_source_page,
+        source_table=source_table,
+        source_figure=source_figure,
+        manufacturer=_optional_text(manufacturer) or document.manufacturer,
+        product_family=_optional_text(product_family),
+        service_type=_optional_text(service_type),
+        service_material=_optional_text(service_material),
+        minimum_service_size_mm=numeric_fields["minimum_service_size_mm"],
+        maximum_service_size_mm=numeric_fields["maximum_service_size_mm"],
+        permitted_service_quantity=_optional_text(permitted_service_quantity),
+        insulation_type=_optional_text(insulation_type),
+        insulation_thickness_mm=numeric_fields["insulation_thickness_mm"],
+        substrate_type=_optional_text(substrate_type),
+        minimum_substrate_thickness_mm=numeric_fields["minimum_substrate_thickness_mm"],
+        maximum_substrate_thickness_mm=numeric_fields["maximum_substrate_thickness_mm"],
+        orientation=_optional_text(orientation),
+        installation_face=_optional_text(installation_face),
+        opening_type=_optional_text(opening_type),
+        opening_dimensions=_optional_text(opening_dimensions),
+        annular_gap_min_mm=numeric_fields["annular_gap_min_mm"],
+        annular_gap_max_mm=numeric_fields["annular_gap_max_mm"],
+        service_spacing_rules=_optional_text(service_spacing_rules),
+        edge_distance_rules=_optional_text(edge_distance_rules),
+        support_rules=_optional_text(support_rules),
+        fixing_rules=_optional_text(fixing_rules),
+        component_requirements=component_requirements,
+        labour_requirements=labour_requirements,
+        hard_exclusions=_optional_text(hard_exclusions),
+        dependencies=_optional_text(dependencies),
+        frl=_optional_text(frl),
+        jurisdiction=_optional_text(jurisdiction),
+        search_eligibility=PENDING_REVIEW_SEARCH_ELIGIBILITY,
+        expert_review_required=True,
+        status="draft",
+        source_hash=stored.sha256,
+        source_json={
+            "intake_policy": "technical-document-draft-materialisation-v1",
+            "source_kind": "manual_transcription_from_retained_technical_document",
+            "technical_document": {
+                "id": document.id,
+                "document_id": document.document_id,
+                "stored_file_id": stored.id,
+                "sha256": stored.sha256,
+                "size_bytes": stored.size_bytes,
+            },
+            "source_locator": {
+                "page": materialised_source_page,
+                "table": source_table,
+                "figure": source_figure,
+            },
+        },
+    )
+    db.add(variant)
+    try:
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        return RedirectResponse(
+            f"{destination}?error=Technical+variant+ID+already+exists",
+            status_code=303,
+        )
+    record_audit(
+        db,
+        actor=user,
+        action="materialise_draft",
+        entity_type="technical_variant",
+        entity_id=variant.id,
+        new_value={
+            "variant_id": variant.variant_id,
+            "system_id": variant.system_id,
+            "status": variant.status,
+            "technical_document_id": document.id,
+            "source_document_reference": document.document_id,
+            "source_page": materialised_source_page,
+            "source_sha256": stored.sha256,
+            "search_eligibility": variant.search_eligibility,
+        },
+        reason=reason,
+    )
+    db.commit()
+    return RedirectResponse(
+        f"/technical/variants/{variant.id}?success=Source-bound+Draft+technical+variant+created",
+        status_code=303,
+    )
 
 @router.post("/technical/documents/{document_db_id}/submit-review")
 def technical_document_submit_review(
