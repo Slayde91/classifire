@@ -133,10 +133,33 @@ def technical_variant_detail(variant_db_id: str, request: Request, db: Db) -> HT
         .where(Approval.entity_type == "technical_variant", Approval.entity_id == variant.id)
         .order_by(Approval.created_at.desc())
     ).all()
+    linked_document = (
+        db.get(TechnicalDocument, variant.technical_document_id)
+        if variant.technical_document_id
+        else None
+    )
+    source_document_reference = (variant.source_document_reference or "").strip()
+    matching_document = (
+        db.scalar(
+            select(TechnicalDocument).where(
+                TechnicalDocument.document_id == source_document_reference
+            )
+        )
+        if not linked_document and source_document_reference
+        else None
+    )
     return templates.TemplateResponse(
         request,
         "technical_variant_detail.html",
-        _context(request, db, variant=variant, history=history, approvals=approvals),
+        _context(
+            request,
+            db,
+            variant=variant,
+            history=history,
+            approvals=approvals,
+            linked_document=linked_document,
+            matching_document=matching_document,
+        ),
     )
 
 
@@ -318,6 +341,82 @@ def technical_variant_revision(
     )
 
 
+@router.post("/technical/variants/{variant_db_id}/bind-source-document")
+def technical_variant_bind_source_document(
+    variant_db_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    reason: Annotated[str, Form()] = "Bind exact retained technical source document",
+) -> RedirectResponse:
+    """Bind a Draft candidate to its exact retained source without approving it."""
+    verify_csrf(request, csrf_token)
+    user = _require(request, db, "technical:write")
+    variant = db.get(TechnicalVariant, variant_db_id)
+    if not variant:
+        raise HTTPException(404, "Technical variant not found")
+    if variant.status not in {"draft", "rejected"}:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Only+Draft+or+Rejected+variants+can+bind+a+source+document",
+            status_code=303,
+        )
+    if variant.technical_document_id:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Technical+variant+already+has+a+bound+source+document",
+            status_code=303,
+        )
+    source_document_reference = (variant.source_document_reference or "").strip()
+    if not source_document_reference:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Source+document+reference+is+required+before+binding",
+            status_code=303,
+        )
+    document = db.scalar(
+        select(TechnicalDocument).where(TechnicalDocument.document_id == source_document_reference)
+    )
+    if not document:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Exact+retained+technical+source+document+was+not+found",
+            status_code=303,
+        )
+    if not _technical_document_source_is_reviewable(db, document):
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Exact+technical+source+file+must+be+clean+and+unchanged+before+binding",
+            status_code=303,
+        )
+    stored = db.get(StoredFile, document.stored_file_id)
+    if not stored:
+        raise RuntimeError("Verified technical document unexpectedly has no stored file")
+    variant.technical_document_id = document.id
+    record_audit(
+        db,
+        actor=user,
+        action="bind_source_document",
+        entity_type="technical_variant",
+        entity_id=variant.id,
+        previous_value={
+            "technical_document_id": None,
+            "source_document_reference": source_document_reference,
+        },
+        new_value={
+            "technical_document_id": document.id,
+            "document_id": document.document_id,
+            "stored_file_sha256": stored.sha256,
+        },
+        reason=reason,
+    )
+    db.commit()
+    return RedirectResponse(
+        f"/technical/variants/{variant.id}?success=Exact+technical+source+document+bound",
+        status_code=303,
+    )
+
+
 @router.post("/technical/variants/{variant_db_id}/submit-review")
 def technical_variant_submit_review(
     variant_db_id: str,
@@ -335,6 +434,19 @@ def technical_variant_submit_review(
         return RedirectResponse(
             f"/technical/variants/{variant.id}?error="
             "Only+Draft+or+Rejected+variants+can+be+submitted",
+            status_code=303,
+        )
+    if not variant.technical_document_id:
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Exact+retained+technical+source+document+must+be+bound+before+review",
+            status_code=303,
+        )
+    document = db.get(TechnicalDocument, variant.technical_document_id)
+    if not document or not _technical_document_source_is_reviewable(db, document):
+        return RedirectResponse(
+            f"/technical/variants/{variant.id}?error="
+            "Bound+technical+source+file+must+be+clean+and+unchanged+before+review",
             status_code=303,
         )
     variant.status = "in_review"
