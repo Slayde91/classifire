@@ -56,7 +56,7 @@ from .services.release_pinning import (
 from .services.rule_engine import evaluate_estimate_rules
 from .services.snapshot import lock_snapshot
 from .services.storage import save_upload
-from .services.technical import extract_pdf_candidate_metadata, search_for_opening
+from .services.technical import build_technical_document_draft_metadata, search_for_opening
 from .services.workflow import WorkflowTransitionError
 from .services.workflow_guard import (
     PhysicalModelLockRequiredError,
@@ -323,12 +323,7 @@ def technical_upload(
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
     except ValueError as exc:
         return RedirectResponse(f"/technical?error={str(exc).replace(' ', '+')}", status_code=303)
-    metadata: dict[str, Any] = {"human_review_required": True, "automatic_activation_permitted": False}
-    if Path(stored.storage_path).suffix.lower() == ".pdf":
-        try:
-            metadata.update(extract_pdf_candidate_metadata(Path(stored.storage_path)))
-        except Exception as exc:
-            metadata["extraction_error"] = str(exc)
+    metadata = build_technical_document_draft_metadata(Path(stored.storage_path))
     document = TechnicalDocument(
         document_id=document_id,
         stored_file_id=stored.id,

@@ -187,3 +187,27 @@ def extract_pdf_candidate_metadata(path: Path) -> dict[str, Any]:
         "human_review_required": True,
         "automatic_activation_permitted": False,
     }
+
+TECHNICAL_DOCUMENT_EXTRACTION_FAILURE_CODE = "TECHNICAL_DOCUMENT_EXTRACTION_FAILED"
+
+
+def build_technical_document_draft_metadata(path: Path) -> dict[str, Any]:
+    """Build safe Draft metadata without persisting parser exception content."""
+    metadata: dict[str, Any] = {
+        "human_review_required": True,
+        "automatic_activation_permitted": False,
+    }
+    if path.suffix.lower() != ".pdf":
+        return metadata
+    try:
+        metadata.update(extract_pdf_candidate_metadata(path))
+    except Exception:
+        # Candidate extraction is optional; retain the immutable Draft source but not
+        # arbitrary parser text, which may contain filesystem or source content.
+        metadata.update(
+            {
+                "extraction_status": "failed",
+                "extraction_failure_code": TECHNICAL_DOCUMENT_EXTRACTION_FAILURE_CODE,
+            }
+        )
+    return metadata

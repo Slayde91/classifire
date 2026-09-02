@@ -84,7 +84,11 @@ from ..services.physical_mutation_guard import (
 from ..services.rule_engine import evaluate_estimate_rules
 from ..services.snapshot import lock_snapshot
 from ..services.storage import StoredFileBindingError, read_hashed_storage_artifact, save_upload
-from ..services.technical import extract_pdf_candidate_metadata, search_for_opening, search_variants
+from ..services.technical import (
+    build_technical_document_draft_metadata,
+    search_for_opening,
+    search_variants,
+)
 from ..services.workflow import WorkflowAction, WorkflowTransitionError
 from ..services.workflow_guard import (
     PhysicalModelLockRequiredError,
@@ -462,15 +466,7 @@ def upload_technical_document(
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    metadata: dict[str, Any] = {
-        "human_review_required": True,
-        "automatic_activation_permitted": False,
-    }
-    if Path(stored.storage_path).suffix.lower() == ".pdf":
-        try:
-            metadata.update(extract_pdf_candidate_metadata(Path(stored.storage_path)))
-        except Exception as exc:  # preserve file even if parser fails
-            metadata.update({"extraction_status": "failed", "extraction_error": str(exc)})
+    metadata = build_technical_document_draft_metadata(Path(stored.storage_path))
     document = TechnicalDocument(
         document_id=document_id,
         stored_file_id=stored.id,
