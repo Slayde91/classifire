@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** `14ed594` (PR #118 merge, 2026-09-02)
+**Verified shared-main implementation:** `5639e26` (PR #122 merge, 2026-09-02)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -53,9 +53,9 @@ Shared main now includes:
 
 PR #104 validation run `33515411987` passed on its exact head `0f6c252`. Its
 first observed `main` push run `33516292114` also passed on merge `b6409a5`,
-including tests and the one-head Alembic check. Every PR #105-#118 check and
+including tests and the one-head Alembic check. Every PR #105-#122 check and
 corresponding `main` validation then passed; the latest post-merge run is
-`33651676333` on `14ed594`. GitHub's branch-protection endpoint still returns
+`33657134992` on `5639e26`. GitHub's branch-protection endpoint still returns
 HTTP 403 because the current private-repository plan requires GitHub Pro or
 public visibility for that configuration; required-check configuration remains
 unverified.
@@ -136,9 +136,12 @@ rejects non-text rule operators deterministically, and proves existing
 library-page rendering. PR #116 preserves the existing release-administration
 guards while clarifying their type boundaries; PR #117 clarifies XLSX row
 handling; and PR #118 validates Mission Control task responses as JSON objects.
+PR #119 reconciles those records, PR #120 uses an aware UTC clock for PDF
+timestamps, and PRs #121-#122 apply current CLASSIFIRE branding to generated
+artifacts and the browser workspace.
 
-**Verification:** every PR #105-#118 check and its corresponding `main` push
-validation passed; the latest `main` run is `33651676333` on `14ed594`. These
+**Verification:** every PR #105-#122 check and its corresponding `main` push
+validation passed; the latest `main` run is `33657134992` on `5639e26`. These
 are safeguards only: no technical decision, release publication, pricing,
 canonical submission, lock, deployment, or Human Release was added.
 
@@ -301,7 +304,7 @@ private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
 **Remaining:** the root checkout is conflicted recovery evidence; hosted `main`
-validation passed through PR #118, but the current GitHub plan prevents
+validation passed through PR #122, but the current GitHub plan prevents
 branch-protection configuration; clean-machine and release reproducibility
 remain incomplete.
 
