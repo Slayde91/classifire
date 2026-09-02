@@ -11,10 +11,10 @@ from pypdf import PdfReader
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from ..models import Opening, TechnicalDocument, TechnicalVariant
+from ..models import Opening, StoredFile, TechnicalDocument, TechnicalVariant
 from .release_scope import pinned_technical_ids
 from .technical_validity import (
-    technical_document_temporal_blockers,
+    technical_document_authority_blockers,
     technical_variant_temporal_blockers,
 )
 
@@ -89,15 +89,34 @@ def search_variants(
                 select(TechnicalDocument).where(TechnicalDocument.id.in_(bound_document_ids))
             ).all()
         }
+    bound_stored_file_ids = {document.stored_file_id for document in documents_by_id.values()}
+    stored_files_by_id: dict[str, StoredFile] = {}
+    if bound_stored_file_ids:
+        stored_files_by_id = {
+            stored.id: stored
+            for stored in db.scalars(
+                select(StoredFile).where(StoredFile.id.in_(bound_stored_file_ids))
+            ).all()
+        }
+    source_blockers_by_document_id = {
+        document.id: technical_document_authority_blockers(
+            status=document.status,
+            expiry_date=document.expiry_date,
+            stored_file_present=(stored := stored_files_by_id.get(document.stored_file_id))
+            is not None,
+            stored_file_purpose=stored.purpose if stored else None,
+            stored_file_scan_status=stored.malware_scan_status if stored else None,
+            stored_file_immutable=stored.immutable if stored else None,
+        )
+        for document in documents_by_id.values()
+    }
     candidates: list[Candidate] = []
     for variant in variants:
         source_blockers: tuple[str, ...] = ()
         if variant.technical_document_id:
-            document = documents_by_id.get(variant.technical_document_id)
-            source_blockers = (
-                technical_document_temporal_blockers(expiry_date=document.expiry_date)
-                if document
-                else ("source_document_missing",)
+            source_blockers = source_blockers_by_document_id.get(
+                variant.technical_document_id,
+                ("source_document_missing",),
             )
         temporal_blockers = (
             *technical_variant_temporal_blockers(

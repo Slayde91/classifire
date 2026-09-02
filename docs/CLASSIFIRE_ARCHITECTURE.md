@@ -252,9 +252,10 @@ technical release; commercial pricing cannot prove compatibility.
 Current shared-main safeguards include:
 
 - independent technical-document submission and decision;
-- clean, immutable, unchanged source-byte checks; source-document expiry at
-  document approval, bound-variant activation, search, snapshot, and pinned
-  runtime use; and current technical-variant effective/expiry windows at
+- clean, immutable, unchanged source-byte checks; an approved, unexpired source
+  document with clean immutable `technical_evidence` metadata at bound-variant
+  activation, search, snapshot, and pinned runtime use; and current
+  technical-variant effective/expiry windows at
   activation, search, snapshot, and pinned runtime use;
 - a retained source document on every Draft variant and preserved exact binding
   through a Draft revision;
@@ -265,7 +266,8 @@ Current shared-main safeguards include:
 - Draft-only new technical-library imports regardless of source-declared state;
 - runtime use only through an active immutable pinned technical release;
 - rejection when any manifest TechnicalVariant is missing, inactive, or no
-  longer current because its bound source or own date window has expired; and
+  longer current because its bound source is missing/ineligible or its own date
+  window has expired; and
 - the same eligibility check before refreshing an editable estimate's pins.
 
 Full Draft intake/materialisation, manufacturer-neutral source lineage,

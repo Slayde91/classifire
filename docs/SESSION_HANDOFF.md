@@ -34,8 +34,9 @@ PR #106 keeps semantic snapshot identity stable across volatile generation
 metadata while retaining a full-document integrity hash and V1 verification.
 PRs #107-#111 require retained technical sources for activation, bind Draft
 variants and revisions to the exact source document, require a source locator
-before review, enforce current source-document expiry and TechnicalVariant
-effective/expiry windows at current-authority gates, derive candidate metadata
+before review, enforce current source-document status/expiry and retained-file
+metadata plus TechnicalVariant effective/expiry windows at current-authority
+gates, derive candidate metadata
 only from clean hash-verified bytes and permit Draft-only metadata refresh after
 the same recheck,
 and suppress content from extraction-failure diagnostics. PR #112 materialises a
@@ -260,8 +261,9 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
   exists for the current UAT estimate.
 - Technical review/import/release safeguards now include retained-source
   activation, Draft/revision source binding, source-locator review, current
-  source-document expiry and TechnicalVariant date-window checks, clean-byte
-  candidate extraction, content-safe extraction diagnostics, and source-bound
+  source-document status/expiry and retained-file metadata plus TechnicalVariant
+  date-window checks, clean-byte candidate extraction, content-safe extraction
+  diagnostics, and source-bound
   Draft materialisation; they do not complete the full technical authority
   registry.
 - Desk quotes are proposal-only; PR #103 merged the evidence-read hardening and

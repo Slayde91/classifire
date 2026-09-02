@@ -15,11 +15,12 @@ from ..models import (
     MarkupProfile,
     PricingLibraryRecord,
     Product,
+    StoredFile,
     TechnicalDocument,
     TechnicalVariant,
 )
 from .technical_validity import (
-    technical_document_temporal_blockers,
+    technical_document_authority_blockers,
     technical_variant_temporal_blockers,
 )
 
@@ -148,6 +149,27 @@ def _active_technical_variant_ids(db: Session, release: LibraryRelease) -> set[s
                 select(TechnicalDocument).where(TechnicalDocument.id.in_(bound_document_ids))
             ).all()
         }
+    bound_stored_file_ids = {document.stored_file_id for document in documents_by_id.values()}
+    stored_files_by_id: dict[str, StoredFile] = {}
+    if bound_stored_file_ids:
+        stored_files_by_id = {
+            stored.id: stored
+            for stored in db.scalars(
+                select(StoredFile).where(StoredFile.id.in_(bound_stored_file_ids))
+            ).all()
+        }
+    source_blockers_by_document_id = {
+        document.id: technical_document_authority_blockers(
+            status=document.status,
+            expiry_date=document.expiry_date,
+            stored_file_present=(stored := stored_files_by_id.get(document.stored_file_id))
+            is not None,
+            stored_file_purpose=stored.purpose if stored else None,
+            stored_file_scan_status=stored.malware_scan_status if stored else None,
+            stored_file_immutable=stored.immutable if stored else None,
+        )
+        for document in documents_by_id.values()
+    }
     active_ids = {
         variant.id
         for variant in variants
@@ -158,9 +180,9 @@ def _active_technical_variant_ids(db: Session, release: LibraryRelease) -> set[s
         )
         and (
             not variant.technical_document_id
-            or (
-                (document := documents_by_id.get(variant.technical_document_id)) is not None
-                and not technical_document_temporal_blockers(expiry_date=document.expiry_date)
+            or not source_blockers_by_document_id.get(
+                variant.technical_document_id,
+                ("source_document_missing",),
             )
         )
     }
