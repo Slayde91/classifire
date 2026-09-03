@@ -8,7 +8,7 @@ from typing import Any
 
 import pymupdf
 import pytest
-from test_report_evidence_adapter import _report_content
+from test_report_evidence_adapter import _caption_report_content, _report_content
 
 from classifire.services.phase8_report_documentary_context import (
     PHASE8_REPORT_DOCUMENTARY_CONTEXT_SCHEMA,
@@ -154,6 +154,23 @@ def test_context_exposes_only_the_packet_selected_item() -> None:
         'text': 'Defect D-001 is described in this private report.\n'
     }
     assert context.evidence_refs == packet.evidence_refs
+
+
+def test_context_reextracts_selected_caption_from_exact_report_bytes() -> None:
+    caption_text = 'Figure 12: Proposed service penetration context.'
+    content = _caption_report_content(caption_text=caption_text)
+    packet = _packet(content, item_kind='caption')
+
+    context = build_phase8_report_documentary_context(
+        report_packet=packet,
+        verified_content=content,
+    )
+
+    assert len(context.items) == 1
+    assert context.items[0].item_kind == 'caption'
+    assert context.items[0].content == {'text': f'{caption_text}\n'}
+    assert caption_text not in json.dumps(context.manifest, sort_keys=True)
+    assert validate_phase8_report_documentary_context(context) == []
 
 
 def test_context_extracts_a_selected_table_from_exact_report_bytes() -> None:

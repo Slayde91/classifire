@@ -171,7 +171,7 @@ def _payload_hash_and_characters(
             _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
         metadata_hashes = {key: _text_sha256(value) for key, value in fields.items()}
         return _canonical_sha256(metadata_hashes), character_count
-    if item_kind in {'page', 'text'}:
+    if item_kind in {'page', 'text', 'caption'}:
         if set(content) != {'text'}:
             _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
         text = _normalised_text(content['text'])
@@ -343,7 +343,7 @@ def _content(document: Any, artifact: dict[str, Any]) -> dict[str, Any] | None:
             raise Phase8ReportDocumentaryContextError(
                 'REPORT_DOCUMENTARY_CONTEXT_REPORT_INVALID'
             ) from exc
-    if item_kind == 'text':
+    if item_kind in {'text', 'caption'}:
         return _text_content(page, locator)
     if item_kind == 'table':
         return _table_content(page, locator)

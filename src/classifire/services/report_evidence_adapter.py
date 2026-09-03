@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 import unicodedata
 from collections.abc import Sequence
 from copy import deepcopy
@@ -69,7 +70,20 @@ _MAX_TABLE_COLUMNS = 200
 _MAX_TABLE_CELLS = 100_000
 _MAX_TABLE_CELL_CHARACTERS = 100_000
 _MAX_REPORT_LABEL = 150
-
+_EXPLICIT_CAPTION_PATTERN = re.compile(
+    r'^\s*(?P<caption_kind>figure|fig|image|photo|photograph|plate)\s+'
+    r'(?P<number>[1-9][0-9]{0,5})\s*[:\-–—]\s*\S',
+    re.IGNORECASE,
+)
+_CAPTION_KIND_BY_PREFIX = {
+    'fig': 'figure',
+    'figure': 'figure',
+    'image': 'image',
+    'photo': 'photo',
+    'photograph': 'photo',
+    'plate': 'plate',
+}
+_CAPTION_KINDS = frozenset(_CAPTION_KIND_BY_PREFIX.values())
 
 class ReportEvidenceAdapterError(ValueError):
     '''A stable, path-free report-evidence adapter failure.'''
@@ -215,6 +229,14 @@ def _text_sha256(value: object) -> str:
     return hashlib.sha256(_normalised_text(value).encode('utf-8')).hexdigest()
 
 
+def _explicit_caption_kind(value: str) -> str | None:
+    first_line = value.partition('\n')[0].strip()
+    match = _EXPLICIT_CAPTION_PATTERN.match(first_line)
+    if match is None:
+        return None
+    return _CAPTION_KIND_BY_PREFIX[match.group('caption_kind').casefold()]
+
+
 def _media_type(value: object) -> str:
     if not isinstance(value, str):
         _fail('REPORT_EVIDENCE_MEDIA_TYPE_FORBIDDEN')
@@ -324,19 +346,25 @@ def _page_drafts(
             'x1': _finite_number(block[2]),
             'y1': _finite_number(block[3]),
         }
+        caption_kind = _explicit_caption_kind(block_text)
+        item_kind = 'caption' if caption_kind is not None else 'text'
+        locator = {
+            'item_kind': item_kind,
+            'page_number': page_number,
+            'bounds': bounds,
+            'character_count': len(block_text),
+            'block_index': block_index,
+        }
+        if caption_kind is None:
+            locator['text_role'] = 'unclassified'
+        else:
+            locator['caption_kind'] = caption_kind
         drafts.append(
             _draft_item(
-                item_kind='text',
+                item_kind=item_kind,
                 page_number=page_number,
                 content_sha256=_text_sha256(block_text),
-                locator={
-                    'item_kind': 'text',
-                    'page_number': page_number,
-                    'bounds': bounds,
-                    'character_count': len(block_text),
-                    'text_role': 'unclassified',
-                    'block_index': block_index,
-                },
+                locator=locator,
                 sort_index=block_index,
             )
         )
@@ -578,7 +606,6 @@ def _valid_bounds(value: object) -> bool:
 def _valid_locator(item: ReportEvidenceLocatorItem, *, sequence: int) -> bool:
     if (
         item.item_kind not in _ITEM_KIND_ORDER
-        or item.item_kind == 'caption'
         or not isinstance(item.locator_key, str)
         or not item.locator_key.strip()
         or len(item.locator_key) > 300
@@ -607,6 +634,15 @@ def _valid_locator(item: ReportEvidenceLocatorItem, *, sequence: int) -> bool:
             'bounds',
             'character_count',
             'text_role',
+            'block_index',
+            'sequence',
+        },
+        'caption': {
+            'item_kind',
+            'page_number',
+            'bounds',
+            'character_count',
+            'caption_kind',
             'block_index',
             'sequence',
         },
@@ -667,6 +703,12 @@ def _valid_locator(item: ReportEvidenceLocatorItem, *, sequence: int) -> bool:
     if item.item_kind == 'text':
         return (
             item.locator.get('text_role') == 'unclassified'
+            and _positive_integer(item.locator.get('block_index'))
+            and isinstance(item.locator.get('character_count'), int)
+        )
+    if item.item_kind == 'caption':
+        return (
+            item.locator.get('caption_kind') in _CAPTION_KINDS
             and _positive_integer(item.locator.get('block_index'))
             and isinstance(item.locator.get('character_count'), int)
         )

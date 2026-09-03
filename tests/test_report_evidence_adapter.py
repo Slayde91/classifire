@@ -92,6 +92,21 @@ def _report_content(payload: bytes | None = None) -> VerifiedStoredFileContent:
     )
 
 
+def _caption_report_content(
+    *,
+    caption_text: str = 'Figure 12: Proposed service penetration context.',
+) -> VerifiedStoredFileContent:
+    document = pymupdf.open()
+    try:
+        page = document.new_page()
+        page.insert_text((72, 72), 'Ordinary report narrative remains unclassified.')
+        page.insert_text((72, 120), caption_text)
+        payload = document.tobytes(garbage=3, deflate=True)
+    finally:
+        document.close()
+    return _report_content(payload)
+
+
 def test_normaliser_is_deterministic_and_keeps_raw_report_content_out_of_locators() -> None:
     content = _report_content()
 
@@ -110,6 +125,47 @@ def test_normaliser_is_deterministic_and_keeps_raw_report_content_out_of_locator
     assert 'Private annotation content' not in serialised
     assert 'Defect D-001 is described' not in serialised
     assert all(item.locator['sequence'] == index for index, item in enumerate(first.locators, 1))
+
+
+def test_normaliser_classifies_only_explicit_numbered_captions_without_persisting_text() -> None:
+    caption_text = 'Figure 12: Proposed service penetration context.'
+    content = _caption_report_content(caption_text=caption_text)
+
+    first = normalise_verified_pdf_report(content)
+    second = normalise_verified_pdf_report(content)
+    caption = next(item for item in first.locators if item.item_kind == 'caption')
+
+    assert first.manifest == second.manifest
+    assert caption.locator['caption_kind'] == 'figure'
+    assert set(caption.locator) == {
+        'item_kind',
+        'page_number',
+        'bounds',
+        'character_count',
+        'caption_kind',
+        'block_index',
+        'sequence',
+    }
+    assert caption.content_sha256 != content.sha256
+    assert caption_text not in json.dumps(first.manifest, sort_keys=True)
+    assert 'Figure 12' not in json.dumps(first.manifest, sort_keys=True)
+    assert any(item.item_kind == 'text' for item in first.locators)
+
+
+@pytest.mark.parametrize(
+    'caption_text',
+    (
+        'Figure this ordinary narrative remains unclassified.',
+        'Figure 0: Invalid caption number.',
+        'Figure 1. Missing explicit caption delimiter.',
+        'Photograph 1000000: Caption number exceeds the bounded syntax.',
+    ),
+)
+def test_normaliser_does_not_infer_captions_from_ambiguous_text(caption_text: str) -> None:
+    report = normalise_verified_pdf_report(_caption_report_content(caption_text=caption_text))
+
+    assert all(item.item_kind != 'caption' for item in report.locators)
+    assert sum(item.item_kind == 'text' for item in report.locators) == 2
 
 
 @pytest.mark.parametrize(
@@ -682,6 +738,41 @@ def test_selected_report_scope_fails_closed_on_cross_project_and_tampered_locato
 
     assert cross_project.value.code == 'PROJECT_EVIDENCE_CROSS_PROJECT_FORBIDDEN'
     assert tampered_locator.value.code == 'REPORT_EVIDENCE_LOCATOR_INVALID'
+
+
+def test_caption_locator_registration_rejects_tampered_category_or_raw_text() -> None:
+    content = _caption_report_content()
+    report = normalise_verified_pdf_report(content)
+    caption = next(item for item in report.locators if item.item_kind == 'caption')
+
+    unsafe_reports = (
+        replace(caption, locator={**caption.locator, 'caption_kind': 'unclassified'}),
+        replace(
+            caption,
+            locator={**caption.locator, 'raw_caption': 'must never be persisted'},
+        ),
+    )
+    with adapter_session() as db:
+        project = _project(db, 47)
+        estimate = _estimate(db, project, 47)
+        stored = _bound_report(db, project, content)
+        for unsafe_caption in unsafe_reports:
+            unsafe_report = replace(
+                report,
+                locators=tuple(
+                    unsafe_caption if item.locator_key == unsafe_caption.locator_key else item
+                    for item in report.locators
+                ),
+            )
+            with pytest.raises(ReportEvidenceAdapterError) as raised:
+                _register_report_evidence_locators(
+                    db,
+                    stored_file_id=stored.id,
+                    project_id=project.id,
+                    estimate_id=estimate.id,
+                    report=unsafe_report,
+                )
+            assert raised.value.code == 'REPORT_EVIDENCE_LOCATOR_INVALID'
 
 
 def test_locator_registration_and_scope_fail_closed_on_conflict_or_wrong_project() -> None:
