@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** c10fde9 (PR #145 merge, 2026-09-03)
+**Verified shared-main implementation:** 6c6e4e (PR #147 merge, 2026-09-03)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -106,6 +106,10 @@ Phases 8-14 and is not a technical selection or canonical output.
 PR #145 completes the controlled-UAT reader boundary. Non-administrators now need both proposal_review:read and an active, audited Project or exact-package grant; administrators can grant, reactivate, or revoke access. The package lifecycle remains proposal-only and grants no canonical, technical, commercial, lock, deployment, or release authority.
 
 The pull-request run 33741309950 and post-merge main run 33741595397 both passed. Broader or customer-facing access remains out of scope.
+
+#### Completed shared-main foundation - hash-bound technical source-document supersession (PR #147)
+
+PR #147 lets a new technical source document record a hash-bound historical predecessor only when the predecessor has an independent approval and its retained technical-evidence bytes still verify clean and unchanged. The new document remains Draft; the earlier document is not retired, and no TechnicalVariant activation, technical selection, pricing, lock, deployment, or release authority is added. PR validation run 33745988740 and post-merge main run 33746319101 passed.
 
 ### Completed and published foundations (not next actions)
 
@@ -283,8 +287,8 @@ downstream authority was added.
 ### Near-term actions
 
 1. Use the merged scoped-reader boundary only for controlled UAT. Any real report or provider operation still needs separate explicit authority; neither a grant nor a package record creates that authority.
-2. Complete extraction-assisted and manufacturer-neutral lineage, publication,
-   and supersession through separate migrations and reviews.
+2. Complete extraction-assisted and manufacturer-neutral lineage plus technical-release
+   publication and supersession through separate migrations and reviews.
 3. Independently validate physical, technical, quantity, labour, commercial,
    formula, recovery, and release integrity before Phase 12. Snapshot V2 already
    separates `generated_utc` from semantic identity while preserving full
@@ -349,7 +353,7 @@ clean-source rechecks, current approved/unexpired source-document and retained-
 file metadata checks, TechnicalVariant effective/expiry checks, verified-byte
 candidate extraction and Draft-only
 metadata refresh after a clean-source recheck, Draft-only imports, source-bound
-variants and revisions, source-locator review gates, source-bound manual Draft
+variants and revisions, hash-bound Draft source-document predecessor lineage, source-locator review gates, source-bound manual Draft
 materialisation from clean retained documents, active immutable technical
 releases, manifest eligibility checks, immutable published technical source-lineage
 checks, active hash-bound pricing records, read-only current-authority visibility
@@ -358,7 +362,7 @@ document/locator visibility for every TechnicalVariant revision, and structured
 immutable source-lineage visibility on TechnicalRelease detail screens.
 
 **Remaining:** extraction-assisted and manufacturer-neutral lineage, governed
-publication/supersession, clean-machine import/recovery, and full commercial
+technical-release publication/supersession, clean-machine import/recovery, and full commercial
 rate-inclusion/recovery rules.
 
 **Exit:** every technical/commercial decision cites an immutable authorised
