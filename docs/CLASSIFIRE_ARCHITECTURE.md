@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** c3c6258 (PR #151 merge, 2026-09-03)
+**Verified shared-main implementation:** 7a33f34 (PR #154 merge, 2026-09-03)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -76,7 +76,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0016_technical_document_supersession_lineage from PR #147 |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0017_xlsx_report_evidence_locators from PR #154 |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -139,7 +139,7 @@ Metadata-only checks are not equivalent to this atomic clean-byte contract.
 
 ### 5.2 Report normalisation
 
-The merged report adapter currently supports bounded PDF normalisation:
+The merged report adapter supports bounded PDF and XLSX normalisation:
 
 - report/page metadata hashes;
 - text blocks;
@@ -148,15 +148,20 @@ The merged report adapter currently supports bounded PDF normalisation:
 - tables;
 - annotations;
 - drawing locators/hashes;
-- embedded-image locators/hashes; and
+- embedded-image locators/hashes;
+- visible XLSX worksheet shape locators with no worksheet names;
+- non-empty XLSX cell position/category/hash locators with no cell values; and
 - stable report/page/item identities and ordered Defect scopes.
 
-Text, table, annotation, and strict caption items can provide transient documentary
-content. Drawing and embedded-image report items are locator/hash evidence without raw
-documentary content. Actual visual inference bytes come from a separately governed
-retained visual packet. A caption is only an exact retained text block with an explicit
-numbered category; it is not automatically associated with an image and cannot establish
-a physical fact. XLSX, DOCX, general report formats, and multi-report generalisability
+Text, table, annotation, strict caption, and selected XLSX cell items can provide
+transient documentary content. Drawing, embedded-image, and XLSX worksheet items are
+locator/hash evidence without raw documentary content. XLSX formula text is never
+executed. The XLSX boundary rejects hidden sheets, macros, external links,
+drawings/media/charts, comments, pivots, embedded objects, validation rules, and unsafe
+archive or worksheet shapes. Actual visual inference bytes come from a separately
+governed retained visual packet. A caption is only an exact retained text block with an
+explicit numbered category; it is not automatically associated with an image and cannot
+establish a physical fact. DOCX, general report formats, and multi-report generalisability
 remain planned.
 
 On shared main, cardinality is deterministic for the report scopes that already exist in the
@@ -444,6 +449,16 @@ that attempt to persist raw caption wording fail closed. This is no image link,
 no visual interpretation, and no physical, technical, commercial, canonical,
 lock, deployment, or release authority. PR #151 pull-request run 33753130859
 and post-merge main run 33753516838 passed.
+
+### Source-bound XLSX report locators on shared main (PR #154)
+
+PR #154 extends the existing exact-byte report boundary to retained `.xlsx` files.
+It adds forward-only migration `0017_xlsx_report_evidence_locators`, accepts only
+visible worksheet shape and non-empty cell position/category/hash locators, and
+re-extracts a selected cell transiently only after exact-source verification. It stores
+neither worksheet names nor cell values and never executes formulas. It adds no provider,
+canonical, technical, commercial, lock, deployment, or release authority. Pull-request
+run 33760112145 and post-merge main run 33760450512 passed.
 
 ### Near term
 
