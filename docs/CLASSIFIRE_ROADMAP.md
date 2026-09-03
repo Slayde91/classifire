@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** `abe8bde` (PR #142 merge, 2026-09-03)
+**Verified shared-main implementation:** a76e1bc (PR #144 merge, 2026-09-03)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -103,25 +103,15 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 #### Priority 0 - Add per-project proposal-review reader assignments
 
-**Current policy implementation:** CLASSIFIRE owns registered proposal-review
-package metadata. The minimum retention period is five years from registration.
-The separate lifecycle record, separate redaction view, legal-hold/deletion
-rules, content-safe locator contract, integrity refusal, and internal read-only
-reviewer screen are implemented by the proposal-review lifecycle candidate.
-It remains proposal-only and grants no canonical, technical, commercial, lock,
-deployment, or release authority.
+**Current shared-main policy:** CLASSIFIRE owns registered proposal-review package metadata. PR #144 supplies the five-year retention, separate redaction, legal-hold/deletion, content-safe locator, integrity-refusal, and internal read-only reviewer lifecycle. It remains proposal-only and grants no canonical, technical, commercial, lock, deployment, or release authority.
 
-**Objective:** replace the controlled-UAT role-wide reader map with explicit
-Project/package reader assignment and revocation before broader or
-customer-facing access.
+**Current candidate:** 0015_proposal_review_reader_assignments makes non-administrator reviewer visibility depend on an active auditable Project or exact-package grant. Administrators can grant, reactivate, and revoke access; the candidate is not shared-main evidence until its PR and post-merge CI pass.
 
-**Why this comes first:** a role-wide reader can see every package permitted to
-that role. The lifecycle controls are suitable for controlled UAT, but wider
-multi-project access needs a narrower access boundary.
+**Objective:** integrate and prove explicit Project/package reader assignment and revocation before broader or customer-facing access.
 
-**Scope:** human reader assignment and revocation only. Do not wire the runner
-to a real report, call a provider, create canonical state, select a technical
-system, price work, create a lock, deploy, or release.
+**Why this comes first:** role permission alone allowed every controlled-UAT package permitted to that role. Wider multi-project access needs a narrower explicit reader boundary.
+
+**Scope:** human reader assignment and revocation only. Do not wire the runner to a real report, call a provider, create canonical state, select a technical system, price work, create a lock, deploy, or release.
 
 ### Completed and published foundations (not next actions)
 
@@ -298,10 +288,7 @@ downstream authority was added.
 
 ### Near-term actions
 
-1. After the lifecycle contract is approved, implement a minimal immutable
-   proposal-review package record before adding a UI. It must retain safe hashes,
-   source/approval bindings, uncertainty, and a storage locator; test isolation,
-   redaction, tamper failure, and absence of canonical authority.
+1. Integrate and prove the isolated scoped-reader candidate. It must preserve immutable package evidence, require an active Project/package grant for non-administrator readers, audit grant/reactivation/revocation, and add no canonical authority.
 2. Complete extraction-assisted and manufacturer-neutral lineage, publication,
    and supersession through separate migrations and reviews.
 3. Independently validate physical, technical, quantity, labour, commercial,
@@ -423,11 +410,7 @@ exact-byte/locator/artifact-audit checks.
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
 runner preflight that rejects legacy/unbound packets before a no-tool port call.
 
-**Remaining:** legacy-scope transition or retirement, explicit per-project
-reader assignment before a wider rollout, caption/multi-format support,
-multi-report evidence-family accuracy, and user review. The registered-package
-lifecycle candidate supplies five-year retention, redaction, legal hold,
-integrity refusal, and a controlled-UAT read-only reviewer surface.
+**Remaining:** legacy-scope transition or retirement, scoped-reader candidate integration before a wider rollout, caption/multi-format support, multi-report evidence-family accuracy, and user review. Shared main supplies five-year retention, redaction, legal hold, integrity refusal, and a controlled-UAT read-only reviewer surface.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.

@@ -5,10 +5,9 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** `origin/main` at `abe8bdecc`
+**Reconciliation baseline:** origin/main at a76e1bc9fe2035aba30dd52ce1fd4c237e6c6208
 
-**Verified shared-main implementation:**
-`abe8bdecc4e1eb6d6dd956fc7e4b5871dadb2380` (PR #142)
+**Verified shared-main implementation:** a76e1bc9fe2035aba30dd52ce1fd4c237e6c6208 (PR #144)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -16,7 +15,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#142
+### Current shared main - PRs #104-#144
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -239,17 +238,9 @@ Shared main includes:
   release-lineage display, safe navigation from an eligible bound record to the
   existing read-only document record, and read-only revision-source visibility.
 
-Shared `main` packages migrations through
-`0013_report_defect_scope_admissions` (one head). The isolated proposal-review
-lifecycle candidate adds `0014_proposal_review_package_lifecycle`; it is not
-shared-main evidence until merged and GitHub-validated.
+Shared main packages migrations through 0014_proposal_review_package_lifecycle (one head). PR #144 merged the proposal-review lifecycle as a76e1bc9fe2035aba30dd52ce1fd4c237e6c6208; pull-request run 33734429630 and post-merge main run 33734739941 both succeeded. The isolated scoped-reader candidate adds 0015_proposal_review_reader_assignments; it is not shared-main evidence until its own PR is merged and GitHub validates the resulting main commit.
 
-PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
-`main` run `33516292114` passed on `b6409a5`, including tests and the one-head
-Alembic check. Each PR #105-#142 check and corresponding `main` run also passed,
-ending with run `33695636744` on `abe8bde`. GitHub's protection API returns HTTP
-403 because the private repository needs GitHub Pro or public visibility for
-that configuration; no required-check configuration is verified.
+PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#144 check and corresponding main run also passed, ending with run 33734739941 on a76e1bc. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
 ### Report-assessment integration limit
 
@@ -258,14 +249,7 @@ stable PDF locators/scopes, transient documentary context, report-aware runtime
 input, assessment/review controllers, and deterministic packages. The runner
 composes the whole sequence, but no supported CLI, API, or UI invokes it.
 
-The proposal-review lifecycle candidate adds a separate, CLASSIFIRE-owned
-metadata record and an internal human read-only `/proposal-reviews` surface for
-registered packages. It requires five-year minimum retention, separate
-redactions, legal-hold protection, deletion only after retention, safe locators,
-and tamper refusal with a content-safe audit event. It does not execute the
-runner and provides no canonical, technical, commercial, lock, deployment, or
-release authority. The present role-wide reader map is controlled-UAT only;
-per-project reader assignment is the next access-control step.
+Shared main has the CLASSIFIRE-owned proposal-review metadata record and internal human read-only /proposal-reviews surface from PR #144. It requires five-year minimum retention, separate redactions, legal-hold protection, deletion only after retention, safe locators, and tamper refusal with a content-safe audit event. The isolated scoped-reader candidate adds auditable active/revoked Project/package grants for eligible internal human readers; non-administrator list/detail access requires a matching active grant. It does not execute the runner and provides no canonical, technical, commercial, lock, deployment, or release authority.
 
 PDF text, table, and annotation content are supported. Drawings and embedded
 images are locator/hash-only in documentary context, with visual bytes supplied

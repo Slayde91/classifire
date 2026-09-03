@@ -4,8 +4,7 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main implementation:** `abe8bdecc4e1eb6d6dd956fc7e4b5871dadb2380`
-(merge of PR #142, 2026-09-03)
+**Verified shared-main implementation:** a76e1bc9fe2035aba30dd52ce1fd4c237e6c6208 (merge of PR #144, 2026-09-03)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -19,12 +18,12 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared `main` | PR #142 is merged at `abe8bde`; it includes the reviewed PR #104-#142 lineage. | Report governance, technical-source safeguards, structured release-lineage display, safe navigation from an eligible bound release record to the existing read-only source-document record, and per-revision source-lineage visibility are shared-main evidence. These changes add no technical, commercial, canonical, lock, deployment, or release authority. |
+| Shared main | PR #144 is merged at a76e1bc9fe2035aba30dd52ce1fd4c237e6c6208; it includes the reviewed PR #104-#144 lineage. | Report governance, technical-source safeguards, structured release-lineage display, safe navigation to eligible source documents, per-revision source-lineage visibility, and the proposal-review package lifecycle are shared-main evidence. These changes add no technical, commercial, canonical, lock, deployment, or release authority. |
 | Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
 | Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
 | Post-PR #104 maintenance series | PRs #105-#126 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, `5639e26`, `90f701c`, `ff1278f`, `7e26c2f`, and `b33246a`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, Mission Control task-response validation, hosted full-Ruff/Mypy/Bandit validation, and explicit Phase 8 invariant errors were strengthened without granting technical, commercial, lock, or release authority. |
 | Current technical-source safeguards | PRs #127-#142 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, `f9dea2a`, `f3c6d92`, `8c21f18`, `9771ff7`, `1e43756`, `caed547`, `075c9c5`, `981324e`, and `abe8bde`. | Verified-byte extraction, current-authority gates, immutable published source-lineage binding, factual reconciliation, structured release-lineage display, safe navigation to bound source-document records, and read-only revision-source visibility were added without granting technical selection, commercial, canonical, lock, or release authority. |
-| Subsequent hosted validation | Each PR #105-#142 check and each corresponding `main` push run passed; the latest is run `33695636744` on `abe8bde`. | Hosted validation is current through the PR #142 merge, while required-check configuration remains unverified. |
+| Subsequent hosted validation | Each PR #105-#144 check and each corresponding main push run passed; the latest is run 33734739941 on a76e1bc. | Hosted validation is current through the PR #144 merge, while required-check configuration remains unverified. |
 | Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
@@ -89,13 +88,9 @@ The following boundaries are implemented and tested for their stated scope:
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-Shared `main` packages migrations through
-`0013_report_defect_scope_admissions`. It has one head:
-`0013_report_defect_scope_admissions (legacy_adjudicated_lineage)`.
+Shared main packages migrations through 0014_proposal_review_package_lifecycle. It has one head: 0014_proposal_review_package_lifecycle (legacy_adjudicated_lineage). PR #144 merged that lifecycle as a76e1bc9fe2035aba30dd52ce1fd4c237e6c6208; its pull-request validation run 33734429630 and post-merge main run 33734739941 both succeeded.
 
-The isolated proposal-review lifecycle candidate adds
-`0014_proposal_review_package_lifecycle`. It is not shared-main evidence until
-its pull request is merged and GitHub validates the resulting `main` commit.
+The isolated scoped-reader candidate adds 0015_proposal_review_reader_assignments. It is not shared-main evidence until its own pull request is merged and GitHub validates the resulting main commit.
 
 ### Completed report-governance integration on shared main (PR #104)
 
@@ -166,7 +161,7 @@ prices work, creates a lock, or releases an estimate.
 | Area | Evidence-backed limit |
 | --- | --- |
 | Desk-quote evidence/output safety | PR #103's shared-main resolver requires a Project/Estimate-owned immutable `clean` `project_evidence` record, verifies retained bytes under the atomic reader, validates stored locators, re-hashes new and cached export bytes, and audits artifact hash/size. Missing, changed, wrong-purpose, cross-project, cross-estimate, unsafe-path, quarantined, and locator-mismatched evidence fails before export or audit. `technical_evidence` remains rejected pending a separately designed owned-byte contract. |
-| Report assessment operation | Shared main has one proposal-only application service, `execute_phase8_report_assessment_runner()`. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a human-approved expected-label manifest bound to report bytes and estimate; it checks the same approval on every V2 scope packet before an injected no-tool port call. The isolated lifecycle candidate adds a separate CLASSIFIRE-owned package metadata record, audited redaction/hold/deletion service, and read-only internal human UI; it is not wired to run assessment or a real-provider route, and grants no canonical, technical, commercial, lock, deployment, or release authority. |
+| Report assessment operation | Shared main has one proposal-only application service, execute_phase8_report_assessment_runner(). It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a human-approved expected-label manifest bound to report bytes and estimate; it checks the same approval on every V2 scope packet before an injected no-tool port call. Shared main also has the separate CLASSIFIRE-owned package metadata/redaction/hold/deletion lifecycle and internal read-only UI from PR #144. The isolated scoped-reader candidate narrows non-administrator visibility to explicit active Project/package grants. Neither surface runs assessment or a real-provider route, and neither grants canonical, technical, commercial, lock, deployment, or release authority. |
 | Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. The runner rejects legacy V1/unbound scope packets or a different approval record before any port call. Historical V1 packets remain verifiable. |
 | Report formats and content | Normalisation is PDF-only. Text, page, table, and annotation content are supported. Drawings and embedded images are locator/hash records with no documentary payload; visual bytes come through a separate governed packet. Caption extraction is explicitly rejected. XLSX, DOCX, and multi-report generalisation are not implemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
@@ -207,12 +202,12 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; `main` validation passed through PR #142; GitHub plan prevents branch-protection configuration. |
+| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #144; GitHub plan prevents branch-protection configuration. |
 | 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
-| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, atomic expected-label scope admission, and runner verification. The isolated lifecycle candidate adds package policy/persistence and a controlled-UAT read-only viewer. Legacy-scope transition, per-project reader assignment, caption/multi-format support, and an operator flow remain. |
+| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, atomic expected-label scope admission, runner verification, and the retained proposal-review package lifecycle. The isolated scoped-reader candidate adds explicit reader grants/revocation. Legacy-scope transition, reader-candidate integration, caption/multi-format support, and an operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
@@ -227,24 +222,15 @@ run has been consumed and must not be repeated without new authority.
 
 #### Priority 0 - Add per-project proposal-review reader assignments
 
-**Current policy implementation:** CLASSIFIRE owns registered proposal-review
-package metadata. The minimum retention period is five years from registration.
-The isolated lifecycle candidate adds the separate metadata and redaction
-records, legal-hold/deletion rules, safe locator contract, integrity refusal,
-and controlled-UAT internal read-only reviewer screen. It remains proposal-only
-and grants no canonical, technical, commercial, lock, deployment, or release
-authority.
+**Current shared-main policy:** CLASSIFIRE owns registered proposal-review package metadata. PR #144 supplies the separate metadata/redaction records, five-year retention, legal-hold/deletion rules, safe locator contract, integrity refusal, and internal read-only reviewer screen. It remains proposal-only and grants no canonical, technical, commercial, lock, deployment, or release authority.
 
-**Objective:** replace the controlled-UAT role-wide reader map with explicit
-Project/package assignments and revocation for project managers, technical
-reviewers, and records/compliance users before broader or customer-facing access.
+**Current candidate:** 0015_proposal_review_reader_assignments gives an administrator an auditable active/revoked grant for one eligible internal reader and either one Project or one retained package. A non-administrator needs both the existing human read permission and an active applicable grant before a list or detail view is returned. The candidate is not yet shared-main evidence.
 
-**Why:** the current authorization model is role-based rather than per-project.
-The lifecycle controls are therefore safe only for internal controlled UAT.
+**Objective:** integrate and prove scoped Project/package assignments and revocation before broader or customer-facing access.
 
-**Scope:** add only human assignment and revocation controls. Do not wire the
-runner to a real report, call a provider, create canonical state, select a
-technical system, price work, create a lock, deploy, or release.
+**Why:** role permission alone was sufficient in the shared-main controlled-UAT lifecycle. A multi-project rollout needs a narrower, explicit reader boundary.
+
+**Scope:** human assignment and revocation only. Do not wire the runner to a real report, call a provider, create canonical state, select a technical system, price work, create a lock, deploy, or release.
 
 #### Priority 2 - Close demonstrated Phase 2 and Phase 12 gaps separately
 
@@ -279,23 +265,13 @@ configuration.
 
 This reconciliation verified:
 
-- fetched Git refs, branch/upstream relationships, recent commits, open PRs, and
-  issues;
+- fetched Git refs, branch/upstream relationships, recent commits, open PRs, and issues;
 - the clean isolated worktree and the read-only legacy-root classification;
-- the single packaged Alembic head `0013_report_defect_scope_admissions`;
-- current models, API/UI routes, report services, storage/containment, technical
-  guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
-- PR #104's successful pull-request validation on `0f6c252` and successful
-  post-merge `main` validation on `b6409a5`, plus successful PR and `main`
-  validation through PR #142 / `abe8bde` (latest `main` run `33695636744`,
-  including full Bandit);
+- the single shared-main Alembic head 0014_proposal_review_package_lifecycle;
+- current models, API/UI routes, report services, storage/containment, technical guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
+- PR #104's successful pull-request validation on 0f6c252 and successful post-merge main validation on b6409a5, plus successful PR #144 validation on a76e1bc and post-merge main run 33734739941;
 - the retained assessment status and no-write/no-lock flags; and
-- the receipt code and tests that retain only validated safe transport codes in
-  new receipts while historical receipts remain verifiable; and
-- the snapshot V2 semantic/document hash contract, V1 compatibility, focused
-  synthetic regression suite, current scoped static checks, and the full
-  synthetic suite.
+- the receipt code and tests that retain only validated safe transport codes in new receipts while historical receipts remain verifiable; and
+- the snapshot V2 semantic/document hash contract, V1 compatibility, focused synthetic regression suite, current scoped static checks, and the full synthetic suite.
 
-No real report, retained image, Gateway token, provider response, customer data,
-database, canonical model, lock, deployment, or release was opened or changed by
-this documentation reconciliation.
+No real report, retained image, Gateway token, provider response, customer data, database, canonical model, lock, deployment, or release was opened or changed by this documentation reconciliation.

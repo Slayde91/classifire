@@ -10,16 +10,18 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, NoReturn
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..audit import record_audit
 from ..models import (
     Estimate,
+    Project,
     ProjectEvidence,
     ProposalReviewPackage,
     ProposalReviewPackageRedaction,
+    ProposalReviewReaderAssignment,
     ReportExpectedLabelManifest,
     User,
 )
@@ -36,6 +38,8 @@ PROPOSAL_REVIEW_PACKAGE_REDACTION_SCHEMA = "CLASSIFIRE-PROPOSAL-REVIEW-REDACTION
 PROPOSAL_REVIEW_PACKAGE_SAFE_LOCATOR_SCHEMA = "CLASSIFIRE-PROPOSAL-REVIEW-LOCATOR-v1"
 PROPOSAL_REVIEW_PACKAGE_RECORD_OWNER = "CLASSIFIRE"
 PROPOSAL_REVIEW_PACKAGE_RETENTION_YEARS = 5
+PROPOSAL_REVIEW_READER_SCOPE_PROJECT = "project"
+PROPOSAL_REVIEW_READER_SCOPE_PACKAGE = "package"
 
 _SAFE_CODE = re.compile(r"^[A-Z][A-Z0-9_]{0,99}$")
 _SHA256 = re.compile(r"^[0-9A-F]{64}$")
@@ -132,6 +136,66 @@ def _require_administrator(actor: User | None) -> User:
     return actor
 
 
+def _reader_assignment_scope(
+    *,
+    project_id: str | None,
+    proposal_review_package_id: str | None,
+    code: str,
+) -> tuple[str, str]:
+    if (project_id is None) == (proposal_review_package_id is None):
+        _fail(code)
+    if project_id is not None:
+        return PROPOSAL_REVIEW_READER_SCOPE_PROJECT, _text(project_id, code=code, maximum=36)
+    return PROPOSAL_REVIEW_READER_SCOPE_PACKAGE, _text(
+        proposal_review_package_id,
+        code=code,
+        maximum=36,
+    )
+
+
+def _require_assigned_reader(
+    db: Session,
+    *,
+    record: ProposalReviewPackage,
+    actor: User | None,
+) -> User:
+    actor = _require_reader(actor)
+    if actor.role == "administrator":
+        return actor
+    assignment_id = db.scalar(
+        select(ProposalReviewReaderAssignment.id).where(
+            ProposalReviewReaderAssignment.user_id == actor.id,
+            ProposalReviewReaderAssignment.active.is_(True),
+            or_(
+                and_(
+                    ProposalReviewReaderAssignment.scope_kind
+                    == PROPOSAL_REVIEW_READER_SCOPE_PROJECT,
+                    ProposalReviewReaderAssignment.project_id == record.project_id,
+                ),
+                and_(
+                    ProposalReviewReaderAssignment.scope_kind
+                    == PROPOSAL_REVIEW_READER_SCOPE_PACKAGE,
+                    ProposalReviewReaderAssignment.proposal_review_package_id == record.id,
+                ),
+            ),
+        )
+    )
+    if assignment_id is None:
+        _fail("PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_REQUIRED")
+    return actor
+
+
+def _stored_utc(value: datetime, *, code: str) -> datetime:
+    """Normalise a database timestamp without mutating stored proposal metadata."""
+
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    try:
+        return value.astimezone(UTC)
+    except ValueError as exc:
+        raise ProposalReviewPackageError(code) from exc
+
+
 def _retention_until(value: datetime) -> datetime:
     if value.tzinfo is None:
         _fail("PROPOSAL_REVIEW_PACKAGE_REGISTERED_AT_INVALID")
@@ -206,16 +270,13 @@ def _safe_locator(record: ProposalReviewPackage | Mapping[str, Any]) -> dict[str
         "project_evidence_id": value("project_evidence_id"),
         "report_sha256": value("report_sha256"),
         "approved_expected_label_manifest_id": value("approved_expected_label_manifest_id"),
-        "approved_expected_label_manifest_sha256": value(
-            "approved_expected_label_manifest_sha256"
-        ),
+        "approved_expected_label_manifest_sha256": value("approved_expected_label_manifest_sha256"),
         "approval_reference": value("approval_reference"),
         "package_id": value("package_id"),
         "package_sha256": value("package_sha256"),
         "package_manifest_sha256": value("package_manifest_sha256"),
         "completion_receipt_sha256": value("completion_receipt_sha256"),
     }
-
 
 
 def _approved_label_file(package: Phase8ReportReviewPackage) -> dict[str, Any]:
@@ -450,6 +511,14 @@ def _validate_record(db: Session, record: ProposalReviewPackage) -> dict[str, An
     evidence = db.get(ProjectEvidence, record.project_evidence_id)
     estimate = db.get(Estimate, record.estimate_id)
     approved = db.get(ReportExpectedLabelManifest, record.approved_expected_label_manifest_id)
+    retention_until = _stored_utc(
+        record.retention_until,
+        code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+    )
+    created_at = _stored_utc(
+        record.created_at,
+        code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+    )
     if (
         evidence is None
         or estimate is None
@@ -462,15 +531,12 @@ def _validate_record(db: Session, record: ProposalReviewPackage) -> dict[str, An
         or approved.estimate_id != record.estimate_id
         or approved.manifest_sha256 != record.approved_expected_label_manifest_sha256
         or approved.approval_reference != record.approval_reference
-        or record.retention_until.tzinfo is None
-        or record.created_at.tzinfo is None
-        or record.retention_until < record.created_at
+        or retention_until < created_at
         or (record.legal_hold_active and record.legal_hold_reason_code is None)
         or (not record.legal_hold_active and record.legal_hold_reason_code is not None)
     ):
         _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
     return summary
-
 
 
 def register_proposal_review_package(
@@ -571,6 +637,7 @@ def create_proposal_review_package_redaction(
     record = db.get(ProposalReviewPackage, proposal_review_package_id)
     if record is None:
         _fail("PROPOSAL_REVIEW_PACKAGE_NOT_FOUND")
+    _require_assigned_reader(db, record=record, actor=actor)
     summary = _validate_record(db, record)
     if isinstance(redacted_scope_ids, (str, bytes)):
         _fail("PROPOSAL_REVIEW_PACKAGE_REDACTION_INVALID")
@@ -612,9 +679,7 @@ def create_proposal_review_package_redaction(
     try:
         db.flush()
     except IntegrityError as exc:
-        raise ProposalReviewPackageError(
-            "PROPOSAL_REVIEW_PACKAGE_REDACTION_CONFLICT"
-        ) from exc
+        raise ProposalReviewPackageError("PROPOSAL_REVIEW_PACKAGE_REDACTION_CONFLICT") from exc
     record_audit(
         db,
         actor=actor,
@@ -663,6 +728,236 @@ def _validate_redaction(
     return expected
 
 
+def grant_proposal_review_reader_assignment(
+    db: Session,
+    *,
+    user_id: str,
+    project_id: str | None = None,
+    proposal_review_package_id: str | None = None,
+    reason_code: str,
+    actor: User | None,
+) -> tuple[ProposalReviewReaderAssignment, bool]:
+    """Grant or reactivate exactly one human reader scope without changing a package."""
+
+    actor = _require_administrator(actor)
+    scope_kind, target_id = _reader_assignment_scope(
+        project_id=project_id,
+        proposal_review_package_id=proposal_review_package_id,
+        code="PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_INVALID",
+    )
+    reader = db.get(
+        User,
+        _text(user_id, code="PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_INVALID", maximum=36),
+    )
+    if (
+        reader is None
+        or reader.is_active is not True
+        or not has_permission(reader, "proposal_review:read")
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_INVALID")
+    reason = _safe_code(reason_code, code="PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_INVALID")
+    if scope_kind == PROPOSAL_REVIEW_READER_SCOPE_PROJECT:
+        project = db.get(Project, target_id)
+        if project is None:
+            _fail("PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_NOT_FOUND")
+        project_id, proposal_review_package_id, audit_project_id = project.id, None, project.id
+    else:
+        record = db.get(ProposalReviewPackage, target_id)
+        if record is None:
+            _fail("PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_NOT_FOUND")
+        _validate_record(db, record)
+        project_id, proposal_review_package_id, audit_project_id = (
+            None,
+            record.id,
+            record.project_id,
+        )
+    existing = db.scalar(
+        select(ProposalReviewReaderAssignment).where(
+            ProposalReviewReaderAssignment.user_id == reader.id,
+            ProposalReviewReaderAssignment.scope_kind == scope_kind,
+            ProposalReviewReaderAssignment.project_id == project_id,
+            ProposalReviewReaderAssignment.proposal_review_package_id == proposal_review_package_id,
+        )
+    )
+    now = datetime.now(UTC)
+    if existing is not None and existing.active:
+        return existing, False
+    previous = None
+    if existing is None:
+        assignment = ProposalReviewReaderAssignment(
+            user_id=reader.id,
+            scope_kind=scope_kind,
+            project_id=project_id,
+            proposal_review_package_id=proposal_review_package_id,
+            active=True,
+            granted_by_user_id=actor.id,
+            granted_at=now,
+        )
+        db.add(assignment)
+        action = "grant_proposal_review_reader_assignment"
+    else:
+        assignment = existing
+        previous = {
+            "active": assignment.active,
+            "revoked_at": assignment.revoked_at.isoformat() if assignment.revoked_at else None,
+            "revocation_reason_code": assignment.revocation_reason_code,
+        }
+        assignment.active = True
+        assignment.granted_by_user_id = actor.id
+        assignment.granted_at = now
+        assignment.revoked_by_user_id = None
+        assignment.revoked_at = None
+        assignment.revocation_reason_code = None
+        action = "reactivate_proposal_review_reader_assignment"
+    try:
+        db.flush()
+    except IntegrityError as exc:
+        raise ProposalReviewPackageError(
+            "PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_CONFLICT"
+        ) from exc
+    record_audit(
+        db,
+        actor=actor,
+        action=action,
+        entity_type="proposal_review_reader_assignment",
+        entity_id=assignment.id,
+        project_id=audit_project_id,
+        previous_value=previous,
+        new_value={
+            "user_id": reader.id,
+            "scope_kind": scope_kind,
+            "project_id": project_id,
+            "proposal_review_package_id": proposal_review_package_id,
+            "active": True,
+            "reason_code": reason,
+            "proposal_only": True,
+        },
+        reason="Granted only controlled proposal-review reader access.",
+    )
+    return assignment, True
+
+
+def revoke_proposal_review_reader_assignment(
+    db: Session,
+    *,
+    proposal_review_reader_assignment_id: str,
+    record: ProposalReviewPackage,
+    reason_code: str,
+    actor: User | None,
+) -> tuple[ProposalReviewReaderAssignment, bool]:
+    """Revoke one reader assignment without altering package evidence or review content."""
+
+    actor = _require_administrator(actor)
+    assignment = db.get(ProposalReviewReaderAssignment, proposal_review_reader_assignment_id)
+    if assignment is None:
+        _fail("PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_NOT_FOUND")
+    _validate_record(db, record)
+    if (
+        (
+            assignment.scope_kind == PROPOSAL_REVIEW_READER_SCOPE_PROJECT
+            and assignment.project_id != record.project_id
+        )
+        or (
+            assignment.scope_kind == PROPOSAL_REVIEW_READER_SCOPE_PACKAGE
+            and assignment.proposal_review_package_id != record.id
+        )
+        or assignment.scope_kind
+        not in {
+            PROPOSAL_REVIEW_READER_SCOPE_PROJECT,
+            PROPOSAL_REVIEW_READER_SCOPE_PACKAGE,
+        }
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_NOT_FOUND")
+    if not assignment.active:
+        return assignment, False
+    reason = _safe_code(reason_code, code="PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_INVALID")
+    audit_project_id = assignment.project_id
+    if assignment.proposal_review_package_id is not None:
+        package_record = db.get(
+            ProposalReviewPackage,
+            assignment.proposal_review_package_id,
+        )
+        if package_record is None:
+            _fail("PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_NOT_FOUND")
+        audit_project_id = package_record.project_id
+    assignment.active = False
+    assignment.revoked_by_user_id = actor.id
+    assignment.revoked_at = datetime.now(UTC)
+    assignment.revocation_reason_code = reason
+    db.flush()
+    record_audit(
+        db,
+        actor=actor,
+        action="revoke_proposal_review_reader_assignment",
+        entity_type="proposal_review_reader_assignment",
+        entity_id=assignment.id,
+        project_id=audit_project_id,
+        previous_value={"active": True},
+        new_value={
+            "user_id": assignment.user_id,
+            "scope_kind": assignment.scope_kind,
+            "project_id": assignment.project_id,
+            "proposal_review_package_id": assignment.proposal_review_package_id,
+            "active": False,
+            "revocation_reason_code": reason,
+            "proposal_only": True,
+        },
+        reason="Revoked only controlled proposal-review reader access.",
+    )
+    return assignment, True
+
+
+def list_proposal_review_reader_assignments(
+    db: Session,
+    *,
+    record: ProposalReviewPackage,
+    actor: User | None,
+) -> tuple[ProposalReviewReaderAssignment, ...]:
+    """List only Project and exact-package assignments relevant to one package."""
+
+    _require_administrator(actor)
+    return tuple(
+        db.scalars(
+            select(ProposalReviewReaderAssignment)
+            .where(
+                or_(
+                    and_(
+                        ProposalReviewReaderAssignment.scope_kind
+                        == PROPOSAL_REVIEW_READER_SCOPE_PROJECT,
+                        ProposalReviewReaderAssignment.project_id == record.project_id,
+                    ),
+                    and_(
+                        ProposalReviewReaderAssignment.scope_kind
+                        == PROPOSAL_REVIEW_READER_SCOPE_PACKAGE,
+                        ProposalReviewReaderAssignment.proposal_review_package_id == record.id,
+                    ),
+                )
+            )
+            .order_by(
+                ProposalReviewReaderAssignment.active.desc(),
+                ProposalReviewReaderAssignment.created_at.desc(),
+            )
+        ).all()
+    )
+
+
+def list_eligible_proposal_review_readers(
+    db: Session,
+    *,
+    actor: User | None,
+) -> tuple[User, ...]:
+    """Return eligible active internal human readers for an administrator-only form."""
+
+    _require_administrator(actor)
+    return tuple(
+        user
+        for user in db.scalars(
+            select(User).where(User.is_active.is_(True)).order_by(User.full_name)
+        ).all()
+        if has_permission(user, "proposal_review:read")
+    )
+
+
 def read_proposal_review_package(
     db: Session,
     *,
@@ -679,6 +974,7 @@ def read_proposal_review_package(
     )
     if record is None:
         _fail("PROPOSAL_REVIEW_PACKAGE_NOT_FOUND")
+    _require_assigned_reader(db, record=record, actor=actor)
     summary = _validate_record(db, record)
     if redaction_id is None:
         return ProposalReviewPackageView(record, summary, record.safe_locator_json)
@@ -701,17 +997,35 @@ def list_proposal_review_packages(
 ) -> tuple[ProposalReviewPackage, ...]:
     """List metadata only after the human-only reader gate."""
 
-    _require_reader(actor)
+    actor = _require_reader(actor)
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 500:
         _fail("PROPOSAL_REVIEW_PACKAGE_LIST_INVALID")
+    statement = select(ProposalReviewPackage)
+    if actor.role != "administrator":
+        statement = statement.join(
+            ProposalReviewReaderAssignment,
+            or_(
+                and_(
+                    ProposalReviewReaderAssignment.scope_kind
+                    == PROPOSAL_REVIEW_READER_SCOPE_PROJECT,
+                    ProposalReviewReaderAssignment.project_id == ProposalReviewPackage.project_id,
+                ),
+                and_(
+                    ProposalReviewReaderAssignment.scope_kind
+                    == PROPOSAL_REVIEW_READER_SCOPE_PACKAGE,
+                    ProposalReviewReaderAssignment.proposal_review_package_id
+                    == ProposalReviewPackage.id,
+                ),
+            ),
+        ).where(
+            ProposalReviewReaderAssignment.user_id == actor.id,
+            ProposalReviewReaderAssignment.active.is_(True),
+        )
     return tuple(
-        db.scalars(
-            select(ProposalReviewPackage)
-            .order_by(ProposalReviewPackage.created_at.desc())
-            .limit(limit)
-        ).all()
+        db.scalars(statement.order_by(ProposalReviewPackage.created_at.desc()).limit(limit))
+        .unique()
+        .all()
     )
-
 
 
 def record_proposal_review_package_tamper(
@@ -843,9 +1157,13 @@ __all__ = [
     "ProposalReviewPackageView",
     "create_proposal_review_package_redaction",
     "delete_expired_proposal_review_package",
+    "grant_proposal_review_reader_assignment",
+    "list_eligible_proposal_review_readers",
+    "list_proposal_review_reader_assignments",
     "list_proposal_review_packages",
     "read_proposal_review_package",
     "record_proposal_review_package_tamper",
+    "revoke_proposal_review_reader_assignment",
     "register_proposal_review_package",
     "set_proposal_review_package_legal_hold",
 ]

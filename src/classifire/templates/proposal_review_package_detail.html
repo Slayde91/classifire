@@ -1,13 +1,146 @@
 {% extends "base.html" %}
-{% block title %}Proposal review {{ view.record.package_id }} - CLASSIFIRE{% endblock %}
+{% block title %}Proposal review {{ view.record.package_id }}{% endblock %}
 {% block heading %}Proposal review package{% endblock %}
 {% block content %}
-<div class="callout"><strong>Proposal-only, read-only record.</strong> This screen is an integrity-checked human review view. It cannot run assessment, change evidence, approve a model, choose a technical system, price work, create a lock, deploy, or release.</div>
-{% if view.redaction %}<div class="alert alert-success">Showing the separate redacted view: {{ view.redaction.redaction_reason_code }}. The original package record remains unchanged.</div>{% endif %}
-<section class="panel"><div class="panel-head"><h2>Record</h2><span class="muted">Owner: {{ view.record.record_owner }}</span></div><dl class="detail-list"><dt>Package</dt><dd class="mono">{{ view.record.package_id }}</dd><dt>Estimate</dt><dd class="mono">{{ view.record.estimate_id }}</dd><dt>Review scopes</dt><dd>{{ view.reviewer_summary.get('visible_defect_count', view.record.selected_defect_count) }}</dd><dt>Retention until</dt><dd>{{ view.record.retention_until.strftime('%Y-%m-%d') }}</dd><dt>Legal hold</dt><dd>{% if view.record.legal_hold_active %}{{ view.record.legal_hold_reason_code }}{% else %}None{% endif %}</dd></dl></section>
-<section class="panel"><div class="panel-head"><h2>Reviewer outcomes</h2><span class="muted">Safe labels and unresolved states only</span></div><div class="table-wrap"><table><thead><tr><th>Defect</th><th>Report label</th><th>Review status</th><th>Blocker</th></tr></thead><tbody>
-{% for outcome in view.reviewer_summary.outcomes %}<tr><td>{{ outcome.defect_reference }}</td><td>{{ outcome.report_defect_label }}</td><td><span class="badge badge-draft">{{ outcome.review_status }}</span></td><td>{{ outcome.blocker_code or '-' }}</td></tr>{% else %}<tr><td colspan="4" class="empty">Every scope is omitted in this redacted view.</td></tr>{% endfor %}
-</tbody></table></div></section>
-<section class="panel"><div class="panel-head"><h2>Safe locator</h2><span class="muted">Identifiers and hashes only - never a storage path</span></div><dl class="detail-list"><dt>Report evidence</dt><dd class="mono">{{ view.safe_locator.project_evidence_id }}</dd><dt>Approved label manifest</dt><dd class="mono">{{ view.safe_locator.approved_expected_label_manifest_id }}</dd><dt>Package manifest hash</dt><dd class="mono">{{ view.safe_locator.package_manifest_sha256 }}</dd><dt>Completion receipt hash</dt><dd class="mono">{{ view.safe_locator.completion_receipt_sha256 }}</dd></dl></section>
-{% if redactions %}<section class="panel"><div class="panel-head"><h2>Separate redacted views</h2></div><ul>{% for item in redactions %}<li><a href="/proposal-reviews/{{ view.record.package_id }}?redaction_id={{ item.id }}">{{ item.redaction_reason_code }} ({{ item.created_at.strftime('%Y-%m-%d') }})</a></li>{% endfor %}</ul></section>{% endif %}
+<div class="callout">
+  <strong>Proposal-only, read-only record.</strong> This view is integrity-checked metadata.
+  It does not approve a physical model, technical system, price, lock, deployment, or release.
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2 class="mono">{{ view.record.package_id }}</h2>
+    <span class="muted">CLASSIFIRE-owned &middot; retained until {{ view.record.retention_until.strftime('%Y-%m-%d') }}</span>
+  </div>
+  <dl class="detail-list">
+    <dt>Estimate</dt><dd class="mono">{{ view.record.estimate_id }}</dd>
+    <dt>Approved label manifest</dt><dd class="mono">{{ view.record.approved_expected_label_manifest_id }}</dd>
+    <dt>Approval reference</dt><dd>{{ view.record.approval_reference }}</dd>
+    <dt>Record state</dt>
+    <dd>
+      {% if view.record.legal_hold_active %}
+      <span class="badge badge-rejected">Legal hold</span>
+      {% else %}
+      <span class="badge badge-draft">Retained</span>
+      {% endif %}
+    </dd>
+  </dl>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Safe review outcomes</h2>
+    <span class="muted">{{ view.reviewer_summary.selected_defect_count }} selected scope(s)</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Defect</th><th>Approved label</th><th>Review state</th><th>Safe blocker code</th></tr></thead>
+      <tbody>
+        {% for outcome in view.reviewer_summary.outcomes %}
+        <tr>
+          <td>{{ outcome.defect_reference }}</td>
+          <td>{{ outcome.report_defect_label }}</td>
+          <td><span class="badge badge-draft">{{ outcome.review_status }}</span></td>
+          <td>{{ outcome.blocker_code or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">Every scope is omitted in this redacted view.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Safe locator</h2>
+    <span class="muted">Identifiers and hashes only - never a storage path</span>
+  </div>
+  <dl class="detail-list">
+    <dt>Report evidence</dt><dd class="mono">{{ view.safe_locator.project_evidence_id }}</dd>
+    <dt>Approved label manifest</dt><dd class="mono">{{ view.safe_locator.approved_expected_label_manifest_id }}</dd>
+    <dt>Package manifest hash</dt><dd class="mono">{{ view.safe_locator.package_manifest_sha256 }}</dd>
+    <dt>Completion receipt hash</dt><dd class="mono">{{ view.safe_locator.completion_receipt_sha256 }}</dd>
+  </dl>
+</section>
+
+{% if redactions %}
+<section class="panel">
+  <div class="panel-head"><h2>Separate redacted views</h2></div>
+  <ul>
+    {% for item in redactions %}
+    <li>
+      <a href="/proposal-reviews/{{ view.record.package_id }}?redaction_id={{ item.id }}">
+        {{ item.redaction_reason_code }} ({{ item.created_at.strftime('%Y-%m-%d') }})
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if user.role == 'administrator' %}
+<section class="panel">
+  <div class="panel-head">
+    <h2>Reader assignments</h2>
+    <span class="muted">Access only; this does not run or approve anything.</span>
+  </div>
+  <form method="post" action="/proposal-reviews/{{ view.record.package_id }}/reader-assignments" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>
+      Internal reader
+      <select name="user_id" required>
+        {% for reader in eligible_readers %}
+        <option value="{{ reader.id }}">{{ reader.full_name }} &middot; {{ reader.role }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Scope
+      <select name="scope_kind">
+        <option value="package">This package only</option>
+        <option value="project">Every package in this Project</option>
+      </select>
+    </label>
+    <label>
+      Safe reason code
+      <input name="reason_code" value="REVIEW_ACCESS" required>
+    </label>
+    <div><button class="button button-secondary">Grant reader access</button></div>
+  </form>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Reader ID</th><th>Scope</th><th>State</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for assignment in reader_assignments %}
+        <tr>
+          <td class="mono">{{ assignment.user_id }}</td>
+          <td>{{ assignment.scope_kind }}</td>
+          <td>
+            {% if assignment.active %}
+            <span class="badge badge-approved">Active</span>
+            {% else %}
+            <span class="badge badge-rejected">Revoked</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if assignment.active %}
+            <form method="post" action="/proposal-reviews/{{ view.record.package_id }}/reader-assignments/{{ assignment.id }}/revoke" class="inline-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <input name="reason_code" value="ACCESS_REVOKED" required>
+              <button class="button button-danger button-small">Revoke</button>
+            </form>
+            {% else %}
+            <span class="muted">{{ assignment.revocation_reason_code }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">No scoped reader assignments.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
 {% endblock %}
