@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** 7a33f34 (PR #154 merge, 2026-09-03)
+**Verified shared-main implementation:** 82d288c (PR #156 merge, 2026-09-03)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -76,7 +76,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0017_xlsx_report_evidence_locators from PR #154 |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0018_docx_report_evidence_locators from PR #156 |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -139,7 +139,7 @@ Metadata-only checks are not equivalent to this atomic clean-byte contract.
 
 ### 5.2 Report normalisation
 
-The merged report adapter supports bounded PDF and XLSX normalisation:
+The merged report adapter supports bounded PDF, XLSX, and DOCX normalisation:
 
 - report/page metadata hashes;
 - text blocks;
@@ -150,18 +150,19 @@ The merged report adapter supports bounded PDF and XLSX normalisation:
 - drawing locators/hashes;
 - embedded-image locators/hashes;
 - visible XLSX worksheet shape locators with no worksheet names;
-- non-empty XLSX cell position/category/hash locators with no cell values; and
+- non-empty XLSX cell position/category/hash locators with no cell values;
+- structural DOCX document locators, visible body paragraph locators, and simple body table locators, all with no document text or table values; and
 - stable report/page/item identities and ordered Defect scopes.
 
-Text, table, annotation, strict caption, and selected XLSX cell items can provide
+Text, table, annotation, strict caption, selected XLSX cell, and selected DOCX paragraph/table items can provide
 transient documentary content. Drawing, embedded-image, and XLSX worksheet items are
 locator/hash evidence without raw documentary content. XLSX formula text is never
 executed. The XLSX boundary rejects hidden sheets, macros, external links,
 drawings/media/charts, comments, pivots, embedded objects, validation rules, and unsafe
-archive or worksheet shapes. Actual visual inference bytes come from a separately
+archive or worksheet shapes. The DOCX boundary rejects encrypted or unsafe archives, macros, external relationships, embedded or hidden content, tracked changes, fields, hyperlinks, drawings, and unsupported body structures. Actual visual inference bytes come from a separately
 governed retained visual packet. A caption is only an exact retained text block with an
 explicit numbered category; it is not automatically associated with an image and cannot
-establish a physical fact. DOCX, general report formats, and multi-report generalisability
+establish a physical fact. General report formats and multi-report generalisability
 remain planned.
 
 On shared main, cardinality is deterministic for the report scopes that already exist in the
@@ -418,7 +419,7 @@ not technical, commercial, canonical, lock, deployment, or release authority.
 
 ### Proposal-review lifecycle and scoped-reader access on shared main
 
-The adopted lifecycle policy names CLASSIFIRE as records owner and sets a minimum five-year retention period from registration. PR #144 merged the narrow metadata and separate immutable-redaction records. PR #145 merged auditable active/revoked reader grants for one Project or one exact retained package. They retain only hash-bound identifiers, safe locators, safe outcome states, uncertainty, and receipt/source/approval bindings - never report bytes, image bytes, prompts, provider output, filesystem paths, signed URLs, credentials, or tokens.
+The adopted lifecycle policy names CLASSIFIRE as records owner and sets a five-year retention period from registration; an active legal hold prevents deletion beyond that period. PR #144 merged the narrow metadata and separate immutable-redaction records. PR #145 merged auditable active/revoked reader grants for one Project or one exact retained package. They retain only hash-bound identifiers, safe locators, safe outcome states, uncertainty, and receipt/source/approval bindings - never report bytes, image bytes, prompts, provider output, filesystem paths, signed URLs, credentials, or tokens.
 
 Administrators can register a record, create a redaction, place or remove a legal hold, delete an expired non-held record, and manage reader grants. A non-administrator needs both the existing human read permission and an active matching grant before listing or reading a package. Every read verifies hashes and relational bindings; a mismatch is refused and produces a content-safe tamper audit event.
 
@@ -459,6 +460,19 @@ re-extracts a selected cell transiently only after exact-source verification. It
 neither worksheet names nor cell values and never executes formulas. It adds no provider,
 canonical, technical, commercial, lock, deployment, or release authority. Pull-request
 run 33760112145 and post-merge main run 33760450512 passed.
+
+### Source-bound DOCX report locators on shared main (PR #156)
+
+PR #156 extends the existing exact-byte report boundary to retained `.docx` files.
+It adds forward-only migration `0018_docx_report_evidence_locators`, accepts only
+structural document, visible body paragraph, and simple body table locators, and
+re-extracts a selected paragraph or table transiently only after exact-source
+verification. It stores positions, counts, and hashes--never document text or table
+values--and fails closed on encrypted or unsafe archives, macros, external
+relationships, embedded or hidden content, tracked changes, fields, hyperlinks,
+drawings, and unsupported body structures. It adds no provider, canonical, technical,
+commercial, lock, deployment, or release authority. Pull-request run 33765731885 and
+post-merge main run 33766069162 passed.
 
 ### Near term
 
