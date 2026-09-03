@@ -1,6 +1,6 @@
 # Proposal-review package lifecycle policy
 
-**Status:** adopted for controlled CLASSIFIRE UAT on 2026-09-03. The scoped reader-assignment implementation is an isolated candidate until its own pull request is merged and GitHub validates main.
+**Status:** adopted for controlled CLASSIFIRE UAT on 2026-09-03. PR #145 merged and GitHub validated the scoped reader-assignment implementation on main.
 
 This policy covers a generated Phase 8 report-review package. It does not turn a proposal into a physical model, a technical selection, a price, a lock, a deployment, or a released output.
 
