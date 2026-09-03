@@ -20,11 +20,13 @@ import pymupdf
 
 from .phase8_visual_proposal import canonical_json_sha256
 from .report_evidence_adapter import (
+    REPORT_DOCX_MEDIA_TYPE,
     REPORT_XLSX_MEDIA_TYPE,
     NormalisedReportEvidence,
     ReportDefectEvidencePacket,
     ReportEvidenceAdapterError,
     normalise_verified_report,
+    reextract_verified_docx_report_item,
     reextract_verified_xlsx_report_item,
     validate_report_defect_evidence_packet,
 )
@@ -37,7 +39,7 @@ _MAX_TABLE_ROWS = 2_000
 _MAX_TABLE_COLUMNS = 200
 _MAX_TABLE_CELLS = 100_000
 _MAX_CONTEXT_CHARACTERS = 4_000_000
-_NON_TEXT_ITEM_KINDS = frozenset({'drawing', 'image', 'worksheet'})
+_NON_TEXT_ITEM_KINDS = frozenset({'document', 'drawing', 'image', 'worksheet'})
 _NOOP_FLAGS = (
     'canonical_submission_performed',
     'technical_selection_performed',
@@ -173,14 +175,14 @@ def _payload_hash_and_characters(
             _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
         metadata_hashes = {key: _text_sha256(value) for key, value in fields.items()}
         return _canonical_sha256(metadata_hashes), character_count
-    if item_kind in {'page', 'text', 'caption'}:
+    if item_kind in {'page', 'text', 'caption', 'paragraph'}:
         if set(content) != {'text'}:
             _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
         text = _normalised_text(content['text'])
         if content['text'] != text:
             _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
         return _text_sha256(text), len(text)
-    if item_kind == 'table':
+    if item_kind in {'table', 'document_table'}:
         if set(content) != {'rows'}:
             _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
         rows, character_count = _table_rows(content['rows'])
@@ -417,12 +419,16 @@ def build_phase8_report_documentary_context(
         ) from exc
     _source_matches_packet(packet, artifacts, source)
     media_type = verified_content.media_type
+    is_docx = (
+        isinstance(media_type, str)
+        and media_type.split(';', 1)[0].strip().lower() == REPORT_DOCX_MEDIA_TYPE
+    )
     is_xlsx = (
         isinstance(media_type, str)
         and media_type.split(';', 1)[0].strip().lower() == REPORT_XLSX_MEDIA_TYPE
     )
     document: Any | None = None
-    if not is_xlsx:
+    if not is_docx and not is_xlsx:
         try:
             document = pymupdf.open(stream=verified_content.content, filetype='pdf')
         except Exception as exc:
@@ -434,16 +440,22 @@ def build_phase8_report_documentary_context(
         character_count = 0
         for artifact in artifacts:
             try:
-                content = (
-                    reextract_verified_xlsx_report_item(
+                if is_docx:
+                    content = reextract_verified_docx_report_item(
                         verified_content,
                         locator_key=artifact['locator_key'],
                         item_kind=artifact['item_kind'],
                         locator=artifact['locator'],
                     )
-                    if is_xlsx
-                    else _content(document, artifact)
-                )
+                elif is_xlsx:
+                    content = reextract_verified_xlsx_report_item(
+                        verified_content,
+                        locator_key=artifact['locator_key'],
+                        item_kind=artifact['item_kind'],
+                        locator=artifact['locator'],
+                    )
+                else:
+                    content = _content(document, artifact)
             except ReportEvidenceAdapterError as exc:
                 raise Phase8ReportDocumentaryContextError(
                     'REPORT_DOCUMENTARY_CONTEXT_SOURCE_MISMATCH'

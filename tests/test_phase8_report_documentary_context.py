@@ -10,6 +10,7 @@ import pymupdf
 import pytest
 from test_report_evidence_adapter import (
     _caption_report_content,
+    _docx_report_content,
     _report_content,
     _xlsx_report_content,
 )
@@ -240,6 +241,36 @@ def test_context_reextracts_only_selected_xlsx_cells_from_exact_bytes() -> None:
         'content hash is invalid' in error
         for error in validate_phase8_report_documentary_context(forged)
     )
+
+
+def test_context_reextracts_selected_docx_paragraphs_and_tables_from_exact_bytes() -> None:
+    content = _docx_report_content()
+    packet = _packet(content)
+
+    context = build_phase8_report_documentary_context(
+        report_packet=packet,
+        verified_content=content,
+    )
+
+    assert validate_phase8_report_documentary_context(context) == []
+    assert [item.item_kind for item in context.items] == [
+        'document',
+        'paragraph',
+        'document_table',
+        'paragraph',
+    ]
+    assert context.items[0].content is None
+    assert context.items[1].content == {
+        'text': 'Private DOCX paragraph for Defect D-001.'
+    }
+    assert context.items[2].content == {
+        'rows': [
+            ['Private table left.', 'Private table right.'],
+            ['Follow-up 1.', 'Follow-up 2.'],
+        ]
+    }
+    assert 'Private DOCX paragraph' not in json.dumps(context.manifest, sort_keys=True)
+    assert 'Private table left' not in json.dumps(context.manifest, sort_keys=True)
 
 def test_context_rejects_mismatched_or_tampered_content() -> None:
     content = _report_content()

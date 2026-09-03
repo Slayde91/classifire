@@ -56,5 +56,5 @@ def test_proposal_review_package_lifecycle_migration_upgrades_0013_database(
     )
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0017_xlsx_report_evidence_locators"
+            "0018_docx_report_evidence_locators"
         )
