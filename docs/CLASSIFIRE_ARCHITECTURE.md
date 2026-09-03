@@ -76,11 +76,11 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0020_proposal_review_family_packages |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0021_proposal_review_annotations |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
-| Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only runner, and retained single-report/family package lifecycle | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; the controller requires exact-approved V2 scopes before package assembly; no CLI, API, or UI invokes the runner and no real-provider run exists |
+| Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only runner, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; the controller requires exact-approved V2 scopes before package assembly; no CLI, API, or UI invokes the runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus governed technical-release publication remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
@@ -218,7 +218,7 @@ Owned clean report bytes
 
 `execute_phase8_report_assessment_runner()` composes this sequence as a
 proposal-only application service. It is not an operator surface: callers must
-provide the transaction and no-tool port. The shared proposal-review lifecycle provides a separate read-only reviewer UI for registered package metadata, with explicit scoped human reader grants. It does not wire that UI, an API, or a CLI to execute the runner. No real-provider run is implemented or authorised.
+provide the transaction and no-tool port. The shared proposal-review lifecycle provides a scoped internal reviewer UI for registered package metadata, with explicit reader grants and administrator-only immutable review annotations. It does not wire that UI, an API, or a CLI to execute the runner. No real-provider run is implemented or authorised.
 
 ### Latest operational evidence
 
@@ -496,10 +496,13 @@ hash, and human approval reference, then independently rechecks every member's e
 stored source, expected-label approval record, review-package manifest, and outcome
 membership. It preserves member order and separate source identities; it never merges
 reports or scopes. The same CLASSIFIRE-owned five-year retention, separate redaction,
-legal hold, integrity refusal, and scoped internal reader grants apply. The existing
-read-only `/proposal-reviews` pages identify a family and show each outcome's family
+legal hold, integrity refusal, and scoped internal reader grants apply. The internal `/proposal-reviews` pages identify a family and show each outcome's family
 member and evidence identifier without exposing storage paths or creating an execution
-route.
+route. Only an administrator may append an immutable, hash-bound human-review annotation
+for the exact original or redacted view and a visible scope using an explicit finding state
+and safe reason code. Other eligible readers can see annotations only in their exact view.
+An annotation records an observation only; it is not a technical, commercial, lock, or
+release approval.
 This remains evidence admission and proposal-review assembly only. It does not change
 PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,

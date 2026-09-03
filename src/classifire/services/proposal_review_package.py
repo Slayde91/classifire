@@ -19,11 +19,13 @@ from ..models import (
     Estimate,
     Project,
     ProjectEvidence,
+    ProposalReviewAnnotation,
     ProposalReviewPackage,
     ProposalReviewPackageRedaction,
     ProposalReviewReaderAssignment,
     ReportExpectedLabelManifest,
     User,
+    new_id,
 )
 from ..security import has_permission
 from .phase8_report_evidence_family_review_package import (
@@ -50,6 +52,17 @@ PROPOSAL_REVIEW_PACKAGE_KIND_SINGLE_REPORT = "single_report"
 PROPOSAL_REVIEW_PACKAGE_KIND_REPORT_EVIDENCE_FAMILY = "report_evidence_family"
 PROPOSAL_REVIEW_PACKAGE_RECORD_OWNER = "CLASSIFIRE"
 PROPOSAL_REVIEW_PACKAGE_RETENTION_YEARS = 5
+PROPOSAL_REVIEW_ANNOTATION_SCHEMA = "CLASSIFIRE-PROPOSAL-REVIEW-ANNOTATION-v1"
+PROPOSAL_REVIEW_ANNOTATION_FINDING_STATES = frozenset(
+    {
+        "confirmed",
+        "inferred",
+        "provisional",
+        "contradictory",
+        "unknown",
+        "human_verification_required",
+    }
+)
 PROPOSAL_REVIEW_READER_SCOPE_PROJECT = "project"
 PROPOSAL_REVIEW_READER_SCOPE_PACKAGE = "package"
 
@@ -113,6 +126,24 @@ def _source_hash(value: object, *, code: str) -> str:
 def _safe_code(value: object, *, code: str) -> str:
     value = _text(value, code=code, maximum=100)
     if _SAFE_CODE.fullmatch(value) is None:
+        _fail(code)
+    return value
+
+
+def _optional_scope_id(value: object, *, code: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        _fail(code)
+    value = value.strip()
+    if not value:
+        return None
+    return _text(value, code=code, maximum=36)
+
+
+def _finding_state(value: object, *, code: str) -> str:
+    value = _text(value, code=code, maximum=40).lower()
+    if value not in PROPOSAL_REVIEW_ANNOTATION_FINDING_STATES:
         _fail(code)
     return value
 
@@ -1250,6 +1281,286 @@ def _validate_redaction(
     return expected
 
 
+def _annotation_payload(
+    annotation: ProposalReviewAnnotation | Mapping[str, Any],
+) -> dict[str, Any]:
+    def value(name: str) -> Any:
+        return annotation[name] if isinstance(annotation, Mapping) else getattr(annotation, name)
+
+    recorded_at = value("recorded_at")
+    if not isinstance(recorded_at, datetime):
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+    return {
+        "schema": PROPOSAL_REVIEW_ANNOTATION_SCHEMA,
+        "annotation_id": value("annotation_id"),
+        "proposal_review_package_id": value("proposal_review_package_id"),
+        "proposal_review_package_redaction_id": value(
+            "proposal_review_package_redaction_id"
+        ),
+        "package_manifest_sha256": value("package_manifest_sha256"),
+        "reviewer_summary_sha256": value("reviewer_summary_sha256"),
+        "scope_id": value("scope_id"),
+        "finding_state": value("finding_state"),
+        "reason_code": value("reason_code"),
+        "proposal_only": value("proposal_only"),
+        "reviewed_by_user_id": value("reviewed_by_user_id"),
+        "recorded_at": _stored_utc(
+            recorded_at,
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+        ).isoformat(),
+    }
+
+
+def _annotation_summary(
+    db: Session,
+    *,
+    record: ProposalReviewPackage,
+    base_summary: dict[str, Any],
+    redaction_id: str | None,
+) -> tuple[dict[str, Any], ProposalReviewPackageRedaction | None]:
+    if redaction_id is None:
+        return base_summary, None
+    redaction = db.get(ProposalReviewPackageRedaction, redaction_id)
+    if redaction is None:
+        _fail("PROPOSAL_REVIEW_PACKAGE_REDACTION_NOT_FOUND")
+    return _validate_redaction(record, redaction, base_summary), redaction
+
+
+def _validate_annotation(
+    db: Session,
+    *,
+    record: ProposalReviewPackage,
+    base_summary: dict[str, Any],
+    annotation: ProposalReviewAnnotation,
+) -> None:
+    summary, redaction = _annotation_summary(
+        db,
+        record=record,
+        base_summary=base_summary,
+        redaction_id=annotation.proposal_review_package_redaction_id,
+    )
+    scope_id = _optional_scope_id(
+        annotation.scope_id,
+        code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+    )
+    known_scope_ids = {outcome["scope_id"] for outcome in summary["outcomes"]}
+    if (
+        annotation.proposal_review_package_id != record.id
+        or annotation.proposal_only is not True
+        or annotation.proposal_review_package_redaction_id
+        != (redaction.id if redaction is not None else None)
+        or _text(
+            annotation.annotation_id,
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+            maximum=128,
+        )
+        != annotation.annotation_id
+        or _hash(
+            annotation.package_manifest_sha256,
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+        )
+        != record.package_manifest_sha256
+        or _hash(
+            annotation.reviewer_summary_sha256,
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+        )
+        != _json_hash(summary, code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        or (scope_id is not None and scope_id not in known_scope_ids)
+        or _finding_state(
+            annotation.finding_state,
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+        )
+        != annotation.finding_state
+        or _safe_code(
+            annotation.reason_code,
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+        )
+        != annotation.reason_code
+        or not _text(
+            annotation.reviewed_by_user_id,
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+            maximum=36,
+        )
+        or _json_hash(
+            _annotation_payload(annotation),
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+        )
+        != annotation.annotation_sha256
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+
+
+def record_proposal_review_annotation(
+    db: Session,
+    *,
+    package_id: str,
+    finding_state: str,
+    reason_code: str,
+    scope_id: str | None = None,
+    redaction_id: str | None = None,
+    actor: User | None,
+    recorded_at: datetime | None = None,
+) -> tuple[ProposalReviewAnnotation, bool]:
+    """Append an administrator-only, proposal-only review annotation."""
+
+    actor = _require_administrator(actor)
+    view = read_proposal_review_package(
+        db,
+        package_id=package_id,
+        actor=actor,
+        redaction_id=redaction_id,
+    )
+    base_summary = _validate_record(db, view.record)
+    summary, redaction = _annotation_summary(
+        db,
+        record=view.record,
+        base_summary=base_summary,
+        redaction_id=redaction_id,
+    )
+    if view.reviewer_summary != summary or view.redaction != redaction:
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+    state = _finding_state(
+        finding_state,
+        code="PROPOSAL_REVIEW_PACKAGE_ANNOTATION_INVALID",
+    )
+    reason = _safe_code(
+        reason_code,
+        code="PROPOSAL_REVIEW_PACKAGE_ANNOTATION_INVALID",
+    )
+    scoped_id = _optional_scope_id(
+        scope_id,
+        code="PROPOSAL_REVIEW_PACKAGE_ANNOTATION_INVALID",
+    )
+    if scoped_id is not None and scoped_id not in {
+        outcome["scope_id"] for outcome in summary["outcomes"]
+    }:
+        _fail("PROPOSAL_REVIEW_PACKAGE_ANNOTATION_INVALID")
+    recorded = recorded_at or datetime.now(UTC)
+    if recorded.tzinfo is None:
+        _fail("PROPOSAL_REVIEW_PACKAGE_ANNOTATION_TIME_INVALID")
+    recorded = recorded.astimezone(UTC)
+    summary_sha256 = _json_hash(
+        summary,
+        code="PROPOSAL_REVIEW_PACKAGE_ANNOTATION_INVALID",
+    )
+    redaction_filter = (
+        ProposalReviewAnnotation.proposal_review_package_redaction_id.is_(None)
+        if redaction is None
+        else ProposalReviewAnnotation.proposal_review_package_redaction_id == redaction.id
+    )
+    scope_filter = (
+        ProposalReviewAnnotation.scope_id.is_(None)
+        if scoped_id is None
+        else ProposalReviewAnnotation.scope_id == scoped_id
+    )
+    existing = db.scalar(
+        select(ProposalReviewAnnotation).where(
+            ProposalReviewAnnotation.proposal_review_package_id == view.record.id,
+            redaction_filter,
+            ProposalReviewAnnotation.package_manifest_sha256
+            == view.record.package_manifest_sha256,
+            ProposalReviewAnnotation.reviewer_summary_sha256 == summary_sha256,
+            scope_filter,
+            ProposalReviewAnnotation.finding_state == state,
+            ProposalReviewAnnotation.reason_code == reason,
+            ProposalReviewAnnotation.reviewed_by_user_id == actor.id,
+        )
+    )
+    if existing is not None:
+        _validate_annotation(
+            db,
+            record=view.record,
+            base_summary=base_summary,
+            annotation=existing,
+        )
+        return existing, False
+    item = ProposalReviewAnnotation(
+        annotation_id=f"PROPOSAL-REVIEW-ANNOTATION-{new_id()}",
+        proposal_review_package_id=view.record.id,
+        proposal_review_package_redaction_id=redaction.id if redaction is not None else None,
+        package_manifest_sha256=view.record.package_manifest_sha256,
+        reviewer_summary_sha256=summary_sha256,
+        scope_id=scoped_id,
+        finding_state=state,
+        reason_code=reason,
+        proposal_only=True,
+        reviewed_by_user_id=actor.id,
+        recorded_at=recorded,
+        created_at=recorded,
+        updated_at=recorded,
+    )
+    item.annotation_sha256 = _json_hash(
+        _annotation_payload(item),
+        code="PROPOSAL_REVIEW_PACKAGE_ANNOTATION_INVALID",
+    )
+    db.add(item)
+    try:
+        db.flush()
+    except IntegrityError as exc:
+        raise ProposalReviewPackageError("PROPOSAL_REVIEW_PACKAGE_ANNOTATION_CONFLICT") from exc
+    record_audit(
+        db,
+        actor=actor,
+        action="record_proposal_review_annotation",
+        entity_type="proposal_review_annotation",
+        entity_id=item.id,
+        project_id=view.record.project_id,
+        new_value={
+            "annotation_id": item.annotation_id,
+            "proposal_review_package_id": view.record.id,
+            "proposal_review_package_redaction_id": item.proposal_review_package_redaction_id,
+            "package_manifest_sha256": item.package_manifest_sha256,
+            "reviewer_summary_sha256": item.reviewer_summary_sha256,
+            "scope_id": item.scope_id,
+            "finding_state": item.finding_state,
+            "reason_code": item.reason_code,
+            "proposal_only": True,
+            **{flag: False for flag in _NOOP_FLAGS},
+        },
+        reason="Recorded an immutable human review annotation with no operational authority.",
+    )
+    return item, True
+
+
+def list_proposal_review_annotations(
+    db: Session,
+    *,
+    record: ProposalReviewPackage,
+    actor: User | None,
+    redaction_id: str | None = None,
+) -> tuple[ProposalReviewAnnotation, ...]:
+    """Return integrity-checked annotations bound to this exact reviewer view."""
+
+    _require_assigned_reader(db, record=record, actor=actor)
+    base_summary = _validate_record(db, record)
+    _, current_redaction = _annotation_summary(
+        db,
+        record=record,
+        base_summary=base_summary,
+        redaction_id=redaction_id,
+    )
+    annotations = tuple(
+        db.scalars(
+            select(ProposalReviewAnnotation)
+            .where(ProposalReviewAnnotation.proposal_review_package_id == record.id)
+            .order_by(ProposalReviewAnnotation.recorded_at.desc())
+        ).all()
+    )
+    for annotation in annotations:
+        _validate_annotation(
+            db,
+            record=record,
+            base_summary=base_summary,
+            annotation=annotation,
+        )
+    current_redaction_id = current_redaction.id if current_redaction is not None else None
+    return tuple(
+        annotation
+        for annotation in annotations
+        if annotation.proposal_review_package_redaction_id == current_redaction_id
+    )
+
+
 def grant_proposal_review_reader_assignment(
     db: Session,
     *,
@@ -1671,6 +1982,8 @@ def delete_expired_proposal_review_package(
 
 
 __all__ = [
+    "PROPOSAL_REVIEW_ANNOTATION_FINDING_STATES",
+    "PROPOSAL_REVIEW_ANNOTATION_SCHEMA",
     "PROPOSAL_REVIEW_PACKAGE_RECORD_OWNER",
     "PROPOSAL_REVIEW_PACKAGE_RECORD_SCHEMA",
     "PROPOSAL_REVIEW_PACKAGE_REDACTION_SCHEMA",
@@ -1681,9 +1994,11 @@ __all__ = [
     "delete_expired_proposal_review_package",
     "grant_proposal_review_reader_assignment",
     "list_eligible_proposal_review_readers",
+    "list_proposal_review_annotations",
     "list_proposal_review_reader_assignments",
     "list_proposal_review_packages",
     "read_proposal_review_package",
+    "record_proposal_review_annotation",
     "record_proposal_review_package_tamper",
     "revoke_proposal_review_reader_assignment",
     "register_proposal_review_package",

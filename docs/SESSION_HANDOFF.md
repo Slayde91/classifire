@@ -176,10 +176,11 @@ PostgreSQL containment race passed locally; PR and post-merge shared CI also
 passed. It adds no canonical, technical, commercial, lock, deployment, or
 release authority. Any real-provider run remains a separate gate.
 
-1. **Define a human review and operator contract separately.** The approved family aggregate
-   is service-only and keeps each report review separate. Do not automatically join reports,
-   use customer evidence, or create a runner/operator route without its own authority and
-   safety design.
+1. **Use the bounded human-review annotation contract; define an operator flow separately.**
+   Administrators may append only immutable, proposal-only observations bound to an exact
+   original/redacted review view. The approved family aggregate remains service-only and
+   keeps each report review separate. Do not automatically join reports, use customer
+   evidence, or create a runner/operator route without its own authority and safety design.
 2. **Continue technical intake separately.** Complete the remaining
    extraction-assisted and manufacturer-neutral lineage plus governed
    publication and supersession. The
@@ -247,7 +248,7 @@ Shared main includes:
 - PR #154's bounded source-bound XLSX worksheet/cell locators and transient selected-cell re-extraction; and
 - PR #156's bounded source-bound DOCX document/paragraph/simple-table locators and transient selected-item re-extraction.
 
-The packaged migration history now has one forward-only head: 0020_proposal_review_family_packages. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0021_proposal_review_annotations. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
 PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#156 check and corresponding main run also passed, ending with run 33766069162 on 82d288c. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
@@ -302,10 +303,13 @@ hash, and human approval reference, then independently rechecks every member's e
 stored source, expected-label approval record, review-package manifest, and outcome
 membership. It preserves member order and separate source identities; it never merges
 reports or scopes. The same CLASSIFIRE-owned five-year retention, separate redaction,
-legal hold, integrity refusal, and scoped internal reader grants apply. The existing
-read-only `/proposal-reviews` pages identify a family and show each outcome's family
+legal hold, integrity refusal, and scoped internal reader grants apply. The internal `/proposal-reviews` pages identify a family and show each outcome's family
 member and evidence identifier without exposing storage paths or creating an execution
-route.
+route. Only an administrator may append an immutable, hash-bound human-review annotation
+for the exact original or redacted view and a visible scope using an explicit finding state
+and safe reason code. Other eligible readers can see annotations only in their exact view.
+An annotation records an observation only; it is not a technical, commercial, lock, or
+release approval.
 This remains evidence admission and proposal-review assembly only. It does not change
 PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
@@ -317,7 +321,7 @@ The report path remains service-only. Source exists for owned report bytes,
 stable PDF, bounded XLSX, and bounded DOCX locators/scopes, transient documentary context, report-aware runtime
 input, assessment/review controllers, and deterministic packages. The single-report runner composes the whole sequence, but no supported CLI, API, or UI invokes it. An approved report family can assemble only an aggregate of separately validated proposal-review packages; it never invokes, alters, or combines runner inputs.
 
-Shared main has the CLASSIFIRE-owned proposal-review metadata record and internal human read-only /proposal-reviews surface from PR #144, plus PR #145's auditable active/revoked Project/package grants for eligible internal human readers. Non-administrator list/detail access requires a matching active grant. It uses CLASSIFIRE-owned five-year retention from registration, separate redactions, legal-hold protection that prevents deletion, deletion only after retention, safe locators, and tamper refusal with a content-safe audit event. It does not execute the runner and provides no canonical, technical, commercial, lock, deployment, or release authority.
+Shared main has the CLASSIFIRE-owned proposal-review metadata record and internal human /proposal-reviews surface from PR #144, plus PR #145's auditable active/revoked Project/package grants for eligible internal human readers and administrator-only immutable human-review annotations. Non-administrator list/detail access requires a matching active grant. It uses CLASSIFIRE-owned five-year retention from registration, separate redactions, legal-hold protection that prevents deletion, deletion only after retention, safe locators, and tamper refusal with a content-safe audit event. It does not execute the runner and provides no canonical, technical, commercial, lock, deployment, or release authority.
 
 PDF text, table, annotation, and strict explicitly numbered caption content are supported.
 Bounded XLSX support persists only visible worksheet shape and non-empty cell

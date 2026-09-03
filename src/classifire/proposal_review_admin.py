@@ -1,4 +1,4 @@
-"""Read-only human reviewer pages and administrator-only access grants."""
+"""Proposal-review pages, administrator-only annotations, and reader grants."""
 
 from __future__ import annotations
 
@@ -21,9 +21,11 @@ from .services.proposal_review_package import (
     ProposalReviewPackageError,
     grant_proposal_review_reader_assignment,
     list_eligible_proposal_review_readers,
+    list_proposal_review_annotations,
     list_proposal_review_packages,
     list_proposal_review_reader_assignments,
     read_proposal_review_package,
+    record_proposal_review_annotation,
     record_proposal_review_package_tamper,
     revoke_proposal_review_reader_assignment,
 )
@@ -83,6 +85,12 @@ def proposal_review_package_page(
             actor=actor,
             redaction_id=redaction_id,
         )
+        annotations = list_proposal_review_annotations(
+            db,
+            record=view.record,
+            actor=actor,
+            redaction_id=redaction_id,
+        )
     except ProposalReviewPackageError as exc:
         if exc.code == "PROPOSAL_REVIEW_PACKAGE_TAMPERED" and record is not None:
             record_proposal_review_package_tamper(
@@ -115,11 +123,46 @@ def proposal_review_package_page(
             request,
             db,
             view=view,
+            annotations=annotations,
             redactions=redactions,
             reader_assignments=reader_assignments,
             eligible_readers=eligible_readers,
         ),
     )
+
+
+@router.post("/proposal-reviews/{package_id}/annotations")
+def proposal_review_annotation_record(
+    package_id: str,
+    request: Request,
+    db: Db,
+    csrf_token: Annotated[str, Form()],
+    finding_state: Annotated[str, Form()],
+    reason_code: Annotated[str, Form()],
+    scope_id: Annotated[str | None, Form()] = None,
+    redaction_id: str | None = None,
+) -> RedirectResponse:
+    """Record a proposal-only human annotation; no reviewer role gains authority."""
+
+    verify_csrf(request, csrf_token)
+    actor, _ = _require_administrator_package(package_id, request, db)
+    try:
+        record_proposal_review_annotation(
+            db,
+            package_id=package_id,
+            finding_state=finding_state,
+            reason_code=reason_code,
+            scope_id=scope_id,
+            redaction_id=redaction_id,
+            actor=actor,
+        )
+        db.commit()
+    except ProposalReviewPackageError as exc:
+        db.rollback()
+        status_code = 409 if exc.code == "PROPOSAL_REVIEW_PACKAGE_TAMPERED" else 400
+        raise HTTPException(status_code, "Proposal-review annotation is unavailable") from exc
+    suffix = f"?redaction_id={redaction_id}" if redaction_id is not None else ""
+    return RedirectResponse(f"/proposal-reviews/{package_id}{suffix}", status_code=303)
 
 
 @router.post("/proposal-reviews/{package_id}/reader-assignments")

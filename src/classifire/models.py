@@ -609,6 +609,61 @@ class ProposalReviewPackageRedaction(RecordMixin, Base):
     created_by_user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), nullable=False)
 
 
+class ProposalReviewAnnotation(RecordMixin, Base):
+    """An immutable human review annotation with no downstream authority."""
+
+    __tablename__ = "proposal_review_annotations"
+    __table_args__ = (
+        CheckConstraint(
+            "finding_state IN ('confirmed', 'inferred', 'provisional', 'contradictory', "
+            "'unknown', 'human_verification_required')",
+            name="ck_proposal_review_annotation_finding_state",
+        ),
+        CheckConstraint(
+            "length(trim(reason_code)) > 0",
+            name="ck_proposal_review_annotation_reason_code",
+        ),
+        CheckConstraint(
+            "proposal_only = true",
+            name="ck_proposal_review_annotation_proposal_only",
+        ),
+        ForeignKeyConstraint(
+            ["proposal_review_package_id"],
+            ["proposal_review_packages.id"],
+            name="fk_proposal_review_annotation_package",
+            ondelete="CASCADE",
+        ),
+        ForeignKeyConstraint(
+            ["proposal_review_package_redaction_id"],
+            ["proposal_review_package_redactions.id"],
+            name="fk_proposal_review_annotation_redaction",
+            ondelete="CASCADE",
+        ),
+        Index(
+            "ix_proposal_review_annotation_package_recorded",
+            "proposal_review_package_id",
+            "recorded_at",
+        ),
+        Index(
+            "ix_proposal_review_annotation_reviewer",
+            "reviewed_by_user_id",
+            "recorded_at",
+        ),
+    )
+
+    annotation_id: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
+    proposal_review_package_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    proposal_review_package_redaction_id: Mapped[str | None] = mapped_column(String(36))
+    package_manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    reviewer_summary_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    annotation_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    scope_id: Mapped[str | None] = mapped_column(String(36))
+    finding_state: Mapped[str] = mapped_column(String(40), nullable=False)
+    reason_code: Mapped[str] = mapped_column(String(100), nullable=False)
+    proposal_only: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    reviewed_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
 class ProposalReviewReaderAssignment(RecordMixin, Base):
     """An auditable active/revoked human-reader grant for one Project or package."""
 

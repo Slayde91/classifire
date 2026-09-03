@@ -4,7 +4,8 @@
 {% block content %}
 <div class="callout">
   <strong>Proposal-only, read-only record.</strong> This view is integrity-checked metadata.
-  It does not approve a physical model, technical system, price, lock, deployment, or release.
+  Administrators may append a separate immutable annotation; it does not approve a physical
+  model, technical system, price, lock, deployment, or release.
 </div>
 
 <section class="panel">
@@ -57,6 +58,61 @@
   </div>
 </section>
 
+<section class="panel">
+  <div class="panel-head">
+    <h2>Human review annotations</h2>
+    <span class="muted">Only administrators append immutable safe codes. Reader accounts can only view annotations for this exact view.</span>
+  </div>
+  {% if user.role == 'administrator' %}
+  <form method="post" action="/proposal-reviews/{{ view.record.package_id }}/annotations{% if view.redaction %}?redaction_id={{ view.redaction.id }}{% endif %}" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>
+      Reviewed target
+      <select name="scope_id">
+        <option value="">Whole package</option>
+        {% for outcome in view.reviewer_summary.outcomes %}
+        <option value="{{ outcome.scope_id }}">{{ outcome.defect_reference }} &middot; {{ outcome.scope_id }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Finding state
+      <select name="finding_state" required>
+        <option value="confirmed">Confirmed</option>
+        <option value="inferred">Inferred</option>
+        <option value="provisional">Provisional</option>
+        <option value="contradictory">Contradictory</option>
+        <option value="unknown">Unknown</option>
+        <option value="human_verification_required">Human verification required</option>
+      </select>
+    </label>
+    <label>
+      Safe reason code
+      <input name="reason_code" value="HUMAN_REVIEW" required>
+    </label>
+    <div><button class="button button-secondary">Record annotation</button></div>
+  </form>
+  {% endif %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Target</th><th>Finding state</th><th>Safe reason code</th><th>Reviewed by</th><th>View</th><th>Recorded</th></tr></thead>
+      <tbody>
+        {% for annotation in annotations %}
+        <tr>
+          <td class="mono">{{ annotation.scope_id or 'Whole package' }}</td>
+          <td><span class="badge badge-draft">{{ annotation.finding_state }}</span></td>
+          <td>{{ annotation.reason_code }}</td>
+          <td class="mono">{{ annotation.reviewed_by_user_id }}</td>
+          <td>{% if annotation.proposal_review_package_redaction_id %}Redacted{% else %}Original{% endif %}</td>
+          <td>{{ annotation.recorded_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty">No human review annotations have been recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
 <section class="panel">
   <div class="panel-head">
     <h2>Safe locator</h2>

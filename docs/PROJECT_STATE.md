@@ -90,7 +90,7 @@ The following boundaries are implemented and tested for their stated scope:
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-The packaged migration history now has one forward-only head: 0020_proposal_review_family_packages (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0021_proposal_review_annotations (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
 ### Completed report-governance integration on shared main (PR #104)
 
@@ -302,7 +302,7 @@ run has been consumed and must not be repeated without new authority.
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, hash-bound Draft source-document predecessor lineage, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and technical-release publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
-| 5. Evidence intake/resolution | **In progress** | The packaged implementation has bounded PDF/XLSX/DOCX report services, strict source-bound caption locators, atomic expected-label scope admission, a human-approved exact report-family manifest, deterministic aggregation of separately validated family review packages, runner and controller verification, the retained single-report/family proposal-review package lifecycle, and explicit scoped reader grants/revocation. Additional formats, family-aware scope and runner execution, human decision/review actions, and a separately authorised operator flow remain. |
+| 5. Evidence intake/resolution | **In progress** | The packaged implementation has bounded PDF/XLSX/DOCX report services, strict source-bound caption locators, atomic expected-label scope admission, a human-approved exact report-family manifest, deterministic aggregation of separately validated family review packages, runner and controller verification, the retained single-report/family proposal-review package lifecycle, explicit scoped reader grants/revocation, and administrator-only immutable human-review annotations. Additional formats, family-aware scope and runner execution, and a separately authorised operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
@@ -323,7 +323,7 @@ PR #147 passed pull-request validation run 33745988740 and post-merge main valid
 
 #### Completed shared-main foundation - scoped proposal-review reader access (PR #145)
 
-CLASSIFIRE owns registered proposal-review metadata with five-year retention, separate redaction, legal hold/deletion, safe locator, integrity refusal, and a read-only reviewer screen. PR #145 adds auditable active/revoked Project or exact-package grants. Every non-administrator reader now needs both the human read permission and an active matching grant before a list or detail view is returned. Administrators can manage the grants, but a grant does not approve a package or expand any other authority.
+CLASSIFIRE owns registered proposal-review metadata with five-year retention, separate redaction, legal hold/deletion, safe locator, integrity refusal, scoped reader visibility, and administrator-only immutable human-review annotations. PR #145 adds auditable active/revoked Project or exact-package grants. Every non-administrator reader now needs both the human read permission and an active matching grant before a list or detail view is returned. Administrators can manage the grants, but a grant does not approve a package or expand any other authority.
 
 PR #145 passed pull-request validation run 33741309950 and post-merge main validation run 33741595397. This remains proposal-only: it does not run a report, call a provider, create canonical state, select a technical system, price work, create a lock, deploy, or release.
 
@@ -374,7 +374,7 @@ This reconciliation verified:
 
 - fetched Git refs, branch/upstream relationships, recent commits, open PRs, and issues;
 - the clean isolated worktree and the read-only legacy-root classification;
-- the packaged forward-only Alembic head 0020_proposal_review_family_packages;
+- the packaged forward-only Alembic head 0021_proposal_review_annotations;
 - current models, API/UI routes, report services, storage/containment, technical guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
 - PR #147's successful technical-lineage validation, PR #149's successful controller validation, PR #151's successful caption-locator validation, PR #154's successful XLSX-locator validation, and PR #156's successful DOCX-locator validation on f82121d plus post-merge main validation on 82d288c;
 - the retained assessment status and no-write/no-lock flags; and
