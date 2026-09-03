@@ -28,6 +28,7 @@
       <a href="/technical/variants" class="nav-link">Technical systems</a>
       <a href="/rules" class="nav-link">Estimating rules</a>
       <div class="nav-section">Governance</div>
+      {% if has_permission is defined and has_permission('proposal_review:read') %}<a href="/proposal-reviews" class="nav-link">Proposal reviews</a>{% endif %}
       <a href="/releases" class="nav-link">Library releases</a>
       <a href="/audit" class="nav-link">Audit history</a>
       <a href="/docs" class="nav-link">API documentation</a>

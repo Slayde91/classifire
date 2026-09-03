@@ -28,6 +28,16 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "library:read",
         "technical:read",
         "rule:read",
+        "proposal_review:read",
+    },
+    "project_manager": {
+        "project:read",
+        "estimate:read",
+        "proposal_review:read",
+    },
+    "records_compliance": {
+        "proposal_review:read",
+        "audit:read",
     },
     "pricing_manager": {
         "library:read",
@@ -46,6 +56,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "rule:approve",
         "change:review",
         "audit:read",
+        "proposal_review:read",
     },
     "approver": {
         "project:read",

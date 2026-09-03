@@ -28,6 +28,7 @@ from .importers.seed import seed_database
 from .library_ui import router as library_ui_router
 from .migrations import require_current_migration_head
 from .models import User
+from .proposal_review_admin import router as proposal_review_admin_router
 from .release_admin import router as release_admin_router
 from .technical_admin import router as technical_admin_router
 from .ui import router as ui_router
@@ -124,3 +125,4 @@ app.include_router(estimate_pinning_router)
 app.include_router(release_admin_router)
 app.include_router(technical_admin_router)
 app.include_router(library_ui_router)
+app.include_router(proposal_review_admin_router)
