@@ -498,7 +498,7 @@ class ReportEvidenceFamilyMember(RecordMixin, Base):
     source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
 
 class ProposalReviewPackage(RecordMixin, Base):
-    '''Immutable, proposal-only report-review package metadata owned by CLASSIFIRE.'''
+    '''Immutable proposal-only metadata for one report or approved report family.'''
 
     __tablename__ = 'proposal_review_packages'
     __table_args__ = (
@@ -509,6 +509,25 @@ class ProposalReviewPackage(RecordMixin, Base):
         CheckConstraint(
             'selected_defect_count > 0',
             name='ck_proposal_review_package_selected_defect_count',
+        ),
+        CheckConstraint(
+            "(package_kind = 'single_report' "
+            "AND project_evidence_id IS NOT NULL "
+            "AND report_sha256 IS NOT NULL "
+            "AND approved_expected_label_manifest_id IS NOT NULL "
+            "AND approved_expected_label_manifest_sha256 IS NOT NULL "
+            "AND report_evidence_family_manifest_id IS NULL "
+            "AND report_evidence_family_manifest_sha256 IS NULL "
+            "AND report_evidence_family_manifest_approval_reference IS NULL) "
+            "OR (package_kind = 'report_evidence_family' "
+            "AND project_evidence_id IS NULL "
+            "AND report_sha256 IS NULL "
+            "AND approved_expected_label_manifest_id IS NULL "
+            "AND approved_expected_label_manifest_sha256 IS NULL "
+            "AND report_evidence_family_manifest_id IS NOT NULL "
+            "AND report_evidence_family_manifest_sha256 IS NOT NULL "
+            "AND report_evidence_family_manifest_approval_reference IS NOT NULL)",
+            name='ck_proposal_review_package_kind_binding',
         ),
         ForeignKeyConstraint(
             ['project_evidence_id', 'report_sha256'],
@@ -522,18 +541,28 @@ class ProposalReviewPackage(RecordMixin, Base):
         ),
         Index('ix_proposal_review_package_project_estimate', 'project_id', 'estimate_id'),
         Index('ix_proposal_review_package_retention', 'retention_until'),
+        Index(
+            'ix_proposal_review_package_family_manifest_id',
+            'report_evidence_family_manifest_id',
+        ),
     )
 
     package_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    package_kind: Mapped[str] = mapped_column(String(30), default='single_report', nullable=False)
     project_id: Mapped[str] = mapped_column(ForeignKey('projects.id'), nullable=False)
     estimate_id: Mapped[str] = mapped_column(ForeignKey('estimates.id'), nullable=False)
-    project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    report_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
-    approved_expected_label_manifest_id: Mapped[str] = mapped_column(
-        ForeignKey('report_expected_label_manifests.id'), nullable=False
+    project_evidence_id: Mapped[str | None] = mapped_column(String(36))
+    report_sha256: Mapped[str | None] = mapped_column(String(64))
+    approved_expected_label_manifest_id: Mapped[str | None] = mapped_column(
+        ForeignKey('report_expected_label_manifests.id')
     )
-    approved_expected_label_manifest_sha256: Mapped[str] = mapped_column(
-        String(64), nullable=False
+    approved_expected_label_manifest_sha256: Mapped[str | None] = mapped_column(String(64))
+    report_evidence_family_manifest_id: Mapped[str | None] = mapped_column(
+        ForeignKey('report_evidence_family_manifests.id')
+    )
+    report_evidence_family_manifest_sha256: Mapped[str | None] = mapped_column(String(64))
+    report_evidence_family_manifest_approval_reference: Mapped[str | None] = mapped_column(
+        String(500)
     )
     approval_reference: Mapped[str] = mapped_column(String(500), nullable=False)
     package_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -548,7 +577,6 @@ class ProposalReviewPackage(RecordMixin, Base):
     retention_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     legal_hold_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     legal_hold_reason_code: Mapped[str | None] = mapped_column(String(100))
-
 
 class ProposalReviewPackageRedaction(RecordMixin, Base):
     '''A separate, immutable redacted reviewer view; it never changes the package.'''

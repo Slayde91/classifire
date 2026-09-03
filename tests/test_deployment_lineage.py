@@ -47,13 +47,13 @@ def _assessment(  # type: ignore[no-untyped-def]
 
 
 def test_clean_stack_head_is_ready_only_with_both_journal_tables() -> None:
-    result = _assessment("0019_report_evidence_family_manifests", receipt_table=True)
+    result = _assessment("0020_proposal_review_family_packages", receipt_table=True)
     assert result.status == "READY"
     assert result.code == "CLEAN_STACK_HEAD_CONFIRMED"
     assert result.database_write_performed is False
 
-def test_immediately_previous_head_requires_the_report_family_migration() -> None:
-    result = _assessment("0018_docx_report_evidence_locators", receipt_table=True)
+def test_immediately_previous_head_requires_the_family_package_migration() -> None:
+    result = _assessment("0019_report_evidence_family_manifests", receipt_table=True)
     assert result.status == "BLOCKED"
     assert result.code == "DATABASE_MIGRATION_REQUIRED"
 
@@ -70,7 +70,7 @@ def test_previous_head_with_stray_legacy_table_requires_retirement() -> None:
 
 def test_current_head_with_stray_legacy_table_fails_as_schema_drift() -> None:
     result = _assessment(
-        "0019_report_evidence_family_manifests",
+        "0020_proposal_review_family_packages",
         receipt_table=True,
         legacy_submission_table=True,
     )
