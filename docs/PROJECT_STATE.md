@@ -4,7 +4,7 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main implementation:** 6c6e4e3196023f912802db66fb365b9a4ce20c3a (merge of PR #147, 2026-09-03)
+**Verified shared-main implementation:** 730911d635917f0023a46c3a5734905f98dfac1d (merge of PR #149, 2026-09-03)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -18,12 +18,12 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared main | PR #147 is merged at 6c6e4e3196023f912802db66fb365b9a4ce20c3a; it includes the reviewed PR #104-#147 lineage. | Report governance, technical-source safeguards, hash-bound Draft source-document predecessor lineage, structured release-lineage display, safe navigation to eligible source documents, per-revision source-lineage visibility, retained proposal-review packages, and scoped reader access are shared-main evidence. These changes add no technical, commercial, canonical, lock, deployment, or release authority. |
+| Shared main | PR #149 is merged at 730911d635917f0023a46c3a5734905f98dfac1d; it includes the reviewed PR #104-#149 lineage. | Report governance, technical-source safeguards, retained proposal-review packages, scoped reader access, and exact-approved-manifest enforcement for controller-created review packages are shared-main evidence. These changes add no technical, commercial, canonical, lock, deployment, or release authority. |
 | Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
 | Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
 | Post-PR #104 maintenance series | PRs #105-#126 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, `5639e26`, `90f701c`, `ff1278f`, `7e26c2f`, and `b33246a`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, Mission Control task-response validation, hosted full-Ruff/Mypy/Bandit validation, and explicit Phase 8 invariant errors were strengthened without granting technical, commercial, lock, or release authority. |
 | Current technical-source safeguards | PRs #127-#142 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, `f9dea2a`, `f3c6d92`, `8c21f18`, `9771ff7`, `1e43756`, `caed547`, `075c9c5`, `981324e`, and `abe8bde`. | Verified-byte extraction, current-authority gates, immutable published source-lineage binding, factual reconciliation, structured release-lineage display, safe navigation to bound source-document records, and read-only revision-source visibility were added without granting technical selection, commercial, canonical, lock, or release authority. |
-| Subsequent hosted validation | Each PR #105-#147 check and each corresponding main push run passed; the latest is run 33746319101 on 6c6e4e. | Hosted validation is current through the PR #147 merge, while required-check configuration remains unverified. |
+| Subsequent hosted validation | Each PR #105-#149 check and each corresponding main push run passed; the latest is run 33750096567 on 730911d. | Hosted validation is current through the PR #149 merge, while required-check configuration remains unverified. |
 | Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
@@ -89,7 +89,7 @@ The following boundaries are implemented and tested for their stated scope:
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-Shared main packages migrations through 0016_technical_document_supersession_lineage. It has one head: 0016_technical_document_supersession_lineage (legacy_adjudicated_lineage). PR #147 merged hash-bound Draft technical source-document predecessor lineage as 6c6e4e3196023f912802db66fb365b9a4ce20c3a; pull-request run 33745988740 and post-merge main run 33746319101 both succeeded.
+Shared main packages migrations through 0016_technical_document_supersession_lineage. It has one head: 0016_technical_document_supersession_lineage (legacy_adjudicated_lineage). PR #147 merged hash-bound Draft technical source-document predecessor lineage as 6c6e4e3196023f912802db66fb365b9a4ce20c3a; PR #149 merged exact-approved-manifest enforcement for controller-created review packages as 730911d635917f0023a46c3a5734905f98dfac1d. PR #149 pull-request run 33749820103 and post-merge main run 33750096567 both succeeded.
 
 ### Completed report-governance integration on shared main (PR #104)
 
@@ -105,6 +105,20 @@ Shared main packages migrations through 0016_technical_document_supersession_lin
   Mypy, and Bandit are separately run for every pull request and `main` push.
 - `58c5946` and `0f6c252` align migration-head expectations and deployment
   readiness with `0013`; `4cba603` reconciles the preceding factual records.
+
+### Completed proposal-review controller admission transition on shared main (PR #149)
+
+PR #149 requires the database-backed proposal-review controller to receive the
+exact human-approved expected-label manifest. Before it builds a new package, it
+checks every selected scope packet is V2 and carries that same manifest ID,
+hash, and approval reference. A legacy/unbound scope, or a scope bound to a
+different approval record, fails before package assembly. Historical V1 packets
+remain verifiable; PR #149 does not rewrite or delete them.
+
+PR #149 passed pull-request validation run 33749820103 and post-merge main run
+33750096567. It remains proposal-only and adds no report retrieval, provider
+call, canonical submission, technical selection, commercial pricing, Physical
+Model Lock, deployment, or Human Release authority.
 
 ### Completed integrity follow-up on shared main (PRs #105-#122)
 
@@ -160,8 +174,8 @@ prices work, creates a lock, or releases an estimate.
 | Area | Evidence-backed limit |
 | --- | --- |
 | Desk-quote evidence/output safety | PR #103's shared-main resolver requires a Project/Estimate-owned immutable `clean` `project_evidence` record, verifies retained bytes under the atomic reader, validates stored locators, re-hashes new and cached export bytes, and audits artifact hash/size. Missing, changed, wrong-purpose, cross-project, cross-estimate, unsafe-path, quarantined, and locator-mismatched evidence fails before export or audit. `technical_evidence` remains rejected pending a separately designed owned-byte contract. |
-| Report assessment operation | Shared main has one proposal-only application service, execute_phase8_report_assessment_runner(). It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a human-approved expected-label manifest bound to report bytes and estimate; it checks the same approval on every V2 scope packet before an injected no-tool port call. Shared main also has CLASSIFIRE-owned package metadata/redaction/hold/deletion, an internal read-only UI, and explicit active/revoked Project/package grants for non-administrator visibility. Neither surface runs assessment or a real-provider route, and neither grants canonical, technical, commercial, lock, deployment, or release authority. |
-| Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. The runner rejects legacy V1/unbound scope packets or a different approval record before any port call. Historical V1 packets remain verifiable. |
+| Report assessment operation | Shared main has one proposal-only application service, execute_phase8_report_assessment_runner(), plus a database-backed controller that assembles only an exact-approved-manifest V2 scope set. The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; the controller does not retrieve a report or call a port. Shared main also has CLASSIFIRE-owned package metadata/redaction/hold/deletion, an internal read-only UI, and explicit active/revoked Project/package grants for non-administrator visibility. Neither surface runs assessment or a real-provider route, and neither grants canonical, technical, commercial, lock, deployment, or release authority. |
+| Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. Both the runner and the database-backed proposal-review controller reject legacy V1/unbound packets or a different approval record before a port call or package assembly. Historical V1 packets remain verifiable. |
 | Report formats and content | Normalisation is PDF-only. Text, page, table, and annotation content are supported. Drawings and embedded images are locator/hash records with no documentary payload; visual bytes come through a separate governed packet. Caption extraction is explicitly rejected. XLSX, DOCX, and multi-report generalisation are not implemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
 | Technical authority | Review, source-document current state, activation, Draft source binding, revision lineage, source-locator, clean-byte candidate metadata extraction and Draft-only refresh after a clean source recheck, manual Draft materialisation, import, and release checks fail closed. A new Draft source document can record a hash-bound historical predecessor only when that predecessor is independently approved and its retained technical-evidence bytes still verify clean and unchanged; it does not retire the predecessor or approve, activate, select, price, lock, deploy, or release anything. A bound source is excluded from normal search, new technical release snapshots, and pinned runtime use when its document is missing, unapproved, or expired, or its retained-file metadata is missing, unsafe, or for another evidence purpose. Newly published technical manifests fix a safe source state: bound document/file identity, digest, and locator, or an explicit legacy-unbound state; pinned runtime rejects later binding or source-hash drift. TechnicalVariant and TechnicalDocument detail screens expose current metadata read-only, and TechnicalVariant revision history now exposes each revision's existing retained document and cited locator read-only. Extraction-assisted and manufacturer-neutral lineage, governed technical-release publication/supersession, and production authority remain incomplete. |
@@ -201,12 +215,12 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #147; GitHub plan prevents branch-protection configuration. |
+| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #149; GitHub plan prevents branch-protection configuration. |
 | 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, hash-bound Draft source-document predecessor lineage, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and technical-release publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
-| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, atomic expected-label scope admission, runner verification, the retained proposal-review package lifecycle, and explicit scoped reader grants/revocation. Legacy-scope transition, caption/multi-format support, and an operator flow remain. |
+| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, atomic expected-label scope admission, runner and controller verification, the retained proposal-review package lifecycle, and explicit scoped reader grants/revocation. Caption/multi-format support, multi-report evidence-family accuracy, user review, and an operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
@@ -230,6 +244,18 @@ PR #147 passed pull-request validation run 33745988740 and post-merge main valid
 CLASSIFIRE owns registered proposal-review metadata with five-year retention, separate redaction, legal hold/deletion, safe locator, integrity refusal, and a read-only reviewer screen. PR #145 adds auditable active/revoked Project or exact-package grants. Every non-administrator reader now needs both the human read permission and an active matching grant before a list or detail view is returned. Administrators can manage the grants, but a grant does not approve a package or expand any other authority.
 
 PR #145 passed pull-request validation run 33741309950 and post-merge main validation run 33741595397. This remains proposal-only: it does not run a report, call a provider, create canonical state, select a technical system, price work, create a lock, deploy, or release.
+
+#### Completed shared-main foundation - proposal-review controller admission transition (PR #149)
+
+PR #149 makes the database-backed proposal-review controller require the exact
+human-approved expected-label manifest before it assembles a new package. Every
+selected packet must be V2 and retain the identical manifest ID, hash, and
+approval reference. Legacy/unbound packets and packets bound to a different
+approval fail before package assembly; historical V1 packets remain verifiable.
+
+PR #149 passed pull-request validation run 33749820103 and post-merge main run
+33750096567. It adds no report/provider operation, canonical state, technical or
+commercial decision, lock, deployment, or release authority.
 
 #### Priority 2 - Close demonstrated Phase 2 and Phase 12 gaps separately
 
@@ -268,7 +294,7 @@ This reconciliation verified:
 - the clean isolated worktree and the read-only legacy-root classification;
 - the single shared-main Alembic head 0016_technical_document_supersession_lineage;
 - current models, API/UI routes, report services, storage/containment, technical guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
-- PR #147's successful pull-request validation on 945d41e and successful post-merge main validation on 6c6e4e;
+- PR #147's successful technical-lineage validation and PR #149's successful pull-request validation on 9bd70c8 plus post-merge main validation on 730911d;
 - the retained assessment status and no-write/no-lock flags; and
 - the receipt code and tests that retain only validated safe transport codes in new receipts while historical receipts remain verifiable; and
 - the snapshot V2 semantic/document hash contract, V1 compatibility, focused synthetic regression suite, current scoped static checks, and the full synthetic suite.

@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** 6c6e4e (PR #147 merge, 2026-09-03)
+**Verified shared-main implementation:** 730911d (PR #149 merge, 2026-09-03)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -110,6 +110,19 @@ The pull-request run 33741309950 and post-merge main run 33741595397 both passed
 #### Completed shared-main foundation - hash-bound technical source-document supersession (PR #147)
 
 PR #147 lets a new technical source document record a hash-bound historical predecessor only when the predecessor has an independent approval and its retained technical-evidence bytes still verify clean and unchanged. The new document remains Draft; the earlier document is not retired, and no TechnicalVariant activation, technical selection, pricing, lock, deployment, or release authority is added. PR validation run 33745988740 and post-merge main run 33746319101 passed.
+
+#### Completed shared-main foundation - approval-bound proposal-review assembly (PR #149)
+
+PR #149 requires the database-backed proposal-review controller to receive the
+exact approved expected-label manifest and then prove every selected scope packet
+is V2 and bound to that same ID, hash, and approval reference. It rejects legacy
+or unbound scope packets, and packets bound to a different approval, before
+package assembly. Historical V1 packet verification remains available; no record
+is rewritten or retired.
+
+PR validation run 33749820103 and post-merge main run 33750096567 passed. This
+is proposal-only: it adds no report/provider operation, canonical, technical,
+commercial, lock, deployment, or release authority.
 
 ### Completed and published foundations (not next actions)
 
@@ -406,9 +419,9 @@ exact-byte/locator/artifact-audit checks.
 
 **Completed foundations:** expected-label manifests bound to report bytes and
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
-runner preflight that rejects legacy/unbound packets before a no-tool port call.
+runner preflight that rejects legacy/unbound packets before a no-tool port call, and a database-backed proposal-review controller that rejects them before package assembly.
 
-**Remaining:** legacy-scope transition or retirement, caption/multi-format support, multi-report evidence-family accuracy, user review, and a separately authorised operator flow. Shared main supplies five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
+**Remaining:** caption/multi-format support, multi-report evidence-family accuracy, user review, and a separately authorised operator flow. Shared main supplies five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -550,8 +563,8 @@ import them into the active fire-seal/penetration runtime prematurely.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
 - Building the report runner as future work; shared main already composes it.
-  The remaining work is package persistence/reviewer ownership and legacy-scope
-  transition.
+  The remaining work is caption/multi-format support, multi-report evidence-family
+  accuracy, user review, and a separately authorised operator flow.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.
 - Count equality, whole-file database hashing, or a model answer as semantic
