@@ -95,6 +95,10 @@ from ..services.technical import (
     search_for_opening,
     search_variants,
 )
+from ..services.technical_document_lineage import (
+    TechnicalDocumentLineageError,
+    prepare_technical_document_supersession,
+)
 from ..services.workflow import WorkflowAction, WorkflowTransitionError
 from ..services.workflow_guard import (
     PhysicalModelLockRequiredError,
@@ -465,9 +469,20 @@ def upload_technical_document(
     reference: str | None = Form(None),
     revision: str | None = Form(None),
     jurisdiction: str | None = Form(None),
+    supersedes_document_id: str | None = Form(None),
 ) -> dict[str, Any]:
     if db.scalar(select(TechnicalDocument.id).where(TechnicalDocument.document_id == document_id)):
         raise HTTPException(status_code=409, detail="Technical Document ID already exists")
+    try:
+        supersedes_document_id, source_lineage_json, source_lineage_sha256 = (
+            prepare_technical_document_supersession(
+                db,
+                supersedes_document_id=supersedes_document_id,
+                storage_root=settings.storage_root,
+            )
+        )
+    except TechnicalDocumentLineageError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     try:
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
     except ValueError as exc:
@@ -497,6 +512,9 @@ def upload_technical_document(
         status="draft",
         extraction_status=metadata.get("extraction_status", "not_started"),
         metadata_json=metadata,
+        supersedes_document_id=supersedes_document_id,
+        source_lineage_json=source_lineage_json,
+        source_lineage_sha256=source_lineage_sha256,
     )
     db.add(document)
     db.flush()
@@ -511,6 +529,8 @@ def upload_technical_document(
             "sha256": stored.sha256,
             "filename": stored.original_filename,
             "status": "draft",
+            "supersedes_document_id": supersedes_document_id,
+            "source_lineage_sha256": source_lineage_sha256,
         },
         reason="Original evidence preserved unchanged; extracted information remains Draft",
         source_ip=request.client.host if request.client else None,

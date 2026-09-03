@@ -21,6 +21,7 @@ from .security import verify_csrf
 from .services.calculation import D
 from .services.storage import StoredFileBindingError, read_verified_stored_file
 from .services.technical import build_technical_document_draft_metadata_from_verified_content
+from .services.technical_document_lineage import technical_document_lineage_state
 from .services.technical_validity import (
     technical_document_authority_blockers,
     technical_document_temporal_blockers,
@@ -852,6 +853,12 @@ def technical_document_detail(document_db_id: str, request: Request, db: Db) -> 
         db,
         document,
     )
+    source_lineage_state, source_lineage = technical_document_lineage_state(document)
+    predecessor = (
+        db.get(TechnicalDocument, document.supersedes_document_id)
+        if source_lineage_state == "verified" and document.supersedes_document_id
+        else None
+    )
     linked = db.scalars(
         select(TechnicalVariant)
         .where(TechnicalVariant.technical_document_id == document.id)
@@ -876,6 +883,9 @@ def technical_document_detail(document_db_id: str, request: Request, db: Db) -> 
             linked=linked,
             approvals=approvals,
             source_authority_state=source_authority_state,
+            source_lineage_state=source_lineage_state,
+            source_lineage=source_lineage,
+            predecessor=predecessor,
             source_authority_messages=tuple(
                 _SOURCE_AUTHORITY_MESSAGES.get(
                     blocker,
