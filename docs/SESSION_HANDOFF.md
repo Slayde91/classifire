@@ -5,9 +5,9 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** origin/main at c3c6258bda8ab69bcfe16fef76dac503560528f1
+**Reconciliation baseline:** origin/main at 7a33f3477086942d1a09991f22bf559d215a1ea5
 
-**Verified shared-main implementation:** c3c6258bda8ab69bcfe16fef76dac503560528f1 (PR #151)
+**Verified shared-main implementation:** 7a33f3477086942d1a09991f22bf559d215a1ea5 (PR #154)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -15,7 +15,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#151
+### Current shared main - PRs #104-#154
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -176,10 +176,11 @@ PostgreSQL containment race passed locally; PR and post-merge shared CI also
 passed. It adds no canonical, technical, commercial, lock, deployment, or
 release authority. Any real-provider run remains a separate gate.
 
-1. **Extend report evidence formats safely beyond PDF.** Keep retained-byte provenance,
-   deterministic locators, explicit uncertainty, and focused synthetic tests. The merged
-   caption support is limited to strict text and creates no visual association. Do not use
-   customer evidence or create an operator route.
+1. **Extend report evidence safely beyond PDF/XLSX.** Start with multi-report
+   evidence-family accuracy while retaining exact-byte provenance, deterministic
+   locators, explicit uncertainty, and focused synthetic tests. Caption support remains
+   strict retained-PDF text with no visual association. Do not use customer evidence or
+   create an operator route.
 2. **Continue technical intake separately.** Complete the remaining
    extraction-assisted and manufacturer-neutral lineage plus governed
    publication and supersession. The
@@ -243,29 +244,48 @@ Shared main includes:
 - PR #147's hash-bound Draft source-document predecessor lineage; and
 - PR #149's exact-approved-manifest V2 enforcement before database-backed
   proposal-review package assembly; and
-- PR #151's strict source-bound caption locators and transient re-extraction.
+- PR #151's strict source-bound caption locators and transient re-extraction; and
+- PR #154's bounded source-bound XLSX worksheet/cell locators and transient selected-cell re-extraction.
 
-Shared main packages migrations through 0016_technical_document_supersession_lineage (one head). PR #147 merged hash-bound Draft technical source-document predecessor lineage as 6c6e4e3196023f912802db66fb365b9a4ce20c3a. PR #149 merged exact-approved-manifest enforcement for controller-created review packages as 730911d635917f0023a46c3a5734905f98dfac1d. PR #151 merged strict source-bound caption locators as c3c6258bda8ab69bcfe16fef76dac503560528f1; pull-request run 33753130859 and post-merge main run 33753516838 both succeeded.
+Shared main packages migrations through 0017_xlsx_report_evidence_locators (one head). PR #154 merged bounded source-bound XLSX worksheet/cell locators as 7a33f3477086942d1a09991f22bf559d215a1ea5; pull-request run 33760112145 and post-merge main run 33760450512 both succeeded.
 
-PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#151 check and corresponding main run also passed, ending with run 33753516838 on c3c6258. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
+PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#154 check and corresponding main run also passed, ending with run 33760450512 on 7a33f34. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
+
+### Completed source-bound XLSX report locators on shared main (PR #154)
+
+PR #154 extends the exact retained-byte report boundary to `.xlsx` workbooks.
+It persists no worksheet names or cell values: only visible worksheet shape and
+non-empty cell position/category/hash locators. A selected cell is re-extracted
+transiently only after the exact source, locator, and hash match again; formula
+text is never executed. It fails closed on absent XML hardening, hidden sheets,
+macros, external links, drawings/media/charts, comments, pivots, embedded
+objects, validation rules, and unsafe archive or worksheet shapes. It adds
+forward-only migration `0017_xlsx_report_evidence_locators` and no provider,
+canonical, technical, commercial, lock, deployment, or release authority.
+
+PR validation run 33760112145 and post-merge main run 33760450512 passed.
 
 ### Report-assessment integration limit
 
 The report path remains service-only. Source exists for owned report bytes,
-stable PDF locators/scopes, transient documentary context, report-aware runtime
+stable PDF and bounded XLSX locators/scopes, transient documentary context, report-aware runtime
 input, assessment/review controllers, and deterministic packages. The runner
 composes the whole sequence, but no supported CLI, API, or UI invokes it.
 
 Shared main has the CLASSIFIRE-owned proposal-review metadata record and internal human read-only /proposal-reviews surface from PR #144, plus PR #145's auditable active/revoked Project/package grants for eligible internal human readers. Non-administrator list/detail access requires a matching active grant. It requires five-year minimum retention, separate redactions, legal-hold protection, deletion only after retention, safe locators, and tamper refusal with a content-safe audit event. It does not execute the runner and provides no canonical, technical, commercial, lock, deployment, or release authority.
 
 PDF text, table, annotation, and strict explicitly numbered caption content are supported.
+Bounded XLSX support persists only visible worksheet shape and non-empty cell
+position/category/hash fields; selected cells are transiently re-extracted from exact
+retained workbook bytes, and formulas are never executed. Hidden sheets, macros, links,
+embedded media, comments, pivots, objects, validation rules, and unsafe shapes are refused.
 Drawings and embedded images are locator/hash-only in documentary context, with visual
 bytes supplied separately. Caption wording is transiently re-extracted from exact retained
 PDF bytes; captions are not associated with images and cannot establish facts. The persisted
 approval record now protects scope admission, runner completeness, and database-backed
 proposal-review package assembly. Historical unbound scopes remain readable for historical
-receipt verification, but both the runner and controller reject them
-before a port call or new package assembly.
+receipt verification, but both the runner and controller reject them before a port call or
+new package assembly.
 
 ### Latest controlled attempt
 
