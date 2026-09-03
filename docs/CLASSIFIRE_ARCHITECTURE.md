@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** a76e1bc (PR #144 merge, 2026-09-03)
+**Verified shared-main implementation:** c10fde9 (PR #145 merge, 2026-09-03)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -76,7 +76,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0014_proposal_review_package_lifecycle from PR #144; the isolated scoped-reader candidate adds 0015_proposal_review_reader_assignments |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0015_proposal_review_reader_assignments from PR #145 |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -209,10 +209,7 @@ Owned clean report bytes
 
 `execute_phase8_report_assessment_runner()` composes this sequence as a
 proposal-only application service. It is not an operator surface: callers must
-provide the transaction and no-tool port. The proposal-review lifecycle
-candidate adds a separate read-only reviewer UI for registered package metadata,
-but does not wire that UI, an API, or a CLI to execute the runner. No
-real-provider run is implemented or authorised.
+provide the transaction and no-tool port. The shared proposal-review lifecycle provides a separate read-only reviewer UI for registered package metadata, with explicit scoped human reader grants. It does not wire that UI, an API, or a CLI to execute the runner. No real-provider run is implemented or authorised.
 
 ### Latest operational evidence
 
@@ -409,15 +406,13 @@ on `cdf4236` (run `33695410954`) and after merge into `main` as `abe8bde`
 (run `33695636744`). Those validations prove source/test/static/migration checks,
 not technical, commercial, canonical, lock, deployment, or release authority.
 
-### Proposal-review lifecycle on shared main and scoped-reader candidate
+### Proposal-review lifecycle and scoped-reader access on shared main
 
-The adopted lifecycle policy names CLASSIFIRE as records owner and sets a minimum five-year retention period from registration. PR #144 merged the narrow metadata and separate immutable-redaction records into main. They retain only hash-bound identifiers, safe locators, safe outcome states, uncertainty, and receipt/source/approval bindings - never report bytes, image bytes, prompts, provider output, filesystem paths, signed URLs, credentials, or tokens.
+The adopted lifecycle policy names CLASSIFIRE as records owner and sets a minimum five-year retention period from registration. PR #144 merged the narrow metadata and separate immutable-redaction records. PR #145 merged auditable active/revoked reader grants for one Project or one exact retained package. They retain only hash-bound identifiers, safe locators, safe outcome states, uncertainty, and receipt/source/approval bindings - never report bytes, image bytes, prompts, provider output, filesystem paths, signed URLs, credentials, or tokens.
 
-Administrators can register a record, create a redaction, place or remove a legal hold, delete an expired non-held record, and manage reader grants. Every read verifies hashes and relational bindings; a mismatch is refused and produces a content-safe tamper audit event.
+Administrators can register a record, create a redaction, place or remove a legal hold, delete an expired non-held record, and manage reader grants. A non-administrator needs both the existing human read permission and an active matching grant before listing or reading a package. Every read verifies hashes and relational bindings; a mismatch is refused and produces a content-safe tamper audit event.
 
-The isolated 0015_proposal_review_reader_assignments candidate replaces role-wide non-administrator visibility with one auditable, active or revoked grant for either a Project or an exact retained package. The list and detail queries enforce the same scope. Administrators retain record-management access; a grant does not approve a package or expand any other authority. It remains unmerged until its PR and post-merge main CI succeed.
-
-The lifecycle and candidate do not execute the report runner or add canonical, technical, commercial, lock, deployment, or release authority.
+PR #145 passed pull-request run 33741309950 and post-merge main run 33741595397. The lifecycle does not execute the report runner or add canonical, technical, commercial, lock, deployment, or release authority.
 
 ### Near term
 

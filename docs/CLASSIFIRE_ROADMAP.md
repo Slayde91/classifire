@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** a76e1bc (PR #144 merge, 2026-09-03)
+**Verified shared-main implementation:** c10fde9 (PR #145 merge, 2026-09-03)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -101,17 +101,11 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ### Immediate next action
 
-#### Priority 0 - Add per-project proposal-review reader assignments
+#### Completed shared-main foundation - scoped proposal-review reader access (PR #145)
 
-**Current shared-main policy:** CLASSIFIRE owns registered proposal-review package metadata. PR #144 supplies the five-year retention, separate redaction, legal-hold/deletion, content-safe locator, integrity-refusal, and internal read-only reviewer lifecycle. It remains proposal-only and grants no canonical, technical, commercial, lock, deployment, or release authority.
+PR #145 completes the controlled-UAT reader boundary. Non-administrators now need both proposal_review:read and an active, audited Project or exact-package grant; administrators can grant, reactivate, or revoke access. The package lifecycle remains proposal-only and grants no canonical, technical, commercial, lock, deployment, or release authority.
 
-**Current candidate:** 0015_proposal_review_reader_assignments makes non-administrator reviewer visibility depend on an active auditable Project or exact-package grant. Administrators can grant, reactivate, and revoke access; the candidate is not shared-main evidence until its PR and post-merge CI pass.
-
-**Objective:** integrate and prove explicit Project/package reader assignment and revocation before broader or customer-facing access.
-
-**Why this comes first:** role permission alone allowed every controlled-UAT package permitted to that role. Wider multi-project access needs a narrower explicit reader boundary.
-
-**Scope:** human reader assignment and revocation only. Do not wire the runner to a real report, call a provider, create canonical state, select a technical system, price work, create a lock, deploy, or release.
+The pull-request run 33741309950 and post-merge main run 33741595397 both passed. Broader or customer-facing access remains out of scope.
 
 ### Completed and published foundations (not next actions)
 
@@ -288,7 +282,7 @@ downstream authority was added.
 
 ### Near-term actions
 
-1. Integrate and prove the isolated scoped-reader candidate. It must preserve immutable package evidence, require an active Project/package grant for non-administrator readers, audit grant/reactivation/revocation, and add no canonical authority.
+1. Use the merged scoped-reader boundary only for controlled UAT. Any real report or provider operation still needs separate explicit authority; neither a grant nor a package record creates that authority.
 2. Complete extraction-assisted and manufacturer-neutral lineage, publication,
    and supersession through separate migrations and reviews.
 3. Independently validate physical, technical, quantity, labour, commercial,
@@ -410,7 +404,7 @@ exact-byte/locator/artifact-audit checks.
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
 runner preflight that rejects legacy/unbound packets before a no-tool port call.
 
-**Remaining:** legacy-scope transition or retirement, scoped-reader candidate integration before a wider rollout, caption/multi-format support, multi-report evidence-family accuracy, and user review. Shared main supplies five-year retention, redaction, legal hold, integrity refusal, and a controlled-UAT read-only reviewer surface.
+**Remaining:** legacy-scope transition or retirement, caption/multi-format support, multi-report evidence-family accuracy, user review, and a separately authorised operator flow. Shared main supplies five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
