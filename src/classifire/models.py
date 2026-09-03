@@ -505,6 +505,52 @@ class ProposalReviewPackageRedaction(RecordMixin, Base):
     created_by_user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), nullable=False)
 
 
+class ProposalReviewReaderAssignment(RecordMixin, Base):
+    """An auditable active/revoked human-reader grant for one Project or package."""
+
+    __tablename__ = "proposal_review_reader_assignments"
+    __table_args__ = (
+        CheckConstraint(
+            "(scope_kind = 'project' AND project_id IS NOT NULL AND proposal_review_"
+            "package_id IS NULL) OR (scope_kind = 'package' AND project_id IS NULL "
+            "AND proposal_review_package_id IS NOT NULL)",
+            name="ck_proposal_review_reader_assignment_scope",
+        ),
+        CheckConstraint(
+            "(active = true AND revoked_by_user_id IS NULL AND revoked_at IS NULL "
+            "AND revocation_reason_code IS NULL) OR "
+            "(active = false AND revoked_by_user_id IS NOT NULL AND revoked_at IS NOT NULL "
+            "AND revocation_reason_code IS NOT NULL)",
+            name="ck_proposal_review_reader_assignment_lifecycle",
+        ),
+        UniqueConstraint(
+            "user_id",
+            "scope_kind",
+            "project_id",
+            name="uq_proposal_review_reader_assignment_project",
+        ),
+        UniqueConstraint(
+            "user_id",
+            "scope_kind",
+            "proposal_review_package_id",
+            name="uq_proposal_review_reader_assignment_package",
+        ),
+        Index("ix_proposal_review_reader_assignment_active_user", "active", "user_id"),
+    )
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    scope_kind: Mapped[str] = mapped_column(String(20), nullable=False)
+    project_id: Mapped[str | None] = mapped_column(ForeignKey("projects.id"))
+    proposal_review_package_id: Mapped[str | None] = mapped_column(
+        ForeignKey("proposal_review_packages.id", ondelete="CASCADE")
+    )
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    granted_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_by_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revocation_reason_code: Mapped[str | None] = mapped_column(String(100))
+
 class TechnicalDocument(RecordMixin, Base):
     __tablename__ = "technical_documents"
 

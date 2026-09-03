@@ -4,8 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** `abe8bde` (PR #142 merge,
-2026-09-03)
+**Verified shared-main implementation:** a76e1bc (PR #144 merge, 2026-09-03)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -77,11 +76,11 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared `main` currently has head `0013_report_defect_scope_admissions`; the isolated lifecycle candidate adds `0014_proposal_review_package_lifecycle` |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0014_proposal_review_package_lifecycle from PR #144; the isolated scoped-reader candidate adds 0015_proposal_review_reader_assignments |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
-| Report assessment | Shared components, expected-label admission, and proposal-only runner | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, UI, persisted package record, or real-provider run exists |
+| Report assessment | Shared components, expected-label admission, proposal-only runner, and retained proposal-review package lifecycle | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, or UI invokes the runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, source locators, independent activation, pinned active releases, and read-only revision lineage | Manufacturer-neutral lineage and governed publication/supersession remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
@@ -410,24 +409,15 @@ on `cdf4236` (run `33695410954`) and after merge into `main` as `abe8bde`
 (run `33695636744`). Those validations prove source/test/static/migration checks,
 not technical, commercial, canonical, lock, deployment, or release authority.
 
-### Proposal-review lifecycle candidate
+### Proposal-review lifecycle on shared main and scoped-reader candidate
 
-The adopted lifecycle policy names CLASSIFIRE as records owner and sets a
-minimum five-year retention period from registration. The candidate creates a
-narrow metadata record and a separate immutable redaction record. It retains
-only hash-bound identifiers, safe locators, safe outcome states, uncertainty,
-and receipt/source/approval bindings - never report bytes, image bytes, prompts,
-provider output, filesystem paths, signed URLs, credentials, or tokens.
+The adopted lifecycle policy names CLASSIFIRE as records owner and sets a minimum five-year retention period from registration. PR #144 merged the narrow metadata and separate immutable-redaction records into main. They retain only hash-bound identifiers, safe locators, safe outcome states, uncertainty, and receipt/source/approval bindings - never report bytes, image bytes, prompts, provider output, filesystem paths, signed URLs, credentials, or tokens.
 
-Authenticated internal human readers can render a verified, read-only package
-view. Only administrators can register a record, create a redaction, place or
-remove a legal hold, or delete an expired non-held record. Every read verifies
-hashes and relational bindings; a mismatch is refused and produces a content-safe
-tamper audit event. Reader permissions are deliberately role-wide for controlled
-UAT, so explicit Project/package assignment is required before wider rollout.
+Administrators can register a record, create a redaction, place or remove a legal hold, delete an expired non-held record, and manage reader grants. Every read verifies hashes and relational bindings; a mismatch is refused and produces a content-safe tamper audit event.
 
-The record does not execute the report runner or add canonical, technical,
-commercial, lock, deployment, or release authority.
+The isolated 0015_proposal_review_reader_assignments candidate replaces role-wide non-administrator visibility with one auditable, active or revoked grant for either a Project or an exact retained package. The list and detail queries enforce the same scope. Administrators retain record-management access; a grant does not approve a package or expand any other authority. It remains unmerged until its PR and post-merge main CI succeed.
+
+The lifecycle and candidate do not execute the report runner or add canonical, technical, commercial, lock, deployment, or release authority.
 
 ### Near term
 

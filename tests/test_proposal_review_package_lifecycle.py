@@ -137,6 +137,26 @@ def _package_and_bindings(db: Session) -> tuple[object, User, User, User]:
     return package, administrator, reviewer, outsider
 
 
+def _grant_project_reader(
+    db: Session,
+    *,
+    record: ProposalReviewPackage,
+    administrator: User,
+    reader: User,
+) -> None:
+    from classifire.services.proposal_review_package import (
+        grant_proposal_review_reader_assignment,
+    )
+
+    grant_proposal_review_reader_assignment(
+        db,
+        user_id=reader.id,
+        project_id=record.project_id,
+        reason_code="CONTROLLED_UAT",
+        actor=administrator,
+    )
+
+
 def test_registers_only_hash_bound_metadata_and_allows_exact_replay() -> None:
     db = _session()
     package, administrator, reviewer, outsider = _package_and_bindings(db)
@@ -147,6 +167,12 @@ def test_registers_only_hash_bound_metadata_and_allows_exact_replay() -> None:
         package=package,
         actor=administrator,
         registered_at=registered_at,
+    )
+    _grant_project_reader(
+        db,
+        record=record,
+        administrator=administrator,
+        reader=reviewer,
     )
     replay, replay_created = register_proposal_review_package(
         db,
@@ -215,6 +241,12 @@ def test_redaction_hold_retention_and_delete_preserve_the_governed_boundary() ->
         registered_at=datetime(2026, 9, 3, tzinfo=UTC),
     )
 
+    _grant_project_reader(
+        db,
+        record=record,
+        administrator=administrator,
+        reader=reviewer,
+    )
     redaction, created = create_proposal_review_package_redaction(
         db,
         proposal_review_package_id=record.id,
@@ -289,6 +321,12 @@ def test_tamper_blocks_reviewer_render_and_creates_only_safe_audit_metadata() ->
         actor=administrator,
         registered_at=datetime(2026, 9, 3, tzinfo=UTC),
     )
+    _grant_project_reader(
+        db,
+        record=record,
+        administrator=administrator,
+        reader=reviewer,
+    )
     record.reviewer_summary_json = {
         **record.reviewer_summary_json,
         "package_id": "FORGED-PACKAGE",
@@ -352,6 +390,12 @@ def test_read_only_route_renders_intact_metadata_and_blocks_tampering() -> None:
         actor=administrator,
         registered_at=datetime(2026, 9, 3, tzinfo=UTC),
     )
+    _grant_project_reader(
+        db,
+        record=record,
+        administrator=administrator,
+        reader=reviewer,
+    )
     request = _reviewer_request(reviewer.id)
 
     listing = proposal_review_packages_page(request, db)
@@ -368,3 +412,221 @@ def test_read_only_route_renders_intact_metadata_and_blocks_tampering() -> None:
     assert db.scalar(
         select(AuditEvent).where(AuditEvent.action == "reject_tampered_proposal_review_package")
     )
+
+
+def test_reader_access_requires_a_scoped_grant_and_revocation_takes_effect() -> None:
+    from classifire.services.proposal_review_package import (
+        grant_proposal_review_reader_assignment,
+        revoke_proposal_review_reader_assignment,
+    )
+
+    db = _session()
+    package, administrator, reviewer, _ = _package_and_bindings(db)
+    record, _ = register_proposal_review_package(
+        db,
+        package=package,
+        actor=administrator,
+        registered_at=datetime(2026, 9, 3, tzinfo=UTC),
+    )
+
+    assert list_proposal_review_packages(db, actor=reviewer) == ()
+    with pytest.raises(
+        ProposalReviewPackageError,
+        match="PROPOSAL_REVIEW_PACKAGE_READER_ASSIGNMENT_REQUIRED",
+    ):
+        read_proposal_review_package(db, package_id=record.package_id, actor=reviewer)
+
+    package_assignment, created = grant_proposal_review_reader_assignment(
+        db,
+        user_id=reviewer.id,
+        proposal_review_package_id=record.id,
+        reason_code="CONTROLLED_UAT",
+        actor=administrator,
+    )
+    assert created is True
+    assert list_proposal_review_packages(db, actor=reviewer) == (record,)
+    assert (
+        read_proposal_review_package(
+            db,
+            package_id=record.package_id,
+            actor=reviewer,
+        ).record.id
+        == record.id
+    )
+
+    revoked, changed = revoke_proposal_review_reader_assignment(
+        db,
+        proposal_review_reader_assignment_id=package_assignment.id,
+        record=record,
+        reason_code="ACCESS_REVOKED",
+        actor=administrator,
+    )
+    assert changed is True
+    assert revoked.active is False
+    assert list_proposal_review_packages(db, actor=reviewer) == ()
+    assert db.scalar(
+        select(AuditEvent).where(AuditEvent.action == "grant_proposal_review_reader_assignment")
+    )
+    assert db.scalar(
+        select(AuditEvent).where(AuditEvent.action == "revoke_proposal_review_reader_assignment")
+    )
+
+
+def test_administrator_routes_manage_scoped_reader_access() -> None:
+    from classifire.proposal_review_admin import (
+        proposal_review_package_page,
+        proposal_review_reader_assignment_grant,
+        proposal_review_reader_assignment_revoke,
+    )
+    from classifire.services.proposal_review_package import (
+        list_proposal_review_reader_assignments,
+    )
+
+    db = _session()
+    package, administrator, reviewer, _ = _package_and_bindings(db)
+    record, _ = register_proposal_review_package(
+        db,
+        package=package,
+        actor=administrator,
+        registered_at=datetime(2026, 9, 3, tzinfo=UTC),
+    )
+    administrator_request = _reviewer_request(administrator.id)
+    detail = proposal_review_package_page(record.package_id, administrator_request, db)
+    assert b"Reader assignments" in detail.body
+    assert b"Grant reader access" in detail.body
+
+    reviewer_request = _reviewer_request(reviewer.id)
+    with pytest.raises(HTTPException) as forbidden:
+        proposal_review_reader_assignment_grant(
+            record.package_id,
+            reviewer_request,
+            db,
+            csrf_token=str(reviewer_request.session["csrf_token"]),
+            user_id=reviewer.id,
+            scope_kind="package",
+            reason_code="CONTROLLED_UAT",
+        )
+    assert forbidden.value.status_code == 403
+
+    granted = proposal_review_reader_assignment_grant(
+        record.package_id,
+        administrator_request,
+        db,
+        csrf_token=str(administrator_request.session["csrf_token"]),
+        user_id=reviewer.id,
+        scope_kind="package",
+        reason_code="CONTROLLED_UAT",
+    )
+    assert granted.status_code == 303
+    assignment = list_proposal_review_reader_assignments(
+        db,
+        record=record,
+        actor=administrator,
+    )[0]
+    assert assignment.active is True
+
+    revoked = proposal_review_reader_assignment_revoke(
+        record.package_id,
+        assignment.id,
+        administrator_request,
+        db,
+        csrf_token=str(administrator_request.session["csrf_token"]),
+        reason_code="ACCESS_REVOKED",
+    )
+    assert revoked.status_code == 303
+    assert assignment.active is False
+
+
+def test_project_reader_grant_covers_only_packages_in_that_project() -> None:
+    from classifire.services.proposal_review_package import (
+        grant_proposal_review_reader_assignment,
+        revoke_proposal_review_reader_assignment,
+    )
+
+    db = _session()
+    package, administrator, reviewer, _ = _package_and_bindings(db)
+    first, _ = register_proposal_review_package(
+        db,
+        package=package,
+        actor=administrator,
+        registered_at=datetime(2026, 9, 3, tzinfo=UTC),
+    )
+    second_expected_labels = {
+        "schema": "CLASSIFIRE-PHASE8-REPORT-EXPECTED-LABELS-v2",
+        "project_evidence_id": first.project_evidence_id,
+        "report_sha256": first.report_sha256,
+        "estimate_id": first.estimate_id,
+        "package_id": "PACKAGE-002",
+        "package_sha256": "9" * 64,
+        "approval_reference": first.approval_reference,
+        "expected_report_defect_labels": ["D-001", "D-002"],
+        "approved_expected_label_manifest_id": first.approved_expected_label_manifest_id,
+        "approved_expected_label_manifest_sha256": (first.approved_expected_label_manifest_sha256),
+        "approved_expected_label_manifest_approval_reference": first.approval_reference,
+    }
+    from test_phase8_report_review_package import ReportDefectReviewOutcome, _packet_for
+
+    first_packet = _packet_for(
+        defect_id="DEFECT-001",
+        defect_reference="D-001",
+        report_label="D-001",
+        scope_id="SCOPE-001",
+    )
+    second_packet = _packet_for(
+        defect_id="DEFECT-002",
+        defect_reference="D-002",
+        report_label="D-002",
+        scope_id="SCOPE-002",
+    )
+    second_package = _package(
+        package_id="PACKAGE-002",
+        packets=[first_packet, second_packet],
+        outcomes={
+            "SCOPE-001": ReportDefectReviewOutcome(
+                no_proposal_status="RETRIEVAL_BLOCKED",
+                blocker_code="ACTIVE_VISUAL_EVIDENCE_REQUIRED",
+            ),
+            "SCOPE-002": ReportDefectReviewOutcome(
+                no_proposal_status="RETRIEVAL_BLOCKED",
+                blocker_code="ACTIVE_VISUAL_EVIDENCE_REQUIRED",
+            ),
+        },
+        expected_label_manifest_file_bytes=(
+            json.dumps(second_expected_labels, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+        ).encode("utf-8"),
+    )
+
+    second, created = register_proposal_review_package(
+        db,
+        package=second_package,
+        actor=administrator,
+        registered_at=datetime(2026, 9, 3, 1, tzinfo=UTC),
+    )
+    assert created is True
+
+    assignment, granted = grant_proposal_review_reader_assignment(
+        db,
+        user_id=reviewer.id,
+        project_id=first.project_id,
+        reason_code="CONTROLLED_UAT",
+        actor=administrator,
+    )
+    assert granted is True
+    assert {record.id for record in list_proposal_review_packages(db, actor=reviewer)} == {
+        first.id,
+        second.id,
+    }
+    assert (
+        read_proposal_review_package(db, package_id=second.package_id, actor=reviewer).record.id
+        == second.id
+    )
+
+    _, revoked = revoke_proposal_review_reader_assignment(
+        db,
+        proposal_review_reader_assignment_id=assignment.id,
+        record=second,
+        reason_code="ACCESS_REVOKED",
+        actor=administrator,
+    )
+    assert revoked is True
+    assert list_proposal_review_packages(db, actor=reviewer) == ()
