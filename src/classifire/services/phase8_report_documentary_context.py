@@ -20,10 +20,12 @@ import pymupdf
 
 from .phase8_visual_proposal import canonical_json_sha256
 from .report_evidence_adapter import (
+    REPORT_XLSX_MEDIA_TYPE,
     NormalisedReportEvidence,
     ReportDefectEvidencePacket,
     ReportEvidenceAdapterError,
-    normalise_verified_pdf_report,
+    normalise_verified_report,
+    reextract_verified_xlsx_report_item,
     validate_report_defect_evidence_packet,
 )
 from .storage import VerifiedStoredFileContent
@@ -35,7 +37,7 @@ _MAX_TABLE_ROWS = 2_000
 _MAX_TABLE_COLUMNS = 200
 _MAX_TABLE_CELLS = 100_000
 _MAX_CONTEXT_CHARACTERS = 4_000_000
-_NON_TEXT_ITEM_KINDS = frozenset({'drawing', 'image'})
+_NON_TEXT_ITEM_KINDS = frozenset({'drawing', 'image', 'worksheet'})
 _NOOP_FLAGS = (
     'canonical_submission_performed',
     'technical_selection_performed',
@@ -188,6 +190,18 @@ def _payload_hash_and_characters(
         ):
             _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
         return _canonical_sha256(rows), character_count
+    if item_kind == 'cell':
+        if set(content) != {'cell_kind', 'value'}:
+            _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
+        cell_kind = content['cell_kind']
+        if cell_kind != locator.get('cell_kind'):
+            _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
+        text = _normalised_text(content['value'])
+        if content['value'] != text:
+            _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
+        return _canonical_sha256(
+            {'cell_kind': cell_kind, 'value_sha256': _text_sha256(text)}
+        ), len(text)
     if item_kind == 'annotation':
         if set(content) != {'info'}:
             _fail('REPORT_DOCUMENTARY_CONTEXT_CONTENT_INVALID')
@@ -396,23 +410,44 @@ def build_phase8_report_documentary_context(
     if not isinstance(verified_content, VerifiedStoredFileContent):
         _fail('REPORT_DOCUMENTARY_CONTEXT_SOURCE_INVALID')
     try:
-        source = normalise_verified_pdf_report(verified_content)
+        source = normalise_verified_report(verified_content)
     except ReportEvidenceAdapterError as exc:
         raise Phase8ReportDocumentaryContextError(
             'REPORT_DOCUMENTARY_CONTEXT_REPORT_INVALID'
         ) from exc
     _source_matches_packet(packet, artifacts, source)
-    try:
-        document = pymupdf.open(stream=verified_content.content, filetype='pdf')
-    except Exception as exc:
-        raise Phase8ReportDocumentaryContextError(
-            'REPORT_DOCUMENTARY_CONTEXT_REPORT_INVALID'
-        ) from exc
+    media_type = verified_content.media_type
+    is_xlsx = (
+        isinstance(media_type, str)
+        and media_type.split(';', 1)[0].strip().lower() == REPORT_XLSX_MEDIA_TYPE
+    )
+    document: Any | None = None
+    if not is_xlsx:
+        try:
+            document = pymupdf.open(stream=verified_content.content, filetype='pdf')
+        except Exception as exc:
+            raise Phase8ReportDocumentaryContextError(
+                'REPORT_DOCUMENTARY_CONTEXT_REPORT_INVALID'
+            ) from exc
     try:
         items: list[TransientReportDocumentaryItem] = []
         character_count = 0
         for artifact in artifacts:
-            content = _content(document, artifact)
+            try:
+                content = (
+                    reextract_verified_xlsx_report_item(
+                        verified_content,
+                        locator_key=artifact['locator_key'],
+                        item_kind=artifact['item_kind'],
+                        locator=artifact['locator'],
+                    )
+                    if is_xlsx
+                    else _content(document, artifact)
+                )
+            except ReportEvidenceAdapterError as exc:
+                raise Phase8ReportDocumentaryContextError(
+                    'REPORT_DOCUMENTARY_CONTEXT_SOURCE_MISMATCH'
+                ) from exc
             payload_hash, payload_characters = _payload_hash_and_characters(
                 item_kind=artifact['item_kind'],
                 locator=artifact['locator'],
@@ -433,7 +468,8 @@ def build_phase8_report_documentary_context(
                 )
             )
     finally:
-        document.close()
+        if document is not None:
+            document.close()
     selected = tuple(items)
     manifest = _manifest(packet, selected)
     context = Phase8ReportDocumentaryContext(

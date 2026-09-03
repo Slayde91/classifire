@@ -3,19 +3,23 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import replace
+from datetime import datetime
 
 import pymupdf
 import pytest
+import xlsxwriter
 from PIL import Image
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 from test_phase8_visual_proposal import _proposal
 
+import classifire.services.report_evidence_adapter as report_evidence_adapter
 from classifire import physical_models  # noqa: F401
 from classifire.db import Base
 from classifire.models import (
@@ -40,6 +44,7 @@ from classifire.services.report_evidence_adapter import (
     build_report_defect_evidence_packet,
     build_report_defect_evidence_packets,
     normalise_verified_pdf_report,
+    normalise_verified_report,
     validate_report_defect_evidence_packet,
     validate_report_defect_v2_proposal,
 )
@@ -91,6 +96,31 @@ def _report_content(payload: bytes | None = None) -> VerifiedStoredFileContent:
         content=bytes_value,
     )
 
+
+def _xlsx_report_content(*, hidden_worksheet: bool = False) -> VerifiedStoredFileContent:
+    stream = io.BytesIO()
+    workbook = xlsxwriter.Workbook(stream, {'in_memory': True})
+    try:
+        date_format = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+        first = workbook.add_worksheet('Private review data')
+        first.write('A1', 'Defect D-001 is described in this private workbook.')
+        first.write('B1', 42)
+        first.write('C1', True)
+        first.write_formula('A2', '=B1*2')
+        first.write_datetime('B2', datetime(2026, 9, 3), date_format)
+        second = workbook.add_worksheet('Follow-up')
+        second.write('A1', 'D-002')
+        if hidden_worksheet:
+            second.hide()
+    finally:
+        workbook.close()
+    payload = stream.getvalue()
+    return VerifiedStoredFileContent(
+        sha256=hashlib.sha256(payload).hexdigest(),
+        size_bytes=len(payload),
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content=payload,
+    )
 
 def _caption_report_content(
     *,
@@ -200,6 +230,160 @@ def test_normaliser_rejects_unbound_or_non_pdf_content(
 
     assert raised.value.code == code
 
+
+def test_xlsx_normaliser_is_deterministic_and_keeps_workbook_content_out_of_locators() -> None:
+    content = _xlsx_report_content()
+
+    first = normalise_verified_report(content)
+    second = normalise_verified_report(content)
+
+    assert first.manifest == second.manifest
+    assert first.page_count == 2
+    assert {item.item_kind for item in first.locators} == {'worksheet', 'cell'}
+    worksheets = [item for item in first.locators if item.item_kind == 'worksheet']
+    assert [item.locator['worksheet_index'] for item in worksheets] == [1, 2]
+    assert all(item.page_number is None for item in first.locators)
+    assert all(
+        set(item.locator)
+        == {
+            'item_kind',
+            'page_number',
+            'worksheet_index',
+            'max_row',
+            'max_column',
+            'nonempty_cell_count',
+            'sequence',
+        }
+        for item in worksheets
+    )
+    serialised = json.dumps(first.manifest, sort_keys=True)
+    assert 'Private review data' not in serialised
+    assert 'Defect D-001 is described' not in serialised
+    assert '=B1*2' not in serialised
+    assert all(item.locator['sequence'] == index for index, item in enumerate(first.locators, 1))
+
+    with adapter_session() as db:
+        project = _project(db, 48)
+        estimate = _estimate(db, project, 48)
+        stored = _bound_report(db, project, content)
+        records = _register_report_evidence_locators(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            report=first,
+        )
+        assert [record.item_kind for record in records] == [
+            item.item_kind for item in first.locators
+        ]
+        assert all(record.page_number is None for record in records)
+        assert 'Private review data' not in json.dumps(
+            [record.locator_json for record in records],
+            sort_keys=True,
+        )
+
+
+def test_xlsx_cells_can_form_an_approved_proposal_only_defect_scope() -> None:
+    content = _xlsx_report_content()
+    report = normalise_verified_report(content)
+    with adapter_session() as db:
+        project = _project(db, 49)
+        estimate = _estimate(db, project, 49)
+        stored = _bound_report(db, project, content)
+        defect = _defect(db, estimate)
+        records = _register_report_evidence_locators(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            report=report,
+        )
+        cells = [record for record in records if record.item_kind == 'cell']
+        manifest_id = _approved_expected_label_manifest_id(
+            db,
+            project=project,
+            estimate=estimate,
+            stored=stored,
+            labels=['D-001'],
+            ordinal=49,
+        )
+        worksheet = next(record for record in records if record.item_kind == 'worksheet')
+        with pytest.raises(ReportEvidenceAdapterError) as worksheet_range:
+            bind_approved_report_defect_scopes(
+                db,
+                stored_file_id=stored.id,
+                project_id=project.id,
+                estimate_id=estimate.id,
+                expected_label_manifest_id=manifest_id,
+                scope_bindings=(
+                    ReportDefectScopeBinding(
+                        defect_id=defect.id,
+                        report_defect_label='D-001',
+                        start_locator_key=worksheet.locator_key,
+                        end_locator_key=cells[-1].locator_key,
+                    ),
+                ),
+            )
+        assert worksheet_range.value.code == 'REPORT_EVIDENCE_RANGE_INVALID'
+        scopes = bind_approved_report_defect_scopes(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            expected_label_manifest_id=manifest_id,
+            scope_bindings=(
+                ReportDefectScopeBinding(
+                    defect_id=defect.id,
+                    report_defect_label='D-001',
+                    start_locator_key=cells[0].locator_key,
+                    end_locator_key=cells[-1].locator_key,
+                ),
+            ),
+        )
+        packet = build_report_defect_evidence_packet(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            defect_id=defect.id,
+        )
+
+        assert len(scopes) == 1
+        assert validate_report_defect_evidence_packet(packet) == []
+        assert all(artifact['item_kind'] == 'cell' for artifact in packet.manifest['artifacts'])
+        assert all(artifact['page_number'] is None for artifact in packet.manifest['artifacts'])
+        assert 'Defect D-001 is described' not in json.dumps(packet.manifest, sort_keys=True)
+        assert db.scalar(select(func.count()).select_from(Opening)) == 0
+        assert db.scalar(select(func.count()).select_from(Service)) == 0
+
+def test_xlsx_normaliser_fails_closed_on_hidden_worksheets_and_embedded_media() -> None:
+    with pytest.raises(ReportEvidenceAdapterError) as hidden:
+        normalise_verified_report(_xlsx_report_content(hidden_worksheet=True))
+
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, 'w') as archive:
+        archive.writestr('[Content_Types].xml', '<Types/>')
+        archive.writestr('xl/media/image.png', b'synthetic image bytes')
+    unsafe_bytes = stream.getvalue()
+    unsafe_content = VerifiedStoredFileContent(
+        sha256=hashlib.sha256(unsafe_bytes).hexdigest(),
+        size_bytes=len(unsafe_bytes),
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content=unsafe_bytes,
+    )
+    with pytest.raises(ReportEvidenceAdapterError) as media:
+        normalise_verified_report(unsafe_content)
+
+    assert hidden.value.code == 'REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN'
+    assert media.value.code == 'REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN'
+
+def test_xlsx_normaliser_fails_closed_without_defused_xml(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(report_evidence_adapter, 'DEFUSEDXML', False)
+
+    with pytest.raises(ReportEvidenceAdapterError) as raised:
+        normalise_verified_report(_xlsx_report_content())
+
+    assert raised.value.code == 'REPORT_EVIDENCE_XLSX_PARSER_UNSAFE'
 
 def test_table_shape_rejects_an_excessive_total_cell_count() -> None:
     with pytest.raises(ReportEvidenceAdapterError) as raised:
