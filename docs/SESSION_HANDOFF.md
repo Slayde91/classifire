@@ -176,10 +176,10 @@ PostgreSQL containment race passed locally; PR and post-merge shared CI also
 passed. It adds no canonical, technical, commercial, lock, deployment, or
 release authority. Any real-provider run remains a separate gate.
 
-1. **Extend report evidence safely beyond PDF/XLSX/DOCX.** Use the explicit human-approved
-   family manifest as the only multi-report membership boundary. Keep exact-byte provenance,
-   deterministic locators, explicit uncertainty, and focused synthetic tests. Do not
-   automatically join reports, use customer evidence, or create an operator route.
+1. **Define a human review and operator contract separately.** The approved family aggregate
+   is service-only and keeps each report review separate. Do not automatically join reports,
+   use customer evidence, or create a runner/operator route without its own authority and
+   safety design.
 2. **Continue technical intake separately.** Complete the remaining
    extraction-assisted and manufacturer-neutral lineage plus governed
    publication and supersession. The
@@ -288,16 +288,24 @@ service rejects filenames, folders, timestamps, titles, and other inferred membe
 It rechecks the immutable clean source binding, ownership, source hash, and family hash
 whenever the family is loaded, and rejects tampering or source drift.
 
-This is an evidence-admission foundation only. It does not change PDF/XLSX/DOCX
-normalisation, invoke the single-report runner, combine scopes or proposals, call a
-provider, or grant canonical, technical, commercial, lock, deployment, or release
-authority.
+Explicit family admission is now accompanied by a deterministic proposal-review
+aggregate. It accepts exactly one already-valid single-report review package for each
+approved member, in the approved order. Each inner package must retain a V2
+human-approved expected-label manifest that is independently re-resolved against the
+member's exact stored source and hash. The aggregate retains the separate scopes,
+artifacts, and identical protected-state receipt binding; it rejects absent, extra,
+swapped, legacy/unbound, drifted, or tampered components.
+
+This remains evidence admission and proposal-review assembly only. It does not change
+PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
+single-report runner, call a provider, or grant canonical, technical, commercial, lock,
+deployment, or release authority.
 
 ### Report-assessment integration limit
 
 The report path remains service-only. Source exists for owned report bytes,
 stable PDF, bounded XLSX, and bounded DOCX locators/scopes, transient documentary context, report-aware runtime
-input, assessment/review controllers, and deterministic packages. The single-report runner composes the whole sequence, but no supported CLI, API, or UI invokes it. An approved report family does not yet invoke, alter, or combine runner inputs.
+input, assessment/review controllers, and deterministic packages. The single-report runner composes the whole sequence, but no supported CLI, API, or UI invokes it. An approved report family can assemble only an aggregate of separately validated proposal-review packages; it never invokes, alters, or combines runner inputs.
 
 Shared main has the CLASSIFIRE-owned proposal-review metadata record and internal human read-only /proposal-reviews surface from PR #144, plus PR #145's auditable active/revoked Project/package grants for eligible internal human readers. Non-administrator list/detail access requires a matching active grant. It uses CLASSIFIRE-owned five-year retention from registration, separate redactions, legal-hold protection that prevents deletion, deletion only after retention, safe locators, and tamper refusal with a content-safe audit event. It does not execute the runner and provides no canonical, technical, commercial, lock, deployment, or release authority.
 
