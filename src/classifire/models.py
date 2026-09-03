@@ -304,7 +304,8 @@ class ReportEvidenceLocator(RecordMixin, Base):
         ),
         CheckConstraint(
             'item_kind IN (\'metadata\', \'page\', \'text\', \'table\', \'caption\', '
-            '\'drawing\', \'annotation\', \'image\', \'worksheet\', \'cell\')',
+            '\'drawing\', \'annotation\', \'image\', \'document\', \'worksheet\', \'cell\', '
+            '\'paragraph\', \'document_table\')',
             name='ck_report_evidence_locator_item_kind',
         ),
         ForeignKeyConstraint(

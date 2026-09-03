@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, NoReturn
 
 import pymupdf
+from defusedxml import ElementTree as defused_elementtree  # type: ignore[import-untyped]
 from openpyxl import load_workbook  # type: ignore[import-untyped]
 from openpyxl.xml import DEFUSEDXML  # type: ignore[import-untyped]
 from sqlalchemy import select
@@ -55,7 +56,9 @@ REPORT_EVIDENCE_LOCATOR_SCHEMA = 'CLASSIFIRE-REPORT-EVIDENCE-LOCATORS-v1'
 REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA = 'CLASSIFIRE-REPORT-DEFECT-EVIDENCE-PACKET-v1'
 REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2 = 'CLASSIFIRE-REPORT-DEFECT-EVIDENCE-PACKET-v2'
 _PDF_MEDIA_TYPE = 'application/pdf'
+_DOCX_MEDIA_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 _XLSX_MEDIA_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+REPORT_DOCX_MEDIA_TYPE = _DOCX_MEDIA_TYPE
 REPORT_XLSX_MEDIA_TYPE = _XLSX_MEDIA_TYPE
 _HEX_SHA256 = frozenset('0123456789abcdef')
 _ITEM_KIND_ORDER = {
@@ -67,8 +70,11 @@ _ITEM_KIND_ORDER = {
     'drawing': 5,
     'annotation': 6,
     'image': 7,
+    'document': 8,
     'worksheet': 8,
     'cell': 9,
+    'paragraph': 10,
+    'document_table': 10,
 }
 _MAX_REPORT_BYTES = 100 * 1024 * 1024
 _MAX_REPORT_PAGES = 2_000
@@ -86,6 +92,60 @@ _MAX_XLSX_ROWS = 10_000
 _MAX_XLSX_COLUMNS = 200
 _MAX_XLSX_GRID_CELLS = 100_000
 _MAX_XLSX_TEXT_CHARACTERS = 4_000_000
+_MAX_DOCX_ARCHIVE_MEMBERS = 10_000
+_MAX_DOCX_UNCOMPRESSED_BYTES = 500 * 1024 * 1024
+_DOCX_WORD_NAMESPACE = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+_DOCX_RELATIONSHIP_NAMESPACE = 'http://schemas.openxmlformats.org/package/2006/relationships'
+_DOCX_DOCUMENT_TAG = f'{{{_DOCX_WORD_NAMESPACE}}}document'
+_DOCX_BODY_TAG = f'{{{_DOCX_WORD_NAMESPACE}}}body'
+_DOCX_PARAGRAPH_TAG = f'{{{_DOCX_WORD_NAMESPACE}}}p'
+_DOCX_TABLE_TAG = f'{{{_DOCX_WORD_NAMESPACE}}}tbl'
+_DOCX_TABLE_ROW_TAG = f'{{{_DOCX_WORD_NAMESPACE}}}tr'
+_DOCX_TABLE_CELL_TAG = f'{{{_DOCX_WORD_NAMESPACE}}}tc'
+_DOCX_SECTION_PROPERTIES_TAG = f'{{{_DOCX_WORD_NAMESPACE}}}sectPr'
+_DOCX_MAIN_CONTENT_TYPE = (
+    b'application/vnd.openxmlformats-officedocument.wordprocessingml.'
+    b'document.main+xml'
+)
+_DOCX_FORBIDDEN_ARCHIVE_PREFIXES = (
+    'word/vbaproject',
+    'word/embeddings/',
+    'word/media/',
+    'word/charts/',
+    'word/diagrams/',
+    'word/activex/',
+    'word/comments',
+    'word/footnotes',
+    'word/endnotes',
+    'word/header',
+    'word/footer',
+    'word/glossary/',
+    'customxml/',
+)
+_DOCX_FORBIDDEN_ELEMENT_NAMES = frozenset(
+    {
+        'altChunk',
+        'commentRangeEnd',
+        'commentRangeStart',
+        'commentReference',
+        'del',
+        'delText',
+        'drawing',
+        'endnoteReference',
+        'fldChar',
+        'fldSimple',
+        'footnoteReference',
+        'hyperlink',
+        'ins',
+        'instrText',
+        'moveFrom',
+        'moveTo',
+        'object',
+        'pict',
+        'sym',
+        'vanish',
+    }
+)
 _EXPLICIT_CAPTION_PATTERN = re.compile(
     r'^\s*(?P<caption_kind>figure|fig|image|photo|photograph|plate)\s+'
     r'(?P<number>[1-9][0-9]{0,5})\s*[:\-–—]\s*\S',
@@ -860,6 +920,352 @@ def normalise_verified_xlsx_report(content: VerifiedStoredFileContent) -> Normal
         drafts=drafts,
     )
 
+def _docx_xml(value: bytes) -> Any:
+    try:
+        return defused_elementtree.fromstring(value)
+    except Exception as exc:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+        raise AssertionError from exc
+
+
+def _docx_relationships_are_safe(value: bytes) -> None:
+    root = _docx_xml(value)
+    if root.tag != f'{{{_DOCX_RELATIONSHIP_NAMESPACE}}}Relationships':
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+    relationship_tag = f'{{{_DOCX_RELATIONSHIP_NAMESPACE}}}Relationship'
+    for relationship in root:
+        if relationship.tag != relationship_tag:
+            _fail('REPORT_EVIDENCE_DOCX_INVALID')
+        target = relationship.attrib.get('Target')
+        target_mode = relationship.attrib.get('TargetMode')
+        if target_mode == 'External':
+            _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
+        if target_mode is not None:
+            _fail('REPORT_EVIDENCE_DOCX_INVALID')
+        if (
+            not isinstance(target, str)
+            or not target
+            or '\\' in target
+            or '\x00' in target
+            or target.startswith('/')
+            or any(part in {'', '.', '..'} for part in target.split('/'))
+        ):
+            _fail('REPORT_EVIDENCE_DOCX_INVALID')
+
+
+def _docx_archive_is_within_policy(report_bytes: bytes) -> None:
+    try:
+        with zipfile.ZipFile(io.BytesIO(report_bytes)) as archive:
+            entries = tuple(archive.infolist())
+            if not entries or len(entries) > _MAX_DOCX_ARCHIVE_MEMBERS:
+                _fail('REPORT_EVIDENCE_DOCX_ARCHIVE_OUT_OF_POLICY')
+            total_uncompressed_bytes = 0
+            archive_names: dict[str, str] = {}
+            for entry in entries:
+                name = entry.filename.replace('\\', '/')
+                normalised_name = name.casefold()
+                if (
+                    not name
+                    or name.startswith('/')
+                    or '\x00' in name
+                    or any(part in {'', '.', '..'} for part in name.split('/'))
+                    or normalised_name in archive_names
+                ):
+                    _fail('REPORT_EVIDENCE_DOCX_ARCHIVE_OUT_OF_POLICY')
+                if entry.flag_bits & 0x1:
+                    _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
+                total_uncompressed_bytes += entry.file_size
+                if total_uncompressed_bytes > _MAX_DOCX_UNCOMPRESSED_BYTES:
+                    _fail('REPORT_EVIDENCE_DOCX_ARCHIVE_OUT_OF_POLICY')
+                archive_names[normalised_name] = name
+            if any(
+                name.startswith(prefix)
+                for name in archive_names
+                for prefix in _DOCX_FORBIDDEN_ARCHIVE_PREFIXES
+            ):
+                _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
+            content_types_name = archive_names.get('[content_types].xml')
+            document_name = archive_names.get('word/document.xml')
+            root_relationships_name = archive_names.get('_rels/.rels')
+            if (
+                content_types_name is None
+                or document_name is None
+                or root_relationships_name is None
+            ):
+                _fail('REPORT_EVIDENCE_DOCX_INVALID')
+            content_types = archive.read(content_types_name).lower()
+            if (
+                b'macroenabled' in content_types
+                or _DOCX_MAIN_CONTENT_TYPE not in content_types
+            ):
+                _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
+            for name in archive_names.values():
+                if name.casefold().endswith('.rels'):
+                    _docx_relationships_are_safe(archive.read(name))
+    except ReportEvidenceAdapterError:
+        raise
+    except (OSError, ValueError, zipfile.BadZipFile) as exc:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+        raise AssertionError from exc
+
+
+def _docx_source_content(content: VerifiedStoredFileContent) -> tuple[str, int, bytes]:
+    source_sha256, source_size_bytes, report_bytes = _verified_report_content(content)
+    if _media_type(content.media_type) != _DOCX_MEDIA_TYPE:
+        _fail('REPORT_EVIDENCE_MEDIA_TYPE_FORBIDDEN')
+    _docx_archive_is_within_policy(report_bytes)
+    return source_sha256, source_size_bytes, report_bytes
+
+
+
+def _docx_document_xml(report_bytes: bytes) -> bytes:
+    try:
+        with zipfile.ZipFile(io.BytesIO(report_bytes)) as archive:
+            return archive.read('word/document.xml')
+    except (KeyError, OSError, ValueError, zipfile.BadZipFile) as exc:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+        raise AssertionError from exc
+
+def _docx_local_name(tag: object) -> str:
+    if not isinstance(tag, str):
+        return ''
+    prefix = f'{{{_DOCX_WORD_NAMESPACE}}}'
+    return tag[len(prefix) :] if tag.startswith(prefix) else ''
+
+
+def _docx_body(report_bytes: bytes) -> Any:
+    root = _docx_xml(_docx_document_xml(report_bytes))
+    if root.tag != _DOCX_DOCUMENT_TAG:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+    forbidden_element_present = any(
+        _docx_local_name(element.tag) in _DOCX_FORBIDDEN_ELEMENT_NAMES
+        for element in root.iter()
+    )
+    if forbidden_element_present:
+        _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
+    bodies = [child for child in root if child.tag == _DOCX_BODY_TAG]
+    if len(bodies) != 1:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+    return bodies[0]
+
+
+def _docx_body_children(body: Any) -> tuple[Any, ...]:
+    children = tuple(body)
+    if not children:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+    section_count = 0
+    for index, child in enumerate(children, start=1):
+        if child.tag == _DOCX_SECTION_PROPERTIES_TAG:
+            section_count += 1
+            if index != len(children):
+                _fail('REPORT_EVIDENCE_DOCX_INVALID')
+        elif child.tag not in {_DOCX_PARAGRAPH_TAG, _DOCX_TABLE_TAG}:
+            _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
+    if section_count > 1:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+    return children
+
+
+def _docx_paragraph_text(paragraph: Any) -> str:
+    if paragraph.tag != _DOCX_PARAGRAPH_TAG:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+    parts: list[str] = []
+    for element in paragraph.iter():
+        local_name = _docx_local_name(element.tag)
+        if local_name == 't':
+            if element.text is None:
+                _fail('REPORT_EVIDENCE_DOCX_INVALID')
+            parts.append(element.text)
+        elif local_name == 'tab':
+            parts.append('\t')
+        elif local_name in {'br', 'cr'}:
+            parts.append('\n')
+    return _normalised_text(''.join(parts))
+
+
+def _docx_table_rows(table: Any) -> list[list[str]]:
+    if table.tag != _DOCX_TABLE_TAG:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+    rows: list[list[str]] = []
+    for child in table:
+        if child.tag not in {
+            f'{{{_DOCX_WORD_NAMESPACE}}}tblPr',
+            f'{{{_DOCX_WORD_NAMESPACE}}}tblGrid',
+            _DOCX_TABLE_ROW_TAG,
+        }:
+            _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
+        if child.tag != _DOCX_TABLE_ROW_TAG:
+            continue
+        cells: list[str] = []
+        for row_child in child:
+            if row_child.tag not in {
+                f'{{{_DOCX_WORD_NAMESPACE}}}trPr',
+                _DOCX_TABLE_CELL_TAG,
+            }:
+                _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
+            if row_child.tag != _DOCX_TABLE_CELL_TAG:
+                continue
+            paragraphs: list[str] = []
+            for cell_child in row_child:
+                if cell_child.tag == f'{{{_DOCX_WORD_NAMESPACE}}}tcPr':
+                    continue
+                if cell_child.tag != _DOCX_PARAGRAPH_TAG:
+                    _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
+                paragraphs.append(_docx_paragraph_text(cell_child))
+            if not paragraphs:
+                _fail('REPORT_EVIDENCE_DOCX_INVALID')
+            cells.append(_normalised_text('\n'.join(paragraphs)))
+        if not cells:
+            _fail('REPORT_EVIDENCE_DOCX_INVALID')
+        rows.append(cells)
+    if not rows:
+        _fail('REPORT_EVIDENCE_DOCX_INVALID')
+    _table_shape(rows)
+    return rows
+
+
+def _docx_report_drafts(report_bytes: bytes) -> list[dict[str, Any]]:
+    body = _docx_body(report_bytes)
+    children = _docx_body_children(body)
+    drafts: list[dict[str, Any]] = []
+    paragraph_count = 0
+    table_count = 0
+    table_index = 0
+    for body_index, child in enumerate(children, start=1):
+        if child.tag == _DOCX_PARAGRAPH_TAG:
+            text = _docx_paragraph_text(child)
+            if not text.strip():
+                continue
+            paragraph_count += 1
+            drafts.append(
+                _draft_item(
+                    item_kind='paragraph',
+                    page_number=None,
+                    content_sha256=_text_sha256(text),
+                    locator={
+                        'item_kind': 'paragraph',
+                        'page_number': None,
+                        'body_index': body_index,
+                        'character_count': len(text),
+                    },
+                    sort_index=paragraph_count,
+                    sort_position=(body_index, 0),
+                )
+            )
+        elif child.tag == _DOCX_TABLE_TAG:
+            table_index += 1
+            rows = _docx_table_rows(child)
+            row_count, column_count, content_sha256 = _table_shape(rows)
+            table_count += 1
+            drafts.append(
+                _draft_item(
+                    item_kind='document_table',
+                    page_number=None,
+                    content_sha256=content_sha256,
+                    locator={
+                        'item_kind': 'document_table',
+                        'page_number': None,
+                        'body_index': body_index,
+                        'table_index': table_index,
+                        'row_count': row_count,
+                        'column_count': column_count,
+                    },
+                    sort_index=table_index,
+                    sort_position=(body_index, 0),
+                )
+            )
+    document_locator = {
+        'item_kind': 'document',
+        'page_number': None,
+        'body_paragraph_count': paragraph_count,
+        'body_table_count': table_count,
+    }
+    return [
+        _draft_item(
+            item_kind='document',
+            page_number=None,
+            content_sha256=_canonical_sha256(document_locator),
+            locator=document_locator,
+            sort_index=0,
+        ),
+        *drafts,
+    ]
+
+
+def normalise_verified_docx_report(content: VerifiedStoredFileContent) -> NormalisedReportEvidence:
+    '''Normalise one exact DOCX body into bounded, content-free stable locators.'''
+
+    source_sha256, source_size_bytes, report_bytes = _docx_source_content(content)
+    drafts = _docx_report_drafts(report_bytes)
+    if len(drafts) > _MAX_REPORT_LOCATORS:
+        _fail('REPORT_EVIDENCE_LOCATOR_COUNT_OUT_OF_POLICY')
+    return _finalise_report_drafts(
+        source_sha256=source_sha256,
+        source_size_bytes=source_size_bytes,
+        document_unit_count=1,
+        drafts=drafts,
+    )
+
+
+def reextract_verified_docx_report_item(
+    content: VerifiedStoredFileContent,
+    *,
+    locator_key: object,
+    item_kind: object,
+    locator: object,
+) -> dict[str, Any] | None:
+    '''Re-extract one safe DOCX item from exact bytes without retaining its content.'''
+
+    if (
+        not isinstance(locator_key, str)
+        or not isinstance(item_kind, str)
+        or not isinstance(locator, dict)
+    ):
+        _fail('REPORT_EVIDENCE_LOCATOR_INVALID')
+    report = normalise_verified_docx_report(content)
+    actual = next((item for item in report.locators if item.locator_key == locator_key), None)
+    if actual is None or actual.item_kind != item_kind or actual.locator != locator:
+        _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+    if item_kind == 'document':
+        return None
+    if item_kind not in {'paragraph', 'document_table'}:
+        _fail('REPORT_EVIDENCE_LOCATOR_INVALID')
+    _, _, report_bytes = _docx_source_content(content)
+    body = _docx_body(report_bytes)
+    children = _docx_body_children(body)
+    body_index = locator.get('body_index')
+    if (
+        not isinstance(body_index, int)
+        or isinstance(body_index, bool)
+        or body_index < 1
+        or body_index > len(children)
+    ):
+        _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+    selected = children[body_index - 1]
+    if item_kind == 'paragraph':
+        if selected.tag != _DOCX_PARAGRAPH_TAG:
+            _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+        text = _docx_paragraph_text(selected)
+        payload: dict[str, Any] = {'text': text}
+        payload_sha256 = _text_sha256(text)
+    else:
+        if selected.tag != _DOCX_TABLE_TAG:
+            _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+        table_index = sum(child.tag == _DOCX_TABLE_TAG for child in children[:body_index])
+        if table_index != locator.get('table_index'):
+            _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+        rows = _docx_table_rows(selected)
+        row_count, column_count, payload_sha256 = _table_shape(rows)
+        if (
+            row_count != locator.get('row_count')
+            or column_count != locator.get('column_count')
+        ):
+            _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+        payload = {'rows': rows}
+    if payload_sha256 != actual.content_sha256:
+        _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+    return payload
+
 
 def normalise_verified_report(content: VerifiedStoredFileContent) -> NormalisedReportEvidence:
     '''Normalise one allowed exact retained report without broad file admission.'''
@@ -869,6 +1275,8 @@ def normalise_verified_report(content: VerifiedStoredFileContent) -> NormalisedR
     media_type = _media_type(content.media_type)
     if media_type == _PDF_MEDIA_TYPE:
         return normalise_verified_pdf_report(content)
+    if media_type == _DOCX_MEDIA_TYPE:
+        return normalise_verified_docx_report(content)
     if media_type == _XLSX_MEDIA_TYPE:
         return normalise_verified_xlsx_report(content)
     _fail('REPORT_EVIDENCE_MEDIA_TYPE_FORBIDDEN')
@@ -975,6 +1383,55 @@ def _valid_locator(item: ReportEvidenceLocatorItem, *, sequence: int) -> bool:
             'metadata_field_count',
             'sequence',
         } and isinstance(item.locator.get('metadata_field_count'), int)
+    if item.item_kind == 'document':
+        return (
+            item.page_number is None
+            and set(item.locator)
+            == {
+                'item_kind',
+                'page_number',
+                'body_paragraph_count',
+                'body_table_count',
+                'sequence',
+            }
+            and all(
+                isinstance(item.locator.get(field), int) and item.locator[field] >= 0
+                for field in ('body_paragraph_count', 'body_table_count')
+            )
+        )
+    if item.item_kind == 'paragraph':
+        return (
+            item.page_number is None
+            and set(item.locator)
+            == {
+                'item_kind',
+                'page_number',
+                'body_index',
+                'character_count',
+                'sequence',
+            }
+            and _positive_integer(item.locator.get('body_index'))
+            and isinstance(item.locator.get('character_count'), int)
+            and item.locator['character_count'] > 0
+        )
+    if item.item_kind == 'document_table':
+        return (
+            item.page_number is None
+            and set(item.locator)
+            == {
+                'item_kind',
+                'page_number',
+                'body_index',
+                'table_index',
+                'row_count',
+                'column_count',
+                'sequence',
+            }
+            and all(
+                _positive_integer(item.locator.get(field))
+                for field in ('body_index', 'table_index', 'row_count', 'column_count')
+            )
+        )
     if item.item_kind == 'worksheet':
         return (
             item.page_number is None
@@ -1762,8 +2219,14 @@ def _bind_report_defect_scope(
     if (
         start is None
         or end is None
-        or (start.page_number is None and start.item_kind != 'cell')
-        or (end.page_number is None and end.item_kind != 'cell')
+        or (
+            start.page_number is None
+            and start.item_kind not in {'cell', 'paragraph', 'document_table'}
+        )
+        or (
+            end.page_number is None
+            and end.item_kind not in {'cell', 'paragraph', 'document_table'}
+        )
         or start.sequence > end.sequence
     ):
         _fail('REPORT_EVIDENCE_RANGE_INVALID')
@@ -1954,6 +2417,7 @@ __all__ = [
     'NormalisedReportEvidence',
     'REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA',
     'REPORT_EVIDENCE_LOCATOR_SCHEMA',
+    'REPORT_DOCX_MEDIA_TYPE',
     'REPORT_XLSX_MEDIA_TYPE',
     'ReportDefectEvidencePacket',
     'ReportEvidenceAdapterError',
@@ -1963,9 +2427,11 @@ __all__ = [
     'build_report_defect_evidence_packet',
     'build_report_defect_evidence_packets',
     'materialise_project_report_locators_for_update',
+    'normalise_verified_docx_report',
     'normalise_verified_pdf_report',
     'normalise_verified_report',
     'normalise_verified_xlsx_report',
+    'reextract_verified_docx_report_item',
     'reextract_verified_xlsx_report_item',
     'validate_report_defect_evidence_packet',
     'validate_report_defect_v2_proposal',

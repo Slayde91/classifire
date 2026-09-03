@@ -43,6 +43,7 @@ from classifire.services.report_evidence_adapter import (
     bind_approved_report_defect_scopes,
     build_report_defect_evidence_packet,
     build_report_defect_evidence_packets,
+    normalise_verified_docx_report,
     normalise_verified_pdf_report,
     normalise_verified_report,
     validate_report_defect_evidence_packet,
@@ -121,6 +122,74 @@ def _xlsx_report_content(*, hidden_worksheet: bool = False) -> VerifiedStoredFil
         media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         content=payload,
     )
+
+
+def _docx_report_content(
+    *,
+    external_relationship: bool = False,
+    embedded_media: bool = False,
+    forbidden_body_feature: bool = False,
+) -> VerifiedStoredFileContent:
+    relationship_mode = ' TargetMode="External"' if external_relationship else ''
+    relationship_target = (
+        'https://example.invalid/report' if external_relationship else 'word/document.xml'
+    )
+    content_types = (
+        b'<?xml version="1.0" encoding="UTF-8"?>\n'
+        b'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">\n'
+        b'  <Default Extension="rels" '
+        b'ContentType="application/vnd.openxmlformats-package.relationships+xml"/>\n'
+        b'  <Default Extension="xml" ContentType="application/xml"/>\n'
+        b'  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-'
+        b'officedocument.wordprocessingml.document.main+xml"/>\n'
+        b'</Types>'
+    )
+    relationships = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" '
+        'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+        f'Target="{relationship_target}"{relationship_mode}/>'
+        '</Relationships>'
+    ).encode()
+    document = b'''<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p><w:r><w:t>Private DOCX paragraph for Defect D-001.</w:t></w:r></w:p>
+    <w:tbl>
+      <w:tr>
+        <w:tc><w:p><w:r><w:t>Private table left.</w:t></w:r></w:p></w:tc>
+        <w:tc><w:p><w:r><w:t>Private table right.</w:t></w:r></w:p></w:tc>
+      </w:tr>
+      <w:tr>
+        <w:tc><w:p><w:r><w:t>Follow-up 1.</w:t></w:r></w:p></w:tc>
+        <w:tc><w:p><w:r><w:t>Follow-up 2.</w:t></w:r></w:p></w:tc>
+      </w:tr>
+    </w:tbl>
+    <w:p><w:r><w:t>Private DOCX follow-up paragraph.</w:t></w:r></w:p>
+    <w:sectPr/>
+  </w:body>
+</w:document>'''
+    if forbidden_body_feature:
+        document = document.replace(
+            b'<w:r><w:t>Private DOCX paragraph for Defect D-001.</w:t></w:r>',
+            b'<w:r><w:drawing/><w:t>Private DOCX paragraph for Defect D-001.</w:t></w:r>',
+        )
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, 'w') as archive:
+        archive.writestr('[Content_Types].xml', content_types)
+        archive.writestr('_rels/.rels', relationships)
+        archive.writestr('word/document.xml', document)
+        if embedded_media:
+            archive.writestr('word/media/private-image.png', b'synthetic image bytes')
+    payload = stream.getvalue()
+    return VerifiedStoredFileContent(
+        sha256=hashlib.sha256(payload).hexdigest(),
+        size_bytes=len(payload),
+        media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        content=payload,
+    )
+
 
 def _caption_report_content(
     *,
@@ -229,6 +298,123 @@ def test_normaliser_rejects_unbound_or_non_pdf_content(
         normalise_verified_pdf_report(content)
 
     assert raised.value.code == code
+
+def test_docx_normaliser_is_deterministic_and_keeps_document_content_out_of_locators() -> None:
+    content = _docx_report_content()
+
+    first = normalise_verified_docx_report(content)
+    second = normalise_verified_report(content)
+
+    assert first.manifest == second.manifest
+    assert first.page_count == 1
+    assert [item.item_kind for item in first.locators] == [
+        'document',
+        'paragraph',
+        'document_table',
+        'paragraph',
+    ]
+    assert [
+        item.locator['body_index'] for item in first.locators if item.item_kind == 'paragraph'
+    ] == [1, 3]
+    table = next(item for item in first.locators if item.item_kind == 'document_table')
+    assert table.locator['body_index'] == 2
+    assert table.locator['table_index'] == 1
+    assert table.locator['row_count'] == 2
+    assert table.locator['column_count'] == 2
+    serialised = json.dumps(first.manifest, sort_keys=True)
+    assert 'Private DOCX paragraph' not in serialised
+    assert 'Private table left' not in serialised
+    assert 'Defect D-001' not in serialised
+    assert all(item.page_number is None for item in first.locators)
+    assert all(item.locator['sequence'] == index for index, item in enumerate(first.locators, 1))
+
+
+def test_docx_paragraphs_and_tables_can_form_an_approved_proposal_only_defect_scope() -> None:
+    content = _docx_report_content()
+    report = normalise_verified_report(content)
+    with adapter_session() as db:
+        project = _project(db, 50)
+        estimate = _estimate(db, project, 50)
+        stored = _bound_report(db, project, content)
+        defect = _defect(db, estimate)
+        records = _register_report_evidence_locators(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            report=report,
+        )
+        paragraph = next(record for record in records if record.item_kind == 'paragraph')
+        table = next(record for record in records if record.item_kind == 'document_table')
+        document = next(record for record in records if record.item_kind == 'document')
+        manifest_id = _approved_expected_label_manifest_id(
+            db,
+            project=project,
+            estimate=estimate,
+            stored=stored,
+            labels=['D-001'],
+            ordinal=50,
+        )
+        with pytest.raises(ReportEvidenceAdapterError) as document_range:
+            bind_approved_report_defect_scopes(
+                db,
+                stored_file_id=stored.id,
+                project_id=project.id,
+                estimate_id=estimate.id,
+                expected_label_manifest_id=manifest_id,
+                scope_bindings=(
+                    ReportDefectScopeBinding(
+                        defect_id=defect.id,
+                        report_defect_label='D-001',
+                        start_locator_key=document.locator_key,
+                        end_locator_key=paragraph.locator_key,
+                    ),
+                ),
+            )
+        assert document_range.value.code == 'REPORT_EVIDENCE_RANGE_INVALID'
+        bind_approved_report_defect_scopes(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            expected_label_manifest_id=manifest_id,
+            scope_bindings=(
+                ReportDefectScopeBinding(
+                    defect_id=defect.id,
+                    report_defect_label='D-001',
+                    start_locator_key=paragraph.locator_key,
+                    end_locator_key=table.locator_key,
+                ),
+            ),
+        )
+        packet = build_report_defect_evidence_packet(
+            db,
+            stored_file_id=stored.id,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            defect_id=defect.id,
+        )
+
+        assert validate_report_defect_evidence_packet(packet) == []
+        assert [artifact['item_kind'] for artifact in packet.manifest['artifacts']] == [
+            'paragraph',
+            'document_table',
+        ]
+        assert 'Private DOCX paragraph' not in json.dumps(packet.manifest, sort_keys=True)
+        assert db.scalar(select(func.count()).select_from(Opening)) == 0
+        assert db.scalar(select(func.count()).select_from(Service)) == 0
+
+def test_docx_normaliser_fails_closed_on_external_links_and_embedded_features() -> None:
+    with pytest.raises(ReportEvidenceAdapterError) as external:
+        normalise_verified_report(_docx_report_content(external_relationship=True))
+    with pytest.raises(ReportEvidenceAdapterError) as media:
+        normalise_verified_report(_docx_report_content(embedded_media=True))
+    with pytest.raises(ReportEvidenceAdapterError) as body_feature:
+        normalise_verified_report(_docx_report_content(forbidden_body_feature=True))
+
+    assert external.value.code == 'REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN'
+    assert media.value.code == 'REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN'
+    assert body_feature.value.code == 'REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN'
 
 
 def test_xlsx_normaliser_is_deterministic_and_keeps_workbook_content_out_of_locators() -> None:
