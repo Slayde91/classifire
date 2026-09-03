@@ -61,6 +61,10 @@ from .services.technical import (
     build_technical_document_draft_metadata_from_verified_content,
     build_technical_document_extraction_deferred_metadata,
 )
+from .services.technical_document_lineage import (
+    TechnicalDocumentLineageError,
+    prepare_technical_document_supersession,
+)
 from .services.workflow import WorkflowTransitionError
 from .services.workflow_guard import (
     PhysicalModelLockRequiredError,
@@ -349,6 +353,7 @@ def technical_page(request: Request, db: Db, q: str | None = None) -> HTMLRespon
     docs = db.scalars(
         select(TechnicalDocument).order_by(TechnicalDocument.updated_at.desc()).limit(100)
     ).all()
+    approved_documents = [document for document in docs if document.status == "approved"]
     stmt = select(TechnicalVariant)
     if q:
         stmt = stmt.where(
@@ -360,7 +365,14 @@ def technical_page(request: Request, db: Db, q: str | None = None) -> HTMLRespon
     return templates.TemplateResponse(
         request,
         "technical.html",
-        _context(request, db, documents=docs, variants=variants, q=q or ""),
+        _context(
+            request,
+            db,
+            documents=docs,
+            approved_documents=approved_documents,
+            variants=variants,
+            q=q or "",
+        ),
     )
 
 
@@ -377,9 +389,20 @@ def technical_upload(
     manufacturer: Annotated[str | None, Form()] = None,
     reference: Annotated[str | None, Form()] = None,
     revision: Annotated[str | None, Form()] = None,
+    supersedes_document_id: Annotated[str | None, Form()] = None,
 ) -> RedirectResponse:
     verify_csrf(request, csrf_token)
     user = _require(request, db, "technical:write")
+    try:
+        supersedes_document_id, source_lineage_json, source_lineage_sha256 = (
+            prepare_technical_document_supersession(
+                db,
+                supersedes_document_id=supersedes_document_id,
+                storage_root=settings.storage_root,
+            )
+        )
+    except TechnicalDocumentLineageError as exc:
+        return RedirectResponse(f"/technical?error={str(exc)}", status_code=303)
     try:
         stored = save_upload(db, settings, file, purpose="technical_evidence", user=user)
     except ValueError as exc:
@@ -409,6 +432,9 @@ def technical_upload(
         status="draft",
         extraction_status=metadata.get("extraction_status", "not_started"),
         metadata_json=metadata,
+        supersedes_document_id=supersedes_document_id,
+        source_lineage_json=source_lineage_json,
+        source_lineage_sha256=source_lineage_sha256,
     )
     db.add(document)
     db.flush()
@@ -418,7 +444,13 @@ def technical_upload(
         action="upload",
         entity_type="technical_document",
         entity_id=document.id,
-        new_value={"document_id": document_id, "sha256": stored.sha256, "status": "draft"},
+        new_value={
+            "document_id": document_id,
+            "sha256": stored.sha256,
+            "status": "draft",
+            "supersedes_document_id": supersedes_document_id,
+            "source_lineage_sha256": source_lineage_sha256,
+        },
         reason="Immutable evidence uploaded; extraction remains Draft",
     )
     db.commit()

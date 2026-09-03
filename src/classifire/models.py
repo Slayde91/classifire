@@ -571,6 +571,8 @@ class TechnicalDocument(RecordMixin, Base):
     extraction_status: Mapped[str] = mapped_column(String(50), default="not_started")
     metadata_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     supersedes_document_id: Mapped[str | None] = mapped_column(ForeignKey("technical_documents.id"))
+    source_lineage_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    source_lineage_sha256: Mapped[str | None] = mapped_column(String(64))
     reviewed_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     approved_by_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

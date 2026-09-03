@@ -7,8 +7,9 @@ from dataclasses import asdict, dataclass
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-CLEAN_STACK_HEAD = "0015_proposal_review_reader_assignments"
-PREVIOUS_CLEAN_STACK_HEAD = "0007_reconcile_adjudicated_admission_lineages"
+CLEAN_STACK_HEAD = "0016_technical_document_supersession_lineage"
+PREVIOUS_CLEAN_STACK_HEAD = "0015_proposal_review_reader_assignments"
+LEGACY_CLEAN_STACK_HEAD = "0007_reconcile_adjudicated_admission_lineages"
 LEGACY_ADJUDICATED_HEAD = "0006_adjudicated_canonical_admissions"
 REQUIRED_TABLES = frozenset(
     {
@@ -75,6 +76,14 @@ def assess_deployment_lineage(db: Session) -> DeploymentLineageAssessment:
     if revisions == (PREVIOUS_CLEAN_STACK_HEAD,):
         return DeploymentLineageAssessment(
             status="BLOCKED",
+            code="DATABASE_MIGRATION_REQUIRED",
+            alembic_revisions=revisions,
+            missing_tables=missing_tables,
+            unexpected_tables=unexpected_tables,
+        )
+    if revisions == (LEGACY_CLEAN_STACK_HEAD,):
+        return DeploymentLineageAssessment(
+            status="BLOCKED",
             code=(
                 "LEGACY_INITIAL_SUBMISSION_RETIREMENT_REQUIRED"
                 if unexpected_tables
@@ -103,6 +112,7 @@ def assess_deployment_lineage(db: Session) -> DeploymentLineageAssessment:
 __all__ = [
     "CLEAN_STACK_HEAD",
     "LEGACY_ADJUDICATED_HEAD",
+    "LEGACY_CLEAN_STACK_HEAD",
     "PREVIOUS_CLEAN_STACK_HEAD",
     "RETIRED_TABLES",
     "DeploymentLineageAssessment",
