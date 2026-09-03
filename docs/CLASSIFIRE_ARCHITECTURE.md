@@ -77,7 +77,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared `main` has one Alembic head: `0013_report_defect_scope_admissions` |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared `main` currently has head `0013_report_defect_scope_admissions`; the isolated lifecycle candidate adds `0014_proposal_review_package_lifecycle` |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -209,10 +209,11 @@ Owned clean report bytes
 ```
 
 `execute_phase8_report_assessment_runner()` composes this sequence as a
-proposal-only application service on shared main. It is not an operator surface:
-callers must provide the transaction and no-tool port, and no
-CLI, API, UI, or persistent review-package record invokes it. No real-provider
-run is implemented or authorised.
+proposal-only application service. It is not an operator surface: callers must
+provide the transaction and no-tool port. The proposal-review lifecycle
+candidate adds a separate read-only reviewer UI for registered package metadata,
+but does not wire that UI, an API, or a CLI to execute the runner. No
+real-provider run is implemented or authorised.
 
 ### Latest operational evidence
 
@@ -409,16 +410,24 @@ on `cdf4236` (run `33695410954`) and after merge into `main` as `abe8bde`
 (run `33695636744`). Those validations prove source/test/static/migration checks,
 not technical, commercial, canonical, lock, deployment, or release authority.
 
-### Required design before a review UI
+### Proposal-review lifecycle candidate
 
-**Priority 1 - define proposal-review package ownership and persistence.** The
-runner returns a deterministic in-memory `Phase8ReportReviewPackage`; the
-materialiser writes only to a caller-selected directory. There is no persistent
-package aggregate, retention/redaction rule, reviewer-access policy, API route,
-or UI route. Decide those ownership and lifecycle rules first, then add a narrow
-immutable record that retains only safe hashes, locators, uncertainty, and
-receipt/source bindings. It must remain proposal-only and cannot add canonical,
-technical, commercial, lock, deployment, or release authority.
+The adopted lifecycle policy names CLASSIFIRE as records owner and sets a
+minimum five-year retention period from registration. The candidate creates a
+narrow metadata record and a separate immutable redaction record. It retains
+only hash-bound identifiers, safe locators, safe outcome states, uncertainty,
+and receipt/source/approval bindings - never report bytes, image bytes, prompts,
+provider output, filesystem paths, signed URLs, credentials, or tokens.
+
+Authenticated internal human readers can render a verified, read-only package
+view. Only administrators can register a record, create a redaction, place or
+remove a legal hold, or delete an expired non-held record. Every read verifies
+hashes and relational bindings; a mismatch is refused and produces a content-safe
+tamper audit event. Reader permissions are deliberately role-wide for controlled
+UAT, so explicit Project/package assignment is required before wider rollout.
+
+The record does not execute the report runner or add canonical, technical,
+commercial, lock, deployment, or release authority.
 
 ### Near term
 

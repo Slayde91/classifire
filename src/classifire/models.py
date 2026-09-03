@@ -420,6 +420,91 @@ class ReportExpectedLabelManifest(RecordMixin, Base):
     approved_by_user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), nullable=False)
     approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
+
+class ProposalReviewPackage(RecordMixin, Base):
+    '''Immutable, proposal-only report-review package metadata owned by CLASSIFIRE.'''
+
+    __tablename__ = 'proposal_review_packages'
+    __table_args__ = (
+        CheckConstraint(
+            "record_owner = 'CLASSIFIRE'",
+            name='ck_proposal_review_package_record_owner',
+        ),
+        CheckConstraint(
+            'selected_defect_count > 0',
+            name='ck_proposal_review_package_selected_defect_count',
+        ),
+        ForeignKeyConstraint(
+            ['project_evidence_id', 'report_sha256'],
+            ['project_evidence.id', 'project_evidence.source_sha256'],
+            name='fk_proposal_review_package_report_source',
+        ),
+        UniqueConstraint('package_id', name='uq_proposal_review_package_package_id'),
+        UniqueConstraint(
+            'package_manifest_sha256',
+            name='uq_proposal_review_package_manifest_sha256',
+        ),
+        Index('ix_proposal_review_package_project_estimate', 'project_id', 'estimate_id'),
+        Index('ix_proposal_review_package_retention', 'retention_until'),
+    )
+
+    package_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    project_id: Mapped[str] = mapped_column(ForeignKey('projects.id'), nullable=False)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey('estimates.id'), nullable=False)
+    project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    report_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    approved_expected_label_manifest_id: Mapped[str] = mapped_column(
+        ForeignKey('report_expected_label_manifests.id'), nullable=False
+    )
+    approved_expected_label_manifest_sha256: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    approval_reference: Mapped[str] = mapped_column(String(500), nullable=False)
+    package_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    package_manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    completion_receipt_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    selected_defect_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    reviewer_summary_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    reviewer_summary_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    safe_locator_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    safe_locator_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    record_owner: Mapped[str] = mapped_column(String(30), default='CLASSIFIRE', nullable=False)
+    retention_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    legal_hold_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    legal_hold_reason_code: Mapped[str | None] = mapped_column(String(100))
+
+
+class ProposalReviewPackageRedaction(RecordMixin, Base):
+    '''A separate, immutable redacted reviewer view; it never changes the package.'''
+
+    __tablename__ = 'proposal_review_package_redactions'
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ['proposal_review_package_id'],
+            ['proposal_review_packages.id'],
+            name='fk_proposal_review_package_redaction_package',
+            ondelete='CASCADE',
+        ),
+        UniqueConstraint(
+            'proposal_review_package_id',
+            'redacted_summary_sha256',
+            name='uq_proposal_review_package_redaction_summary',
+        ),
+        Index(
+            'ix_proposal_review_package_redaction_package_created',
+            'proposal_review_package_id',
+            'created_at',
+        ),
+    )
+
+    proposal_review_package_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    redaction_reason_code: Mapped[str] = mapped_column(String(100), nullable=False)
+    redacted_scope_ids: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    redacted_summary_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    redacted_summary_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_by_user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), nullable=False)
+
+
 class TechnicalDocument(RecordMixin, Base):
     __tablename__ = "technical_documents"
 

@@ -101,28 +101,27 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ### Immediate next action
 
-#### Priority 0 - Define proposal-review package ownership before a UI
+#### Priority 0 - Add per-project proposal-review reader assignments
 
-**Objective:** agree the minimum retention, redaction/deletion, reviewer-access,
-and safe storage-locator contract for generated proposal-review packages before
-creating a persistence migration or reviewer UI.
-
-**Why this comes first:** PR #104 has integrated the runner and approval
-boundary, but its deterministic package remains in memory or caller-selected
-files. A UI or database record created before ownership is defined would create
-an ungoverned second source of truth for proposal evidence.
-
-**Scope:** retain only hash-bound package metadata, receipt/source/approval
-references, reviewer-visible uncertainty, and a safe locator. The design must
-remain proposal-only and add no canonical, technical, commercial, lock,
+**Current policy implementation:** CLASSIFIRE owns registered proposal-review
+package metadata. The minimum retention period is five years from registration.
+The separate lifecycle record, separate redaction view, legal-hold/deletion
+rules, content-safe locator contract, integrity refusal, and internal read-only
+reviewer screen are implemented by the proposal-review lifecycle candidate.
+It remains proposal-only and grants no canonical, technical, commercial, lock,
 deployment, or release authority.
 
-**Done when:** a reviewed lifecycle contract defines owner, reader, retention,
-redaction/deletion, and tamper response; a later narrow migration and reviewer
-surface can be tested against that contract without inventing policy.
+**Objective:** replace the controlled-UAT role-wide reader map with explicit
+Project/package reader assignment and revocation before broader or
+customer-facing access.
 
-**Uncertainty:** no existing evidence defines this lifecycle policy. It needs a
-product/records-ownership decision before implementation.
+**Why this comes first:** a role-wide reader can see every package permitted to
+that role. The lifecycle controls are suitable for controlled UAT, but wider
+multi-project access needs a narrower access boundary.
+
+**Scope:** human reader assignment and revocation only. Do not wire the runner
+to a real report, call a provider, create canonical state, select a technical
+system, price work, create a lock, deploy, or release.
 
 ### Completed and published foundations (not next actions)
 
@@ -424,10 +423,11 @@ exact-byte/locator/artifact-audit checks.
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
 runner preflight that rejects legacy/unbound packets before a no-tool port call.
 
-**Remaining:** legacy-scope transition or retirement, package
-retention/redaction/deletion policy, persistent reviewer package ownership,
-caption/multi-format support, multi-report evidence-family accuracy, and user
-review.
+**Remaining:** legacy-scope transition or retirement, explicit per-project
+reader assignment before a wider rollout, caption/multi-format support,
+multi-report evidence-family accuracy, and user review. The registered-package
+lifecycle candidate supplies five-year retention, redaction, legal hold,
+integrity refusal, and a controlled-UAT read-only reviewer surface.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.

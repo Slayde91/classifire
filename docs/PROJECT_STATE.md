@@ -93,6 +93,10 @@ Shared `main` packages migrations through
 `0013_report_defect_scope_admissions`. It has one head:
 `0013_report_defect_scope_admissions (legacy_adjudicated_lineage)`.
 
+The isolated proposal-review lifecycle candidate adds
+`0014_proposal_review_package_lifecycle`. It is not shared-main evidence until
+its pull request is merged and GitHub validates the resulting `main` commit.
+
 ### Completed report-governance integration on shared main (PR #104)
 
 - `b36ebb5` introduces an immutable, human-approved expected-label manifest
@@ -162,7 +166,7 @@ prices work, creates a lock, or releases an estimate.
 | Area | Evidence-backed limit |
 | --- | --- |
 | Desk-quote evidence/output safety | PR #103's shared-main resolver requires a Project/Estimate-owned immutable `clean` `project_evidence` record, verifies retained bytes under the atomic reader, validates stored locators, re-hashes new and cached export bytes, and audits artifact hash/size. Missing, changed, wrong-purpose, cross-project, cross-estimate, unsafe-path, quarantined, and locator-mismatched evidence fails before export or audit. `technical_evidence` remains rejected pending a separately designed owned-byte contract. |
-| Report assessment operation | Shared main has one proposal-only application service, `execute_phase8_report_assessment_runner()`. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a human-approved expected-label manifest bound to report bytes and estimate; it checks the same approval on every V2 scope packet before an injected no-tool port call. There is no API/CLI/UI route, persisted review-package record, or real-provider run. |
+| Report assessment operation | Shared main has one proposal-only application service, `execute_phase8_report_assessment_runner()`. It requires a caller-owned PostgreSQL clean-byte transaction, exact Project/Estimate/report/package/profile bindings, and a human-approved expected-label manifest bound to report bytes and estimate; it checks the same approval on every V2 scope packet before an injected no-tool port call. The isolated lifecycle candidate adds a separate CLASSIFIRE-owned package metadata record, audited redaction/hold/deletion service, and read-only internal human UI; it is not wired to run assessment or a real-provider route, and grants no canonical, technical, commercial, lock, deployment, or release authority. |
 | Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. The runner rejects legacy V1/unbound scope packets or a different approval record before any port call. Historical V1 packets remain verifiable. |
 | Report formats and content | Normalisation is PDF-only. Text, page, table, and annotation content are supported. Drawings and embedded images are locator/hash records with no documentary payload; visual bytes come through a separate governed packet. Caption extraction is explicitly rejected. XLSX, DOCX, and multi-report generalisation are not implemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
@@ -170,7 +174,7 @@ prices work, creates a lock, or releases an estimate.
 | Quantity and labour | Basic estimate calculation exists; the complete selected-system-to-components-to-productivity chain is not implemented on current main. |
 | Commercial recovery | Desk quotes and basic estimating rules exist, but the full component-level rate-inclusion/recovery ledger remains incomplete. |
 | Snapshot and release | Estimate snapshot V2 separates semantic identity from `generated_utc`: `snapshot_hash` excludes that volatile generation metadata, while `snapshot_document_hash` still binds the complete displayed document. V1 snapshots retain their historical full-payload verification. Focused synthetic tests cover semantic stability, metadata/semantic tampering, and unsupported schemas. Full independent validation certificates and Human Release are not proven. |
-| Product UI | A development UI exists for projects, estimates, libraries, and basic outputs. Technical source and variant details show a read-only current source-authority result; TechnicalVariant revision history also shows every recorded revision's retained-document binding and cited locator, while an eligible bound record in technical-release detail can safely link to the current document record without changing its published binding. There is no supported user-facing report-assessment/review workflow for the merged Phase 8 report services. |
+| Product UI | A development UI exists for projects, estimates, libraries, and basic outputs. Technical source and variant details show a read-only current source-authority result; TechnicalVariant revision history also shows every recorded revision's retained-document binding and cited locator, while an eligible bound record in technical-release detail can safely link to the current document record without changing its published binding. The isolated candidate adds only a controlled-UAT read-only viewer for registered proposal packages; it does not execute assessment or create a package from a report. |
 | Production operation | Narrow fail-closed startup/browser/diagnostic controls are merged. Clean-machine deployment, observability, backup/restore, performance, incident response, data-rights controls, and production proof remain incomplete. |
 | Static analysis | Full `ruff check .`, `mypy src`, and `bandit -q -r src` pass; Mypy covers 115 source files with maintained PyYAML and ReportLab stubs. Hosted CI runs all three checks after tests. | These are static-analysis gates, not proof of production readiness or operational authority. |
 
@@ -208,7 +212,7 @@ run has been consumed and must not be repeated without new authority.
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
-| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, atomic expected-label scope admission, and runner verification. Legacy-scope transition, package persistence, caption/multi-format support, and an operator flow remain. |
+| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, atomic expected-label scope admission, and runner verification. The isolated lifecycle candidate adds package policy/persistence and a controlled-UAT read-only viewer. Legacy-scope transition, per-project reader assignment, caption/multi-format support, and an operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
@@ -221,51 +225,26 @@ run has been consumed and must not be repeated without new authority.
 
 ### Immediate next action
 
-#### Priority 0 - Define proposal-review package ownership before a UI
+#### Priority 0 - Add per-project proposal-review reader assignments
 
-**Objective:** agree the minimum retention, redaction/deletion, reviewer-access,
-and safe storage-locator contract for generated proposal-review packages before
-creating a persistence migration or reviewer UI.
+**Current policy implementation:** CLASSIFIRE owns registered proposal-review
+package metadata. The minimum retention period is five years from registration.
+The isolated lifecycle candidate adds the separate metadata and redaction
+records, legal-hold/deletion rules, safe locator contract, integrity refusal,
+and controlled-UAT internal read-only reviewer screen. It remains proposal-only
+and grants no canonical, technical, commercial, lock, deployment, or release
+authority.
 
-**Why this is first:** PR #104 has integrated the runner and approval boundary,
-but its deterministic package remains in memory or caller-selected files. A UI
-or database record created before ownership is defined would create an
-ungoverned second source of truth for proposal evidence.
+**Objective:** replace the controlled-UAT role-wide reader map with explicit
+Project/package assignments and revocation for project managers, technical
+reviewers, and records/compliance users before broader or customer-facing access.
 
-**Scope:** retain only hash-bound package metadata, receipt/source/approval
-references, reviewer-visible uncertainty, and a safe locator. The design must
-remain proposal-only and add no canonical, technical, commercial, lock,
-deployment, or release authority.
+**Why:** the current authorization model is role-based rather than per-project.
+The lifecycle controls are therefore safe only for internal controlled UAT.
 
-**Done when:** a reviewed lifecycle contract defines owner, reader, retention,
-redaction/deletion, and tamper response; a later narrow migration and reviewer
-surface can be tested against that contract without inventing policy.
-
-**Uncertainty:** no existing evidence defines this lifecycle policy. It needs a
-product/records-ownership decision before implementation.
-
-### Near-term actions
-
-#### Priority 1 - Add governed persistence before a report-review UI
-
-**Objective:** define and implement the smallest immutable, proposal-only
-storage contract for a generated report-review package, then expose it through a
-read-only reviewer surface.
-
-**Why:** the runner builds a deterministic in-memory package and can materialise
-files only to a caller-supplied path. `models.py`, `api/`, and `ui.py` contain no
-`ReportReviewPackage` record or report-review route, so building a UI first would
-create a second, ungoverned source of truth.
-
-**Scope and acceptance:** retain only hash-bound package metadata, receipt and
-source/approval references, reviewer-visible uncertainty, and a safe storage
-locator. Prove immutable reads, project/estimate isolation, redaction, tamper
-failure, and absence of canonical, technical, commercial, lock, or release
-authority with a migration, service, route/UI tests, and synthetic fixtures.
-
-**Dependencies and uncertainty:** first decide retention, redaction/deletion,
-and reviewer-access ownership for proposal artifacts. No evidence currently
-defines that policy, so this design decision must precede a migration.
+**Scope:** add only human assignment and revocation controls. Do not wire the
+runner to a real report, call a provider, create canonical state, select a
+technical system, price work, create a lock, deploy, or release.
 
 #### Priority 2 - Close demonstrated Phase 2 and Phase 12 gaps separately
 

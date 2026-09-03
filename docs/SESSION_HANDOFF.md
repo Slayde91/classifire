@@ -240,7 +240,9 @@ Shared main includes:
   existing read-only document record, and read-only revision-source visibility.
 
 Shared `main` packages migrations through
-`0013_report_defect_scope_admissions` (one head).
+`0013_report_defect_scope_admissions` (one head). The isolated proposal-review
+lifecycle candidate adds `0014_proposal_review_package_lifecycle`; it is not
+shared-main evidence until merged and GitHub-validated.
 
 PR #104 run `33515411987` passed Python validation on `0f6c252`; post-merge
 `main` run `33516292114` passed on `b6409a5`, including tests and the one-head
@@ -251,11 +253,19 @@ that configuration; no required-check configuration is verified.
 
 ### Report-assessment integration limit
 
-The new report path is service-only. Source exists for owned report bytes,
+The report path remains service-only. Source exists for owned report bytes,
 stable PDF locators/scopes, transient documentary context, report-aware runtime
-input, assessment/review controllers, and deterministic packages. The shared-
-main runner composes the whole sequence, but no supported CLI, API, UI, or
-persisted proposal-review package record invokes it.
+input, assessment/review controllers, and deterministic packages. The runner
+composes the whole sequence, but no supported CLI, API, or UI invokes it.
+
+The proposal-review lifecycle candidate adds a separate, CLASSIFIRE-owned
+metadata record and an internal human read-only `/proposal-reviews` surface for
+registered packages. It requires five-year minimum retention, separate
+redactions, legal-hold protection, deletion only after retention, safe locators,
+and tamper refusal with a content-safe audit event. It does not execute the
+runner and provides no canonical, technical, commercial, lock, deployment, or
+release authority. The present role-wide reader map is controlled-UAT only;
+per-project reader assignment is the next access-control step.
 
 PDF text, table, and annotation content are supported. Drawings and embedded
 images are locator/hash-only in documentary context, with visual bytes supplied
@@ -303,7 +313,9 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
 - Estimate snapshot V2 has a stable semantic hash, a separate full-document
   integrity hash, and legacy V1 compatibility. It does not prove the independent
   Phase 12 validation inputs or Human Release.
-- The development UI does not expose a supported report-assessment/review flow.
+- The development UI exposes only a controlled-UAT read-only registered-package
+  review surface; it does not execute a report assessment or create a review
+  package from a report.
 - Production deployment, backup/recovery, observability, data-rights, and
   performance proof remain incomplete.
 
