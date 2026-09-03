@@ -17,7 +17,16 @@ from .phase8_report_review_package import (
     Phase8ReportReviewPackage,
     build_phase8_report_review_package,
 )
-from .report_evidence_adapter import build_report_defect_evidence_packets
+from .report_evidence_adapter import (
+    REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2,
+    ReportDefectEvidencePacket,
+    build_report_defect_evidence_packets,
+)
+from .report_expected_label_manifest import (
+    ApprovedReportExpectedLabelManifest,
+    ReportExpectedLabelManifestError,
+    require_approved_report_expected_label_manifest,
+)
 
 
 class Phase8ReportReviewControllerError(RuntimeError):
@@ -93,6 +102,55 @@ def _state(
     return state
 
 
+def _approved_expected_label_manifest(
+    db: Session,
+    *,
+    approved_expected_label_manifest_id: object,
+    project_id: str,
+    estimate_id: str,
+    stored_file_id: str,
+    report_sha256: str,
+) -> ApprovedReportExpectedLabelManifest:
+    try:
+        return require_approved_report_expected_label_manifest(
+            db,
+            expected_label_manifest_id=approved_expected_label_manifest_id,
+            project_id=project_id,
+            estimate_id=estimate_id,
+            stored_file_id=stored_file_id,
+            report_sha256=report_sha256,
+        )
+    except ReportExpectedLabelManifestError as exc:
+        raise Phase8ReportReviewControllerError(
+            'REPORT_REVIEW_CONTROLLER_EXPECTED_LABEL_MANIFEST_INVALID'
+        ) from exc
+
+
+def _require_approved_scope_packets(
+    packets: tuple[ReportDefectEvidencePacket, ...],
+    *,
+    approved_expected_label_manifest: ApprovedReportExpectedLabelManifest,
+) -> None:
+    expected_labels = approved_expected_label_manifest.expected_report_defect_labels
+    actual_labels = tuple(
+        str(packet.manifest['report_defect_label']) for packet in packets
+    )
+    if actual_labels != expected_labels:
+        _fail('REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_MISMATCH')
+    for packet in packets:
+        manifest = packet.manifest
+        if (
+            manifest.get('schema') != REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2
+            or manifest.get('approved_expected_label_manifest_id')
+            != approved_expected_label_manifest.id
+            or manifest.get('approved_expected_label_manifest_sha256')
+            != approved_expected_label_manifest.manifest_sha256
+            or manifest.get('approved_expected_label_manifest_approval_reference')
+            != approved_expected_label_manifest.approval_reference
+        ):
+            _fail('REPORT_REVIEW_CONTROLLER_SCOPE_ADMISSION_INVALID')
+
+
 def assemble_phase8_report_review_package(
     db: Session,
     *,
@@ -106,8 +164,9 @@ def assemble_phase8_report_review_package(
     approval_reference: object,
     outcomes_by_scope: object,
     protected_state_reader: Callable[[], InitialSubmissionState] | None = None,
+    approved_expected_label_manifest_id: object = None,
 ) -> Phase8ReportReviewPackage:
-    '''Assemble one owned report review package without retrieval, inference, or writes.'''
+    '''Assemble one owned report review package only from an approved scope admission.'''
 
     if not isinstance(db, Session):
         _fail('REPORT_REVIEW_CONTROLLER_SESSION_INVALID')
@@ -152,6 +211,23 @@ def assemble_phase8_report_review_package(
         )
         if actual_labels != expected_labels:
             _fail('REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_MISMATCH')
+        approved_expected_label_manifest = _approved_expected_label_manifest(
+            db,
+            approved_expected_label_manifest_id=approved_expected_label_manifest_id,
+            project_id=selected_project_id,
+            estimate_id=selected_estimate_id,
+            stored_file_id=selected_stored_file_id,
+            report_sha256=expected_report_sha256,
+        )
+        if frozenset(
+            label.casefold()
+            for label in approved_expected_label_manifest.expected_report_defect_labels
+        ) != expected_labels:
+            _fail('REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_MISMATCH')
+        _require_approved_scope_packets(
+            packets,
+            approved_expected_label_manifest=approved_expected_label_manifest,
+        )
         package = build_phase8_report_review_package(
             package_id=package_id,
             package_sha256=package_sha256,

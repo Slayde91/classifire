@@ -10,7 +10,7 @@ from test_report_evidence_adapter import (
     adapter_session,
 )
 
-from classifire.models import Opening, ReportDefectScope, Service
+from classifire.models import Opening, ReportDefectScope, ReportExpectedLabelManifest, Service
 from classifire.services.canonical_submission_state import initial_submission_state
 from classifire.services.phase8_report_review_controller import (
     Phase8ReportReviewControllerError,
@@ -20,6 +20,19 @@ from classifire.services.phase8_report_review_package import (
     ReportDefectReviewOutcome,
     validate_phase8_report_review_package,
 )
+from classifire.services.report_expected_label_manifest import (
+    record_approved_report_expected_label_manifest,
+)
+
+
+def _approved_expected_label_manifest_id(db, *, estimate_id: str) -> str:
+    record = db.scalar(
+        select(ReportExpectedLabelManifest).where(
+            ReportExpectedLabelManifest.estimate_id == estimate_id
+        )
+    )
+    assert isinstance(record, ReportExpectedLabelManifest)
+    return record.id
 
 
 def test_controller_selects_every_owned_scope_and_proves_no_write() -> None:
@@ -49,6 +62,9 @@ def test_controller_selects_every_owned_scope_and_proves_no_write() -> None:
             package_id='PACKAGE-REPORT-001',
             package_sha256='A' * 64,
             approval_reference='proposal-only batch assembly',
+            approved_expected_label_manifest_id=(
+                _approved_expected_label_manifest_id(db, estimate_id=estimate.id)
+            ),
             outcomes_by_scope={
                 scope.id: ReportDefectReviewOutcome(
                     no_proposal_status='RETRIEVAL_BLOCKED',
@@ -94,6 +110,9 @@ def test_controller_fails_closed_on_changed_state_or_dirty_session() -> None:
                 package_id='PACKAGE-REPORT-002',
                 package_sha256='B' * 64,
                 approval_reference='proposal-only batch assembly',
+                approved_expected_label_manifest_id=(
+                    _approved_expected_label_manifest_id(db, estimate_id=estimate.id)
+                ),
                 outcomes_by_scope={
                     'unused': ReportDefectReviewOutcome(
                         no_proposal_status='RETRIEVAL_BLOCKED',
@@ -107,6 +126,9 @@ def test_controller_fails_closed_on_changed_state_or_dirty_session() -> None:
             select(ReportDefectScope).where(ReportDefectScope.defect_id == defect.id)
         )
         assert scope is not None
+        approved_manifest_id = _approved_expected_label_manifest_id(
+            db, estimate_id=estimate.id
+        )
         states = iter((before, before, changed))
         with pytest.raises(Phase8ReportReviewControllerError) as after_package:
             assemble_phase8_report_review_package(
@@ -119,6 +141,9 @@ def test_controller_fails_closed_on_changed_state_or_dirty_session() -> None:
                 package_id='PACKAGE-REPORT-004',
                 package_sha256='D' * 64,
                 approval_reference='proposal-only batch assembly',
+                approved_expected_label_manifest_id=(
+                    _approved_expected_label_manifest_id(db, estimate_id=estimate.id)
+                ),
                 outcomes_by_scope={
                     scope.id: ReportDefectReviewOutcome(
                         no_proposal_status='RETRIEVAL_BLOCKED',
@@ -140,6 +165,7 @@ def test_controller_fails_closed_on_changed_state_or_dirty_session() -> None:
                 package_id='PACKAGE-REPORT-003',
                 package_sha256='C' * 64,
                 approval_reference='proposal-only batch assembly',
+                approved_expected_label_manifest_id=approved_manifest_id,
                 outcomes_by_scope={},
             )
 
@@ -163,6 +189,9 @@ def test_controller_rejects_a_wrong_report_hash_before_package_assembly() -> Non
                 package_id='PACKAGE-REPORT-005',
                 package_sha256='E' * 64,
                 approval_reference='proposal-only batch assembly',
+                approved_expected_label_manifest_id=(
+                    _approved_expected_label_manifest_id(db, estimate_id=estimate.id)
+                ),
                 outcomes_by_scope={},
             )
 
@@ -177,6 +206,9 @@ def test_controller_rejects_missing_or_duplicate_expected_labels() -> None:
         project, estimate, stored, _first_defect, _second_defect, _records, _scopes = (
             _multi_scoped_report_packet(db, ordinal=54)
         )
+        approved_manifest_id = _approved_expected_label_manifest_id(
+            db, estimate_id=estimate.id
+        )
 
         with pytest.raises(Phase8ReportReviewControllerError) as omitted:
             assemble_phase8_report_review_package(
@@ -189,6 +221,7 @@ def test_controller_rejects_missing_or_duplicate_expected_labels() -> None:
                 package_id='PACKAGE-REPORT-006',
                 package_sha256='F' * 64,
                 approval_reference='proposal-only batch assembly',
+                approved_expected_label_manifest_id=approved_manifest_id,
                 outcomes_by_scope={},
             )
         with pytest.raises(Phase8ReportReviewControllerError) as duplicate:
@@ -202,8 +235,95 @@ def test_controller_rejects_missing_or_duplicate_expected_labels() -> None:
                 package_id='PACKAGE-REPORT-007',
                 package_sha256='1' * 64,
                 approval_reference='proposal-only batch assembly',
+                approved_expected_label_manifest_id=approved_manifest_id,
                 outcomes_by_scope={},
             )
 
     assert omitted.value.code == 'REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_MISMATCH'
     assert duplicate.value.code == 'REPORT_REVIEW_CONTROLLER_EXPECTED_LABELS_INVALID'
+
+
+def test_controller_rejects_legacy_unbound_scope_before_package_assembly() -> None:
+    with adapter_session() as db:
+        project, estimate, stored, defect, _records = _scoped_report_packet(db, ordinal=55)
+        scope = db.scalar(
+            select(ReportDefectScope).where(ReportDefectScope.defect_id == defect.id)
+        )
+        assert isinstance(scope, ReportDefectScope)
+        approved_manifest_id = _approved_expected_label_manifest_id(
+            db, estimate_id=estimate.id
+        )
+        scope.approved_expected_label_manifest_id = None
+        db.flush()
+
+        with pytest.raises(Phase8ReportReviewControllerError) as raised:
+            assemble_phase8_report_review_package(
+                db,
+                stored_file_id=stored.id,
+                project_id=project.id,
+                estimate_id=estimate.id,
+                report_sha256=stored.sha256,
+                expected_report_defect_labels=['D-001'],
+                package_id='PACKAGE-REPORT-008',
+                package_sha256='2' * 64,
+                approval_reference='proposal-only batch assembly',
+                approved_expected_label_manifest_id=approved_manifest_id,
+                outcomes_by_scope={
+                    scope.id: ReportDefectReviewOutcome(
+                        no_proposal_status='RETRIEVAL_BLOCKED',
+                        blocker_code='ACTIVE_VISUAL_EVIDENCE_REQUIRED',
+                    )
+                },
+            )
+
+        assert db.scalar(select(func.count()).select_from(Opening)) == 0
+        assert db.scalar(select(func.count()).select_from(Service)) == 0
+
+    assert raised.value.code == 'REPORT_REVIEW_CONTROLLER_SCOPE_ADMISSION_INVALID'
+
+
+def test_controller_rejects_scope_bound_to_a_different_approval_record() -> None:
+    with adapter_session() as db:
+        project, estimate, stored, defect, _records = _scoped_report_packet(db, ordinal=56)
+        scope = db.scalar(
+            select(ReportDefectScope).where(ReportDefectScope.defect_id == defect.id)
+        )
+        original_manifest = db.scalar(
+            select(ReportExpectedLabelManifest).where(
+                ReportExpectedLabelManifest.estimate_id == estimate.id
+            )
+        )
+        assert isinstance(scope, ReportDefectScope)
+        assert isinstance(original_manifest, ReportExpectedLabelManifest)
+        different_manifest = record_approved_report_expected_label_manifest(
+            db,
+            project_id=project.id,
+            estimate_id=estimate.id,
+            stored_file_id=stored.id,
+            report_sha256=stored.sha256,
+            expected_report_defect_labels=['D-001'],
+            approval_reference='a different synthetic human approval',
+            approved_by_user_id=original_manifest.approved_by_user_id,
+        )
+
+        with pytest.raises(Phase8ReportReviewControllerError) as raised:
+            assemble_phase8_report_review_package(
+                db,
+                stored_file_id=stored.id,
+                project_id=project.id,
+                estimate_id=estimate.id,
+                report_sha256=stored.sha256,
+                expected_report_defect_labels=['D-001'],
+                package_id='PACKAGE-REPORT-009',
+                package_sha256='3' * 64,
+                approval_reference='proposal-only batch assembly',
+                approved_expected_label_manifest_id=different_manifest.id,
+                outcomes_by_scope={
+                    scope.id: ReportDefectReviewOutcome(
+                        no_proposal_status='RETRIEVAL_BLOCKED',
+                        blocker_code='ACTIVE_VISUAL_EVIDENCE_REQUIRED',
+                    )
+                },
+            )
+
+    assert raised.value.code == 'REPORT_REVIEW_CONTROLLER_SCOPE_ADMISSION_INVALID'
