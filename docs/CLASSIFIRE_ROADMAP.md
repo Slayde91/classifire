@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** 730911d (PR #149 merge, 2026-09-03)
+**Verified shared-main implementation:** c3c6258 (PR #151 merge, 2026-09-03)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -123,6 +123,17 @@ is rewritten or retired.
 PR validation run 33749820103 and post-merge main run 33750096567 passed. This
 is proposal-only: it adds no report/provider operation, canonical, technical,
 commercial, lock, deployment, or release authority.
+
+#### Completed shared-main foundation - strict source-bound caption locators (PR #151)
+
+PR #151 classifies only explicit, numbered `Figure`, `Fig`, `Image`, `Photo`,
+`Photograph`, or `Plate` text as a caption. It persists only the fixed category
+and safe deterministic position/hash fields, then re-extracts the exact text
+transiently only after retained-PDF locator/hash verification. It rejects
+ambiguous prose and raw-caption locator fields. It creates no caption-to-image
+association and no physical, technical, commercial, canonical, lock,
+deployment, or release authority. Pull-request run 33753130859 and post-merge
+main run 33753516838 passed.
 
 ### Completed and published foundations (not next actions)
 
@@ -282,7 +293,9 @@ or release capability.
   successful fake results each produce exactly one safe outcome;
 - drawing/image locator-only and separately governed visual-byte semantics are
   preserved;
-- captions remain unsupported until separately implemented and tested; and
+- strict explicitly numbered caption text is retained only as a content-free
+  locator and transient hash-checked documentary context, without visual
+  association or fact inference; and
 - fake-transport integration, report-focused tests, PostgreSQL containment,
   full suite, static checks, Alembic head, and output inspection pass.
 
@@ -309,8 +322,9 @@ downstream authority was added.
 4. Maintain the full-repository Ruff, Mypy, and Bandit checks beside the changed-file
    Ruff fast-path, then have the repository owner decide on an upgrade or
    equivalent documented default-branch protection control.
-5. Expand report evidence beyond PDF, add captions only with a real provenance
-   contract, and prove multiple independent report formats.
+5. Expand report evidence beyond PDF and prove multiple independent report
+   formats; the merged caption contract remains limited to strict retained-PDF
+   text and does not associate captions with images.
 
 ### Later or dependency-bound actions
 
@@ -413,15 +427,15 @@ database or approval workflow.
 
 **Completed foundations:** retained evidence, linked-original controls,
 Project/Estimate ownership, exact clean-byte reads, shared-byte quarantine,
-PDF text/table/annotation and drawing/image locators, ordered scopes, report-
-aware inputs, deterministic review artifacts, and PR #103's desk-quote
-exact-byte/locator/artifact-audit checks.
+PDF text/table/annotation and drawing/image locators, strict explicitly numbered
+caption locators, ordered scopes, report-aware inputs, deterministic review
+artifacts, and PR #103's desk-quote exact-byte/locator/artifact-audit checks.
 
 **Completed foundations:** expected-label manifests bound to report bytes and
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
 runner preflight that rejects legacy/unbound packets before a no-tool port call, and a database-backed proposal-review controller that rejects them before package assembly.
 
-**Remaining:** caption/multi-format support, multi-report evidence-family accuracy, user review, and a separately authorised operator flow. Shared main supplies five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
+**Remaining:** multi-format support, multi-report evidence-family accuracy, user review, and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -563,8 +577,8 @@ import them into the active fire-seal/penetration runtime prematurely.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
 - Building the report runner as future work; shared main already composes it.
-  The remaining work is caption/multi-format support, multi-report evidence-family
-  accuracy, user review, and a separately authorised operator flow.
+  The remaining work is multi-format support, multi-report evidence-family accuracy,
+  user review, caption-to-image association policy, and a separately authorised operator flow.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.
 - Count equality, whole-file database hashing, or a model answer as semantic

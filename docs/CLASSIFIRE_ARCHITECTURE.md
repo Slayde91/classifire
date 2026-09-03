@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** 730911d (PR #149 merge, 2026-09-03)
+**Verified shared-main implementation:** c3c6258 (PR #151 merge, 2026-09-03)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -143,18 +143,21 @@ The merged report adapter currently supports bounded PDF normalisation:
 
 - report/page metadata hashes;
 - text blocks;
+- strict explicitly numbered caption text blocks, with a fixed categorical caption
+  kind and no raw caption text in the locator;
 - tables;
 - annotations;
 - drawing locators/hashes;
 - embedded-image locators/hashes; and
 - stable report/page/item identities and ordered Defect scopes.
 
-Text, table, and annotation items can provide transient documentary content.
-Drawing and embedded-image report items are locator/hash evidence without raw
-documentary content. Actual visual inference bytes come from a separately
-governed retained visual packet. Caption items are currently rejected, and no
-caption extractor exists. XLSX, DOCX, general report formats, and multi-report
-generalisability remain planned.
+Text, table, annotation, and strict caption items can provide transient documentary
+content. Drawing and embedded-image report items are locator/hash evidence without raw
+documentary content. Actual visual inference bytes come from a separately governed
+retained visual packet. A caption is only an exact retained text block with an explicit
+numbered category; it is not automatically associated with an image and cannot establish
+a physical fact. XLSX, DOCX, general report formats, and multi-report generalisability
+remain planned.
 
 On shared main, cardinality is deterministic for the report scopes that already exist in the
 database. An approved expected-label manifest record is source-bound to the
@@ -429,6 +432,18 @@ PR #149 passed pull-request validation run 33749820103 and post-merge main run
 33750096567. The controller still cannot retrieve report bytes, invoke a
 provider, materialise files, write canonical state, create a lock, or release
 anything.
+
+### Strict source-bound report captions on shared main (PR #151)
+
+The PDF normaliser accepts only an explicit, bounded numbered caption prefix and
+stores its category, position, size, sequence, and content hash—not its raw
+wording. Before selected caption wording is exposed in transient documentary
+context, the system normalises the exact verified PDF again and requires the
+same locator and hash. Ambiguous prose, unknown categories, and locator fields
+that attempt to persist raw caption wording fail closed. This is no image link,
+no visual interpretation, and no physical, technical, commercial, canonical,
+lock, deployment, or release authority. PR #151 pull-request run 33753130859
+and post-merge main run 33753516838 passed.
 
 ### Near term
 
