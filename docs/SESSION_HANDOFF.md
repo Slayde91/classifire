@@ -247,7 +247,7 @@ Shared main includes:
 - PR #154's bounded source-bound XLSX worksheet/cell locators and transient selected-cell re-extraction; and
 - PR #156's bounded source-bound DOCX document/paragraph/simple-table locators and transient selected-item re-extraction.
 
-The packaged migration history now has one forward-only head: 0019_report_evidence_family_manifests. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0020_proposal_review_family_packages. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
 PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#156 check and corresponding main run also passed, ending with run 33766069162 on 82d288c. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
@@ -281,7 +281,7 @@ run 33765731885 and post-merge main run 33766069162 passed.
 
 ### Explicit human-approved report evidence families
 
-Forward-only migration `0019_report_evidence_family_manifests` retains an immutable,
+Migration `0019_report_evidence_family_manifests` retains an immutable,
 human-approved, ordered family of at least two already-retained reports for one Project
 and Estimate. The approver supplies only each exact stored-file ID and source SHA; the
 service rejects filenames, folders, timestamps, titles, and other inferred membership.
@@ -296,6 +296,16 @@ member's exact stored source and hash. The aggregate retains the separate scopes
 artifacts, and identical protected-state receipt binding; it rejects absent, extra,
 swapped, legacy/unbound, drifted, or tampered components.
 
+The proposal-review register now retains either a single-report package or an approved
+report-family package. A family record binds the exact approved family-manifest ID,
+hash, and human approval reference, then independently rechecks every member's exact
+stored source, expected-label approval record, review-package manifest, and outcome
+membership. It preserves member order and separate source identities; it never merges
+reports or scopes. The same CLASSIFIRE-owned five-year retention, separate redaction,
+legal hold, integrity refusal, and scoped internal reader grants apply. The existing
+read-only `/proposal-reviews` pages identify a family and show each outcome's family
+member and evidence identifier without exposing storage paths or creating an execution
+route.
 This remains evidence admission and proposal-review assembly only. It does not change
 PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,

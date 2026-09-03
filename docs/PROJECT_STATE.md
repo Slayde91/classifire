@@ -90,7 +90,7 @@ The following boundaries are implemented and tested for their stated scope:
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-The packaged migration history now has one forward-only head: 0019_report_evidence_family_manifests (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0020_proposal_review_family_packages (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
 ### Completed report-governance integration on shared main (PR #104)
 
@@ -172,7 +172,7 @@ passed.
 
 ### Explicit human-approved report evidence families
 
-Forward-only migration `0019_report_evidence_family_manifests` retains an immutable,
+Migration `0019_report_evidence_family_manifests` retains an immutable,
 human-approved, ordered family of at least two already-retained reports for one Project
 and Estimate. The approver supplies only each exact stored-file ID and source SHA; the
 service rejects filenames, folders, timestamps, titles, and other inferred membership.
@@ -187,6 +187,16 @@ member's exact stored source and hash. The aggregate retains the separate scopes
 artifacts, and identical protected-state receipt binding; it rejects absent, extra,
 swapped, legacy/unbound, drifted, or tampered components.
 
+The proposal-review register now retains either a single-report package or an approved
+report-family package. A family record binds the exact approved family-manifest ID,
+hash, and human approval reference, then independently rechecks every member's exact
+stored source, expected-label approval record, review-package manifest, and outcome
+membership. It preserves member order and separate source identities; it never merges
+reports or scopes. The same CLASSIFIRE-owned five-year retention, separate redaction,
+legal hold, integrity refusal, and scoped internal reader grants apply. The existing
+read-only `/proposal-reviews` pages identify a family and show each outcome's family
+member and evidence identifier without exposing storage paths or creating an execution
+route.
 This remains evidence admission and proposal-review assembly only. It does not change
 PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
@@ -248,7 +258,7 @@ prices work, creates a lock, or releases an estimate.
 | Desk-quote evidence/output safety | PR #103's shared-main resolver requires a Project/Estimate-owned immutable `clean` `project_evidence` record, verifies retained bytes under the atomic reader, validates stored locators, re-hashes new and cached export bytes, and audits artifact hash/size. Missing, changed, wrong-purpose, cross-project, cross-estimate, unsafe-path, quarantined, and locator-mismatched evidence fails before export or audit. `technical_evidence` remains rejected pending a separately designed owned-byte contract. |
 | Report assessment operation | Shared main has one proposal-only application service, execute_phase8_report_assessment_runner(), plus a database-backed controller that assembles only an exact-approved-manifest V2 scope set. The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; the controller does not retrieve a report or call a port. Shared main also has CLASSIFIRE-owned package metadata/redaction/hold/deletion, an internal read-only UI, and explicit active/revoked Project/package grants for non-administrator visibility. Neither surface runs assessment or a real-provider route, and neither grants canonical, technical, commercial, lock, deployment, or release authority. |
 | Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. Both the runner and the database-backed proposal-review controller reject legacy V1/unbound packets or a different approval record before a port call or package assembly. Historical V1 packets remain verifiable. |
-| Report formats and content | Normalisation supports PDF plus bounded source-bound XLSX and DOCX. PDF text, page, table, annotation, and strict explicitly numbered captions remain supported. XLSX persists only visible worksheet shape and non-empty cell position/category/hash fields; only selected cells are re-extracted transiently, and formulas are not executed. DOCX persists only structural document/visible-body paragraph/simple-body-table position, count, and hash fields; selected paragraph/table content is re-extracted transiently. XLSX and DOCX both fail closed on unsupported or unsafe structures, and never persist workbook/document content. General report formats remain unimplemented. Explicit human-approved multi-report family admission and deterministic proposal-review aggregation now exist, but family-aware scope and runner execution remain unimplemented. |
+| Report formats and content | Normalisation supports PDF plus bounded source-bound XLSX and DOCX. PDF text, page, table, annotation, and strict explicitly numbered captions remain supported. XLSX persists only visible worksheet shape and non-empty cell position/category/hash fields; only selected cells are re-extracted transiently, and formulas are not executed. DOCX persists only structural document/visible-body paragraph/simple-body-table position, count, and hash fields; selected paragraph/table content is re-extracted transiently. XLSX and DOCX both fail closed on unsupported or unsafe structures, and never persist workbook/document content. General report formats remain unimplemented. Explicit human-approved multi-report family admission and deterministic proposal-review aggregation now exist. The aggregate can be retained, redacted, held, integrity-checked, and read by scoped internal reviewers without joining members; family-aware scope and runner execution remain unimplemented. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
 | Technical authority | Review, source-document current state, activation, Draft source binding, revision lineage, source-locator, clean-byte candidate metadata extraction and Draft-only refresh after a clean source recheck, manual Draft materialisation, import, and release checks fail closed. A new Draft source document can record a hash-bound historical predecessor only when that predecessor is independently approved and its retained technical-evidence bytes still verify clean and unchanged; it does not retire the predecessor or approve, activate, select, price, lock, deploy, or release anything. A bound source is excluded from normal search, new technical release snapshots, and pinned runtime use when its document is missing, unapproved, or expired, or its retained-file metadata is missing, unsafe, or for another evidence purpose. Newly published technical manifests fix a safe source state: bound document/file identity, digest, and locator, or an explicit legacy-unbound state; pinned runtime rejects later binding or source-hash drift. TechnicalVariant and TechnicalDocument detail screens expose current metadata read-only, and TechnicalVariant revision history now exposes each revision's existing retained document and cited locator read-only. Extraction-assisted and manufacturer-neutral lineage, governed technical-release publication/supersession, and production authority remain incomplete. |
 | Quantity and labour | Basic estimate calculation exists; the complete selected-system-to-components-to-productivity chain is not implemented on current main. |
@@ -292,7 +302,7 @@ run has been consumed and must not be repeated without new authority.
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, hash-bound Draft source-document predecessor lineage, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and technical-release publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
-| 5. Evidence intake/resolution | **In progress** | The packaged implementation has bounded PDF/XLSX/DOCX report services, strict source-bound caption locators, atomic expected-label scope admission, a human-approved exact report-family manifest, deterministic aggregation of separately validated family review packages, runner and controller verification, the retained proposal-review package lifecycle, and explicit scoped reader grants/revocation. Additional formats, family-aware scope and runner execution, user review, and an operator flow remain. |
+| 5. Evidence intake/resolution | **In progress** | The packaged implementation has bounded PDF/XLSX/DOCX report services, strict source-bound caption locators, atomic expected-label scope admission, a human-approved exact report-family manifest, deterministic aggregation of separately validated family review packages, runner and controller verification, the retained single-report/family proposal-review package lifecycle, and explicit scoped reader grants/revocation. Additional formats, family-aware scope and runner execution, human decision/review actions, and a separately authorised operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
@@ -364,7 +374,7 @@ This reconciliation verified:
 
 - fetched Git refs, branch/upstream relationships, recent commits, open PRs, and issues;
 - the clean isolated worktree and the read-only legacy-root classification;
-- the packaged forward-only Alembic head 0019_report_evidence_family_manifests;
+- the packaged forward-only Alembic head 0020_proposal_review_family_packages;
 - current models, API/UI routes, report services, storage/containment, technical guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
 - PR #147's successful technical-lineage validation, PR #149's successful controller validation, PR #151's successful caption-locator validation, PR #154's successful XLSX-locator validation, and PR #156's successful DOCX-locator validation on f82121d plus post-merge main validation on 82d288c;
 - the retained assessment status and no-write/no-lock flags; and

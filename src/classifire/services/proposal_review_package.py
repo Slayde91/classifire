@@ -26,16 +26,28 @@ from ..models import (
     User,
 )
 from ..security import has_permission
+from .phase8_report_evidence_family_review_package import (
+    Phase8ReportEvidenceFamilyReviewPackage,
+    validate_phase8_report_evidence_family_review_package,
+)
 from .phase8_report_review_package import (
     REPORT_EXPECTED_LABEL_MANIFEST_SCHEMA_V2,
     Phase8ReportReviewPackage,
     validate_phase8_report_review_package,
 )
 from .phase8_visual_proposal import canonical_json_sha256
+from .report_evidence_family_manifest import (
+    ReportEvidenceFamilyManifestError,
+    require_approved_report_evidence_family_manifest,
+)
 
 PROPOSAL_REVIEW_PACKAGE_RECORD_SCHEMA = "CLASSIFIRE-PROPOSAL-REVIEW-PACKAGE-RECORD-v1"
+PROPOSAL_REVIEW_PACKAGE_FAMILY_RECORD_SCHEMA = "CLASSIFIRE-PROPOSAL-REVIEW-FAMILY-PACKAGE-RECORD-v1"
 PROPOSAL_REVIEW_PACKAGE_REDACTION_SCHEMA = "CLASSIFIRE-PROPOSAL-REVIEW-REDACTION-v1"
 PROPOSAL_REVIEW_PACKAGE_SAFE_LOCATOR_SCHEMA = "CLASSIFIRE-PROPOSAL-REVIEW-LOCATOR-v1"
+PROPOSAL_REVIEW_PACKAGE_FAMILY_SAFE_LOCATOR_SCHEMA = "CLASSIFIRE-PROPOSAL-REVIEW-FAMILY-LOCATOR-v1"
+PROPOSAL_REVIEW_PACKAGE_KIND_SINGLE_REPORT = "single_report"
+PROPOSAL_REVIEW_PACKAGE_KIND_REPORT_EVIDENCE_FAMILY = "report_evidence_family"
 PROPOSAL_REVIEW_PACKAGE_RECORD_OWNER = "CLASSIFIRE"
 PROPOSAL_REVIEW_PACKAGE_RETENTION_YEARS = 5
 PROPOSAL_REVIEW_READER_SCOPE_PROJECT = "project"
@@ -262,21 +274,46 @@ def _safe_locator(record: ProposalReviewPackage | Mapping[str, Any]) -> dict[str
     def value(name: str) -> Any:
         return record[name] if isinstance(record, Mapping) else getattr(record, name)
 
-    return {
-        "schema": PROPOSAL_REVIEW_PACKAGE_SAFE_LOCATOR_SCHEMA,
-        "record_owner": PROPOSAL_REVIEW_PACKAGE_RECORD_OWNER,
-        "project_id": value("project_id"),
-        "estimate_id": value("estimate_id"),
-        "project_evidence_id": value("project_evidence_id"),
-        "report_sha256": value("report_sha256"),
-        "approved_expected_label_manifest_id": value("approved_expected_label_manifest_id"),
-        "approved_expected_label_manifest_sha256": value("approved_expected_label_manifest_sha256"),
-        "approval_reference": value("approval_reference"),
-        "package_id": value("package_id"),
-        "package_sha256": value("package_sha256"),
-        "package_manifest_sha256": value("package_manifest_sha256"),
-        "completion_receipt_sha256": value("completion_receipt_sha256"),
-    }
+    package_kind = value("package_kind")
+    if package_kind == PROPOSAL_REVIEW_PACKAGE_KIND_SINGLE_REPORT:
+        return {
+            "schema": PROPOSAL_REVIEW_PACKAGE_SAFE_LOCATOR_SCHEMA,
+            "record_owner": PROPOSAL_REVIEW_PACKAGE_RECORD_OWNER,
+            "project_id": value("project_id"),
+            "estimate_id": value("estimate_id"),
+            "project_evidence_id": value("project_evidence_id"),
+            "report_sha256": value("report_sha256"),
+            "approved_expected_label_manifest_id": value("approved_expected_label_manifest_id"),
+            "approved_expected_label_manifest_sha256": value(
+                "approved_expected_label_manifest_sha256"
+            ),
+            "approval_reference": value("approval_reference"),
+            "package_id": value("package_id"),
+            "package_sha256": value("package_sha256"),
+            "package_manifest_sha256": value("package_manifest_sha256"),
+            "completion_receipt_sha256": value("completion_receipt_sha256"),
+        }
+    if package_kind == PROPOSAL_REVIEW_PACKAGE_KIND_REPORT_EVIDENCE_FAMILY:
+        return {
+            "schema": PROPOSAL_REVIEW_PACKAGE_FAMILY_SAFE_LOCATOR_SCHEMA,
+            "record_owner": PROPOSAL_REVIEW_PACKAGE_RECORD_OWNER,
+            "package_kind": package_kind,
+            "project_id": value("project_id"),
+            "estimate_id": value("estimate_id"),
+            "report_evidence_family_manifest_id": value("report_evidence_family_manifest_id"),
+            "report_evidence_family_manifest_sha256": value(
+                "report_evidence_family_manifest_sha256"
+            ),
+            "report_evidence_family_manifest_approval_reference": value(
+                "report_evidence_family_manifest_approval_reference"
+            ),
+            "approval_reference": value("approval_reference"),
+            "package_id": value("package_id"),
+            "package_sha256": value("package_sha256"),
+            "package_manifest_sha256": value("package_manifest_sha256"),
+            "completion_receipt_sha256": value("completion_receipt_sha256"),
+        }
+    _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
 
 
 def _approved_label_file(package: Phase8ReportReviewPackage) -> dict[str, Any]:
@@ -311,12 +348,18 @@ def _approved_label_file(package: Phase8ReportReviewPackage) -> dict[str, Any]:
     return value
 
 
-def _package_values(db: Session, package: Phase8ReportReviewPackage) -> dict[str, Any]:
+def _single_report_package_values(
+    db: Session,
+    package: Phase8ReportReviewPackage,
+    *,
+    require_matching_package_approval_reference: bool = True,
+) -> dict[str, Any]:
     if validate_phase8_report_review_package(package):
         _fail("PROPOSAL_REVIEW_PACKAGE_INPUT_INVALID")
     manifest, labels = package.manifest, _approved_label_file(package)
     try:
         values: dict[str, Any] = {
+            "package_kind": PROPOSAL_REVIEW_PACKAGE_KIND_SINGLE_REPORT,
             "package_id": _text(
                 manifest["package_id"],
                 code="PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID",
@@ -354,6 +397,9 @@ def _package_values(db: Session, package: Phase8ReportReviewPackage) -> dict[str
                 labels["approved_expected_label_manifest_sha256"],
                 code="PROPOSAL_REVIEW_PACKAGE_APPROVED_LABEL_MANIFEST_INVALID",
             ),
+            "report_evidence_family_manifest_id": None,
+            "report_evidence_family_manifest_sha256": None,
+            "report_evidence_family_manifest_approval_reference": None,
         }
     except KeyError as exc:
         raise ProposalReviewPackageError("PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID") from exc
@@ -365,10 +411,16 @@ def _package_values(db: Session, package: Phase8ReportReviewPackage) -> dict[str
         "package_sha256",
         "approval_reference",
     )
+    if any(labels[name] != values[name] for name in bound_names):
+        _fail("PROPOSAL_REVIEW_PACKAGE_APPROVED_LABEL_MANIFEST_INVALID")
+    expected_label_approval_reference = _text(
+        labels["approved_expected_label_manifest_approval_reference"],
+        code="PROPOSAL_REVIEW_PACKAGE_APPROVED_LABEL_MANIFEST_INVALID",
+        maximum=500,
+    )
     if (
-        any(labels[name] != values[name] for name in bound_names)
-        or labels["approved_expected_label_manifest_approval_reference"]
-        != values["approval_reference"]
+        require_matching_package_approval_reference
+        and expected_label_approval_reference != values["approval_reference"]
     ):
         _fail("PROPOSAL_REVIEW_PACKAGE_APPROVED_LABEL_MANIFEST_INVALID")
     evidence = db.get(ProjectEvidence, values["project_evidence_id"])
@@ -386,7 +438,11 @@ def _package_values(db: Session, package: Phase8ReportReviewPackage) -> dict[str
         or approved.source_sha256 != values["report_sha256"]
         or approved.estimate_id != estimate.id
         or approved.manifest_sha256 != values["approved_expected_label_manifest_sha256"]
-        or approved.approval_reference != values["approval_reference"]
+        or approved.approval_reference != expected_label_approval_reference
+        or (
+            require_matching_package_approval_reference
+            and approved.approval_reference != values["approval_reference"]
+        )
     ):
         _fail("PROPOSAL_REVIEW_PACKAGE_BINDING_MISMATCH")
     summary = _reviewer_summary(package)
@@ -413,15 +469,213 @@ def _package_values(db: Session, package: Phase8ReportReviewPackage) -> dict[str
     return values
 
 
+def _family_reviewer_summary(
+    package: Phase8ReportEvidenceFamilyReviewPackage,
+    member_values: tuple[dict[str, Any], ...],
+) -> dict[str, Any]:
+    if len(package.artifacts) != len(member_values) or not member_values:
+        _fail("PROPOSAL_REVIEW_PACKAGE_REVIEW_INVALID")
+    outcomes: list[dict[str, Any]] = []
+    members: list[dict[str, Any]] = []
+    seen_scope_ids: set[str] = set()
+    for artifact, values in zip(package.artifacts, member_values, strict=True):
+        member = artifact.member
+        summary = values["reviewer_summary_json"]
+        member_binding = {
+            "member_sequence": member.member_sequence,
+            "project_evidence_id": member.project_evidence_id,
+            "stored_file_id": member.stored_file_id,
+            "report_sha256": member.source_sha256,
+            "approved_expected_label_manifest_id": values["approved_expected_label_manifest_id"],
+            "approved_expected_label_manifest_sha256": values[
+                "approved_expected_label_manifest_sha256"
+            ],
+            "approved_expected_label_manifest_approval_reference": _text(
+                _approved_label_file(artifact.report_review_package)[
+                    "approved_expected_label_manifest_approval_reference"
+                ],
+                code="PROPOSAL_REVIEW_PACKAGE_REVIEW_INVALID",
+                maximum=500,
+            ),
+            "report_review_package_id": values["package_id"],
+            "report_review_package_manifest_sha256": values["package_manifest_sha256"],
+            "report_review_completion_receipt_sha256": values["completion_receipt_sha256"],
+            "selected_defect_count": values["selected_defect_count"],
+        }
+        if (
+            values["project_evidence_id"] != member.project_evidence_id
+            or values["report_sha256"] != member.source_sha256
+            or values["selected_defect_count"] != summary["selected_defect_count"]
+        ):
+            _fail("PROPOSAL_REVIEW_PACKAGE_BINDING_MISMATCH")
+        members.append(member_binding)
+        for outcome in summary["outcomes"]:
+            scope_id = outcome["scope_id"]
+            if scope_id in seen_scope_ids:
+                _fail("PROPOSAL_REVIEW_PACKAGE_REVIEW_INVALID")
+            seen_scope_ids.add(scope_id)
+            outcomes.append(
+                {
+                    "member_sequence": member.member_sequence,
+                    "project_evidence_id": member.project_evidence_id,
+                    "report_sha256": member.source_sha256,
+                    **outcome,
+                }
+            )
+    return {
+        "schema": PROPOSAL_REVIEW_PACKAGE_FAMILY_RECORD_SCHEMA,
+        "package_id": package.manifest["package_id"],
+        "member_count": len(members),
+        "selected_defect_count": len(outcomes),
+        "members": members,
+        "outcomes": outcomes,
+        "proposal_only": True,
+        **{flag: False for flag in _NOOP_FLAGS},
+    }
+
+
+def _family_package_values(
+    db: Session,
+    package: Phase8ReportEvidenceFamilyReviewPackage,
+) -> dict[str, Any]:
+    if validate_phase8_report_evidence_family_review_package(package):
+        _fail("PROPOSAL_REVIEW_PACKAGE_INPUT_INVALID")
+    manifest = package.manifest
+    try:
+        values: dict[str, Any] = {
+            "package_kind": PROPOSAL_REVIEW_PACKAGE_KIND_REPORT_EVIDENCE_FAMILY,
+            "package_id": _text(
+                manifest["package_id"],
+                code="PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID",
+                maximum=128,
+            ),
+            "project_id": _text(
+                manifest["project_id"],
+                code="PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID",
+                maximum=36,
+            ),
+            "estimate_id": _text(
+                manifest["estimate_id"],
+                code="PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID",
+                maximum=36,
+            ),
+            "report_evidence_family_manifest_id": _text(
+                manifest["report_evidence_family_manifest_id"],
+                code="PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID",
+                maximum=36,
+            ),
+            "report_evidence_family_manifest_sha256": _hash(
+                manifest["report_evidence_family_manifest_sha256"],
+                code="PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID",
+            ),
+            "report_evidence_family_manifest_approval_reference": _text(
+                manifest["report_evidence_family_manifest_approval_reference"],
+                code="PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID",
+                maximum=500,
+            ),
+            "approval_reference": _text(
+                manifest["approval_reference"],
+                code="PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID",
+                maximum=500,
+            ),
+            "package_sha256": _hash(
+                manifest["package_sha256"],
+                code="PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID",
+            ),
+        }
+    except KeyError as exc:
+        raise ProposalReviewPackageError("PROPOSAL_REVIEW_PACKAGE_MANIFEST_INVALID") from exc
+    try:
+        approved_family = require_approved_report_evidence_family_manifest(
+            db,
+            report_evidence_family_manifest_id=values["report_evidence_family_manifest_id"],
+            project_id=values["project_id"],
+            estimate_id=values["estimate_id"],
+        )
+    except ReportEvidenceFamilyManifestError as exc:
+        raise ProposalReviewPackageError("PROPOSAL_REVIEW_PACKAGE_BINDING_NOT_FOUND") from exc
+    if (
+        approved_family.manifest_sha256 != values["report_evidence_family_manifest_sha256"]
+        or approved_family.approval_reference
+        != values["report_evidence_family_manifest_approval_reference"]
+        or approved_family.project_id != values["project_id"]
+        or approved_family.estimate_id != values["estimate_id"]
+        or len(package.artifacts) != len(approved_family.members)
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_BINDING_MISMATCH")
+    member_values = tuple(
+        _single_report_package_values(
+            db,
+            artifact.report_review_package,
+            require_matching_package_approval_reference=False,
+        )
+        for artifact in package.artifacts
+    )
+    for artifact, member_values_item, approved_member in zip(
+        package.artifacts,
+        member_values,
+        approved_family.members,
+        strict=True,
+    ):
+        member = artifact.member
+        if (
+            member != approved_member
+            or member_values_item["project_evidence_id"] != member.project_evidence_id
+            or member_values_item["report_sha256"] != member.source_sha256
+            or member_values_item["estimate_id"] != values["estimate_id"]
+        ):
+            _fail("PROPOSAL_REVIEW_PACKAGE_BINDING_MISMATCH")
+    summary = _family_reviewer_summary(package, member_values)
+    if summary["member_count"] != len(approved_family.members) or not summary["outcomes"]:
+        _fail("PROPOSAL_REVIEW_PACKAGE_REVIEW_INVALID")
+    values.update(
+        {
+            "project_evidence_id": None,
+            "report_sha256": None,
+            "approved_expected_label_manifest_id": None,
+            "approved_expected_label_manifest_sha256": None,
+            "package_manifest_sha256": canonical_json_sha256(manifest),
+            "completion_receipt_sha256": package.completion_receipt_file_sha256,
+            "selected_defect_count": summary["selected_defect_count"],
+            "reviewer_summary_json": summary,
+            "reviewer_summary_sha256": _json_hash(
+                summary,
+                code="PROPOSAL_REVIEW_PACKAGE_REVIEW_INVALID",
+            ),
+        }
+    )
+    values["safe_locator_json"] = _safe_locator(values)
+    values["safe_locator_sha256"] = _json_hash(
+        values["safe_locator_json"],
+        code="PROPOSAL_REVIEW_PACKAGE_REVIEW_INVALID",
+    )
+    return values
+
+
+def _package_values(
+    db: Session,
+    package: Phase8ReportReviewPackage | Phase8ReportEvidenceFamilyReviewPackage,
+) -> dict[str, Any]:
+    if isinstance(package, Phase8ReportReviewPackage):
+        return _single_report_package_values(db, package)
+    if isinstance(package, Phase8ReportEvidenceFamilyReviewPackage):
+        return _family_package_values(db, package)
+    _fail("PROPOSAL_REVIEW_PACKAGE_INPUT_INVALID")
+
+
 def _matches(record: ProposalReviewPackage, values: Mapping[str, Any]) -> bool:
     fields = (
         "package_id",
+        "package_kind",
         "project_id",
         "estimate_id",
         "project_evidence_id",
         "report_sha256",
         "approved_expected_label_manifest_id",
         "approved_expected_label_manifest_sha256",
+        "report_evidence_family_manifest_id",
+        "report_evidence_family_manifest_sha256",
+        "report_evidence_family_manifest_approval_reference",
         "approval_reference",
         "package_sha256",
         "package_manifest_sha256",
@@ -435,50 +689,34 @@ def _matches(record: ProposalReviewPackage, values: Mapping[str, Any]) -> bool:
     return all(getattr(record, field) == values[field] for field in fields)
 
 
-def _validate_record(db: Session, record: ProposalReviewPackage) -> dict[str, Any]:
-    summary = record.reviewer_summary_json
-    expected = {
-        "schema",
-        "package_id",
-        "selected_defect_count",
-        "outcomes",
-        "proposal_only",
-        *_NOOP_FLAGS,
-    }
+def _validate_lifecycle_state(record: ProposalReviewPackage) -> None:
+    retention_until = _stored_utc(
+        record.retention_until,
+        code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+    )
+    created_at = _stored_utc(
+        record.created_at,
+        code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+    )
     if (
         record.record_owner != PROPOSAL_REVIEW_PACKAGE_RECORD_OWNER
-        or not isinstance(summary, dict)
-        or set(summary) != expected
-        or summary.get("schema") != PROPOSAL_REVIEW_PACKAGE_RECORD_SCHEMA
-        or summary.get("package_id") != record.package_id
-        or summary.get("selected_defect_count") != record.selected_defect_count
-        or summary.get("proposal_only") is not True
-        or any(summary.get(flag) is not False for flag in _NOOP_FLAGS)
-        or _json_hash(summary, code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
-        != record.reviewer_summary_sha256
-        or record.safe_locator_json != _safe_locator(record)
-        or _json_hash(_safe_locator(record), code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
-        != record.safe_locator_sha256
+        or retention_until < created_at
+        or (record.legal_hold_active and record.legal_hold_reason_code is None)
+        or (not record.legal_hold_active and record.legal_hold_reason_code is not None)
     ):
         _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
-    if (
-        _hash(record.package_sha256, code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
-        != record.package_sha256
-        or _hash(record.package_manifest_sha256, code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
-        != record.package_manifest_sha256
-        or _hash(record.completion_receipt_sha256, code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
-        != record.completion_receipt_sha256
-        or _hash(
-            record.approved_expected_label_manifest_sha256,
-            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
-        )
-        != record.approved_expected_label_manifest_sha256
-        or _source_hash(record.report_sha256, code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
-        != record.report_sha256
+    for value in (
+        record.package_sha256,
+        record.package_manifest_sha256,
+        record.completion_receipt_sha256,
+        record.reviewer_summary_sha256,
+        record.safe_locator_sha256,
     ):
-        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
-    outcomes = summary["outcomes"]
-    if not isinstance(outcomes, list) or len(outcomes) != record.selected_defect_count:
+        _hash(value, code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+
+
+def _validate_single_report_outcomes(outcomes: object, *, selected_defect_count: int) -> None:
+    if not isinstance(outcomes, list) or len(outcomes) != selected_defect_count:
         _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
     seen: set[str] = set()
     for outcome in outcomes:
@@ -508,17 +746,51 @@ def _validate_record(db: Session, record: ProposalReviewPackage) -> dict[str, An
         _safe_code(outcome["review_status"], code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
         if outcome["blocker_code"] is not None:
             _safe_code(outcome["blocker_code"], code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+
+
+def _validate_single_report_record(
+    db: Session,
+    record: ProposalReviewPackage,
+    summary: dict[str, Any],
+) -> dict[str, Any]:
+    expected = {
+        "schema",
+        "package_id",
+        "selected_defect_count",
+        "outcomes",
+        "proposal_only",
+        *_NOOP_FLAGS,
+    }
+    if (
+        record.project_evidence_id is None
+        or record.report_sha256 is None
+        or record.approved_expected_label_manifest_id is None
+        or record.approved_expected_label_manifest_sha256 is None
+        or record.report_evidence_family_manifest_id is not None
+        or record.report_evidence_family_manifest_sha256 is not None
+        or record.report_evidence_family_manifest_approval_reference is not None
+        or set(summary) != expected
+        or summary.get("schema") != PROPOSAL_REVIEW_PACKAGE_RECORD_SCHEMA
+        or summary.get("package_id") != record.package_id
+        or summary.get("selected_defect_count") != record.selected_defect_count
+        or summary.get("proposal_only") is not True
+        or any(summary.get(flag) is not False for flag in _NOOP_FLAGS)
+        or _hash(
+            record.approved_expected_label_manifest_sha256,
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+        )
+        != record.approved_expected_label_manifest_sha256
+        or _source_hash(record.report_sha256, code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        != record.report_sha256
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+    _validate_single_report_outcomes(
+        summary["outcomes"],
+        selected_defect_count=record.selected_defect_count,
+    )
     evidence = db.get(ProjectEvidence, record.project_evidence_id)
     estimate = db.get(Estimate, record.estimate_id)
     approved = db.get(ReportExpectedLabelManifest, record.approved_expected_label_manifest_id)
-    retention_until = _stored_utc(
-        record.retention_until,
-        code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
-    )
-    created_at = _stored_utc(
-        record.created_at,
-        code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
-    )
     if (
         evidence is None
         or estimate is None
@@ -531,18 +803,268 @@ def _validate_record(db: Session, record: ProposalReviewPackage) -> dict[str, An
         or approved.estimate_id != record.estimate_id
         or approved.manifest_sha256 != record.approved_expected_label_manifest_sha256
         or approved.approval_reference != record.approval_reference
-        or retention_until < created_at
-        or (record.legal_hold_active and record.legal_hold_reason_code is None)
-        or (not record.legal_hold_active and record.legal_hold_reason_code is not None)
     ):
         _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
     return summary
 
 
+def _validate_family_members(
+    db: Session,
+    *,
+    record: ProposalReviewPackage,
+    summary: dict[str, Any],
+) -> dict[int, dict[str, Any]]:
+    if (
+        record.report_evidence_family_manifest_id is None
+        or record.report_evidence_family_manifest_sha256 is None
+        or record.report_evidence_family_manifest_approval_reference is None
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+    try:
+        approved_family = require_approved_report_evidence_family_manifest(
+            db,
+            report_evidence_family_manifest_id=record.report_evidence_family_manifest_id,
+            project_id=record.project_id,
+            estimate_id=record.estimate_id,
+        )
+    except ReportEvidenceFamilyManifestError as exc:
+        raise ProposalReviewPackageError("PROPOSAL_REVIEW_PACKAGE_TAMPERED") from exc
+    if (
+        approved_family.manifest_sha256 != record.report_evidence_family_manifest_sha256
+        or approved_family.approval_reference
+        != record.report_evidence_family_manifest_approval_reference
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+    members = summary["members"]
+    if (
+        not isinstance(members, list)
+        or len(members) != len(approved_family.members)
+        or summary["member_count"] != len(members)
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+    expected_fields = {
+        "member_sequence",
+        "project_evidence_id",
+        "stored_file_id",
+        "report_sha256",
+        "approved_expected_label_manifest_id",
+        "approved_expected_label_manifest_sha256",
+        "approved_expected_label_manifest_approval_reference",
+        "report_review_package_id",
+        "report_review_package_manifest_sha256",
+        "report_review_completion_receipt_sha256",
+        "selected_defect_count",
+    }
+    bindings: dict[int, dict[str, Any]] = {}
+    for stored_member, approved_member in zip(members, approved_family.members, strict=True):
+        if not isinstance(stored_member, dict) or set(stored_member) != expected_fields:
+            _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        sequence = stored_member["member_sequence"]
+        count = stored_member["selected_defect_count"]
+        if (
+            isinstance(sequence, bool)
+            or not isinstance(sequence, int)
+            or sequence != approved_member.member_sequence
+            or isinstance(count, bool)
+            or not isinstance(count, int)
+            or count <= 0
+            or sequence in bindings
+            or _text(
+                stored_member["project_evidence_id"],
+                code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+                maximum=36,
+            )
+            != approved_member.project_evidence_id
+            or _text(
+                stored_member["stored_file_id"],
+                code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+                maximum=36,
+            )
+            != approved_member.stored_file_id
+            or _source_hash(
+                stored_member["report_sha256"],
+                code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+            )
+            != approved_member.source_sha256
+            or not _text(
+                stored_member["approved_expected_label_manifest_id"],
+                code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+                maximum=36,
+            )
+            or _hash(
+                stored_member["approved_expected_label_manifest_sha256"],
+                code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+            )
+            != stored_member["approved_expected_label_manifest_sha256"]
+            or not _text(
+                stored_member["approved_expected_label_manifest_approval_reference"],
+                code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+                maximum=500,
+            )
+            or not _text(
+                stored_member["report_review_package_id"],
+                code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+                maximum=128,
+            )
+            or _hash(
+                stored_member["report_review_package_manifest_sha256"],
+                code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+            )
+            != stored_member["report_review_package_manifest_sha256"]
+            or _hash(
+                stored_member["report_review_completion_receipt_sha256"],
+                code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+            )
+            != stored_member["report_review_completion_receipt_sha256"]
+        ):
+            _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        evidence = db.get(ProjectEvidence, approved_member.project_evidence_id)
+        approved_labels = db.get(
+            ReportExpectedLabelManifest,
+            stored_member["approved_expected_label_manifest_id"],
+        )
+        if (
+            evidence is None
+            or approved_labels is None
+            or evidence.source_sha256 != approved_member.source_sha256
+            or (
+                evidence.project_id != record.project_id
+                and evidence.estimate_id != record.estimate_id
+            )
+            or approved_labels.project_evidence_id != evidence.id
+            or approved_labels.source_sha256 != approved_member.source_sha256
+            or approved_labels.estimate_id != record.estimate_id
+            or approved_labels.manifest_sha256
+            != stored_member["approved_expected_label_manifest_sha256"]
+            or approved_labels.approval_reference
+            != stored_member["approved_expected_label_manifest_approval_reference"]
+        ):
+            _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        bindings[sequence] = stored_member
+    return bindings
+
+
+def _validate_family_outcomes(
+    outcomes: object,
+    *,
+    bindings: Mapping[int, Mapping[str, Any]],
+    selected_defect_count: int,
+) -> None:
+    if not isinstance(outcomes, list) or len(outcomes) != selected_defect_count:
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+    expected_fields = {
+        "member_sequence",
+        "project_evidence_id",
+        "report_sha256",
+        "scope_id",
+        "defect_id",
+        "defect_reference",
+        "report_defect_label",
+        "review_status",
+        "blocker_code",
+    }
+    seen_scope_ids: set[str] = set()
+    counts = {sequence: 0 for sequence in bindings}
+    for outcome in outcomes:
+        if not isinstance(outcome, dict) or set(outcome) != expected_fields:
+            _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        sequence = outcome["member_sequence"]
+        if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence not in bindings:
+            _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        binding = bindings[sequence]
+        if (
+            outcome["project_evidence_id"] != binding["project_evidence_id"]
+            or outcome["report_sha256"] != binding["report_sha256"]
+        ):
+            _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        scope_id = _text(
+            outcome["scope_id"],
+            code="PROPOSAL_REVIEW_PACKAGE_TAMPERED",
+            maximum=36,
+        )
+        if scope_id in seen_scope_ids:
+            _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        seen_scope_ids.add(scope_id)
+        for field, maximum in (
+            ("defect_id", 36),
+            ("defect_reference", 150),
+            ("report_defect_label", 150),
+        ):
+            _text(outcome[field], code="PROPOSAL_REVIEW_PACKAGE_TAMPERED", maximum=maximum)
+        _safe_code(outcome["review_status"], code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        if outcome["blocker_code"] is not None:
+            _safe_code(outcome["blocker_code"], code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        counts[sequence] += 1
+    if any(
+        counts[sequence] != binding["selected_defect_count"]
+        for sequence, binding in bindings.items()
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+
+
+def _validate_family_record(
+    db: Session,
+    record: ProposalReviewPackage,
+    summary: dict[str, Any],
+) -> dict[str, Any]:
+    expected = {
+        "schema",
+        "package_id",
+        "member_count",
+        "selected_defect_count",
+        "members",
+        "outcomes",
+        "proposal_only",
+        *_NOOP_FLAGS,
+    }
+    if (
+        record.project_evidence_id is not None
+        or record.report_sha256 is not None
+        or record.approved_expected_label_manifest_id is not None
+        or record.approved_expected_label_manifest_sha256 is not None
+        or set(summary) != expected
+        or summary.get("schema") != PROPOSAL_REVIEW_PACKAGE_FAMILY_RECORD_SCHEMA
+        or summary.get("package_id") != record.package_id
+        or summary.get("proposal_only") is not True
+        or any(summary.get(flag) is not False for flag in _NOOP_FLAGS)
+        or isinstance(summary.get("member_count"), bool)
+        or not isinstance(summary.get("member_count"), int)
+        or summary["member_count"] < 2
+        or summary.get("selected_defect_count") != record.selected_defect_count
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+    bindings = _validate_family_members(db, record=record, summary=summary)
+    _validate_family_outcomes(
+        summary["outcomes"],
+        bindings=bindings,
+        selected_defect_count=record.selected_defect_count,
+    )
+    return summary
+
+
+def _validate_record(db: Session, record: ProposalReviewPackage) -> dict[str, Any]:
+    summary = record.reviewer_summary_json
+    if (
+        not isinstance(summary, dict)
+        or _json_hash(summary, code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        != record.reviewer_summary_sha256
+        or record.safe_locator_json != _safe_locator(record)
+        or _json_hash(_safe_locator(record), code="PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+        != record.safe_locator_sha256
+    ):
+        _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+    _validate_lifecycle_state(record)
+    if record.package_kind == PROPOSAL_REVIEW_PACKAGE_KIND_SINGLE_REPORT:
+        return _validate_single_report_record(db, record, summary)
+    if record.package_kind == PROPOSAL_REVIEW_PACKAGE_KIND_REPORT_EVIDENCE_FAMILY:
+        return _validate_family_record(db, record, summary)
+    _fail("PROPOSAL_REVIEW_PACKAGE_TAMPERED")
+
+
 def register_proposal_review_package(
     db: Session,
     *,
-    package: Phase8ReportReviewPackage,
+    package: Phase8ReportReviewPackage | Phase8ReportEvidenceFamilyReviewPackage,
     actor: User | None,
     registered_at: datetime | None = None,
 ) -> tuple[ProposalReviewPackage, bool]:

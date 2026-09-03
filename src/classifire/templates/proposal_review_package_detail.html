@@ -14,8 +14,13 @@
   </div>
   <dl class="detail-list">
     <dt>Estimate</dt><dd class="mono">{{ view.record.estimate_id }}</dd>
+    {% if view.record.package_kind == 'report_evidence_family' %}
+    <dt>Approved report family</dt><dd class="mono">{{ view.record.report_evidence_family_manifest_id }}</dd>
+    <dt>Family approval reference</dt><dd>{{ view.record.report_evidence_family_manifest_approval_reference }}</dd>
+    {% else %}
     <dt>Approved label manifest</dt><dd class="mono">{{ view.record.approved_expected_label_manifest_id }}</dd>
-    <dt>Approval reference</dt><dd>{{ view.record.approval_reference }}</dd>
+    {% endif %}
+    <dt>Package approval reference</dt><dd>{{ view.record.approval_reference }}</dd>
     <dt>Record state</dt>
     <dd>
       {% if view.record.legal_hold_active %}
@@ -34,17 +39,18 @@
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Defect</th><th>Approved label</th><th>Review state</th><th>Safe blocker code</th></tr></thead>
+      <thead><tr>{% if view.record.package_kind == 'report_evidence_family' %}<th>Family member</th><th>Report evidence</th>{% endif %}<th>Defect</th><th>Approved label</th><th>Review state</th><th>Safe blocker code</th></tr></thead>
       <tbody>
         {% for outcome in view.reviewer_summary.outcomes %}
         <tr>
+          {% if view.record.package_kind == 'report_evidence_family' %}<td>{{ outcome.member_sequence }}</td><td class="mono">{{ outcome.project_evidence_id }}</td>{% endif %}
           <td>{{ outcome.defect_reference }}</td>
           <td>{{ outcome.report_defect_label }}</td>
           <td><span class="badge badge-draft">{{ outcome.review_status }}</span></td>
           <td>{{ outcome.blocker_code or '-' }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="4" class="empty">Every scope is omitted in this redacted view.</td></tr>
+        <tr><td colspan="{% if view.record.package_kind == 'report_evidence_family' %}6{% else %}4{% endif %}" class="empty">Every scope is omitted in this redacted view.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -57,8 +63,13 @@
     <span class="muted">Identifiers and hashes only - never a storage path</span>
   </div>
   <dl class="detail-list">
+    {% if view.record.package_kind == 'report_evidence_family' %}
+    <dt>Report family manifest</dt><dd class="mono">{{ view.safe_locator.report_evidence_family_manifest_id }}</dd>
+    <dt>Family manifest hash</dt><dd class="mono">{{ view.safe_locator.report_evidence_family_manifest_sha256 }}</dd>
+    {% else %}
     <dt>Report evidence</dt><dd class="mono">{{ view.safe_locator.project_evidence_id }}</dd>
     <dt>Approved label manifest</dt><dd class="mono">{{ view.safe_locator.approved_expected_label_manifest_id }}</dd>
+    {% endif %}
     <dt>Package manifest hash</dt><dd class="mono">{{ view.safe_locator.package_manifest_sha256 }}</dd>
     <dt>Completion receipt hash</dt><dd class="mono">{{ view.safe_locator.completion_receipt_sha256 }}</dd>
   </dl>

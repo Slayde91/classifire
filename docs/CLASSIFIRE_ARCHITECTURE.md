@@ -76,11 +76,11 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0019_report_evidence_family_manifests |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0020_proposal_review_family_packages |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
-| Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only runner, and retained package lifecycle | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; the controller requires exact-approved V2 scopes before package assembly; no CLI, API, or UI invokes the runner and no real-provider run exists |
+| Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only runner, and retained single-report/family package lifecycle | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; the controller requires exact-approved V2 scopes before package assembly; no CLI, API, or UI invokes the runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus governed technical-release publication remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
@@ -162,7 +162,7 @@ drawings/media/charts, comments, pivots, embedded objects, validation rules, and
 archive or worksheet shapes. The DOCX boundary rejects encrypted or unsafe archives, macros, external relationships, embedded or hidden content, tracked changes, fields, hyperlinks, drawings, and unsupported body structures. Actual visual inference bytes come from a separately
 governed retained visual packet. A caption is only an exact retained text block with an
 explicit numbered category; it is not automatically associated with an image and cannot
-establish a physical fact. General report formats remain planned. Explicit human-approved family admission and a deterministic proposal-review aggregate are available; family-aware scope and runner execution remain planned.
+establish a physical fact. General report formats remain planned. Explicit human-approved family admission and a deterministic proposal-review aggregate are available; family records retain their approved member identities through the existing controlled-UAT reviewer lifecycle. Family-aware scope and runner execution remain planned.
 
 On shared main, cardinality is deterministic for the report scopes that already exist in the
 database. An approved expected-label manifest record is source-bound to the
@@ -475,7 +475,7 @@ post-merge main run 33766069162 passed.
 
 ### Explicit human-approved report evidence families
 
-Forward-only migration `0019_report_evidence_family_manifests` retains an immutable,
+Migration `0019_report_evidence_family_manifests` retains an immutable,
 human-approved, ordered family of at least two already-retained reports for one Project
 and Estimate. The approver supplies only each exact stored-file ID and source SHA; the
 service rejects filenames, folders, timestamps, titles, and other inferred membership.
@@ -490,6 +490,16 @@ member's exact stored source and hash. The aggregate retains the separate scopes
 artifacts, and identical protected-state receipt binding; it rejects absent, extra,
 swapped, legacy/unbound, drifted, or tampered components.
 
+The proposal-review register now retains either a single-report package or an approved
+report-family package. A family record binds the exact approved family-manifest ID,
+hash, and human approval reference, then independently rechecks every member's exact
+stored source, expected-label approval record, review-package manifest, and outcome
+membership. It preserves member order and separate source identities; it never merges
+reports or scopes. The same CLASSIFIRE-owned five-year retention, separate redaction,
+legal hold, integrity refusal, and scoped internal reader grants apply. The existing
+read-only `/proposal-reviews` pages identify a family and show each outcome's family
+member and evidence identifier without exposing storage paths or creating an execution
+route.
 This remains evidence admission and proposal-review assembly only. It does not change
 PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
