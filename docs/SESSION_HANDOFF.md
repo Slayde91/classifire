@@ -5,9 +5,9 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** origin/main at c10fde9bfaf03b549d2a6044fa46fa3075977117
+**Reconciliation baseline:** origin/main at 6c6e4e3196023f912802db66fb365b9a4ce20c3a
 
-**Verified shared-main implementation:** c10fde9bfaf03b549d2a6044fa46fa3075977117 (PR #145)
+**Verified shared-main implementation:** 6c6e4e3196023f912802db66fb365b9a4ce20c3a (PR #147)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -238,9 +238,9 @@ Shared main includes:
   release-lineage display, safe navigation from an eligible bound record to the
   existing read-only document record, and read-only revision-source visibility.
 
-Shared main packages migrations through 0015_proposal_review_reader_assignments (one head). PR #145 merged scoped reader access as c10fde9bfaf03b549d2a6044fa46fa3075977117; pull-request run 33741309950 and post-merge main run 33741595397 both succeeded.
+Shared main packages migrations through 0016_technical_document_supersession_lineage (one head). PR #147 merged hash-bound Draft technical source-document predecessor lineage as 6c6e4e3196023f912802db66fb365b9a4ce20c3a; pull-request run 33745988740 and post-merge main run 33746319101 both succeeded.
 
-PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#145 check and corresponding main run also passed, ending with run 33741595397 on c10fde9. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
+PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#147 check and corresponding main run also passed, ending with run 33746319101 on 6c6e4e. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
 ### Report-assessment integration limit
 

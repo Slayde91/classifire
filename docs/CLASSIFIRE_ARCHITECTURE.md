@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** c10fde9 (PR #145 merge, 2026-09-03)
+**Verified shared-main implementation:** 6c6e4e (PR #147 merge, 2026-09-03)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -76,12 +76,12 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0015_proposal_review_reader_assignments from PR #145 |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0016_technical_document_supersession_lineage from PR #147 |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, proposal-only runner, and retained proposal-review package lifecycle | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, or UI invokes the runner and no real-provider run exists |
-| Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, source locators, independent activation, pinned active releases, and read-only revision lineage | Manufacturer-neutral lineage and governed publication/supersession remain incomplete |
+| Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus governed technical-release publication remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
 
@@ -261,6 +261,7 @@ Current shared-main safeguards include:
   extraction failure diagnostics;
 - independent TechnicalVariant activation from `in_review`;
 - Draft-only new technical-library imports regardless of source-declared state;
+- a new Draft technical document may record a hash-bound historical predecessor only when that predecessor is independently approved and its retained source bytes remain clean and unchanged; this does not approve the Draft, retire the predecessor, activate a variant, or create a release;
 - runtime use only through an active immutable pinned technical release;
 - each newly published technical manifest fixes a safe source state: bound
   document/file identity, digest, and locator, or an explicit legacy-unbound
@@ -278,7 +279,7 @@ Current shared-main safeguards include:
   persisted locator values only: they do not read source bytes or grant approval,
   activation, publication, or release authority.
 
-Extraction-assisted and manufacturer-neutral source lineage, governed
+Extraction-assisted and manufacturer-neutral source lineage, governed technical-release
 publication/supersession automation, and production technical authority are not
 complete. Unsupported compatibility remains unresolved.
 
@@ -417,7 +418,7 @@ PR #145 passed pull-request run 33741309950 and post-merge main run 33741595397.
 ### Near term
 
 Complete the remaining extraction-assisted and manufacturer-neutral technical-source
-lineage plus governed publication and supersession in separate reviewed migrations.
+lineage plus governed technical-release publication and supersession in separate reviewed migrations.
 Maintain full-repository Ruff, Mypy, and Bandit checks
 alongside the changed-file Ruff fast-path; static checks do not grant product or
 release authority.
