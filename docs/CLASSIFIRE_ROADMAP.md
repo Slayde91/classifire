@@ -185,10 +185,13 @@ hash, and human approval reference, then independently rechecks every member's e
 stored source, expected-label approval record, review-package manifest, and outcome
 membership. It preserves member order and separate source identities; it never merges
 reports or scopes. The same CLASSIFIRE-owned five-year retention, separate redaction,
-legal hold, integrity refusal, and scoped internal reader grants apply. The existing
-read-only `/proposal-reviews` pages identify a family and show each outcome's family
+legal hold, integrity refusal, and scoped internal reader grants apply. The internal `/proposal-reviews` pages identify a family and show each outcome's family
 member and evidence identifier without exposing storage paths or creating an execution
-route.
+route. Only an administrator may append an immutable, hash-bound human-review annotation
+for the exact original or redacted view and a visible scope using an explicit finding state
+and safe reason code. Other eligible readers can see annotations only in their exact view.
+An annotation records an observation only; it is not a technical, commercial, lock, or
+release approval.
 This remains evidence admission and proposal-review assembly only. It does not change
 PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
@@ -382,7 +385,7 @@ downstream authority was added.
    Ruff fast-path, then have the repository owner decide on an upgrade or
    equivalent documented default-branch protection control.
 5. Extend report evidence beyond the now-supported PDF/XLSX/DOCX boundary, starting
-   with the explicit human-approved family manifest as its only membership boundary. The approved family now has a retained proposal-review aggregate with read-only reviewer visibility, but automatic joining and family-aware scope/runner execution remain separate. Keep the merged caption contract
+   with the explicit human-approved family manifest as its only membership boundary. The approved family now has a retained proposal-review aggregate with scoped reader visibility and administrator-only immutable human-review annotations, but automatic joining and family-aware scope/runner execution remain separate. Keep the merged caption contract
    limited to strict retained-PDF text and do not associate captions with images.
 
 ### Later or dependency-bound actions
@@ -487,7 +490,7 @@ database or approval workflow.
 **Completed foundations:** retained evidence, linked-original controls,
 Project/Estimate ownership, exact clean-byte reads, shared-byte quarantine,
 PDF text/table/annotation and drawing/image locators, strict explicitly numbered
-caption locators, bounded XLSX worksheet/cell locators, bounded DOCX document/paragraph/simple-table locators, ordered scopes, explicit human-approved report-family manifests, deterministic family proposal-review aggregation of independently validated member packages, and governed five-year retention/redaction/hold/integrity-checked read-only reviewer visibility for those approved family packages,
+caption locators, bounded XLSX worksheet/cell locators, bounded DOCX document/paragraph/simple-table locators, ordered scopes, explicit human-approved report-family manifests, deterministic family proposal-review aggregation of independently validated member packages, and governed five-year retention/redaction/hold/integrity-checked scoped reviewer visibility plus administrator-only immutable human-review annotations for those approved family packages,
 report-aware inputs, deterministic review artifacts, and PR #103's desk-quote
 exact-byte/locator/artifact-audit checks.
 
@@ -495,7 +498,7 @@ exact-byte/locator/artifact-audit checks.
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
 runner preflight that rejects legacy/unbound packets before a no-tool port call, and a database-backed proposal-review controller that rejects them before package assembly.
 
-**Remaining:** support for formats beyond PDF/XLSX/DOCX, family-aware scope and runner execution after the explicit approval boundary, human decision/review actions, and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies CLASSIFIRE-owned five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
+**Remaining:** support for formats beyond PDF/XLSX/DOCX, family-aware scope and runner execution after the explicit approval boundary, and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies CLASSIFIRE-owned five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT scoped reviewer surface, explicit reader grants, and administrator-only immutable human-review annotations.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -638,7 +641,7 @@ import them into the active fire-seal/penetration runtime prematurely.
   one authorised attempt already occurred and failed safely.
 - Building the report runner as future work; shared main already composes it.
   The remaining work is formats beyond PDF/XLSX/DOCX, family-aware scope/runner execution after explicit approval,
-  human decision/review actions, caption-to-image association policy, and a separately authorised operator flow.
+  caption-to-image association policy, and a separately authorised operator flow. Human-review annotations remain proposal-only observations.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.
 - Count equality, whole-file database hashing, or a model answer as semantic
