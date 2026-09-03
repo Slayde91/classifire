@@ -4,7 +4,7 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main implementation:** 730911d635917f0023a46c3a5734905f98dfac1d (merge of PR #149, 2026-09-03)
+**Verified shared-main implementation:** c3c6258bda8ab69bcfe16fef76dac503560528f1 (merge of PR #151, 2026-09-03)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -18,12 +18,12 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared main | PR #149 is merged at 730911d635917f0023a46c3a5734905f98dfac1d; it includes the reviewed PR #104-#149 lineage. | Report governance, technical-source safeguards, retained proposal-review packages, scoped reader access, and exact-approved-manifest enforcement for controller-created review packages are shared-main evidence. These changes add no technical, commercial, canonical, lock, deployment, or release authority. |
+| Shared main | PR #151 is merged at c3c6258bda8ab69bcfe16fef76dac503560528f1; it includes the reviewed PR #104-#151 lineage. | Report governance, technical-source safeguards, retained proposal-review packages, scoped reader access, exact-approved-manifest enforcement, and source-bound caption locators are shared-main evidence. These changes add no technical, commercial, canonical, lock, deployment, or release authority. |
 | Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
 | Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
 | Post-PR #104 maintenance series | PRs #105-#126 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, `5639e26`, `90f701c`, `ff1278f`, `7e26c2f`, and `b33246a`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, Mission Control task-response validation, hosted full-Ruff/Mypy/Bandit validation, and explicit Phase 8 invariant errors were strengthened without granting technical, commercial, lock, or release authority. |
 | Current technical-source safeguards | PRs #127-#142 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, `f9dea2a`, `f3c6d92`, `8c21f18`, `9771ff7`, `1e43756`, `caed547`, `075c9c5`, `981324e`, and `abe8bde`. | Verified-byte extraction, current-authority gates, immutable published source-lineage binding, factual reconciliation, structured release-lineage display, safe navigation to bound source-document records, and read-only revision-source visibility were added without granting technical selection, commercial, canonical, lock, or release authority. |
-| Subsequent hosted validation | Each PR #105-#149 check and each corresponding main push run passed; the latest is run 33750096567 on 730911d. | Hosted validation is current through the PR #149 merge, while required-check configuration remains unverified. |
+| Subsequent hosted validation | Each PR #105-#151 check and each corresponding main push run passed; the latest is run 33753516838 on c3c6258. | Hosted validation is current through the PR #151 merge, while required-check configuration remains unverified. |
 | Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
@@ -57,9 +57,9 @@ The following boundaries are implemented and tested for their stated scope:
   correction, evidence review, human adjudication, and durable visual-validation
   receipt contracts.
 - Project/Estimate-owned retained report evidence, exact clean-byte reads,
-  cross-project rejection, shared-byte quarantine, stable PDF locators, bounded
-  report scopes, deterministic review packages, and no-write report-assessment
-  components.
+  cross-project rejection, shared-byte quarantine, stable PDF locators including strict
+  explicitly numbered caption locators, bounded report scopes, deterministic review
+  packages, and no-write report-assessment components.
 - Production configuration checks before filesystem work, no production
   `create_all()` or default-administrator seeding, packaged migration history,
   an explicit migration command, and exact migration-head readiness checks.
@@ -89,7 +89,7 @@ The following boundaries are implemented and tested for their stated scope:
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-Shared main packages migrations through 0016_technical_document_supersession_lineage. It has one head: 0016_technical_document_supersession_lineage (legacy_adjudicated_lineage). PR #147 merged hash-bound Draft technical source-document predecessor lineage as 6c6e4e3196023f912802db66fb365b9a4ce20c3a; PR #149 merged exact-approved-manifest enforcement for controller-created review packages as 730911d635917f0023a46c3a5734905f98dfac1d. PR #149 pull-request run 33749820103 and post-merge main run 33750096567 both succeeded.
+Shared main packages migrations through 0016_technical_document_supersession_lineage. It has one head: 0016_technical_document_supersession_lineage (legacy_adjudicated_lineage). PR #147 merged hash-bound Draft technical source-document predecessor lineage as 6c6e4e3196023f912802db66fb365b9a4ce20c3a; PR #149 merged exact-approved-manifest enforcement for controller-created review packages as 730911d635917f0023a46c3a5734905f98dfac1d; and PR #151 merged strict source-bound caption locators as c3c6258bda8ab69bcfe16fef76dac503560528f1. PR #151 pull-request run 33753130859 and post-merge main run 33753516838 both succeeded.
 
 ### Completed report-governance integration on shared main (PR #104)
 
@@ -119,6 +119,21 @@ PR #149 passed pull-request validation run 33749820103 and post-merge main run
 33750096567. It remains proposal-only and adds no report retrieval, provider
 call, canonical submission, technical selection, commercial pricing, Physical
 Model Lock, deployment, or Human Release authority.
+
+### Completed source-bound report captions on shared main (PR #151)
+
+PR #151 recognises only an explicitly numbered `Figure`, `Fig`, `Image`,
+`Photo`, `Photograph`, or `Plate` text block as a caption. Its persisted locator
+contains only the fixed caption category, page, bounds, block index, character
+count, sequence, and content hash. The caption wording is re-extracted only in
+transient documentary context after the exact retained PDF reproduces that
+locator and hash. Ambiguous prose, unrecognised categories, and locators with
+raw caption text are refused.
+
+It does not associate a caption with an image, infer physical facts, select a
+technical system, price work, call a provider, create canonical state or a lock,
+deploy, or release. PR validation run 33753130859 and post-merge main run
+33753516838 passed.
 
 ### Completed integrity follow-up on shared main (PRs #105-#122)
 
@@ -215,12 +230,12 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #149; GitHub plan prevents branch-protection configuration. |
+| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #151; GitHub plan prevents branch-protection configuration. |
 | 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, hash-bound Draft source-document predecessor lineage, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and technical-release publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
-| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, atomic expected-label scope admission, runner and controller verification, the retained proposal-review package lifecycle, and explicit scoped reader grants/revocation. Caption/multi-format support, multi-report evidence-family accuracy, user review, and an operator flow remain. |
+| 5. Evidence intake/resolution | **In progress** | Shared main has PDF report services, strict source-bound caption locators, atomic expected-label scope admission, runner and controller verification, the retained proposal-review package lifecycle, and explicit scoped reader grants/revocation. Multi-format support, multi-report evidence-family accuracy, user review, and an operator flow remain. |
 | 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
@@ -294,7 +309,7 @@ This reconciliation verified:
 - the clean isolated worktree and the read-only legacy-root classification;
 - the single shared-main Alembic head 0016_technical_document_supersession_lineage;
 - current models, API/UI routes, report services, storage/containment, technical guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
-- PR #147's successful technical-lineage validation and PR #149's successful pull-request validation on 9bd70c8 plus post-merge main validation on 730911d;
+- PR #147's successful technical-lineage validation, PR #149's successful controller validation, and PR #151's successful caption-locator validation on d7068d9 plus post-merge main validation on c3c6258;
 - the retained assessment status and no-write/no-lock flags; and
 - the receipt code and tests that retain only validated safe transport codes in new receipts while historical receipts remain verifiable; and
 - the snapshot V2 semantic/document hash contract, V1 compatibility, focused synthetic regression suite, current scoped static checks, and the full synthetic suite.
