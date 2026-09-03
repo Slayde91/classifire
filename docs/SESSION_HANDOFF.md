@@ -5,9 +5,9 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** origin/main at 6c6e4e3196023f912802db66fb365b9a4ce20c3a
+**Reconciliation baseline:** origin/main at 730911d635917f0023a46c3a5734905f98dfac1d
 
-**Verified shared-main implementation:** 6c6e4e3196023f912802db66fb365b9a4ce20c3a (PR #147)
+**Verified shared-main implementation:** 730911d635917f0023a46c3a5734905f98dfac1d (PR #149)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -15,7 +15,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#145
+### Current shared main - PRs #104-#149
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -176,9 +176,10 @@ PostgreSQL containment race passed locally; PR and post-merge shared CI also
 passed. It adds no canonical, technical, commercial, lock, deployment, or
 release authority. Any real-provider run remains a separate gate.
 
-1. **Persist proposal-review packages before building a UI.** Define retention,
-   redaction/deletion, reviewer access, and immutable safe-hash ownership first;
-   then test isolation, tamper failure, and absence of canonical authority.
+1. **Extend report evidence formats safely.** Add caption support or a non-PDF
+   format only with retained-byte provenance, deterministic locators, explicit
+   uncertainty, and focused synthetic tests. Do not use customer evidence or
+   create an operator route.
 2. **Continue technical intake separately.** Complete the remaining
    extraction-assisted and manufacturer-neutral lineage plus governed
    publication and supersession. The
@@ -236,13 +237,16 @@ Shared main includes:
   current-authority safeguards and reviewer visibility, factual reconciliation,
   immutable published technical source-lineage checks, structured technical
   release-lineage display, safe navigation from an eligible bound record to the
-  existing read-only document record, and read-only revision-source visibility.
+  existing read-only document record, and read-only revision-source visibility;
+- PRs #143-#145's registered proposal-review lifecycle, five-year retention,
+  separate redactions/legal holds/deletion controls, and scoped reader grants;
+- PR #147's hash-bound Draft source-document predecessor lineage; and
+- PR #149's exact-approved-manifest V2 enforcement before database-backed
+  proposal-review package assembly.
 
-Shared main packages migrations through 0016_technical_document_supersession_lineage (one head). PR #147 merged hash-bound Draft technical source-document predecessor lineage as 6c6e4e3196023f912802db66fb365b9a4ce20c3a; pull-request run 33745988740 and post-merge main run 33746319101 both succeeded.
+Shared main packages migrations through 0016_technical_document_supersession_lineage (one head). PR #147 merged hash-bound Draft technical source-document predecessor lineage as 6c6e4e3196023f912802db66fb365b9a4ce20c3a. PR #149 merged exact-approved-manifest enforcement for controller-created review packages as 730911d635917f0023a46c3a5734905f98dfac1d; pull-request run 33749820103 and post-merge main run 33750096567 both succeeded.
 
-PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#147 check and corresponding main run also passed, ending with run 33746319101 on 6c6e4e. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
-
-### Report-assessment integration limit
+PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#149 check and corresponding main run also passed, ending with run 33750096567 on 730911d. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
 ### Report-assessment integration limit
 
@@ -256,9 +260,10 @@ Shared main has the CLASSIFIRE-owned proposal-review metadata record and interna
 PDF text, table, and annotation content are supported. Drawings and embedded
 images are locator/hash-only in documentary context, with visual bytes supplied
 separately. Captions are rejected and not extracted. The persisted approval record
-now protects scope admission as well as runner completeness. Historical unbound
-scopes remain readable for historical receipt verification but are rejected by the
-proposal runner until a separately designed transition is implemented.
+now protects scope admission, runner completeness, and database-backed
+proposal-review package assembly. Historical unbound scopes remain readable for
+historical receipt verification, but both the runner and controller reject them
+before a port call or new package assembly.
 
 ### Latest controlled attempt
 

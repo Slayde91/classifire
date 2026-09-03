@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** 6c6e4e (PR #147 merge, 2026-09-03)
+**Verified shared-main implementation:** 730911d (PR #149 merge, 2026-09-03)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -80,7 +80,7 @@ Approval for one operation never grants a later authority.
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
-| Report assessment | Shared components, expected-label admission, proposal-only runner, and retained proposal-review package lifecycle | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; no CLI, API, or UI invokes the runner and no real-provider run exists |
+| Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only runner, and retained package lifecycle | The runner requires a caller-owned PostgreSQL clean-byte transaction and injected no-tool port; the controller requires exact-approved V2 scopes before package assembly; no CLI, API, or UI invokes the runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus governed technical-release publication remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
@@ -161,8 +161,9 @@ database. An approved expected-label manifest record is source-bound to the
 report bytes and estimate for runner completeness. New report scopes are admitted
 only as one complete, exact label set matching that approval record, and every new
 scope retains its approval-record ID. Bound packets emit V2 approval details.
-Historical unbound scope packets remain verifiable as V1, but the proposal runner
-rejects them rather than treating them as approved coverage.
+Historical unbound scope packets remain verifiable as V1, but both the proposal
+runner and the database-backed proposal-review controller reject them rather than
+treating them as approved coverage or using them to assemble a new package.
 
 ### 5.3 Linked originals and visual evidence
 
@@ -414,6 +415,20 @@ The adopted lifecycle policy names CLASSIFIRE as records owner and sets a minimu
 Administrators can register a record, create a redaction, place or remove a legal hold, delete an expired non-held record, and manage reader grants. A non-administrator needs both the existing human read permission and an active matching grant before listing or reading a package. Every read verifies hashes and relational bindings; a mismatch is refused and produces a content-safe tamper audit event.
 
 PR #145 passed pull-request run 33741309950 and post-merge main run 33741595397. The lifecycle does not execute the report runner or add canonical, technical, commercial, lock, deployment, or release authority.
+
+### Approval-bound proposal-review assembly on shared main (PR #149)
+
+The database-backed `assemble_phase8_report_review_package()` controller now
+requires the exact human-approved expected-label manifest. Before it creates an
+in-memory package, every selected packet must be V2 and retain the same manifest
+ID, deterministic hash, and approval reference. Legacy/unbound packets and
+packets tied to a different approval are refused before package assembly.
+Historical V1 packet verification is retained without rewriting old records.
+
+PR #149 passed pull-request validation run 33749820103 and post-merge main run
+33750096567. The controller still cannot retrieve report bytes, invoke a
+provider, materialise files, write canonical state, create a lock, or release
+anything.
 
 ### Near term
 
