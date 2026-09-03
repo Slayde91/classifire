@@ -56,6 +56,30 @@ def test_report_locator_migration_upgrades_existing_0010_database(tmp_path: Path
     )
     with engine.connect() as connection:
         assert connection.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == (
-            '0016_technical_document_supersession_lineage'
+            '0017_xlsx_report_evidence_locators'
+        )
+    engine.dispose()
+
+
+def test_xlsx_locator_migration_admits_safe_worksheet_and_cell_kinds(tmp_path: Path) -> None:
+    database_path = tmp_path / 'xlsx-report-evidence-locators.sqlite'
+    database_url = f'sqlite:///{database_path.as_posix()}'
+    environment = _migration_environment(tmp_path, database_url)
+
+    _upgrade(database_url, environment, '0016_technical_document_supersession_lineage')
+    _upgrade(database_url, environment, 'head')
+
+    engine = create_engine(database_url)
+    inspector = inspect(engine)
+    constraints = {
+        constraint['name']: constraint['sqltext']
+        for constraint in inspector.get_check_constraints('report_evidence_locators')
+    }
+    item_kind_constraint = constraints['ck_report_evidence_locator_item_kind']
+    assert "'worksheet'" in item_kind_constraint
+    assert "'cell'" in item_kind_constraint
+    with engine.connect() as connection:
+        assert connection.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == (
+            '0017_xlsx_report_evidence_locators'
         )
     engine.dispose()

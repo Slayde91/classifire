@@ -8,7 +8,11 @@ from typing import Any
 
 import pymupdf
 import pytest
-from test_report_evidence_adapter import _caption_report_content, _report_content
+from test_report_evidence_adapter import (
+    _caption_report_content,
+    _report_content,
+    _xlsx_report_content,
+)
 
 from classifire.services.phase8_report_documentary_context import (
     PHASE8_REPORT_DOCUMENTARY_CONTEXT_SCHEMA,
@@ -21,7 +25,7 @@ from classifire.services.phase8_visual_proposal import canonical_json_sha256
 from classifire.services.report_evidence_adapter import (
     REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA,
     ReportDefectEvidencePacket,
-    normalise_verified_pdf_report,
+    normalise_verified_report,
 )
 from classifire.services.storage import VerifiedStoredFileContent
 
@@ -31,7 +35,7 @@ def _packet(
     *,
     item_kind: str | None = None,
 ) -> ReportDefectEvidencePacket:
-    report = normalise_verified_pdf_report(content)
+    report = normalise_verified_report(content)
     locators = tuple(
         locator
         for locator in report.locators
@@ -187,6 +191,55 @@ def test_context_extracts_a_selected_table_from_exact_report_bytes() -> None:
     assert context.items[0].content == {'rows': [['A', 'B'], ['C', 'D']]}
     assert validate_phase8_report_documentary_context(context) == []
 
+
+def test_context_reextracts_only_selected_xlsx_cells_from_exact_bytes() -> None:
+    content = _xlsx_report_content()
+    packet = _packet(content, item_kind='cell')
+
+    context = build_phase8_report_documentary_context(
+        report_packet=packet,
+        verified_content=content,
+    )
+
+    assert validate_phase8_report_documentary_context(context) == []
+    assert len(context.items) == 6
+    assert all(item.item_kind == 'cell' for item in context.items)
+    assert all(item.page_number is None for item in context.items)
+    contents = {tuple(sorted(item.content.items())) for item in context.items if item.content}
+    assert (('cell_kind', 'formula'), ('value', '=B1*2')) in contents
+    assert (('cell_kind', 'number'), ('value', '42')) in contents
+    assert (('cell_kind', 'boolean'), ('value', 'true')) in contents
+    assert 'Defect D-001 is described in this private workbook.' not in json.dumps(
+        context.manifest,
+        sort_keys=True,
+    )
+    assert 'Private review data' not in str(context)
+
+    worksheet_context = build_phase8_report_documentary_context(
+        report_packet=_packet(content, item_kind='worksheet'),
+        verified_content=content,
+    )
+    assert all(item.content is None for item in worksheet_context.items)
+    assert validate_phase8_report_documentary_context(worksheet_context) == []
+
+    formula_item = next(
+        item
+        for item in context.items
+        if item.content is not None and item.content['cell_kind'] == 'formula'
+    )
+    forged = replace(
+        context,
+        items=tuple(
+            replace(formula_item, content={'cell_kind': 'formula', 'value': '=B1*99'})
+            if item is formula_item
+            else item
+            for item in context.items
+        ),
+    )
+    assert any(
+        'content hash is invalid' in error
+        for error in validate_phase8_report_documentary_context(forged)
+    )
 
 def test_context_rejects_mismatched_or_tampered_content() -> None:
     content = _report_content()

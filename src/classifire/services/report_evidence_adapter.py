@@ -8,17 +8,22 @@ physical-model, technical, commercial, lock, or release records.
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import math
 import re
 import unicodedata
+import zipfile
 from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass
+from datetime import date, datetime, time
 from pathlib import Path
 from typing import Any, NoReturn
 
 import pymupdf
+from openpyxl import load_workbook  # type: ignore[import-untyped]
+from openpyxl.xml import DEFUSEDXML  # type: ignore[import-untyped]
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -50,6 +55,8 @@ REPORT_EVIDENCE_LOCATOR_SCHEMA = 'CLASSIFIRE-REPORT-EVIDENCE-LOCATORS-v1'
 REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA = 'CLASSIFIRE-REPORT-DEFECT-EVIDENCE-PACKET-v1'
 REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA_V2 = 'CLASSIFIRE-REPORT-DEFECT-EVIDENCE-PACKET-v2'
 _PDF_MEDIA_TYPE = 'application/pdf'
+_XLSX_MEDIA_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+REPORT_XLSX_MEDIA_TYPE = _XLSX_MEDIA_TYPE
 _HEX_SHA256 = frozenset('0123456789abcdef')
 _ITEM_KIND_ORDER = {
     'metadata': 0,
@@ -60,6 +67,8 @@ _ITEM_KIND_ORDER = {
     'drawing': 5,
     'annotation': 6,
     'image': 7,
+    'worksheet': 8,
+    'cell': 9,
 }
 _MAX_REPORT_BYTES = 100 * 1024 * 1024
 _MAX_REPORT_PAGES = 2_000
@@ -70,6 +79,13 @@ _MAX_TABLE_COLUMNS = 200
 _MAX_TABLE_CELLS = 100_000
 _MAX_TABLE_CELL_CHARACTERS = 100_000
 _MAX_REPORT_LABEL = 150
+_MAX_XLSX_ARCHIVE_MEMBERS = 10_000
+_MAX_XLSX_UNCOMPRESSED_BYTES = 500 * 1024 * 1024
+_MAX_XLSX_WORKSHEETS = 200
+_MAX_XLSX_ROWS = 10_000
+_MAX_XLSX_COLUMNS = 200
+_MAX_XLSX_GRID_CELLS = 100_000
+_MAX_XLSX_TEXT_CHARACTERS = 4_000_000
 _EXPLICIT_CAPTION_PATTERN = re.compile(
     r'^\s*(?P<caption_kind>figure|fig|image|photo|photograph|plate)\s+'
     r'(?P<number>[1-9][0-9]{0,5})\s*[:\-–—]\s*\S',
@@ -84,6 +100,7 @@ _CAPTION_KIND_BY_PREFIX = {
     'plate': 'plate',
 }
 _CAPTION_KINDS = frozenset(_CAPTION_KIND_BY_PREFIX.values())
+_XLSX_CELL_KINDS = frozenset({'text', 'number', 'boolean', 'formula', 'date', 'error'})
 
 class ReportEvidenceAdapterError(ValueError):
     '''A stable, path-free report-evidence adapter failure.'''
@@ -110,7 +127,7 @@ class ReportEvidenceLocatorItem:
 
 @dataclass(frozen=True, slots=True)
 class NormalisedReportEvidence:
-    '''Deterministic locator inventory for one exact, retained PDF report.'''
+    '''Deterministic locator inventory for one exact retained report document.'''
 
     source_sha256: str
     source_size_bytes: int
@@ -243,10 +260,10 @@ def _media_type(value: object) -> str:
     return value.split(';', 1)[0].strip().lower()
 
 
-def _report_content(content: VerifiedStoredFileContent) -> tuple[str, int, bytes]:
+def _verified_report_content(content: object) -> tuple[str, int, bytes]:
+    if not isinstance(content, VerifiedStoredFileContent):
+        _fail('REPORT_EVIDENCE_SOURCE_INVALID')
     source_sha256 = _normalise_sha256(content.sha256)
-    if _media_type(content.media_type) != _PDF_MEDIA_TYPE:
-        _fail('REPORT_EVIDENCE_MEDIA_TYPE_FORBIDDEN')
     if content.size_bytes != len(content.content) or not content.content:
         _fail('REPORT_EVIDENCE_SOURCE_INVALID')
     if content.size_bytes > _MAX_REPORT_BYTES:
@@ -255,6 +272,12 @@ def _report_content(content: VerifiedStoredFileContent) -> tuple[str, int, bytes
         _fail('REPORT_EVIDENCE_SOURCE_HASH_MISMATCH')
     return source_sha256, content.size_bytes, content.content
 
+
+def _report_content(content: VerifiedStoredFileContent) -> tuple[str, int, bytes]:
+    source_sha256, source_size_bytes, report_bytes = _verified_report_content(content)
+    if _media_type(content.media_type) != _PDF_MEDIA_TYPE:
+        _fail('REPORT_EVIDENCE_MEDIA_TYPE_FORBIDDEN')
+    return source_sha256, source_size_bytes, report_bytes
 
 def _table_shape(rows: object) -> tuple[int, int, str]:
     if not isinstance(rows, list) or len(rows) > _MAX_TABLE_ROWS:
@@ -286,6 +309,7 @@ def _draft_item(
     content_sha256: str,
     locator: dict[str, Any],
     sort_index: int,
+    sort_position: tuple[int, ...] = (),
 ) -> dict[str, Any]:
     if item_kind not in _ITEM_KIND_ORDER:
         _fail('REPORT_EVIDENCE_ITEM_KIND_INVALID')
@@ -307,6 +331,7 @@ def _draft_item(
             page_number or 0,
             _ITEM_KIND_ORDER[item_kind],
             *position,
+            *sort_position,
             content_sha256,
             sort_index,
         ),
@@ -571,6 +596,332 @@ def normalise_verified_pdf_report(content: VerifiedStoredFileContent) -> Normali
     )
 
 
+def _xlsx_archive_is_within_policy(report_bytes: bytes) -> None:
+    try:
+        with zipfile.ZipFile(io.BytesIO(report_bytes)) as archive:
+            entries = tuple(archive.infolist())
+            if not entries or len(entries) > _MAX_XLSX_ARCHIVE_MEMBERS:
+                _fail('REPORT_EVIDENCE_XLSX_ARCHIVE_OUT_OF_POLICY')
+            total_uncompressed_bytes = 0
+            names: list[str] = []
+            for entry in entries:
+                name = entry.filename.replace('\\', '/')
+                if (
+                    not name
+                    or name.startswith('/')
+                    or '\x00' in name
+                    or any(part == '..' for part in name.split('/'))
+                ):
+                    _fail('REPORT_EVIDENCE_XLSX_ARCHIVE_OUT_OF_POLICY')
+                if entry.flag_bits & 0x1:
+                    _fail('REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN')
+                total_uncompressed_bytes += entry.file_size
+                if total_uncompressed_bytes > _MAX_XLSX_UNCOMPRESSED_BYTES:
+                    _fail('REPORT_EVIDENCE_XLSX_ARCHIVE_OUT_OF_POLICY')
+                names.append(name.casefold())
+            forbidden_prefixes = (
+                'xl/vbaproject',
+                'xl/externallinks/',
+                'xl/drawings/',
+                'xl/media/',
+                'xl/charts/',
+                'xl/comments',
+                'xl/threadedcomments/',
+                'xl/pivottables/',
+                'xl/pivotcache/',
+                'xl/embeddings/',
+                'xl/connections.xml',
+            )
+            if any(
+                name.startswith(prefix)
+                for name in names
+                for prefix in forbidden_prefixes
+            ):
+                _fail('REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN')
+            try:
+                content_types = archive.read('[Content_Types].xml').lower()
+            except KeyError:
+                _fail('REPORT_EVIDENCE_XLSX_INVALID')
+            if b'macroenabled' in content_types:
+                _fail('REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN')
+    except ReportEvidenceAdapterError:
+        raise
+    except (OSError, ValueError, zipfile.BadZipFile) as exc:
+        _fail('REPORT_EVIDENCE_XLSX_INVALID')
+        raise AssertionError from exc
+
+
+def _xlsx_source_content(content: VerifiedStoredFileContent) -> tuple[str, int, bytes]:
+    source_sha256, source_size_bytes, report_bytes = _verified_report_content(content)
+    if _media_type(content.media_type) != _XLSX_MEDIA_TYPE:
+        _fail('REPORT_EVIDENCE_MEDIA_TYPE_FORBIDDEN')
+    _xlsx_archive_is_within_policy(report_bytes)
+    return source_sha256, source_size_bytes, report_bytes
+
+
+def _open_verified_xlsx_report(report_bytes: bytes) -> Any:
+    if not DEFUSEDXML:
+        _fail('REPORT_EVIDENCE_XLSX_PARSER_UNSAFE')
+    try:
+        workbook = load_workbook(
+            filename=io.BytesIO(report_bytes),
+            read_only=False,
+            data_only=False,
+            keep_vba=False,
+            keep_links=False,
+            rich_text=False,
+        )
+    except Exception as exc:
+        _fail('REPORT_EVIDENCE_XLSX_INVALID')
+        raise AssertionError from exc
+    if workbook._external_links:
+        workbook.close()
+        _fail('REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN')
+    return workbook
+
+
+def _xlsx_cell_value(cell: Any) -> tuple[str, str]:
+    value = cell.value
+    if value is None:
+        _fail('REPORT_EVIDENCE_XLSX_CELL_OUT_OF_POLICY')
+    if cell.data_type == 'f':
+        if not isinstance(value, str):
+            _fail('REPORT_EVIDENCE_XLSX_CELL_OUT_OF_POLICY')
+        return 'formula', _normalised_text(value)
+    if cell.data_type == 'b':
+        if not isinstance(value, bool):
+            _fail('REPORT_EVIDENCE_XLSX_CELL_OUT_OF_POLICY')
+        return 'boolean', 'true' if value else 'false'
+    if cell.data_type == 'e':
+        if not isinstance(value, str):
+            _fail('REPORT_EVIDENCE_XLSX_CELL_OUT_OF_POLICY')
+        return 'error', _normalised_text(value)
+    if cell.is_date:
+        if not isinstance(value, (date, datetime, time)):
+            _fail('REPORT_EVIDENCE_XLSX_CELL_OUT_OF_POLICY')
+        return 'date', _normalised_text(value.isoformat())
+    if isinstance(value, str):
+        return 'text', _normalised_text(value)
+    if isinstance(value, bool):
+        return 'boolean', 'true' if value else 'false'
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if isinstance(value, float) and not math.isfinite(value):
+            _fail('REPORT_EVIDENCE_XLSX_CELL_OUT_OF_POLICY')
+        return 'number', str(value)
+    _fail('REPORT_EVIDENCE_XLSX_CELL_OUT_OF_POLICY')
+
+
+def _xlsx_worksheet_drafts(
+    worksheet: Any,
+    worksheet_index: int,
+) -> tuple[list[dict[str, Any]], int]:
+    if worksheet.sheet_state != 'visible':
+        _fail('REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN')
+    if worksheet.merged_cells.ranges or worksheet._images or worksheet._charts:
+        _fail('REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN')
+    if worksheet.data_validations.count:
+        _fail('REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN')
+    max_row = worksheet.max_row
+    max_column = worksheet.max_column
+    if (
+        not isinstance(max_row, int)
+        or not isinstance(max_column, int)
+        or max_row < 1
+        or max_column < 1
+        or max_row > _MAX_XLSX_ROWS
+        or max_column > _MAX_XLSX_COLUMNS
+        or max_row * max_column > _MAX_XLSX_GRID_CELLS
+    ):
+        _fail('REPORT_EVIDENCE_XLSX_WORKSHEET_OUT_OF_POLICY')
+    nonempty_cell_count = 0
+    text_character_count = 0
+    cell_drafts: list[dict[str, Any]] = []
+    for row in worksheet.iter_rows():
+        for cell in row:
+            if cell.comment is not None or cell.hyperlink is not None:
+                _fail('REPORT_EVIDENCE_XLSX_FEATURE_FORBIDDEN')
+            if cell.value is None:
+                continue
+            cell_kind, value = _xlsx_cell_value(cell)
+            nonempty_cell_count += 1
+            text_character_count += len(value)
+            cell_drafts.append(
+                _draft_item(
+                    item_kind='cell',
+                    page_number=None,
+                    content_sha256=_canonical_sha256(
+                        {
+                            'cell_kind': cell_kind,
+                            'value_sha256': _text_sha256(value),
+                        }
+                    ),
+                    locator={
+                        'item_kind': 'cell',
+                        'page_number': None,
+                        'worksheet_index': worksheet_index,
+                        'row_index': cell.row,
+                        'column_index': cell.column,
+                        'cell_kind': cell_kind,
+                    },
+                    sort_index=nonempty_cell_count,
+                    sort_position=(worksheet_index, cell.row, cell.column),
+                )
+            )
+    worksheet_locator = {
+        'item_kind': 'worksheet',
+        'page_number': None,
+        'worksheet_index': worksheet_index,
+        'max_row': max_row,
+        'max_column': max_column,
+        'nonempty_cell_count': nonempty_cell_count,
+    }
+    return ([
+        _draft_item(
+            item_kind='worksheet',
+            page_number=None,
+            content_sha256=_canonical_sha256(worksheet_locator),
+            locator=worksheet_locator,
+            sort_index=0,
+            sort_position=(worksheet_index, 0, 0),
+        ),
+        *cell_drafts,
+    ], text_character_count)
+
+
+def _finalise_report_drafts(
+    *,
+    source_sha256: str,
+    source_size_bytes: int,
+    document_unit_count: int,
+    drafts: list[dict[str, Any]],
+) -> NormalisedReportEvidence:
+    drafts.sort(key=lambda item: item['sort_key'])
+    kind_ordinals: dict[tuple[int | None, str], int] = {}
+    locators: list[ReportEvidenceLocatorItem] = []
+    for sequence, draft in enumerate(drafts, start=1):
+        page_number = draft['page_number']
+        item_kind = draft['item_kind']
+        ordinal_key = (page_number, item_kind)
+        ordinal = kind_ordinals.get(ordinal_key, 0) + 1
+        kind_ordinals[ordinal_key] = ordinal
+        page_token = page_number if page_number is not None else 0
+        content_sha256 = draft['content_sha256']
+        locator_key = (
+            f'report-{source_sha256[:16]}-p{page_token:04d}-'
+            f'{item_kind}-{ordinal:04d}-{content_sha256[:16]}'
+        )
+        locator = dict(draft['locator'])
+        locator['sequence'] = sequence
+        locators.append(
+            ReportEvidenceLocatorItem(
+                locator_key=locator_key,
+                item_kind=item_kind,
+                page_number=page_number,
+                content_sha256=content_sha256,
+                locator=locator,
+            )
+        )
+    return NormalisedReportEvidence(
+        source_sha256=source_sha256,
+        source_size_bytes=source_size_bytes,
+        page_count=document_unit_count,
+        locators=tuple(locators),
+    )
+
+
+def normalise_verified_xlsx_report(content: VerifiedStoredFileContent) -> NormalisedReportEvidence:
+    '''Normalise one exact XLSX workbook into bounded, content-free locators.'''
+
+    source_sha256, source_size_bytes, report_bytes = _xlsx_source_content(content)
+    workbook = _open_verified_xlsx_report(report_bytes)
+    try:
+        worksheets = tuple(workbook.worksheets)
+        if not worksheets or len(worksheets) > _MAX_XLSX_WORKSHEETS:
+            _fail('REPORT_EVIDENCE_XLSX_WORKSHEET_OUT_OF_POLICY')
+        drafts: list[dict[str, Any]] = []
+        text_character_count = 0
+        for worksheet_index, worksheet in enumerate(worksheets, start=1):
+            worksheet_drafts, worksheet_character_count = _xlsx_worksheet_drafts(
+                worksheet,
+                worksheet_index,
+            )
+            drafts.extend(worksheet_drafts)
+            text_character_count += worksheet_character_count
+            if text_character_count > _MAX_XLSX_TEXT_CHARACTERS:
+                _fail('REPORT_EVIDENCE_TEXT_OUT_OF_POLICY')
+            if len(drafts) > _MAX_REPORT_LOCATORS:
+                _fail('REPORT_EVIDENCE_LOCATOR_COUNT_OUT_OF_POLICY')
+    finally:
+        workbook.close()
+    return _finalise_report_drafts(
+        source_sha256=source_sha256,
+        source_size_bytes=source_size_bytes,
+        document_unit_count=len(worksheets),
+        drafts=drafts,
+    )
+
+
+def normalise_verified_report(content: VerifiedStoredFileContent) -> NormalisedReportEvidence:
+    '''Normalise one allowed exact retained report without broad file admission.'''
+
+    if not isinstance(content, VerifiedStoredFileContent):
+        _fail('REPORT_EVIDENCE_SOURCE_INVALID')
+    media_type = _media_type(content.media_type)
+    if media_type == _PDF_MEDIA_TYPE:
+        return normalise_verified_pdf_report(content)
+    if media_type == _XLSX_MEDIA_TYPE:
+        return normalise_verified_xlsx_report(content)
+    _fail('REPORT_EVIDENCE_MEDIA_TYPE_FORBIDDEN')
+
+
+def reextract_verified_xlsx_report_item(
+    content: VerifiedStoredFileContent,
+    *,
+    locator_key: object,
+    item_kind: object,
+    locator: object,
+) -> dict[str, str] | None:
+    '''Re-extract one safe XLSX item from exact bytes without retaining its content.'''
+
+    if (
+        not isinstance(locator_key, str)
+        or not isinstance(item_kind, str)
+        or not isinstance(locator, dict)
+    ):
+        _fail('REPORT_EVIDENCE_LOCATOR_INVALID')
+    report = normalise_verified_xlsx_report(content)
+    actual = next((item for item in report.locators if item.locator_key == locator_key), None)
+    if actual is None or actual.item_kind != item_kind or actual.locator != locator:
+        _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+    if item_kind == 'worksheet':
+        return None
+    if item_kind != 'cell':
+        _fail('REPORT_EVIDENCE_LOCATOR_INVALID')
+    _, _, report_bytes = _xlsx_source_content(content)
+    workbook = _open_verified_xlsx_report(report_bytes)
+    try:
+        worksheet_index = locator['worksheet_index']
+        row_index = locator['row_index']
+        column_index = locator['column_index']
+        worksheet = workbook.worksheets[worksheet_index - 1]
+        cell = worksheet.cell(row=row_index, column=column_index)
+        cell_kind, value = _xlsx_cell_value(cell)
+    except (IndexError, KeyError, TypeError, ValueError) as exc:
+        _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+        raise AssertionError from exc
+    finally:
+        workbook.close()
+    payload = {'cell_kind': cell_kind, 'value': value}
+    if (
+        cell_kind != locator.get('cell_kind')
+        or _canonical_sha256(
+            {'cell_kind': cell_kind, 'value_sha256': _text_sha256(value)}
+        )
+        != actual.content_sha256
+    ):
+        _fail('REPORT_EVIDENCE_LOCATOR_CONFLICT')
+    return payload
+
 def _report_owner(
     db: Session,
     *,
@@ -624,6 +975,45 @@ def _valid_locator(item: ReportEvidenceLocatorItem, *, sequence: int) -> bool:
             'metadata_field_count',
             'sequence',
         } and isinstance(item.locator.get('metadata_field_count'), int)
+    if item.item_kind == 'worksheet':
+        return (
+            item.page_number is None
+            and set(item.locator)
+            == {
+                'item_kind',
+                'page_number',
+                'worksheet_index',
+                'max_row',
+                'max_column',
+                'nonempty_cell_count',
+                'sequence',
+            }
+            and all(
+                _positive_integer(item.locator.get(field))
+                for field in ('worksheet_index', 'max_row', 'max_column')
+            )
+            and isinstance(item.locator.get('nonempty_cell_count'), int)
+            and item.locator['nonempty_cell_count'] >= 0
+        )
+    if item.item_kind == 'cell':
+        return (
+            item.page_number is None
+            and set(item.locator)
+            == {
+                'item_kind',
+                'page_number',
+                'worksheet_index',
+                'row_index',
+                'column_index',
+                'cell_kind',
+                'sequence',
+            }
+            and all(
+                _positive_integer(item.locator.get(field))
+                for field in ('worksheet_index', 'row_index', 'column_index')
+            )
+            and item.locator.get('cell_kind') in _XLSX_CELL_KINDS
+        )
     if not _positive_integer(item.page_number):
         return False
     allowed_keys = {
@@ -850,7 +1240,7 @@ def materialise_project_report_locators_for_update(
         )
     except ValueError as exc:
         _fail(str(exc))
-    report = normalise_verified_pdf_report(content)
+    report = normalise_verified_report(content)
     return _register_report_evidence_locators(
         db,
         stored_file_id=stored_file_id,
@@ -1372,8 +1762,8 @@ def _bind_report_defect_scope(
     if (
         start is None
         or end is None
-        or start.page_number is None
-        or end.page_number is None
+        or (start.page_number is None and start.item_kind != 'cell')
+        or (end.page_number is None and end.item_kind != 'cell')
         or start.sequence > end.sequence
     ):
         _fail('REPORT_EVIDENCE_RANGE_INVALID')
@@ -1564,6 +1954,7 @@ __all__ = [
     'NormalisedReportEvidence',
     'REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA',
     'REPORT_EVIDENCE_LOCATOR_SCHEMA',
+    'REPORT_XLSX_MEDIA_TYPE',
     'ReportDefectEvidencePacket',
     'ReportEvidenceAdapterError',
     'ReportEvidenceLocatorItem',
@@ -1573,6 +1964,9 @@ __all__ = [
     'build_report_defect_evidence_packets',
     'materialise_project_report_locators_for_update',
     'normalise_verified_pdf_report',
+    'normalise_verified_report',
+    'normalise_verified_xlsx_report',
+    'reextract_verified_xlsx_report_item',
     'validate_report_defect_evidence_packet',
     'validate_report_defect_v2_proposal',
 ]
