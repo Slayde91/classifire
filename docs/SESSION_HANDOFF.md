@@ -176,11 +176,10 @@ PostgreSQL containment race passed locally; PR and post-merge shared CI also
 passed. It adds no canonical, technical, commercial, lock, deployment, or
 release authority. Any real-provider run remains a separate gate.
 
-1. **Extend report evidence safely beyond PDF/XLSX/DOCX.** Start with multi-report
-   evidence-family accuracy while retaining exact-byte provenance, deterministic
-   locators, explicit uncertainty, and focused synthetic tests. Caption support remains
-   strict retained-PDF text with no visual association. Do not use customer evidence or
-   create an operator route.
+1. **Extend report evidence safely beyond PDF/XLSX/DOCX.** Use the explicit human-approved
+   family manifest as the only multi-report membership boundary. Keep exact-byte provenance,
+   deterministic locators, explicit uncertainty, and focused synthetic tests. Do not
+   automatically join reports, use customer evidence, or create an operator route.
 2. **Continue technical intake separately.** Complete the remaining
    extraction-assisted and manufacturer-neutral lineage plus governed
    publication and supersession. The
@@ -248,7 +247,7 @@ Shared main includes:
 - PR #154's bounded source-bound XLSX worksheet/cell locators and transient selected-cell re-extraction; and
 - PR #156's bounded source-bound DOCX document/paragraph/simple-table locators and transient selected-item re-extraction.
 
-Shared main packages migrations through 0018_docx_report_evidence_locators (one head). PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0019_report_evidence_family_manifests. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
 PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#156 check and corresponding main run also passed, ending with run 33766069162 on 82d288c. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
@@ -280,12 +279,25 @@ drawings, and unsupported body structures. Forward-only migration
 canonical, technical, commercial, lock, deployment, or release authority. PR validation
 run 33765731885 and post-merge main run 33766069162 passed.
 
+### Explicit human-approved report evidence families
+
+Forward-only migration `0019_report_evidence_family_manifests` retains an immutable,
+human-approved, ordered family of at least two already-retained reports for one Project
+and Estimate. The approver supplies only each exact stored-file ID and source SHA; the
+service rejects filenames, folders, timestamps, titles, and other inferred membership.
+It rechecks the immutable clean source binding, ownership, source hash, and family hash
+whenever the family is loaded, and rejects tampering or source drift.
+
+This is an evidence-admission foundation only. It does not change PDF/XLSX/DOCX
+normalisation, invoke the single-report runner, combine scopes or proposals, call a
+provider, or grant canonical, technical, commercial, lock, deployment, or release
+authority.
+
 ### Report-assessment integration limit
 
 The report path remains service-only. Source exists for owned report bytes,
 stable PDF, bounded XLSX, and bounded DOCX locators/scopes, transient documentary context, report-aware runtime
-input, assessment/review controllers, and deterministic packages. The runner
-composes the whole sequence, but no supported CLI, API, or UI invokes it.
+input, assessment/review controllers, and deterministic packages. The single-report runner composes the whole sequence, but no supported CLI, API, or UI invokes it. An approved report family does not yet invoke, alter, or combine runner inputs.
 
 Shared main has the CLASSIFIRE-owned proposal-review metadata record and internal human read-only /proposal-reviews surface from PR #144, plus PR #145's auditable active/revoked Project/package grants for eligible internal human readers. Non-administrator list/detail access requires a matching active grant. It uses CLASSIFIRE-owned five-year retention from registration, separate redactions, legal-hold protection that prevents deletion, deletion only after retention, safe locators, and tamper refusal with a content-safe audit event. It does not execute the runner and provides no canonical, technical, commercial, lock, deployment, or release authority.
 

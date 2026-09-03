@@ -422,6 +422,81 @@ class ReportExpectedLabelManifest(RecordMixin, Base):
     approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class ReportEvidenceFamilyManifest(RecordMixin, Base):
+    '''An immutable, human-approved exact set of retained reports for one estimate.'''
+
+    __tablename__ = 'report_evidence_family_manifests'
+    __table_args__ = (
+        CheckConstraint(
+            'length(trim(family_reference)) > 0',
+            name='ck_report_evidence_family_manifest_reference',
+        ),
+        CheckConstraint(
+            'length(trim(approval_reference)) > 0',
+            name='ck_report_evidence_family_manifest_approval_reference',
+        ),
+        CheckConstraint(
+            'member_count >= 2',
+            name='ck_report_evidence_family_manifest_member_count',
+        ),
+        UniqueConstraint(
+            'estimate_id',
+            'manifest_sha256',
+            'approval_reference',
+            'approved_by_user_id',
+            name='uq_report_evidence_family_manifest_approval',
+        ),
+        Index('ix_report_evidence_family_manifest_estimate_id', 'estimate_id'),
+    )
+
+    project_id: Mapped[str] = mapped_column(ForeignKey('projects.id'), nullable=False)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey('estimates.id'), nullable=False)
+    family_reference: Mapped[str] = mapped_column(String(150), nullable=False)
+    member_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    approval_reference: Mapped[str] = mapped_column(String(500), nullable=False)
+    approved_by_user_id: Mapped[str] = mapped_column(ForeignKey('users.id'), nullable=False)
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ReportEvidenceFamilyMember(RecordMixin, Base):
+    '''One ordered, hash-bound retained report in an approved evidence family.'''
+
+    __tablename__ = 'report_evidence_family_members'
+    __table_args__ = (
+        CheckConstraint(
+            'member_sequence > 0',
+            name='ck_report_evidence_family_member_sequence',
+        ),
+        ForeignKeyConstraint(
+            ['report_evidence_family_manifest_id'],
+            ['report_evidence_family_manifests.id'],
+            name='fk_report_evidence_family_member_manifest',
+        ),
+        ForeignKeyConstraint(
+            ['project_evidence_id', 'source_sha256'],
+            ['project_evidence.id', 'project_evidence.source_sha256'],
+            name='fk_report_evidence_family_member_source',
+        ),
+        UniqueConstraint(
+            'report_evidence_family_manifest_id',
+            'member_sequence',
+            name='uq_report_evidence_family_member_sequence',
+        ),
+        UniqueConstraint(
+            'report_evidence_family_manifest_id',
+            'project_evidence_id',
+            name='uq_report_evidence_family_member_source',
+        ),
+        Index('ix_report_evidence_family_member_project_evidence_id', 'project_evidence_id'),
+    )
+
+    report_evidence_family_manifest_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    member_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    project_evidence_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    stored_file_id: Mapped[str] = mapped_column(ForeignKey('stored_files.id'), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+
 class ProposalReviewPackage(RecordMixin, Base):
     '''Immutable, proposal-only report-review package metadata owned by CLASSIFIRE.'''
 

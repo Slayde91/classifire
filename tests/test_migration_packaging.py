@@ -25,7 +25,7 @@ def test_source_alembic_configuration_uses_packaged_history() -> None:
     assert config.get_main_option("script_location") == SCRIPT_LOCATION
     assert (
         ScriptDirectory.from_config(config).get_current_head()
-        == "0018_docx_report_evidence_locators"
+        == "0019_report_evidence_family_manifests"
     )
 
 
@@ -46,7 +46,7 @@ def test_migration_command_upgrades_disposable_database_to_packaged_head(
     engine = create_engine(f"sqlite:///{database_path.as_posix()}")
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0018_docx_report_evidence_locators"
+            "0019_report_evidence_family_manifests"
         )
 
 

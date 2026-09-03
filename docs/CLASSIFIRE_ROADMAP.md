@@ -162,6 +162,20 @@ proposal-only and adds no provider, canonical, technical, commercial, lock, depl
 or release authority. Pull-request run 33765731885 and post-merge main run 33766069162
 passed.
 
+### Explicit human-approved report evidence families
+
+Forward-only migration `0019_report_evidence_family_manifests` retains an immutable,
+human-approved, ordered family of at least two already-retained reports for one Project
+and Estimate. The approver supplies only each exact stored-file ID and source SHA; the
+service rejects filenames, folders, timestamps, titles, and other inferred membership.
+It rechecks the immutable clean source binding, ownership, source hash, and family hash
+whenever the family is loaded, and rejects tampering or source drift.
+
+This is an evidence-admission foundation only. It does not change PDF/XLSX/DOCX
+normalisation, invoke the single-report runner, combine scopes or proposals, call a
+provider, or grant canonical, technical, commercial, lock, deployment, or release
+authority.
+
 ### Completed and published foundations (not next actions)
 
 #### Completed on shared main - Snapshot, technical-source, and type-safety safeguards (PRs #105-#118)
@@ -350,7 +364,7 @@ downstream authority was added.
    Ruff fast-path, then have the repository owner decide on an upgrade or
    equivalent documented default-branch protection control.
 5. Extend report evidence beyond the now-supported PDF/XLSX/DOCX boundary, starting
-   with multi-report evidence-family accuracy. Keep the merged caption contract
+   with the explicit human-approved family manifest as its only membership boundary. Do not add automatic report joining; family-aware scope/proposal execution remains separate. Keep the merged caption contract
    limited to strict retained-PDF text and do not associate captions with images.
 
 ### Later or dependency-bound actions
@@ -455,7 +469,7 @@ database or approval workflow.
 **Completed foundations:** retained evidence, linked-original controls,
 Project/Estimate ownership, exact clean-byte reads, shared-byte quarantine,
 PDF text/table/annotation and drawing/image locators, strict explicitly numbered
-caption locators, bounded XLSX worksheet/cell locators, bounded DOCX document/paragraph/simple-table locators, ordered scopes,
+caption locators, bounded XLSX worksheet/cell locators, bounded DOCX document/paragraph/simple-table locators, ordered scopes, explicit human-approved report-family manifests,
 report-aware inputs, deterministic review artifacts, and PR #103's desk-quote
 exact-byte/locator/artifact-audit checks.
 
@@ -463,7 +477,7 @@ exact-byte/locator/artifact-audit checks.
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
 runner preflight that rejects legacy/unbound packets before a no-tool port call, and a database-backed proposal-review controller that rejects them before package assembly.
 
-**Remaining:** support for formats beyond PDF/XLSX/DOCX, multi-report evidence-family accuracy, user review, and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies CLASSIFIRE-owned five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
+**Remaining:** support for formats beyond PDF/XLSX/DOCX, family-aware scope/proposal execution after the explicit approval boundary, user review, and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies CLASSIFIRE-owned five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -605,7 +619,7 @@ import them into the active fire-seal/penetration runtime prematurely.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
 - Building the report runner as future work; shared main already composes it.
-  The remaining work is formats beyond PDF/XLSX/DOCX, multi-report evidence-family accuracy,
+  The remaining work is formats beyond PDF/XLSX/DOCX, family-aware scope/proposal execution after explicit approval,
   user review, caption-to-image association policy, and a separately authorised operator flow.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.

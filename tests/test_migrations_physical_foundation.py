@@ -149,6 +149,8 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
         "project_evidence",
         "report_evidence_locators",
         "report_defect_scopes",
+        "report_evidence_family_manifests",
+        "report_evidence_family_members",
     }.issubset(inspector.get_table_names())
     assert "canonical_defect_id" in {column["name"] for column in inspector.get_columns("openings")}
     assert "primary_opening_legacy" in {
@@ -172,7 +174,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
     assert active_lock_index["unique"]
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0018_docx_report_evidence_locators"
+            "0019_report_evidence_family_manifests"
         )
         active_lock_index_sql = connection.execute(
             text(

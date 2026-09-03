@@ -76,7 +76,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has head 0018_docx_report_evidence_locators from PR #156 |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0019_report_evidence_family_manifests |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -162,8 +162,7 @@ drawings/media/charts, comments, pivots, embedded objects, validation rules, and
 archive or worksheet shapes. The DOCX boundary rejects encrypted or unsafe archives, macros, external relationships, embedded or hidden content, tracked changes, fields, hyperlinks, drawings, and unsupported body structures. Actual visual inference bytes come from a separately
 governed retained visual packet. A caption is only an exact retained text block with an
 explicit numbered category; it is not automatically associated with an image and cannot
-establish a physical fact. General report formats and multi-report generalisability
-remain planned.
+establish a physical fact. General report formats remain planned. Explicit human-approved family admission is available, but family-aware scope/proposal execution remains planned.
 
 On shared main, cardinality is deterministic for the report scopes that already exist in the
 database. An approved expected-label manifest record is source-bound to the
@@ -473,6 +472,20 @@ relationships, embedded or hidden content, tracked changes, fields, hyperlinks,
 drawings, and unsupported body structures. It adds no provider, canonical, technical,
 commercial, lock, deployment, or release authority. Pull-request run 33765731885 and
 post-merge main run 33766069162 passed.
+
+### Explicit human-approved report evidence families
+
+Forward-only migration `0019_report_evidence_family_manifests` retains an immutable,
+human-approved, ordered family of at least two already-retained reports for one Project
+and Estimate. The approver supplies only each exact stored-file ID and source SHA; the
+service rejects filenames, folders, timestamps, titles, and other inferred membership.
+It rechecks the immutable clean source binding, ownership, source hash, and family hash
+whenever the family is loaded, and rejects tampering or source drift.
+
+This is an evidence-admission foundation only. It does not change PDF/XLSX/DOCX
+normalisation, invoke the single-report runner, combine scopes or proposals, call a
+provider, or grant canonical, technical, commercial, lock, deployment, or release
+authority.
 
 ### Near term
 
