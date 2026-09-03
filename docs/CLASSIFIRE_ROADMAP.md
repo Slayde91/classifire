@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** 7a33f34 (PR #154 merge, 2026-09-03)
+**Verified shared-main implementation:** 82d288c (PR #156 merge, 2026-09-03)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -33,7 +33,7 @@ Shared main now includes:
 - physical-model, evidence, proposal-only visual, admission, and receipt
   boundaries;
 - Project/Estimate report ownership, atomic PostgreSQL clean-byte handling,
-  stable PDF plus bounded XLSX worksheet/cell locators/scopes, report assessment
+  stable PDF, bounded XLSX worksheet/cell, and bounded DOCX document/paragraph/simple-table locators/scopes, report assessment
   components, and deterministic review packages;
 - the PR #103 desk-quote evidence-read hardening;
 - PR #104's expected-label manifests, atomic scope admission, V2 runner
@@ -57,9 +57,9 @@ Shared main now includes:
 
 PR #104 validation run `33515411987` passed on its exact head `0f6c252`. Its
 first observed `main` push run `33516292114` also passed on merge `b6409a5`,
-including tests and the one-head Alembic check. Every PR #105-#126 check and
-corresponding `main` validation then passed; the latest post-merge run is
-`33667477950` on `b33246a`. GitHub's branch-protection endpoint still returns
+including tests and the one-head Alembic check. Each PR #105-#156 check and
+corresponding `main` validation then passed through PR #156; the latest post-merge run is
+`33766069162` on `82d288c`. GitHub's branch-protection endpoint still returns
 HTTP 403 because the current private-repository plan requires GitHub Pro or
 public visibility for that configuration; required-check configuration remains
 unverified.
@@ -147,6 +147,20 @@ shapes are rejected. Forward-only migration `0017_xlsx_report_evidence_locators`
 only `worksheet` and `cell` locator kinds. This remains proposal-only and adds no
 provider, canonical, technical, commercial, lock, deployment, or release authority.
 Pull-request run 33760112145 and post-merge main run 33760450512 passed.
+
+#### Completed shared-main foundation - source-bound DOCX report locators (PR #156)
+
+PR #156 extends the exact retained-byte report boundary to `.docx` documents. It
+persists only structural document, visible body paragraph, and simple body table
+positions/counts/hashes, then re-extracts selected paragraph/table content transiently
+after exact retained-byte, locator, and hash verification. It never stores document text
+or table values. Encrypted or unsafe archives, macros, external relationships, embedded
+or hidden content, tracked changes, fields, hyperlinks, drawings, and unsupported body
+structures are rejected. Forward-only migration `0018_docx_report_evidence_locators`
+admits only `document`, `paragraph`, and `document_table` locator kinds. This remains
+proposal-only and adds no provider, canonical, technical, commercial, lock, deployment,
+or release authority. Pull-request run 33765731885 and post-merge main run 33766069162
+passed.
 
 ### Completed and published foundations (not next actions)
 
@@ -335,7 +349,7 @@ downstream authority was added.
 4. Maintain the full-repository Ruff, Mypy, and Bandit checks beside the changed-file
    Ruff fast-path, then have the repository owner decide on an upgrade or
    equivalent documented default-branch protection control.
-5. Extend report evidence beyond the now-supported PDF/XLSX boundary, starting
+5. Extend report evidence beyond the now-supported PDF/XLSX/DOCX boundary, starting
    with multi-report evidence-family accuracy. Keep the merged caption contract
    limited to strict retained-PDF text and do not associate captions with images.
 
@@ -441,7 +455,7 @@ database or approval workflow.
 **Completed foundations:** retained evidence, linked-original controls,
 Project/Estimate ownership, exact clean-byte reads, shared-byte quarantine,
 PDF text/table/annotation and drawing/image locators, strict explicitly numbered
-caption locators, bounded XLSX worksheet/cell locators, ordered scopes,
+caption locators, bounded XLSX worksheet/cell locators, bounded DOCX document/paragraph/simple-table locators, ordered scopes,
 report-aware inputs, deterministic review artifacts, and PR #103's desk-quote
 exact-byte/locator/artifact-audit checks.
 
@@ -449,7 +463,7 @@ exact-byte/locator/artifact-audit checks.
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
 runner preflight that rejects legacy/unbound packets before a no-tool port call, and a database-backed proposal-review controller that rejects them before package assembly.
 
-**Remaining:** support for formats beyond PDF/XLSX, multi-report evidence-family accuracy, user review, and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
+**Remaining:** support for formats beyond PDF/XLSX/DOCX, multi-report evidence-family accuracy, user review, and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies CLASSIFIRE-owned five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT read-only reviewer surface, and explicit scoped reader grants.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -591,7 +605,7 @@ import them into the active fire-seal/penetration runtime prematurely.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
 - Building the report runner as future work; shared main already composes it.
-  The remaining work is formats beyond PDF/XLSX, multi-report evidence-family accuracy,
+  The remaining work is formats beyond PDF/XLSX/DOCX, multi-report evidence-family accuracy,
   user review, caption-to-image association policy, and a separately authorised operator flow.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.

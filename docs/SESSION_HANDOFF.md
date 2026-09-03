@@ -1,13 +1,13 @@
 # CLASSIFIRE Session Handoff
 
-**Prepared:** 2026-09-03 (AEST)
+**Prepared:** 2026-09-04 (AEST)
 
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** origin/main at 7a33f3477086942d1a09991f22bf559d215a1ea5
+**Reconciliation baseline:** origin/main at 82d288c14d0e04d70a75a7fde2191125fbd147ca
 
-**Verified shared-main implementation:** 7a33f3477086942d1a09991f22bf559d215a1ea5 (PR #154)
+**Verified shared-main implementation:** 82d288c14d0e04d70a75a7fde2191125fbd147ca (PR #156)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -15,7 +15,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#154
+### Current shared main - PRs #104-#156
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -176,7 +176,7 @@ PostgreSQL containment race passed locally; PR and post-merge shared CI also
 passed. It adds no canonical, technical, commercial, lock, deployment, or
 release authority. Any real-provider run remains a separate gate.
 
-1. **Extend report evidence safely beyond PDF/XLSX.** Start with multi-report
+1. **Extend report evidence safely beyond PDF/XLSX/DOCX.** Start with multi-report
    evidence-family accuracy while retaining exact-byte provenance, deterministic
    locators, explicit uncertainty, and focused synthetic tests. Caption support remains
    strict retained-PDF text with no visual association. Do not use customer evidence or
@@ -245,11 +245,12 @@ Shared main includes:
 - PR #149's exact-approved-manifest V2 enforcement before database-backed
   proposal-review package assembly; and
 - PR #151's strict source-bound caption locators and transient re-extraction; and
-- PR #154's bounded source-bound XLSX worksheet/cell locators and transient selected-cell re-extraction.
+- PR #154's bounded source-bound XLSX worksheet/cell locators and transient selected-cell re-extraction; and
+- PR #156's bounded source-bound DOCX document/paragraph/simple-table locators and transient selected-item re-extraction.
 
-Shared main packages migrations through 0017_xlsx_report_evidence_locators (one head). PR #154 merged bounded source-bound XLSX worksheet/cell locators as 7a33f3477086942d1a09991f22bf559d215a1ea5; pull-request run 33760112145 and post-merge main run 33760450512 both succeeded.
+Shared main packages migrations through 0018_docx_report_evidence_locators (one head). PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
-PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#154 check and corresponding main run also passed, ending with run 33760450512 on 7a33f34. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
+PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#156 check and corresponding main run also passed, ending with run 33766069162 on 82d288c. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
 ### Completed source-bound XLSX report locators on shared main (PR #154)
 
@@ -265,20 +266,34 @@ canonical, technical, commercial, lock, deployment, or release authority.
 
 PR validation run 33760112145 and post-merge main run 33760450512 passed.
 
+### Completed source-bound DOCX report locators on shared main (PR #156)
+
+PR #156 extends the exact retained-byte report boundary to `.docx` documents. It
+persists only structural document, visible body paragraph, and simple body table
+positions/counts/hashes, then re-extracts selected paragraph/table content transiently
+after exact retained-byte, locator, and hash verification. It never stores document text
+or table values and fails closed on encrypted or unsafe archives, macros, external
+relationships, embedded or hidden content, tracked changes, fields, hyperlinks,
+drawings, and unsupported body structures. Forward-only migration
+`0018_docx_report_evidence_locators` admits only `document`, `paragraph`, and
+`document_table` locator kinds. This remains proposal-only and adds no provider,
+canonical, technical, commercial, lock, deployment, or release authority. PR validation
+run 33765731885 and post-merge main run 33766069162 passed.
+
 ### Report-assessment integration limit
 
 The report path remains service-only. Source exists for owned report bytes,
-stable PDF and bounded XLSX locators/scopes, transient documentary context, report-aware runtime
+stable PDF, bounded XLSX, and bounded DOCX locators/scopes, transient documentary context, report-aware runtime
 input, assessment/review controllers, and deterministic packages. The runner
 composes the whole sequence, but no supported CLI, API, or UI invokes it.
 
-Shared main has the CLASSIFIRE-owned proposal-review metadata record and internal human read-only /proposal-reviews surface from PR #144, plus PR #145's auditable active/revoked Project/package grants for eligible internal human readers. Non-administrator list/detail access requires a matching active grant. It requires five-year minimum retention, separate redactions, legal-hold protection, deletion only after retention, safe locators, and tamper refusal with a content-safe audit event. It does not execute the runner and provides no canonical, technical, commercial, lock, deployment, or release authority.
+Shared main has the CLASSIFIRE-owned proposal-review metadata record and internal human read-only /proposal-reviews surface from PR #144, plus PR #145's auditable active/revoked Project/package grants for eligible internal human readers. Non-administrator list/detail access requires a matching active grant. It uses CLASSIFIRE-owned five-year retention from registration, separate redactions, legal-hold protection that prevents deletion, deletion only after retention, safe locators, and tamper refusal with a content-safe audit event. It does not execute the runner and provides no canonical, technical, commercial, lock, deployment, or release authority.
 
 PDF text, table, annotation, and strict explicitly numbered caption content are supported.
 Bounded XLSX support persists only visible worksheet shape and non-empty cell
 position/category/hash fields; selected cells are transiently re-extracted from exact
 retained workbook bytes, and formulas are never executed. Hidden sheets, macros, links,
-embedded media, comments, pivots, objects, validation rules, and unsafe shapes are refused.
+embedded media, comments, pivots, objects, validation rules, and unsafe shapes are refused. DOCX support persists only structural document, visible body paragraph, and simple body table positions/counts/hashes; selected paragraph/table content is transiently re-extracted from exact retained document bytes. Encrypted or unsafe archives, macros, external relationships, embedded or hidden content, tracked changes, fields, hyperlinks, drawings, and unsupported body structures are refused.
 Drawings and embedded images are locator/hash-only in documentary context, with visual
 bytes supplied separately. Caption wording is transiently re-extracted from exact retained
 PDF bytes; captions are not associated with images and cannot establish facts. The persisted
