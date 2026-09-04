@@ -452,7 +452,9 @@ payload, invalidates only the authorised signed lock, and records immutable
 before/after snapshots, hashes, row mappings, execution receipt, and audit.
 No-op changes, unauthorised roles, corrupt replays, and later downstream
 dependencies fail closed; injected write failure proves the mutation and
-invalidation roll back together. It does not create a replacement lock or grant
+invalidation roll back together. A disposable PostgreSQL two-session race test
+proves a concurrent exact retry blocks and then returns the same single outcome
+without a second mutation or audit event. It does not create a replacement lock or grant
 technical, commercial, snapshot, release, or other downstream authority.
 
 **Remaining:** separately design and authorise replacement-lock creation over the

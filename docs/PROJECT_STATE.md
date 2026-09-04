@@ -69,6 +69,8 @@ one exact registered admission atomically: it reconciles canonical Openings,
 Services, and links, invalidates only the signed target lock, and records exact
 before/after snapshots, row mappings, receipt, and audit. No-op, corrupt replay,
 late dependency, unauthorised-role, and injected write-failure tests fail closed.
+A disposable PostgreSQL two-session test proves concurrent exact execution
+serialises to one mutation, one immutable outcome, and one execution audit event.
 It does not create a replacement lock or grant downstream authority.
 - Proposal-only blind inventory, Physical proposal, Validator review, bounded
   correction, evidence review, human adjudication, and durable visual-validation
