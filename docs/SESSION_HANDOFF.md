@@ -5,9 +5,9 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** origin/main at 0663f708f55db948f3152eab513907a2b80604a5
+**Reconciliation baseline:** origin/main at 664afc48b5591d1f42b89a23d873caba2d50dd6c
 
-**Verified shared-main implementation:** 0663f708f55db948f3152eab513907a2b80604a5 (PR #170)
+**Verified shared-main implementation:** 664afc48b5591d1f42b89a23d873caba2d50dd6c (PR #171)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -15,7 +15,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#170
+### Current shared main - PRs #104-#171
 PRs #163-#168 add sealed blank/mixed physical-submission regression proof,
 controlled unsigned pre-technical reopen, signed lock-amendment eligibility,
 transaction-ready no-write preflight, immutable admission journaling, and the
@@ -35,13 +35,22 @@ serialises to the same single outcome and audit event. It creates no replacement
 lock and grants no downstream authority. All evidence is synthetic/disposable;
 no real report, provider, or canonical project operation was run.
 
-The current continuation adds a separate short-lived P-256 replacement-lock
-manifest and transaction-ready no-write preflight. It locks and rechecks the
-Estimate and every current physical row, the exact immutable amendment outcome,
-prior signed-lock binding, approved visual receipt, amended model hash, scope-aware completeness, editable
-status, and absence of downstream dependencies. It creates no admission, lock,
-audit, or downstream authority. The next gated work is an immutable admission
-journal; actual replacement-lock creation remains a separately controlled writer.
+PR #171 added the separate short-lived P-256 replacement-lock manifest and
+transaction-ready no-write preflight, merging as
+`664afc48b5591d1f42b89a23d873caba2d50dd6c`. PR run `33872572819` and exact
+post-merge `main` run `33872867885` passed. The preflight locks and rechecks the
+Estimate and every current physical row, exact immutable amendment outcome,
+prior signed-lock binding, approved visual receipt, amended model hash,
+scope-aware completeness, editable status, and absence of downstream
+dependencies. It creates no admission, lock, audit, or downstream authority.
+
+The current continuation adds the immutable replacement-lock admission journal.
+Registration reruns the locked preflight, retains the exact canonical signed
+envelope and receipt with an accountable human registrar, and rejects conflicting
+or corrupted replay while allowing a fresh separately signed approval after an
+earlier approval expires unused. It creates no replacement lock or downstream
+authority. Actual replacement-lock creation remains a separately
+permission-gated writer.
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -274,9 +283,9 @@ Shared main includes:
 - PR #154's bounded source-bound XLSX worksheet/cell locators and transient selected-cell re-extraction; and
 - PR #156's bounded source-bound DOCX document/paragraph/simple-table locators and transient selected-item re-extraction.
 
-The packaged migration history now has one forward-only head: 0021_proposal_review_annotations. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0024_signed_physical_model_lock_replacement_admissions. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
-PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#156 check and corresponding main run also passed, ending with run 33766069162 on 82d288c. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
+PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#171 check and corresponding main run also passed, ending with run 33872867885 on 664afc4. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
 ### Completed source-bound XLSX report locators on shared main (PR #154)
 

@@ -67,7 +67,16 @@ def _executed_amendment(db):  # type: ignore[no-untyped-def]
     return estimate, opening, old_lock, admission, outcome
 
 
-def _replacement_manifest(db, estimate, old_lock, admission, outcome):  # type: ignore[no-untyped-def]
+def _replacement_manifest(
+    db,
+    estimate,
+    old_lock,
+    admission,
+    outcome,
+    *,
+    replacement_lock_admission_id=None,
+    replacement_lock_reason="Human approval for the exact amended physical model.",
+):  # type: ignore[no-untyped-def]
     private_key = ec.generate_private_key(ec.SECP256R1())
     public_key = _base64url(
         private_key.public_key().public_bytes(
@@ -78,7 +87,7 @@ def _replacement_manifest(db, estimate, old_lock, admission, outcome):  # type: 
     current = build_current_physical_model_lock_snapshot(db, estimate)
     manifest: dict[str, object] = {
         "schema": SIGNED_REPLACEMENT_LOCK_SCHEMA,
-        "replacement_lock_admission_id": str(uuid4()),
+        "replacement_lock_admission_id": replacement_lock_admission_id or str(uuid4()),
         "purpose": SIGNED_REPLACEMENT_LOCK_PURPOSE,
         "project_id": estimate.project_id,
         "estimate_id": estimate.id,
@@ -90,7 +99,7 @@ def _replacement_manifest(db, estimate, old_lock, admission, outcome):  # type: 
         "superseded_lock_id": old_lock.id,
         "superseded_lock_content_hash": old_lock.content_hash,
         "replacement_lock_content_hash": current.content_hash,
-        "replacement_lock_reason": "Human approval for the exact amended physical model.",
+        "replacement_lock_reason": replacement_lock_reason,
         "policy_versions": {
             "amendment_execution": EXECUTION_RECEIPT_SCHEMA,
             "replacement_lock": (

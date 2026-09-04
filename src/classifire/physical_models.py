@@ -335,3 +335,58 @@ class PhysicalModelLockAmendmentOutcome(Base):
     execution_receipt_sha256: Mapped[str] = mapped_column(
         String(64), unique=True, index=True, nullable=False
     )
+
+
+class PhysicalModelLockReplacementAdmission(Base):
+    """Immutable journal record for one verified replacement-lock approval.
+
+    This record preserves eligibility evidence only. It cannot create a
+    Physical Model Lock or grant any downstream authority.
+    """
+
+    __tablename__ = "physical_model_lock_replacement_admissions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_now_utc, nullable=False
+    )
+    replacement_lock_admission_id: Mapped[str] = mapped_column(
+        String(36), unique=True, index=True, nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
+    amendment_outcome_id: Mapped[str] = mapped_column(
+        ForeignKey("physical_model_lock_amendment_outcomes.id"),
+        index=True,
+        nullable=False,
+    )
+    amendment_admission_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    amendment_envelope_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    amendment_execution_receipt_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    visual_validation_receipt_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    superseded_lock_id: Mapped[str] = mapped_column(
+        ForeignKey("physical_model_locks.id"), index=True, nullable=False
+    )
+    superseded_lock_content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    replacement_lock_content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    replacement_lock_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    policy_versions: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False)
+    replacement_lock_envelope_json: Mapped[str] = mapped_column(Text, nullable=False)
+    replacement_lock_envelope_sha256: Mapped[str] = mapped_column(
+        String(64), unique=True, nullable=False
+    )
+    issuer_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    signing_key_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    signature_algorithm: Mapped[str] = mapped_column(String(80), nullable=False)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    preflight_receipt_json: Mapped[str] = mapped_column(Text, nullable=False)
+    preflight_receipt_sha256: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+
+    __table_args__ = (
+        Index(
+            "ix_physical_model_lock_replacement_admission_estimate_created",
+            "estimate_id",
+            "created_at",
+        ),
+    )

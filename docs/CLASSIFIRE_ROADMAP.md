@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** 82d288c (PR #156 merge, 2026-09-03)
+**Verified shared-main implementation:** 664afc4 (PR #171 merge, 2026-09-04)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -462,12 +462,17 @@ intact amendment outcome, prior signed-lock binding, approved visual receipt, ex
 amended content hash, scope-aware physical completeness, editable status, and absence of downstream dependencies; and
 returns an exact no-write receipt. Changed state, expired or altered signatures, corrupt
 evidence, any active lock, or later technical, commercial, rule, snapshot, or release
-state fails closed.
+state fails closed. An immutable human-attributed admission journal now reruns that
+locked preflight and records the exact canonical signed envelope and receipt. Exact
+replay is idempotent; changed, conflicting, or corrupted evidence fails closed. A
+fresh separately signed approval can follow an expired unused approval without
+rewriting history. Registration creates no lock and grants no downstream authority.
 
-**Remaining:** add an immutable replacement-lock admission journal, then separately
-implement and authorise the permission-gated transaction that consumes that exact
-admission and creates the replacement lock. Verification and preflight remain read-only;
-amendment execution still leaves the Estimate without an active Physical Model Lock.
+**Remaining:** separately implement and authorise the permission-gated transaction
+that consumes one freshly rechecked registered admission and creates the exact
+replacement lock. Verification, preflight, and admission registration do not create a
+lock; amendment execution still leaves the Estimate without an active Physical Model
+Lock.
 
 **Exit:** physical state and amendments are service-governed, attributable,
 audited, and cannot be changed by an unauthorised role.
