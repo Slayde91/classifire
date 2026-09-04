@@ -4,7 +4,7 @@
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main implementation:** 0663f708f55db948f3152eab513907a2b80604a5 (merge of PR #170, 2026-09-04)
+**Verified shared-main implementation:** 664afc48b5591d1f42b89a23d873caba2d50dd6c (merge of PR #171, 2026-09-04)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -18,12 +18,12 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared main | PR #170 is merged at 0663f708f55db948f3152eab513907a2b80604a5; it includes the reviewed PR #104-#170 lineage. | Report governance, technical-source safeguards, retained proposal-review packages, scoped reader access, exact-approved-manifest enforcement, source-bound captions, bounded XLSX worksheet/cell locators, and bounded DOCX document/paragraph/simple-table locators are shared-main evidence. These changes add no technical, commercial, canonical, lock, deployment, or release authority. |
+| Shared main | PR #171 is merged at 664afc48b5591d1f42b89a23d873caba2d50dd6c; it includes the reviewed PR #104-#171 lineage. | Report governance, technical-source safeguards, retained proposal-review packages, scoped reader access, exact-approved-manifest enforcement, source-bound captions, bounded XLSX worksheet/cell locators, bounded DOCX document/paragraph/simple-table locators, and signed replacement-lock preflight are shared-main evidence. These changes add no technical, commercial, canonical, lock, deployment, or release authority. |
 | Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
 | Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
 | Post-PR #104 maintenance series | PRs #105-#126 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, `5639e26`, `90f701c`, `ff1278f`, `7e26c2f`, and `b33246a`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, Mission Control task-response validation, hosted full-Ruff/Mypy/Bandit validation, and explicit Phase 8 invariant errors were strengthened without granting technical, commercial, lock, or release authority. |
 | Current technical-source safeguards | PRs #127-#142 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, `f9dea2a`, `f3c6d92`, `8c21f18`, `9771ff7`, `1e43756`, `caed547`, `075c9c5`, `981324e`, and `abe8bde`. | Verified-byte extraction, current-authority gates, immutable published source-lineage binding, factual reconciliation, structured release-lineage display, safe navigation to bound source-document records, and read-only revision-source visibility were added without granting technical selection, commercial, canonical, lock, or release authority. |
-| Subsequent hosted validation | Each PR #105-#170 check and each corresponding main push run passed; the latest is run 33866685294 on 0663f70. | Hosted validation is current through the PR #170 merge, while required-check configuration remains unverified. |
+| Subsequent hosted validation | Each PR #105-#171 check and each corresponding main push run passed; the latest is run 33872867885 on 664afc4. | Hosted validation is current through the PR #171 merge, while required-check configuration remains unverified. |
 | Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
@@ -75,7 +75,11 @@ It does not create a replacement lock or grant downstream authority. A separate
 signed replacement-lock eligibility contract now locks and rechecks the exact
 amendment outcome, prior signature binding, approved visual receipt, amended
 physical hash, scope-aware completeness, lifecycle state, and downstream dependency absence without
-creating a lock, admission, audit, or authority record.
+creating a lock, admission, audit, or authority record. A separate immutable
+admission journal now reruns that locked preflight and records the exact signed
+envelope and receipt with accountable human attribution, idempotent exact replay,
+and fail-closed corruption/conflict handling. It creates no replacement lock or
+downstream authority.
 - Proposal-only blind inventory, Physical proposal, Validator review, bounded
   correction, evidence review, human adjudication, and durable visual-validation
   receipt contracts.
@@ -113,7 +117,7 @@ creating a lock, admission, audit, or authority record.
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-The packaged migration history now has one forward-only head: 0023_signed_physical_model_lock_amendment_outcomes (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0024_signed_physical_model_lock_replacement_admissions (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
 ### Completed report-governance integration on shared main (PR #104)
 
@@ -320,8 +324,8 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #170; GitHub plan prevents branch-protection configuration. |
-| 1. Domain/workflow governance | **In progress** | Signed-amendment execution is audited and race-safe; a separate signed replacement-lock preflight now proves exact eligibility without writing, while its admission journal and lock writer remain unfinished. |
+| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #171; GitHub plan prevents branch-protection configuration. |
+| 1. Domain/workflow governance | **In progress** | Signed-amendment execution is audited and race-safe; signed replacement-lock preflight and immutable admission journaling preserve exact approval evidence without creating a lock, while the lock writer remains unfinished. |
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, hash-bound Draft source-document predecessor lineage, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and technical-release publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
@@ -397,7 +401,7 @@ This reconciliation verified:
 
 - fetched Git refs, branch/upstream relationships, recent commits, open PRs, and issues;
 - the clean isolated worktree and the read-only legacy-root classification;
-- the packaged forward-only Alembic head 0021_proposal_review_annotations;
+- the packaged forward-only Alembic head 0024_signed_physical_model_lock_replacement_admissions;
 - current models, API/UI routes, report services, storage/containment, technical guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
 - PR #147's successful technical-lineage validation, PR #149's successful controller validation, PR #151's successful caption-locator validation, PR #154's successful XLSX-locator validation, and PR #156's successful DOCX-locator validation on f82121d plus post-merge main validation on 82d288c;
 - the retained assessment status and no-write/no-lock flags; and
