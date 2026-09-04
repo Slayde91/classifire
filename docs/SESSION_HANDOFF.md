@@ -5,9 +5,9 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** origin/main at 40dc7898c35f4623a31e7ca3014b3ad2074861d6
+**Reconciliation baseline:** origin/main at 7e8f473e45e51c4cf3505846cd978749efbdac59
 
-**Verified shared-main implementation:** 40dc7898c35f4623a31e7ca3014b3ad2074861d6 (PR #173)
+**Verified shared-main implementation:** 7e8f473e45e51c4cf3505846cd978749efbdac59 (PR #174)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -15,7 +15,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#173
+### Current shared main - PRs #104-#174
 PRs #163-#168 add sealed blank/mixed physical-submission regression proof,
 controlled unsigned pre-technical reopen, signed lock-amendment eligibility,
 transaction-ready no-write preflight, immutable admission journaling, and the
@@ -64,21 +64,36 @@ fail closed or roll back together. It performs no technical selection, pricing,
 deployment, or Human Release and grants no downstream authority. No real project
 data or real lock operation was used.
 
-The current continuation governs technical-library release publication. An
-active human with `technical:approve` must publish every current eligible active
-logical variant exactly once or the operation fails without writing. Bound
-source bytes are rechecked; Draft variants are never activated; prior-release
-supersession, the new immutable manifest, and audit event are one transaction.
-Migration `0026_single_active_technical_release` prevents concurrent publication
-from leaving two active technical releases while leaving other library types
-unchanged. This creates technical library evidence only; it performs no project
+PR #174 added governed technical-library release publication and merged as
+`7e8f473e45e51c4cf3505846cd978749efbdac59`. PR run `33892514672` and exact
+post-merge `main` run `33892921342` passed. An active human with
+`technical:approve` must publish every current eligible active logical variant
+exactly once or the operation fails without writing. Bound source bytes are
+rechecked; Draft variants are never activated; prior-release supersession, the
+new immutable manifest, and audit event are one transaction. Migration
+`0026_single_active_technical_release` prevents concurrent publication from
+leaving two active technical releases while leaving other library types
+unchanged. This creates technical-library evidence only; it performs no project
 technical selection, pricing, deployment, or Human Release.
 
-Local synthetic validation for this candidate passed: the full pytest suite
-completed with six environment-dependent skips; full Ruff and Bandit, focused
-Mypy, focused publication/migration/route regressions, and the one-head Alembic
-check passed. The disposable PostgreSQL publication-race proof remains for
-hosted CI.
+### Accepted hybrid architecture target
+
+[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
+accepts a deterministic CLASSIFIRE core with bounded optional AI adapters. A
+persistent autonomous fleet is not a required product foundation. ChatGPT and
+standalone interfaces will use the same authenticated application services,
+and a planned versioned `ProjectPackage` will be an immutable interchange
+artifact rather than a replacement for live canonical database state.
+
+This decision changes the target architecture only. CLASSIFIRE-owned
+job/run/stage persistence, a provider-neutral replacement inference adapter,
+MCP, a production standalone client, complete project-package export/import,
+and OpenClaw retirement are not implemented. OpenClaw remains the current
+controlled execution adapter until every security, receipt, recovery,
+observability, clean-machine, and rollback parity gate passes. The next safe
+implementation task is synthetic characterisation of every used OpenClaw
+contract; do not use a real report, Gateway, provider, or customer evidence for
+that work.
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -245,10 +260,11 @@ release authority. Any real-provider run remains a separate gate.
    keeps each report review separate. Do not automatically join reports, use customer
    evidence, or create a runner/operator route without its own authority and safety design.
 2. **Continue technical intake separately.** Complete the remaining
-   extraction-assisted and manufacturer-neutral lineage plus governed
-   publication and supersession. The
-   deterministic semantic snapshot hash and manual Draft materialisation are
-   already shared-main evidence.
+   extraction-assisted and manufacturer-neutral lineage plus clean-machine
+   technical-library import and recovery evidence. Governed technical-release
+   publication and supersession are complete on shared main through PR #174.
+   The deterministic semantic snapshot hash and manual Draft materialisation
+   are also shared-main evidence.
 3. **Maintain full Ruff, Mypy, and Bandit CI.** Decide whether to upgrade GitHub
    protection or document an equivalent review control.
 4. **Seek new report-run authority only after synthetic transport diagnosis.** A
@@ -313,7 +329,7 @@ Shared main includes:
 
 The packaged migration history now has one forward-only head: 0026_single_active_technical_release. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
-PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#173 check and corresponding main run also passed, ending with run 33887607933 on 40dc789. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
+PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#174 check and corresponding main run also passed. PR #174 run 33892514672 passed on e587cf8, and post-merge main run 33892921342 passed on 7e8f473. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
 ### Completed source-bound XLSX report locators on shared main (PR #154)
 
@@ -422,6 +438,12 @@ OpenClaw, Gateway, or provider workflow without new explicit authority.
 
 ### Product limits
 
+- The hybrid target is accepted but not implemented. OpenClaw remains required
+  for the current bounded runtime path until its protections have proven
+  CLASSIFIRE-owned replacements.
+- There is no complete portable `ProjectPackage`, whole-project download/import
+  workflow, production ChatGPT MCP integration, or production standalone
+  client. Existing proposal-review packages and PDF/XLSX exports are narrower.
 - No semantically approved replacement canonical Physical Model or active lock
   exists for the current UAT estimate.
 - Technical review/import/release safeguards now include retained-source

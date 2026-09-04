@@ -2,12 +2,16 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 4.0
+**Architecture version:** 5.0
 
-**Verified shared-main implementation:** 40dc789 (PR #173 merge, 2026-09-04)
+**Verified shared-main implementation:** 7e8f473 (PR #174 merge, 2026-09-05)
+
+**Accepted target architecture:** Hybrid deterministic core with bounded,
+optional AI adapters; see
+[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md).
 
 This document separates the architecture that is implemented now from the
-target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
+adopted target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
 and [CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md). Source, tests, migrations,
 Git state, and retained runtime receipts determine factual implementation state.
 
@@ -43,9 +47,16 @@ assumptions, but it does not enter or bypass the canonical chain above.
 
 ## 2. Authority and sources of truth
 
-The governed CLASSIFIRE database is canonical project state. OpenClaw sessions,
-Mission Control tasks, prompts, model outputs, chat history, package files, desk
-quotes, and temporary receipts are evidence or proposals, not canonical truth.
+The governed CLASSIFIRE database and content-addressed retained-file storage are
+live canonical project state for an application instance. The planned versioned
+`ProjectPackage` schema is the canonical interoperability contract; each valid
+export is an immutable, hash-bound snapshot of one governed project version,
+while every import remains untrusted until quarantine, integrity, schema,
+lineage, conflict, permission, and authority checks pass. The existing
+`ProposalReviewPackage` is a narrower proposal-only review artifact, not that
+complete portable project contract. OpenClaw sessions, Mission Control tasks,
+prompts, model outputs, chat history, desk quotes, and temporary receipts remain
+evidence or proposals, not live canonical truth.
 
 Authority remains separate for:
 
@@ -83,7 +94,7 @@ Approval for one operation never grants a later authority.
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, atomic governed publication, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus production technical authority remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
-| Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
+| Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Transitional current implementation. The accepted target is a small CLASSIFIRE-owned deterministic job/run coordinator with bounded optional AI adapters; migration is not implemented and OpenClaw remains until parity gates pass. Neither control plane owns canonical estimate state. |
 
 Production startup validates configuration before storage work, never runs
 `create_all()` or seeds a default administrator in production, and requires the
@@ -428,7 +439,20 @@ and CI passed; operational approval remains necessary before use.
 Desk quotes also do not complete the canonical rate-inclusion/recovery ledger
 and do not mark Phase 11 or Phase 13 complete.
 
-## 10. OpenClaw, Mission Control, and human authority
+## 10. Hybrid orchestration, OpenClaw, Mission Control, and human authority
+
+[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
+accepts a hybrid target: deterministic CLASSIFIRE commands own durable workflow,
+state, validation, packages, and authority-bearing transitions, while bounded
+stateless AI calls are optional for evidence interpretation or independent
+challenge where their benefit is measured. A persistent autonomous agent fleet
+is not a required product foundation.
+
+This is an accepted target, not implemented migration. OpenClaw remains the
+current controlled execution adapter until CLASSIFIRE-owned replacements prove
+equivalent no-tool isolation, context separation, input and version binding,
+safe receipts, recovery, observability, and rollback. Removing or bypassing it
+before those parity gates pass is not authorised by the decision.
 
 OpenClaw provides controlled sessions, model routing, workspace/tool policy,
 and audit evidence. Proposal roles must have empty effective tool inventories
@@ -438,6 +462,13 @@ decisions, or release an estimate.
 Mission Control is an operational task and visibility plane. It may mirror links
 and summaries but must not become a second estimate database, technical library,
 pricing authority, or release workflow.
+
+The target ChatGPT integration and any standalone interface call the same
+authenticated CLASSIFIRE application commands and queries. The governed
+database and content-addressed storage remain live canonical state. A planned
+`ProjectPackage` is a versioned interchange contract and immutable export; it
+does not replace live canonical state or activate imported approvals, locks, or
+release authority.
 
 Competent humans own source approval, material evidence exceptions, technical
 and commercial approvals where required, canonical/lock authorities, deployment,
@@ -458,6 +489,16 @@ These terms are not interchangeable. No automatic translation may upgrade a
 desk assumption or model estimate into a confirmed canonical fact.
 
 ## 12. Current architectural gaps and follow-up
+
+### Accepted hybrid target (migration not implemented)
+
+The hybrid architecture decision is accepted at the verified PR #174 baseline.
+The first migration task is to characterise the used OpenClaw contracts with
+synthetic golden and negative tests before adding CLASSIFIRE-owned job/run/stage
+state or a provider-neutral inference adapter. Portable `ProjectPackage`, MCP,
+standalone-client, and OpenClaw-retirement capabilities remain planned. No part
+of this documentation decision grants canonical, technical, commercial, lock,
+deployment, provider-run, or Human Release authority.
 
 ### Completed report-governance integration
 
@@ -596,6 +637,12 @@ deployment, or release authority.
 
 ### Near term
 
+Characterise every used OpenClaw contract with synthetic golden and negative
+tests covering no-tool enforcement, context separation, exact input and version
+binding, safe receipts, timeouts, failure outcomes, recovery, and protected
+state. This is the first hybrid-migration gate; it neither removes OpenClaw nor
+authorises a real report, Gateway, or provider run.
+
 Complete the remaining extraction-assisted and manufacturer-neutral technical-source
 lineage plus clean-machine technical-library import and recovery evidence.
 Maintain full-repository Ruff, Mypy, and Bandit checks
@@ -615,6 +662,7 @@ authority gates. Detailed execution order and acceptance criteria are in
 - Whole-file database hashes and count equality as semantic acceptance.
 - Placeholder Services for blank openings.
 - Generic writer authority or lock creation during initial submission.
+- A persistent autonomous agent fleet as a mandatory domain or runtime path.
 - Treating model output, desk quotes, chat, or Mission Control as canonical truth.
 - Treating the conflicted legacy root or draft PR stack as a bulk merge path.
 - Treating a successful transport, test suite, or CI run as technical approval,
