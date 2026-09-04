@@ -5,9 +5,9 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** origin/main at 793a99371c40abd408c220011e2bbf3ae8b06d1e
+**Reconciliation baseline:** origin/main at 0663f708f55db948f3152eab513907a2b80604a5
 
-**Verified shared-main implementation:** 793a99371c40abd408c220011e2bbf3ae8b06d1e (PR #169)
+**Verified shared-main implementation:** 0663f708f55db948f3152eab513907a2b80604a5 (PR #170)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -15,7 +15,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#169
+### Current shared main - PRs #104-#170
 PRs #163-#168 add sealed blank/mixed physical-submission regression proof,
 controlled unsigned pre-technical reopen, signed lock-amendment eligibility,
 transaction-ready no-write preflight, immutable admission journaling, and the
@@ -27,11 +27,21 @@ as `793a99371c40abd408c220011e2bbf3ae8b06d1e`. Pull-request run `33864748488`
 and exact post-merge `main` run `33865021658` passed. The service consumes one
 exact registered signed admission, reconciles only its approved
 Opening/Service/link payload, invalidates only the signed target lock, and
-retains immutable before/after snapshots, row mappings, receipt, and audit. A
-disposable PostgreSQL two-session test now proves concurrent exact execution
+retains immutable before/after snapshots, row mappings, receipt, and audit.
+PR #170 then added the disposable PostgreSQL two-session race proof and merged
+as `0663f708f55db948f3152eab513907a2b80604a5`; PR run `33866384568` and exact
+post-merge `main` run `33866685294` passed 786 tests. Concurrent exact execution
 serialises to the same single outcome and audit event. It creates no replacement
 lock and grants no downstream authority. All evidence is synthetic/disposable;
 no real report, provider, or canonical project operation was run.
+
+The current continuation adds a separate short-lived P-256 replacement-lock
+manifest and transaction-ready no-write preflight. It locks and rechecks the
+Estimate and every current physical row, the exact immutable amendment outcome,
+prior signed-lock binding, approved visual receipt, amended model hash, scope-aware completeness, editable
+status, and absence of downstream dependencies. It creates no admission, lock,
+audit, or downstream authority. The next gated work is an immutable admission
+journal; actual replacement-lock creation remains a separately controlled writer.
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical

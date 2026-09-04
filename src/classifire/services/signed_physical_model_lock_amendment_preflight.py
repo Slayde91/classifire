@@ -118,7 +118,7 @@ def preflight_signed_physical_model_lock_amendment(
     if (estimate.status or "").strip().lower() not in _EDITABLE_ESTIMATE_STATUSES:
         raise SignedPhysicalModelLockAmendmentPreflightError("AMENDMENT_ESTIMATE_STATUS_INVALID")
 
-    openings = _lock_current_physical_rows(db, estimate)
+    openings = lock_current_physical_model_rows(db, estimate)
 
     active_locks = list(
         db.scalars(
@@ -225,7 +225,7 @@ def _require_prospective_defects(
         )
 
 
-def _lock_current_physical_rows(db: Session, estimate: Estimate) -> list[Opening]:
+def lock_current_physical_model_rows(db: Session, estimate: Estimate) -> list[Opening]:
     """Lock every current row that contributes to the target lock hash."""
 
     openings = list(
@@ -274,6 +274,8 @@ def _lock_current_physical_rows(db: Session, estimate: Estimate) -> list[Opening
         ).all()
     )
     return openings
+
+
 def _normalise_now(now: datetime | None) -> datetime:
     current = now or datetime.now(UTC)
     if current.tzinfo is None or current.utcoffset() is None:
@@ -285,5 +287,6 @@ __all__ = [
     "SIGNED_LOCK_AMENDMENT_PREFLIGHT_SCHEMA",
     "SignedPhysicalModelLockAmendmentPreflightError",
     "SignedPhysicalModelLockAmendmentPreflightReceipt",
+    "lock_current_physical_model_rows",
     "preflight_signed_physical_model_lock_amendment",
 ]
