@@ -431,17 +431,29 @@ retain their explicit links through the canonical writer and completeness check.
 The generic pre-technical path now has an attributed, audited reopen service and
 `estimate:write` API route: it invalidates only an active unsigned lock, preserves
 all retained physical rows, and refuses technical, commercial, rule, snapshot, or
-release dependencies. A separate no-write P-256 signed-amendment verifier now
-requires an active current signed lock, a prospective canonical payload, and an
-exact semantically approved visual-validation receipt. Physical lock hashes also
-normalise decimal display scale so unchanged values remain stable after refresh.
-Its transaction-ready no-write preflight locks and rechecks the target Estimate
-and lock, downstream lifecycle dependencies, and prospective Defect ownership.
+release dependencies.
+A separate no-write P-256 signed-amendment verifier now requires an active current
+signed lock, a prospective canonical payload, and an exact semantically approved
+visual-validation receipt. Physical lock hashes also normalise decimal display
+scale so unchanged values remain stable after refresh. Its transaction-ready
+no-write preflight locks and rechecks the target Estimate and lock, downstream
+lifecycle dependencies, and prospective Defect ownership. An additive immutable
+signed-amendment admission journal can now retain one fresh verified manifest,
+canonical prospective payload, preflight receipt, and human-governance audit
+event. Registration is idempotent only for the same eligible signed manifest,
+rechecks every retained binding on replay, and refuses a conflicting reuse of its
+amendment-admission ID or a corrupt retained record. A no-write consumption
+bridge now reloads an exact journal record and reruns the locked fresh preflight
+for a future writer. It does not invalidate the signed lock, alter canonical
+physical rows, create a replacement lock, or create technical, commercial,
+snapshot, release, or execution authority.
 
-**Remaining:** persist and execute a separately authorised signed lock-admission
-transaction that consumes this preflight and retains additive admission/audit
-outcomes. Neither verifier nor preflight invalidates a signed lock or creates a
-replacement lock.
+**Remaining:** design and execute a separately authorised signed lock-amendment
+writer that consumes the registered-admission preflight and creates a separate
+additive execution outcome that preserves exact pre/post physical payload hashes
+and row identity mappings. Neither eligibility, preflight, admission
+registration, nor the registered-admission preflight invalidates a signed lock
+or creates a replacement lock.
 
 **Exit:** physical state and amendments are service-governed, attributable,
 audited, and cannot be changed by an unauthorised role.

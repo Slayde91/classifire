@@ -7,7 +7,7 @@ from classifire.services.deployment_lineage import assess_deployment_lineage
 
 
 def _assessment(  # type: ignore[no-untyped-def]
-    revision: str, *, receipt_table: bool, legacy_submission_table: bool = False
+    revision: str, *, required_tables: bool, legacy_submission_table: bool = False
 ):
     engine = create_engine("sqlite+pysqlite:///:memory:")
     with engine.begin() as connection:
@@ -17,9 +17,12 @@ def _assessment(  # type: ignore[no-untyped-def]
             {"revision": revision},
         )
         connection.execute(text("CREATE TABLE physical_model_admissions (id VARCHAR(36))"))
-        if receipt_table:
+        if required_tables:
             connection.execute(
                 text("CREATE TABLE physical_model_submission_receipts (id VARCHAR(36))")
+            )
+            connection.execute(
+                text("CREATE TABLE physical_model_lock_amendment_admissions (id VARCHAR(36))")
             )
             connection.execute(text("CREATE TABLE visual_validation_receipts (id VARCHAR(36))"))
             connection.execute(text("CREATE TABLE project_evidence (id VARCHAR(36))"))
@@ -27,9 +30,7 @@ def _assessment(  # type: ignore[no-untyped-def]
             connection.execute(
                 text("CREATE TABLE report_evidence_family_manifests (id VARCHAR(36))")
             )
-            connection.execute(
-                text("CREATE TABLE report_evidence_family_members (id VARCHAR(36))")
-            )
+            connection.execute(text("CREATE TABLE report_evidence_family_members (id VARCHAR(36))"))
             connection.execute(text("CREATE TABLE report_defect_scopes (id VARCHAR(36))"))
             connection.execute(
                 text("CREATE TABLE report_expected_label_manifests (id VARCHAR(36))")
@@ -47,21 +48,25 @@ def _assessment(  # type: ignore[no-untyped-def]
         return assess_deployment_lineage(db)
 
 
-def test_clean_stack_head_is_ready_only_with_both_journal_tables() -> None:
-    result = _assessment("0021_proposal_review_annotations", receipt_table=True)
+def test_clean_stack_head_is_ready_only_with_all_required_journal_tables() -> None:
+    result = _assessment(
+        "0022_signed_physical_model_lock_amendment_admissions", required_tables=True
+    )
     assert result.status == "READY"
     assert result.code == "CLEAN_STACK_HEAD_CONFIRMED"
     assert result.database_write_performed is False
 
-def test_immediately_previous_head_requires_the_annotation_migration() -> None:
-    result = _assessment("0020_proposal_review_family_packages", receipt_table=True)
+
+def test_immediately_previous_head_requires_the_amendment_admission_migration() -> None:
+    result = _assessment("0021_proposal_review_annotations", required_tables=True)
     assert result.status == "BLOCKED"
     assert result.code == "DATABASE_MIGRATION_REQUIRED"
+
 
 def test_previous_head_with_stray_legacy_table_requires_retirement() -> None:
     result = _assessment(
         "0007_reconcile_adjudicated_admission_lineages",
-        receipt_table=True,
+        required_tables=True,
         legacy_submission_table=True,
     )
     assert result.status == "BLOCKED"
@@ -71,8 +76,8 @@ def test_previous_head_with_stray_legacy_table_requires_retirement() -> None:
 
 def test_current_head_with_stray_legacy_table_fails_as_schema_drift() -> None:
     result = _assessment(
-        "0021_proposal_review_annotations",
-        receipt_table=True,
+        "0022_signed_physical_model_lock_amendment_admissions",
+        required_tables=True,
         legacy_submission_table=True,
     )
     assert result.status == "BLOCKED"
@@ -80,10 +85,11 @@ def test_current_head_with_stray_legacy_table_fails_as_schema_drift() -> None:
 
 
 def test_legacy_adjudicated_head_fails_closed_for_rehearsal() -> None:
-    result = _assessment("0006_adjudicated_canonical_admissions", receipt_table=False)
+    result = _assessment("0006_adjudicated_canonical_admissions", required_tables=False)
     assert result.status == "BLOCKED"
     assert result.code == "LEGACY_LINEAGE_REHEARSAL_REQUIRED"
     assert result.missing_tables == (
+        "physical_model_lock_amendment_admissions",
         "physical_model_submission_receipts",
         "project_evidence",
         "proposal_review_annotations",
@@ -99,6 +105,6 @@ def test_legacy_adjudicated_head_fails_closed_for_rehearsal() -> None:
 
 
 def test_unknown_revision_fails_closed() -> None:
-    result = _assessment("unexpected_revision", receipt_table=True)
+    result = _assessment("unexpected_revision", required_tables=True)
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_LINEAGE_UNRECOGNISED"
