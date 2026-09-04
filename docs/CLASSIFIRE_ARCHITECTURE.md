@@ -124,17 +124,20 @@ lock invalidation and audit fields.
 
 ### Signed-lock amendment eligibility
 
-**Current architecture:** no signed Physical Model Lock admission or writer
-exists. **Change:** a separate no-write P-256 amendment verifier now binds an
-active signed lock, its current physical hash, a prospective canonical payload,
-and an exact semantically approved visual-validation receipt. **Reason:** a
-future signer must approve one exact correction without letting a generic API or
-receipt itself become lock authority. **Consequences:** the verifier refuses
+**Current architecture:** no signed lock-amendment admission or writer exists.
+**Change:** a no-write P-256 amendment verifier and transaction-ready preflight
+bind an active signed lock, its current physical hash, a prospective canonical
+payload, and an exact semantically approved visual-validation receipt. **Reason:**
+a future signer must approve one exact correction without letting a generic API
+or receipt itself become lock authority. **Consequences:** the verifier refuses
 unsigned, stale, altered, expired, mismatched, or visually withheld candidates;
-it does not invalidate a lock or create an audit event. Lock decimals are
-semantically normalised before hashing so an unchanged model is not made stale by
-database display scale. **Migration impact:** none for verification; a future
-writer needs a separate additive retained-admission record and explicit authority.
+the preflight locks the Estimate and target lock, then rechecks
+lifecycle/downstream dependencies and prospective Defect ownership. It does not
+invalidate a lock or create an audit event. Lock decimals are semantically
+normalised before hashing so an unchanged model is not made stale by database
+display scale. **Migration impact:** none for verification/preflight; a future
+writer needs separate additive retained-admission/outcome records and explicit
+authority.
 
 Barrier/substrate, plane, orientation, opening type and dimensions, FRL or
 governed assumption, service identity/material/quantity, link provenance, and
