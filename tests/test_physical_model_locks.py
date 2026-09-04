@@ -19,6 +19,7 @@ from classifire.models import Estimate, Opening
 from classifire.physical_models import Defect, EvidenceSource, PhysicalModelLock
 from classifire.services.physical_model import (
     PhysicalModelLockError,
+    build_current_physical_model_lock_payload,
     create_physical_model_lock,
 )
 from classifire.services.physical_mutation_guard import (
@@ -73,6 +74,20 @@ def test_physical_model_lock_is_idempotent_but_changed_active_content_fails_clos
 
         assert first.invalidated_at is None
 
+
+def test_lock_hash_is_stable_when_database_numeric_scale_is_refreshed() -> None:
+    with complete_service_penetration() as (session, estimate, _opening):
+        lock, created = create_physical_model_lock(session, estimate)
+        assert created is True
+        original_hash = lock.content_hash
+        session.flush()
+        session.expire_all()
+        refreshed_estimate = session.get(Estimate, estimate.id)
+        assert refreshed_estimate is not None
+
+        current = build_current_physical_model_lock_payload(session, refreshed_estimate)
+
+        assert current["content_hash"] == original_hash
 
 def test_stale_active_lock_blocks_technical_search_until_a_future_governed_reopen() -> None:
     with complete_service_penetration() as (session, estimate, opening):

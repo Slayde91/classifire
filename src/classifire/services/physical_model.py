@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -29,6 +30,11 @@ def _canonical(payload: dict[str, Any]) -> str:
 
 
 def _text(value: object) -> str | None:
+    if isinstance(value, Decimal):
+        # Database adapters may expose the same NUMERIC value as ``100`` before
+        # a refresh and ``100.0000`` afterwards. The lock must bind physical
+        # value, not an adapter-specific display scale.
+        return format(value.normalize(), "f")
     return str(value) if value is not None else None
 
 
