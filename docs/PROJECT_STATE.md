@@ -61,10 +61,15 @@ The following boundaries are implemented and tested for their stated scope:
   rows and refuses signed locks. A no-write P-256 signed-amendment verifier now
 proves exact binding between a current signed lock, prospective payload, and
 semantically approved visual receipt, without invalidating anything; physical
-lock decimal values are normalised before hashing. A transaction-ready no-write
-preflight now locks and rechecks the target Estimate/lock, lifecycle dependencies,
-and prospective Defect ownership, but still creates no admission, audit event,
-canonical row, invalidation, or replacement lock.
+lock decimal values are normalised before hashing. A transaction-ready no-write preflight locks and rechecks the target
+Estimate/lock, lifecycle dependencies, and prospective Defect ownership. An
+immutable admission journal retains the exact verified manifest, payload, and
+preflight evidence. A separate active-human `estimate:write` service now consumes
+one exact registered admission atomically: it reconciles canonical Openings,
+Services, and links, invalidates only the signed target lock, and records exact
+before/after snapshots, row mappings, receipt, and audit. No-op, corrupt replay,
+late dependency, unauthorised-role, and injected write-failure tests fail closed.
+It does not create a replacement lock or grant downstream authority.
 - Proposal-only blind inventory, Physical proposal, Validator review, bounded
   correction, evidence review, human adjudication, and durable visual-validation
   receipt contracts.
@@ -102,7 +107,7 @@ canonical row, invalidation, or replacement lock.
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-The packaged migration history now has one forward-only head: 0021_proposal_review_annotations (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0023_signed_physical_model_lock_amendment_outcomes (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
 ### Completed report-governance integration on shared main (PR #104)
 
@@ -310,7 +315,7 @@ run has been consumed and must not be repeated without new authority.
 | Phase | Status | Current gate |
 | --- | --- | --- |
 | 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #156; GitHub plan prevents branch-protection configuration. |
-| 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; unsigned locks have an audited reopen boundary and signed amendments have a receipt-bound verifier plus a transaction-ready no-write preflight, while signed admission execution remains. |
+| 1. Domain/workflow governance | **In progress** | Unsigned reopen and exact registered signed-amendment execution are permission-gated and audited; execution retains before/after snapshots and row mappings, invalidates only its target lock, and leaves replacement-lock authority separate and unfinished. |
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, hash-bound Draft source-document predecessor lineage, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and technical-release publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |

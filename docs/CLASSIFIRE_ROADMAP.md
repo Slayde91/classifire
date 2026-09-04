@@ -442,22 +442,24 @@ signed-amendment admission journal can now retain one fresh verified manifest,
 canonical prospective payload, preflight receipt, and human-governance audit
 event. Registration is idempotent only for the same eligible signed manifest,
 rechecks every retained binding on replay, and refuses a conflicting reuse of its
-amendment-admission ID or a corrupt retained record. A no-write consumption
-bridge now reloads an exact journal record and reruns the locked fresh preflight
-for a future writer. The lock service also exposes the exact canonical JSON
+amendment-admission ID or a corrupt retained record. A no-write consumption bridge now reloads an exact journal record and reruns the
+locked fresh preflight. The lock service exposes the exact canonical JSON
 preimage behind the existing lock hash, including Defect, evidence, Opening,
 Service, and link row identities; the ordinary lock summary is derived from that
-same path. Both operations are read-only and do not invalidate the signed lock,
-alter canonical physical rows, create a replacement lock, or create technical,
-commercial, snapshot, release, or execution authority.
+same path. A permission-gated writer now consumes the exact registered admission
+in one transaction, reconciles only its approved Opening, Service, and link
+payload, invalidates only the authorised signed lock, and records immutable
+before/after snapshots, hashes, row mappings, execution receipt, and audit.
+No-op changes, unauthorised roles, corrupt replays, and later downstream
+dependencies fail closed; injected write failure proves the mutation and
+invalidation roll back together. It does not create a replacement lock or grant
+technical, commercial, snapshot, release, or other downstream authority.
 
-**Remaining:** design and execute a separately authorised signed lock-amendment
-writer that consumes the registered-admission preflight and retains the exact
-pre/post lock-content snapshots in a separate additive execution outcome. The
-writer must preserve row identity mappings explicitly. Neither eligibility,
-preflight, admission
-registration, nor the registered-admission preflight invalidates a signed lock
-or creates a replacement lock.
+**Remaining:** separately design and authorise replacement-lock creation over the
+amended physical state. Eligibility, preflight, admission registration, and the
+registered-admission preflight remain read-only; amendment execution deliberately
+leaves the Estimate without an active Physical Model Lock until that separate
+human-governed lock step succeeds.
 
 **Exit:** physical state and amendments are service-governed, attributable,
 audited, and cannot be changed by an unauthorised role.

@@ -143,6 +143,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
         "service_opening_links",
         "physical_model_locks",
         "physical_model_lock_amendment_admissions",
+        "physical_model_lock_amendment_outcomes",
         "agent_service_principals",
         "physical_model_admissions",
         "physical_model_submission_receipts",
@@ -192,6 +193,36 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
         "uq_physical_model_lock_amendment_admission_envelope_sha256",
         "uq_physical_model_lock_amendment_admission_preflight_sha256",
     }.issubset(amendment_admission_constraints)
+    amendment_outcome_columns = {
+        column["name"] for column in inspector.get_columns("physical_model_lock_amendment_outcomes")
+    }
+    assert {
+        "admission_record_id",
+        "target_lock_id",
+        "pre_physical_model_payload_json",
+        "post_physical_model_payload_json",
+        "row_identity_map_json",
+        "execution_receipt_sha256",
+    }.issubset(amendment_outcome_columns)
+    amendment_outcome_foreign_keys = inspector.get_foreign_keys(
+        "physical_model_lock_amendment_outcomes"
+    )
+    assert any(
+        foreign_key["constrained_columns"] == ["admission_record_id"]
+        and foreign_key["referred_table"] == "physical_model_lock_amendment_admissions"
+        for foreign_key in amendment_outcome_foreign_keys
+    )
+    amendment_outcome_constraints = {
+        constraint["name"]
+        for constraint in inspector.get_unique_constraints("physical_model_lock_amendment_outcomes")
+    }
+    assert {
+        "uq_pm_lock_amendment_outcome_admission_record",
+        "uq_pm_lock_amendment_outcome_admission_id",
+        "uq_pm_lock_amendment_outcome_target_lock",
+        "uq_pm_lock_amendment_outcome_envelope",
+        "uq_pm_lock_amendment_outcome_receipt",
+    }.issubset(amendment_outcome_constraints)
     physical_lock_columns = {
         column["name"]: column for column in inspector.get_columns("physical_model_locks")
     }
@@ -204,7 +235,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
     assert active_lock_index["unique"]
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0022_signed_physical_model_lock_amendment_admissions"
+            "0023_signed_physical_model_lock_amendment_outcomes"
         )
         active_lock_index_sql = connection.execute(
             text(
