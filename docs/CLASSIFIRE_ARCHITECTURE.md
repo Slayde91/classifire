@@ -120,8 +120,21 @@ physical hash, and row counts in the existing audit record, then preserves every
 Defect, EvidenceSource, Opening, Service, and link for amendment. It fails closed
 when technical selection, estimate lines, rule evaluations, snapshots, approval,
 or any signed lock is present. **Migration impact:** none; it uses the existing
-lock invalidation and audit fields. Signed lock-admission reopening is not implied
-and remains a separate future contract.
+lock invalidation and audit fields.
+
+### Signed-lock amendment eligibility
+
+**Current architecture:** no signed Physical Model Lock admission or writer
+exists. **Change:** a separate no-write P-256 amendment verifier now binds an
+active signed lock, its current physical hash, a prospective canonical payload,
+and an exact semantically approved visual-validation receipt. **Reason:** a
+future signer must approve one exact correction without letting a generic API or
+receipt itself become lock authority. **Consequences:** the verifier refuses
+unsigned, stale, altered, expired, mismatched, or visually withheld candidates;
+it does not invalidate a lock or create an audit event. Lock decimals are
+semantically normalised before hashing so an unchanged model is not made stale by
+database display scale. **Migration impact:** none for verification; a future
+writer needs a separate additive retained-admission record and explicit authority.
 
 Barrier/substrate, plane, orientation, opening type and dimensions, FRL or
 governed assumption, service identity/material/quantity, link provenance, and

@@ -431,10 +431,14 @@ retain their explicit links through the canonical writer and completeness check.
 The generic pre-technical path now has an attributed, audited reopen service and
 `estimate:write` API route: it invalidates only an active unsigned lock, preserves
 all retained physical rows, and refuses technical, commercial, rule, snapshot, or
-release dependencies.
+release dependencies. A separate no-write P-256 signed-amendment verifier now
+requires an active current signed lock, a prospective canonical payload, and an
+exact semantically approved visual-validation receipt. Physical lock hashes also
+normalise decimal display scale so unchanged values remain stable after refresh.
 
-**Remaining:** extend amendment/reopen rules to the future signed lock-admission
-path and complete visual-receipt eligibility in that future lock path.
+**Remaining:** persist and execute a separately authorised signed lock-admission
+transaction with fresh preflight and write-time dependency rechecks. The verifier
+does not invalidate a signed lock or create a replacement lock.
 
 **Exit:** physical state and amendments are service-governed, attributable,
 audited, and cannot be changed by an unauthorised role.

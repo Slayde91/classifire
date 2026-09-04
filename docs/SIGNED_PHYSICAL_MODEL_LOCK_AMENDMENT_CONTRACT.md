@@ -1,0 +1,70 @@
+# Signed Physical Model Lock Amendment Contract
+
+## Status and boundary
+
+`CLASSIFIRE-SIGNED-PHYSICAL-MODEL-LOCK-AMENDMENT-v1` is a strict, no-write
+external-signature contract for a **future** amendment of an active signed
+Physical Model Lock.
+
+It verifies eligibility only. It does not invalidate a lock, edit retained
+physical records, persist an admission, create a replacement lock, submit
+canonical state, choose a technical system, calculate a quantity or price, make
+a snapshot, or release anything.
+
+The generic unsigned reopen route does not call this contract. It remains limited
+to its separate pre-technical boundary.
+
+## Required signed bindings
+
+The canonical JSON envelope has an amendment-admission UUID and binds exactly:
+
+- one Project, Estimate, and active signed target lock;
+- the target lock content hash and a SHA-256 of its retained signature text;
+- the current retained physical-model content hash;
+- one prospective `InitialCanonicalPhysicalSubmission` payload hash;
+- one visual-validation receipt hash and every reviewed controller, evidence,
+  family, and human-review hash required by that receipt;
+- a nonblank amendment reason, policy versions, signer issuer/key identity,
+  issue/expiry timestamps, and an ECDSA P-256 SHA-256 low-S signature.
+
+Evidence, review content, source reports, images, prompts, provider responses,
+and private signing keys are not included in the envelope.
+
+Visual-review and canonical-submission digests are uppercase SHA-256 values.
+The existing Physical Model Lock content hash remains lowercase because that is
+the retained lock identity. Its decimal fields are semantically normalised before
+hashing, so equivalent database renderings such as `100` and `100.0000` cannot
+make an unchanged physical model appear stale.
+
+## Eligibility recheck
+
+`require_signed_physical_model_lock_amendment` is a database-reading gate. It
+fails closed unless all of these remain true at the time it is called:
+
+1. the Estimate and target lock have the exact signed Project/Estimate binding;
+2. the lock is still active, has nonblank retained signature text, and its
+   current physical hash still matches the stored lock hash;
+3. the external amendment signature is valid, current, and exactly bound to the
+   independently rebuilt facts and prospective payload;
+4. the stored visual-validation receipt is intact, semantically approved, has
+   no unresolved material items, and matches every signed receipt binding.
+
+The verifier performs no write or audit event. It therefore cannot be mistaken
+for approval or execution authority.
+
+## Future execution requirements
+
+A future separate signed lock-admission writer must, in one governed transaction:
+
+1. obtain a fresh no-write preflight and the explicit execution authority;
+2. re-run this verifier while holding the relevant canonical rows;
+3. recheck technical, commercial, rule, snapshot, release, protected-state, and
+   amendment lifecycle dependencies at write time;
+4. retain the verified envelope and an attributed audit receipt through an
+   additive migration;
+5. invalidate only the exact signed lock authorised by the envelope; and
+6. leave replacement submission and replacement-lock creation as separate,
+   explicitly authorised operations.
+
+Until that writer exists and is separately authorised, this contract provides no
+canonical mutation path.
