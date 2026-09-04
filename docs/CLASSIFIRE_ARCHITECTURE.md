@@ -142,7 +142,10 @@ or records their logical row identities, invalidates only the signed target lock
 and retains exact canonical before/after payloads, hashes, an identity map, an
 execution receipt, and an attributed audit event. Exact completed replays return
 the intact retained outcome; corrupt outcomes fail closed. Any write or audit
-failure rolls back the topology, invalidation, outcome, and audit together.
+failure rolls back the topology, invalidation, outcome, and audit together. A
+disposable PostgreSQL two-session race test holds the first execution
+uncommitted, proves the second session blocks, and then requires both callers to
+resolve to the same single outcome and audit event.
 Execution rejects a no-op and rechecks later technical, commercial, rule,
 snapshot, or release dependencies. It creates no replacement lock and grants no
 technical, commercial, snapshot, release, or other downstream authority. Lock
