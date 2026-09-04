@@ -52,7 +52,9 @@ The following boundaries are implemented and tested for their stated scope:
 - The current `Defect -> EvidenceSource -> Opening -> Service/link` physical
   model, explicit blank-opening semantics, protected-state fingerprints,
   admission registration, one-shot initial submission, and separate lock
-  creation.
+  creation. Synthetic sealed-submission tests prove that all-blank models stay
+  service-free and mixed blank/multi-service models preserve their explicit
+  service links through the writer and completeness check.
 - Proposal-only blind inventory, Physical proposal, Validator review, bounded
   correction, evidence review, human adjudication, and durable visual-validation
   receipt contracts.
@@ -303,7 +305,7 @@ run has been consumed and must not be repeated without new authority.
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
 | 5. Evidence intake/resolution | **In progress** | The packaged implementation has bounded PDF/XLSX/DOCX report services, strict source-bound caption locators, atomic expected-label scope admission, a human-approved exact report-family manifest, deterministic aggregation of separately validated family review packages, and a family runner that preflights every member before any no-tool port is created. It retains separate member scopes, inputs, and packages; runner/controller verification, the retained single-report/family proposal-review package lifecycle, explicit scoped reader grants/revocation, and administrator-only immutable human-review annotations remain. Additional formats and a separately authorised operator flow remain. |
-| 6. Physical Model | **In progress** | Proposal structures exist; accepted canonical physical truth does not. |
+| 6. Physical Model | **In progress** | Synthetic sealed-submission tests cover all-blank and mixed blank/multi-service models; accepted canonical physical truth still does not exist for the current UAT estimate. |
 | 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
 | 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
 | 8C. Accuracy programme | **Planned** | No training or continual learning before its admission gates. |
