@@ -145,6 +145,13 @@ by database display scale. **Migration impact:** forward-only migration
 `0022_signed_physical_model_lock_amendment_admissions` adds a separate journal;
 it does not alter the initial-submission admission table or existing locks.
 
+The read-only lock-content snapshot API exposes the exact canonical JSON preimage
+of the existing v1 lock hash. That payload includes the row identities and bound
+fields for Defects, evidence, Openings, Services, and ServiceOpeningLinks. The
+ordinary lock summary and persisted content hash are built through the same
+snapshot path, preventing the inspection payload from silently diverging from
+the lock identity. It performs no write and grants no amendment authority.
+
 Barrier/substrate, plane, orientation, opening type and dimensions, FRL or
 governed assumption, service identity/material/quantity, link provenance, and
 limitations remain independently represented. Unknown or occluded facts must

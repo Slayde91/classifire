@@ -75,6 +75,13 @@ expected envelope hash, re-canonicalises and re-hashes the stored envelope and
 payload, checks every retained journal binding, and then reruns the locked fresh
 preflight. It returns no authority and performs no mutation or audit write.
 
+`build_current_physical_model_lock_snapshot` exposes the exact canonical JSON
+preimage used by the existing Physical Model Lock v1 hash. It includes the bound
+Defect, evidence, Opening, Service, and ServiceOpeningLink row identities and
+fields. The normal lock summary is derived through the same internal builder, so
+the snapshot and persisted lock identity cannot silently diverge. The returned
+parsed form is detached, and the operation writes nothing or grants no authority.
+
 ## Future execution requirements
 
 A future separate signed lock-admission writer must, in one governed transaction:
