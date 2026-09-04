@@ -5,9 +5,9 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** origin/main at 2e71353456967660b32f509974ad096d48c8e6bc
+**Reconciliation baseline:** origin/main at 40dc7898c35f4623a31e7ca3014b3ad2074861d6
 
-**Verified shared-main implementation:** 2e71353456967660b32f509974ad096d48c8e6bc (PR #172)
+**Verified shared-main implementation:** 40dc7898c35f4623a31e7ca3014b3ad2074861d6 (PR #173)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -15,7 +15,7 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#172
+### Current shared main - PRs #104-#173
 PRs #163-#168 add sealed blank/mixed physical-submission regression proof,
 controlled unsigned pre-technical reopen, signed lock-amendment eligibility,
 transaction-ready no-write preflight, immutable admission journaling, and the
@@ -52,18 +52,33 @@ accountable human registrar, and rejects conflicting or corrupted replay while
 allowing a fresh separately signed approval after an earlier approval expires
 unused. It creates no replacement lock or downstream authority.
 
-The current continuation adds the separate permission-gated writer. An active
+PR #173 added the separate permission-gated replacement-lock writer and merged
+as `40dc7898c35f4623a31e7ca3014b3ad2074861d6`. PR run `33887255111` and exact
+post-merge `main` run `33887607933` passed, including hosted PostgreSQL
+concurrency, full Mypy, Ruff, Bandit, and the one-head Alembic check. An active
 human with `estimate:write` may consume one exact registered admission after a
 fresh locked preflight and atomically create its exact replacement Physical
 Model Lock plus an immutable outcome and audit event. Exact replay is idempotent;
 state drift, active-lock races, corrupt evidence, and failed outcome/audit writes
 fail closed or roll back together. It performs no technical selection, pricing,
-deployment, or release and grants no downstream authority. No real project data
-or real lock operation is part of this candidate. Local full pytest completed
-successfully with five environment-dependent skips; full Ruff and Bandit,
-focused Mypy, migration packaging, and the one-head Alembic check also passed.
-The dedicated PostgreSQL race test requires GitHub's disposable PostgreSQL
-service because no local loopback test server was available.
+deployment, or Human Release and grants no downstream authority. No real project
+data or real lock operation was used.
+
+The current continuation governs technical-library release publication. An
+active human with `technical:approve` must publish every current eligible active
+logical variant exactly once or the operation fails without writing. Bound
+source bytes are rechecked; Draft variants are never activated; prior-release
+supersession, the new immutable manifest, and audit event are one transaction.
+Migration `0026_single_active_technical_release` prevents concurrent publication
+from leaving two active technical releases while leaving other library types
+unchanged. This creates technical library evidence only; it performs no project
+technical selection, pricing, deployment, or Human Release.
+
+Local synthetic validation for this candidate passed: the full pytest suite
+completed with six environment-dependent skips; full Ruff and Bandit, focused
+Mypy, focused publication/migration/route regressions, and the one-head Alembic
+check passed. The disposable PostgreSQL publication-race proof remains for
+hosted CI.
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical
@@ -296,9 +311,9 @@ Shared main includes:
 - PR #154's bounded source-bound XLSX worksheet/cell locators and transient selected-cell re-extraction; and
 - PR #156's bounded source-bound DOCX document/paragraph/simple-table locators and transient selected-item re-extraction.
 
-The packaged migration history now has one forward-only head: 0025_signed_physical_model_lock_replacement_outcomes. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0026_single_active_technical_release. PR #156 merged bounded source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca; pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
-PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#172 check and corresponding main run also passed, ending with run 33881784756 on 2e71353. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
+PR #104 run 33515411987 passed Python validation on 0f6c252; post-merge main run 33516292114 passed on b6409a5, including tests and the one-head Alembic check. Each PR #105-#173 check and corresponding main run also passed, ending with run 33887607933 on 40dc789. GitHub's protection API returns HTTP 403 because the private repository needs GitHub Pro or public visibility for that configuration; no required-check configuration is verified.
 
 ### Completed source-bound XLSX report locators on shared main (PR #154)
 

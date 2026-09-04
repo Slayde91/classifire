@@ -59,7 +59,7 @@ def _assessment(  # type: ignore[no-untyped-def]
 
 def test_clean_stack_head_is_ready_only_with_all_required_journal_tables() -> None:
     result = _assessment(
-        "0025_signed_physical_model_lock_replacement_outcomes",
+        "0026_single_active_technical_release",
         required_tables=True,
     )
     assert result.status == "READY"
@@ -67,9 +67,9 @@ def test_clean_stack_head_is_ready_only_with_all_required_journal_tables() -> No
     assert result.database_write_performed is False
 
 
-def test_immediately_previous_head_requires_the_replacement_outcome_migration() -> None:
+def test_immediately_previous_head_requires_the_single_active_release_migration() -> None:
     result = _assessment(
-        "0024_signed_physical_model_lock_replacement_admissions", required_tables=True
+        "0025_signed_physical_model_lock_replacement_outcomes", required_tables=True
     )
     assert result.status == "BLOCKED"
     assert result.code == "DATABASE_MIGRATION_REQUIRED"
@@ -88,7 +88,7 @@ def test_previous_head_with_stray_legacy_table_requires_retirement() -> None:
 
 def test_current_head_with_stray_legacy_table_fails_as_schema_drift() -> None:
     result = _assessment(
-        "0025_signed_physical_model_lock_replacement_outcomes",
+        "0026_single_active_technical_release",
         required_tables=True,
         legacy_submission_table=True,
     )

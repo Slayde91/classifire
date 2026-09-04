@@ -4,7 +4,7 @@
 
 **Architecture version:** 4.0
 
-**Verified shared-main implementation:** 2e71353 (PR #172 merge, 2026-09-04)
+**Verified shared-main implementation:** 40dc789 (PR #173 merge, 2026-09-04)
 
 This document separates the architecture that is implemented now from the
 target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -76,12 +76,12 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0025_signed_physical_model_lock_replacement_outcomes |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0026_single_active_technical_release |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | No accepted replacement lock for the current UAT estimate; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
-| Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus governed technical-release publication remain incomplete |
+| Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, atomic governed publication, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus production technical authority remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Neither owns canonical estimate state |
 
@@ -351,6 +351,13 @@ Current shared-main safeguards include:
 - Draft-only new technical-library imports regardless of source-declared state;
 - a new Draft technical document may record a hash-bound historical predecessor only when that predecessor is independently approved and its retained source bytes remain clean and unchanged; this does not approve the Draft, retire the predecessor, activate a variant, or create a release;
 - runtime use only through an active immutable pinned technical release;
+- technical publication only by an active `technical:approve` human; it locks
+  the current active candidates, rejects any ineligible or duplicate logical
+  variant instead of silently omitting it, rechecks exact bound source bytes,
+  and atomically supersedes the prior active release while creating the new
+  immutable manifest and audit event. Migration
+  `0026_single_active_technical_release` adds a technical-only partial unique
+  index so concurrent publication cannot leave two active technical releases;
 - each newly published technical manifest fixes a safe source state: bound
   document/file identity, digest, and locator, or an explicit legacy-unbound
   state; pinned runtime rejects a later source-hash or source-binding mismatch; and
@@ -367,9 +374,9 @@ Current shared-main safeguards include:
   persisted locator values only: they do not read source bytes or grant approval,
   activation, publication, or release authority.
 
-Extraction-assisted and manufacturer-neutral source lineage, governed technical-release
-publication/supersession automation, and production technical authority are not
-complete. Unsupported compatibility remains unresolved.
+Extraction-assisted and manufacturer-neutral source lineage, clean-machine
+recovery, and production technical authority are not complete. Unsupported
+compatibility remains unresolved.
 
 ## 9. Quantity, commercial recovery, snapshots, and outputs
 
@@ -590,7 +597,7 @@ deployment, or release authority.
 ### Near term
 
 Complete the remaining extraction-assisted and manufacturer-neutral technical-source
-lineage plus governed technical-release publication and supersession in separate reviewed migrations.
+lineage plus clean-machine technical-library import and recovery evidence.
 Maintain full-repository Ruff, Mypy, and Bandit checks
 alongside the changed-file Ruff fast-path; static checks do not grant product or
 release authority.

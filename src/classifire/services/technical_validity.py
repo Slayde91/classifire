@@ -6,6 +6,14 @@ from typing import Any
 TECHNICAL_RELEASE_SOURCE_BINDING_SCHEMA = "technical-release-source-binding-v1"
 
 
+def technical_variant_logical_key(*, variant_id: str, source_json: dict[str, Any] | None) -> str:
+    """Return the stable lineage key shared by snapshots and publication."""
+
+    source = source_json or {}
+    original_variant_id = source.get("original_variant_id")
+    return str(original_variant_id or variant_id.split("-QFREV")[0])
+
+
 def technical_release_source_binding(
     *,
     technical_document_id: str | None,

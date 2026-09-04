@@ -44,7 +44,7 @@ def _mark_clean_lineage(db) -> None:  # type: ignore[no-untyped-def]
     db.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(64))"))
     db.execute(
         text("INSERT INTO alembic_version (version_num) VALUES (:revision)"),
-        {"revision": "0025_signed_physical_model_lock_replacement_outcomes"},
+        {"revision": "0026_single_active_technical_release"},
     )
     db.commit()
 

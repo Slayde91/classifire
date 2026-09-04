@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .audit import record_audit
+from .config import get_settings
 from .db import get_db
 from .models import (
     EstimatingRule,
@@ -26,9 +27,14 @@ from .models import (
     TechnicalVariant,
 )
 from .security import verify_csrf
+from .services.technical_release_publication import (
+    TechnicalReleasePublicationError,
+    publish_governed_technical_release,
+)
 from .services.technical_validity import (
     technical_document_authority_blockers,
     technical_release_source_binding,
+    technical_variant_logical_key,
     technical_variant_temporal_blockers,
 )
 from .ui import _context, _require, templates
@@ -45,9 +51,10 @@ def _canonical_hash(payload: dict[str, Any]) -> str:
 
 
 def _technical_logical_key(record: TechnicalVariant) -> str:
-    source = record.source_json or {}
-    original_variant_id = source.get("original_variant_id")
-    return str(original_variant_id or record.variant_id.split("-QFREV")[0])
+    return technical_variant_logical_key(
+        variant_id=record.variant_id,
+        source_json=record.source_json,
+    )
 
 
 def _manifest_mapping(value: object) -> Mapping[str, object]:
@@ -291,6 +298,7 @@ def _snapshot_records(db: Session, release_type: str) -> list[dict[str, Any]]:
             )
             for document in documents_by_id.values()
         }
+
         def source_binding(technical_record: TechnicalVariant) -> dict[str, Any]:
             document = documents_by_id.get(technical_record.technical_document_id or "")
             stored = stored_files_by_id.get(document.stored_file_id) if document else None
@@ -465,9 +473,7 @@ def release_detail(release_id: str, request: Request, db: Db) -> HTMLResponse:
     raw_records = manifest.get("records", [])
     records = raw_records if isinstance(raw_records, list) else []
     technical_lineage = (
-        _technical_release_lineage_rows(records)
-        if release.library_type == "technical"
-        else []
+        _technical_release_lineage_rows(records) if release.library_type == "technical" else []
     )
     return templates.TemplateResponse(
         request,
@@ -506,6 +512,28 @@ def publish_release(
 
     if release_type not in SUPPORTED_TYPES:
         raise HTTPException(400, "Unsupported release type")
+
+    if release_type == "technical":
+        if activate_drafts == "yes":
+            return RedirectResponse(
+                "/releases?error=Technical+Drafts+must+be+approved+through+the+Technical+Systems+workflow+before+release",
+                status_code=303,
+            )
+        try:
+            release = publish_governed_technical_release(
+                db,
+                version=version,
+                notes=notes,
+                actor=user,
+                storage_root=get_settings().storage_root,
+                source_ip=request.client.host if request.client else None,
+            )
+        except TechnicalReleasePublicationError as exc:
+            return RedirectResponse(f"/releases?error={quote(exc.code, safe='')}", status_code=303)
+        db.commit()
+        return RedirectResponse(
+            f"/releases/{release.id}?success=Release+published", status_code=303
+        )
 
     existing = db.scalar(
         select(LibraryRelease).where(

@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** 2e71353 (PR #172 merge, 2026-09-04)
+**Verified shared-main implementation:** 40dc789 (PR #173 merge, 2026-09-04)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -375,8 +375,8 @@ downstream authority was added.
 ### Near-term actions
 
 1. Use the merged scoped-reader boundary only for controlled UAT. Any real report or provider operation still needs separate explicit authority; neither a grant nor a package record creates that authority.
-2. Complete extraction-assisted and manufacturer-neutral lineage plus technical-release
-   publication and supersession through separate migrations and reviews.
+2. Complete extraction-assisted and manufacturer-neutral lineage, then prove
+   clean-machine technical-library import and recovery.
 3. Independently validate physical, technical, quantity, labour, commercial,
    formula, recovery, and release integrity before Phase 12. Snapshot V2 already
    separates `generated_utc` from semantic identity while preserving full
@@ -498,11 +498,15 @@ releases, manifest eligibility checks, immutable published technical source-line
 checks, active hash-bound pricing records, read-only current-authority visibility
 on TechnicalVariant and TechnicalDocument detail screens, read-only retained
 document/locator visibility for every TechnicalVariant revision, and structured
-immutable source-lineage visibility on TechnicalRelease detail screens.
+immutable source-lineage visibility on TechnicalRelease detail screens. Governed
+technical publication now requires an active technical approver, includes every
+current eligible active logical variant exactly once or fails closed, rechecks
+exact bound source bytes, and atomically supersedes the prior release with the
+new immutable manifest and audit event. A technical-only database constraint
+prevents concurrent publication from leaving two active technical releases.
 
-**Remaining:** extraction-assisted and manufacturer-neutral lineage, governed
-technical-release publication/supersession, clean-machine import/recovery, and full commercial
-rate-inclusion/recovery rules.
+**Remaining:** extraction-assisted and manufacturer-neutral lineage,
+clean-machine import/recovery, and full commercial rate-inclusion/recovery rules.
 
 **Exit:** every technical/commercial decision cites an immutable authorised
 release and its source cannot silently change after use.
