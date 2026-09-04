@@ -7,8 +7,8 @@ from dataclasses import asdict, dataclass
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-CLEAN_STACK_HEAD = "0025_signed_physical_model_lock_replacement_outcomes"
-PREVIOUS_CLEAN_STACK_HEAD = "0024_signed_physical_model_lock_replacement_admissions"
+CLEAN_STACK_HEAD = "0026_single_active_technical_release"
+PREVIOUS_CLEAN_STACK_HEAD = "0025_signed_physical_model_lock_replacement_outcomes"
 LEGACY_CLEAN_STACK_HEAD = "0007_reconcile_adjudicated_admission_lineages"
 LEGACY_ADJUDICATED_HEAD = "0006_adjudicated_canonical_admissions"
 REQUIRED_TABLES = frozenset(

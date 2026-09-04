@@ -19,6 +19,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -97,6 +98,13 @@ class LibraryRelease(RecordMixin, Base):
     __table_args__ = (
         UniqueConstraint(
             "library_type", "version", name="uq_library_release_type_version"
+        ),
+        Index(
+            "uq_library_release_one_active_technical",
+            "library_type",
+            unique=True,
+            sqlite_where=text("status = 'active' AND library_type = 'technical'"),
+            postgresql_where=text("status = 'active' AND library_type = 'technical'"),
         ),
     )
 

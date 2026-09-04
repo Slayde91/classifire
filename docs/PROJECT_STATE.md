@@ -1,10 +1,10 @@
 # CLASSIFIRE Project State
 
-**Verified snapshot:** 2026-09-04 (AEST)
+**Verified snapshot:** 2026-09-05 (AEST)
 
 **Product status:** Pre-production implementation and controlled UAT
 
-**Verified shared-main implementation:** 2e71353456967660b32f509974ad096d48c8e6bc (merge of PR #172, 2026-09-04)
+**Verified shared-main implementation:** 40dc7898c35f4623a31e7ca3014b3ad2074861d6 (merge of PR #173, 2026-09-05 AEST)
 
 This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
 the quarantined legacy checkout, and retained non-canonical receipts. Those
@@ -18,12 +18,12 @@ deployment, technical approval, commercial approval, or Human Release.
 
 | Area | Verified state | Consequence |
 | --- | --- | --- |
-| Shared main | PR #172 is merged at 2e71353456967660b32f509974ad096d48c8e6bc; it includes the reviewed PR #104-#172 lineage. | Report governance, technical-source safeguards, retained proposal-review packages, scoped reader access, exact-approved-manifest enforcement, source-bound report locators, and signed replacement-lock preflight/admission are shared-main evidence. The admission journal grants no technical, commercial, lock, deployment, or release authority. |
+| Shared main | PR #173 is merged at 40dc7898c35f4623a31e7ca3014b3ad2074861d6; it includes the reviewed PR #104-#173 lineage. | Report governance, technical-source safeguards, retained proposal-review packages, source-bound report locators, and atomic signed replacement-lock execution are shared-main evidence. No real UAT lock, technical selection, pricing, deployment, or Human Release was performed. |
 | Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
 | Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
 | Post-PR #104 maintenance series | PRs #105-#126 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, `5639e26`, `90f701c`, `ff1278f`, `7e26c2f`, and `b33246a`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, Mission Control task-response validation, hosted full-Ruff/Mypy/Bandit validation, and explicit Phase 8 invariant errors were strengthened without granting technical, commercial, lock, or release authority. |
 | Current technical-source safeguards | PRs #127-#142 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, `f9dea2a`, `f3c6d92`, `8c21f18`, `9771ff7`, `1e43756`, `caed547`, `075c9c5`, `981324e`, and `abe8bde`. | Verified-byte extraction, current-authority gates, immutable published source-lineage binding, factual reconciliation, structured release-lineage display, safe navigation to bound source-document records, and read-only revision-source visibility were added without granting technical selection, commercial, canonical, lock, or release authority. |
-| Subsequent hosted validation | Each PR #105-#172 check and each corresponding main push run passed; PR #172 run 33881333028 and main run 33881784756 passed on 2e71353. | Hosted validation is current through the PR #172 merge, while required-check configuration remains unverified. |
+| Subsequent hosted validation | Each PR #105-#173 check and each corresponding main push run passed; PR #173 run 33887255111 and main run 33887607933 passed on 40dc789. | Hosted validation is current through the PR #173 merge, while required-check configuration remains unverified. |
 | Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
 | Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
 | Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
@@ -110,6 +110,11 @@ authority.
   read-only current-authority displays
   on linked TechnicalVariant and TechnicalDocument detail screens, plus a
   structured immutable source-lineage view on TechnicalRelease detail screens.
+  Governed technical publication now locks and includes every current eligible
+  active logical variant exactly once or fails closed, rechecks exact bound
+  source bytes, and atomically supersedes the prior active release while writing
+  the new immutable manifest and audit event. A technical-only unique constraint
+  prevents two active technical releases. Draft variants remain untouched.
   Technical extraction failures retain only content-safe diagnostics.
 - Governed assumption-led desk-quote PDF/XLSX outputs from PR #75. They remain
   explicitly non-technical, proposal-only commercial scenarios. The current
@@ -123,7 +128,7 @@ authority.
 - A secret-free pull-request workflow using Node 24-compatible actions and a
   disposable PostgreSQL 16 service.
 
-The packaged migration history now has one forward-only head: 0025_signed_physical_model_lock_replacement_outcomes (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
+The packaged migration history now has one forward-only head: 0026_single_active_technical_release (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
 
 ### Completed report-governance integration on shared main (PR #104)
 
@@ -293,7 +298,7 @@ prices work, creates a lock, or releases an estimate.
 | Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. Both the runner and the database-backed proposal-review controller reject legacy V1/unbound packets or a different approval record before a port call or package assembly. Historical V1 packets remain verifiable. |
 | Report formats and content | Normalisation supports PDF plus bounded source-bound XLSX and DOCX. PDF text, page, table, annotation, and strict explicitly numbered captions remain supported. XLSX persists only visible worksheet shape and non-empty cell position/category/hash fields; only selected cells are re-extracted transiently, and formulas are not executed. DOCX persists only structural document/visible-body paragraph/simple-body-table position, count, and hash fields; selected paragraph/table content is re-extracted transiently. XLSX and DOCX both fail closed on unsupported or unsafe structures, and never persist workbook/document content. General report formats remain unimplemented. Explicit human-approved multi-report family admission, deterministic proposal-review aggregation, and family execution now exist. Family execution preflights every member before any inference port and never joins member scopes, evidence, runtime inputs, or packages. |
 | Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
-| Technical authority | Review, source-document current state, activation, Draft source binding, revision lineage, source-locator, clean-byte candidate metadata extraction and Draft-only refresh after a clean source recheck, manual Draft materialisation, import, and release checks fail closed. A new Draft source document can record a hash-bound historical predecessor only when that predecessor is independently approved and its retained technical-evidence bytes still verify clean and unchanged; it does not retire the predecessor or approve, activate, select, price, lock, deploy, or release anything. A bound source is excluded from normal search, new technical release snapshots, and pinned runtime use when its document is missing, unapproved, or expired, or its retained-file metadata is missing, unsafe, or for another evidence purpose. Newly published technical manifests fix a safe source state: bound document/file identity, digest, and locator, or an explicit legacy-unbound state; pinned runtime rejects later binding or source-hash drift. TechnicalVariant and TechnicalDocument detail screens expose current metadata read-only, and TechnicalVariant revision history now exposes each revision's existing retained document and cited locator read-only. Extraction-assisted and manufacturer-neutral lineage, governed technical-release publication/supersession, and production authority remain incomplete. |
+| Technical authority | Review, source-document current state, activation, Draft source binding, revision lineage, source-locator, clean-byte candidate metadata extraction and Draft-only refresh after a clean source recheck, manual Draft materialisation, import, and release checks fail closed. A new Draft source document can record a hash-bound historical predecessor only when that predecessor is independently approved and its retained technical-evidence bytes still verify clean and unchanged; it does not retire the predecessor or approve, activate, select, price, lock, deploy, or release anything. A bound source is excluded from normal search, new technical release snapshots, and pinned runtime use when its document is missing, unapproved, or expired, or its retained-file metadata is missing, unsafe, or for another evidence purpose. Governed publication includes every current eligible active logical variant exactly once or fails closed, rechecks exact bound source bytes, atomically supersedes the prior active release with an immutable manifest/audit event, and cannot leave two active technical releases. TechnicalVariant and TechnicalDocument detail screens expose current metadata read-only, and TechnicalVariant revision history exposes each revision's existing retained document and cited locator read-only. Extraction-assisted and manufacturer-neutral lineage, clean-machine recovery, and production authority remain incomplete. |
 | Quantity and labour | Basic estimate calculation exists; the complete selected-system-to-components-to-productivity chain is not implemented on current main. |
 | Commercial recovery | Desk quotes and basic estimating rules exist, but the full component-level rate-inclusion/recovery ledger remains incomplete. |
 | Snapshot and release | Estimate snapshot V2 separates semantic identity from `generated_utc`: `snapshot_hash` excludes that volatile generation metadata, while `snapshot_document_hash` still binds the complete displayed document. V1 snapshots retain their historical full-payload verification. Focused synthetic tests cover semantic stability, metadata/semantic tampering, and unsupported schemas. Full independent validation certificates and Human Release are not proven. |
@@ -330,9 +335,9 @@ run has been consumed and must not be repeated without new authority.
 
 | Phase | Status | Current gate |
 | --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #172; GitHub plan prevents branch-protection configuration. |
+| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #173; GitHub plan prevents branch-protection configuration. |
 | 1. Domain/workflow governance | **In progress** | Signed amendment and replacement-lock execution are permission-gated, atomic, audited, and race-safe in synthetic tests; no real UAT replacement lock has been authorised or created. |
-| 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, hash-bound Draft source-document predecessor lineage, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and technical-release publication governance remain. |
+| 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation, current-authority, immutable source-lineage, and fail-closed atomic technical publication/supersession controls exist; extraction-assisted and manufacturer-neutral lineage, clean-machine recovery, and full commercial recovery rules remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
 | 5. Evidence intake/resolution | **In progress** | The packaged implementation has bounded PDF/XLSX/DOCX report services, strict source-bound caption locators, atomic expected-label scope admission, a human-approved exact report-family manifest, deterministic aggregation of separately validated family review packages, and a family runner that preflights every member before any no-tool port is created. It retains separate member scopes, inputs, and packages; runner/controller verification, the retained single-report/family proposal-review package lifecycle, explicit scoped reader grants/revocation, and administrator-only immutable human-review annotations remain. Additional formats and a separately authorised operator flow remain. |
@@ -374,9 +379,9 @@ commercial decision, lock, deployment, or release authority.
 
 #### Priority 2 - Close demonstrated Phase 2 and Phase 12 gaps separately
 
-Complete the remaining extraction-assisted and manufacturer-neutral lineage plus
-governed technical-release publication/supersession in separately reviewed migrations, without
-automatic activation. Snapshot V2 now separates
+Complete the remaining extraction-assisted and manufacturer-neutral lineage,
+then prove clean-machine technical-library import and recovery without automatic
+activation. Snapshot V2 now separates
 semantic identity from volatile generation metadata and preserves V1 validation;
 the remaining Phase 12 work is independent physical, technical, quantity,
 commercial, formula, recovery, and release validation. Neither activity may
@@ -407,8 +412,9 @@ This reconciliation verified:
 
 - fetched Git refs, branch/upstream relationships, recent commits, open PRs, and issues;
 - the clean isolated worktree and the read-only legacy-root classification;
-- the packaged forward-only Alembic head 0025_signed_physical_model_lock_replacement_outcomes;
-- the replacement-lock writer's successful local full synthetic pytest run with five environment-dependent skips, full Ruff and Bandit, focused Mypy, migration packaging, and one-head Alembic check; the dedicated PostgreSQL race awaits the hosted disposable service;
+- the packaged forward-only Alembic head 0026_single_active_technical_release;
+- the current technical-release candidate full synthetic pytest suite passed with six environment-dependent skips; full Ruff and Bandit, focused Mypy, focused publication/migration/route regressions, and the one-head Alembic check passed locally; the disposable PostgreSQL publication-race proof remains for hosted CI;
+- the replacement-lock writer's successful local full synthetic pytest run with five environment-dependent skips plus PR #173 and exact post-merge main validation, including hosted PostgreSQL concurrency, full Mypy, Ruff, Bandit, and the one-head Alembic check;
 - current models, API/UI routes, report services, storage/containment, technical guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
 - PR #147's successful technical-lineage validation, PR #149's successful controller validation, PR #151's successful caption-locator validation, PR #154's successful XLSX-locator validation, and PR #156's successful DOCX-locator validation on f82121d plus post-merge main validation on 82d288c;
 - the retained assessment status and no-write/no-lock flags; and
