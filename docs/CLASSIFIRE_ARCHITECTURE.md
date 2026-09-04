@@ -76,9 +76,9 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0021_proposal_review_annotations |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0022_signed_physical_model_lock_amendment_admissions |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
-| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, and an audited unsigned-lock reopen service | No accepted replacement lock for the current UAT estimate; signed-lock reopening remains a separate future admission boundary |
+| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, and an audited unsigned-lock reopen service | No accepted replacement lock for the current UAT estimate; signed-amendment admission is journaled separately, while execution remains a future authority boundary |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus governed technical-release publication remain incomplete |
@@ -124,20 +124,26 @@ lock invalidation and audit fields.
 
 ### Signed-lock amendment eligibility
 
-**Current architecture:** no signed lock-amendment admission or writer exists.
-**Change:** a no-write P-256 amendment verifier and transaction-ready preflight
-bind an active signed lock, its current physical hash, a prospective canonical
-payload, and an exact semantically approved visual-validation receipt. **Reason:**
-a future signer must approve one exact correction without letting a generic API
-or receipt itself become lock authority. **Consequences:** the verifier refuses
-unsigned, stale, altered, expired, mismatched, or visually withheld candidates;
-the preflight locks the Estimate and target lock, then rechecks
-lifecycle/downstream dependencies and prospective Defect ownership. It does not
-invalidate a lock or create an audit event. Lock decimals are semantically
-normalised before hashing so an unchanged model is not made stale by database
-display scale. **Migration impact:** none for verification/preflight; a future
-writer needs separate additive retained-admission/outcome records and explicit
-authority.
+**Current architecture:** a no-write P-256 verifier and transaction-ready
+preflight bind an active signed lock, its current physical hash, a prospective
+canonical payload, and an exact semantically approved visual-validation receipt.
+**Change:** a separately additive immutable admission journal now records a
+fresh verified manifest, canonical prospective payload, preflight receipt, and
+attributed human-governance audit event. **Reason:** retain exact approval
+lineage without letting a generic API, a receipt, or the journal itself become
+lock-execution authority. **Consequences:** registration refuses unsigned,
+stale, altered, expired, mismatched, visually withheld, conflicting-replay, or
+corrupt retained candidates. Exact replays recheck every stored binding before
+returning the existing admission. A separate no-write registered-admission
+preflight reloads the exact journal record and reruns the locked signed preflight
+for a future writer. It neither invalidates a lock nor changes canonical
+physical rows,
+creates a replacement lock, creates an execution outcome, or grants technical,
+commercial, snapshot, release, or execution authority. Lock decimals remain
+semantically normalised before hashing so an unchanged model is not made stale
+by database display scale. **Migration impact:** forward-only migration
+`0022_signed_physical_model_lock_amendment_admissions` adds a separate journal;
+it does not alter the initial-submission admission table or existing locks.
 
 Barrier/substrate, plane, orientation, opening type and dimensions, FRL or
 governed assumption, service identity/material/quantity, link provenance, and

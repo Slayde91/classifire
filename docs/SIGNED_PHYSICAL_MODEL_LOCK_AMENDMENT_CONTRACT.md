@@ -6,10 +6,17 @@
 external-signature contract for a **future** amendment of an active signed
 Physical Model Lock.
 
-It verifies eligibility only. It does not invalidate a lock, edit retained
-physical records, persist an admission, create a replacement lock, submit
+The verifier and preflight verify eligibility only. They do not invalidate a
+lock, edit retained physical records, create a replacement lock, submit
 canonical state, choose a technical system, calculate a quantity or price, make
 a snapshot, or release anything.
+
+A separately additive admission journal may retain a fresh, verified manifest,
+canonical prospective payload, preflight receipt, and human-governance audit
+event. That journal does not invalidate a lock, edit canonical physical records,
+create a replacement lock, create an execution outcome, or grant execution or
+downstream authority. Exact replays are accepted only after every retained manifest,
+payload, preflight, signer, timestamp, policy, and target binding is rechecked.
 
 The generic unsigned reopen route does not call this contract. It remains limited
 to its separate pre-technical boundary.
@@ -56,21 +63,31 @@ for approval or execution authority.
 still no-write companion. It locks the target Estimate and active lock, re-runs
 the signature/current-hash/visual-receipt checks after the relevant physical
 rows are locked, rejects later technical/commercial/rule/snapshot/release work,
-and proves every prospective canonical Defect belongs to the same Estimate. Its
-receipt is ephemeral: it creates no admission, audit event, canonical physical
-row, invalidation, or replacement lock.
+and proves every prospective canonical Defect belongs to the same Estimate.
+Direct use of the preflight creates no admission, audit event, canonical
+physical row, invalidation, or replacement lock. The separate admission journal
+may persist the receipt only after it freshly completes that preflight in the
+same caller-owned transaction; recording it remains non-executing.
+
+`preflight_registered_signed_physical_model_lock_amendment` is the no-write
+consumption bridge for a future writer. It loads the exact admission ID and
+expected envelope hash, re-canonicalises and re-hashes the stored envelope and
+payload, checks every retained journal binding, and then reruns the locked fresh
+preflight. It returns no authority and performs no mutation or audit write.
 
 ## Future execution requirements
 
 A future separate signed lock-admission writer must, in one governed transaction:
 
-1. obtain explicit execution authority and call the fresh no-write preflight
+1. obtain explicit execution authority and call the registered-admission no-write
+   preflight, which reruns the fresh signed preflight
    while holding its outer transaction open;
 2. retain the preflight's locks while applying only the manifest-bound amendment;
 3. recheck technical, commercial, rule, snapshot, release, protected-state, and
    amendment lifecycle dependencies at write time;
-4. retain the verified envelope and an attributed audit receipt through an
-   additive migration;
+4. create a separate immutable execution outcome linked to the already retained
+   admission evidence, containing exact pre/post physical payload hashes and row
+   identity mappings, plus an attributed audit receipt;
 5. invalidate only the exact signed lock authorised by the envelope; and
 6. leave replacement submission and replacement-lock creation as separate,
    explicitly authorised operations.

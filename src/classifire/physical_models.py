@@ -240,3 +240,53 @@ class VisualValidationReceipt(Base):
     __table_args__ = (
         Index("ix_visual_validation_receipt_estimate_status", "estimate_id", "status"),
     )
+
+
+class PhysicalModelLockAmendmentAdmission(Base):
+    """Immutable journal record for a verified signed lock-amendment candidate.
+
+    Recording an amendment admission is deliberately not amendment execution:
+    it cannot invalidate a Physical Model Lock, change canonical physical rows,
+    create a replacement lock, or confer downstream authority. A later writer
+    must have its own separately authorised, transactional design.
+    """
+
+    __tablename__ = "physical_model_lock_amendment_admissions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_now_utc, nullable=False
+    )
+    amendment_admission_id: Mapped[str] = mapped_column(
+        String(36), unique=True, index=True, nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
+    target_lock_id: Mapped[str] = mapped_column(
+        ForeignKey("physical_model_locks.id"), index=True, nullable=False
+    )
+    target_lock_content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    target_lock_signature_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    current_physical_model_content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    amendment_submission_payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    amendment_submission_payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    visual_validation_receipt_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    amendment_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    policy_versions: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False)
+    amendment_envelope_json: Mapped[str] = mapped_column(Text, nullable=False)
+    amendment_envelope_sha256: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    issuer_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    signing_key_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    signature_algorithm: Mapped[str] = mapped_column(String(80), nullable=False)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    preflight_receipt_json: Mapped[str] = mapped_column(Text, nullable=False)
+    preflight_receipt_sha256: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+
+    __table_args__ = (
+        Index(
+            "ix_physical_model_lock_amendment_admission_estimate_created",
+            "estimate_id",
+            "created_at",
+        ),
+    )

@@ -129,7 +129,16 @@ def _visual_receipt(estimate, payload, *, status: str = VISUAL_VALIDATION_RECEIP
     }
 
 
-def _manifest(db, estimate, lock, payload, visual_receipt_sha256):  # type: ignore[no-untyped-def]
+def _manifest(
+    db,
+    estimate,
+    lock,
+    payload,
+    visual_receipt_sha256,
+    *,
+    amendment_admission_id: str | None = None,
+    amendment_reason: str = "A human-approved physical correction needs a new signed path.",
+):  # type: ignore[no-untyped-def]
     private_key = ec.generate_private_key(ec.SECP256R1())
     public_key = _base64url(
         private_key.public_key().public_bytes(
@@ -140,15 +149,15 @@ def _manifest(db, estimate, lock, payload, visual_receipt_sha256):  # type: igno
     current_hash = build_current_physical_model_lock_payload(db, estimate)["content_hash"]
     manifest: dict[str, object] = {
         "schema": SIGNED_LOCK_AMENDMENT_SCHEMA,
-        "amendment_admission_id": str(uuid4()),
+        "amendment_admission_id": amendment_admission_id or str(uuid4()),
         "purpose": SIGNED_LOCK_AMENDMENT_PURPOSE,
         "project_id": estimate.project_id,
         "estimate_id": estimate.id,
         "target_lock_id": lock.id,
         "target_lock_content_hash": lock.content_hash,
-        "target_lock_signature_sha256": hashlib.sha256(
-            lock.signature.encode("utf-8")
-        ).hexdigest().upper(),
+        "target_lock_signature_sha256": hashlib.sha256(lock.signature.encode("utf-8"))
+        .hexdigest()
+        .upper(),
         "current_physical_model_content_hash": current_hash,
         "amendment_submission_payload_sha256": normalised_submission_payload_sha256(payload),
         "visual_validation_receipt_sha256": visual_receipt_sha256,
@@ -158,7 +167,7 @@ def _manifest(db, estimate, lock, payload, visual_receipt_sha256):  # type: igno
         "evidence_family_review_sha256": "D" * 64,
         "human_review_request_sha256": "E" * 64,
         "human_review_response_sha256": "F" * 64,
-        "amendment_reason": "A human-approved physical correction needs a new signed path.",
+        "amendment_reason": amendment_reason,
         "policy_versions": {
             "signed_lock_amendment": (
                 f"{SIGNED_LOCK_AMENDMENT_SCHEMA}:{SIGNED_LOCK_AMENDMENT_SIGNATURE_ALGORITHM}"
@@ -292,9 +301,9 @@ def test_signed_manifest_rejects_changed_binding_or_signature() -> None:
                 expected_estimate_id=estimate.id,
                 expected_target_lock_id=lock.id,
                 expected_target_lock_content_hash=lock.content_hash,
-                expected_target_lock_signature_sha256=hashlib.sha256(
-                    lock.signature.encode("utf-8")
-                ).hexdigest().upper(),
+                expected_target_lock_signature_sha256=hashlib.sha256(lock.signature.encode("utf-8"))
+                .hexdigest()
+                .upper(),
                 expected_current_physical_model_content_hash=lock.content_hash,
                 amendment_submission_payload=payload,
                 expected_issuer="classifire-governance",
