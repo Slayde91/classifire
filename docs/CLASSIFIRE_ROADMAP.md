@@ -385,7 +385,7 @@ downstream authority was added.
    Ruff fast-path, then have the repository owner decide on an upgrade or
    equivalent documented default-branch protection control.
 5. Extend report evidence beyond the now-supported PDF/XLSX/DOCX boundary, starting
-   with the explicit human-approved family manifest as its only membership boundary. The approved family now has a retained proposal-review aggregate with scoped reader visibility and administrator-only immutable human-review annotations, but automatic joining and family-aware scope/runner execution remain separate. Keep the merged caption contract
+   with the explicit human-approved family manifest as its only membership boundary. The approved family now has retained proposal-review aggregation, scoped reader visibility, administrator-only immutable human-review annotations, and a service-only runner that preflights every member before any no-tool port is created. Automatic joining remains separate. Keep the merged caption contract
    limited to strict retained-PDF text and do not associate captions with images.
 
 ### Later or dependency-bound actions
@@ -498,7 +498,7 @@ exact-byte/locator/artifact-audit checks.
 estimate; atomic complete-label scope admission; V2 approval-bound packets; and
 runner preflight that rejects legacy/unbound packets before a no-tool port call, and a database-backed proposal-review controller that rejects them before package assembly.
 
-**Remaining:** support for formats beyond PDF/XLSX/DOCX, family-aware scope and runner execution after the explicit approval boundary, and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies CLASSIFIRE-owned five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT scoped reviewer surface, explicit reader grants, and administrator-only immutable human-review annotations.
+**Remaining:** support for formats beyond PDF/XLSX/DOCX and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies CLASSIFIRE-owned five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT scoped reviewer surface, explicit reader grants, administrator-only immutable human-review annotations, and a service-only family runner that preflights every member before any no-tool port is created.
 
 **Exit:** every downstream claim traces to exact retained bytes and a stable
 report/page/item or visual locator; expected items cannot disappear silently.
@@ -640,7 +640,7 @@ import them into the active fire-seal/penetration runtime prematurely.
 - “Obtain authority and run the approved assessment” as the immediate task; the
   one authorised attempt already occurred and failed safely.
 - Building the report runner as future work; shared main already composes it.
-  The remaining work is formats beyond PDF/XLSX/DOCX, family-aware scope/runner execution after explicit approval,
+  The remaining work is formats beyond PDF/XLSX/DOCX,
   caption-to-image association policy, and a separately authorised operator flow. Human-review annotations remain proposal-only observations.
 - Site visit as an automatic first response; exhaust governed report evidence
   first and request confirmation only where materially required.
