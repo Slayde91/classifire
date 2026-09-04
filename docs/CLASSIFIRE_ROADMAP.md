@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** 664afc4 (PR #171 merge, 2026-09-04)
+**Verified shared-main implementation:** 2e71353 (PR #172 merge, 2026-09-04)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -467,12 +467,18 @@ locked preflight and records the exact canonical signed envelope and receipt. Ex
 replay is idempotent; changed, conflicting, or corrupted evidence fails closed. A
 fresh separately signed approval can follow an expired unused approval without
 rewriting history. Registration creates no lock and grants no downstream authority.
+A separate active-human `estimate:write` transaction now consumes one exact
+registered admission only after rerunning the locked fresh preflight. It creates
+the exact replacement Physical Model Lock over the unchanged approved snapshot
+and records one immutable outcome plus audit event atomically. Exact completed
+replay is idempotent; state drift, active-lock races, corrupt evidence, or failed
+outcome/audit writes fail closed or roll back together. It performs no technical
+selection, pricing, deployment, or release and grants no downstream authority.
 
-**Remaining:** separately implement and authorise the permission-gated transaction
-that consumes one freshly rechecked registered admission and creates the exact
-replacement lock. Verification, preflight, and admission registration do not create a
-lock; amendment execution still leaves the Estimate without an active Physical Model
-Lock.
+**Remaining:** exercise the governed evidence-to-physical workflow on separately
+authorised project data and satisfy the Phase 1 exit evidence. The implemented
+writer does not itself authorise a real replacement-lock operation, and the current
+UAT estimate still has no accepted active replacement lock.
 
 **Exit:** physical state and amendments are service-governed, attributable,
 audited, and cannot be changed by an unauthorised role.
@@ -587,7 +593,7 @@ exists. Rollback and no-write/no-lock safeguards held.
 5. obtain independent semantic approval;
 6. perform a fresh no-write canonical preflight;
 7. separately authorise signing, registration, and exact canonical submission;
-8. separately design/approve/authorise the replacement lock.
+8. separately authorise signing, registration, and exact replacement-lock execution.
 
 **Exit:** every known Defect is defensibly represented or withheld with reason,
 the accepted canonical model is receipt-bound, and a replacement active Physical
