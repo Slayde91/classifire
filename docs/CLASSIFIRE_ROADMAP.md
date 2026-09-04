@@ -425,10 +425,12 @@ passes required checks, and is traceable without secrets or customer evidence.
 
 **Completed foundations:** separate Defect, EvidenceSource, Opening, Service,
 `ServiceOpeningLink`, blank-opening, protected-state, admission, submission,
-receipt, and lock concepts.
+receipt, and lock concepts. Synthetic sealed-submission regression coverage proves
+that all-blank models remain service-free and that mixed blank/multi-service models
+retain their explicit links through the canonical writer and completeness check.
 
-**Remaining:** complete amendment/reopen rules, visual-receipt eligibility in the
-future lock path, and broader all-blank/mixed-service regression proof.
+**Remaining:** complete amendment/reopen rules and visual-receipt eligibility in the
+future lock path.
 
 **Exit:** physical state and amendments are service-governed, attributable,
 audited, and cannot be changed by an unauthorised role.

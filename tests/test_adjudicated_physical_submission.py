@@ -23,26 +23,16 @@ from classifire.services.adjudicated_physical_submission import (
 )
 from classifire.services.canonical_submission_state import initial_submission_state
 from classifire.services.physical_defects import bind_canonical_defect
+from classifire.services.physical_scope import assess_physical_model_completeness
 
 
-def _admission(db, estimate):  # type: ignore[no-untyped-def]
-    defect = bind_canonical_defect(db, estimate, "D-001")
-    assert defect is not None
-    add_evidence(db, estimate)
+def _record_admission(
+    db,
+    estimate,
+    payload: InitialCanonicalPhysicalSubmission,  # type: ignore[no-untyped-def]
+):
+    """Record a synthetic sealed admission after its actual state preflight."""
     state = initial_submission_state(db, estimate_id=estimate.id)
-    payload = InitialCanonicalPhysicalSubmission.model_validate(
-        {
-            "openings": [
-                {
-                    "opening_code": "O-001",
-                    "canonical_defect_id": defect.id,
-                    "opening_type": "service_penetration",
-                }
-            ],
-            "services": [{"service_code": "S-001", "service_type": "pipe"}],
-            "service_opening_links": [{"service_code": "S-001", "opening_code": "O-001"}],
-        }
-    )
     now = datetime.now(UTC)
     admission = PhysicalModelAdmission(
         admission_id=str(uuid4()),
@@ -74,6 +64,26 @@ def _admission(db, estimate):  # type: ignore[no-untyped-def]
     return admission
 
 
+def _admission(db, estimate):  # type: ignore[no-untyped-def]
+    defect = bind_canonical_defect(db, estimate, "D-001")
+    assert defect is not None
+    add_evidence(db, estimate)
+    payload = InitialCanonicalPhysicalSubmission.model_validate(
+        {
+            "openings": [
+                {
+                    "opening_code": "O-001",
+                    "canonical_defect_id": defect.id,
+                    "opening_type": "service_penetration",
+                }
+            ],
+            "services": [{"service_code": "S-001", "service_type": "pipe"}],
+            "service_opening_links": [{"service_code": "S-001", "opening_code": "O-001"}],
+        }
+    )
+    return _record_admission(db, estimate, payload)
+
+
 def test_writer_creates_only_the_sealed_model_once() -> None:
     with physical_session() as db:
         estimate = add_estimate(db)
@@ -97,6 +107,126 @@ def test_writer_creates_only_the_sealed_model_once() -> None:
         assert admission.state == "consumed"
         with pytest.raises(ControlledPhysicalSubmissionError, match="NOT_AVAILABLE"):
             submit_recorded_initial_physical_model(db, admission_id=admission.admission_id)
+
+
+def test_writer_accepts_an_all_blank_sealed_model_without_inventing_services() -> None:
+    with physical_session() as db:
+        estimate = add_estimate(db)
+        defect = bind_canonical_defect(db, estimate, "D-BLANK")
+        assert defect is not None
+        add_evidence(db, estimate)
+        payload = InitialCanonicalPhysicalSubmission.model_validate(
+            {
+                "openings": [
+                    {
+                        "opening_code": "O-BLANK-001",
+                        "canonical_defect_id": defect.id,
+                        "opening_type": "blank opening seal",
+                        "substrate_type": "concrete",
+                        "substrate_plane": "wall",
+                        "orientation": "horizontal",
+                        "frl": "-/120/120",
+                    },
+                    {
+                        "opening_code": "O-BLANK-002",
+                        "canonical_defect_id": defect.id,
+                        "opening_type": "blank_core_hole",
+                        "substrate_type": "concrete",
+                        "substrate_plane": "wall",
+                        "orientation": "horizontal",
+                        "frl": "-/120/120",
+                    },
+                ],
+                "services": [],
+                "service_opening_links": [],
+            }
+        )
+        admission = _record_admission(db, estimate, payload)
+        db.commit()
+
+        result = submit_recorded_initial_physical_model(db, admission_id=admission.admission_id)
+
+        assert result["opening_count"] == 2
+        assert result["service_count"] == 0
+        assert result["service_opening_link_count"] == 0
+        assert result["physical_model_lock_created"] is False
+        assert db.scalar(select(func.count(Opening.id))) == 2
+        assert db.scalar(select(func.count(Service.id))) == 0
+        assert db.scalar(select(func.count(ServiceOpeningLink.id))) == 0
+        assert db.scalar(select(func.count(PhysicalModelLock.id))) == 0
+        completeness = assess_physical_model_completeness(db, estimate.id)
+        assert completeness.complete
+        assert {item.opening_type for item in completeness.openings} == {
+            "blank_opening",
+            "blank_core_hole",
+        }
+        assert all(item.blank_opening for item in completeness.openings)
+        assert all(item.service_link_count == 0 for item in completeness.openings)
+
+
+def test_writer_accepts_mixed_blank_and_multi_service_sealed_model() -> None:
+    with physical_session() as db:
+        estimate = add_estimate(db)
+        defect = bind_canonical_defect(db, estimate, "D-MIXED")
+        assert defect is not None
+        add_evidence(db, estimate)
+        payload = InitialCanonicalPhysicalSubmission.model_validate(
+            {
+                "openings": [
+                    {
+                        "opening_code": "O-BLANK",
+                        "canonical_defect_id": defect.id,
+                        "opening_type": "blank_core_hole",
+                        "substrate_type": "concrete",
+                        "substrate_plane": "wall",
+                        "orientation": "horizontal",
+                        "frl": "-/120/120",
+                    },
+                    {
+                        "opening_code": "O-SHARED",
+                        "canonical_defect_id": defect.id,
+                        "opening_type": "service_penetration",
+                        "substrate_type": "concrete",
+                        "substrate_plane": "wall",
+                        "orientation": "horizontal",
+                        "frl": "-/120/120",
+                    },
+                ],
+                "services": [
+                    {"service_code": "S-PIPE", "service_type": "pipe"},
+                    {"service_code": "S-CONDUIT", "service_type": "conduit"},
+                ],
+                "service_opening_links": [
+                    {"service_code": "S-PIPE", "opening_code": "O-SHARED"},
+                    {"service_code": "S-CONDUIT", "opening_code": "O-SHARED"},
+                ],
+            }
+        )
+        admission = _record_admission(db, estimate, payload)
+        db.commit()
+
+        result = submit_recorded_initial_physical_model(db, admission_id=admission.admission_id)
+
+        assert result["opening_count"] == 2
+        assert result["service_count"] == 2
+        assert result["service_opening_link_count"] == 2
+        openings = {
+            item.opening_code: item
+            for item in db.scalars(select(Opening).order_by(Opening.opening_code))
+        }
+        services = {item.service_code: item for item in db.scalars(select(Service))}
+        assert services["S-PIPE"].opening_id == openings["O-SHARED"].id
+        assert services["S-CONDUIT"].opening_id == openings["O-SHARED"].id
+        links = list(db.scalars(select(ServiceOpeningLink)))
+        assert {item.opening_id for item in links} == {openings["O-SHARED"].id}
+        assert db.scalar(select(func.count(PhysicalModelLock.id))) == 0
+        completeness = assess_physical_model_completeness(db, estimate.id)
+        assert completeness.complete
+        rows = {item.opening_code: item for item in completeness.openings}
+        assert rows["O-BLANK"].blank_opening
+        assert rows["O-BLANK"].service_link_count == 0
+        assert not rows["O-SHARED"].blank_opening
+        assert rows["O-SHARED"].service_link_count == 2
 
 
 def test_writer_refuses_when_the_preflight_state_changed() -> None:
