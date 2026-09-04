@@ -444,14 +444,18 @@ event. Registration is idempotent only for the same eligible signed manifest,
 rechecks every retained binding on replay, and refuses a conflicting reuse of its
 amendment-admission ID or a corrupt retained record. A no-write consumption
 bridge now reloads an exact journal record and reruns the locked fresh preflight
-for a future writer. It does not invalidate the signed lock, alter canonical
-physical rows, create a replacement lock, or create technical, commercial,
-snapshot, release, or execution authority.
+for a future writer. The lock service also exposes the exact canonical JSON
+preimage behind the existing lock hash, including Defect, evidence, Opening,
+Service, and link row identities; the ordinary lock summary is derived from that
+same path. Both operations are read-only and do not invalidate the signed lock,
+alter canonical physical rows, create a replacement lock, or create technical,
+commercial, snapshot, release, or execution authority.
 
 **Remaining:** design and execute a separately authorised signed lock-amendment
-writer that consumes the registered-admission preflight and creates a separate
-additive execution outcome that preserves exact pre/post physical payload hashes
-and row identity mappings. Neither eligibility, preflight, admission
+writer that consumes the registered-admission preflight and retains the exact
+pre/post lock-content snapshots in a separate additive execution outcome. The
+writer must preserve row identity mappings explicitly. Neither eligibility,
+preflight, admission
 registration, nor the registered-admission preflight invalidates a signed lock
 or creates a replacement lock.
 

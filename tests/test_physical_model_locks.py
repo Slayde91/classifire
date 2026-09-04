@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Iterator
 from contextlib import contextmanager
 
@@ -20,6 +21,7 @@ from classifire.physical_models import Defect, EvidenceSource, PhysicalModelLock
 from classifire.services.physical_model import (
     PhysicalModelLockError,
     build_current_physical_model_lock_payload,
+    build_current_physical_model_lock_snapshot,
     create_physical_model_lock,
 )
 from classifire.services.physical_mutation_guard import (
@@ -39,6 +41,38 @@ def complete_service_penetration() -> Iterator[tuple[Session, Estimate, Opening]
         add_service_link(session, service, opening)
         add_evidence(session, estimate)
         yield session, estimate, opening
+
+
+def test_lock_content_snapshot_is_the_exact_hash_preimage_with_row_identities() -> None:
+    with complete_service_penetration() as (session, estimate, opening):
+        lock, created = create_physical_model_lock(session, estimate)
+        assert created is True
+
+        snapshot = build_current_physical_model_lock_snapshot(session, estimate)
+        payload = snapshot.as_dict()
+
+        assert hashlib.sha256(snapshot.canonical_payload_json.encode("utf-8")).hexdigest() == (
+            snapshot.content_hash
+        )
+        assert snapshot.content_hash == lock.content_hash
+        assert payload["schema"] == "CLASSIFIRE-PhysicalModelLock-v1"
+        assert payload["project_id"] == estimate.project_id
+        assert payload["estimate_id"] == estimate.id
+        assert [item["id"] for item in payload["openings"]] == [opening.id]
+        assert [item["canonical_defect_id"] for item in payload["openings"]] == [
+            opening.canonical_defect_id
+        ]
+        assert len(payload["defects"]) == 1
+        assert len(payload["evidence"]) == 1
+        assert len(payload["services"]) == 1
+        assert len(payload["service_opening_links"]) == 1
+        assert payload["service_opening_links"][0]["opening_id"] == opening.id
+        assert not session.new
+        assert not session.dirty
+        assert not session.deleted
+
+        payload["openings"][0]["frl"] = "tampered detached copy"
+        assert snapshot.as_dict()["openings"][0]["frl"] == "-/120/120"
 
 
 def test_technical_search_is_blocked_until_a_valid_physical_model_lock_exists() -> None:
@@ -79,15 +113,19 @@ def test_lock_hash_is_stable_when_database_numeric_scale_is_refreshed() -> None:
     with complete_service_penetration() as (session, estimate, _opening):
         lock, created = create_physical_model_lock(session, estimate)
         assert created is True
-        original_hash = lock.content_hash
+        original_snapshot = build_current_physical_model_lock_snapshot(session, estimate)
         session.flush()
         session.expire_all()
         refreshed_estimate = session.get(Estimate, estimate.id)
         assert refreshed_estimate is not None
 
         current = build_current_physical_model_lock_payload(session, refreshed_estimate)
+        refreshed_snapshot = build_current_physical_model_lock_snapshot(session, refreshed_estimate)
 
-        assert current["content_hash"] == original_hash
+        assert current["content_hash"] == lock.content_hash
+        assert refreshed_snapshot.content_hash == original_snapshot.content_hash
+        assert refreshed_snapshot.canonical_payload_json == original_snapshot.canonical_payload_json
+
 
 def test_stale_active_lock_blocks_technical_search_until_a_future_governed_reopen() -> None:
     with complete_service_penetration() as (session, estimate, opening):

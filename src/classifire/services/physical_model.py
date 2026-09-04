@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -17,6 +18,25 @@ from .workflow_guard import require_estimate_action
 
 class PhysicalModelLockError(RuntimeError):
     """Raised when a requested Physical Model Lock cannot be safely created."""
+
+
+@dataclass(frozen=True, slots=True)
+class PhysicalModelLockContentSnapshot:
+    """Exact canonical physical content used to calculate one lock hash.
+
+    The canonical JSON is the authoritative byte-for-byte preimage of
+    ``content_hash``. ``as_dict`` returns a detached copy for inspection; it
+    cannot change the retained snapshot or any canonical database row.
+    """
+
+    canonical_payload_json: str
+    content_hash: str
+
+    def as_dict(self) -> dict[str, Any]:
+        payload = json.loads(self.canonical_payload_json)
+        if not isinstance(payload, dict):  # pragma: no cover - constructed internally
+            raise PhysicalModelLockError("Physical Model Lock snapshot is not an object.")
+        return cast(dict[str, Any], payload)
 
 
 def _canonical(payload: dict[str, Any]) -> str:
@@ -257,10 +277,10 @@ def _critical_unknowns(
     return unknowns
 
 
-def build_current_physical_model_lock_payload(
+def _build_current_physical_model_lock_payload(
     db: Session,
     estimate: Estimate,
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], PhysicalModelLockContentSnapshot]:
     """Build the current deterministic payload without making a workflow decision.
 
     This deliberately unguarded helper is used to verify that an active lock still
@@ -339,9 +359,13 @@ def build_current_physical_model_lock_payload(
         "service_opening_links": _service_link_rows(links),
         "critical_unknowns": critical_unknowns,
     }
-    content_hash = hashlib.sha256(_canonical(hash_payload).encode("utf-8")).hexdigest()
+    canonical_payload_json = _canonical(hash_payload)
+    content_snapshot = PhysicalModelLockContentSnapshot(
+        canonical_payload_json=canonical_payload_json,
+        content_hash=hashlib.sha256(canonical_payload_json.encode("utf-8")).hexdigest(),
+    )
 
-    return {
+    payload = {
         "project_id": estimate.project_id,
         "estimate_id": estimate.id,
         "defect_ids": defect_ids,
@@ -353,9 +377,39 @@ def build_current_physical_model_lock_payload(
         "critical_unknowns": critical_unknowns,
         "validator_result": "PASS" if not critical_unknowns else "PROVISIONAL",
         "permitted_classes": ["opening_specific_technical_search"],
-        "content_hash": content_hash,
+        "content_hash": content_snapshot.content_hash,
         "signature": None,
     }
+    return payload, content_snapshot
+
+
+def build_current_physical_model_lock_snapshot(
+    db: Session,
+    estimate: Estimate,
+) -> PhysicalModelLockContentSnapshot:
+    """Return the exact JSON preimage and hash for the current physical state.
+
+    This is read-only and makes no workflow or authority decision. The payload
+    contains the defect, evidence, opening, service, and service-opening-link
+    identities already bound by Physical Model Lock v1.
+    """
+
+    _payload, snapshot = _build_current_physical_model_lock_payload(db, estimate)
+    return snapshot
+
+
+def build_current_physical_model_lock_payload(
+    db: Session,
+    estimate: Estimate,
+) -> dict[str, Any]:
+    """Build the current deterministic summary without a workflow decision.
+
+    The summary and hash are derived from the same exact content snapshot, so
+    callers cannot observe a lock identity calculated from a different payload.
+    """
+
+    payload, _snapshot = _build_current_physical_model_lock_payload(db, estimate)
+    return payload
 
 
 def build_physical_model_lock_payload(db: Session, estimate: Estimate) -> dict[str, Any]:
@@ -425,8 +479,10 @@ def create_physical_model_lock(
 
 
 __all__ = [
+    "PhysicalModelLockContentSnapshot",
     "PhysicalModelLockError",
     "build_current_physical_model_lock_payload",
+    "build_current_physical_model_lock_snapshot",
     "build_physical_model_lock_payload",
     "create_physical_model_lock",
 ]
