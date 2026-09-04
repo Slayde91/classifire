@@ -121,9 +121,16 @@ def _physical_counts(db: Session, estimate_id: str, openings: list[Opening]) -> 
     return service_count, link_count
 
 
-def _require_pretechnical_dependencies_absent(
+def pretechnical_physical_amendment_dependency_code(
     db: Session, estimate: Estimate, openings: list[Opening]
-) -> None:
+) -> str | None:
+    """Return the first downstream dependency that makes an amendment unsafe.
+
+    Both the unsigned reopen path and a future signed-amendment writer must
+    reject the same technical, commercial, validation, snapshot, and release
+    dependencies. Returning a neutral token keeps their public safe-code
+    vocabularies separate without letting the checks drift apart.
+    """
     technical_opening_ids = [
         item.id
         for item in openings
@@ -131,15 +138,31 @@ def _require_pretechnical_dependencies_absent(
         or (item.technical_status or "").strip().lower() not in _UNASSESSED_TECHNICAL_STATUSES
     ]
     if technical_opening_ids:
-        raise PhysicalModelReopenError("REOPEN_TECHNICAL_DEPENDENCY_PRESENT")
+        return "technical"
     if db.scalar(select(EstimateLine.id).where(EstimateLine.estimate_id == estimate.id).limit(1)):
-        raise PhysicalModelReopenError("REOPEN_COMMERCIAL_DEPENDENCY_PRESENT")
+        return "commercial"
     if db.scalar(
         select(RuleEvaluation.id).where(RuleEvaluation.estimate_id == estimate.id).limit(1)
     ):
-        raise PhysicalModelReopenError("REOPEN_RULE_DEPENDENCY_PRESENT")
+        return "rule"
     if estimate.snapshot_hash or estimate.locked_at or estimate.approved_at:
-        raise PhysicalModelReopenError("REOPEN_SNAPSHOT_OR_RELEASE_PRESENT")
+        return "snapshot_or_release"
+    return None
+
+
+def _require_pretechnical_dependencies_absent(
+    db: Session, estimate: Estimate, openings: list[Opening]
+) -> None:
+    dependency = pretechnical_physical_amendment_dependency_code(db, estimate, openings)
+    if dependency is not None:
+        raise PhysicalModelReopenError(
+            {
+                "technical": "REOPEN_TECHNICAL_DEPENDENCY_PRESENT",
+                "commercial": "REOPEN_COMMERCIAL_DEPENDENCY_PRESENT",
+                "rule": "REOPEN_RULE_DEPENDENCY_PRESENT",
+                "snapshot_or_release": "REOPEN_SNAPSHOT_OR_RELEASE_PRESENT",
+            }[dependency]
+        )
 
 
 def reopen_pretechnical_physical_model(
@@ -236,5 +259,6 @@ def reopen_pretechnical_physical_model(
 __all__ = [
     "PhysicalModelReopenError",
     "PhysicalModelReopenReceipt",
+    "pretechnical_physical_amendment_dependency_code",
     "reopen_pretechnical_physical_model",
 ]

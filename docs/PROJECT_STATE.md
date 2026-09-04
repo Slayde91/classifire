@@ -61,7 +61,10 @@ The following boundaries are implemented and tested for their stated scope:
   rows and refuses signed locks. A no-write P-256 signed-amendment verifier now
 proves exact binding between a current signed lock, prospective payload, and
 semantically approved visual receipt, without invalidating anything; physical
-lock decimal values are normalised before hashing.
+lock decimal values are normalised before hashing. A transaction-ready no-write
+preflight now locks and rechecks the target Estimate/lock, lifecycle dependencies,
+and prospective Defect ownership, but still creates no admission, audit event,
+canonical row, invalidation, or replacement lock.
 - Proposal-only blind inventory, Physical proposal, Validator review, bounded
   correction, evidence review, human adjudication, and durable visual-validation
   receipt contracts.
@@ -307,7 +310,7 @@ run has been consumed and must not be repeated without new authority.
 | Phase | Status | Current gate |
 | --- | --- | --- |
 | 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #156; GitHub plan prevents branch-protection configuration. |
-| 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; unsigned locks have an audited reopen boundary and signed amendments have a no-write receipt-bound verifier, while signed admission execution remains. |
+| 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; unsigned locks have an audited reopen boundary and signed amendments have a receipt-bound verifier plus a transaction-ready no-write preflight, while signed admission execution remains. |
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, hash-bound Draft source-document predecessor lineage, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and technical-release publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |

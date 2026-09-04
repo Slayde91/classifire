@@ -435,10 +435,13 @@ release dependencies. A separate no-write P-256 signed-amendment verifier now
 requires an active current signed lock, a prospective canonical payload, and an
 exact semantically approved visual-validation receipt. Physical lock hashes also
 normalise decimal display scale so unchanged values remain stable after refresh.
+Its transaction-ready no-write preflight locks and rechecks the target Estimate
+and lock, downstream lifecycle dependencies, and prospective Defect ownership.
 
 **Remaining:** persist and execute a separately authorised signed lock-admission
-transaction with fresh preflight and write-time dependency rechecks. The verifier
-does not invalidate a signed lock or create a replacement lock.
+transaction that consumes this preflight and retains additive admission/audit
+outcomes. Neither verifier nor preflight invalidates a signed lock or creates a
+replacement lock.
 
 **Exit:** physical state and amendments are service-governed, attributable,
 audited, and cannot be changed by an unauthorised role.

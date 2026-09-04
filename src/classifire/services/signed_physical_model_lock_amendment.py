@@ -30,6 +30,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import Estimate
@@ -222,6 +223,7 @@ def require_signed_physical_model_lock_amendment(
     expected_key_id: str,
     amendment_submission_payload: object,
     now: datetime | None = None,
+    lock_target: bool = False,
 ) -> VerifiedSignedPhysicalModelLockAmendment:
     """Revalidate a signature and exact approved visual receipt without writing.
 
@@ -232,10 +234,18 @@ def require_signed_physical_model_lock_amendment(
     """
 
     item = _parse_manifest(_raw_manifest(manifest))
-    estimate = db.get(Estimate, item["estimate_id"])
+    estimate_statement = select(Estimate).where(Estimate.id == item["estimate_id"])
+    if lock_target:
+        estimate_statement = estimate_statement.with_for_update()
+    estimate = db.scalar(estimate_statement)
     if estimate is None or estimate.project_id != item["project_id"]:
         _fail("AMENDMENT_ESTIMATE_BINDING_INVALID")
-    lock = db.get(PhysicalModelLock, item["target_lock_id"])
+    lock_statement = select(PhysicalModelLock).where(
+        PhysicalModelLock.id == item["target_lock_id"]
+    )
+    if lock_target:
+        lock_statement = lock_statement.with_for_update()
+    lock = db.scalar(lock_statement)
     if lock is None:
         _fail("AMENDMENT_TARGET_LOCK_MISSING")
     if lock.project_id != estimate.project_id or lock.estimate_id != estimate.id:

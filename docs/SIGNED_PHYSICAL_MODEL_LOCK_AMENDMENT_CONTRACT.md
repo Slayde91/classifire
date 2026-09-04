@@ -52,12 +52,21 @@ fails closed unless all of these remain true at the time it is called:
 The verifier performs no write or audit event. It therefore cannot be mistaken
 for approval or execution authority.
 
+`preflight_signed_physical_model_lock_amendment` is the transaction-ready,
+still no-write companion. It locks the target Estimate and active lock, re-runs
+the signature/current-hash/visual-receipt checks after the relevant physical
+rows are locked, rejects later technical/commercial/rule/snapshot/release work,
+and proves every prospective canonical Defect belongs to the same Estimate. Its
+receipt is ephemeral: it creates no admission, audit event, canonical physical
+row, invalidation, or replacement lock.
+
 ## Future execution requirements
 
 A future separate signed lock-admission writer must, in one governed transaction:
 
-1. obtain a fresh no-write preflight and the explicit execution authority;
-2. re-run this verifier while holding the relevant canonical rows;
+1. obtain explicit execution authority and call the fresh no-write preflight
+   while holding its outer transaction open;
+2. retain the preflight's locks while applying only the manifest-bound amendment;
 3. recheck technical, commercial, rule, snapshot, release, protected-state, and
    amendment lifecycle dependencies at write time;
 4. retain the verified envelope and an attributed audit receipt through an
