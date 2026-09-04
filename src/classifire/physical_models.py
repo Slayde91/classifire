@@ -290,3 +290,48 @@ class PhysicalModelLockAmendmentAdmission(Base):
             "created_at",
         ),
     )
+
+
+class PhysicalModelLockAmendmentOutcome(Base):
+    """Immutable proof of one admission-bound signed lock amendment."""
+
+    __tablename__ = "physical_model_lock_amendment_outcomes"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_new_id)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_now_utc, nullable=False
+    )
+    admission_record_id: Mapped[str] = mapped_column(
+        ForeignKey("physical_model_lock_amendment_admissions.id"),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    amendment_admission_id: Mapped[str] = mapped_column(
+        String(36), unique=True, index=True, nullable=False
+    )
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey("estimates.id"), index=True, nullable=False)
+    target_lock_id: Mapped[str] = mapped_column(
+        ForeignKey("physical_model_locks.id"), unique=True, index=True, nullable=False
+    )
+    target_lock_content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    amendment_envelope_sha256: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    amendment_submission_payload_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    pre_physical_model_payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    pre_physical_model_content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    post_physical_model_payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    post_physical_model_content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    row_identity_map_json: Mapped[str] = mapped_column(Text, nullable=False)
+    row_identity_map_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    executed_by_user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id"), index=True, nullable=False
+    )
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    physical_model_lock_invalidated: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    replacement_lock_created: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    downstream_authority_granted: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    execution_receipt_json: Mapped[str] = mapped_column(Text, nullable=False)
+    execution_receipt_sha256: Mapped[str] = mapped_column(
+        String(64), unique=True, index=True, nullable=False
+    )

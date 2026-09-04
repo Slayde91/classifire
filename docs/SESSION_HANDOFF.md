@@ -5,9 +5,9 @@
 **Safe worktree rule:** use a clean isolated worktree based on `origin/main`;
 never use the conflicted root checkout as a publication source.
 
-**Reconciliation baseline:** origin/main at 82d288c14d0e04d70a75a7fde2191125fbd147ca
+**Reconciliation baseline:** origin/main at 7176ab30f73eee23e6c66f3b91424b95d0d05cc5
 
-**Verified shared-main implementation:** 82d288c14d0e04d70a75a7fde2191125fbd147ca (PR #156)
+**Verified shared-main implementation:** 7176ab30f73eee23e6c66f3b91424b95d0d05cc5 (PR #168)
 
 This handoff is a factual resume point. It does not authorise a report/provider
 run, canonical write, signing, registration, lock, deployment, technical or
@@ -15,7 +15,20 @@ commercial approval, or release.
 
 ## Start Here / Next Session
 
-### Current shared main - PRs #104-#156
+### Current shared main - PRs #104-#168
+PRs #163-#168 add sealed blank/mixed physical-submission regression proof,
+controlled unsigned pre-technical reopen, signed lock-amendment eligibility,
+transaction-ready no-write preflight, immutable admission journaling, and the
+exact lock-content snapshot API. Their shared-main boundary still creates no
+signed-amendment execution or replacement lock.
+
+This branch adds the separately permission-gated execution transaction. It
+consumes one exact registered signed admission, reconciles only its approved
+Opening/Service/link payload, invalidates only the signed target lock, and
+retains immutable before/after snapshots, row mappings, receipt, and audit. It
+creates no replacement lock and grants no downstream authority. All evidence is
+synthetic/disposable; no real report, provider, or canonical project operation
+was run.
 
 PR #104 remains the report-governance integration. PRs #105-#118 then merged
 the factual reconciliation, semantic snapshot identity, retained technical

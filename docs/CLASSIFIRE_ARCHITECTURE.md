@@ -76,9 +76,9 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0022_signed_physical_model_lock_amendment_admissions |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0023_signed_physical_model_lock_amendment_outcomes |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
-| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, and an audited unsigned-lock reopen service | No accepted replacement lock for the current UAT estimate; signed-amendment admission is journaled separately, while execution remains a future authority boundary |
+| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, and an audited unsigned-lock reopen service | No accepted replacement lock for the current UAT estimate; a permission-gated writer can execute an exact registered signed amendment, but it grants no downstream authority and cannot create the replacement lock |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus governed technical-release publication remain incomplete |
@@ -134,16 +134,23 @@ lineage without letting a generic API, a receipt, or the journal itself become
 lock-execution authority. **Consequences:** registration refuses unsigned,
 stale, altered, expired, mismatched, visually withheld, conflicting-replay, or
 corrupt retained candidates. Exact replays recheck every stored binding before
-returning the existing admission. A separate no-write registered-admission
-preflight reloads the exact journal record and reruns the locked signed preflight
-for a future writer. It neither invalidates a lock nor changes canonical
-physical rows,
-creates a replacement lock, creates an execution outcome, or grants technical,
-commercial, snapshot, release, or execution authority. Lock decimals remain
-semantically normalised before hashing so an unchanged model is not made stale
-by database display scale. **Migration impact:** forward-only migration
-`0022_signed_physical_model_lock_amendment_admissions` adds a separate journal;
-it does not alter the initial-submission admission table or existing locks.
+returning the existing admission. A separate no-write registered-admission preflight reloads the exact journal
+record and reruns the locked signed preflight. The permission-gated execution
+service consumes only that exact registered payload in the same caller-owned
+transaction. It reconciles Openings, Services, and ServiceOpeningLinks, preserves
+or records their logical row identities, invalidates only the signed target lock,
+and retains exact canonical before/after payloads, hashes, an identity map, an
+execution receipt, and an attributed audit event. Exact completed replays return
+the intact retained outcome; corrupt outcomes fail closed. Any write or audit
+failure rolls back the topology, invalidation, outcome, and audit together.
+Execution rejects a no-op and rechecks later technical, commercial, rule,
+snapshot, or release dependencies. It creates no replacement lock and grants no
+technical, commercial, snapshot, release, or other downstream authority. Lock
+decimals remain semantically normalised before hashing so an unchanged model is
+not made stale by database display scale. **Migration impact:** forward-only
+migration `0022_signed_physical_model_lock_amendment_admissions` adds the journal;
+`0023_signed_physical_model_lock_amendment_outcomes` adds the immutable execution
+outcome. Neither alters the initial-submission admission table.
 
 The read-only lock-content snapshot API exposes the exact canonical JSON preimage
 of the existing v1 lock hash. That payload includes the row identities and bound
