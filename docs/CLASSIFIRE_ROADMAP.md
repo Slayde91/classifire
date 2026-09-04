@@ -2,15 +2,17 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** 40dc789 (PR #173 merge, 2026-09-04)
+**Verified shared-main implementation:** 7e8f473 (PR #174 merge, 2026-09-05)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
 migrations, Git/GitHub state, and retained receipts outrank older roadmap text.
 
 Read with [PROJECT_STATE.md](./PROJECT_STATE.md) for the detailed current
-snapshot and [CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md) for the
-governing boundaries.
+snapshot, [CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md) for the
+governing boundaries, and
+[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
+for the accepted hybrid target and migration gates.
 
 ## 1. Status labels
 
@@ -28,6 +30,9 @@ governing boundaries.
 
 Shared main now includes:
 
+- an accepted hybrid target architecture in which deterministic CLASSIFIRE
+  services own durable workflow and optional bounded AI adapters perform only
+  proposal work where justified; this target is documented but not implemented;
 - core application, persistence, UI, API, audit, authentication, and packaged
   migration foundations;
 - physical-model, evidence, proposal-only visual, admission, and receipt
@@ -57,9 +62,10 @@ Shared main now includes:
 
 PR #104 validation run `33515411987` passed on its exact head `0f6c252`. Its
 first observed `main` push run `33516292114` also passed on merge `b6409a5`,
-including tests and the one-head Alembic check. Each PR #105-#156 check and
-corresponding `main` validation then passed through PR #156; the latest post-merge run is
-`33766069162` on `82d288c`. GitHub's branch-protection endpoint still returns
+including tests and the one-head Alembic check. Each PR #105-#174 check and
+corresponding `main` validation then passed through PR #174. The PR #174 check
+was `33892514672` on `e587cf8`; post-merge `main` run `33892921342` passed on
+`7e8f473`. GitHub's branch-protection endpoint still returns
 HTTP 403 because the current private-repository plan requires GitHub Pro or
 public visibility for that configuration; required-check configuration remains
 unverified.
@@ -78,8 +84,8 @@ safe codes without exposing exception content. No rerun is authorised.
 | 0. Product, repository, and change control | **In progress** | Reproducible clean source, protected publication, and auditable operational evidence |
 | 1. Domain and workflow governance | **In progress** | Governed physical amendments, receipt eligibility, and separate lock authority |
 | 2. Governed technical/commercial libraries | **In progress** | Immutable authorised source and runtime releases with complete lineage |
-| 3. OpenClaw and controlled write | **In progress** | Least privilege, reproducible operations, safe diagnostics, and approved operator flows |
-| 4. Mission Control integration | **In progress** | Useful visibility without becoming estimate truth |
+| 3. Hybrid orchestration and controlled execution | **In progress** | CLASSIFIRE-owned deterministic run state and bounded AI adapters with proven security and recovery parity before OpenClaw retirement |
+| 4. Operational visibility | **In progress** | Useful CLASSIFIRE-owned run visibility without a second project or approval database; Mission Control is transitional/read-only |
 | 5. Evidence intake and resolution | **In progress** | Complete, owned, exact-byte evidence and expected-label coverage across supported reports |
 | 6. Physical Model engine | **In progress** | Defensible model or explicit limitation for every known Defect |
 | 7. Independent visual topology gate | **In progress** | Durable independent validation for every future lock candidate |
@@ -94,12 +100,53 @@ safe codes without exposing exception content. No rerun is authorised.
 | 15. Production hardening | **In progress** | Secure, observable, recoverable, reproducible operation |
 | 16. Structural steel and full duct runs | **Planned / deferred** | Separate approved domains and evidence |
 
+### Cross-cutting ProjectPackage track
+
+`ProjectPackage` is a cross-cutting portability contract rather than a new
+authority-bearing shortcut through the phase sequence:
+
+| Phase | ProjectPackage responsibility |
+| --- | --- |
+| 0. Product, repository, and change control | Govern schema ownership, versioning, compatibility, decision records, and reviewed change control. |
+| 3. Hybrid orchestration and controlled execution | Run deterministic generation and validation as durable CLASSIFIRE jobs that still work when every model adapter is disabled. |
+| 5. Evidence intake and resolution | Define exact package membership, evidence provenance, export profiles, quarantine, safe archive handling, import validation, lineage, and conflict admission. |
+| 13. Canonical output generation | For packages claiming canonical or Released output, assemble immutable complete or redacted revisions and permission-checked downloads from the exact validated snapshot without recalculation. |
+| 15. Production hardening | Prove storage, authentication, signatures or encryption where adopted, compatibility migration, backup/restore, monitoring, malicious-archive resistance, performance, and recovery. |
+
+Imported approvals, locks, signatures, technical decisions, and release
+records always remain historical evidence. Integrity and signature checks prove
+package provenance only; they do not activate local authority. Active local
+authority always requires a new explicit local record created through the full
+applicable CLASSIFIRE gate.
+
+Policy-permitted Draft, Provisional, Validated, Locked, and Released package
+exports are allowed. The manifest preserves the exact lifecycle state,
+unresolved blockers, and authority status, and export never upgrades that state.
+Only a package claiming canonical or Released output requires the applicable
+Phase 12 validation, Phase 13 canonical output, and Phase 14 Human Release gates.
+
 The desk-quote path is a bounded proposal-only exception. It does not advance
 Phases 8-14 and is not a technical selection or canonical output.
 
 ## 4. Prioritised build plan
 
 ### Immediate next action
+
+#### Accepted target - hybrid CLASSIFIRE architecture
+
+[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
+accepts a deterministic CLASSIFIRE core with bounded optional AI adapters.
+OpenClaw is now a transitional adapter, not the long-term product foundation,
+but it remains in place until the documented security, receipt, recovery,
+observability, clean-machine, and rollback parity gates pass.
+
+The next architecture-migration implementation task is to characterise every
+used OpenClaw contract with synthetic golden and negative tests. Later tasks are
+CLASSIFIRE-owned job/run/stage persistence, a provider-neutral adapter behind a
+feature flag, deterministic `ProjectPackage` export and audited download,
+quarantined import, shared MCP/standalone application adapters, and only then
+OpenClaw retirement. These are planned changes: none is implemented or granted
+operational authority by accepting the decision.
 
 #### Completed shared-main foundation - scoped proposal-review reader access (PR #145)
 
@@ -412,7 +459,7 @@ private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
 **Remaining:** the root checkout is conflicted recovery evidence; hosted `main`
-validation passed through PR #126, but the current GitHub plan prevents
+validation passed through PR #174, but the current GitHub plan prevents
 branch-protection configuration; clean-machine and release reproducibility
 remain incomplete.
 
@@ -511,28 +558,48 @@ clean-machine import/recovery, and full commercial rate-inclusion/recovery rules
 **Exit:** every technical/commercial decision cites an immutable authorised
 release and its source cannot silently change after use.
 
-### Phase 3 - OpenClaw and controlled write
+### Phase 3 - Hybrid orchestration and controlled execution
 
 **Status:** In progress
+
+**Accepted target:** deterministic CLASSIFIRE commands own workflow and
+authority-bearing transitions. A small CLASSIFIRE-owned coordinator persists
+jobs, runs, stages, leases, retries, cancellation, safe outcomes, and audit
+correlation. Optional stateless model adapters may propose evidence
+interpretations or independent challenges; they do not control workflow or
+write canonical state.
 
 **Completed foundations:** role-limited no-tool proposal sessions, literal-
 loopback transports, evidence rehashing, tool attestation/audit, proposal-only
 receipts, admission registration, and one-shot submission boundaries.
 
-**Remaining:** PostgreSQL containment execution, clean-machine runbooks,
-credential custody, recovery/timeout evidence, and separate lock-admission
-design.
+**Remaining:** first freeze the used OpenClaw behaviour with synthetic contract
+tests. Then implement durable CLASSIFIRE job/run/stage state, provider-neutral
+inference adapters, governed secret custody, timeout/cancellation/retry and
+crash-recovery evidence, provider-egress classification/minimisation, permitted
+provider/endpoint and network-allowlist enforcement, tenant/project isolation,
+retention/residency policy, content-safe telemetry, cross-tenant and
+confused-deputy tests, negative authority tests, historical-receipt support, and
+feature-flag rollback. OpenClaw remains the current adapter until the retirement
+gates in Architecture Decision 0001 pass.
 
 **Exit:** every operation has minimum authority, safe diagnostics, exact inputs,
-reproducible setup, attribution, and tested recovery.
+reproducible setup, attribution, and tested recovery; deterministic package
+work remains available with all model adapters disabled; and the required
+runtime no longer depends on OpenClaw.
 
-### Phase 4 - Mission Control
+### Phase 4 - Operational visibility
 
 **Status:** In progress
 
 Mission Control may mirror tasks, run/gate summaries, and links. CLASSIFIRE
 remains the source of project, evidence, physical, technical, commercial,
 snapshot, and release truth.
+
+The accepted target is CLASSIFIRE-owned job/run/stage visibility. Mission
+Control may remain temporarily as a read-only projection and may be retired
+when the native visibility and recovery evidence are adequate. It may not own
+project state, approval state, workflow truth, or command authority.
 
 **Exit:** operational visibility is useful without a second mutable estimate
 database or approval workflow.
@@ -554,8 +621,18 @@ runner preflight that rejects legacy/unbound packets before a no-tool port call,
 
 **Remaining:** support for formats beyond PDF/XLSX/DOCX and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies CLASSIFIRE-owned five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT scoped reviewer surface, explicit reader grants, administrator-only immutable human-review annotations, and a service-only family runner that preflights every member before any no-tool port is created.
 
+The accepted hybrid target also adds a distinct future `ProjectPackage`
+portability boundary. The complete versioned schema, deterministic whole-project
+generation and validation, immutable storage, permission-checked download,
+quarantined import, lineage/conflict handling, export profiles, and signature
+policy are not implemented. This must not be confused with the narrower
+proposal-review package or current PDF/XLSX estimate exports.
+
 **Exit:** every downstream claim traces to exact retained bytes and a stable
-report/page/item or visual locator; expected items cannot disappear silently.
+report/page/item or visual locator; expected items cannot disappear silently;
+and package evidence membership, provenance, and safe-import prerequisites are
+defined and proven. End-to-end package generation remains a cross-cutting track,
+not a Phase 5 exit dependency.
 
 ### Phase 6 - Physical Model engine
 
@@ -701,6 +778,7 @@ import them into the active fire-seal/penetration runtime prematurely.
 - Count equality, whole-file database hashing, or a model answer as semantic
   acceptance.
 - Initial submission and Physical Model Lock as one authority.
+- A persistent autonomous agent fleet as a mandatory domain or runtime path.
 
 ## 7. Roadmap-wide rules
 
@@ -714,11 +792,23 @@ import them into the active fire-seal/penetration runtime prematurely.
 8. Shared work is commercially recovered once.
 9. No downstream phase bypasses an unresolved upstream gate.
 10. Final release remains human-only.
+11. ChatGPT, standalone, CLI, and administrative interfaces call the same
+    CLASSIFIRE application and domain services; they do not duplicate business
+    rules.
+12. No interface, package, model, agent, prompt, or orchestration task grants
+    canonical, technical, commercial, lock, deployment, or Human Release
+    authority by itself.
+13. AI must earn its use through measured accuracy, safety, or efficiency
+    benefit; deterministic workflows remain the default.
+14. OpenClaw retirement requires documented security, provider privacy/egress,
+    receipt, recovery, observability, clean-machine, compatibility, and rollback
+    parity, including cross-tenant and confused-deputy refusal.
 
 ## 8. Related documents
 
 - [Current Project State](./PROJECT_STATE.md)
 - [CLASSIFIRE Architecture](./CLASSIFIRE_ARCHITECTURE.md)
+- [Architecture Decision 0001 - Hybrid CLASSIFIRE Architecture](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 - [Current Session Handoff](./SESSION_HANDOFF.md)
 - [Desk Quote Assumption Contract](./DESK_QUOTE_ASSUMPTION_CONTRACT.md)
 - [Phase 8 Representative Run Package](./PHASE8_REPRESENTATIVE_RUN_PACKAGE.md)
