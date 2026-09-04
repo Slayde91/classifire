@@ -428,9 +428,13 @@ passes required checks, and is traceable without secrets or customer evidence.
 receipt, and lock concepts. Synthetic sealed-submission regression coverage proves
 that all-blank models remain service-free and that mixed blank/multi-service models
 retain their explicit links through the canonical writer and completeness check.
+The generic pre-technical path now has an attributed, audited reopen service and
+`estimate:write` API route: it invalidates only an active unsigned lock, preserves
+all retained physical rows, and refuses technical, commercial, rule, snapshot, or
+release dependencies.
 
-**Remaining:** complete amendment/reopen rules and visual-receipt eligibility in the
-future lock path.
+**Remaining:** extend amendment/reopen rules to the future signed lock-admission
+path and complete visual-receipt eligibility in that future lock path.
 
 **Exit:** physical state and amendments are service-governed, attributable,
 audited, and cannot be changed by an unauthorised role.

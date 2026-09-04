@@ -17,6 +17,10 @@ from ..models import Estimate, StoredFile, User
 from ..physical_models import Defect, EvidenceSource
 from ..security import require_permission
 from ..services.physical_model import PhysicalModelLockError, create_physical_model_lock
+from ..services.physical_model_reopen import (
+    PhysicalModelReopenError,
+    reopen_pretechnical_physical_model,
+)
 from ..services.physical_mutation_guard import PhysicalMutationError, require_evidence_mutation
 from ..services.workflow import WorkflowTransitionError
 
@@ -125,6 +129,12 @@ class EvidenceSourceInput(BaseModel):
 
 class PhysicalModelLockRequest(BaseModel):
     reason: str = Field(default="Physical model reviewed and locked", min_length=1, max_length=2000)
+
+
+class PhysicalModelReopenRequest(_StrictSiteEvidencePayload):
+    """Human reason for a pre-technical amendment of an unsigned generic lock."""
+
+    reason: str = Field(min_length=1, max_length=2000)
 
 
 def _estimate_or_404(db: Session, estimate_id: str) -> Estimate:
@@ -321,3 +331,39 @@ def lock_physical_model(
         "critical_unknowns": lock.critical_unknowns or [],
         "permitted_classes": lock.permitted_classes or [],
     }
+
+
+@router.post("/estimates/{estimate_id}/physical-model/reopen")
+def reopen_physical_model(
+    estimate_id: str,
+    payload: PhysicalModelReopenRequest,
+    request: Request,
+    db: Db,
+    user: Annotated[User, Depends(require_permission("estimate:write"))],
+) -> dict[str, Any]:
+    """Invalidate an unsigned pre-technical lock before a controlled amendment.
+
+    Signed-lock reopening remains deliberately unavailable: it needs its own
+    admission contract. This route preserves all retained physical rows and only
+    records an audited unlock decision when no later work depends on them.
+    """
+    estimate = _estimate_or_404(db, estimate_id)
+    try:
+        receipt = reopen_pretechnical_physical_model(
+            db,
+            estimate,
+            actor=user,
+            reason=payload.reason,
+            source_ip=request.client.host if request.client else None,
+        )
+    except PhysicalModelReopenError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "action": "reopen_pretechnical_physical_model",
+                "allowed": False,
+                "code": exc.code,
+            },
+        ) from exc
+    db.commit()
+    return receipt.as_dict()

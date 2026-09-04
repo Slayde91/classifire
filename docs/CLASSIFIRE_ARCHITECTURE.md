@@ -78,7 +78,7 @@ Approval for one operation never grants a later authority.
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
 | Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0021_proposal_review_annotations |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
-| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts | No accepted replacement lock for the current UAT estimate |
+| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, and an audited unsigned-lock reopen service | No accepted replacement lock for the current UAT estimate; signed-lock reopening remains a separate future admission boundary |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus governed technical-release publication remain incomplete |
@@ -107,6 +107,21 @@ Project
 
 An Opening is the aperture or bounded penetration condition. A Service is a
 physical item passing through it. Placeholder Services are prohibited.
+
+### Pre-technical physical amendments
+
+**Current architecture:** an active Physical Model Lock blocks evidence and
+physical mutations. **Change:** the generic API now allows an `estimate:write`
+human to reopen an active *unsigned* pre-technical lock with a nonblank reason.
+**Reason:** a human-reviewed physical correction needs a governed way to proceed
+without discarding retained evidence or topology. **Consequences:** reopening
+invalidates the old lock, records the actor, reason, prior lock hashes, current
+physical hash, and row counts in the existing audit record, then preserves every
+Defect, EvidenceSource, Opening, Service, and link for amendment. It fails closed
+when technical selection, estimate lines, rule evaluations, snapshots, approval,
+or any signed lock is present. **Migration impact:** none; it uses the existing
+lock invalidation and audit fields. Signed lock-admission reopening is not implied
+and remains a separate future contract.
 
 Barrier/substrate, plane, orientation, opening type and dimensions, FRL or
 governed assumption, service identity/material/quantity, link provenance, and
