@@ -543,6 +543,21 @@ def _require_intact_outcome(
         raise SignedPhysicalModelLockAmendmentExecutionError("AMENDMENT_EXECUTION_OUTCOME_CORRUPT")
 
 
+def require_intact_signed_physical_model_lock_amendment_outcome(
+    db: Session,
+    outcome: PhysicalModelLockAmendmentOutcome,
+    *,
+    expected_amendment_envelope_sha256: str,
+) -> None:
+    """Recheck immutable execution evidence for a downstream governed step."""
+
+    _require_intact_outcome(
+        db,
+        outcome,
+        expected_amendment_envelope_sha256=expected_amendment_envelope_sha256,
+    )
+
+
 def _canonical_object(value: str) -> dict[str, Any]:
     parsed = json.loads(value)
     if not isinstance(parsed, dict) or _canonical_json(parsed) != value:
@@ -586,4 +601,5 @@ __all__ = [
     "ROW_IDENTITY_MAP_SCHEMA",
     "SignedPhysicalModelLockAmendmentExecutionError",
     "execute_registered_signed_physical_model_lock_amendment",
+    "require_intact_signed_physical_model_lock_amendment_outcome",
 ]

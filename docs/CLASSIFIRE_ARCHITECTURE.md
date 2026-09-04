@@ -78,7 +78,7 @@ Approval for one operation never grants a later authority.
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
 | Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0023_signed_physical_model_lock_amendment_outcomes |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
-| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, and an audited unsigned-lock reopen service | No accepted replacement lock for the current UAT estimate; a permission-gated writer can execute an exact registered signed amendment, but it grants no downstream authority and cannot create the replacement lock |
+| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and signed replacement-lock preflight | No accepted replacement lock for the current UAT estimate; replacement verification/preflight is read-only and the admission journal plus lock writer remain unimplemented |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus governed technical-release publication remain incomplete |
@@ -154,6 +154,17 @@ not made stale by database display scale. **Migration impact:** forward-only
 migration `0022_signed_physical_model_lock_amendment_admissions` adds the journal;
 `0023_signed_physical_model_lock_amendment_outcomes` adds the immutable execution
 outcome. Neither alters the initial-submission admission table.
+
+A separate signed replacement-lock contract now binds one short-lived P-256
+approval to the exact immutable amendment outcome, invalidated signed-lock hash,
+approved visual receipt, and unchanged amended physical-model hash. Its
+transaction-ready preflight locks the Estimate and every current physical row,
+rechecks scope-aware physical completeness, editable lifecycle state, and the absence of technical, commercial,
+rule, snapshot, or release dependencies, then returns only a deterministic
+no-write receipt. It creates no admission or lock and grants no downstream
+authority. **Migration impact:** none. An immutable admission and a separate
+permission-gated writer are still required before replacement-lock creation can
+exist.
 
 The read-only lock-content snapshot API exposes the exact canonical JSON preimage
 of the existing v1 lock hash. That payload includes the row identities and bound

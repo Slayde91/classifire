@@ -455,13 +455,19 @@ dependencies fail closed; injected write failure proves the mutation and
 invalidation roll back together. A disposable PostgreSQL two-session race test
 proves a concurrent exact retry blocks and then returns the same single outcome
 without a second mutation or audit event. It does not create a replacement lock or grant
-technical, commercial, snapshot, release, or other downstream authority.
+technical, commercial, snapshot, release, or other downstream authority. A separate
+short-lived P-256 replacement-lock manifest can now be checked by a transaction-ready,
+no-write preflight. It locks the Estimate and every current physical row; rechecks the
+intact amendment outcome, prior signed-lock binding, approved visual receipt, exact
+amended content hash, scope-aware physical completeness, editable status, and absence of downstream dependencies; and
+returns an exact no-write receipt. Changed state, expired or altered signatures, corrupt
+evidence, any active lock, or later technical, commercial, rule, snapshot, or release
+state fails closed.
 
-**Remaining:** separately design and authorise replacement-lock creation over the
-amended physical state. Eligibility, preflight, admission registration, and the
-registered-admission preflight remain read-only; amendment execution deliberately
-leaves the Estimate without an active Physical Model Lock until that separate
-human-governed lock step succeeds.
+**Remaining:** add an immutable replacement-lock admission journal, then separately
+implement and authorise the permission-gated transaction that consumes that exact
+admission and creates the replacement lock. Verification and preflight remain read-only;
+amendment execution still leaves the Estimate without an active Physical Model Lock.
 
 **Exit:** physical state and amendments are service-governed, attributable,
 audited, and cannot be changed by an unauthorised role.
