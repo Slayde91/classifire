@@ -319,7 +319,7 @@ deployment, or release authority.
 
 The report path remains service-only. Source exists for owned report bytes,
 stable PDF, bounded XLSX, and bounded DOCX locators/scopes, transient documentary context, report-aware runtime
-input, assessment/review controllers, and deterministic packages. The single-report runner composes the whole sequence, but no supported CLI, API, or UI invokes it. An approved report family can assemble only an aggregate of separately validated proposal-review packages; it never invokes, alters, or combines runner inputs.
+input, assessment/review controllers, and deterministic packages. The single-report runner composes the whole sequence, but no supported CLI, API, or UI invokes it. The service-only family runner first preflights every approved ordered member's exact retained source, expected-label manifest, and V2 scope before it creates any no-tool port; it then runs and packages members separately before assembling the aggregate. It never joins, alters, or combines member evidence, scopes, runtime inputs, or proposals.
 
 Shared main has the CLASSIFIRE-owned proposal-review metadata record and internal human /proposal-reviews surface from PR #144, plus PR #145's auditable active/revoked Project/package grants for eligible internal human readers and administrator-only immutable human-review annotations. Non-administrator list/detail access requires a matching active grant. It uses CLASSIFIRE-owned five-year retention from registration, separate redactions, legal-hold protection that prevents deletion, deletion only after retention, safe locators, and tamper refusal with a content-safe audit event. It does not execute the runner and provides no canonical, technical, commercial, lock, deployment, or release authority.
 
