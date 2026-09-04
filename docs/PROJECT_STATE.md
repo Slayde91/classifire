@@ -54,7 +54,11 @@ The following boundaries are implemented and tested for their stated scope:
   admission registration, one-shot initial submission, and separate lock
   creation. Synthetic sealed-submission tests prove that all-blank models stay
   service-free and mixed blank/multi-service models preserve their explicit
-  service links through the writer and completeness check.
+  service links through the writer and completeness check. An active unsigned
+  generic pre-technical lock can now be reopened only by an attributed,
+  reasoned, audited `estimate:write` request before any technical, commercial,
+  rule, snapshot, or release dependency exists; reopening preserves physical
+  rows and refuses signed locks.
 - Proposal-only blind inventory, Physical proposal, Validator review, bounded
   correction, evidence review, human adjudication, and durable visual-validation
   receipt contracts.
@@ -300,7 +304,7 @@ run has been consumed and must not be repeated without new authority.
 | Phase | Status | Current gate |
 | --- | --- | --- |
 | 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #156; GitHub plan prevents branch-protection configuration. |
-| 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; complete amendment and lock eligibility remain. |
+| 1. Domain/workflow governance | **In progress** | Core physical and authority boundaries exist; unsigned generic pre-technical locks have an audited reopen boundary, while signed-lock amendment and visual receipt eligibility remain. |
 | 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation safeguards, hash-bound Draft source-document predecessor lineage, current-authority gates and reviewer visibility, immutable published technical source-lineage checks, and pricing-release controls exist; manufacturer-neutral lineage and technical-release publication governance remain. |
 | 3. OpenClaw/controlled write | **In progress** | Least-privilege boundaries and safe receipt codes exist; the proposal runner is shared-main but has no operator route or real report operation. |
 | 4. Mission Control | **In progress** | Basic client/bootstrap exists; it is not canonical workflow state. |
