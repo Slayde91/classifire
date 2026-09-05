@@ -8,6 +8,22 @@ QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP.
 
 > **Release status:** pre-production integration build. This repository contains the working application foundation, editable pricing and technical-library services, deterministic calculation and rule engines, branded output renderers, and Mission Control integration scaffolding. It must not be represented as production-authorised until the published release gates and source-parity tests pass.
 
+## Approved direction and next milestone
+
+The current product name is **CLASSIFIRE**; legacy package/asset names remain
+where needed for compatibility. Accepted [ADR 0001](docs/ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
+and [ADR 0002](docs/ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md) define
+a shared deterministic core with optional AI and four independent capabilities:
+scope analysis, system matching, estimating and reporting.
+
+The next milestone is an interactive, persisted **Draft Scope workspace** in the
+existing UI, with validation, reopen and exact JSON download. This is planned;
+the current application foundation is not yet that prototype. See the
+[product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
+[verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
+Complete visible slices before broad refinement; preserve existing authority
+and security protections. Agent contributors should read [AGENTS.md](AGENTS.md).
+
 ## What is included
 
 - FastAPI application and server-rendered estimator/admin UI
@@ -79,7 +95,9 @@ classifire doctor
 
 ## Mission Control
 
-Mission Control is the architecture and operations control plane. QUANTIFIRE remains the canonical system for evidence, estimates, pricing, technical records, calculations, snapshots and outputs.
+Mission Control is a transitional orchestration/visibility integration. CLASSIFIRE
+retains canonical project state and authority. It is not required for the planned
+manual Draft Scope prototype; operational OpenClaw retirement remains parity-gated.
 
 After configuring `CLASSIFIRE_MISSION_CONTROL_URL` and `CLASSIFIRE_MISSION_CONTROL_API_KEY`:
 
