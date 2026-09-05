@@ -512,3 +512,125 @@ def test_cli_timeout_contract_is_unavailable_and_does_not_expose_process_output(
     assert error.value.code == "RPC_UNAVAILABLE"
     assert "synthetic-private" not in str(error.value)
     assert error.value.__suppress_context__ is True
+
+
+@pytest.mark.parametrize("failure", ["timeout", "process", "os"])
+def test_uncertain_session_creation_never_replays_or_switches_route(
+    tmp_path: Path, failure: str
+) -> None:
+    calls: list[tuple[str, str]] = []
+    created: list[str] = []
+    params = {"key": "synthetic-session", "agentId": "cf-validator", "model": "provider/model"}
+
+    def runner(args, **kwargs):
+        method = args[3]
+        calls.append(("primary", method))
+        if method == "sessions.describe":
+            return subprocess.CompletedProcess(args, 0, '{"session":null}', "")
+        assert method == "sessions.create"
+        created.append(json.loads(args[args.index("--params") + 1])["key"])
+        if failure == "timeout":
+            raise subprocess.TimeoutExpired(
+                args, timeout=12, output="private-output", stderr="private-stderr"
+            )
+        if failure == "process":
+            raise subprocess.SubprocessError("private-process-detail")
+        raise OSError("private-os-detail")
+
+    def fallback(method: str, values: dict[str, Any]) -> dict[str, Any]:
+        calls.append(("fallback", method))
+        created.append(values["key"])
+        return {"ok": True}
+
+    rpc = OpenClawCliOrLoopbackGatewayRpc(
+        primary=OpenClawCliGatewayRpc(command_prefix=(_executable(tmp_path),), runner=runner),
+        fallback=fallback,
+    )
+    with pytest.raises(Phase8GatewayRpcError) as error:
+        rpc("sessions.create", params)
+    assert error.value.code == "RPC_OUTCOME_UNKNOWN"
+    assert str(error.value) == "Phase 8 Gateway RPC failed: RPC_OUTCOME_UNKNOWN."
+    assert error.value.__suppress_context__ is True
+    assert created == ["synthetic-session"]
+    assert rpc("sessions.describe", {"key": "synthetic-session"}) == {"session": None}
+    assert calls == [("primary", "sessions.create"), ("primary", "sessions.describe")]
+
+
+def test_read_only_fallback_selection_allows_one_later_creation() -> None:
+    calls: list[tuple[str, str]] = []
+
+    def primary(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        calls.append(("primary", method))
+        raise Phase8GatewayRpcError("RPC_UNAVAILABLE")
+
+    def fallback(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        calls.append(("fallback", method))
+        return {"session": None} if method == "sessions.describe" else {"ok": True}
+
+    rpc = OpenClawCliOrLoopbackGatewayRpc(primary=primary, fallback=fallback)
+    assert rpc("sessions.describe", {"key": "synthetic-session"}) == {"session": None}
+    assert rpc(
+        "sessions.create",
+        {"key": "synthetic-session", "agentId": "cf-validator", "model": "provider/model"},
+    ) == {"ok": True}
+    assert calls == [
+        ("primary", "sessions.describe"),
+        ("fallback", "sessions.describe"),
+        ("fallback", "sessions.create"),
+    ]
+
+
+def test_managed_runtime_stops_after_uncertain_creation_before_fallback_or_inference(
+    tmp_path: Path, monkeypatch
+) -> None:
+    packet = _packet(tmp_path)
+    calls: list[str] = []
+    counts = {"fallback": 0, "token": 0, "http": 0}
+
+    def runner(args, **kwargs):
+        method = args[3]
+        calls.append(method)
+        if method == "sessions.describe":
+            return subprocess.CompletedProcess(args, 0, '{"session":null}', "")
+        assert method == "sessions.create"
+        raise subprocess.TimeoutExpired(args, timeout=12, output="private-output")
+
+    def fallback(self, method, params):
+        counts["fallback"] += 1
+        raise Phase8GatewayRpcError("RPC_UNAVAILABLE")
+
+    monkeypatch.setattr(OpenClawLoopbackGatewayRpc, "__call__", fallback)
+
+    def token_provider() -> str:
+        counts["token"] += 1
+        return "synthetic-token"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        counts["http"] += 1
+        return httpx.Response(500)
+
+    with ManagedPhase8VisualRuntime(
+        command_prefix=(_executable(tmp_path),),
+        base_url="http://127.0.0.1:18789/v1",
+        provider="test-provider",
+        physical_model="physical-model",
+        validator_model="validator-model",
+        physical_agent_id="cf-phase8-visual-physical",
+        validator_agent_id="cf-phase8-visual-validator",
+        implementation_revision="a" * 40,
+        evidence_packet=packet,
+        token_provider=token_provider,
+        http_transport=httpx.MockTransport(handler),
+        rpc_runner=runner,
+    ) as runtime:
+        with pytest.raises(Phase8OpenResponsesTransportError) as error:
+            runtime.transport.invoke(
+                role="cf-validator",
+                stage="blind_inventory",
+                request=_request(packet, runtime.profile),
+            )
+        assert error.value.code == "TOOL_ATTESTATION_UNAVAILABLE"
+        assert "private-output" not in str(error.value)
+        assert error.value.__suppress_context__ is True
+    assert calls == ["sessions.describe", "sessions.create"]
+    assert counts == {"fallback": 0, "token": 0, "http": 0}

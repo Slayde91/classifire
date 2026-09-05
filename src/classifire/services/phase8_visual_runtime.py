@@ -466,7 +466,7 @@ class OpenClawLoopbackGatewayRpc:
 
 
 class OpenClawCliOrLoopbackGatewayRpc:
-    """Fall back only from an unavailable CLI to the same local Gateway RPC."""
+    """Select fallback on unavailable reads; never replay an uncertain creation."""
 
     def __init__(self, *, primary: GatewayRpc, fallback: GatewayRpc) -> None:
         self._primary = primary
@@ -483,6 +483,10 @@ class OpenClawCliOrLoopbackGatewayRpc:
             except Phase8GatewayRpcError as exc:
                 if exc.code != "RPC_UNAVAILABLE":
                     raise
+                if method == "sessions.create":
+                    # A failed reply does not prove creation had no remote effect.
+                    # Leave route selection unchanged and let attestation fail closed.
+                    raise Phase8GatewayRpcError("RPC_OUTCOME_UNKNOWN") from None
                 self._primary_is_unavailable = True
         result = self._fallback(method, params)
         if not isinstance(result, dict):

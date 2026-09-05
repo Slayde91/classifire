@@ -2,7 +2,7 @@
 
 **Verified snapshot:** 2026-09-05 (AEST)
 **Product status:** Pre-production implementation and controlled UAT
-**Verified shared-main baseline:** `c080424c907b01a2a979f9efbfe9561bb097ba81` (PR #177, 2026-09-05)
+**Verified shared-main baseline:** `036e9272368adfca8748f36ca7b37672d7ea8d8d` (PR #178, 2026-09-05)
 **Latest executable-change baseline:** `7e8f473e45e51c4cf3505846cd978749efbdac59` (PR #174)
 
 PR #175 adopted Architecture Decision 0001 in documentation. It did not implement
@@ -12,30 +12,34 @@ under `docs/`; root-level duplicates are not maintained.
 
 ## Contract characterisation progress
 
-The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
-current callers and existing coverage. Thirteen added synthetic fallback/audit
-cases bring the eight-file focused suite to 83 passing tests. Executable source,
-runtime configuration and authority are unchanged; full retirement parity is
-not complete. PR #177 merged this inventory and coverage as c080424; its exact
-post-merge CI [33933164159](https://github.com/Slayde91/classifire/actions/runs/33933164159)
-passed. This documentation reconciliation rechecked that result and the 83-test
-synthetic baseline; it makes no executable change.
+PR #177 merged the initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md)
+and 13 fallback/audit cases. PR #178 reconciled documentation; exact main CI
+[33934179868](https://github.com/Slayde91/classifire/actions/runs/33934179868)
+passed on 036e927. Full retirement parity is not complete.
 
-**Next bounded task:** investigate ambiguous CLI timeout handling using a fake
-completed session creation followed by a lost reply. The CLI maps timeout to
-RPC_UNAVAILABLE, which can select fallback even for sessions.create. Determine
-and test a fail-closed resolution without altering read-only fallback,
-historical receipt compatibility or calling a real Gateway. This takes priority
-over coordinator/adapter/package implementation. Other inventory gaps are listed
-in the contract document.
+**Current correction (candidate until merged):** unavailable CLI session creation
+now fails with RPC_OUTCOME_UNKNOWN rather than repeating sessions.create through
+fallback. Read-only fallback remains available; a route selected by an earlier
+read can still receive one creation attempt. Five new synthetic cases prove
+lost-reply refusal, unchanged route selection and managed-runtime failure before
+fallback, token access or HTTP inference. The focused suite passes 88 tests;
+17 additional report/representative tests pass. No canonical or release
+authority, receipt schema, provider configuration or migration changes.
+
+**Next bounded task after this correction merges:** characterise loopback socket
+deadlines, closure, malformed frames and request/response correlation using the
+existing injected socket fixture. Map coverage first; add only demonstrated
+missing negative cases and correct only reproduced contract defects. Preserve
+least-privilege scopes, safe errors and receipt compatibility; no real Gateway.
+Complete remaining contract gates before coordinator/adapter/package work.
 
 ## 1. Project health and publication
 
 | Area | Verified state | Meaning |
 | --- | --- | --- |
-| Shared main | PR #177 merged as `c080424`; executable lineage through PR #174 remains present. | Hybrid is accepted, not a completed runtime migration. |
-| Hosted CI | [Main run 33933164159](https://github.com/Slayde91/classifire/actions/runs/33933164159) succeeded on exactly `c080424`. | Source/test/static/migration evidence, not production or real-UAT proof. |
-| Local synthetic verification | 83 tests passed across the eight contract/security files in the handoff; the prior 70-test baseline remains historical evidence. | Existing contracts have a passing baseline; full migration parity is not proven. |
+| Shared main | PR #178 merged as `036e927`; executable lineage through PR #174 remains present. | Hybrid is accepted, not a completed runtime migration. |
+| Hosted CI | [Main run 33934179868](https://github.com/Slayde91/classifire/actions/runs/33934179868) succeeded on exactly `036e927`. | Source/test/static/migration evidence, not production or real-UAT proof. |
+| Local synthetic verification | 88 tests passed across the eight contract/security files in the handoff; the prior 70-test baseline remains historical evidence. | Existing contracts have a passing baseline; full migration parity is not proven. |
 | Migration history | One Alembic head: `0026_single_active_technical_release` on `legacy_adjudicated_lineage`. | Preserve forward-only history. |
 | Branch governance | Detailed protection/rules APIs previously returned HTTP 403; basic main metadata reports protected=false and no enforced checks. CODEOWNERS names Slayde91. | Normal PR #176 merge was accepted after policy evidence; never bypass failed checks or required review. |
 | Open work | Issues #42 (retained Phase 8 tooling reconciliation) and #43 (OpenClaw development dependency advisories); draft PRs #9-#13 on legacy feature-to-feature bases. | Reconcile issue contents against source; do not bulk-merge the draft stack. |
@@ -52,12 +56,12 @@ two tests. Staged additions, unstaged code/configuration/plugin/UI/test changes,
 and untracked material are pre-existing recovery evidence. Protected pytest
 directories prevent a complete untracked inventory. None belongs to this change.
 
-Current documentation branch: `docs/current-hybrid-state-20260905`, worktree
-`C:\CLASSIFIRE\.tmp\docs-current-hybrid-state-20260905`, created clean
-from `c080424`. Only these four documents belong to this update. PR #176
-previously merged the documentation reconciliation; PR #177 merged the initial
-contract inventory/tests. Check Git/GitHub for this update's later publication
-outcome; this snapshot does not claim its own future merge.
+Current implementation branch: `fix/phase8-uncertain-session-create-20260905`,
+worktree `C:\CLASSIFIRE\.tmp\phase8-uncertain-session-create-20260905`,
+advanced cleanly to `036e927` before editing. This candidate changes one runtime
+service, its tests, the contract inventory and four continuity documents.
+Verify its eventual commit/PR/merge in GitHub; the snapshot does not claim a
+future publication result.
 
 ## 2. Implemented foundations
 
@@ -118,8 +122,8 @@ it retroactively. No repeat report/provider run is authorised by this snapshot.
 
 - Phases 0-7 and 15 have implemented foundations with incomplete exits.
 - Phase 3 initial contract inventory/tests are merged. The next implementation
-  task is the bounded uncertain-session-creation correction; this update is
-  documentation-only.
+  task after the candidate correction merges is loopback socket/protocol
+  characterisation. The current candidate fixes uncertain session creation.
 - Phase 8 remains blocked on fresh authority, evidence review, semantic approval
   and separately governed canonical/replacement-lock gates.
 - Phases 9-14 remain dependency-blocked; package portability does not bypass them.
@@ -131,12 +135,11 @@ See the [roadmap](./CLASSIFIRE_ROADMAP.md) for phase-specific acceptance criteri
 
 ## 6. Recommended Next Actions
 
-1. **Resolve uncertain session creation after a lost CLI reply.**
-   Add a composed fake-transport regression proving whether fallback can repeat
-   an already completed creation, then make only the justified fail-closed fix.
-   Preserve read-only fallback, no-tool enforcement, context separation, safe
-   diagnostics and receipt compatibility. The initial inventory and 13 added
-   cases are already merged; do not repeat them.
+1. **Characterise the remaining loopback socket/protocol boundary.**
+   After publishing the current correction, extend the existing injected socket
+   tests for deadline/closure, malformed frames and response correlation.
+   Reproduce gaps before any source correction; preserve least-privilege scopes,
+   no-tool guards and safe diagnostics. Do not repeat merged CLI/audit coverage.
    [Start Here / Next Session](./SESSION_HANDOFF.md#start-here--next-session)
    provides files, commands and completion criteria.
 2. **After the remaining characterisation gate, establish the smallest durable run contract.**
@@ -155,15 +158,17 @@ or a general agent platform.
 
 ## 7. Verification and limits
 
-Freshly checked for this documentation update: fetched main at c080424;
-isolated starting tree; root conflict/local-change state; open PRs/issues;
-successful exact-main CI 33933164159; basic branch metadata (unprotected,
-no enforced checks); CLI/fallback and worker source; 83 passing synthetic
-contract/security tests; documentation scope, links and diff checks.
-
-Earlier PR #177 validation recorded full Ruff/Bandit and Mypy across 142 source
-files. Those static checks are historical evidence here; hosted CI for this
-documentation change must be checked separately before publication.
+Current candidate verification: four new regression cases failed before the
+source correction (three lost-reply cases and managed-runtime fallback refusal);
+the read-selected route compatibility case already passed. After the correction,
+88 focused tests and 17 additional report/representative tests passed. The new
+test's initial expected error text was corrected to the existing public format.
+Full Ruff/Bandit and Mypy (142 source files) passed; one Alembic head remains.
+Already-declared type stubs were installed only in task-temporary storage. No real Gateway/provider,
+customer evidence, canonical write or lock was exercised. Representative tests
+emit an existing Pillow getdata deprecation warning; their assertions pass.
+Exact baseline main CI 33934179868 is successful. Candidate hosted CI and merge
+must be verified separately; source tests do not prove deployment or full parity.
 
 Detailed historical PR/runtime evidence remains in Git history and linked
 documents; it was not all rerun here. No real report, customer evidence,

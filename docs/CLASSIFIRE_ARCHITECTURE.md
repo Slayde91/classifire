@@ -4,7 +4,7 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main baseline:** `c080424c907b01a2a979f9efbfe9561bb097ba81` (PR #177, 2026-09-05)
+**Verified shared-main baseline:** `036e9272368adfca8748f36ca7b37672d7ea8d8d` (PR #178, 2026-09-05)
 
 **Latest executable-change baseline:** 7e8f473 (PR #174)
 
@@ -19,22 +19,26 @@ Git state, and retained runtime receipts determine factual implementation state.
 
 ## Contract characterisation progress
 
-The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
-current callers and existing coverage. Thirteen added synthetic fallback/audit
-cases bring the eight-file focused suite to 83 passing tests. Executable source,
-runtime configuration and authority are unchanged; full retirement parity is
-not complete. PR #177 merged this inventory and coverage as c080424; its exact
-post-merge CI [33933164159](https://github.com/Slayde91/classifire/actions/runs/33933164159)
-passed. This documentation reconciliation rechecked that result and the 83-test
-synthetic baseline; it makes no executable change.
+PR #177 merged the initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md)
+and 13 fallback/audit cases. PR #178 reconciled documentation; exact main CI
+[33934179868](https://github.com/Slayde91/classifire/actions/runs/33934179868)
+passed on 036e927. Full retirement parity is not complete.
 
-**Next bounded task:** investigate ambiguous CLI timeout handling using a fake
-completed session creation followed by a lost reply. The CLI maps timeout to
-RPC_UNAVAILABLE, which can select fallback even for sessions.create. Determine
-and test a fail-closed resolution without altering read-only fallback,
-historical receipt compatibility or calling a real Gateway. This takes priority
-over coordinator/adapter/package implementation. Other inventory gaps are listed
-in the contract document.
+**Current correction (candidate until merged):** unavailable CLI session creation
+now fails with RPC_OUTCOME_UNKNOWN rather than repeating sessions.create through
+fallback. Read-only fallback remains available; a route selected by an earlier
+read can still receive one creation attempt. Five new synthetic cases prove
+lost-reply refusal, unchanged route selection and managed-runtime failure before
+fallback, token access or HTTP inference. The focused suite passes 88 tests;
+17 additional report/representative tests pass. No canonical or release
+authority, receipt schema, provider configuration or migration changes.
+
+**Next bounded task after this correction merges:** characterise loopback socket
+deadlines, closure, malformed frames and request/response correlation using the
+existing injected socket fixture. Map coverage first; add only demonstrated
+missing negative cases and correct only reproduced contract defects. Preserve
+least-privilege scopes, safe errors and receipt compatibility; no real Gateway.
+Complete remaining contract gates before coordinator/adapter/package work.
 
 ## 1. Governing reasoning chain
 
@@ -537,8 +541,9 @@ desk assumption or model estimate into a confirmed canonical fact.
 The hybrid decision merged in PR #175 at 9c0fc7d, with executable code
 unchanged from the PR #174 baseline.
 PR #177 completed the initial inventory and 13 synthetic contract cases.
-Characterisation remains incomplete. The next bounded task is a composed
-lost-reply/session-creation regression and the justified fail-closed correction.
+Characterisation remains incomplete. The current candidate refuses uncertain
+CLI creation replay. After it merges, the next bounded task is synthetic
+loopback socket deadline/closure, malformed-frame and response-correlation coverage.
 Complete the remaining contract gates before adding CLASSIFIRE-owned job/run/stage
 state or a provider-neutral inference adapter. Portable `ProjectPackage`, MCP,
 standalone-client, and OpenClaw-retirement capabilities remain planned. No part
