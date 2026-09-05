@@ -1,9 +1,9 @@
 # CLASSIFIRE Master Roadmap
 
 **Status:** Active; prototype-first delivery approved 2026-09-05.
-**Verified shared-main baseline:** `e9f9263125438674e8c59f2e6d660b1609878035` (PR #198).
-Service-size review is merged; exact-head/main CI succeeded.
-The current complete-report profile extends the usable reporting UI; validation/publication
+**Verified shared-main baseline:** `06442b15e164a1c91dd350944666f510ac22ed62` (PR #199).
+All four Draft report profiles are merged; exact-head/main CI succeeded.
+The current selected package download extends the usable UI; validation/publication
 is tracked in PROJECT_STATE.md. No full production phase is completed by these Draft slices.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
@@ -82,34 +82,36 @@ prototype into it.
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
 | **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; full governed pricing still upcoming** | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
-| **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile active local increment** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Configurable Draft package download next; import/client parity follow | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
+| **P5. Project portability and shared ChatGPT access** | Selected Draft package download active local increment; safe import next; client parity follows | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
-**Current delivery order:** P0, P1a, P4a, P2a, P3a, estimate-only P4b, first PDF
-P1b, substrate/gap and service-size P2b, first XLSX P3b and scope-and-system P4b are
-merged. Current P4b complete reporting has a synthetic preview/create/download/edit
-and restart journey. Finish its final checks/publication; do not rebuild prior slices.
+**Current delivery order:** P0, P1a, P4a, P2a, P3a, all three additional P4b
+profiles, first PDF P1b, partial measured P2b and first XLSX P3b are merged. The
+current P5 increment has a real configuration/save/download/reconfiguration/restart
+journey. Finish its checks/publication; do not rebuild earlier slices.
 
-**Next: P5 configurable Draft ProjectPackage download.** Select coherent saved Scope,
-optional System Match/Estimate revisions and existing report outputs through the UI.
-Preview membership/omissions, explicitly retain the package revision, then download
-its exact validated archive. This joins the independently usable capabilities into
-the portable product the owner requested. Scope-only packaging must remain usable
-without forcing matching or estimating. Imported/source metadata confers no authority.
+**Active: selected Draft ProjectPackage download.** One coherent Scope workspace,
+optional review/Estimate and chosen retained report pairs can be previewed without
+writes, explicitly saved as an immutable package revision and downloaded. Source
+bodies stay external/withheld, permissions follow included content, and historical
+bytes stay exact. This does not complete full project/history/source coverage.
+See [contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md).
 
-Build the minimum package contract with this visible interaction. Reuse existing
-artifact readers/rights and compatible archive helpers; the untracked older candidate
-is not a shipped Draft schema. Declare included, external, withheld and unavailable
-content, verify exact hashes and dependencies, retain historical bytes and enforce
-project/technical/commercial/export rights. Never recalculate, embed restricted
-technical/pricing bodies by default or imply full database completeness. Safe import
-into a new Draft project and shared ChatGPT access follow this proven command.
+**Next: safe new-project package import.** Users should upload a supported package,
+inspect its complete selected membership and foreign provenance, explicitly import
+into a new local Draft project, reopen and continue supported independent capabilities.
+Validate ZIP bounds/members/hashes and every capability schema, map identities and
+cross-artifact dependencies, preserve original history/outputs and mark external
+sources unresolved. Never activate foreign approval, release or lock claims. Do not
+silently drop review/Estimate artifacts or assume existing Scope JSON import handles
+them. Ship the minimum necessary import contracts together with this visible UI.
 
-This moves to portability after the fourth report choice instead of repeatedly
-polishing reports. Broader evidence analysis, actual applicability and governed
-pricing retain their unmet exits; a complete report profile does not complete them.
+Then add shared ChatGPT access over these proven commands. Broader evidence analysis,
+actual applicability and governed pricing retain unmet exits; archive transfer does
+not complete them. Source-body export, multiple workspace collections, full revision
+history, production retention/quotas and operational security remain future work.
 
 Defer every-format intake, OCR/agent automation, exhaustive technical edge coverage,
 general job infrastructure and report polish until the supported interactions have
@@ -117,8 +119,7 @@ been tried. Scanner availability, safe retained-byte handling, uncertainty and h
 authority remain mandatory on the exposed PDF path. Never invent technical constraints
 or use customer technical/pricing sources without the required authorization.
 
-P4b complete profile remains an unmerged local increment until publication is verified.
-All four Draft choices then exist; professional/production acceptance remains separate. P2a remains retrieval/review, P3a manual provisional costing; P2b/P3b keep
+All four P4b Draft choices are merged; professional/production acceptance remains separate. P2a remains retrieval/review, P3a manual provisional costing; P2b/P3b keep
 their full applicability and governed pricing exits. Trial each usable increment
 before broad refinement. Complete portability and ChatGPT adapters reuse proven
 commands; OpenClaw retirement still depends on verified protection parity. No
@@ -157,14 +158,12 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Finish current complete-report validation/publication if outstanding. Then deliver
-configurable Draft ProjectPackage preview/save/download using current artifact
-versions, explicit membership and source/export policy. Do not replace that UI slice
-with a schema-only exercise. SESSION_HANDOFF.md gives prerequisites, files and tests.
-No provider/customer data, canonical write, lock or release is required for this demo.
-
-Safe import, ChatGPT access, broader evidence/applicability/pricing and OpenClaw
-protection parity remain required work with their own verification gates.
+Finish selected package download validation/publication if outstanding. Then deliver
+safe new-project package import with exact membership/provenance and explicit local
+identity/authority rules. SESSION_HANDOFF.md gives prerequisites, files and tests.
+No provider/customer data, canonical write, lock or release is required for the demo.
+ChatGPT access, broader evidence/applicability/pricing and OpenClaw protection parity
+remain required work with their own verification gates.
 
 ### Authoritative readiness track
 

@@ -52,8 +52,8 @@ preserve partial/unapproved status and exact historical bytes. It is merged in P
 explicit dimension meanings against pinned limits, without implying compatibility.
 Service-size review is merged in PR #198. The current
 [complete report profile](docs/DRAFT_COMPLETE_REPORT_CONTRACT.md) combines saved Scope,
-technical review and commercial details. Next is configurable ProjectPackage download
-using these proven artifacts; full import and ChatGPT access remain upcoming.
+technical review and commercial details and is merged in PR #199. Selected package
+download is now the current increment; safe import and ChatGPT access remain upcoming.
 See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
 [verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
 Complete visible slices before broad refinement; preserve existing authority and
@@ -162,3 +162,8 @@ Proprietary. See [PROPRIETARY.md](PROPRIETARY.md). No open-source licence is gra
 The Draft candidate screen also supports explicit substrate/gap measured-limit
 review with immutable history. See the [synthetic demo and contract](docs/DRAFT_CONSTRAINT_REVIEW.md).
 These are partial, unapproved checks; other technical conditions remain unresolved.
+
+The current [selected Draft project package](docs/DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md)
+adds UI configuration, preview, immutable revisions and ZIP download over saved
+capability artifacts. Safe new-project import is next; source-file redistribution,
+full project coverage, ChatGPT and production readiness remain unfinished.

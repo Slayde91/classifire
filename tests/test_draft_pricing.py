@@ -169,6 +169,25 @@ def test_workbook_selection_preserves_history_and_source_permissions(
         assert not any(cell.data_type == "f" for row in book["Pricing sources"] for cell in row)
         book.close()
         reports.read_report(db, actor, x.ids[2], estimate.id, report.id)
+        from classifire.services import draft_project_packages as packages
+
+        selected = {
+            "scope_revision": 2,
+            "estimate_id": estimate.id,
+            "estimate_revision": 3,
+            "estimate_reports": [report.id],
+        }
+        package_preview = packages.preview(db, actor, x.ids[2], selected)
+        package = packages.create_package(
+            db, actor, x.ids[2], selected, 0, package_preview["preview_hash"]
+        )
+        archive = packages.package_bytes(db, actor, x.ids[2], package.id)
+        manifest, _ = packages.inspect_archive(archive)
+        assert any(
+            ref["kind"] == "pricing_source" and ref["membership"] == "withheld"
+            for ref in manifest["source_manifest"]
+        )
+
         db.commit()
         assert (
             pricing.pricing_staleness(
@@ -189,6 +208,7 @@ def test_workbook_selection_preserves_history_and_source_permissions(
                 ROLE_PERMISSIONS, "estimator", ROLE_PERMISSIONS["estimator"] - {"library:read"}
             )
             for read in (
+                lambda: packages.package_bytes(db, actor, x.ids[2], package.id),
                 lambda: estimates.read_estimate_revision(db, actor, x.ids[2], estimate.id),
                 lambda: reports.report_bytes(db, actor, x.ids[2], estimate.id, report.id, "xlsx"),
             ):

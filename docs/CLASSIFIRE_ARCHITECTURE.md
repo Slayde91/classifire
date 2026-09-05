@@ -2,11 +2,11 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.13 - complete Draft report profile.
+**Architecture version:** 5.14 - selected Draft project package download.
 
-**Verified shared baseline:** `e9f9263125438674e8c59f2e6d660b1609878035`, merged
-PR #198. Exact-head CI 33994014117 passed 1,427 tests; main CI 33994444807 succeeded.
-Current branch: `feat/draft-complete-reports-20260906`. This is its prepublication
+**Verified shared baseline:** `06442b15e164a1c91dd350944666f510ac22ed62`, merged
+PR #199. Exact-head CI 33996804767 passed 1,439 tests; main CI 33997262382 succeeded.
+Current branch: `feat/draft-project-package-20260906`. This is its prepublication
 checkpoint; live Git/PR/CI determine publication, not the document version.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
@@ -36,8 +36,9 @@ It is not shared-main architecture. It accepts an explicit snapshot/inventory
 and authorization callback, validates the declared graph and hashes, and writes
 or validates deterministic archives. A supplied inventory cannot prove database
 completeness, and a callback interface cannot establish an export policy.
-Database projection, rights/redaction, immutable persistence, download and
-quarantined import remain separate unimplemented boundaries.
+That candidate remains unshipped. The current Draft-specific implementation below
+adds selected artifact projection, rights, immutable persistence and download; full
+project coverage, source-body export and quarantined import remain unfinished.
 
 Do not reuse `services/snapshot.py:build_estimate_snapshot` as a read-only package
 extractor: it calls `recalculate_estimate`. Future projection must preserve a
@@ -78,13 +79,13 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review is merged; complete reporting is the current increment. ProjectPackage/ChatGPT remain planned. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is the current increment; import/ChatGPT remain planned. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
-| Packages | Scope v1/v2 exchange plus v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Whole-project archives, candidate/estimate import and rights/membership projection remain later work; these artifacts are not a complete ProjectPackage. |
-| Reporting | Scope-only, estimate-only and scope-and-system Draft snapshots plus current complete profile; paired PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
+| Packages | Scope v1/v2 exchange plus v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Current selected Draft archive projection and download reuse these readers; whole-project coverage, source-body membership and capability imports remain later work. |
+| Reporting | Scope-only, estimate-only and scope-and-system Draft snapshots plus merged complete profile; paired PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
 ### Implemented manual Draft Scope slice (P0)
@@ -1325,7 +1326,7 @@ profile. No report is rerendered on read. The separately versioned synthetic siz
 fixture preserves older demo source bytes and refuses unrelated fixture adoption.
 See [the v3 contract and limits](./DRAFT_SERVICE_SIZE_REVIEW.md).
 
-### Implemented current increment: complete Draft reports (P4b)
+### Merged complete Draft reports (P4b, PR #199)
 
 Current architecture -> change -> reason: the existing Estimate report command now
 accepts an explicit complete profile because its retained Estimate already contains
@@ -1342,15 +1343,31 @@ Technical/library/export rights remain enforced. The profile grants no approval,
 canonical write, lock or release. No migration or new dependency is required.
 See [the contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md).
 
-**Next proposed visible slice:** configure, preview, retain and download a Draft
-ProjectPackage containing explicitly selected coherent capability revisions and
-existing reports. Use shared artifact readers and export checks; do not recalculate
-or export all database/private source contents implicitly. Declare included,
-external, withheld and unavailable evidence. The unrelated archive candidate predates
-the current Draft contracts; reassess compatible archive helpers without adopting
-its canonical-table projection as the Draft product schema. Safe new-project import
-and a thin ChatGPT adapter follow the proven download command. Full canonical archive
-coverage and production operation remain separate unresolved work.
+### Implemented current increment: selected Draft package (P5)
+
+Current architecture -> change -> reason: users can now collect coherent selected
+Scope/review/Estimate revisions and existing reports in one portable ZIP. Shared
+`draft_project_packages` reads existing validated services and report retention;
+`draft_project_package_ui` adds configuration, no-write preview, explicit save,
+history and download. No business logic is duplicated or upstream capability run.
+
+Migration 0034 adds immutable package records with exact manifest/archive hashes,
+workspace revision/parent links and creator/time. Scope-only selection is independent;
+optional content uses its existing technical, commercial and export permissions.
+Source bodies stay external/withheld with explicit pointers. A selected workspace
+package does not claim all project workspaces, source files or historical revisions.
+The structural ZIP inspector never extracts or grants import authority. Historical
+bytes remain unchanged; current source/dependency changes are displayed separately.
+See [contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md).
+
+**Next proposed visible slice:** safe new-project package import. Validate the full
+selected membership and all capability schemas, retain foreign provenance and exact
+originals, and map identities/dependencies explicitly without granting foreign
+approval or local technical authority. Unsupported inputs must be rejected or
+visibly retained unresolved, never silently dropped. This requires actual import
+contracts for review/Estimate data; current export is not proof of those contracts.
+A thin ChatGPT adapter follows proven shared commands. Full source redistribution,
+project/history coverage, retention/quotas and operational assurance remain debt.
 
 ### Separate production and adapter backlog
 

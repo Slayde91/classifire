@@ -50,7 +50,7 @@ def test_pricing_migration_preserves_saved_work_and_binds_exact_source_bytes(tmp
         ids = (draft.id, estimate.id)
         db.commit()
         assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
-    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
+    _upgrade(url, environment, "0033_draft_pricing_sources", enforce_sqlite_foreign_keys=True)
     assert "draft_pricing_sources" in inspect(engine).get_table_names()
     assert any(
         fk["constrained_columns"] == ["stored_file_id", "source_sha256", "source_size_bytes"]
@@ -61,7 +61,7 @@ def test_pricing_migration_preserves_saved_work_and_binds_exact_source_bytes(tmp
         assert revision_bytes(db, actor, *ids) == old
         for kind, content in outputs.items():
             assert report_bytes(db, actor, *ids, report_id, kind) == content
-        assert assess_deployment_lineage(db).code == "CLEAN_STACK_HEAD_CONFIRMED"
+        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
         assert (
             db.scalar(text("SELECT version_num FROM alembic_version"))
             == "0033_draft_pricing_sources"
