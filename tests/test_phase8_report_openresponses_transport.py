@@ -210,6 +210,7 @@ def _transport(
     *,
     guard: _FakeGuard | None = None,
     completion_verifier=_fake_completion,
+    completion_lifecycle=None,
     token_provider=lambda: "secret-token",  # noqa: B008
 ) -> tuple[Phase8ReportOpenResponsesTransport, _FakeGuard]:
     selected_guard = guard or _FakeGuard()
@@ -221,6 +222,7 @@ def _transport(
             runtime_input=runtime,
             session_guard=selected_guard,
             completion_verifier=completion_verifier,
+            completion_lifecycle=completion_lifecycle,
             runtime_agent_ids={
                 "cf-physical-model": "cf-physical-model",
                 "cf-validator": "cf-validator",

@@ -219,6 +219,7 @@ def _transport(
     *,
     guard: FakeGuard | None = None,
     completion_verifier=_fake_completion,
+    completion_lifecycle=None,
     token_provider=lambda: "secret-token",  # noqa: B008
     runtime_agent_ids: dict[str, str] | None = None,
     prompt_renderer: object | None = None,
@@ -236,6 +237,7 @@ def _transport(
             evidence_packet=packet,
             session_guard=selected_guard,
             completion_verifier=completion_verifier,
+            completion_lifecycle=completion_lifecycle,
             runtime_agent_ids=selected_runtime_agent_ids,
             prompt_renderer=prompt_renderer,
             clock_ms=lambda: 1234567890,

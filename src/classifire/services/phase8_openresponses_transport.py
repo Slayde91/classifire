@@ -11,8 +11,10 @@ import base64
 import hashlib
 import ipaddress
 import json
+import logging
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any, Protocol
@@ -150,6 +152,15 @@ class NoToolSessionAudit:
 
 
 @dataclass(frozen=True, slots=True)
+class ExecutionDispatchBinding:
+    agent_id: str
+    session_id_sha256: str
+    request_sha256: str
+    request_body_sha256: str
+    attestation_receipt_sha256: str
+
+
+@dataclass(frozen=True, slots=True)
 class ExecutionCompletionContext:
     agent_id: str
     session_id_sha256: str
@@ -195,6 +206,14 @@ class ExecutionCompletionVerifier(Protocol):
         self,
         context: ExecutionCompletionContext,
     ) -> ExecutionCompletionEvidence: ...
+
+
+class ExecutionCompletionLifecycle(Protocol):
+    def begin(self, binding: ExecutionDispatchBinding) -> int: ...
+
+    def complete(self, context: ExecutionCompletionContext) -> ExecutionCompletionEvidence: ...
+
+    def abort(self) -> None: ...
 
 
 def validate_execution_completion(
@@ -548,6 +567,7 @@ class Phase8OpenResponsesTransport:
         runtime_agent_ids: Mapping[str, str],
         prompt_renderer: Phase8VisualPromptRenderer | None = None,
         completion_verifier: ExecutionCompletionVerifier | None = None,
+        completion_lifecycle: ExecutionCompletionLifecycle | None = None,
         clock_ms: Callable[[], int] | None = None,
     ) -> None:
         self._client = client
@@ -555,7 +575,14 @@ class Phase8OpenResponsesTransport:
         self._token_provider = token_provider
         self._packet = evidence_packet
         self._guard = session_guard
+        if completion_lifecycle is not None and (
+            completion_verifier is not None
+            or not all(callable(getattr(completion_lifecycle, name, None))
+                       for name in ("begin", "complete", "abort"))
+        ):
+            raise Phase8OpenResponsesTransportError("COMPLETION_EVIDENCE_INVALID")
         self._completion_verifier = completion_verifier
+        self._completion_lifecycle = completion_lifecycle
         selected_agent_ids = dict(runtime_agent_ids)
         if (
             set(selected_agent_ids) != _ALLOWED_ROLES
@@ -657,86 +684,95 @@ class Phase8OpenResponsesTransport:
         if len(encoded_body) > _MAX_REQUEST_BYTES:
             raise Phase8OpenResponsesTransportError("REQUEST_BODY_TOO_LARGE")
 
-        self._require_completion_verifier()
-        try:
-            token = self._token_provider()
-        except Exception:
-            raise Phase8OpenResponsesTransportError("GATEWAY_TOKEN_UNAVAILABLE") from None
-        if not isinstance(token, str) or not token.strip():
-            raise Phase8OpenResponsesTransportError("GATEWAY_TOKEN_UNAVAILABLE")
-
-        started_at_ms = self._clock_ms()
-        response: httpx.Response | None = None
-        request_error: Phase8OpenResponsesTransportError | None = None
-        try:
-            response = self._client.post(
-                self._endpoint,
-                content=encoded_body,
-                headers={
-                    "Authorization": f"Bearer {token.strip()}",
-                    "Content-Type": "application/json",
-                    "x-openclaw-agent-id": runtime_agent_id,
-                    "x-openclaw-session-key": session_key,
-                },
-                follow_redirects=False,
+        with self._completion_scope(
+            ExecutionDispatchBinding(
+                agent_id=runtime_agent_id,
+                session_id_sha256=session_id_sha256,
+                request_sha256=canonical_json_sha256(trusted_request),
+                request_body_sha256=hashlib.sha256(encoded_body).hexdigest().upper(),
+                attestation_receipt_sha256=attestation.receipt_sha256,
             )
-        except httpx.TimeoutException:
-            request_error = Phase8OpenResponsesTransportError("GATEWAY_TIMEOUT")
-        except httpx.HTTPError:
-            request_error = Phase8OpenResponsesTransportError("GATEWAY_REQUEST_FAILED")
-        except Exception:
-            request_error = Phase8OpenResponsesTransportError("GATEWAY_REQUEST_FAILED")
-        finally:
-            del token
+        ) as started_at_ms:
+            try:
+                token = self._token_provider()
+            except Exception:
+                raise Phase8OpenResponsesTransportError("GATEWAY_TOKEN_UNAVAILABLE") from None
+            if not isinstance(token, str) or not token.strip():
+                raise Phase8OpenResponsesTransportError("GATEWAY_TOKEN_UNAVAILABLE")
 
-        audit = self._audit(
-            agent_id=runtime_agent_id,
-            session_key=session_key,
-            session_id_sha256=session_id_sha256,
-            after_ms=started_at_ms,
-        )
-        if audit.tool_calls:
-            raise Phase8OpenResponsesTransportError("SERVER_TOOL_ACTION_DETECTED")
-        if request_error is not None:
-            raise request_error
-        if response is None:
-            raise Phase8OpenResponsesTransportError("GATEWAY_REQUEST_FAILED")
-        payload, response_id = self._parse_response(response)
-        completion_sha256 = self._verify_completion(
-            agent_id=runtime_agent_id,
-            session_id_sha256=session_id_sha256,
-            request=trusted_request,
-            encoded_body=encoded_body,
-            response=response,
-            audit=audit,
-            attestation_receipt_sha256=attestation.receipt_sha256,
-            started_at_ms=started_at_ms,
-        )
+            if started_at_ms is None:
+                started_at_ms = self._clock_ms()
+            response: httpx.Response | None = None
+            request_error: Phase8OpenResponsesTransportError | None = None
+            try:
+                response = self._client.post(
+                    self._endpoint,
+                    content=encoded_body,
+                    headers={
+                        "Authorization": f"Bearer {token.strip()}",
+                        "Content-Type": "application/json",
+                        "x-openclaw-agent-id": runtime_agent_id,
+                        "x-openclaw-session-key": session_key,
+                    },
+                    follow_redirects=False,
+                )
+            except httpx.TimeoutException:
+                request_error = Phase8OpenResponsesTransportError("GATEWAY_TIMEOUT")
+            except httpx.HTTPError:
+                request_error = Phase8OpenResponsesTransportError("GATEWAY_REQUEST_FAILED")
+            except Exception:
+                request_error = Phase8OpenResponsesTransportError("GATEWAY_REQUEST_FAILED")
+            finally:
+                del token
 
-        receipt_sha256 = canonical_json_sha256(
-            {
-                "schema": "CLASSIFIRE-PHASE8-OPENRESPONSES-TRANSPORT-v2",
-                "request_sha256": canonical_json_sha256(trusted_request),
-                "prompt_template_sha256": rendered.template_sha256,
+            audit = self._audit(
+                agent_id=runtime_agent_id,
+                session_key=session_key,
+                session_id_sha256=session_id_sha256,
+                after_ms=started_at_ms,
+            )
+            if audit.tool_calls:
+                raise Phase8OpenResponsesTransportError("SERVER_TOOL_ACTION_DETECTED")
+            if request_error is not None:
+                raise request_error
+            if response is None:
+                raise Phase8OpenResponsesTransportError("GATEWAY_REQUEST_FAILED")
+            payload, response_id = self._parse_response(response)
+            completion_sha256 = self._verify_completion(
+                agent_id=runtime_agent_id,
+                session_id_sha256=session_id_sha256,
+                request=trusted_request,
+                encoded_body=encoded_body,
+                response=response,
+                audit=audit,
+                attestation_receipt_sha256=attestation.receipt_sha256,
+                started_at_ms=started_at_ms,
+            )
+
+            receipt_sha256 = canonical_json_sha256(
+                {
+                    "schema": "CLASSIFIRE-PHASE8-OPENRESPONSES-TRANSPORT-v2",
+                    "request_sha256": canonical_json_sha256(trusted_request),
+                    "prompt_template_sha256": rendered.template_sha256,
+                    "session_id_sha256": session_id_sha256,
+                    "attestation_receipt_sha256": attestation.receipt_sha256,
+                    "audit_receipt_sha256": audit.receipt_sha256,
+                    "execution_completion_sha256": completion_sha256,
+                    "evidence": byte_receipts,
+                    "openresponses_response_id_sha256": _sha256_text(response_id),
+                    "payload_sha256": canonical_json_sha256(payload),
+                }
+            )
+            return {
+                "schema": VISUAL_INFERENCE_RESPONSE_SCHEMA,
+                "agent_id": role,
+                "provider": attestation.provider,
+                "model": attestation.model,
                 "session_id_sha256": session_id_sha256,
-                "attestation_receipt_sha256": attestation.receipt_sha256,
-                "audit_receipt_sha256": audit.receipt_sha256,
-                "execution_completion_sha256": completion_sha256,
-                "evidence": byte_receipts,
-                "openresponses_response_id_sha256": _sha256_text(response_id),
-                "payload_sha256": canonical_json_sha256(payload),
+                "transport_receipt_sha256": receipt_sha256,
+                "tool_calls": [],
+                "payload": payload,
             }
-        )
-        return {
-            "schema": VISUAL_INFERENCE_RESPONSE_SCHEMA,
-            "agent_id": role,
-            "provider": attestation.provider,
-            "model": attestation.model,
-            "session_id_sha256": session_id_sha256,
-            "transport_receipt_sha256": receipt_sha256,
-            "tool_calls": [],
-            "payload": payload,
-        }
 
     def _validate_request(
         self,
@@ -914,7 +950,37 @@ class Phase8OpenResponsesTransport:
             raise Phase8OpenResponsesTransportError("TOOL_AUDIT_MISMATCH")
         return audit
 
+    @contextmanager
+    def _completion_scope(
+        self, binding: ExecutionDispatchBinding,
+    ) -> Iterator[int | None]:
+        self._require_completion_verifier()
+        lifecycle = self._completion_lifecycle
+        if lifecycle is None:
+            yield None
+            return
+        began = False
+        try:
+            before = self._clock_ms()
+            try:
+                started = lifecycle.begin(binding)
+                began = True
+                if type(started) is not int or not before <= started <= self._clock_ms():
+                    raise ValueError
+            except Exception:
+                raise Phase8OpenResponsesTransportError("COMPLETION_EVIDENCE_UNAVAILABLE") from None
+            yield started
+        except BaseException:
+            if began:
+                try:
+                    lifecycle.abort()
+                except Exception:
+                    logging.getLogger(__name__).warning("COMPLETION_ABORT_UNAVAILABLE")
+            raise
+
     def _require_completion_verifier(self) -> ExecutionCompletionVerifier:
+        if self._completion_lifecycle is not None:
+            return self._completion_lifecycle.complete
         if not callable(self._completion_verifier):
             raise Phase8OpenResponsesTransportError("COMPLETION_EVIDENCE_UNAVAILABLE")
         return self._completion_verifier

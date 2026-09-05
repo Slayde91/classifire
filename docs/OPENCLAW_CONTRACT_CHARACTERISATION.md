@@ -190,3 +190,19 @@ A trusted producer must supply and authenticate capture/terminal evidence.
 Next integrate the transport pre-dispatch/post-response lifecycle without a
 circular completion dependency, and prove it synthetically. Production capture,
 key custody/rotation, real cancellation and OpenClaw retirement remain gated.
+
+
+### Phase 8 lifecycle candidate after PR #184
+
+Journal PR #184 merged at bdd6719 and exact main CI 33940542172 passed.
+The candidate now supplies optional pre-dispatch and post-response lifecycle
+hooks to both transports; begin/complete/abort reuse journal persistence without
+recursive execution. Conflicting verifier/lifecycle injection is refused.
+A failed competing begin does not abort the owner; failures after begin abort
+local acceptance while preserving the original safe error if cleanup fails.
+
+Local validation passed 222 tests; seven guarded PostgreSQL cases remain for
+hosted CI. Managed factories stay unwired: authenticated production capture still
+has no proven implementation. The next product slice is deterministic Draft
+ProjectPackage v1 membership/validation/export, permitted independently of AI
+under Decision 0001. Provider assurance and retirement remain separate gates.
