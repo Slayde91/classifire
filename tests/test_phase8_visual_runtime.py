@@ -455,3 +455,60 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
     assert rpc_calls[0][1]["key"].startswith("agent:cf-phase8-visual-validator:classifire-phase8-")
     assert counts == {"token": 0, "http": 0}
     assert client.is_closed
+
+
+@pytest.mark.parametrize("code", ["RPC_REJECTED", "RPC_OUTPUT_INVALID", "RPC_PARAMS_FORBIDDEN"])
+def test_cli_policy_failure_never_falls_back_or_changes_route(code: str) -> None:
+    calls: list[str] = []
+
+    def primary(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        calls.append("primary")
+        raise Phase8GatewayRpcError(code)
+
+    def fallback(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        calls.append("fallback")
+        return {"session": None}
+
+    rpc = OpenClawCliOrLoopbackGatewayRpc(primary=primary, fallback=fallback)
+    for _ in range(2):
+        with pytest.raises(Phase8GatewayRpcError) as error:
+            rpc("sessions.describe", {"key": "synthetic-session"})
+        assert error.value.code == code
+    assert calls == ["primary", "primary"]
+
+
+@pytest.mark.parametrize("invalid_on", ["primary", "fallback"])
+def test_rpc_fallback_rejects_non_object_results(invalid_on: str) -> None:
+    calls: list[str] = []
+
+    def primary(method: str, params: dict[str, Any]) -> Any:
+        calls.append("primary")
+        if invalid_on == "fallback":
+            raise Phase8GatewayRpcError("RPC_UNAVAILABLE")
+        return []
+
+    def fallback(method: str, params: dict[str, Any]) -> Any:
+        calls.append("fallback")
+        return []
+
+    rpc = OpenClawCliOrLoopbackGatewayRpc(primary=primary, fallback=fallback)
+    with pytest.raises(Phase8GatewayRpcError) as error:
+        rpc("sessions.describe", {"key": "synthetic-session"})
+    assert error.value.code == "RPC_OUTPUT_INVALID"
+    assert calls == (["primary"] if invalid_on == "primary" else ["primary", "fallback"])
+
+
+def test_cli_timeout_contract_is_unavailable_and_does_not_expose_process_output(
+    tmp_path: Path,
+) -> None:
+    def runner(args, **kwargs):
+        raise subprocess.TimeoutExpired(
+            args, timeout=12, output="synthetic-private-output", stderr="synthetic-private-stderr"
+        )
+
+    rpc = OpenClawCliGatewayRpc(command_prefix=(_executable(tmp_path),), runner=runner)
+    with pytest.raises(Phase8GatewayRpcError) as error:
+        rpc("sessions.describe", {"key": "synthetic-session"})
+    assert error.value.code == "RPC_UNAVAILABLE"
+    assert "synthetic-private" not in str(error.value)
+    assert error.value.__suppress_context__ is True

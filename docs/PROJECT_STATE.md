@@ -2,7 +2,7 @@
 
 **Verified snapshot:** 2026-09-05 (AEST)
 **Product status:** Pre-production implementation and controlled UAT
-**Verified shared-main baseline:** `9c0fc7d32b29125b53e4d3164f56ae5e00deacfe` (PR #175)
+**Verified shared-main baseline:** `c3ab07aa9ceccf8910389773d889a6c796b7abbf` (PR #176, 2026-09-05)
 **Latest executable-change baseline:** `7e8f473e45e51c4cf3505846cd978749efbdac59` (PR #174)
 
 PR #175 adopted Architecture Decision 0001 in documentation. It did not implement
@@ -10,15 +10,33 @@ the hybrid migration. This snapshot separates freshly checked source/Git/test
 evidence from historical runtime evidence. All four maintained documents live
 under `docs/`; root-level duplicates are not maintained.
 
+## Contract characterisation progress
+
+The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
+current callers and existing coverage. Thirteen added synthetic fallback/audit
+cases bring the eight-file focused suite to 83 passing tests. Executable source,
+runtime configuration and authority are unchanged; full retirement parity is
+not complete. PR #176 documentation merged as c3ab07a and its exact post-merge
+CI [33932371817](https://github.com/Slayde91/classifire/actions/runs/33932371817)
+passed.
+
+**Next bounded task:** investigate ambiguous CLI timeout handling using a fake
+completed session creation followed by a lost reply. The CLI maps timeout to
+RPC_UNAVAILABLE, which can select fallback even for sessions.create. Determine
+and test a fail-closed resolution without altering read-only fallback,
+historical receipt compatibility or calling a real Gateway. This takes priority
+over coordinator/adapter/package implementation. Other inventory gaps are listed
+in the contract document.
+
 ## 1. Project health and publication
 
 | Area | Verified state | Meaning |
 | --- | --- | --- |
-| Shared main | PR #175 merged as `9c0fc7d`; executable lineage through PR #174 remains present. | Hybrid is accepted, not a completed runtime migration. |
-| Hosted CI | [Main run 33899855871](https://github.com/Slayde91/classifire/actions/runs/33899855871) succeeded on exactly `9c0fc7d`. | Source/test/static/migration evidence, not production or real-UAT proof. |
-| Local synthetic verification | 70 tests passed across the eight contract/security files in the handoff; collection independently confirmed 70 tests. | Existing contracts have a passing baseline; full migration parity is not proven. |
+| Shared main | PR #176 merged as `c3ab07a`; executable lineage through PR #174 remains present. | Hybrid is accepted, not a completed runtime migration. |
+| Hosted CI | [Main run 33932371817](https://github.com/Slayde91/classifire/actions/runs/33932371817) succeeded on exactly `c3ab07a`. | Source/test/static/migration evidence, not production or real-UAT proof. |
+| Local synthetic verification | 83 tests passed across the eight contract/security files in the handoff; the prior 70-test baseline remains historical evidence. | Existing contracts have a passing baseline; full migration parity is not proven. |
 | Migration history | One Alembic head: `0026_single_active_technical_release` on `legacy_adjudicated_lineage`. | Preserve forward-only history. |
-| Branch governance | Branch-protection API returned HTTP 403 with the GitHub Pro/public-repository requirement. | Required-check configuration remains unverified; never bypass failed checks. |
+| Branch governance | Detailed protection/rules APIs return HTTP 403; basic main metadata reports protected=false and no enforced checks. CODEOWNERS names Slayde91. | Normal PR #176 merge was accepted after policy evidence; never bypass failed checks or required review. |
 | Open work | Issues #42 (retained Phase 8 tooling reconciliation) and #43 (OpenClaw development dependency advisories); draft PRs #9-#13 on legacy feature-to-feature bases. | Reconcile issue contents against source; do not bulk-merge the draft stack. |
 | Operational health | No new runtime/database/provider verification. | Deployment, recovery, production tenancy, real project acceptance and release remain unproven. |
 
@@ -98,7 +116,7 @@ it retroactively. No repeat report/provider run is authorised by this snapshot.
 
 - Phases 0-7 and 15 have implemented foundations with incomplete exits.
 - Phase 3 contract characterisation is the single recommended next implementation
-  task; the active change here is documentation only.
+  task; the active slice adds contract tests and inventory documentation only.
 - Phase 8 remains blocked on fresh authority, evidence review, semantic approval
   and separately governed canonical/replacement-lock gates.
 - Phases 9-14 remain dependency-blocked; package portability does not bypass them.
@@ -148,3 +166,8 @@ used or changed.
 
 Related: [Architecture](./CLASSIFIRE_ARCHITECTURE.md),
 [Roadmap](./CLASSIFIRE_ROADMAP.md), [Handoff](./SESSION_HANDOFF.md).
+
+Current contract validation: 83 focused tests; full Ruff and Bandit passed.
+Mypy passed across 142 source files after the already-declared PyYAML/reportlab
+stubs were installed only into task-temporary storage. No shared environment
+or executable source was changed.

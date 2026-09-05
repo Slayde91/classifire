@@ -1176,3 +1176,76 @@ def test_transport_composes_with_controller_without_write_capability(tmp_path: P
     assert len({item["session_key"] for item in guard.attestations}) == 3
     assert result.receipt["controller_canonical_write_performed"] is False
     assert result.receipt["write_or_lock_capability_exposed"] is False
+
+
+def _audit_contract_guard(rpc) -> OpenClawGatewayNoToolSessionGuard:
+    return OpenClawGatewayNoToolSessionGuard(
+        gateway_rpc=rpc,
+        provider="provider",
+        agent_models={"cf-physical-model": "physical-model", "cf-validator": "model"},
+        policy_revision_sha256="C" * 64,
+    )
+
+
+def test_audit_fallback_preserves_exact_scope_and_hash_bound_receipt() -> None:
+    calls: list[tuple[str, dict[str, Any]]] = []
+
+    def rpc(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        calls.append((method, dict(params)))
+        if method == "audit.activity.list":
+            raise RuntimeError("synthetic-private-gateway-message")
+        return {"events": []}
+
+    guard = _audit_contract_guard(rpc)
+    audit = guard.audit(
+        agent_id="cf-validator", session_key="agent:cf-validator:synthetic-audit", after_ms=123
+    )
+    expected_params = {
+        "sessionKey": "agent:cf-validator:synthetic-audit",
+        "agentId": "cf-validator",
+        "kind": "tool_action",
+        "after": 123,
+        "limit": 100,
+    }
+    assert calls == [("audit.activity.list", expected_params), ("audit.list", expected_params)]
+    assert audit.agent_id == "cf-validator"
+    assert audit.session_id_sha256 == _sha256_text("agent:cf-validator:synthetic-audit")
+    assert audit.tool_calls == ()
+    # Frozen synthetic legacy audit receipt; changing it needs compatibility review.
+    assert audit.receipt_sha256 == (
+        "315779AE87AE71419225DAE96AED7A2C47B7CC3DF04D7676EE158D91412961C1"
+    )
+    assert "synthetic-private" not in repr(audit)
+
+
+@pytest.mark.parametrize("result", [None, [], {}, {"events": None}, {"events": [None]}])
+def test_malformed_audit_response_is_not_hidden_by_fallback(result: Any) -> None:
+    calls: list[str] = []
+
+    def rpc(method: str, params: dict[str, Any]) -> Any:
+        calls.append(method)
+        return result
+
+    with pytest.raises(Phase8OpenResponsesTransportError) as error:
+        _audit_contract_guard(rpc).audit(
+            agent_id="cf-validator", session_key="agent:cf-validator:synthetic-audit", after_ms=123
+        )
+    assert error.value.code == "TOOL_AUDIT_INVALID"
+    assert calls == ["audit.activity.list"]
+
+
+def test_both_audit_endpoints_unavailable_fail_with_content_safe_error() -> None:
+    calls: list[str] = []
+
+    def rpc(method: str, params: dict[str, Any]) -> dict[str, Any]:
+        calls.append(method)
+        raise RuntimeError("synthetic-private-gateway-message")
+
+    with pytest.raises(Phase8OpenResponsesTransportError) as error:
+        _audit_contract_guard(rpc).audit(
+            agent_id="cf-validator", session_key="agent:cf-validator:synthetic-audit", after_ms=123
+        )
+    assert error.value.code == "TOOL_AUDIT_UNAVAILABLE"
+    assert calls == ["audit.activity.list", "audit.list"]
+    assert "synthetic-private" not in str(error.value)
+    assert error.value.__suppress_context__ is True
