@@ -1,207 +1,171 @@
 # CLASSIFIRE Session Handoff
 
-**Prepared:** 2026-09-05 (AEST)
-**Verified shared-main baseline:** `bdd67198728e2da18171cdc4a3bea143328254ef` (PR #184)
-**Latest executable-change baseline:** bdd6719 (PR #184)
+**Verified:** 2026-09-05 (AEST)
+**Verified shared-main baseline:** `73c428ea450d9bd17c51031187608c205e200ffd` (PR #185)
+**Latest executable-change baseline:** 73c428e (PR #185)
 
-All four maintained documents are under `docs/`. Inspect current repository
-evidence before editing; this handoff records a snapshot, not live authority.
+All four maintained documents live under `docs/`. Repository evidence outranks
+this snapshot; inspect newer source and publication before resuming.
 
 ## Start Here / Next Session
 
-**First task:** after verifying lifecycle publication, implement ProjectPackage v1
-membership/schema validation and deterministic Draft export. This is shared
-domain/service work, independent of AI, UI and ChatGPT transport.
+**Single first task:** review, finish and publish the existing ProjectPackage v1
+Draft contract/exporter candidate. Do not start another implementation from scratch.
 
-**Why next:** synthetic journal/transport integration is proven in the candidate;
-actual provider assurance remains unresolved. Decision 0001 section 2.5 permits
-Draft exports that preserve unresolved stages and confer no authority. Current
-code has Project/Estimate/evidence and estimate/proposal exports, but no complete
-portable ProjectPackage contract. This slice advances the intended product without
-making package access depend on optional AI.
+**Why next:** the optional journal/transport lifecycle is already merged. A Draft
+package can work without AI and without pretending unresolved stages are approved.
+This is the next bounded foundation for creating, editing and downloading whole
+projects through shared ChatGPT and standalone application services.
 
-**Prerequisites:** read applicable AGENTS.md, four docs, Decision 0001 and
-completion contract; inspect branch/upstream/HEAD/conflicts, fetch main and check
-PRs/CI before editing. Verify publication of `feat/phase8-journal-lifecycle-20260905`
-in `C:\CLASSIFIRE\.tmp\phase8-journal-lifecycle-20260905`, based on `bdd6719`.
-Preserve unrelated/root work and use an isolated current-main tree.
+**Prerequisites:** read applicable AGENTS.md, these four documents and
+[Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md). Inspect
+current HEAD, upstream, changes/conflicts, remote main, PRs and CI before editing.
+Find the candidate with `git worktree list --porcelain`; verify it has not since
+been superseded. Preserve the conflicted root and all unrelated local changes.
 
-**Relevant components:** `src/classifire/models.py` (Project, Estimate, StoredFile,
-ProjectEvidence and related records), physical models, `services/project_evidence.py`,
-`services/snapshot.py`, `services/proposal_review_package.py`,
-`services/technical_release_publication.py`, existing export routes in
-`api/router.py`, storage/security/permission conventions, and their tests.
-These paths are relative to `src/classifire/`. Extend existing abstractions before
-adding a new database, orchestration framework or parallel business logic.
+**Existing work:** branch `feat/project-package-draft-20260905`, worktree
+`C:\CLASSIFIRE\.tmp\project-package-draft-20260905`, based on `73c428e`.
+Three untracked files were verified:
+
+- `docs/PROJECT_PACKAGE_V1_CONTRACT.md`;
+- `src/classifire/services/project_package.py`;
+- `tests/test_project_package.py`.
+
+Its 22 existing synthetic tests passed in this documentation session. Static
+checks, full regression, completeness review and publication remain unverified.
+This candidate is not in shared main and was not edited in this session.
+
+**Relevant shared components:** `src/classifire/models.py`,
+`physical_models.py`, `services/project_evidence.py`, `services/snapshot.py`,
+`services/proposal_review_package.py`, `services/technical_release_publication.py`,
+`security.py`, `api/router.py` and related tests. Abbreviated paths are relative
+to `src/classifire/`. The snapshot builder calls `recalculate_estimate`; do not
+use it as an unexamined read-only extractor. Preserve exact clean-byte ownership
+and the separate canonical-output/lock gates.
 
 **Definition of done:**
 
-1. Inventory complete project membership and map each item to source-of-truth
-   records, exact evidence identity, lifecycle, ownership and export rights.
-   Distinguish included bytes, authorized references and explicit withheld items.
-   Do not silently omit data and call a narrow review/estimate export complete.
-2. Define versioned manifest/schema, semantic validation and immutable revision/
-   parent identity. Preserve physical/technical/commercial separation, provenance,
-   unresolved evidence, review state and blockers. Imported authority is historical
-   evidence only. Unknown schema/invalid relationships/conflicting hashes fail closed.
-3. Implement deterministic Draft archive generation from validated, explicitly
-   authorized inputs using shared services. Stable semantic content produces stable
-   archive bytes/hash; volatile transport metadata cannot change semantic identity.
-   Reject unsafe paths, duplicate archive members and missing/altered required bytes.
-4. Preserve confidentiality: no credentials, raw secrets or automatic export of
-   restricted technical/commercial libraries. Record material unresolved export-
-   policy decisions explicitly; do not silently grant redistribution authority.
-5. Test a synthetic project with multiple estimates/services/openings/relationships,
-   retained evidence and unresolved stages. Inspect archive members and manifest,
-   verify deterministic output, exact hashes, policy refusal and no canonical
-   mutation. An empty/incomplete package fixture alone is insufficient proof.
-6. Run new/focused package and warranted evidence/snapshot/authority regressions,
-   Ruff/Mypy/Bandit, one Alembic head and full hosted CI. Align docs; classify,
-   commit, push, PR and merge where safe after checks/reviews; verify actual merge
-   and post-merge CI. Storage/download, import and shared interfaces remain later
-   bounded slices unless already covered by the verified current implementation.
+1. Review the candidate against existing records and Decision 0001. Define exact
+   declared membership, schema version, revision/parent identity, hashes,
+   uncertainty, stage blockers and historical-only authority.
+2. Prove deterministic archive bytes and semantic identity using a synthetic
+   multi-estimate project with shared evidence and multiple openings/services.
+   Inspect the manifest and members. Reject invalid schema/relationships,
+   missing or altered bytes, unsafe/duplicate paths and prohibited contents.
+3. Prove authorization refusal and exact content binding, including mutation
+   after authorization. No permissive default, invented export rights, secrets,
+   implicit restricted-library redistribution or canonical mutation.
+4. State clearly that caller inventory is not database completeness proof and
+   that an authorization callback is not an implemented permission policy.
+   Complete source mapping/redaction and governed projection remain prerequisites
+   to a real whole-project export. Do not claim download/import/UI completion.
+5. Run focused and warranted regression/static checks, align all four docs,
+   classify changes, commit explicit paths, push normally, open a PR, and merge
+   only after passing CI and required reviews. Verify merge and post-merge CI.
 
-**Blockers/limits:** full package membership/export rights are not yet defined.
-Resolve within existing authority; surface any material policy decision that
-cannot be inferred. No real customer/provider/canonical write, lock, deployment
-or release is authorized. Actual producer assurance and managed AI wiring remain
-blocked independently; do not weaken their controls to make package tests pass.
+**Blockers and dependencies:** membership completeness, export policy/redaction,
+predecessor integrity and actual database extraction still need explicit proof.
+Resolve routine choices from existing rules; surface a material permission or
+product-policy decision that those rules cannot resolve. Storage/download,
+quarantined import and shared clients follow this bounded contract slice.
+Actual AI producer assurance is independently blocked; no package task permits
+provider wiring, OpenClaw retirement, live canonical writes, locks or release.
 
 ### Validation commands
 
-Run from the clean worktree with its own `src` first. The interpreter below
-was verified locally; use a clean equivalent if unavailable. No credentials
-are needed for this synthetic baseline.
+From the verified candidate worktree, use its source and disposable test storage:
 
 ~~~powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-$contractPython = 'C:\CLASSIFIRE\.venv\Scripts\python.exe'
-$contractTemp = Join-Path $env:TEMP ('classifire-contract-' + [guid]::NewGuid().ToString('N'))
-& $contractPython -m pytest -o addopts= -q -p no:cacheprovider --basetemp $contractTemp `
-  tests/test_phase8_journal_lifecycle.py `
-  tests/test_phase8_journal_lifecycle_postgresql.py `
-  tests/test_execution_journal.py `
-  tests/test_execution_journal_postgresql.py `
-  tests/test_phase8_openresponses_transport.py `
-  tests/test_phase8_report_openresponses_transport.py `
-  tests/test_phase8_visual_runtime.py `
-  tests/test_phase8_report_assessment_controller.py `
-  tests/test_phase8_report_assessment_runner.py `
-  tests/test_openclaw_admission_writer_manifest.py `
-  tests/test_phase8_admission_only_profile.py `
-  tests/test_agent_security_boundary.py `
-  tests/test_phase8_report_runtime_input.py `
-  tests/test_phase8_report_assessment_prompts.py `
-  tests/test_phase8_representative_run.py `
-  tests/test_run_phase8_representative_package.py
-& $contractPython -m ruff check . --no-cache
-& $contractPython -m mypy src
-& $contractPython -m bandit -q -r src
-& $contractPython -m alembic heads
+$env:CLASSIFIRE_POSTGRES_TEST_URL = ''
+$packagePython = 'C:\CLASSIFIRE\.venv\Scripts\python.exe'
+$packageTemp = Join-Path $env:TEMP ('classifire-package-' + [guid]::NewGuid().ToString('N'))
+& $packagePython -m pytest -o addopts= -q -p no:cacheprovider --basetemp $packageTemp tests/test_project_package.py tests/test_snapshot.py
+& $packagePython -m ruff check . --no-cache
+& $packagePython -m mypy src
+& $packagePython -m bandit -q -r src
+& $packagePython -m alembic heads
 git diff --check
 ~~~
 
-This is the verified orchestration regression baseline, not the only package
-validation. Select new package and relevant evidence/snapshot/authority tests
-from current source. Check each command's exit code before continuing.
-Hosted `.github/workflows/pull-request-validation.yml` runs full pytest, Ruff,
-Mypy, Bandit and one Alembic-head validation with disposable PostgreSQL.
-Run broader local regression when changed shared behaviour warrants it.
-Never point destructive PostgreSQL tests at project/UAT/production databases.
-Do not run `classifire doctor` against a real configured environment merely
-for this synthetic task.
+Check each exit code before publication. Add evidence/permission/authority tests
+matching the final changed callers; do not substitute this short baseline for
+required coverage. Run Ruff after any formatting. Install declared development
+dependencies in an isolated environment if required. Full hosted CI includes
+PostgreSQL containment tests, Ruff, Mypy, Bandit and one Alembic head. Never point
+destructive PostgreSQL fixtures at a project/UAT/production database.
 
 ## Recommended Prompt for New Session
 
 ~~~text
-Continue CLASSIFIRE at C:\CLASSIFIRE (https://github.com/Slayde91/classifire).
-Before editing read AGENTS.md, four docs under docs/ and Decision 0001. Inspect
-HEAD/upstream/conflicts/local changes; fetch main and check PRs/CI. Verified main
-was bdd6719 (PR #184), CI 33940542172 passed. Verify actual publication of
-feat/phase8-journal-lifecycle-20260905 in
-C:\CLASSIFIRE\.tmp\phase8-journal-lifecycle-20260905 and reconcile newer source.
-Preserve the conflicted root and unrelated work; use an isolated current-main tree.
+Continue CLASSIFIRE at C:\CLASSIFIRE (github.com/Slayde91/classifire). Before editing,
+read AGENTS.md, the four maintained docs under docs/ and Architecture Decision 0001.
+Inspect Git/worktrees, HEAD/upstream/conflicts/local changes; fetch and reconcile
+main, PRs and CI. Verified baseline was 73c428e (PR #185), main CI 33941884582 passed
+974 tests. Preserve the conflicted root and all unrelated work; use an isolated tree.
 
-Single next task: ProjectPackage v1 membership/schema validation and deterministic
-Draft export. Decision 0001 permits Draft exports without completed AI or Human
-Release. Existing estimate/proposal exports are not the complete project contract.
-Inspect models.py, physical_models.py, project_evidence.py, snapshot.py,
-proposal_review_package.py, technical_release_publication.py, api/router.py and
-their storage/permission tests under src/classifire/ and tests/.
+Single task: finish and publish the existing ProjectPackage v1 Draft contract/exporter.
+Verify feat/project-package-draft-20260905 at C:\CLASSIFIRE\.tmp\project-package-draft-20260905.
+It had three untracked files: docs/PROJECT_PACKAGE_V1_CONTRACT.md,
+src/classifire/services/project_package.py and tests/test_project_package.py;
+22 synthetic tests passed, but full qualification/publication was unfinished.
+Reuse valid work; do not duplicate anything now merged. This is next because Draft
+portability advances the product independently of optional AI and Human Release.
 
-Inventory complete project membership, ownership and export rights before coding.
-Define versioned manifest, semantic validation, immutable revisions/parent hashes,
-exact evidence membership and deterministic archive generation from authorized
-inputs. Preserve unresolved stages, provenance and review/authority status.
-No silent omissions or implied technical/commercial redistribution rights.
-Imported approvals/locks remain historical, never active local authority.
-Extend existing services; avoid a new database or parallel business pipeline.
+Inspect models.py, physical_models.py, services/project_evidence.py, snapshot.py,
+proposal_review_package.py, technical_release_publication.py, security.py and
+api/router.py under src/classifire/, plus relevant tests. Preserve domain stages,
+uncertainty, provenance, ownership and authority. Snapshot building recalculates;
+do not use it as a read-only extractor. Review membership, export rights/redaction,
+revision lineage and schema before extending the candidate. Caller inventory does
+not prove database completeness; a callback does not establish permission policy.
 
-Done: synthetic multi-estimate/project export with multiple services/openings,
-evidence and unresolved stages; inspected manifest/archive; deterministic bytes/
-hashes; refusal of wrong ownership, unsafe/duplicate paths, altered/missing
-evidence, invalid relationships/schema and prohibited members; no canonical
-mutation; aligned docs. Clarify any material export-policy choice that existing
-authority cannot resolve, while completing independent safe work.
+Done: inspected deterministic multi-estimate archive, exact semantic/byte hashes,
+shared evidence and opening/service relationships, explicit unresolved stages,
+refusal of invalid schema/ownership/paths/bytes/rights and post-authorization mutation,
+no canonical mutation, aligned docs and passing required CI. Database projection,
+storage/download, import and clients remain later slices; do not claim them done.
+Surface only material policy decisions unresolved by existing rules; avoid speculation.
 
-Run new package and relevant evidence/snapshot/authority regressions, warranted
-handoff baseline tests, Ruff/Mypy/Bandit, Alembic heads and diff checks with
-worktree PYTHONPATH and unique temporary storage. Full hosted CI must pass.
-No real customer/provider operation, canonical write, lock, deployment, release
-or OpenClaw retirement. Managed AI remains gated on actual producer assurance.
-Continue autonomously through implementation, validation, classification, explicit
-commit, normal push, PR and merge where safe after CI/reviews; verify merge and
-post-merge CI. Do not duplicate newer completed work.
+Run new package tests, tests/test_snapshot.py and affected evidence/authority tests,
+Ruff after formatting, Mypy, Bandit, Alembic heads and diff checks with worktree-local
+PYTHONPATH and unique temporary storage; full hosted CI must pass. Continue
+autonomously through implementation, validation, classification, explicit commit,
+normal push, PR and merge where safe after checks/reviews; verify merge/main CI.
+No customer/provider run, live canonical write, lock, deployment, release or
+OpenClaw retirement. Keep AI optional and all existing protections intact.
 ~~~
 
-## Verified project context
+## Verified project and publication context
 
-PR #184 merged at bdd6719 with
-[successful exact main CI](https://github.com/Slayde91/classifire/actions/runs/33940542172).
-The lifecycle candidate adds optional shared visual/report pre-dispatch capture
-and post-response durable completion. Begin/complete/abort reuse the journal and
-retain producer-owned execute. Verifier-only injection remains compatible;
-conflicting configuration is refused. Managed factories are not wired.
+PR #185 merged optional begin/complete/abort journal hooks into both transports.
+[Exact main CI](https://github.com/Slayde91/classifire/actions/runs/33941884582)
+passed 974 tests with 141 warnings. The existing completion consumer, execution
+journal, deterministic domain services and governance remain. Managed AI still
+lacks authenticated production capture assurance; generic worker handling and
+recovery are incomplete. No full fleet replacement or production readiness is proven.
 
-Local validation: 222 tests passed; seven guarded disposable PostgreSQL cases
-were skipped locally for hosted CI. Ruff, Bandit, Mypy (143 files) and one
-Alembic head passed. Eight existing Pillow warnings remain. Tests inspect database
-state during HTTP and before successful return, plus cleanup, duplicates and
-interruption. No real provider/customer/canonical database was used.
+This session changed documentation only on `docs/package-target-handoff-20260905`
+in `C:\CLASSIFIRE\.tmp\docs-package-target-handoff-20260905`, based on `73c428e`.
+Publication of this documentation must be checked in Git/PR history; it is not
+proof of publication of the separate package implementation.
 
-Implemented foundations include evidence ownership/locators, proposal controllers
-and review packages, signed physical amendments and separate replacement locks,
-technical-library publication, snapshot integrity and basic estimate outputs.
-The worker has no handlers and does not honour run_after. Durable hybrid
-execution, full ProjectPackage portability and production ChatGPT/standalone
-package flows remain planned. The database/storage remain live truth; exported
-packages will be immutable interchange revisions, not imported authority.
-
-Historical UAT failure/rollback and absence of an accepted replacement lock were
-not rechecked against live records. Phase 8 authority/evidence/semantic gates and
-downstream Phases 9-14 remain. See [Project State](./PROJECT_STATE.md).
-
-## Local changes, open issues and publication context
-
-- Protected root: `gpt/phase8-linked-original-images`, HEAD `de0cc5a`,
-  CHERRY_PICK_HEAD `c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`. Four unresolved
-  paths are the phase8_linked_visual_run and phase8_visual_evidence services
-  and their two tests. Other staged/unstaged/untracked legacy work is unrelated;
-  protected pytest directories prevent complete untracked enumeration.
-  Never reset, clean, bulk-copy or publish from this root.
-- Current lifecycle candidate: `feat/phase8-journal-lifecycle-20260905` in
-  `C:\CLASSIFIRE\.tmp\phase8-journal-lifecycle-20260905`, based on `bdd6719`.
-  Scope: three services, four test files, completion contract, inventory and four
-  continuity documents. Verify actual commit/upstream/PR/merge before reuse.
-- PRs #182-#184 are merged. Their clean retained worktrees are separate.
+- Protected root: branch `gpt/phase8-linked-original-images`, HEAD `de0cc5a`,
+  CHERRY_PICK_HEAD `c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`. Four conflicts:
+  phase8_linked_visual_run and phase8_visual_evidence services and their tests.
+  Staged additions, unstaged changes and untracked legacy material are unrelated
+  recovery evidence. Protected pytest directories limit untracked enumeration.
+  Never reset, clean, bulk-copy or publish this root.
+- Package worktree: three untracked implementation files, unfinished and separate.
+- Documentation worktree: only the four requested maintained documents changed.
 - Issues #42 (retained Phase 8 tooling) and #43 (OpenClaw development dependency
-  advisories) remain open. Draft PRs #9-#13 remain legacy feature-to-feature work;
-  verify current lifecycle-candidate publication separately. Do not bulk-merge that stack.
-- Check current repository review/protection requirements before publication.
-  Never bypass failed CI or required review. No runtime operation is authorised
-  merely by this handoff.
+  advisories) remain open. PRs #9-#13 remain legacy draft feature-to-feature work;
+  do not bulk-merge them. No other open PR was returned at verification.
+- Historical UAT failure and absence of a replacement lock were not rechecked
+  against live records. Phase 8 evidence/authority gates and downstream phases
+  remain; database/storage are live truth and packages convey no new authority.
 
-Related: [Architecture](./CLASSIFIRE_ARCHITECTURE.md),
-[Roadmap](./CLASSIFIRE_ROADMAP.md), [Project State](./PROJECT_STATE.md).
+Related: [Project State](./PROJECT_STATE.md),
+[Architecture](./CLASSIFIRE_ARCHITECTURE.md), [Roadmap](./CLASSIFIRE_ROADMAP.md).

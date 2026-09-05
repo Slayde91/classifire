@@ -2,9 +2,9 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main baseline:** `bdd67198728e2da18171cdc4a3bea143328254ef` (PR #184, 2026-09-05)
+**Verified shared-main baseline:** `73c428ea450d9bd17c51031187608c205e200ffd` (PR #185, 2026-09-05)
 
-**Latest executable-change baseline:** bdd6719 (PR #184)
+**Latest executable-change baseline:** 73c428e (PR #185)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -16,41 +16,19 @@ governing boundaries, and
 [Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 for the accepted hybrid target and migration gates.
 
-## Contract characterisation progress
+## Latest reconciliation
 
-PR #184 merged the execution journal as `bdd67198728e2da18171cdc4a3bea143328254ef`.
-[Exact main CI 33940542172](https://github.com/Slayde91/classifire/actions/runs/33940542172)
-passed. PR #183's required completion consumer and the journal are shared-main
-foundations; neither supplies production capture assurance.
+PR #185's journal/transport lifecycle is a **completed bounded foundation** on
+`73c428e`. [Exact main CI 33941884582](https://github.com/Slayde91/classifire/actions/runs/33941884582)
+passed 974 tests; production capture assurance and general job recovery remain
+incomplete. The accepted hybrid migration is partially implemented.
 
-**Current lifecycle candidate:** `feat/phase8-journal-lifecycle-20260905`, based
-on `bdd6719`, connects the journal through optional application-injected hooks.
-Both visual/report transports commit capture before inference token/HTTP and
-complete, reload and validate durable evidence before returning a proposal.
-Journal begin/complete/abort operations reuse its existing state machine;
-producer-owned execute and verifier-only transport injection stay compatible.
-Conflicting lifecycle/verifier configuration is refused.
-
-**Failure and trust boundaries:** duplicate begin cannot redispatch or abort
-another caller's active attempt. Post-begin failure aborts local acceptance;
-abort-storage failure preserves the original safe error and an unverified record.
-No-tool audit, exact byte/context binding, historical receipts and all canonical/
-lock/release boundaries remain. Managed factories remain unwired and fail closed.
-A trusted producer must authenticate capture; local journal seals are not remote
-proof. No schema migration, dependency, endpoint or real-provider operation.
-
-**Validation:** 222 local synthetic tests passed; seven PostgreSQL cases are
-reserved for the guarded disposable hosted CI environment. Full Ruff, Bandit
-and Mypy (143 source files) passed; one Alembic head remains. Eight existing Pillow
-warnings persist. Tests inspect durable capture during HTTP and terminal state
-before returning visual/report proposals, including interruption and duplicates.
-
-**Reordered next product task:** implement ProjectPackage v1 membership/schema
-validation and deterministic Draft export. Decision 0001 permits Draft exports
-without waiting for AI or Human Release. Reuse project/evidence/snapshot/storage
-services; inventory complete project membership and export rights before coding.
-Keep omissions, unresolved stages and authority status explicit. Full download/
-import/UI and actual provider assurance remain separately gated follow-ups.
+ProjectPackage v1 Draft schema/export is **active local work, reordered next**:
+three untracked files in `.tmp/project-package-draft-20260905`; 22 synthetic tests
+passed during this review. Complete review and publication before advancing to
+governed database projection, immutable storage/download, import and clients.
+Draft portability does not depend on AI or completed Human Release and cannot
+claim a completed physical, technical or commercial stage.
 
 ## 1. Status labels
 
@@ -71,7 +49,8 @@ Shared main now includes:
 
 - an accepted hybrid target architecture in which deterministic CLASSIFIRE
   services own durable workflow and optional bounded AI adapters perform only
-  proposal work where justified; this target is documented but not implemented;
+  proposal work where justified. Journal/lifecycle foundations are implemented;
+  the complete target remains unfinished;
 - core application, persistence, UI, API, audit, authentication, and packaged
   migration foundations;
 - physical-model, evidence, proposal-only visual, admission, and receipt
@@ -175,22 +154,23 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ## 4. Prioritised build plan
 
-### Priority reconciliation through PR #184 and lifecycle candidate
+### Priority reconciliation through PR #185
 
 | Work | Status | Dependency / completion evidence |
 | --- | --- | --- |
-| Hybrid decision | **Completed documentation** | PR #175 accepts Decision 0001; runtime migration is unimplemented. |
+| Hybrid decision | **Completed documentation** | PR #175 accepts Decision 0001; runtime migration remains incomplete. |
 | Initial OpenClaw inventory/tests | **Completed foundation** | PR #177: inventory and 13 added cases; 83 focused tests pass. Full parity remains incomplete. |
 | Uncertain session creation | **Completed foundation** | PR #179; five cases prove replay refusal, read-only fallback and stopping before inference. Exact main CI passed. |
 | Loopback socket/protocol contracts | **Completed bounded foundation** | PR #180, 15 cases and two deadline fixes; broader protocol/live compatibility remains unproven. |
 | Audit page contract | **Completed bounded foundation** | PR #181 merged; exact PR/main CI passed. Continuation/oversize refused; legacy receipt compatibility retained. |
 | Completion acceptance consumer | **Completed bounded foundation** | PR #183 merged with required verifier and v2 receipt binding; exact main CI passed. Managed inference refuses without a verifier. |
 | Durable execution journal | **Completed bounded foundation** | PR #184 merged; all 946 hosted tests and exact main CI passed. |
-| Journal/transport lifecycle | **Validated candidate / publication pending** | Shared visual/report begin/complete/abort hooks; 222 local tests and seven PostgreSQL CI cases. |
+| Journal/transport lifecycle | **Completed bounded foundation** | PR #185 merged; exact main CI passed 974 tests including disposable PostgreSQL coverage. |
 | Production capture producer | **Blocked on assurance** | Remote capture/terminal identity and loss detection cannot be inferred from a local journal seal or empty audit pages. |
 | Remaining contract characterisation | **Upcoming** | Socket/protocol, audit completeness, recovery, identity, privacy and clean-machine gaps remain in the inventory. |
 | Durable jobs/replacement adapter | **Upcoming / planned** | Characterisation first; extend BackgroundJob/worker. Current worker has no handlers. |
-| ProjectPackage v1 Draft contract/export | **Reordered next** | Inventory complete membership/rights, implement schema and semantic validation plus deterministic archives. Draft exports do not require AI or Phase 14. |
+| ProjectPackage v1 Draft contract/export | **Active local / reordered next** | Review and finish the three-file untracked candidate; 22 synthetic tests pass, but full checks and publication remain. Draft exports do not require AI or Phase 14. |
+| Governed package database projection | **Upcoming dependency** | Prove complete authorized membership, redaction and exact clean-byte reads without recalculation; caller-declared inventory is insufficient. |
 | Package storage/download | **Upcoming** | Immutable revision/ownership, verified exact bytes and audited permission-checked delivery after the export contract. |
 | Quarantined import | **Upcoming / planned** | Stable export/schema/integrity; new-project import before conflict handling. |
 | MCP/standalone package clients | **Upcoming / planned** | Shared authenticated commands, permission/isolation and package contracts. |
@@ -199,12 +179,10 @@ Phases 8-14 and is not a technical selection or canonical output.
 | Technical/production follow-ups | **Separate backlog** | Preserve Phase 2/15 gates; do not broaden the next contract task. |
 | Real UAT and Phases 9-14 | **Blocked** | Fresh authority, evidence, semantic approval and governed replacement lock remain required. |
 
-The lifecycle candidate changes three services, four test files and aligned
-contracts/docs. The existing table, authority gates and version-2 transport
-receipt schema are retained. Local verification passed 222 tests; seven
-PostgreSQL cases run only in the guarded disposable CI environment.
-[Session Handoff](./SESSION_HANDOFF.md#start-here--next-session) defines the
-next Draft package slice. Actual producer assurance remains a separate gate.
+PR #185 retains the existing table, authority gates and version-2 receipts.
+The [Session Handoff](./SESSION_HANDOFF.md#start-here--next-session) defines the
+unfinished Draft contract slice and how to preserve its local candidate.
+Actual producer assurance remains a separate gate.
 
 ### Immediate next action
 
@@ -216,12 +194,12 @@ OpenClaw is now a transitional adapter, not the long-term product foundation,
 but it remains in place until the documented security, receipt, recovery,
 observability, clean-machine, and rollback parity gates pass.
 
-After lifecycle publication, prioritise the deterministic Draft ProjectPackage
-v1 contract and exporter. This moves the approved user-facing product forward
+Prioritise review, completion and publication of the existing deterministic Draft
+ProjectPackage v1 contract/exporter candidate. This moves the approved user-facing product forward
 while real-provider assurance remains unproven. Decision 0001 explicitly permits
 Draft exports with unresolved stages and no authority upgrade. First inventory
 membership and export rights, then prove schema/semantic integrity and repeatable
-archive generation. Immutable storage/download, quarantined import and shared
+archive generation. Governed database projection, immutable storage/download, quarantined import and shared
 clients follow. Real AI wiring and OpenClaw retirement retain all parity gates.
 
 #### Completed shared-main foundation - scoped proposal-review reader access (PR #145)

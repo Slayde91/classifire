@@ -4,9 +4,9 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main baseline:** `bdd67198728e2da18171cdc4a3bea143328254ef` (PR #184, 2026-09-05)
+**Verified shared-main baseline:** `73c428ea450d9bd17c51031187608c205e200ffd` (PR #185, 2026-09-05)
 
-**Latest executable-change baseline:** bdd6719 (PR #184)
+**Latest executable-change baseline:** 73c428e (PR #185)
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -17,41 +17,30 @@ adopted target architecture and known gaps. Read it with [PROJECT_STATE.md](./PR
 and [CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md). Source, tests, migrations,
 Git state, and retained runtime receipts determine factual implementation state.
 
-## Contract characterisation progress
+## Implemented execution boundary and planned package boundary
 
-PR #184 merged the execution journal as `bdd67198728e2da18171cdc4a3bea143328254ef`.
-[Exact main CI 33940542172](https://github.com/Slayde91/classifire/actions/runs/33940542172)
-passed. PR #183's required completion consumer and the journal are shared-main
-foundations; neither supplies production capture assurance.
+PR #185 is merged at `73c428e`; optional journal lifecycle hooks now span both
+visual and report transports. Capture begins before inference dispatch;
+completion is durably reloaded and validated before proposal acceptance.
+Duplicate begin, abort and conflicting verifier configuration fail closed.
+The journal is a bounded foundation, not a complete workflow scheduler or proof
+of remote capture. Managed factories remain unwired pending producer assurance.
+[Exact main CI](https://github.com/Slayde91/classifire/actions/runs/33941884582)
+passed 974 tests. No OpenClaw retirement or operational migration occurred.
 
-**Current lifecycle candidate:** `feat/phase8-journal-lifecycle-20260905`, based
-on `bdd6719`, connects the journal through optional application-injected hooks.
-Both visual/report transports commit capture before inference token/HTTP and
-complete, reload and validate durable evidence before returning a proposal.
-Journal begin/complete/abort operations reuse its existing state machine;
-producer-owned execute and verifier-only transport injection stay compatible.
-Conflicting lifecycle/verifier configuration is refused.
+A local, untracked Draft ProjectPackage schema/archive candidate exists in
+`.tmp/project-package-draft-20260905`; 22 synthetic tests passed on review.
+It is not shared-main architecture. It accepts an explicit snapshot/inventory
+and authorization callback, validates the declared graph and hashes, and writes
+or validates deterministic archives. A supplied inventory cannot prove database
+completeness, and a callback interface cannot establish an export policy.
+Database projection, rights/redaction, immutable persistence, download and
+quarantined import remain separate unimplemented boundaries.
 
-**Failure and trust boundaries:** duplicate begin cannot redispatch or abort
-another caller's active attempt. Post-begin failure aborts local acceptance;
-abort-storage failure preserves the original safe error and an unverified record.
-No-tool audit, exact byte/context binding, historical receipts and all canonical/
-lock/release boundaries remain. Managed factories remain unwired and fail closed.
-A trusted producer must authenticate capture; local journal seals are not remote
-proof. No schema migration, dependency, endpoint or real-provider operation.
-
-**Validation:** 222 local synthetic tests passed; seven PostgreSQL cases are
-reserved for the guarded disposable hosted CI environment. Full Ruff, Bandit
-and Mypy (143 source files) passed; one Alembic head remains. Eight existing Pillow
-warnings persist. Tests inspect durable capture during HTTP and terminal state
-before returning visual/report proposals, including interruption and duplicates.
-
-**Reordered next product task:** implement ProjectPackage v1 membership/schema
-validation and deterministic Draft export. Decision 0001 permits Draft exports
-without waiting for AI or Human Release. Reuse project/evidence/snapshot/storage
-services; inventory complete project membership and export rights before coding.
-Keep omissions, unresolved stages and authority status explicit. Full download/
-import/UI and actual provider assurance remain separately gated follow-ups.
+Do not reuse `services/snapshot.py:build_estimate_snapshot` as a read-only package
+extractor: it calls `recalculate_estimate`. Future projection must preserve a
+consistent authorized revision and reuse exact clean-byte evidence reads without
+recalculating, changing records or bypassing canonical output gates.
 
 ## 1. Governing reasoning chain
 
@@ -132,7 +121,7 @@ Approval for one operation never grants a later authority.
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, atomic governed publication, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus production technical authority remain incomplete |
 | Estimating/output | Basic estimate calculation, PDF/XLSX outputs, assumption-led desk quotes | Full technical-to-component recovery and release chain incomplete |
-| Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Transitional current implementation. The accepted target is a small CLASSIFIRE-owned deterministic job/run coordinator with bounded optional AI adapters; migration is not implemented and OpenClaw remains until parity gates pass. Neither control plane owns canonical estimate state. |
+| Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Transitional current implementation. The accepted target is a small CLASSIFIRE-owned deterministic job/run coordinator with bounded optional AI adapters; journal/lifecycle foundations are implemented, but full migration remains incomplete and OpenClaw stays until parity gates pass. Neither control plane owns canonical estimate state. |
 
 Production startup validates configuration before storage work, never runs
 `create_all()` or seeds a default administrator in production, and requires the
@@ -508,7 +497,7 @@ stateless AI calls are optional for evidence interpretation or independent
 challenge where their benefit is measured. A persistent autonomous agent fleet
 is not a required product foundation.
 
-This is an accepted target, not implemented migration. OpenClaw remains the
+This is an accepted target with partial journal/lifecycle foundations, not a completed migration. OpenClaw remains the
 current controlled execution adapter until CLASSIFIRE-owned replacements prove
 equivalent no-tool isolation, context separation, input and version binding,
 safe receipts, recovery, observability, and rollback. Removing or bypassing it
@@ -550,7 +539,7 @@ desk assumption or model estimate into a confirmed canonical fact.
 
 ## 12. Current architectural gaps and follow-up
 
-### Accepted hybrid target (migration not implemented)
+### Accepted hybrid target (migration incomplete)
 
 The hybrid decision merged in PR #175 at 9c0fc7d, with executable code
 unchanged from the PR #174 baseline.
@@ -562,15 +551,16 @@ and can lose/disable new records without signaling this through audit.list.
 A trusted completion/coverage evidence contract is therefore required before
 claiming complete protection; legacy empty-list receipts remain observation-only.
 This is a verified migration gap, not a new guarantee or permission to remove guards.
-Complete the remaining contract gates before adding CLASSIFIRE-owned job/run/stage
-state or a provider-neutral inference adapter. Portable `ProjectPackage`, MCP,
+Complete remaining contract gates before production replacement wiring; extend the
+existing journal/BackgroundJob boundary instead of inventing parallel run state.
+Portable `ProjectPackage`, MCP,
 standalone-client, and OpenClaw-retirement capabilities remain planned. No part
 of this documentation decision grants canonical, technical, commercial, lock,
 deployment, provider-run, or Human Release authority.
 
 ### Unresolved decisions, migrations and technical debt
 
-**Implemented consumer (PR #183; lifecycle integration candidate):** the completion-evidence boundary adds
+**Implemented consumer (PR #183) and lifecycle integration (PR #185):** the completion-evidence boundary adds
 a required application-injected verifier to both transports and binds validated
 evidence into version-2 transport digests. Its context includes request/response
 bytes, session, agent, audit and attestation receipts, and invocation times.
@@ -592,7 +582,7 @@ clock assumptions and crash/replay recovery before production wiring. The
 
 | Decision/gap | Constraint and next evidence |
 | --- | --- |
-| Durable execution | PR #184 journal is merged. Candidate begin/complete/abort lifecycle integrates both transports without recursion; existing execute remains compatible. Generic coordination and real cancellation remain incomplete. No migration. |
+| Durable execution | PR #184 journal is merged. PR #185 begin/complete/abort lifecycle integrates both transports without recursion; existing execute remains compatible. Generic coordination and real cancellation remain incomplete. No migration. |
 | Inference replacement | Preserve ports, context isolation, evidence/version binding and receipts. Provider/endpoint, privacy, egress, retention/residency and secret policy need validation. |
 | ProjectPackage v1 | Define project/estimate membership, rights/redaction, profiles, schema compatibility and signature trust. Database/storage remain live truth; imports never activate foreign authority. |
 | Package integrity | Separate semantic and byte hashes; deterministic manifest entries, external final archive hash. Prove blank-instance import before existing-project conflict handling. |
