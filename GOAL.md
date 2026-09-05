@@ -159,14 +159,14 @@ edits/restart and retain unapproved status. No Estimate or matching run is requi
 PR #198 merged explicit service-size review; PR #199 merged complete Draft reports.
 All four Draft report choices exist. Their partial/unapproved status remains explicit.
 
-The current selected Draft ProjectPackage UI configures one coherent saved Scope,
+The selected Draft ProjectPackage UI, merged in PR #200, configures one coherent saved Scope,
 optional review/Estimate and retained report pairs, previews without writes, saves a
 new package revision and downloads exact ZIP bytes. Source files stay external or
 withheld; existing artifact provenance and history are preserved. This is selected
 workspace portability, not all project records, original evidence or a database backup.
 See PROJECT_STATE.md for evidence/publication and remaining limitations.
 
-After publication, prioritize **safe new-project package import** across selected
+Prioritize **safe new-project package import** across selected
 capability artifacts and outputs. Validate complete declared membership and schemas,
 preserve original provenance, map local identities explicitly, and keep missing
 sources/foreign approval unresolved. Never silently discard unsupported artifacts or
