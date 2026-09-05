@@ -11,7 +11,7 @@ from .config import get_settings
 from .db import get_db
 from .models import User
 from .security import verify_csrf
-from .services.draft_constraint_review import INPUT_FIELDS
+from .services.draft_constraint_review import INPUT_FIELDS, SIZE_BASIS_FIELDS, SIZE_INPUT_FIELDS
 from .services.draft_scope import DraftScopeError, get_draft, read_revision
 from .services.draft_system_matches import (
     DraftSystemMatchError,
@@ -241,17 +241,24 @@ def save_constraints(
 ) -> HTMLResponse | RedirectResponse:
     verify_csrf(request, form.get("csrf_token"))
     user = _actor(request, db, write=True)
-    if set(form) != {
+    service_size = any(key in form for key in (*SIZE_INPUT_FIELDS, *SIZE_BASIS_FIELDS))
+    expected = {
         "csrf_token",
         "expected_revision",
         "candidate_id",
         "measurement_note",
         *INPUT_FIELDS,
-    }:
+    }
+    if service_size:
+        expected.update((*SIZE_INPUT_FIELDS, *SIZE_BASIS_FIELDS))
+    if set(form) != expected:
         raise HTTPException(422, "Submit the complete measurement form")
     revision = _revision(form["expected_revision"])
     inputs: dict[str, Any] = {key: form[key] or None for key in INPUT_FIELDS}
     inputs["measurement_note"] = form["measurement_note"]
+    if service_size:
+        inputs.update({key: form[key] or None for key in SIZE_INPUT_FIELDS})
+        inputs.update({key: form[key] for key in SIZE_BASIS_FIELDS})
     try:
         save_constraint_review(
             db,
@@ -262,6 +269,7 @@ def save_constraints(
             form["candidate_id"],
             inputs,
             storage_root=get_settings().storage_root,
+            service_size=service_size,
         )
         db.commit()
     except (DraftScopeError, DraftSystemMatchError) as exc:

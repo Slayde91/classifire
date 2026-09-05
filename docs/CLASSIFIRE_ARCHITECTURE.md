@@ -2,11 +2,11 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.11 - independent saved Scope/system review reporting.
+**Architecture version:** 5.12 - explicit measured service-size review.
 
-**Verified shared baseline:** `b6792f998ae73c6755a84cd4f1f8a24afa6dc00f`, merged
-PR #196. Exact-head CI 33988763234 and main CI 33989222878 succeeded. Current
-report branch: `feat/draft-system-reports-20260906`. This is a prepublication
+**Verified shared baseline:** `20b308388b334fc8fea8c4337c7aa4cfb33c99df`, merged
+PR #197. Exact-head CI 33991617826 passed 1,401 tests; main CI 33992094617 succeeded.
+Current branch: `feat/draft-service-size-20260906`. This is its prepublication
 checkpoint; live Git/PR/CI determine publication, not the document version.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
@@ -78,13 +78,13 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Extend measured service-size review next; ChatGPT remains planned. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Current service-size review is additive; complete reporting and ChatGPT remain planned. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
 | Packages | Scope v1/v2 exchange plus v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Whole-project archives, candidate/estimate import and rights/membership projection remain later work; these artifacts are not a complete ProjectPackage. |
-| Reporting | Scope-only and estimate-only Draft snapshots plus current scope-and-system profile; paired PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
+| Reporting | Scope-only and estimate-only Draft snapshots plus merged scope-and-system profile; paired PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
 ### Implemented manual Draft Scope slice (P0)
@@ -1293,11 +1293,43 @@ no live source file or approval is silently embedded or granted. Reporting calls
 retrieval, calculation, provider or canonical writer. Full applicability, pricing and
 human release remain unavailable in this profile. See [contract](./DRAFT_SYSTEM_REPORT_CONTRACT.md).
 
-**Next proposed visible slice:** explicit service-size review against existing pinned
-minimum/maximum service-size fields in the current measured-limit UI. Resolve the
-meaning of the source's size constraint before comparing; unsupported configurations
-remain unresolved. This improves material technical coverage before combined-report
-polish. It does not change the accepted architecture or complete P2b.
+### Implemented current increment: measured service sizes (P2b)
+
+Current architecture -> change -> reason: the same saved measured-review command
+now supports a v3 match envelope with a measured service-size range and separate
+measurement/source dimension meanings. Existing pinned min/max service-size fields
+did not establish their meaning. Explicit unapproved human interpretation avoids
+silently treating nominal size, bundle dimensions or rectangular widths as diameter.
+No new library metadata or canonical physical dimension is asserted by this UI.
+
+`draft_constraint_review.py` adds positive strict-decimal size inputs and one partial
+range check. Both recorded meanings must be individual outside diameter, the target
+must be an explicit nonblank opening/service, and the retained published fields must
+be hash-bound. A known exceeded bound is outside; within requires a complete valid
+range. Unknown/unsupported meanings and missing evidence remain unresolved. The
+range covers recorded observations only; instance counts, complete coverage, material,
+configuration and approved source interpretation remain unassessed.
+
+`draft_system_match_contract.py` keeps v1/v2 readers and introduces v3 explicitly.
+The v2 validator still rejects new inputs. `save_constraint_review(...,
+service_size=True)` retains v3; an old-form write against v3 is refused rather than
+silently losing size claims. Keep/reject copies the whole saved review. Existing
+revision/hash/persistence, ownership/technical rights, CSRF, stale-source checks and
+concurrency controls are reused. No database migration, dependency or agent is added.
+
+The current measured-review template exposes the new inputs; shared presentation
+propagates them into scope-and-system reports. Explicit Draft Estimate creation
+retains the complete v3 match unchanged. Estimate-only rendering continues to show
+a review reference; complete technical/commercial reporting remains a separate
+profile. No report is rerendered on read. The separately versioned synthetic size
+fixture preserves older demo source bytes and refuses unrelated fixture adoption.
+See [the v3 contract and limits](./DRAFT_SERVICE_SIZE_REVIEW.md).
+
+**Next proposed visible slice:** the complete Draft report profile over one saved
+Estimate and its embedded Scope/optional review, showing all available sections and
+explicit missing information. Reuse the report services/renderers without invoking
+upstream work. This is the remaining requested profile; it does not imply complete
+technical applicability, estimating governance, portability or production release.
 
 ### Separate production and adapter backlog
 

@@ -30,9 +30,12 @@ FIXTURE_NOTES = (
 FIXTURE_DOCUMENT_ID = "SYNTHETIC-P2A-SOURCE-001"
 CONSTRAINT_VERSION = "SYNTHETIC-P2B-001"
 CONSTRAINT_DOCUMENT_ID = "SYNTHETIC-P2B-SOURCE-001"
+SIZE_VERSION = "SYNTHETIC-P2B-SIZE-001"
+SIZE_DOCUMENT_ID = "SYNTHETIC-P2B-SIZE-SOURCE-001"
 
 
-def _document_bytes(*, constraints: bool = False) -> bytes:
+def _document_bytes(*, constraints: bool = False, service_size: bool = False) -> bytes:
+    constraints = constraints or service_size
     buffer = io.BytesIO()
     document = canvas.Canvas(buffer, pagesize=A4, invariant=1, pageCompression=1)
     document.setTitle("CLASSIFIRE synthetic candidate-review fixture")
@@ -47,7 +50,9 @@ def _document_bytes(*, constraints: bool = False) -> bytes:
         "It is not a fire test, assessment, product certificate or installation instruction.",
         "No real passive-fire system or performance claim is represented.",
         (
-            "Document reference: SYNTHETIC-P2B-SOURCE-001. Revision: DEMO-1."
+            "Document reference: SYNTHETIC-P2B-SIZE-SOURCE-001. Revision: DEMO-1."
+            if service_size
+            else "Document reference: SYNTHETIC-P2B-SOURCE-001. Revision: DEMO-1."
             if constraints
             else "Document reference: SYNTHETIC-P2A-SOURCE-001. Revision: DEMO-1."
         ),
@@ -64,6 +69,15 @@ def _document_bytes(*, constraints: bool = False) -> bytes:
             )
             if constraints
             else ("All dimensions, material, FRL, insulation and installation limits are unknown.",)
+        ),
+        *(
+            (
+                "Service size: individual round service outside diameter, 10 to 90 mm inclusive.",
+                "These fixture limits do not mean nominal diameter, bundle size or duct width.",
+                "Compare only recorded outside diameters; instance coverage is unassessed.",
+            )
+            if service_size
+            else ()
         ),
         "Both candidates require evidence and expert review; neither is applicable.",
         "",
@@ -82,9 +96,19 @@ def _existing_fixture(
     storage_root: Path,
     *,
     constraints: bool = False,
+    service_size: bool = False,
 ) -> LibraryRelease | None:
-    version = CONSTRAINT_VERSION if constraints else FIXTURE_VERSION
-    document_id = CONSTRAINT_DOCUMENT_ID if constraints else FIXTURE_DOCUMENT_ID
+    constraints = constraints or service_size
+    version = (
+        SIZE_VERSION if service_size else CONSTRAINT_VERSION if constraints else FIXTURE_VERSION
+    )
+    document_id = (
+        SIZE_DOCUMENT_ID
+        if service_size
+        else CONSTRAINT_DOCUMENT_ID
+        if constraints
+        else FIXTURE_DOCUMENT_ID
+    )
     releases = list(
         db.scalars(select(LibraryRelease).where(LibraryRelease.library_type == "technical"))
     )
@@ -120,6 +144,7 @@ def seed_demo_library(
     actor: User,
     *,
     constraints: bool = False,
+    service_size: bool = False,
 ) -> LibraryRelease:
     """Seed only an explicitly isolated SQLite fixture, or verify its unchanged restart.
 
@@ -136,10 +161,21 @@ def seed_demo_library(
         or not has_permission(retained_actor, "technical:approve")
     ):
         raise ValueError("Synthetic library seeding requires an active technical approver")
+    constraints = constraints or service_size
     storage_root = storage_root.resolve()
-    version = CONSTRAINT_VERSION if constraints else FIXTURE_VERSION
-    document_id = CONSTRAINT_DOCUMENT_ID if constraints else FIXTURE_DOCUMENT_ID
-    existing = _existing_fixture(db, storage_root, constraints=constraints)
+    version = (
+        SIZE_VERSION if service_size else CONSTRAINT_VERSION if constraints else FIXTURE_VERSION
+    )
+    document_id = (
+        SIZE_DOCUMENT_ID
+        if service_size
+        else CONSTRAINT_DOCUMENT_ID
+        if constraints
+        else FIXTURE_DOCUMENT_ID
+    )
+    existing = _existing_fixture(
+        db, storage_root, constraints=constraints, service_size=service_size
+    )
     if existing is not None:
         return existing
     if any(
@@ -148,10 +184,12 @@ def seed_demo_library(
     ):
         raise ValueError("Refusing to seed over existing technical records")
     storage_root.mkdir(parents=True, exist_ok=True)
-    content = _document_bytes(constraints=constraints)
+    content = _document_bytes(constraints=constraints, service_size=service_size)
     digest = hashlib.sha256(content).hexdigest()
     source_path = storage_root / (
-        "synthetic-constraint-review-source.pdf"
+        "synthetic-service-size-review-source.pdf"
+        if service_size
+        else "synthetic-constraint-review-source.pdf"
         if constraints
         else "synthetic-candidate-review-source.pdf"
     )
@@ -197,6 +235,8 @@ def seed_demo_library(
                 manufacturer="Synthetic fixture only",
                 service_type="pipe",
                 substrate_type=substrate,
+                minimum_service_size_mm=10 if service_size else None,
+                maximum_service_size_mm=90 if service_size else None,
                 minimum_substrate_thickness_mm=100 if constraints else None,
                 maximum_substrate_thickness_mm=200 if constraints else None,
                 annular_gap_min_mm=10 if constraints else None,

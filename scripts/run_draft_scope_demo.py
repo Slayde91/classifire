@@ -51,6 +51,11 @@ def main() -> None:
         action="store_true",
         help="Seed the versioned synthetic measured-limit fixture in a new SQLite demo",
     )
+    parser.add_argument(
+        "--seed-service-size-library",
+        action="store_true",
+        help="Seed a separate synthetic outside-diameter fixture in a new SQLite demo",
+    )
     args = parser.parse_args()
     pricing_database = args.postgres_demo_database == "classifire_draft_pricing_demo"
     if pricing_database and args.postgres_demo_port is None:
@@ -180,7 +185,11 @@ def main() -> None:
                 )
             )
             db.commit()
-        if args.seed_technical_library or args.seed_constraint_library:
+        if (
+            args.seed_technical_library
+            or args.seed_constraint_library
+            or args.seed_service_size_library
+        ):
             from draft_system_match_demo_fixture import seed_demo_library
 
             actor = db.scalar(select(User).where(User.email == DEMO_EMAIL))
@@ -191,6 +200,7 @@ def main() -> None:
                 task_dir / "storage",
                 actor,
                 constraints=args.seed_constraint_library,
+                service_size=args.seed_service_size_library,
             )
             db.commit()
             print(f"Synthetic technical release: {release.version} ({release.id})", flush=True)

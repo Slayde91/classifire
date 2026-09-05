@@ -123,6 +123,10 @@ class ConstraintEnvelope(Envelope):
     constraint_review: dict[str, Any]
 
 
+class ServiceSizeEnvelope(ConstraintEnvelope):
+    schema_version: Literal["CLASSIFIRE-DRAFT-SYSTEM-MATCH-v3"]  # type: ignore[assignment]
+
+
 def canonical(value: Any) -> bytes:
     return json.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
@@ -240,14 +244,19 @@ def target_for(
 def validate_envelope(value: dict[str, Any]) -> None:
     if len(canonical(value)) > MAX_MATCH_BYTES:
         raise ValueError("size")
-    model = (
-        ConstraintEnvelope
-        if value.get("schema_version") == "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v2"
-        else Envelope
-    )
+    model: type[Envelope] = Envelope
+    if value.get("schema_version") == "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v3":
+        model = ServiceSizeEnvelope
+    elif value.get("schema_version") == "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v2":
+        model = ConstraintEnvelope
     parsed = model.model_validate(value)
     if "constraint_review" in value:
-        validate_review(value["constraint_review"], value["candidates"], value["target"])
+        validate_review(
+            value["constraint_review"],
+            value["candidates"],
+            value["target"],
+            service_size=value["schema_version"] == "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v3",
+        )
         timestamp(value["constraint_review"]["reviewed_at"])
     if (
         parsed.model_dump(mode="json") != value

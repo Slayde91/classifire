@@ -25,7 +25,7 @@ from ..models import (
     User,
     new_id,
 )
-from .draft_constraint_review import UNASSESSED, results, validate_inputs
+from .draft_constraint_review import SIZE_UNASSESSED, UNASSESSED, results, validate_inputs
 from .draft_scope import DraftScopeError, _actor, _atomic, _valid_hash, get_draft, read_revision
 from .draft_system_match_contract import (
     COMPARISON_NAMES,
@@ -652,10 +652,11 @@ def save_constraint_review(
     inputs: dict[str, Any],
     *,
     storage_root: Path,
+    service_size: bool = False,
 ) -> dict[str, Any]:
     """Append explicit manual measurements and partial checks; never approve a system."""
     try:
-        validate_inputs(inputs)
+        validate_inputs(inputs, service_size=service_size)
     except (ValueError, TypeError) as exc:
         raise DraftSystemMatchError("MATCH_MEASUREMENTS_INVALID", 422) from exc
     with _atomic(db):
@@ -663,10 +664,14 @@ def save_constraint_review(
         if type(expected_revision) is not int or expected_revision != match.latest_revision:
             raise DraftSystemMatchError("MATCH_REVISION_CONFLICT", 409)
         db.scalar(
-            select(DraftScope).where(DraftScope.id == draft.id).with_for_update()
+            select(DraftScope)
+            .where(DraftScope.id == draft.id)
+            .with_for_update()
             .execution_options(populate_existing=True)
         )
         prior = _read(db, actor, draft, match, expected_revision)
+        if prior["schema_version"] == "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v3" and not service_size:
+            raise DraftSystemMatchError("MATCH_MEASUREMENT_VERSION_REQUIRED", 422)
         release, records, _ = _release(db, match.release_id)
         if match_staleness(db, actor, draft_id, match_id, storage_root=storage_root):
             raise DraftSystemMatchError("MATCH_BASIS_STALE", 409)
@@ -685,13 +690,19 @@ def save_constraint_review(
         )
         published_hash = candidate["fields_sha256"] if pinned else None
         envelope = copy.deepcopy(prior)
-        envelope["schema_version"] = "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v2"
+        envelope["schema_version"] = (
+            "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v3"
+            if service_size
+            else "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v2"
+        )
         envelope["constraint_review"] = {
             "candidate_id": candidate_id,
             "inputs": copy.deepcopy(inputs),
             "published_fields_sha256": published_hash,
-            "checks": results(candidate, prior["target"], inputs, published_hash),
-            "unassessed": list(UNASSESSED),
+            "checks": results(
+                candidate, prior["target"], inputs, published_hash, service_size=service_size
+            ),
+            "unassessed": list(SIZE_UNASSESSED if service_size else UNASSESSED),
             "status": "partial_unapproved",
             "reviewed_by": actor.id,
             "reviewed_at": datetime.now(UTC).isoformat(),

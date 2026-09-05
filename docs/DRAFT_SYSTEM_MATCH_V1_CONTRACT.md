@@ -167,3 +167,10 @@ basis/history and adds partial substrate/gap checks with manual measurement clai
 See [the v2 extension and demo](./DRAFT_CONSTRAINT_REVIEW.md). New technical release
 v3 snapshots public fields; historical releases are not rewritten. Partial checks
 never grant applicability or approval and do not change existing v1 bytes.
+
+## Additive measured-size version
+
+The [v3 service-size review](./DRAFT_SERVICE_SIZE_REVIEW.md) extends saved numeric
+review with observed ranges and explicit measurement/source meanings. V1/v2 validation
+and retained bytes remain unchanged. New semantics require the v3 envelope and an
+explicit v3 save; unsupported meanings never become technical approval.

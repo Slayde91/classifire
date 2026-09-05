@@ -47,8 +47,10 @@ Full Scope analysis, actual applicability, governed pricing and complete
 ProjectPackage/ChatGPT access remain unfinished. The current independent
 [scope-and-system report screen](docs/DRAFT_SYSTEM_REPORT_CONTRACT.md) captures a
 saved review and its embedded Scope without requiring an Estimate. Both outputs
-preserve partial/unapproved status and exact historical bytes. After publication,
-next is a bounded service-size review using already pinned source limits.
+preserve partial/unapproved status and exact historical bytes. It is merged in PR #197. The current
+[service-size review](docs/DRAFT_SERVICE_SIZE_REVIEW.md) records measured ranges and
+explicit dimension meanings against pinned limits, without implying compatibility.
+After publication, next is the complete Draft report profile using saved artifacts.
 See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
 [verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
 Complete visible slices before broad refinement; preserve existing authority and

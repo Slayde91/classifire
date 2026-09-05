@@ -82,3 +82,11 @@ receipts/downloads/screenshots `.tmp/constraint-review-artifacts`, harnesses in
 `.tmp/scope-browser-test-tools`. Four match revisions and exact r1/r2/r4 downloads
 survived an actual process restart. The served logo matched the user PNG exactly.
 These artifacts remain outside Git; PROJECT_STATE.md records validation/publication.
+
+## Additive service-size review
+
+The [v3 service-size increment](./DRAFT_SERVICE_SIZE_REVIEW.md) adds explicit
+measured ranges and measurement/source dimension meanings. The v2 contract above
+remains valid and retains its original two-check semantics. V3 compares only
+recorded outside diameters; unsupported meanings and incomplete coverage remain
+unresolved/unapproved. No legacy revision or output is rewritten.
