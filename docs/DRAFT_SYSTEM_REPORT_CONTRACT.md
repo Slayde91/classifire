@@ -31,7 +31,7 @@ Production export licensing and tenant isolation remain separate unproven polici
 The original scope-only schema/renderer 1 remains supported. System reports use
 `CLASSIFIRE-DRAFT-SCOPE-REPORT-v2`, `profile: scope-and-system`, `render_version: 2`.
 The existing report fields remain; one additional `system_match` contains the whole
-validated retained v1/v2 review. Its embedded Scope must equal the report Scope in
+validated retained v1/v2/v3 review. Its embedded Scope must equal the report Scope in
 full. SHA-256 covers the canonical JSON snapshot. Retained local match identity,
 revision, hash and content are rechecked before persistence and on read.
 
@@ -79,3 +79,8 @@ Demo: `python scripts/run_draft_scope_demo.py --port 8806 --data-dir
 technical fixtures and a separate marked SQLite database; no customer/provider or
 real technical approval. Inspect the browser, both output formats and actual restart.
 See PROJECT_STATE.md for checks actually completed, including any preview-tool limits.
+
+V3 service-size reviews use the same report profile: the exact range, both recorded
+meanings and partial numeric outcome are included. Old input versions retain their
+existing presentation and saved output bytes. Reporting never derives a size or
+converts an unapproved interpretation into source truth.

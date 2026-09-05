@@ -122,6 +122,22 @@ def summary(match: dict[str, Any]) -> list[tuple[str, str]]:
         rows.append(("Measured limits", "No measured-limit review saved"))
     else:
         rows.append(("Measurement evidence", review["inputs"]["measurement_note"]))
+        if "service_size_basis" in review["inputs"]:
+            recorded = review["inputs"]
+            rows.append(
+                (
+                    "Measured service sizes (mm)",
+                    f"{recorded['service_size_min_mm'] or 'unknown'} to "
+                    f"{recorded['service_size_max_mm'] or 'unknown'}; measured instances only",
+                )
+            )
+            rows.append(
+                (
+                    "Measurement / source size meanings",
+                    f"{recorded['service_size_basis']} / {recorded['source_size_basis']}; "
+                    "unapproved human interpretation",
+                )
+            )
         for check in review["checks"]:
             label = check["criterion"].replace("_", " ").title()
             status = check["status"].replace("_", " ")

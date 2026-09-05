@@ -1,7 +1,7 @@
 <section class="panel" aria-labelledby="constraint-heading">
   <h2 id="constraint-heading">Check measured limits</h2>
-  <p>Check substrate thickness and the smallest/largest annular gap for one selected opening and service pair. Enter millimetres measured using the retained source's definitions. Leave unknown measurements blank. This does not change the Scope.</p>
-  <p class="callout"><strong>Partial checks, not system compatibility.</strong> Service size, fire rating, seal depth, installation conditions and other requirements still need assessment. A value within these limits is not an approved system. Measurements and their source interpretation remain your unapproved review claims.</p>
+  <p>Check substrate thickness, the smallest/largest annular gap and a measured service-size range for one selected opening and service pair. Enter millimetres measured using the retained source's definitions. Leave unknown measurements blank. This does not change the Scope.</p>
+  <p class="callout"><strong>Partial checks, not system compatibility.</strong> Service type/material, measurement coverage, fire rating, seal depth, installation conditions and other requirements still need assessment. A value within these limits is not an approved system. Measurements and their source interpretation remain your unapproved review claims.</p>
   {% set review = envelope.get('constraint_review') %}
   {% if review %}
     {% for candidate in envelope.candidates %}{% if candidate.candidate_id == review.candidate_id %}
@@ -12,6 +12,10 @@
     <dl class="scope-import-details">
       <dt>Substrate thickness (mm)</dt><dd>{{ review.inputs.substrate_thickness_mm or 'Unknown' }}</dd>
       <dt>Smallest / largest gap (mm)</dt><dd>{{ review.inputs.annular_gap_min_mm or 'Unknown' }} / {{ review.inputs.annular_gap_max_mm or 'Unknown' }}</dd>
+      {% if 'service_size_min_mm' in review.inputs %}
+      <dt>Measured service-size range (mm)</dt><dd>{{ review.inputs.service_size_min_mm or 'Unknown' }} / {{ review.inputs.service_size_max_mm or 'Unknown' }}</dd>
+      <dt>Recorded measurement / source meanings</dt><dd>{{ review.inputs.service_size_basis|replace('_', ' ') }} / {{ review.inputs.source_size_basis|replace('_', ' ') }}. Human interpretation, not approved technical data.</dd>
+      {% else %}<dt>Service-size review</dt><dd>Not recorded in this earlier revision.</dd>{% endif %}
     </dl>
     <table class="scope-table"><thead><tr><th>Check</th><th>Published limits (mm)</th><th>Result</th><th>Reason</th></tr></thead><tbody>
     {% for check in review.checks %}<tr><td>{{ check.criterion|replace('_', ' ')|capitalize }}</td><td>{{ check.lower_limit_mm if check.lower_limit_mm is not none else 'Unknown' }} to {{ check.upper_limit_mm if check.upper_limit_mm is not none else 'Unknown' }}</td><td>{{ check.status|replace('_', ' ')|capitalize }}</td><td>{{ check.reason|replace('_', ' ')|capitalize }}</td></tr>{% endfor %}
@@ -28,7 +32,15 @@
     {% for key, label in [('substrate_thickness_mm', 'Substrate thickness (mm)'), ('annular_gap_min_mm', 'Smallest measured annular gap (mm)'), ('annular_gap_max_mm', 'Largest measured annular gap (mm)')] %}
     <div><label for="constraint-{{ key }}">{{ label }}</label><input id="constraint-{{ key }}" name="{{ key }}" type="text" inputmode="decimal" maxlength="15" value="{{ form_values.get(key, saved.get(key) or '') }}"><p class="scope-hint">Blank means unknown. Up to four decimal places.</p></div>
     {% endfor %}
-    <div class="span-2"><label for="constraint-note">Measurement evidence and source interpretation</label><textarea id="constraint-note" name="measurement_note" maxlength="2000" required>{{ form_values.get('measurement_note', saved.get('measurement_note', '')) }}</textarea><p class="scope-hint">Identify the observation/page, measurement method and why the selected source's measurement definitions apply. Do not infer a gap from overall opening width or count.</p></div>
+    <div class="span-2"><h3>Measured service sizes</h3><p class="scope-hint">Record only the individual services you measured. For one measurement, enter the same value twice. This does not establish how many instances exist or that every instance was measured. Do not substitute nominal pipe size, bundle dimensions or rectangular width/height for outside diameter.</p></div>
+    {% for key, label in [('service_size_min_mm', 'Smallest measured service size (mm)'), ('service_size_max_mm', 'Largest measured service size (mm)')] %}
+    <div><label for="constraint-{{ key }}">{{ label }}</label><input id="constraint-{{ key }}" name="{{ key }}" type="text" inputmode="decimal" maxlength="15" value="{{ form_values.get(key, saved.get(key) or '') }}"><p class="scope-hint">Blank means unknown; positive millimetres only.</p></div>
+    {% endfor %}
+    {% for key, label in [('service_size_basis', 'What do your service measurements describe?'), ('source_size_basis', 'What do the selected source size limits describe?')] %}
+    <div><label for="constraint-{{ key }}">{{ label }}</label><select id="constraint-{{ key }}" name="{{ key }}" required>{% for value, text in [('unknown', 'Unknown / not established'), ('outside_diameter', 'Individual service outside diameter'), ('nominal_diameter', 'Nominal diameter'), ('rectangular_dimensions', 'Rectangular width or height'), ('bundle_envelope', 'Overall bundle dimensions')] %}<option value="{{ value }}"{% if form_values.get(key, saved.get(key, 'unknown')) == value %} selected{% endif %}>{{ text }}</option>{% endfor %}</select></div>
+    {% endfor %}
+    <p class="span-2 scope-hint">This partial check compares only explicitly recorded outside-diameter ranges with source limits recorded as outside diameters. Other meanings remain unresolved. Your source interpretation is retained as an unapproved claim; no size is inferred from a service label.</p>
+    <div class="span-2"><label for="constraint-note">Measurement evidence and source interpretation</label><textarea id="constraint-note" name="measurement_note" maxlength="2000" required>{{ form_values.get('measurement_note', saved.get('measurement_note', '')) }}</textarea><p class="scope-hint">Identify the observation/page, which service instances were measured, the measurement method and why the selected source's measurement definitions apply. Do not infer a gap from overall opening width or count.</p></div>
     <div class="span-2"><button class="button button-primary" type="submit">Save measured-limit review</button><p class="scope-hint">Adds an unapproved revision for this candidate. Earlier measurements remain in history. Does not select a system or price work.</p></div>
   </form>
   {% elif not envelope.target.opening_id %}<p class="callout">Start a review with an explicit opening to check its measured limits.</p>{% endif %}

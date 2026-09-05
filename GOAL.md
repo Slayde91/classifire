@@ -148,23 +148,32 @@ PR #196 merged source-bound XLSX upload, scanning, explicit column mapping and r
 selection. Original rates, manual overrides and exact cells survive export/restart.
 This remains unapproved workbook selection, not complete pricing governance.
 
-## Demonstrated scope-and-system reporting and immediate priority
+## Demonstrated scope-and-system reporting
 
-The current P4b increment adds a separate saved-review report screen. Users select
-one retained review and its embedded Scope, preview saved candidate decisions and
-partial measured checks, then explicitly generate both PDF and XLSX. No Estimate,
-matching run or provider is needed. Historical downloads survive review edits and
-restart. See PROJECT_STATE.md for measured checks and current publication status.
+PR #197 merged independent reporting of one saved candidate review and its exact
+Scope, including technical-read boundaries and visible staleness. PDF/XLSX survive
+edits/restart and retain unapproved status. No Estimate or matching run is required.
 
-After publishing this increment, the next visible task is **service-size review**
-within the existing measured-limit screen: explicitly enter an evidenced service
-size and compare it with the selected candidate's pinned published numeric limits.
-Those limits already exist in the technical fields, but the current saved checks
-cover only substrate thickness and annular gaps. This closes a material technical
-input gap before another reporting profile. Keep ambiguous size interpretations,
-missing bounds and unsupported service configurations unresolved. Do not infer a
-diameter from a name or claim full applicability from another partial numeric check.
-Reuse the existing shared review contract, revision history and report presentation.
+## Current service-size increment and immediate priority
+
+The existing measured-limit UI now records a service-size range and explicit
+measurement/source dimension meanings. It compares only recorded outside diameters
+against pinned published bounds; nominal, rectangular, bundle or unknown meanings
+remain unresolved. These are unapproved human review claims and measured instances
+only, not complete applicability or physical quantities. Old reviews and outputs
+remain unchanged. See PROJECT_STATE.md for verification/publication.
+
+After publishing this increment, deliver the remaining **complete Draft report
+profile** from one explicitly selected retained Estimate and its embedded Scope and
+optional System Match. The existing estimate-only profile shows a review reference;
+the complete profile should present the available scope, technical review and
+commercial details together, with unavailable sections clearly identified. This
+closes the fourth requested report profile using already saved artifacts. Reuse the
+shared report services and presentation; never rerun matching or estimating.
+
+Then prioritize portable ProjectPackage exchange and shared ChatGPT access over
+further report polish. Broader evidence analysis and technical/pricing coverage
+remain essential parallel product gaps, not completed by this prototype.
 
 Full applicability, pricing default/inferred methods, broader Scope formats/analysis,
 other report profiles, ProjectPackage exchange and shared ChatGPT access remain
