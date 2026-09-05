@@ -56,7 +56,7 @@ def test_report_migration_preserves_scope_and_retains_pair_with_foreign_key_bind
         assert read_report(db, actor, draft_id, report.id)["scope"]["content"]["assumptions"] == [
             "Predates report migration"
         ]
-        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
+        assert assess_deployment_lineage(db).code == "DEPLOYMENT_LINEAGE_UNRECOGNISED"
         assert (
             db.scalar(text("SELECT version_num FROM alembic_version")) == "0028_draft_scope_reports"
         )

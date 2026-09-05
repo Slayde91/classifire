@@ -126,6 +126,31 @@ Only one target is assessed for retrieval per review, with at most 20 candidates
 The artifact preserves the full Scope context and remaining unassessed item IDs.
 No Estimate, provider, canonical physical write, lock or operational release runs.
 
+## Manual Draft Estimate interaction
+
+The existing launcher can demonstrate P3a without `--seed-technical-library` or
+any pricing release. In the saved Scope workspace:
+
+1. Save explicit service quantities/units and any blank openings. Unknown stays blank.
+2. Open **Draft Estimates**, select the saved Scope revision and choose **Create
+   Draft Estimate**. Leave both candidate-review fields blank for manual entry.
+3. Choose a **Scope target to price** and **Show target for pricing**. Enter its
+   work description, unit sell rate excluding tax and source/work note. Changing
+   the saved quantity or supplying a blank-opening quantity requires a reason.
+4. **Add and calculate line** saves a revision. Rates support six decimals;
+   `1000 mm x AUD 0.001234/mm = AUD 1.23`. Blank quantity/rate stays unpriced.
+5. Open **Edit price or omit this line**. Save quantity/rate changes with a reason,
+   or omit separately with its reason. Restore the retained line instead of adding
+   the same target again. Originals and attributed changes remain in history.
+6. Download saved Draft Estimate JSON, open an older revision, edit the Scope and
+   return to see the stale warning. Earlier totals/downloads keep their old basis.
+   Restart the server and compare the same downloads again.
+
+Totals are always partial, AUD-only and excluding uncalculated tax. Service lines
+exclude shared-opening closure; nonblank-opening work remains unassessed. This is
+not technical approval, a complete quote, a tax invoice or a canonical Estimate.
+The sign-in screen/sidebar display the owner's exact supplied PNG in a white frame.
+
 ## Check persistence after restart
 
 To verify persistence, stop the server with `Ctrl+C` and run the same command
@@ -190,13 +215,42 @@ standard/long-text fixtures are in `.tmp/draft-scope-report-output-qa`. These ar
 synthetic artifacts, excluded from the PR. The launcher can run this increment with
 `--data-dir C:\CLASSIFIRE\.tmp\draft-scope-report-demo-20260905 --port 8798`.
 
+## Verified P3a manual estimate and logo demonstration
+
+The 2026-09-05 Chrome journey created one Scope, imported its saved JSON and edited
+it through revision 4. Estimate revision 8 retains Scope revision 3, two service
+lines and one blank-opening line. It exercised an unknown rate, a six-decimal rate,
+reasoned quantity/rate overrides and omit/restore. The final partial subtotal was
+**AUD 441.23 excluding tax**, with tax uncalculated. Earlier revision 2 remained
+AUD 251.10. The UI correctly marked the estimate stale after the later Scope edit.
+
+Browser and actual server restart receipts reported PASS with no page errors.
+The first restart harness navigation preceded server readiness and was refused;
+after a successful HTTP readiness check, the same read-only comparison passed.
+Login/sidebar branding and estimate screens were visually inspected. Served logo
+bytes exactly match the supplied original, SHA-256
+`fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+
+- Revision 8 file SHA-256: `164000f897c0bac1155b143e4abc36e475b8698763296bbecdcc453fd9a1bd9a`.
+- Revision 2 file SHA-256: `19ec52b8ce5355af5517f1564ba24be090e17b3bf6c3baf42260974706f141af`.
+- Revision 8 envelope hash: `8e337384dc82372380d125560636b2b24ba94374d602b0866786675d61ca6114`.
+- Local estimate: `http://127.0.0.1:8801/scopes/6099f8d3-fe8c-4a5d-ad5e-7b71da4c1917/estimates/c0470537-1208-4d6b-86d2-77102fa205c9`.
+
+Both historical and latest JSON remained byte-identical after edits and restart.
+A read-only count found one Draft Scope/four revisions and one Draft Estimate/eight
+revisions, with zero library releases, canonical estimates/lines, defects, openings,
+services, service links or Physical Model Locks. Demo data is preserved under
+`.tmp/draft-estimate-demo-20260905`; screenshots, downloads and receipts are under
+`.tmp/draft-estimate-artifacts`, outside Git. Run the launcher with that data directory
+and `--port 8801` to reopen this synthetic demonstration.
+
 ## Boundaries and remaining work
 
 - Scope JSON import/export is implemented for the supported v1/v2 contracts.
   Complete ProjectPackage ZIP generation/import, source-file intake, AI analysis,
-  matching, pricing and additional report profiles remain outside this workflow.
+  full applicability, governed pricing and additional report profiles remain unfinished.
   Scope-only Draft PDF/XLSX reporting and bounded P2a candidate review are implemented;
-  P3a manual Draft estimating is next after current validation/publication.
+  P3a manual Draft estimating is locally demonstrated; estimate-only PDF/XLSX is next after publication.
 - Saved revisions remain Draft and unreviewed. They do not create canonical
   physical-model records, approvals, locks or human releases.
 - Draft content is restricted to its owner and administrators. Surrounding

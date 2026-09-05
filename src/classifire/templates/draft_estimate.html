@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Draft Estimate | {{ project.reference }} | CLASSIFIRE{% endblock %}
+{% block heading %}Draft Estimate{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+{% set form_values = form_values|default({}) %}
+{% set estimate_url = estimate_url|default('') %}
+{% set error_line_id = error_line_id|default(none) %}
+<div class="scope-context">
+  <a href="/scopes/{{ draft.id }}">&larr; Draft Scope</a>
+  <span class="badge badge-draft">Draft &middot; provisional pricing</span>
+</div>
+{% if errors|default([]) %}
+<section class="alert alert-error" role="alert" aria-labelledby="estimate-errors-heading">
+  <h2 id="estimate-errors-heading">Estimate needs attention</h2>
+  <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+  <p>Your attempted changes were not saved. Check the fields below before trying again.</p>
+</section>
+{% endif %}
+<section class="panel">
+  <div class="eyebrow">{{ project.reference }}</div>
+  <h2>{{ project.name }}</h2>
+  <p>Enter manual quantities and unit sell rates against a selected saved Scope.</p>
+  <div class="callout"><strong>Provisional manual estimate.</strong> Amounts are in AUD, excluding tax. Tax is not calculated. Prices do not establish technical compatibility or approval, and this worksheet is not a complete project quote.</div>
+{% if estimate_url %}
+  <p>Estimate revision {{ envelope.revision }} &middot; saved Scope revision {{ scope.revision }}</p>
+  {% if staleness|default([]) %}
+  <div class="alert alert-error" role="status">
+    <strong>Saved inputs are out of date or cannot be verified.</strong> Retained lines, totals and downloads keep their earlier basis.
+    <ul>{% for code in staleness %}<li>{{ code|replace('_', ' ')|capitalize }}</li>{% endfor %}</ul>
+    <a href="{{ base_url }}">Start a separate estimate from selected inputs</a>
+  </div>
+  {% endif %}
+  <div class="scope-context-actions">
+    {% if has_permission('estimate:export') %}
+    <a class="button button-primary" href="{{ estimate_url }}/download?revision={{ envelope.revision }}">Download saved Draft Estimate JSON</a>
+    {% endif %}
+    <a class="button button-secondary" href="{{ base_url }}">All Draft Estimates</a>
+  </div>
+  <form method="get" action="{{ estimate_url }}" class="stack-form">
+    <label for="estimate-history-revision">Saved estimate revision</label>
+    <input id="estimate-history-revision" name="revision" type="number" min="1" max="{{ latest_revision }}" value="{{ envelope.revision }}" required>
+    <button class="button button-secondary" type="submit">Open estimate revision</button>
+  </form>
+  {% if envelope.revision != latest_revision %}
+  <p class="callout">This is a historical estimate revision. <a href="{{ estimate_url }}" target="_blank" rel="noopener">Open the latest revision to edit (new tab)</a>. Earlier downloads remain unchanged.</p>
+  {% endif %}
+  <details class="scope-import-source">
+    <summary>Saved identity and dependencies</summary>
+    <dl class="scope-import-details">
+      <dt>Estimate ID</dt><dd class="scope-item-id">{{ envelope.artifact_id }}</dd>
+      <dt>Estimate checksum</dt><dd class="scope-item-id">{{ envelope.sha256 }}</dd>
+      <dt>Previous checksum</dt><dd class="scope-item-id">{{ envelope.parent_hash or 'None - first revision' }}</dd>
+      <dt>Saved by / at</dt><dd>{{ envelope.created_by }} / {{ envelope.created_at }}</dd>
+      <dt>Scope ID / revision</dt><dd class="scope-item-id">{{ scope.artifact_id }} / {{ scope.revision }}</dd>
+      <dt>Scope checksum</dt><dd class="scope-item-id">{{ scope.sha256 }}</dd>
+      <dt>Schema / state</dt><dd>{{ envelope.schema_version }} / Draft, unreviewed</dd>
+    </dl>
+    <p class="scope-hint">Saved Scope assertions and imported claims remain unreviewed. This estimate does not promote them into approved facts.</p>
+  </details>
+{% else %}
+  <form method="get" action="{{ base_url }}" class="stack-form">
+    <label for="estimate-scope-revision">Saved Scope revision</label>
+    <input id="estimate-scope-revision" name="scope_revision" type="number" min="1" max="{{ draft.latest_revision }}" value="{{ scope_revision }}" required>
+    <button class="button button-secondary" type="submit">Show Scope revision</button>
+  </form>
+  <p class="scope-hint">The estimate will retain saved Scope revision {{ scope_revision }}. Unsaved Scope editor changes are not included.</p>
+  {% if scope_revision != draft.latest_revision %}<p class="callout">You selected an earlier Scope revision. The latest saved revision is {{ draft.latest_revision }}.</p>{% endif %}
+{% endif %}
+</section>
+{% if estimate_url %}
+  {% set can_edit = (can_edit|default(true)) and has_permission('project:write') and has_permission('estimate:write') and envelope.revision == latest_revision %}
+  {% include "draft_estimate_content.html" %}
+{% else %}
+<section class="panel">
+  <h2>Start a manual Draft Estimate</h2>
+  <p>Add service-specific work once across its linked openings, or closure work for a blank opening. No quantities or rates are inferred.</p>
+  {% if has_permission('project:write') and has_permission('estimate:write') %}
+  <form method="post" action="{{ base_url }}" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="scope_revision" value="{{ scope_revision }}">
+    <div>
+      <label for="estimate-match-id">Candidate review reference (optional)</label>
+      <select id="estimate-match-id" name="match_id" aria-describedby="estimate-match-hint">
+        <option value="">No candidate review attached</option>
+        {% for item in matches %}<option value="{{ item.id }}"{% if form_values.get('match_id') == item.id %} selected{% endif %}>{{ item.id }} &middot; latest revision {{ item.latest_revision }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="estimate-match-revision">Candidate review revision (if attached)</label>
+      <input id="estimate-match-revision" name="match_revision" type="number" min="1" value="{{ form_values.get('match_revision', '') }}" aria-describedby="estimate-match-hint">
+    </div>
+    <p id="estimate-match-hint" class="scope-hint span-2">A review is optional and must retain this exact Scope revision. Enter its saved revision to attach. Keep/reject decisions are unapproved context, not a system choice or price.</p>
+    {% if not matches %}<p class="scope-hint span-2">No accessible reviews are listed. You can still create a manual estimate without one.</p>{% endif %}
+    <div class="span-2"><button class="button button-primary" type="submit">Create Draft Estimate</button><p class="scope-hint">Saves an empty first revision. Add one work line at a time afterward.</p></div>
+  </form>
+  {% else %}<p class="callout">Creating or editing an estimate requires project and estimate write permissions.</p>{% endif %}
+</section>
+<section class="panel">
+  <h2>Saved Draft Estimates</h2>
+  <p class="scope-hint">Newest 20 estimates. Each retains its inputs and prior revisions. Older saved links remain valid.</p>
+  {% for item in estimates %}<article class="scope-import-item"><a href="{{ base_url }}/{{ item.id|urlencode|replace('/', '%2F') }}">Draft Estimate &middot; revision {{ item.latest_revision }} &middot; {{ item.created_at }}</a><p class="scope-item-id">{{ item.id }}</p></article>{% else %}<p class="scope-empty">No saved Draft Estimates yet.</p>{% endfor %}
+</section>
+<details class="panel"><summary>Selected saved Scope context</summary>
+  {% with envelope=scope %}{% include "draft_scope_report_content.html" %}{% endwith %}
+</details>
+{% endif %}
+{% endblock %}
