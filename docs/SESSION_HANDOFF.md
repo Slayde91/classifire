@@ -1,72 +1,66 @@
 # CLASSIFIRE Session Handoff
 
 **Prepared:** 2026-09-05 (AEST)
-**Verified shared-main baseline:** `51e7d601a756141dfbdef5d113e754a9b2833d34` (PR #182)
-**Latest executable-change baseline:** 4ab8723 (PR #181)
+**Verified shared-main baseline:** `d03753f94634860ed3381825f4c5d2f514e6523d` (PR #183)
+**Latest executable-change baseline:** d03753f (PR #183)
 
 All four maintained documents are under `docs/`. Inspect current repository
 evidence before editing; this handoff records a snapshot, not live authority.
 
 ## Start Here / Next Session
 
-**First task:** after verifying publication of the completion-consumer candidate,
-implement the smallest durable execution journal and authenticated verifier path.
-Extend CLASSIFIRE's existing BackgroundJob/worker/service abstractions where
-suitable. Use a synthetic executor to prove the contract before production wiring.
+**First task:** after verifying journal publication, integrate its lifecycle
+with Phase 8's pre-dispatch and post-response boundaries. Use injected trusted
+capture/verification ports and prove the path end to end with synthetic transport.
 
-**Why next:** the consumer now refuses inference without a configured verifier
-and refuses proposals without valid bound completion evidence. Managed factories
-have no verifier. A durable trusted producer is needed to restore governed
-inference; empty OpenClaw audit pages cannot supply its guarantees.
+**Why next:** the consumer is merged and the journal candidate can durably seal
+a trusted producer's outcome, but managed transports are not wired to it.
+A naive wrapper is circular: transport waits for verification while the journal
+waits for transport return. Split or adapt the existing lifecycle deliberately;
+persist capture before dispatch and completion before returning a proposal.
 
-**Prerequisites:**
+**Prerequisites:** inspect applicable AGENTS.md, root/worktree status, branch/
+upstream/HEAD, main, open PRs and CI before editing. Read the four docs, Decision
+0001, completion contract and OpenClaw inventory. Verify the actual journal
+commit/PR/merge from `feat/execution-journal-20260905` in
+`C:\CLASSIFIRE\.tmp\execution-journal-20260905`, based on `d03753f`.
+Preserve unrelated/root work and use an isolated current-main tree.
 
-- Inspect AGENTS.md, Git branch/upstream/HEAD/conflicts, current main and PR/CI.
-  Read the four docs, Decision 0001, OPENCLAW_CONTRACT_CHARACTERISATION.md and
-  EXECUTION_COMPLETION_CONTRACT.md. Do not repeat newly merged work.
-- Candidate branch `feat/phase8-completion-evidence-20260905` in
-  `C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905` was advanced to
-  `51e7d60` before validation. Verify its actual commit/PR/merge and current main.
-  Preserve its changes and the unrelated conflicted root; use an isolated tree.
-- Review capture lifecycle, durable authority, clock assumptions and retention
-  requirements before implementation. The stock audit API does not certify
-  persistence or loss. Do not manufacture a certificate from its responses.
-- No live provider/customer, canonical-write, lock, deployment or release
-  authority is granted. Synthetic/disposable database work is available.
-
-**Files/components:** `src/classifire/models.py`, `worker.py`, `db.py`;
-`services/phase8_openresponses_transport.py`,
-`services/phase8_report_openresponses_transport.py` and
-`services/phase8_visual_runtime.py` under `src/classifire/`; packaged migrations,
-completion contract, relevant job/database tests and the transport/caller suite
-below. Reuse receipt/transaction conventions without giving a job canonical authority.
+**Files/components:** `src/classifire/services/execution_journal.py`;
+`phase8_openresponses_transport.py`, `phase8_report_openresponses_transport.py`,
+`phase8_visual_runtime.py` in that service directory; `src/classifire/models.py`
+and `worker.py` for state compatibility; completion contract; journal and existing
+transport/controller/caller tests listed below.
 
 **Definition of done:**
 
-1. Record current-to-target design and justified schema/migration impact. Journal
-   immutable invocation identity, owner, capture start, execution and terminal
-   outcome; separate operational job state from canonical project truth.
-2. Make capture-before-dispatch and durable terminal ordering explicit. Missing,
-   disabled, pending, lost, corrupt or interrupted capture cannot verify success.
-   Authenticate the producer record before returning typed completion evidence.
-3. Prove exact request/response/session/agent/attestation binding, cross-invocation
-   refusal, idempotent replay, concurrent ownership and crash/recovery behavior.
-   Use synthetic executors; add only necessary forward migrations and disposable
-   PostgreSQL tests where transaction semantics matter.
-4. Preserve no-tool controls, historical receipt verification, safe diagnostics,
-   deterministic services and all human/canonical/lock/release gates. Production
-   wiring stays disabled unless the actual producer meets the complete contract.
-5. Run focused/new job and transport regressions, static/migration checks and full
-   hosted CI. Inspect stored synthetic records/receipts, align documentation,
-   classify scope, commit, push, PR and merge after CI/reviews pass where safe.
-   Verify merge/post-merge CI; report remaining real-provider parity honestly.
+1. Record the exact lifecycle change and trust/availability impact before editing.
+   Reuse the journal and existing transport checks; do not duplicate domain logic.
+2. Commit capture identity before inference dispatch; let post-response verification
+   authenticate producer evidence, commit a terminal journal and reload it before
+   proposal acceptance. Bind the same session/request/response/attestation/context.
+3. Prove positive visual/report execution with synthetic capture/HTTP, absence and
+   loss refusal, safe failures, interruption/late completion, concurrent/repeated
+   calls and historical receipts. A verifier must never require transport return
+   before it can complete that same transport.
+4. Preserve no-tool enforcement, exact evidence, owner/producer boundaries and all
+   canonical/lock/release controls. An authenticated application supplies owner IDs;
+   accepting an arbitrary owner string is not user authorization.
+5. Keep managed real-provider wiring disabled until actual capture/terminal
+   assurance is proven. Empty remote pages and locally sealed assertions cannot
+   establish that assurance. No real provider/customer/canonical operation.
+6. Run focused integration/journal and warranted caller tests, full static checks,
+   migration heads, guarded disposable PostgreSQL concurrency and hosted CI.
+   Inspect synthetic records/receipts; align docs; classify, commit, push, PR and
+   merge where safe after CI/reviews. Verify merge and post-merge CI.
 
-**Blockers/limits:** no trusted production producer exists; whether the current
-OpenClaw integration can supply sufficient terminal/capture evidence remains
-unproven. A local journal alone cannot attest events outside its enforcement
-boundary. Complete the durable synthetic boundary without claiming provider parity,
-then identify the exact remaining adapter requirement. Do not create a general
-agent framework, new package/UI pipeline or permissive production verifier.
+**Remaining limits:** journal HMAC is integrity protection inside the trusted
+application/storage boundary, not provider authentication or malicious-database
+anti-rollback. Production key custody/rotation, retention, actual capture and
+remote cancellation remain unproven. The generic worker still has no handlers;
+journal operations use explicit non-queued states. No new migration is needed
+for the current journal. Do not expand the next slice into a general agent
+framework, packages or UI.
 
 ### Validation commands
 
@@ -81,6 +75,8 @@ $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
 $contractPython = 'C:\CLASSIFIRE\.venv\Scripts\python.exe'
 $contractTemp = Join-Path $env:TEMP ('classifire-contract-' + [guid]::NewGuid().ToString('N'))
 & $contractPython -m pytest -o addopts= -q -p no:cacheprovider --basetemp $contractTemp `
+  tests/test_execution_journal.py `
+  tests/test_execution_journal_postgresql.py `
   tests/test_phase8_openresponses_transport.py `
   tests/test_phase8_report_openresponses_transport.py `
   tests/test_phase8_visual_runtime.py `
@@ -114,58 +110,55 @@ for this synthetic task.
 Continue CLASSIFIRE at C:\CLASSIFIRE (https://github.com/Slayde91/classifire).
 Before editing read AGENTS.md, the four docs under docs/, Decision 0001,
 EXECUTION_COMPLETION_CONTRACT.md and OPENCLAW_CONTRACT_CHARACTERISATION.md.
-Inspect branch/upstream/HEAD/conflicts and local changes; fetch main and check
-PRs/CI. Verified main was 51e7d60 (PR #182), CI 33938506042 passed. Verify actual
-publication of feat/phase8-completion-evidence-20260905 in
-C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905 before proceeding.
+Inspect branch/upstream/HEAD/conflicts/local changes; fetch main and check PRs/CI.
+Verified main was d03753f (PR #183), CI 33939296281 passed. Verify publication
+of feat/execution-journal-20260905 in
+C:\CLASSIFIRE\.tmp\execution-journal-20260905 and reconcile newer source.
 Preserve the conflicted root and unrelated work; use an isolated current-main tree.
 
-Single next task: implement the smallest durable execution journal and
-authenticated completion verifier using existing BackgroundJob/worker/service
-boundaries where suitable. The consumer candidate requires bound completion
-evidence; managed inference intentionally refuses dispatch because no production
-verifier exists. Empty audit pages cannot prove capture completeness. Do not
-duplicate the consumer or invent provider certificates.
+Single next task: connect the execution journal to Phase 8's pre-dispatch and
+post-response lifecycle with injected trusted capture/verification ports.
+The consumer is merged; the journal candidate persists sealed outcomes on
+BackgroundJob, but managed inference is still unwired. Avoid a circular wrapper:
+the verifier cannot wait for the transport return that it is itself blocking.
 
-Inspect src/classifire/models.py, worker.py, db.py, the two phase8_*openresponses
-transports, phase8_visual_runtime.py, their tests and packaged migrations.
-Document design/migration impact first. Prove capture-before-dispatch, durable
-terminal ordering, immutable invocation/owner binding, lost/disabled/pending
-capture refusal, idempotent replay, concurrent ownership and crash recovery with
-a synthetic executor. Authenticate journal evidence before returning typed proof;
-hashes/booleans alone confer no authority. A local journal cannot attest remote
-events outside its enforcement boundary. Keep production wiring disabled until
-the actual producer satisfies the full contract.
+Inspect src/classifire/services/execution_journal.py, both phase8_*openresponses
+transports, phase8_visual_runtime.py, their tests, models.py, worker.py and the
+completion contract. Record lifecycle/trust impact first. Persist capture before
+HTTP, authenticate exact producer evidence after response, commit/reload terminal
+evidence before proposal acceptance. Reuse no-tool/context/receipt checks and
+journal state transitions. Owner identity comes from authenticated composition.
 
-Done: minimal durable producer/verifier boundary, inspected synthetic records and
-receipts, positive/negative/recovery tests, justified forward migrations, aligned
-docs and passing checks. Preserve no-tool, historical receipts and human/canonical/
-lock/release gates. Run new job tests, handoff transport/caller suite, Ruff,
-Mypy, Bandit, Alembic heads, warranted disposable PostgreSQL tests and diff checks.
-Set worktree PYTHONPATH and unique temporary storage. No real provider/customer
-operation, canonical write, lock, deployment, release or OpenClaw retirement.
+Done: synthetic visual/report end-to-end execution; missing/lost evidence,
+identity mismatch, interruption/late completion, duplicate/concurrent invocation
+and safe-error tests; preserved historical receipts and authority gates; aligned
+docs and passing checks. Run new integration tests, handoff journal/transport/
+caller suite, Ruff, Mypy, Bandit, Alembic heads, guarded disposable PostgreSQL
+concurrency and diff checks with worktree PYTHONPATH and unique temporary storage.
 
-Continue autonomously through implementation, validation, classification,
-explicit commit, normal push, PR and merge where safe after CI/reviews pass.
-Verify merge and post-merge CI. Reconcile newer completed work rather than
-duplicating it; disclose the remaining real-provider boundary.
+Keep actual provider wiring disabled until authenticated capture/terminal proof
+exists. A journal HMAC or empty audit page does not prove remote activity.
+No real provider/customer operation, canonical write, lock, deployment, release
+or OpenClaw retirement. Continue autonomously through implementation, validation,
+classification, explicit commit, normal push, PR and merge where safe after
+CI/reviews pass. Verify actual merge/post-merge CI and disclose remaining
+production assurance. Do not duplicate newer completed work.
 ~~~
 
 ## Verified project context
 
-Main PR #182 merged as 51e7d601a756141dfbdef5d113e754a9b2833d34, with
-[successful exact CI](https://github.com/Slayde91/classifire/actions/runs/33938506042).
-Its executable baseline remains PR #181. Current candidate validation passed
-171 synthetic tests across the twelve files below, full Ruff/Bandit, and one
-Alembic head. Full Mypy passed for 142 source files; hosted publication checks are verified
-before merge. Eight existing Pillow deprecation warnings remain.
-No real runtime/customer/canonical database was used.
+PR #183 merged at d03753f with
+[successful exact main CI](https://github.com/Slayde91/classifire/actions/runs/33939296281).
+The journal candidate adds durable capture/terminal ordering and authenticated
+record verification on BackgroundJob, with owner/producer/context binding,
+completed replay and interruption without redispatch. It does not supply a
+production capture producer or wire the managed transports.
 
-The consumer binds exact encoded request/response bytes, invocation identity and
-validated completion evidence into version-2 transport receipts. Legacy audit
-observation hashes remain unchanged. Missing verifier prevents inference token
-acquisition/HTTP; managed factories intentionally supply none. Production
-producer/verifier implementation and OpenClaw retirement remain incomplete.
+Local validation: 27 journal tests and 171 existing transport/security/caller
+tests passed. Three disposable PostgreSQL cases are included for hosted CI and
+skipped locally. Ruff, Bandit, Mypy (143 files) and one Alembic head passed.
+Eight existing Pillow warnings remain. No real provider/customer/canonical
+database was used. Verify journal publication/CI separately.
 
 Implemented foundations include evidence ownership/locators, proposal controllers
 and review packages, signed physical amendments and separate replacement locks,
@@ -187,14 +180,14 @@ downstream Phases 9-14 remain. See [Project State](./PROJECT_STATE.md).
   and their two tests. Other staged/unstaged/untracked legacy work is unrelated;
   protected pytest directories prevent complete untracked enumeration.
   Never reset, clean, bulk-copy or publish from this root.
-- Current completion candidate: `feat/phase8-completion-evidence-20260905`,
-  `C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905`, validated on `51e7d60`.
-  Scope: two transports, three tests, completion contract, inventory and four
-  continuity docs. Verify actual commit/upstream/PR/merge before the next task.
-- Documentation-only PR #182 is merged; its retained worktree is separate and clean.
+- Current journal candidate: `feat/execution-journal-20260905` in
+  `C:\CLASSIFIRE\.tmp\execution-journal-20260905`, based on `d03753f`.
+  Scope: one journal service, two test files, completion contract, inventory and
+  four continuity documents. Verify actual commit/upstream/PR/merge before reuse.
+- PRs #182 and #183 are merged. Their clean retained worktrees are separate.
 - Issues #42 (retained Phase 8 tooling) and #43 (OpenClaw development dependency
   advisories) remain open. Draft PRs #9-#13 remain legacy feature-to-feature work;
-  verify current completion-candidate publication separately. Do not bulk-merge that stack.
+  verify current journal-candidate publication separately. Do not bulk-merge that stack.
 - Check current repository review/protection requirements before publication.
   Never bypass failed CI or required review. No runtime operation is authorised
   merely by this handoff.

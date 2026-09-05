@@ -173,3 +173,20 @@ Before declaring full characterisation/retirement parity, also resolve:
 
 These are gaps requiring evidence, not proposed permission to weaken guards or
 build a general agent platform. Decision 0001 retirement gates remain unchanged.
+
+
+### Durable journal candidate after PR #183
+
+PR #183's consumer is merged at d03753f; main CI 33939296281 passed.
+The current journal service reuses BackgroundJob with distinct non-queued states,
+committed capture before producer execution, sealed terminal records, exact
+owner/producer/invocation verification, and refusal to redispatch uncertain work.
+It adds no API, default runtime wiring, schema or dependency. Local tests prove
+27 journal cases and retain 171 transport/caller regressions; three PostgreSQL
+restart/concurrency cases use the existing guarded disposable fixture.
+
+The journal authenticates its stored records, not arbitrary remote capture claims.
+A trusted producer must supply and authenticate capture/terminal evidence.
+Next integrate the transport pre-dispatch/post-response lifecycle without a
+circular completion dependency, and prove it synthetically. Production capture,
+key custody/rotation, real cancellation and OpenClaw retirement remain gated.

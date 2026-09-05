@@ -4,9 +4,9 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main baseline:** `51e7d601a756141dfbdef5d113e754a9b2833d34` (PR #182, 2026-09-05)
+**Verified shared-main baseline:** `d03753f94634860ed3381825f4c5d2f514e6523d` (PR #183, 2026-09-05)
 
-**Latest executable-change baseline:** 4ab8723 (PR #181)
+**Latest executable-change baseline:** d03753f (PR #183)
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -19,40 +19,39 @@ Git state, and retained runtime receipts determine factual implementation state.
 
 ## Contract characterisation progress
 
-PR #182 merged the documentation reconciliation as `51e7d601a756141dfbdef5d113e754a9b2833d34`.
-[Exact main CI 33938506042](https://github.com/Slayde91/classifire/actions/runs/33938506042)
-passed. PR #181 audit-page refusal, PR #180 socket deadlines and PR #179
-uncertain-session-creation refusal remain implemented.
+PR #183 merged the required completion consumer as `d03753f94634860ed3381825f4c5d2f514e6523d`.
+[Exact main CI 33939296281](https://github.com/Slayde91/classifire/actions/runs/33939296281)
+passed. Managed OpenClaw factories have no trusted production verifier and refuse
+inference dispatch; the independent no-tool boundary remains intact.
 
-**Current implementation candidate (publication must be verified):**
-`feat/phase8-completion-evidence-20260905` now includes shared main `51e7d60`.
-Both transports require an application-configured completion verifier before
-inference token acquisition or HTTP dispatch. Successful acceptance validates
-the exact invocation, durable receipt identity, terminal time and capture
-coverage, writer health, and zero pending/lost/tool records. Version-2 transport
-digests bind that result. Independent no-tool checks and historical audit
-observation receipts remain unchanged.
+**Current journal candidate:** `feat/execution-journal-20260905`, based on
+`d03753f`, adds `services/execution_journal.py` on the existing BackgroundJob
+table. It commits reservation and capture identity before producer execution,
+then commits a sealed terminal record before returning completion evidence.
+Owner, producer, invocation, context, state and record version are bound.
+Exact completed replay does not redispatch; failed/interrupted/running attempts
+cannot replay. Conditional updates prevent late completion after interruption.
 
-**Intentional runtime consequence:** managed factories supply no completion
-verifier, so inference dispatch fails with `COMPLETION_EVIDENCE_UNAVAILABLE`.
-No production evidence producer/verifier is supplied. This is a fail-closed
-consumer boundary, not proof of working production capture or OpenClaw retirement.
-Typed fields and hashes cannot authenticate a producer. See the
-[completion contract](./EXECUTION_COMPLETION_CONTRACT.md).
+**Trust and limits:** an injected trusted producer owns capture assurance.
+HMAC protects stored journal content using an application-held key; it cannot
+prove remote tool activity or replace producer authentication. Owner identity
+must come from authenticated application composition, not user-supplied authority.
+There is no API, generic-worker dispatch, runtime wiring, new dependency or
+database migration. Managed inference remains blocked.
 
-**Verified candidate evidence:** 171 synthetic tests passed across the twelve
-transport/security/caller files listed in the handoff. Eight existing Pillow
-deprecation warnings remain. Exact request/response byte binding, missing evidence
-before token/HTTP, invalid/mismatched/incomplete evidence, safe errors, replay
-binding, managed refusal and legacy audit receipt compatibility are covered.
-No real provider, customer evidence, canonical write, lock or release was used.
+**Verification:** 27 journal tests and 171 transport/security/caller tests passed
+locally. Three additional PostgreSQL restart/concurrency cases use the existing
+explicit disposable-database fixture and must pass in hosted CI. Full Ruff,
+Bandit and Mypy (143 source files) passed; one migration head remains. Existing
+Pillow warnings persist. No real provider or customer/canonical operation ran.
 
-**Next gated task:** implement the smallest durable CLASSIFIRE execution journal
-and authenticated completion-verifier path, extending BackgroundJob/worker where
-suitable. It must prove capture-before-dispatch, terminal persistence ordering,
-loss detection, invocation ownership and crash/replay recovery using synthetic
-execution. Keep production wiring disabled until a producer can prove the full
-contract. Do not substitute empty audit polling, self-asserted fields or delays.
+**Next bounded task:** integrate the journal at the Phase 8 pre-dispatch and
+post-response boundaries using injected capture/verification ports. Prove one
+invocation and durable acceptance end to end with synthetic transport, including
+crash and late completion. Avoid a circular dependency in which the transport
+waits for a journal completion that can only be written after transport return.
+Do not wire a real provider until its capture/terminal proof is authenticated;
+empty audit pages and a locally sealed assertion are not enough.
 
 ## 1. Governing reasoning chain
 
@@ -152,7 +151,8 @@ BackgroundJob and worker.run_once() are existing extension points. The worker
 claims a queued job with a row lock, marks it running, then fails it because no
 handlers are registered. Its selector does not honour run_after. Durable stages,
 lease expiry, cancellation and crash recovery remain gaps. Record them now;
-implement the coordinator only in its later scoped migration.
+the current journal candidate reuses this table in distinct non-queued states;
+the generic worker still has no registered handlers.
 
 The controlled-write plugin defaults to phase8-admission-only. Broader catalog
 entries and Mission Control bootstrap code do not prove working API routes,
@@ -570,7 +570,7 @@ deployment, provider-run, or Human Release authority.
 
 ### Unresolved decisions, migrations and technical debt
 
-**Current candidate consumer change, validated but publication pending:** the completion-evidence candidate adds
+**Implemented consumer (PR #183):** the completion-evidence boundary adds
 a required application-injected verifier to both transports and binds validated
 evidence into version-2 transport digests. Its context includes request/response
 bytes, session, agent, audit and attestation receipts, and invocation times.
@@ -578,21 +578,21 @@ Missing evidence blocks inference dispatch; malformed, mismatched or incomplete
 evidence blocks proposal acceptance. Independent no-tool checks remain.
 
 **Reason and consequences:** shared-main audit pages cannot establish durable
-completion. The candidate closes acceptance without pretending the missing
+completion. The consumer closes acceptance without pretending the missing
 producer exists, but managed inference becomes unavailable until a trusted
 producer/verifier is implemented and wired. Synthetic tests prove this availability
 impact; no real provider was exercised. Typed callback data alone is not authentication.
 
 **Migration and unresolved decisions:** verify historical version-1 receipts
 separately from version-2 acceptance; never relabel old observations as complete
-capture. The candidate adds no database migration or provider removal. Prove
+capture. The consumer adds no database migration or provider removal. Prove
 producer identity, persistence ordering, capture health/loss detection, retention,
 clock assumptions and crash/replay recovery before production wiring. The
 [completion contract](./EXECUTION_COMPLETION_CONTRACT.md) records this boundary.
 
 | Decision/gap | Constraint and next evidence |
 | --- | --- |
-| Durable jobs | Extend BackgroundJob/worker where suitable; define transactions, idempotency, leases, retries, cancellation and recovery after characterisation. Use forward-only migrations in that later task. |
+| Durable execution | Candidate journal reuses BackgroundJob with sealed invocation/outcome records, unique run IDs, conditional transitions and no automatic replay. Generic worker/stage coordination, actual cancellation and transport lifecycle integration remain incomplete. No migration in this slice. |
 | Inference replacement | Preserve ports, context isolation, evidence/version binding and receipts. Provider/endpoint, privacy, egress, retention/residency and secret policy need validation. |
 | ProjectPackage v1 | Define project/estimate membership, rights/redaction, profiles, schema compatibility and signature trust. Database/storage remain live truth; imports never activate foreign authority. |
 | Package integrity | Separate semantic and byte hashes; deterministic manifest entries, external final archive hash. Prove blank-instance import before existing-project conflict handling. |

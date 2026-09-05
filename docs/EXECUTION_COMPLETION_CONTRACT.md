@@ -1,13 +1,13 @@
 # Execution completion acceptance contract
 
-Status: implementation candidate under accepted hybrid Decision 0001.
-Baseline: 4ab8723 (PR #181). No trusted production producer exists yet.
+Status: consumer merged in PR #183; journal implementation candidate.
+Baseline: d03753f (PR #183). No trusted production producer exists yet.
 
 ## Current boundary and problem
 
 NoToolSessionAudit represents an observed Gateway audit page. The pinned
 OpenClaw writer can be asynchronous, disabled or lossy; an empty page has no
-completion certificate. Current transports can return proposals after that
+completion certificate. Transports before PR #183 could return proposals after that
 observation. Historical audit receipts must remain verifiable, but cannot be
 reinterpreted as proof of complete capture.
 
@@ -69,3 +69,45 @@ and post-merge verification are publication gates, not production proof.
 Next gate: implement and prove a trusted producer plus durable verification;
 then wire it into composition. This consumer contract alone does not complete
 OpenClaw retirement, provider execution or production readiness.
+
+
+## Durable journal design (current candidate)
+
+Current architecture has the required consumer but no durable execution producer.
+Add a CLASSIFIRE service on the existing BackgroundJob table, with a distinct
+job type and non-queued states so the generic worker cannot dispatch it. No schema,
+migration, dependency, route or default runtime wiring is added.
+
+Trusted application composition supplies a producer, producer identity, scoped
+owner identity and a persistent journal authentication key kept outside the
+database. The producer must authenticate/enforce its own capture boundary.
+A local HMAC authenticates journal content and detects alteration; it does not
+prove anything about remote tools outside that producer's control.
+
+Ordering is reserve-and-commit -> trusted capture start -> commit invocation and
+capture identity -> execute once -> validate terminal coverage -> commit sealed
+terminal record -> reload and verify before returning completion evidence.
+No producer execution occurs before the durable start record. The journal records
+only IDs, hashes, times and safe codes, never prompts, evidence bytes or responses.
+The producer owns capture and remote terminal assurance; this service never
+manufactures those facts from an audit list.
+
+A caller-supplied UUID identifies one invocation. Duplicate calls return only a
+verified completed outcome; preparing/running/failed/interrupted invocations are
+never automatically replayed. Primary-key insertion and version/status conditional
+updates resolve competing callers without relying on SQLite row locks. A timeout
+marks uncertain work interrupted; a late producer cannot complete it. Recovery
+never treats an interrupted attempt as success or dispatches it again.
+
+The completion verifier reopens the exact run, checks owner/producer, record seal,
+state, context and coverage, then binds the durable record hash into evidence.
+Authentication-key loss/rotation, deletion, tampering and wrong-owner/context reads
+fail closed. Key rotation/retention and production adapter wiring remain explicit
+operational follow-ups. There is no claim of malicious-database anti-rollback:
+a trusted storage boundary is still required.
+
+Acceptance requires file-backed disposable database tests for persistence/restart,
+capture-before-execute ordering, duplicate/concurrent invocation, result tampering,
+owner/producer/key/context mismatch, invalid/late capture, producer failure,
+interruption and late completion. Managed OpenClaw remains blocked until an actual
+producer meets this contract; synthetic tests are not provider parity.
