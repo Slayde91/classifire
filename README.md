@@ -145,3 +145,8 @@ The only approved product logo is `assets/brand/quantifire-logo-master.png`. Do 
 ## Licence
 
 Proprietary. See [PROPRIETARY.md](PROPRIETARY.md). No open-source licence is granted.
+
+
+The Draft candidate screen also supports explicit substrate/gap measured-limit
+review with immutable history. See the [synthetic demo and contract](docs/DRAFT_CONSTRAINT_REVIEW.md).
+These are partial, unapproved checks; other technical conditions remain unresolved.

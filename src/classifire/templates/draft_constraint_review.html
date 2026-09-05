@@ -1,0 +1,35 @@
+<section class="panel" aria-labelledby="constraint-heading">
+  <h2 id="constraint-heading">Check measured limits</h2>
+  <p>Check substrate thickness and the smallest/largest annular gap for one selected opening and service pair. Enter millimetres measured using the retained source's definitions. Leave unknown measurements blank. This does not change the Scope.</p>
+  <p class="callout"><strong>Partial checks, not system compatibility.</strong> Service size, fire rating, seal depth, installation conditions and other requirements still need assessment. A value within these limits is not an approved system. Measurements and their source interpretation remain your unapproved review claims.</p>
+  {% set review = envelope.get('constraint_review') %}
+  {% if review %}
+    {% for candidate in envelope.candidates %}{% if candidate.candidate_id == review.candidate_id %}
+    <p>Saved measurement review for <strong>{{ candidate.variant_id }}</strong> ({{ candidate.system_id }}). Source: {{ candidate.release_record.source_document_reference or 'Unknown' }}, page {{ candidate.release_record.source_page or 'Unknown' }}.</p>
+    {% endif %}{% endfor %}
+    <details><summary>Measurement review record</summary><p>Recorded by {{ review.reviewed_by }} at {{ review.reviewed_at }}. Candidate {{ review.candidate_id }}.</p></details>
+    <p>{{ review.inputs.measurement_note }}</p>
+    <dl class="scope-import-details">
+      <dt>Substrate thickness (mm)</dt><dd>{{ review.inputs.substrate_thickness_mm or 'Unknown' }}</dd>
+      <dt>Smallest / largest gap (mm)</dt><dd>{{ review.inputs.annular_gap_min_mm or 'Unknown' }} / {{ review.inputs.annular_gap_max_mm or 'Unknown' }}</dd>
+    </dl>
+    <table class="scope-table"><thead><tr><th>Check</th><th>Published limits (mm)</th><th>Result</th><th>Reason</th></tr></thead><tbody>
+    {% for check in review.checks %}<tr><td>{{ check.criterion|replace('_', ' ')|capitalize }}</td><td>{{ check.lower_limit_mm if check.lower_limit_mm is not none else 'Unknown' }} to {{ check.upper_limit_mm if check.upper_limit_mm is not none else 'Unknown' }}</td><td>{{ check.status|replace('_', ' ')|capitalize }}</td><td>{{ check.reason|replace('_', ' ')|capitalize }}</td></tr>{% endfor %}
+    </tbody></table>
+    <details><summary>Conditions still unassessed</summary><ul>{% for item in review.unassessed %}<li>{{ item|replace('_', ' ')|capitalize }}</li>{% endfor %}</ul></details>
+    {% if review.published_fields_sha256 is none %}<p class="callout">This older release does not pin structured limits. The saved checks remain unresolved. A new governed release is needed; earlier artifacts are preserved.</p>{% endif %}
+  {% endif %}
+  {% if has_permission('project:write') and envelope.revision == latest_revision and not staleness and envelope.candidates and envelope.target.opening_id %}
+  {% set saved = review.inputs if review else {} %}
+  <form method="post" action="{{ match_url }}/constraints" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="expected_revision" value="{{ envelope.revision }}">
+    <div class="span-2"><label for="constraint-candidate">Candidate whose source you reviewed</label><select id="constraint-candidate" name="candidate_id" required>{% for item in envelope.candidates %}<option value="{{ item.candidate_id }}"{% if form_values.get('candidate_id', review.candidate_id if review else '') == item.candidate_id %} selected{% endif %}>{{ item.variant_id }} ? {{ item.system_id }}</option>{% endfor %}</select></div>
+    {% for key, label in [('substrate_thickness_mm', 'Substrate thickness (mm)'), ('annular_gap_min_mm', 'Smallest measured annular gap (mm)'), ('annular_gap_max_mm', 'Largest measured annular gap (mm)')] %}
+    <div><label for="constraint-{{ key }}">{{ label }}</label><input id="constraint-{{ key }}" name="{{ key }}" type="text" inputmode="decimal" maxlength="15" value="{{ form_values.get(key, saved.get(key) or '') }}"><p class="scope-hint">Blank means unknown. Up to four decimal places.</p></div>
+    {% endfor %}
+    <div class="span-2"><label for="constraint-note">Measurement evidence and source interpretation</label><textarea id="constraint-note" name="measurement_note" maxlength="2000" required>{{ form_values.get('measurement_note', saved.get('measurement_note', '')) }}</textarea><p class="scope-hint">Identify the observation/page, measurement method and why the selected source's measurement definitions apply. Do not infer a gap from overall opening width or count.</p></div>
+    <div class="span-2"><button class="button button-primary" type="submit">Save measured-limit review</button><p class="scope-hint">Adds an unapproved revision for this candidate. Earlier measurements remain in history. Does not select a system or price work.</p></div>
+  </form>
+  {% elif not envelope.target.opening_id %}<p class="callout">Start a review with an explicit opening to check its measured limits.</p>{% endif %}
+</section>

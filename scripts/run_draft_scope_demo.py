@@ -40,6 +40,11 @@ def main() -> None:
         action="store_true",
         help="Seed a labelled synthetic library in this isolated demo only",
     )
+    parser.add_argument(
+        "--seed-constraint-library",
+        action="store_true",
+        help="Seed the versioned synthetic measured-limit fixture in a new SQLite demo",
+    )
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:
         parser.error("Choose a local port from 1024 to 65535")
@@ -156,13 +161,18 @@ def main() -> None:
                 )
             )
             db.commit()
-        if args.seed_technical_library:
+        if args.seed_technical_library or args.seed_constraint_library:
             from draft_system_match_demo_fixture import seed_demo_library
 
             actor = db.scalar(select(User).where(User.email == DEMO_EMAIL))
             if actor is None:
                 parser.error("The synthetic demo administrator is missing")
-            release = seed_demo_library(db, task_dir / "storage", actor)
+            release = seed_demo_library(
+                db,
+                task_dir / "storage",
+                actor,
+                constraints=args.seed_constraint_library,
+            )
             db.commit()
             print(f"Synthetic technical release: {release.version} ({release.id})", flush=True)
     print(f"Synthetic local prototype: http://127.0.0.1:{args.port}/scopes", flush=True)

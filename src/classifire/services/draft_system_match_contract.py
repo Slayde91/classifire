@@ -11,46 +11,14 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .draft_constraint_review import validate_review
 from .draft_scope import _envelope_shape, _valid_hash, validate_payload
+from .technical_field_snapshot import FIELD_NAMES as FIELD_NAMES
 
 SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v1"
 MAX_MATCH_BYTES = 1024 * 1024
 MAX_CANDIDATES = 20
 MAX_SOURCE_BYTES = 64 * 1024 * 1024
-FIELD_NAMES = (
-    "manufacturer",
-    "product_family",
-    "service_type",
-    "service_material",
-    "minimum_service_size_mm",
-    "maximum_service_size_mm",
-    "permitted_service_quantity",
-    "insulation_type",
-    "insulation_thickness_mm",
-    "substrate_type",
-    "minimum_substrate_thickness_mm",
-    "maximum_substrate_thickness_mm",
-    "orientation",
-    "installation_face",
-    "opening_type",
-    "opening_dimensions",
-    "annular_gap_min_mm",
-    "annular_gap_max_mm",
-    "service_spacing_rules",
-    "edge_distance_rules",
-    "support_rules",
-    "fixing_rules",
-    "hard_exclusions",
-    "dependencies",
-    "frl",
-    "jurisdiction",
-    "quality_score",
-    "confidence_cap",
-    "search_eligibility",
-    "expert_review_required",
-    "effective_date",
-    "expiry_date",
-)
 COMPARISON_NAMES = ("service_type", "service_material", "substrate", "orientation", "frl")
 MANIFEST_FIELDS = (
     "id",
@@ -148,6 +116,11 @@ class Envelope(Contract):
     candidates: Annotated[list[Candidate], Field(max_length=MAX_CANDIDATES)]
     decisions: Annotated[list[Decision], Field(max_length=MAX_CANDIDATES)]
     sha256: Digest
+
+
+class ConstraintEnvelope(Envelope):
+    schema_version: Literal["CLASSIFIRE-DRAFT-SYSTEM-MATCH-v2"]  # type: ignore[assignment]
+    constraint_review: dict[str, Any]
 
 
 def canonical(value: Any) -> bytes:
@@ -267,7 +240,15 @@ def target_for(
 def validate_envelope(value: dict[str, Any]) -> None:
     if len(canonical(value)) > MAX_MATCH_BYTES:
         raise ValueError("size")
-    parsed = Envelope.model_validate(value)
+    model = (
+        ConstraintEnvelope
+        if value.get("schema_version") == "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v2"
+        else Envelope
+    )
+    parsed = model.model_validate(value)
+    if "constraint_review" in value:
+        validate_review(value["constraint_review"], value["candidates"], value["target"])
+        timestamp(value["constraint_review"]["reviewed_at"])
     if (
         parsed.model_dump(mode="json") != value
         or type(value["retrieval"]["version"]) is not int

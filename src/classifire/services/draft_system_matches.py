@@ -25,10 +25,10 @@ from ..models import (
     User,
     new_id,
 )
+from .draft_constraint_review import UNASSESSED, results, validate_inputs
 from .draft_scope import DraftScopeError, _actor, _atomic, _valid_hash, get_draft, read_revision
 from .draft_system_match_contract import (
     COMPARISON_NAMES,
-    FIELD_NAMES,
     MANIFEST_FIELDS,
     MAX_CANDIDATES,
     MAX_MATCH_BYTES,
@@ -50,6 +50,7 @@ from .storage import (
     read_verified_stored_file,
 )
 from .technical import Candidate, search_variants
+from .technical_field_snapshot import technical_fields as _fields
 from .technical_validity import (
     technical_document_authority_blockers,
     technical_release_source_binding,
@@ -140,6 +141,9 @@ def _release(
             .execution_options(populate_existing=True)
         ):
             record = by_id[variant.id]
+            if manifest.get("schema") == "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v3":
+                if record.get("technical_fields") != _fields(variant):
+                    raise ValueError("published_constraints")
             for key in (
                 "variant_id",
                 "system_id",
@@ -164,16 +168,6 @@ def _release(
         ArithmeticError,
     ) as exc:
         raise DraftSystemMatchError("MATCH_RELEASE_INVALID", 422) from exc
-
-
-def _fields(variant: TechnicalVariant) -> dict[str, str | bool | None]:
-    return {
-        key: (
-            value if key == "expert_review_required" else str(value) if value is not None else None
-        )
-        for key in FIELD_NAMES
-        for value in (getattr(variant, key),)
-    }
 
 
 def _bound_rows(
@@ -644,13 +638,84 @@ def save_review(
     except (ValueError, TypeError, ValidationError) as exc:
         raise DraftSystemMatchError("MATCH_DECISIONS_INVALID", 422) from exc
     envelope = copy.deepcopy(prior)
+    envelope["decisions"] = [by_id[key] for key in candidate_ids]
+    return _append_review(db, actor, draft, match, prior, envelope, "review")
+
+
+def save_constraint_review(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    match_id: str,
+    expected_revision: int,
+    candidate_id: str,
+    inputs: dict[str, Any],
+    *,
+    storage_root: Path,
+) -> dict[str, Any]:
+    """Append explicit manual measurements and partial checks; never approve a system."""
+    try:
+        validate_inputs(inputs)
+    except (ValueError, TypeError) as exc:
+        raise DraftSystemMatchError("MATCH_MEASUREMENTS_INVALID", 422) from exc
+    with _atomic(db):
+        actor, draft, match = _match(db, actor, draft_id, match_id, write=True)
+        if type(expected_revision) is not int or expected_revision != match.latest_revision:
+            raise DraftSystemMatchError("MATCH_REVISION_CONFLICT", 409)
+        db.scalar(
+            select(DraftScope).where(DraftScope.id == draft.id).with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        prior = _read(db, actor, draft, match, expected_revision)
+        release, records, _ = _release(db, match.release_id)
+        if match_staleness(db, actor, draft_id, match_id, storage_root=storage_root):
+            raise DraftSystemMatchError("MATCH_BASIS_STALE", 409)
+        candidate = next(
+            (item for item in prior["candidates"] if item["candidate_id"] == candidate_id), None
+        )
+        if candidate is None:
+            raise DraftSystemMatchError("MATCH_CANDIDATE_INVALID", 422)
+        if prior["target"]["opening_id"] is None:
+            raise DraftSystemMatchError("MATCH_EXPLICIT_OPENING_REQUIRED", 422)
+        record = records[candidate_id]
+        pinned = (
+            isinstance(release.source_manifest, dict)
+            and release.source_manifest.get("schema") == "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v3"
+            and record.get("technical_fields") == candidate["fields"]
+        )
+        published_hash = candidate["fields_sha256"] if pinned else None
+        envelope = copy.deepcopy(prior)
+        envelope["schema_version"] = "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v2"
+        envelope["constraint_review"] = {
+            "candidate_id": candidate_id,
+            "inputs": copy.deepcopy(inputs),
+            "published_fields_sha256": published_hash,
+            "checks": results(candidate, prior["target"], inputs, published_hash),
+            "unassessed": list(UNASSESSED),
+            "status": "partial_unapproved",
+            "reviewed_by": actor.id,
+            "reviewed_at": datetime.now(UTC).isoformat(),
+        }
+        return _append_review(db, actor, draft, match, prior, envelope, "constraint_review")
+
+
+def _append_review(
+    db: Session,
+    actor: User,
+    draft: DraftScope,
+    match: DraftSystemMatch,
+    prior: dict[str, Any],
+    envelope: dict[str, Any],
+    action: str,
+) -> dict[str, Any]:
+    expected_revision = prior["revision"]
+    draft_id = draft.id
     created = datetime.now(UTC)
     envelope.update(
         revision=expected_revision + 1,
         parent_hash=prior["sha256"],
         created_by=actor.id,
         created_at=created.isoformat(),
-        decisions=[by_id[key] for key in candidate_ids],
     )
     envelope["sha256"] = envelope_hash(envelope)
     _validate(envelope)
@@ -682,7 +747,7 @@ def save_review(
                     created_at=created,
                 )
             )
-            _audit(db, actor, draft, match.id, "review", envelope)
+            _audit(db, actor, draft, match.id, action, envelope)
             db.flush()
         db.refresh(match)
         return envelope

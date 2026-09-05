@@ -2,16 +2,14 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.8 - retained PDF page review and backward-compatible Draft Scope v3.
+**Architecture version:** 5.9 - published technical field snapshots and partial measured-limit review.
 
-**Verified shared-main baseline:** `45c0fdd389b066589881531778e6b7a8b898d754`,
-merged PR #193, feature `acc2f458fa11a4604d617a990eba6a7de99f0842`.
-P0/P1a/P4a/P2a/P3a and estimate-only P4b are merged. PR CI 33974663186 and
-main CI 33975108129 passed 1,315 tests, 141 warnings.
-**Current increment:** `feat/draft-pdf-intake-20260906`, first P1b PDF path,
-implemented locally with real-scanner browser/restart evidence. This is a
-prepublication checkpoint; verify current Git/PR/CI before treating it as merged.
-The supplied original logo is already on main and was verified again in the browser.
+**Verified shared-main baseline:** `25510565aac69ce7d0b6402423caac251a266236`,
+merged PR #194. PDF intake and the exact supplied logo are merged; main CI 33982467430
+passed (1,354 tests, 141 warnings). **Current local increment:**
+`feat/draft-applicability-review-20260906`. Measurement UI/service/browser/restart
+work is described below; this is a prepublication checkpoint. Current Git/PR/CI
+outrank the checkpoint for publication status.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -1106,10 +1104,10 @@ calculation. New outputs use the exact supplied PNG; existing outputs are untouc
 
 This is one estimate-only profile, not completion of P4b or production reporting.
 Other technical/combined profiles, production retention limits and export projection
-remain open. The next source-to-Scope interaction is implemented locally below.
+remain open. The first source-to-Scope interaction is merged in PR #194, described below.
 P2b applicability, P3b governed pricing and full portability remain required work.
 
-### Implemented locally: retained PDF evidence review (first P1b increment)
+### Implemented and merged: retained PDF evidence review (first P1b increment)
 
 Current architecture -> change: the shared upload service previously left files
 pending/not_configured with no demonstrated Draft scanner consumer. A thin
@@ -1183,6 +1181,62 @@ Full applicability still needs explicit structured criteria: current retrieval u
 only service type/substrate and leaves size, material, orientation, FRL and installation
 criteria missing. Deliver a bounded visible criteria/constraint-review increment next;
 never turn existing text similarity into an Applicable verdict.
+
+### Current local increment: partial measured-limit review (first P2b)
+
+The existing candidate review retrieves records through text comparison and captures
+Scope, target, source and release. It is not a compatibility engine. The new
+`draft_constraint_review.py` adds two deterministic checks: substrate thickness and
+the measured minimum/maximum annular gap. The same FastAPI/Jinja screen explicitly
+selects one retained candidate, records measurements and their evidence/method note,
+saves, reopens and downloads the resulting unapproved review.
+
+Current architecture -> change -> reason -> consequences -> migration:
+
+- New technical publications use `CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v3` and an
+  explicit `technical_fields` snapshot shared with retrieval by
+  `technical_field_snapshot.py`. Earlier manifests pin identity/version/source but
+  do not freeze numeric limits; they cannot support a claim that limits were published.
+- Existing publisher permissions, active-record/source checks and release transaction
+  remain. No Draft activation or approval authority is added. New manifests hash the
+  field snapshot; old releases are not rewritten or silently republished.
+- Existing `DraftSystemMatch`/Revision rows store backward-compatible v1 and new v2
+  envelopes. v2 adds `constraint_review`; the original immutable retrieval basis
+  remains unchanged. `save_review` and `save_constraint_review` share the revision
+  append/CAS path. No new table, database, orchestrator, agent or dependency is needed.
+- Scope and release dependencies are locked for new measurement reviews, current
+  ownership/permissions and source bytes are checked, and stale dependencies block
+  new checks. Read/history still retain earlier results with current stale warnings.
+- An explicit opening is required. Gap review additionally needs a selected linked
+  service; no aggregate quantity or plane is repurposed as a measurement. Decimal
+  range comparisons return within_limits/outside_limits/unresolved with reasons.
+  Missing complete bounds cannot yield a within-limits result. Known violated bounds
+  can yield outside_limits; inconsistent source ranges remain unresolved.
+- v2 records manual measurement provenance, selected candidate, published field hash,
+  results and a fixed unassessed-conditions list. Validation recomputes checks. These
+  are unapproved input claims and partial checks, never a system applicability verdict.
+  Existing keep/reject notes preserve the measured review. Attached Estimates retain
+  their exact v2 bytes and become stale after later match revisions.
+
+UI -> existing authenticated/CSRF route -> shared `save_constraint_review` -> locked
+Scope/release/source checks -> pure numeric evaluation -> immutable revision/audit ->
+read/download. No next capability runs. Future ChatGPT uses this same command through
+an appropriately authenticated adapter; no business logic belongs in chat memory.
+
+The synthetic P2B source explicitly states its fake numeric limits and is separately
+versioned from the retained P2A fixture. Chrome demonstrated within/outside/unknown
+outcomes and exact history after restart. See [contract/demo](./DRAFT_CONSTRAINT_REVIEW.md)
+and PROJECT_STATE.md for actual checks. This does not complete P2b.
+
+**Unresolved:** source-defined service-size meaning, material/FRL/insulation/seal depth,
+configuration, spacing/support/fixings, exclusions, contradictions and authorized
+technical review. Full System Match portability and complete applicability need
+further contracts and evidence; no fallback to keyword matching is permitted.
+
+**Next prototype dependency:** pricing XLSX must retain exact source/sheet/cell lineage
+before explicit Draft-rate selection. `importers/pricing.py` is a CSV/canonical import
+path; do not expose it as an upload handler or silently activate pricing. Extend the
+Draft Estimate service/revision contract and existing intake controls instead.
 
 ### Separate production and adapter backlog
 

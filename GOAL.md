@@ -134,17 +134,23 @@ provides the existing clean-byte/quarantine boundary; manual entry remains avail
 without the scanner. This is bounded evidence review, not complete automated Scope
 analysis. See PROJECT_STATE.md for current validation and publication status.
 
-## Immediate priority: bounded applicability review
+## Demonstrated first measured-limit review
 
-Finish P1b publication if still outstanding, then deliver the first P2b visible
-criteria/constraint-review increment. Current matching is source-bound retrieval,
-with most physical criteria still missing. Capture explicit inputs for one supported
-target and compare only authorized structured constraints, exposing reasons and
-unknowns in a saved unapproved revision. Preserve old artifacts, optional manual
-operation and independent stopping; text similarity must not imply applicability.
-Do not invent passive-fire rules to produce a successful demo.
+The current P2b increment saves explicit substrate thickness and measured gap range
+against a selected candidate's pinned source limits. New technical releases freeze
+public fields; old releases remain unresolved for these checks. Chrome and restart
+preserved within/outside/unknown outcomes and exact history. This is partial,
+unapproved review, not full applicability. See PROJECT_STATE.md for publication.
 
-Full applicability, pricing XLSX ingestion/default/inferred methods, other report
-profiles, complete ProjectPackage exchange and shared ChatGPT access remain required.
-This prototype work does not complete production authority, release or operational
+## Immediate priority: pricing workbook to explicit Draft rate
+
+Finish measured-limit publication if outstanding, then deliver P3b's first visible
+XLSX preview and explicit Draft-rate selection with retained source/sheet/cell lineage,
+units and original/override history. The current CSV importer and manually entered
+Draft rates do not satisfy that requirement. Reuse existing intake/Estimate services;
+never silently activate a library or imply that selecting a price proves compatibility.
+
+Full applicability, pricing default/inferred methods, broader Scope formats/analysis,
+other report profiles, ProjectPackage exchange and shared ChatGPT access remain
+required. Prototype work does not complete production authority, release or operational
 readiness. Do not replace the full product goal with one successful milestone.

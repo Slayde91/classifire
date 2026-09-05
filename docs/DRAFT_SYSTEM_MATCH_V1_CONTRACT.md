@@ -157,3 +157,13 @@ when current source use is blocked; source files are never included in this expo
 This bounded slice stops at candidate review. Applicability coverage, technical
 selection, pricing, estimating, report integration and complete ProjectPackage
 portability retain their own later milestones and authority requirements.
+
+
+## Compatible measured-review extension
+
+v1 remains the retrieval/keep/reject contract above. Explicit measured-limit review
+can append `CLASSIFIRE-DRAFT-SYSTEM-MATCH-v2` to the same artifact. It retains v1
+basis/history and adds partial substrate/gap checks with manual measurement claims.
+See [the v2 extension and demo](./DRAFT_CONSTRAINT_REVIEW.md). New technical release
+v3 snapshots public fields; historical releases are not rewritten. Partial checks
+never grant applicability or approval and do not change existing v1 bytes.

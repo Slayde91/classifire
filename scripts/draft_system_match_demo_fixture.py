@@ -28,9 +28,11 @@ FIXTURE_NOTES = (
     "no malware scanner, technical assessment or human release is claimed."
 )
 FIXTURE_DOCUMENT_ID = "SYNTHETIC-P2A-SOURCE-001"
+CONSTRAINT_VERSION = "SYNTHETIC-P2B-001"
+CONSTRAINT_DOCUMENT_ID = "SYNTHETIC-P2B-SOURCE-001"
 
 
-def _document_bytes() -> bytes:
+def _document_bytes(*, constraints: bool = False) -> bytes:
     buffer = io.BytesIO()
     document = canvas.Canvas(buffer, pagesize=A4, invariant=1, pageCompression=1)
     document.setTitle("CLASSIFIRE synthetic candidate-review fixture")
@@ -44,12 +46,25 @@ def _document_bytes() -> bytes:
         "This file exists only to demonstrate source-bound candidate review.",
         "It is not a fire test, assessment, product certificate or installation instruction.",
         "No real passive-fire system or performance claim is represented.",
-        "Document reference: SYNTHETIC-P2A-SOURCE-001. Revision: DEMO-1.",
+        (
+            "Document reference: SYNTHETIC-P2B-SOURCE-001. Revision: DEMO-1."
+            if constraints
+            else "Document reference: SYNTHETIC-P2A-SOURCE-001. Revision: DEMO-1."
+        ),
         "",
         "Table 1: Synthetic retrieval fields",
         "Candidate DEMO-PIPE-CONCRETE: service type pipe; substrate concrete.",
         "Candidate DEMO-PIPE-MASONRY: service type pipe; substrate masonry.",
-        "All dimensions, material, FRL, insulation and installation limits are unknown.",
+        *(
+            (
+                "Both synthetic candidates: substrate thickness 100 to 200 mm inclusive.",
+                "Annular gap: every measured clearance must be 10 to 30 mm inclusive.",
+                "Use the smallest and largest measured gap around the selected service.",
+                "Other dimensions, material, FRL and installation limits are unknown.",
+            )
+            if constraints
+            else ("All dimensions, material, FRL, insulation and installation limits are unknown.",)
+        ),
         "Both candidates require evidence and expert review; neither is applicable.",
         "",
         "The application's approved/clean labels are seeded synthetic test metadata.",
@@ -62,7 +77,14 @@ def _document_bytes() -> bytes:
     return buffer.getvalue()
 
 
-def _existing_fixture(db: Session, storage_root: Path) -> LibraryRelease | None:
+def _existing_fixture(
+    db: Session,
+    storage_root: Path,
+    *,
+    constraints: bool = False,
+) -> LibraryRelease | None:
+    version = CONSTRAINT_VERSION if constraints else FIXTURE_VERSION
+    document_id = CONSTRAINT_DOCUMENT_ID if constraints else FIXTURE_DOCUMENT_ID
     releases = list(
         db.scalars(select(LibraryRelease).where(LibraryRelease.library_type == "technical"))
     )
@@ -71,17 +93,17 @@ def _existing_fixture(db: Session, storage_root: Path) -> LibraryRelease | None:
     if len(releases) != 1:
         raise ValueError("Refusing to seed a demo over an existing technical library")
     release = releases[0]
-    if release.version != FIXTURE_VERSION or release.notes != FIXTURE_NOTES:
+    if release.version != version or release.notes != FIXTURE_NOTES:
         raise ValueError("Refusing to adopt a non-fixture technical library")
     ids = active_technical_release_ids(db, release)
     variants = list(db.scalars(select(TechnicalVariant).where(TechnicalVariant.id.in_(ids))))
     if {variant.variant_id for variant in variants} != {"DEMO-PIPE-CONCRETE", "DEMO-PIPE-MASONRY"}:
         raise ValueError("The synthetic library has changed; refusing to reseed it")
     for variant in variants:
-        if variant.source_json != {"synthetic_fixture": FIXTURE_VERSION}:
+        if variant.source_json != {"synthetic_fixture": version}:
             raise ValueError("The synthetic library marker is invalid")
         document = db.get(TechnicalDocument, variant.technical_document_id)
-        if document is None or document.document_id != FIXTURE_DOCUMENT_ID:
+        if document is None or document.document_id != document_id:
             raise ValueError("The synthetic document binding is invalid")
         stored = db.get(StoredFile, document.stored_file_id)
         if stored is None:
@@ -92,7 +114,13 @@ def _existing_fixture(db: Session, storage_root: Path) -> LibraryRelease | None:
     return release
 
 
-def seed_demo_library(db: Session, storage_root: Path, actor: User) -> LibraryRelease:
+def seed_demo_library(
+    db: Session,
+    storage_root: Path,
+    actor: User,
+    *,
+    constraints: bool = False,
+) -> LibraryRelease:
     """Seed only an explicitly isolated SQLite fixture, or verify its unchanged restart.
 
     The caller must enforce a marked synthetic demo directory and explicit opt-in.
@@ -109,7 +137,9 @@ def seed_demo_library(db: Session, storage_root: Path, actor: User) -> LibraryRe
     ):
         raise ValueError("Synthetic library seeding requires an active technical approver")
     storage_root = storage_root.resolve()
-    existing = _existing_fixture(db, storage_root)
+    version = CONSTRAINT_VERSION if constraints else FIXTURE_VERSION
+    document_id = CONSTRAINT_DOCUMENT_ID if constraints else FIXTURE_DOCUMENT_ID
+    existing = _existing_fixture(db, storage_root, constraints=constraints)
     if existing is not None:
         return existing
     if any(
@@ -118,9 +148,13 @@ def seed_demo_library(db: Session, storage_root: Path, actor: User) -> LibraryRe
     ):
         raise ValueError("Refusing to seed over existing technical records")
     storage_root.mkdir(parents=True, exist_ok=True)
-    content = _document_bytes()
+    content = _document_bytes(constraints=constraints)
     digest = hashlib.sha256(content).hexdigest()
-    source_path = storage_root / "synthetic-candidate-review-source.pdf"
+    source_path = storage_root / (
+        "synthetic-constraint-review-source.pdf"
+        if constraints
+        else "synthetic-candidate-review-source.pdf"
+    )
     if source_path.exists():
         raise ValueError("Refusing to overwrite an existing demo source")
     with source_path.open("xb") as destination:
@@ -139,15 +173,15 @@ def seed_demo_library(db: Session, storage_root: Path, actor: User) -> LibraryRe
     db.add(stored)
     db.flush()
     document = TechnicalDocument(
-        document_id=FIXTURE_DOCUMENT_ID,
+        document_id=document_id,
         stored_file_id=stored.id,
         document_type="synthetic_fixture",
         title="Synthetic candidate-review source - not technical approval",
-        reference=FIXTURE_DOCUMENT_ID,
+        reference=document_id,
         revision="DEMO-1",
         status="approved",  # Explicit fixture setup, not a runtime approval workflow.
         approved_by_id=actor.id,
-        metadata_json={"synthetic_fixture": FIXTURE_VERSION, "scanner_executed": False},
+        metadata_json={"synthetic_fixture": version, "scanner_executed": False},
     )
     db.add(document)
     db.flush()
@@ -157,23 +191,27 @@ def seed_demo_library(db: Session, storage_root: Path, actor: User) -> LibraryRe
                 variant_id=f"DEMO-PIPE-{suffix}",
                 system_id=f"SYNTHETIC-SYSTEM-{suffix}",
                 technical_document_id=document.id,
-                source_document_reference=FIXTURE_DOCUMENT_ID,
+                source_document_reference=document_id,
                 source_page="1",
                 source_table="Table 1: Synthetic retrieval fields",
                 manufacturer="Synthetic fixture only",
                 service_type="pipe",
                 substrate_type=substrate,
+                minimum_substrate_thickness_mm=100 if constraints else None,
+                maximum_substrate_thickness_mm=200 if constraints else None,
+                annular_gap_min_mm=10 if constraints else None,
+                annular_gap_max_mm=30 if constraints else None,
                 expert_review_required=True,
                 search_eligibility="INCLUDE",
                 status="active",  # Explicit synthetic fixture state.
                 source_hash=digest,
-                source_json={"synthetic_fixture": FIXTURE_VERSION},
+                source_json={"synthetic_fixture": version},
             )
         )
     db.flush()
     return publish_governed_technical_release(
         db,
-        version=FIXTURE_VERSION,
+        version=version,
         notes=FIXTURE_NOTES,
         actor=actor,
         storage_root=storage_root,

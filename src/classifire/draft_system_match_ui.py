@@ -11,6 +11,7 @@ from .config import get_settings
 from .db import get_db
 from .models import User
 from .security import verify_csrf
+from .services.draft_constraint_review import INPUT_FIELDS
 from .services.draft_scope import DraftScopeError, get_draft, read_revision
 from .services.draft_system_matches import (
     DraftSystemMatchError,
@@ -20,6 +21,7 @@ from .services.draft_system_matches import (
     match_staleness,
     read_match_revision,
     revision_bytes,
+    save_constraint_review,
     save_review,
 )
 from .ui import _context, _require, templates
@@ -227,3 +229,57 @@ def download_candidate_review(
         "Content-Disposition": f'attachment; filename="{filename}"',
         "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
     })
+
+
+@router.post("/scopes/{draft_id}/system-matches/{match_id}/constraints", response_model=None)
+def save_constraints(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    match_id: str,
+    form: FormData,
+) -> HTMLResponse | RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _actor(request, db, write=True)
+    if set(form) != {
+        "csrf_token",
+        "expected_revision",
+        "candidate_id",
+        "measurement_note",
+        *INPUT_FIELDS,
+    }:
+        raise HTTPException(422, "Submit the complete measurement form")
+    revision = _revision(form["expected_revision"])
+    inputs: dict[str, Any] = {key: form[key] or None for key in INPUT_FIELDS}
+    inputs["measurement_note"] = form["measurement_note"]
+    try:
+        save_constraint_review(
+            db,
+            user,
+            draft_id,
+            match_id,
+            revision,
+            form["candidate_id"],
+            inputs,
+            storage_root=get_settings().storage_root,
+        )
+        db.commit()
+    except (DraftScopeError, DraftSystemMatchError) as exc:
+        db.rollback()
+        if exc.status_code not in {409, 422}:
+            raise HTTPException(exc.status_code, exc.code) from exc
+        try:
+            return _detail(
+                request,
+                db,
+                user,
+                draft_id,
+                match_id,
+                revision,
+                errors=["No measurement review was saved. " + exc.code],
+                form_values=form,
+                status_code=exc.status_code,
+            )
+        except (DraftScopeError, DraftSystemMatchError) as render_exc:
+            raise HTTPException(render_exc.status_code, render_exc.code) from render_exc
+    return RedirectResponse(f"/scopes/{draft_id}/system-matches/{match_id}", status_code=303)
