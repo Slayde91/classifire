@@ -58,6 +58,6 @@ def test_report_evidence_family_manifest_migration_upgrades_existing_0018_databa
     )
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0026_single_active_technical_release"
+            "0027_draft_scope_revisions"
         )
     engine.dispose()

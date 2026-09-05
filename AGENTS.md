@@ -18,7 +18,8 @@ Keep AI optional. Four capabilities do not require four agents or four services.
 
 Prioritize a working, testable UI prototype. Deliver one complete user interaction
 with the minimum supporting contract, persistence and validation in the same slice.
-The immediate priority is the manual Draft Scope workbench described in GOAL.md.
+Use GOAL.md and the verified project state to select the next visible increment;
+do not rebuild the completed manual Draft Scope workbench.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
 production AI, OpenClaw replacement or every edge case a prerequisite to that demo.

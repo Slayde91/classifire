@@ -20,7 +20,7 @@ def test_single_active_release_migration_upgrades_existing_0025_database(
         environment,
         "0025_signed_physical_model_lock_replacement_outcomes",
     )
-    _upgrade(database_url, environment, "head")
+    _upgrade(database_url, environment, "0026_single_active_technical_release")
 
     engine = create_engine(database_url)
     inspector = inspect(engine)
