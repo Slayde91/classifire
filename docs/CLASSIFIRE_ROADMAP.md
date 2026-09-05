@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main baseline:** `c3ab07aa9ceccf8910389773d889a6c796b7abbf` (PR #176, 2026-09-05)
+**Verified shared-main baseline:** `c080424c907b01a2a979f9efbfe9561bb097ba81` (PR #177, 2026-09-05)
 
 **Latest executable-change baseline:** 7e8f473 (PR #174)
 
@@ -22,9 +22,10 @@ The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
 current callers and existing coverage. Thirteen added synthetic fallback/audit
 cases bring the eight-file focused suite to 83 passing tests. Executable source,
 runtime configuration and authority are unchanged; full retirement parity is
-not complete. PR #176 documentation merged as c3ab07a and its exact post-merge
-CI [33932371817](https://github.com/Slayde91/classifire/actions/runs/33932371817)
-passed.
+not complete. PR #177 merged this inventory and coverage as c080424; its exact
+post-merge CI [33933164159](https://github.com/Slayde91/classifire/actions/runs/33933164159)
+passed. This documentation reconciliation rechecked that result and the 83-test
+synthetic baseline; it makes no executable change.
 
 **Next bounded task:** investigate ambiguous CLI timeout handling using a fake
 completed session creation followed by a lost reply. The CLI maps timeout to
@@ -88,10 +89,13 @@ corresponding `main` validation then passed through PR #174. The PR #174 check
 was `33892514672` on `e587cf8`; post-merge `main` run `33892921342` passed on
 `7e8f473`. PR #175 merged the documentation-only hybrid decision as
 9c0fc7d; exact main run 33899855871 succeeded. The reconciliation also passed
-70 focused synthetic contract/security tests. GitHub's branch-protection endpoint still returns
-HTTP 403 because the current private-repository plan requires GitHub Pro or
-public visibility for that configuration; required-check configuration remains
-unverified.
+70 focused synthetic contract/security tests at that earlier baseline.
+PR #176 merged the four-document reconciliation; PR #177 merged the initial
+contract inventory and 13 added cases. Exact main CI 33933164159 passed on
+c080424; this update rechecked it and 83 focused tests. Basic branch metadata
+reports main unprotected with no enforced checks. Detailed protection/rules
+inspection previously returned HTTP 403; this does not permit bypassing CI
+or a requested review.
 
 The latest documented historical Phase 8 attempt is not a proposal result.
 Its receipts/database were not reopened in this documentation reconciliation. Runtime
@@ -154,12 +158,14 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ## 4. Prioritised build plan
 
-### Priority reconciliation after PR #175
+### Priority reconciliation through PR #177
 
 | Work | Status | Dependency / completion evidence |
 | --- | --- | --- |
 | Hybrid decision | **Completed documentation** | PR #175 accepts Decision 0001; runtime migration is unimplemented. |
-| OpenClaw characterisation | **Next / reordered first** | Map actual callers/contracts to existing tests; add only demonstrated synthetic gaps. A passing suite alone does not prove the full inventory. |
+| Initial OpenClaw inventory/tests | **Completed foundation** | PR #177: inventory and 13 added cases; 83 focused tests pass. Full parity remains incomplete. |
+| Uncertain session creation | **Next / reordered first** | Fake completed creation/lost reply; prove repeat risk and implement the smallest justified fail-closed fix. |
+| Remaining contract characterisation | **Upcoming** | Socket/protocol, audit completeness, recovery, identity, privacy and clean-machine gaps remain in the inventory. |
 | Durable jobs/replacement adapter | **Upcoming / planned** | Characterisation first; extend BackgroundJob/worker. Current worker has no handlers. |
 | ProjectPackage export/download | **Upcoming / planned** | Membership, rights, profiles, revisions and deterministic jobs. Policy-permitted Drafts need not await Phase 14 or OpenClaw retirement. |
 | Quarantined import | **Upcoming / planned** | Stable export/schema/integrity; new-project import before conflict handling. |
@@ -170,7 +176,7 @@ Phases 8-14 and is not a technical selection or canonical output.
 | Real UAT and Phases 9-14 | **Blocked** | Fresh authority, evidence, semantic approval and governed replacement lock remain required. |
 
 The active reconciliation is documentation-only. Characterisation builds on
-transport/runtime/controller/runner/security tests: 70 passed on the verified
+transport/runtime/controller/runner/security tests: 83 passed on the verified
 baseline. Record missing retry/cancellation/recovery as future requirements,
 not invented existing guarantees. Do not build adapters, jobs, packages or UI
 in the first task. [Session Handoff](./SESSION_HANDOFF.md#start-here--next-session)
@@ -186,8 +192,9 @@ OpenClaw is now a transitional adapter, not the long-term product foundation,
 but it remains in place until the documented security, receipt, recovery,
 observability, clean-machine, and rollback parity gates pass.
 
-The next architecture-migration implementation task is to characterise every
-used OpenClaw contract with synthetic golden and negative tests. Later tasks are
+The next architecture-migration implementation task is the uncertain-session-
+creation regression and bounded correction described above. Complete remaining
+synthetic contract characterisation after that fix. Later tasks are
 CLASSIFIRE-owned job/run/stage persistence, a provider-neutral adapter behind a
 feature flag, deterministic `ProjectPackage` export and audited download,
 quarantined import, shared MCP/standalone application adapters, and only then

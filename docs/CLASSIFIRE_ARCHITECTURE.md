@@ -4,7 +4,7 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main baseline:** `c3ab07aa9ceccf8910389773d889a6c796b7abbf` (PR #176, 2026-09-05)
+**Verified shared-main baseline:** `c080424c907b01a2a979f9efbfe9561bb097ba81` (PR #177, 2026-09-05)
 
 **Latest executable-change baseline:** 7e8f473 (PR #174)
 
@@ -23,9 +23,10 @@ The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
 current callers and existing coverage. Thirteen added synthetic fallback/audit
 cases bring the eight-file focused suite to 83 passing tests. Executable source,
 runtime configuration and authority are unchanged; full retirement parity is
-not complete. PR #176 documentation merged as c3ab07a and its exact post-merge
-CI [33932371817](https://github.com/Slayde91/classifire/actions/runs/33932371817)
-passed.
+not complete. PR #177 merged this inventory and coverage as c080424; its exact
+post-merge CI [33933164159](https://github.com/Slayde91/classifire/actions/runs/33933164159)
+passed. This documentation reconciliation rechecked that result and the 83-test
+synthetic baseline; it makes no executable change.
 
 **Next bounded task:** investigate ambiguous CLI timeout handling using a fake
 completed session creation followed by a lost reply. The CLI maps timeout to
@@ -109,7 +110,7 @@ Approval for one operation never grants a later authority.
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
 | Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0026_single_active_technical_release |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
-| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | No accepted replacement lock for the current UAT estimate; code capability does not authorise operation on real project data |
+| Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, atomic governed publication, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus production technical authority remain incomplete |
@@ -535,8 +536,10 @@ desk assumption or model estimate into a confirmed canonical fact.
 
 The hybrid decision merged in PR #175 at 9c0fc7d, with executable code
 unchanged from the PR #174 baseline.
-The first migration task is to characterise the used OpenClaw contracts with
-synthetic golden and negative tests before adding CLASSIFIRE-owned job/run/stage
+PR #177 completed the initial inventory and 13 synthetic contract cases.
+Characterisation remains incomplete. The next bounded task is a composed
+lost-reply/session-creation regression and the justified fail-closed correction.
+Complete the remaining contract gates before adding CLASSIFIRE-owned job/run/stage
 state or a provider-neutral inference adapter. Portable `ProjectPackage`, MCP,
 standalone-client, and OpenClaw-retirement capabilities remain planned. No part
 of this documentation decision grants canonical, technical, commercial, lock,
