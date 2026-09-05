@@ -44,7 +44,7 @@ def test_draft_scope_migration_preserves_existing_data_and_supports_revisions(tm
         save_revision(db, actor, draft.id, 1, {"assumptions": ["Synthetic migration test"]})
         db.commit()
         assert read_revision(db, actor, draft.id)["revision"] == 2
-        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
+        assert assess_deployment_lineage(db).code == "DEPLOYMENT_LINEAGE_UNRECOGNISED"
         assert (
             db.scalar(text("SELECT version_num FROM alembic_version"))
             == "0027_draft_scope_revisions"

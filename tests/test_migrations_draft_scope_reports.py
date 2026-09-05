@@ -39,7 +39,9 @@ def test_report_migration_preserves_scope_and_retains_pair_with_foreign_key_bind
         save_revision(db, actor, scope.id, 1, {"assumptions": ["Predates report migration"]})
         draft_id = scope.id
         db.commit()
-    _upgrade(database_url, environment, "head", enforce_sqlite_foreign_keys=True)
+    _upgrade(
+        database_url, environment, "0028_draft_scope_reports", enforce_sqlite_foreign_keys=True
+    )
     inspector = inspect(engine)
     assert "draft_scope_reports" in inspector.get_table_names()
     assert any(
@@ -54,7 +56,7 @@ def test_report_migration_preserves_scope_and_retains_pair_with_foreign_key_bind
         assert read_report(db, actor, draft_id, report.id)["scope"]["content"]["assumptions"] == [
             "Predates report migration"
         ]
-        assert assess_deployment_lineage(db).status == "READY"
+        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
         assert (
             db.scalar(text("SELECT version_num FROM alembic_version")) == "0028_draft_scope_reports"
         )

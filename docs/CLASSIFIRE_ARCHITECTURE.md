@@ -2,11 +2,12 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.4 - independent Draft Scope reports implemented; broader capability target remains partial
+**Architecture version:** 5.5 - saved candidate-review UI; full applicability and estimating remain planned
 
-**Verified shared-main baseline before P4a:** `e17cec31b571bbcec5153df95c9d4f35b16ed348` (PR #189, 2026-09-05)
+**Verified shared-main baseline before P2a:** `18f5177f55458a5a1eb36b8117aea112d7a82f33` (PR #190, 2026-09-05)
 
-**P4a implementation:** `feat/draft-scope-reports-20260905`; local implementation and evidence below. Verify its publication separately through Git/PR/CI.
+**P4a is merged:** PR #190 and main CI 33952553673 passed (1,124 tests).
+**P2a implementation:** `feat/system-match-review-20260905`; local evidence is recorded in PROJECT_STATE.md. Verify its final publication through Git/PR/CI.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -77,10 +78,10 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | Existing FastAPI/Jinja shell plus `/scopes` editing/import and saved report preview/PDF/XLSX download routes | Add independent candidate-review and estimating interactions; ChatGPT later uses the same application commands. |
+| Interfaces/API | Existing FastAPI/Jinja shell plus `/scopes` editing/import and saved report preview/PDF/XLSX download routes | Candidate review now has independent routes; estimating and ChatGPT adapters remain planned. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
-| Draft persistence | Separate Draft tables, owner/admin checks, hash/parent validation and conditional revision update; v2 imported-source lineage retained through manual edits | Report snapshots and exact output pairs now have separate retention; other capability artifacts remain planned. |
+| Draft persistence | Separate Draft tables, owner/admin checks, hash/parent validation and conditional revision update; v2 imported-source lineage retained through manual edits | Report snapshots/output pairs and candidate-review revisions have separate retention; Estimate artifacts remain planned. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
 | Packages | v1 manual and v2 imported Draft Scope JSON; bounded import preview/confirmation plus existing narrow exports | Whole-project archives and rights/membership projection remain later work; a Scope artifact is not a complete ProjectPackage. |
 | Reporting | Separate scope-only Draft snapshot and PDF/XLSX retention; current Scope/project edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
@@ -161,7 +162,7 @@ not silent truncation. Raw source attachments and complete foreign revision hist
 are not stored by this narrow import; the complete ProjectPackage/evidence-retention
 boundary remains separate. See the [v1/v2 contract](./DRAFT_SCOPE_V1_CONTRACT.md).
 
-**Planned dependency freshness:** artifacts will pin input/release revisions and hashes.
+**Implemented for reports and candidate reviews; planned for other artifacts:** pin input/release revisions and hashes.
 Upstream edits mark affected downstream relationships stale without changing the
 old artifact's content or approval history. The user chooses to compare or rerun.
 A report snapshot captures selected revisions and freshness so PDF and XLSX agree.
@@ -228,6 +229,62 @@ and a newest-20 report list. Older report IDs remain valid; pagination and movin
 large outputs to object storage can follow measured need. The dedicated PDF is the
 print layout; wide Excel sheets are intended for filtering and horizontal navigation.
 Only this Scope profile is implemented, not complete reporting or ProjectPackage export.
+
+### Implemented saved technical-candidate review (P2a)
+
+`draft_system_match_ui.py` is a thin FastAPI/Jinja adapter over independently callable
+`services/draft_system_matches.py`. Users explicitly select a saved Scope revision,
+a technical release and one opening, service or valid linked pair. Retrieval does
+not create canonical Openings or an Estimate and does not invoke AI. The full saved
+Scope remains context; `coverage: selected_target_only` identifies unassessed items.
+An opening-only review does not imply every linked service has been assessed.
+
+The existing `technical.search_variants` supplies text retrieval with stable ordering.
+It does not test complete applicability. Missing material, size, FRL, insulation and
+installation criteria remain visible; plane is not substituted for orientation.
+The UI exposes captured constraints/references, not an Applicable control. Keeping
+or rejecting a candidate is an unapproved preference, not library approval.
+
+```mermaid
+flowchart LR
+    UI[Select Scope, release and explicit target] --> S[Shared candidate-review use cases]
+    S --> V[Owner, technical permission, release and source checks]
+    V --> T[Bounded deterministic text retrieval]
+    T --> F[Freeze Scope, candidates, references and missing criteria]
+    F --> DB[Draft match and append-only review revisions]
+    DB --> R[Inspect, keep or reject with notes]
+    R --> DB
+    DB --> D[Exact saved JSON download]
+    DB --> ST[Check current dependencies; display stale reasons]
+```
+
+The [v1 candidate contract](./DRAFT_SYSTEM_MATCH_V1_CONTRACT.md) stores the complete
+Scope envelope, release ID/hash, explicit target, allowlisted technical fields,
+source locators/bindings, retrieval findings and decisions. It omits raw source JSON,
+storage paths, source bytes and arbitrary metadata. New retrieval validates release
+membership, published fields, dates and source integrity. Legacy unbound records
+remain unresolved. Source verification means retained-byte integrity, not a malware
+scan or technical applicability decision.
+
+Forward migration `0029_draft_system_matches` adds a parent and revision table after
+0028. Review saves use expected-revision comparison and append rather than overwrite;
+only decisions, author/time and revision lineage change. Downgrade refuses retained
+data loss. All operations require an active persisted human, Draft owner/admin access
+and technical read permission; writes additionally require project write and browser
+CSRF. Metadata-only audit excludes source/Scope text and review notes.
+
+Reads validate retained envelope/hash/chain and its local Scope binding separately
+from live source eligibility. Changed Scope, library, candidate or source dependencies
+produce stale reasons while preserving earlier unapproved metadata downloads. Users
+may annotate an old basis; this neither refreshes it nor removes staleness. A newer
+review revision blocks a stale save. Rerunning retrieval creates a separate artifact.
+
+Bounded synchronous limits: 20 candidates, 1 MiB artifact, 64 MiB aggregate deduplicated
+source reads and newest 20 saved reviews. PostgreSQL uses existing locked clean-byte
+reads; SQLite supports the isolated demonstration without proving quarantine
+serialization. Technical source links open current metadata, not a source-file viewer.
+Complete applicability (P2b), full System Match import/export and general source intake
+remain unfinished. No new framework, provider, database or scheduling dependency.
 
 ## 1. Governing reasoning chain
 
@@ -306,7 +363,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0028_draft_scope_reports |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0029_draft_system_matches |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -785,7 +842,8 @@ clock assumptions and crash/replay recovery before production wiring. The
 **Migration impact:** P0 adds the Draft revision tables and minimal manual contract.
 P1a adds explicit v2 import provenance in existing revision storage without reinterpreting v1 authority.
 P4a adds a retained scope-only snapshot and exact PDF/XLSX pair in migration 0028.
-Next, add a bounded independent candidate-review artifact using explicit Scope/library dependencies.
+P2a adds candidate-review revisions and explicit Scope/library dependencies in migration 0029.
+Next, deliver independent manual Draft estimating (P3a) using sufficient saved inputs.
 Capability/package/client increments follow the roadmap independently of the
 replacement track. That track adds required run/adapter behavior and retires
 OpenClaw only after Decision 0001 parity gates. Preserve historical migrations and receipt readers,
@@ -794,8 +852,8 @@ or duplicate business rules in MCP/UI.
 
 **Historical verification:** PR #175 was documentation-only; its 70 focused
 contract/security tests and main CI 33899855871 describe that older baseline.
-The pre-P4a shared baseline is `e17cec3` with main CI 33949738802 (1,072 tests).
-P0/P1a have browser/restart evidence; P4a verification is recorded in PROJECT_STATE.md.
+The pre-P2a shared baseline is `18f5177` with main CI 33952553673 (1,124 tests).
+P0/P1a/P4a are merged; P2a browser/restart evidence is recorded in PROJECT_STATE.md.
 None proves production or full recovery parity.
 
 ### Completed report-governance integration
@@ -933,25 +991,21 @@ PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
 deployment, or release authority.
 
-### Near term: independent technical-candidate review (P2a)
+### Near term: independent manual Draft estimating (P3a)
 
-The next visible increment consumes a selected Scope revision and explicit technical
-release, then lets a user inspect sources, keep/reject candidates with notes, save,
-reopen and download an unapproved System Match candidate-review revision.
-`technical.py:search_variants` is retrieval/ranking over five text fields, not a
-complete applicability checker. `search_for_opening` depends on canonical Opening
-and Estimate; do not manufacture either for a Draft interaction.
+P2a now provides the bounded candidate-review interaction described above. It does
+not complete applicability. The next useful screen is P3a: explicit saved Scope,
+optional unapproved review attachment, attributed unit sell rates, original values
+and reasoned overrides, unknown/unpriced work, partial totals and exact revisions.
+Use the existing Decimal helpers only where their null/rounding behavior fits the
+explicit Draft contract. Canonical Estimate creation, locked line mutation and the
+recalculating snapshot builder retain their existing authority boundaries.
 
-Reuse `release_scope.py:active_technical_release_ids` with an explicitly selected
-release and existing source/validity checks. That helper supports legacy unbound
-variants; it alone proves neither retained source bytes nor technical suitability.
-Missing/unsafe/unbound evidence stays unresolved. Scope v1/v2 lacks material, service
-size, FRL and insulation fields; unchecked criteria cannot produce Applicable status.
-Retain exact dependencies and identify stale later Scope/library/source changes.
-This is a bounded candidate-review prototype, not completed technical matching.
-P1b source intake remains upcoming with actual scanner, PostgreSQL clean-read and
-retention prerequisites; synthetic library development must not fabricate runtime
-scan attestations or use customer technical evidence.
+P2b still needs sufficient material/size/FRL/insulation and other source/physical
+criteria plus actual applicability rules. P3b retains pricing workbook provenance,
+validated default/inferred methods and full recovery coverage. P1b remains dependent
+on actual scanning, verified retained storage and retention policy. The manual
+prototype advances independently without fabricating any of those capabilities.
 
 ### Separate production and adapter backlog
 

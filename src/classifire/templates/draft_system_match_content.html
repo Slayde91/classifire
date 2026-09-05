@@ -1,0 +1,105 @@
+{% macro item_label(items, identifier) -%}
+{{ items|selectattr('id', 'equalto', identifier)|map(attribute='label')|first|default(identifier) }}
+{%- endmacro %}
+{% macro value_text(value) -%}
+{% if value is sameas true %}Yes{% elif value is sameas false %}No{% elif value is none or value == '' %}Not supplied{% else %}{{ value }}{% endif %}
+{%- endmacro %}
+{% set target = envelope.target %}
+<section class="panel" aria-labelledby="review-target-heading">
+  <h2 id="review-target-heading">Selected target</h2>
+  <p><strong>Only the selected target is under review.</strong> Related items are shown for context. A candidate for one service does not establish a complete treatment for a shared opening.</p>
+  <dl class="scope-import-details">
+    <dt>Selected opening</dt><dd>{% if target.opening_id %}{{ item_label(scope.content.openings, target.opening_id) }}<span class="scope-item-id"> ({{ target.opening_id }})</span>{% else %}No opening selected{% endif %}</dd>
+    <dt>Selected service</dt><dd>{% if target.service_id %}{{ item_label(scope.content.services, target.service_id) }}<span class="scope-item-id"> ({{ target.service_id }})</span>{% else %}No service selected{% endif %}</dd>
+    <dt>Blank opening</dt><dd>{{ 'Yes - no linked services' if target.blank_opening else 'Not selected as a blank opening' }}</dd>
+    <dt>Related openings</dt><dd>{% if target.opening_ids %}<ul>{% for identifier in target.opening_ids %}<li>{{ item_label(scope.content.openings, identifier) }} <span class="scope-item-id">({{ identifier }})</span></li>{% endfor %}</ul>{% else %}None linked / unresolved{% endif %}</dd>
+    <dt>Related services</dt><dd>{% if target.service_ids %}<ul>{% for identifier in target.service_ids %}<li>{{ item_label(scope.content.services, identifier) }} <span class="scope-item-id">({{ identifier }})</span></li>{% endfor %}</ul>{% else %}None linked{% endif %}</dd>
+  </dl>
+  <details class="scope-import-source">
+    <summary>Items not assessed by this review: {{ target.not_assessed_opening_ids|length }} openings and {{ target.not_assessed_service_ids|length }} services</summary>
+    <div class="grid-two">
+      <div><h3>Openings not assessed</h3>{% if target.not_assessed_opening_ids %}<ul>{% for identifier in target.not_assessed_opening_ids %}<li>{{ item_label(scope.content.openings, identifier) }} <span class="scope-item-id">({{ identifier }})</span></li>{% endfor %}</ul>{% else %}<p>None outside the selected opening.</p>{% endif %}</div>
+      <div><h3>Services not assessed</h3>{% if target.not_assessed_service_ids %}<ul>{% for identifier in target.not_assessed_service_ids %}<li>{{ item_label(scope.content.services, identifier) }} <span class="scope-item-id">({{ identifier }})</span></li>{% endfor %}</ul>{% else %}<p>None outside the selected service.</p>{% endif %}</div>
+    </div>
+  </details>
+</section>
+<section class="panel scope-findings" aria-labelledby="review-limits-heading">
+  <h2 id="review-limits-heading">Missing information and review limits</h2>
+  <p>Saved Scope values, including Confirmed labels, remain unreviewed assertions. This review makes no applicability decision.</p>
+  <div class="grid-two">
+    <div><h3>Missing criteria</h3>{% if envelope.retrieval.missing_criteria %}<ul>{% for code in envelope.retrieval.missing_criteria %}<li>{{ code|replace('_', ' ')|capitalize }}</li>{% endfor %}</ul>{% else %}<p>No missing text inputs were recorded. This does not mean all technical criteria are complete.</p>{% endif %}</div>
+    <div><h3>Criteria not assessed</h3>{% if envelope.retrieval.unassessed_criteria %}<ul>{% for code in envelope.retrieval.unassessed_criteria %}<li>{{ code|replace('_', ' ')|capitalize }}</li>{% endfor %}</ul>{% else %}<p>Technical applicability remains unassessed.</p>{% endif %}</div>
+  </div>
+  {% if envelope.retrieval.truncated %}<p class="callout"><strong>Limited candidate set.</strong> Retrieval reached its supported limit. These candidates are not an exhaustive library or compatibility assessment.</p>{% endif %}
+  <p class="scope-hint">Retrieved {{ envelope.retrieval.evaluated_at }} using retrieval version {{ envelope.retrieval.version }}, with at most {{ envelope.retrieval.candidate_limit }} candidates. Saving review notes does not refresh these results.</p>
+</section>
+<section class="panel" aria-labelledby="review-candidates-heading">
+  <div class="panel-head"><h2 id="review-candidates-heading">Candidates to inspect</h2><span class="badge badge-draft">{{ envelope.candidates|length }} retained</span></div>
+  <p class="scope-hint">Listed in retrieval order. Text overlap and stored library scores are not confidence, compatibility or approval. Keeping or rejecting applies only to this saved review.</p>
+  {% set comparison_labels = {'service_type': 'Service type', 'service_material': 'Service material', 'substrate': 'Substrate', 'orientation': 'Orientation', 'frl': 'FRL'} %}
+  {% set field_keys = {'service_type': 'service_type', 'service_material': 'service_material', 'substrate': 'substrate_type', 'orientation': 'orientation', 'frl': 'frl'} %}
+  {% set decision_labels = {'unreviewed': 'Not reviewed', 'keep': 'Keep for review', 'reject': 'Reject from this review'} %}
+  {% for candidate in envelope.candidates %}
+  {% set review = envelope.decisions|selectattr('candidate_id', 'equalto', candidate.candidate_id)|first %}
+  {% set decision = form_values.get('candidate_' ~ candidate.candidate_id, review.decision) %}
+  {% set notes = form_values.get('notes_' ~ candidate.candidate_id, review.notes) %}
+  <article class="scope-import-item" aria-labelledby="candidate-heading-{{ candidate.candidate_id }}">
+    <div class="scope-import-item-heading"><h3 id="candidate-heading-{{ candidate.candidate_id }}">{{ candidate.variant_id }}</h3><span class="badge badge-draft">Unapproved candidate</span></div>
+    <p>System {{ candidate.system_id }} &middot; {{ candidate.fields.manufacturer or 'Manufacturer not supplied' }} &middot; {{ candidate.fields.product_family or 'Product family not supplied' }}</p>
+    <p><a href="/technical/variants/{{ candidate.candidate_id|urlencode|replace('/', '%2F') }}" target="_blank" rel="noopener">Open current variant record (new tab)</a></p>
+    {% if candidate.blockers %}<div class="callout"><strong>Findings to review</strong><ul>{% for code in candidate.blockers %}<li>{{ code|replace('_', ' ')|capitalize }}</li>{% endfor %}</ul><p class="scope-hint">Text differences signal a potential conflict to investigate, not a completed technical assessment.</p></div>{% endif %}
+    <h4>Captured source</h4>
+    {% if candidate.source.state == 'bound' and candidate.source.verification == 'exact_bytes' %}
+      {% set binding = candidate.source.binding %}
+      {% set document = binding.technical_document %}
+      <p><strong>Source bytes verified when retrieved.</strong> The bound file was checked at {{ candidate.source.verified_at }}. This is source integrity evidence, not approval of this candidate for the Scope.</p>
+      <dl class="scope-import-details">
+        <dt>Document</dt><dd>{{ document.document_id }} &middot; {{ document.reference or 'Reference not supplied' }} &middot; revision {{ document.revision or 'not supplied' }}</dd>
+        <dt>Source locator</dt><dd>Page: {{ binding.source_locator.page or 'Not supplied' }} &middot; Table: {{ binding.source_locator.table or 'Not supplied' }} &middot; Figure: {{ binding.source_locator.figure or 'Not supplied' }}</dd>
+        <dt>Document reference</dt><dd>{{ binding.source_locator.document_reference or 'Not supplied' }}</dd>
+        <dt>File checksum</dt><dd class="scope-item-id">{{ document.stored_file.sha256 }}</dd>
+        <dt>File size</dt><dd>{{ document.stored_file.size_bytes }} bytes</dd>
+      </dl>
+      <p><a href="/technical/documents/{{ document.id|urlencode|replace('/', '%2F') }}" target="_blank" rel="noopener">Open current technical document record (new tab)</a></p>
+    {% else %}
+      <p class="callout"><strong>Source verification unresolved.</strong> {% if candidate.source.state == 'legacy_unbound' %}This is a legacy unbound source record.{% else %}The captured manifest has no verified source binding.{% endif %} A reference alone does not establish retained evidence or technical authority.</p>
+      <dl class="scope-import-details"><dt>Declared reference</dt><dd>{{ candidate.release_record.get('source_document_reference') or 'Not supplied' }}</dd><dt>Declared page</dt><dd>{{ candidate.release_record.get('source_page') or 'Not supplied' }}</dd></dl>
+    {% endif %}
+    <p class="scope-hint">Links open current metadata records, not a source-file viewer. The captured reference and decisions remain unchanged.</p>
+    <div class="table-wrap"><table>
+      <caption>Saved inputs and library text &mdash; retrieval comparisons only</caption>
+      <thead><tr><th scope="col">Criterion</th><th scope="col">Saved Scope input</th><th scope="col">Captured library value</th><th scope="col">Text comparison</th></tr></thead>
+      <tbody>{% for key, label in comparison_labels.items() %}<tr><th scope="row">{{ label }}</th><td class="scope-preserve-text">{{ value_text(envelope.retrieval.inputs.get(key)) }}</td><td class="scope-preserve-text">{{ value_text(candidate.fields.get(field_keys[key])) }}</td><td>{% if candidate.comparisons[key] == 'MATCH' %}Text overlap only{% elif candidate.comparisons[key] == 'MISMATCH' %}Text differs &mdash; review required{% else %}Missing or unrecognised text{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <details class="scope-import-source">
+      <summary>Captured technical limits and library metadata</summary>
+      <p class="scope-hint">These are the retained library values, not checked compatibility for this target. Stored quality and confidence fields describe the library record and are not a confidence rating for this review.</p>
+      <dl class="scope-import-details">{% for key, value in candidate.fields.items() %}<dt>{{ 'FRL' if key == 'frl' else key|replace('_mm', ' (mm)')|replace('_', ' ')|capitalize }}</dt><dd class="scope-preserve-text">{{ value_text(value) }}</dd>{% endfor %}</dl>
+    </details>
+    <details class="scope-import-source"><summary>Candidate identity and captured revision</summary><dl class="scope-import-details"><dt>Candidate record ID</dt><dd class="scope-item-id">{{ candidate.candidate_id }}</dd><dt>Record version</dt><dd>{{ candidate.record_version }}</dd><dt>Captured fields checksum</dt><dd class="scope-item-id">{{ candidate.fields_sha256 }}</dd><dt>Published source hash</dt><dd class="scope-item-id">{{ candidate.release_record.get('source_hash') or 'Not supplied' }}</dd></dl></details>
+    {% if can_edit %}
+    <fieldset class="scope-item" aria-labelledby="candidate-decision-heading-{{ candidate.candidate_id }}">
+      <legend id="candidate-decision-heading-{{ candidate.candidate_id }}">Review {{ candidate.variant_id }}</legend>
+      <label for="candidate-decision-{{ candidate.candidate_id }}">Review decision</label>
+      <select id="candidate-decision-{{ candidate.candidate_id }}" name="candidate_{{ candidate.candidate_id }}" aria-describedby="candidate-decision-hint-{{ candidate.candidate_id }}">
+        {% for value, label in decision_labels.items() %}<option value="{{ value }}"{% if decision == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <p class="scope-hint" id="candidate-decision-hint-{{ candidate.candidate_id }}">This records your preference only. It does not approve or retire the library record.</p>
+      <label for="candidate-notes-{{ candidate.candidate_id }}">Review notes</label>
+      <textarea id="candidate-notes-{{ candidate.candidate_id }}" name="notes_{{ candidate.candidate_id }}" rows="3" maxlength="4000" placeholder="Explain why you kept or rejected this candidate, or what remains unresolved.">{{ notes }}</textarea>
+    </fieldset>
+    {% else %}<div class="callout">
+      {% if 'candidate_' ~ candidate.candidate_id in form_values or 'notes_' ~ candidate.candidate_id in form_values %}
+      <strong>Unsaved attempted review decision:</strong> {{ decision_labels.get(decision, 'Unrecognised decision') }}
+      <p class="scope-preserve-text">{{ notes or 'No review notes supplied.' }}</p>
+      <p class="scope-hint">These attempted changes were not saved. Copy any notes you want to keep, then open the latest review revision before editing.</p>
+      {% else %}<strong>Saved review decision:</strong> {{ decision_labels[review.decision] }}<p class="scope-preserve-text">{{ review.notes or 'No review notes supplied.' }}</p>{% endif %}
+    </div>{% endif %}
+  </article>
+  {% else %}
+  <div class="scope-empty"><h3>No candidates retained</h3><p>No candidates were returned for this selected target and release. This does not prove that no suitable system exists. Check the missing inputs, source requirements and retrieval limits before starting another review.</p></div>
+  {% endfor %}
+</section>
+<details class="panel"><summary>Full saved Scope context &mdash; other items remain unassessed</summary>
+  {% with envelope=scope %}{% include "draft_scope_report_content.html" %}{% endwith %}
+</details>

@@ -1,238 +1,152 @@
 # CLASSIFIRE Session Handoff
 
 **Verified:** 2026-09-05 (AEST).
-**Shared-main baseline:** `e17cec31b571bbcec5153df95c9d4f35b16ed348`, merged
-[PR #189](https://github.com/Slayde91/classifire/pull/189).
-[Main CI 33949738802](https://github.com/Slayde91/classifire/actions/runs/33949738802)
-passed on that exact commit (1,072 tests, 141 warnings).
-**P4a branch/worktree:** `feat/draft-scope-reports-20260905` at
-`C:\CLASSIFIRE\.tmp\draft-scope-reports-20260905`.
-**Architecture:** accepted ADR 0001 + approved ADR 0002; prototype-first delivery.
-Final P4a artifact/restart, combined regression, migration and static checks passed.
-This checkpoint precedes publication. Verify its exact commit/PR/CI/merge before
-carrying this snapshot into another session.
+**Shared-main baseline:** `18f5177f55458a5a1eb36b8117aea112d7a82f33`, merged
+[PR #190](https://github.com/Slayde91/classifire/pull/190).
+[Main CI 33952553673](https://github.com/Slayde91/classifire/actions/runs/33952553673)
+passed on that exact commit: 1,124 tests, 141 warnings.
+**Current P2a branch:** `feat/system-match-review-20260905` at
+`C:\CLASSIFIRE\.tmp\system-match-review-20260905`, based on that main commit.
+**Architecture:** approved ADR 0001 + ADR 0002, prototype-first delivery.
+This checkpoint precedes P2a publication. Verify final commit/PR/checks/merge from
+current Git and GitHub; local validation alone does not prove a shared-main feature.
 
 ## Start Here / Next Session
 
-**First finish the current P4a verification/publication if still outstanding.**
-Do not abandon these implemented reporting changes or start a competing branch.
-Then the **single next product task is P2a: an independently saved System Match
-candidate-review workspace** consuming a selected Scope revision and a governed
-technical release. Provide a real inspect/keep/reject/save/reopen/download UI.
+First finish P2a verification/publication if still outstanding; do not abandon its
+implemented candidate-review UI. Then the **single highest-value next task is P3a:
+a usable independent manual Draft Estimate workspace** over explicit saved Scope
+inputs, with an optional saved candidate-review reference.
 
-**Why next:** P0 editing and P1a JSON exchange are merged; P4a adds a second useful
-independent capability. The existing technical library and release checks can supply
-candidates without creating an Estimate or canonical Opening. Source ingestion
-still needs a real scan producer and storage/retention work. Its absence does not
-block a synthetic, unapproved candidate-review prototype over existing valid inputs.
-Candidate review is a bounded step toward matching, not complete applicability.
+Why next: P0 editing, P1a JSON exchange and P4a PDF/XLSX reporting are merged. P2a
+adds saved technical-candidate review, making a manual costing screen the missing
+fourth interaction. Broad applicability (P2b) needs new physical/source criteria
+and validated rules; it does not have to block an explicitly provisional manual
+worksheet. This order does not declare full matching, estimating or the goal done.
 
 ### Inspect before editing
 
-Read `AGENTS.md`, `GOAL.md`, `docs/PROJECT_STATE.md`, the architecture, roadmap,
-ADRs 0001/0002 and Draft Scope/report contracts. Inspect branch/HEAD/upstream,
-status/diffs/conflicts/worktrees, current main and relevant PR/CI. Reconcile newer
-source, tests and runtime evidence before editing. Preserve the conflicted root,
-unrelated work and package candidate; use a clean current-main worktree after P4a
-publication. Do not rebuild P0/P1a/P4a or seek approval for the accepted architecture.
+Read `AGENTS.md`, `GOAL.md`, the four current docs, ADRs 0001/0002 and current Draft
+contracts. Inspect branch, HEAD/upstream, diffs/conflicts/worktrees, current remote
+main and relevant PR/CI. Reconcile current source/tests before editing. Preserve
+all unrelated changes and the conflicted root. Use a clean current-main worktree
+after P2a publication; do not rebuild P0/P1a/P4a/P2a or seek architecture reapproval.
 
-### P2a minimum input/output contract
+### P3a supported slice and decisions
 
-- Input: explicit local Scope artifact/revision/hash and technical-release ID/hash;
-  owner/admin access and `technical:read` permission are checked by the backend.
-- Candidate entries bind stable Scope service/opening IDs to variant/document/source
-  references and page/table/figure locators. Record the selected release and source
-  identity, not just a current search query or chat context.
-- Show a criteria checklist covering material/size, opening/configuration,
-  substrate/thickness, plane/orientation, FRL, insulation and installation limits/
-  exclusions. Missing facts and unsupported checks stay unresolved. v1/v2 Scope
-  does not contain every required field; do not manufacture them.
-- Users retain/reject candidates and enter reasons as unapproved review decisions.
-  Never treat text ranking as compatibility or confidence. P2a produces unapproved candidates only;
-  Applicable decisions belong to P2b, after its evidence and criteria requirements.
-- Output: a versioned Draft System Match candidate-review artifact, with dependency
-  hashes, candidates, criteria/findings, review notes, local actor/time, predecessor
-  identity and checksum. Save/reopen/download exact JSON; do not start estimating.
-- Later Scope revision/hash, superseded/ineligible release or changed source
-  binding/validity makes the dependency stale. Preserve earlier artifact bytes and
-  explain the change; do not silently rerun, overwrite or promote it.
+- Select one saved Scope artifact/revision/hash. A candidate-review attachment is
+  optional, explicit and hash-bound; keeping a candidate is not technical approval.
+  Do not force users to run matching first or create a canonical Estimate/Opening.
+- Start with explicitly user-entered **unit sell rates**, classified user-defined
+  and provisional. Do not silently interpret them as cost plus markup or an exact
+  library rate. Declare currency, unit, precision, rounding and tax treatment.
+  Reuse the existing money/quantity helpers where their behavior fits; document
+  the supported calculation rule before coding and test it with concrete values.
+- Preserve original Scope quantities and original rate values. Any override needs
+  local author/time, reason, scope and active value. Missing quantity/rate remains
+  unavailable, not zero or one. Do not infer physical work from defect counts.
+- Bind lines to explicit Scope service/opening IDs and unit/recovery intent. Do not
+  generate duplicate shared work automatically. Refuse duplicate recovery for the
+  supported case or keep ambiguous recovery unresolved; state unsupported work.
+- Show priced/unpriced/omitted items and a clearly labelled partial subtotal when
+  anything is unresolved. A provisional worksheet cannot appear to be a complete
+  technically approved quote. Do not run pricing inference, release or reporting.
+- Deliver the UI, minimum shared contract, persistence, validation and exact JSON
+  download together. Save/reopen after restart, retain old revisions and mark later
+  Scope/attached-review changes stale without recalculating earlier artifacts.
 
-### Relevant files and prerequisites
+### Relevant implementation and prerequisites
 
-- `src/classifire/services/draft_scope.py`, `draft_scope_ui.py`, current templates
-  and tests: saved v1/v2 inputs, ownership, CSRF, revision/CAS and output patterns.
-- `src/classifire/services/technical.py`: `search_variants` ranks five text fields.
-  Use it only for retrieval. `search_for_opening` requires canonical Opening/Estimate;
-  do not fabricate those records to enter the independent capability.
-- `src/classifire/services/release_scope.py`:
-  `active_technical_release_ids(db, release)` validates an explicit release without
-  an Estimate. `release_pinning.active_release` can locate the current release;
-  capture its ID/hash explicitly. The reusable release check permits legacy unbound
-  records and older manifests; missing source authority remains unresolved in P2a.
-- `src/classifire/services/technical_validity.py`,
-  `technical_release_publication.py`, `technical_admin.py`, `release_admin.py` and
-  `models.py`: existing source, lifecycle, authority and review boundaries. Link to
-  existing technical-source detail screens; do not manufacture technical approvals.
-- `tests/test_technical_release_publication.py`,
-  `test_technical_import_governance.py`, `test_technical_source_authority_display.py`
-  and existing Draft/import/report tests: retain these while adding focused P2a tests.
-- `scripts/run_draft_scope_demo.py` and `docs/DRAFT_SCOPE_DEMO.md`: synthetic UI
-  launcher. Verify its current options and storage before use; never use customer DBs.
+- `services/draft_scope.py`, `draft_system_matches.py`,
+  `draft_system_match_contract.py`, `draft_scope_reports.py`, `models.py` and current
+  UI/templates/tests: ownership, revision/CAS, retained hashes and stale dependencies.
+- `services/calculation.py`: pure `money`, `rate`, `quantity`, `calculate_line` and
+  `sum_money`. Inspect behavior first: `D(None)` returns zero; `calculate_line`
+  rounds unit sell to cents before multiplying. Neither silently defines all
+  independent Draft semantics. Keep existing canonical behavior unchanged.
+- Existing Estimate creation pins six library releases. Existing estimate-line UI
+  requires a Physical Model Lock. `calculate_estimate_line`/`recalculate_estimate`
+  mutate canonical Estimate records; `services/snapshot.py:build_estimate_snapshot`
+  recalculates. Do not call these as read-only Draft projections or bypass guards.
+- `templates/estimate.html`, `PricingLibraryRecord`, pricing import and desk-quote
+  services provide presentation/provenance concepts. Desk quotes require release
+  bindings and priced allowances, so are not a drop-in Draft contract.
+- Current migration head is `0029_draft_system_matches`; use a new forward migration
+  if new persistence requires it. Preserve earlier migration tests as historical
+  scenarios and reconcile current-head/deployment fixtures explicitly.
+- `scripts/run_draft_scope_demo.py` supports marked isolated SQLite storage and
+  optional `--seed-technical-library`. The fixture PDF/approval/clean metadata are
+  synthetic setup, not a scanner result or operational technical approval.
 
-A small synthetic governed library can demonstrate the workflow. Fixture approval
-is not evidence of approved customer material. Missing real library evidence must
-produce a useful unresolved state, not a hard-coded successful match. No AI,
-canonical physical admission, estimating, operational release or deployment is needed.
+No customer evidence, provider, operational canonical record/lock, deployment or
+release is authorized by this development task. Synthetic isolated test fixtures
+may exercise boundaries. No identified external dependency blocks manual P3a.
+P1b scan producer/retention/concurrent upload, P2b applicability and P3b pricing
+XLSX/default/inferred-rate coverage remain required separate follow-on work.
 
-P1b remains upcoming with an actual scanner producer, verified retained bytes,
-PostgreSQL clean-read serialization, retention policy and safe concurrent upload
-handling outstanding. `save_upload` records pending/not_configured, and `worker.py`
-has no registered processing handler. An optional scanner dependency alone does
-not establish working intake. Preserve these guards and report the limitation.
+### Definition of done and validation
 
-### Definition of done for P2a
+1. A real authenticated synthetic browser session selects saved inputs, enters
+   supported unit rates/quantities, sees meaningful provisional/unknown totals,
+   records a reasoned override and saves/reopens/downloads an exact Draft revision.
+2. Shared services enforce active human permissions and owner/admin access; no
+   adapter duplicates calculations or creates canonical physical/Estimate state.
+3. Tests cover Decimal rounding/units, zero versus unknown, bounds, partial totals,
+   original/override lineage, duplicate recovery, optional/stale attachments,
+   integrity, CAS, ownership, agent denial, sessions/CSRF and safe export.
+4. Restart retains prior downloads. Inspect the browser and downloaded JSON against
+   concrete expected arithmetic and Scope IDs. No mock-only success screen.
+5. Relevant existing Draft, calculation/snapshot, physical/admission and desk-quote
+   regressions plus any migration checks pass. Run Ruff, Mypy and Bandit as required.
+6. Reconcile docs, classify the full diff, commit only relevant paths, push normally,
+   create/update PR, check exact-head CI/review, merge safely and verify main result.
 
-1. A fresh authenticated synthetic UI session selects a saved Scope/release, sees
-   real library candidates and missing criteria, inspects references, retains or
-   rejects alternatives with reasons, saves/reopens and downloads the same artifact.
-2. Shared services enforce ownership, technical permissions, valid dependency
-   identities, stable many-to-many Scope links and stale-save refusal. No text score,
-   manual selection or foreign history becomes technical approval.
-3. Tests cover exact allowed release membership, tampered/wrong-type/inactive/missing
-   releases, unsafe/expired/missing source bindings and unresolved legacy sources.
-   Unknown criteria never produce Applicable; no canonical writes or estimation run.
-4. Stale-dependency tests change Scope revision/hash, release status/identity and
-   source binding/validity. Existing JSON remains unchanged, the UI explains why it
-   is stale, and nothing automatically reruns or overwrites the artifact.
-5. Relevant service/UI/security/authority and any forward-migration checks pass;
-   inspect the real browser interaction and downloaded JSON. Update factual docs.
-6. Classify the full diff, commit/push normally, create/update the PR and merge only
-   after exact-head CI and required review permit it. Verify merge and main CI.
-
-This completes only P2a, not full technical matching, all four capabilities,
-production readiness or the active product goal. Do not add placeholder success
-screens or defer the entire user interaction in favor of schema work alone.
-
-### Validation commands
-
-Run from the isolated worktree with current declared dependencies installed:
+From the isolated worktree, using installed declared development dependencies:
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
 $env:CLASSIFIRE_POSTGRES_TEST_URL = ''
-$taskTestBase = Join-Path $env:TEMP ('classifire-candidate-review-' + [guid]::NewGuid().ToString('N'))
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp $taskTestBase tests/test_technical_release_publication.py tests/test_technical_import_governance.py tests/test_technical_source_authority_display.py tests/test_draft_scope.py tests/test_draft_scope_import.py tests/test_draft_scope_ui.py tests/test_draft_scope_import_ui.py tests/test_draft_scope_reports.py tests/test_draft_scope_reports_ui.py tests/test_draft_scope_outputs.py tests/test_human_session_security.py tests/test_physical_api_boundary.py tests/test_initial_canonicalisation_boundary.py
+$taskTestBase = Join-Path $env:TEMP ('classifire-estimate-' + [guid]::NewGuid().ToString('N'))
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp $taskTestBase tests/test_draft_scope.py tests/test_draft_scope_ui.py tests/test_draft_system_matches.py tests/test_draft_system_match_ui.py tests/test_snapshot.py tests/test_desk_quote.py tests/test_physical_api_boundary.py tests/test_initial_canonicalisation_boundary.py
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -r src
-git diff --check
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src --no-incremental
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -r src -ll
 ```
 
-Add new P2a service/UI tests to the command once created and run syntax checks for
-any changed JavaScript. Direct existing public-helper coverage is
-`test_technical_release_publication.py::test_publication_snapshots_every_active_variant_and_supersedes_atomically`.
-Also retain the same file's exact-manifest and changed-retained-byte tests and
-`test_technical_import_governance.py::test_pinned_technical_release_rejects_source_lineage_drift`.
-Add direct candidate-adapter failure tests rather than relying only on pinned
-Estimate tests. Synthetic release creation must use test fixtures/governed helpers.
+Add the new feature tests and current migration checks after inspecting their names.
+Local PostgreSQL skips require hosted/disposable PostgreSQL evidence; do not label
+SQLite checks production concurrency proof. Do not connect to an operational DB.
 
-If the migration head changes, reconcile deployment-lineage/current-head fixtures
-and run the full migration and affected preflight collection. Preserve historical
-migration cases. Local PostgreSQL skips are not passes; hosted CI must exercise its
-configured disposable database. Mypy requires declared stubs. No real-report UAT,
-provider execution, customer `doctor` run, deployment or release is authorized.
+## Current local changes and evidence
+
+P2a adds shared review services/strict contract, two revision tables and migration
+0029, thin UI adapter/templates/navigation, stable retrieval ordering, synthetic
+fixture/launcher, tests and documentation. Detailed measured checks are in
+PROJECT_STATE.md; Git/PR is authoritative for its final publication status.
+
+Protected `C:\CLASSIFIRE` remains at `de0cc5a` on
+`gpt/phase8-linked-original-images`, CHERRY_PICK_HEAD
+`c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`: 46 unstaged modified paths, 14 staged
+additions and four DU conflicts, plus untracked recovery material. Do not resolve,
+reset, clean, broadly stage or publish from it. The four conflicts are linked-visual
+service/evidence files and their tests. They are unrelated to this increment.
+
+Prior P0/P1a/P4a worktrees/demos and `.tmp/project-package-draft-20260905` are preserved.
+The latter contains three untracked candidate files (contract/service/test), not a
+shipped full package implementation. Its historical 22 tests are not qualification
+against current main. Demo databases, evidence PDFs, browser session cookies,
+screenshots and receipts remain outside the feature diff under `.tmp`.
 
 ## Recommended Prompt for New Session
 
 ```text
-Continue CLASSIFIRE's approved hybrid, independent-capability, prototype-first plan.
-Inspect AGENTS.md, GOAL.md, project state, architecture, roadmap, handoff and ADRs;
-verify current source/Git/worktrees/diffs/main/PR/CI BEFORE editing. Shared baseline
-was e17cec3, merged PR #189. Finish any outstanding P4a report verification/publication
-on feat/draft-scope-reports-20260905 first. Preserve the conflicted C:\CLASSIFIRE root,
-unrelated changes and package candidate; then use an isolated current-main worktree.
+Continue CLASSIFIRE from verified repository state. Read AGENTS.md, GOAL.md, docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md, docs/CLASSIFIRE_ROADMAP.md, docs/SESSION_HANDOFF.md, ADRs 0001/0002 and current Draft contracts. Inspect branch/HEAD/upstream, status/diffs/conflicts/worktrees, origin/main and relevant PR/CI before editing. Preserve the conflicted C:\CLASSIFIRE root, all unrelated changes, prior demos and package candidate; use an isolated current-main worktree. First finish P2a publication if outstanding; do not redo merged work.
 
-Single next product task: P2a, a saved System Match candidate-review UI. Consume an
-explicit Scope v1/v2 revision/hash and governed technical-release ID/hash. Reuse
-services/draft_scope.py, technical.py, release_scope.active_technical_release_ids,
-technical_validity.py, technical_admin.py and existing UI/security/revision patterns.
-No Estimate or canonical Opening is required. Text ranking is retrieval only;
-missing material/size/FRL/insulation/configuration or source authority stays unresolved.
-Never label relevance, manual selection or imported claims technical approval.
-P2a produces unapproved candidates only; Applicable decisions remain P2b work.
+Then deliver one task: P3a, a working independent manual Draft Estimate UI over an explicit saved Scope revision, with optional hash-bound candidate-review attachment. It is next because editing, JSON exchange, reports and candidate review already provide useful interactions; manual provisional costing adds the fourth without waiting for broad applicability rules. Reuse Draft ownership/revision/hash/staleness patterns and inspect services/calculation.py Decimal helpers, models.py, estimate.html and existing Draft/snapshot/desk-quote/physical-boundary tests. D(None) becomes zero, canonical Estimate creation pins six releases, line writes require a Physical Model Lock and build_estimate_snapshot recalculates: do not use these to bypass Draft boundaries.
 
-Deliver real candidate/reference inspection, retain/reject with reasons, versioned
-Draft save/reopen/exact JSON download, owner/technical permissions and CAS protection.
-Preserve stable Scope links and source provenance. Scope/library/source changes mark
-dependencies stale without altering older bytes or automatically running estimating.
-Use synthetic governed-library fixtures; legacy unbound sources stay unresolved.
-P1b actual scanning/retention remains required but is not this prototype's prerequisite.
+Define a bounded unit-sell-rate/currency/unit/rounding/tax contract, then implement its shared service and real UI together. Preserve original quantities/rates and attributed reasoned overrides, keep unknowns unpriced, show partial/omitted work, prevent supported-case duplicate recovery, and never turn a kept candidate into technical approval. Save/reopen after restart and download exact JSON revisions; upstream changes flag stale without overwriting. No external blocker is known for synthetic manual inputs; real scanning, full applicability and pricing XLSX/inferred defaults remain separate required work. No speculative framework or real customer/provider/canonical/lock/deployment/release operation.
 
-Done: meaningful new service/UI/stale-dependency tests plus technical release/import
-and existing Draft/report/authority regressions pass; static/migration checks pass;
-a real browser session and downloaded JSON are inspected. Use handoff commands and
-isolated storage/PYTHONPATH. Update docs, classify changes, then autonomously commit,
-normal push, PR and merge after exact-head CI/reviews permit; verify merge/main CI.
-No speculative infrastructure, customer data, AI execution, canonical writes,
-operational release or deployment. Report actual evidence, limitations and Git state.
+Done means observed browser entry/calculation/override/save/reopen/restart/download with correct arithmetic/IDs plus focused Decimal, unknown/unit/recovery, lineage, stale/CAS, permission/CSRF/integrity tests. Run relevant existing Draft, snapshot, desk-quote and physical/admission regressions, any forward-migration checks, Ruff, Mypy, Bandit and exact-head CI. Set PYTHONPATH to the isolated src and use unique pytest temp storage with cache disabled. Update the aligned docs, classify/preserve unrelated changes, commit explicit paths, push normally, PR and merge after required checks/review pass; verify merge/main CI. Continue autonomously, stopping only for a concrete blocker. Report limitations honestly; this does not complete the full product goal.
 ```
-
-## Current P4a evidence and remaining publication work
-
-- Local report service/model/renderers and browser routes are implemented. A new
-  `DraftScopeReport` row freezes one selected Scope plus project labels and render
-  version, and atomically retains both PDF/XLSX byte streams with hashes.
-- Candidate head: `0028_draft_scope_reports`; each output is bounded to 8 MiB.
-  The newest 20 reports are listed; older report IDs remain readable. No new
-  framework, database or library dependency was added.
-- Tests recorded so far: **50 report service passes and one local PostgreSQL skip;
-  16 report HTTP passes; 7 output passes**. Combined import/UI/report/authority
-  regression: **124 passed**. Full migration/deployment/preflight: **43 passed**.
-  Full Ruff, Mypy (149 files), Bandit, JavaScript syntax and whitespace checks passed.
-  Existing Starlette/Alembic warnings remain; hosted CI must cover PostgreSQL.
-- HTTP tests verified both formats, v1/v2 lineage, immutable historical downloads,
-  changed-project/Scope stale indication, ownership, CSRF, revoked sessions and
-  corruption refusal. The detected ReportLab logo sizing error was corrected.
-- The synthetic browser exercised v2 import, revision 2 reporting, PDF/XLSX download
-  and revision 3 stale indication with old bytes unchanged. Three normal PDF pages,
-  four long-text pages and nine Excel tabs were visually inspected. Native Excel
-  was opened read-only because the available workbook renderer was not compatible
-  with Windows. The final title correction is visually verified. Regenerated
-  final files passed an actual server restart with identical bytes and no page errors.
-- Final PDF SHA-256: `1ed6dbd5f4beda3f720b8095e265bc4899891f2b84c20a0e550fb812c37e6cde`.
-  Final XLSX SHA-256: `c20f1e826854f8fb17424c5376dc5d171ffddc91384c0c21be2b1abb6e480dc8`.
-  Snapshot SHA-256: `4a331ad21e131eeae4802176f893c3890b6f94604de1b28e173d698852c679fc`.
-  Three imported-source records remain unverified. The isolated demo contains four
-  Drafts, 11 revisions and three reports; all canonical physical/estimate/lock counts
-  remain zero. See the demo guide and local receipts for the selected report link.
-- Before publication: inspect/classify the full diff, then commit/push/PR/merge only
-  after passing required exact-head checks. Verify main afterward; no P4a merge is claimed here.
-
-## Local context and preserved work
-
-- P4a worktree: `C:\CLASSIFIRE\.tmp\draft-scope-reports-20260905`, branch
-  `feat/draft-scope-reports-20260905`, base `e17cec3`. The documentation checkpoint precedes publication; verify current HEAD.
-  Changes include reporting, migration 0028, related current-head/deployment fixtures,
-  tests and aligned documentation. Do not treat those related fixture updates as
-  unrelated work or weaken historical migration assertions.
-- Synthetic report artifacts are under `.tmp/draft-scope-report-artifacts`; long
-  text/hostile output QA under `.tmp/draft-scope-report-output-qa`. Prior import
-  artifacts/tools remain local. Keep generated files, databases and cookies out of Git.
-- P0 `.tmp/draft-scope-ui-20260905` and P1a `.tmp/draft-scope-import-20260905`
-  worktrees are clean and unchanged. P1a merged as `e17cec3` through PR #189.
-- Protected root: `gpt/phase8-linked-original-images`, HEAD `de0cc5a`,
-  CHERRY_PICK_HEAD `c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`, four linked-visual
-  conflicts and staged/unstaged/untracked recovery work. Do not reset, clean,
-  resolve, broadly stage or publish from it.
-- `.tmp/project-package-draft-20260905` retains three unrelated untracked files:
-  contract, `services/project_package.py` and tests. Prior 22 synthetic passes are
-  historical evidence only; this increment does not requalify that candidate.
-- Historical issues #42/#43 and draft PRs #9-#13 are recovery/operations context;
-  query their current state when relevant. No real provider/UAT/lock/release or
-  deployment operation was authorized or exercised by this reporting increment.
-
-Use [PROJECT_STATE.md](./PROJECT_STATE.md) for facts and health,
-[the roadmap](./CLASSIFIRE_ROADMAP.md) for sequencing and
-[the architecture](./CLASSIFIRE_ARCHITECTURE.md) for boundaries.

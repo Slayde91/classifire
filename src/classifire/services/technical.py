@@ -75,7 +75,7 @@ def search_variants(
         )
     if frl:
         stmt = stmt.where(or_(TechnicalVariant.frl == frl, TechnicalVariant.frl.is_(None)))
-    variants = db.scalars(stmt.limit(max(limit * 10, 100))).all()
+    variants = db.scalars(stmt.order_by(TechnicalVariant.id).limit(max(limit * 10, 100))).all()
     bound_document_ids = {
         variant.technical_document_id
         for variant in variants
@@ -152,7 +152,7 @@ def search_variants(
         candidates.append(
             Candidate(variant=variant, score=score, comparisons=comparisons, blockers=blockers)
         )
-    candidates.sort(key=lambda item: item.score, reverse=True)
+    candidates.sort(key=lambda item: (-item.score, item.variant.id))
     return candidates[:limit]
 
 
