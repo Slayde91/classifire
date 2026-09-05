@@ -43,7 +43,7 @@
     </div>
   </div>
 </section>
-{% if envelope.system_match %}
+{% if envelope.system_match and report_profile|default('') != 'complete' %}
 <section class="panel">
   <h2>Attached candidate review</h2>
   <p>Saved review revision {{ envelope.system_match.revision }} &middot; unapproved reference only. No technical system or rate was selected automatically.</p>
@@ -156,6 +156,8 @@
 {% if error_line_id == 'add' and not can_edit %}
 <section class="panel"><h2>Unsaved attempted new line</h2><dl class="scope-import-details">{% for key in ['target_kind', 'target_id', 'description', 'unit', 'quantity', 'unit_sell_rate', 'source_note', 'reason'] %}{% if key in form_values %}<dt>{{ key|replace('_', ' ')|capitalize }}</dt><dd class="scope-preserve-text">{{ number_text(form_values[key]) }}</dd>{% endif %}{% endfor %}</dl><p>Copy any values or notes to keep, then <a href="{{ estimate_url }}" target="_blank" rel="noopener">open the latest revision (new tab)</a>. These changes were not saved.</p></section>
 {% endif %}
+{% if report_profile|default('') != 'complete' %}
 <details class="panel"><summary>Full saved Scope context</summary>
   {% with envelope=scope %}{% include "draft_scope_report_content.html" %}{% endwith %}
 </details>
+{% endif %}

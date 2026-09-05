@@ -111,8 +111,10 @@ def test_ownership_read_only_export_and_csrf(estimate_app):  # noqa: F811
         assert client.get(report + "/download?format=xlsx").status_code in (403, 404)
 
 
-@pytest.mark.parametrize("extra", [{"profile": "complete"}, {"revision": "0"}, {"revision": "1e2"}])
-def test_report_creation_refuses_injected_profile_or_invalid_revision(estimate_app, extra):  # noqa: F811
+@pytest.mark.parametrize(
+    "extra", [{"profile": "canonical"}, {"revision": "0"}, {"revision": "1e2"}]
+)
+def test_report_creation_refuses_unknown_profile_or_invalid_revision(estimate_app, extra):  # noqa: F811
     with TestClient(estimate_app.scope.app) as client:
         _login(client)
         detail, _report = create(client)

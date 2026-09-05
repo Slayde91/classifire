@@ -92,7 +92,10 @@ def test_unsupported_prices_remain_unresolved(changes, problem):
     assert problem in preview_rows(document, 1, 1, MAPPING)[0]["problems"]
 
 
-def test_workbook_selection_preserves_history_and_source_permissions(pdf_setup, monkeypatch):
+@pytest.mark.parametrize("profile", ["estimate-only", "complete"])
+def test_workbook_selection_preserves_history_and_source_permissions(
+    pdf_setup, monkeypatch, profile
+):
     x = pdf_setup
     with x.factory() as db:
         actor = db.get(User, x.ids[0])
@@ -155,7 +158,7 @@ def test_workbook_selection_preserves_history_and_source_permissions(pdf_setup, 
 
         with pytest.raises(ValueError):
             validate_envelope(tampered)
-        report = reports.create_report(db, actor, x.ids[2], estimate.id, 3)
+        report = reports.create_report(db, actor, x.ids[2], estimate.id, 3, profile=profile)
         pdf = reports.report_bytes(db, actor, x.ids[2], estimate.id, report.id, "pdf")
         xlsx = reports.report_bytes(db, actor, x.ids[2], estimate.id, report.id, "xlsx")
         assert "D2" in "".join(page.extract_text() for page in PdfReader(io.BytesIO(pdf)).pages)
