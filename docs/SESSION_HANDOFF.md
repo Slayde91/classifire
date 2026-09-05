@@ -1,7 +1,7 @@
 # CLASSIFIRE Session Handoff
 
 **Prepared:** 2026-09-05 (AEST)
-**Verified shared-main baseline:** `c080424c907b01a2a979f9efbfe9561bb097ba81` (PR #177, 2026-09-05)
+**Verified shared-main baseline:** `036e9272368adfca8748f36ca7b37672d7ea8d8d` (PR #178, 2026-09-05)
 **Latest executable-change baseline:** `7e8f473e45e51c4cf3505846cd978749efbdac59` (PR #174)
 
 All four maintained documents are under `docs/`. Source, tests, Git and verified
@@ -11,33 +11,36 @@ runtime evidence outrank this handoff. Refresh the baseline before work.
 
 ### Contract characterisation progress
 
-The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
-current callers and existing coverage. Thirteen added synthetic fallback/audit
-cases bring the eight-file focused suite to 83 passing tests. Executable source,
-runtime configuration and authority are unchanged; full retirement parity is
-not complete. PR #177 merged this inventory and coverage as c080424; its exact
-post-merge CI [33933164159](https://github.com/Slayde91/classifire/actions/runs/33933164159)
-passed. This documentation reconciliation rechecked that result and the 83-test
-synthetic baseline; it makes no executable change.
+PR #177 merged the initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md)
+and 13 fallback/audit cases. PR #178 reconciled documentation; exact main CI
+[33934179868](https://github.com/Slayde91/classifire/actions/runs/33934179868)
+passed on 036e927. Full retirement parity is not complete.
 
-**Next bounded task:** investigate ambiguous CLI timeout handling using a fake
-completed session creation followed by a lost reply. The CLI maps timeout to
-RPC_UNAVAILABLE, which can select fallback even for sessions.create. Determine
-and test a fail-closed resolution without altering read-only fallback,
-historical receipt compatibility or calling a real Gateway. This takes priority
-over coordinator/adapter/package implementation. Other inventory gaps are listed
-in the contract document.
+**Current correction (candidate until merged):** unavailable CLI session creation
+now fails with RPC_OUTCOME_UNKNOWN rather than repeating sessions.create through
+fallback. Read-only fallback remains available; a route selected by an earlier
+read can still receive one creation attempt. Five new synthetic cases prove
+lost-reply refusal, unchanged route selection and managed-runtime failure before
+fallback, token access or HTTP inference. The focused suite passes 88 tests;
+17 additional report/representative tests pass. No canonical or release
+authority, receipt schema, provider configuration or migration changes.
+
+**Next bounded task after this correction merges:** characterise loopback socket
+deadlines, closure, malformed frames and request/response correlation using the
+existing injected socket fixture. Map coverage first; add only demonstrated
+missing negative cases and correct only reproduced contract defects. Preserve
+least-privilege scopes, safe errors and receipt compatibility; no real Gateway.
+Complete remaining contract gates before coordinator/adapter/package work.
 
 **Broader migration track:** characterise actually used OpenClaw contracts with synthetic
 tests, extending existing coverage rather than recreating it. This is the first
 retirement gate in
 [Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md).
 
-**Why next:** CLASSIFIRE owns inference sequencing and protected-state checks,
-but OpenClaw supplies session/tool-policy/audit protections. Replacements must
-preserve those contracts. The initial inventory exists; its remaining gaps include a possible repeated
-session creation when the CLI loses a reply. Resolve that risk before replacing
-the executor or adding durable retries.
+**Why next:** the uncertain-creation candidate closes one demonstrated replay
+risk. The existing socket fixture primarily proves successful framing;
+deadline/closure, malformed-frame and correlation failure coverage remains a
+named inventory gap. Replacement execution must preserve these boundaries.
 
 **Prerequisites:** read applicable AGENTS.md, inspect root/worktree Git state,
 fetch main, read the four documents and Decision 0001, inspect current callers/
@@ -83,11 +86,12 @@ Use the existing interpreter or an isolated environment installed from
 `pyproject.toml`; do not modify the protected root. Materially broader domain/
 security changes need separate scope.
 
-**Next-task completion criteria:** reproduce the ambiguous creation/lost-reply
-case with fake transports; prove whether fallback can repeat an uncertain write;
-implement only the justified fail-closed correction; preserve read-only fallback,
-no-tool/authority and historical receipt contracts; pass focused tests, relevant
-regression/static checks and hosted CI; update this inventory and handoff.
+**Next-task completion criteria:** map existing socket coverage, add missing
+injected deadline/closure, malformed-frame and mismatched-ID cases; prove safe
+failure and socket cleanup without repeated writes. Correct source only where a
+composed failing test demonstrates a contract defect. Preserve CLI fallback and
+unknown-outcome refusal, no-tool/authority and receipt compatibility. Pass focused
+and warranted regression/static checks plus hosted CI; update inventory/handoff.
 
 ### Validation commands
 
@@ -129,55 +133,53 @@ for this synthetic task.
 
 ~~~text
 Continue CLASSIFIRE at C:\CLASSIFIRE (https://github.com/Slayde91/classifire).
-Before editing, read applicable AGENTS.md, inspect branch/upstream/HEAD and local
-changes, fetch main, and read the four maintained docs under docs/ plus
-ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md and
-OPENCLAW_CONTRACT_CHARACTERISATION.md. Last verified main: c080424 (PR #177),
-83 focused tests and exact main CI 33933164159 passed. Recheck newer work.
-Preserve the conflicted root and all unrelated work; use a clean isolated
-current-main worktree.
+Before editing, read applicable AGENTS.md; inspect branch/upstream/HEAD, conflicts
+and unrelated changes; fetch main and check current PRs/CI. Read the four docs
+under docs/, Architecture Decision 0001 and OPENCLAW_CONTRACT_CHARACTERISATION.md.
+Verified baseline: 036e927 (PR #178). The uncertain-session-creation correction
+is a tested candidate on fix/phase8-uncertain-session-create-20260905; verify its
+actual publication and newer source before selecting work. Preserve the legacy
+root and unrelated work; use a clean isolated current-main worktree.
 
-Do one task: reproduce a completed sessions.create followed by a lost CLI reply
-using injected fake transports; prove whether RPC_UNAVAILABLE repeats creation
-through fallback, then implement only the justified fail-closed correction.
-This is next because unknown write outcomes must be resolved before executor
-replacement or durable retries. PR #177 already added the initial inventory
-and 13 fallback/audit cases; do not duplicate them.
+First finish/reconcile that candidate's publication if needed. Once merged, do
+one task: characterise loopback socket deadline/closure, malformed frames and
+request/response correlation using the existing injected socket fixture in
+tests/test_phase8_visual_runtime.py. Read src/classifire/services/
+phase8_visual_runtime.py and phase8_openresponses_transport.py and their callers.
+Map existing coverage before adding tests; correct only a reproduced contract
+defect. This is next because these remaining protections must be evidenced before
+executor replacement. Do not repeat the completed CLI/audit tests.
 
-Primary files: src/classifire/services/phase8_visual_runtime.py,
-phase8_openresponses_transport.py and their existing tests under tests/.
-Inspect report transport/controller/runner callers for regression impact.
-Preserve read-only fallback, no-tool and separate-session enforcement, model/
-evidence binding, safe diagnostics, historical receipts and protected authority.
-Use synthetic evidence and fake ports only. No new coordinator, adapter,
-package/UI, migration, OpenClaw removal, real Gateway/provider/customer run,
-canonical write, lock, deployment or release. Real-run authority is absent;
-it does not block synthetic work.
+Preserve unknown-creation refusal, read-only fallback, no-tool/context/model
+binding, least-privilege scopes, safe errors/receipts and authority boundaries.
+Use fake sockets/RPC/HTTP and synthetic evidence only. No real Gateway/provider,
+customer evidence, canonical write, lock, deployment or release; no new
+coordinator, adapter, package/UI, migration or OpenClaw removal. Missing real-run
+authority does not block synthetic work.
 
-Done: a failing-before/passing-after composed regression, minimal justified
-correction, passing eight-file pytest baseline from SESSION_HANDOFF.md and
-warranted regression tests, Ruff/Mypy/Bandit, Alembic heads, diff checks and
-hosted CI; aligned docs record the fix and remaining parity gates. Use worktree
-PYTHONPATH, cache disabled and unique temporary test storage. Never use project
-databases for destructive tests. If newer main already fixes this, report that
-evidence rather than manufacture duplicate work.
+Done: demonstrated missing negative contracts covered, safe errors/socket cleanup
+and no repeated writes verified, only justified minimal corrections, aligned
+inventory/four docs and explicit remaining gates. Run the eight-file pytest
+command in SESSION_HANDOFF.md (candidate baseline 88 tests), warranted caller
+regressions (17 passed), Ruff/Mypy/Bandit, Alembic heads and git diff --check.
+Use worktree PYTHONPATH, disabled cache and unique temporary storage; never point
+destructive tests at project databases. If newer source completes the task,
+report evidence instead of duplicating work.
 
 Continue autonomously through implementation, validation, classification,
-explicit-file commit, normal push, PR to main and merge where safe after checks
-pass. Verify base/head/diff, actual merge SHA and post-merge CI. Preserve unrelated
-changes, never bypass failed checks or required reviews, and report genuine
-blockers and remaining local changes. Avoid speculative expansion.
+explicit-file commit, normal push, PR and merge where safe after checks pass.
+Verify exact scope/base/head, reviews, actual merge and post-merge CI. Never
+bypass required review or failed checks; report genuine blockers and remaining
+local changes. Avoid speculative scope expansion.
 ~~~
 
 ## Verified project context
 
-PR #175 adopted the hybrid decision; PR #176 reconciled continuity documentation.
-PR #177 merged the contract inventory and synthetic coverage as c080424 without
-executable changes. Exact main CI
-[33933164159](https://github.com/Slayde91/classifire/actions/runs/33933164159)
-passed and was rechecked for this update. The eight-file baseline passed 83 tests.
-The packaged migration history remains at 0026_single_active_technical_release;
-this documentation task introduces no migration.
+PR #175 adopted the hybrid decision; PR #177 added contract coverage;
+PR #178 reconciled the documents as 036e927. Its exact main CI 33934179868 passed.
+The current candidate adds uncertain-creation refusal: 88 focused tests and 17
+report/representative regressions pass. Full retirement parity remains incomplete.
+The packaged migration head remains 0026_single_active_technical_release.
 
 Implemented foundations include evidence ownership/locators, proposal controllers/
 review packages, signed physical amendments and separate replacement locks,
@@ -197,13 +199,13 @@ See [Project State](./PROJECT_STATE.md) for the capability snapshot.
   plus staged/unstaged/untracked legacy work remain unrelated recovery evidence.
   Protected pytest directories prevent complete untracked enumeration.
   Do not reset, clean, resolve or copy it wholesale.
-- Current documentation branch: `docs/current-hybrid-state-20260905`, worktree
-  `C:\CLASSIFIRE\.tmp\docs-current-hybrid-state-20260905`, created clean
-  from `c080424`. Only four documentation files are in scope. Initial upstream:
-  `origin/main`; publication should set the branch's own remote upstream.
-  Check Git/GitHub for the later commit/PR/merge result.
-- Previous documentation branch merged in PR #176; the contract test branch
-  merged in PR #177. Their worktrees remain historical context, not active tasks.
+- Current candidate: `fix/phase8-uncertain-session-create-20260905` in
+  `C:\CLASSIFIRE\.tmp\phase8-uncertain-session-create-20260905`, advanced cleanly
+  to `036e927`. Scope: one runtime service, its test file, contract inventory and
+  four continuity docs. Initial upstream is `origin/main`; verify later branch
+  upstream, commit/PR and merge rather than assuming publication.
+- Previous documentation and contract slices merged in PRs #176-#178. Preserve
+  their historical worktrees; they are not new implementation tasks.
 - Issues #42 (retained Phase 8 tooling) and #43 (OpenClaw dependency advisories)
   remain open; read current bodies before acting.
 - Draft PRs #9-#13 remain on legacy feature-to-feature bases. They are not
@@ -212,5 +214,6 @@ See [Project State](./PROJECT_STATE.md) for the capability snapshot.
   previously returned HTTP 403. No protection override, real provider
   operation or deployment is authorised by this handoff.
 
-Start with the uncertain-session-creation regression and bounded correction.
-Do not repeat the initial inventory or redesign the accepted architecture.
+Start by verifying candidate publication, then characterise the remaining
+loopback socket/protocol boundary. Do not repeat the initial inventory or
+redesign the accepted architecture.

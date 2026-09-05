@@ -1,6 +1,8 @@
 # OpenClaw contract characterisation
 
-**Source baseline:** `c3ab07a` (PR #176); executable source unchanged from PR #174.
+**Shared baseline:** `036e927` (PR #178).
+**Current candidate:** uncertain CLI session-creation refusal; verify publication
+before treating candidate behaviour as shared main.
 **Scope:** initial source/caller inventory and bounded synthetic fallback/audit
 coverage. This is not full retirement parity or proof of a live deployed fleet.
 
@@ -21,7 +23,7 @@ The following source inventory must be refreshed before replacing components.
 | OpenClawGatewayNoToolSessionGuard.attest | Describe absent session, create without run/worktree, re-describe exact model, obtain effective tools | Transport tests freeze method order, model policy, unsafe session creation and existing-session refusal. |
 | Guard.audit | Scoped tool-action audit after attempted turn; primary audit endpoint with legacy fallback | New cases below cover fallback scope, a literal receipt digest, malformed records and safe unavailability. |
 | OpenClawLoopbackGatewayRpc | Literal loopback, authenticated framing, method/parameter allowlist and bounded deadline | Runtime tests cover endpoint refusal and least-privilege framing. Broader socket/protocol failure coverage remains to inventory. |
-| OpenClawCliGatewayRpc / CLI-to-loopback wrapper | Fixed no-shell process invocation; fallback only for RPC_UNAVAILABLE | Existing unavailable-route test plus new refusal/malformed/timeout cases below. Unknown remote outcome is not recovered. |
+| OpenClawCliGatewayRpc / CLI-to-loopback wrapper | Fixed no-shell invocation; candidate refuses unavailable creation replay; read-only unavailable fallback remains | Existing unavailable-route test plus new refusal/malformed/timeout cases below. Unknown creation outcome fails closed in the candidate; no recovery or automatic replay. |
 | EnvironmentGatewayTokenProvider / readiness | Lazy fixed environment key; readiness describes a fixed absent session only | Runtime tests verify no-write probe and lazy token handling. No real secret was read here. |
 | Controlled-write plugin / agent API / agent_security | Default admission-only profile; host-verified identity and server/persisted scopes; signed admission ID, no physical payload or lock tool | `test_openclaw_admission_writer_manifest.py`, `test_phase8_admission_only_profile.py`, `test_agent_security_boundary.py` and submission API tests. Static plugin checks do not prove live host enforcement. |
 | Provisioning config/script and deployment candidate auditor | Pinned dedicated zero-tool profiles and explicit deployment prerequisites | `config/phase8-zero-tool-agents.json`, `scripts/provision-phase8-zero-tool-agents.ps1`, `scripts/audit_phase8_admission_deployment_candidate.py`; not executed here. Clean-machine evidence remains separate. |
@@ -51,23 +53,38 @@ Thirteen parameterised cases extend two existing suites:
   gateway exception in the public error.
 
 The changed suites passed 54 tests; the eight-file handoff suite passed 83 tests.
-No implementation or runtime policy was changed. Existing no-tool checks remain
+That initial PR #177 slice changed no implementation or runtime policy. Existing no-tool checks remain
 at the transport boundary; an empty audit alone does not authorise a model turn.
 
 ## Remaining gaps and next bounded task
 
-**First remaining task: resolve ambiguous CLI timeout handling synthetically.**
-The CLI maps subprocess.TimeoutExpired to RPC_UNAVAILABLE; the wrapper permits
-that code to fall back for any allowed method, including sessions.create.
-A timeout does not prove the first request had no remote effect. The current
-characterisation records this behaviour but does not endorse duplicate session
-creation or claim it has occurred in a real run.
+### Current candidate: uncertain creation refusal
 
-Inspect the composed call path, add an injected two-transport scenario that
-models a completed creation followed by a lost reply, and determine whether
-fail-closed distinction/reconciliation is needed. Preserve read-only fallback,
-safe diagnostics and historical receipt compatibility. Do not contact a real
-Gateway or introduce general retry machinery.
+The composed lost-reply tests failed before the fix: timeout, generic subprocess
+failure and OSError could all route a completed creation to fallback; the managed
+runtime also attempted fallback. The wrapper now raises RPC_OUTCOME_UNKNOWN
+when the primary returns RPC_UNAVAILABLE for sessions.create. It leaves route
+selection unchanged. This is a conservative outcome classification, not proof
+that the remote creation occurred. Even genuine pre-launch unavailability on a
+direct create is refused; normal read-only readiness can select fallback first.
+
+An earlier read selecting fallback still permits a single creation on that
+route. Read-only timeout semantics remain RPC_UNAVAILABLE. The no-tool guard
+maps the new internal error to existing TOOL_ATTESTATION_UNAVAILABLE, so receipt
+schemas and historical verification do not change. The managed-runtime regression
+proves no later fallback, token access or HTTP inference. No session cleanup,
+remote reconciliation, general idempotency or explicit caller retry guarantee is
+introduced; uncertain remote state remains a recovery limitation.
+
+Five added cases bring the focused suite to 88 passing tests; 17 additional
+report/representative tests pass. Source scope is the existing CLI/fallback
+wrapper only. No real Gateway or provider was contacted.
+
+**Next bounded task after merge: loopback socket/protocol negative coverage.**
+Extend the existing injected socket fixture to exercise deadline/closure,
+malformed frames and request/response correlation. First map coverage, then add
+only missing cases; change source only for a reproduced defect. Prove safe
+errors, cleanup and no repeated writes without introducing general retry logic.
 
 Before declaring full characterisation/retirement parity, also resolve:
 
