@@ -1,133 +1,124 @@
 # CLASSIFIRE Session Handoff
 
+## Verified branch and project context
+
+Current worktree: `C:\CLASSIFIRE\.tmp\draft-pricing-xlsx-20260906`.
+Branch: `feat/draft-pricing-xlsx-20260906`, created from shared main
+`98048b7e940433c492297aeecc7dec8fce0dea2b` (merged PR #195).
+PR #195 CI 33985001054 and main CI 33985401595 succeeded; measured-limit review
+and the supplied logo are merged. Current pricing publication must be checked live:
+this document is a prepublication checkpoint, not a claim of its merge.
+
+Accepted ADRs 0001/0002 and AGENTS.md remain aligned: optional AI, deterministic
+shared services, independent capabilities, UI-first increments, unchanged canonical
+and human-release boundaries. Do not rebuild the manual Draft workbench or fleet.
+
+Current changes: shared PDF/XLSX retained-source intake; DraftPricingSource/migration
+0033; bounded XLSX worker and explicit mapping/selection; Estimate v2 provenance;
+PDF/XLSX report source cells; pricing UI; isolated PostgreSQL demo choice; tests/docs.
+No new dependency, canonical library activation, provider, deployment or release.
+
+Protected legacy root `C:\CLASSIFIRE` is at `de0cc5a` on
+`gpt/phase8-linked-original-images`, with interrupted cherry-pick `c3e4c810` and
+four DU conflicts. Preserve all recovery work; never reset/clean/resolve/stage it.
+Three untracked ProjectPackage candidate files in `.tmp/project-package-draft-20260905`
+remain unrelated. Prior demos/worktrees, customer evidence and source logo are preserved.
+Do not broadly stage `.tmp`, runtime databases, logs or generated synthetic outputs.
+
+## Current demonstration and limits
+
+Real Chrome/ClamD demo at `http://127.0.0.1:8805/scopes` uses its own marked
+`classifire_draft_pricing_demo` database and `.tmp/draft-pricing-demo-20260906` storage.
+Synthetic login: `scope-demo@example.test` / `synthetic-scope-demo-only`.
+Rates!D5 = AUD 120.25 was explicitly applied, original AUD 100 preserved, then
+reasoned manual override AUD 125. Formula/blank prices remained unselectable.
+Actual restart preserved exact r2/r3/r4 JSON and PDF/XLSX. Browser page errors: none.
+The served logo is byte-identical to the attached root PNG and visually inspected.
+Receipts/screenshots/downloads: `.tmp/pricing-artifacts`. Four PDF pages inspected.
+Excel source values were independently reopened; artifact-tool previews have an
+empty-string rendering defect and exit 1 without diagnostics despite saved renders.
+Do not claim native Excel visual verification from those previews.
+
+Tests and final checks are recorded in PROJECT_STATE.md. Hosted exact-head CI is
+required before merge. Local tests use the worktree src first, isolated scratch
+paths and no root `.env`. Guarded PostgreSQL tests may reset only
+`classifire_containment_test` on loopback 15432 with explicit destructive-test opt-in;
+never the pricing/PDF demo databases. Do not run resetting suites concurrently.
+
 ## Start Here / Next Session
 
-Inspect before editing: AGENTS.md, GOAL.md, PROJECT_STATE.md, roadmap, architecture,
-accepted ADRs 0001/0002, relevant contracts, branch/status/diff/worktrees and remote
-main/PR/CI. Repository evidence outranks this prepublication checkpoint. Use an
-isolated worktree; never adopt or repair the conflicted legacy root implicitly.
+Inspect AGENTS.md, GOAL.md, PROJECT_STATE.md, roadmap, architecture and accepted ADRs,
+then branch/status/diff/worktrees, current main, PR and CI before editing.
+Finish this pricing branch's validation/publication if outstanding. If it is merged,
+do not repeat it: use a clean worktree from current main.
 
-**Current work:** first P2b measured-limit review UI in
-`C:\CLASSIFIRE\.tmp\draft-applicability-review-20260906`, branch
-`feat/draft-applicability-review-20260906`, starting at main
-`25510565aac69ce7d0b6402423caac251a266236` (merged PR #194).
-That baseline includes PDF intake and the supplied logo; main CI 33982467430 succeeded
-with 1,354 tests/141 warnings. Do not redo it. Current measured-limit publication
-must be checked from its live PR before assuming it is finished or outstanding.
+**Single next product task:** an independent scope-and-system PDF/XLSX report screen
+from one explicitly selected saved Draft System Match revision and its embedded
+Scope. This is next because candidate review/partial measurements now persist, but
+users cannot share that result as a standalone report without creating an Estimate.
+Existing immutable artifacts and report components make this a bounded usable slice.
 
-**First task:** finish this branch's exact-head verification/publication if still
-outstanding, then deliver one P3b interaction: **pricing XLSX preview -> explicit
-Draft-rate selection with source cell provenance**. This is next because all four
-capabilities have bounded UI paths, but Estimate rates are still manual values plus
-free-text notes; the existing pricing importer reads CSV and can activate library
-state. A safe, source-bound rate-selection interaction adds more user value than
-polishing text retrieval or treating two numeric checks as complete applicability.
+Relevant files: `services/draft_system_matches.py`, `draft_system_match_contract.py`,
+`draft_constraint_review.py`, `draft_system_match_ui.py`, existing match templates;
+`services/draft_scope_reports.py`, `draft_estimate_reports.py`, `outputs/draft_scope.py`,
+`outputs/draft_estimate.py`, models/migrations and report UI tests. Reuse these patterns.
+Read `DRAFT_SYSTEM_MATCH_V1_CONTRACT.md`, `DRAFT_CONSTRAINT_REVIEW.md`,
+`DRAFT_PRICING_XLSX.md` and current report contracts; resolve actual paths first.
 
-Relevant files/components:
+Prerequisites/dependencies: verified pricing publication or finish that work first;
+selected valid saved match/Scope revisions, synthetic library fixture, existing
+project/technical/export rights, immutable snapshot/output persistence. Determine
+the smallest additive report model/contract from code; don't invent another pipeline.
+No customer material, AI/provider, operational DB, canonical lock or release required.
+No known blocker; denied access, required review/CI or an unresolved material rule
+must be reported accurately. Never work around authority gates.
 
-- `src/classifire/importers/pricing.py`, `models.py` (PricingLibraryRecord), current
-  pricing UI and workbook-reading utilities: inspect/reuse useful parsing concepts,
-  not the CSV importer's automatic library writes from an upload handler.
-- `services/draft_estimates.py`, `draft_estimate_contract.py`, `draft_estimate_ui.py`,
-  templates and Estimate report snapshot/renderers: preserve v1 history, original
-  rates, reasoned overrides, missing work, units and downstream stale semantics.
-- Existing `services/storage.py`, `malware_scan.py`, `draft_pdf_intake.py` and worker
-  isolation patterns: reuse exact-byte/scanning/ownership controls, with explicit XLSX
-  archive/parser limits. Do not treat PDFs and ZIP-based spreadsheets as identical.
-- `DRAFT_CONSTRAINT_REVIEW.md` and match contracts: technical review stays independent;
-  selected pricing must not claim compatibility or run technical approval.
+Definition of done: user selects a saved review, explicitly generates both formats
+without estimating/rerunning matching, sees exact evidence/candidate decisions and
+partial numeric checks with unresolved/unapproved status, downloads readable consistent
+PDF/XLSX with the supplied logo, reopens after restart, and retains byte-identical
+historical downloads after upstream edits. Tests cover ownership/export/technical
+permissions, tamper/stale revisions, escaping/formula injection and old report bytes.
+Do not label retrieval/partial checks complete compatibility or implement every profile.
 
-Prerequisites/dependencies: supported workbook schema/mapping with explicit sheet/cell
-locations, exact retained bytes, safe XLSX parsing and draft-only permission boundary.
-Use a synthetic workbook and disposable storage/database. No customer pricing file
-or permission to process Package 14/customer evidence is supplied. A real provider,
-operational DB, canonical library activation, lock, deployment or release is outside
-this task. Ambiguous supplier units/recovery/technical semantics must remain unresolved;
-ask only if an actual required product rule cannot be established from repository evidence.
-
-Definition of done: the real UI uploads a supported synthetic workbook, previews
-explicit mapped rows/cells and unknowns, applies one selected compatible-unit rate to
-one supported Draft line without activating a canonical library, preserves original
-and override history, saves/reopens after restart and downloads exact provenance.
-Old Draft/Estimate/report bytes remain unchanged. Do not implement all supplier formats
-or inferred pricing methods before this usable slice; record those remaining gaps.
-
-Validation: inspect actual test paths and dependency state first. Add targeted
-workbook/limit/formula/archive-safety, provenance, unit/override, stale-save and
-ownership/CSRF cases. Run relevant Draft Estimate/report, intake/storage and match
-regressions, inspect the browser and downloaded JSON/PDF/XLSX where affected, then
-Ruff/Mypy/Bandit, one Alembic head, and all required exact-head GitHub checks.
+Validation commands (resolve actual targeted filenames first):
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider `
-  --basetemp <new-unique-temp-directory> <verified-relevant-test-paths>
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp <new-unique-temp> <affected-tests>
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
+git diff --check
 ```
 
-PDF/quarantine tests use guarded `classifire_containment_test` on loopback 15432 with
-explicit destructive-test opt-in, never `classifire_draft_pdf_demo` or an operational
-DB. Do not run concurrent reset suites on that DB. Local Mypy used installed lifecycle
-stubs on PYTHONPATH; CI installs dev/postgres dependencies. The measured-limit demo
-uses its own SQLite file and does not require a scanner or AI.
-
-## Current increment and measured evidence
-
-Shared field snapshot + technical publication v3; match v2 partial measurement review;
-existing revision append/CAS reused; UI/strict form validation; versioned synthetic
-P2B fixture and tests. No migration, new framework, agent or dependency. AGENTS.md
-already matches approved architecture/prototype priority and required no rewrite.
-
-New service/HTTP/dependency tests: 24 passed, one existing Starlette warning (14.06s).
-Earlier existing candidate/publication/UI regression: 76 passed, one warning (139.62s).
-Chrome demonstrated within/outside/unknown results, exact old downloads and actual
-restart. Broader/static and publication results belong in the final checkpoint below
-and live PR; do not infer success from this list.
-
-Synthetic demo: `http://127.0.0.1:8804/scopes`; data `.tmp/constraint-demo-20260906`;
-receipts/JSON/screenshots `.tmp/constraint-review-artifacts`. Correct logo verified
-by exact served-byte hash and rendered inspection. Existing P2A/PDF demos remain intact.
-Measurement outcomes are partial unapproved claims; full applicability is unfinished.
-
-## Local change classification and open issues
-
-Current branch: measured-limit source/UI, publication snapshot, demo/tests and relevant
-docs only. Before staging, inspect the complete diff and stage explicit paths.
-Protected root remains `de0cc5a` / `gpt/phase8-linked-original-images`, CHERRY_PICK_HEAD
-`c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`: 46 unstaged modifications, 14 staged
-additions, four DU conflicts. Preserve all as unrelated recovery evidence.
-`.tmp/project-package-draft-20260905` retains three untracked contract/service/test
-candidate files; historical tests do not qualify them as shipped. Preserve the original
-logo and prior worktrees/demos. Synthetic data, cookies, logs and browser tools stay
-outside Git. No current technical/access blocker to this branch's publication is known.
-
-Remaining product work includes full physical/technical coverage, pricing workbook
-and inference methods, report profiles, complete ProjectPackage import/export and
-ChatGPT integration. Production gates/retention/privacy/operational assurance remain
-unproven; no full product goal completion or OpenClaw retirement is claimed.
+Mypy locally used installed lifecycle stubs on PYTHONPATH; CI installs dev/postgres
+dependencies. Inspect actual dependency state; do not bypass missing stubs or tests.
+Browser/restart and output inspection are required for a UI milestone. Reconcile
+GOAL, architecture, roadmap, state and this handoff; classify explicit staged paths,
+commit, push, PR, verify exact-head CI/review, merge safely and verify resulting main.
 
 ## Recommended Prompt for New Session
 
-```text
-Continue CLASSIFIRE from repository evidence. Before editing, inspect AGENTS.md, GOAL.md, docs/PROJECT_STATE.md, docs/CLASSIFIRE_ROADMAP.md, docs/CLASSIFIRE_ARCHITECTURE.md, docs/SESSION_HANDOFF.md, ADRs 0001/0002, branch/HEAD/upstream/status/diff/worktrees, remote main and current PR/CI. Preserve the conflicted C:\CLASSIFIRE root, unrelated changes, original logo, prior demos and ProjectPackage candidate. Finish feat/draft-applicability-review-20260906 publication only if outstanding; then use isolated current main. Do not redo merged manual Scope/import, PDF review, candidate review, manual estimates/reports or measured-limit review.
-
-Deliver one task: P3b pricing-XLSX preview and explicit Draft-rate selection with retained source/sheet/cell provenance. Current importers/pricing.py consumes CSV and can write active library state; Draft Estimate rates have manual values/free-text source_note. Inspect models/PricingLibraryRecord, existing workbook/storage/malware/parser controls, draft_estimates.py, draft_estimate_contract.py, draft_estimate_ui.py, templates, reports and tests. Reuse them; do not expose automatic canonical import as a web upload. Define only the supported synthetic workbook mapping, archive/parser limits, source lineage, units and draft-only permissions needed for the UI. No customer pricing, real provider, operational DB, canonical activation/lock, deployment or release. Unknown technical or recovery rules stay unresolved; selecting a rate never proves compatibility.
-
-Done: upload/preview explicit mapped rows and cells, select one rate for a supported Draft line, preserve original/override history and missing values, save/reopen after actual restart, download exact provenance, and preserve older artifacts. Test file safety, formulas, units, provenance, authority, stale saves and downstream history; run relevant intake/Estimate/report/match regressions, inspect affected outputs and browser, run Ruff/Mypy/Bandit/one Alembic head and full required CI. Verify test paths/environment first; isolate destructive test DBs from demos. Reconcile docs, classify/stage only relevant changes, and continue autonomously through implementation, validation, commit, normal push, PR and merge when exact-head checks/reviews pass; verify merge/main CI. Avoid speculative supplier formats or inference before this usable slice. Stop only for a concrete blocker. The full platform goal remains active after this increment.
-```
-
-
-## Final local verification checkpoint
-
-Broader measurement/candidate/publication/Estimate/report regression: **241 passed,
-1 existing Starlette/httpx warning** (364.94 seconds). Counts overlap earlier runs;
-do not sum them. Final Ruff, Mypy (169 source files), Bandit and one Alembic head
-(0032) passed. No migration or new dependency. Browser/restart and exact historical
-JSON/served-logo checks passed. Final documentation-link/whitespace/diff classification
-precedes publication. Exact-head hosted CI and merge/main CI remain to be verified
-from the branch PR; this checkpoint does not preclaim their result.
+> Resume CLASSIFIRE from verified repository state. First read AGENTS.md, GOAL.md,
+> docs/PROJECT_STATE.md, docs/SESSION_HANDOFF.md, roadmap/architecture and ADRs 0001/0002;
+> inspect worktrees, branch/status/diff, current main and live PR/CI before editing.
+> Preserve the conflicted C:\CLASSIFIRE root, unrelated local changes and untracked
+> ProjectPackage candidate. Finish feat/draft-pricing-xlsx-20260906 verification and
+> publication if outstanding; do not repeat merged work. Then deliver one scope-and-system
+> PDF/XLSX report UI from a selected saved Draft System Match revision and its embedded
+> Scope. This is next because users can save candidate/partial measured reviews but
+> cannot independently share them as reports. Reuse draft_system_matches/contract/UI,
+> constraint review, existing Scope/Estimate snapshot/renderers, permissions and tests.
+> Use synthetic data only; no provider, customer/operational DB, canonical approval,
+> lock, deployment or release. Keep partial/unresolved technical status explicit; never
+> rerun matching or require an Estimate to report. Done means explicit creation, consistent
+> readable PDF/XLSX with the supplied logo, source/revision provenance, permission/tamper/
+> stale-save coverage, restart persistence and unchanged historical downloads. Run affected
+> match/Scope/Estimate/report/migration tests, browser/output QA, Ruff, Mypy, Bandit,
+> one Alembic head and diff checks. Update aligned docs, classify changes and continue
+> autonomously through commit, push, PR and merge after exact-head CI/reviews pass.
+> Stop only for a concrete blocker; avoid speculative work or weakening governance.

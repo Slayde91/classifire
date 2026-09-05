@@ -24,7 +24,7 @@ async def _upload(request: Request, db: Db) -> dict[str, Any]:
     body = bytearray()
     async for chunk in request.stream():
         if len(body) + len(chunk) > limit:
-            raise HTTPException(413, "PDF upload exceeds the size limit")
+            raise HTTPException(413, "Source upload exceeds the size limit")
         body.extend(chunk)
     delivered = False
 
@@ -38,12 +38,12 @@ async def _upload(request: Request, db: Db) -> dict[str, Any]:
     parsed_request = Request(request.scope, receive=receive)
     async with parsed_request.form(max_files=1, max_fields=1) as form:
         if set(form) != {"csrf_token", "file"} or any(len(form.getlist(k)) != 1 for k in form):
-            raise HTTPException(422, "Choose one PDF file")
+            raise HTTPException(422, "Choose one source file")
         token = form.get("csrf_token")
         verify_csrf(request, token if isinstance(token, str) else None)
         file = form["file"]
         if not isinstance(file, UploadFile):
-            raise HTTPException(422, "Choose one PDF file")
+            raise HTTPException(422, "Choose one source file")
         return {"filename": file.filename or "", "content": await file.read()}
 
 

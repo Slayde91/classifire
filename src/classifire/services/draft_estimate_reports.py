@@ -61,7 +61,8 @@ def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
             snapshot["schema_version"] != REPORT_SCHEMA_VERSION
             or snapshot["profile"] != "estimate-only"
             or type(snapshot["render_version"]) is not int
-            or snapshot["render_version"] != 1
+            or snapshot["render_version"]
+            != (2 if snapshot["estimate"].get("pricing_sources") else 1)
             or snapshot["state"] != "Draft"
             or snapshot["review_status"] != "unreviewed"
         ):
@@ -118,7 +119,7 @@ def create_report(
         "project": _project(db, draft),
         "estimate": envelope,
         "profile": "estimate-only",
-        "render_version": 1,
+        "render_version": 2 if envelope.get("pricing_sources") else 1,
         "created_by": actor.id,
         "created_at": created.isoformat(),
         "state": "Draft",
@@ -233,11 +234,11 @@ def _retained(
             content = _output(getattr(row, name + "_bytes"), name)
             if hashlib.sha256(content).hexdigest() != getattr(row, name + "_sha256"):
                 raise ValueError("output")
-    except (ValueError, TypeError, KeyError, RecursionError, UnicodeError, OverflowError) as exc:
-        raise DraftEstimateReportError("ESTIMATE_REPORT_INTEGRITY_FAILED", 409) from exc
     except DraftScopeError as exc:
         if exc.status_code == 403:
             raise
+        raise DraftEstimateReportError("ESTIMATE_REPORT_INTEGRITY_FAILED", 409) from exc
+    except (ValueError, TypeError, KeyError, RecursionError, UnicodeError, OverflowError) as exc:
         raise DraftEstimateReportError("ESTIMATE_REPORT_INTEGRITY_FAILED", 409) from exc
     _estimate(db, actor, draft_id, estimate_id, export=export)
     return row, snapshot

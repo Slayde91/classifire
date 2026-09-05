@@ -142,13 +142,18 @@ public fields; old releases remain unresolved for these checks. Chrome and resta
 preserved within/outside/unknown outcomes and exact history. This is partial,
 unapproved review, not full applicability. See PROJECT_STATE.md for publication.
 
-## Immediate priority: pricing workbook to explicit Draft rate
+## Demonstrated first workbook-rate selection and immediate priority
 
-Finish measured-limit publication if outstanding, then deliver P3b's first visible
-XLSX preview and explicit Draft-rate selection with retained source/sheet/cell lineage,
-units and original/override history. The current CSV importer and manually entered
-Draft rates do not satisfy that requirement. Reuse existing intake/Estimate services;
-never silently activate a library or imply that selecting a price proves compatibility.
+PR #195 merged the measured-limit review. The current P3b increment now has a real
+XLSX upload/scan/map/select UI with exact source cells, original rate and reasoned
+manual override history. Browser/restart preserved revisions and reports. This is
+unapproved exact-workbook selection, not complete pricing governance; see PROJECT_STATE.md.
+
+Finish this increment's exact-head validation/publication if outstanding. Then deliver
+one scope-and-system PDF/XLSX report interaction from a selected saved candidate review
+and its embedded Scope. It must work without an Estimate, retain the same frozen data
+in both outputs, show partial/unresolved technical status and never rerun matching.
+Reuse existing snapshot, report and permission services; preserve historical bytes.
 
 Full applicability, pricing default/inferred methods, broader Scope formats/analysis,
 other report profiles, ProjectPackage exchange and shared ChatGPT access remain

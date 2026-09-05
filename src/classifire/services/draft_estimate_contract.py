@@ -123,6 +123,12 @@ class Envelope(Contract):
     sha256: str
 
 
+class PricingEnvelope(Envelope):
+    schema_version: Literal["CLASSIFIRE-DRAFT-ESTIMATE-v2"]  # type: ignore[assignment]
+    provenance: Literal["manual_and_workbook_unit_sell"]  # type: ignore[assignment]
+    pricing_sources: Annotated[list[dict[str, Any]], Field(min_length=1, max_length=100)]
+
+
 def decimal_string(value: Any, *, unit: str | None = None) -> str | None:
     """Never turn missing values into zero, coerce floats, or round input precision."""
     if value is None:
@@ -303,7 +309,22 @@ def _line_valid(line: dict[str, Any], scope: dict[str, Any]) -> None:
 
 
 def validate_envelope(value: dict[str, Any]) -> None:
-    Envelope.model_validate(value, strict=True)
+    model = (
+        PricingEnvelope
+        if value.get("schema_version") == "CLASSIFIRE-DRAFT-ESTIMATE-v2"
+        else Envelope
+    )
+    model.model_validate(value, strict=True)
+    if "pricing_sources" in value:
+        from .draft_pricing_contract import validate_selection
+
+        seen = set()
+        for selection in value["pricing_sources"]:
+            validate_selection(selection, value["lines"])
+            selection_key = (selection["line_id"], selection["event_id"])
+            if selection_key in seen:
+                raise ValueError("duplicate rate source")
+            seen.add(selection_key)
     if type(value["calculation_version"]) is not int or len(canonical(value)) > MAX_ESTIMATE_BYTES:
         raise ValueError("bounds")
     for key in ("artifact_id", "project_id", "created_by"):

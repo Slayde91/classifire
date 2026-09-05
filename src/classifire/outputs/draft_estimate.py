@@ -71,7 +71,12 @@ def _metadata(report: dict[str, Any]) -> list[tuple[str, Any]]:
         ("Estimate created by", estimate["created_by"]),
         (
             "Pricing basis",
-            "User-defined manual unit sell rates; no pricing library or inferred rate",
+            (
+                "Manual rates and explicitly selected exact workbook rates; "
+                "source selections remain unapproved"
+                if estimate.get("pricing_sources")
+                else "User-defined manual unit sell rates; no pricing library or inferred rate"
+            ),
         ),
         (
             "Calculation",
@@ -126,6 +131,33 @@ def _context_rows(report: dict[str, Any]) -> list[list[Any]]:
     for ref in estimate["scope"].get("evidence_refs", []):
         for key, value in ref.items():
             rows.append(["Saved page-review claim", ref["observation_id"], key, str(value)])
+    return rows
+
+
+def _pricing_rows(report: dict[str, Any]) -> list[list[str]]:
+    rows = []
+    for selection in report["estimate"].get("pricing_sources", []):
+        identity = selection["line_id"] + " / " + selection["event_id"]
+        source = selection["original_filename"] + " / " + selection["row"]["sheet"]
+        for key in (
+            "method",
+            "approval_status",
+            "recovery_note",
+            "source_sha256",
+            "document_sha256",
+            "scan_sha256",
+        ):
+            rows.append([identity, source, key, "", str(selection[key])])
+        for key, cell in selection["row"]["fields"].items():
+            rows.append(
+                [
+                    identity,
+                    source,
+                    key,
+                    cell["address"] if cell else "",
+                    (cell["value"] + " (" + cell["kind"] + ")") if cell else _UNKNOWN,
+                ]
+            )
     return rows
 
 
@@ -207,6 +239,13 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
             )
             text("Reason: " + (event["reason"] or "Initial values recorded"))
             text("Event ID: " + event["event_id"], small)
+    if estimate.get("pricing_sources"):
+        text("Workbook rate selections - unapproved", heading)
+        text("Historical source selections remain below even after a later manual rate override.")
+        for identity, source, field, cell, value in _pricing_rows(report):
+            text(f"{source} / {field} / {cell}: {value}", small)
+            if field == "method":
+                text("Line / event: " + identity, small)
     text("Unpriced and unassessed work", heading)
     text(_LIMITS)
     for status, kind, identifier, label in _coverage_rows(report):
@@ -442,6 +481,13 @@ def render_estimate_report_xlsx(snapshot: dict[str, Any]) -> bytes:
         ],
         [38, 38, 10, 24, 24, 28, 24, 14, 48],
     )
+    if estimate.get("pricing_sources"):
+        table(
+            "Pricing sources",
+            ["Line / event", "Source", "Field", "Cell", "Exact source value"],
+            _pricing_rows(report),
+            [40, 40, 28, 14, 70],
+        )
     details = []
     history = []
     for line in estimate["lines"]:

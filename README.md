@@ -34,14 +34,18 @@ restart checks passed; P3a is merged in PR #192.
 The sign-in screen and sidebar now use the owner's supplied CLASSIFIRE logo.
 
 The **estimate-only Draft PDF/XLSX report** increment is merged in PR #193.
-The first **PDF evidence review UI** is locally demonstrated: upload, genuine scan,
-retained page inspection, explicit page-linked Draft observation and exact saved JSON,
-including persistence after restart. The PDF path requires PostgreSQL and a trusted
-ClamD endpoint; follow the [PDF demo guide](docs/DRAFT_PDF_DEMO.md). Manual editing
-still works without scanning or AI. Verify publication in PROJECT_STATE.md/current Git.
+The first **PDF evidence review UI** is merged in PR #194, and partial measured-limit
+review in PR #195. PDF/workbook intake uses PostgreSQL and a trusted ClamD endpoint;
+manual editing still works without scanning or AI. The current **pricing XLSX UI**
+uploads, scans, maps source columns and explicitly selects a rate for a Draft line,
+preserving original/override history and source cells in JSON/PDF/XLSX. Its synthetic
+Chrome/restart checks passed; see [the contract](docs/DRAFT_PRICING_XLSX.md) and
+PROJECT_STATE.md/current Git for publication and limits. It never approves a technical
+system or activates a pricing library. The supplied logo is verified byte-for-byte.
+
 Full Scope analysis, actual applicability, governed pricing and complete
-ProjectPackage/ChatGPT access remain unfinished. Next is one bounded applicability
-criteria/constraint-review interaction, not more text-retrieval polish.
+ProjectPackage/ChatGPT access remain unfinished. After pricing publication, next is
+an independent scope-and-system PDF/XLSX report from a selected saved review.
 See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
 [verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
 Complete visible slices before broad refinement; preserve existing authority and
