@@ -2,9 +2,9 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main baseline:** `036e9272368adfca8748f36ca7b37672d7ea8d8d` (PR #178, 2026-09-05)
+**Verified shared-main baseline:** `c6794053586f353eb03c2921473cea2f2b44506c` (PR #179, 2026-09-05)
 
-**Latest executable-change baseline:** 7e8f473 (PR #174)
+**Latest executable-change baseline:** c679405 (PR #179)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -18,26 +18,28 @@ for the accepted hybrid target and migration gates.
 
 ## Contract characterisation progress
 
-PR #177 merged the initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md)
-and 13 fallback/audit cases. PR #178 reconciled documentation; exact main CI
-[33934179868](https://github.com/Slayde91/classifire/actions/runs/33934179868)
-passed on 036e927. Full retirement parity is not complete.
+PR #179 merged uncertain CLI session-creation refusal as c679405. Its exact
+post-merge CI [33935111307](https://github.com/Slayde91/classifire/actions/runs/33935111307)
+passed. That correction preserves read-only fallback and stops uncertain creation
+before inference. Full OpenClaw retirement parity remains incomplete.
 
-**Current correction (candidate until merged):** unavailable CLI session creation
-now fails with RPC_OUTCOME_UNKNOWN rather than repeating sessions.create through
-fallback. Read-only fallback remains available; a route selected by an earlier
-read can still receive one creation attempt. Five new synthetic cases prove
-lost-reply refusal, unchanged route selection and managed-runtime failure before
-fallback, token access or HTTP inference. The focused suite passes 88 tests;
-17 additional report/representative tests pass. No canonical or release
-authority, receipt schema, provider configuration or migration changes.
+**Current socket candidate (until merged):** the existing invocation deadline
+is checked before consuming buffered bytes and before returning a decoded reply.
+Two fake-clock regressions reproduced late-response acceptance before the fix.
+Thirteen additional fake-socket cases prove safe refusal, closure, one connection
+and no repeated creation for close/EOF/timeout/OS errors, malformed frames/JSON,
+oversized replies and unrelated connect/request IDs. All 120 focused/caller
+tests pass (103 contract/security plus 17 report/representative tests).
+Authority, receipt schemas, provider configuration and migrations are unchanged.
 
-**Next bounded task after this correction merges:** characterise loopback socket
-deadlines, closure, malformed frames and request/response correlation using the
-existing injected socket fixture. Map coverage first; add only demonstrated
-missing negative cases and correct only reproduced contract defects. Preserve
-least-privilege scopes, safe errors and receipt compatibility; no real Gateway.
-Complete remaining contract gates before coordinator/adapter/package work.
+**Next bounded task after merge:** establish the audit completeness contract.
+Inspect the pinned Gateway response shape and current guard/tests before choosing
+behaviour. The guard requests at most 100 events and validates their shape; this
+does not prove the response covers the complete audit window. Add synthetic
+coverage for verified truncation/pagination/window semantics and correct only a
+demonstrated acceptance gap. Do not invent provider fields or weaken historical
+receipt verification. Record any unavailable upstream contract evidence as a
+specific blocker; complete independent coverage first.
 
 ## 1. Status labels
 
@@ -162,14 +164,15 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ## 4. Prioritised build plan
 
-### Priority reconciliation through PR #178 and current candidate
+### Priority reconciliation through PR #179 and current candidate
 
 | Work | Status | Dependency / completion evidence |
 | --- | --- | --- |
 | Hybrid decision | **Completed documentation** | PR #175 accepts Decision 0001; runtime migration is unimplemented. |
 | Initial OpenClaw inventory/tests | **Completed foundation** | PR #177: inventory and 13 added cases; 83 focused tests pass. Full parity remains incomplete. |
-| Uncertain session creation | **Validated candidate / publication pending** | Five new cases; replay refused, read-only fallback preserved, guard stops before inference. Verify merge before treating as shared main. |
-| Loopback socket/protocol contracts | **Next after candidate merge** | Inject deadlines/closure, malformed frames and wrong response IDs; fill proven gaps without a real Gateway. |
+| Uncertain session creation | **Completed foundation** | PR #179; five cases prove replay refusal, read-only fallback and stopping before inference. Exact main CI passed. |
+| Loopback socket/protocol contracts | **Validated candidate / publication pending** | 15 cases; two deadline regressions fixed, 13 safe-failure contracts frozen. Broader protocol/live compatibility is unproven. |
+| Audit completeness | **Next after candidate merge** | Verify upstream pagination/window contract, then characterise and correct demonstrated acceptance gaps. Do not invent response fields. |
 | Remaining contract characterisation | **Upcoming** | Socket/protocol, audit completeness, recovery, identity, privacy and clean-machine gaps remain in the inventory. |
 | Durable jobs/replacement adapter | **Upcoming / planned** | Characterisation first; extend BackgroundJob/worker. Current worker has no handlers. |
 | ProjectPackage export/download | **Upcoming / planned** | Membership, rights, profiles, revisions and deterministic jobs. Policy-permitted Drafts need not await Phase 14 or OpenClaw retirement. |
@@ -180,9 +183,8 @@ Phases 8-14 and is not a technical selection or canonical output.
 | Technical/production follow-ups | **Separate backlog** | Preserve Phase 2/15 gates; do not broaden the next contract task. |
 | Real UAT and Phases 9-14 | **Blocked** | Fresh authority, evidence, semantic approval and governed replacement lock remain required. |
 
-The active candidate changes only the uncertain-creation boundary and its tests/docs. Characterisation builds on
-transport/runtime/controller/runner/security tests: 88 pass on the candidate
-plus 17 report/representative regressions. Record missing retry/cancellation/recovery as future requirements,
+The active candidate changes only socket deadline enforcement and its tests/docs.
+The contract/security suite passes 103 tests, plus 17 report/representative regressions. Record missing retry/cancellation/recovery as future requirements,
 not invented existing guarantees. Do not build adapters, jobs, packages or UI
 in the first task. [Session Handoff](./SESSION_HANDOFF.md#start-here--next-session)
 defines files, commands and completion criteria.
@@ -197,8 +199,8 @@ OpenClaw is now a transitional adapter, not the long-term product foundation,
 but it remains in place until the documented security, receipt, recovery,
 observability, clean-machine, and rollback parity gates pass.
 
-After the uncertain-creation correction merges, the next implementation task
-is loopback socket/protocol characterisation. Complete remaining synthetic
+After the socket deadline correction merges, the next implementation task
+is audit-completeness characterisation grounded in pinned upstream evidence. Complete remaining synthetic
 contract gates before expanding the execution layer. Later tasks are
 CLASSIFIRE-owned job/run/stage persistence, a provider-neutral adapter behind a
 feature flag, deterministic `ProjectPackage` export and audited download,

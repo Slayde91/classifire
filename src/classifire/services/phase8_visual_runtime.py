@@ -203,6 +203,8 @@ def _take_socket_bytes(
         buffered.extend(chunk)
         if len(buffered) > _MAX_RPC_OUTPUT_BYTES + _MAX_WEBSOCKET_HANDSHAKE_BYTES:
             raise Phase8GatewayRpcError("RPC_OUTPUT_INVALID")
+    # Buffered bytes must obey the same deadline as a blocking read.
+    _remaining_timeout(deadline)
     result = bytes(buffered[:size])
     del buffered[:size]
     return result
@@ -461,6 +463,8 @@ class OpenClawLoopbackGatewayRpc:
                 result = frame.get("payload")
                 if not isinstance(result, dict):
                     raise Phase8GatewayRpcError("RPC_OUTPUT_INVALID")
+                # Decoding a valid response does not extend the invocation deadline.
+                _remaining_timeout(deadline)
                 return result
         raise Phase8GatewayRpcError("RPC_UNAVAILABLE")
 

@@ -4,9 +4,9 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main baseline:** `036e9272368adfca8748f36ca7b37672d7ea8d8d` (PR #178, 2026-09-05)
+**Verified shared-main baseline:** `c6794053586f353eb03c2921473cea2f2b44506c` (PR #179, 2026-09-05)
 
-**Latest executable-change baseline:** 7e8f473 (PR #174)
+**Latest executable-change baseline:** c679405 (PR #179)
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -19,26 +19,28 @@ Git state, and retained runtime receipts determine factual implementation state.
 
 ## Contract characterisation progress
 
-PR #177 merged the initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md)
-and 13 fallback/audit cases. PR #178 reconciled documentation; exact main CI
-[33934179868](https://github.com/Slayde91/classifire/actions/runs/33934179868)
-passed on 036e927. Full retirement parity is not complete.
+PR #179 merged uncertain CLI session-creation refusal as c679405. Its exact
+post-merge CI [33935111307](https://github.com/Slayde91/classifire/actions/runs/33935111307)
+passed. That correction preserves read-only fallback and stops uncertain creation
+before inference. Full OpenClaw retirement parity remains incomplete.
 
-**Current correction (candidate until merged):** unavailable CLI session creation
-now fails with RPC_OUTCOME_UNKNOWN rather than repeating sessions.create through
-fallback. Read-only fallback remains available; a route selected by an earlier
-read can still receive one creation attempt. Five new synthetic cases prove
-lost-reply refusal, unchanged route selection and managed-runtime failure before
-fallback, token access or HTTP inference. The focused suite passes 88 tests;
-17 additional report/representative tests pass. No canonical or release
-authority, receipt schema, provider configuration or migration changes.
+**Current socket candidate (until merged):** the existing invocation deadline
+is checked before consuming buffered bytes and before returning a decoded reply.
+Two fake-clock regressions reproduced late-response acceptance before the fix.
+Thirteen additional fake-socket cases prove safe refusal, closure, one connection
+and no repeated creation for close/EOF/timeout/OS errors, malformed frames/JSON,
+oversized replies and unrelated connect/request IDs. All 120 focused/caller
+tests pass (103 contract/security plus 17 report/representative tests).
+Authority, receipt schemas, provider configuration and migrations are unchanged.
 
-**Next bounded task after this correction merges:** characterise loopback socket
-deadlines, closure, malformed frames and request/response correlation using the
-existing injected socket fixture. Map coverage first; add only demonstrated
-missing negative cases and correct only reproduced contract defects. Preserve
-least-privilege scopes, safe errors and receipt compatibility; no real Gateway.
-Complete remaining contract gates before coordinator/adapter/package work.
+**Next bounded task after merge:** establish the audit completeness contract.
+Inspect the pinned Gateway response shape and current guard/tests before choosing
+behaviour. The guard requests at most 100 events and validates their shape; this
+does not prove the response covers the complete audit window. Add synthetic
+coverage for verified truncation/pagination/window semantics and correct only a
+demonstrated acceptance gap. Do not invent provider fields or weaken historical
+receipt verification. Record any unavailable upstream contract evidence as a
+specific blocker; complete independent coverage first.
 
 ## 1. Governing reasoning chain
 
@@ -541,9 +543,11 @@ desk assumption or model estimate into a confirmed canonical fact.
 The hybrid decision merged in PR #175 at 9c0fc7d, with executable code
 unchanged from the PR #174 baseline.
 PR #177 completed the initial inventory and 13 synthetic contract cases.
-Characterisation remains incomplete. The current candidate refuses uncertain
-CLI creation replay. After it merges, the next bounded task is synthetic
-loopback socket deadline/closure, malformed-frame and response-correlation coverage.
+PR #179 merged uncertain-creation refusal. Characterisation remains incomplete.
+The current socket candidate rejects replies consumed/decoded after the existing
+deadline. After it merges, establish the audit-completeness contract using pinned
+upstream evidence and synthetic tests; do not infer complete audit coverage from
+an empty or bounded event list alone.
 Complete the remaining contract gates before adding CLASSIFIRE-owned job/run/stage
 state or a provider-neutral inference adapter. Portable `ProjectPackage`, MCP,
 standalone-client, and OpenClaw-retirement capabilities remain planned. No part

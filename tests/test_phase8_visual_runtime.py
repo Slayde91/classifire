@@ -634,3 +634,149 @@ def test_managed_runtime_stops_after_uncertain_creation_before_fallback_or_infer
         assert error.value.__suppress_context__ is True
     assert calls == ["sessions.describe", "sessions.create"]
     assert counts == {"fallback": 0, "token": 0, "http": 0}
+
+
+@pytest.mark.parametrize(
+    ("fault", "expected"),
+    [
+        ("close", "RPC_UNAVAILABLE"),
+        ("eof", "RPC_UNAVAILABLE"),
+        ("timeout", "RPC_UNAVAILABLE"),
+        ("os_error", "RPC_UNAVAILABLE"),
+        ("reserved_bits", "RPC_OUTPUT_INVALID"),
+        ("fragmented", "RPC_OUTPUT_INVALID"),
+        ("masked", "RPC_OUTPUT_INVALID"),
+        ("binary", "RPC_OUTPUT_INVALID"),
+        ("invalid_utf8", "RPC_OUTPUT_INVALID"),
+        ("invalid_json", "RPC_OUTPUT_INVALID"),
+        ("oversized", "RPC_OUTPUT_INVALID"),
+        ("wrong_request_id", "RPC_UNAVAILABLE"),
+        ("wrong_connect_id", "RPC_UNAVAILABLE"),
+    ],
+)
+def test_loopback_socket_failures_close_without_repeating_creation(
+    fault: str,
+    expected: str,
+) -> None:
+    class FaultSocket(_GatewaySocket):
+        def sendall(self, payload: bytes) -> None:
+            super().sendall(payload)
+            if not self.requests:
+                return
+            method = self.requests[-1]["method"]
+            if fault == "wrong_connect_id" and method == "connect":
+                self.incoming = bytearray(
+                    self._server_text(
+                        {"type": "res", "id": "unrelated-connect", "ok": True, "payload": {}},
+                    )
+                )
+                return
+            if method == "connect":
+                return
+            invalid_frames = {
+                "close": b"\x88\x00",
+                "eof": b"",
+                "timeout": b"",
+                "os_error": b"",
+                "reserved_bits": b"\xc1\x00",
+                "fragmented": b"\x01\x00",
+                "masked": b"\x81\x80",
+                "binary": b"\x82\x00",
+                "invalid_utf8": b"\x81\x01\xff",
+                "invalid_json": b"\x81\x01{",
+                "oversized": b"\x81\x7f" + (1_000_001).to_bytes(8, "big"),
+                "wrong_request_id": self._server_text(
+                    {"type": "res", "id": "unrelated-request", "ok": True, "payload": {}},
+                ),
+            }
+            self.incoming = bytearray(invalid_frames[fault])
+
+        def recv(self, size: int) -> bytes:
+            if self.requests and self.requests[-1]["method"] == "sessions.create":
+                if fault == "eof":
+                    return b""
+                if fault == "timeout":
+                    raise TimeoutError("synthetic-private-timeout")
+                if fault == "os_error":
+                    raise OSError("synthetic-private-socket-detail")
+            return super().recv(size)
+
+    gateway_socket = FaultSocket()
+    factory_calls = []
+
+    def socket_factory(address, timeout):
+        factory_calls.append(address)
+        return gateway_socket
+
+    rpc = OpenClawLoopbackGatewayRpc(
+        base_url="http://127.0.0.1:18789",
+        token_provider=lambda: "synthetic-token",
+        socket_factory=socket_factory,
+    )
+    with pytest.raises(Phase8GatewayRpcError) as error:
+        rpc(
+            "sessions.create",
+            {
+                "key": "synthetic-session",
+                "agentId": "cf-validator",
+                "model": "provider/model",
+            },
+        )
+    assert error.value.code == expected
+    assert "synthetic-private" not in str(error.value)
+    assert gateway_socket.closed is True
+    assert factory_calls == [("127.0.0.1", 18789)]
+    assert [request["method"] for request in gateway_socket.requests] == (
+        ["connect"] if fault == "wrong_connect_id" else ["connect", "sessions.create"]
+    )
+    assert gateway_socket.requests[0]["params"]["scopes"] == ["operator.write"]
+
+
+@pytest.mark.parametrize("late_stage", ["receive", "decode"])
+def test_loopback_reply_received_after_deadline_is_refused_and_socket_closed(
+    monkeypatch,
+    late_stage: str,
+) -> None:
+    from classifire.services import phase8_visual_runtime
+
+    now = [100.0]
+    original_parse = phase8_visual_runtime._parse_gateway_json
+
+    def parse_reply(value):
+        result = original_parse(value)
+        if late_stage == "decode" and result.get("payload") == {"session": None}:
+            now[0] = 111.0
+        return result
+
+    monkeypatch.setattr(phase8_visual_runtime, "_parse_gateway_json", parse_reply)
+    monkeypatch.setattr(
+        "classifire.services.phase8_visual_runtime.time.monotonic",
+        lambda: now[0],
+    )
+
+    class LateReplySocket(_GatewaySocket):
+        def recv(self, size: int) -> bytes:
+            chunk = super().recv(size)
+            if (
+                late_stage == "receive"
+                and self.requests
+                and self.requests[-1]["method"] == "sessions.describe"
+            ):
+                now[0] = 111.0
+            return chunk
+
+    gateway_socket = LateReplySocket()
+    rpc = OpenClawLoopbackGatewayRpc(
+        base_url="http://127.0.0.1:18789",
+        token_provider=lambda: "synthetic-token",
+        timeout_seconds=10,
+        socket_factory=lambda address, timeout: gateway_socket,
+    )
+    with pytest.raises(Phase8GatewayRpcError) as error:
+        rpc("sessions.describe", {"key": "synthetic-session"})
+    assert error.value.code == "RPC_UNAVAILABLE"
+    assert gateway_socket.closed is True
+    assert [request["method"] for request in gateway_socket.requests] == [
+        "connect",
+        "sessions.describe",
+    ]
