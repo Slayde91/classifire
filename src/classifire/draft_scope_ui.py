@@ -48,7 +48,7 @@ MAX_IMPORT_FORM_BYTES = 1_200_000
 IMPORT_PREVIEW_MAX_AGE = 900
 
 
-async def _form_values(request: Request, limit: int) -> dict[str, str]:
+async def _form_values(request: Request, limit: int, *, max_fields: int = 8) -> dict[str, str]:
     if request.headers.get("content-type", "").split(";")[0] != (
         "application/x-www-form-urlencoded"
     ):
@@ -60,7 +60,7 @@ async def _form_values(request: Request, limit: int) -> dict[str, str]:
         body.extend(chunk)
     try:
         pairs = parse_qsl(
-            body.decode("utf-8"), keep_blank_values=True, errors="strict", max_num_fields=8
+            body.decode("utf-8"), keep_blank_values=True, errors="strict", max_num_fields=max_fields
         )
     except (ValueError, UnicodeError) as exc:
         raise HTTPException(422, "Invalid draft form") from exc

@@ -267,6 +267,8 @@ def _read(
             raise ValueError("size")
         envelope = cast(dict[str, Any], json.loads(row.envelope_json))
         validate_envelope(envelope)
+        if envelope.get("pricing_sources"):
+            _actor(db, actor, "library:read")
         created = (
             row.created_at.replace(tzinfo=UTC) if row.created_at.tzinfo is None else row.created_at
         )
@@ -624,10 +626,13 @@ def estimate_staleness(
         db, actor, draft, estimate, estimate.latest_revision if revision is None else revision
     )
     from .draft_pdf_intake import scope_evidence_staleness
+    from .draft_pricing_intake import pricing_staleness
 
     reasons = scope_evidence_staleness(
         db, actor, draft_id, envelope["scope"], storage_root=storage_root
     )
+    reasons.extend(pricing_staleness(db, actor, draft_id, envelope, storage_root=storage_root))
+
     if _scope(db, actor, draft_id)["sha256"] != envelope["scope"]["sha256"]:
         reasons.append("ESTIMATE_SCOPE_CHANGED")
     match = envelope["system_match"]

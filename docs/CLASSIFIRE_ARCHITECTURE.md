@@ -2,14 +2,12 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.9 - published technical field snapshots and partial measured-limit review.
+**Architecture version:** 5.10 - retained pricing XLSX and explicit Draft-rate selection.
 
-**Verified shared-main baseline:** `25510565aac69ce7d0b6402423caac251a266236`,
-merged PR #194. PDF intake and the exact supplied logo are merged; main CI 33982467430
-passed (1,354 tests, 141 warnings). **Current local increment:**
-`feat/draft-applicability-review-20260906`. Measurement UI/service/browser/restart
-work is described below; this is a prepublication checkpoint. Current Git/PR/CI
-outrank the checkpoint for publication status.
+**Verified shared baseline:** `98048b7e940433c492297aeecc7dec8fce0dea2b`, merged
+PR #195; PR/main CI succeeded. Current pricing branch is
+`feat/draft-pricing-xlsx-20260906`. This is its prepublication checkpoint;
+source/tests and live Git/PR/CI determine implementation/publication truth.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -359,7 +357,7 @@ bounded. No new dependency or infrastructure was added. `D(None)` and canonical
 `calculate_line` are not used for this contract because they respectively collapse
 unknowns and round unit rates before multiplication. Existing canonical Estimate
 creation, locked line writers, recalculation, snapshots and human-release gates
-are unchanged. P3b pricing-source/default/inferred methods, full recovery, taxes,
+are unchanged. P3b default/inferred methods and broader source coverage, full recovery, taxes,
 Estimate import and estimate/combined PDF/XLSX profiles remain planned.
 
 The supplied original UI PNG is served at `static/brand/classifire-logo.png`
@@ -1179,10 +1177,11 @@ raw PDFs; their downloads retain normal ownership/permission/integrity checks.
 No canonical physical model, technical approval, price, lock or release is created.
 Full applicability still needs explicit structured criteria: current retrieval uses
 only service type/substrate and leaves size, material, orientation, FRL and installation
-criteria missing. Deliver a bounded visible criteria/constraint-review increment next;
-never turn existing text similarity into an Applicable verdict.
+criteria missing. The former next priority, a bounded criteria/constraint review,
+was delivered in PR #195 as described below; full applicability remains incomplete.
+Never turn existing text similarity into an Applicable verdict.
 
-### Current local increment: partial measured-limit review (first P2b)
+### Merged partial measured-limit review (first P2b, PR #195)
 
 The existing candidate review retrieves records through text comparison and captures
 Scope, target, source and release. It is not a compatibility engine. The new
@@ -1233,10 +1232,39 @@ configuration, spacing/support/fixings, exclusions, contradictions and authorize
 technical review. Full System Match portability and complete applicability need
 further contracts and evidence; no fallback to keyword matching is permitted.
 
-**Next prototype dependency:** pricing XLSX must retain exact source/sheet/cell lineage
-before explicit Draft-rate selection. `importers/pricing.py` is a CSV/canonical import
-path; do not expose it as an upload handler or silently activate pricing. Extend the
-Draft Estimate service/revision contract and existing intake controls instead.
+### Current implemented increment: pricing workbook selection (first P3b)
+
+Current architecture -> change -> reason -> consequences -> migration:
+manual Draft rates/free-text notes and PDF-specific intake -> shared retained-source
+intake plus bounded XLSX parsing and explicit rate selection -> make prices traceable
+to actual workbook cells -> Estimate v2 freezes unapproved selection events while
+v1 remains supported -> additive migration 0033; old source/report bytes unchanged.
+No new framework, dependency, AI agent, canonical pricing writer or orchestration layer.
+
+UI routes in `draft_pricing_ui.py` call `draft_pricing_intake.preview/apply_rate`.
+`draft_source_intake.py` centralizes the prior PDF ownership, storage, ClamD and
+shared quarantine protections; PDF wrappers retain existing behavior. A separately
+bound DraftPricingSource and fixed disposable XLSX worker feed explicit sheet/header/
+column mapping. Strict units/Decimal prices, row/document hashes and revision CAS
+control application to one existing line. Prices never supply technical authority.
+
+Estimate v2 links every source selection to its override event and retained workbook,
+scan, parsed-document and row hashes. Exact cells preserve reference, description,
+unit/rate, currency/tax, date, labour/materials and inclusions/exclusions. Existing
+quantity, initial rate, stale-input and reasoned override rules remain. Formula rates,
+missing prices and unsupported units stay unresolved. Workbook reads additionally
+require library permission. Reports use the same frozen Estimate revision, with a
+versioned PDF provenance section and XLSX Pricing sources sheet; no recomputation
+on download. Shared commands can later serve ChatGPT without duplicated rules.
+
+See [the contract](./DRAFT_PRICING_XLSX.md) for limits, security and revision details.
+Windows parser limits are not a complete sandbox. Scanner operations, source download/
+retention and full portability remain open. Recovery notes and workbook rows remain
+unapproved human/source claims; this does not deliver all pricing methods or recovery.
+
+**Next proposed UI slice:** scope-and-system PDF/XLSX from one saved match plus
+its embedded Scope, without creating an Estimate or rerunning matching. Preserve
+partial measured-limit status; full applicability is still separate required work.
 
 ### Separate production and adapter backlog
 

@@ -17,6 +17,7 @@ def _assessment(  # type: ignore[no-untyped-def]
     estimate_tables: bool = True,
     estimate_report_tables: bool = True,
     pdf_source_tables: bool = True,
+    pricing_source_tables: bool = True,
 ):
     engine = create_engine("sqlite+pysqlite:///:memory:")
     with engine.begin() as connection:
@@ -66,6 +67,8 @@ def _assessment(  # type: ignore[no-untyped-def]
         if required_tables and match_tables:
             connection.execute(text("CREATE TABLE draft_system_matches (id VARCHAR(36))"))
             connection.execute(text("CREATE TABLE draft_system_match_revisions (id VARCHAR(36))"))
+        if required_tables and pricing_source_tables:
+            connection.execute(text("CREATE TABLE draft_pricing_sources (id VARCHAR(36))"))
         if required_tables and pdf_source_tables:
             connection.execute(text("CREATE TABLE draft_pdf_sources (id VARCHAR(36))"))
         if required_tables and estimate_report_tables:
@@ -83,7 +86,7 @@ def _assessment(  # type: ignore[no-untyped-def]
 
 def test_clean_stack_head_is_ready_only_with_all_required_journal_tables() -> None:
     result = _assessment(
-        "0032_draft_pdf_sources",
+        "0033_draft_pricing_sources",
         required_tables=True,
     )
     assert result.status == "READY"
@@ -110,7 +113,7 @@ def test_previous_head_with_stray_legacy_table_requires_retirement() -> None:
 
 def test_current_head_with_stray_legacy_table_fails_as_schema_drift() -> None:
     result = _assessment(
-        "0032_draft_pdf_sources",
+        "0033_draft_pricing_sources",
         required_tables=True,
         legacy_submission_table=True,
     )
@@ -127,6 +130,7 @@ def test_legacy_adjudicated_head_fails_closed_for_rehearsal() -> None:
         "draft_estimate_revisions",
         "draft_estimates",
         "draft_pdf_sources",
+        "draft_pricing_sources",
         "draft_scope_reports",
         "draft_scope_revisions",
         "draft_scopes",
@@ -157,7 +161,7 @@ def test_unknown_revision_fails_closed() -> None:
 
 
 def test_current_head_without_draft_tables_fails_as_schema_drift() -> None:
-    result = _assessment("0032_draft_pdf_sources", required_tables=True, draft_tables=False)
+    result = _assessment("0033_draft_pricing_sources", required_tables=True, draft_tables=False)
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_scope_revisions", "draft_scopes")
@@ -165,7 +169,7 @@ def test_current_head_without_draft_tables_fails_as_schema_drift() -> None:
 
 
 def test_current_head_without_report_table_fails_as_schema_drift() -> None:
-    result = _assessment("0032_draft_pdf_sources", required_tables=True, report_tables=False)
+    result = _assessment("0033_draft_pricing_sources", required_tables=True, report_tables=False)
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_scope_reports",)
@@ -173,7 +177,7 @@ def test_current_head_without_report_table_fails_as_schema_drift() -> None:
 
 
 def test_current_head_without_match_tables_fails_as_schema_drift() -> None:
-    result = _assessment("0032_draft_pdf_sources", required_tables=True, match_tables=False)
+    result = _assessment("0033_draft_pricing_sources", required_tables=True, match_tables=False)
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_system_match_revisions", "draft_system_matches")
@@ -181,7 +185,7 @@ def test_current_head_without_match_tables_fails_as_schema_drift() -> None:
 
 
 def test_current_head_without_draft_estimate_tables_is_schema_drift() -> None:
-    result = _assessment("0032_draft_pdf_sources", required_tables=True, estimate_tables=False)
+    result = _assessment("0033_draft_pricing_sources", required_tables=True, estimate_tables=False)
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_estimate_revisions", "draft_estimates")
@@ -189,7 +193,7 @@ def test_current_head_without_draft_estimate_tables_is_schema_drift() -> None:
 
 def test_current_head_without_estimate_report_table_is_schema_drift() -> None:
     result = _assessment(
-        "0032_draft_pdf_sources", required_tables=True, estimate_report_tables=False
+        "0033_draft_pricing_sources", required_tables=True, estimate_report_tables=False
     )
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_estimate_reports",)
@@ -203,6 +207,21 @@ def test_older_recognized_match_head_still_requires_migration() -> None:
 
 
 def test_current_head_without_pdf_source_table_is_schema_drift() -> None:
-    result = _assessment("0032_draft_pdf_sources", required_tables=True, pdf_source_tables=False)
+    result = _assessment(
+        "0033_draft_pricing_sources", required_tables=True, pdf_source_tables=False
+    )
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_pdf_sources",)
+
+
+def test_previous_pdf_head_requires_migration():
+    result = _assessment("0032_draft_pdf_sources", required_tables=True)
+    assert result.code == "DATABASE_MIGRATION_REQUIRED"
+
+
+def test_current_head_requires_pricing_source_table():
+    result = _assessment(
+        "0033_draft_pricing_sources", required_tables=True, pricing_source_tables=False
+    )
+    assert "draft_pricing_sources" in result.missing_tables
+    assert result.code != "CLEAN_STACK_HEAD_CONFIRMED"

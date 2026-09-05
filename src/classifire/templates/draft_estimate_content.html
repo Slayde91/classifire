@@ -7,6 +7,18 @@
 {% set summary = envelope.summary %}
 {% set selected_target = selected_target|default(none) %}
 {% set available_targets = available_targets|default([]) %}
+{% if estimate_url|default('') and has_permission('library:read') %}
+<p><a class="button button-secondary" href="{{ estimate_url }}/pricing">Pricing workbook</a></p>
+{% endif %}
+{% if envelope.get('pricing_sources') %}
+<section class="panel"><h2>Workbook rate selections</h2>
+<p>Exact rates from uploaded workbooks remain unapproved. Later manual overrides preserve the earlier source selections below.</p>
+{% for selection in envelope.pricing_sources %}<details><summary>{{ selection.row['values'].reference }} &middot; {{ selection.row['values'].rate }} AUD / {{ selection.row['values'].unit }}</summary>
+<p>{{ selection.original_filename }} &middot; {{ selection.row.sheet }} &middot; row {{ selection.row.row }}. {{ selection.recovery_note }}</p>
+<dl class="scope-import-details">{% for field, cell in selection.row.fields.items() %}<dt>{{ field|replace('_', ' ')|capitalize }}</dt><dd>{% if cell %}{{ cell.address }}: {{ cell.value }} ({{ cell.kind }}){% else %}Unknown{% endif %}</dd>{% endfor %}</dl>
+<p class="scope-item-id">Source SHA-256: {{ selection.source_sha256 }}</p></details>{% endfor %}
+</section>
+{% endif %}
 <section class="panel" aria-labelledby="estimate-subtotal-heading">
   <h2 id="estimate-subtotal-heading">Priced work subtotal</h2>
   <div class="totals-box">

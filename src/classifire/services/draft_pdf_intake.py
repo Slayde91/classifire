@@ -3,47 +3,33 @@
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import os
 
 # Fixed parser subprocess only; no shell and no content in command arguments.
 import subprocess  # nosec B404
 import sys
-from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
-from fastapi import UploadFile
-from sqlalchemy import func, select, text
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from starlette.datastructures import Headers
 
-from ..audit import record_audit
 from ..config import Settings
 from ..models import DraftPdfSource, StoredFile, User, new_id
-from . import malware_scan
+from . import malware_scan as malware_scan
 from .draft_scope import (
     DraftScopeError,
     _actor,
     _append_revision,
-    _atomic,
     _json,
     get_draft,
     read_revision,
 )
 from .draft_scope_evidence import observation_hash
+from .draft_source_intake import DraftSourceIntake, SourcePolicy
 from .storage import (
-    StoredFileBindingError,
     VerifiedStoredFileContent,
-    _locked_stored_files_by_sha256,
-    _require_serialized_containment_transaction,
-    quarantine_stored_file_bytes_for_update,
-    read_clean_stored_file_for_update,
-    read_verified_stored_file,
-    save_upload,
 )
 
 PURPOSE = "draft_scope_pdf"
@@ -52,11 +38,25 @@ MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
 MAX_PREVIEW_BYTES = 4 * 1024 * 1024
 
 
+def _intake() -> DraftSourceIntake:
+    return DraftSourceIntake(
+        SourcePolicy(
+            model=DraftPdfSource,
+            purpose=PURPOSE,
+            extension=".pdf",
+            magic=b"%PDF-",
+            media_type="application/pdf",
+            schema="CLASSIFIRE-DRAFT-PDF-v1",
+            code_prefix="PDF_",
+            audit_name="draft_pdf",
+            process=_process,
+            valid_document=lambda document: 1 <= len(document["pages"]) <= 50,
+        )
+    )
+
+
 def _postgres(db: Session) -> None:
-    try:
-        _require_serialized_containment_transaction(db)
-    except StoredFileBindingError as exc:
-        raise DraftScopeError("PDF_POSTGRESQL_REQUIRED", 409) from exc
+    _intake()._postgres(db)
 
 
 def _source(
@@ -68,156 +68,28 @@ def _source(
     write: bool = False,
     lock: bool = False,
 ) -> tuple[User, DraftPdfSource]:
-    actor = _actor(db, actor, "project:write" if write else "project:read")
-    get_draft(db, actor, draft_id)
-    query = (
-        select(DraftPdfSource)
-        .where(DraftPdfSource.id == source_id, DraftPdfSource.draft_scope_id == draft_id)
-        .execution_options(populate_existing=True)
-    )
-    if lock:
-        _postgres(db)
-        query = query.with_for_update()
-    source = db.scalar(query)
-    if source is None:
-        raise DraftScopeError("PDF_SOURCE_NOT_FOUND", 404)
-    return actor, source
+    user, source = _intake()._source(db, actor, draft_id, source_id, write=write, lock=lock)
+    return user, cast(DraftPdfSource, source)
 
 
 def _file(db: Session, source: DraftPdfSource) -> StoredFile:
-    row = db.scalar(
-        select(StoredFile)
-        .where(StoredFile.id == source.stored_file_id)
-        .execution_options(populate_existing=True)
-    )
-    if row is None or (row.sha256, row.size_bytes, row.purpose) != (
-        source.source_sha256,
-        source.source_size_bytes,
-        PURPOSE,
-    ):
-        raise DraftScopeError("PDF_SOURCE_INTEGRITY_FAILED", 409)
-    return row
+    return _intake()._file(db, source)
 
 
 def list_sources(db: Session, actor: User, draft_id: str) -> list[dict[str, Any]]:
-    get_draft(db, actor, draft_id)
-    sources = db.scalars(
-        select(DraftPdfSource)
-        .where(DraftPdfSource.draft_scope_id == draft_id)
-        .order_by(DraftPdfSource.created_at.desc(), DraftPdfSource.id)
-        .limit(MAX_SOURCES)
-    ).all()
-    return [source_info(db, actor, draft_id, row.id) for row in sources]
+    return _intake().list_sources(db, actor, draft_id)
 
 
 def source_info(db: Session, actor: User, draft_id: str, source_id: str) -> dict[str, Any]:
-    actor, row = _source(db, actor, draft_id, source_id)
-    stored = _file(db, row)
-    try:
-        scan = json.loads(row.scan_json) if row.scan_json else None
-        if scan is not None and not isinstance(scan, dict):
-            raise ValueError("scan metadata")
-    except (ValueError, TypeError) as exc:
-        raise DraftScopeError("PDF_SOURCE_INTEGRITY_FAILED", 409) from exc
-    return {
-        "id": row.id,
-        "filename": row.original_filename,
-        "sha256": row.source_sha256,
-        "size_bytes": row.source_size_bytes,
-        "status": stored.malware_scan_status,
-        "scan": scan,
-        "processing_error": row.processing_error,
-        "ready": stored.malware_scan_status == "clean" and row.document_json is not None,
-        "created_at": row.created_at,
-        "document_sha256": row.document_sha256,
-    }
+    return _intake().source_info(db, actor, draft_id, source_id)
 
 
 def retain_pdf(
     db: Session, actor: User, draft_id: str, filename: str, content: bytes, *, settings: Settings
 ) -> DraftPdfSource:
-    actor = _actor(db, actor, "project:write")
-    draft = get_draft(db, actor, draft_id)
-    _postgres(db)
-    name = filename.replace("\\", "/").rsplit("/", 1)[-1]
-    if (
-        not name.lower().endswith(".pdf")
-        or not 1 <= len(name) <= 200
-        or any(ord(c) < 32 for c in name)
-        or type(content) is not bytes
-        or not 1 <= len(content) <= min(settings.max_upload_bytes, malware_scan.MAX_SCAN_BYTES)
-        or not content.startswith(b"%PDF-")
-    ):
-        raise DraftScopeError("PDF_UPLOAD_INVALID")
-    digest = hashlib.sha256(content).hexdigest()
-    # Serialize same-byte submissions without granting one project access to another.
-    key = int.from_bytes(bytes.fromhex(digest[:16]), "big", signed=True)
-    db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": key})
-    existing = db.scalar(select(StoredFile).where(StoredFile.sha256 == digest))
-    if existing is not None:
-        source = db.scalar(
-            select(DraftPdfSource).where(
-                DraftPdfSource.stored_file_id == existing.id,
-                DraftPdfSource.draft_scope_id == draft_id,
-            )
-        )
-        if source is None or existing.purpose != PURPOSE:
-            raise DraftScopeError("PDF_UPLOAD_CONFLICT", 409)
-        return source
-    # Serialize the per-Draft quota with other source additions.
-    from ..models import DraftScope
-
-    db.scalar(select(DraftScope.id).where(DraftScope.id == draft_id).with_for_update())
-    if (
-        db.scalar(
-            select(func.count())
-            .select_from(DraftPdfSource)
-            .where(DraftPdfSource.draft_scope_id == draft_id)
-        )
-        or 0
-    ) >= MAX_SOURCES:
-        raise DraftScopeError("PDF_SOURCE_LIMIT", 409)
-    try:
-        with _atomic(db):
-            stored = save_upload(
-                db,
-                settings,
-                UploadFile(
-                    filename=name,
-                    file=io.BytesIO(content),
-                    headers=Headers({"content-type": "application/pdf"}),
-                ),
-                purpose=PURPOSE,
-                user=actor,
-            )
-            # Upload never infers a clean verdict, including when no scanner is configured.
-            actor = _actor(db, actor, "project:write")
-            get_draft(db, actor, draft_id)
-            source = DraftPdfSource(
-                draft_scope_id=draft_id,
-                stored_file_id=stored.id,
-                source_sha256=digest,
-                source_size_bytes=len(content),
-                original_filename=name,
-                created_by_id=actor.id,
-            )
-            db.add(source)
-            db.flush()
-            record_audit(
-                db,
-                actor=actor,
-                action="draft_pdf.upload",
-                entity_type="draft_pdf_source",
-                entity_id=source.id,
-                project_id=draft.project_id,
-                new_value={"sha256": digest, "size_bytes": len(content)},
-            )
-            db.flush()
-            return source
-    except (IntegrityError, ValueError, OSError, StoredFileBindingError) as exc:
-        if isinstance(exc, DraftScopeError):
-            raise
-        raise DraftScopeError("PDF_UPLOAD_FAILED", 409) from exc
+    return cast(
+        DraftPdfSource, _intake().retain(db, actor, draft_id, filename, content, settings=settings)
+    )
 
 
 def _process(content: bytes, page_number: int | None = None) -> bytes:
@@ -269,146 +141,14 @@ def _process(content: bytes, page_number: int | None = None) -> bytes:
 def scan_source(
     db: Session, actor: User, draft_id: str, source_id: str, *, settings: Settings
 ) -> dict[str, Any]:
-    actor, source = _source(db, actor, draft_id, source_id, write=True, lock=True)
-    rows = _locked_stored_files_by_sha256(db, source.source_sha256)
-    stored = _file(db, source)
-    if not rows or any(row.malware_scan_status == "malware_detected" for row in rows):
-        raise DraftScopeError("PDF_SOURCE_QUARANTINED", 409)
-    try:
-        content = read_verified_stored_file(
-            stored,
-            storage_root=settings.storage_root,
-            required_purpose=PURPOSE,
-            allowed_scan_statuses=("pending", "not_configured", "scan_error", "clean"),
-        )
-    except StoredFileBindingError as exc:
-        raise DraftScopeError("PDF_SOURCE_INTEGRITY_FAILED", 409) from exc
-    draft = get_draft(db, actor, draft_id)
-    previous = json.loads(source.scan_json) if source.scan_json else None
-    source.processing_error = None
-    source.document_json = None
-    source.document_sha256 = None
-    stored.malware_scan_status = "pending"
-    try:
-        verdict = malware_scan.scan_bytes(
-            content.content, host=settings.clamav_host, port=settings.clamav_port
-        )
-        if verdict.sha256 != content.sha256 or verdict.size_bytes != content.size_bytes:
-            raise malware_scan.MalwareScanError("SCAN_BINDING_INVALID")
-        scan = asdict(verdict)
-    except malware_scan.MalwareScanError as exc:
-        scan = {
-            "sha256": content.sha256,
-            "size_bytes": content.size_bytes,
-            "status": "not_configured" if exc.code == "SCAN_NOT_CONFIGURED" else "scan_error",
-            "code": exc.code,
-            "scanned_at": datetime.now(UTC).isoformat(),
-        }
-    authorized = True
-    try:
-        actor = _actor(db, actor, "project:write")
-    except DraftScopeError:
-        authorized = False
-    if not authorized and scan["status"] != "malware_detected":
-        scan = {
-            "sha256": content.sha256,
-            "size_bytes": content.size_bytes,
-            "status": "scan_error",
-            "code": "SCAN_PERMISSION_CHANGED",
-            "scanned_at": datetime.now(UTC).isoformat(),
-        }
-    if scan["status"] == "malware_detected":
-        quarantine_stored_file_bytes_for_update(
-            db,
-            stored_file_id=stored.id,
-            observed_sha256=content.sha256,
-            observed_size_bytes=content.size_bytes,
-        )
-    else:
-        stored.malware_scan_status = scan["status"]
-    source.scan_json = _json(scan).decode("utf-8")
-    db.flush()
-    if scan["status"] == "clean":
-        try:
-            # Re-read exact bytes under the existing shared quarantine lock boundary.
-            verified = read_clean_stored_file_for_update(
-                db,
-                stored_file_id=stored.id,
-                storage_root=settings.storage_root,
-                required_purpose=PURPOSE,
-            )
-            document_bytes = _process(verified.content)
-            source.document_json = document_bytes.decode("utf-8")
-            source.document_sha256 = hashlib.sha256(document_bytes).hexdigest()
-        except (DraftScopeError, StoredFileBindingError):
-            source.processing_error = "PDF_PROCESSING_FAILED"
-        try:
-            actor = _actor(db, actor, "project:write")
-            get_draft(db, actor, draft_id)
-        except DraftScopeError:
-            stored.malware_scan_status = "scan_error"
-            source.document_json = None
-            source.document_sha256 = None
-            source.processing_error = "SCAN_PERMISSION_CHANGED"
-    record_audit(
-        db,
-        actor=actor,
-        action="draft_pdf.scan",
-        entity_type="draft_pdf_source",
-        entity_id=source.id,
-        project_id=draft.project_id,
-        previous_value=previous,
-        new_value=scan | {"processing_error": source.processing_error},
-    )
-    db.flush()
-    return {"status": stored.malware_scan_status, "processing_error": source.processing_error}
+    return _intake().scan_source(db, actor, draft_id, source_id, settings=settings)
 
 
 def _document(
     db: Session, actor: User, draft_id: str, source_id: str, storage_root: Path
 ) -> tuple[DraftPdfSource, dict[str, Any], VerifiedStoredFileContent]:
-    actor, source = _source(db, actor, draft_id, source_id, lock=True)
-    _file(db, source)
-    try:
-        content = read_clean_stored_file_for_update(
-            db,
-            stored_file_id=source.stored_file_id,
-            storage_root=storage_root,
-            required_purpose=PURPOSE,
-        )
-        if source.document_json is None or source.scan_json is None:
-            raise ValueError("missing")
-        raw = source.document_json.encode("utf-8")
-        if (
-            len(raw) > MAX_DOCUMENT_BYTES
-            or hashlib.sha256(raw).hexdigest() != source.document_sha256
-        ):
-            raise ValueError("document")
-        document = json.loads(raw)
-        scan = json.loads(source.scan_json)
-        if (
-            scan["status"] != "clean"
-            or scan["sha256"] != content.sha256
-            or scan["size_bytes"] != content.size_bytes
-            or document["schema"] != "CLASSIFIRE-DRAFT-PDF-v1"
-            or document["manifest"]["source_sha256"] != content.sha256
-            or document["manifest"]["source_size_bytes"] != content.size_bytes
-            or not 1 <= len(document["pages"]) <= 50
-        ):
-            raise ValueError("binding")
-        # An expired signature database requires a fresh scan before active viewing/review.
-        database_date = datetime.fromisoformat(scan["database_date"])
-        if (
-            datetime.now(UTC) - database_date
-        ).total_seconds() > malware_scan.MAX_DATABASE_AGE_DAYS * 86400:
-            raise DraftScopeError("PDF_SCAN_EXPIRED", 409)
-    except (StoredFileBindingError, ValueError, TypeError, KeyError, UnicodeError) as exc:
-        if isinstance(exc, DraftScopeError):
-            raise
-        raise DraftScopeError("PDF_SOURCE_NOT_READY", 409) from exc
-    _actor(db, actor, "project:read")
-    get_draft(db, actor, draft_id)
-    return source, cast(dict[str, Any], document), content
+    source, document, content = _intake()._document(db, actor, draft_id, source_id, storage_root)
+    return cast(DraftPdfSource, source), document, content
 
 
 def read_document(

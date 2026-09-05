@@ -1,5 +1,9 @@
 # Draft Estimate Report v1
 
+Workbook-rate amendment: [Draft pricing XLSX](./DRAFT_PRICING_XLSX.md) adds Estimate v2
+and report renderer v2 for source selections. This document retains the manual v1
+contract; existing saved bytes are unchanged.
+
 Status: first P4b estimate-only increment, implemented locally. See PROJECT_STATE.md
 for measured validation/publication. This is a Draft output contract, not technical
 approval, a canonical estimate, a complete ProjectPackage or Human Release.

@@ -1,110 +1,94 @@
 # CLASSIFIRE Project State
 
-**Verified snapshot:** 2026-09-06 (AEST). **Health:** usable bounded Draft prototype,
-not a production-ready platform. Approved ADRs 0001/0002 remain the target:
-independent capabilities, shared deterministic services, optional AI, and conditional
-OpenClaw retirement after protection parity. Database/retained storage govern live
-state; portable revisions and imports never confer approval or release authority.
+**Verified snapshot:** 2026-09-06 AEST. **Health:** usable bounded Draft prototype;
+not a production-ready platform. Accepted ADRs 0001/0002 remain unchanged: independent
+capabilities, shared deterministic services, optional AI, conditional OpenClaw retirement
+only after protection parity. The database/retained storage govern live state;
+portable packages do not confer approval, locks or release authority.
 
-**Verified shared main:** `25510565aac69ce7d0b6402423caac251a266236`,
-[merged PR #194](https://github.com/Slayde91/classifire/pull/194).
-Its feature was `91b9a0be82c5790a7d608da03832c8de2fdfbf86`; PR CI 33981999121
-and [main CI 33982467430](https://github.com/Slayde91/classifire/actions/runs/33982467430)
-succeeded (1,354 tests, 141 warnings; static checks and one migration head).
-**Current increment:** `feat/draft-applicability-review-20260906`, isolated worktree
-`C:\CLASSIFIRE\.tmp\draft-applicability-review-20260906`, based on that main.
-This document is a prepublication checkpoint for measured-limit review. Check the
-branch's PR/current Git evidence before treating this increment as merged or repeating it.
+**Verified shared baseline:** `98048b7e940433c492297aeecc7dec8fce0dea2b`,
+[merged PR #195](https://github.com/Slayde91/classifire/pull/195).
+PR CI 33985001054 passed 1,378 tests; [main CI 33985401595](https://github.com/Slayde91/classifire/actions/runs/33985401595)
+is confirmed successful. This includes partial measured-limit review and the supplied logo.
+**Current increment:** `feat/draft-pricing-xlsx-20260906`, isolated worktree
+`C:\CLASSIFIRE\.tmp\draft-pricing-xlsx-20260906`, based on that main.
+This is a prepublication checkpoint for pricing XLSX. Current Git/PR/CI outrank this
+checkpoint; verify publication before repeating work.
 
 ## Evidence-based implementation snapshot
 
 | Area | Implemented and evidenced | Remaining gap |
 | --- | --- | --- |
-| Scope | Merged manual editor, immutable JSON/import, graph validation, v3 PDF page-linked observations; real-scanner/browser/restart evidence in PR #194 | Automatic analysis, Word/XLSX/images/drawings intake UI, instances, full planes/treatments and contradictions |
-| Technical | Merged source-bound candidate retrieval/keep/reject/history. Current local UI checks substrate thickness and measured gap range for one candidate against published limits, saving a v2 review | These are partial numeric checks, not compatibility. Material/size/FRL/insulation/seal depth/configuration/exclusions and complete applicability remain unassessed |
-| Estimating | Merged manual AUD unit sell rates, unknown quantities, original values/reasoned overrides, omit/restore, partial subtotals and exact history | Pricing XLSX with cell provenance, governed defaults/inference, broader components and complete recovery |
-| Reporting | Merged independent Scope/Estimate PDF+XLSX from frozen snapshots, retained downloads, source claims and stale warnings | Technical/combined profiles and full package export |
-| UI/integration | FastAPI/Jinja over shared commands; correct supplied logo served on sign-in/sidebar and new Draft reports | ChatGPT adapter, full tenant/privacy and hosted operational assurance |
-| Packages | Scope v1/v2/v3 exchange, match/Estimate JSON, retained reports | Complete ProjectPackage ZIP, membership/export rights, source/history portability and other imports |
+| Scope | Manual editor, immutable JSON/import, graph validation, PDF page-linked observations; prior real-scanner/browser/restart evidence | Word/XLSX/images/drawings intake UI, automatic analysis, instances, full planes/treatments and contradictions |
+| Technical | Source-bound retrieval, keep/reject/history; merged pinned-field publication and saved substrate/gap numeric review | Partial checks are not compatibility; material/size/FRL/insulation/configuration and complete applicability remain unassessed |
+| Estimating | Manual rates, unknown quantities, original/override history, omit/restore; current XLSX upload/scan/mapping/explicit-rate selection UI with exact cells | Governed defaults/inference, broader components, full recovery, more formats/units/currencies |
+| Reporting | Independent Scope/Estimate PDF+XLSX frozen snapshots; current Estimate reports include workbook provenance | Scope-and-system/combined profiles, complete package export |
+| UI/integration | FastAPI/Jinja calls shared services; attached logo on sign-in/sidebar/new Draft reports | ChatGPT adapter, full tenant/privacy and operational assurance |
+| Packages | Scope v1/v2/v3 exchange, match/Estimate JSON, retained reports; current Estimate v2 freezes workbook selections | Full ProjectPackage ZIP, source/history export rights and other imports |
 | Operations | Canonical authority guards, admissions/locks, human release, exact-byte storage and transport/journal foundations | Production Phase 8-14 exits and OpenClaw protection parity are unproven |
 
-## Current measured-limit increment
+## Current pricing increment and verification
 
-New technical publications use manifest v3 and freeze the explicit public field
-snapshot. Previously numeric limits were only captured from live variant rows at
-retrieval time. Existing release bytes remain unchanged; v1/v2 releases remain
-retrievable but cannot claim pinned-limit checks. No database migration is needed.
+Shared source intake reuses existing PDF/ClamAV/quarantine controls. Additive migration
+0033 retains old Estimate/report bytes and exact StoredFile binding. A fixed bounded
+XLSX worker preserves cell kinds, formulas and unknowns; it never evaluates formulas.
+Explicit column mapping and exact-unit selection append an Estimate v2 override with
+source hashes/cells and a required recovery explanation. No canonical library activation
+or technical approval occurs. Existing manual v1/history and PDF entry points remain.
+See [the supported contract and demo](./DRAFT_PRICING_XLSX.md).
 
-`draft_constraint_review.py` checks inclusive numeric ranges using Decimal. Explicit
-opening selection is required; gap checks additionally require a selected linked
-service. A missing measurement, source range/binding or old publication leaves the
-check unresolved. Unsupported conditions remain listed; no Applicable or technical
-approval verdict is produced. Manual measurements require an evidence/method note
-and remain unapproved claims, separate from the saved Scope.
+- Targeted pricing/service/HTTP/deployment tests: **23 passed, 1 existing Starlette warning**
+  (19.43 seconds), before the additional archive/tampering regression cases.
+- Additive migration test passed, including old output preservation and downgrade refusal.
+- Real Chrome + real ClamD: upload, scan, map, select Rates!D5 = 120.25 AUD,
+  preserve original 100, then reasoned override 125. Blank/formula rates unselectable.
+- Actual restart preserved exact Estimate r2/r3/r4 and both report downloads.
+  No browser page errors. Four PDF pages inspected: readable and correctly branded.
+- Excel output independently reopened: source cells/types/values present and safe literal
+  provenance. Artifact-tool renders were produced but its process exited 1 without a
+  diagnostic; its preview also misrenders empty strings. This is a preview-tool limitation,
+  not evidence of empty-cell values in the independently inspected workbook.
+- Exact served logo SHA-256 matches the user PNG:
+  `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+  Sign-in/sidebar screenshots inspected; old demos on 8803/8804 also serve exact bytes.
+- Mypy passed 175 source files; Bandit passed; one Alembic head is 0033.
+  Final regression/static/documentation results are recorded before publication below.
+- No customer/operational database, provider, canonical release or production audit ran.
 
-`save_constraint_review` uses existing ownership/permissions, locked dependencies,
-source integrity/staleness checks and revision compare-and-swap. It appends match v2;
-v1/history bytes survive. Keep/reject notes preserve the measurement review. A later
-match revision makes an attached Estimate stale without changing its saved bytes.
-No AI, pricing, canonical physical rows, lock or release is invoked by the review.
-See [the contract and demo](./DRAFT_CONSTRAINT_REVIEW.md).
+## Local changes and active gaps
 
-## Verification and project health
+Current changes are the pricing service/UI/contract, shared intake extraction, additive
+migration/current-head expectations, report provenance, synthetic demo/tests and docs.
+Protected root remains unrelated recovery evidence at `de0cc5a`, branch
+`gpt/phase8-linked-original-images`, with interrupted cherry-pick `c3e4c810` and four
+DU conflicts. Never stage, reset or resolve it implicitly. Three untracked ProjectPackage
+candidate files remain in `.tmp/project-package-draft-20260905`; preserve them. Prior
+demos, source evidence and original logo remain. Runtime data/logs/screenshots stay local.
 
-- Existing candidate/UI/publication regression: **76 passed, 1 existing warning**
-  (139.62 seconds), before the final fixture/measurement additions.
-- Latest new measurement/service/HTTP/Estimate dependency set: **24 passed, 1 existing
-  Starlette/httpx warning** (14.06 seconds). Covers limits, unknowns, invalid numbers,
-  source drift, old releases/history, CSRF, stale revisions and ownership.
-- Real Chrome: imported synthetic Scope, explicit target/candidate, within-limit r2,
-  outside-limit r3, unknown r4, unchanged r1/r2 downloads. Actual server restart
-  retained exact r1/r2/r4 downloads. No browser page errors.
-- Served logo bytes match `classifire logo.png` exactly (SHA-256
-  `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`).
-  The rendered screen was inspected. Source PNG and historical reports were preserved.
-- Ruff and Mypy (169 source files) passed. Bandit found one type-narrowing assertion;
-  it was replaced with explicit control flow. Final static/broader checks passed as recorded below; exact-head hosted CI remains
-  required before publication.
-- Source numeric field names do not define service-size measurement semantics. This
-  increment deliberately leaves service size and full applicability unresolved.
-- No operational/customer database, real provider or production readiness audit ran.
-  PDF hosted parser isolation, scanner refresh, quotas, retention and monitoring remain
-  open. Manual prototype entry is available without AI or the scanner.
-
-## Local changes and blockers
-
-The current branch contains only the measured-limit service/UI, shared release
-snapshot, synthetic demo/tests and aligned documentation. The protected legacy root
-remains at `de0cc5a`, branch `gpt/phase8-linked-original-images`, with 46 unstaged
-modifications, 14 staged additions, four DU conflicts and CHERRY_PICK_HEAD `c3e4c810`.
-Those are unrelated recovery evidence. Three untracked ProjectPackage candidate files
-remain in `.tmp/project-package-draft-20260905`; do not publish or delete them implicitly.
-Prior demos, source evidence and the original logo are preserved. Synthetic data/logs/
-browser artifacts are excluded from Git. No concrete blocker to this branch's normal
-validation/publication is known at this checkpoint.
+Production parser isolation, scanner refresh/availability, quotas/retention, tenancy,
+complete technical and recovery rules, reporting breadth and package exchange remain
+open. This slice supports a declared workbook subset; manual work still runs without AI.
+No concrete blocker to normal verification/publication is known at this checkpoint.
 
 ## Recommended Next Actions
 
-1. Finish the current measured-limit increment's validation/publication if outstanding.
-2. Deliver **P3b's first pricing-XLSX preview and explicit Draft-rate selection UI**.
-   The verified pricing importer currently consumes CSV and can write active library
-   rows; it is not a safe browser XLSX intake command. The Draft Estimate still uses
-   manual `unit_sell_rate` plus free-text `source_note`, without retained sheet/cell
-   lineage. Reuse existing storage/scanner, workbook readers and estimate revisions;
-   retain source bytes and explicit mapping/units before applying one unapproved rate.
-   Preserve original rates and overrides. This independent pricing slice does not need
-   full technical compatibility and must not imply it. See the handoff for boundaries.
-3. Continue full applicability and Scope coverage, additional report profiles,
-   ProjectPackage exchange and ChatGPT access after their supporting commands are proven.
-   These are required product work, not completed phases or reasons to postpone user trials.
-
+1. Finish current pricing verification/publication if outstanding; do not repeat merged work.
+2. Add one independent **scope-and-system PDF/XLSX report UI** from a selected saved
+   candidate-review revision and its exact embedded Scope. Users can then share evidence,
+   decisions and partial measured checks without first creating an Estimate. Reuse existing
+   snapshot/rendering/permission patterns; never rerun matching or imply compatibility.
+3. Continue full applicability, governed pricing and broader evidence analysis, then complete
+   ProjectPackage exchange and ChatGPT access over proven shared commands. Trial each
+   supported interaction before broad polish; production gates remain separate.
 
 ## Final local verification checkpoint
 
-Broader measurement/candidate/publication/Estimate/report regression: **241 passed,
-1 existing Starlette/httpx warning** (364.94 seconds). Counts overlap earlier runs;
-do not sum them. Final Ruff, Mypy (169 source files), Bandit and one Alembic head
-(0032) passed. No migration or new dependency. Browser/restart and exact historical
-JSON/served-logo checks passed. Final documentation-link/whitespace/diff classification
-precedes publication. Exact-head hosted CI and merge/main CI remain to be verified
-from the branch PR; this checkpoint does not preclaim their result.
+Affected Draft/Estimate/PDF/report/Scope UI/migration regression: **194 passed,
+2 existing dependency warnings** (515.13 seconds). After final permission-error
+classification and pre-save permission recheck, targeted pricing/report/HTTP regression:
+**41 passed, 1 existing warning** (59.11 seconds). These overlapping counts are not
+additive. Browser/restart receipts and exact historical downloads passed. Independent
+synthetic database counts: one pricing source, four Draft Estimate revisions, zero
+canonical Estimates/Openings/Services/Physical Model Locks or pricing library records/
+releases. Documentation links and whitespace checks passed. Final Ruff, Mypy (175 source files), Bandit and one Alembic head (0033) passed.
+Exact-head hosted CI remains required before merge; inspect the PR for its result.

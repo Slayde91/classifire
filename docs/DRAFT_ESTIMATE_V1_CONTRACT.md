@@ -1,5 +1,9 @@
 # Draft Estimate v1 contract
 
+Workbook-rate amendment: [Draft pricing XLSX](./DRAFT_PRICING_XLSX.md) adds Estimate v2
+and report renderer v2 for source selections. This document retains the manual v1
+contract; existing saved bytes are unchanged.
+
 Status: implemented P3a prototype contract. This is an independent manual estimate,
 not a canonical Estimate, technically approved system selection, complete quotation,
 or a governed pricing-library calculation. ADR 0002 permits this bounded capability
