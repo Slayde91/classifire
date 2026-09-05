@@ -2,15 +2,16 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.0
+**Architecture version:** 5.1 - accepted independent capabilities; implementation remains partial
 
-**Verified shared-main baseline:** `73c428ea450d9bd17c51031187608c205e200ffd` (PR #185, 2026-09-05)
+**Verified shared-main baseline:** `3b437dad9e42ec7ba2adf512b8ee67816d243473` (PR #186, 2026-09-05)
 
 **Latest executable-change baseline:** 73c428e (PR #185)
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
-[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md).
+[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md),
+refined by approved [Decision 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
 This document separates the architecture that is implemented now from the
 adopted target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
@@ -42,6 +43,65 @@ extractor: it calls `recalculate_estimate`. Future projection must preserve a
 consistent authorized revision and reuse exact clean-byte evidence reads without
 recalculating, changing records or bypassing canonical output gates.
 
+## Approved capability composition and first prototype
+
+**Target, not implemented capability:** one modular CLASSIFIRE application exposes
+Scope, System Matching, Estimating and Reporting through independent use cases.
+Each accepts explicit validated saved/manual inputs, produces a versioned artifact
+and stops unless the user requests another capability. Stable IDs, evidence,
+validation, storage and permissions are shared across clients.
+
+```mermaid
+flowchart TD
+    UI[Existing standalone UI / CLI] --> API[Authenticated application use cases]
+    CHAT[Planned ChatGPT adapter] --> API
+    API --> S[Scope]
+    API --> T[System matching]
+    API --> E[Estimating]
+    API --> R[Reporting]
+    S --> A[Versioned artifacts and exact dependencies]
+    T --> A
+    E --> A
+    A --> R
+    R --> O[Same snapshot: PDF and XLSX]
+    A --> DB[Governed database and retained evidence storage]
+    A --> P[Artifact / ProjectPackage validation and download]
+    AI[Optional bounded AI proposals] -.-> S
+    AI -.-> T
+```
+
+The arrows show available data paths, not automatic execution. Reporting reads
+selected available artifacts; it does not call the other three capabilities.
+Technical suitability and pricing remain separate, and source/library eligibility
+still applies. Model output is proposed evidence, never authority.
+
+| Component | Implemented starting point | Accepted prototype/target work |
+| --- | --- | --- |
+| Interfaces/API | FastAPI, Jinja templates, sessions, project/estimate forms and scoped proposal-review pages | Extend the existing UI first. Add independently callable shared Draft use cases; ChatGPT later uses the same commands. |
+| Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
+| Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
+| Draft persistence | Existing project/database/storage and narrower proposal records | Persist Draft Scope revisions in an explicit non-authoritative boundary, with ownership, integrity and stale-save refusal. Determine the smallest compatible mapping in P0. |
+| Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
+| Packages | Narrow proposal-review/estimate exports; local unmerged generic archive candidate | Minimum Scope JSON contract in P0; whole-project archives and import follow demonstrated use cases. A Scope artifact is not a complete ProjectPackage. |
+| Reporting | Canonical export requires lock/retained snapshot; snapshot builder recalculates | Separate Draft profiles over explicit immutable inputs, PDF/XLSX parity and visible missing/stale sections; preserve canonical guards. |
+| Security | Session/CSRF, roles, evidence ownership, scoped review and safe reads | Define exact Draft object access/export policy, bounded input and safe filenames. Existing role names alone do not prove object authorization. |
+
+**First milestone:** a real persisted Draft Scope UI, with manually entered
+synthetic observations, distinct openings/services, explicit uncertainty,
+validation, reopen after restart and exact saved JSON download. Build the minimum
+schema, persistence and tests in that same slice. An API-only/schema-only result
+or a mocked screen does not satisfy the milestone.
+
+**Dependency freshness:** artifacts pin input/release revisions and hashes.
+Upstream edits mark affected downstream relationships stale without changing the
+old artifact's content or approval history. The user chooses to compare or rerun.
+A report snapshot captures selected revisions and freshness so PDF and XLSX agree.
+
+**Scope of independence:** saved/manual input can replace a prior session's
+execution, but cannot replace required evidence or approval. Partial Draft
+artifacts/reports may be valid with explicit missing information. Structural
+validity, completeness, technical authority and Human Release are separate facts.
+
 ## 1. Governing reasoning chain
 
 CLASSIFIRE preserves this order:
@@ -63,6 +123,10 @@ Project Evidence
 -> Human Release
 ```
 
+This chain governs defensibility and authority; it does not require every user
+to run every capability in one session. Validated saved/manual inputs may enter
+at a capability boundary, with unresolved facts and approvals explicit.
+
 Physical reality comes before technical selection or pricing. A report label,
 Defect, photograph, Opening, Service, Opening-Service link, repair component,
 and commercial line are different records. One Defect does not imply one
@@ -78,7 +142,8 @@ The governed CLASSIFIRE database and content-addressed retained-file storage are
 live canonical project state for an application instance. The planned versioned
 `ProjectPackage` schema is the canonical interoperability contract; each valid
 export is an immutable, hash-bound snapshot of one governed project version,
-while every import remains untrusted until quarantine, integrity, schema,
+with independent Scope/System Match/Estimate artifacts and explicit partial
+project exports supported in the target. Every import remains untrusted until quarantine, integrity, schema,
 lineage, conflict, permission, and authority checks pass. The existing
 `ProposalReviewPackage` is a narrower proposal-only review artifact, not that
 complete portable project contract. OpenClaw sessions, Mission Control tasks,
@@ -590,15 +655,17 @@ clock assumptions and crash/replay recovery before production wiring. The
 | Offline use | Local backend/database and safe revision exchange need a separate decision. Do not assume SQLite reproduces PostgreSQL locking or permit automatic bidirectional merges. |
 | Operations/cost | Clean-machine setup, backup/restore, safe traces, monitoring, rollback and accepted-result cost/latency remain unmeasured. Changing frameworks alone does not prove savings. |
 
-**Migration impact:** additive contract characterisation, durable runs and a
-feature-flagged provider adapter, packages/shared clients, then retirement after
-Decision 0001 parity gates. Preserve historical migrations and receipt readers,
+**Migration impact:** first deliver the P0 UI and its minimum Draft contract.
+Capability/package/client increments follow the roadmap independently of the
+replacement track. That track adds required run/adapter behavior and retires
+OpenClaw only after Decision 0001 parity gates. Preserve historical migrations and receipt readers,
 signed admissions and human authority. Do not create a general agent platform
 or duplicate business rules in MCP/UI.
 
-**Verification limit:** PR #175 implements none of those gaps. The reconciled
-baseline has 70 passing focused synthetic contract/security tests and successful
-main CI 33899855871, not production, recovery-parity or fleet-utilisation proof.
+**Historical verification:** PR #175 was documentation-only; its 70 focused
+contract/security tests and main CI 33899855871 describe that older baseline.
+The current verified baseline is `3b437da` with main CI 33943428434; neither
+proves production, full recovery parity or a demonstrated new UI prototype.
 
 ### Completed report-governance integration
 
@@ -735,27 +802,32 @@ PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
 deployment, or release authority.
 
-### Near term
+### Near term: demonstrate P0 in the existing UI
 
-Characterise every used OpenClaw contract with synthetic golden and negative
-tests covering no-tool enforcement, context separation, exact input and version
-binding, safe receipts, timeouts, failure outcomes, recovery, and protected
-state. This is the first hybrid-migration gate; it neither removes OpenClaw nor
-authorises a real report, Gateway, or provider run.
+Implement the persisted manual Draft Scope workspace described above and in the
+[roadmap](./CLASSIFIRE_ROADMAP.md#prototype-delivery-track). Include only the
+contract, storage, permissions, validation and tests needed to create/edit/save/
+reopen/download it. Inspect the browser and exact download using synthetic data
+and isolated storage. Preserve all canonical and evidence guards.
 
-Complete the remaining extraction-assisted and manufacturer-neutral technical-source
-lineage plus clean-machine technical-library import and recovery evidence.
-Maintain full-repository Ruff, Mypy, and Bandit checks
-alongside the changed-file Ruff fast-path; static checks do not grant product or
-release authority.
+Package-schema reconciliation is supporting work within that slice, not a reason
+to delay the screen until all archive or capability contracts are complete.
+Use existing services/frameworks; no general agent/scheduler/platform rewrite.
 
-### Dependency-bound
+### Separate production and adapter backlog
 
-Another report/provider attempt requires fresh explicit authority after synthetic
-transport diagnosis. Canonical submission, lock creation, Phases 9-14,
-deployment, and Human Release remain behind their existing evidence and human
-authority gates. Detailed execution order and acceptance criteria are in
-[PROJECT_STATE.md](./PROJECT_STATE.md).
+Remaining OpenClaw contract characterisation is required before replacement
+wiring/retirement, not before the manual prototype. Provider execution needs
+its established explicit authority, capture assurance and privacy controls.
+Broader technical-source lineage, formats, pricing inference, full archive
+migration/conflict handling, deployment recovery, scale and accuracy tuning
+follow supported-path needs and user evidence. Never postpone a known security
+or correctness defect on the path exposed by the prototype.
+
+Phase 8-14 authoritative exits, canonical submission/locks and Human Release
+remain separately governed. They do not block all independent Draft development.
+The [roadmap](./CLASSIFIRE_ROADMAP.md) controls delivery order; the
+[project snapshot](./PROJECT_STATE.md) controls factual implementation claims.
 
 ## 13. Deprecated or superseded paths
 
@@ -763,6 +835,8 @@ authority gates. Detailed execution order and acceptance criteria are in
 - Placeholder Services for blank openings.
 - Generic writer authority or lock creation during initial submission.
 - A persistent autonomous agent fleet as a mandatory domain or runtime path.
+- Completing all schemas, orchestration or edge cases before a usable UI slice.
+- Reusing guarded canonical physical writers as permissive Draft storage.
 - Treating model output, desk quotes, chat, or Mission Control as canonical truth.
 - Treating the conflicted legacy root or draft PR stack as a bulk merge path.
 - Treating a successful transport, test suite, or CI run as technical approval,

@@ -1,508 +1,129 @@
 # CLASSIFIRE Master Roadmap
 
-**Roadmap status:** Active
+**Status:** Active; prototype-first delivery approved 2026-09-05.
+**Verified shared-main baseline:** `3b437dad9e42ec7ba2adf512b8ee67816d243473` (PR #186).
+**Latest executable-change baseline:** `73c428e` (PR #185).
+**Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
+plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
-**Verified shared-main baseline:** `73c428ea450d9bd17c51031187608c205e200ffd` (PR #185, 2026-09-05)
+## 1. Delivery decision
 
-**Latest executable-change baseline:** 73c428e (PR #185)
+**Build a working, testable UI prototype before broad fine tuning.** The first
+milestone is a persisted Draft Scope workspace in the existing application.
+Deliver its screen, minimum shared contract, validation, storage and download as
+one usable slice. Do not finish every schema, archive feature, orchestration
+abstraction or edge case before allowing a user to try the product.
 
-This roadmap records verified implementation, remaining gates, and execution
-order. It does not grant operational authority. Current source, tests,
-migrations, Git/GitHub state, and retained receipts outrank older roadmap text.
+The four capabilities remain independently callable: scope analysis, system
+matching, estimating and reporting. The full evidence-to-Human-Release chain
+is a rule for defensible conclusions and authority, not a mandatory user journey.
+Users may stop, edit, save, export, replace inputs and explicitly continue.
 
-Read with [PROJECT_STATE.md](./PROJECT_STATE.md) for the detailed current
-snapshot, [CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md) for the
-governing boundaries, and
-[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
-for the accepted hybrid target and migration gates.
+[Project State](./PROJECT_STATE.md) records what is actually implemented;
+[Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines boundaries;
+[Handoff](./SESSION_HANDOFF.md) specifies the single next engineering task;
+[GOAL.md](../GOAL.md) records the product outcome.
 
-## Latest reconciliation
+## 2. Verified starting point
 
-PR #185's journal/transport lifecycle is a **completed bounded foundation** on
-`73c428e`. [Exact main CI 33941884582](https://github.com/Slayde91/classifire/actions/runs/33941884582)
-passed 974 tests; production capture assurance and general job recovery remain
-incomplete. The accepted hybrid migration is partially implemented.
+- Existing FastAPI/Jinja UI supports authentication, projects, estimates, manual
+  physical entry, library administration and retained proposal-review screens.
+  This is reusable application code, not the independent Draft Scope prototype.
+- Existing opening/service forms write guarded canonical physical rows. Preserve
+  their behavior; a Draft editor must not use them by disabling admission guards.
+- Deterministic domain services, exact-byte evidence handling, technical-library
+  governance, calculation/snapshot/rendering, audit and migrations are foundations.
+- PR #185's completion consumer/journal/lifecycle hooks are merged. Full workflow
+  scheduling, production capture assurance and OpenClaw replacement are incomplete.
+- Main CI [33943428434](https://github.com/Slayde91/classifire/actions/runs/33943428434)
+  passed on `3b437da` (974 tests). It does not prove a usable new UI or production.
+- Three untracked Draft ProjectPackage files remain in
+  `.tmp/project-package-draft-20260905`; their 22 tests passed in the prior review.
+  They are candidate archive work, not a shipped contract or UI. Reuse compatible
+  pieces when needed, preserving originals and documenting any schema change.
+- Historical Phase 8 UAT/lock state was not rechecked against a live database.
+  Production and authoritative real-data exits remain unproven.
 
-ProjectPackage v1 Draft schema/export is **active local work, reordered next**:
-three untracked files in `.tmp/project-package-draft-20260905`; 22 synthetic tests
-passed during this review. Complete review and publication before advancing to
-governed database projection, immutable storage/download, import and clients.
-Draft portability does not depend on AI or completed Human Release and cannot
-claim a completed physical, technical or commercial stage.
+## 3. Status and evidence rules
 
-## 1. Status labels
-
-| Label | Meaning |
+| Status | Meaning |
 | --- | --- |
-| **Completed foundation** | Implemented and verified for the stated narrow boundary; later product gates may remain. |
-| **In progress** | Material implementation exists but exit criteria are incomplete. |
-| **Reordered** | Priority changed; phase and authority dependencies remain. |
-| **Planned** | Approved direction without completed implementation. |
-| **Blocked** | An upstream evidence, authority, safety, or implementation gate prevents progress. |
-| **Deprecated / superseded** | Retained for history or compatibility; not the current build path. |
+| Completed foundation | Narrow implementation and evidence exist; not a completed product milestone. |
+| Next / planned | Approved work, without demonstrated completion. |
+| Active local candidate | Unmerged work to inspect and reuse; not shared-main capability. |
+| Reordered / superseded | A previous delivery priority no longer controls the next task. |
+| Blocked authoritative exit | Required real evidence/approval/operational proof is absent; safe Draft development may continue. |
+| Deferred | Deliberately outside the current prototype path; revisit on evidence or feedback. |
 
-“Code exists” never means a whole phase is complete.
-
-## 2. Current product position
-
-Shared main now includes:
-
-- an accepted hybrid target architecture in which deterministic CLASSIFIRE
-  services own durable workflow and optional bounded AI adapters perform only
-  proposal work where justified. Journal/lifecycle foundations are implemented;
-  the complete target remains unfinished;
-- core application, persistence, UI, API, audit, authentication, and packaged
-  migration foundations;
-- physical-model, evidence, proposal-only visual, admission, and receipt
-  boundaries;
-- Project/Estimate report ownership, atomic PostgreSQL clean-byte handling,
-  stable PDF, bounded XLSX worksheet/cell, and bounded DOCX document/paragraph/simple-table locators/scopes, report assessment
-  components, and deterministic review packages;
-- the PR #103 desk-quote evidence-read hardening;
-- PR #104's expected-label manifests, atomic scope admission, V2 runner
-  preflight, migration-head readiness, and `main` push validation;
-- PRs #105-#118's factual reconciliation, semantic snapshot identity,
-  retained-source safeguards, source-bound Draft materialisation, admission/
-  UI/rule/release-administration type safety, XLSX row handling, and Mission
-  Control task-response validation;
-- production configuration, migration-head, browser, and diagnostic hardening;
-- independent technical-document/variant review, clean source rechecks,
-  current approved/unexpired source-document and stored-file metadata checks,
-  technical-variant date-window checks,
-  verified-byte candidate extraction and Draft-only metadata refresh after a
-  clean-source recheck, Draft-only imports, source-bound variants and revisions,
-  source locators, manual Draft materialisation, and active pinned
-  technical-release safeguards;
-- assumption-led desk-quote PDF/XLSX output as a parallel non-technical
-  proposal path; and
-- pull-request CI with changed-file and full-repository Ruff, full Mypy, full Bandit, full
-  tests, PostgreSQL containment, and Alembic one-head validation.
-
-PR #104 validation run `33515411987` passed on its exact head `0f6c252`. Its
-first observed `main` push run `33516292114` also passed on merge `b6409a5`,
-including tests and the one-head Alembic check. Each PR #105-#174 check and
-corresponding `main` validation then passed through PR #174. The PR #174 check
-was `33892514672` on `e587cf8`; post-merge `main` run `33892921342` passed on
-`7e8f473`. PR #175 merged the documentation-only hybrid decision as
-9c0fc7d; exact main run 33899855871 succeeded. The reconciliation also passed
-70 focused synthetic contract/security tests at that earlier baseline.
-PR #176 merged the four-document reconciliation; PR #177 merged the initial
-contract inventory and 13 added cases. Exact main CI 33933164159 passed on
-c080424; the PR #178 documentation update rechecked it and 83 focused tests. Basic branch metadata
-reports main unprotected with no enforced checks. Detailed protection/rules
-inspection previously returned HTTP 403; this does not permit bypassing CI
-or a requested review.
-
-The latest documented historical Phase 8 attempt is not a proposal result.
-Its receipts/database were not reopened in this documentation reconciliation. Runtime
-inference began, then failed at the first blind-inventory call with
-`VISUAL_PROPOSAL_FAILED` / `INFERENCE_PORT_FAILED`. Rollback/no-write/no-lock
-boundaries held. Its historical receipt retained only the transport exception
-type, not the stable safe code. New proposal-only receipts retain established
-safe codes without exposing exception content. No rerun is authorised.
-
-## 3. Roadmap at a glance
-
-| Phase | Status | Primary exit condition |
-| --- | --- | --- |
-| 0. Product, repository, and change control | **In progress** | Reproducible clean source, protected publication, and auditable operational evidence |
-| 1. Domain and workflow governance | **In progress** | Governed physical amendments, receipt eligibility, and separate lock authority |
-| 2. Governed technical/commercial libraries | **In progress** | Immutable authorised source and runtime releases with complete lineage |
-| 3. Hybrid orchestration and controlled execution | **In progress** | CLASSIFIRE-owned deterministic run state and bounded AI adapters with proven security and recovery parity before OpenClaw retirement |
-| 4. Operational visibility | **In progress** | Useful CLASSIFIRE-owned run visibility without a second project or approval database; Mission Control is transitional/read-only |
-| 5. Evidence intake and resolution | **In progress** | Complete, owned, exact-byte evidence and expected-label coverage across supported reports |
-| 6. Physical Model engine | **In progress** | Defensible model or explicit limitation for every known Defect |
-| 7. Independent visual topology gate | **In progress** | Durable independent validation for every future lock candidate |
-| 8. Corrected real Physical UAT | **Blocked** | Semantically approved canonical model and replacement active Physical Model Lock |
-| 8C. Physical-model accuracy programme | **Planned** | Leakage-safe measured improvement after admission gates |
-| 9. Technical system selection | **Blocked by Phase 8** | One defensible current strategy per supported Opening |
-| 10. Quantity and labour | **Blocked by Phase 9** | Deterministic authorised components, quantities, and labour |
-| 11. Commercial recovery | **Blocked by Phases 9-10** | Each required component recovered once |
-| 12. Validation and immutable snapshot | **Blocked by Phases 8-11** | Reproducible snapshot with no unresolved blockers |
-| 13. Canonical output generation | **Blocked by Phase 12** | Snapshot-only technical/client outputs |
-| 14. Human Release | **Blocked by Phase 13** | Human acceptance of exact snapshot/output hashes |
-| 15. Production hardening | **In progress** | Secure, observable, recoverable, reproducible operation |
-| 16. Structural steel and full duct runs | **Planned / deferred** | Separate approved domains and evidence |
-
-### Cross-cutting ProjectPackage track
-
-`ProjectPackage` is a cross-cutting portability contract rather than a new
-authority-bearing shortcut through the phase sequence:
-
-| Phase | ProjectPackage responsibility |
-| --- | --- |
-| 0. Product, repository, and change control | Govern schema ownership, versioning, compatibility, decision records, and reviewed change control. |
-| 3. Hybrid orchestration and controlled execution | Run deterministic generation and validation as durable CLASSIFIRE jobs that still work when every model adapter is disabled. |
-| 5. Evidence intake and resolution | Define exact package membership, evidence provenance, export profiles, quarantine, safe archive handling, import validation, lineage, and conflict admission. |
-| 13. Canonical output generation | For packages claiming canonical or Released output, assemble immutable complete or redacted revisions and permission-checked downloads from the exact validated snapshot without recalculation. |
-| 15. Production hardening | Prove storage, authentication, signatures or encryption where adopted, compatibility migration, backup/restore, monitoring, malicious-archive resistance, performance, and recovery. |
-
-Imported approvals, locks, signatures, technical decisions, and release
-records always remain historical evidence. Integrity and signature checks prove
-package provenance only; they do not activate local authority. Active local
-authority always requires a new explicit local record created through the full
-applicable CLASSIFIRE gate.
-
-Policy-permitted Draft, Provisional, Validated, Locked, and Released package
-exports are allowed. The manifest preserves the exact lifecycle state,
-unresolved blockers, and authority status, and export never upgrades that state.
-Only a package claiming canonical or Released output requires the applicable
-Phase 12 validation, Phase 13 canonical output, and Phase 14 Human Release gates.
-
-The desk-quote path is a bounded proposal-only exception. It does not advance
-Phases 8-14 and is not a technical selection or canonical output.
+A UI milestone requires observed browser behavior plus relevant API/service tests.
+A schema, test count, mock screen or successful CI alone does not finish it.
 
 ## 4. Prioritised build plan
 
-### Priority reconciliation through PR #185
+### Prototype delivery track
 
-| Work | Status | Dependency / completion evidence |
+Order by user-visible value. Build the minimum shared contracts within each
+slice. Keep the first PR focused on P0; do not bundle the whole prototype into it.
+
+| Milestone | Priority/status | User-visible exit and required evidence |
 | --- | --- | --- |
-| Hybrid decision | **Completed documentation** | PR #175 accepts Decision 0001; runtime migration remains incomplete. |
-| Initial OpenClaw inventory/tests | **Completed foundation** | PR #177: inventory and 13 added cases; 83 focused tests pass. Full parity remains incomplete. |
-| Uncertain session creation | **Completed foundation** | PR #179; five cases prove replay refusal, read-only fallback and stopping before inference. Exact main CI passed. |
-| Loopback socket/protocol contracts | **Completed bounded foundation** | PR #180, 15 cases and two deadline fixes; broader protocol/live compatibility remains unproven. |
-| Audit page contract | **Completed bounded foundation** | PR #181 merged; exact PR/main CI passed. Continuation/oversize refused; legacy receipt compatibility retained. |
-| Completion acceptance consumer | **Completed bounded foundation** | PR #183 merged with required verifier and v2 receipt binding; exact main CI passed. Managed inference refuses without a verifier. |
-| Durable execution journal | **Completed bounded foundation** | PR #184 merged; all 946 hosted tests and exact main CI passed. |
-| Journal/transport lifecycle | **Completed bounded foundation** | PR #185 merged; exact main CI passed 974 tests including disposable PostgreSQL coverage. |
-| Production capture producer | **Blocked on assurance** | Remote capture/terminal identity and loss detection cannot be inferred from a local journal seal or empty audit pages. |
-| Remaining contract characterisation | **Upcoming** | Socket/protocol, audit completeness, recovery, identity, privacy and clean-machine gaps remain in the inventory. |
-| Durable jobs/replacement adapter | **Upcoming / planned** | Characterisation first; extend BackgroundJob/worker. Current worker has no handlers. |
-| ProjectPackage v1 Draft contract/export | **Active local / reordered next** | Review and finish the three-file untracked candidate; 22 synthetic tests pass, but full checks and publication remain. Draft exports do not require AI or Phase 14. |
-| Governed package database projection | **Upcoming dependency** | Prove complete authorized membership, redaction and exact clean-byte reads without recalculation; caller-declared inventory is insufficient. |
-| Package storage/download | **Upcoming** | Immutable revision/ownership, verified exact bytes and audited permission-checked delivery after the export contract. |
-| Quarantined import | **Upcoming / planned** | Stable export/schema/integrity; new-project import before conflict handling. |
-| MCP/standalone package clients | **Upcoming / planned** | Shared authenticated commands, permission/isolation and package contracts. |
-| OpenClaw/Mission Control retirement | **Blocked on parity** | Security, receipts, recovery, visibility, compatibility, clean-machine and rollback evidence; separate operational authority. |
-| Mandatory autonomous fleet | **Superseded target** | Optional bounded inference replaces fleet expansion. Existing adapter/receipt support is not removed. |
-| Technical/production follow-ups | **Separate backlog** | Preserve Phase 2/15 gates; do not broaden the next contract task. |
-| Real UAT and Phases 9-14 | **Blocked** | Fresh authority, evidence, semantic approval and governed replacement lock remain required. |
+| **P0. Draft Scope workspace** | **Next; not implemented** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
+| **P1. Scope intake and replacement** | Upcoming after P0 | Import/replace a validated saved/manual Scope artifact through the UI with identity, ownership, safe-input and revision checks. Add one explicitly supported evidence intake path using existing retained-evidence services; unsupported content is visibly refused. Manual entry remains usable when extraction/AI is unavailable. |
+| **P2. System matching workspace** | Upcoming | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
+| **P3. Estimate workspace** | Upcoming | Load sufficient saved/manual scope, quantity and system inputs; calculate a small supported scenario with units, explicit rate/method basis, recovery and overrides; save/export an Estimate revision and stop without reporting. Unknown technical/pricing facts remain visibly provisional or unresolved. |
+| **P4. Independent Draft reports** | Planned; scope-only profile may follow P0 early | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
+| **P5. Project portability and shared ChatGPT access** | After relevant commands are demonstrated | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
-PR #185 retains the existing table, authority gates and version-2 receipts.
-The [Session Handoff](./SESSION_HANDOFF.md#start-here--next-session) defines the
-unfinished Draft contract slice and how to preserve its local candidate.
-Actual producer assurance remains a separate gate.
+**First interactive prototype = P0. Four-capability prototype = demonstrated
+P0-P4 behavior**, including independent/manual entry and reporting from partial
+inputs. Full portability/ChatGPT and production readiness are separate exits.
+No placeholder button or hard-coded success screen counts as a capability.
+
+### Minimum controls now; refinement later
+
+| Required for each exposed prototype path | Can wait until needed or after user feedback |
+| --- | --- |
+| Existing authentication, CSRF for browser mutations, appropriate permissions, explicit project/artifact ownership and a controlled test environment | Multi-organization product breadth and production tenancy rollout; never claim cross-tenant isolation without proof |
+| Stable IDs, valid relationships/units, attributed manual input, uncertainty, provenance, durable saves and revision identity | Exhaustive taxonomies, every document format, polished layouts and every rare workflow combination |
+| Preserve canonical guards, technical/commercial separation, deterministic supported calculations and visible Draft status | Real canonical Phase 8-14 acceptance, production lock/release operations and deep accuracy optimization |
+| Bound and validate exposed inputs/downloads, refuse unsafe paths/tampering and avoid secrets or customer fixtures; safe spreadsheet output when exposed | ZIP conflict resolution/offline synchronization before ZIP import exists; large-file/performance tuning before measured need |
+| Targeted happy-path and material negative tests, browser inspection, required CI and no known supported-path safety/correctness defect | General agent framework, full scheduler, provider migration and broad failure-matrix expansion unrelated to the selected slice |
+
+Deferring breadth means restricting and declaring the supported scope. It never
+means suppressing known errors, weakening tests or bypassing permissions.
+
+### Work reordered and retained
+
+| Work | Revised disposition |
+| --- | --- |
+| Finish the generic ProjectPackage exporter before any UI | **Superseded priority.** Keep the candidate; reconcile only what P0 needs, then complete packaging when it serves P5. |
+| Complete all four schemas before building screens | **Superseded.** Evolve compatible contracts alongside demonstrated use cases. |
+| OpenClaw completion/journal/transport foundations | **Completed bounded foundations** (PRs #183-#185); preserve them without making replacement work a P0 dependency. |
+| Remaining capture assurance, general jobs, replacement adapter and retirement | **Separate gated backlog.** Mandatory before applicable provider deployment/retirement, unnecessary for deterministic manual P0. |
+| Full technical-source lineage, broad pricing inference, all formats and edge cases | **Deferred breadth.** Do only what the selected supported capability needs; no implied source redistribution or learned-price reliability. |
+| Existing domain guards, exact-byte reads, snapshot integrity, scoped review and CI | **Retained foundations.** Reuse them; avoid parallel business pipelines or regression. |
+| Legacy draft PRs #9-#13 / dirty root | **Recovery context.** Do not bulk-merge or overwrite. |
 
 ### Immediate next action
 
-#### Accepted target - hybrid CLASSIFIRE architecture
+Implement **P0: the persisted Draft Scope workspace**. Use the current UI shell,
+shared application use cases and governed persistence. Choose the minimum Draft
+schema/storage mapping within that task; do not write unapproved physical facts
+into canonical models. Reconcile the local package candidate without turning its
+publication into a prerequisite. The handoff defines inputs, tests and done.
 
-[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
-accepts a deterministic CLASSIFIRE core with bounded optional AI adapters.
-OpenClaw is now a transitional adapter, not the long-term product foundation,
-but it remains in place until the documented security, receipt, recovery,
-observability, clean-machine, and rollback parity gates pass.
+### Authoritative readiness track
 
-Prioritise review, completion and publication of the existing deterministic Draft
-ProjectPackage v1 contract/exporter candidate. This moves the approved user-facing product forward
-while real-provider assurance remains unproven. Decision 0001 explicitly permits
-Draft exports with unresolved stages and no authority upgrade. First inventory
-membership and export rights, then prove schema/semantic integrity and repeatable
-archive generation. Governed database projection, immutable storage/download, quarantined import and shared
-clients follow. Real AI wiring and OpenClaw retirement retain all parity gates.
+The existing phase catalogue below retains its detailed domain and release exits.
+Phases 8-14 gate authoritative project results, not all prototype implementation.
+A validated manual artifact replaces session dependence; it does not replace
+required evidence, local approval, physical locks or technical eligibility.
+Library and operational gates apply when those capabilities/data are actually
+exposed. Provider/customer operations, deployment and release need their existing
+authorization and evidence. P0 does not require a real provider or customer file.
 
-#### Completed shared-main foundation - scoped proposal-review reader access (PR #145)
-
-PR #145 completes the controlled-UAT reader boundary. Non-administrators now need both proposal_review:read and an active, audited Project or exact-package grant; administrators can grant, reactivate, or revoke access. The package lifecycle remains proposal-only and grants no canonical, technical, commercial, lock, deployment, or release authority.
-
-The pull-request run 33741309950 and post-merge main run 33741595397 both passed. Broader or customer-facing access remains out of scope.
-
-#### Completed shared-main foundation - hash-bound technical source-document supersession (PR #147)
-
-PR #147 lets a new technical source document record a hash-bound historical predecessor only when the predecessor has an independent approval and its retained technical-evidence bytes still verify clean and unchanged. The new document remains Draft; the earlier document is not retired, and no TechnicalVariant activation, technical selection, pricing, lock, deployment, or release authority is added. PR validation run 33745988740 and post-merge main run 33746319101 passed.
-
-#### Completed shared-main foundation - approval-bound proposal-review assembly (PR #149)
-
-PR #149 requires the database-backed proposal-review controller to receive the
-exact approved expected-label manifest and then prove every selected scope packet
-is V2 and bound to that same ID, hash, and approval reference. It rejects legacy
-or unbound scope packets, and packets bound to a different approval, before
-package assembly. Historical V1 packet verification remains available; no record
-is rewritten or retired.
-
-PR validation run 33749820103 and post-merge main run 33750096567 passed. This
-is proposal-only: it adds no report/provider operation, canonical, technical,
-commercial, lock, deployment, or release authority.
-
-#### Completed shared-main foundation - strict source-bound caption locators (PR #151)
-
-PR #151 classifies only explicit, numbered `Figure`, `Fig`, `Image`, `Photo`,
-`Photograph`, or `Plate` text as a caption. It persists only the fixed category
-and safe deterministic position/hash fields, then re-extracts the exact text
-transiently only after retained-PDF locator/hash verification. It rejects
-ambiguous prose and raw-caption locator fields. It creates no caption-to-image
-association and no physical, technical, commercial, canonical, lock,
-deployment, or release authority. Pull-request run 33753130859 and post-merge
-main run 33753516838 passed.
-
-#### Completed shared-main foundation - source-bound XLSX report locators (PR #154)
-
-PR #154 extends the exact retained-byte report boundary to `.xlsx` workbooks.
-It persists only visible worksheet shape and non-empty cell position/category/hash
-locators, then re-extracts selected cells transiently after the same exact workbook,
-locator, and hash verify again. It never stores worksheet names or cell values and never
-executes a formula. Hidden sheets, macros, external links, drawings/media/charts,
-comments, pivots, embedded objects, validation rules, and unsafe archive or worksheet
-shapes are rejected. Forward-only migration `0017_xlsx_report_evidence_locators` admits
-only `worksheet` and `cell` locator kinds. This remains proposal-only and adds no
-provider, canonical, technical, commercial, lock, deployment, or release authority.
-Pull-request run 33760112145 and post-merge main run 33760450512 passed.
-
-#### Completed shared-main foundation - source-bound DOCX report locators (PR #156)
-
-PR #156 extends the exact retained-byte report boundary to `.docx` documents. It
-persists only structural document, visible body paragraph, and simple body table
-positions/counts/hashes, then re-extracts selected paragraph/table content transiently
-after exact retained-byte, locator, and hash verification. It never stores document text
-or table values. Encrypted or unsafe archives, macros, external relationships, embedded
-or hidden content, tracked changes, fields, hyperlinks, drawings, and unsupported body
-structures are rejected. Forward-only migration `0018_docx_report_evidence_locators`
-admits only `document`, `paragraph`, and `document_table` locator kinds. This remains
-proposal-only and adds no provider, canonical, technical, commercial, lock, deployment,
-or release authority. Pull-request run 33765731885 and post-merge main run 33766069162
-passed.
-
-### Explicit human-approved report evidence families
-
-Migration `0019_report_evidence_family_manifests` retains an immutable,
-human-approved, ordered family of at least two already-retained reports for one Project
-and Estimate. The approver supplies only each exact stored-file ID and source SHA; the
-service rejects filenames, folders, timestamps, titles, and other inferred membership.
-It rechecks the immutable clean source binding, ownership, source hash, and family hash
-whenever the family is loaded, and rejects tampering or source drift.
-
-Explicit family admission is now accompanied by a deterministic proposal-review
-aggregate. It accepts exactly one already-valid single-report review package for each
-approved member, in the approved order. Each inner package must retain a V2
-human-approved expected-label manifest that is independently re-resolved against the
-member's exact stored source and hash. The aggregate retains the separate scopes,
-artifacts, and identical protected-state receipt binding; it rejects absent, extra,
-swapped, legacy/unbound, drifted, or tampered components.
-
-The proposal-review register now retains either a single-report package or an approved
-report-family package. A family record binds the exact approved family-manifest ID,
-hash, and human approval reference, then independently rechecks every member's exact
-stored source, expected-label approval record, review-package manifest, and outcome
-membership. It preserves member order and separate source identities; it never merges
-reports or scopes. The same CLASSIFIRE-owned five-year retention, separate redaction,
-legal hold, integrity refusal, and scoped internal reader grants apply. The internal `/proposal-reviews` pages identify a family and show each outcome's family
-member and evidence identifier without exposing storage paths or creating an execution
-route. Only an administrator may append an immutable, hash-bound human-review annotation
-for the exact original or redacted view and a visible scope using an explicit finding state
-and safe reason code. Other eligible readers can see annotations only in their exact view.
-An annotation records an observation only; it is not a technical, commercial, lock, or
-release approval.
-This remains evidence admission and proposal-review assembly only. It does not change
-PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
-single-report runner, call a provider, or grant canonical, technical, commercial, lock,
-deployment, or release authority.
-
-### Completed and published foundations (not next actions)
-
-#### Completed on shared main - Snapshot, technical-source, and type-safety safeguards (PRs #105-#118)
-
-**Shared-main result:** PR #106 makes V2 snapshot identity stable across volatile
-generation metadata while retaining a full-document integrity hash and V1
-verification. PRs #107-#111 require retained technical sources at activation,
-bind Draft variants and revisions to that exact source, require a source locator
-before review, and keep extraction failures content-safe. PR #112 materialises
-source-bound Draft variants only from clean retained documents. PR #113 makes
-admission rejection helpers explicitly non-returning without weakening their
-safe-code failure. PR #114 makes existing rule and UI response types explicit,
-rejects non-text rule operators deterministically, and proves existing
-library-page rendering. PR #116 preserves the existing release-administration
-guards while clarifying their type boundaries; PR #117 clarifies XLSX row
-handling; and PR #118 validates Mission Control task responses as JSON objects.
-PR #119 reconciles those records, PR #120 uses an aware UTC clock for PDF
-timestamps, and PRs #121-#122 apply current CLASSIFIRE branding to generated
-artifacts and the browser workspace.
-
-**Verification:** every PR #105-#122 check and its corresponding `main` push
-validation passed; the latest `main` run is `33657134992` on `5639e26`. These
-are safeguards only: no technical decision, release publication, pricing,
-canonical submission, lock, deployment, or Human Release was added.
-
-#### Completed on shared main - Current technical-source safeguards and release lineage (PRs #127-#142)
-
-**Shared-main result:** PR #127 reconciles factual records through the hosted
-validation baseline. PR #128 permits extraction only from clean hash-verified
-retained bytes; PR #129 refreshes Draft metadata only from a fresh verified
-source recheck. PR #130 enforces current TechnicalVariant date windows. PR #131
-rejects expired source authority, and PR #132 rechecks bound source-document
-approval and retained-file metadata at current-use boundaries. PRs #133-#134
-show those same metadata results read-only on TechnicalVariant and
-TechnicalDocument detail screens. PR #135 reconciles the factual baseline. PR
-#136 fixes a safe source state in each newly published technical manifest: bound
-document/file identity, digest, and locator, or an explicit legacy-unbound state;
-it rejects later source-lineage drift from pinned runtime use. PR #137 reconciles
-those factual records. PR #138 displays the immutable published source lineage
-on TechnicalRelease detail screens without granting source approval or current-use
-authority. PR #139 reconciles the factual records. PR #140 safely links an
-eligible bound document ID to the existing current read-only document record; it
-URL-escapes the row ID and leaves legacy, malformed, and unrecognised bindings
-as non-links. PR #141 reconciles the factual records. PR #142 makes every
-TechnicalVariant revision's existing retained-document binding and cited
-document/page/table/figure locator visible to a reviewer. It links only existing
-retained-document records and labels missing bindings or legacy-unbound rows.
-
-**Verification:** every PR #127-#142 check and each corresponding `main` push
-validation passed. The latest PR check is `33695410954` on `cdf4236`; the latest
-`main` run is `33695636744` on `abe8bde`.
-
-**Authority boundary:** these changes do not approve a source, activate a
-variant, re-read source bytes, publish a technical release, price work, create
-canonical state, create a lock, deploy, or Human Release.
-
-#### Completed on shared main - Report governance and main validation (PR #104)
-
-**Shared-main result:** expected-label manifests are bound to retained report
-bytes and an Estimate. Complete exact label sets are admitted atomically, each
-new scope carries the approval binding, and the runner rejects legacy or unbound
-scope packets before proposal-only execution. Migration and deployment-lineage
-expectations now require the single packaged `0013` head.
-
-**Verification:** PR run `33515411987` passed on `0f6c252`; post-merge `main`
-run `33516292114` passed on `b6409a5`, including tests and the one-head Alembic
-check. The change remains proposal-only and adds no canonical, technical,
-commercial, lock, deployment, or release authority.
-
-#### Completed on shared main - Desk-quote evidence hardening (PR #103)
-
-**Shared-main result:** the resolver now requires an explicit Project/Estimate binding,
-uses only immutable, `clean` ProjectEvidence-owned `project_evidence`, reopens
-the exact retained bytes through the shared atomic reader, and checks caller
-locators against persisted EvidenceSource or ReportEvidenceLocator data.
-`technical_evidence` remains rejected.
-
-**Verification:** new and cached bytes are re-hashed before return and their
-hash/size are audited. Synthetic tests cover missing, altered, unsafe-path,
-quarantined, cross-estimate, locator, cache-tamper, and PostgreSQL race cases.
-
-**Relevant components:**
-
-- `src/classifire/services/desk_quote.py`
-- `src/classifire/api/router.py`
-- `src/classifire/services/storage.py`
-- `src/classifire/services/project_evidence.py`
-- `tests/test_desk_quote.py`
-- `tests/test_shared_file_containment.py`
-
-**Acceptance criteria:**
-
-1. only Project/Estimate-owned, immutable, `clean`, exact retained bytes are
-   usable;
-2. `not_configured`, pending, quarantined, missing, altered, outside-root,
-   symlink, and Windows reparse-point sources fail closed;
-3. locator text matches persisted EvidenceSource page/region data or a stable
-   `ReportEvidenceLocator`;
-4. cross-project and cross-estimate evidence fails;
-5. the PostgreSQL quarantine/read race remains serialized;
-6. new and cached export bytes are hash-verified and the artifact hash is
-   included in the audit record;
-7. failure creates no export, cached artifact, audit event, canonical state,
-   technical decision, pricing mutation, or lock; and
-8. focused tests, PostgreSQL race, full suite, Ruff, Mypy, Alembic head, and
-   `git diff --check` pass.
-
-No real customer report, quote, OpenClaw, Gateway, or provider run was used.
-PR #103 passed CI and review; operational approval remains a separate gate before
-use.
-
-#### Completed on shared main - Secret-safe Phase 8 transport diagnostics
-
-**Result:** commit `afb9de1` propagates only the established safe transport code
-through new outer `INFERENCE_PORT_FAILED` receipts. Historical receipts remain
-valid and content-free.
-
-**Why now:** the authorised assessment failed safely, but the receipt cannot
-identify the transport failure class beyond the Python exception type.
-
-**Acceptance criteria:**
-
-- known codes such as `GATEWAY_TIMEOUT` survive;
-- arbitrary exception messages, malformed codes, response content, tokens, and
-  report content do not;
-- generic exceptions retain type-only behaviour;
-- receipt validation, stage hashes, protected-state checks, and no-write flags
-  remain valid; and
-- synthetic/fake-port tests, focused regressions, Ruff, and the full suite pass
-  without report, OpenClaw, Gateway, or provider execution.
-
-Commit `afb9de1` is an ancestor of shared `main`; historical receipts remain
-verifiable and no real report/provider operation was used for this change.
-
-#### Completed on shared main - Bounded report-assessment runner
-
-**Current state:** `execute_phase8_report_assessment_runner()` composes the
-service components as a proposal-only application service with fake-port tests.
-
-**Required contract:** exact project, estimate, report SHA, package/policy/
-profile, and a persisted human-approved expected Defect-label manifest bound to
-report evidence/source SHA and estimate; every new scope batch atomically admits
-the complete exact approved label set and retains that approval record; V2 scope
-packets and the completion receipt bind the approval ID, SHA, and reference;
-atomic clean-byte trust held through context consumption; one deterministic
-outcome per expected label; no technical, pricing, canonical, lock, deployment,
-or release capability.
-
-**Acceptance criteria:**
-
-- cross-project, hash, locator, label, profile, and byte drift fail before a
-  provider call;
-- omitted, duplicate, foreign, or mismatched expected labels are rejected before
-  scope admission;
-- retrieval-blocked, malformed, insufficient-evidence, transport-failed, and
-  successful fake results each produce exactly one safe outcome;
-- drawing/image locator-only and separately governed visual-byte semantics are
-  preserved;
-- strict explicitly numbered caption text is retained only as a content-free
-  locator and transient hash-checked documentary context, without visual
-  association or fact inference; and
-- fake-transport integration, report-focused tests, PostgreSQL containment,
-  full suite, static checks, Alembic head, and output inspection pass.
-
-Shared-main behaviour: `execute_phase8_report_assessment_runner()` composes the
-contained report reader, packets, documentary contexts, retained visual packets,
-report-aware controller, proposal review, and deterministic package. It admits
-new scopes only from the complete approved expected-label record, retains that
-binding, then loads the same record after its clean-byte check and preflights V2
-scope packets before an injected fake port. It emits a V2 receipt artifact bound
-to that record. The full offline suite, focused static checks, Alembic head, and
-the dedicated two-session containment race passed locally; PR and post-merge
-shared CI also passed. Any real-provider run remains a separate gate, and no
-downstream authority was added.
-
-### Near-term actions
-
-1. Use the merged scoped-reader boundary only for controlled UAT. Any real report or provider operation still needs separate explicit authority; neither a grant nor a package record creates that authority.
-2. Complete extraction-assisted and manufacturer-neutral lineage, then prove
-   clean-machine technical-library import and recovery.
-3. Independently validate physical, technical, quantity, labour, commercial,
-   formula, recovery, and release integrity before Phase 12. Snapshot V2 already
-   separates `generated_utc` from semantic identity while preserving full
-   document integrity and V1 verification.
-4. Maintain the full-repository Ruff, Mypy, and Bandit checks beside the changed-file
-   Ruff fast-path, then have the repository owner decide on an upgrade or
-   equivalent documented default-branch protection control.
-5. Extend report evidence beyond the now-supported PDF/XLSX/DOCX boundary, starting
-   with the explicit human-approved family manifest as its only membership boundary. The approved family now has retained proposal-review aggregation, scoped reader visibility, administrator-only immutable human-review annotations, and a service-only runner that preflights every member before any no-tool port is created. Automatic joining remains separate. Keep the merged caption contract
-   limited to strict retained-PDF text and do not associate captions with images.
-
-### Later or dependency-bound actions
-
-6. After synthetic transport behaviour is understood, obtain new explicit
-   authority for one proposal-only report assessment. Review every artifact; a
-   successful call is not semantic approval.
-9. Resolve remaining physical uncertainty and obtain independent semantic
-   approval before any canonical preflight.
-10. Keep admission signing, registration, canonical submission, and Physical
-    Model Lock as separately authorised operations.
-11. Keep Phases 9-14 blocked until the replacement lock exists.
-12. Continue Phase 15 security, recovery, data-rights, and performance work only
-    where it cannot bypass an upstream product gate.
-
-## 5. Phase details
+## 5. Authoritative phase catalogue and retained backlog
 
 ### Phase 0 - Product, repository, and change control
 
@@ -512,10 +133,11 @@ downstream authority was added.
 private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
-**Remaining:** the root checkout is conflicted recovery evidence; hosted `main`
-validation passed through PR #175, but the current GitHub plan prevents
-branch-protection configuration; clean-machine and release reproducibility
-remain incomplete.
+**Remaining:** the root checkout is conflicted recovery evidence. Exact main CI
+passed on `3b437da` (PR #186); basic metadata currently reports main unprotected.
+Detailed protection configuration limits were not rechecked here; do not infer
+plan restrictions or bypass CI/review from that fact. Clean-machine and release
+reproducibility remain incomplete.
 
 **Exit:** every publishable change starts from clean current main, is reviewed,
 passes required checks, and is traceable without secrets or customer evidence.
@@ -625,10 +247,11 @@ write canonical state.
 
 **Completed foundations:** role-limited no-tool proposal sessions, literal-
 loopback transports, evidence rehashing, tool attestation/audit, proposal-only
-receipts, admission registration, and one-shot submission boundaries.
+receipts, admission registration, one-shot submission boundaries, and PRs
+#183-#185 completion consumer/journal/optional transport lifecycle integration.
 
-**Remaining:** first freeze the used OpenClaw behaviour with synthetic contract
-tests. Then implement durable CLASSIFIRE job/run/stage state, provider-neutral
+**Remaining within the separate replacement track:** extend the existing contract
+characterisation and journal into only the required durable job/run/stage handling, provider-neutral
 inference adapters, governed secret custody, timeout/cancellation/retry and
 crash-recovery evidence, provider-egress classification/minimisation, permitted
 provider/endpoint and network-allowlist enforcement, tenant/project isolation,
@@ -752,7 +375,7 @@ Human Release authority.
 
 ### Phase 9 - Technical system selection
 
-**Status:** Blocked by Phase 8
+**Status:** Authoritative exit blocked by Phase 8; P2 Draft/manual development is allowed
 
 Search only the pinned authorised technical release, evaluate every relevant
 physical condition, preserve mismatches/unknowns, and create one current strategy
@@ -760,7 +383,7 @@ per supported Opening. Pricing never proves suitability.
 
 ### Phase 10 - Quantity and labour
 
-**Status:** Blocked by Phase 9
+**Status:** Authoritative exit blocked by Phase 9; bounded P3 development is allowed
 
 Derive component quantities and labour from selected systems with explicit
 inputs, units, waste, rounding, procurement, access, productivity, crew, and
@@ -768,7 +391,7 @@ shared-work rules. Missing productivity fails closed.
 
 ### Phase 11 - Commercial recovery
 
-**Status:** Blocked by Phases 9-10
+**Status:** Authoritative exit blocked by Phases 9-10; bounded P3 development is allowed
 
 Recover each required component once through an authorised pricing hierarchy
 and explicit inclusion/recovery ledger. The desk-quote prototype remains a
@@ -776,7 +399,7 @@ parallel assumption-led allowance and does not satisfy this exit.
 
 ### Phase 12 - Independent validation and immutable snapshot
 
-**Status:** Blocked by Phases 8-11
+**Status:** Authoritative exit blocked by Phases 8-11; Draft artifact identity work is allowed
 
 Snapshot V2 now keeps volatile generation metadata out of the semantic hash and
 binds the complete document with a separate integrity hash; V1 snapshots remain
@@ -785,7 +408,7 @@ commercial, formula, recovery, and release integrity.
 
 ### Phase 13 - Canonical output generation
 
-**Status:** Blocked by Phase 12
+**Status:** Canonical output exit blocked by Phase 12; independent P4 Draft reporting is allowed
 
 Render technical/client artifacts from the immutable validated snapshot only;
 renderers must not recalculate or reinterpret scope. Desk-quote PDF/XLSX output
@@ -818,6 +441,10 @@ import them into the active fire-seal/penetration runtime prematurely.
 
 ## 6. Deprecated and superseded work
 
+- Infrastructure/schema perfection before an interactive prototype.
+- The former package-exporter-first handoff as the current next task.
+- Treating the full canonical chain as a compulsory user session sequence.
+
 - The conflicted root checkout as a publication, deployment, or bulk-merge path.
 - Draft PRs #9-#13 as current-main candidates without selective reconstruction.
 - PR #75 as open work; it merged at `348bce5` and remains a bounded
@@ -844,7 +471,8 @@ import them into the active fire-seal/penetration runtime prematurely.
 6. Correct abstention beats unsupported confidence.
 7. Technical suitability and commercial price remain separate.
 8. Shared work is commercially recovered once.
-9. No downstream phase bypasses an unresolved upstream gate.
+9. No authoritative downstream result bypasses an unresolved upstream gate;
+   independently validated Draft prototype work is allowed within its stated limits.
 10. Final release remains human-only.
 11. ChatGPT, standalone, CLI, and administrative interfaces call the same
     CLASSIFIRE application and domain services; they do not duplicate business
@@ -860,6 +488,9 @@ import them into the active fire-seal/penetration runtime prematurely.
 
 ## 8. Related documents
 
+- [Product Goal](../GOAL.md)
+- [Engineering Guidance](../AGENTS.md)
+- [ADR 0002 - Independent Capabilities](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md)
 - [Current Project State](./PROJECT_STATE.md)
 - [CLASSIFIRE Architecture](./CLASSIFIRE_ARCHITECTURE.md)
 - [Architecture Decision 0001 - Hybrid CLASSIFIRE Architecture](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)

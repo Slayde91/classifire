@@ -2,6 +2,10 @@
 
 **Status:** Accepted target architecture on 2026-09-05; migration not yet complete
 
+**Refinement:** [Decision 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md)
+was explicitly approved on 2026-09-05. It defines independent capability artifacts
+and prototype-first UI delivery without weakening this decision's retirement gates.
+
 **Scope:** Orchestration, bounded AI execution, ChatGPT and standalone
 interfaces, portable project packages, and eventual OpenClaw retirement
 
@@ -316,7 +320,15 @@ Costs and limitations:
 
 ## 8. Migration and compatibility
 
-Migration is additive and reversible:
+Migration is additive and reversible. The sequence below records replacement
+adapter dependencies, not a requirement to finish OpenClaw work before building
+the product. Under accepted Decision 0002, the UI prototype and minimum Draft
+contracts proceed first; package and interface steps may run independently of
+provider replacement. Synchronous bounded manual commands need no general job
+scheduler. Background execution becomes necessary when the selected workflow
+actually needs durable long-running work.
+
+Within the OpenClaw replacement track:
 
 1. Characterise the current OpenClaw contract with synthetic inputs and golden
    receipts.

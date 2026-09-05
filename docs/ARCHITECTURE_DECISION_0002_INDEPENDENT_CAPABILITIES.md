@@ -1,12 +1,13 @@
 # Architecture Decision 0002 - Independent product capabilities
 
-**Status:** Proposed for explicit architecture approval; not an amendment in force.
+**Status:** Accepted target architecture by explicit user approval on 2026-09-05; implementation incomplete.
 **Prepared:** 2026-09-05 (AEST).
 **Verified baseline:** `3b437dad9e42ec7ba2adf512b8ee67816d243473` (PR #186).
 **Relationship:** Refines [Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md).
-Decision 0001 remains accepted. Publication of this proposal does not approve it.
+Decision 0001 remains accepted as refined here. The same approval directs delivery
+toward a working, testable UI prototype before broad refinement and edge-case work.
 
-## Decision requested
+## Accepted decision
 
 Keep the approved hybrid modular application, and expose four independently
 callable capabilities: scope analysis, technical-system matching, estimating,
@@ -18,7 +19,7 @@ This records the architecture implications of the newly supplied product brief.
 It does not authorize a rewrite, production operation, permission change,
 OpenClaw removal, or automatic acceptance of manual/imported technical claims.
 
-## Current architecture -> proposed change -> reason
+## Current architecture -> accepted change -> reason
 
 **Verified current architecture:** CLASSIFIRE already owns deterministic domain
 logic, database/storage, physical governance, technical-library governance,
@@ -41,7 +42,7 @@ versioned Scope/System Match/Estimate artifact boundaries, dependency freshness,
 independent capability entry points or whole-project database completeness.
 Do not publish that schema as the final product contract without reconciliation.
 
-**Proposed change:** retain the same application and domain services, add stable
+**Accepted change:** retain the same application and domain services, add stable
 capability contracts and explicit artifact dependency records, and let the user
 choose which capability runs. An orchestration command may chain capabilities
 only when explicitly requested. Four capabilities do not require four agents,
@@ -139,29 +140,46 @@ it must not be invented in the current package implementation. Transparent
 component/rules methods and holdout error evidence precede claims about reliable
 price inference. No new pricing algorithm or redistribution right is approved here.
 
-## Migration and priority impact if approved
+## Prototype-first delivery and migration
 
-1. Reconcile the three-file Draft ProjectPackage candidate against common artifact
-   identity, capability payloads, dependency freshness and partial exports. Reuse
-   proven archive validation; do not discard unrelated work or freeze an incomplete
-   v1 contract. First slice: common artifact envelope and an independently validatable
-   Scope Package contract using existing physical/evidence identifiers.
-2. Prove standalone scope validation and safe export/import contracts with
-   synthetic multi-service/opening cases and explicit incomplete evidence. Select
-   the smallest application use case from current source; do not claim full source
-   analysis merely because a schema validates.
-3. Add or expose matching and estimation use cases that accept saved/manual inputs
-   and check all material prerequisites without depending on prior session state.
-4. Add snapshot-only partial reporting with consistent PDF/XLSX content. Reuse
-   renderers where valid and preserve the current canonical export guards.
-5. Complete governed projection, revision storage, download, quarantine/import and
-   shared interfaces as bounded slices. Continue OpenClaw replacement only against
-   Decision 0001's independently proven parity requirements.
+The user explicitly approved this amendment and prioritized an interactive
+prototype over polishing every detail. The minimum artifact contract belongs
+inside a usable UI slice; it is not a separate programme to finish before UI.
+The [roadmap](./CLASSIFIRE_ROADMAP.md#prototype-delivery-track) defines delivery
+order and measurable user-facing exits.
 
-Phases 8-14 remain gates for authoritative end-to-end results. Draft capability
-contracts and partial reporting are separate development milestones, not evidence
-that those phase exits are complete. On approval, reconcile the four maintained
-documents and replace their former package-publication-first handoff accordingly.
+1. **First slice: persisted Draft Scope workspace.** Extend the existing FastAPI/
+   Jinja UI and shared services so a user can create/open a synthetic project,
+   manually enter distinct openings/services and uncertainties, validate, save,
+   reopen and download a versioned Draft Scope JSON artifact. Include only the
+   schema, persistence, permission and revision behavior needed for that slice.
+   Draft data must not write guarded canonical physical rows or imply approval.
+2. Add safe Draft Scope import/replacement and supported evidence-assisted intake
+   as bounded UI increments. Explicitly report unsupported input; do not await
+   comprehensive format coverage or AI availability to demonstrate manual scope.
+3. Expose matching and estimating workspaces from saved or validated manual
+   inputs. Preserve their separate contracts and never run the next capability
+   implicitly. Develop with synthetic approved-library fixtures and clearly
+   provisional commercial inputs until real-source authority is established.
+4. Provide independent Draft reporting from selected artifact revisions. Produce
+   PDF/XLSX from one snapshot without recalculation, show missing/stale sections,
+   inspect both formats, and extend the report profiles as capabilities arrive.
+5. Reconcile and reuse the untracked ProjectPackage archive candidate when
+   assembling multiple capability artifacts, then prove governed projection,
+   storage/download and quarantined import. A Draft Scope download is not the
+   complete project-package product. Do not freeze v1 around today's narrow record
+   list or make complete ZIP/import infrastructure a prerequisite for first UI.
+6. Add a thin ChatGPT adapter to proven application commands; keep both clients
+   on the same core. Prioritize observed user feedback, then broaden accuracy,
+   format coverage, performance and production operation. OpenClaw replacement
+   remains a separate parity-gated track and is not required for the manual UI.
+
+Phases 8-14 remain gates for authoritative end-to-end results, not a blanket ban
+on development of independent Draft capabilities. Each prototype slice retains
+permissions, ownership, provenance, explicit uncertainty, safe input handling,
+applicable calculation checks and existing authority boundaries. Broader edge-case
+coverage can follow user testing; a known security or correctness defect on the
+supported path must be fixed before declaring that slice usable.
 
 ## Acceptance evidence for the amended architecture
 
@@ -180,14 +198,15 @@ documents and replace their former package-publication-first handoff accordingly
 - With AI disabled, valid manual artifact workflows still operate. ChatGPT and
   standalone adapters use the same domain validation and authorization services.
 
-## Unresolved details and approval boundary
+## Remaining implementation decisions
 
-The four-capability direction is explicit in the supplied product brief. The
-implementation amendment remains proposed until confirmed: exact artifact schema,
-manual-input admission, provisional estimate/report profiles, freshness storage,
-override precedence and source redistribution need mapping to current policies.
-Do not silently relax existing canonical guards to implement independence.
+Architecture approval is complete. Exact payload/schema evolution, Draft storage
+mapping, manual-input admission, provisional report profiles, freshness storage,
+override precedence and source redistribution still need mapping to current
+policies when the relevant slice is built. Resolve ordinary implementation details
+using existing abstractions. Surface only material policy choices not covered by
+approval; do not ask again whether four independent capabilities are approved.
 
-This review changed no executable code, schema, migration, permissions or runtime.
-Approve this amendment to make its revised contract-first priority authoritative;
-then implement the smallest proven slice and update the four continuity documents.
+Approval and documentation do not implement a prototype or authorize a live
+provider/customer run, canonical write, lock, deployment or release. No such
+operation occurred in this documentation change.
