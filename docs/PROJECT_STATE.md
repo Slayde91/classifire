@@ -2,8 +2,8 @@
 
 **Verified snapshot:** 2026-09-05 (AEST)
 **Product status:** Pre-production implementation and controlled UAT
-**Verified shared-main baseline:** `51e7d601a756141dfbdef5d113e754a9b2833d34` (PR #182, 2026-09-05)
-**Latest executable-change baseline:** 4ab8723 (PR #181)
+**Verified shared-main baseline:** `d03753f94634860ed3381825f4c5d2f514e6523d` (PR #183, 2026-09-05)
+**Latest executable-change baseline:** d03753f (PR #183)
 
 PR #175 adopted Architecture Decision 0001 in documentation. It did not implement
 the hybrid migration. This snapshot separates freshly checked source/Git/test
@@ -12,48 +12,47 @@ under `docs/`; root-level duplicates are not maintained.
 
 ## Contract characterisation progress
 
-PR #182 merged the documentation reconciliation as `51e7d601a756141dfbdef5d113e754a9b2833d34`.
-[Exact main CI 33938506042](https://github.com/Slayde91/classifire/actions/runs/33938506042)
-passed. PR #181 audit-page refusal, PR #180 socket deadlines and PR #179
-uncertain-session-creation refusal remain implemented.
+PR #183 merged the required completion consumer as `d03753f94634860ed3381825f4c5d2f514e6523d`.
+[Exact main CI 33939296281](https://github.com/Slayde91/classifire/actions/runs/33939296281)
+passed. Managed OpenClaw factories have no trusted production verifier and refuse
+inference dispatch; the independent no-tool boundary remains intact.
 
-**Current implementation candidate (publication must be verified):**
-`feat/phase8-completion-evidence-20260905` now includes shared main `51e7d60`.
-Both transports require an application-configured completion verifier before
-inference token acquisition or HTTP dispatch. Successful acceptance validates
-the exact invocation, durable receipt identity, terminal time and capture
-coverage, writer health, and zero pending/lost/tool records. Version-2 transport
-digests bind that result. Independent no-tool checks and historical audit
-observation receipts remain unchanged.
+**Current journal candidate:** `feat/execution-journal-20260905`, based on
+`d03753f`, adds `services/execution_journal.py` on the existing BackgroundJob
+table. It commits reservation and capture identity before producer execution,
+then commits a sealed terminal record before returning completion evidence.
+Owner, producer, invocation, context, state and record version are bound.
+Exact completed replay does not redispatch; failed/interrupted/running attempts
+cannot replay. Conditional updates prevent late completion after interruption.
 
-**Intentional runtime consequence:** managed factories supply no completion
-verifier, so inference dispatch fails with `COMPLETION_EVIDENCE_UNAVAILABLE`.
-No production evidence producer/verifier is supplied. This is a fail-closed
-consumer boundary, not proof of working production capture or OpenClaw retirement.
-Typed fields and hashes cannot authenticate a producer. See the
-[completion contract](./EXECUTION_COMPLETION_CONTRACT.md).
+**Trust and limits:** an injected trusted producer owns capture assurance.
+HMAC protects stored journal content using an application-held key; it cannot
+prove remote tool activity or replace producer authentication. Owner identity
+must come from authenticated application composition, not user-supplied authority.
+There is no API, generic-worker dispatch, runtime wiring, new dependency or
+database migration. Managed inference remains blocked.
 
-**Verified candidate evidence:** 171 synthetic tests passed across the twelve
-transport/security/caller files listed in the handoff. Eight existing Pillow
-deprecation warnings remain. Exact request/response byte binding, missing evidence
-before token/HTTP, invalid/mismatched/incomplete evidence, safe errors, replay
-binding, managed refusal and legacy audit receipt compatibility are covered.
-No real provider, customer evidence, canonical write, lock or release was used.
+**Verification:** 27 journal tests and 171 transport/security/caller tests passed
+locally. Three additional PostgreSQL restart/concurrency cases use the existing
+explicit disposable-database fixture and must pass in hosted CI. Full Ruff,
+Bandit and Mypy (143 source files) passed; one migration head remains. Existing
+Pillow warnings persist. No real provider or customer/canonical operation ran.
 
-**Next gated task:** implement the smallest durable CLASSIFIRE execution journal
-and authenticated completion-verifier path, extending BackgroundJob/worker where
-suitable. It must prove capture-before-dispatch, terminal persistence ordering,
-loss detection, invocation ownership and crash/replay recovery using synthetic
-execution. Keep production wiring disabled until a producer can prove the full
-contract. Do not substitute empty audit polling, self-asserted fields or delays.
+**Next bounded task:** integrate the journal at the Phase 8 pre-dispatch and
+post-response boundaries using injected capture/verification ports. Prove one
+invocation and durable acceptance end to end with synthetic transport, including
+crash and late completion. Avoid a circular dependency in which the transport
+waits for a journal completion that can only be written after transport return.
+Do not wire a real provider until its capture/terminal proof is authenticated;
+empty audit pages and a locally sealed assertion are not enough.
 
 ## 1. Project health and publication
 
 | Area | Verified state | Meaning |
 | --- | --- | --- |
-| Shared main | PR #182 merged as 51e7d60; executable main remains PR #181. | Hybrid is accepted, not a completed runtime migration. |
-| Hosted CI | [Main run 33938506042](https://github.com/Slayde91/classifire/actions/runs/33938506042) succeeded on exactly `51e7d60`. | Source/test/static/migration evidence, not production or real-UAT proof. |
-| Local synthetic verification | 171 synthetic candidate tests passed across the twelve handoff files; full CI/publication is verified separately. | Existing contracts have a passing baseline; full migration parity is not proven. |
+| Shared main | PR #183 merged as d03753f; required completion acceptance is implemented. | Hybrid is accepted, not a completed runtime migration. |
+| Hosted CI | [Main run 33939296281](https://github.com/Slayde91/classifire/actions/runs/33939296281) succeeded on exactly `d03753f`. | Source/test/static/migration evidence, not production or real-UAT proof. |
+| Local synthetic verification | 27 journal and 171 existing transport/caller tests passed; three PostgreSQL cases await hosted CI. | Existing contracts have a passing baseline; full migration parity is not proven. |
 | Migration history | One Alembic head: `0026_single_active_technical_release` on `legacy_adjudicated_lineage`. | Preserve forward-only history. |
 | Branch governance | Detailed protection/rules APIs previously returned HTTP 403; basic main metadata reports protected=false and no enforced checks. CODEOWNERS names Slayde91. | Normal PR #176 merge was accepted after policy evidence; never bypass failed checks or required review. |
 | Open work | Issues #42 (retained Phase 8 tooling reconciliation) and #43 (OpenClaw development dependency advisories); draft PRs #9-#13 on legacy feature-to-feature bases. | Reconcile issue contents against source; do not bulk-merge the draft stack. |
@@ -70,12 +69,12 @@ two tests. Staged additions, unstaged code/configuration/plugin/UI/test changes,
 and untracked material are pre-existing recovery evidence. Protected pytest
 directories prevent a complete untracked inventory. None belongs to this change.
 
-Current candidate: `feat/phase8-completion-evidence-20260905` in
-`C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905`, fast-forwarded safely
-to `51e7d60` with all existing edits retained. Scope: two transport services,
-three tests, the new completion contract, contract inventory and four continuity
-documents. No unrelated root changes belong to this candidate. Verify the actual
-candidate commit, upstream, PR and merge from GitHub before claiming publication.
+Current candidate: `feat/execution-journal-20260905` in
+`C:\CLASSIFIRE\.tmp\execution-journal-20260905`, created cleanly from `d03753f`.
+Scope: the new journal service, SQLite and PostgreSQL tests, completion contract,
+contract inventory and four continuity documents. The previous consumer worktree
+is clean and retained. Root recovery evidence remains unrelated and untouched.
+Verify the current candidate commit/upstream/PR/merge before relying on publication.
 
 ## 2. Implemented foundations
 
@@ -90,7 +89,7 @@ candidate commit, upstream, PR and merge from GitHub before claiming publication
 | Proposal review | Retained review metadata, five-year retention, redaction, legal hold, scoped readers and immutable administrator annotations | `services/proposal_review_package.py` and lifecycle/security tests |
 | Technical libraries | Source-bound Draft/revision/review/activation; current-authority checks; release lineage; atomic eligible-set publication and one-active-release constraint | `services/technical_release_publication.py`, migration `0026` and technical tests |
 | Outputs | Basic calculation, PDF/XLSX, proposal-only desk quotes; snapshot V2 semantic/document integrity with V1 verification | `services/calculation.py`, `desk_quote.py`, `snapshot.py`, `api/router.py` |
-| Background work | BackgroundJob persistence and polling worker shell; no registered handlers, so queued jobs fail | `models.py`, `worker.py` |
+| Background work | BackgroundJob and polling shell; generic queued jobs still have no handlers. Candidate journal uses separate non-queued states and explicit producer calls | `models.py`, `worker.py` |
 
 Abbreviated filenames in the last column use the directory of the preceding
 path in that row. Source paths are under `src/classifire/` unless explicitly
@@ -109,7 +108,7 @@ approvals, locks or release authority.
 
 | Gap | Current boundary |
 | --- | --- |
-| Hybrid execution | No complete durable job/run/stage coordinator, replacement adapter, cancellation/crash recovery or proven OpenClaw retirement. Extend existing abstractions first. |
+| Hybrid execution | Candidate adds durable single-invocation journal, replay refusal and local interruption; full stage coordination, remote cancellation, transport integration and retirement remain incomplete. |
 | Project package | No complete ProjectPackage schema, whole-project export/download or quarantined import. Existing review packages and PDF/XLSX exports are narrower. |
 | Interfaces | No production MCP integration or standalone package workflow. Existing UI cannot invoke the report runner. |
 | Physical acceptance | Historical records report no accepted replacement physical model/active lock for the UAT estimate; not rechecked against a live database here. |
@@ -136,8 +135,8 @@ it retroactively. No repeat report/provider run is authorised by this snapshot.
 
 - Phases 0-7 and 15 have implemented foundations with incomplete exits.
 - Phase 3 initial contract inventory/tests are merged. The next implementation
-  candidate adds required completion acceptance. The next gate is durable
-  authenticated completion production; managed inference remains unavailable.
+  consumer is merged; the journal candidate adds durable single-attempt storage.
+  Next is transport lifecycle integration; production capture remains unproven.
 - Phase 8 remains blocked on fresh authority, evidence review, semantic approval
   and separately governed canonical/replacement-lock gates.
 - Phases 9-14 remain dependency-blocked; package portability does not bypass them.
@@ -149,20 +148,21 @@ See the [roadmap](./CLASSIFIRE_ROADMAP.md) for phase-specific acceptance criteri
 
 ## 6. Recommended Next Actions
 
-1. **After verifying candidate publication, implement durable completion production.**
-   Define and prove a minimal execution journal and authenticated verifier using
-   existing job/service boundaries. Capture must precede dispatch; terminal
-   evidence must be durable and bound to the invocation. Missing, dropped,
-   disabled or interrupted capture must never count as completion.
+1. **After journal publication, integrate its lifecycle with Phase 8.**
+   Commit capture/invocation state before HTTP and terminal evidence before
+   proposal acceptance, using injected trusted capture/verification ports.
+   Prove the shared visual/report path with synthetic end-to-end tests and
+   no circular transport/journal dependency.
    [Start Here / Next Session](./SESSION_HANDOFF.md#start-here--next-session)
-   defines the bounded next task and validation.
-2. **Complete recovery and adapter parity before production wiring or retirement.**
-   Prove ownership, idempotency, cancellation, crash/replay and safe diagnostics;
-   retain no-tool, receipt and authority controls. No production verifier exists yet.
+   defines files, dependencies and acceptance criteria.
+2. **Prove actual producer assurance before production wiring.**
+   A local seal cannot certify remote events. Establish the permitted producer's
+   capture/terminal identity, privacy, loss detection, cancellation and recovery.
+   Keep managed inference and OpenClaw retirement gated until parity is proven.
 3. **Deliver portable packages and shared interfaces in bounded slices.**
    Define membership/export rights, immutable revisions and downloads, then
    quarantined import and shared ChatGPT/standalone adapters. Draft exports need
-   not await Phase 14 or OpenClaw retirement; they confer no release authority.
+   not await Phase 14 or retirement; they confer no release authority.
 
 Technical-library and operational follow-ups remain separately scoped backlog.
 Maintain full CI. Do not expand the next task into Phase 2/12, real UAT, packages
@@ -170,17 +170,18 @@ or a general agent platform.
 
 ## 7. Verification and limits
 
-Current candidate validation: 171 synthetic tests passed; full Ruff and Bandit
-passed; one Alembic head remains 0026_single_active_technical_release.
-Full Mypy passed for 142 source files. Hosted CI/publication is checked before merge.
-Source/diff review confirms no permissive production verifier or factory wiring.
-Historical audit observation hashes remain covered; they are not completion proof.
-Eight existing Pillow deprecation warnings remain.
+The journal has 27 passing file-backed SQLite tests; 171 existing transport/
+security/caller tests also passed. Three guarded disposable PostgreSQL cases are
+included for hosted CI and were skipped locally. Full Ruff/Bandit and Mypy (143
+files) passed; Alembic retains head 0026_single_active_technical_release. Stored
+synthetic rows, capture-before-execution ordering, restart, corruption, ownership,
+failures, concurrent duplicate and late-completion outcomes were inspected in tests.
+Eight existing Pillow warnings remain.
 
-Main 51e7d60 and its successful CI were rechecked. No runtime database, retained
-customer receipt, real Gateway/provider, canonical record, lock, deployment or
-release was inspected or changed. Upstream audit findings are retained repository
-evidence, not a new live capture audit. Production readiness remains unproven.
+Baseline main d03753f and CI 33939296281 passed. Verify candidate CI/publication
+separately. No real provider, customer evidence, project/canonical database,
+lock, deployment or release was exercised. Producer assurance, production key
+custody/rotation, remote cancellation and anti-rollback remain unproven.
 
 Related: [Architecture](./CLASSIFIRE_ARCHITECTURE.md),
 [Roadmap](./CLASSIFIRE_ROADMAP.md), [Handoff](./SESSION_HANDOFF.md).
