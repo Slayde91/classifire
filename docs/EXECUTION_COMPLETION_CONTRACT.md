@@ -111,3 +111,31 @@ capture-before-execute ordering, duplicate/concurrent invocation, result tamperi
 owner/producer/key/context mismatch, invalid/late capture, producer failure,
 interruption and late completion. Managed OpenClaw remains blocked until an actual
 producer meets this contract; synthetic tests are not provider parity.
+
+
+## Phase 8 lifecycle integration (current candidate)
+
+PR #184 merged the durable journal at bdd6719. Its execute wrapper cannot wrap a
+transport whose verifier waits for that same wrapper's return. Add explicit
+begin/complete/abort operations using the existing reservation, capture, conditional
+transition and verification logic; retain execute compatibility.
+
+An optional application-injected lifecycle begins after input/evidence/no-tool
+checks and request-byte encoding, before token/HTTP. It binds exact agent/session/
+request/body/attestation hashes and returns the committed dispatch timestamp.
+Post-response parsing and no-tool audit remain mandatory. Completion authenticates
+producer evidence for that exact context, commits/reloads the journal and supplies
+the existing completion consumer. The result retains the existing version-2 schema.
+
+Use one bound run/owner lifecycle per invocation. Duplicate begin must never
+dispatch, even if a historical outcome exists; completed read/replay is a separate
+journal operation. Failure after begin marks the attempt failed when storage is
+available; abort failure preserves the original content-safe error and leaves an
+unverified non-replayable record. An unsuccessful competing begin must not abort
+another caller's active invocation. Interruption still rejects late completion.
+
+Existing verifier-only injection stays compatible; providing both verifier and
+lifecycle is refused. Managed factories supply neither and remain blocked.
+The trusted capture verifier must authenticate real producer assurance; synthetic
+ports prove sequencing only. There is no provider, API, schema, migration or
+authority change, and no promise of remote cancellation.

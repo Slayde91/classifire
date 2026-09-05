@@ -21,6 +21,7 @@ from classifire.models import BackgroundJob
 from classifire.services.phase8_openresponses_transport import (
     ExecutionCompletionContext,
     ExecutionCompletionEvidence,
+    ExecutionDispatchBinding,
     Phase8OpenResponsesTransportError,
     _is_agent_id,
     _is_sha256,
@@ -54,13 +55,8 @@ def _storage_boundary(method: Callable[P, T]) -> Callable[P, T]:
     return safe
 
 
-@dataclass(frozen=True, slots=True)
-class ExecutionBinding:
-    agent_id: str
-    session_id_sha256: str
-    request_sha256: str
-    request_body_sha256: str
-    attestation_receipt_sha256: str
+# Keep the existing import and serialized binding contract compatible.
+ExecutionBinding = ExecutionDispatchBinding
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +88,11 @@ class ExecutionJournal:
         producer_id: str,
         producer: TrustedExecutionProducer,
         clock_ms: Callable[[], int] | None = None,
+        completion_verifier: Callable[
+            [ExecutionBinding, CaptureStart, ExecutionCompletionContext],
+            ExecutionCompletionEvidence,
+        ]
+        | None = None,
     ) -> None:
         if (
             type(authentication_key) is not bytes
@@ -103,13 +104,70 @@ class ExecutionJournal:
         self._key = authentication_key
         self._producer_id = producer_id
         self._producer = producer
+        self._completion_verifier = completion_verifier
         self._clock = clock_ms or (lambda: time.time_ns() // 1_000_000)
 
     @_storage_boundary
     def execute(
         self, *, run_id: str, owner_id: str, binding: ExecutionBinding
     ) -> ExecutionCompletionEvidence:
-        """One durable attempt. Replays never redispatch a producer."""
+        """Compatible producer-owned execution; replays never redispatch."""
+        if not self._reserve(run_id, owner_id, binding):
+            return self._completed(self._read(run_id, owner_id))
+        try:
+            capture, started = self._start(run_id, owner_id, binding)
+            context, evidence = self._producer.execute(binding, capture, started)
+            return self._finish(run_id, owner_id, context, evidence)
+        except Exception:
+            self._fail(run_id, owner_id)
+            raise ExecutionJournalError("JOURNAL_EXECUTION_FAILED") from None
+
+    @_storage_boundary
+    def begin(self, *, run_id: str, owner_id: str, binding: ExecutionBinding) -> int:
+        """Commit capture before caller-owned dispatch; never resume an old attempt."""
+        if not callable(self._completion_verifier):
+            raise ExecutionJournalError("JOURNAL_CONFIGURATION_INVALID")
+        if not self._reserve(run_id, owner_id, binding):
+            raise ExecutionJournalError("JOURNAL_DISPATCH_ALREADY_CLAIMED")
+        try:
+            _, started = self._start(run_id, owner_id, binding)
+            return started
+        except Exception:
+            self._fail(run_id, owner_id)
+            raise ExecutionJournalError("JOURNAL_EXECUTION_FAILED") from None
+
+    @_storage_boundary
+    def complete(
+        self, *, run_id: str, owner_id: str, context: ExecutionCompletionContext
+    ) -> ExecutionCompletionEvidence:
+        record = self._read(run_id, owner_id)
+        if record["status"] == "complete":
+            return self.verify(run_id=run_id, owner_id=owner_id, context=context)
+        if record["status"] != "running":
+            raise ExecutionJournalError("JOURNAL_OUTCOME_UNAVAILABLE")
+        try:
+            binding = ExecutionBinding(**record["payload"]["binding"])
+            capture = CaptureStart(**record["data"]["capture"])
+            if (
+                type(context) is not ExecutionCompletionContext
+                or any(getattr(context, name) != value for name, value in asdict(binding).items())
+                or context.started_at_ms != record["data"]["started_at_ms"]
+            ):
+                raise ExecutionJournalError("JOURNAL_INVOCATION_MISMATCH")
+            verifier = self._completion_verifier
+            if not callable(verifier):
+                raise ExecutionJournalError("JOURNAL_CONFIGURATION_INVALID")
+            evidence = verifier(binding, capture, context)
+            return self._finish(run_id, owner_id, context, evidence)
+        except Exception:
+            self._fail(run_id, owner_id)
+            raise ExecutionJournalError("JOURNAL_EXECUTION_FAILED") from None
+
+    @_storage_boundary
+    def abort(self, *, run_id: str, owner_id: str) -> None:
+        self._fail(run_id, owner_id)
+
+    def _reserve(self, run_id: str, owner_id: str, binding: ExecutionBinding) -> bool:
         self._identity(run_id)
         self._identity(owner_id)
         self._binding(binding)
@@ -138,39 +196,59 @@ class ExecutionJournal:
             record = self._read(run_id, owner_id)
             if record["payload"] != payload:
                 raise ExecutionJournalError("JOURNAL_INVOCATION_MISMATCH") from None
-            return self._completed(record)
-        # Any crash from this point leaves a durable non-replayable attempt.
-        try:
-            capture = self._producer.start_capture(binding)
-            started = self._now()
-            if (
-                type(capture) is not CaptureStart
-                or not _is_sha256(capture.receipt_sha256)
-                or type(capture.started_at_ms) is not int
-                or not data["reserved_at_ms"] <= capture.started_at_ms <= started
-            ):
-                raise ExecutionJournalError("JOURNAL_CAPTURE_INVALID")
-            running_data = {
-                **data,
-                "capture": asdict(capture),
-                "started_at_ms": started,
-            }
-            self._transition(run_id, owner_id, "preparing", 1, "running", running_data)
-            context, evidence = self._producer.execute(binding, capture, started)
-            self._check_outcome(binding, capture, started, context, evidence)
-            if context.observed_at_ms > self._now():
-                raise ExecutionJournalError("JOURNAL_CLOCK_INVALID")
-            terminal_data = {
-                **running_data,
-                "context": asdict(context),
-                "evidence": asdict(evidence),
-            }
-            self._transition(run_id, owner_id, "running", 2, "complete", terminal_data)
-        except Exception:
-            # Error persistence can itself fail. A preparing/running record remains
-            # unverified and cannot replay. Never retain arbitrary exception text.
-            self._fail(run_id, owner_id)
-            raise ExecutionJournalError("JOURNAL_EXECUTION_FAILED") from None
+            return False
+        return True
+
+    def _start(
+        self, run_id: str, owner_id: str, binding: ExecutionBinding
+    ) -> tuple[CaptureStart, int]:
+        record = self._read(run_id, owner_id)
+        data = record["data"]
+        capture = self._producer.start_capture(binding)
+        started = self._now()
+        if (
+            type(capture) is not CaptureStart
+            or not _is_sha256(capture.receipt_sha256)
+            or type(capture.started_at_ms) is not int
+            or not data["reserved_at_ms"] <= capture.started_at_ms <= started
+        ):
+            raise ExecutionJournalError("JOURNAL_CAPTURE_INVALID")
+        self._transition(
+            run_id,
+            owner_id,
+            "preparing",
+            1,
+            "running",
+            {**data, "capture": asdict(capture), "started_at_ms": started},
+        )
+        return capture, started
+
+    def _finish(
+        self,
+        run_id: str,
+        owner_id: str,
+        context: ExecutionCompletionContext,
+        evidence: ExecutionCompletionEvidence,
+    ) -> ExecutionCompletionEvidence:
+        record = self._read(run_id, owner_id)
+        data = record["data"]
+        self._check_outcome(
+            ExecutionBinding(**record["payload"]["binding"]),
+            CaptureStart(**data["capture"]),
+            data["started_at_ms"],
+            context,
+            evidence,
+        )
+        if context.observed_at_ms > self._now():
+            raise ExecutionJournalError("JOURNAL_CLOCK_INVALID")
+        self._transition(
+            run_id,
+            owner_id,
+            "running",
+            2,
+            "complete",
+            {**data, "context": asdict(context), "evidence": asdict(evidence)},
+        )
         return self.verify(run_id=run_id, owner_id=owner_id, context=context)
 
     @_storage_boundary
@@ -386,3 +464,21 @@ class ExecutionJournal:
             or evidence.coverage_from_ms > capture.started_at_ms
         ):
             raise ExecutionJournalError("JOURNAL_INVOCATION_MISMATCH")
+
+
+class JournalCompletionLifecycle:
+    """One application-scoped run; owner identity must already be authenticated."""
+
+    def __init__(self, journal: ExecutionJournal, *, run_id: str, owner_id: str) -> None:
+        self._journal = journal
+        self._run_id = run_id
+        self._owner_id = owner_id
+
+    def begin(self, binding: ExecutionBinding) -> int:
+        return self._journal.begin(run_id=self._run_id, owner_id=self._owner_id, binding=binding)
+
+    def complete(self, context: ExecutionCompletionContext) -> ExecutionCompletionEvidence:
+        return self._journal.complete(run_id=self._run_id, owner_id=self._owner_id, context=context)
+
+    def abort(self) -> None:
+        self._journal.abort(run_id=self._run_id, owner_id=self._owner_id)

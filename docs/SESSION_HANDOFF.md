@@ -1,66 +1,71 @@
 # CLASSIFIRE Session Handoff
 
 **Prepared:** 2026-09-05 (AEST)
-**Verified shared-main baseline:** `d03753f94634860ed3381825f4c5d2f514e6523d` (PR #183)
-**Latest executable-change baseline:** d03753f (PR #183)
+**Verified shared-main baseline:** `bdd67198728e2da18171cdc4a3bea143328254ef` (PR #184)
+**Latest executable-change baseline:** bdd6719 (PR #184)
 
 All four maintained documents are under `docs/`. Inspect current repository
 evidence before editing; this handoff records a snapshot, not live authority.
 
 ## Start Here / Next Session
 
-**First task:** after verifying journal publication, integrate its lifecycle
-with Phase 8's pre-dispatch and post-response boundaries. Use injected trusted
-capture/verification ports and prove the path end to end with synthetic transport.
+**First task:** after verifying lifecycle publication, implement ProjectPackage v1
+membership/schema validation and deterministic Draft export. This is shared
+domain/service work, independent of AI, UI and ChatGPT transport.
 
-**Why next:** the consumer is merged and the journal candidate can durably seal
-a trusted producer's outcome, but managed transports are not wired to it.
-A naive wrapper is circular: transport waits for verification while the journal
-waits for transport return. Split or adapt the existing lifecycle deliberately;
-persist capture before dispatch and completion before returning a proposal.
+**Why next:** synthetic journal/transport integration is proven in the candidate;
+actual provider assurance remains unresolved. Decision 0001 section 2.5 permits
+Draft exports that preserve unresolved stages and confer no authority. Current
+code has Project/Estimate/evidence and estimate/proposal exports, but no complete
+portable ProjectPackage contract. This slice advances the intended product without
+making package access depend on optional AI.
 
-**Prerequisites:** inspect applicable AGENTS.md, root/worktree status, branch/
-upstream/HEAD, main, open PRs and CI before editing. Read the four docs, Decision
-0001, completion contract and OpenClaw inventory. Verify the actual journal
-commit/PR/merge from `feat/execution-journal-20260905` in
-`C:\CLASSIFIRE\.tmp\execution-journal-20260905`, based on `d03753f`.
+**Prerequisites:** read applicable AGENTS.md, four docs, Decision 0001 and
+completion contract; inspect branch/upstream/HEAD/conflicts, fetch main and check
+PRs/CI before editing. Verify publication of `feat/phase8-journal-lifecycle-20260905`
+in `C:\CLASSIFIRE\.tmp\phase8-journal-lifecycle-20260905`, based on `bdd6719`.
 Preserve unrelated/root work and use an isolated current-main tree.
 
-**Files/components:** `src/classifire/services/execution_journal.py`;
-`phase8_openresponses_transport.py`, `phase8_report_openresponses_transport.py`,
-`phase8_visual_runtime.py` in that service directory; `src/classifire/models.py`
-and `worker.py` for state compatibility; completion contract; journal and existing
-transport/controller/caller tests listed below.
+**Relevant components:** `src/classifire/models.py` (Project, Estimate, StoredFile,
+ProjectEvidence and related records), physical models, `services/project_evidence.py`,
+`services/snapshot.py`, `services/proposal_review_package.py`,
+`services/technical_release_publication.py`, existing export routes in
+`api/router.py`, storage/security/permission conventions, and their tests.
+These paths are relative to `src/classifire/`. Extend existing abstractions before
+adding a new database, orchestration framework or parallel business logic.
 
 **Definition of done:**
 
-1. Record the exact lifecycle change and trust/availability impact before editing.
-   Reuse the journal and existing transport checks; do not duplicate domain logic.
-2. Commit capture identity before inference dispatch; let post-response verification
-   authenticate producer evidence, commit a terminal journal and reload it before
-   proposal acceptance. Bind the same session/request/response/attestation/context.
-3. Prove positive visual/report execution with synthetic capture/HTTP, absence and
-   loss refusal, safe failures, interruption/late completion, concurrent/repeated
-   calls and historical receipts. A verifier must never require transport return
-   before it can complete that same transport.
-4. Preserve no-tool enforcement, exact evidence, owner/producer boundaries and all
-   canonical/lock/release controls. An authenticated application supplies owner IDs;
-   accepting an arbitrary owner string is not user authorization.
-5. Keep managed real-provider wiring disabled until actual capture/terminal
-   assurance is proven. Empty remote pages and locally sealed assertions cannot
-   establish that assurance. No real provider/customer/canonical operation.
-6. Run focused integration/journal and warranted caller tests, full static checks,
-   migration heads, guarded disposable PostgreSQL concurrency and hosted CI.
-   Inspect synthetic records/receipts; align docs; classify, commit, push, PR and
-   merge where safe after CI/reviews. Verify merge and post-merge CI.
+1. Inventory complete project membership and map each item to source-of-truth
+   records, exact evidence identity, lifecycle, ownership and export rights.
+   Distinguish included bytes, authorized references and explicit withheld items.
+   Do not silently omit data and call a narrow review/estimate export complete.
+2. Define versioned manifest/schema, semantic validation and immutable revision/
+   parent identity. Preserve physical/technical/commercial separation, provenance,
+   unresolved evidence, review state and blockers. Imported authority is historical
+   evidence only. Unknown schema/invalid relationships/conflicting hashes fail closed.
+3. Implement deterministic Draft archive generation from validated, explicitly
+   authorized inputs using shared services. Stable semantic content produces stable
+   archive bytes/hash; volatile transport metadata cannot change semantic identity.
+   Reject unsafe paths, duplicate archive members and missing/altered required bytes.
+4. Preserve confidentiality: no credentials, raw secrets or automatic export of
+   restricted technical/commercial libraries. Record material unresolved export-
+   policy decisions explicitly; do not silently grant redistribution authority.
+5. Test a synthetic project with multiple estimates/services/openings/relationships,
+   retained evidence and unresolved stages. Inspect archive members and manifest,
+   verify deterministic output, exact hashes, policy refusal and no canonical
+   mutation. An empty/incomplete package fixture alone is insufficient proof.
+6. Run new/focused package and warranted evidence/snapshot/authority regressions,
+   Ruff/Mypy/Bandit, one Alembic head and full hosted CI. Align docs; classify,
+   commit, push, PR and merge where safe after checks/reviews; verify actual merge
+   and post-merge CI. Storage/download, import and shared interfaces remain later
+   bounded slices unless already covered by the verified current implementation.
 
-**Remaining limits:** journal HMAC is integrity protection inside the trusted
-application/storage boundary, not provider authentication or malicious-database
-anti-rollback. Production key custody/rotation, retention, actual capture and
-remote cancellation remain unproven. The generic worker still has no handlers;
-journal operations use explicit non-queued states. No new migration is needed
-for the current journal. Do not expand the next slice into a general agent
-framework, packages or UI.
+**Blockers/limits:** full package membership/export rights are not yet defined.
+Resolve within existing authority; surface any material policy decision that
+cannot be inferred. No real customer/provider/canonical write, lock, deployment
+or release is authorized. Actual producer assurance and managed AI wiring remain
+blocked independently; do not weaken their controls to make package tests pass.
 
 ### Validation commands
 
@@ -75,6 +80,8 @@ $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
 $contractPython = 'C:\CLASSIFIRE\.venv\Scripts\python.exe'
 $contractTemp = Join-Path $env:TEMP ('classifire-contract-' + [guid]::NewGuid().ToString('N'))
 & $contractPython -m pytest -o addopts= -q -p no:cacheprovider --basetemp $contractTemp `
+  tests/test_phase8_journal_lifecycle.py `
+  tests/test_phase8_journal_lifecycle_postgresql.py `
   tests/test_execution_journal.py `
   tests/test_execution_journal_postgresql.py `
   tests/test_phase8_openresponses_transport.py `
@@ -96,7 +103,9 @@ $contractTemp = Join-Path $env:TEMP ('classifire-contract-' + [guid]::NewGuid().
 git diff --check
 ~~~
 
-Check each command's exit code before continuing. Include newly added tests.
+This is the verified orchestration regression baseline, not the only package
+validation. Select new package and relevant evidence/snapshot/authority tests
+from current source. Check each command's exit code before continuing.
 Hosted `.github/workflows/pull-request-validation.yml` runs full pytest, Ruff,
 Mypy, Bandit and one Alembic-head validation with disposable PostgreSQL.
 Run broader local regression when changed shared behaviour warrants it.
@@ -108,57 +117,59 @@ for this synthetic task.
 
 ~~~text
 Continue CLASSIFIRE at C:\CLASSIFIRE (https://github.com/Slayde91/classifire).
-Before editing read AGENTS.md, the four docs under docs/, Decision 0001,
-EXECUTION_COMPLETION_CONTRACT.md and OPENCLAW_CONTRACT_CHARACTERISATION.md.
-Inspect branch/upstream/HEAD/conflicts/local changes; fetch main and check PRs/CI.
-Verified main was d03753f (PR #183), CI 33939296281 passed. Verify publication
-of feat/execution-journal-20260905 in
-C:\CLASSIFIRE\.tmp\execution-journal-20260905 and reconcile newer source.
+Before editing read AGENTS.md, four docs under docs/ and Decision 0001. Inspect
+HEAD/upstream/conflicts/local changes; fetch main and check PRs/CI. Verified main
+was bdd6719 (PR #184), CI 33940542172 passed. Verify actual publication of
+feat/phase8-journal-lifecycle-20260905 in
+C:\CLASSIFIRE\.tmp\phase8-journal-lifecycle-20260905 and reconcile newer source.
 Preserve the conflicted root and unrelated work; use an isolated current-main tree.
 
-Single next task: connect the execution journal to Phase 8's pre-dispatch and
-post-response lifecycle with injected trusted capture/verification ports.
-The consumer is merged; the journal candidate persists sealed outcomes on
-BackgroundJob, but managed inference is still unwired. Avoid a circular wrapper:
-the verifier cannot wait for the transport return that it is itself blocking.
+Single next task: ProjectPackage v1 membership/schema validation and deterministic
+Draft export. Decision 0001 permits Draft exports without completed AI or Human
+Release. Existing estimate/proposal exports are not the complete project contract.
+Inspect models.py, physical_models.py, project_evidence.py, snapshot.py,
+proposal_review_package.py, technical_release_publication.py, api/router.py and
+their storage/permission tests under src/classifire/ and tests/.
 
-Inspect src/classifire/services/execution_journal.py, both phase8_*openresponses
-transports, phase8_visual_runtime.py, their tests, models.py, worker.py and the
-completion contract. Record lifecycle/trust impact first. Persist capture before
-HTTP, authenticate exact producer evidence after response, commit/reload terminal
-evidence before proposal acceptance. Reuse no-tool/context/receipt checks and
-journal state transitions. Owner identity comes from authenticated composition.
+Inventory complete project membership, ownership and export rights before coding.
+Define versioned manifest, semantic validation, immutable revisions/parent hashes,
+exact evidence membership and deterministic archive generation from authorized
+inputs. Preserve unresolved stages, provenance and review/authority status.
+No silent omissions or implied technical/commercial redistribution rights.
+Imported approvals/locks remain historical, never active local authority.
+Extend existing services; avoid a new database or parallel business pipeline.
 
-Done: synthetic visual/report end-to-end execution; missing/lost evidence,
-identity mismatch, interruption/late completion, duplicate/concurrent invocation
-and safe-error tests; preserved historical receipts and authority gates; aligned
-docs and passing checks. Run new integration tests, handoff journal/transport/
-caller suite, Ruff, Mypy, Bandit, Alembic heads, guarded disposable PostgreSQL
-concurrency and diff checks with worktree PYTHONPATH and unique temporary storage.
+Done: synthetic multi-estimate/project export with multiple services/openings,
+evidence and unresolved stages; inspected manifest/archive; deterministic bytes/
+hashes; refusal of wrong ownership, unsafe/duplicate paths, altered/missing
+evidence, invalid relationships/schema and prohibited members; no canonical
+mutation; aligned docs. Clarify any material export-policy choice that existing
+authority cannot resolve, while completing independent safe work.
 
-Keep actual provider wiring disabled until authenticated capture/terminal proof
-exists. A journal HMAC or empty audit page does not prove remote activity.
-No real provider/customer operation, canonical write, lock, deployment, release
-or OpenClaw retirement. Continue autonomously through implementation, validation,
-classification, explicit commit, normal push, PR and merge where safe after
-CI/reviews pass. Verify actual merge/post-merge CI and disclose remaining
-production assurance. Do not duplicate newer completed work.
+Run new package and relevant evidence/snapshot/authority regressions, warranted
+handoff baseline tests, Ruff/Mypy/Bandit, Alembic heads and diff checks with
+worktree PYTHONPATH and unique temporary storage. Full hosted CI must pass.
+No real customer/provider operation, canonical write, lock, deployment, release
+or OpenClaw retirement. Managed AI remains gated on actual producer assurance.
+Continue autonomously through implementation, validation, classification, explicit
+commit, normal push, PR and merge where safe after CI/reviews; verify merge and
+post-merge CI. Do not duplicate newer completed work.
 ~~~
 
 ## Verified project context
 
-PR #183 merged at d03753f with
-[successful exact main CI](https://github.com/Slayde91/classifire/actions/runs/33939296281).
-The journal candidate adds durable capture/terminal ordering and authenticated
-record verification on BackgroundJob, with owner/producer/context binding,
-completed replay and interruption without redispatch. It does not supply a
-production capture producer or wire the managed transports.
+PR #184 merged at bdd6719 with
+[successful exact main CI](https://github.com/Slayde91/classifire/actions/runs/33940542172).
+The lifecycle candidate adds optional shared visual/report pre-dispatch capture
+and post-response durable completion. Begin/complete/abort reuse the journal and
+retain producer-owned execute. Verifier-only injection remains compatible;
+conflicting configuration is refused. Managed factories are not wired.
 
-Local validation: 27 journal tests and 171 existing transport/security/caller
-tests passed. Three disposable PostgreSQL cases are included for hosted CI and
-skipped locally. Ruff, Bandit, Mypy (143 files) and one Alembic head passed.
-Eight existing Pillow warnings remain. No real provider/customer/canonical
-database was used. Verify journal publication/CI separately.
+Local validation: 222 tests passed; seven guarded disposable PostgreSQL cases
+were skipped locally for hosted CI. Ruff, Bandit, Mypy (143 files) and one
+Alembic head passed. Eight existing Pillow warnings remain. Tests inspect database
+state during HTTP and before successful return, plus cleanup, duplicates and
+interruption. No real provider/customer/canonical database was used.
 
 Implemented foundations include evidence ownership/locators, proposal controllers
 and review packages, signed physical amendments and separate replacement locks,
@@ -180,14 +191,14 @@ downstream Phases 9-14 remain. See [Project State](./PROJECT_STATE.md).
   and their two tests. Other staged/unstaged/untracked legacy work is unrelated;
   protected pytest directories prevent complete untracked enumeration.
   Never reset, clean, bulk-copy or publish from this root.
-- Current journal candidate: `feat/execution-journal-20260905` in
-  `C:\CLASSIFIRE\.tmp\execution-journal-20260905`, based on `d03753f`.
-  Scope: one journal service, two test files, completion contract, inventory and
-  four continuity documents. Verify actual commit/upstream/PR/merge before reuse.
-- PRs #182 and #183 are merged. Their clean retained worktrees are separate.
+- Current lifecycle candidate: `feat/phase8-journal-lifecycle-20260905` in
+  `C:\CLASSIFIRE\.tmp\phase8-journal-lifecycle-20260905`, based on `bdd6719`.
+  Scope: three services, four test files, completion contract, inventory and four
+  continuity documents. Verify actual commit/upstream/PR/merge before reuse.
+- PRs #182-#184 are merged. Their clean retained worktrees are separate.
 - Issues #42 (retained Phase 8 tooling) and #43 (OpenClaw development dependency
   advisories) remain open. Draft PRs #9-#13 remain legacy feature-to-feature work;
-  verify current journal-candidate publication separately. Do not bulk-merge that stack.
+  verify current lifecycle-candidate publication separately. Do not bulk-merge that stack.
 - Check current repository review/protection requirements before publication.
   Never bypass failed CI or required review. No runtime operation is authorised
   merely by this handoff.

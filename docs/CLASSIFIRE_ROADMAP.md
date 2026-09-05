@@ -2,9 +2,9 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main baseline:** `d03753f94634860ed3381825f4c5d2f514e6523d` (PR #183, 2026-09-05)
+**Verified shared-main baseline:** `bdd67198728e2da18171cdc4a3bea143328254ef` (PR #184, 2026-09-05)
 
-**Latest executable-change baseline:** d03753f (PR #183)
+**Latest executable-change baseline:** bdd6719 (PR #184)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -18,39 +18,39 @@ for the accepted hybrid target and migration gates.
 
 ## Contract characterisation progress
 
-PR #183 merged the required completion consumer as `d03753f94634860ed3381825f4c5d2f514e6523d`.
-[Exact main CI 33939296281](https://github.com/Slayde91/classifire/actions/runs/33939296281)
-passed. Managed OpenClaw factories have no trusted production verifier and refuse
-inference dispatch; the independent no-tool boundary remains intact.
+PR #184 merged the execution journal as `bdd67198728e2da18171cdc4a3bea143328254ef`.
+[Exact main CI 33940542172](https://github.com/Slayde91/classifire/actions/runs/33940542172)
+passed. PR #183's required completion consumer and the journal are shared-main
+foundations; neither supplies production capture assurance.
 
-**Current journal candidate:** `feat/execution-journal-20260905`, based on
-`d03753f`, adds `services/execution_journal.py` on the existing BackgroundJob
-table. It commits reservation and capture identity before producer execution,
-then commits a sealed terminal record before returning completion evidence.
-Owner, producer, invocation, context, state and record version are bound.
-Exact completed replay does not redispatch; failed/interrupted/running attempts
-cannot replay. Conditional updates prevent late completion after interruption.
+**Current lifecycle candidate:** `feat/phase8-journal-lifecycle-20260905`, based
+on `bdd6719`, connects the journal through optional application-injected hooks.
+Both visual/report transports commit capture before inference token/HTTP and
+complete, reload and validate durable evidence before returning a proposal.
+Journal begin/complete/abort operations reuse its existing state machine;
+producer-owned execute and verifier-only transport injection stay compatible.
+Conflicting lifecycle/verifier configuration is refused.
 
-**Trust and limits:** an injected trusted producer owns capture assurance.
-HMAC protects stored journal content using an application-held key; it cannot
-prove remote tool activity or replace producer authentication. Owner identity
-must come from authenticated application composition, not user-supplied authority.
-There is no API, generic-worker dispatch, runtime wiring, new dependency or
-database migration. Managed inference remains blocked.
+**Failure and trust boundaries:** duplicate begin cannot redispatch or abort
+another caller's active attempt. Post-begin failure aborts local acceptance;
+abort-storage failure preserves the original safe error and an unverified record.
+No-tool audit, exact byte/context binding, historical receipts and all canonical/
+lock/release boundaries remain. Managed factories remain unwired and fail closed.
+A trusted producer must authenticate capture; local journal seals are not remote
+proof. No schema migration, dependency, endpoint or real-provider operation.
 
-**Verification:** 27 journal tests and 171 transport/security/caller tests passed
-locally. Three additional PostgreSQL restart/concurrency cases use the existing
-explicit disposable-database fixture and must pass in hosted CI. Full Ruff,
-Bandit and Mypy (143 source files) passed; one migration head remains. Existing
-Pillow warnings persist. No real provider or customer/canonical operation ran.
+**Validation:** 222 local synthetic tests passed; seven PostgreSQL cases are
+reserved for the guarded disposable hosted CI environment. Full Ruff, Bandit
+and Mypy (143 source files) passed; one Alembic head remains. Eight existing Pillow
+warnings persist. Tests inspect durable capture during HTTP and terminal state
+before returning visual/report proposals, including interruption and duplicates.
 
-**Next bounded task:** integrate the journal at the Phase 8 pre-dispatch and
-post-response boundaries using injected capture/verification ports. Prove one
-invocation and durable acceptance end to end with synthetic transport, including
-crash and late completion. Avoid a circular dependency in which the transport
-waits for a journal completion that can only be written after transport return.
-Do not wire a real provider until its capture/terminal proof is authenticated;
-empty audit pages and a locally sealed assertion are not enough.
+**Reordered next product task:** implement ProjectPackage v1 membership/schema
+validation and deterministic Draft export. Decision 0001 permits Draft exports
+without waiting for AI or Human Release. Reuse project/evidence/snapshot/storage
+services; inventory complete project membership and export rights before coding.
+Keep omissions, unresolved stages and authority status explicit. Full download/
+import/UI and actual provider assurance remain separately gated follow-ups.
 
 ## 1. Status labels
 
@@ -175,7 +175,7 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ## 4. Prioritised build plan
 
-### Priority reconciliation through PR #183 and journal candidate
+### Priority reconciliation through PR #184 and lifecycle candidate
 
 | Work | Status | Dependency / completion evidence |
 | --- | --- | --- |
@@ -185,12 +185,13 @@ Phases 8-14 and is not a technical selection or canonical output.
 | Loopback socket/protocol contracts | **Completed bounded foundation** | PR #180, 15 cases and two deadline fixes; broader protocol/live compatibility remains unproven. |
 | Audit page contract | **Completed bounded foundation** | PR #181 merged; exact PR/main CI passed. Continuation/oversize refused; legacy receipt compatibility retained. |
 | Completion acceptance consumer | **Completed bounded foundation** | PR #183 merged with required verifier and v2 receipt binding; exact main CI passed. Managed inference refuses without a verifier. |
-| Durable execution journal | **Validated candidate / publication pending** | Existing-table persistence, sealed records, capture/terminal ordering, identity and interruption; 27 local tests plus PostgreSQL CI cases. |
-| Journal/transport lifecycle | **Reordered next** | Integrate pre-dispatch capture and post-response durable verification without circular execution; synthetic end-to-end proof first. |
+| Durable execution journal | **Completed bounded foundation** | PR #184 merged; all 946 hosted tests and exact main CI passed. |
+| Journal/transport lifecycle | **Validated candidate / publication pending** | Shared visual/report begin/complete/abort hooks; 222 local tests and seven PostgreSQL CI cases. |
 | Production capture producer | **Blocked on assurance** | Remote capture/terminal identity and loss detection cannot be inferred from a local journal seal or empty audit pages. |
 | Remaining contract characterisation | **Upcoming** | Socket/protocol, audit completeness, recovery, identity, privacy and clean-machine gaps remain in the inventory. |
 | Durable jobs/replacement adapter | **Upcoming / planned** | Characterisation first; extend BackgroundJob/worker. Current worker has no handlers. |
-| ProjectPackage export/download | **Upcoming / planned** | Membership, rights, profiles, revisions and deterministic jobs. Policy-permitted Drafts need not await Phase 14 or OpenClaw retirement. |
+| ProjectPackage v1 Draft contract/export | **Reordered next** | Inventory complete membership/rights, implement schema and semantic validation plus deterministic archives. Draft exports do not require AI or Phase 14. |
+| Package storage/download | **Upcoming** | Immutable revision/ownership, verified exact bytes and audited permission-checked delivery after the export contract. |
 | Quarantined import | **Upcoming / planned** | Stable export/schema/integrity; new-project import before conflict handling. |
 | MCP/standalone package clients | **Upcoming / planned** | Shared authenticated commands, permission/isolation and package contracts. |
 | OpenClaw/Mission Control retirement | **Blocked on parity** | Security, receipts, recovery, visibility, compatibility, clean-machine and rollback evidence; separate operational authority. |
@@ -198,12 +199,12 @@ Phases 8-14 and is not a technical selection or canonical output.
 | Technical/production follow-ups | **Separate backlog** | Preserve Phase 2/15 gates; do not broaden the next contract task. |
 | Real UAT and Phases 9-14 | **Blocked** | Fresh authority, evidence, semantic approval and governed replacement lock remain required. |
 
-The current candidate adds one journal service, two test files and aligned
-contracts/docs. It reuses BackgroundJob without a schema migration. The generic
-worker does not dispatch it. Local verification passed 27 journal plus 171
-existing tests; three PostgreSQL cases are gated to disposable hosted CI.
-[Session Handoff](./SESSION_HANDOFF.md#start-here--next-session) defines the next
-integration slice and remaining production assurance limits.
+The lifecycle candidate changes three services, four test files and aligned
+contracts/docs. The existing table, authority gates and version-2 transport
+receipt schema are retained. Local verification passed 222 tests; seven
+PostgreSQL cases run only in the guarded disposable CI environment.
+[Session Handoff](./SESSION_HANDOFF.md#start-here--next-session) defines the
+next Draft package slice. Actual producer assurance remains a separate gate.
 
 ### Immediate next action
 
@@ -215,13 +216,13 @@ OpenClaw is now a transitional adapter, not the long-term product foundation,
 but it remains in place until the documented security, receipt, recovery,
 observability, clean-machine, and rollback parity gates pass.
 
-After journal publication, connect pre-dispatch capture and post-response
-durable verification to the Phase 8 transport lifecycle. Avoid recursively
-calling a transport that waits on the journal it is itself meant to complete.
-Prove synthetic end-to-end behavior before wiring a real producer. Later work
-includes producer assurance, remote recovery/cancellation, broader coordination,
-provider-neutral adapters, ProjectPackage export/import/download and shared
-ChatGPT/standalone interfaces. Retirement still requires complete parity.
+After lifecycle publication, prioritise the deterministic Draft ProjectPackage
+v1 contract and exporter. This moves the approved user-facing product forward
+while real-provider assurance remains unproven. Decision 0001 explicitly permits
+Draft exports with unresolved stages and no authority upgrade. First inventory
+membership and export rights, then prove schema/semantic integrity and repeatable
+archive generation. Immutable storage/download, quarantined import and shared
+clients follow. Real AI wiring and OpenClaw retirement retain all parity gates.
 
 #### Completed shared-main foundation - scoped proposal-review reader access (PR #145)
 
