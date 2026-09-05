@@ -1,7 +1,7 @@
 # OpenClaw contract characterisation
 
-**Shared baseline:** `c679405` (PR #179).
-**Current candidate:** loopback buffered/decoded-response deadline enforcement; verify publication
+**Shared baseline:** `45b1f7f` (PR #180).
+**Current candidate:** explicit audit continuation/oversize refusal; verify publication
 before treating candidate behaviour as shared main.
 **Scope:** initial source/caller inventory and bounded synthetic fallback/audit
 coverage. This is not full retirement parity or proof of a live deployed fleet.
@@ -80,7 +80,7 @@ Five added cases bring the focused suite to 88 passing tests; 17 additional
 report/representative tests pass. Source scope is the existing CLI/fallback
 wrapper only. No real Gateway or provider was contacted.
 
-### Current socket candidate
+### Merged PR #180: socket deadline correction
 
 Two fake-clock tests reproduced acceptance after the deadline elapsed during
 receipt or JSON decoding. Deadline checks now run before buffered-byte
@@ -98,17 +98,67 @@ covered. Total validation: 103 contract/security plus 17 caller tests pass.
 This is bounded negative coverage, not complete WebSocket conformance, live-host
 compatibility or a claim that every frame/handshake variation is covered.
 
-**Next task after merge: establish audit completeness from pinned upstream
-semantics.** Inspect the 100-event limit, time window and any verified
-pagination/truncation fields before adding synthetic acceptance/refusal tests.
-A well-formed event list alone does not prove complete coverage. Preserve
-legacy receipt hashes and independent no-tool attestation; identify missing
-upstream evidence rather than inventing a protocol.
+### Pinned upstream audit evidence and current page candidate
+
+Read-only inspection on 2026-09-05 found installed openclaw 2026.7.1-2 matching
+config/phase8-zero-tool-agents.json. These are local distribution artifacts,
+not proof of a running process/configuration or independently authenticated npm
+release. No application module was executed and no live ledger/config was read.
+
+| Artifact under installed openclaw/dist | SHA-256 |
+| --- | --- |
+| audit--uog9aNn.js | 5B898585736CF4F9BC54B99448AC8833F806F126C4D9688448104A80A7DD3E5F |
+| audit-event-store-D1P32Q4Y.js | AA6640A3BF796B9058EFEAC8A23862C1620D6ED4629CE00E24B29C082D6E5783 |
+| schema-BuOFpc7K.js | B5B672DD1CE3579E2B030567EF192355374C052934CB4E252B793E08647D54AB |
+| server-runtime-subscriptions-OlWMLbPY.js | 17E89DDAB3F5768B39F47F68FE0AAE35F724B6352789B6514ECD34F8BB3D71FB |
+| audit/audit-event-writer.worker.js | 0BF29F9872DC2995CB1370AE0E19359A9BC102FB7AA45A7CA95C77477C4B8013 |
+
+Verified contract:
+
+- Stock server catalog registers audit.list; audit.activity.list was not found
+  as a registered RPC. CLASSIFIRE's fallback filters match the stock schema.
+- Results contain events and an optional nextCursor. The store reads limit+1,
+  orders newest sequence first, and returns a cursor only when another stored
+  row exists. Cursor filtering is sequence < cursor; after/before are inclusive
+  occurredAt bounds. Limit is 1-500 upstream; CLASSIFIRE requests 100.
+- Retention is 30 days and at most 100,000 rows. Queries enforce the retention
+  floor even if the requested after is older.
+- The writer uses a worker thread and a bounded 4,096 pending-event queue.
+  Unavailable/full queues can drop metadata; write failures are logged.
+  audit.enabled=false disables new capture while existing records stay readable.
+- audit.list reads the store directly; its response has no writer-health,
+  coverage/loss, terminal-execution or persistence-barrier certificate.
+
+The candidate rejects any nextCursor presence (including malformed empty/null
+values) and more than the requested 100 events as TOOL_AUDIT_INVALID. It does not
+retry a malformed success or page indefinitely. Any observed tool event already
+causes transport refusal, so fetching later pages cannot turn it into a valid
+no-tool result. A terminal 100-event page still reports detected tool activity.
+Valid legacy empty-page receipts retain the literal golden hash.
+
+Ten new refusal cases failed before the correction; eleven added cases bring
+validation to 114 contract/security plus 17 caller tests. Empty-page-with-cursor
+fixtures are inconsistent/malformed upstream responses, not claimed observed
+server output. A valid nonempty continuation already prevents no-tool acceptance
+downstream; the correction additionally prevents issuing a partial audit receipt.
+
+**Material remaining gap:** no cursor means only that this retained query has no
+further page. It does not exclude pending/lost/disabled capture or retention loss.
+The current transport still permits proposal return after an empty-page observation;
+complete coverage is not yet an enforced acceptance gate. This change
+does not retrofit a trusted completion certificate or prove live audit health.
+
+**Next task:** establish the trusted execution/audit completion evidence contract
+and migration impact at existing CLASSIFIRE boundaries, then implement justified
+fail-closed validation with synthetic evidence. Preserve historical observation
+receipt verification separately from new acceptance. Do not fabricate upstream
+fields, infer completion from polling, or retire OpenClaw/no-tool guards before
+a trusted producer and consumer are proven.
 
 Before declaring full characterisation/retirement parity, also resolve:
 
 - Broader protocol/handshake interoperability beyond the bounded socket cases above.
-- Audit pagination/window/completeness assumptions and fallback semantics.
+- Trusted audit completion, persistence/loss and retention coverage: stock API is insufficient.
 - Interrupted invocation state, cancellation, duplicate delivery and recovery.
 - Provisioning/plugin host identity behaviour and clean-machine reproducibility.
 - Mission Control registration/retry and content-safe telemetry requirements.
