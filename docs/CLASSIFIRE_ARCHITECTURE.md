@@ -4,9 +4,9 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main baseline:** `45b1f7f8196805854f7bd344eb57d7e5b737d9e9` (PR #180, 2026-09-05)
+**Verified shared-main baseline:** `4ab872334cad326fbd3cc6dad7106f3f448eae14` (PR #181, 2026-09-05)
 
-**Latest executable-change baseline:** 45b1f7f (PR #180)
+**Latest executable-change baseline:** 4ab8723 (PR #181)
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -19,39 +19,38 @@ Git state, and retained runtime receipts determine factual implementation state.
 
 ## Contract characterisation progress
 
-PR #180 merged the socket deadline correction as 45b1f7f; exact main CI
-[33935963213](https://github.com/Slayde91/classifire/actions/runs/33935963213)
-passed. PR #179 uncertain-creation refusal remains intact.
+PR #181 merged audit-page refusal as `4ab872334cad326fbd3cc6dad7106f3f448eae14`.
+[PR CI 33936702941](https://github.com/Slayde91/classifire/actions/runs/33936702941)
+and [main CI 33936917822](https://github.com/Slayde91/classifire/actions/runs/33936917822)
+were rechecked and passed. Shared main rejects any `nextCursor` field and
+more than 100 audit events. PR #179 uncertain-session-creation refusal and
+PR #180 socket deadlines are already merged.
 
-**Current audit-page candidate (until merged):** reject any nextCursor field
-and responses exceeding the requested 100-event limit with TOOL_AUDIT_INVALID.
-Eleven new cases cover both endpoints and the valid 100-event terminal boundary.
-Ten refusal cases failed before the fix; 131 focused/caller tests now pass
-(114 contract/security plus 17 report/representative). Valid legacy empty-page
-receipt hashes remain unchanged. No authority, migration or provider change.
+**Remaining shared-main gap:** an empty terminal audit page is only an
+observation of retained events. The source inspection recorded in the
+[contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) found asynchronous,
+potentially disabled/lossy capture without a durable completion certificate.
+The shared-main transport has no completion-verifier acceptance gate.
 
-**Newly verified limitation:** the installed OpenClaw 2026.7.1-2 package matches
-the configured pin. Its audit.list supports the existing filters and optional
-nextCursor; audit.activity.list is not registered in the inspected stock handler
-catalog. The retained fallback request is compatible with the stock method's schema.
-The writer is asynchronous, can drop queued metadata and can be disabled while
-stored records remain readable. The list result provides no persistence barrier
-or loss/coverage certificate. A terminal empty page is an observation of retained
-records, not proof that no tool action occurred. The page fix does not close this
-gap. See the [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) for
-artifact hashes and exact limits. The transport can still return a proposal
-after an empty page; complete coverage is not yet an enforced acceptance gate.
+**Uncommitted local work, not shared implementation:** branch
+`feat/phase8-completion-evidence-20260905` at base `4ab8723`, worktree
+`C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905`, contains changes to two
+transports and three test files, plus an untracked
+`docs/EXECUTION_COMPLETION_CONTRACT.md`. Its proposed required verifier and
+version-2 transport receipts bind execution evidence to the exact invocation.
+Managed runtimes supply no verifier, so the candidate deliberately refuses
+inference before acquiring the inference token or sending HTTP. A trusted
+production producer/verifier is absent. Typed data and hashes do not prove
+producer authority. This reconciliation inspected the diff; it did not rerun
+candidate tests or publish that code.
 
-**Next bounded task:** establish a trusted execution/audit completion evidence
-contract before using this audit as complete protection. Inspect existing
-NoToolSessionAudit, transport acceptance, receipts and durable job abstractions;
-define how terminal execution, durable event coverage, loss/disabled-writer state
-and authority are proved. Separate historical observation receipts from new
-acceptance evidence. Record implementation/migration impact before coding;
-implement only a justified fail-closed boundary with synthetic ports. Do not
-invent a Gateway field, use sleeps/repeated empty reads as proof, or remove
-independent no-tool attestation. OpenClaw retirement/live completeness claims
-remain blocked on this missing protection.
+**Next bounded task:** review, validate and finish that existing completion
+acceptance candidate, including its deliberate runtime refusal and historical
+receipt compatibility. Preserve its changes; do not recreate them. Prove the
+consumer boundary with synthetic tests before normal reviewed publication.
+Durable authenticated evidence production is a subsequent gate; do not
+fabricate provider fields, use repeated empty reads as proof, or remove OpenClaw
+before security and recovery parity.
 
 ## 1. Governing reasoning chain
 
@@ -555,7 +554,7 @@ The hybrid decision merged in PR #175 at 9c0fc7d, with executable code
 unchanged from the PR #174 baseline.
 PR #177 completed the initial inventory and 13 synthetic contract cases.
 PR #179 merged uncertain-creation refusal. Characterisation remains incomplete.
-PR #180 merged deadline enforcement. The current candidate rejects explicitly
+PR #180 merged deadline enforcement; PR #181 merged refusal of explicitly
 incomplete/oversized audit pages. Stock pinned audit persistence is asynchronous
 and can lose/disable new records without signaling this through audit.list.
 A trusted completion/coverage evidence contract is therefore required before
@@ -568,6 +567,26 @@ of this documentation decision grants canonical, technical, commercial, lock,
 deployment, provider-run, or Human Release authority.
 
 ### Unresolved decisions, migrations and technical debt
+
+**Proposed consumer change, local only:** the completion-evidence candidate adds
+a required application-injected verifier to both transports and binds validated
+evidence into version-2 transport digests. Its context includes request/response
+bytes, session, agent, audit and attestation receipts, and invocation times.
+Missing evidence blocks inference dispatch; malformed, mismatched or incomplete
+evidence blocks proposal acceptance. Independent no-tool checks remain.
+
+**Reason and consequences:** shared-main audit pages cannot establish durable
+completion. The candidate closes acceptance without pretending the missing
+producer exists, but managed inference becomes unavailable until a trusted
+producer/verifier is implemented and wired. Review and test this availability
+impact before merging. Typed callback data alone is not authentication.
+
+**Migration and unresolved decisions:** verify historical version-1 receipts
+separately from version-2 acceptance; never relabel old observations as complete
+capture. The candidate adds no database migration or provider removal. Prove
+producer identity, persistence ordering, capture health/loss detection, retention,
+clock assumptions and crash/replay recovery before production wiring. The local
+contract is not on main; use the exact candidate path in the handoff.
 
 | Decision/gap | Constraint and next evidence |
 | --- | --- |

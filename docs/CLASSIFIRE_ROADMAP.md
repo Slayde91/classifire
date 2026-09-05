@@ -2,9 +2,9 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main baseline:** `45b1f7f8196805854f7bd344eb57d7e5b737d9e9` (PR #180, 2026-09-05)
+**Verified shared-main baseline:** `4ab872334cad326fbd3cc6dad7106f3f448eae14` (PR #181, 2026-09-05)
 
-**Latest executable-change baseline:** 45b1f7f (PR #180)
+**Latest executable-change baseline:** 4ab8723 (PR #181)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -18,39 +18,38 @@ for the accepted hybrid target and migration gates.
 
 ## Contract characterisation progress
 
-PR #180 merged the socket deadline correction as 45b1f7f; exact main CI
-[33935963213](https://github.com/Slayde91/classifire/actions/runs/33935963213)
-passed. PR #179 uncertain-creation refusal remains intact.
+PR #181 merged audit-page refusal as `4ab872334cad326fbd3cc6dad7106f3f448eae14`.
+[PR CI 33936702941](https://github.com/Slayde91/classifire/actions/runs/33936702941)
+and [main CI 33936917822](https://github.com/Slayde91/classifire/actions/runs/33936917822)
+were rechecked and passed. Shared main rejects any `nextCursor` field and
+more than 100 audit events. PR #179 uncertain-session-creation refusal and
+PR #180 socket deadlines are already merged.
 
-**Current audit-page candidate (until merged):** reject any nextCursor field
-and responses exceeding the requested 100-event limit with TOOL_AUDIT_INVALID.
-Eleven new cases cover both endpoints and the valid 100-event terminal boundary.
-Ten refusal cases failed before the fix; 131 focused/caller tests now pass
-(114 contract/security plus 17 report/representative). Valid legacy empty-page
-receipt hashes remain unchanged. No authority, migration or provider change.
+**Remaining shared-main gap:** an empty terminal audit page is only an
+observation of retained events. The source inspection recorded in the
+[contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) found asynchronous,
+potentially disabled/lossy capture without a durable completion certificate.
+The shared-main transport has no completion-verifier acceptance gate.
 
-**Newly verified limitation:** the installed OpenClaw 2026.7.1-2 package matches
-the configured pin. Its audit.list supports the existing filters and optional
-nextCursor; audit.activity.list is not registered in the inspected stock handler
-catalog. The retained fallback request is compatible with the stock method's schema.
-The writer is asynchronous, can drop queued metadata and can be disabled while
-stored records remain readable. The list result provides no persistence barrier
-or loss/coverage certificate. A terminal empty page is an observation of retained
-records, not proof that no tool action occurred. The page fix does not close this
-gap. See the [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) for
-artifact hashes and exact limits. The transport can still return a proposal
-after an empty page; complete coverage is not yet an enforced acceptance gate.
+**Uncommitted local work, not shared implementation:** branch
+`feat/phase8-completion-evidence-20260905` at base `4ab8723`, worktree
+`C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905`, contains changes to two
+transports and three test files, plus an untracked
+`docs/EXECUTION_COMPLETION_CONTRACT.md`. Its proposed required verifier and
+version-2 transport receipts bind execution evidence to the exact invocation.
+Managed runtimes supply no verifier, so the candidate deliberately refuses
+inference before acquiring the inference token or sending HTTP. A trusted
+production producer/verifier is absent. Typed data and hashes do not prove
+producer authority. This reconciliation inspected the diff; it did not rerun
+candidate tests or publish that code.
 
-**Next bounded task:** establish a trusted execution/audit completion evidence
-contract before using this audit as complete protection. Inspect existing
-NoToolSessionAudit, transport acceptance, receipts and durable job abstractions;
-define how terminal execution, durable event coverage, loss/disabled-writer state
-and authority are proved. Separate historical observation receipts from new
-acceptance evidence. Record implementation/migration impact before coding;
-implement only a justified fail-closed boundary with synthetic ports. Do not
-invent a Gateway field, use sleeps/repeated empty reads as proof, or remove
-independent no-tool attestation. OpenClaw retirement/live completeness claims
-remain blocked on this missing protection.
+**Next bounded task:** review, validate and finish that existing completion
+acceptance candidate, including its deliberate runtime refusal and historical
+receipt compatibility. Preserve its changes; do not recreate them. Prove the
+consumer boundary with synthetic tests before normal reviewed publication.
+Durable authenticated evidence production is a subsequent gate; do not
+fabricate provider fields, use repeated empty reads as proof, or remove OpenClaw
+before security and recovery parity.
 
 ## 1. Status labels
 
@@ -175,7 +174,7 @@ Phases 8-14 and is not a technical selection or canonical output.
 
 ## 4. Prioritised build plan
 
-### Priority reconciliation through PR #180 and current candidate
+### Priority reconciliation through PR #181 and local completion candidate
 
 | Work | Status | Dependency / completion evidence |
 | --- | --- | --- |
@@ -183,8 +182,9 @@ Phases 8-14 and is not a technical selection or canonical output.
 | Initial OpenClaw inventory/tests | **Completed foundation** | PR #177: inventory and 13 added cases; 83 focused tests pass. Full parity remains incomplete. |
 | Uncertain session creation | **Completed foundation** | PR #179; five cases prove replay refusal, read-only fallback and stopping before inference. Exact main CI passed. |
 | Loopback socket/protocol contracts | **Completed bounded foundation** | PR #180, 15 cases and two deadline fixes; broader protocol/live compatibility remains unproven. |
-| Audit page contract | **Validated candidate / publication pending** | Pinned handler/store inspected; explicit continuation/oversize refused, valid receipt compatibility retained. |
-| Trusted audit completion | **Reordered next; upstream guarantee absent** | Async/disabled/dropped metadata cannot be excluded by audit.list. Define trustworthy completion/coverage evidence and fail-closed acceptance before parity claims. |
+| Audit page contract | **Completed bounded foundation** | PR #181 merged; exact PR/main CI passed. Continuation/oversize refused; legacy receipt compatibility retained. |
+| Completion acceptance consumer | **Active / uncommitted; reordered next** | Review and finish the existing six-file candidate, prove refusal/compatibility and deliberate managed-runtime blocking, then publish after CI. |
+| Trusted completion producer | **Upcoming; production wiring blocked** | Authenticate durable coverage, writer health/loss and invocation ownership. The candidate supplies no producer. |
 | Remaining contract characterisation | **Upcoming** | Socket/protocol, audit completeness, recovery, identity, privacy and clean-machine gaps remain in the inventory. |
 | Durable jobs/replacement adapter | **Upcoming / planned** | Characterisation first; extend BackgroundJob/worker. Current worker has no handlers. |
 | ProjectPackage export/download | **Upcoming / planned** | Membership, rights, profiles, revisions and deterministic jobs. Policy-permitted Drafts need not await Phase 14 or OpenClaw retirement. |
@@ -195,11 +195,11 @@ Phases 8-14 and is not a technical selection or canonical output.
 | Technical/production follow-ups | **Separate backlog** | Preserve Phase 2/15 gates; do not broaden the next contract task. |
 | Real UAT and Phases 9-14 | **Blocked** | Fresh authority, evidence, semantic approval and governed replacement lock remain required. |
 
-The active candidate changes only audit-page refusal and its tests/docs.
-The contract/security suite passes 114 tests, plus 17 report/representative regressions. Record missing retry/cancellation/recovery as future requirements,
-not invented existing guarantees. Do not build adapters, jobs, packages or UI
-in the first task. [Session Handoff](./SESSION_HANDOFF.md#start-here--next-session)
-defines files, commands and completion criteria.
+The active local candidate changes two transports, three tests and one untracked
+contract document; it is neither committed nor an open PR at this snapshot.
+PR #181 recorded 114 contract/security plus 17 caller tests, not fresh candidate
+validation. [Session Handoff](./SESSION_HANDOFF.md#start-here--next-session)
+defines the next task, files, commands and completion criteria.
 
 ### Immediate next action
 
@@ -211,8 +211,8 @@ OpenClaw is now a transitional adapter, not the long-term product foundation,
 but it remains in place until the documented security, receipt, recovery,
 observability, clean-machine, and rollback parity gates pass.
 
-After the page-refusal correction merges, the next task is a trusted execution/
-audit completion contract and justified fail-closed validation. The pinned API
+The page-refusal correction is merged. Next, review, validate and finish the
+existing completion-evidence acceptance candidate; preserve its local changes. The pinned API
 cannot supply persistence/loss guarantees; this must inform the migration design. Complete remaining synthetic
 contract gates before expanding the execution layer. Later tasks are
 CLASSIFIRE-owned job/run/stage persistence, a provider-neutral adapter behind a
