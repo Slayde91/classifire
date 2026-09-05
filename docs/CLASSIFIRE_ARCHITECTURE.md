@@ -2,12 +2,14 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.6 - local manual Draft Estimate UI; broader applicability and estimating coverage remain planned
+**Architecture version:** 5.7 - retained Draft Estimate reports; broader applicability and estimating coverage remain planned
 
-**Verified shared-main baseline:** `02dc20022b87b532c3d860d4c12527bdfb60dd05` (PR #191, 2026-09-05)
-
-**P0/P1a/P4a/P2a are merged.** P2a feature `21b53363b3e5037b7ad3496c002d0cd84c47fe21` passed [PR CI 33955043986](https://github.com/Slayde91/classifire/actions/runs/33955043986); [main CI 33955401203](https://github.com/Slayde91/classifire/actions/runs/33955401203) passed on `02dc200` (both 1,191 tests, 141 warnings).
-**P3a implementation:** local, uncommitted `feat/draft-estimate-ui-20260905`. Manual Estimate routes, services, strict contract and migration have HTTP/backend and real-browser verification. Actual server restart and combined/static checks passed; publication remains pending at this checkpoint. See PROJECT_STATE.md.
+**Verified shared-main baseline:** `24ee6e35f181ed544ae82cdc3bc429ce70f49c3b` (PR #192).
+P0/P1a/P4a/P2a/P3a are merged. PR CI 33967557386 and main CI 33968038437
+passed 1,286 tests, 141 warnings. The supplied logo is already shared-main UI branding.
+**Current increment:** `feat/draft-estimate-reports-20260905`, estimate-only P4b,
+implemented locally and demonstrated on 2026-09-06. Publication is pending at this
+checkpoint; verify current Git/PR evidence before repeating work. See PROJECT_STATE.md.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -46,7 +48,7 @@ recalculating, changing records or bypassing canonical output gates.
 
 ## Approved capability composition and first prototype
 
-**Accepted target; Scope, scope-only reports and candidate review have been demonstrated, and the local manual Estimate has passed its first real-browser interaction:** one modular CLASSIFIRE application exposes
+**Accepted target; manual Scope/Estimate, candidate review and independent Draft reports have browser evidence:** one modular CLASSIFIRE application exposes
 Scope, System Matching, Estimating and Reporting through independent use cases.
 Each accepts explicit validated saved/manual inputs, produces a versioned artifact
 and stops unless the user requests another capability. Stable IDs, evidence,
@@ -78,13 +80,13 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate routes and local P3a manual Estimate routes | Finish Estimate publication; next add estimate-only Draft reports. ChatGPT adapter remains planned. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local estimate-report routes | Finish report publication, then one evidence intake path. ChatGPT adapter remains planned. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
-| Draft persistence | Separate Scope/report/candidate tables plus local Estimate parent/revisions; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
+| Draft persistence | Separate Scope/report/candidate tables plus merged Estimate parent/revisions and local Estimate report retention; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
-| Packages | Scope v1/v2 exchange, candidate JSON and local exact manual Estimate JSON download | Whole-project archives, candidate/estimate import and rights/membership projection remain later work; these artifacts are not a complete ProjectPackage. |
-| Reporting | Separate scope-only Draft snapshot and PDF/XLSX retention; current Scope/project edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
+| Packages | Scope v1/v2 exchange, candidate JSON and exact manual Estimate JSON download | Whole-project archives, candidate/estimate import and rights/membership projection remain later work; these artifacts are not a complete ProjectPackage. |
+| Reporting | Separate scope-only and local estimate-only Draft snapshots and PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
 ### Implemented manual Draft Scope slice (P0)
@@ -286,13 +288,13 @@ serialization. Technical source links open current metadata, not a source-file v
 Complete applicability (P2b), full System Match import/export and general source intake
 remain unfinished. No new framework, provider, database or scheduling dependency.
 
-### Implemented locally: independent manual Draft Estimate (P3a)
+### Implemented: independent manual Draft Estimate (P3a)
 
 This slice implements the separate estimating capability under ADR 0002. It uses
 an exact saved Scope v1/v2 revision and optionally the complete saved candidate
 review envelope for that same Scope. Matching and pricing-library publication are
 not prerequisites. An attachment remains unapproved context; it never selects a
-technical system or rate. Browser/restart and local verification passed; publication is pending at this checkpoint.
+technical system or rate. Browser/restart and local verification passed; PR #192 is merged with successful main CI.
 
 `draft_estimate_ui.py` adapts shared `services/draft_estimates.py` commands. Its
 picker creates empty revision 1; users select one target, add a work line, change
@@ -443,7 +445,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has 0029_draft_system_matches; local P3a advances the packaged head to 0030_draft_estimates |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has 0030_draft_estimates; local P4b advances the packaged head to 0031_draft_estimate_reports |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -784,7 +786,7 @@ Locked Physical Model
 ```
 
 Shared main has basic calculation, releases, estimate lines, PDF/XLSX rendering,
-and snapshots. The local P3a slice adds independent manual unit-sell Draft arithmetic
+and snapshots. The merged P3a slice adds independent manual unit-sell Draft arithmetic
 and exact revision downloads, as described above, without invoking this canonical
 chain. It does not yet implement the complete system-derived component,
 productivity, and rate-inclusion/recovery ledger. Estimate snapshot V2 keeps
@@ -925,7 +927,7 @@ clock assumptions and crash/replay recovery before production wiring. The
 P1a adds explicit v2 import provenance in existing revision storage without reinterpreting v1 authority.
 P4a adds a retained scope-only snapshot and exact PDF/XLSX pair in migration 0028.
 P2a adds candidate-review revisions and explicit Scope/library dependencies in migration 0029.
-P3a locally adds manual Draft Estimate parent/revisions and exact Scope/optional review foreign keys in migration 0030; browser/restart and local checks passed, while publication remains pending at this checkpoint.
+P3a adds manual Draft Estimate parent/revisions and exact Scope/optional review foreign keys in migration 0030 (merged PR #192). P4b adds retained estimate-report snapshots and paired bytes in forward migration 0031; no historical migration is changed.
 Capability/package/client increments follow the roadmap independently of the
 replacement track. That track adds required run/adapter behavior and retires
 OpenClaw only after Decision 0001 parity gates. Preserve historical migrations and receipt readers,
@@ -934,13 +936,11 @@ or duplicate business rules in MCP/UI.
 
 **Historical verification:** PR #175 was documentation-only; its 70 focused
 contract/security tests and main CI 33899855871 describe that older baseline.
-Current shared main is `02dc200`, including P2a through PR #191, with main CI
-33955401203 (1,191 tests, 141 warnings). P0/P1a/P4a/P2a are merged; their browser
-evidence is recorded in PROJECT_STATE.md. P3a has 40 HTTP and 53 backend passes,
-47 corrected-and-passing migration/readiness checks and a successful first Chrome
-interaction. Combined regression passed 328 tests with one dedicated PostgreSQL
-concurrency skip; full Ruff, Mypy (157 source files), Bandit and actual server
-restart passed. Hosted publication remains unverified at this checkpoint.
+Current shared main is `24ee6e3`, including P3a through PR #192, with main CI
+33968038437 (1,286 tests, 141 warnings). P4b local verification includes 233 combined
+regression passes, 17 report-HTTP/migration/readiness passes and 15 historical
+migration/preflight checks. Browser creation, later edits and actual restart retained
+identical PDF/XLSX bytes. See PROJECT_STATE.md for precise evidence and limitations.
 None proves production or full recovery parity.
 
 ### Completed report-governance integration
@@ -1078,38 +1078,38 @@ PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
 deployment, or release authority.
 
-### Next planned prototype: estimate-only Draft reporting (P4b)
+### Implemented locally: estimate-only Draft reporting (first P4b increment)
 
-P3a's shared contract, services, persistence and UI have passed 40 HTTP tests,
-53 backend tests and a real Chrome workflow. The latter retained eight Estimate
-revisions, preserved unknowns and reasoned changes, exercised omit/restore and
-per-mm precision, and showed the partial AUD 441.23 subtotal without tax. Historical
-revision 2/8 downloads stayed unchanged after a Scope edit. Actual server restart,
-combined/static verification and safe publication remain prerequisites to closing
-that increment. P2a is already merged; neither workflow needs to be rebuilt.
+`services/draft_estimate_reports.py` captures one explicitly selected saved Estimate
+and its exact Scope/optional candidate-review envelope with project labels, author,
+time and render version. `outputs/draft_estimate.py` renders that frozen snapshot
+without calling upstream writers. Both outputs are retained atomically in
+`DraftEstimateReport`, bound to the exact Estimate revision by migration 0031.
+Read/download verifies the snapshot, saved input and both output hashes; it never
+regenerates files. Separate scope-only contracts and older reports remain unchanged.
+See [the report contract](./DRAFT_ESTIMATE_REPORT_V1_CONTRACT.md).
 
-The next implementation is an **estimate-only Draft PDF/XLSX profile**. Reuse the
-existing report snapshot/rendering/output-retention architecture, selected saved
-Estimate service and UI patterns. Freeze one exact Estimate envelope, project
-labels and render version; retain both outputs from that snapshot. Display partial
-subtotal, explicit unknown/unpriced/omitted work, units and retained original/change
-history. An optional captured candidate review remains unapproved context.
+`draft_estimate_ui.py` and `draft_estimate_reports.html` provide selection, preview,
+creation, saved-report listing and PDF/XLSX downloads. Active human owner/admin,
+project/estimate read/write/export and optional technical permissions apply in the
+shared service, with rechecks around rendering/byte work. CSRF protects creation.
+Later Estimate, Scope, optional review/source or project changes show stale reasons
+without rewriting historical files. Corruption and missing authority fail closed.
 
-This profile is planned, not implemented by P3a. The current report validator and
-renderer accept only `scope-only`; their saved Scope/report history must remain
-compatible. Add an explicit Estimate profile/dependency binding rather than passing
-an Estimate into the scope-only contract. Snapshot/render/download must validate retained artifacts without refreshing
-quantities, prices or review content, running retrieval/AI, or calling the canonical
-estimate snapshot builder.
-Carry owner/admin, estimate read/export and attached-review technical permissions
-through snapshot creation and downloads. Later input changes should flag stale
-without rewriting retained output bytes; test corruption, restart and both formats.
+PDF and six-sheet XLSX show saved quantities, rates, partial AUD subtotal, originals,
+change history, omissions, unknown/unassessed work and provenance. Exact decimal
+text is authoritative; optional numeric line amounts appear only when safely
+representable within 15 significant digits. No formulas, inferred URLs or tax
+calculation. New outputs use the exact supplied PNG; existing outputs are untouched.
 
-P2b still needs sufficient material/size/FRL/insulation and other source/physical
-criteria plus actual applicability rules. P3b retains pricing workbook provenance,
-validated default/inferred methods, broader components and full recovery coverage.
-P1b remains dependent on actual scanning, verified storage and retention policy.
-These remain required work and do not change the separate authoritative phase gates.
+This is one estimate-only profile, not completion of P4b or production reporting.
+Other technical/combined profiles, production retention limits and export projection
+remain open. After publication, prioritize P1b's first evidence intake UI: source
+retention and a real clean-scan producer must be delivered with its supported path.
+`save_upload` currently leaves pending/not_configured status and `worker.py` has no
+registered handler. Do not substitute a forced clean flag for scanning. Reuse
+verified storage and the report evidence adapter; keep extraction as proposals.
+P2b applicability, P3b governed pricing and full portability remain required work.
 
 ### Separate production and adapter backlog
 

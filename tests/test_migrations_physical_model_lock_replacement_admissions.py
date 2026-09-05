@@ -65,6 +65,6 @@ def test_replacement_lock_admission_migration_upgrades_existing_0023_database(
     )
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0030_draft_estimates"
+            "0031_draft_estimate_reports"
         )
     engine.dispose()

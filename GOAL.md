@@ -117,17 +117,23 @@ This is manual provisional costing, not complete governed estimating. No library
 AI, canonical Estimate, Physical Model Lock or technical approval is required or
 created. The supported recovery boundary excludes nonblank-opening closure work.
 
-## Immediate priority: estimate-only Draft PDF and XLSX
+## Demonstrated estimate-report increment
 
-After P3a publication, deliver one P4b increment: select a saved Draft Estimate,
-preview it and retain readable PDF/XLSX from one frozen snapshot. Reuse existing
-Draft report retention and authority patterns. Display retained quantities, rates,
-originals, overrides, omissions, unknown work and partial totals without rerunning
-upstream capabilities or the canonical recalculating snapshot builder.
+The first P4b profile previews one saved Draft Estimate and retains PDF/XLSX from
+one immutable snapshot. Exact amounts, originals/changes, missing work and partial
+coverage survive later edits and restart. It runs independently without AI or
+canonical recalculation. See PROJECT_STATE.md for measured checks/publication.
 
-Preserve exact decimal values in both formats; large supported amounts can exceed
-spreadsheet numeric precision. Keep original report files and earlier revisions
-unchanged. This delivers useful output from the manual costing interaction before
-broad refinement. The roadmap and handoff define acceptance and validation.
-Pricing XLSX ingestion, supported inferred/default methods, applicability, source
-intake, other reports and complete portability remain required follow-on work.
+## Immediate priority: one evidence intake UI path
+
+After report publication, deliver P1b: upload one supported PDF into a Draft-owned
+retained source, observe genuine scan status, inspect exact page evidence and
+explicitly use reviewed observations in the Draft Scope. Build the minimum scan,
+storage, provenance and review support with this visible interaction. Unavailable
+or failed scanning must remain visibly blocked, not become a fake clean result.
+Start with synthetic evidence; preserve the working manual path and optional AI.
+
+Full applicability, pricing XLSX ingestion/default/inferred methods, other report
+profiles, complete ProjectPackage exchange and shared ChatGPT access remain required.
+This prototype work does not complete production authority, release or operational
+readiness. Do not replace the full product goal with one successful milestone.

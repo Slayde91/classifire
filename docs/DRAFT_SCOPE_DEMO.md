@@ -250,7 +250,7 @@ and `--port 8801` to reopen this synthetic demonstration.
   Complete ProjectPackage ZIP generation/import, source-file intake, AI analysis,
   full applicability, governed pricing and additional report profiles remain unfinished.
   Scope-only Draft PDF/XLSX reporting and bounded P2a candidate review are implemented;
-  P3a manual Draft estimating is locally demonstrated; estimate-only PDF/XLSX is next after publication.
+  P3a manual Draft estimating is merged in PR #192; estimate-only PDF/XLSX is locally demonstrated.
 - Saved revisions remain Draft and unreviewed. They do not create canonical
   physical-model records, approvals, locks or human releases.
 - Draft content is restricted to its owner and administrators. Surrounding
@@ -260,3 +260,37 @@ and `--port 8801` to reopen this synthetic demonstration.
   deployment, production database migration readiness or completion of all four
   independent capabilities. Continue with the next visible increment in the
   [roadmap](CLASSIFIRE_ROADMAP.md).
+
+## Verified estimate-only report demonstration (2026-09-06)
+
+From a saved Draft Estimate, choose **Estimate PDF/XLSX reports**, select the saved
+revision, preview its partial amounts and choose **Create saved Estimate PDF and
+XLSX**. Open the retained report and download either file. Later changes display
+stale warnings; old downloads keep their exact values and bytes. This does not
+approve technical compatibility, complete recovery or tax. Use the existing
+synthetic launcher with a fresh data directory; no technical seed is required.
+
+The isolated demonstration uses port 8802, data
+`.tmp/draft-estimate-report-demo-20260906` and receipts/downloads/screenshots in
+`.tmp/draft-estimate-report-artifacts`. The report URL is
+`http://127.0.0.1:8802/scopes/ba673952-b7bd-4934-b6fc-baeffa8bac47/estimates/ac020f76-5794-41df-95d6-81dc52b934fc/reports/c16bba9b-b886-45aa-a6c6-7272d1d165b1`.
+Recheck local server availability rather than assuming a historical port is live.
+
+Chrome preview/create/download passed; the report captures Estimate 8 / Scope 3,
+with partial subtotal AUD 441.23 and uncalculated tax. After Estimate 9 / Scope 4
+and an actual server restart, both downloads remained byte-for-byte identical:
+
+- PDF SHA-256: `503a594f92f4c3eb527c4477548423c0127f83b1c2cc8ae44dc88f87c42e5b80`.
+- XLSX SHA-256: `88fda49cbb3a472623cb4154bb8ee561d84a8a19607c443b4b4ca3d6e1e2873a`.
+
+Five PDF pages and representative ranges from all six workbook sheets were visually
+inspected. Workbook cells preserve exact decimal text, no formulas/URLs, filters,
+originals/history and the supplied PNG. Read-only Excel previews were used after
+artifact-tool's Windows native module failed; original workbook bytes were unchanged.
+The UI screenshot shows the supplied logo. Programmatic tests cover additional
+large/unknown/zero/omitted and long/hostile values; this is not a production-scale trial.
+Read-only database counts found one report, one Estimate/nine revisions, one
+Scope/four revisions and zero canonical Estimate/line/physical/lock/library releases.
+The demo uses create_all, while a separate test verifies migration 0030 to 0031.
+See PROJECT_STATE.md for current checks and publication rather than inferring merge
+or production readiness from the demo.
