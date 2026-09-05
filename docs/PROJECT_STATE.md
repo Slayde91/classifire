@@ -82,6 +82,13 @@ not calculated, technical status is unapproved. See
   `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
   Existing report outputs were not rewritten. See DRAFT_SCOPE_DEMO.md for receipts.
 
+
+- Initial PR #193 CI 33973815802 stopped after **526 passes and one failure**:
+  advancing the current head dropped recognition of the previously supported 0029
+  lineage. The service now preserves recognized upgrade heads; the original failing
+  assertion remains unchanged. **15 focused lineage/migration checks passed** after
+  the correction, with Ruff/Mypy/Bandit rechecked. A fresh full CI run is required.
+
 ## Dependencies and technical debt
 
 P1b needs an actual scanner producer, retained source policy, safe concurrent upload

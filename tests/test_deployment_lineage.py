@@ -189,3 +189,10 @@ def test_current_head_without_estimate_report_table_is_schema_drift() -> None:
     )
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_estimate_reports",)
+
+
+def test_older_recognized_match_head_still_requires_migration() -> None:
+    result = _assessment("0029_draft_system_matches", required_tables=True)
+    assert result.status == "BLOCKED"
+    assert result.code == "DATABASE_MIGRATION_REQUIRED"
+    assert result.database_write_performed is False

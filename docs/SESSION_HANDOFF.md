@@ -110,6 +110,11 @@ implicitly. Original supplied logo remains unchanged. Prior worktrees/demos and
 three untracked ProjectPackage candidate files are unrelated and preserved.
 Synthetic databases, browser tools, cookies and QA files stay outside commits.
 
+Initial PR #193 CI caught lost recognition of schema 0029 after advancing the head
+(526 passed, one failed). The service now preserves recognized upgrade lineages;
+the original assertion was retained. Fifteen focused lineage/migration checks and
+static checks passed after correction; verify the fresh full CI before merging.
+
 ## Recommended Prompt for New Session
 
 ```text

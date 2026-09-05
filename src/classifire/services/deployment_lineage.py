@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 
 CLEAN_STACK_HEAD = "0031_draft_estimate_reports"
 PREVIOUS_CLEAN_STACK_HEAD = "0030_draft_estimates"
+# Preserve recognized upgrade lineages as the current head advances.
+MIGRATION_REQUIRED_HEADS = frozenset({"0029_draft_system_matches", "0030_draft_estimates"})
 LEGACY_CLEAN_STACK_HEAD = "0007_reconcile_adjudicated_admission_lineages"
 LEGACY_ADJUDICATED_HEAD = "0006_adjudicated_canonical_admissions"
 REQUIRED_TABLES = frozenset(
@@ -88,7 +90,7 @@ def assess_deployment_lineage(db: Session) -> DeploymentLineageAssessment:
             missing_tables=missing_tables,
             unexpected_tables=unexpected_tables,
         )
-    if revisions == (PREVIOUS_CLEAN_STACK_HEAD,):
+    if len(revisions) == 1 and revisions[0] in MIGRATION_REQUIRED_HEADS:
         return DeploymentLineageAssessment(
             status="BLOCKED",
             code="DATABASE_MIGRATION_REQUIRED",
