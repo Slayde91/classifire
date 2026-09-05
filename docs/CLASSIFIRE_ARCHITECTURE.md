@@ -1177,8 +1177,9 @@ raw PDFs; their downloads retain normal ownership/permission/integrity checks.
 No canonical physical model, technical approval, price, lock or release is created.
 Full applicability still needs explicit structured criteria: current retrieval uses
 only service type/substrate and leaves size, material, orientation, FRL and installation
-criteria missing. Deliver a bounded visible criteria/constraint-review increment next;
-never turn existing text similarity into an Applicable verdict.
+criteria missing. The former next priority, a bounded criteria/constraint review,
+was delivered in PR #195 as described below; full applicability remains incomplete.
+Never turn existing text similarity into an Applicable verdict.
 
 ### Merged partial measured-limit review (first P2b, PR #195)
 
