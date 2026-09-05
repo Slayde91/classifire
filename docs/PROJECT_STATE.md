@@ -2,8 +2,8 @@
 
 **Verified snapshot:** 2026-09-05 (AEST)
 **Product status:** Pre-production implementation and controlled UAT
-**Verified shared-main baseline:** `c6794053586f353eb03c2921473cea2f2b44506c` (PR #179, 2026-09-05)
-**Latest executable-change baseline:** `c679405` (PR #179)
+**Verified shared-main baseline:** `45b1f7f8196805854f7bd344eb57d7e5b737d9e9` (PR #180, 2026-09-05)
+**Latest executable-change baseline:** `45b1f7f` (PR #180)
 
 PR #175 adopted Architecture Decision 0001 in documentation. It did not implement
 the hybrid migration. This snapshot separates freshly checked source/Git/test
@@ -12,36 +12,47 @@ under `docs/`; root-level duplicates are not maintained.
 
 ## Contract characterisation progress
 
-PR #179 merged uncertain CLI session-creation refusal as c679405. Its exact
-post-merge CI [33935111307](https://github.com/Slayde91/classifire/actions/runs/33935111307)
-passed. That correction preserves read-only fallback and stops uncertain creation
-before inference. Full OpenClaw retirement parity remains incomplete.
+PR #180 merged the socket deadline correction as 45b1f7f; exact main CI
+[33935963213](https://github.com/Slayde91/classifire/actions/runs/33935963213)
+passed. PR #179 uncertain-creation refusal remains intact.
 
-**Current socket candidate (until merged):** the existing invocation deadline
-is checked before consuming buffered bytes and before returning a decoded reply.
-Two fake-clock regressions reproduced late-response acceptance before the fix.
-Thirteen additional fake-socket cases prove safe refusal, closure, one connection
-and no repeated creation for close/EOF/timeout/OS errors, malformed frames/JSON,
-oversized replies and unrelated connect/request IDs. All 120 focused/caller
-tests pass (103 contract/security plus 17 report/representative tests).
-Authority, receipt schemas, provider configuration and migrations are unchanged.
+**Current audit-page candidate (until merged):** reject any nextCursor field
+and responses exceeding the requested 100-event limit with TOOL_AUDIT_INVALID.
+Eleven new cases cover both endpoints and the valid 100-event terminal boundary.
+Ten refusal cases failed before the fix; 131 focused/caller tests now pass
+(114 contract/security plus 17 report/representative). Valid legacy empty-page
+receipt hashes remain unchanged. No authority, migration or provider change.
 
-**Next bounded task after merge:** establish the audit completeness contract.
-Inspect the pinned Gateway response shape and current guard/tests before choosing
-behaviour. The guard requests at most 100 events and validates their shape; this
-does not prove the response covers the complete audit window. Add synthetic
-coverage for verified truncation/pagination/window semantics and correct only a
-demonstrated acceptance gap. Do not invent provider fields or weaken historical
-receipt verification. Record any unavailable upstream contract evidence as a
-specific blocker; complete independent coverage first.
+**Newly verified limitation:** the installed OpenClaw 2026.7.1-2 package matches
+the configured pin. Its audit.list supports the existing filters and optional
+nextCursor; audit.activity.list is not registered in the inspected stock handler
+catalog. The retained fallback request is compatible with the stock method's schema.
+The writer is asynchronous, can drop queued metadata and can be disabled while
+stored records remain readable. The list result provides no persistence barrier
+or loss/coverage certificate. A terminal empty page is an observation of retained
+records, not proof that no tool action occurred. The page fix does not close this
+gap. See the [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) for
+artifact hashes and exact limits. The transport can still return a proposal
+after an empty page; complete coverage is not yet an enforced acceptance gate.
+
+**Next bounded task:** establish a trusted execution/audit completion evidence
+contract before using this audit as complete protection. Inspect existing
+NoToolSessionAudit, transport acceptance, receipts and durable job abstractions;
+define how terminal execution, durable event coverage, loss/disabled-writer state
+and authority are proved. Separate historical observation receipts from new
+acceptance evidence. Record implementation/migration impact before coding;
+implement only a justified fail-closed boundary with synthetic ports. Do not
+invent a Gateway field, use sleeps/repeated empty reads as proof, or remove
+independent no-tool attestation. OpenClaw retirement/live completeness claims
+remain blocked on this missing protection.
 
 ## 1. Project health and publication
 
 | Area | Verified state | Meaning |
 | --- | --- | --- |
-| Shared main | PR #179 merged as `c679405`, including uncertain-creation refusal. | Hybrid is accepted, not a completed runtime migration. |
-| Hosted CI | [Main run 33935111307](https://github.com/Slayde91/classifire/actions/runs/33935111307) succeeded on exactly `c679405`. | Source/test/static/migration evidence, not production or real-UAT proof. |
-| Local synthetic verification | 103 tests passed across the eight contract/security files in the handoff; the prior 70-test baseline remains historical evidence. | Existing contracts have a passing baseline; full migration parity is not proven. |
+| Shared main | PR #180 merged as `45b1f7f`, including socket deadline enforcement. | Hybrid is accepted, not a completed runtime migration. |
+| Hosted CI | [Main run 33935963213](https://github.com/Slayde91/classifire/actions/runs/33935963213) succeeded on exactly `45b1f7f`. | Source/test/static/migration evidence, not production or real-UAT proof. |
+| Local synthetic verification | 114 tests passed across the eight contract/security files in the handoff; the prior 70-test baseline remains historical evidence. | Existing contracts have a passing baseline; full migration parity is not proven. |
 | Migration history | One Alembic head: `0026_single_active_technical_release` on `legacy_adjudicated_lineage`. | Preserve forward-only history. |
 | Branch governance | Detailed protection/rules APIs previously returned HTTP 403; basic main metadata reports protected=false and no enforced checks. CODEOWNERS names Slayde91. | Normal PR #176 merge was accepted after policy evidence; never bypass failed checks or required review. |
 | Open work | Issues #42 (retained Phase 8 tooling reconciliation) and #43 (OpenClaw development dependency advisories); draft PRs #9-#13 on legacy feature-to-feature bases. | Reconcile issue contents against source; do not bulk-merge the draft stack. |
@@ -58,9 +69,9 @@ two tests. Staged additions, unstaged code/configuration/plugin/UI/test changes,
 and untracked material are pre-existing recovery evidence. Protected pytest
 directories prevent a complete untracked inventory. None belongs to this change.
 
-Current implementation branch: `test/phase8-socket-contracts-20260905`,
-worktree `C:\CLASSIFIRE\.tmp\phase8-socket-contracts-20260905`,
-created cleanly from `c679405` before editing. This candidate changes one runtime
+Current implementation branch: `fix/phase8-audit-contract-20260905`,
+worktree `C:\CLASSIFIRE\.tmp\phase8-audit-contract-20260905`,
+created cleanly from `45b1f7f` before editing. This candidate changes one runtime
 service, its tests, the contract inventory and four continuity documents.
 Verify its eventual commit/PR/merge in GitHub; the snapshot does not claim a
 future publication result.
@@ -124,8 +135,8 @@ it retroactively. No repeat report/provider run is authorised by this snapshot.
 
 - Phases 0-7 and 15 have implemented foundations with incomplete exits.
 - Phase 3 initial contract inventory/tests are merged. The next implementation
-  task after the socket correction merges is audit-completeness
-  characterisation. The current candidate fixes late-response acceptance.
+  task is trusted completion evidence following the newly verified asynchronous
+  audit gap. The current candidate refuses incomplete/oversized pages only.
 - Phase 8 remains blocked on fresh authority, evidence review, semantic approval
   and separately governed canonical/replacement-lock gates.
 - Phases 9-14 remain dependency-blocked; package portability does not bypass them.
@@ -137,13 +148,15 @@ See the [roadmap](./CLASSIFIRE_ROADMAP.md) for phase-specific acceptance criteri
 
 ## 6. Recommended Next Actions
 
-1. **Establish the audit completeness contract.**
-   After publishing the socket correction, inspect pinned upstream semantics and
-   guard/test behaviour for the 100-event limit and audit window. Add synthetic
-   coverage and fix only a demonstrated acceptance gap. Missing provider-contract
-   evidence must be stated, not replaced with invented pagination fields.
+1. **Establish trusted execution/audit completion evidence.**
+   After publishing the page-refusal candidate, define the completion/coverage
+   proof and its fail-closed validation at existing service boundaries.
+   Record migration impact and preserve legacy observation-receipt verification.
+   The stock API has no certificate for writer health, dropped events or a
+   persisted terminal boundary; polling or fabricated provider fields cannot
+   supply one.
    [Start Here / Next Session](./SESSION_HANDOFF.md#start-here--next-session)
-   provides files, commands and completion criteria.
+   provides prerequisites and completion criteria.
 2. **After the remaining characterisation gate, establish the smallest durable run contract.**
    Extend BackgroundJob/worker where suitable, then add a feature-flagged
    provider adapter with tested rollback. Do not implement these in the
@@ -160,13 +173,15 @@ or a general agent platform.
 
 ## 7. Verification and limits
 
-Current candidate verification: both receive/decode deadline regressions failed
-against old source; 13 other new socket failure cases already passed. After the
-two deadline checks, all 120 focused/caller tests pass. Full Ruff/Bandit and Mypy (142 source files) passed;
-one Alembic head remains. Declared stubs were installed only in temporary storage. Existing Pillow getdata deprecation warnings remain in
-representative tests. No real Gateway/provider/customer evidence or canonical,
-lock, deployment or release operations were exercised. Exact baseline main CI
-33935111307 passed; candidate hosted CI and publication need separate verification.
+Current candidate verification: installed package/version, audit handler/schema,
+event store and asynchronous writer inspected read-only; artifact hashes recorded
+in the contract inventory. No live configuration or ledger was read. Ten new
+refusal cases failed before the fix; 131 tests pass after it, including the legacy
+golden receipt. Full Ruff/Bandit and Mypy (142 source files) passed; one Alembic head remains.
+Declared type stubs were installed only in task-temporary storage. Existing Pillow
+getdata warnings remain in representative tests. No real Gateway/provider,
+customer data, canonical write, lock, deployment or release was exercised.
+Baseline main CI 33935963213 passed; verify candidate CI/publication separately.
 
 Detailed historical PR/runtime evidence remains in Git history and linked
 documents; it was not all rerun here. No real report, customer evidence,

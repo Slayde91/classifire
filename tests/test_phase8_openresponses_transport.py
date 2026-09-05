@@ -1249,3 +1249,57 @@ def test_both_audit_endpoints_unavailable_fail_with_content_safe_error() -> None
     assert calls == ["audit.activity.list", "audit.list"]
     assert "synthetic-private" not in str(error.value)
     assert error.value.__suppress_context__ is True
+
+
+@pytest.mark.parametrize("endpoint", ["audit.activity.list", "audit.list"])
+@pytest.mark.parametrize(
+    "result",
+    [
+        {"events": [], "nextCursor": "123"},
+        {"events": [], "nextCursor": ""},
+        {"events": [], "nextCursor": None},
+        {"events": [{"toolName": "synthetic-tool"}] * 100, "nextCursor": "123"},
+        {"events": [{"toolName": "synthetic-tool"}] * 101},
+    ],
+)
+def test_audit_refuses_incomplete_or_oversized_page_without_retry(
+    endpoint: str,
+    result: dict[str, Any],
+) -> None:
+    calls = []
+
+    def rpc(method, params):
+        calls.append(method)
+        if method != endpoint:
+            raise RuntimeError("synthetic unsupported endpoint")
+        return result
+
+    with pytest.raises(Phase8OpenResponsesTransportError) as error:
+        _audit_contract_guard(rpc).audit(
+            agent_id="cf-validator",
+            session_key="agent:cf-validator:synthetic-audit",
+            after_ms=123,
+        )
+    assert error.value.code == "TOOL_AUDIT_INVALID"
+    assert calls == (
+        ["audit.activity.list"]
+        if endpoint == "audit.activity.list"
+        else ["audit.activity.list", "audit.list"]
+    )
+
+
+def test_terminal_full_audit_page_preserves_tool_detection_without_paging() -> None:
+    calls = []
+
+    def rpc(method, params):
+        calls.append((method, params))
+        return {"events": [{"toolName": "synthetic-tool"}] * 100}
+
+    audit = _audit_contract_guard(rpc).audit(
+        agent_id="cf-validator",
+        session_key="agent:cf-validator:synthetic-audit",
+        after_ms=123,
+    )
+    assert audit.tool_calls == ("synthetic-tool",)
+    assert len(calls) == 1
+    assert calls[0][1]["limit"] == 100

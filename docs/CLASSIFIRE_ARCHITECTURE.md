@@ -4,9 +4,9 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main baseline:** `c6794053586f353eb03c2921473cea2f2b44506c` (PR #179, 2026-09-05)
+**Verified shared-main baseline:** `45b1f7f8196805854f7bd344eb57d7e5b737d9e9` (PR #180, 2026-09-05)
 
-**Latest executable-change baseline:** c679405 (PR #179)
+**Latest executable-change baseline:** 45b1f7f (PR #180)
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -19,28 +19,39 @@ Git state, and retained runtime receipts determine factual implementation state.
 
 ## Contract characterisation progress
 
-PR #179 merged uncertain CLI session-creation refusal as c679405. Its exact
-post-merge CI [33935111307](https://github.com/Slayde91/classifire/actions/runs/33935111307)
-passed. That correction preserves read-only fallback and stops uncertain creation
-before inference. Full OpenClaw retirement parity remains incomplete.
+PR #180 merged the socket deadline correction as 45b1f7f; exact main CI
+[33935963213](https://github.com/Slayde91/classifire/actions/runs/33935963213)
+passed. PR #179 uncertain-creation refusal remains intact.
 
-**Current socket candidate (until merged):** the existing invocation deadline
-is checked before consuming buffered bytes and before returning a decoded reply.
-Two fake-clock regressions reproduced late-response acceptance before the fix.
-Thirteen additional fake-socket cases prove safe refusal, closure, one connection
-and no repeated creation for close/EOF/timeout/OS errors, malformed frames/JSON,
-oversized replies and unrelated connect/request IDs. All 120 focused/caller
-tests pass (103 contract/security plus 17 report/representative tests).
-Authority, receipt schemas, provider configuration and migrations are unchanged.
+**Current audit-page candidate (until merged):** reject any nextCursor field
+and responses exceeding the requested 100-event limit with TOOL_AUDIT_INVALID.
+Eleven new cases cover both endpoints and the valid 100-event terminal boundary.
+Ten refusal cases failed before the fix; 131 focused/caller tests now pass
+(114 contract/security plus 17 report/representative). Valid legacy empty-page
+receipt hashes remain unchanged. No authority, migration or provider change.
 
-**Next bounded task after merge:** establish the audit completeness contract.
-Inspect the pinned Gateway response shape and current guard/tests before choosing
-behaviour. The guard requests at most 100 events and validates their shape; this
-does not prove the response covers the complete audit window. Add synthetic
-coverage for verified truncation/pagination/window semantics and correct only a
-demonstrated acceptance gap. Do not invent provider fields or weaken historical
-receipt verification. Record any unavailable upstream contract evidence as a
-specific blocker; complete independent coverage first.
+**Newly verified limitation:** the installed OpenClaw 2026.7.1-2 package matches
+the configured pin. Its audit.list supports the existing filters and optional
+nextCursor; audit.activity.list is not registered in the inspected stock handler
+catalog. The retained fallback request is compatible with the stock method's schema.
+The writer is asynchronous, can drop queued metadata and can be disabled while
+stored records remain readable. The list result provides no persistence barrier
+or loss/coverage certificate. A terminal empty page is an observation of retained
+records, not proof that no tool action occurred. The page fix does not close this
+gap. See the [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) for
+artifact hashes and exact limits. The transport can still return a proposal
+after an empty page; complete coverage is not yet an enforced acceptance gate.
+
+**Next bounded task:** establish a trusted execution/audit completion evidence
+contract before using this audit as complete protection. Inspect existing
+NoToolSessionAudit, transport acceptance, receipts and durable job abstractions;
+define how terminal execution, durable event coverage, loss/disabled-writer state
+and authority are proved. Separate historical observation receipts from new
+acceptance evidence. Record implementation/migration impact before coding;
+implement only a justified fail-closed boundary with synthetic ports. Do not
+invent a Gateway field, use sleeps/repeated empty reads as proof, or remove
+independent no-tool attestation. OpenClaw retirement/live completeness claims
+remain blocked on this missing protection.
 
 ## 1. Governing reasoning chain
 
@@ -544,10 +555,12 @@ The hybrid decision merged in PR #175 at 9c0fc7d, with executable code
 unchanged from the PR #174 baseline.
 PR #177 completed the initial inventory and 13 synthetic contract cases.
 PR #179 merged uncertain-creation refusal. Characterisation remains incomplete.
-The current socket candidate rejects replies consumed/decoded after the existing
-deadline. After it merges, establish the audit-completeness contract using pinned
-upstream evidence and synthetic tests; do not infer complete audit coverage from
-an empty or bounded event list alone.
+PR #180 merged deadline enforcement. The current candidate rejects explicitly
+incomplete/oversized audit pages. Stock pinned audit persistence is asynchronous
+and can lose/disable new records without signaling this through audit.list.
+A trusted completion/coverage evidence contract is therefore required before
+claiming complete protection; legacy empty-list receipts remain observation-only.
+This is a verified migration gap, not a new guarantee or permission to remove guards.
 Complete the remaining contract gates before adding CLASSIFIRE-owned job/run/stage
 state or a provider-neutral inference adapter. Portable `ProjectPackage`, MCP,
 standalone-client, and OpenClaw-retirement capabilities remain planned. No part

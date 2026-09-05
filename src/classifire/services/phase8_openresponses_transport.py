@@ -340,12 +340,13 @@ class OpenClawGatewayNoToolSessionGuard:
         session_key: str,
         after_ms: int,
     ) -> NoToolSessionAudit:
+        audit_limit = 100
         params = {
             "sessionKey": session_key,
             "agentId": agent_id,
             "kind": "tool_action",
             "after": after_ms,
-            "limit": 100,
+            "limit": audit_limit,
         }
         method = "audit.activity.list"
         try:
@@ -357,6 +358,10 @@ class OpenClawGatewayNoToolSessionGuard:
         except Exception:
             raise Phase8OpenResponsesTransportError("TOOL_AUDIT_UNAVAILABLE") from None
         if not isinstance(result, dict) or not isinstance(result.get("events"), list):
+            raise Phase8OpenResponsesTransportError("TOOL_AUDIT_INVALID")
+        # A continuation is not a complete audit result, even if its current events are empty.
+        # The no-tool contract needs no pagination: any observed action already fails.
+        if "nextCursor" in result or len(result["events"]) > audit_limit:
             raise Phase8OpenResponsesTransportError("TOOL_AUDIT_INVALID")
         names: set[str] = set()
         for event in result["events"]:
