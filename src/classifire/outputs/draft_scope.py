@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import math
 import unicodedata
+from collections.abc import Callable
 from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
@@ -135,6 +136,78 @@ def _metadata(snapshot: dict[str, Any]) -> list[tuple[str, Any]]:
     ]
 
 
+def _append_scope_content(
+    scope: dict[str, Any],
+    text: Callable[..., None],
+    heading: ParagraphStyle,
+    item_heading: ParagraphStyle,
+    small: ParagraphStyle,
+) -> None:
+    """Append the same retained physical content to Scope and complete reports."""
+
+    def detail(label: str, value: object) -> None:
+        text(f"{label}: {value}")
+
+    content = scope["content"]
+    text("Scope overview", heading)
+    text(" | ".join(f"{key.replace('_', ' ').title()}: {len(content[key])}" for key in content))
+    defects = {item["id"]: item["label"] for item in content["defects"]}
+    openings = {item["id"]: item["label"] for item in content["openings"]}
+
+    text("Defects", heading)
+    for item in content["defects"]:
+        text(item["label"], item_heading)
+        text(f"Defect ID: {item['id']}", small)
+        text(item["description"] or "No description supplied.")
+    if not content["defects"]:
+        text("No defects supplied.")
+    text("Openings", heading)
+    for item in content["openings"]:
+        text(item["label"], item_heading)
+        text(f"Opening ID: {item['id']}", small)
+        related = item["defect_id"]
+        detail(
+            "Related defect",
+            f"{defects[related]} ({related})" if related else "Not linked / unknown",
+        )
+        detail("Plane / substrate", f"{item['plane']} / {item['substrate'] or _UNKNOWN}")
+        detail(
+            "Width / height",
+            f"{_quantity(item['width_mm'], 'mm')} / {_quantity(item['height_mm'], 'mm')}",
+        )
+        detail("Blank opening", "Yes - no linked services" if item["blank"] else "No")
+        detail("Evidence state", f"{item['state']} - unreviewed")
+    if not content["openings"]:
+        text("No openings supplied.")
+    text("Services", heading)
+    for item in content["services"]:
+        text(item["label"], item_heading)
+        text(f"Service ID: {item['id']}", small)
+        detail("Type", item["service_type"] or _UNKNOWN)
+        detail("Quantity", _quantity(item["quantity"], item["unit"]))
+        detail("Quantity unit", item["unit"])
+        detail("Evidence state", f"{item['state']} - unreviewed")
+        for identifier in item["opening_ids"]:
+            detail("Linked opening", f"{openings[identifier]} ({identifier})")
+        if not item["opening_ids"]:
+            detail("Linked openings", "Not linked / unknown")
+    if not content["services"]:
+        text("No services supplied.")
+    text("Observations", heading)
+    for item in content["observations"]:
+        text(f"Observation ID: {item['id']}", small)
+        text(item["text"])
+        detail("Evidence state", f"{item['state']} - unreviewed")
+    if not content["observations"]:
+        text("No observations supplied.")
+    for key in ("assumptions", "exclusions"):
+        text(key.title(), heading)
+        for index, value in enumerate(content[key], 1):
+            text(f"{index}. {value}")
+        if not content[key]:
+            text("None supplied.")
+
+
 def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
     """Render every scope item as flowing text, including long notes and links."""
     report = _verified(snapshot)
@@ -196,64 +269,7 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
         text("Saved technical review summary", heading)
         for label, value in system_summary(report["system_match"]):
             detail(label, value)
-    content = report["scope"]["content"]
-    text("Scope overview", heading)
-    text(" | ".join(f"{key.replace('_', ' ').title()}: {len(content[key])}" for key in content))
-    defects = {item["id"]: item["label"] for item in content["defects"]}
-    openings = {item["id"]: item["label"] for item in content["openings"]}
-
-    text("Defects", heading)
-    for item in content["defects"]:
-        text(item["label"], item_heading)
-        text(f"Defect ID: {item['id']}", small)
-        text(item["description"] or "No description supplied.")
-    if not content["defects"]:
-        text("No defects supplied.")
-    text("Openings", heading)
-    for item in content["openings"]:
-        text(item["label"], item_heading)
-        text(f"Opening ID: {item['id']}", small)
-        related = item["defect_id"]
-        detail(
-            "Related defect",
-            f"{defects[related]} ({related})" if related else "Not linked / unknown",
-        )
-        detail("Plane / substrate", f"{item['plane']} / {item['substrate'] or _UNKNOWN}")
-        detail(
-            "Width / height",
-            f"{_quantity(item['width_mm'], 'mm')} / {_quantity(item['height_mm'], 'mm')}",
-        )
-        detail("Blank opening", "Yes - no linked services" if item["blank"] else "No")
-        detail("Evidence state", f"{item['state']} - unreviewed")
-    if not content["openings"]:
-        text("No openings supplied.")
-    text("Services", heading)
-    for item in content["services"]:
-        text(item["label"], item_heading)
-        text(f"Service ID: {item['id']}", small)
-        detail("Type", item["service_type"] or _UNKNOWN)
-        detail("Quantity", _quantity(item["quantity"], item["unit"]))
-        detail("Quantity unit", item["unit"])
-        detail("Evidence state", f"{item['state']} - unreviewed")
-        for identifier in item["opening_ids"]:
-            detail("Linked opening", f"{openings[identifier]} ({identifier})")
-        if not item["opening_ids"]:
-            detail("Linked openings", "Not linked / unknown")
-    if not content["services"]:
-        text("No services supplied.")
-    text("Observations", heading)
-    for item in content["observations"]:
-        text(f"Observation ID: {item['id']}", small)
-        text(item["text"])
-        detail("Evidence state", f"{item['state']} - unreviewed")
-    if not content["observations"]:
-        text("No observations supplied.")
-    for key in ("assumptions", "exclusions"):
-        text(key.title(), heading)
-        for index, value in enumerate(content[key], 1):
-            text(f"{index}. {value}")
-        if not content[key]:
-            text("None supplied.")
+    _append_scope_content(report["scope"], text, heading, item_heading, small)
     if report.get("system_match"):
         for section in system_sections(report["system_match"]):
             text(section["title"], heading)

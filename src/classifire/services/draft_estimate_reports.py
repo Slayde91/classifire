@@ -1,4 +1,4 @@
-"""Estimate-only Draft reports over exact saved inputs; no upstream writer runs."""
+"""Independent Draft report profiles over exact saved inputs; no upstream writer runs."""
 
 from __future__ import annotations
 
@@ -28,6 +28,8 @@ from .draft_scope_reports import (
 )
 
 REPORT_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-ESTIMATE-REPORT-v1"
+COMPLETE_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-ESTIMATE-REPORT-v2"
+REPORT_PROFILES = ("estimate-only", "complete")
 MAX_REPORT_SNAPSHOT_BYTES = MAX_ESTIMATE_BYTES + 8192
 REPORT_LIST_LIMIT = 20
 REPORT_KEYS = frozenset(
@@ -57,12 +59,14 @@ def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
             raise ValueError("shape")
         if len(_canonical(snapshot)) > MAX_REPORT_SNAPSHOT_BYTES:
             raise ValueError("size")
+        complete = snapshot["profile"] == "complete"
         if (
-            snapshot["schema_version"] != REPORT_SCHEMA_VERSION
-            or snapshot["profile"] != "estimate-only"
+            snapshot["profile"] not in REPORT_PROFILES
+            or snapshot["schema_version"]
+            != (COMPLETE_SCHEMA_VERSION if complete else REPORT_SCHEMA_VERSION)
             or type(snapshot["render_version"]) is not int
             or snapshot["render_version"]
-            != (2 if snapshot["estimate"].get("pricing_sources") else 1)
+            != (3 if complete else 2 if snapshot["estimate"].get("pricing_sources") else 1)
             or snapshot["state"] != "Draft"
             or snapshot["review_status"] != "unreviewed"
         ):
@@ -104,22 +108,27 @@ def create_report(
     draft_id: str,
     estimate_id: str,
     revision: int,
+    *,
+    profile: str = "estimate-only",
 ) -> DraftEstimateReport:
     """Render one explicit revision, then retain both outputs in one transaction."""
     from ..outputs.draft_estimate import render_estimate_report_pdf, render_estimate_report_xlsx
 
+    if type(profile) is not str or profile not in REPORT_PROFILES:
+        raise DraftEstimateReportError("ESTIMATE_REPORT_PROFILE_INVALID", 422)
+    complete = profile == "complete"
     actor, draft, _parent = _estimate(db, actor, draft_id, estimate_id, write=True)
     if type(revision) is not int or revision < 1:
         raise DraftEstimateReportError("ESTIMATE_REVISION_NOT_FOUND", 404)
     envelope = read_estimate_revision(db, actor, draft_id, estimate_id, revision)
     created = datetime.now(UTC)
     snapshot = {
-        "schema_version": REPORT_SCHEMA_VERSION,
+        "schema_version": COMPLETE_SCHEMA_VERSION if complete else REPORT_SCHEMA_VERSION,
         "report_id": new_id(),
         "project": _project(db, draft),
         "estimate": envelope,
-        "profile": "estimate-only",
-        "render_version": 2 if envelope.get("pricing_sources") else 1,
+        "profile": profile,
+        "render_version": 3 if complete else 2 if envelope.get("pricing_sources") else 1,
         "created_by": actor.id,
         "created_at": created.isoformat(),
         "state": "Draft",

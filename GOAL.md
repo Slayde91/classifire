@@ -154,28 +154,26 @@ PR #197 merged independent reporting of one saved candidate review and its exact
 Scope, including technical-read boundaries and visible staleness. PDF/XLSX survive
 edits/restart and retain unapproved status. No Estimate or matching run is required.
 
-## Current service-size increment and immediate priority
+## Merged service-size review and current complete-report increment
 
-The existing measured-limit UI now records a service-size range and explicit
-measurement/source dimension meanings. It compares only recorded outside diameters
-against pinned published bounds; nominal, rectangular, bundle or unknown meanings
-remain unresolved. These are unapproved human review claims and measured instances
-only, not complete applicability or physical quantities. Old reviews and outputs
-remain unchanged. See PROJECT_STATE.md for verification/publication.
+PR #198 merged explicit service-size ranges and measurement/source meanings. Recorded
+outside diameters alone can be compared with pinned limits. Partial/unapproved status,
+unsupported meanings and unassessed instance coverage remain explicit.
 
-After publishing this increment, deliver the remaining **complete Draft report
-profile** from one explicitly selected retained Estimate and its embedded Scope and
-optional System Match. The existing estimate-only profile shows a review reference;
-the complete profile should present the available scope, technical review and
-commercial details together, with unavailable sections clearly identified. This
-closes the fourth requested report profile using already saved artifacts. Reuse the
-shared report services and presentation; never rerun matching or estimating.
+The current complete Draft report profile presents one saved Estimate, its physical
+Scope, optional full technical review and commercial lines/history together in PDF
+and XLSX. Missing sections remain unavailable. It reuses existing snapshots and does
+not rerun upstream capabilities. PROJECT_STATE.md records verification/publication.
 
-Then prioritize portable ProjectPackage exchange and shared ChatGPT access over
-further report polish. Broader evidence analysis and technical/pricing coverage
-remain essential parallel product gaps, not completed by this prototype.
+After publishing this fourth report choice, prioritize **configurable Draft
+ProjectPackage preview, save and download** over further report polish. Users select
+coherent saved capability revisions and existing outputs; Scope-only packages must
+not require matching or estimating. Preserve exact content and history, explicit
+included/external/withheld evidence, project/export rights and immutable archive
+bytes. Do not treat the older untracked archive candidate as the current Draft schema.
+Safe new-project import and shared ChatGPT access follow the demonstrated command.
 
-Full applicability, pricing default/inferred methods, broader Scope formats/analysis,
-other report profiles, ProjectPackage exchange and shared ChatGPT access remain
-required. Prototype work does not complete production authority, release or operational
-readiness. Do not replace the full product goal with one successful milestone.
+The full goal remains active: broad Scope formats/analysis, actual applicability,
+pricing defaults/inferred methods, complete package exchange, ChatGPT integration
+and production readiness remain unfinished. No report profile grants approval or
+removes human-release gates. OpenClaw retirement still requires proven protections.

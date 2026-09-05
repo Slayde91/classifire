@@ -1,4 +1,4 @@
-"""Pure estimate-only report renderers over a validated retained snapshot."""
+"""Pure Estimate and complete report profiles over a validated retained snapshot."""
 
 from __future__ import annotations
 
@@ -20,10 +20,47 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from .common import ATTRIBUTION
 from .draft_branding import DraftLogo as _Logo
 from .draft_branding import supplied_logo_path as _logo_path
-from .draft_scope import _FONT, _control_text, _font_coverage, _pdf_text, _segments
+from .draft_scope import (
+    _FONT,
+    _append_scope_content,
+    _control_text,
+    _font_coverage,
+    _pdf_text,
+    _segments,
+)
+from .draft_system_review import sections as system_sections
+from .draft_system_review import summary as system_summary
 from .xlsx import _formats
 
 _UNKNOWN = "Unknown / unavailable"
+_COMPLETE_NOTICE = (
+    "Complete report profile means all available saved sections are included, not that the "
+    "evidence or estimate is complete. Physical claims remain unreviewed; technical "
+    "applicability, complete commercial recovery, tax and human release remain unavailable. "
+    "Only the selected saved Estimate and its embedded Scope/review are reported."
+)
+
+
+def complete_coverage(estimate: dict[str, Any]) -> list[tuple[str, str]]:
+    """Describe retained section availability without calculating new results."""
+    return [
+        ("Report coverage", _COMPLETE_NOTICE),
+        ("Physical Scope", "Saved Draft Scope; assertions and quantities remain unreviewed"),
+        (
+            "Technical review",
+            "Saved unapproved candidate review; suitability remains unresolved"
+            if estimate["system_match"] is not None
+            else "Unavailable - no System Match attached to this Estimate revision",
+        ),
+        (
+            "Commercial work",
+            "Saved provisional lines and changes; unknown or omitted work is not recovered"
+            if estimate["lines"]
+            else "Unavailable - no Estimate work lines recorded; zero subtotal is not a quote",
+        ),
+    ]
+
+
 _LIMITS = (
     "Draft, unreviewed and provisional. Partial AUD subtotal excluding tax; tax is not calculated. "
     "Service lines exclude shared-opening closure. Nonblank-opening work is unassessed. "
@@ -100,6 +137,8 @@ def _metadata(report: dict[str, Any]) -> list[tuple[str, Any]]:
                 ("Candidate review status", "Unapproved reference only; not a selected system"),
             ]
         )
+    if report["profile"] == "complete":
+        rows.extend(complete_coverage(estimate))
     return rows
 
 
@@ -205,11 +244,32 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
     def text(value: object, style: ParagraphStyle = body) -> None:
         story.append(Paragraph(_pdf_text(value), style))
 
-    text("Draft Estimate Report", title)
+    complete = report["profile"] == "complete"
+    report_title = "Complete Draft Report" if complete else "Draft Estimate Report"
+    text(report_title, title)
     for label, value in _metadata(report)[:10]:
         text(f"{label}: {value}")
-    text("Saved work lines", heading)
     estimate = report["estimate"]
+    if complete:
+        text("Included sections and limitations", heading)
+        for label, value in complete_coverage(estimate):
+            text(f"{label}: {value}")
+        item_heading = ParagraphStyle(
+            "CompleteItem",
+            parent=body,
+            fontSize=11,
+            leading=15,
+            spaceBefore=9,
+            keepWithNext=True,
+        )
+        _append_scope_content(estimate["scope"], text, heading, item_heading, small)
+        text("Saved technical review summary", heading)
+        if estimate["system_match"] is not None:
+            for label, value in system_summary(estimate["system_match"]):
+                text(f"{label}: {value}")
+        else:
+            text("Unavailable - no System Match attached to this Estimate revision.")
+    text("Saved work lines", heading)
     if not estimate["lines"]:
         text("No work lines. No work is priced.")
     for index, line in enumerate(estimate["lines"], 1):
@@ -250,12 +310,20 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
     text(_LIMITS)
     for status, kind, identifier, label in _coverage_rows(report):
         text(f"{status}: {label} ({kind}, {identifier})")
-    text("Saved Scope context and source claims", heading)
+    text("Saved Scope provenance" if complete else "Saved Scope context and source claims", heading)
     text(
         "Scope assertions and imported history remain unreviewed. No technical approval is implied."
     )
     for kind, identifier, label, value in _context_rows(report):
+        if complete and kind in estimate["scope"]["content"]:
+            continue
         text(f"{kind} / {identifier} / {label}: {value}", small)
+    if complete and estimate["system_match"] is not None:
+        text("Retained technical evidence and decisions", heading)
+        for section in system_sections(estimate["system_match"]):
+            text(section["title"], heading)
+            for label, value in section["rows"]:
+                text(f"{label}: {value}", small)
     text("Report provenance", heading)
     for label, value in _metadata(report)[10:]:
         text(f"{label}: {value}", small)
@@ -263,7 +331,11 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
     def footer(canvas: Any, document: Any) -> None:
         canvas.saveState()
         canvas.setFont(_FONT, 7)
-        canvas.drawString(17 * mm, 14 * mm, "CLASSIFIRE | DRAFT - UNREVIEWED | Estimate-only")
+        canvas.drawString(
+            17 * mm,
+            14 * mm,
+            "CLASSIFIRE | DRAFT - UNREVIEWED | " + ("Complete" if complete else "Estimate-only"),
+        )
         canvas.drawRightString(A4[0] - 17 * mm, 14 * mm, f"Page {document.page}")
         canvas.setFont(_FONT, 6)
         canvas.drawString(17 * mm, 10 * mm, ATTRIBUTION)
@@ -277,7 +349,7 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
         rightMargin=17 * mm,
         topMargin=16 * mm,
         bottomMargin=23 * mm,
-        title="CLASSIFIRE Draft Estimate Report",
+        title="CLASSIFIRE " + report_title,
         author="Ceasefire PFP",
     )
     document.build(story, onFirstPage=footer, onLaterPages=footer)
@@ -300,6 +372,8 @@ def _safe_numeric(value: str | None) -> float | None:
 
 def render_estimate_report_xlsx(snapshot: dict[str, Any]) -> bytes:
     report = _verified(snapshot)
+    complete = report["profile"] == "complete"
+    report_title = "Complete Draft Report" if complete else "Draft Estimate Report"
     output = io.BytesIO()
     workbook = xlsxwriter.Workbook(
         output,
@@ -315,7 +389,7 @@ def render_estimate_report_xlsx(snapshot: dict[str, Any]) -> bytes:
     integer_format = workbook.add_format({"border": 1, "num_format": "0", "valign": "top"})
     workbook.set_properties(
         {
-            "title": "CLASSIFIRE Draft Estimate Report",
+            "title": "CLASSIFIRE " + report_title,
             "author": "Ceasefire PFP",
             "created": datetime.fromisoformat(report["created_at"]).replace(tzinfo=None),
             "comments": report["sha256"],
@@ -331,7 +405,7 @@ def render_estimate_report_xlsx(snapshot: dict[str, Any]) -> bytes:
             sheet.write_string(
                 0,
                 2,
-                "CLASSIFIRE Draft Estimate Report",
+                "CLASSIFIRE " + report_title,
                 workbook.add_format(
                     {
                         "font_size": 20,
@@ -343,7 +417,13 @@ def render_estimate_report_xlsx(snapshot: dict[str, Any]) -> bytes:
             )
         else:
             sheet.merge_range(
-                0, 1, 0, len(headers), "CLASSIFIRE Draft Estimate - " + name, formats["title"]
+                0,
+                1,
+                0,
+                len(headers),
+                ("CLASSIFIRE Complete Draft - " if complete else "CLASSIFIRE Draft Estimate - ")
+                + name,
+                formats["title"],
             )
         sheet.set_row(0, 32)
         if name == "Summary":
@@ -446,7 +526,7 @@ def render_estimate_report_xlsx(snapshot: dict[str, Any]) -> bytes:
         sheet.set_landscape()
         sheet.fit_to_pages(1, 0)
         sheet.repeat_rows(5)
-        sheet.set_header("&LCLASSIFIRE Draft Estimate&RUnreviewed")
+        sheet.set_header("&LCLASSIFIRE " + report_title + "&RUnreviewed")
         sheet.set_footer("&L" + report["report_id"] + "&RPage &P of &N")
         sheet.print_area(0, 0, max(6, current - 1), len(headers))
 
@@ -523,5 +603,40 @@ def render_estimate_report_xlsx(snapshot: dict[str, Any]) -> bytes:
         _context_rows(report),
         [30, 38, 28, 90],
     )
+    if complete:
+        match = estimate["system_match"]
+        table(
+            "Technical summary",
+            ["Field", "Saved finding"],
+            [list(row) for row in system_summary(match)]
+            if match is not None
+            else [
+                [
+                    "Technical review",
+                    "Unavailable - no System Match attached to this Estimate revision",
+                ]
+            ],
+            [55, 100],
+        )
+        if match is not None:
+            parts = system_sections(match)
+            table(
+                "Review and coverage",
+                ["Field", "Saved value"],
+                [list(row) for row in parts[0]["rows"]],
+                [55, 100],
+            )
+            table(
+                "System candidates",
+                ["Candidate", "Field", "Saved value"],
+                [[part["title"], *row] for part in parts[1:-1] for row in part["rows"]],
+                [36, 55, 100],
+            )
+            table(
+                "Measured limits",
+                ["Field", "Saved value"],
+                [list(row) for row in parts[-1]["rows"]],
+                [55, 100],
+            )
     workbook.close()
     return output.getvalue()

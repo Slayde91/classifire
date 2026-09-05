@@ -1,6 +1,6 @@
 # Draft service-size review
 
-Status: implemented local P2b increment under accepted ADRs 0001/0002. Consult
+Status: merged P2b increment in PR #198 under accepted ADRs 0001/0002. Consult
 PROJECT_STATE.md and live Git/CI for publication. This is a partial measured-range
 comparison, not a technically applicable system or approval.
 
@@ -61,7 +61,8 @@ basis and concurrent revision checks still apply. Shared pure presentation inclu
 the range, recorded meanings and numeric check in scope-and-system PDF/XLSX. Explicit
 Estimate creation retains the exact v3 review without reinterpreting or applying it.
 Estimate-only reports remain an estimating profile; complete combined reporting is
-still planned. No next capability, quantity calculation, canonical write or approval
+implemented in the [current complete-profile increment](./DRAFT_COMPLETE_REPORT_CONTRACT.md).
+No next capability, quantity calculation, canonical write or approval
 is automatically invoked by saving measurements.
 
 ## Synthetic demonstration and checks

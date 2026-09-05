@@ -69,3 +69,12 @@ test_migrations_draft_estimate_reports.py, with existing Draft/deployment/author
 regressions. Verify real preview/create/download, later edits and actual restart,
 PDF page appearance, XLSX types/precision/long text, atomic failure, integrity,
 permissions/revocation/CSRF and absence of canonical writes. See the demo guide.
+
+
+## Additive complete profile
+
+The [complete report profile](./DRAFT_COMPLETE_REPORT_CONTRACT.md) uses report schema
+v2/renderer 3 over the same retained Estimate/Scope/optional review. This document's
+estimate-only schema and renderer behavior remain supported; saved files are not
+rewritten. Complete reporting exposes all available saved sections without invoking
+upstream work or changing authority.

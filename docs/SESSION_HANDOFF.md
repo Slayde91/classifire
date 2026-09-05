@@ -3,145 +3,142 @@
 ## Verified branch and project context
 
 Snapshot: 2026-09-06 AEST. Worktree:
-`C:\CLASSIFIRE\.tmp\draft-service-size-20260906`, branch
-`feat/draft-service-size-20260906`, based on shared main
-`20b308388b334fc8fea8c4337c7aa4cfb33c99df` (merged PR #197).
-PR #197 exact-head CI 33991617826 passed 1,401 tests; main CI 33992094617
-succeeded. This is a prepublication checkpoint: inspect live Git/PR/CI for the
-current size-review publication before doing more work.
+`C:\CLASSIFIRE\.tmp\draft-complete-reports-20260906`; branch
+`feat/draft-complete-reports-20260906`, based on shared main
+`e9f9263125438674e8c59f2e6d660b1609878035` (merged PR #198).
+PR #198 exact-head CI 33994014117 passed 1,427 tests; main CI 33994444807 succeeded.
+This is a prepublication checkpoint. Inspect live Git/PR/CI for complete-report
+publication before selecting more work. Do not rebuild already merged features.
 
-Accepted ADRs 0001/0002 remain the target: independent capabilities, shared
-CLASSIFIRE services, optional AI and conditional OpenClaw retirement after proven
-protection replacements. AGENTS.md already expresses this direction and was reviewed
-without unnecessary edits. No architecture redesign or operational release occurred.
+Accepted ADRs 0001/0002 and AGENTS.md remain aligned: shared deterministic core,
+independent capabilities, optional AI, prototype-first UI and unchanged human/canonical
+authority. No OpenClaw retirement, architecture rewrite or production release occurred.
 
-Current changes: additive v3 service-size review contract, existing service/UI and
-shared report presentation, synthetic fixture/launcher, two test files and aligned
-documentation. No new dependency, migration, agent, provider or canonical authority.
-The exact supplied logo is already merged and verified in the UI and XLSX; do not
-replace it with a recreation. Source and packaged SHA-256:
-`fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+Current changes: explicit complete profile in existing Estimate report service/UI,
+shared Scope/technical render composition, templates, focused tests, PostgreSQL
+pricing regression extension and docs. No new dependency, migration or provider.
+The supplied logo remains exact in UI/XLSX and is not recreated in this increment.
 
-Protected legacy root remains on `gpt/phase8-linked-original-images` with four DU
-conflicts plus staged and unstaged recovery changes. Never reset, clean, resolve,
-stage or publish that root implicitly. Preserve the unrelated untracked candidates
-in `.tmp/project-package-draft-20260905`: `docs/PROJECT_PACKAGE_V1_CONTRACT.md`,
-`src/classifire/services/project_package.py`, `tests/test_project_package.py`.
-Reinspect all local states before editing. Do not stage `.tmp` receipts or demo data.
+Preserve the conflicted legacy `C:\CLASSIFIRE` root on
+`gpt/phase8-linked-original-images`, its four DU conflicts and staged/unstaged recovery
+work. Never reset, clean, resolve, stage or publish that root implicitly. Preserve
+three unrelated untracked files in `.tmp/project-package-draft-20260905`:
+`docs/PROJECT_PACKAGE_V1_CONTRACT.md`, `src/classifire/services/project_package.py`,
+`tests/test_project_package.py`. Their candidate contract predates current Draft
+artifacts and is not a shipped UI, extractor or importer. Reinspect before reuse.
+Do not stage `.tmp` demo records, downloads, harnesses or receipts.
 
-## Demonstration, verification and limits
+## Current evidence and remaining limits
 
-Synthetic UI: `http://127.0.0.1:8807/scopes`; separate SQLite storage at
-`.tmp/draft-service-size-demo-20260906`. Login `scope-demo@example.test` /
-`synthetic-scope-demo-only`. Launcher: `scripts/run_draft_scope_demo.py` with
-`--port 8807 --data-dir <that-directory> --seed-service-size-library`.
-Check the listening process and command line before restarting only this demo.
-Older demos and operational databases remain separate and preserved.
+Synthetic UI: `http://127.0.0.1:8808/scopes`, separate SQLite directory
+`.tmp/draft-complete-report-demo-20260906`. Login: `scope-demo@example.test` /
+`synthetic-scope-demo-only`. Launcher: `scripts/run_draft_scope_demo.py --port 8808
+--data-dir <that-directory> --seed-service-size-library`. Inspect the listening
+process/command line before stopping only this demo. Older demos remain preserved.
 
-The UI records smallest/largest measured size and explicit observed/source meanings.
-Only individual outside-diameter meanings permit comparison; ambiguous, nominal,
-bundle or rectangular meanings remain unresolved. Human interpretation is unapproved;
-instance coverage and full compatibility remain unassessed. Existing v1/v2 revisions
-retain their semantics and bytes; old-form saves cannot silently discard v3 fields.
-Scope-and-system outputs include the full v3 review. Estimate creation retains it,
-but estimate-only reports currently show its reference, not all technical detail.
+Chrome exercised populated and missing-section profiles, explicit save/download,
+later Scope/Estimate edits and actual process restart. Both report pairs and prior
+Estimate JSON remained exact. All 16 PDF pages and ten populated workbook views
+were inspected; actual cell types/values/embedded logo independently verified.
+Artifact-tool preview exits 1 and mishandles some empty strings/images; raw ZIP and
+openpyxl confirmed the real file. Native Excel is unverified. A browser harness
+encoding assertion was corrected and resumed from the existing synthetic Estimate;
+visual inspection then found/fixed a template BOM conversion and added a regression.
 
-Verification: 239 affected service/UI regression tests passed in 379.55 seconds,
-one existing Starlette warning. Real Chrome exercised within/outside/unresolved
-outcomes, historical JSON/report downloads and an actual server restart without
-output drift or page errors. Four match revisions, one report pair, zero Draft or
-canonical Estimates, Openings, Services or Physical Model Locks in the synthetic demo.
-Ten PDF pages inspected. Both measured-limit worksheet previews inspected and actual
-cells/types/logo independently checked with openpyxl/ZIP. Artifact-tool saved previews
-but exited 1 without a diagnostic; native Excel rendering remains unverified.
+111 affected report/service-size tests passed (227.81 seconds), followed by seven
+final UI tests after encoding and historical-preview staleness corrections (26.28 seconds). Both runs had one
+existing Starlette warning. The PostgreSQL pricing-source regression now parametrizes
+both profiles; hosted CI must qualify it. Ruff, Mypy (176 files), Bandit and one Alembic head (0033) passed. Final
+publication checks/results belong in the PR. No canonical Estimate/line, Opening, Service or Lock was created in the demo.
 
-Evidence stays local in `.tmp/service-size-artifacts`; browser harnesses are
-`.tmp/scope-browser-test-tools/service-size-check.cjs` and `service-size-restart.cjs`.
-Ruff, Mypy (176 files), Bandit and the single Alembic head (0033) passed.
-Final link/Git checks and exact-head hosted CI are publication prerequisites;
-read the PR for their final results. No customer evidence/provider, deployment,
-canonical lock or production-readiness claim is part of this increment.
+Artifacts: `.tmp/complete-report-artifacts`; harnesses:
+`.tmp/scope-browser-test-tools/complete-report-check.cjs`, `complete-report-resume.cjs`
+and `complete-report-restart.cjs`. Full applicability, governed estimating, broader
+Scope analysis, package exchange, ChatGPT and production readiness remain unfinished.
 
 ## Start Here / Next Session
 
-First inspect AGENTS.md, GOAL.md, PROJECT_STATE.md, roadmap/architecture and ADRs;
-reconcile branch/status/diff/worktrees/current main/PR/CI before editing. Finish
-size-review publication if outstanding. Once merged, use a clean main-based worktree.
-Do not repeat an increment merely because this checkpoint predates its merge.
+Read AGENTS.md, GOAL.md, PROJECT_STATE.md, roadmap/architecture and accepted ADRs.
+Inspect branch/status/diff/worktrees, origin/main, current PR and CI before editing.
+Finish complete-report publication if outstanding. Then use a clean current-main
+worktree and preserve unrelated local work.
 
-**Single next product task: complete Draft PDF/XLSX report profile.** Why next:
-Scope, optional System Match and Estimate are already retained together by an
-explicit Estimate revision, but estimate-only reports do not present the full
-technical review. A combined profile completes the requested visible reporting
-choices using existing data; it must not become another upstream calculation flow.
+**Single next task: configurable Draft ProjectPackage preview, save and download.**
+Why next: the four Draft reporting choices and individual retained artifacts now
+provide a usable foundation, but users cannot collect coherent chosen revisions and
+outputs into one portable project download. This is higher value than report polish.
 
-Inspect existing `src/classifire/services/draft_estimate_reports.py`,
-`draft_scope_reports.py`, `draft_estimates.py`, `draft_system_match_contract.py`,
-report UI modules/templates and `src/classifire/outputs/` renderers, especially
-`draft_system_review.py`. Resolve actual paths/callers before editing. Existing
-Estimate-report and system-report contracts/tests are the starting point.
+Inspect current `draft_scope.py`, `draft_system_matches.py`, `draft_estimates.py`,
+`draft_scope_reports.py`, `draft_estimate_reports.py`, PDF/pricing intake services,
+artifact validators, models and existing UI/templates/tests. Read the older package
+candidate in its isolated worktree as a possible source of safe ZIP helpers, not an
+approved mapping of current Draft data. Do not broad-copy it or create a parallel
+canonical estimator. Establish the minimal versioned package contract with the UI.
 
-Prerequisites: the current size-review publication, valid retained Estimate revision
-with embedded Scope and optional match, existing project/technical/commercial export
-permissions, and synthetic fixtures. Do not add a separate package schema, database
-or provider. Missing sections must say unavailable; no matching, estimating or
-recalculation runs when generating a report. There is no known concrete blocker;
-material domain ambiguity, denied access, failed CI or required review must not be
-bypassed. Full applicability and production Phase 8-14 exits remain separate gaps.
+Prerequisites: complete-report merge; authorized current artifact read/export paths;
+explicit coherent revision selection and ownership; source membership/omission policy;
+synthetic fixtures. Package Scope without requiring matching or estimating. Retain
+optional reviews/Estimates and selected report bytes only when their dependencies
+match the declared revisions. Declare included, external, withheld and unavailable
+content. Source hashes do not grant redistribution rights. Use existing project,
+technical, commercial and export checks; do not embed restricted library bodies by
+default or claim complete database extraction. A real unresolved rights/domain rule,
+access denial, CI failure or required review is a blocker to report, not bypass.
 
-Definition of done: user explicitly previews and creates the complete profile,
-downloads readable PDF and filterable XLSX from one immutable snapshot, sees all
-available physical/technical/commercial sections and explicit missing/stale warnings,
-and reopens unchanged historical outputs after an actual restart. Preserve old
-profiles/bytes, source identities, unknown quantities, exact amounts/overrides,
-permissions, CSRF, concurrency and human authority. No canonical writes or automatic
-next capability. Inspect the real synthetic UI and both exported formats.
+Done: a user configures membership, previews it without writes, explicitly saves a
+package revision, downloads a validated archive, reopens it after actual restart and
+retrieves the same bytes. Validate membership, schema versions, hashes and graph
+references; refuse unsafe/duplicate/oversized archives if a reader is exposed.
+Show stale dependencies without rewriting history; no AI, recalculation, canonical
+writes, approval or release. Inspect the actual ZIP and extracted in-memory content.
+Safe new-project import and ChatGPT parity remain the next P5 steps, not claims
+made by export alone. Update documentation and classify remaining work honestly.
 
-Validation: use worktree `PYTHONPATH`, disabled pytest cache and a unique temporary
-directory. Add focused complete-profile cases and run affected existing tests:
+Validation: add focused package service/HTTP/permission tests and exercise the real
+synthetic browser/restart journey. Run affected capability/report tests with worktree
+PYTHONPATH, disabled pytest cache and a unique temporary directory:
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp <new-unique-temp> tests/test_draft_estimate_reports.py tests/test_draft_estimate_reports_ui.py tests/test_draft_system_reports.py tests/test_draft_system_reports_ui.py tests/test_draft_service_size_review.py tests/test_draft_service_size_ui.py
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp <unique-temp> tests/test_draft_complete_reports.py tests/test_draft_complete_reports_ui.py tests/test_draft_scope.py tests/test_draft_system_matches.py tests/test_draft_estimates.py
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
 ```
 
-Use installed development dependencies; never weaken checks for missing stubs.
-Hosted exact-head CI runs the full suite. Update evidence-based documentation,
-classify all changes, commit explicit files, push normally, PR, await checks/reviews,
-merge where safe and verify the merge commit. After this visible report slice,
-prioritize ProjectPackage/shared ChatGPT access over repeated report polish while
-retaining broader evidence, technical and estimating requirements.
+Check actual filenames/development dependencies first; do not weaken checks for
+missing stubs. Continue through explicit staging, commit, normal push, PR, required
+exact-head CI/reviews and safe merge; verify the resulting merge commit. No customer
+material, operational database, deployment or canonical operation is needed.
 
 ## Recommended Prompt for New Session
 
 > Continue CLASSIFIRE from verified repository state. Before editing read AGENTS.md,
 > GOAL.md, docs/PROJECT_STATE.md, docs/CLASSIFIRE_ROADMAP.md,
 > docs/CLASSIFIRE_ARCHITECTURE.md, docs/SESSION_HANDOFF.md and accepted ADRs 0001/0002;
-> inspect Git status/diff/worktrees, current origin/main, PRs and CI. Preserve the
-> conflicted C:\CLASSIFIRE root, unrelated changes and ProjectPackage candidates;
-> use an isolated worktree. Finish service-size review publication if outstanding
-> and do not repeat merged work. The single next task is the complete Draft PDF/XLSX
-> report profile: an Estimate already retains Scope and optional System Match, but
-> estimate-only reports omit full technical detail. Inspect draft_estimate_reports.py,
-> draft_scope_reports.py, draft_estimates.py, report UI/templates/renderers,
-> draft_system_review.py and current report contracts/tests. Reuse their persistence
-> and permissions. Require a valid selected saved Estimate; show missing sections as
-> unavailable. Never run matching, estimating, recalculation, AI or canonical writes
-> to produce a report. Done means explicit UI preview/create, both readable formats
-> from one snapshot, complete available physical/technical/commercial detail, clear
-> missing/stale warnings and exact historical downloads after real restart. Preserve
-> old profiles/bytes, source lineage, unknowns, amounts, overrides, project/technical/
-> commercial rights, CSRF and human authority. Use synthetic data only. Run focused
-> new tests plus affected Estimate/system-report and service-size tests with worktree
-> PYTHONPATH and unique no-cache temp storage; Ruff, Mypy, Bandit, one Alembic head,
-> browser/restart checks and PDF/XLSX inspection. Keep documentation aligned. Continue
-> autonomously through implementation, validation, classification, explicit commit,
-> normal push, PR and merge after required exact-head CI/reviews; verify the merge.
-> Stop only for a concrete domain/security/access/CI/review blocker. Avoid speculative
-> work or repeated polish; preserve the full product goal and unrelated local changes.
+> inspect Git status/diff/worktrees, origin/main, PRs and CI. Preserve the conflicted
+> C:\CLASSIFIRE root, unrelated changes and untracked ProjectPackage candidates; use
+> an isolated worktree. Finish complete-report publication if outstanding; do not
+> repeat merged work. The single next task is configurable Draft ProjectPackage
+> preview/save/download: individual capability artifacts and all four Draft report
+> choices exist, but users cannot collect coherent chosen revisions into one package.
+> Inspect current Scope/match/Estimate/report services, validators, models, UI and
+> PDF/pricing source boundaries. Reassess older package ZIP helpers against current
+> Draft contracts before reuse. Package Scope without forcing matching or estimating;
+> explicitly select optional artifacts/outputs, validate their dependencies and declare
+> included/external/withheld/unavailable sources. Enforce project/technical/commercial/
+> export rights; never embed restricted bodies by default or claim database completeness.
+> Done means real UI configuration, no-write preview, explicit persisted revision,
+> validated exact ZIP download and unchanged reopening after actual restart. Test
+> membership, hashes, versions, source rights, stale history and applicable unsafe
+> archive refusal. Use synthetic data; no AI, recalculation, canonical writes or
+> imported authority. Add focused service/HTTP tests, run affected capability/report
+> regressions with worktree PYTHONPATH and unique no-cache temp storage, Ruff, Mypy,
+> Bandit, one migration head and browser/archive inspection. Keep docs aligned.
+> Continue autonomously through implementation, validation, classification, explicit
+> commit, normal push, PR and merge after required exact-head CI/reviews; verify merge.
+> Report genuine rights/domain/access/CI/review blockers without bypassing them. Avoid
+> speculative work; preserve safe import, ChatGPT and the full product goal as unfinished.

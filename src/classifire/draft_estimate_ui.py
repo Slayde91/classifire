@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Annotated, Any
+import json
+from typing import Annotated, Any, Literal
 from urllib.parse import parse_qsl
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -10,6 +11,9 @@ from sqlalchemy.orm import Session
 from .config import get_settings
 from .db import get_db
 from .models import User
+from .outputs.draft_estimate import complete_coverage
+from .outputs.draft_system_review import sections as system_sections
+from .outputs.draft_system_review import summary as system_summary
 from .security import has_permission, verify_csrf
 from .services import draft_estimate_reports as estimate_reports
 from .services.draft_estimates import (
@@ -327,6 +331,7 @@ def estimate_reports_page(
     draft_id: str,
     estimate_id: str,
     revision: int | None = None,
+    profile: Literal["estimate-only", "complete"] = "estimate-only",
 ) -> HTMLResponse:
     user = _actor(request, db)
     try:
@@ -341,6 +346,9 @@ def estimate_reports_page(
             envelope["revision"],
             storage_root=get_settings().storage_root,
         )
+        latest = read_estimate_revision(db, user, draft_id, estimate_id)
+        if latest["sha256"] != envelope["sha256"]:
+            stale.append("REPORT_ESTIMATE_CHANGED")
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
     return templates.TemplateResponse(
@@ -354,6 +362,17 @@ def estimate_reports_page(
             envelope=envelope,
             scope=envelope["scope"],
             reports=reports,
+            report_profiles={
+                item.id: json.loads(item.snapshot_json)["profile"] for item in reports
+            },
+            report_profile=profile,
+            complete_coverage=complete_coverage(envelope) if profile == "complete" else [],
+            system_summary=system_summary(envelope["system_match"])
+            if profile == "complete" and envelope["system_match"]
+            else [],
+            system_sections=system_sections(envelope["system_match"])
+            if profile == "complete" and envelope["system_match"]
+            else [],
             snapshot=None,
             report_id=None,
             estimate_url=f"/scopes/{draft_id}/estimates/{estimate_id}",
@@ -376,11 +395,13 @@ def create_estimate_report(
 ) -> RedirectResponse:
     verify_csrf(request, form.get("csrf_token"))
     user = _actor(request, db, write=True)
-    if set(form) != {"csrf_token", "revision"}:
+    if set(form) not in ({"csrf_token", "revision"}, {"csrf_token", "revision", "profile"}):
         raise HTTPException(422, "Choose one saved estimate revision")
     revision = _revision(form["revision"])
     try:
-        report = estimate_reports.create_report(db, user, draft_id, estimate_id, revision)
+        report = estimate_reports.create_report(
+            db, user, draft_id, estimate_id, revision, profile=form.get("profile", "estimate-only")
+        )
         db.commit()
     except DraftScopeError as exc:
         db.rollback()
@@ -427,6 +448,17 @@ def estimate_report_page(
             envelope=envelope,
             scope=envelope["scope"],
             reports=[],
+            report_profiles={},
+            report_profile=snapshot["profile"],
+            complete_coverage=complete_coverage(envelope)
+            if snapshot["profile"] == "complete"
+            else [],
+            system_summary=system_summary(envelope["system_match"])
+            if snapshot["profile"] == "complete" and envelope["system_match"]
+            else [],
+            system_sections=system_sections(envelope["system_match"])
+            if snapshot["profile"] == "complete" and envelope["system_match"]
+            else [],
             snapshot=snapshot,
             report_id=report_id,
             estimate_url=f"/scopes/{draft_id}/estimates/{estimate_id}",
@@ -462,7 +494,8 @@ def download_estimate_report(
         if format == "pdf"
         else ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     )
-    filename = f"CLASSIFIRE-Draft-Estimate-Report-{snapshot['report_id']}.{format}"
+    label = "Complete" if snapshot["profile"] == "complete" else "Estimate"
+    filename = f"CLASSIFIRE-Draft-{label}-Report-{snapshot['report_id']}.{format}"
     return Response(
         content,
         media_type=media_type,

@@ -50,7 +50,10 @@ saved review and its embedded Scope without requiring an Estimate. Both outputs
 preserve partial/unapproved status and exact historical bytes. It is merged in PR #197. The current
 [service-size review](docs/DRAFT_SERVICE_SIZE_REVIEW.md) records measured ranges and
 explicit dimension meanings against pinned limits, without implying compatibility.
-After publication, next is the complete Draft report profile using saved artifacts.
+Service-size review is merged in PR #198. The current
+[complete report profile](docs/DRAFT_COMPLETE_REPORT_CONTRACT.md) combines saved Scope,
+technical review and commercial details. Next is configurable ProjectPackage download
+using these proven artifacts; full import and ChatGPT access remain upcoming.
 See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
 [verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
 Complete visible slices before broad refinement; preserve existing authority and

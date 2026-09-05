@@ -2,11 +2,11 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.12 - explicit measured service-size review.
+**Architecture version:** 5.13 - complete Draft report profile.
 
-**Verified shared baseline:** `20b308388b334fc8fea8c4337c7aa4cfb33c99df`, merged
-PR #197. Exact-head CI 33991617826 passed 1,401 tests; main CI 33992094617 succeeded.
-Current branch: `feat/draft-service-size-20260906`. This is its prepublication
+**Verified shared baseline:** `e9f9263125438674e8c59f2e6d660b1609878035`, merged
+PR #198. Exact-head CI 33994014117 passed 1,427 tests; main CI 33994444807 succeeded.
+Current branch: `feat/draft-complete-reports-20260906`. This is its prepublication
 checkpoint; live Git/PR/CI determine publication, not the document version.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
@@ -78,13 +78,13 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Current service-size review is additive; complete reporting and ChatGPT remain planned. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review is merged; complete reporting is the current increment. ProjectPackage/ChatGPT remain planned. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
 | Packages | Scope v1/v2 exchange plus v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Whole-project archives, candidate/estimate import and rights/membership projection remain later work; these artifacts are not a complete ProjectPackage. |
-| Reporting | Scope-only and estimate-only Draft snapshots plus merged scope-and-system profile; paired PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
+| Reporting | Scope-only, estimate-only and scope-and-system Draft snapshots plus current complete profile; paired PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
 ### Implemented manual Draft Scope slice (P0)
@@ -1293,7 +1293,7 @@ no live source file or approval is silently embedded or granted. Reporting calls
 retrieval, calculation, provider or canonical writer. Full applicability, pricing and
 human release remain unavailable in this profile. See [contract](./DRAFT_SYSTEM_REPORT_CONTRACT.md).
 
-### Implemented current increment: measured service sizes (P2b)
+### Merged measured service sizes (P2b, PR #198)
 
 Current architecture -> change -> reason: the same saved measured-review command
 now supports a v3 match envelope with a measured service-size range and separate
@@ -1325,11 +1325,32 @@ profile. No report is rerendered on read. The separately versioned synthetic siz
 fixture preserves older demo source bytes and refuses unrelated fixture adoption.
 See [the v3 contract and limits](./DRAFT_SERVICE_SIZE_REVIEW.md).
 
-**Next proposed visible slice:** the complete Draft report profile over one saved
-Estimate and its embedded Scope/optional review, showing all available sections and
-explicit missing information. Reuse the report services/renderers without invoking
-upstream work. This is the remaining requested profile; it does not imply complete
-technical applicability, estimating governance, portability or production release.
+### Implemented current increment: complete Draft reports (P4b)
+
+Current architecture -> change -> reason: the existing Estimate report command now
+accepts an explicit complete profile because its retained Estimate already contains
+the exact Scope and optional System Match. Reuse the same report table, persistence,
+source binding, transaction and permissions. No new database, orchestration layer,
+provider or domain calculation is needed. Original profiles and downloads remain intact.
+
+Report schema v2/renderer 3 identifies complete composition; schema v1 preserves
+estimate-only renderer 1/2. Mixed versions/profiles fail validation. Shared Scope
+composition and technical review presentation join existing commercial lines/history
+in one frozen PDF/XLSX pair. UI preview/create/history/download selects a saved Estimate
+and profile; missing sections are unavailable and current staleness is visible.
+Technical/library/export rights remain enforced. The profile grants no approval,
+canonical write, lock or release. No migration or new dependency is required.
+See [the contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md).
+
+**Next proposed visible slice:** configure, preview, retain and download a Draft
+ProjectPackage containing explicitly selected coherent capability revisions and
+existing reports. Use shared artifact readers and export checks; do not recalculate
+or export all database/private source contents implicitly. Declare included,
+external, withheld and unavailable evidence. The unrelated archive candidate predates
+the current Draft contracts; reassess compatible archive helpers without adopting
+its canonical-table projection as the Draft product schema. Safe new-project import
+and a thin ChatGPT adapter follow the proven download command. Full canonical archive
+coverage and production operation remain separate unresolved work.
 
 ### Separate production and adapter backlog
 
