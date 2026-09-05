@@ -2,11 +2,11 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.3 - Draft Scope revision exchange implemented; full independent capability target remains partial
+**Architecture version:** 5.4 - independent Draft Scope reports implemented; broader capability target remains partial
 
-**Verified shared-main baseline before P1a:** `96d686952021828ef1fb28b53f4d6eea566376aa` (PR #188, 2026-09-05)
+**Verified shared-main baseline before P4a:** `e17cec31b571bbcec5153df95c9d4f35b16ed348` (PR #189, 2026-09-05)
 
-**P1a implementation:** `feat/draft-scope-import-20260905`; local runtime evidence below, publication verified separately through Git/PR/CI.
+**P4a implementation:** `feat/draft-scope-reports-20260905`; local implementation and evidence below. Verify its publication separately through Git/PR/CI.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -45,7 +45,7 @@ recalculating, changing records or bypassing canonical output gates.
 
 ## Approved capability composition and first prototype
 
-**Accepted target; only the manual Scope increment is demonstrated:** one modular CLASSIFIRE application exposes
+**Accepted target; manual/imported Scope and scope-only reporting are demonstrated:** one modular CLASSIFIRE application exposes
 Scope, System Matching, Estimating and Reporting through independent use cases.
 Each accepts explicit validated saved/manual inputs, produces a versioned artifact
 and stops unless the user requests another capability. Stable IDs, evidence,
@@ -77,13 +77,13 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | Existing FastAPI/Jinja shell plus `/scopes` editing, validation, import preview/confirmation and download routes | Add independently callable report and other capability interactions; ChatGPT later uses the same application commands. |
+| Interfaces/API | Existing FastAPI/Jinja shell plus `/scopes` editing/import and saved report preview/PDF/XLSX download routes | Add independent candidate-review and estimating interactions; ChatGPT later uses the same application commands. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
-| Draft persistence | Separate Draft tables, owner/admin checks, hash/parent validation and conditional revision update; v2 imported-source lineage retained through manual edits | Add independently persisted report/dependency snapshots without changing canonical authority. |
+| Draft persistence | Separate Draft tables, owner/admin checks, hash/parent validation and conditional revision update; v2 imported-source lineage retained through manual edits | Report snapshots and exact output pairs now have separate retention; other capability artifacts remain planned. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
 | Packages | v1 manual and v2 imported Draft Scope JSON; bounded import preview/confirmation plus existing narrow exports | Whole-project archives and rights/membership projection remain later work; a Scope artifact is not a complete ProjectPackage. |
-| Reporting | Canonical export requires lock/retained snapshot; snapshot builder recalculates | Separate Draft profiles over explicit immutable inputs, PDF/XLSX parity and visible missing/stale sections; preserve canonical guards. |
+| Reporting | Separate scope-only Draft snapshot and PDF/XLSX retention; current Scope/project edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
 ### Implemented manual Draft Scope slice (P0)
@@ -171,6 +171,64 @@ execution, but cannot replace required evidence or approval. Partial Draft
 artifacts/reports may be valid with explicit missing information. Structural
 validity, completeness, technical authority and Human Release are separate facts.
 
+
+### Implemented independent Draft Scope reporting (P4a)
+
+`services/draft_scope_reports.py` exposes create/list/read/download/freshness use
+cases independently of an Estimate, canonical physical model or provider.
+`draft_scope_ui.py` provides saved-revision selection, full content preview,
+explicit creation and retained PDF/XLSX links. No upstream capability runs.
+See the [report contract](./DRAFT_SCOPE_REPORT_V1_CONTRACT.md).
+
+The frozen `CLASSIFIRE-DRAFT-SCOPE-REPORT-v1` snapshot includes the entire verified
+Scope v1/v2 envelope, project identity/name/reference, local actor/time, report ID,
+Draft/unreviewed status, profile/render version and canonical JSON checksum.
+Both renderers consume detached copies of that snapshot. One new report row retains
+both output byte strings, separate byte hashes and the source revision binding.
+A renderer failure saves neither report nor create audit; a later download never
+regenerates the files. Each output is limited to 8 MiB in service and database.
+
+```mermaid
+flowchart LR
+    UI[Select saved Scope revision in UI] --> S[Report application use case]
+    S --> V[Owner, schema and source integrity checks]
+    V --> F[Freeze Scope and project labels]
+    F --> PDF[ReportLab PDF]
+    F --> XLSX[XlsxWriter workbook]
+    PDF --> DB[Atomic report snapshot and exact output pair]
+    XLSX --> DB
+    DB --> D[Authorized hash-checked downloads]
+    DB --> ST[Compare current dependencies: stale status]
+```
+
+Forward migration `0028_draft_scope_reports` adds the report table and a composite
+foreign key to the retained Draft/Scope revision. Existing migration history is
+unchanged. Deployment-lineage/current-head checks advance explicitly. Generated
+outputs are held within the existing database transaction; they are not uploaded
+source documents and acquire no fabricated clean-scan attestation. Downgrade refuses
+to destroy retained reports. Append-only service behavior and checksums do not make
+the database tamper-proof; operational database administrators remain trusted.
+
+Creation requires an active human with project write permission and Draft ownership
+or administrator access. Reads require the corresponding read permission and the
+same ownership boundary. Browser mutations require CSRF. Reads verify snapshot,
+source and both output hashes; stale-but-valid files remain downloadable. Metadata-only
+audit excludes Scope text. Later Scope revisions or project label changes flag the
+report as stale without modifying its snapshot or downloads.
+
+PDF includes complete flowing content and provenance. XLSX has typed known quantities,
+explicit unknowns, stable IDs, separate many-to-many links, filters and frozen headers.
+Imported claims remain unverified; missing technical/pricing sections remain unavailable.
+Escaped PDF text and literal Excel strings prevent markup/formula/URL interpretation.
+Unsupported PDF glyphs and unsafe control characters are visibly represented as code
+points; exact original text remains in the saved Scope artifact. No new dependency.
+
+**Bounded prototype trade-offs:** synchronous rendering, maximum 8 MiB per format,
+and a newest-20 report list. Older report IDs remain valid; pagination and moving
+large outputs to object storage can follow measured need. The dedicated PDF is the
+print layout; wide Excel sheets are intended for filtering and horizontal navigation.
+Only this Scope profile is implemented, not complete reporting or ProjectPackage export.
+
 ## 1. Governing reasoning chain
 
 CLASSIFIRE preserves this order:
@@ -248,7 +306,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0027_draft_scope_revisions |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Packaged history advances through 0028_draft_scope_reports |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -726,7 +784,8 @@ clock assumptions and crash/replay recovery before production wiring. The
 
 **Migration impact:** P0 adds the Draft revision tables and minimal manual contract.
 P1a adds explicit v2 import provenance in existing revision storage without reinterpreting v1 authority.
-Next, retain an independent scope-only report snapshot/output binding for P4a.
+P4a adds a retained scope-only snapshot and exact PDF/XLSX pair in migration 0028.
+Next, add a bounded independent candidate-review artifact using explicit Scope/library dependencies.
 Capability/package/client increments follow the roadmap independently of the
 replacement track. That track adds required run/adapter behavior and retires
 OpenClaw only after Decision 0001 parity gates. Preserve historical migrations and receipt readers,
@@ -735,8 +794,9 @@ or duplicate business rules in MCP/UI.
 
 **Historical verification:** PR #175 was documentation-only; its 70 focused
 contract/security tests and main CI 33899855871 describe that older baseline.
-The pre-P1a shared baseline is `96d6869` with main CI 33947498324 (1,020 tests).
-P0/P1a also have local browser/restart evidence; none proves production or full recovery parity.
+The pre-P4a shared baseline is `e17cec3` with main CI 33949738802 (1,072 tests).
+P0/P1a have browser/restart evidence; P4a verification is recorded in PROJECT_STATE.md.
+None proves production or full recovery parity.
 
 ### Completed report-governance integration
 
@@ -873,22 +933,25 @@ PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
 deployment, or release authority.
 
-### Near term: independent scope-only Draft reports
+### Near term: independent technical-candidate review (P2a)
 
-P4a extends the demonstrated Scope and import UI with one explicitly selected,
-persisted report snapshot/profile. Capture the exact validated Scope envelope,
-project labels and render version together; PDF and XLSX must consume that same
-snapshot and retain stable output bindings across restart and later edits.
-Reuse existing ReportLab/XlsxWriter dependencies and branding/layout patterns.
-Do not call `build_estimate_snapshot`, which recalculates, or invent an Estimate
-to satisfy the canonical renderers. Canonical export lock requirements remain intact.
+The next visible increment consumes a selected Scope revision and explicit technical
+release, then lets a user inspect sources, keep/reject candidates with notes, save,
+reopen and download an unapproved System Match candidate-review revision.
+`technical.py:search_variants` is retrieval/ranking over five text fields, not a
+complete applicability checker. `search_for_opening` depends on canonical Opening
+and Estimate; do not manufacture either for a Draft interaction.
 
-The early scope-only profile is already permitted by the roadmap. It provides a
-second visible capability while source intake establishes its actual scanning,
-PostgreSQL clean-read and retention requirements. Unsupported technical/pricing
-sections stay unavailable, missing quantities never become zero, and imported
-claims remain unreviewed. Inspect PDF page images and spreadsheet cells/types,
-including safe markup/formula handling, rather than relying on file existence.
+Reuse `release_scope.py:active_technical_release_ids` with an explicitly selected
+release and existing source/validity checks. That helper supports legacy unbound
+variants; it alone proves neither retained source bytes nor technical suitability.
+Missing/unsafe/unbound evidence stays unresolved. Scope v1/v2 lacks material, service
+size, FRL and insulation fields; unchecked criteria cannot produce Applicable status.
+Retain exact dependencies and identify stale later Scope/library/source changes.
+This is a bounded candidate-review prototype, not completed technical matching.
+P1b source intake remains upcoming with actual scanner, PostgreSQL clean-read and
+retention prerequisites; synthetic library development must not fabricate runtime
+scan attestations or use customer technical evidence.
 
 ### Separate production and adapter backlog
 

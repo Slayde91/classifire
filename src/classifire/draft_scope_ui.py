@@ -29,6 +29,14 @@ from .services.draft_scope import (
     save_revision,
     validate_payload,
 )
+from .services.draft_scope_reports import (
+    DraftScopeReportError,
+    create_report,
+    list_reports,
+    read_report,
+    report_bytes,
+    report_freshness,
+)
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -528,3 +536,92 @@ def confirm_scope_import(
             request, db, draft, errors=[_import_error(exc)], status_code=exc.status_code
         )
     return RedirectResponse(f"/scopes/{draft_id}", status_code=303)
+
+
+@router.get("/scopes/{draft_id}/reports", response_class=HTMLResponse)
+def scope_reports_page(
+    request: Request, db: Db, draft_id: str, revision: int | None = None
+) -> HTMLResponse:
+    user = _require(request, db, "project:read")
+    try:
+        draft = get_draft(db, user, draft_id)
+        envelope = read_revision(db, user, draft_id, revision)
+        reports = list_reports(db, user, draft_id)
+    except (DraftScopeError, DraftScopeReportError) as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return templates.TemplateResponse(
+        request,
+        "draft_scope_reports.html",
+        _context(
+            request, db, draft=draft, project=draft.project, envelope=envelope,
+            reports=reports, report=None, snapshot=None, stale=False,
+        ),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.post("/scopes/{draft_id}/reports", response_class=RedirectResponse)
+def create_scope_report(
+    request: Request, db: Db, draft_id: str, form: FormData
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _require(request, db, "project:write")
+    raw_revision = form.get("revision", "")
+    if not raw_revision.isascii() or not raw_revision.isdigit() or len(raw_revision) > 10:
+        raise HTTPException(422, "A valid saved revision is required")
+    revision = int(raw_revision)
+    if revision < 1:
+        raise HTTPException(422, "A valid saved revision is required")
+    try:
+        report = create_report(db, user, draft_id, revision)
+        db.commit()
+    except (DraftScopeError, DraftScopeReportError) as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return RedirectResponse(f"/scopes/{draft_id}/reports/{report.id}", status_code=303)
+
+
+@router.get("/scopes/{draft_id}/reports/{report_id}", response_class=HTMLResponse)
+def scope_report_page(
+    request: Request, db: Db, draft_id: str, report_id: str
+) -> HTMLResponse:
+    user = _require(request, db, "project:read")
+    try:
+        draft = get_draft(db, user, draft_id)
+        snapshot = read_report(db, user, draft_id, report_id)
+        stale = report_freshness(db, user, draft_id, report_id)
+    except (DraftScopeError, DraftScopeReportError) as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return templates.TemplateResponse(
+        request,
+        "draft_scope_reports.html",
+        _context(
+            request, db, draft=draft, project=snapshot["project"],
+            envelope=snapshot["scope"], reports=[], report=report_id,
+            snapshot=snapshot, stale=stale,
+        ),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.get("/scopes/{draft_id}/reports/{report_id}/download")
+def download_scope_report(
+    request: Request, db: Db, draft_id: str, report_id: str, format: str = "pdf"
+) -> Response:
+    user = _require(request, db, "project:read")
+    try:
+        snapshot = read_report(db, user, draft_id, report_id)
+        content = report_bytes(db, user, draft_id, report_id, format)
+        db.commit()
+    except (DraftScopeError, DraftScopeReportError) as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    media_type = (
+        "application/pdf" if format == "pdf"
+        else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    filename = f"CLASSIFIRE-Scope-Report-{snapshot['report_id']}.{format}"
+    return Response(content, media_type=media_type, headers={
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+    })

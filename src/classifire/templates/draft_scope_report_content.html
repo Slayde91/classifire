@@ -1,0 +1,29 @@
+{% macro related_label(items, identifier) -%}
+{{ items|selectattr('id', 'equalto', identifier)|map(attribute='label')|first|default(identifier) }}
+{%- endmacro %}
+<section class="panel scope-import-content" aria-labelledby="scope-import-content-heading">
+  <h2 id="scope-import-content-heading">Saved Scope content</h2>
+  <h3>Defects</h3>
+  {% for item in envelope.content.defects %}<article class="scope-import-item"><h4>{{ item.label }}</h4><p class="scope-item-id">ID: {{ item.id }}</p><p class="scope-preserve-text">{{ item.description or 'No description supplied.' }}</p></article>{% else %}<p class="scope-empty">No defects in this revision.</p>{% endfor %}
+  <h3>Openings</h3>
+  {% for item in envelope.content.openings %}<article class="scope-import-item"><div class="scope-import-item-heading"><h4>{{ item.label }}</h4><span class="badge badge-draft">{{ item.state }} &middot; unreviewed</span></div><p class="scope-item-id">ID: {{ item.id }}</p><dl class="scope-import-details">
+    <dt>Related defect</dt><dd>{% if item.defect_id %}{{ related_label(envelope.content.defects, item.defect_id) }}<span class="scope-item-id"> ({{ item.defect_id }})</span>{% else %}Not linked / unknown{% endif %}</dd>
+    <dt>Plane / substrate</dt><dd>{{ item.plane }} / {{ item.substrate or 'Unknown' }}</dd>
+    <dt>Width / height</dt><dd>{{ item.width_mm ~ ' mm' if item.width_mm is not none else 'Unknown' }} / {{ item.height_mm ~ ' mm' if item.height_mm is not none else 'Unknown' }}</dd>
+    <dt>Blank opening</dt><dd>{{ 'Yes - no linked services' if item.blank else 'No' }}</dd>
+  </dl></article>{% else %}<p class="scope-empty">No openings in this revision.</p>{% endfor %}
+  <h3>Services</h3>
+  {% for item in envelope.content.services %}<article class="scope-import-item"><div class="scope-import-item-heading"><h4>{{ item.label }}</h4><span class="badge badge-draft">{{ item.state }} &middot; unreviewed</span></div><p class="scope-item-id">ID: {{ item.id }}</p><dl class="scope-import-details">
+    <dt>Service type</dt><dd>{{ item.service_type or 'Unknown' }}</dd>
+    <dt>Quantity / unit</dt><dd>{{ item.quantity if item.quantity is not none else 'Unknown' }} {{ item.unit }}</dd>
+    <dt>Linked openings</dt><dd>{% if item.opening_ids %}<ul>{% for identifier in item.opening_ids %}<li>{{ related_label(envelope.content.openings, identifier) }}<span class="scope-item-id"> ({{ identifier }})</span></li>{% endfor %}</ul>{% else %}Not linked / unknown{% endif %}</dd>
+  </dl></article>{% else %}<p class="scope-empty">No services in this revision.</p>{% endfor %}
+  <h3>Observations</h3>
+  {% for item in envelope.content.observations %}<article class="scope-import-item"><span class="badge badge-draft">{{ item.state }} &middot; unreviewed</span><p class="scope-preserve-text">{{ item.text }}</p><p class="scope-item-id">ID: {{ item.id }}</p></article>{% else %}<p class="scope-empty">No observations in this revision.</p>{% endfor %}
+  <div class="grid-two scope-import-notes"><div><h3>Assumptions</h3>{% if envelope.content.assumptions %}<ul>{% for note in envelope.content.assumptions %}<li class="scope-preserve-text">{{ note }}</li>{% endfor %}</ul>{% else %}<p class="muted">None supplied.</p>{% endif %}</div><div><h3>Exclusions</h3>{% if envelope.content.exclusions %}<ul>{% for note in envelope.content.exclusions %}<li class="scope-preserve-text">{{ note }}</li>{% endfor %}</ul>{% else %}<p class="muted">None supplied.</p>{% endif %}</div></div>
+</section>
+
+{% if envelope.get('import_lineage') %}
+<section class="panel"><h2>Import history</h2><p class="scope-hint">Source identities, authors and ancestry below are unverified claims. Importing does not grant review or approval.</p>
+{% for source in envelope.import_lineage %}<details class="scope-import-item"><summary>Source {{ loop.index }} &middot; revision {{ source.revision }}</summary><dl class="scope-import-details">{% for key, value in source.items() %}<dt>{{ key|replace('_', ' ') }}</dt><dd class="scope-item-id">{{ value }}</dd>{% endfor %}</dl></details>{% endfor %}</section>
+{% endif %}

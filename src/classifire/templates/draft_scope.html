@@ -3,7 +3,7 @@
 {% block heading %}Draft Scope workspace{% endblock %}
 {% block content %}
 <link rel="stylesheet" href="/static/draft_scope.css">
-<div class="scope-context"><a href="/scopes">&larr; All drafts</a><div class="scope-context-actions">{% if has_permission('project:write') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/import">Import Draft Scope JSON</a>{% endif %}<span class="badge badge-draft">Draft &middot; awaiting review</span></div></div>
+<div class="scope-context"><a href="/scopes">&larr; All drafts</a><div class="scope-context-actions"><a class="button button-secondary" href="/scopes/{{ draft.id }}/reports?revision={{ expected_revision }}">Scope reports</a>{% if has_permission('project:write') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/import">Import Draft Scope JSON</a>{% endif %}<span class="badge badge-draft">Draft &middot; awaiting review</span></div></div>
 <section class="panel scope-project">
   <div><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2><p class="muted">Working from saved revision {{ expected_revision }}</p></div>
   <div class="scope-save-state" id="scope-save-state" role="status" aria-live="polite">{% if saved %}Saved revision {{ expected_revision }}{% else %}Changes have not been saved{% endif %}</div>

@@ -76,6 +76,23 @@ history is not silently truncated. A preview expires after 15 minutes. If it exp
 or the target changes, preview again. Unsupported versions, tampering, invalid
 relationships and oversized files are refused without replacing saved content.
 
+## Create a scope-only report
+
+1. Save the Scope, then choose **Scope reports** from its editor.
+2. Select a saved revision and choose **Preview revision**. Review the complete
+   saved content; unsaved editor changes are excluded.
+3. Choose **Create PDF and Excel report**. Open **Download PDF** and **Download Excel**.
+   Both files preserve the same project labels and Scope snapshot.
+4. Edit and save another Scope revision, then reopen the earlier report. It shows
+   **Out of date**, while downloading either format returns the original bytes.
+5. Restart the same isolated demo and reopen the saved report link. Verify both
+   downloads again. The report list shows the newest 20; older saved links remain valid.
+
+The dedicated PDF is the print layout. Excel has filterable sheets and separate
+service/opening links; scroll horizontally on wider sheets. Known quantities are
+numeric; missing quantities and technical/pricing facts remain unavailable. Neither
+file grants approval or causes matching, pricing, AI or release to run.
+
 ## Check persistence after restart
 
 To verify persistence, stop the server with `Ctrl+C` and run the same command
@@ -114,12 +131,38 @@ defects, openings, services, service links, estimates or Physical Model Locks.
 P1a screenshots, receipts and synthetic downloads are retained locally under
 `C:\CLASSIFIRE\.tmp\draft-scope-import-artifacts`; none belong in Git.
 
+The P4a final Chrome demonstration created a report from imported Scope revision 2,
+saved a later revision 3 and showed the retained report as out of date. Both files
+remained byte-identical after the later edit and an actual server restart. Browser
+and restart receipts reported `PASS` with no page errors.
+
+- PDF SHA-256: `1ed6dbd5f4beda3f720b8095e265bc4899891f2b84c20a0e550fb812c37e6cde`.
+- XLSX SHA-256: `c20f1e826854f8fb17424c5376dc5d171ffddc91384c0c21be2b1abb6e480dc8`.
+- Report snapshot SHA-256: `4a331ad21e131eeae4802176f893c3890b6f94604de1b28e173d698852c679fc`.
+- Final saved report: `http://127.0.0.1:8798/scopes/b4d57d5e-67d1-4507-942f-6f13bb895a67/reports/8db56993-c17a-4155-9f3c-2d7f321da16f` (local synthetic server on port 8798).
+
+The report retains three imported-source history records, all unverified claims.
+Its three PDF pages were inspected; independent standard/long-text fixtures added
+seven inspected PDF pages with hostile literal text. All nine workbook sheets were
+opened read-only in native Excel with macros/events disabled and rendered for visual
+review. Workbook cells, numeric types, filters, relationships and absent formulas/
+hyperlinks were also checked programmatically. A duplicated workbook title and
+oversized PDF logo found during verification were fixed before the final demonstration.
+
+The report demo contains four synthetic Drafts, 11 revisions and three reports from
+the verification runs, with zero canonical defects/openings/services/links/estimates
+or Physical Model Locks. It lives at `.tmp/draft-scope-report-demo-20260905`; receipts,
+screenshots and downloads are in `.tmp/draft-scope-report-artifacts`. Additional
+standard/long-text fixtures are in `.tmp/draft-scope-report-output-qa`. These are local
+synthetic artifacts, excluded from the PR. The launcher can run this increment with
+`--data-dir C:\CLASSIFIRE\.tmp\draft-scope-report-demo-20260905 --port 8798`.
+
 ## Boundaries and remaining work
 
 - Scope JSON import/export is implemented for the supported v1/v2 contracts.
   Complete ProjectPackage ZIP generation/import, source-file intake, AI analysis,
-  matching, pricing and independent PDF/XLSX reports remain outside this workflow.
-  Scope-only Draft reporting is the next planned visible increment.
+  matching, pricing and additional report profiles remain outside this workflow.
+  Scope-only Draft PDF/XLSX reporting is implemented; P2a candidate review is next.
 - Saved revisions remain Draft and unreviewed. They do not create canonical
   physical-model records, approvals, locks or human releases.
 - Draft content is restricted to its owner and administrators. Surrounding
