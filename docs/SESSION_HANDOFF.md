@@ -1,8 +1,8 @@
 # CLASSIFIRE Session Handoff
 
 **Prepared:** 2026-09-05 (AEST)
-**Verified shared-main baseline:** `036e9272368adfca8748f36ca7b37672d7ea8d8d` (PR #178, 2026-09-05)
-**Latest executable-change baseline:** `7e8f473e45e51c4cf3505846cd978749efbdac59` (PR #174)
+**Verified shared-main baseline:** `c6794053586f353eb03c2921473cea2f2b44506c` (PR #179, 2026-09-05)
+**Latest executable-change baseline:** `c679405` (PR #179)
 
 All four maintained documents are under `docs/`. Source, tests, Git and verified
 runtime evidence outrank this handoff. Refresh the baseline before work.
@@ -11,36 +11,38 @@ runtime evidence outrank this handoff. Refresh the baseline before work.
 
 ### Contract characterisation progress
 
-PR #177 merged the initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md)
-and 13 fallback/audit cases. PR #178 reconciled documentation; exact main CI
-[33934179868](https://github.com/Slayde91/classifire/actions/runs/33934179868)
-passed on 036e927. Full retirement parity is not complete.
+PR #179 merged uncertain CLI session-creation refusal as c679405. Its exact
+post-merge CI [33935111307](https://github.com/Slayde91/classifire/actions/runs/33935111307)
+passed. That correction preserves read-only fallback and stops uncertain creation
+before inference. Full OpenClaw retirement parity remains incomplete.
 
-**Current correction (candidate until merged):** unavailable CLI session creation
-now fails with RPC_OUTCOME_UNKNOWN rather than repeating sessions.create through
-fallback. Read-only fallback remains available; a route selected by an earlier
-read can still receive one creation attempt. Five new synthetic cases prove
-lost-reply refusal, unchanged route selection and managed-runtime failure before
-fallback, token access or HTTP inference. The focused suite passes 88 tests;
-17 additional report/representative tests pass. No canonical or release
-authority, receipt schema, provider configuration or migration changes.
+**Current socket candidate (until merged):** the existing invocation deadline
+is checked before consuming buffered bytes and before returning a decoded reply.
+Two fake-clock regressions reproduced late-response acceptance before the fix.
+Thirteen additional fake-socket cases prove safe refusal, closure, one connection
+and no repeated creation for close/EOF/timeout/OS errors, malformed frames/JSON,
+oversized replies and unrelated connect/request IDs. All 120 focused/caller
+tests pass (103 contract/security plus 17 report/representative tests).
+Authority, receipt schemas, provider configuration and migrations are unchanged.
 
-**Next bounded task after this correction merges:** characterise loopback socket
-deadlines, closure, malformed frames and request/response correlation using the
-existing injected socket fixture. Map coverage first; add only demonstrated
-missing negative cases and correct only reproduced contract defects. Preserve
-least-privilege scopes, safe errors and receipt compatibility; no real Gateway.
-Complete remaining contract gates before coordinator/adapter/package work.
+**Next bounded task after merge:** establish the audit completeness contract.
+Inspect the pinned Gateway response shape and current guard/tests before choosing
+behaviour. The guard requests at most 100 events and validates their shape; this
+does not prove the response covers the complete audit window. Add synthetic
+coverage for verified truncation/pagination/window semantics and correct only a
+demonstrated acceptance gap. Do not invent provider fields or weaken historical
+receipt verification. Record any unavailable upstream contract evidence as a
+specific blocker; complete independent coverage first.
 
 **Broader migration track:** characterise actually used OpenClaw contracts with synthetic
 tests, extending existing coverage rather than recreating it. This is the first
 retirement gate in
 [Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md).
 
-**Why next:** the uncertain-creation candidate closes one demonstrated replay
-risk. The existing socket fixture primarily proves successful framing;
-deadline/closure, malformed-frame and correlation failure coverage remains a
-named inventory gap. Replacement execution must preserve these boundaries.
+**Why next:** transport integrity alone does not prove audit completeness.
+The guard requests up to 100 events and returns a receipt for a well-formed list.
+Pagination/window assumptions need evidence before replacement executors can
+claim equivalent protection. Preserve independent no-tool attestation.
 
 **Prerequisites:** read applicable AGENTS.md, inspect root/worktree Git state,
 fetch main, read the four documents and Decision 0001, inspect current callers/
@@ -86,12 +88,13 @@ Use the existing interpreter or an isolated environment installed from
 `pyproject.toml`; do not modify the protected root. Materially broader domain/
 security changes need separate scope.
 
-**Next-task completion criteria:** map existing socket coverage, add missing
-injected deadline/closure, malformed-frame and mismatched-ID cases; prove safe
-failure and socket cleanup without repeated writes. Correct source only where a
-composed failing test demonstrates a contract defect. Preserve CLI fallback and
-unknown-outcome refusal, no-tool/authority and receipt compatibility. Pass focused
-and warranted regression/static checks plus hosted CI; update inventory/handoff.
+**Next-task completion criteria:** identify pinned upstream response/window
+semantics and current tests; cover verified incomplete/truncated/paginated
+responses synthetically; make only a demonstrated fail-closed correction.
+Preserve valid legacy receipt hashes, no-tool guards, safe errors and fallback
+semantics. If upstream semantics cannot be verified, state exactly which claims
+remain unproven and complete independent tests without inventing fields.
+Pass focused/caller/static checks and hosted CI; align inventory/four documents.
 
 ### Validation commands
 
@@ -133,53 +136,52 @@ for this synthetic task.
 
 ~~~text
 Continue CLASSIFIRE at C:\CLASSIFIRE (https://github.com/Slayde91/classifire).
-Before editing, read applicable AGENTS.md; inspect branch/upstream/HEAD, conflicts
-and unrelated changes; fetch main and check current PRs/CI. Read the four docs
-under docs/, Architecture Decision 0001 and OPENCLAW_CONTRACT_CHARACTERISATION.md.
-Verified baseline: 036e927 (PR #178). The uncertain-session-creation correction
-is a tested candidate on fix/phase8-uncertain-session-create-20260905; verify its
-actual publication and newer source before selecting work. Preserve the legacy
-root and unrelated work; use a clean isolated current-main worktree.
+Before editing, read applicable AGENTS.md, inspect branch/upstream/HEAD and local
+changes, fetch main, check PRs/CI, and read the four docs under docs/, Decision 0001
+and OPENCLAW_CONTRACT_CHARACTERISATION.md. Verified main: c679405 (PR #179).
+The socket-deadline correction is a tested candidate on
+test/phase8-socket-contracts-20260905; verify its actual publication and newer
+source before choosing work. Preserve the conflicted root and unrelated changes;
+use a clean isolated current-main worktree.
 
-First finish/reconcile that candidate's publication if needed. Once merged, do
-one task: characterise loopback socket deadline/closure, malformed frames and
-request/response correlation using the existing injected socket fixture in
-tests/test_phase8_visual_runtime.py. Read src/classifire/services/
-phase8_visual_runtime.py and phase8_openresponses_transport.py and their callers.
-Map existing coverage before adding tests; correct only a reproduced contract
-defect. This is next because these remaining protections must be evidenced before
-executor replacement. Do not repeat the completed CLI/audit tests.
+Finish/reconcile candidate publication if needed, then do one task: establish
+the audit-completeness contract. Inspect OpenClawGatewayNoToolSessionGuard.audit
+in src/classifire/services/phase8_openresponses_transport.py, its tests, the RPC
+allowlist in phase8_visual_runtime.py and pinned upstream Gateway source/docs.
+The guard requests 100 events; a shaped list does not prove full window coverage.
+Verify actual pagination/truncation/window semantics before adding tests or
+changing behaviour. This closes a documented protection gap before executor
+replacement; do not invent provider fields or duplicate existing malformed-audit,
+fallback, CLI-replay or socket coverage.
 
-Preserve unknown-creation refusal, read-only fallback, no-tool/context/model
-binding, least-privilege scopes, safe errors/receipts and authority boundaries.
-Use fake sockets/RPC/HTTP and synthetic evidence only. No real Gateway/provider,
-customer evidence, canonical write, lock, deployment or release; no new
-coordinator, adapter, package/UI, migration or OpenClaw removal. Missing real-run
-authority does not block synthetic work.
+Use synthetic evidence and injected RPC/HTTP only. Preserve no-tool attestation,
+context/model binding, safe errors, valid legacy receipt hashes and authority.
+No real Gateway/provider/customer run, canonical write, lock, deployment or
+release; no new coordinator, adapter, package/UI, migration or OpenClaw removal.
+Missing upstream contract evidence is a specific blocker for dependent claims,
+not permission to guess; complete independent coverage first.
 
-Done: demonstrated missing negative contracts covered, safe errors/socket cleanup
-and no repeated writes verified, only justified minimal corrections, aligned
-inventory/four docs and explicit remaining gates. Run the eight-file pytest
-command in SESSION_HANDOFF.md (candidate baseline 88 tests), warranted caller
-regressions (17 passed), Ruff/Mypy/Bandit, Alembic heads and git diff --check.
-Use worktree PYTHONPATH, disabled cache and unique temporary storage; never point
-destructive tests at project databases. If newer source completes the task,
-report evidence instead of duplicating work.
+Done: verified contract inventory, meaningful incomplete-response tests, only
+demonstrated minimal corrections, passing focused/caller/static checks, aligned
+docs and explicit remaining gates. Run the eight-file command in SESSION_HANDOFF
+(candidate baseline 103 tests), warranted caller regression (17 passed),
+Ruff/Mypy/Bandit, Alembic heads and git diff --check. Use worktree PYTHONPATH and
+unique temporary storage; never point destructive tests at project databases.
 
 Continue autonomously through implementation, validation, classification,
 explicit-file commit, normal push, PR and merge where safe after checks pass.
-Verify exact scope/base/head, reviews, actual merge and post-merge CI. Never
-bypass required review or failed checks; report genuine blockers and remaining
-local changes. Avoid speculative scope expansion.
+Verify scope/base/head, required reviews, actual merge and post-merge CI. Never
+bypass failed checks/review or overwrite unrelated work. If newer main completes
+this task, report evidence instead of duplicating it. Avoid speculative expansion.
 ~~~
 
 ## Verified project context
 
-PR #175 adopted the hybrid decision; PR #177 added contract coverage;
-PR #178 reconciled the documents as 036e927. Its exact main CI 33934179868 passed.
-The current candidate adds uncertain-creation refusal: 88 focused tests and 17
-report/representative regressions pass. Full retirement parity remains incomplete.
-The packaged migration head remains 0026_single_active_technical_release.
+PR #175 adopted the hybrid decision; PR #177 added initial contract coverage;
+PR #179 merged uncertain-creation refusal as c679405. Exact main CI 33935111307
+passed. The current socket candidate passes 103 contract/security plus 17
+report/representative tests; full retirement parity remains incomplete.
+The migration head remains 0026_single_active_technical_release.
 
 Implemented foundations include evidence ownership/locators, proposal controllers/
 review packages, signed physical amendments and separate replacement locks,
@@ -199,12 +201,12 @@ See [Project State](./PROJECT_STATE.md) for the capability snapshot.
   plus staged/unstaged/untracked legacy work remain unrelated recovery evidence.
   Protected pytest directories prevent complete untracked enumeration.
   Do not reset, clean, resolve or copy it wholesale.
-- Current candidate: `fix/phase8-uncertain-session-create-20260905` in
-  `C:\CLASSIFIRE\.tmp\phase8-uncertain-session-create-20260905`, advanced cleanly
-  to `036e927`. Scope: one runtime service, its test file, contract inventory and
+- Current candidate: `test/phase8-socket-contracts-20260905` in
+  `C:\CLASSIFIRE\.tmp\phase8-socket-contracts-20260905`, created cleanly
+  from `c679405`. Scope: one runtime service, its test file, contract inventory and
   four continuity docs. Initial upstream is `origin/main`; verify later branch
   upstream, commit/PR and merge rather than assuming publication.
-- Previous documentation and contract slices merged in PRs #176-#178. Preserve
+- Previous documentation and contract slices merged in PRs #176-#179. Preserve
   their historical worktrees; they are not new implementation tasks.
 - Issues #42 (retained Phase 8 tooling) and #43 (OpenClaw dependency advisories)
   remain open; read current bodies before acting.
@@ -214,6 +216,6 @@ See [Project State](./PROJECT_STATE.md) for the capability snapshot.
   previously returned HTTP 403. No protection override, real provider
   operation or deployment is authorised by this handoff.
 
-Start by verifying candidate publication, then characterise the remaining
-loopback socket/protocol boundary. Do not repeat the initial inventory or
+Start by verifying candidate publication, then establish the audit-completeness
+contract from verified upstream semantics and synthetic evidence. Do not repeat the initial inventory or
 redesign the accepted architecture.
