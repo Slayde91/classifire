@@ -1,463 +1,150 @@
 # CLASSIFIRE Project State
 
 **Verified snapshot:** 2026-09-05 (AEST)
-
 **Product status:** Pre-production implementation and controlled UAT
+**Verified shared-main baseline:** `9c0fc7d32b29125b53e4d3164f56ae5e00deacfe` (PR #175)
+**Latest executable-change baseline:** `7e8f473e45e51c4cf3505846cd978749efbdac59` (PR #174)
 
-**Verified shared-main implementation:** 7e8f473e45e51c4cf3505846cd978749efbdac59 (merge of PR #174, 2026-09-05 AEST)
+PR #175 adopted Architecture Decision 0001 in documentation. It did not implement
+the hybrid migration. This snapshot separates freshly checked source/Git/test
+evidence from historical runtime evidence. All four maintained documents live
+under `docs/`; root-level duplicates are not maintained.
 
-This snapshot reconciles executable source, tests, migrations, Git/GitHub state,
-the quarantined legacy checkout, and retained non-canonical receipts. Those
-sources outrank older handoffs and roadmap prose.
+## 1. Project health and publication
 
-Nothing in this document authorises report retrieval or inference, admission
-signing or registration, canonical submission, Physical Model Lock creation,
-deployment, technical approval, commercial approval, or Human Release.
-
-## 1. Repository and publication state
-
-| Area | Verified state | Consequence |
+| Area | Verified state | Meaning |
 | --- | --- | --- |
-| Shared main | PR #174 is merged at 7e8f473e45e51c4cf3505846cd978749efbdac59; it includes the reviewed PR #104-#174 lineage. | Report governance, technical-source safeguards, retained proposal-review packages, source-bound report locators, atomic signed replacement-lock execution, and governed technical-release publication are shared-main evidence. No real UAT lock, project technical selection, pricing, deployment, or Human Release was performed. |
-| Report-governance range | PR #104 contains six reviewed commits: `b36ebb5`, `9a4c2d2`, `e9ac8f0`, `4cba603`, `58c5946`, and `0f6c252`. | Expected-label approval, atomic scope admission, main-push CI, factual docs, and migration-head readiness are integrated together. |
-| Pull-request and post-merge CI | PR #104 run `33515411987` passed on `0f6c252`; `main` push run `33516292114` passed on merge `b6409a5`. | The exact candidate and its shared-main merge both passed hosted Python validation, including tests and one Alembic head. |
-| Post-PR #104 maintenance series | PRs #105-#126 merged as `6ecd0a6`, `513c9e1`, `d88bd1f`, `6391579`, `a16e246`, `75e6145`, `dc1e4c6`, `c7c9fc9`, `c9aa917`, `14c2269`, `3860b23`, `efff4d9`, `ecd7213`, `14ed594`, `bd3e7ee`, `7167f9e`, `73a9d43`, `5639e26`, `90f701c`, `ff1278f`, `7e26c2f`, and `b33246a`. | Documentation, semantic snapshot identity, technical-source lineage, Draft materialisation, type safety, UTC PDF timestamps, current output/browser branding, Mission Control task-response validation, hosted full-Ruff/Mypy/Bandit validation, and explicit Phase 8 invariant errors were strengthened without granting technical, commercial, lock, or release authority. |
-| Current technical-source safeguards | PRs #127-#142 merged as `e5a607d`, `e1c2297`, `4bc9c8e`, `2a7d4a9`, `45e07f4`, `f9c0d82`, `c54065a`, `f9dea2a`, `f3c6d92`, `8c21f18`, `9771ff7`, `1e43756`, `caed547`, `075c9c5`, `981324e`, and `abe8bde`. | Verified-byte extraction, current-authority gates, immutable published source-lineage binding, factual reconciliation, structured release-lineage display, safe navigation to bound source-document records, and read-only revision-source visibility were added without granting technical selection, commercial, canonical, lock, or release authority. |
-| Subsequent hosted validation | Each PR #105-#174 check and each corresponding main push run passed; PR #174 run 33892514672 passed on e587cf8 and main run 33892921342 passed on 7e8f473. | Hosted validation is current through the PR #174 merge, while required-check configuration remains unverified. |
-| Architecture target | Architecture Decision 0001 accepts a deterministic CLASSIFIRE core with bounded optional AI adapters, one shared application layer for ChatGPT and standalone clients, a versioned portable `ProjectPackage` contract, and eventual OpenClaw retirement after parity gates. | This is a documentation decision, not implemented migration. OpenClaw remains the current adapter until its security, receipt, recovery, observability, clean-machine, and rollback protections have proven replacements. |
-| Default-branch governance | Commit `e9ac8f0` now validates pushes to `main`, and its first observed run passed. GitHub's branch-protection API still returns HTTP 403 because this private repository needs GitHub Pro or public visibility for that feature. | Hosted validation is evidenced, but required-check configuration is still not independently inspectable. |
-| Open pull requests | Draft PRs #9-#13 remain open on obsolete feature-to-feature bases, have no checks, and are materially diverged from `main`. | Treat them as quarantined legacy candidates, not current-main merge candidates. |
-| Issues | Issues #42 and #43 remain open. | Their descriptions may be historical; implementation evidence still wins. |
+| Shared main | PR #175 merged as `9c0fc7d`; executable lineage through PR #174 remains present. | Hybrid is accepted, not a completed runtime migration. |
+| Hosted CI | [Main run 33899855871](https://github.com/Slayde91/classifire/actions/runs/33899855871) succeeded on exactly `9c0fc7d`. | Source/test/static/migration evidence, not production or real-UAT proof. |
+| Local synthetic verification | 70 tests passed across the eight contract/security files in the handoff; collection independently confirmed 70 tests. | Existing contracts have a passing baseline; full migration parity is not proven. |
+| Migration history | One Alembic head: `0026_single_active_technical_release` on `legacy_adjudicated_lineage`. | Preserve forward-only history. |
+| Branch governance | Branch-protection API returned HTTP 403 with the GitHub Pro/public-repository requirement. | Required-check configuration remains unverified; never bypass failed checks. |
+| Open work | Issues #42 (retained Phase 8 tooling reconciliation) and #43 (OpenClaw development dependency advisories); draft PRs #9-#13 on legacy feature-to-feature bases. | Reconcile issue contents against source; do not bulk-merge the draft stack. |
+| Operational health | No new runtime/database/provider verification. | Deployment, recovery, production tenancy, real project acceptance and release remain unproven. |
 
-### Quarantined root checkout
+### Local change classification
 
-The root checkout at `C:\CLASSIFIRE` remains recovery evidence on
-`gpt/phase8-linked-original-images` at `de0cc5a`. It still has an interrupted
-cherry-pick, unmerged paths, tracked changes, and an incomplete untracked
-inventory because protected pytest directories cannot be read. Its exact dirty
-inventory is deliberately not treated as current implementation evidence.
+The protected root `C:\CLASSIFIRE` was inspected read-only on
+`gpt/phase8-linked-original-images` at `de0cc5a`, with
+`CHERRY_PICK_HEAD=c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`.
+Four unresolved deleted/updated paths remain: the
+`phase8_linked_visual_run.py` and `phase8_visual_evidence.py` services and their
+two tests. Staged additions, unstaged code/configuration/plugin/UI/test changes,
+and untracked material are pre-existing recovery evidence. Protected pytest
+directories prevent a complete untracked inventory. None belongs to this change.
 
-The root contains substantial unfinished Phase 8, plugin, script, UI, and test
-work. Its conflicted state makes it unsuitable for this commit, publication,
-deployment, or canonical operations. None of it was edited, resolved, staged,
-or copied into the isolated worktree.
+Reconciliation branch: `docs/hybrid-handoff-reconcile-20260905`, worktree
+`C:\CLASSIFIRE\.tmp\docs-hybrid-handoff-reconcile-20260905`, created clean
+from `9c0fc7d`. Only the four documents belong to this change. Check Git/GitHub
+for its publication outcome; this pre-commit snapshot does not claim its own
+future commit, PR or merge.
 
-## 2. Current implementation
+## 2. Implemented foundations
 
-### Completed foundations in the current candidate
+| Component | Implemented scope | Evidence entry points |
+| --- | --- | --- |
+| Application | FastAPI, CLI, development UI, SQLAlchemy, audit/security and migrations | `src/classifire/api/`, `models.py`, `ui.py`, `migrations/` |
+| Evidence | Project/Estimate ownership, exact retained-byte reads, quarantine, PDF and bounded XLSX/DOCX locators, approved labels and report families | `services/project_evidence.py`, `report_evidence_adapter.py`, `report_expected_label_manifest.py` |
+| Physical governance | Distinct defects/openings/services/links, blank-opening semantics, guards, signed admissions, initial submission, amendments and separate signed replacement-lock execution | `services/adjudicated_physical_submission.py`, `signed_physical_model_lock_amendment_execution.py`, `signed_physical_model_lock_replacement_execution.py` |
+| Proposal assessment | CLASSIFIRE controls blind inventory, Physical proposal, Validator, bounded correction and protected-state checks; single/family runners are service-only | `services/phase8_report_assessment_controller.py`, `phase8_report_assessment_runner.py` |
+| OpenClaw | Fresh sessions, provider/model binding, literal-loopback transport, no-tool attestation, post-call audit and safe errors | `services/phase8_openresponses_transport.py`, `phase8_report_openresponses_transport.py`, `phase8_visual_runtime.py` |
+| Controlled writes | Default plugin profile exposes only admission-bound initial submission; broader catalog entries do not prove live capability | `openclaw-plugin-classifire-controlled-write/src/index.ts`, `src/classifire/api/agent_api.py` |
+| Proposal review | Retained review metadata, five-year retention, redaction, legal hold, scoped readers and immutable administrator annotations | `services/proposal_review_package.py` and lifecycle/security tests |
+| Technical libraries | Source-bound Draft/revision/review/activation; current-authority checks; release lineage; atomic eligible-set publication and one-active-release constraint | `services/technical_release_publication.py`, migration `0026` and technical tests |
+| Outputs | Basic calculation, PDF/XLSX, proposal-only desk quotes; snapshot V2 semantic/document integrity with V1 verification | `services/calculation.py`, `desk_quote.py`, `snapshot.py`, `api/router.py` |
+| Background work | BackgroundJob persistence and polling worker shell; no registered handlers, so queued jobs fail | `models.py`, `worker.py` |
 
-The following boundaries are implemented and tested for their stated scope:
+Abbreviated filenames in the last column use the directory of the preceding
+path in that row. Source paths are under `src/classifire/` unless explicitly
+rooted elsewhere. These are bounded capabilities, not a complete product.
+Technical-library publication is not project technical selection; annotations
+are not approval; a passed proposal is not canonical physical truth.
 
-- FastAPI, CLI, SQLAlchemy, packaged Alembic migrations, development UI, audit,
-  and role/session security foundations.
-- The current `Defect -> EvidenceSource -> Opening -> Service/link` physical
-  model, explicit blank-opening semantics, protected-state fingerprints,
-  admission registration, one-shot initial submission, and separate lock
-  creation. Synthetic sealed-submission tests prove that all-blank models stay
-  service-free and mixed blank/multi-service models preserve their explicit
-  service links through the writer and completeness check. An active unsigned
-  generic pre-technical lock can now be reopened only by an attributed,
-  reasoned, audited `estimate:write` request before any technical, commercial,
-  rule, snapshot, or release dependency exists; reopening preserves physical
-  rows and refuses signed locks. A no-write P-256 signed-amendment verifier now
-proves exact binding between a current signed lock, prospective payload, and
-semantically approved visual receipt, without invalidating anything; physical
-lock decimal values are normalised before hashing. A transaction-ready no-write preflight locks and rechecks the target
-Estimate/lock, lifecycle dependencies, and prospective Defect ownership. An
-immutable admission journal retains the exact verified manifest, payload, and
-preflight evidence. A separate active-human `estimate:write` service now consumes
-one exact registered admission atomically: it reconciles canonical Openings,
-Services, and links, invalidates only the signed target lock, and records exact
-before/after snapshots, row mappings, receipt, and audit. No-op, corrupt replay,
-late dependency, unauthorised-role, and injected write-failure tests fail closed.
-A disposable PostgreSQL two-session test proves concurrent exact execution
-serialises to one mutation, one immutable outcome, and one execution audit event.
-It does not create a replacement lock or grant downstream authority. A separate
-signed replacement-lock eligibility contract now locks and rechecks the exact
-amendment outcome, prior signature binding, approved visual receipt, amended
-physical hash, scope-aware completeness, lifecycle state, and downstream dependency absence without
-creating a lock, admission, audit, or authority record. A separate immutable
-admission journal now reruns that locked preflight and records the exact signed
-envelope and receipt with accountable human attribution, idempotent exact replay,
-and fail-closed corruption/conflict handling. It creates no replacement lock or
-downstream authority. A separate active-human `estimate:write` transaction now
-reruns the exact registered admission preflight and atomically creates the exact
-replacement Physical Model Lock plus one immutable outcome and audit event.
-Exact replay is idempotent; state drift, active-lock races, corrupt evidence, and
-failed outcome/audit writes fail closed or roll back together. It performs no
-technical selection, pricing, deployment, or release and grants no downstream
-authority.
-- Proposal-only blind inventory, Physical proposal, Validator review, bounded
-  correction, evidence review, human adjudication, and durable visual-validation
-  receipt contracts.
-- Project/Estimate-owned retained report evidence, exact clean-byte reads,
-  cross-project rejection, shared-byte quarantine, stable PDF locators including strict
-  explicitly numbered caption locators, bounded source-bound XLSX worksheet/cell, and bounded DOCX document/paragraph/simple-table
-  locators, ordered report scopes, deterministic review packages, and no-write
-  report-assessment components.
-- Production configuration checks before filesystem work, no production
-  `create_all()` or default-administrator seeding, packaged migration history,
-  an explicit migration command, and exact migration-head readiness checks.
-- Technical-document review separation, clean source-byte rechecks, current
-  approved/unexpired source-document and clean, immutable `technical_evidence`
-  stored-file metadata at current-authority gates, technical-variant
-  effective/expiry windows, verified-byte candidate metadata extraction and
-  Draft-only metadata refresh after a clean source recheck, Draft-only imports,
-  source-document-bound Draft variants, source-preserving revisions, nonblank
-  source locators before review, source-bound manual Draft materialisation,
-  hash-bound Draft source-document predecessor lineage without automatic retirement,
-  independent activation, active immutable technical-release requirements,
-  release-manifest eligibility and published source-lineage rechecks, and
-  read-only current-authority displays
-  on linked TechnicalVariant and TechnicalDocument detail screens, plus a
-  structured immutable source-lineage view on TechnicalRelease detail screens.
-  Governed technical publication now locks and includes every current eligible
-  active logical variant exactly once or fails closed, rechecks exact bound
-  source bytes, and atomically supersedes the prior active release while writing
-  the new immutable manifest and audit event. A technical-only unique constraint
-  prevents two active technical releases. Draft variants remain untouched.
-  Technical extraction failures retain only content-safe diagnostics.
-- Governed assumption-led desk-quote PDF/XLSX outputs from PR #75. They remain
-  explicitly non-technical, proposal-only commercial scenarios. The current
-  shared-main resolver requires Project/Estimate-owned immutable `clean` ProjectEvidence,
-  exact atomic retained-byte reads, persisted locators, and artifact-byte audit
-  bindings; `technical_evidence` remains rejected. PR #103's checks passed;
-  operational approval remains separate.
-- PDF timestamps use a timezone-aware UTC clock, and the current browser UI and
-  generated PDF/XLSX artifacts use CLASSIFIRE display branding. Legacy persisted
-  identifiers and static logo paths remain only where compatibility requires them.
-- A secret-free pull-request workflow using Node 24-compatible actions and a
-  disposable PostgreSQL 16 service.
-
-The packaged migration history now has one forward-only head: 0026_single_active_technical_release (legacy_adjudicated_lineage). The earlier 0018_docx_report_evidence_locators revision remains the bounded DOCX locator migration. PR #156 merged source-bound DOCX document/paragraph/simple-table locators as 82d288c14d0e04d70a75a7fde2191125fbd147ca. PR #156 pull-request run 33765731885 and post-merge main run 33766069162 both succeeded.
-
-### Completed report-governance integration on shared main (PR #104)
-
-- `b36ebb5` introduces an immutable, human-approved expected-label manifest
-  bound to retained report bytes and an estimate
-  (`0012_report_expected_label_manifests`).
-- `9a4c2d2` admits a complete exact approved label set atomically, retains that
-  manifest on every new report scope, and prevents V1/unbound scope packets from
-  reaching a proposal run (`0013_report_defect_scope_admissions`). Historical
-  V1 receipts remain verifiable.
-- `e9ac8f0` adds the GitHub Actions `push` validation path for merged `main`
-  changes. Changed-file Ruff remains a fast delta check; full-repository Ruff,
-  Mypy, and Bandit are separately run for every pull request and `main` push.
-- `58c5946` and `0f6c252` align migration-head expectations and deployment
-  readiness with `0013`; `4cba603` reconciles the preceding factual records.
-
-### Completed proposal-review controller admission transition on shared main (PR #149)
-
-PR #149 requires the database-backed proposal-review controller to receive the
-exact human-approved expected-label manifest. Before it builds a new package, it
-checks every selected scope packet is V2 and carries that same manifest ID,
-hash, and approval reference. A legacy/unbound scope, or a scope bound to a
-different approval record, fails before package assembly. Historical V1 packets
-remain verifiable; PR #149 does not rewrite or delete them.
-
-PR #149 passed pull-request validation run 33749820103 and post-merge main run
-33750096567. It remains proposal-only and adds no report retrieval, provider
-call, canonical submission, technical selection, commercial pricing, Physical
-Model Lock, deployment, or Human Release authority.
-
-### Completed source-bound report captions on shared main (PR #151)
-
-PR #151 recognises only an explicitly numbered `Figure`, `Fig`, `Image`,
-`Photo`, `Photograph`, or `Plate` text block as a caption. Its persisted locator
-contains only the fixed caption category, page, bounds, block index, character
-count, sequence, and content hash. The caption wording is re-extracted only in
-transient documentary context after the exact retained PDF reproduces that
-locator and hash. Ambiguous prose, unrecognised categories, and locators with
-raw caption text are refused.
-
-It does not associate a caption with an image, infer physical facts, select a
-technical system, price work, call a provider, create canonical state or a lock,
-deploy, or release. PR validation run 33753130859 and post-merge main run
-33753516838 passed.
-
-### Completed source-bound XLSX report locators on shared main (PR #154)
-
-PR #154 admits only exact retained `.xlsx` bytes into the existing report locator
-boundary. It persists visible worksheet shape and non-empty cell positions, fixed
-cell categories, and hashes--never worksheet names or cell values. A selected cell
-is re-extracted only transiently after the exact workbook reproduces its locator and
-hash. Formula text is not executed. Hidden sheets, macros, external links,
-drawings/media/charts, comments, pivots, embedded objects, validation rules, and
-out-of-policy archive or worksheet shapes fail closed. The forward-only
-`0017_xlsx_report_evidence_locators` migration admits only `worksheet` and `cell`
-locator kinds.
-
-This remains proposal-only. It adds no report runner route, provider call, canonical
-physical-model write, technical selection, commercial pricing, lock, deployment, or
-release authority. PR validation run 33760112145 and post-merge main run 33760450512
-passed.
-
-### Completed source-bound DOCX report locators on shared main (PR #156)
-
-PR #156 admits only exact retained `.docx` bytes into the existing report locator
-boundary. It can retain a structural document locator, visible body paragraphs,
-and simple body tables, but persists only safe structural positions, counts, and
-hashes--never document text or table values. A selected paragraph or table is
-re-extracted only transiently after the exact retained bytes reproduce its locator
-and hash. Encrypted or unsafe archives, macros, external relationships, embedded
-or hidden content, tracked changes, fields, hyperlinks, drawings, and unsupported
-body structures fail closed. The forward-only `0018_docx_report_evidence_locators`
-migration admits only `document`, `paragraph`, and `document_table` locator kinds.
-
-This remains proposal-only. It adds no report runner route, provider call, canonical
-physical-model write, technical selection, commercial pricing, lock, deployment, or
-release authority. PR validation run 33765731885 and post-merge main run 33766069162
-passed.
-
-### Explicit human-approved report evidence families
-
-Migration `0019_report_evidence_family_manifests` retains an immutable,
-human-approved, ordered family of at least two already-retained reports for one Project
-and Estimate. The approver supplies only each exact stored-file ID and source SHA; the
-service rejects filenames, folders, timestamps, titles, and other inferred membership.
-It rechecks the immutable clean source binding, ownership, source hash, and family hash
-whenever the family is loaded, and rejects tampering or source drift.
-
-Explicit family admission is now accompanied by a deterministic proposal-review
-aggregate. It accepts exactly one already-valid single-report review package for each
-approved member, in the approved order. Each inner package must retain a V2
-human-approved expected-label manifest that is independently re-resolved against the
-member's exact stored source and hash. The aggregate retains the separate scopes,
-artifacts, and identical protected-state receipt binding; it rejects absent, extra,
-swapped, legacy/unbound, drifted, or tampered components.
-
-The proposal-review register now retains either a single-report package or an approved
-report-family package. A family record binds the exact approved family-manifest ID,
-hash, and human approval reference, then independently rechecks every member's exact
-stored source, expected-label approval record, review-package manifest, and outcome
-membership. It preserves member order and separate source identities; it never merges
-reports or scopes. The same CLASSIFIRE-owned five-year retention, separate redaction,
-legal hold, integrity refusal, and scoped internal reader grants apply. The existing
-read-only `/proposal-reviews` pages identify a family and show each outcome's family
-member and evidence identifier without exposing storage paths or creating an execution
-route.
-This remains evidence admission and proposal-review assembly only. It does not change
-PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
-single-report runner, call a provider, or grant canonical, technical, commercial, lock,
-deployment, or release authority.
-
-### Completed integrity follow-up on shared main (PRs #105-#122)
-
-- PR #106 separates semantic snapshot identity from volatile generation metadata
-  while retaining a full-document integrity hash and V1 verification.
-- PRs #107-#110 require retained technical sources at activation, bind Draft
-  variants and revisions to the exact source document, and require a source
-  locator before technical review.
-- PR #111 records extraction failures with content-safe diagnostics.
-- PR #112 materialises source-bound Draft variants from clean retained documents.
-- PR #113 makes admission rejection helpers explicitly non-returning without
-  altering their fail-closed safe-code behaviour.
-- PR #114 makes rule and UI response types explicit, rejects non-text rule
-  operators deterministically, and adds focused geometry/library-page coverage.
-- PR #115 reconciles the preceding factual project documents. PR #116 hardens
-  release-administration typing without changing the underlying release guards.
-- PR #117 clarifies XLSX row handling and adds technical-workbook output
-  coverage. PR #118 rejects a non-object successful task response at the Mission
-  Control client boundary.
-- PR #119 reconciles the preceding factual project records. PR #120 preserves
-  the PDF timestamp form while replacing a deprecated naive UTC call with an
-  aware UTC clock. PR #121 applies CLASSIFIRE display branding to generated
-  PDF/XLSX artifacts, and PR #122 applies it to the browser workspace and serves
-  the approved current logo.
-
-### Completed current technical-source safeguards on shared main (PRs #127-#140)
-
-- PR #127 reconciles factual records through the full hosted validation baseline.
-- PR #128 requires clean, hash-verified retained bytes before extraction. PR #129
-  derives Draft metadata only from those verified bytes after a fresh recheck.
-- PR #130 applies current TechnicalVariant effective/expiry windows. PR #131
-  rejects expired source authority, and PR #132 also gates bound source document
-  approval and retained-file metadata at current-use boundaries.
-- PR #133 exposes that current bound-source metadata result on TechnicalVariant
-  detail screens. PR #134 exposes the same read-only result on TechnicalDocument
-  detail screens and uses the defined blocked visual state. PR #135 reconciles
-  those factual records. PR #136 freezes each newly published technical release's
-  safe source state: bound document/file identity and locator, or an explicit
-  legacy-unbound state; it rejects later source-lineage drift from a pinned release.
-  PR #137 reconciles those factual records. PR #138 shows the same published
-  source lineage in a structured technical-release detail view without granting
-  approval or current-use authority. PR #139 reconciles those factual records. PR #140 safely links an eligible bound document ID to the existing read-only document record; it URL-escapes the row ID and leaves legacy, malformed, and unrecognised bindings as non-links. PR #141 reconciles those factual records. PR #142 makes each TechnicalVariant revision's existing retained-document binding and cited document/page/table/figure locator reviewer-visible; it links only a document record that remains present and labels missing bindings or legacy-unbound records.
-
-These safeguards are current-use and published-manifest lineage checks. They do not approve a source,
-activate a variant, re-read source bytes, publish a release, price work, create
-canonical state, create a lock, deploy, or Human Release.
-
-None of these safeguards approves a technical system, publishes a release,
-prices work, creates a lock, or releases an estimate.
-
-### Accepted hybrid target (not implemented)
+## 3. Accepted target and known gaps
 
 [Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
-accepts a hybrid architecture. Deterministic CLASSIFIRE commands and domain
-services will own durable workflow, project-package lifecycle, validation,
-canonical writes, locks, and release. Optional stateless AI adapters may
-perform only bounded proposal or independent-challenge work. ChatGPT and
-standalone interfaces will call the same authenticated application layer.
+accepts a deterministic core with bounded optional AI. ChatGPT and standalone
+clients will share authenticated application services. Database and retained
+storage remain live truth; ProjectPackage will be a versioned interchange
+contract and immutable exported revision. Imports never activate foreign
+approvals, locks or release authority.
 
-The governed database and content-addressed storage remain live canonical
-state. The planned `ProjectPackage` is a versioned, immutable, tamper-evident
-interchange artifact; importing one will not automatically activate foreign
-approvals, locks, technical decisions, or release status.
-
-No migration step is implemented by accepting the decision. OpenClaw remains
-the current controlled execution adapter until synthetic contract evidence and
-CLASSIFIRE-owned security, recovery, observability, clean-machine, and rollback
-parity satisfy every retirement gate. The decision grants no provider,
-canonical, technical, commercial, lock, deployment, or Human Release authority.
-
-### In progress or incomplete
-
-| Area | Evidence-backed limit |
+| Gap | Current boundary |
 | --- | --- |
-| Desk-quote evidence/output safety | PR #103's shared-main resolver requires a Project/Estimate-owned immutable `clean` `project_evidence` record, verifies retained bytes under the atomic reader, validates stored locators, re-hashes new and cached export bytes, and audits artifact hash/size. Missing, changed, wrong-purpose, cross-project, cross-estimate, unsafe-path, quarantined, and locator-mismatched evidence fails before export or audit. `technical_evidence` remains rejected pending a separately designed owned-byte contract. |
-| Report assessment operation | Shared main has proposal-only single-report and exact-family application services, plus a database-backed controller that assembles only an exact-approved-manifest V2 scope set. The family runner requires one caller-owned PostgreSQL clean-byte transaction, preflights every ordered member's exact source, expected-label manifest, and V2 scope before it creates any injected no-tool port, and retains separately built member packages in the family aggregate. The controller does not retrieve a report or call a port. Shared main also has CLASSIFIRE-owned package metadata/redaction/hold/deletion, an internal read-only UI, and explicit active/revoked Project/package grants for non-administrator visibility. Neither surface runs assessment or a real-provider route, and neither grants canonical, technical, commercial, lock, deployment, or release authority. |
-| Report completeness | New scope admission rejects omitted, duplicate, foreign, or mismatched labels before it writes a scope, and stores the exact approval record on every new scope. Both the runner and the database-backed proposal-review controller reject legacy V1/unbound packets or a different approval record before a port call or package assembly. Historical V1 packets remain verifiable. |
-| Report formats and content | Normalisation supports PDF plus bounded source-bound XLSX and DOCX. PDF text, page, table, annotation, and strict explicitly numbered captions remain supported. XLSX persists only visible worksheet shape and non-empty cell position/category/hash fields; only selected cells are re-extracted transiently, and formulas are not executed. DOCX persists only structural document/visible-body paragraph/simple-body-table position, count, and hash fields; selected paragraph/table content is re-extracted transiently. XLSX and DOCX both fail closed on unsupported or unsafe structures, and never persist workbook/document content. General report formats remain unimplemented. Explicit human-approved multi-report family admission, deterministic proposal-review aggregation, and family execution now exist. Family execution preflights every member before any inference port and never joins member scopes, evidence, runtime inputs, or packages. |
-| Phase 8 physical truth | Proposal and review contracts exist, but there is no semantically approved canonical Physical Model or active replacement Physical Model Lock for the current UAT estimate. |
-| Technical authority | Review, source-document current state, activation, Draft source binding, revision lineage, source-locator, clean-byte candidate metadata extraction and Draft-only refresh after a clean source recheck, manual Draft materialisation, import, and release checks fail closed. A new Draft source document can record a hash-bound historical predecessor only when that predecessor is independently approved and its retained technical-evidence bytes still verify clean and unchanged; it does not retire the predecessor or approve, activate, select, price, lock, deploy, or release anything. A bound source is excluded from normal search, new technical release snapshots, and pinned runtime use when its document is missing, unapproved, or expired, or its retained-file metadata is missing, unsafe, or for another evidence purpose. Governed publication includes every current eligible active logical variant exactly once or fails closed, rechecks exact bound source bytes, atomically supersedes the prior active release with an immutable manifest/audit event, and cannot leave two active technical releases. TechnicalVariant and TechnicalDocument detail screens expose current metadata read-only, and TechnicalVariant revision history exposes each revision's existing retained document and cited locator read-only. Extraction-assisted and manufacturer-neutral lineage, clean-machine recovery, and production authority remain incomplete. |
-| Quantity and labour | Basic estimate calculation exists; the complete selected-system-to-components-to-productivity chain is not implemented on current main. |
-| Commercial recovery | Desk quotes and basic estimating rules exist, but the full component-level rate-inclusion/recovery ledger remains incomplete. |
-| Snapshot and release | Estimate snapshot V2 separates semantic identity from `generated_utc`: `snapshot_hash` excludes that volatile generation metadata, while `snapshot_document_hash` still binds the complete displayed document. V1 snapshots retain their historical full-payload verification. Focused synthetic tests cover semantic stability, metadata/semantic tampering, and unsupported schemas. Full independent validation certificates and Human Release are not proven. |
-| Product UI | A development UI exists for projects, estimates, libraries, and basic outputs. Technical source and variant details show a read-only current source-authority result; TechnicalVariant revision history also shows every recorded revision's retained-document binding and cited locator, while an eligible bound record in technical-release detail can safely link to the current document record without changing its published binding. Shared main adds a controlled-UAT read-only viewer for registered proposal packages and administrator-only scoped reader grants; it does not execute assessment or create a package from a report. |
-| Hybrid orchestration migration | The target is accepted, but CLASSIFIRE-owned durable job/run/stage state, a provider-neutral replacement inference adapter, ChatGPT MCP integration, a production standalone client, and OpenClaw retirement are not implemented. Current OpenClaw protections must remain until parity gates pass. |
-| Portable project package | No complete `ProjectPackage` schema, deterministic whole-project export/download, quarantined import, package signature policy, or cross-instance conflict/admission workflow is implemented. The existing `ProposalReviewPackage` and PDF/XLSX estimate exports are narrower artifacts. |
-| Production operation | Narrow fail-closed startup/browser/diagnostic controls are merged. Clean-machine deployment, observability, backup/restore, performance, incident response, data-rights controls, and production proof remain incomplete. |
-| Static analysis | Full `ruff check .`, `mypy src`, and `bandit -q -r src` pass; Mypy covers 115 source files with maintained PyYAML and ReportLab stubs. Hosted CI runs all three checks after tests. | These are static-analysis gates, not proof of production readiness or operational authority. |
+| Hybrid execution | No complete durable job/run/stage coordinator, replacement adapter, cancellation/crash recovery or proven OpenClaw retirement. Extend existing abstractions first. |
+| Project package | No complete ProjectPackage schema, whole-project export/download or quarantined import. Existing review packages and PDF/XLSX exports are narrower. |
+| Interfaces | No production MCP integration or standalone package workflow. Existing UI cannot invoke the report runner. |
+| Physical acceptance | Historical records report no accepted replacement physical model/active lock for the UAT estimate; not rechecked against a live database here. |
+| Technical/commercial | Extraction-assisted/manufacturer-neutral lineage, clean-machine recovery, system-derived quantities/productivity and full recovery ledger remain incomplete. |
+| Validation/release | Snapshot integrity exists; full independently validated technical/commercial output and Human Release remain unproven. |
+| Operations | Provider privacy/egress, tenancy, backup/restore, deployment, monitoring and performance/cost evidence remain required. |
 
-## 3. Latest controlled Phase 8 execution evidence
+## 4. Historical controlled-UAT evidence
 
-One separately authorised proposal-only assessment of the approved retained
-report package was attempted on 2026-09-01. Current local receipts prove:
+The prior documented 2026-09-01 proposal-only attempt failed at `blind_inventory`:
+`VISUAL_PROPOSAL_FAILED` /
+`INFERENCE_PORT_FAILED: blind_inventory: Phase8OpenResponsesTransportError`.
+Human comparison was `NOT_RUN`; the recorded outcome was rollback-only with no
+controller/runner canonical write or Physical Model Lock.
 
-- runtime inference began;
-- the first `blind_inventory` stage, using the Validator role, failed;
-- final status was `VISUAL_PROPOSAL_FAILED` with
-  `INFERENCE_PORT_FAILED: blind_inventory: Phase8OpenResponsesTransportError`;
-- human-reference comparison was `NOT_RUN`;
-- rollback-only remained true;
-- no controller or runner database write occurred;
-- no canonical submission or Physical Model Lock occurred;
-- no write-or-lock capability was exposed; and
-- the retained completion receipt file hashes to
-  `F0572917AB321BF27A645F10F4EB75BDFD022042E347D6DC584C4113059423EC`.
+Historical completion receipt:
+`F0572917AB321BF27A645F10F4EB75BDFD022042E347D6DC584C4113059423EC`.
 
-This is a safe failed attempt, not an assessment result and not evidence that the
-report is technically unsuitable. Its historical receipt records the transport
-exception type but not the transport's stable safe code, so it cannot distinguish
-a timeout from a rejected status, malformed response, audit failure, or another
-transport code. New proposal-only receipts on this branch retain only an
-established safe code; arbitrary exception text remains excluded. The authorised
-run has been consumed and must not be repeated without new authority.
+This reconciliation did not reopen that receipt or UAT database. Its underlying
+transport reason remains unresolved; later safe-code propagation cannot recover
+it retroactively. No repeat report/provider run is authorised by this snapshot.
 
-## 4. Roadmap position
+## 5. Roadmap position and active work
 
-| Phase | Status | Current gate |
-| --- | --- | --- |
-| 0. Repository/change control | **In progress** | Quarantined root; main validation passed through PR #174; GitHub plan prevents branch-protection configuration. |
-| 1. Domain/workflow governance | **In progress** | Signed amendment and replacement-lock execution are permission-gated, atomic, audited, and race-safe in synthetic tests; no real UAT replacement lock has been authorised or created. |
-| 2. Governed libraries | **In progress** | Source-bound Draft/revision/review/materialisation, current-authority, immutable source-lineage, and fail-closed atomic technical publication/supersession controls exist; extraction-assisted and manufacturer-neutral lineage, clean-machine recovery, and full commercial recovery rules remain. |
-| 3. Hybrid orchestration/controlled execution | **In progress** | The target is accepted. OpenClaw remains transitional until synthetic contract characterisation and CLASSIFIRE-owned job/run, adapter, security, recovery, observability, and rollback parity are proven. |
-| 4. Operational visibility | **In progress** | Basic Mission Control client/bootstrap exists and is not canonical workflow state; the target CLASSIFIRE-owned run visibility is not implemented. |
-| 5. Evidence intake/resolution | **In progress** | The packaged implementation has bounded PDF/XLSX/DOCX report services, strict source-bound caption locators, atomic expected-label scope admission, a human-approved exact report-family manifest, deterministic aggregation of separately validated family review packages, and a family runner that preflights every member before any no-tool port is created. It retains separate member scopes, inputs, and packages; runner/controller verification, the retained single-report/family proposal-review package lifecycle, explicit scoped reader grants/revocation, and administrator-only immutable human-review annotations remain. Additional formats and a separately authorised operator flow remain. |
-| 6. Physical Model | **In progress** | Synthetic sealed-submission tests cover all-blank and mixed blank/multi-service models; accepted canonical physical truth still does not exist for the current UAT estimate. |
-| 7. Independent visual gate | **In progress** | Historical blocked-run proof exists; the latest attempt failed before an inventory result. |
-| 8. Corrected real Physical UAT | **Blocked** | First diagnose and harden the transport/orchestration path, then obtain new run authority; semantic approval and lock gates follow. |
-| 8C. Accuracy programme | **Planned** | No training or continual learning before its admission gates. |
-| 9-14. Technical through Human Release | **Blocked** | No replacement Phase 8 Physical Model Lock. Desk quotes do not bypass this chain. |
-| 15. Production hardening | **In progress** | Source safeguards exist; operational proof remains. |
-| 16. Structural steel/full duct runs | **Planned / deferred** | Separate domain design and evidence are required. |
+- Phases 0-7 and 15 have implemented foundations with incomplete exits.
+- Phase 3 contract characterisation is the single recommended next implementation
+  task; the active change here is documentation only.
+- Phase 8 remains blocked on fresh authority, evidence review, semantic approval
+  and separately governed canonical/replacement-lock gates.
+- Phases 9-14 remain dependency-blocked; package portability does not bypass them.
+- Phase 8C is planned/gated; Phase 16 is deferred.
+- A mandatory autonomous fleet is superseded as the target. OpenClaw remains
+  required for the current bounded inference path until replacement parity.
 
-## 5. Recommended Next Actions
+See the [roadmap](./CLASSIFIRE_ROADMAP.md) for phase-specific acceptance criteria.
 
-### Immediate next action
+## 6. Recommended Next Actions
 
-#### Priority 1 - Characterise the current OpenClaw contract synthetically
+1. **Characterise the actually used OpenClaw contracts synthetically.**
+   Map callers to contracts and existing tests, distinguish active paths from
+   dormant catalog entries, and add only demonstrated missing golden/negative
+   coverage. Preserve no-tool enforcement, fresh/separate contexts, exact
+   evidence/prompt/model/profile binding, safe errors/receipts, timeouts,
+   historical verification and protected state. Record absent recovery as gaps.
+   [Start Here / Next Session](./SESSION_HANDOFF.md#start-here--next-session)
+   provides the files, commands and definition of done.
+2. **After that gate, establish the smallest durable run contract.**
+   Extend BackgroundJob/worker where suitable, then add a feature-flagged
+   provider adapter with tested rollback. Do not implement these in the
+   characterisation task.
+3. **Then deliver packages and shared interfaces.**
+   Define membership/export rights, deterministic revisions and downloads,
+   followed by quarantined new-project import and MCP/standalone adapters.
+   Policy-permitted Draft exports need not wait for Phase 14 but cannot claim
+   Released authority.
 
-Inventory every used OpenClaw call site and freeze the current no-tool,
-context-separation, exact-input, prompt/model/profile binding, safe-receipt,
-timeout, failure, and protected-state behaviour with synthetic golden and
-negative tests. Do not remove OpenClaw or add a real provider/operator route in
-this step. This evidence is the first retirement gate and defines the smallest
-provider-neutral adapter and CLASSIFIRE job/run/stage contract that can safely
-follow.
+Technical-library and operational follow-ups remain separately scoped backlog.
+Maintain full CI. Do not expand the next task into Phase 2/12, real UAT, packages
+or a general agent platform.
 
-#### Completed shared-main foundation - hash-bound technical source-document supersession (PR #147)
+## 7. Verification and limits
 
-PR #147 permits a new technical document to record a hash-bound predecessor only after verifying that predecessor is independently approved and its retained technical-evidence bytes remain clean and unchanged. The new document stays Draft. It neither retires the predecessor nor grants document approval, TechnicalVariant activation, technical selection, pricing, canonical, lock, deployment, or release authority. A modified lineage snapshot is shown as untrusted rather than a valid predecessor.
+Freshly checked: fetched main/history; clean isolated starting tree; root tracked/
+conflict state; open PRs/issues; successful main CI `33899855871`; protection
+HTTP 403; relevant source/tests and `.github/workflows/pull-request-validation.yml`;
+70 passing synthetic contract/security tests; single packaged Alembic head;
+strict UTF-8, exact four-file scope, 25 local links/anchors, eight referenced test
+paths, handoff PowerShell syntax and git diff --check.
 
-PR #147 passed pull-request validation run 33745988740 and post-merge main validation run 33746319101.
+Detailed historical PR/runtime evidence remains in Git history and linked
+documents; it was not all rerun here. No real report, customer evidence,
+provider, Gateway, canonical project record, lock, deployment or release was
+used or changed.
 
-#### Completed shared-main foundation - scoped proposal-review reader access (PR #145)
-
-CLASSIFIRE owns registered proposal-review metadata with five-year retention, separate redaction, legal hold/deletion, safe locator, integrity refusal, scoped reader visibility, and administrator-only immutable human-review annotations. PR #145 adds auditable active/revoked Project or exact-package grants. Every non-administrator reader now needs both the human read permission and an active matching grant before a list or detail view is returned. Administrators can manage the grants, but a grant does not approve a package or expand any other authority.
-
-PR #145 passed pull-request validation run 33741309950 and post-merge main validation run 33741595397. This remains proposal-only: it does not run a report, call a provider, create canonical state, select a technical system, price work, create a lock, deploy, or release.
-
-#### Completed shared-main foundation - proposal-review controller admission transition (PR #149)
-
-PR #149 makes the database-backed proposal-review controller require the exact
-human-approved expected-label manifest before it assembles a new package. Every
-selected packet must be V2 and retain the identical manifest ID, hash, and
-approval reference. Legacy/unbound packets and packets bound to a different
-approval fail before package assembly; historical V1 packets remain verifiable.
-
-PR #149 passed pull-request validation run 33749820103 and post-merge main run
-33750096567. It adds no report/provider operation, canonical state, technical or
-commercial decision, lock, deployment, or release authority.
-
-#### Priority 2 - Close demonstrated Phase 2 and Phase 12 gaps separately
-
-Complete the remaining extraction-assisted and manufacturer-neutral lineage,
-then prove clean-machine technical-library import and recovery without automatic
-activation. Snapshot V2 now separates
-semantic identity from volatile generation metadata and preserves V1 validation;
-the remaining Phase 12 work is independent physical, technical, quantity,
-commercial, formula, recovery, and release validation. Neither activity may
-bypass the Phase 8 lock gate.
-
-#### Priority 3 - Maintain full static checks and default-branch governance
-
-The repository is now clean under full Ruff and Bandit scans. Keep the changed-file Ruff fast-path and
-full `ruff check .`, `mypy src`, and `bandit -q -r src` checks in the shared workflow. Decide whether
-the repository owner will upgrade/configure GitHub protection or document an
-equivalent review control; hosted runs alone do not prove required-check
-configuration.
-
-### Later or dependency-bound actions
-
-1. Diagnose any remaining transport behaviour with synthetic/fake ports only,
-   then seek fresh explicit authority before a further proposal-only report run.
-   A successful transport call is not semantic approval.
-2. Advance canonical submission and a separately signed Physical Model Lock only
-   after evidence resolution, semantic approval, a fresh no-write preflight,
-   admission registration, and separate write/lock authorities.
-3. Keep Phases 9-14 blocked until the replacement lock exists. Continue Phase 15
-   hardening only where it cannot bypass the upstream gates.
-
-## 6. Validation evidence for this snapshot
-
-This reconciliation verified:
-
-- fetched Git refs, branch/upstream relationships, recent commits, open PRs, and issues;
-- the clean isolated worktree and the read-only legacy-root classification;
-- the packaged forward-only Alembic head 0026_single_active_technical_release;
-- the governed technical-release publication implementation, migration, source rechecks, active-release constraint, and synthetic race coverage; PR #174 check 33892514672 passed on e587cf8 and exact post-merge main run 33892921342 passed on 7e8f473, including the hosted validation gates;
-- the replacement-lock writer's successful local full synthetic pytest run with five environment-dependent skips plus PR #173 and exact post-merge main validation, including hosted PostgreSQL concurrency, full Mypy, Ruff, Bandit, and the one-head Alembic check;
-- current models, API/UI routes, report services, storage/containment, technical guards, desk-quote services/outputs, snapshot code, tests, scripts, and CI;
-- the current OpenClaw, Mission Control, inference-port, application-service,
-  package/export, and authority boundaries used to distinguish the accepted
-  hybrid target from migration work that does not yet exist;
-- PR #147's successful technical-lineage validation, PR #149's successful controller validation, PR #151's successful caption-locator validation, PR #154's successful XLSX-locator validation, and PR #156's successful DOCX-locator validation on f82121d plus post-merge main validation on 82d288c;
-- the retained assessment status and no-write/no-lock flags; and
-- the receipt code and tests that retain only validated safe transport codes in new receipts while historical receipts remain verifiable; and
-- the snapshot V2 semantic/document hash contract, V1 compatibility, focused synthetic regression suite, current scoped static checks, and the full synthetic suite.
-
-No real report, retained image, Gateway token, provider response, customer data,
-database, canonical model, lock, deployment, or release was opened or changed
-by this documentation reconciliation. Accepting the hybrid target grants none
-of those authorities and does not itself implement any migration step.
+Related: [Architecture](./CLASSIFIRE_ARCHITECTURE.md),
+[Roadmap](./CLASSIFIRE_ROADMAP.md), [Handoff](./SESSION_HANDOFF.md).
