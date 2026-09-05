@@ -16,20 +16,23 @@ and [ADR 0002](docs/ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md) defi
 a shared deterministic core with optional AI and four independent capabilities:
 scope analysis, system matching, estimating and reporting.
 
-The first interactive prototype is now the persisted **manual Draft Scope
-workspace**. Users can create a project, edit defects, openings, services and
-unknowns, validate, save a revision, reopen it and download its exact Draft Scope
-JSON. A synthetic browser demonstration verified this flow and persistence after
+The working **manual Draft Scope workspace** supports create, edit, validate,
+save, reopen and exact JSON download. It now also imports a saved Draft Scope
+file through a full preview and explicit replacement confirmation. Imports create
+new local revisions, preserve previous revisions and retain unverified source
+history; subsequent manual edits and re-imports keep that history visible.
+Synthetic browser demonstrations verified both workflows and persistence after
 restarting the application. Follow the [local demo guide](docs/DRAFT_SCOPE_DEMO.md)
-to try it without using an existing project database or customer evidence.
+to try them without using an existing project database or customer evidence.
 
-This delivers the manual P0 prototype; it does not complete automated scope
-analysis, full ProjectPackage portability, system matching, estimating or
-reporting. See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
-[verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md)
-for the next usable increment. Complete visible slices before broad refinement;
-preserve existing authority and security protections. Agent contributors should
-read [AGENTS.md](AGENTS.md).
+P0 and P1a are bounded manual prototypes. The next visible increment is **scope-only
+Draft PDF/XLSX reporting** from selected saved revisions. Evidence intake remains
+planned with its clean-scan, provenance and retention prerequisites; complete
+ProjectPackage portability, AI analysis, matching and estimating remain unfinished.
+See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
+[verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
+Complete visible slices before broad refinement; preserve existing authority and
+security protections. Agent contributors should read [AGENTS.md](AGENTS.md).
 
 ## What is included
 

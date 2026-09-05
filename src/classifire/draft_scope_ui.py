@@ -1,21 +1,29 @@
 from __future__ import annotations
 
+import base64
+import binascii
+import hashlib
 import json
 from typing import Annotated, Any
 from urllib.parse import parse_qsl
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from itsdangerous import BadData, URLSafeTimedSerializer
 from sqlalchemy.orm import Session
 
+from .config import get_settings
 from .db import get_db
 from .models import DraftScope, User
 from .security import verify_csrf
 from .services.draft_scope import (
+    MAX_ARTIFACT_BYTES,
     DraftScopeError,
+    apply_import,
     create_draft_project,
     get_draft,
     list_drafts,
+    preview_import,
     read_revision,
     revision_bytes,
     save_revision,
@@ -27,16 +35,18 @@ router = APIRouter(include_in_schema=False)
 Db = Annotated[Session, Depends(get_db)]
 MAX_FORM_BYTES = 300_000
 MAX_PAYLOAD_BYTES = 262_144
+MAX_IMPORT_FORM_BYTES = 1_200_000
+IMPORT_PREVIEW_MAX_AGE = 900
 
 
-async def _bounded_form(request: Request) -> dict[str, str]:
+async def _form_values(request: Request, limit: int) -> dict[str, str]:
     if request.headers.get("content-type", "").split(";")[0] != (
         "application/x-www-form-urlencoded"
     ):
         raise HTTPException(415, "Use a standard form submission")
     body = bytearray()
     async for chunk in request.stream():
-        if len(body) + len(chunk) > MAX_FORM_BYTES:
+        if len(body) + len(chunk) > limit:
             raise HTTPException(413, "Draft form exceeds the size limit")
         body.extend(chunk)
     try:
@@ -51,7 +61,16 @@ async def _bounded_form(request: Request) -> dict[str, str]:
     return values
 
 
+async def _bounded_form(request: Request) -> dict[str, str]:
+    return await _form_values(request, MAX_FORM_BYTES)
+
+
+async def _bounded_import_form(request: Request) -> dict[str, str]:
+    return await _form_values(request, MAX_IMPORT_FORM_BYTES)
+
+
 FormData = Annotated[dict[str, str], Depends(_bounded_form)]
+ImportFormData = Annotated[dict[str, str], Depends(_bounded_import_form)]
 
 
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -120,6 +139,7 @@ def _editor(
     expected_revision: int,
     *,
     saved: bool,
+    envelope: dict[str, Any] | None = None,
     errors: list[str] | None = None,
     findings: list[str] | None = None,
     status_code: int = 200,
@@ -135,6 +155,7 @@ def _editor(
             payload=payload,
             expected_revision=expected_revision,
             saved=saved,
+            envelope=envelope or {},
             errors=errors or [],
             findings=findings or [],
         ),
@@ -233,6 +254,7 @@ def edit_scope(request: Request, db: Db, draft_id: str) -> HTMLResponse:
         envelope["content"],
         envelope["revision"],
         saved=True,
+        envelope=envelope,
         findings=[_finding_text(item) for item in warnings],
     )
 
@@ -315,3 +337,194 @@ def download_scope(
             "X-Content-Type-Options": "nosniff",
         },
     )
+
+
+def _import_signer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(
+        get_settings().secret_key,
+        salt="classifire-draft-scope-import-v1",
+        signer_kwargs={"digest_method": hashlib.sha256},
+    )
+
+
+def _import_bytes(form: dict[str, str]) -> bytes:
+    encoded = form.get("artifact_b64", "")
+    if len(encoded) > 4 * ((MAX_ARTIFACT_BYTES + 2) // 3):
+        raise HTTPException(413, "The saved Scope file exceeds the size limit.")
+    try:
+        raw = base64.b64decode(encoded, validate=True)
+    except (ValueError, binascii.Error) as exc:
+        raise HTTPException(422, "Choose a valid saved Draft Scope JSON file.") from exc
+    if not raw:
+        raise HTTPException(422, "Choose a saved Draft Scope JSON file.")
+    if len(raw) > MAX_ARTIFACT_BYTES:
+        raise HTTPException(413, "The saved Scope file exceeds the size limit.")
+    return raw
+
+
+def _import_session(request: Request) -> str:
+    return hashlib.sha256(request.session["csrf_token"].encode("utf-8")).hexdigest()
+
+
+def _import_page(
+    request: Request,
+    db: Session,
+    draft: DraftScope,
+    *,
+    errors: list[str] | None = None,
+    preview: dict[str, Any] | None = None,
+    artifact_b64: str = "",
+    preview_token: str = "",
+    status_code: int = 200,
+) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request,
+        "draft_scope_import.html",
+        _context(
+            request,
+            db,
+            draft=draft,
+            project=draft.project,
+            current_revision=draft.latest_revision,
+            errors=errors or [],
+            preview=preview,
+            artifact_b64=artifact_b64,
+            preview_token=preview_token,
+        ),
+        status_code=status_code,
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+def _import_error(exc: DraftScopeError) -> str:
+    if exc.code == "DRAFT_REVISION_CONFLICT":
+        return "This Draft has changed. Open it and preview the import again before replacing it."
+    if exc.code == "DRAFT_PERMISSION_DENIED":
+        return "Your account cannot replace this Draft."
+    if exc.code == "DRAFT_IMPORT_LINEAGE_LIMIT":
+        return (
+            "This file has reached the supported limit of 16 import records. "
+            "Its history cannot be silently removed to import it again."
+        )
+    if exc.code == "DRAFT_IMPORT_SOURCE_CHANGED":
+        return "The file differs from the preview. Choose it and preview the import again."
+    if exc.code == "DRAFT_REVISION_INTEGRITY_FAILED":
+        return "The saved Draft failed its integrity check. No changes were saved."
+    return (
+        "The file could not be imported. It must be a supported, unchanged Draft Scope "
+        "download with valid fields, relationships and history. "
+        "No changes were saved."
+    )
+
+
+@router.get("/scopes/{draft_id}/import", response_class=HTMLResponse)
+def import_scope_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
+    user = _require(request, db, "project:write")
+    try:
+        draft = get_draft(db, user, draft_id)
+        read_revision(db, user, draft_id)
+    except DraftScopeError as exc:
+        raise _failure(exc) from exc
+    return _import_page(request, db, draft)
+
+
+@router.post("/scopes/{draft_id}/import/preview", response_class=HTMLResponse)
+def preview_scope_import(
+    request: Request, db: Db, draft_id: str, form: ImportFormData
+) -> HTMLResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _require(request, db, "project:write")
+    try:
+        draft = get_draft(db, user, draft_id)
+    except DraftScopeError as exc:
+        raise _failure(exc) from exc
+    try:
+        raw = _import_bytes(form)
+        preview = preview_import(db, user, draft_id, raw)
+    except HTTPException as exc:
+        return _import_page(
+            request, db, draft, errors=[str(exc.detail)], status_code=exc.status_code
+        )
+    except DraftScopeError as exc:
+        return _import_page(
+            request, db, draft, errors=[_import_error(exc)], status_code=exc.status_code
+        )
+    binding = {
+        "actor_id": user.id,
+        "draft_id": draft.id,
+        "revision": preview["expected_revision"],
+        "target_hash": preview["current_hash"],
+        "source_file_sha256": preview["source_file_sha256"],
+        "session": _import_session(request),
+    }
+    return _import_page(
+        request,
+        db,
+        draft,
+        preview=preview,
+        artifact_b64=form["artifact_b64"],
+        preview_token=_import_signer().dumps(binding),
+    )
+
+
+@router.post("/scopes/{draft_id}/import/confirm", response_model=None)
+def confirm_scope_import(
+    request: Request, db: Db, draft_id: str, form: ImportFormData
+) -> HTMLResponse | RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _require(request, db, "project:write")
+    try:
+        draft = get_draft(db, user, draft_id)
+    except DraftScopeError as exc:
+        raise _failure(exc) from exc
+    try:
+        if form.get("confirm") != "replace":
+            raise HTTPException(422, "Confirm replacement after reviewing the import preview.")
+        raw = _import_bytes(form)
+        token = form.get("preview_token", "")
+        if not token or len(token) > 2048:
+            raise HTTPException(422, "Preview the file again before confirming its import.")
+        try:
+            binding = _import_signer().loads(token, max_age=IMPORT_PREVIEW_MAX_AGE)
+        except BadData as exc:
+            raise HTTPException(
+                422, "The preview is invalid or expired. Preview the file again."
+            ) from exc
+        if (
+            not isinstance(binding, dict)
+            or set(binding)
+            != {"actor_id", "draft_id", "revision", "target_hash", "source_file_sha256", "session"}
+            or binding["actor_id"] != user.id
+            or binding["draft_id"] != draft.id
+            or binding["session"] != _import_session(request)
+            or binding["source_file_sha256"] != hashlib.sha256(raw).hexdigest()
+        ):
+            raise HTTPException(
+                422, "The file or destination differs from the preview. Preview again."
+            )
+        current = read_revision(db, user, draft_id)
+        if (
+            current["revision"] != binding["revision"]
+            or current["sha256"] != binding["target_hash"]
+        ):
+            raise DraftScopeError("DRAFT_REVISION_CONFLICT", 409)
+        apply_import(
+            db,
+            user,
+            draft_id,
+            binding["revision"],
+            raw,
+            expected_source_hash=binding["source_file_sha256"],
+        )
+        db.commit()
+    except HTTPException as exc:
+        db.rollback()
+        return _import_page(
+            request, db, draft, errors=[str(exc.detail)], status_code=exc.status_code
+        )
+    except DraftScopeError as exc:
+        db.rollback()
+        return _import_page(
+            request, db, draft, errors=[_import_error(exc)], status_code=exc.status_code
+        )
+    return RedirectResponse(f"/scopes/{draft_id}", status_code=303)

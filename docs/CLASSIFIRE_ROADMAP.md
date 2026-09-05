@@ -1,8 +1,8 @@
 # CLASSIFIRE Master Roadmap
 
 **Status:** Active; prototype-first delivery approved 2026-09-05.
-**Verified shared-main baseline before P0:** `803da1bfee1724a9f1bd86f58b6130782dfdb8c3` (PR #187).
-**P0 implementation:** locally demonstrated on `feat/draft-scope-ui-20260905`; verify publication from current Git/PR checks.
+**Verified shared-main baseline before P1a:** `96d686952021828ef1fb28b53f4d6eea566376aa` (PR #188).
+**P1a implementation:** locally demonstrated on `feat/draft-scope-import-20260905`; verify publication from current Git/PR checks.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
@@ -36,10 +36,10 @@ Users may stop, edit, save, export, replace inputs and explicitly continue.
   governance, calculation/snapshot/rendering, audit and migrations are foundations.
 - PR #185's completion consumer/journal/lifecycle hooks are merged. Full workflow
   scheduling, production capture assurance and OpenClaw replacement are incomplete.
-- Baseline main CI [33945228889](https://github.com/Slayde91/classifire/actions/runs/33945228889)
-  passed on `803da1b`. P0 also has service/HTTP/authority tests and an actual Chrome
-  create/edit/validate/save/restart/reopen/download demonstration. Its own exact-head
-  CI and merge must be verified; no result proves production readiness.
+- P0 main CI [33947498324](https://github.com/Slayde91/classifire/actions/runs/33947498324)
+  passed on `96d6869` with 1,020 tests. P1a adds an actual Chrome upload/preview/
+  confirmed replacement/manual-edit/reimport/restart demonstration and focused
+  service/HTTP checks; verify its own publication. No result proves production readiness.
 - Three untracked Draft ProjectPackage files remain in
   `.tmp/project-package-draft-20260905`; their 22 tests passed in the prior review.
   They are candidate archive work, not a shipped contract or UI. Reuse compatible
@@ -66,16 +66,18 @@ A schema, test count, mock screen or successful CI alone does not finish it.
 ### Prototype delivery track
 
 Order by user-visible value. Build the minimum shared contracts within each
-slice. Keep the first PR focused on P0; do not bundle the whole prototype into it.
+slice. Keep each PR focused on its selected increment; do not bundle the whole
+prototype into it.
 
 | Milestone | Priority/status | User-visible exit and required evidence |
 | --- | --- | --- |
-| **P0. Draft Scope workspace** | **Implemented and locally demonstrated; verify publication** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
-| **P1a. Saved Scope import/replacement** | **Next after P0 publication** | Upload saved Draft Scope JSON, validate/check its declared hash and version, preview identity/content/uncertainty and explicitly append a local revision. Preserve source lineage and prior revisions; reject stale saves and foreign authority. Demonstrate browser round trip and refusal cases. No ZIP or report extraction in this slice. |
-| **P1b. One evidence intake path** | Upcoming after P1a | Add one explicitly supported evidence intake path using existing retained-evidence services. Unsupported content is visibly refused; extraction remains proposed until reviewed. Manual entry stays usable without AI. |
+| **P0. Draft Scope workspace** | **Completed bounded prototype; merged PR #188** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
+| **P1a. Saved Scope import/replacement** | **Implemented and locally demonstrated; verify publication** | Upload saved Draft Scope JSON, validate/check its declared hash and version, preview identity/content/uncertainty and explicitly append a local revision. Preserve source lineage and prior revisions; reject stale saves and foreign authority. Demonstrate browser round trip and refusal cases. No ZIP or report extraction in this slice. |
+| **P1b. One evidence intake path** | Upcoming; scan/storage/retention prerequisites unresolved | Add one explicitly supported evidence intake path using existing retained-evidence services. Unsupported content is visibly refused; extraction remains proposed until reviewed. Manual entry stays usable without AI. |
 | **P2. System matching workspace** | Upcoming | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3. Estimate workspace** | Upcoming | Load sufficient saved/manual scope, quantity and system inputs; calculate a small supported scenario with units, explicit rate/method basis, recovery and overrides; save/export an Estimate revision and stop without reporting. Unknown technical/pricing facts remain visibly provisional or unresolved. |
-| **P4. Independent Draft reports** | Planned; scope-only profile may follow P0 early | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
+| **P4a. Scope-only Draft reports** | **Next after P1a publication; advanced from P4** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
+| **P4b. Other independent Draft report profiles** | Planned after relevant artifacts exist | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
 | **P5. Project portability and shared ChatGPT access** | After relevant commands are demonstrated | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
@@ -102,6 +104,7 @@ means suppressing known errors, weakening tests or bypassing permissions.
 | Work | Revised disposition |
 | --- | --- |
 | Finish the generic ProjectPackage exporter before any UI | **Superseded priority.** Keep the candidate; reconcile only what P0 needs, then complete packaging when it serves P5. |
+| Scope-only reporting waits until every capability exists | **Reordered.** P4a follows the proven JSON round trip; other profiles still depend on their actual artifacts. |
 | Complete all four schemas before building screens | **Superseded.** Evolve compatible contracts alongside demonstrated use cases. |
 | OpenClaw completion/journal/transport foundations | **Completed bounded foundations** (PRs #183-#185); preserve them without making replacement work a P0 dependency. |
 | Remaining capture assurance, general jobs, replacement adapter and retirement | **Separate gated backlog.** Mandatory before applicable provider deployment/retirement, unnecessary for deterministic manual P0. |
@@ -111,12 +114,18 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Deliver **P1a: safe Draft Scope JSON import/replacement**, after verifying P0
-publication. Extend the demonstrated UI and shared Draft service with bounded
-validation, preview, explicit application and source-lineage retention. The v1
-contract is manual-only: introduce any required compatible contract evolution
-explicitly, without converting foreign history into local approval. Keep P1b
-evidence extraction and whole-project archives separate. The handoff defines done.
+Deliver **P4a: scope-only Draft PDF/XLSX reporting**, after verifying P1a
+publication. The approved roadmap already permits the scope-only profile early;
+this adds another useful independent capability over demonstrated saved scopes.
+Use one retained, hash-bound report snapshot and reuse existing libraries/layout
+patterns. Do not call estimate recalculation or fabricate priced Estimate records.
+
+P1b remains required. Inspection found that `save_upload` leaves files pending or
+not_configured and no current clean-scan producer was found; verified locked-byte
+reads require PostgreSQL. Establish actual scanning, safe concurrent upload and
+source-retention behavior before exposing parsed DOCX/PDF/XLSX evidence. These
+prerequisites are not permission to label unscanned bytes clean for a demo. Scanner
+and disposable PostgreSQL availability were not verified in this increment.
 
 ### Authoritative readiness track
 
@@ -139,7 +148,7 @@ private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
 **Remaining:** the root checkout is conflicted recovery evidence. Exact main CI
-passed on `803da1b` (PR #187); basic metadata previously reported main unprotected.
+passed on `96d6869` (PR #188); basic metadata previously reported main unprotected.
 Detailed protection configuration limits were not rechecked here; do not infer
 plan restrictions or bypass CI/review from that fact. Clean-machine and release
 reproducibility remain incomplete.

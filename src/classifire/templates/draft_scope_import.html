@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Import Draft Scope | {{ project.reference }} | CLASSIFIRE{% endblock %}
+{% block heading %}Import Draft Scope{% endblock %}
+{% macro related_label(items, identifier) -%}
+{{ items|selectattr('id', 'equalto', identifier)|map(attribute='label')|first|default(identifier) }}
+{%- endmacro %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<div class="scope-context"><a href="/scopes/{{ draft.id }}">&larr; Return to draft</a><span class="badge badge-draft">Preview before applying</span></div>
+<section class="panel scope-project"><div><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2><p class="muted">Current saved revision {{ current_revision }}</p></div></section>
+<div class="callout"><strong>Replace this draft's content with a saved Scope file.</strong> Review the preview before confirming. Applying an import saves a new local Draft revision and keeps your previous revisions. Imported claims do not grant ownership, approval or release authority.</div>
+{% if errors %}
+<section class="alert alert-error" role="alert"><strong>Import was not applied.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul><p>Choose the file and preview it again before confirming.</p></section>
+{% endif %}
+<section class="panel" aria-labelledby="scope-import-upload-heading">
+  <div class="panel-head"><h2 id="scope-import-upload-heading">1. Choose a saved Draft Scope JSON file</h2></div>
+  <form method="post" action="/scopes/{{ draft.id }}/import/preview" id="scope-import-upload" class="stack-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="artifact_b64" id="scope-import-artifact" value="">
+    <label for="scope-import-file">Draft Scope JSON file<input type="file" id="scope-import-file" accept=".json,application/json" aria-label="Draft Scope JSON file" aria-describedby="scope-import-file-help" required></label>
+    <p class="scope-hint" id="scope-import-file-help">Select one downloaded Draft Scope file, up to 288 KiB (294,912 bytes). Whole-project ZIP files and evidence reports are not supported here. Previewing does not save changes.</p>
+    <p class="scope-hint" id="scope-import-file-status" role="status" aria-live="polite">Choose a file to continue.</p>
+    <div class="alert alert-error" id="scope-import-client-error" role="alert" hidden></div>
+    <div><button class="button button-secondary" type="submit" id="scope-import-preview-button" disabled>Preview import</button></div>
+  </form>
+  <noscript><div class="alert alert-error">Enable JavaScript and reload to select a file for this import preview.</div></noscript>
+</section>
+{% if preview %}
+<section class="panel" aria-labelledby="scope-import-preview-heading">
+  <div class="panel-head"><h2 id="scope-import-preview-heading">2. Review the replacement</h2><span class="badge badge-draft">Nothing saved yet</span></div>
+  <p>This content would replace the whole content of saved revision {{ preview.expected_revision }}. It is not merged with your current items. Previous saved revisions remain available.</p>
+  <div class="table-wrap"><table class="scope-import-counts"><thead><tr><th>Content</th><th>Current draft</th><th>Imported file</th></tr></thead><tbody>
+  {% for key, label in [('defects', 'Defects'), ('openings', 'Openings'), ('services', 'Services'), ('observations', 'Observations'), ('assumptions', 'Assumptions'), ('exclusions', 'Exclusions')] %}
+    <tr><td>{{ label }}</td><td>{{ preview.before_counts[key] if key in preview.before_counts else 'Unavailable' }}</td><td>{{ preview.after_counts[key] if key in preview.after_counts else 'Unavailable' }}</td></tr>
+  {% endfor %}
+  </tbody></table></div>
+  <details class="scope-import-source"><summary>Source identity and integrity details</summary>
+    <p class="scope-hint">These are declarations from the supplied file. A valid checksum does not verify its author, observations or approval. Imported history stays separate from local authority.</p>
+    <dl class="scope-import-details">
+      <dt>Declared schema</dt><dd>{{ preview.source.schema_version }}</dd>
+      <dt>Declared source artifact</dt><dd class="mono">{{ preview.source.artifact_id }}</dd>
+      <dt>Declared project</dt><dd class="mono">{{ preview.source.project_id }}</dd>
+      <dt>Declared revision</dt><dd>{{ preview.source.revision }}</dd>
+      <dt>Declared author</dt><dd class="mono">{{ preview.source.created_by }}</dd>
+      <dt>Declared creation time</dt><dd>{{ preview.source.created_at }}</dd>
+      <dt>Declared provenance / review</dt><dd>{{ preview.source.provenance }} / {{ preview.source.review_status }}</dd>
+      <dt>Source envelope checksum</dt><dd class="mono">{{ preview.source.sha256 }}</dd>
+      <dt>Uploaded file checksum</dt><dd class="mono">{{ preview.source_file_sha256 }}</dd>
+    </dl>
+  </details>
+</section>
+{% if preview.findings %}
+<section class="panel scope-findings" aria-labelledby="scope-import-findings-heading"><h2 id="scope-import-findings-heading">Uncertainty and review findings</h2><p>These findings remain part of the Draft review context. Importing does not resolve them.</p><ul>{% for finding in preview.findings %}<li>{% if finding.path %}<span class="mono">{{ finding.path }}</span>: {% endif %}{{ finding.message }}</li>{% endfor %}</ul></section>
+{% endif %}
+<section class="panel scope-import-content" aria-labelledby="scope-import-content-heading">
+  <h2 id="scope-import-content-heading">Full imported scope content</h2>
+  <h3>Defects</h3>
+  {% for item in preview.content.defects %}<article class="scope-import-item"><h4>{{ item.label }}</h4><p class="scope-item-id">ID: {{ item.id }}</p><p class="scope-preserve-text">{{ item.description or 'No description supplied.' }}</p></article>{% else %}<p class="scope-empty">No defects in this file.</p>{% endfor %}
+  <h3>Openings</h3>
+  {% for item in preview.content.openings %}<article class="scope-import-item"><div class="scope-import-item-heading"><h4>{{ item.label }}</h4><span class="badge badge-draft">{{ item.state }} &middot; unreviewed</span></div><p class="scope-item-id">ID: {{ item.id }}</p><dl class="scope-import-details">
+    <dt>Related defect</dt><dd>{% if item.defect_id %}{{ related_label(preview.content.defects, item.defect_id) }}<span class="scope-item-id"> ({{ item.defect_id }})</span>{% else %}Not linked / unknown{% endif %}</dd>
+    <dt>Plane / substrate</dt><dd>{{ item.plane }} / {{ item.substrate or 'Unknown' }}</dd>
+    <dt>Width / height</dt><dd>{{ item.width_mm ~ ' mm' if item.width_mm is not none else 'Unknown' }} / {{ item.height_mm ~ ' mm' if item.height_mm is not none else 'Unknown' }}</dd>
+    <dt>Blank opening</dt><dd>{{ 'Yes - no linked services' if item.blank else 'No' }}</dd>
+  </dl></article>{% else %}<p class="scope-empty">No openings in this file.</p>{% endfor %}
+  <h3>Services</h3>
+  {% for item in preview.content.services %}<article class="scope-import-item"><div class="scope-import-item-heading"><h4>{{ item.label }}</h4><span class="badge badge-draft">{{ item.state }} &middot; unreviewed</span></div><p class="scope-item-id">ID: {{ item.id }}</p><dl class="scope-import-details">
+    <dt>Service type</dt><dd>{{ item.service_type or 'Unknown' }}</dd>
+    <dt>Quantity / unit</dt><dd>{{ item.quantity if item.quantity is not none else 'Unknown' }} {{ item.unit }}</dd>
+    <dt>Linked openings</dt><dd>{% if item.opening_ids %}<ul>{% for identifier in item.opening_ids %}<li>{{ related_label(preview.content.openings, identifier) }}<span class="scope-item-id"> ({{ identifier }})</span></li>{% endfor %}</ul>{% else %}Not linked / unknown{% endif %}</dd>
+  </dl></article>{% else %}<p class="scope-empty">No services in this file.</p>{% endfor %}
+  <h3>Observations</h3>
+  {% for item in preview.content.observations %}<article class="scope-import-item"><span class="badge badge-draft">{{ item.state }} &middot; unreviewed</span><p class="scope-preserve-text">{{ item.text }}</p><p class="scope-item-id">ID: {{ item.id }}</p></article>{% else %}<p class="scope-empty">No observations in this file.</p>{% endfor %}
+  <div class="grid-two scope-import-notes"><div><h3>Assumptions</h3>{% if preview.content.assumptions %}<ul>{% for note in preview.content.assumptions %}<li class="scope-preserve-text">{{ note }}</li>{% endfor %}</ul>{% else %}<p class="muted">None supplied.</p>{% endif %}</div><div><h3>Exclusions</h3>{% if preview.content.exclusions %}<ul>{% for note in preview.content.exclusions %}<li class="scope-preserve-text">{{ note }}</li>{% endfor %}</ul>{% else %}<p class="muted">None supplied.</p>{% endif %}</div></div>
+</section>
+{% if not errors %}
+<section class="panel scope-import-confirm" aria-labelledby="scope-import-confirm-heading">
+  <h2 id="scope-import-confirm-heading">3. Apply as a new local Draft revision</h2>
+  <p>The new revision will record your local user and time. It remains Draft and unreviewed. No matching, estimating or release runs.</p>
+  <form method="post" action="/scopes/{{ draft.id }}/import/confirm" id="scope-import-confirm" class="stack-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="artifact_b64" value="{{ artifact_b64 }}">
+    <input type="hidden" name="preview_token" value="{{ preview_token }}">
+    <fieldset id="scope-import-confirm-controls"><label class="scope-check" for="scope-import-consent"><input type="checkbox" id="scope-import-consent" name="confirm" value="replace" required>I understand this replaces the whole Draft content and keeps previous saved revisions.</label><div class="scope-import-confirm-actions"><button class="button button-primary" type="submit">Apply import as new revision</button><a class="button button-secondary" href="/scopes/{{ draft.id }}">Cancel import</a></div></fieldset>
+  </form>
+</section>
+{% endif %}
+{% endif %}
+<script src="/static/draft_scope_import.js" defer></script>
+{% endblock %}

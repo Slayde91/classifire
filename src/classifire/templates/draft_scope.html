@@ -3,11 +3,20 @@
 {% block heading %}Draft Scope workspace{% endblock %}
 {% block content %}
 <link rel="stylesheet" href="/static/draft_scope.css">
-<div class="scope-context"><a href="/scopes">&larr; All drafts</a><span class="badge badge-draft">Draft &middot; awaiting review</span></div>
+<div class="scope-context"><a href="/scopes">&larr; All drafts</a><div class="scope-context-actions">{% if has_permission('project:write') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/import">Import Draft Scope JSON</a>{% endif %}<span class="badge badge-draft">Draft &middot; awaiting review</span></div></div>
 <section class="panel scope-project">
   <div><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2><p class="muted">Working from saved revision {{ expected_revision }}</p></div>
   <div class="scope-save-state" id="scope-save-state" role="status" aria-live="polite">{% if saved %}Saved revision {{ expected_revision }}{% else %}Changes have not been saved{% endif %}</div>
 </section>
+{% set import_history = (envelope|default({})).get('import_lineage', []) %}
+{% if import_history %}
+{% set latest_source = import_history[-1] %}
+<details class="panel scope-import-source">
+  <summary>Saved import history &middot; {{ import_history|length }} source record{% if import_history|length != 1 %}s{% endif %}</summary>
+  <p class="scope-hint">Imported identities, authors and ancestry are unverified source claims. This saved draft remains unreviewed; source history grants no local authority.</p>
+  <dl class="scope-import-details"><dt>Most recent source artifact</dt><dd class="mono">{{ latest_source.artifact_id }}</dd><dt>Declared project / revision</dt><dd><span class="mono">{{ latest_source.project_id }}</span> / {{ latest_source.revision }}</dd><dt>Declared author / time</dt><dd><span class="mono">{{ latest_source.created_by }}</span> / {{ latest_source.created_at }}</dd><dt>Source schema</dt><dd>{{ latest_source.schema_version }}</dd><dt>Source envelope checksum</dt><dd class="mono">{{ latest_source.sha256 }}</dd><dt>Uploaded file checksum</dt><dd class="mono">{{ latest_source.file_sha256 }}</dd></dl>
+</details>
+{% endif %}
 <div class="callout"><strong>Record what you know. Leave unknowns visible.</strong> An opening may contain several services, and a service may pass through several openings. Quantities stay blank until you enter them. Draft entries do not approve a physical model, system or estimate.</div>
 {% if errors %}
 <section class="alert alert-error" role="alert" aria-labelledby="scope-errors-heading"><strong id="scope-errors-heading">Changes were not saved.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul><p>Your submitted entries remain below. Correct the problem before saving again.</p></section>
