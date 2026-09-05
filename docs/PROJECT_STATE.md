@@ -128,3 +128,10 @@ PR #196 subsequently passed exact-head CI and merged as recorded above.
 Receipts and generated outputs remain local in `.tmp/system-report-artifacts`.
 Exact-head hosted CI/review and verified merge are still required at this checkpoint;
 use live Git/PR evidence to determine publication rather than treating this as a merge claim.
+
+Final review also added a stale warning before report creation, using the existing
+match/source freshness checks. The focused HTTP journey passed (1 test, existing
+Starlette warning, 7.10 seconds); Mypy again passed 176 files. Real Chrome confirmed
+the warning and byte-identical existing downloads after loading the final code.
+Publication PR: [#197](https://github.com/Slayde91/classifire/pull/197); check its
+current head, CI/review and merge state before continuing.

@@ -15,7 +15,8 @@ estimating, physical-model writes, technical approval or release.
 
 GET/POST `/scopes/{draft_id}/system-matches/{match_id}/reports` adapt these shared
 services. Existing `/scopes/{draft_id}/reports/{report_id}` and `/download?format=`
-serve the retained report. GET previews never create reports. POST requires the
+serve the retained report. GET previews never create reports and warn when the selected review or its
+Scope/source dependencies are stale or unverifiable. POST requires the
 session's CSRF token and one positive saved review revision; extra fields fail.
 
 Active persisted humans require project read plus ownership/admin access. Creation

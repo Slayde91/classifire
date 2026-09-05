@@ -71,6 +71,9 @@ def test_independent_report_screen_download_history_and_permissions(candidate_ap
         envelope = client.get(match + "/download").json()
         form = _review_form(client, match, envelope)
         assert client.post(match + "/review", data=form, follow_redirects=False).status_code == 303
+        historical_preview = client.get(match + "/reports?revision=1")
+        assert historical_preview.status_code == 200
+        assert "Selected review is out of date:" in historical_preview.text
         stale = client.get(report)
         assert "Out of date:" in stale.text
         assert f'href="{match}/reports"' in stale.text

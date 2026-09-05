@@ -40,7 +40,7 @@ from .services.draft_scope_reports import (
     report_bytes,
     report_freshness,
 )
-from .services.draft_system_matches import read_match_revision
+from .services.draft_system_matches import match_staleness, read_match_revision
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -679,6 +679,16 @@ def system_reports_page(
         draft = get_draft(db, user, draft_id)
         match = read_match_revision(db, user, draft_id, match_id, revision)
         latest = read_match_revision(db, user, draft_id, match_id)
+        stale = latest["sha256"] != match["sha256"] or bool(
+            match_staleness(
+                db,
+                user,
+                draft_id,
+                match_id,
+                match["revision"],
+                storage_root=get_settings().storage_root,
+            )
+        )
         reports = list_reports(db, user, draft_id)
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
@@ -698,7 +708,7 @@ def system_reports_page(
             reports=reports,
             report=None,
             snapshot=None,
-            stale=False,
+            stale=stale,
             preview_url=f"/scopes/{draft_id}/system-matches/{match_id}/reports",
         ),
         headers={"Cache-Control": "no-store"},
