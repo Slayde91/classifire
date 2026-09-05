@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Draft Scope | {{ project.reference }} | CLASSIFIRE{% endblock %}
+{% block heading %}Draft Scope workspace{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<div class="scope-context"><a href="/scopes">&larr; All drafts</a><span class="badge badge-draft">Draft &middot; awaiting review</span></div>
+<section class="panel scope-project">
+  <div><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2><p class="muted">Working from saved revision {{ expected_revision }}</p></div>
+  <div class="scope-save-state" id="scope-save-state" role="status" aria-live="polite">{% if saved %}Saved revision {{ expected_revision }}{% else %}Changes have not been saved{% endif %}</div>
+</section>
+<div class="callout"><strong>Record what you know. Leave unknowns visible.</strong> An opening may contain several services, and a service may pass through several openings. Quantities stay blank until you enter them. Draft entries do not approve a physical model, system or estimate.</div>
+{% if errors %}
+<section class="alert alert-error" role="alert" aria-labelledby="scope-errors-heading"><strong id="scope-errors-heading">Changes were not saved.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul><p>Your submitted entries remain below. Correct the problem before saving again.</p></section>
+{% endif %}
+{% if findings %}
+<section class="panel scope-findings" aria-labelledby="scope-findings-heading"><h2 id="scope-findings-heading">Needs attention</h2><p>These findings stay visible in the Draft Scope. Saving a draft does not resolve or approve them.</p><ul>{% for finding in findings %}<li>{{ finding }}</li>{% endfor %}</ul></section>
+{% endif %}
+<noscript><div class="alert alert-error">This editor needs JavaScript to add and connect scope items. Enable JavaScript and reload to edit safely.</div></noscript>
+<div class="alert alert-error" id="scope-client-error" role="alert" hidden></div>
+<form method="post" action="/scopes/{{ draft.id }}" id="scope-editor" data-can-edit="{{ 'true' if has_permission('project:write') else 'false' }}">
+  {% if not has_permission('project:write') %}<p class="callout">Your account can view this saved draft. Editing requires project write permission.</p>{% endif %}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="expected_revision" value="{{ expected_revision }}">
+  <input type="hidden" name="payload" id="scope-payload" value="">
+  <fieldset id="scope-edit-controls" disabled>
+    <nav class="scope-section-nav" aria-label="Scope sections"><a href="#scope-defects">Defects</a><a href="#scope-openings">Openings</a><a href="#scope-services">Services</a><a href="#scope-observations">Observations</a><a href="#scope-notes">Assumptions &amp; exclusions</a></nav>
+    <section class="panel scope-section" id="scope-defects" aria-labelledby="defects-heading">
+      <div class="panel-head"><div><h2 id="defects-heading">1. Defects</h2><p class="muted">Give each reported problem a label. A defect can contain several openings and services.</p></div><button class="button button-secondary" type="button" data-add="defects">Add defect</button></div>
+      <div class="scope-items" data-items="defects"></div>
+      <p class="scope-empty" data-empty="defects">No defects yet. Add the first problem you need to describe.</p>
+    </section>
+    <section class="panel scope-section" id="scope-openings" aria-labelledby="openings-heading">
+      <div class="panel-head"><div><h2 id="openings-heading">2. Openings</h2><p class="muted">Record each separate opening and link it to a defect. Enter dimensions in millimetres when known.</p></div><button class="button button-secondary" type="button" data-add="openings">Add opening</button></div>
+      <div class="scope-items" data-items="openings"></div>
+      <p class="scope-empty" data-empty="openings">No openings yet. Shared and blank openings can be recorded separately.</p>
+    </section>
+    <section class="panel scope-section" id="scope-services" aria-labelledby="services-heading">
+      <div class="panel-head"><div><h2 id="services-heading">3. Services</h2><p class="muted">Describe pipes, cables or other services. Select every opening the service passes through.</p></div><button class="button button-secondary" type="button" data-add="services">Add service</button></div>
+      <div class="scope-items" data-items="services"></div>
+      <p class="scope-empty" data-empty="services">No services yet. One defect does not automatically mean one service or quantity one.</p>
+    </section>
+    <section class="panel scope-section" id="scope-observations" aria-labelledby="observations-heading">
+      <div class="panel-head"><div><h2 id="observations-heading">4. Observations &amp; unknowns</h2><p class="muted">Capture missing information, conflicting observations and facts requiring evidence or review.</p></div><button class="button button-secondary" type="button" data-add="observations">Add observation</button></div>
+      <div class="scope-items" data-items="observations"></div>
+      <p class="scope-empty" data-empty="observations">No observations yet. Record uncertainty here instead of filling gaps with guesses.</p>
+    </section>
+    <section class="panel scope-section" id="scope-notes" aria-labelledby="scope-notes-heading">
+      <h2 id="scope-notes-heading">5. Assumptions &amp; exclusions</h2>
+      <div class="form-grid"><label for="scope-assumptions">Assumptions <span class="scope-hint">One assumption per line. These remain unapproved draft notes.</span><textarea id="scope-assumptions" rows="4"></textarea></label><label for="scope-exclusions">Exclusions <span class="scope-hint">One exclusion per line. State work or areas this scope does not cover.</span><textarea id="scope-exclusions" rows="4"></textarea></label></div>
+    </section>
+    <div class="scope-actions">
+      <div><button class="button button-secondary" type="submit" name="action" value="validate">Validate draft</button><button class="button button-primary" type="submit" name="action" value="save">Save new revision</button></div>
+      <div><a class="button button-secondary" id="scope-download" href="/scopes/{{ draft.id }}/download?revision={{ expected_revision }}"{% if not saved %} hidden{% endif %}>Download saved Draft Scope JSON</a><span class="scope-hint" id="scope-download-hint"{% if saved %} hidden{% endif %}>Save your changes before downloading.</span></div>
+    </div>
+  </fieldset>
+</form>
+<script type="application/json" id="scope-initial-payload">{{ payload|tojson }}</script>
+<script src="/static/draft_scope.js" defer></script>
+{% endblock %}

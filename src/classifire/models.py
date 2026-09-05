@@ -894,6 +894,37 @@ class Project(RecordMixin, Base):
     estimates: Mapped[list[Estimate]] = relationship(back_populates="project")
 
 
+class DraftScope(RecordMixin, Base):
+    """Owner-scoped Draft artifact; never a canonical physical-model write."""
+
+    __tablename__ = "draft_scopes"
+    __table_args__ = (CheckConstraint("latest_revision >= 0", name="ck_draft_scope_revision"),)
+
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True, nullable=False)
+    owner_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    latest_revision: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    project: Mapped[Project] = relationship()
+
+
+class DraftScopeRevision(RecordMixin, Base):
+    """Append-only through the Draft Scope service, with verified serialized bytes."""
+
+    __tablename__ = "draft_scope_revisions"
+    __table_args__ = (
+        UniqueConstraint("draft_scope_id", "revision", name="uq_draft_scope_revision"),
+        CheckConstraint("revision >= 1", name="ck_draft_scope_positive_revision"),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_scopes.id"), index=True, nullable=False
+    )
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_hash: Mapped[str | None] = mapped_column(String(64))
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    envelope_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
 class Estimate(RecordMixin, Base):
     __tablename__ = "estimates"
     __table_args__ = (

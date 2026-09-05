@@ -60,63 +60,41 @@ The prototype reorders delivery; it does not remove the broader product needs:
   records, and human-only final release. Upstream edits identify stale downstream
   dependencies without silently overwriting prior approvals or totals.
 
-## Immediate priority: a usable manual Draft Scope workbench
+## Demonstrated first prototype: manual Draft Scope
 
-Deliver one small, complete UI workflow on the existing application stack. A user
-must be able to create or open a project, enter a manual Draft Scope, save it, reopen
-it, validate it and download the exact saved Draft Scope revision as JSON.
+P0 is implemented and locally demonstrated: the existing UI creates a new project
+and owner-scoped manual Draft, supports multiple openings/services and explicit
+uncertainty, validates, saves/reopens after restart and downloads exact saved JSON.
+The [demo guide](./docs/DRAFT_SCOPE_DEMO.md) gives runnable instructions and evidence.
+Verify the feature's current PR/merge state before equating local demonstration
+with shared publication. This is not complete Scope Analysis or production readiness.
 
-This is the highest-value next task because CLASSIFIRE has substantial deterministic
-and governance foundations, while independent capability use still needs a visible
-interaction that users can test. A small end-to-end workflow exposes practical gaps
-so later contract, API and product decisions can follow observed behavior.
+The prototype uses shared application services and separate Draft revision tables.
+Existing canonical physical guards remain intact. Saving, validating and exporting
+a Draft does not run AI, matching, estimating, admission, locking or release.
+Manual Confirmed facts remain unreviewed assertions. Existing project metadata
+visibility is shared; the demonstrated environment contains synthetic data only.
 
-Build only the shared Scope artifact fields and application services necessary for
-that workflow in the same implementation slice. Reuse FastAPI, `src/classifire/ui.py`,
-SQLAlchemy and established service/security patterns. Keep Draft persistence and
-permissions explicit. Existing opening/service UI writes guarded canonical physical
-records; do not use those writers as Draft editing shortcuts or relax their guards.
-The prototype must not admit a physical model, activate a lock or produce a Released
-claim simply because a user saved, validated or exported a Draft.
+## Immediate priority: safe Draft Scope import and replacement
 
-### Demonstration and completion evidence
+After P0 publication, extend the same UI so a user can import its downloaded JSON,
+inspect a validation/identity/uncertainty preview and explicitly apply the selected
+content as a new local Draft revision. Preserve prior revisions and source lineage;
+reject unsupported versions, malformed graphs, tampering and stale replacements.
+Imported identities, authors and review history cannot grant local ownership or
+approval. Evolve the minimal contract explicitly if import provenance requires it;
+never silently reinterpret v1 or label foreign claims as verified local evidence.
 
-A fresh user interaction must demonstrate all of the following with synthetic data:
+This is next because it closes the smallest useful portability loop on an already
+working screen. Users can leave the app and return without rebuilding their scope.
+The slice must include shared import validation, UI preview/confirmation, durable
+revision handling, tests and an observed browser round trip with synthetic data.
 
-- Create/open a project and start a clearly labeled manual Draft Scope.
-- Add one defect with multiple distinct openings and multiple services, including a
-  shared relationship and a blank opening; do not equate defect count with quantity.
-- Record explicit evidence/observation states and unresolved facts. Attribute manual
-  claims and leave missing evidence visible.
-- Edit the Draft, save a revision, reopen it and confirm the same data survives an
-  application restart. Preserve stable IDs and intentional relationship changes.
-- Validate required fields and relationships. Show actionable errors separately from
-  unresolved evidence; validation does not imply technical approval or readiness.
-- Download the selected saved revision as JSON and inspect its project identity,
-  artifact/schema version, revision identity, content, uncertainty and Draft status.
-- Confirm that saving, validating and downloading do not invoke matching, estimating,
-  AI providers, canonical physical admission, locking or release.
-- Pass meaningful service/API tests and existing relevant authority-guard regressions;
-  run and inspect the UI interaction and downloaded content. Record actual results.
-
-Use synthetic fixtures and isolated development/test storage. Project access and
-Draft-only writes must be checked by the backend, not only hidden by UI controls.
-An available route, schema or unit-test suite without the demonstrated UI path does
-not satisfy this milestone. A passing demo does not establish production readiness.
-
-### Keep the first prototype bounded
-
-Safe import/replacement of the downloaded Draft Scope is the next bounded UI
-increment. It must validate version, ownership, relationships and authority before
-any permitted local persistence; a downloaded document must not become a trusted
-local record merely because its JSON parses.
-
-Do not put the full ProjectPackage ZIP, all four capability schemas, whole-database
-projection, bulk evidence ingestion, automatic system matching, reliable price
-inference, production ChatGPT distribution, full orchestration replacement or every
-edge case on the first demo's critical path. The existing unpublished package draft
-is review material to reconcile and selectively reuse, not the prototype milestone
-or an automatically approved contract.
+Do not bundle report extraction, complete ProjectPackage ZIP, all capability
+schemas, automatic matching, inferred pricing, production ChatGPT distribution or
+full orchestration replacement into this increment. Those remain subsequent
+visible slices. Preserve the unpublished package candidate as review material;
+it is not an automatically accepted contract or prerequisite to Scope JSON import.
 
 ## What follows the first demo
 

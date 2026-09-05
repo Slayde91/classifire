@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Draft scopes | CLASSIFIRE{% endblock %}
+{% block heading %}Draft scopes{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<div class="scope-intro">
+  <p class="scope-lead">Build a clear picture of the work before choosing systems or prices.</p>
+  <p class="muted">Create a project, record its defects, openings and services, then save and download a Draft Scope package. You can return to each saved draft.</p>
+</div>
+{% if errors %}
+<div class="alert alert-error" role="alert"><strong>The draft could not be created.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
+{% endif %}
+{% if has_permission('project:write') %}
+<section class="panel scope-create" aria-labelledby="new-scope-heading">
+  <div class="panel-head"><h2 id="new-scope-heading">Start a new draft</h2><span class="badge badge-draft">Manual entry</span></div>
+  <p class="muted">This creates a project and its first Draft Scope revision.</p>
+  <form method="post" action="/scopes" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="scope-reference">Project reference<input id="scope-reference" name="reference" value="{{ reference|default('') }}" maxlength="100" placeholder="e.g. CF-001" required></label>
+    <label for="scope-name">Project name<input id="scope-name" name="name" value="{{ name|default('') }}" maxlength="300" placeholder="e.g. Building A inspection" required></label>
+    <div class="span-2"><button class="button button-primary" type="submit">Create Draft Scope</button></div>
+  </form>
+</section>
+{% endif %}
+<div class="panel-head"><h2>Your saved drafts</h2><span class="muted">{{ drafts|length }} draft{% if drafts|length != 1 %}s{% endif %}</span></div>
+<section class="project-grid" aria-label="Saved Draft Scopes">
+  {% for draft in drafts %}
+  <article class="project-card">
+    <div class="project-head"><div><div class="eyebrow">{{ draft.reference }}</div><h2>{{ draft.name }}</h2></div><span class="badge badge-draft">Draft</span></div>
+    <p class="muted">Saved revision {{ draft.latest_revision }} &middot; awaiting review</p>
+    <a class="button button-secondary" href="/scopes/{{ draft.id }}">Open draft</a>
+  </article>
+  {% else %}
+  <div class="panel scope-empty"><h3>Your first scope starts here</h3><p>Use the form above to create a draft. No system selection, pricing or AI is needed.</p></div>
+  {% endfor %}
+</section>
+{% endblock %}

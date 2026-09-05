@@ -16,13 +16,20 @@ and [ADR 0002](docs/ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md) defi
 a shared deterministic core with optional AI and four independent capabilities:
 scope analysis, system matching, estimating and reporting.
 
-The next milestone is an interactive, persisted **Draft Scope workspace** in the
-existing UI, with validation, reopen and exact JSON download. This is planned;
-the current application foundation is not yet that prototype. See the
-[product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
-[verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
-Complete visible slices before broad refinement; preserve existing authority
-and security protections. Agent contributors should read [AGENTS.md](AGENTS.md).
+The first interactive prototype is now the persisted **manual Draft Scope
+workspace**. Users can create a project, edit defects, openings, services and
+unknowns, validate, save a revision, reopen it and download its exact Draft Scope
+JSON. A synthetic browser demonstration verified this flow and persistence after
+restarting the application. Follow the [local demo guide](docs/DRAFT_SCOPE_DEMO.md)
+to try it without using an existing project database or customer evidence.
+
+This delivers the manual P0 prototype; it does not complete automated scope
+analysis, full ProjectPackage portability, system matching, estimating or
+reporting. See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
+[verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md)
+for the next usable increment. Complete visible slices before broad refinement;
+preserve existing authority and security protections. Agent contributors should
+read [AGENTS.md](AGENTS.md).
 
 ## What is included
 
@@ -96,7 +103,7 @@ classifire doctor
 ## Mission Control
 
 Mission Control is a transitional orchestration/visibility integration. CLASSIFIRE
-retains canonical project state and authority. It is not required for the planned
+retains canonical project state and authority. It is not required for the
 manual Draft Scope prototype; operational OpenClaw retirement remains parity-gated.
 
 After configuring `CLASSIFIRE_MISSION_CONTROL_URL` and `CLASSIFIRE_MISSION_CONTROL_API_KEY`:

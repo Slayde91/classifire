@@ -1,8 +1,8 @@
 # CLASSIFIRE Master Roadmap
 
 **Status:** Active; prototype-first delivery approved 2026-09-05.
-**Verified shared-main baseline:** `3b437dad9e42ec7ba2adf512b8ee67816d243473` (PR #186).
-**Latest executable-change baseline:** `73c428e` (PR #185).
+**Verified shared-main baseline before P0:** `803da1bfee1724a9f1bd86f58b6130782dfdb8c3` (PR #187).
+**P0 implementation:** locally demonstrated on `feat/draft-scope-ui-20260905`; verify publication from current Git/PR checks.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
@@ -28,15 +28,18 @@ Users may stop, edit, save, export, replace inputs and explicitly continue.
 
 - Existing FastAPI/Jinja UI supports authentication, projects, estimates, manual
   physical entry, library administration and retained proposal-review screens.
-  This is reusable application code, not the independent Draft Scope prototype.
+  P0 now extends that shell with a separate persisted manual Draft Scope workspace;
+  see the [demo](./DRAFT_SCOPE_DEMO.md) and [contract](./DRAFT_SCOPE_V1_CONTRACT.md).
 - Existing opening/service forms write guarded canonical physical rows. Preserve
   their behavior; a Draft editor must not use them by disabling admission guards.
 - Deterministic domain services, exact-byte evidence handling, technical-library
   governance, calculation/snapshot/rendering, audit and migrations are foundations.
 - PR #185's completion consumer/journal/lifecycle hooks are merged. Full workflow
   scheduling, production capture assurance and OpenClaw replacement are incomplete.
-- Main CI [33943428434](https://github.com/Slayde91/classifire/actions/runs/33943428434)
-  passed on `3b437da` (974 tests). It does not prove a usable new UI or production.
+- Baseline main CI [33945228889](https://github.com/Slayde91/classifire/actions/runs/33945228889)
+  passed on `803da1b`. P0 also has service/HTTP/authority tests and an actual Chrome
+  create/edit/validate/save/restart/reopen/download demonstration. Its own exact-head
+  CI and merge must be verified; no result proves production readiness.
 - Three untracked Draft ProjectPackage files remain in
   `.tmp/project-package-draft-20260905`; their 22 tests passed in the prior review.
   They are candidate archive work, not a shipped contract or UI. Reuse compatible
@@ -67,8 +70,9 @@ slice. Keep the first PR focused on P0; do not bundle the whole prototype into i
 
 | Milestone | Priority/status | User-visible exit and required evidence |
 | --- | --- | --- |
-| **P0. Draft Scope workspace** | **Next; not implemented** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
-| **P1. Scope intake and replacement** | Upcoming after P0 | Import/replace a validated saved/manual Scope artifact through the UI with identity, ownership, safe-input and revision checks. Add one explicitly supported evidence intake path using existing retained-evidence services; unsupported content is visibly refused. Manual entry remains usable when extraction/AI is unavailable. |
+| **P0. Draft Scope workspace** | **Implemented and locally demonstrated; verify publication** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
+| **P1a. Saved Scope import/replacement** | **Next after P0 publication** | Upload saved Draft Scope JSON, validate/check its declared hash and version, preview identity/content/uncertainty and explicitly append a local revision. Preserve source lineage and prior revisions; reject stale saves and foreign authority. Demonstrate browser round trip and refusal cases. No ZIP or report extraction in this slice. |
+| **P1b. One evidence intake path** | Upcoming after P1a | Add one explicitly supported evidence intake path using existing retained-evidence services. Unsupported content is visibly refused; extraction remains proposed until reviewed. Manual entry stays usable without AI. |
 | **P2. System matching workspace** | Upcoming | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3. Estimate workspace** | Upcoming | Load sufficient saved/manual scope, quantity and system inputs; calculate a small supported scenario with units, explicit rate/method basis, recovery and overrides; save/export an Estimate revision and stop without reporting. Unknown technical/pricing facts remain visibly provisional or unresolved. |
 | **P4. Independent Draft reports** | Planned; scope-only profile may follow P0 early | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
@@ -76,7 +80,7 @@ slice. Keep the first PR focused on P0; do not bundle the whole prototype into i
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 **First interactive prototype = P0. Four-capability prototype = demonstrated
-P0-P4 behavior**, including independent/manual entry and reporting from partial
+P0-P4 behavior**, including P1a/P1b, independent/manual entry and reporting from partial
 inputs. Full portability/ChatGPT and production readiness are separate exits.
 No placeholder button or hard-coded success screen counts as a capability.
 
@@ -107,11 +111,12 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Implement **P0: the persisted Draft Scope workspace**. Use the current UI shell,
-shared application use cases and governed persistence. Choose the minimum Draft
-schema/storage mapping within that task; do not write unapproved physical facts
-into canonical models. Reconcile the local package candidate without turning its
-publication into a prerequisite. The handoff defines inputs, tests and done.
+Deliver **P1a: safe Draft Scope JSON import/replacement**, after verifying P0
+publication. Extend the demonstrated UI and shared Draft service with bounded
+validation, preview, explicit application and source-lineage retention. The v1
+contract is manual-only: introduce any required compatible contract evolution
+explicitly, without converting foreign history into local approval. Keep P1b
+evidence extraction and whole-project archives separate. The handoff defines done.
 
 ### Authoritative readiness track
 
@@ -134,7 +139,7 @@ private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
 **Remaining:** the root checkout is conflicted recovery evidence. Exact main CI
-passed on `3b437da` (PR #186); basic metadata currently reports main unprotected.
+passed on `803da1b` (PR #187); basic metadata previously reported main unprotected.
 Detailed protection configuration limits were not rechecked here; do not infer
 plan restrictions or bypass CI/review from that fact. Clean-machine and release
 reproducibility remain incomplete.

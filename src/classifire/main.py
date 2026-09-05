@@ -23,6 +23,7 @@ from .api.workflow import router as workflow_router
 from .api.workflow_actions import router as workflow_actions_router
 from .config import get_settings, require_production_configuration
 from .db import Base, SessionLocal, engine
+from .draft_scope_ui import router as draft_scope_ui_router
 from .estimate_pinning import router as estimate_pinning_router
 from .importers.seed import seed_database
 from .library_ui import router as library_ui_router
@@ -126,3 +127,5 @@ app.include_router(release_admin_router)
 app.include_router(technical_admin_router)
 app.include_router(library_ui_router)
 app.include_router(proposal_review_admin_router)
+
+app.include_router(draft_scope_ui_router)

@@ -18,6 +18,7 @@
     <nav aria-label="Primary navigation">
       <a href="/" class="nav-link">Dashboard</a>
       <a href="/projects" class="nav-link">Projects & estimates</a>
+      {% if has_permission is defined and has_permission('project:read') %}<a href="/scopes" class="nav-link">Draft Scope workspace</a>{% endif %}
       <div class="nav-section">Commercial libraries</div>
       <a href="/pricing" class="nav-link">Pricing library</a>
       <a href="/products" class="nav-link">Products & materials</a>
