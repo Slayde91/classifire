@@ -28,7 +28,9 @@ def test_draft_scope_migration_preserves_existing_data_and_supports_revisions(tm
         db.add(actor)
         db.commit()
         actor_id = actor.id
-    _upgrade(database_url, environment, "head", enforce_sqlite_foreign_keys=True)
+    _upgrade(
+        database_url, environment, "0027_draft_scope_revisions", enforce_sqlite_foreign_keys=True
+    )
     inspector = inspect(engine)
     assert {"draft_scopes", "draft_scope_revisions"} <= set(inspector.get_table_names())
     assert {
@@ -42,7 +44,7 @@ def test_draft_scope_migration_preserves_existing_data_and_supports_revisions(tm
         save_revision(db, actor, draft.id, 1, {"assumptions": ["Synthetic migration test"]})
         db.commit()
         assert read_revision(db, actor, draft.id)["revision"] == 2
-        assert assess_deployment_lineage(db).status == "READY"
+        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
         assert (
             db.scalar(text("SELECT version_num FROM alembic_version"))
             == "0027_draft_scope_revisions"

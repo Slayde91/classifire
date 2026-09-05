@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Scope reports | {{ project.reference }} | CLASSIFIRE{% endblock %}
+{% block heading %}Scope reports{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<div class="scope-context"><a href="/scopes/{{ draft.id }}">&larr; Edit Scope</a><span class="badge badge-draft">Draft &middot; awaiting review</span></div>
+<section class="panel">
+  <div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2>
+  <p>Scope-only report &middot; saved Scope revision {{ envelope.revision }}</p>
+  <p class="scope-hint">This report contains unreviewed Scope information. Technical-system selection and pricing are unavailable. Unknown quantities remain unknown.</p>
+  {% if report %}
+  {% if stale %}<div class="notice notice-warning" role="status"><strong>Out of date:</strong> the Scope or project details have changed since this report was created. These downloads preserve the earlier snapshot. <a href="/scopes/{{ draft.id }}/reports">Review the latest Scope for a new report</a>.</div>{% endif %}
+  <p>Created {{ snapshot.created_at }}. Both files contain the same saved snapshot.</p>
+  <div class="scope-context-actions"><a class="button button-primary" href="/scopes/{{ draft.id }}/reports/{{ report }}/download?format=pdf">Download PDF</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/reports/{{ report }}/download?format=xlsx">Download Excel</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/reports">All Scope reports</a></div>
+  <details class="scope-import-source"><summary>Report identity and provenance</summary><dl class="scope-import-details"><dt>Report ID</dt><dd class="scope-item-id">{{ snapshot.report_id }}</dd><dt>Snapshot checksum</dt><dd class="scope-item-id">{{ snapshot.sha256 }}</dd><dt>Saved Scope checksum</dt><dd class="scope-item-id">{{ envelope.sha256 }}</dd><dt>Created by</dt><dd class="scope-item-id">{{ snapshot.created_by }}</dd><dt>Format version</dt><dd>{{ snapshot.render_version }}</dd></dl></details>
+  {% else %}
+  <form method="get" action="/scopes/{{ draft.id }}/reports" class="stack-form"><label for="report-revision">Saved Scope revision</label><input id="report-revision" name="revision" type="number" min="1" max="{{ draft.latest_revision }}" value="{{ envelope.revision }}" required><button class="button button-secondary" type="submit">Preview revision</button></form>
+  <p class="scope-hint">Review the saved content below. Unsaved editor changes are not included.</p>
+  {% if envelope.revision != draft.latest_revision %}<p class="notice notice-warning">You selected an earlier revision. The latest is revision {{ draft.latest_revision }}.</p>{% endif %}
+  {% if has_permission('project:write') %}<form method="post" action="/scopes/{{ draft.id }}/reports" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="revision" value="{{ envelope.revision }}"><button class="button button-primary" type="submit">Create PDF and Excel report</button></form>{% endif %}
+  {% endif %}
+</section>
+{% include "draft_scope_report_content.html" %}
+{% if not report %}
+<section class="panel"><h2>Saved reports</h2><p class="scope-hint">Most recent 20 reports. Older reports remain retained at their saved links.</p><p class="scope-hint">Each report keeps its original project details, Scope revision and downloads.</p>
+{% for item in reports %}<article class="scope-import-item"><a href="/scopes/{{ draft.id }}/reports/{{ item.id }}">Scope revision {{ item.scope_revision }} &middot; {{ item.created_at }}</a><p class="scope-item-id">{{ item.id }}</p></article>{% else %}<p>No saved reports yet.</p>{% endfor %}
+</section>
+{% endif %}
+{% endblock %}

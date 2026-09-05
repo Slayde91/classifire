@@ -7,12 +7,13 @@ from dataclasses import asdict, dataclass
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-CLEAN_STACK_HEAD = "0027_draft_scope_revisions"
-PREVIOUS_CLEAN_STACK_HEAD = "0026_single_active_technical_release"
+CLEAN_STACK_HEAD = "0028_draft_scope_reports"
+PREVIOUS_CLEAN_STACK_HEAD = "0027_draft_scope_revisions"
 LEGACY_CLEAN_STACK_HEAD = "0007_reconcile_adjudicated_admission_lineages"
 LEGACY_ADJUDICATED_HEAD = "0006_adjudicated_canonical_admissions"
 REQUIRED_TABLES = frozenset(
     {
+        "draft_scope_reports",
         "draft_scopes",
         "draft_scope_revisions",
         "physical_model_admissions",

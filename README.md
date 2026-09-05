@@ -25,10 +25,13 @@ Synthetic browser demonstrations verified both workflows and persistence after
 restarting the application. Follow the [local demo guide](docs/DRAFT_SCOPE_DEMO.md)
 to try them without using an existing project database or customer evidence.
 
-P0 and P1a are bounded manual prototypes. The next visible increment is **scope-only
-Draft PDF/XLSX reporting** from selected saved revisions. Evidence intake remains
-planned with its clean-scan, provenance and retention prerequisites; complete
-ProjectPackage portability, AI analysis, matching and estimating remain unfinished.
+P0 and P1a are bounded manual prototypes. **Scope-only Draft PDF/XLSX reporting**
+is now implemented and locally verified: select a saved revision, create both files
+and reopen unchanged downloads after edits or restart. Verify publication in current
+Git/PR evidence. The next increment is **P2a, saved technical-candidate review**,
+with missing applicability evidence explicit. Evidence intake retains its clean-scan,
+provenance and retention prerequisites; complete ProjectPackage portability, AI
+analysis, full matching and estimating remain unfinished.
 See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
 [verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
 Complete visible slices before broad refinement; preserve existing authority and

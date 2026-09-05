@@ -15,6 +15,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Index,
     Integer,
+    LargeBinary,
     Numeric,
     String,
     Text,
@@ -923,6 +924,41 @@ class DraftScopeRevision(RecordMixin, Base):
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     envelope_json: Mapped[str] = mapped_column(Text, nullable=False)
     created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
+class DraftScopeReport(RecordMixin, Base):
+    """Retained scope-only Draft snapshot and its two exact rendered outputs."""
+
+    __tablename__ = "draft_scope_reports"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["draft_scope_id", "scope_revision"],
+            ["draft_scope_revisions.draft_scope_id", "draft_scope_revisions.revision"],
+            name="fk_draft_scope_report_revision",
+        ),
+        CheckConstraint("scope_revision >= 1", name="ck_draft_scope_report_revision"),
+        CheckConstraint(
+            "length(pdf_bytes) > 0 AND length(pdf_bytes) <= 8388608",
+            name="ck_draft_scope_report_pdf_size",
+        ),
+        CheckConstraint(
+            "length(xlsx_bytes) > 0 AND length(xlsx_bytes) <= 8388608",
+            name="ck_draft_scope_report_xlsx_size",
+        ),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_scopes.id"), index=True, nullable=False
+    )
+    scope_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    scope_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    snapshot_json: Mapped[str] = mapped_column(Text, nullable=False)
+    snapshot_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    pdf_bytes: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    pdf_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    xlsx_bytes: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    xlsx_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
 class Estimate(RecordMixin, Base):

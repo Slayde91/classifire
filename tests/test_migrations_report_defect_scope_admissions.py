@@ -34,6 +34,6 @@ def test_report_scope_admission_migration_upgrades_existing_0012_database(
     )
     with engine.connect() as connection:
         assert connection.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == (
-            '0027_draft_scope_revisions'
+            '0028_draft_scope_reports'
         )
     engine.dispose()
