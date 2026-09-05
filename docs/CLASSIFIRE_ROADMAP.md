@@ -1,11 +1,10 @@
 # CLASSIFIRE Master Roadmap
 
 **Status:** Active; prototype-first delivery approved 2026-09-05.
-**Verified shared-main baseline:** `45c0fdd389b066589881531778e6b7a8b898d754` (PR #193).
-**P0/P1a/P4a/P2a/P3a and estimate-only P4b are merged:** main CI 33975108129 passed
-1,315 tests, 141 warnings. **P1b first PDF increment is locally demonstrated** with
-real scan, explicit page review, saved v3 download and restart; publication remains
-a gate at this checkpoint. Verify current Git/PR evidence before repeating work.
+**Verified shared-main baseline:** `25510565aac69ce7d0b6402423caac251a266236` (PR #194).
+P0/P1a/P4a/P2a/P3a, estimate-only P4b and first PDF P1b are merged; main CI
+33982467430 passed 1,354 tests, 141 warnings. First P2b measured-limit UI is locally
+demonstrated; verify its current PR/CI before treating it as published or repeating work.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
@@ -77,26 +76,30 @@ prototype into it.
 | --- | --- | --- |
 | **P0. Draft Scope workspace** | **Completed bounded prototype; merged PR #188** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
 | **P1a. Saved Scope import/replacement** | **Completed bounded increment; merged PR #189** | Upload saved Draft Scope JSON, validate/check its declared hash and version, preview identity/content/uncertainty and explicitly append a local revision. Preserve source lineage and prior revisions; reject stale saves and foreign authority. Demonstrate browser round trip and refusal cases. No ZIP or report extraction in this slice. |
-| **P1b. One evidence intake path** | **First PDF increment locally implemented and demonstrated; publication pending** | Upload a bounded PDF, observe real scanning, inspect retained pages, explicitly save page-linked Draft observations, reopen after restart and download intact provenance. PostgreSQL/quarantine and authority guards apply. Other formats, automatic interpretation and full Scope analysis remain upcoming; manual entry needs no AI. |
+| **P1b. One evidence intake path** | **First PDF increment merged PR #194; broader P1b unfinished** | Upload a bounded PDF, observe real scanning, inspect retained pages, explicitly save page-linked Draft observations, reopen after restart and download intact provenance. PostgreSQL/quarantine and authority guards apply. Other formats, automatic interpretation and full Scope analysis remain upcoming; manual entry needs no AI. |
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
-| **P2b. Applicability coverage and matching** | **Next implementation after P1b publication: one bounded criteria/constraint review UI** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
+| **P2b. Applicability coverage and matching** | **First substrate/gap review locally demonstrated; complete applicability still upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
-| **P3b. Governed pricing and estimating coverage** | After P3a and supported input/library contracts | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
+| **P3b. Governed pricing and estimating coverage** | **Next visible increment after measured-limit publication: XLSX preview and explicit Draft-rate selection** | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only profile merged PR #193. Technical/combined profiles remain upcoming** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
 | **P5. Project portability and shared ChatGPT access** | After relevant commands are demonstrated | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
-**Current delivery order:** P0, P1a, P4a, P2a, P3a and estimate-only P4b are
-merged. Publish the locally demonstrated first P1b PDF slice after exact-head checks.
-Then deliver **P2b's first bounded applicability review UI**: explicit physical target
-criteria, authorized structured constraints, and saved reasons for supported checks.
-Current retrieval supplies only service type/substrate and marks material, size,
-orientation, FRL and installation conditions missing; more retrieval polish cannot
-close that gap. Add the minimum compatible input/constraint contract with the UI.
-Unsupported or incompletely evidenced configurations stay unresolved, never Applicable.
-This is a first increment, not complete technical-system matching.
+**Current delivery order:** P0, P1a, P4a, P2a, P3a, estimate-only P4b and first
+PDF P1b are merged. Finish first P2b publication after exact-head validation. Its
+measured substrate/gap review has a real browser/restart demonstration, but material,
+service size, FRL, installation and complete applicability remain unresolved.
+
+Next deliver **P3b's first pricing-XLSX preview and explicit Draft-rate selection UI**.
+The existing importer consumes CSV and writes library state; Draft rates have only
+manual values/free-text source notes. Retained workbook bytes, sheet/cell lineage,
+explicit mapping, units and draft-only application are the minimum useful slice.
+Do not run the legacy active-library importer from a web upload. Preserve original
+values, reasoned overrides and unknown work. A selected rate never proves compatibility.
+This reorders broader applicability coverage after one more independent usable
+capability increment; it does not mark P2b complete or weaken technical gates.
 
 Defer every-format intake, OCR/agent automation, exhaustive technical edge coverage,
 general job infrastructure and report polish until the supported interactions have
@@ -144,19 +147,16 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Finish current estimate-only report publication if still outstanding. Then deliver
-P1b: one supported PDF evidence intake UI, with genuine scan status, retained exact
-source/page identity and explicit reviewed observations into Draft Scope. Reuse
-storage/report-evidence services and the existing editor. Include the minimum
-scanner, retention/quarantine and provenance contract necessary for this path.
-Current uploads remain pending/not_configured and worker.py has no handler; do not
-force clean flags or treat mocked scanning as proof. Preserve old Scope revisions,
-manual operation, ownership and canonical authority boundaries.
+Finish the current measured-limit branch's tests, diff classification and normal
+publication if outstanding. Then implement the P3b workbook preview/rate-selection
+journey above, using only a synthetic workbook and isolated storage. Do not postpone
+its UI for all inferred methods, supplier formats or commercial edge cases. Exposed
+file safety, source lineage, unit validation, permissions and override history remain
+mandatory. Full pricing/import governance is not satisfied by a manual worksheet.
 
-The concrete files, prerequisites, tests and definition of done are in
-SESSION_HANDOFF.md. P2b actual applicability, P3b governed pricing and remaining
-P4b profiles remain required; they do not justify postponing the first evidence UI
-until every detail or source format is perfected.
+The verified components, prerequisites, tests, blockers and definition of done are
+in SESSION_HANDOFF.md. P2b complete applicability, broader P1b evidence analysis,
+remaining report profiles and ProjectPackage/ChatGPT remain required work.
 
 ### Authoritative readiness track
 

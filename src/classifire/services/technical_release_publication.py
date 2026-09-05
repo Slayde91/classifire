@@ -20,6 +20,7 @@ from .storage import (
     read_clean_stored_file_for_update,
     read_verified_stored_file,
 )
+from .technical_field_snapshot import technical_fields
 from .technical_validity import (
     technical_document_authority_blockers,
     technical_release_source_binding,
@@ -27,7 +28,7 @@ from .technical_validity import (
     technical_variant_temporal_blockers,
 )
 
-TECHNICAL_RELEASE_MANIFEST_SCHEMA = "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v2"
+TECHNICAL_RELEASE_MANIFEST_SCHEMA = "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v3"
 
 
 class TechnicalReleasePublicationError(RuntimeError):
@@ -306,6 +307,7 @@ def _technical_record(
         "source_page": variant.source_page,
         "source_hash": variant.source_hash,
         "record_version": variant.record_version,
+        "technical_fields": technical_fields(variant),
         "source_binding": technical_release_source_binding(
             technical_document_id=variant.technical_document_id,
             technical_document_key=document.document_id if document else None,

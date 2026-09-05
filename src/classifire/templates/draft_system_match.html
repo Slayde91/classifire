@@ -105,6 +105,7 @@
 {% endif %}
 </section>
 {% if match_url %}
+  {% include "draft_constraint_review.html" %}
   {% set can_edit = has_permission('project:write') and envelope.revision == latest_revision %}
   <form method="post" action="{{ match_url }}/review">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
