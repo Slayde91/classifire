@@ -1,113 +1,76 @@
 # CLASSIFIRE Session Handoff
 
 **Prepared:** 2026-09-05 (AEST)
-**Verified shared-main baseline:** `45b1f7f8196805854f7bd344eb57d7e5b737d9e9` (PR #180, 2026-09-05)
-**Latest executable-change baseline:** `45b1f7f` (PR #180)
+**Verified shared-main baseline:** `4ab872334cad326fbd3cc6dad7106f3f448eae14` (PR #181)
+**Latest executable-change baseline:** 4ab8723 (PR #181)
 
-All four maintained documents are under `docs/`. Source, tests, Git and verified
-runtime evidence outrank this handoff. Refresh the baseline before work.
+All four maintained documents are under `docs/`. Inspect current repository
+evidence before editing; this handoff records a snapshot, not live authority.
 
 ## Start Here / Next Session
 
-### Contract characterisation progress
+**First task:** review, validate and finish the existing uncommitted
+execution-completion acceptance candidate. Do not create a duplicate implementation.
 
-PR #180 merged the socket deadline correction as 45b1f7f; exact main CI
-[33935963213](https://github.com/Slayde91/classifire/actions/runs/33935963213)
-passed. PR #179 uncertain-creation refusal remains intact.
+**Why next:** PR #181 already refuses continued/oversized audit pages, but shared
+main still accepts an empty page without proof of durable execution coverage.
+The existing candidate addresses that consumer gap. Its default managed runtime
+will refuse inference until a trusted producer/verifier is wired. Confirm that
+deliberate availability consequence and prove the boundary before publishing.
+The consumer does not itself prove complete capture or retire OpenClaw.
 
-**Current audit-page candidate (until merged):** reject any nextCursor field
-and responses exceeding the requested 100-event limit with TOOL_AUDIT_INVALID.
-Eleven new cases cover both endpoints and the valid 100-event terminal boundary.
-Ten refusal cases failed before the fix; 131 focused/caller tests now pass
-(114 contract/security plus 17 report/representative). Valid legacy empty-page
-receipt hashes remain unchanged. No authority, migration or provider change.
+**Prerequisites and working context:**
 
-**Newly verified limitation:** the installed OpenClaw 2026.7.1-2 package matches
-the configured pin. Its audit.list supports the existing filters and optional
-nextCursor; audit.activity.list is not registered in the inspected stock handler
-catalog. The retained fallback request is compatible with the stock method's schema.
-The writer is asynchronous, can drop queued metadata and can be disabled while
-stored records remain readable. The list result provides no persistence barrier
-or loss/coverage certificate. A terminal empty page is an observation of retained
-records, not proof that no tool action occurred. The page fix does not close this
-gap. See the [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) for
-artifact hashes and exact limits. The transport can still return a proposal
-after an empty page; complete coverage is not yet an enforced acceptance gate.
+- Read applicable AGENTS.md, the four maintained documents, Decision 0001 and
+  `docs/OPENCLAW_CONTRACT_CHARACTERISATION.md`. Fetch main; inspect branch,
+  upstream, changes, open PRs and CI before deciding what remains.
+- Candidate worktree:
+  `C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905`.
+  Branch: `feat/phase8-completion-evidence-20260905`; HEAD/base: `4ab8723`;
+  upstream at inspection: `origin/main`. Five tracked modifications plus one
+  untracked contract document; no candidate commit or open PR was found.
+- Preserve that candidate and the conflicted legacy root. Use the isolated
+  candidate worktree only after classifying its current contents. Reconcile
+  newer main non-destructively; retain updated documentation when combining work.
+- A trusted production evidence producer is absent. This blocks production
+  wiring, not synthetic consumer validation. No live-provider/customer,
+  canonical-write, lock, deployment or release authority is granted here.
 
-**Next bounded task:** establish a trusted execution/audit completion evidence
-contract before using this audit as complete protection. Inspect existing
-NoToolSessionAudit, transport acceptance, receipts and durable job abstractions;
-define how terminal execution, durable event coverage, loss/disabled-writer state
-and authority are proved. Separate historical observation receipts from new
-acceptance evidence. Record implementation/migration impact before coding;
-implement only a justified fail-closed boundary with synthetic ports. Do not
-invent a Gateway field, use sleeps/repeated empty reads as proof, or remove
-independent no-tool attestation. OpenClaw retirement/live completeness claims
-remain blocked on this missing protection.
+**Relevant files:**
 
-**Broader migration track:** characterise actually used OpenClaw contracts with synthetic
-tests, extending existing coverage rather than recreating it. This is the first
-retirement gate in
-[Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md).
+- `src/classifire/services/phase8_openresponses_transport.py`
+- `src/classifire/services/phase8_report_openresponses_transport.py`
+- `src/classifire/services/phase8_visual_runtime.py` (managed composition/callers)
+- `tests/test_phase8_openresponses_transport.py`
+- `tests/test_phase8_report_openresponses_transport.py`
+- `tests/test_phase8_visual_runtime.py`
+- `docs/EXECUTION_COMPLETION_CONTRACT.md` exists only in the candidate worktree.
+- Controller/runner tests listed below; `src/classifire/models.py` and
+  `src/classifire/worker.py` are later producer/recovery extension points.
 
-**Why next:** pinned upstream source confirms a material gap: asynchronous
-audit writes can be pending, dropped or disabled while audit.list returns an empty
-terminal page. The current page-refusal fix cannot prove full event coverage.
-Replacements must make completion evidence explicit instead of copying this gap.
+**Definition of done:**
 
-**Prerequisites:** read applicable AGENTS.md, inspect root/worktree Git state,
-fetch main, read the four documents and Decision 0001, inspect current callers/
-tests and check that newer work has not completed this task. Use a clean isolated
-current-main worktree; preserve unrelated changes.
+1. Review current-to-proposed behavior, trusted verifier authority, exact
+   request/response/session/agent/attestation binding and receipt migration.
+   Typed fields/hashes are not producer authentication.
+2. Verify missing verifier prevents inference token/HTTP use; malformed,
+   stale, mismatched, incomplete, disabled/lossy or untrusted evidence refuses
+   acceptance. Test both transports, safe error handling and replay binding.
+3. Preserve independent no-tool checks, proposal-only authority, historical
+   receipt verification and all canonical/lock/release gates. Explicitly test
+   the managed runtime's deliberate refusal. Never add a permissive fake
+   production verifier to make tests or real runs proceed.
+4. Focused and warranted caller regressions, static/migration checks, full hosted
+   CI and documentation alignment pass. Report remaining producer limitations.
+5. Classify and commit only reviewed scope, push normally, open/update the PR,
+   merge after required CI/review passes where safe, then verify actual merge
+   and post-merge CI. Do not report production readiness.
 
-**Files/components:**
-
-- `src/classifire/services/phase8_openresponses_transport.py`,
-  `phase8_report_openresponses_transport.py`, `phase8_visual_runtime.py`.
-- `src/classifire/services/phase8_report_assessment_controller.py`,
-  `phase8_report_assessment_runner.py` and visual-controller callers.
-- `src/classifire/api/agent_api.py`, `src/classifire/agent_security.py`,
-  `openclaw-plugin-classifire-controlled-write/src/index.ts`.
-- `config/phase8-zero-tool-agents.json`, relevant scripts and
-  `src/classifire/mission_control/` for caller/profile inventory.
-- Existing tests below. Inspect `models.py`/ `worker.py` under `src/classifire/`
-  to record job/recovery gaps, not to implement the coordinator in this task.
-
-**Broader characterisation completion criteria:**
-
-1. Map every discovered used boundary to caller, input/output contract,
-   authority, existing test and missing coverage. Separate service-only,
-   default-profile and dormant catalog paths from operationally proven use.
-2. Add only demonstrated missing golden/negative tests for no-tool enforcement,
-   fresh/separate contexts, exact evidence/profile/model binding, safe receipts/
-   errors, timeouts, historical compatibility and protected state.
-3. Use fake ports/RPC/HTTP and synthetic evidence only. Record missing durable
-   retry/cancellation/crash recovery as future work; do not invent guarantees,
-   alter authority, rewrite migrations, add adapters/coordinators/packages/UI
-   or remove OpenClaw.
-4. Existing/new focused tests, relevant static checks, full hosted CI,
-   diff/secret checks and documentation alignment pass. Publish only reviewed
-   scope and verify actual merge and post-merge CI.
-5. If newer main already completes the task, report evidence and identify the
-   next gated roadmap task instead of manufacturing duplicate tests.
-
-**Blockers/dependencies:** real report/provider authority is absent, which does
-not block synthetic work. Production database/lock state is not reverified.
-Basic main metadata reports unprotected/no enforced checks; detailed protection
-inspection previously returned HTTP 403. Never bypass failed CI or required review.
-Use the existing interpreter or an isolated environment installed from
-`pyproject.toml`; do not modify the protected root. Materially broader domain/
-security changes need separate scope.
-
-**Next-task completion criteria:** define evidence for terminal execution,
-durable coverage and absence of disabled/lost/pending audit data; identify the
-trusted producer and consumer authority boundaries. Document current-to-target
-migration and historical receipt compatibility. Implement only a justified
-fail-closed validator at existing abstractions, with positive/negative synthetic
-cases for missing, stale, mismatched, incomplete and untrusted evidence.
-Do not claim the stock list endpoint supplies this contract. A new trusted
-producer remains a separate gate until implemented and proven. Preserve no-tool
-attestation and canonical/release boundaries; pass relevant checks and hosted CI.
+**Subsequent gate, not part of this consumer slice:** durable authenticated
+completion production with capture-before-dispatch, persisted terminal ordering,
+loss detection, invocation ownership and crash/replay recovery. Extend existing
+job abstractions where suitable. Broader adapters, packages and UI follow their
+own contracts; OpenClaw stays until proven protection and recovery parity.
 
 ### Validation commands
 
@@ -149,89 +112,86 @@ for this synthetic task.
 
 ~~~text
 Continue CLASSIFIRE at C:\CLASSIFIRE (https://github.com/Slayde91/classifire).
-Read applicable AGENTS.md, inspect branch/upstream/HEAD/conflicts/local changes,
-fetch main and check PRs/CI before editing. Read the four docs under docs/,
-Decision 0001 and OPENCLAW_CONTRACT_CHARACTERISATION.md. Verified main: 45b1f7f
-(PR #180). The audit-page refusal candidate is on
-fix/phase8-audit-contract-20260905; verify its actual publication and newer source.
-Preserve the conflicted root and unrelated work; use an isolated current-main tree.
+Before editing, read applicable AGENTS.md and the four docs under docs/, Decision
+0001 and OPENCLAW_CONTRACT_CHARACTERISATION.md. Inspect HEAD/upstream/conflicts/
+local changes; fetch main and check PRs/CI. Verified baseline: 4ab8723, PR #181;
+main CI 33936917822 passed. Preserve the dirty legacy root and unrelated work.
 
-Reconcile candidate publication, then establish a trusted execution/audit
-completion evidence contract. Pinned OpenClaw 2026.7.1-2 uses an asynchronous
-writer that can drop/disable new records; audit.list has no persistence/loss
-certificate. nextCursor refusal fixes incomplete pages only. Empty terminal
-pages remain observation evidence, not proof of no activity. Read the artifact
-hashes/limits in the inventory; do not repeat that inspection without reason.
+Single task: review, validate and finish the existing completion-evidence
+acceptance candidate in C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905,
+branch feat/phase8-completion-evidence-20260905. At handoff it was uncommitted on
+4ab8723: two transports, three tests and untracked
+docs/EXECUTION_COMPLETION_CONTRACT.md. Inspect the actual diff and newer main;
+do not recreate completed work or overwrite newer documentation.
 
-Inspect NoToolSessionAudit and acceptance in
-src/classifire/services/phase8_openresponses_transport.py, report transport,
-phase8_visual_runtime.py, their tests and existing BackgroundJob/worker.
-Define terminal execution, durable coverage, writer-health/loss and authority
-requirements; record current-to-target migration before coding. Implement only a
-justified fail-closed evidence validator using existing abstractions where
-possible. Preserve historical receipt verification separately from new acceptance.
-Do not invent provider fields or treat sleeps/repeated empty pages as proof.
-A trusted producer remains a gate until implemented and proven.
+Why next: merged audit-page refusal does not prove durable execution coverage.
+Review phase8_openresponses_transport.py, phase8_report_openresponses_transport.py,
+phase8_visual_runtime.py under src/classifire/services/, their tests and the
+local contract. The candidate requires trusted completion evidence and version-2
+receipt binding; managed inference deliberately stops before inference token/
+HTTP because no production verifier exists. Review and test that consequence.
+A typed result/hash is not authentication; a trusted producer remains a later
+gate. Do not fabricate provider fields or use empty audit polling as proof.
 
-Use synthetic ports/evidence only. No real Gateway/provider/customer operation,
-canonical write, lock, deployment, release, provider removal or general framework.
-Preserve no-tool, context/model binding and all canonical/release boundaries.
-Done: explicit reviewed contract/migration impact, justified validator with
-missing/stale/mismatched/incomplete/untrusted evidence tests, honest remaining
-producer gaps, aligned docs and passing checks. If the design requires a material
-unapproved authority change, explain the exact blocker and complete safe work.
+Done: justified consumer contract and migration; synthetic tests for absent,
+stale, mismatched, incomplete, untrusted and replayed evidence in both transports;
+safe errors; managed refusal; retained no-tool and historical receipt behavior;
+aligned four docs and passing validation. Run the handoff eight-file suite plus
+warranted caller regressions, Ruff, Mypy, Bandit, Alembic heads and diff checks
+with worktree PYTHONPATH and unique temporary storage. Use only synthetic ports
+and disposable test databases. No real provider/customer operation, canonical
+write, lock, deployment, release, OpenClaw removal or speculative framework.
 
-Run the handoff eight-file suite (candidate baseline 114 tests), warranted caller
-regressions (17 passed), Ruff/Mypy/Bandit, Alembic heads and git diff --check with
-worktree PYTHONPATH and unique temporary storage. Never use project databases for
-destructive tests. Continue through validation, classification, explicit commit,
-normal push, PR and merge where safe after CI/reviews pass; verify actual merge
-and post-merge CI. Do not overwrite unrelated work or duplicate newer completed
-work. Keep the full production-platform goal active.
+Continue autonomously through implementation as needed, validation,
+classification, explicit commit, normal push, PR and merge where safe after
+CI/reviews pass; verify merge and post-merge CI. Preserve unrelated changes.
+If newer work already finishes this slice, report that evidence and follow the
+next documented dependency rather than duplicating it.
 ~~~
 
 ## Verified project context
 
-PR #175 adopted the hybrid target; PR #179 refused uncertain creation replay;
-PR #180 enforced socket deadlines as 45b1f7f. Exact main CI 33935963213 passed.
-The page-refusal candidate passes 114 contract/security plus 17 caller tests.
-The pinned asynchronous audit store cannot prove complete activity coverage;
-full retirement/production protection parity remains incomplete.
-The migration head remains 0026_single_active_technical_release.
+PR #181 is merged at `4ab872334cad326fbd3cc6dad7106f3f448eae14`.
+[PR CI](https://github.com/Slayde91/classifire/actions/runs/33936702941) and
+[exact main CI](https://github.com/Slayde91/classifire/actions/runs/33936917822)
+were rechecked successfully. PR #181 records 114 contract/security plus 17 caller
+tests; these are historical local results, not fresh completion-candidate tests.
+This documentation task inspected source/diffs and publication evidence; it did
+not execute or publish the candidate. Its validation must be re-established.
 
-Implemented foundations include evidence ownership/locators, proposal controllers/
-review packages, signed physical amendments and separate replacement locks,
+Implemented foundations include evidence ownership/locators, proposal controllers
+and review packages, signed physical amendments and separate replacement locks,
 technical-library publication, snapshot integrity and basic estimate outputs.
-The worker has no handlers. Durable hybrid execution, whole-project packages
-and production MCP/standalone flows remain unimplemented.
+The worker has no handlers and does not honour run_after. Durable hybrid
+execution, full ProjectPackage portability and production ChatGPT/standalone
+package flows remain planned. The database/storage remain live truth; exported
+packages will be immutable interchange revisions, not imported authority.
 
-Historical records describe the 2026-09-01 first-stage inference failure and
-rollback with no accepted UAT replacement lock. These were not reopened or rerun
-here. Phase 8 and downstream gates remain intact.
-See [Project State](./PROJECT_STATE.md) for the capability snapshot.
+Historical UAT failure/rollback and absence of an accepted replacement lock were
+not rechecked against live records. Phase 8 authority/evidence/semantic gates and
+downstream Phases 9-14 remain. See [Project State](./PROJECT_STATE.md).
 
-## Local changes, open work and publication context
+## Local changes, open issues and publication context
 
-- Root: `gpt/phase8-linked-original-images`, `de0cc5a`, interrupted cherry-pick
-  `c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`. Four unresolved service/test paths
-  plus staged/unstaged/untracked legacy work remain unrelated recovery evidence.
-  Protected pytest directories prevent complete untracked enumeration.
-  Do not reset, clean, resolve or copy it wholesale.
-- Current candidate: `fix/phase8-audit-contract-20260905` in
-  `C:\CLASSIFIRE\.tmp\phase8-audit-contract-20260905`, created cleanly
-  from `45b1f7f`. Scope: one runtime service, its test file, contract inventory and
-  four continuity docs. Initial upstream is `origin/main`; verify later branch
-  upstream, commit/PR and merge rather than assuming publication.
-- Previous documentation and contract slices merged in PRs #176-#180. Preserve
-  their historical worktrees; they are not new implementation tasks.
-- Issues #42 (retained Phase 8 tooling) and #43 (OpenClaw dependency advisories)
-  remain open; read current bodies before acting.
-- Draft PRs #9-#13 remain on legacy feature-to-feature bases. They are not
-  current-main candidates and do not belong to this task.
-- Basic main metadata reports no protection/enforced checks; detailed API access
-  previously returned HTTP 403. No protection override, real provider
-  operation or deployment is authorised by this handoff.
+- Protected root: `gpt/phase8-linked-original-images`, HEAD `de0cc5a`,
+  CHERRY_PICK_HEAD `c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`. Four unresolved
+  paths are the phase8_linked_visual_run and phase8_visual_evidence services
+  and their two tests. Other staged/unstaged/untracked legacy work is unrelated;
+  protected pytest directories prevent complete untracked enumeration.
+  Never reset, clean, bulk-copy or publish from this root.
+- The six-file completion candidate is separate uncommitted implementation work.
+  Preserve it. Its contract file is not available on shared main at this snapshot.
+- Documentation branch: `docs/verified-hybrid-handoff-20260905` in
+  `C:\CLASSIFIRE\.tmp\docs-verified-hybrid-handoff-20260905`, based on `4ab8723`.
+  Scope is exactly PROJECT_STATE, CLASSIFIRE_ARCHITECTURE, CLASSIFIRE_ROADMAP and
+  SESSION_HANDOFF under `docs/`. Initial upstream is `origin/main`; check GitHub
+  for the eventual documentation commit, PR and merge rather than assuming them.
+- Issues #42 (retained Phase 8 tooling) and #43 (OpenClaw development dependency
+  advisories) remain open. Draft PRs #9-#13 remain legacy feature-to-feature work;
+  no completion-candidate PR was present. Do not bulk-merge that stack.
+- Check current repository review/protection requirements before publication.
+  Never bypass failed CI or required review. No runtime operation is authorised
+  merely by this handoff.
 
-Start by verifying candidate publication, then establish trusted execution/audit
-completion evidence. Do not mistake the bounded page correction for complete
-audit persistence or repeat completed socket/CLI coverage.
+Related: [Architecture](./CLASSIFIRE_ARCHITECTURE.md),
+[Roadmap](./CLASSIFIRE_ROADMAP.md), [Project State](./PROJECT_STATE.md).
