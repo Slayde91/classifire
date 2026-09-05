@@ -16,6 +16,8 @@ from test_phase8_report_runtime_input import _visual_packet
 from test_report_evidence_adapter import _report_content
 
 from classifire.services.phase8_openresponses_transport import (
+    ExecutionCompletionContext,
+    ExecutionCompletionEvidence,
     NoToolSessionAttestation,
     NoToolSessionAudit,
     Phase8OpenResponsesTransportError,
@@ -186,11 +188,28 @@ class _FakeGuard:
         )
 
 
+def _fake_completion(context: ExecutionCompletionContext) -> ExecutionCompletionEvidence:
+    # Synthetic trusted producer; never used by application/runtime composition.
+    return ExecutionCompletionEvidence(
+        context_sha256=context.sha256,
+        receipt_sha256="C" * 64,
+        terminal_at_ms=context.started_at_ms,
+        coverage_from_ms=context.started_at_ms,
+        coverage_through_ms=context.observed_at_ms,
+        writer_enabled=True,
+        writer_healthy=True,
+        pending_events=0,
+        dropped_events=0,
+        tool_actions=0,
+    )
+
+
 def _transport(
     runtime: Phase8ReportRuntimeInput,
     handler,
     *,
     guard: _FakeGuard | None = None,
+    completion_verifier=_fake_completion,
     token_provider=lambda: "secret-token",  # noqa: B008
 ) -> tuple[Phase8ReportOpenResponsesTransport, _FakeGuard]:
     selected_guard = guard or _FakeGuard()
@@ -201,6 +220,7 @@ def _transport(
             token_provider=token_provider,
             runtime_input=runtime,
             session_guard=selected_guard,
+            completion_verifier=completion_verifier,
             runtime_agent_ids={
                 "cf-physical-model": "cf-physical-model",
                 "cf-validator": "cf-validator",
@@ -456,3 +476,91 @@ def test_managed_report_runtime_uses_report_policy_before_token_or_http(
     assert "classifire-phase8-report" in rpc_calls[0][1]["key"]
     assert counts == {"token": 0, "http": 0}
     assert client.is_closed
+
+
+@pytest.mark.parametrize(
+    "mode", ["missing", "untrusted", "mismatch", "incomplete", "error", "valid"]
+)
+def test_report_completion_gate_prevents_unverified_proposal(tmp_path: Path, mode: str) -> None:
+    runtime, _ = _runtime(tmp_path)
+    request = _request(runtime)
+    counts = {"token": 0, "http": 0}
+    wire = {}
+
+    def token():
+        counts["token"] += 1
+        return "synthetic-token"
+
+    def handler(provider_request):
+        counts["http"] += 1
+        response = httpx.Response(200, json=_completed_response({"accepted": True}))
+        wire["request"] = provider_request.content
+        wire["response"] = response.content
+        return response
+
+    contexts = []
+
+    def verifier(context):
+        contexts.append(context)
+        if mode == "untrusted":
+            return {"complete": True}
+        if mode == "error":
+            raise RuntimeError("private-verifier-detail")
+        proof = _fake_completion(context)
+        if mode == "mismatch":
+            return replace(proof, context_sha256="F" * 64)
+        if mode == "incomplete":
+            return replace(proof, dropped_events=1)
+        return proof
+
+    transport, guard = _transport(
+        runtime,
+        handler,
+        token_provider=token,
+        completion_verifier=None if mode == "missing" else verifier,
+    )
+    kwargs = {
+        "role": "cf-validator",
+        "stage": "blind_inventory",
+        "request": request,
+        "rendered_prompt": _render(runtime, request),
+        "runtime_input": runtime,
+        "report_assessment_inference_profile": _report_profile(),
+    }
+    if mode == "valid":
+        result = transport.invoke(**kwargs)
+        assert result["payload"] == {"accepted": True}
+        assert (
+            contexts[0].request_body_sha256 == hashlib.sha256(wire["request"]).hexdigest().upper()
+        )
+        assert contexts[0].response_sha256 == hashlib.sha256(wire["response"]).hexdigest().upper()
+        assert contexts[0].request_sha256 == canonical_json_sha256(request)
+        assert contexts[0].agent_id == "cf-validator"
+        assert counts == {"token": 1, "http": 1}
+        assert len(guard.audits) == 1
+        transport._visual_transport._completion_verifier = lambda context: replace(
+            _fake_completion(context),
+            receipt_sha256="F" * 64,
+        )
+        changed = transport.invoke(**kwargs)
+        assert changed["transport_receipt_sha256"] != result["transport_receipt_sha256"]
+    else:
+        with pytest.raises(Phase8OpenResponsesTransportError) as error:
+            transport.invoke(**kwargs)
+        assert (
+            error.value.code
+            == {
+                "missing": "COMPLETION_EVIDENCE_UNAVAILABLE",
+                "untrusted": "COMPLETION_EVIDENCE_INVALID",
+                "mismatch": "COMPLETION_EVIDENCE_MISMATCH",
+                "incomplete": "COMPLETION_EVIDENCE_INCOMPLETE",
+                "error": "COMPLETION_EVIDENCE_UNAVAILABLE",
+            }[mode]
+        )
+        assert "private-verifier-detail" not in str(error.value)
+        if mode == "missing":
+            assert counts == {"token": 0, "http": 0}
+            assert guard.audits == []
+        else:
+            assert counts == {"token": 1, "http": 1}
+            assert len(guard.audits) == 1

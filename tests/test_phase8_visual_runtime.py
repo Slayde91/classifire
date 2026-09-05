@@ -364,8 +364,15 @@ def test_no_write_gateway_readiness_requires_token_and_only_describes_session(
     assert len(calls) == 1
 
 
+@pytest.mark.parametrize(
+    ("effective_tools", "expected_code"),
+    [
+        ([{"id": "classifire_evidence_read"}], "SERVER_TOOLS_NOT_EMPTY"),
+        ([], "COMPLETION_EVIDENCE_UNAVAILABLE"),
+    ],
+)
 def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
-    tmp_path: Path,
+    tmp_path: Path, effective_tools: list[dict[str, str]], expected_code: str,
 ) -> None:
     packet = _packet(tmp_path)
     rpc_calls: list[tuple[str, dict[str, Any]]] = []
@@ -404,7 +411,7 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
                 "groups": [
                     {
                         "name": "classifire",
-                        "tools": [{"id": "classifire_evidence_read"}],
+                        "tools": effective_tools,
                     }
                 ]
             }
@@ -438,7 +445,7 @@ def test_managed_runtime_registers_metadata_then_fails_before_token_and_http(
                 stage="blind_inventory",
                 request=_request(packet, runtime.profile),
             )
-        assert exc_info.value.code == "SERVER_TOOLS_NOT_EMPTY"
+        assert exc_info.value.code == expected_code
         client = runtime._client
 
     assert [method for method, _params in rpc_calls] == [

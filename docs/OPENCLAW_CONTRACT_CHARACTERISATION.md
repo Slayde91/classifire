@@ -98,7 +98,7 @@ covered. Total validation: 103 contract/security plus 17 caller tests pass.
 This is bounded negative coverage, not complete WebSocket conformance, live-host
 compatibility or a claim that every frame/handshake variation is covered.
 
-### Pinned upstream audit evidence and current page candidate
+### Pinned upstream audit evidence and merged PR #181 page refusal
 
 Read-only inspection on 2026-09-05 found installed openclaw 2026.7.1-2 matching
 config/phase8-zero-tool-agents.json. These are local distribution artifacts,
@@ -129,7 +129,7 @@ Verified contract:
 - audit.list reads the store directly; its response has no writer-health,
   coverage/loss, terminal-execution or persistence-barrier certificate.
 
-The candidate rejects any nextCursor presence (including malformed empty/null
+PR #181 rejects any nextCursor presence (including malformed empty/null
 values) and more than the requested 100 events as TOOL_AUDIT_INVALID. It does not
 retry a malformed success or page indefinitely. Any observed tool event already
 causes transport refusal, so fetching later pages cannot turn it into a valid
@@ -144,16 +144,23 @@ downstream; the correction additionally prevents issuing a partial audit receipt
 
 **Material remaining gap:** no cursor means only that this retained query has no
 further page. It does not exclude pending/lost/disabled capture or retention loss.
-The current transport still permits proposal return after an empty-page observation;
-complete coverage is not yet an enforced acceptance gate. This change
-does not retrofit a trusted completion certificate or prove live audit health.
+Shared main through PR #182 still permits proposal return after that observation.
+The current completion-consumer candidate now requires a trusted verifier before
+inference dispatch and validates exact invocation/terminal/coverage evidence before
+acceptance. Managed factories have no verifier and deliberately refuse dispatch.
+See [Execution completion contract](./EXECUTION_COMPLETION_CONTRACT.md).
 
-**Next task:** establish the trusted execution/audit completion evidence contract
-and migration impact at existing CLASSIFIRE boundaries, then implement justified
-fail-closed validation with synthetic evidence. Preserve historical observation
-receipt verification separately from new acceptance. Do not fabricate upstream
-fields, infer completion from polling, or retire OpenClaw/no-tool guards before
-a trusted producer and consumer are proven.
+Version-2 transport receipts bind the completion digest; historical audit-page
+hashes remain unchanged and never become proof of complete capture. The verifier
+port is trusted application code, not a mechanism for accepting self-asserted
+model/Gateway fields. A production producer and authenticated verifier remain
+absent. The twelve-file synthetic suite in the handoff passes 171 tests.
+
+**Next task:** establish durable execution journal/producer/verifier evidence,
+using existing job/service boundaries where suitable. Prove pre-dispatch capture,
+terminal ordering, invocation ownership, disabled/lost/pending capture refusal
+and crash/replay recovery. Do not fabricate upstream guarantees, infer completion
+from polling, or retire OpenClaw/no-tool guards before parity.
 
 Before declaring full characterisation/retirement parity, also resolve:
 
