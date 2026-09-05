@@ -9,8 +9,8 @@ from test_shared_file_containment import postgresql_session_factory  # noqa: F40
 @pytest.mark.parametrize("mode", ["valid", "interrupted"])
 def test_postgresql_transport_lifecycle(
     tmp_path,
-    postgresql_session_factory,
+    postgresql_session_factory,  # noqa: F811
     kind,
-    mode,  # noqa: F811
+    mode,
 ):
     cases.test_journal_transport_lifecycle(tmp_path, postgresql_session_factory, kind, mode)
