@@ -11,6 +11,7 @@ from .config import get_settings
 from .db import get_db
 from .models import User
 from .security import has_permission, verify_csrf
+from .services import draft_estimate_reports as estimate_reports
 from .services.draft_estimates import (
     add_line,
     create_estimate,
@@ -317,3 +318,157 @@ def download_estimate(
         "Content-Disposition": f'attachment; filename="{filename}"',
         "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
     })
+
+
+@router.get("/scopes/{draft_id}/estimates/{estimate_id}/reports", response_class=HTMLResponse)
+def estimate_reports_page(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    revision: int | None = None,
+) -> HTMLResponse:
+    user = _actor(request, db)
+    try:
+        draft = get_draft(db, user, draft_id)
+        envelope = read_estimate_revision(db, user, draft_id, estimate_id, revision)
+        reports = estimate_reports.list_reports(db, user, draft_id, estimate_id)
+        stale = estimate_staleness(
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            envelope["revision"],
+            storage_root=get_settings().storage_root,
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return templates.TemplateResponse(
+        request,
+        "draft_estimate_reports.html",
+        _context(
+            request,
+            db,
+            draft=draft,
+            project=draft.project,
+            envelope=envelope,
+            scope=envelope["scope"],
+            reports=reports,
+            snapshot=None,
+            report_id=None,
+            estimate_url=f"/scopes/{draft_id}/estimates/{estimate_id}",
+            staleness=stale,
+            can_edit=False,
+            error_line_id=None,
+            form_values={},
+        ),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.post("/scopes/{draft_id}/estimates/{estimate_id}/reports", response_class=RedirectResponse)
+def create_estimate_report(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    form: FormData,
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _actor(request, db, write=True)
+    if set(form) != {"csrf_token", "revision"}:
+        raise HTTPException(422, "Choose one saved estimate revision")
+    revision = _revision(form["revision"])
+    try:
+        report = estimate_reports.create_report(db, user, draft_id, estimate_id, revision)
+        db.commit()
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return RedirectResponse(
+        f"/scopes/{draft_id}/estimates/{estimate_id}/reports/{report.id}",
+        status_code=303,
+    )
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/reports/{report_id}", response_class=HTMLResponse
+)
+def estimate_report_page(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    report_id: str,
+) -> HTMLResponse:
+    user = _actor(request, db)
+    try:
+        draft = get_draft(db, user, draft_id)
+        snapshot = estimate_reports.read_report(db, user, draft_id, estimate_id, report_id)
+        stale = estimate_reports.report_staleness(
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            report_id,
+            storage_root=get_settings().storage_root,
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    envelope = snapshot["estimate"]
+    return templates.TemplateResponse(
+        request,
+        "draft_estimate_reports.html",
+        _context(
+            request,
+            db,
+            draft=draft,
+            project=snapshot["project"],
+            envelope=envelope,
+            scope=envelope["scope"],
+            reports=[],
+            snapshot=snapshot,
+            report_id=report_id,
+            estimate_url=f"/scopes/{draft_id}/estimates/{estimate_id}",
+            staleness=stale,
+            can_edit=False,
+            error_line_id=None,
+            form_values={},
+        ),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.get("/scopes/{draft_id}/estimates/{estimate_id}/reports/{report_id}/download")
+def download_estimate_report(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    report_id: str,
+    format: str = "pdf",
+) -> Response:
+    user = _actor(request, db)
+    _require(request, db, "estimate:export")
+    try:
+        snapshot = estimate_reports.read_report(db, user, draft_id, estimate_id, report_id)
+        content = estimate_reports.report_bytes(db, user, draft_id, estimate_id, report_id, format)
+        db.commit()
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    media_type = (
+        "application/pdf"
+        if format == "pdf"
+        else ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    )
+    filename = f"CLASSIFIRE-Draft-Estimate-Report-{snapshot['report_id']}.{format}"
+    return Response(
+        content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )

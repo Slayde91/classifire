@@ -1,0 +1,43 @@
+﻿{% extends "base.html" %}
+{% block title %}Draft Estimate Report | CLASSIFIRE{% endblock %}
+{% block heading %}Draft Estimate Report{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<p><a href="{{ estimate_url }}?revision={{ envelope.revision }}">&larr; Saved Draft Estimate</a></p>
+<section class="panel">
+  <div class="eyebrow">{{ project.reference }}</div>
+  <h2>{{ project.name }}</h2>
+  <p>Estimate-only report from saved estimate revision {{ envelope.revision }}, Scope revision {{ scope.revision }}.</p>
+  <p class="callout"><strong>Draft and unreviewed.</strong> This report keeps the selected saved values. Amounts are partial, in AUD and exclude uncalculated tax. It does not approve a technical system or establish a complete quote.</p>
+  {% if staleness %}<div role="status" class="alert alert-error"><strong>Saved inputs are out of date or cannot be verified.</strong> Earlier amounts and report downloads keep their saved basis.<ul>{% for reason in staleness %}<li>{{ reason|replace('_', ' ')|capitalize }}</li>{% endfor %}</ul></div>{% endif %}
+  {% if report_id %}
+  <p>Saved report {{ report_id }} &middot; {{ snapshot.created_at }}</p>
+  <div class="scope-context-actions">
+    {% if has_permission('estimate:export') %}
+    <a class="button button-primary" href="{{ estimate_url }}/reports/{{ report_id }}/download?format=pdf">Download saved Estimate PDF</a>
+    <a class="button button-secondary" href="{{ estimate_url }}/reports/{{ report_id }}/download?format=xlsx">Download saved Estimate XLSX</a>
+    {% endif %}
+    <a href="{{ estimate_url }}/reports">All Estimate reports</a>
+  </div>
+  <details><summary>Report identity</summary><p class="scope-item-id">Snapshot SHA-256: {{ snapshot.sha256 }}</p><p>{{ snapshot.profile }} / renderer {{ snapshot.render_version }}</p></details>
+  {% else %}
+  <form method="get" action="{{ estimate_url }}/reports" class="stack-form">
+    <label for="report-estimate-revision">Saved estimate revision to report</label>
+    <input id="report-estimate-revision" name="revision" type="number" min="1" value="{{ envelope.revision }}" required>
+    <button type="submit" class="button button-secondary">Preview estimate revision</button>
+  </form>
+  {% if has_permission('project:write') and has_permission('estimate:write') %}
+  <form method="post" action="{{ estimate_url }}/reports" class="stack-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="revision" value="{{ envelope.revision }}">
+    <button class="button button-primary" type="submit">Create saved Estimate PDF and XLSX</button>
+    <p>Creates and retains both files from the previewed revision. No matching or pricing is rerun.</p>
+  </form>
+  {% endif %}
+  <h3>Saved reports</h3>
+  {% if reports %}<ul>{% for item in reports %}<li><a href="{{ estimate_url }}/reports/{{ item.id }}">Estimate revision {{ item.estimate_revision }} &middot; {{ item.created_at }} &middot; {{ item.id }}</a></li>{% endfor %}</ul>{% else %}<p>No saved estimate reports yet.</p>{% endif %}
+  {% endif %}
+  <p class="scope-hint">The XLSX preserves exact decimal text. Its optional numeric subtotal column is blank when spreadsheet precision cannot safely represent the saved amount. This report contains saved values, not editable calculation formulas.</p>
+</section>
+{% include "draft_estimate_content.html" %}
+{% endblock %}

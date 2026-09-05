@@ -1053,6 +1053,40 @@ class DraftEstimateRevision(RecordMixin, Base):
     created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class DraftEstimateReport(RecordMixin, Base):
+    """Retained estimate-only Draft snapshot and exact PDF/XLSX pair."""
+
+    __tablename__ = "draft_estimate_reports"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["estimate_id", "estimate_revision"],
+            ["draft_estimate_revisions.estimate_id", "draft_estimate_revisions.revision"],
+            name="fk_draft_estimate_report_revision",
+        ),
+        CheckConstraint("estimate_revision >= 1", name="ck_draft_estimate_report_revision"),
+        CheckConstraint(
+            "length(pdf_bytes) > 0 AND length(pdf_bytes) <= 8388608",
+            name="ck_draft_estimate_report_pdf_size",
+        ),
+        CheckConstraint(
+            "length(xlsx_bytes) > 0 AND length(xlsx_bytes) <= 8388608",
+            name="ck_draft_estimate_report_xlsx_size",
+        ),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
+    estimate_id: Mapped[str] = mapped_column(ForeignKey("draft_estimates.id"), index=True)
+    estimate_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    estimate_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    snapshot_json: Mapped[str] = mapped_column(Text, nullable=False)
+    snapshot_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    pdf_bytes: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    pdf_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    xlsx_bytes: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    xlsx_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class Estimate(RecordMixin, Base):
     __tablename__ = "estimates"
     __table_args__ = (

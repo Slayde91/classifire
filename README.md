@@ -30,10 +30,13 @@ technical-candidate review are merged. Retrieval is not technical applicability.
 The new **manual Draft Estimate UI** supports explicit AUD unit sell rates,
 unknown quantities/rates, preserved originals and reasoned overrides, omit/restore,
 partial subtotals and exact historical JSON downloads. Its synthetic browser and
-restart checks passed; verify final publication in current Git/PR evidence.
+restart checks passed; P3a is merged in PR #192.
 The sign-in screen and sidebar now use the owner's supplied CLASSIFIRE logo.
 
-Next is **estimate-only Draft PDF/XLSX reporting** over a selected saved estimate.
+The local **estimate-only Draft PDF/XLSX report** increment is demonstrated, with
+unchanged saved downloads after edits and restart. Verify its publication in current
+Git/PR evidence. Next is one supported evidence intake UI path, including genuine
+scan status and retained source provenance.
 Real evidence intake, full applicability, governed pricing and complete
 ProjectPackage/ChatGPT access remain unfinished. See the demo guide for manual
 estimate steps and clearly labelled optional synthetic library setup.

@@ -62,7 +62,7 @@ def test_forward_estimate_migration_preserves_saved_inputs_and_reports(tmp_path)
         old_match = match_bytes(db, actor, draft.id, match.id)
         draft_id, match_id, report_id = draft.id, match.id, report.id
         db.commit()
-    _upgrade(database_url, environment, "head", enforce_sqlite_foreign_keys=True)
+    _upgrade(database_url, environment, "0030_draft_estimates", enforce_sqlite_foreign_keys=True)
     inspector = inspect(engine)
     assert {"draft_estimates", "draft_estimate_revisions"} <= set(inspector.get_table_names())
     constraints = inspector.get_foreign_keys("draft_estimates")
@@ -89,7 +89,7 @@ def test_forward_estimate_migration_preserves_saved_inputs_and_reports(tmp_path)
         )
         assert match_bytes(db, actor, draft_id, match_id) == old_match
         assert report_bytes(db, actor, draft_id, report_id, "pdf") == old_pdf
-        assert assess_deployment_lineage(db).status == "READY"
+        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
         assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0030_draft_estimates"
         for changes in (
             {"scope_revision": 999},
