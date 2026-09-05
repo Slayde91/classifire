@@ -2,7 +2,7 @@
 
 **Verified snapshot:** 2026-09-05 (AEST)
 **Product status:** Pre-production implementation and controlled UAT
-**Verified shared-main baseline:** `c3ab07aa9ceccf8910389773d889a6c796b7abbf` (PR #176, 2026-09-05)
+**Verified shared-main baseline:** `c080424c907b01a2a979f9efbfe9561bb097ba81` (PR #177, 2026-09-05)
 **Latest executable-change baseline:** `7e8f473e45e51c4cf3505846cd978749efbdac59` (PR #174)
 
 PR #175 adopted Architecture Decision 0001 in documentation. It did not implement
@@ -16,9 +16,10 @@ The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
 current callers and existing coverage. Thirteen added synthetic fallback/audit
 cases bring the eight-file focused suite to 83 passing tests. Executable source,
 runtime configuration and authority are unchanged; full retirement parity is
-not complete. PR #176 documentation merged as c3ab07a and its exact post-merge
-CI [33932371817](https://github.com/Slayde91/classifire/actions/runs/33932371817)
-passed.
+not complete. PR #177 merged this inventory and coverage as c080424; its exact
+post-merge CI [33933164159](https://github.com/Slayde91/classifire/actions/runs/33933164159)
+passed. This documentation reconciliation rechecked that result and the 83-test
+synthetic baseline; it makes no executable change.
 
 **Next bounded task:** investigate ambiguous CLI timeout handling using a fake
 completed session creation followed by a lost reply. The CLI maps timeout to
@@ -32,11 +33,11 @@ in the contract document.
 
 | Area | Verified state | Meaning |
 | --- | --- | --- |
-| Shared main | PR #176 merged as `c3ab07a`; executable lineage through PR #174 remains present. | Hybrid is accepted, not a completed runtime migration. |
-| Hosted CI | [Main run 33932371817](https://github.com/Slayde91/classifire/actions/runs/33932371817) succeeded on exactly `c3ab07a`. | Source/test/static/migration evidence, not production or real-UAT proof. |
+| Shared main | PR #177 merged as `c080424`; executable lineage through PR #174 remains present. | Hybrid is accepted, not a completed runtime migration. |
+| Hosted CI | [Main run 33933164159](https://github.com/Slayde91/classifire/actions/runs/33933164159) succeeded on exactly `c080424`. | Source/test/static/migration evidence, not production or real-UAT proof. |
 | Local synthetic verification | 83 tests passed across the eight contract/security files in the handoff; the prior 70-test baseline remains historical evidence. | Existing contracts have a passing baseline; full migration parity is not proven. |
 | Migration history | One Alembic head: `0026_single_active_technical_release` on `legacy_adjudicated_lineage`. | Preserve forward-only history. |
-| Branch governance | Detailed protection/rules APIs return HTTP 403; basic main metadata reports protected=false and no enforced checks. CODEOWNERS names Slayde91. | Normal PR #176 merge was accepted after policy evidence; never bypass failed checks or required review. |
+| Branch governance | Detailed protection/rules APIs previously returned HTTP 403; basic main metadata reports protected=false and no enforced checks. CODEOWNERS names Slayde91. | Normal PR #176 merge was accepted after policy evidence; never bypass failed checks or required review. |
 | Open work | Issues #42 (retained Phase 8 tooling reconciliation) and #43 (OpenClaw development dependency advisories); draft PRs #9-#13 on legacy feature-to-feature bases. | Reconcile issue contents against source; do not bulk-merge the draft stack. |
 | Operational health | No new runtime/database/provider verification. | Deployment, recovery, production tenancy, real project acceptance and release remain unproven. |
 
@@ -51,11 +52,12 @@ two tests. Staged additions, unstaged code/configuration/plugin/UI/test changes,
 and untracked material are pre-existing recovery evidence. Protected pytest
 directories prevent a complete untracked inventory. None belongs to this change.
 
-Reconciliation branch: `docs/hybrid-handoff-reconcile-20260905`, worktree
-`C:\CLASSIFIRE\.tmp\docs-hybrid-handoff-reconcile-20260905`, created clean
-from `9c0fc7d`. Only the four documents belong to this change. Check Git/GitHub
-for its publication outcome; this pre-commit snapshot does not claim its own
-future commit, PR or merge.
+Current documentation branch: `docs/current-hybrid-state-20260905`, worktree
+`C:\CLASSIFIRE\.tmp\docs-current-hybrid-state-20260905`, created clean
+from `c080424`. Only these four documents belong to this update. PR #176
+previously merged the documentation reconciliation; PR #177 merged the initial
+contract inventory/tests. Check Git/GitHub for this update's later publication
+outcome; this snapshot does not claim its own future merge.
 
 ## 2. Implemented foundations
 
@@ -115,8 +117,9 @@ it retroactively. No repeat report/provider run is authorised by this snapshot.
 ## 5. Roadmap position and active work
 
 - Phases 0-7 and 15 have implemented foundations with incomplete exits.
-- Phase 3 contract characterisation is the single recommended next implementation
-  task; the active slice adds contract tests and inventory documentation only.
+- Phase 3 initial contract inventory/tests are merged. The next implementation
+  task is the bounded uncertain-session-creation correction; this update is
+  documentation-only.
 - Phase 8 remains blocked on fresh authority, evidence review, semantic approval
   and separately governed canonical/replacement-lock gates.
 - Phases 9-14 remain dependency-blocked; package portability does not bypass them.
@@ -128,15 +131,15 @@ See the [roadmap](./CLASSIFIRE_ROADMAP.md) for phase-specific acceptance criteri
 
 ## 6. Recommended Next Actions
 
-1. **Characterise the actually used OpenClaw contracts synthetically.**
-   Map callers to contracts and existing tests, distinguish active paths from
-   dormant catalog entries, and add only demonstrated missing golden/negative
-   coverage. Preserve no-tool enforcement, fresh/separate contexts, exact
-   evidence/prompt/model/profile binding, safe errors/receipts, timeouts,
-   historical verification and protected state. Record absent recovery as gaps.
+1. **Resolve uncertain session creation after a lost CLI reply.**
+   Add a composed fake-transport regression proving whether fallback can repeat
+   an already completed creation, then make only the justified fail-closed fix.
+   Preserve read-only fallback, no-tool enforcement, context separation, safe
+   diagnostics and receipt compatibility. The initial inventory and 13 added
+   cases are already merged; do not repeat them.
    [Start Here / Next Session](./SESSION_HANDOFF.md#start-here--next-session)
-   provides the files, commands and definition of done.
-2. **After that gate, establish the smallest durable run contract.**
+   provides files, commands and completion criteria.
+2. **After the remaining characterisation gate, establish the smallest durable run contract.**
    Extend BackgroundJob/worker where suitable, then add a feature-flagged
    provider adapter with tested rollback. Do not implement these in the
    characterisation task.
@@ -152,12 +155,15 @@ or a general agent platform.
 
 ## 7. Verification and limits
 
-Freshly checked: fetched main/history; clean isolated starting tree; root tracked/
-conflict state; open PRs/issues; successful main CI `33899855871`; protection
-HTTP 403; relevant source/tests and `.github/workflows/pull-request-validation.yml`;
-70 passing synthetic contract/security tests; single packaged Alembic head;
-strict UTF-8, exact four-file scope, 25 local links/anchors, eight referenced test
-paths, handoff PowerShell syntax and git diff --check.
+Freshly checked for this documentation update: fetched main at c080424;
+isolated starting tree; root conflict/local-change state; open PRs/issues;
+successful exact-main CI 33933164159; basic branch metadata (unprotected,
+no enforced checks); CLI/fallback and worker source; 83 passing synthetic
+contract/security tests; documentation scope, links and diff checks.
+
+Earlier PR #177 validation recorded full Ruff/Bandit and Mypy across 142 source
+files. Those static checks are historical evidence here; hosted CI for this
+documentation change must be checked separately before publication.
 
 Detailed historical PR/runtime evidence remains in Git history and linked
 documents; it was not all rerun here. No real report, customer evidence,
@@ -166,8 +172,3 @@ used or changed.
 
 Related: [Architecture](./CLASSIFIRE_ARCHITECTURE.md),
 [Roadmap](./CLASSIFIRE_ROADMAP.md), [Handoff](./SESSION_HANDOFF.md).
-
-Current contract validation: 83 focused tests; full Ruff and Bandit passed.
-Mypy passed across 142 source files after the already-declared PyYAML/reportlab
-stubs were installed only into task-temporary storage. No shared environment
-or executable source was changed.
