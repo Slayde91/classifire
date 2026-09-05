@@ -1,7 +1,7 @@
 # CLASSIFIRE Session Handoff
 
 **Prepared:** 2026-09-05 (AEST)
-**Verified shared-main baseline:** `9c0fc7d32b29125b53e4d3164f56ae5e00deacfe` (PR #175)
+**Verified shared-main baseline:** `c3ab07aa9ceccf8910389773d889a6c796b7abbf` (PR #176, 2026-09-05)
 **Latest executable-change baseline:** `7e8f473e45e51c4cf3505846cd978749efbdac59` (PR #174)
 
 All four maintained documents are under `docs/`. Source, tests, Git and verified
@@ -9,7 +9,25 @@ runtime evidence outrank this handoff. Refresh the baseline before work.
 
 ## Start Here / Next Session
 
-**First task:** characterise actually used OpenClaw contracts with synthetic
+### Contract characterisation progress
+
+The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
+current callers and existing coverage. Thirteen added synthetic fallback/audit
+cases bring the eight-file focused suite to 83 passing tests. Executable source,
+runtime configuration and authority are unchanged; full retirement parity is
+not complete. PR #176 documentation merged as c3ab07a and its exact post-merge
+CI [33932371817](https://github.com/Slayde91/classifire/actions/runs/33932371817)
+passed.
+
+**Next bounded task:** investigate ambiguous CLI timeout handling using a fake
+completed session creation followed by a lost reply. The CLI maps timeout to
+RPC_UNAVAILABLE, which can select fallback even for sessions.create. Determine
+and test a fail-closed resolution without altering read-only fallback,
+historical receipt compatibility or calling a real Gateway. This takes priority
+over coordinator/adapter/package implementation. Other inventory gaps are listed
+in the contract document.
+
+**Broader migration track:** characterise actually used OpenClaw contracts with synthetic
 tests, extending existing coverage rather than recreating it. This is the first
 retirement gate in
 [Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md).
@@ -37,7 +55,7 @@ current-main worktree; preserve unrelated changes.
 - Existing tests below. Inspect `models.py`/ `worker.py` under `src/classifire/`
   to record job/recovery gaps, not to implement the coordinator in this task.
 
-**Definition of done:**
+**Broader characterisation completion criteria:**
 
 1. Map every discovered used boundary to caller, input/output contract,
    authority, existing test and missing coverage. Separate service-only,
@@ -61,6 +79,12 @@ Branch-protection inspection returns HTTP 403; never bypass failed CI.
 Use the existing interpreter or an isolated environment installed from
 `pyproject.toml`; do not modify the protected root. Materially broader domain/
 security changes need separate scope.
+
+**Next-task completion criteria:** reproduce the ambiguous creation/lost-reply
+case with fake transports; prove whether fallback can repeat an uncertain write;
+implement only the justified fail-closed correction; preserve read-only fallback,
+no-tool/authority and historical receipt contracts; pass focused tests, relevant
+regression/static checks and hosted CI; update this inventory and handoff.
 
 ### Validation commands
 
@@ -105,12 +129,17 @@ Continue CLASSIFIRE (https://github.com/Slayde91/classifire), starting at C:\CLA
 First read applicable AGENTS.md, inspect branch/upstream/HEAD, conflicts and local
 changes, fetch main, then read docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md,
 docs/CLASSIFIRE_ROADMAP.md, docs/SESSION_HANDOFF.md and Architecture Decision 0001.
-Last verified shared baseline: 9c0fc7d (PR #175, accepted hybrid target). Verify
+Last verified shared baseline: c3ab07a (PR #176); Decision 0001 is accepted. Verify
 newer state before editing. Preserve the conflicted root and unrelated changes;
 use a clean isolated current-main worktree.
 
-Do one task: map actually used OpenClaw contracts to callers and existing tests,
-then add only demonstrated missing synthetic golden/negative coverage. This is
+Do one task: resolve ambiguous CLI timeout/fallback handling using synthetic
+completed session creation followed by a lost reply. Read
+docs/OPENCLAW_CONTRACT_CHARACTERISATION.md first. The initial inventory and
+13 fallback/audit cases already exist; do not repeat them. Inspect whether
+RPC_UNAVAILABLE can cause duplicate sessions.create and implement the smallest
+fail-closed correction justified by a failing composed test. Preserve read-only
+fallback, safe receipts and existing authority. This is
 the first safe replacement gate because OpenClaw supplies fresh-session,
 no-tool, model-binding and audit protections around CLASSIFIRE-owned workflows.
 Inspect services/phase8_openresponses_transport.py, phase8_report_openresponses_transport.py,
@@ -127,11 +156,11 @@ No new adapter, coordinator, package/UI implementation, migration, OpenClaw
 removal, real report/provider/Gateway run, customer evidence, canonical write,
 lock, deployment or release.
 
-Done: evidence-linked contract/coverage inventory, justified gap tests, focused
+Done: composed lost-reply regression, the justified bounded correction, focused
 tests and relevant checks passing, aligned docs and explicit remaining gates.
 Run the eight-file pytest command in SESSION_HANDOFF.md with worktree PYTHONPATH,
 cache disabled and unique temporary storage; run Ruff, Mypy, Bandit, Alembic heads,
-git diff --check, warranted regression and full hosted CI. Baseline: 70 passing
+git diff --check, warranted regression and full hosted CI. Baseline: 83 passing
 focused tests, one migration head. Known root conflicts and unavailable
 branch-protection inspection do not permit overwriting work or bypassing failed
 checks. Reverify access/CI. If newer source completes this task, report evidence
@@ -183,3 +212,8 @@ See [Project State](./PROJECT_STATE.md) for the capability snapshot.
 
 Start with contract characterisation, not another architecture redesign or a
 repeat of completed technical/publication work.
+
+**Current contract branch:** test/openclaw-contract-characterisation-20260905 in
+C:\CLASSIFIRE\.tmp\openclaw-contract-characterisation-20260905, based on
+c3ab07a (merged PR #176). This slice changes two test files, the inventory and
+four continuity documents. Recheck its eventual publication state in GitHub.

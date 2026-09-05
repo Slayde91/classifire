@@ -2,7 +2,7 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main baseline:** 9c0fc7d (PR #175 merge, 2026-09-05)
+**Verified shared-main baseline:** `c3ab07aa9ceccf8910389773d889a6c796b7abbf` (PR #176, 2026-09-05)
 
 **Latest executable-change baseline:** 7e8f473 (PR #174)
 
@@ -15,6 +15,24 @@ snapshot, [CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md) for the
 governing boundaries, and
 [Architecture Decision 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 for the accepted hybrid target and migration gates.
+
+## Contract characterisation progress
+
+The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
+current callers and existing coverage. Thirteen added synthetic fallback/audit
+cases bring the eight-file focused suite to 83 passing tests. Executable source,
+runtime configuration and authority are unchanged; full retirement parity is
+not complete. PR #176 documentation merged as c3ab07a and its exact post-merge
+CI [33932371817](https://github.com/Slayde91/classifire/actions/runs/33932371817)
+passed.
+
+**Next bounded task:** investigate ambiguous CLI timeout handling using a fake
+completed session creation followed by a lost reply. The CLI maps timeout to
+RPC_UNAVAILABLE, which can select fallback even for sessions.create. Determine
+and test a fail-closed resolution without altering read-only fallback,
+historical receipt compatibility or calling a real Gateway. This takes priority
+over coordinator/adapter/package implementation. Other inventory gaps are listed
+in the contract document.
 
 ## 1. Status labels
 

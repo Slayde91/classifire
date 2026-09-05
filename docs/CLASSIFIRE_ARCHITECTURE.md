@@ -4,7 +4,7 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main baseline:** 9c0fc7d (PR #175 merge, 2026-09-05)
+**Verified shared-main baseline:** `c3ab07aa9ceccf8910389773d889a6c796b7abbf` (PR #176, 2026-09-05)
 
 **Latest executable-change baseline:** 7e8f473 (PR #174)
 
@@ -16,6 +16,24 @@ This document separates the architecture that is implemented now from the
 adopted target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
 and [CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md). Source, tests, migrations,
 Git state, and retained runtime receipts determine factual implementation state.
+
+## Contract characterisation progress
+
+The initial [contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) maps
+current callers and existing coverage. Thirteen added synthetic fallback/audit
+cases bring the eight-file focused suite to 83 passing tests. Executable source,
+runtime configuration and authority are unchanged; full retirement parity is
+not complete. PR #176 documentation merged as c3ab07a and its exact post-merge
+CI [33932371817](https://github.com/Slayde91/classifire/actions/runs/33932371817)
+passed.
+
+**Next bounded task:** investigate ambiguous CLI timeout handling using a fake
+completed session creation followed by a lost reply. The CLI maps timeout to
+RPC_UNAVAILABLE, which can select fallback even for sessions.create. Determine
+and test a fail-closed resolution without altering read-only fallback,
+historical receipt compatibility or calling a real Gateway. This takes priority
+over coordinator/adapter/package implementation. Other inventory gaps are listed
+in the contract document.
 
 ## 1. Governing reasoning chain
 
