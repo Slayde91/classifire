@@ -95,36 +95,26 @@ Later Scope/project edits flag the earlier report as stale while preserving byte
 Unknown quantities remain unknown; technical and pricing information is unavailable.
 See PROJECT_STATE.md for current validation/publication, not this goal statement.
 
-## Immediate priority: saved technical-candidate review
+## Demonstrated candidate-review increment
 
-After P4a publication, deliver P2a: an independent candidate-review workspace over
-an explicit Scope revision and technical release. Users inspect source references,
-missing applicability criteria and alternatives, keep/reject with notes, save a
-revision, reopen/download it and stop. Existing keyword ranking is relevance only.
-No unchecked material, size, FRL, insulation or configuration may become an Applicable
-claim. Legacy unbound or unsafe source records remain unresolved.
+P2a provides saved candidate retrieval and human keep/reject notes over an explicit
+Scope revision, technical release and selected opening/service target. Source-bound
+references, missing criteria and stale dependencies remain visible. Saved JSON does
+not grant approval. See PROJECT_STATE.md for validation and publication evidence.
+Full applicability remains P2b; text relevance must never become a matching verdict.
 
-This extends the usable prototype with a technical decision-support interaction
-using existing release and source governance. It does not complete full technical
-matching; broader applicability remains P2b. P1b evidence intake stays required with
-actual scanning, PostgreSQL verified reads and retained-source prerequisites. Keep
-manual/imported Scope usable without AI while those dependencies are addressed.
+## Immediate priority: independent Draft Estimate interaction
 
-Continue one demonstrated interaction at a time. Preserve exact revision dependencies,
-visible staleness, permissions and human authority. Do not introduce a separate
-framework, fleet, database or mandatory chain between capabilities.
+After P2a verification/publication, deliver P3a: a bounded user-entered-rate Draft
+Estimate workspace over explicit saved Scope inputs, with an optional candidate-review
+reference. Show unknown quantities/rates and unapproved technical status, preserve
+original rates and reasoned overrides, save/reopen/download revisions, and stop.
+This brings the fourth capability into the working prototype without waiting for
+all technical rules or source formats. It does not complete production estimating.
 
-## Durable instructions for continuing work
-
-Inspect repository state before editing and preserve unrelated local work. Read
-`AGENTS.md`, the project state, relevant roadmap section, architecture decisions,
-current services/UI and tests. Implement the single next demonstrable slice;
-avoid speculative rewrites and schema-only completion. Continue through appropriate
-validation, local-change classification, commit, normal push, PR and merge when
-within the authorized scope and all required checks/review permit it. Deployment,
-release, real-provider/customer workflows and operational canonical actions remain
-separate authorization boundaries.
-
-Use [SESSION_HANDOFF.md](./docs/SESSION_HANDOFF.md) for the current self-contained
-next-session task and verified commands. Update claims from actual source, test and
-runtime evidence. Keep this goal distinct from a claim that the product is finished.
+Reuse existing Decimal helpers after inspecting their rounding and null behavior.
+Do not create canonical physical rows, require unrelated release pins, call the
+recalculating snapshot builder or turn a kept candidate into an applicable system.
+The roadmap and handoff define the concrete next task and validation boundaries.
+Pricing XLSX ingestion, supported inferred/default methods, applicability, source
+intake, other reports and complete portability remain required follow-on work.

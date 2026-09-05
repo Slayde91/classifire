@@ -13,6 +13,7 @@ def _assessment(  # type: ignore[no-untyped-def]
     legacy_submission_table: bool = False,
     draft_tables: bool = True,
     report_tables: bool = True,
+    match_tables: bool = True,
 ):
     engine = create_engine("sqlite+pysqlite:///:memory:")
     with engine.begin() as connection:
@@ -59,6 +60,9 @@ def _assessment(  # type: ignore[no-untyped-def]
             connection.execute(text("CREATE TABLE draft_scope_revisions (id VARCHAR(36))"))
         if required_tables and report_tables:
             connection.execute(text("CREATE TABLE draft_scope_reports (id VARCHAR(36))"))
+        if required_tables and match_tables:
+            connection.execute(text("CREATE TABLE draft_system_matches (id VARCHAR(36))"))
+            connection.execute(text("CREATE TABLE draft_system_match_revisions (id VARCHAR(36))"))
         if legacy_submission_table:
             connection.execute(
                 text("CREATE TABLE physical_model_initial_submissions (id VARCHAR(36))")
@@ -69,7 +73,7 @@ def _assessment(  # type: ignore[no-untyped-def]
 
 def test_clean_stack_head_is_ready_only_with_all_required_journal_tables() -> None:
     result = _assessment(
-        "0028_draft_scope_reports",
+        "0029_draft_system_matches",
         required_tables=True,
     )
     assert result.status == "READY"
@@ -77,8 +81,8 @@ def test_clean_stack_head_is_ready_only_with_all_required_journal_tables() -> No
     assert result.database_write_performed is False
 
 
-def test_immediately_previous_head_requires_the_draft_scope_report_migration() -> None:
-    result = _assessment("0027_draft_scope_revisions", required_tables=True)
+def test_immediately_previous_head_requires_the_draft_system_match_migration() -> None:
+    result = _assessment("0028_draft_scope_reports", required_tables=True)
     assert result.status == "BLOCKED"
     assert result.code == "DATABASE_MIGRATION_REQUIRED"
 
@@ -96,7 +100,7 @@ def test_previous_head_with_stray_legacy_table_requires_retirement() -> None:
 
 def test_current_head_with_stray_legacy_table_fails_as_schema_drift() -> None:
     result = _assessment(
-        "0028_draft_scope_reports",
+        "0029_draft_system_matches",
         required_tables=True,
         legacy_submission_table=True,
     )
@@ -112,6 +116,8 @@ def test_legacy_adjudicated_head_fails_closed_for_rehearsal() -> None:
         "draft_scope_reports",
         "draft_scope_revisions",
         "draft_scopes",
+        "draft_system_match_revisions",
+        "draft_system_matches",
         "physical_model_lock_amendment_admissions",
         "physical_model_lock_amendment_outcomes",
         "physical_model_lock_replacement_admissions",
@@ -137,7 +143,7 @@ def test_unknown_revision_fails_closed() -> None:
 
 
 def test_current_head_without_draft_tables_fails_as_schema_drift() -> None:
-    result = _assessment("0028_draft_scope_reports", required_tables=True, draft_tables=False)
+    result = _assessment("0029_draft_system_matches", required_tables=True, draft_tables=False)
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_scope_revisions", "draft_scopes")
@@ -145,8 +151,16 @@ def test_current_head_without_draft_tables_fails_as_schema_drift() -> None:
 
 
 def test_current_head_without_report_table_fails_as_schema_drift() -> None:
-    result = _assessment("0028_draft_scope_reports", required_tables=True, report_tables=False)
+    result = _assessment("0029_draft_system_matches", required_tables=True, report_tables=False)
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_scope_reports",)
+    assert result.database_write_performed is False
+
+
+def test_current_head_without_match_tables_fails_as_schema_drift() -> None:
+    result = _assessment("0029_draft_system_matches", required_tables=True, match_tables=False)
+    assert result.status == "BLOCKED"
+    assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
+    assert result.missing_tables == ("draft_system_match_revisions", "draft_system_matches")
     assert result.database_write_performed is False

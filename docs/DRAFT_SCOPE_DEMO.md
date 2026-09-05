@@ -93,6 +93,39 @@ service/opening links; scroll horizontally on wider sheets. Known quantities are
 numeric; missing quantities and technical/pricing facts remain unavailable. Neither
 file grants approval or causes matching, pricing, AI or release to run.
 
+## Review technical candidates with synthetic sources
+
+Use a new empty/marked demo directory and opt into its labelled synthetic library:
+
+```powershell
+C:\CLASSIFIRE\.venv\Scripts\python.exe .\scripts\run_draft_scope_demo.py --data-dir C:\CLASSIFIRE\.tmp\my-candidate-demo --port 8799 --seed-technical-library
+```
+
+The fixture contains a real one-page PDF and two synthetic pipe records. Its seeded
+approved/clean metadata is fixture setup, not a malware scan or technical approval.
+It never adopts or overwrites an unrelated existing library. Use the same directory
+and flag after restart; an altered fixture is refused instead of silently reseeded.
+
+1. Create/save a synthetic Scope with service type `pipe`, a linked wall opening
+   and substrate `masonry` or `concrete`. Leave unknown material, FRL and dimensions
+   unknown. A cable-only query can correctly return no records from this tiny library.
+2. Choose **System candidate review**, a saved Scope revision, release
+   `SYNTHETIC-P2A-001` and an opening, service or actual linked pair.
+3. Choose **Find and save candidates**. Read the selected target, unassessed items,
+   missing criteria, captured source references and text comparisons. Open current
+   document/variant metadata if useful; these links are not source-file viewers.
+4. Set **Keep for review** or **Reject from this review**, enter reasons and choose
+   **Save new review revision**. These are unapproved preferences, never applicability.
+5. Reopen and **Download saved candidate review JSON**. Use the historical revision
+   selector to confirm earlier decisions/bytes remain unchanged.
+6. Edit/save the Scope and return to the review: **Out of date** explains the changed
+   dependency. A new retrieval creates a separate review; saving notes does not
+   refresh candidates or remove staleness. Restart and compare the same download.
+
+Only one target is assessed for retrieval per review, with at most 20 candidates.
+The artifact preserves the full Scope context and remaining unassessed item IDs.
+No Estimate, provider, canonical physical write, lock or operational release runs.
+
 ## Check persistence after restart
 
 To verify persistence, stop the server with `Ctrl+C` and run the same command
@@ -162,7 +195,8 @@ synthetic artifacts, excluded from the PR. The launcher can run this increment w
 - Scope JSON import/export is implemented for the supported v1/v2 contracts.
   Complete ProjectPackage ZIP generation/import, source-file intake, AI analysis,
   matching, pricing and additional report profiles remain outside this workflow.
-  Scope-only Draft PDF/XLSX reporting is implemented; P2a candidate review is next.
+  Scope-only Draft PDF/XLSX reporting and bounded P2a candidate review are implemented;
+  P3a manual Draft estimating is next after current validation/publication.
 - Saved revisions remain Draft and unreviewed. They do not create canonical
   physical-model records, approvals, locks or human releases.
 - Draft content is restricted to its owner and administrators. Surrounding

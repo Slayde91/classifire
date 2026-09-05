@@ -25,13 +25,15 @@ Synthetic browser demonstrations verified both workflows and persistence after
 restarting the application. Follow the [local demo guide](docs/DRAFT_SCOPE_DEMO.md)
 to try them without using an existing project database or customer evidence.
 
-P0 and P1a are bounded manual prototypes. **Scope-only Draft PDF/XLSX reporting**
-is now implemented and locally verified: select a saved revision, create both files
-and reopen unchanged downloads after edits or restart. Verify publication in current
-Git/PR evidence. The next increment is **P2a, saved technical-candidate review**,
-with missing applicability evidence explicit. Evidence intake retains its clean-scan,
-provenance and retention prerequisites; complete ProjectPackage portability, AI
-analysis, full matching and estimating remain unfinished.
+P0 editing, P1a saved JSON exchange and **scope-only PDF/XLSX reporting** are merged.
+A saved **technical-candidate review** screen is now implemented and locally
+verified: select Scope/release/target, inspect source references and missing criteria,
+keep/reject with notes, save/reopen and download unchanged historical JSON. Verify
+its final publication in current Git/PR evidence. Retrieval is not applicability.
+The next increment is **P3a, an independent manual Draft Estimate UI** with attributed
+rates/overrides, explicit unknowns and partial totals. Real evidence intake, full
+applicability, governed pricing and complete ProjectPackage/ChatGPT access remain
+unfinished. See the demo guide for clearly labelled synthetic library setup.
 See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
 [verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
 Complete visible slices before broad refinement; preserve existing authority and
