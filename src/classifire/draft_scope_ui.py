@@ -29,6 +29,7 @@ from .services.draft_scope import (
     save_revision,
     validate_payload,
 )
+from .services.draft_scope_evidence import reference_status
 from .services.draft_scope_reports import (
     DraftScopeReportError,
     create_report,
@@ -164,6 +165,10 @@ def _editor(
             expected_revision=expected_revision,
             saved=saved,
             envelope=envelope or {},
+            evidence_links=[
+                dict(ref, status=reference_status(ref, payload.get("observations", [])))
+                for ref in (envelope or {}).get("evidence_refs", [])
+            ],
             errors=errors or [],
             findings=findings or [],
         ),
@@ -553,8 +558,15 @@ def scope_reports_page(
         request,
         "draft_scope_reports.html",
         _context(
-            request, db, draft=draft, project=draft.project, envelope=envelope,
-            reports=reports, report=None, snapshot=None, stale=False,
+            request,
+            db,
+            draft=draft,
+            project=draft.project,
+            envelope=envelope,
+            reports=reports,
+            report=None,
+            snapshot=None,
+            stale=False,
         ),
         headers={"Cache-Control": "no-store"},
     )
@@ -582,23 +594,29 @@ def create_scope_report(
 
 
 @router.get("/scopes/{draft_id}/reports/{report_id}", response_class=HTMLResponse)
-def scope_report_page(
-    request: Request, db: Db, draft_id: str, report_id: str
-) -> HTMLResponse:
+def scope_report_page(request: Request, db: Db, draft_id: str, report_id: str) -> HTMLResponse:
     user = _require(request, db, "project:read")
     try:
         draft = get_draft(db, user, draft_id)
         snapshot = read_report(db, user, draft_id, report_id)
-        stale = report_freshness(db, user, draft_id, report_id)
+        stale = report_freshness(
+            db, user, draft_id, report_id, storage_root=get_settings().storage_root
+        )
     except (DraftScopeError, DraftScopeReportError) as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
     return templates.TemplateResponse(
         request,
         "draft_scope_reports.html",
         _context(
-            request, db, draft=draft, project=snapshot["project"],
-            envelope=snapshot["scope"], reports=[], report=report_id,
-            snapshot=snapshot, stale=stale,
+            request,
+            db,
+            draft=draft,
+            project=snapshot["project"],
+            envelope=snapshot["scope"],
+            reports=[],
+            report=report_id,
+            snapshot=snapshot,
+            stale=stale,
         ),
         headers={"Cache-Control": "no-store"},
     )
@@ -617,11 +635,17 @@ def download_scope_report(
         db.rollback()
         raise HTTPException(exc.status_code, exc.code) from exc
     media_type = (
-        "application/pdf" if format == "pdf"
+        "application/pdf"
+        if format == "pdf"
         else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     filename = f"CLASSIFIRE-Scope-Report-{snapshot['report_id']}.{format}"
-    return Response(content, media_type=media_type, headers={
-        "Content-Disposition": f'attachment; filename="{filename}"',
-        "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
-    })
+    return Response(
+        content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )

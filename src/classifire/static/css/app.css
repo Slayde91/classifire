@@ -3,3 +3,10 @@
 /* Present the supplied square PNG without changing its original pixels. */
 .brand-logo-window{position:relative;display:block;width:100%;aspect-ratio:1254/380;overflow:hidden;background:#fff;border-radius:8px}
 .brand .brand-logo-window img,.login-logo-window img{position:absolute;display:block;left:0;top:50%;width:100%;height:auto;max-width:none;transform:translateY(-48.7%)}
+
+/* Retained PDF review: external CSS respects the application's content policy. */
+.pdf-page-preview{display:block;max-width:100%;max-height:85vh;width:auto;height:auto;border:1px solid #d3dbe5;margin-top:1rem}
+.pdf-source-identity{overflow-wrap:anywhere}
+.pdf-extracted-text{white-space:pre-wrap;overflow-wrap:anywhere}
+.stack-form label.pdf-review-confirmation{display:flex;align-items:center;gap:.6rem}
+.stack-form input.pdf-review-checkbox{width:1.15rem;height:1.15rem;flex:0 0 auto;margin:0}

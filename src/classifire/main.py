@@ -24,6 +24,7 @@ from .api.workflow_actions import router as workflow_actions_router
 from .config import get_settings, require_production_configuration
 from .db import Base, SessionLocal, engine
 from .draft_estimate_ui import router as draft_estimate_ui_router
+from .draft_pdf_ui import router as draft_pdf_ui_router
 from .draft_scope_ui import router as draft_scope_ui_router
 from .draft_system_match_ui import router as draft_system_match_ui_router
 from .estimate_pinning import router as estimate_pinning_router
@@ -131,5 +132,6 @@ app.include_router(library_ui_router)
 app.include_router(proposal_review_admin_router)
 
 app.include_router(draft_scope_ui_router)
+app.include_router(draft_pdf_ui_router)
 app.include_router(draft_estimate_ui_router)
 app.include_router(draft_system_match_ui_router)

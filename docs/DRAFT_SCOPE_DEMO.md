@@ -246,11 +246,12 @@ and `--port 8801` to reopen this synthetic demonstration.
 
 ## Boundaries and remaining work
 
-- Scope JSON import/export is implemented for the supported v1/v2 contracts.
-  Complete ProjectPackage ZIP generation/import, source-file intake, AI analysis,
+- Scope JSON import/export supports v1/v2 and the v3 PDF page-reference extension.
+  The separate [PostgreSQL PDF demo](./DRAFT_PDF_DEMO.md) uses genuine ClamD scanning.
+  Complete ProjectPackage ZIP generation/import, broader source intake, AI analysis,
   full applicability, governed pricing and additional report profiles remain unfinished.
   Scope-only Draft PDF/XLSX reporting and bounded P2a candidate review are implemented;
-  P3a manual Draft estimating is merged in PR #192; estimate-only PDF/XLSX is locally demonstrated.
+  P3a manual Draft estimating is merged in PR #192; estimate-only PDF/XLSX is merged in PR #193.
 - Saved revisions remain Draft and unreviewed. They do not create canonical
   physical-model records, approvals, locks or human releases.
 - Draft content is restricted to its owner and administrators. Surrounding

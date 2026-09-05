@@ -623,7 +623,11 @@ def estimate_staleness(
     envelope = _read(
         db, actor, draft, estimate, estimate.latest_revision if revision is None else revision
     )
-    reasons = []
+    from .draft_pdf_intake import scope_evidence_staleness
+
+    reasons = scope_evidence_staleness(
+        db, actor, draft_id, envelope["scope"], storage_root=storage_root
+    )
     if _scope(db, actor, draft_id)["sha256"] != envelope["scope"]["sha256"]:
         reasons.append("ESTIMATE_SCOPE_CHANGED")
     match = envelope["system_match"]

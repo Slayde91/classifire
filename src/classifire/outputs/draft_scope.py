@@ -21,9 +21,11 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
-from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
-from .common import ATTRIBUTION, logo_path
+from .common import ATTRIBUTION
+from .draft_branding import DraftLogo
+from .draft_branding import supplied_logo_path as logo_path
 from .xlsx import _formats
 
 _FONT = "CLASSIFIRE-Scope-Unicode"
@@ -151,13 +153,7 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
     def detail(label: str, value: object) -> None:
         text(f"{label}: {value}")
 
-    logo_source = str(logo_path())
-    probe = Image(logo_source)
-    aspect = probe.imageWidth / probe.imageHeight
-    logo_width = min(65 * mm, 20 * mm * aspect)
-    logo = Image(logo_source, width=logo_width, height=logo_width / aspect)
-    logo.hAlign = "LEFT"
-    story.extend([logo, Spacer(1, 5 * mm)])
+    story.extend([DraftLogo(), Spacer(1, 5 * mm)])
     text("Draft Scope Report", title)
     text(report["project"]["name"], item_heading)
     text(f"{report['project']['reference']} | Saved scope revision {report['scope']['revision']}")
@@ -247,7 +243,16 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
         for key in _LINEAGE_KEYS:
             text(f"{key.replace('_', ' ').title()}: {entry[key]}", small)
     if not report["scope"].get("import_lineage"):
-        text("No imported source history. Manual Draft.")
+        text("No imported source history. Draft remains unreviewed.")
+    if report["scope"].get("evidence_refs"):
+        text("Saved page-review references", heading)
+        text(
+            "These are saved Draft review claims. Current source/scan availability may change; "
+            "the application checks it separately. No technical or physical approval is granted."
+        )
+        for ref in report["scope"]["evidence_refs"]:
+            for key, value in ref.items():
+                text(f"{key.replace('_', ' ')}: {value}", small)
     text("Report and source identity", heading)
     for label, value in _metadata(report):
         text(f"{label}: {value}", small)
@@ -352,10 +357,9 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
         for column, width in enumerate(widths, 1):
             sheet.set_column(column, column, width)
         if brand:
-            sheet.set_row(0, 70)
+            sheet.set_row(0, 110)
             sheet.write_string(0, 2, "CLASSIFIRE", formats["title"])
-            probe = Image(str(logo_path()))
-            scale = min(130 / probe.imageWidth, 72 / probe.imageHeight)
+            scale = 140 / 1254
             sheet.insert_image(
                 0,
                 0,
@@ -531,5 +535,16 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
         ],
         [15, 38, 39, 39, 12, 39, 32, 68, 68],
     )
+    if report["scope"].get("evidence_refs"):
+        table(
+            "Page Review References",
+            ["Observation ID", "Field", "Saved claim"],
+            [
+                [ref["observation_id"], key.replace("_", " "), str(value)]
+                for ref in report["scope"]["evidence_refs"]
+                for key, value in ref.items()
+            ],
+            [39, 28, 100],
+        )
     workbook.close()
     return output.getvalue()

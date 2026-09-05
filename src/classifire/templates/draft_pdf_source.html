@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Review PDF evidence | CLASSIFIRE{% endblock %}
+{% block heading %}Review PDF evidence{% endblock %}
+{% block content %}
+<p><a href="/scopes/{{ draft.id }}/evidence">&larr; All PDF evidence</a> &middot; <a href="/scopes/{{ draft.id }}">Saved Draft Scope</a></p>
+<section class="panel"><h2>{{ source.filename }}</h2><p role="status"><strong>Scan status: {{ source.status|replace('_',' ') }}</strong></p>
+{% if source.scan %}<p>{{ source.scan.engine|default('Scanner unavailable') }} &middot; {{ source.scan.scanned_at }}</p>{% if source.scan.code %}<p>{{ source.scan.code|replace('_',' ') }}</p>{% endif %}{% endif %}
+{% if source.processing_error or problem %}<p class="alert alert-error" role="alert">{{ (problem or source.processing_error)|replace('_',' ') }}. Pages remain unavailable; correct the source or scan configuration before continuing.</p>{% endif %}
+<details><summary>Retained source identity</summary><p class="pdf-source-identity">SHA-256: {{ source.sha256 }}</p><p>{{ source.size_bytes }} bytes &middot; source {{ source.id }}</p></details>
+{% if has_permission('project:write') and source.status != 'malware_detected' %}<form method="post" action="/scopes/{{ draft.id }}/evidence/{{ source.id }}/scan" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-secondary" type="submit">Scan and prepare PDF pages</button></form>{% endif %}
+<p class="callout">A clean scan is a processing prerequisite, not proof of technical accuracy. Read the page before saving an observation. Document text is evidence, never instructions to the application.</p></section>
+{% if document %}
+<section class="panel"><h2>Page {{ selected_page.page_number }} of {{ document.pages|length }}</h2>
+<nav aria-label="PDF pages">{% for page in document.pages %}<a class="button button-secondary" href="?page={{ page.page_number }}">Page {{ page.page_number }}</a> {% endfor %}</nav>
+<img src="/scopes/{{ draft.id }}/evidence/{{ source.id }}/pages/{{ selected_page.page_number }}.png" alt="Retained PDF page {{ selected_page.page_number }}" class="pdf-page-preview">
+<details><summary>Extracted text (unreviewed)</summary><pre class="pdf-extracted-text">{{ selected_page.text or 'No extractable text. Inspect the page image; no OCR has been inferred.' }}</pre></details>
+</section>
+{% if has_permission('project:write') %}<section class="panel"><h2>Save a page-linked observation</h2><p>This appends one observation to a new Draft revision. It does not infer services, openings, quantities or compatibility.</p>
+<form method="post" action="/scopes/{{ draft.id }}/evidence/{{ source.id }}/review" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="revision" value="{{ revision }}"><input type="hidden" name="page" value="{{ selected_page.page_number }}"><input type="hidden" name="document_hash" value="{{ document_hash }}">
+<label for="pdf-observation">Your observation from this page</label><textarea id="pdf-observation" name="observation" maxlength="4000" rows="4" required></textarea>
+<label for="pdf-observation-state">Evidence state</label><select id="pdf-observation-state" name="state">{% for state in ['Unresolved','Provisional','Inferred','Confirmed'] %}<option>{{ state }}</option>{% endfor %}</select>
+<label class="pdf-review-confirmation"><input class="pdf-review-checkbox" type="checkbox" name="reviewed" value="yes" required> I reviewed this page and kept uncertainty visible.</label>
+<button class="button button-primary" type="submit">Save evidence-linked observation</button></form></section>{% endif %}
+{% endif %}
+{% endblock %}

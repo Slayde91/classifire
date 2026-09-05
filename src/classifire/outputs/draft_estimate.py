@@ -8,7 +8,6 @@ import unicodedata
 from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
-from pathlib import Path
 from typing import Any
 
 import xlsxwriter  # type: ignore[import-untyped]
@@ -16,9 +15,11 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
-from reportlab.platypus import Flowable, Paragraph, SimpleDocTemplate, Spacer
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from .common import ATTRIBUTION
+from .draft_branding import DraftLogo as _Logo
+from .draft_branding import supplied_logo_path as _logo_path
 from .draft_scope import _FONT, _control_text, _font_coverage, _pdf_text, _segments
 from .xlsx import _formats
 
@@ -35,35 +36,6 @@ def _verified(snapshot: dict[str, Any]) -> dict[str, Any]:
 
     validate_report_snapshot(snapshot)
     return deepcopy(snapshot)
-
-
-def _logo_path() -> Path:
-    return Path(__file__).resolve().parents[1] / "static" / "brand" / "classifire-logo.png"
-
-
-class _Logo(Flowable):
-    """Clip the supplied square canvas for display without changing its pixels."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.width = 70 * mm
-        self.height = 22 * mm
-
-    def draw(self) -> None:
-        canvas = self.canv
-        canvas.saveState()
-        clip = canvas.beginPath()
-        clip.rect(0, 0, self.width, self.height)
-        canvas.clipPath(clip, stroke=0)
-        canvas.drawImage(
-            str(_logo_path()),
-            0,
-            self.height / 2 - self.width * 0.513,
-            width=self.width,
-            height=self.width,
-            mask="auto",
-        )
-        canvas.restoreState()
 
 
 def _number(value: str | None) -> str:
@@ -151,6 +123,9 @@ def _context_rows(report: dict[str, Any]) -> list[list[Any]]:
     for index, source in enumerate(estimate["scope"].get("import_lineage", []), 1):
         for key, value in source.items():
             rows.append(["Unverified imported claim", str(index), key, str(value)])
+    for ref in estimate["scope"].get("evidence_refs", []):
+        for key, value in ref.items():
+            rows.append(["Saved page-review claim", ref["observation_id"], key, str(value)])
     return rows
 
 

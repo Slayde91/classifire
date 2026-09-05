@@ -303,3 +303,84 @@ def test_upload_reuses_identical_bytes_for_the_same_evidence_purpose(
             assert list((settings.storage_root / '.incoming').iterdir()) == []
     finally:
         engine.dispose()
+
+
+@pytest.mark.parametrize("failure", ["empty", "oversize", "corrupt_existing"])
+def test_upload_failures_clean_temporary_files_and_never_overwrite(tmp_path, failure):
+    engine = create_engine("sqlite+pysqlite://")
+    Base.metadata.create_all(engine)
+    settings = Settings(storage_root=tmp_path / "storage", max_upload_mb=1, _env_file=None)
+    payload = b"" if failure == "empty" else b"x" * (1048577 if failure == "oversize" else 10)
+    final = None
+    if failure == "corrupt_existing":
+        digest = hashlib.sha256(payload).hexdigest()
+        final = settings.storage_root / digest[:2] / digest[2:4] / (digest + ".pdf")
+        final.parent.mkdir(parents=True)
+        final.write_bytes(b"retained recovery bytes")
+    with Session(engine) as db:
+        with pytest.raises(ValueError):
+            save_upload(
+                db, settings, _upload("same.pdf", payload), purpose="project_evidence", user=None
+            )
+        assert list(db.scalars(select(StoredFile))) == []
+    assert list((settings.storage_root / ".incoming").iterdir()) == []
+    if final:
+        assert final.read_bytes() == b"retained recovery bytes"
+    engine.dispose()
+
+
+def test_upload_refuses_linked_parent_before_creating_child(tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    link = tmp_path / "linked"
+    try:
+        link.symlink_to(outside, target_is_directory=True)
+    except OSError:
+        pytest.skip("Platform does not permit directory symlinks")
+    settings = Settings(storage_root=link / "must-not-create", _env_file=None)
+    with Session(create_engine("sqlite+pysqlite://")) as db:
+        with pytest.raises(StoredFileBindingError):
+            save_upload(
+                db,
+                settings,
+                _upload("same.pdf", b"synthetic"),
+                purpose="project_evidence",
+                user=None,
+            )
+    assert list(outside.iterdir()) == []
+
+
+def test_concurrent_identical_filenames_keep_distinct_complete_bytes(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    engine = create_engine("sqlite:///" + (tmp_path / "uploads.sqlite").as_posix())
+    Base.metadata.create_all(engine)
+    settings = Settings(storage_root=tmp_path / "storage", _env_file=None)
+    start = Barrier(2)
+
+    class Stream(BytesIO):
+        def __init__(self, content):
+            super().__init__(content)
+            self.first = True
+
+        def read(self, size=-1):
+            if self.first:
+                self.first = False
+                start.wait(timeout=10)
+            return super().read(size)
+
+    def upload(content):
+        with Session(engine) as db:
+            source = UploadFile(filename="same.pdf", file=Stream(content))
+            row = save_upload(db, settings, source, purpose="project_evidence", user=None)
+            db.commit()
+            return Path(row.storage_path).read_bytes()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert list(pool.map(upload, [b"first synthetic", b"second synthetic"])) == [
+            b"first synthetic",
+            b"second synthetic",
+        ]
+    assert list((settings.storage_root / ".incoming").iterdir()) == []
+    engine.dispose()

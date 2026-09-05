@@ -1,6 +1,8 @@
 # Draft Scope v1 and v2 import contract
 
 Status: prototype contract implemented with the standalone Draft Scope workspace.
+The compatible [v3 PDF page-reference extension](./DRAFT_PDF_EVIDENCE_V1_CONTRACT.md)
+is separate; this document preserves the original v1/v2 contract.
 Version 1 manual artifacts remain supported unchanged. Version 2 adds explicit
 import provenance and retained, untrusted source-history claims.
 This is a manual Scope capability increment under accepted ADR 0002. It is not the

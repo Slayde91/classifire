@@ -2,15 +2,17 @@
 
 **Verified snapshot:** 2026-09-06 (AEST).
 **Product health:** usable manual Draft Scope/import, candidate review, manual
-estimating and Scope reports on shared main. The first estimate-only report
-increment is locally implemented with passing browser, restart and focused checks.
-Evidence-to-Scope intake, full applicability, governed pricing, complete portability
-and production readiness remain unfinished.
-**Verified shared-main baseline:** `24ee6e35f181ed544ae82cdc3bc429ce70f49c3b`, merged
-[PR #192](https://github.com/Slayde91/classifire/pull/192), feature `8c0da21476e66dac0e1e003b086271d6118c78b2`.
-**Current increment:** `feat/draft-estimate-reports-20260905`, based on that main.
+estimating and independent Scope/Estimate reports. The first PDF evidence review
+path now has local real-scanner browser and restart evidence. Full Scope analysis,
+actual applicability, governed pricing, complete portability and production readiness
+remain unfinished; no full product or production-phase completion is claimed.
+**Verified shared-main baseline:** `45c0fdd389b066589881531778e6b7a8b898d754`,
+[merged PR #193](https://github.com/Slayde91/classifire/pull/193), feature
+`acc2f458fa11a4604d617a990eba6a7de99f0842`.
+**Current increment:** `feat/draft-pdf-intake-20260906` in
+`C:\CLASSIFIRE\.tmp\draft-pdf-intake-20260906`, based on that main.
 This is a prepublication checkpoint. Verify current Git/PR/CI before treating the
-report increment as merged or repeating it. Full product completion is not claimed.
+PDF changes as merged or repeating work already published.
 
 ## Approved direction and implementation
 
@@ -22,80 +24,79 @@ revisions. Imported claims, chat and hashes never grant approval or release auth
 
 | Area | Verified implementation | Remaining gap |
 | --- | --- | --- |
-| Scope (P0/P1a, merged) | Owner/admin manual editor, graph validation, immutable revisions, exact JSON download, bounded import preview/confirmation with unverified v2 lineage | Evidence-backed intake UI, service instances, full plane/treatment/criteria and contradiction coverage |
-| Technical (P2a, merged) | Explicit saved Scope/release/target, source-bound retrieval, keep/reject notes, history/export and stale checks | Retrieval is not applicability; P2b needs sufficient physical criteria and authorised technical constraints |
-| Estimating (P3a, merged PR #192) | Manual service/blank-opening lines, exact Decimal amounts, original values, attributed overrides, omit/restore, partial AUD subtotal and exact JSON | Pricing XLSX provenance, governed/default/inferred methods, tax, broader components and complete recovery |
-| Reporting (P4a merged; first P4b local) | Separate Scope-only and estimate-only frozen snapshots, paired PDF/XLSX retention, exact downloads and stale warnings | Technical/combined profiles, complete integration and measured production retention |
-| UI/API | FastAPI/Jinja shared services; supplied original PNG on login/sidebar; estimate-report routes locally demonstrated | Shared ChatGPT adapter and full tenant privacy remain unproven |
-| Source intake | Existing retained-byte checks, PDF/XLSX/DOCX adapters and technical governance | save_upload records pending/not_configured; worker has no registered scan/processing handler; no demonstrated source-to-Scope UI |
-| Packages | Scope v1/v2 exchange, candidate/Estimate JSON, retained report outputs | Complete ProjectPackage ZIP, rights/membership projection, candidate/estimate import and evidence/history portability |
-| Authority/operations | Guarded canonical models, admissions/locks, release and transport/journal foundations remain intact | Production Phase 8-14 exits, real provider assurance and OpenClaw protection parity are not proven by Draft demos |
+| Scope (P0/P1a merged; first P1b local) | Owner/admin editor, graph validation, immutable JSON revisions/import; PDF upload/scan/page review appends v3 evidence-linked observations | Automatic analysis, other formats, service instances, full planes/treatments/criteria and contradiction coverage |
+| Technical (P2a merged) | Saved Scope/release/target, source-bound retrieval, keep/reject notes, history/export and stale checks | P2b actual applicability needs sufficient physical inputs and authorized structured constraints; text retrieval is not compatibility |
+| Estimating (P3a merged) | Manual service/blank-opening lines, Decimal amounts, originals and reasoned overrides, omit/restore, partial AUD subtotal and exact JSON | Pricing XLSX provenance, governed/default/inferred methods, broader components and complete recovery |
+| Reporting (P4a and estimate-only P4b merged) | Independent frozen snapshots, paired PDF/XLSX, exact historical downloads and stale warnings; local v3 page claims flow into outputs | Technical/combined profiles, production retention and full package export |
+| UI/API | Shared FastAPI/Jinja use cases; supplied logo on sign-in/sidebar; local PDF evidence routes | Shared ChatGPT adapter and full tenant privacy remain unproven |
+| Source intake (first P1b local) | Exact-byte ClamD adapter, unique atomic upload, PostgreSQL quarantine coordination, bounded parser child, authorized PNG pages and unreviewed text | OCR/other formats, hosted parser isolation, quotas/retention/monitoring and a general durable queue |
+| Packages | Scope v1/v2 exchange plus local v3 page claims, candidate/Estimate JSON and retained reports | Complete ProjectPackage ZIP, exact rights/membership projection, source bytes/history portability and other artifact imports |
+| Authority/operations | Existing canonical guards, admissions/locks, human release and transport/journal foundations | Production Phase 8-14 exits, real provider assurance and OpenClaw protection parity are not proven by Draft demos |
 
-## Current report increment
+## Current PDF increment
 
-One explicitly selected saved Estimate revision is frozen with its full validated
-Scope/optional review context, project labels, author/time and render version.
-`draft_estimate_reports.py` retains both outputs atomically; migration
-`0031_draft_estimate_reports` adds a separate table with exact Estimate revision
-binding. Historical migrations and existing Scope-only reports remain unchanged.
-Read/download verifies snapshot/input/byte hashes and current authority; never
-regenerates output or reruns calculation, matching, canonical writers or locks.
+`draft_pdf_ui.py` calls `services/draft_pdf_intake.py` for explicit upload, scan,
+page viewing and reviewed observation saves. `malware_scan.py` talks to real ClamD;
+`draft_pdf_worker.py` reuses the report normalizer in a bounded child process.
+Migration `0032_draft_pdf_sources` adds exact Draft/StoredFile byte bindings and
+scan/document metadata. Supported PDFs: 10 MiB, 50 pages, 20 per Draft. Missing,
+failed, stale, infected or unsupported input cannot become viewable evidence.
 
-The real UI previews, creates, lists and downloads reports. Later Estimate, Scope,
-optional review/source and project changes flag stale inputs without rewriting
-files. Both formats show partial coverage, unknown/unpriced/omitted work, original
-values and change history. Exact decimal text preserves values beyond spreadsheet
-precision; optional numeric subtotals use a tested safe-precision policy. Tax is
-not calculated, technical status is unapproved. See
-[DRAFT_ESTIMATE_REPORT_V1_CONTRACT.md](./DRAFT_ESTIMATE_REPORT_V1_CONTRACT.md).
+A v3 Scope reference pins the observation hash, source/hash/size, page locator/text
+hash, normalized document and scan hashes, reviewer/time. A manual edit keeps the
+old review claim visibly stale; imported claims become imported_unverified. Earlier
+v1/v2/v3 downloads and generated reports are not rewritten. Source changes propagate
+stale status to dependent reports/estimates. Saving review creates no canonical
+physical rows, technical approval, price, lock or release. See the
+[contract](./DRAFT_PDF_EVIDENCE_V1_CONTRACT.md) and [demo](./DRAFT_PDF_DEMO.md).
 
 ## Project health and measured verification
 
-- P3a [PR CI 33967557386](https://github.com/Slayde91/classifire/actions/runs/33967557386)
-  and [main CI 33968038437](https://github.com/Slayde91/classifire/actions/runs/33968038437)
-  succeeded: **1,286 tests, 141 warnings**, full Ruff/Mypy/Bandit and one migration head.
-  This proves the shared baseline, not publication of the current report changes.
-- Current report backend/renderer tests: **21 passed**. Report HTTP, forward migration
-  and deployment lineage: **17 passed**, one existing Starlette/httpx warning.
-- Combined 12-file regression: **233 passed**, one existing warning, in 313.11 seconds.
-  It covers report/Estimate/Scope services and UI, candidate dependencies, existing
-  reports, snapshots, desk quotes and physical/admission boundaries. Runs overlap;
-  these counts must not be added as unique coverage.
-- Additional historical migration/packaging/preflight/legacy checks: **15 passed**,
-  one existing Alembic path_separator warning, in 82.39 seconds.
-- Full Ruff, Mypy (**160 source files**), Bandit and diff whitespace checks passed.
-  Full hosted CI and PostgreSQL coverage remain publication gates at this checkpoint.
-- Real Chrome creation/download, later Estimate edit and an **actual server restart**
-  passed. Exact PDF/XLSX bytes remained unchanged; stale reasons remained visible.
-  Five PDF pages and representative ranges from all six workbook sheets were
-  visually inspected. Cell types, filters, exact decimals, no formulas/URLs and
-  embedded original logo were checked. The artifact-tool preview had a Windows
-  native-module error; read-only Excel/PyMuPDF previews supplied visual verification.
-- Tests cover unknown/zero/omitted values, large decimals, long/hostile text, source
-  staleness, integrity corruption, atomic renderer failure/mutation, ownership,
-  export/technical permissions, revocation and CSRF. No customer/provider UAT ran.
-- Read-only synthetic counts after restart: one Scope/four revisions, one Estimate/
-  nine revisions and one report; zero canonical Estimate/line, Defect/Opening/Service,
-  Physical Model Lock or library-release rows. The demo uses create_all and has no
-  alembic_version table; the separate migration test proves 0030-to-0031 upgrade.
-- Original supplied logo bytes match the packaged PNG SHA-256
+- Shared PR #193 [PR CI 33974663186](https://github.com/Slayde91/classifire/actions/runs/33974663186)
+  and [main CI 33975108129](https://github.com/Slayde91/classifire/actions/runs/33975108129)
+  succeeded: **1,315 tests, 141 warnings**, Ruff/Mypy/Bandit and one migration head.
+  Initial PR CI had caught lost 0029 upgrade recognition; the corrected service
+  preserves recognized lineages. The original failing assertion remains intact.
+- Current final focused PDF/HTTP/parser/scanner/storage/migration/readiness set:
+  **67 passed, 2 skipped, 2 warnings** (156.20 seconds). Both skips require Windows
+  symlink privileges; full Linux CI must cover them. Warnings are existing
+  Starlette/httpx and Alembic path_separator deprecations.
+- Earlier combined Draft/Estimate/report/candidate/storage regression:
+  **238 passed, 1 skipped, 1 warning** (410.92 seconds). Runs overlap; do not sum
+  counts. New migration proves 0031 -> 0032 preserves existing Estimate JSON and
+  PDF/XLSX bytes and enforces exact source binding; historical 0031 test stays pinned.
+- Real Chrome upload -> pending -> real clean scan -> retained raster page ->
+  explicit observation -> saved v3 download passed. An actual process restart
+  preserved page access and exact revision-2 bytes. Manual edit to revision 3
+  exposed the changed-review warning without changing revision 2.
+- Real scanner: isolated loopback ClamAV 1.5.4, signature database 28108, published
+  2026-08-30. The actual scan metadata is retained in the synthetic source; the
+  seven-day freshness rule can block it later and must not be bypassed. Tests use
+  controlled verdict fixtures for failures; those are not real malware-scanning proof.
+- Synthetic demo counts after restart/edit: one PDF source, three Scope revisions;
+  zero canonical Estimate, Opening, Service or Physical Model Lock rows. Demo
+  create_all is distinct from the passing forward-migration test.
+- Served logo bytes match the owner's original PNG SHA-256
   `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
-  Existing report outputs were not rewritten. See DRAFT_SCOPE_DEMO.md for receipts.
-
-
-- Initial PR #193 CI 33973815802 stopped after **526 passes and one failure**:
-  advancing the current head dropped recognition of the previously supported 0029
-  lineage. The service now preserves recognized upgrade heads; the original failing
-  assertion remains unchanged. **15 focused lineage/migration checks passed** after
-  the correction, with Ruff/Mypy/Bandit rechecked. A fresh full CI run is required.
+  Sign-in/sidebar were visually inspected; existing report outputs were not rewritten.
+- Full hosted current-head CI/review remains a publication gate at this checkpoint.
+  No customer evidence, real provider, operational database, deployment or release ran.
 
 ## Dependencies and technical debt
 
-P1b needs an actual scanner producer, retained source policy, safe concurrent upload
-and verified storage. `save_upload` records pending/not_configured; `worker.py` has
-no registered processing handler. Optional `clamd` alone is not a working scan path.
-PostgreSQL provides existing locked clean-byte reads; SQLite demonstration does not
-prove production quarantine serialization. Do not weaken these guards for intake.
+PDF review requires PostgreSQL and a trusted reachable ClamD with a fresh signature
+database. SQLite manual entry is unaffected. The configured daemon must use UTC;
+its unauthenticated TCP endpoint requires trusted private access. This bounded
+synchronous command is not a general durable worker. Linux adds parser resource
+limits; Windows process/timeout/data bounds are not a complete OS sandbox.
+
+Supported retention is append-only with no source-delete UI or automatic cleanup.
+An aborted DB publication may leave unreferenced exact-byte storage; never blindly
+delete it. Global quotas, orphan reconciliation, retention duration/legal holds,
+scanner update monitoring, hosted isolation and measured concurrent capacity remain
+pre-customer deployment requirements. Existing storage ACLs are trusted. Uploaded
+PDFs are not yet included in a portable archive; source metadata imports confer no
+local viewing or approval rights. These gaps do not justify fake clean flags.
 
 P2a freezes allowlisted library fields because current release manifests do not
 freeze every matching field. Legacy unbound sources remain visibly unresolved. Live
@@ -127,19 +128,22 @@ infrastructure. Existing canonical export/lock/human-release gates remain intact
 
 ## Local change classification
 
-- Active isolated `.tmp/draft-estimate-reports-20260905`: estimate-report model/
-  service/renderer/UI, forward migration, tests/current-head fixtures and aligned
-  docs. All are part of this increment; publication pending at this checkpoint.
-- Protected root remains recovery evidence at `de0cc5a` on
-  `gpt/phase8-linked-original-images`, with CHERRY_PICK_HEAD `c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`.
-  Its reverified 46 unstaged modifications, 14 staged additions and four
-  DU conflicts are unrelated. Recheck before any recovery; never bulk-stage it.
-- Prior P0/P1a/P4a/P2a/P3a branches and demos are preserved. P3a is merged, not work
-  to rebuild. The separate ProjectPackage candidate remains three untracked files;
-  its historical 22-test result is not current qualification.
-- Current synthetic data: `.tmp/draft-estimate-report-demo-20260906`; outputs,
-  screenshots and receipts: `.tmp/draft-estimate-report-artifacts`. Browser harnesses
-  and synthetic databases/cookies remain outside this feature diff.
+- Active isolated PDF worktree: bounded scan/parser/intake services, v3 evidence
+  extension, model/additive migration, UI/CSS, shared upload correction, downstream
+  provenance/staleness, tests/current-head fixtures and aligned documentation.
+  These are the selected P1b increment; publication is pending at this checkpoint.
+- Protected root stays at `de0cc5a` on `gpt/phase8-linked-original-images`, with
+  CHERRY_PICK_HEAD `c3e4c810d93bf0bbbc397f70e0deb8442aa2eec7`. Its 46 unstaged
+  modifications, 14 staged additions and four DU conflicts are unrelated recovery
+  evidence. Recheck read-only; never bulk-stage, reset, resolve or publish it implicitly.
+- Prior P0/P1a/P4a/P2a/P3a/P4b branches, demos and the original logo remain preserved.
+  The separate ProjectPackage candidate remains three untracked files; its historical
+  22-test result is not current qualification.
+- Synthetic PDF data: `.tmp/draft-pdf-demo-20260906`; screenshots, source and receipts:
+  `.tmp/draft-pdf-artifacts`; browser harnesses: `.tmp/scope-browser-test-tools`.
+  Dedicated loopback containers `classifire-pdf-intake-20260906-pg` and
+  `classifire-pdf-intake-20260906-av` have no customer host mounts. Demo/test databases
+  are separate. No synthetic data, session marker, cookies or QA outputs enter Git.
 
 ## Historical operational evidence
 
@@ -152,13 +156,27 @@ The receipt/database were not reopened. This does not authorize a real rerun.
 
 ## Recommended Next Actions
 
-1. Finish current report publication after exact-head checks/review; verify merge
-   and main CI. Do not redo it if current Git shows it has already merged.
-2. **Next implementation: P1b, one PDF evidence intake UI path.** Reuse storage and
-   report evidence services; deliver real scanning, retained identity, safe viewing
-   and explicit reviewed observations into Draft Scope together. Pending/error/
-   infected/unconfigured inputs remain blocked. Preserve manual operation and
-   demonstrate with synthetic evidence before expanding formats or AI.
-3. Continue P2b actual applicability, P3b governed pricing, remaining report profiles
-   and full ProjectPackage/ChatGPT access. None is completed by the manual worksheet
-   or its reports. Authoritative Phase 8-14 and Human Release gates remain separate.
+1. Finish current PDF publication after exact-head CI/review; verify merge and main
+   CI. Do not redo it if current Git shows it already merged.
+2. **Next implementation: P2b's first bounded applicability review UI.** Current
+   retrieval uses service type/substrate while physical material/size/orientation/FRL
+   and installation criteria are missing. Capture explicit target inputs and compare
+   only authorized structured constraints, saving reasons and unresolved findings.
+   Reuse existing Scope/match/technical services; never promote text similarity or a
+   synthetic fixture into technical authority. Deliver one visible interaction with
+   its minimum compatible contract, tests, reopen/download and stale dependencies.
+3. Continue governed pricing, remaining reports, full ProjectPackage/ChatGPT access
+   and broader Scope analysis. Authoritative Phase 8-14 and Human Release are separate
+   gates; this PDF milestone does not complete the full product goal.
+
+## Final local verification checkpoint
+
+Full Ruff, Mypy (167 source files), Bandit and one Alembic head (0032) passed;
+Git whitespace and relative documentation-link checks passed. Report-specific tests
+had 43 passes and two header-position failures; the original C1 placement was restored
+and both unchanged assertions passed on rerun. No tests were weakened.
+New Draft Scope and Estimate outputs share the supplied original PNG renderer;
+Chrome verified new PDF/XLSX creation and unchanged historical downloads. Both PDF
+pages and workbook cell types/source references were inspected. Final browser console
+had no errors. Existing canonical/legacy output rendering was not migrated.
+Full hosted current-head CI/review remains the publication gate at this checkpoint.
