@@ -5,6 +5,10 @@ an explicit saved Scope revision and creates a paired PDF and XLSX report from o
 frozen snapshot. This does not complete independent system matching, estimating,
 complete-project reporting, or production approval/release requirements.
 
+The additive [scope-and-system profile](./DRAFT_SYSTEM_REPORT_CONTRACT.md) reuses
+this service/table with a v2 snapshot and additional technical-read checks. The v1
+contract and exact retained scope-only bytes below remain supported.
+
 ## Shared use cases and permissions
 
 `classifire.services.draft_scope_reports` owns the report contract, source binding,

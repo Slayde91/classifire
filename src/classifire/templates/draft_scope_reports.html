@@ -2,24 +2,38 @@
 {% block title %}Scope reports | {{ project.reference }} | CLASSIFIRE{% endblock %}
 {% block heading %}Scope reports{% endblock %}
 {% block content %}
+{% set match = snapshot.get("system_match") if snapshot else match_envelope|default(none) %}
 <link rel="stylesheet" href="/static/draft_scope.css">
 <div class="scope-context"><a href="/scopes/{{ draft.id }}">&larr; Edit Scope</a><span class="badge badge-draft">Draft &middot; awaiting review</span></div>
 <section class="panel">
   <div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2>
-  <p>Scope-only report &middot; saved Scope revision {{ envelope.revision }}</p>
-  <p class="scope-hint">This report contains unreviewed Scope information. Technical-system selection and pricing are unavailable. Unknown quantities remain unknown.</p>
+  <p>{{ "Scope and system review" if match else "Scope-only report" }} &middot; saved Scope revision {{ envelope.revision }}{% if match %} &middot; review revision {{ match.revision }}{% endif %}</p>
+  <p class="scope-hint">{% if match %}This report preserves unapproved candidate decisions and partial numeric checks for the selected target only. Keeping a candidate is not technical approval. Pricing remains unavailable; reporting never runs matching or estimating.{% else %}This report contains unreviewed Scope information. Technical-system selection and pricing are unavailable. Unknown quantities remain unknown.{% endif %}</p>
+  {% if match and stale and not report %}<p class="notice notice-warning" role="status"><strong>Selected review is out of date:</strong> a newer review exists or its Scope/source dependencies changed or cannot be verified. Creating a report preserves these historical claims; it does not refresh or approve them.</p>{% endif %}
   {% if report %}
-  {% if stale %}<div class="notice notice-warning" role="status"><strong>Out of date:</strong> the Scope or project details have changed since this report was created. These downloads preserve the earlier snapshot. <a href="/scopes/{{ draft.id }}/reports">Review the latest Scope for a new report</a>.</div>{% endif %}
+  {% if stale %}<div class="notice notice-warning" role="status"><strong>Out of date:</strong> the Scope, project details or captured review/source dependencies have changed or cannot be verified. These downloads preserve the earlier snapshot. {% if match %}<a href="/scopes/{{ draft.id }}/system-matches/{{ match.artifact_id }}/reports">Review the latest saved system review for a new report</a>{% else %}<a href="/scopes/{{ draft.id }}/reports">Review the latest Scope for a new report</a>{% endif %}.</div>{% endif %}
   <p>Created {{ snapshot.created_at }}. Both files contain the same saved snapshot.</p>
   <div class="scope-context-actions"><a class="button button-primary" href="/scopes/{{ draft.id }}/reports/{{ report }}/download?format=pdf">Download PDF</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/reports/{{ report }}/download?format=xlsx">Download Excel</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/reports">All Scope reports</a></div>
   <details class="scope-import-source"><summary>Report identity and provenance</summary><dl class="scope-import-details"><dt>Report ID</dt><dd class="scope-item-id">{{ snapshot.report_id }}</dd><dt>Snapshot checksum</dt><dd class="scope-item-id">{{ snapshot.sha256 }}</dd><dt>Saved Scope checksum</dt><dd class="scope-item-id">{{ envelope.sha256 }}</dd><dt>Created by</dt><dd class="scope-item-id">{{ snapshot.created_by }}</dd><dt>Format version</dt><dd>{{ snapshot.render_version }}</dd></dl></details>
+  {% else %}
+  {% if match %}
+  <form method="get" action="{{ preview_url }}" class="stack-form"><label for="system-report-revision">Saved review revision to report</label><input id="system-report-revision" name="revision" type="number" min="1" max="{{ latest_match_revision }}" value="{{ match.revision }}" required><button class="button button-secondary" type="submit">Preview review revision</button></form>
+  <p class="scope-hint">Only the selected saved review and its embedded Scope are included. Historical or stale source claims remain historical; unsaved edits are excluded.</p>
+  {% if has_permission('project:write') and has_permission('technical:read') %}<form method="post" action="{{ preview_url }}" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="match_revision" value="{{ match.revision }}"><button class="button button-primary" type="submit">Create Scope and System PDF and Excel</button></form>{% endif %}
   {% else %}
   <form method="get" action="/scopes/{{ draft.id }}/reports" class="stack-form"><label for="report-revision">Saved Scope revision</label><input id="report-revision" name="revision" type="number" min="1" max="{{ draft.latest_revision }}" value="{{ envelope.revision }}" required><button class="button button-secondary" type="submit">Preview revision</button></form>
   <p class="scope-hint">Review the saved content below. Unsaved editor changes are not included.</p>
   {% if envelope.revision != draft.latest_revision %}<p class="notice notice-warning">You selected an earlier revision. The latest is revision {{ draft.latest_revision }}.</p>{% endif %}
   {% if has_permission('project:write') %}<form method="post" action="/scopes/{{ draft.id }}/reports" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="revision" value="{{ envelope.revision }}"><button class="button button-primary" type="submit">Create PDF and Excel report</button></form>{% endif %}
   {% endif %}
+  {% endif %}
 </section>
+{% if match %}
+<section class="panel"><h2>Saved system review</h2><p>Review {{ match.artifact_id }} &middot; revision {{ match.revision }}. Technical applicability remains unresolved; source integrity is not approval for this Scope.</p>
+<dl class="scope-import-details">{% for label, value in system_summary %}<dt>{{ label }}</dt><dd class="scope-preserve-text">{{ value }}</dd>{% endfor %}</dl>
+{% for section in system_sections %}<details class="scope-import-source"><summary>{{ section.title }}</summary><dl class="scope-import-details">{% for label, value in section.rows %}<dt>{{ label|capitalize }}</dt><dd class="scope-preserve-text">{{ value }}</dd>{% endfor %}</dl></details>{% endfor %}
+</section>
+{% endif %}
 {% include "draft_scope_report_content.html" %}
 {% if not report %}
 <section class="panel"><h2>Saved reports</h2><p class="scope-hint">Most recent 20 reports. Older reports remain retained at their saved links.</p><p class="scope-hint">Each report keeps its original project details, Scope revision and downloads.</p>

@@ -36,7 +36,7 @@ The sign-in screen and sidebar now use the owner's supplied CLASSIFIRE logo.
 The **estimate-only Draft PDF/XLSX report** increment is merged in PR #193.
 The first **PDF evidence review UI** is merged in PR #194, and partial measured-limit
 review in PR #195. PDF/workbook intake uses PostgreSQL and a trusted ClamD endpoint;
-manual editing still works without scanning or AI. The current **pricing XLSX UI**
+manual editing still works without scanning or AI. The **pricing XLSX UI**, merged in PR #196,
 uploads, scans, maps source columns and explicitly selects a rate for a Draft line,
 preserving original/override history and source cells in JSON/PDF/XLSX. Its synthetic
 Chrome/restart checks passed; see [the contract](docs/DRAFT_PRICING_XLSX.md) and
@@ -44,8 +44,11 @@ PROJECT_STATE.md/current Git for publication and limits. It never approves a tec
 system or activates a pricing library. The supplied logo is verified byte-for-byte.
 
 Full Scope analysis, actual applicability, governed pricing and complete
-ProjectPackage/ChatGPT access remain unfinished. After pricing publication, next is
-an independent scope-and-system PDF/XLSX report from a selected saved review.
+ProjectPackage/ChatGPT access remain unfinished. The current independent
+[scope-and-system report screen](docs/DRAFT_SYSTEM_REPORT_CONTRACT.md) captures a
+saved review and its embedded Scope without requiring an Estimate. Both outputs
+preserve partial/unapproved status and exact historical bytes. After publication,
+next is a bounded service-size review using already pinned source limits.
 See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
 [verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
 Complete visible slices before broad refinement; preserve existing authority and

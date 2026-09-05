@@ -26,6 +26,9 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from .common import ATTRIBUTION
 from .draft_branding import DraftLogo
 from .draft_branding import supplied_logo_path as logo_path
+from .draft_system_review import NOTICE as SYSTEM_NOTICE
+from .draft_system_review import sections as system_sections
+from .draft_system_review import summary as system_summary
 from .xlsx import _formats
 
 _FONT = "CLASSIFIRE-Scope-Unicode"
@@ -113,12 +116,21 @@ def _metadata(snapshot: dict[str, Any]) -> list[tuple[str, Any]]:
         ("Scope created by", scope["created_by"]),
         ("Scope provenance", scope["provenance"]),
         ("Scope review", scope["review_status"]),
-        ("Technical system selection", "Unavailable - not supplied in this scope-only report"),
+        (
+            "Technical system selection",
+            "Saved unapproved candidate review; compatibility unresolved"
+            if snapshot.get("system_match")
+            else "Unavailable - not supplied in this scope-only report",
+        ),
         ("Pricing and commercial totals", "Unavailable - no estimate was run"),
         (
             "Evidence and authority",
             "Manual/imported assertions remain unreviewed. "
-            "No source evidence or approval is established.",
+            + (
+                "Captured technical-source provenance is not approval for this Scope."
+                if snapshot.get("system_match")
+                else "No source evidence or approval is established."
+            ),
         ),
     ]
 
@@ -154,12 +166,17 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
         text(f"{label}: {value}")
 
     story.extend([DraftLogo(), Spacer(1, 5 * mm)])
-    text("Draft Scope Report", title)
+    report_title = (
+        "Draft Scope and System Review" if report.get("system_match") else "Draft Scope Report"
+    )
+    text(report_title, title)
     text(report["project"]["name"], item_heading)
     text(f"{report['project']['reference']} | Saved scope revision {report['scope']['revision']}")
     text(_DRAFT, heading)
     text(
-        "Scope-only record. Technical selection, pricing and release are unavailable. "
+        SYSTEM_NOTICE
+        if report.get("system_match")
+        else "Scope-only record. Technical selection, pricing and release are unavailable. "
         "Confirmed labels are manual or imported assertions, not approved physical truth."
     )
     if any(
@@ -175,6 +192,10 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
             "supported text characters.",
             small,
         )
+    if report.get("system_match"):
+        text("Saved technical review summary", heading)
+        for label, value in system_summary(report["system_match"]):
+            detail(label, value)
     content = report["scope"]["content"]
     text("Scope overview", heading)
     text(" | ".join(f"{key.replace('_', ' ').title()}: {len(content[key])}" for key in content))
@@ -233,6 +254,11 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
             text(f"{index}. {value}")
         if not content[key]:
             text("None supplied.")
+    if report.get("system_match"):
+        for section in system_sections(report["system_match"]):
+            text(section["title"], heading)
+            for label, value in section["rows"]:
+                text(f"{label}: {value}", small)
     text("Imported source history", heading)
     text(
         "Source identities, authors and ancestry are unverified declarations. "
@@ -278,7 +304,7 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
         rightMargin=17 * mm,
         topMargin=16 * mm,
         bottomMargin=23 * mm,
-        title="CLASSIFIRE Draft Scope Report",
+        title="CLASSIFIRE " + report_title,
         author="Ceasefire PFP",
         subject=_DRAFT,
     )
@@ -328,6 +354,9 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
             "strings_to_numbers": False,
         },
     )
+    report_title = (
+        "Draft Scope and System Review" if report.get("system_match") else "Draft Scope Report"
+    )
     formats = _formats(workbook)
     formats["quantity"] = workbook.add_format(
         {"border": 1, "num_format": "0.######", "valign": "top"}
@@ -335,7 +364,7 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
     formats["integer"] = workbook.add_format({"border": 1, "num_format": "0", "valign": "top"})
     workbook.set_properties(
         {
-            "title": "CLASSIFIRE Draft Scope Report",
+            "title": "CLASSIFIRE " + report_title,
             "subject": _DRAFT,
             "author": "Ceasefire PFP",
             "created": datetime.fromisoformat(report["created_at"]).replace(tzinfo=None),
@@ -366,7 +395,10 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
                 str(logo_path()),
                 {"x_scale": scale, "y_scale": scale, "object_position": 1},
             )
-            sheet.merge_range(1, 1, 1, 2, "CLASSIFIRE Draft Scope Report", formats["section"])
+            sheet.merge_range(1, 1, 1, 2, "CLASSIFIRE " + report_title, formats["section"])
+        elif report.get("system_match"):
+            sheet.set_row(0, 32)
+            sheet.merge_range(0, 1, 0, len(headers), f"CLASSIFIRE {name}", formats["title"])
         else:
             sheet.write_string(0, 1, f"CLASSIFIRE {name}", formats["title"])
         sheet.write_string(
@@ -545,6 +577,26 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
                 for key, value in ref.items()
             ],
             [39, 28, 100],
+        )
+    if report.get("system_match"):
+        parts = system_sections(report["system_match"])
+        table(
+            "Review and coverage",
+            ["Field", "Saved value"],
+            [list(row) for row in parts[0]["rows"]],
+            [40, 100],
+        )
+        table(
+            "System candidates",
+            ["Candidate", "Field", "Saved value"],
+            [[part["title"], *row] for part in parts[1:-1] for row in part["rows"]],
+            [36, 55, 100],
+        )
+        table(
+            "Measured limits",
+            ["Field", "Saved value"],
+            [list(row) for row in parts[-1]["rows"]],
+            [55, 100],
         )
     workbook.close()
     return output.getvalue()

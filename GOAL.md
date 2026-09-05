@@ -142,18 +142,29 @@ public fields; old releases remain unresolved for these checks. Chrome and resta
 preserved within/outside/unknown outcomes and exact history. This is partial,
 unapproved review, not full applicability. See PROJECT_STATE.md for publication.
 
-## Demonstrated first workbook-rate selection and immediate priority
+## Demonstrated first workbook-rate selection
 
-PR #195 merged the measured-limit review. The current P3b increment now has a real
-XLSX upload/scan/map/select UI with exact source cells, original rate and reasoned
-manual override history. Browser/restart preserved revisions and reports. This is
-unapproved exact-workbook selection, not complete pricing governance; see PROJECT_STATE.md.
+PR #196 merged source-bound XLSX upload, scanning, explicit column mapping and rate
+selection. Original rates, manual overrides and exact cells survive export/restart.
+This remains unapproved workbook selection, not complete pricing governance.
 
-Finish this increment's exact-head validation/publication if outstanding. Then deliver
-one scope-and-system PDF/XLSX report interaction from a selected saved candidate review
-and its embedded Scope. It must work without an Estimate, retain the same frozen data
-in both outputs, show partial/unresolved technical status and never rerun matching.
-Reuse existing snapshot, report and permission services; preserve historical bytes.
+## Demonstrated scope-and-system reporting and immediate priority
+
+The current P4b increment adds a separate saved-review report screen. Users select
+one retained review and its embedded Scope, preview saved candidate decisions and
+partial measured checks, then explicitly generate both PDF and XLSX. No Estimate,
+matching run or provider is needed. Historical downloads survive review edits and
+restart. See PROJECT_STATE.md for measured checks and current publication status.
+
+After publishing this increment, the next visible task is **service-size review**
+within the existing measured-limit screen: explicitly enter an evidenced service
+size and compare it with the selected candidate's pinned published numeric limits.
+Those limits already exist in the technical fields, but the current saved checks
+cover only substrate thickness and annular gaps. This closes a material technical
+input gap before another reporting profile. Keep ambiguous size interpretations,
+missing bounds and unsupported service configurations unresolved. Do not infer a
+diameter from a name or claim full applicability from another partial numeric check.
+Reuse the existing shared review contract, revision history and report presentation.
 
 Full applicability, pricing default/inferred methods, broader Scope formats/analysis,
 other report profiles, ProjectPackage exchange and shared ChatGPT access remain
