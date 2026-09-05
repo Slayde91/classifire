@@ -62,12 +62,12 @@ The prototype reorders delivery; it does not remove the broader product needs:
 
 ## Demonstrated first prototype: manual Draft Scope
 
-P0 is implemented and locally demonstrated: the existing UI creates a new project
+P0 is merged in PR #188 at `96d6869` and locally demonstrated: the existing UI creates a new project
 and owner-scoped manual Draft, supports multiple openings/services and explicit
 uncertainty, validates, saves/reopens after restart and downloads exact saved JSON.
 The [demo guide](./docs/DRAFT_SCOPE_DEMO.md) gives runnable instructions and evidence.
-Verify the feature's current PR/merge state before equating local demonstration
-with shared publication. This is not complete Scope Analysis or production readiness.
+This is not complete Scope Analysis or production readiness. Verify newer repository
+state before extending it; P1a publication is recorded separately below.
 
 The prototype uses shared application services and separate Draft revision tables.
 Existing canonical physical guards remain intact. Saving, validating and exporting
@@ -75,33 +75,48 @@ a Draft does not run AI, matching, estimating, admission, locking or release.
 Manual Confirmed facts remain unreviewed assertions. Existing project metadata
 visibility is shared; the demonstrated environment contains synthetic data only.
 
-## Immediate priority: safe Draft Scope import and replacement
+## Demonstrated portability increment: Draft Scope import
 
-After P0 publication, extend the same UI so a user can import its downloaded JSON,
-inspect a validation/identity/uncertainty preview and explicitly apply the selected
-content as a new local Draft revision. Preserve prior revisions and source lineage;
-reject unsupported versions, malformed graphs, tampering and stale replacements.
-Imported identities, authors and review history cannot grant local ownership or
-approval. Evolve the minimal contract explicitly if import provenance requires it;
-never silently reinterpret v1 or label foreign claims as verified local evidence.
+P1a extends the working UI with bounded saved-JSON upload, no-write preview and
+explicit replacement as a new local revision. v1 downloads retain their original
+bytes; imported revisions use explicit v2 lineage, preserved through manual edits
+and reimport. Foreign project/author/history claims remain unverified. Preview
+confirmation binds the exact file, local destination/revision and current session.
+The actual synthetic browser round trip and server restart passed; consult current
+Git/PR evidence for publication and PROJECT_STATE.md for the measured checks.
 
-This is next because it closes the smallest useful portability loop on an already
-working screen. Users can leave the app and return without rebuilding their scope.
-The slice must include shared import validation, UI preview/confirmation, durable
-revision handling, tests and an observed browser round trip with synthetic data.
+## Immediate priority: scope-only Draft PDF and XLSX reports
 
-Do not bundle report extraction, complete ProjectPackage ZIP, all capability
-schemas, automatic matching, inferred pricing, production ChatGPT distribution or
-full orchestration replacement into this increment. Those remain subsequent
-visible slices. Preserve the unpublished package candidate as review material;
-it is not an automatically accepted contract or prerequisite to Scope JSON import.
+After P1a publication, deliver the roadmap's early P4a profile from an explicitly
+selected saved Scope revision. A user should create and preview one frozen Draft
+report snapshot, download both formats and reopen the same retained outputs after
+restart. Capture project labels and render/profile version with the Scope revision
+so later project or scope edits do not silently alter an earlier report.
+
+This is the next visible capability because saved scopes and safe JSON exchange
+are demonstrated and the existing stack already provides PDF/XLSX libraries and
+formatting patterns. Scope-only reporting is explicitly permitted early by the
+roadmap. Evidence intake remains required; its actual clean-scan producer,
+PostgreSQL clean-byte path and source-retention policy must be established before
+parsing uploaded evidence. A pending-upload screen is not Scope Analysis.
+
+Use a distinct Draft report profile over shared saved data. Do not invent an
+Estimate, call the recalculating estimate snapshot builder or bypass canonical
+export locks. Show unknown quantities as unavailable and technical/pricing sections
+as not supplied. Preserve stable relationships, assumptions, exclusions, manual
+and imported provenance, and visible Draft/unreviewed status. Inspect PDF pages
+and workbook cells/types, including long text and hostile formula/markup input.
+
+Do not bundle all report profiles, complete ProjectPackage ZIP, source extraction,
+automatic matching, inferred pricing or OpenClaw retirement into this increment.
+Those remain required subsequent capabilities, not deleted product requirements.
 
 ## What follows the first demo
 
 [The roadmap](./docs/CLASSIFIRE_ROADMAP.md) owns the detailed sequence and status.
 Develop subsequent increments from user feedback and verified dependencies:
 
-- Safe Draft Scope import/replacement and revision handling.
+- Scope-only Draft reports, then supported evidence intake with verified scan/storage prerequisites.
 - Independent matching and estimating with explicit saved/manual input boundaries.
 - Partial reporting from selected immutable revisions, with consistent PDF/XLSX.
 - Shared ChatGPT access, complete portable project revisions and governed downloads.

@@ -35,3 +35,26 @@
 button:disabled { cursor: wait; opacity: .65; }
 @media (max-width: 1050px) { .scope-item .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .scope-project, .scope-section .panel-head { align-items: stretch; flex-direction: column; } .scope-save-state { text-align: left; } .scope-item .form-grid { grid-template-columns: 1fr; } .scope-actions { position: static; } .scope-item-footer { align-items: start; flex-direction: column; } }
+
+.scope-context-actions { display: flex; align-items: center; justify-content: end; gap: 12px; flex-wrap: wrap; }
+.scope-import-source { margin-top: 18px; }
+.scope-import-source summary { line-height: 1.6; }
+.scope-import-details { display: grid; grid-template-columns: minmax(130px, 190px) minmax(0, 1fr); gap: 8px 16px; font-size: 13px; line-height: 1.6; }
+.scope-import-details dt { font-weight: 700; color: #374151; }
+.scope-import-details dd { margin: 0; overflow-wrap: anywhere; }
+.scope-import-details ul { margin: 0; padding-left: 18px; }
+.scope-import-content h3 { font-size: 16px; margin: 24px 0 12px; padding-top: 14px; border-top: 1px solid var(--line); }
+.scope-import-item { padding: 14px 16px; margin: 10px 0; border: 1px solid var(--line); border-radius: 8px; background: #fafcfd; }
+.scope-import-item h4 { font-size: 14px; margin: 0; }
+.scope-import-item-heading { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.scope-import-item p { font-size: 13px; line-height: 1.6; }
+.scope-import-item .scope-item-id { font-size: 10px; }
+.scope-preserve-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.scope-import-notes { margin: 0; }
+.scope-import-notes li { margin-bottom: 8px; font-size: 13px; line-height: 1.6; }
+.scope-import-confirm { border-left: 4px solid var(--orange); }
+.scope-import-confirm > p { font-size: 13px; line-height: 1.6; }
+#scope-import-confirm-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+.scope-import-confirm-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+#scope-import-confirm-controls:disabled button { cursor: not-allowed; }
+@media (max-width: 760px) { .scope-import-details { grid-template-columns: 1fr; gap: 3px; } .scope-import-details dd { margin-bottom: 10px; } .scope-context { align-items: start; } .scope-context-actions { flex-direction: column; align-items: end; } }

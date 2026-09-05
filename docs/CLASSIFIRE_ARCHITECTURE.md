@@ -2,11 +2,11 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.2 - manual Draft Scope implemented; full independent capability target remains partial
+**Architecture version:** 5.3 - Draft Scope revision exchange implemented; full independent capability target remains partial
 
-**Verified shared-main baseline before P0:** `803da1bfee1724a9f1bd86f58b6130782dfdb8c3` (PR #187, 2026-09-05)
+**Verified shared-main baseline before P1a:** `96d686952021828ef1fb28b53f4d6eea566376aa` (PR #188, 2026-09-05)
 
-**P0 implementation:** `feat/draft-scope-ui-20260905`; local runtime evidence below, publication verified separately through Git/PR/CI.
+**P1a implementation:** `feat/draft-scope-import-20260905`; local runtime evidence below, publication verified separately through Git/PR/CI.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -77,12 +77,12 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | Existing FastAPI/Jinja shell plus `/scopes` list/create/editor/validate/download routes | Add import and subsequent capability interactions; ChatGPT later uses the same application commands. |
+| Interfaces/API | Existing FastAPI/Jinja shell plus `/scopes` editing, validation, import preview/confirmation and download routes | Add independently callable report and other capability interactions; ChatGPT later uses the same application commands. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
-| Draft persistence | Separate `DraftScope`/`DraftScopeRevision` tables, owner/admin checks, hash/parent validation and conditional revision update | Extend explicit import lineage and downstream dependency freshness without changing existing canonical authority. |
+| Draft persistence | Separate Draft tables, owner/admin checks, hash/parent validation and conditional revision update; v2 imported-source lineage retained through manual edits | Add independently persisted report/dependency snapshots without changing canonical authority. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
-| Packages | `CLASSIFIRE-DRAFT-SCOPE-v1` exact saved JSON plus narrower existing exports; unmerged generic archive candidate | Safe Scope import is next. Whole-project archives and rights/membership projection remain later work; a Scope artifact is not a complete ProjectPackage. |
+| Packages | v1 manual and v2 imported Draft Scope JSON; bounded import preview/confirmation plus existing narrow exports | Whole-project archives and rights/membership projection remain later work; a Scope artifact is not a complete ProjectPackage. |
 | Reporting | Canonical export requires lock/retained snapshot; snapshot builder recalculates | Separate Draft profiles over explicit immutable inputs, PDF/XLSX parity and visible missing/stale sections; preserve canonical guards. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
@@ -122,14 +122,44 @@ Draft content requires an active human with the relevant project permission and
 ownership or administrator status. Existing project names/references remain visible
 through shared `/projects` behavior; this is not tenant isolation. Bounded input,
 CSRF, escaped rendering, safe download names and metadata-only audit, excluding scope text, preserve the exposed
-boundary. Imported content is not supported yet. Saving or validating creates no
+boundary. Import preview/confirmation is implemented as described below. Saving or validating creates no
 canonical Defect/Opening/Service, technical match, estimate, lock or release and
 invokes no AI provider. Manual Confirmed is still an unreviewed assertion.
 
 **Remaining Scope gaps:** report/source intake, verified evidence locators, richer
-plane/service-instance/treatment and contradiction models, import provenance and
-cross-capability dependency tracking. These are subsequent visible increments;
+plane/service-instance/treatment and contradiction models, verified evidence provenance
+and cross-capability dependency tracking. These are subsequent visible increments;
 P0 does not claim the complete Scope Package contract or full Scope Analysis.
+
+### Implemented Draft Scope exchange (P1a)
+
+`preview_import` and `apply_import` extend the existing shared Draft service. The
+browser uploads exact bytes as bounded base64 form data; the server validates the
+version, strict envelope fields, UUID/time/hash claims, graph, normalized values and
+checksum before displaying a no-write preview. Duplicate JSON keys, nonfinite
+values, malformed UTF-8 and unsupported authority fields fail closed. The artifact
+limit is 288 KiB and the separate encoded form limit is 1.2 MB.
+
+Confirmation requires an explicit replacement choice plus a purpose-specific,
+15-minute signed preview binding the actor, session, destination, saved revision/
+hash and exact file hash. Current ownership/permissions and target integrity are
+rechecked, then the existing conditional revision update arbitrates concurrent
+writers. Replay or stale confirmation cannot silently create another revision.
+Preview emits no audit/persistence changes; successful apply records metadata only.
+
+Existing v1 manual revision bytes remain unchanged. Imported revisions use
+`CLASSIFIRE-DRAFT-SCOPE-v2`, `provenance: imported` and up to 16 source metadata
+records. Later manual edits retain that history with `provenance: manual_edit`;
+reimport retains declared ancestry and appends the newly observed source identity
+and file hash. All foreign identities/history remain unverified claims. Local
+revision/actor/time/ownership come from the current application; status remains
+Draft/unreviewed. No approval, canonical model, estimate or provider is invoked.
+
+This evolution uses existing revision JSON storage and needs no database migration
+or new dependency. Reaching the supported lineage limit is an explicit refusal,
+not silent truncation. Raw source attachments and complete foreign revision history
+are not stored by this narrow import; the complete ProjectPackage/evidence-retention
+boundary remains separate. See the [v1/v2 contract](./DRAFT_SCOPE_V1_CONTRACT.md).
 
 **Planned dependency freshness:** artifacts will pin input/release revisions and hashes.
 Upstream edits mark affected downstream relationships stale without changing the
@@ -695,7 +725,8 @@ clock assumptions and crash/replay recovery before production wiring. The
 | Operations/cost | Clean-machine setup, backup/restore, safe traces, monitoring, rollback and accepted-result cost/latency remain unmeasured. Changing frameworks alone does not prove savings. |
 
 **Migration impact:** P0 adds the Draft revision tables and minimal manual contract.
-Next, evolve explicit import provenance for P1a without reinterpreting v1 authority.
+P1a adds explicit v2 import provenance in existing revision storage without reinterpreting v1 authority.
+Next, retain an independent scope-only report snapshot/output binding for P4a.
 Capability/package/client increments follow the roadmap independently of the
 replacement track. That track adds required run/adapter behavior and retires
 OpenClaw only after Decision 0001 parity gates. Preserve historical migrations and receipt readers,
@@ -704,8 +735,8 @@ or duplicate business rules in MCP/UI.
 
 **Historical verification:** PR #175 was documentation-only; its 70 focused
 contract/security tests and main CI 33899855871 describe that older baseline.
-The pre-P0 shared baseline is `803da1b` with main CI 33945228889. P0 has separate
-local browser/restart evidence; neither proves production or full recovery parity.
+The pre-P1a shared baseline is `96d6869` with main CI 33947498324 (1,020 tests).
+P0/P1a also have local browser/restart evidence; none proves production or full recovery parity.
 
 ### Completed report-governance integration
 
@@ -842,19 +873,22 @@ PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
 deployment, or release authority.
 
-### Near term: safe import into the demonstrated Draft UI
+### Near term: independent scope-only Draft reports
 
-P1a closes the saved JSON round trip. Extend the existing Draft service and UI with
-bounded upload validation, declared version/hash checks, preview and explicit
-application as a new local revision. Preserve source artifact identity/hash as
-import lineage without adopting its owner, author, approval or revision as local
-authority. Retain old revisions and refuse stale confirmation. The v1 manual-only
-contract requires an explicit compatible evolution if new provenance fields are
-needed. Demonstrate this interaction with synthetic data before broadening intake.
+P4a extends the demonstrated Scope and import UI with one explicitly selected,
+persisted report snapshot/profile. Capture the exact validated Scope envelope,
+project labels and render version together; PDF and XLSX must consume that same
+snapshot and retain stable output bindings across restart and later edits.
+Reuse existing ReportLab/XlsxWriter dependencies and branding/layout patterns.
+Do not call `build_estimate_snapshot`, which recalculates, or invent an Estimate
+to satisfy the canonical renderers. Canonical export lock requirements remain intact.
 
-Do not couple the task to complete archive/rights projection, report extraction,
-all four contracts or a general agent platform. Keep existing canonical guards;
-use the [roadmap](./CLASSIFIRE_ROADMAP.md#prototype-delivery-track) for the next slice.
+The early scope-only profile is already permitted by the roadmap. It provides a
+second visible capability while source intake establishes its actual scanning,
+PostgreSQL clean-read and retention requirements. Unsupported technical/pricing
+sections stay unavailable, missing quantities never become zero, and imported
+claims remain unreviewed. Inspect PDF page images and spreadsheet cells/types,
+including safe markup/formula handling, rather than relying on file existence.
 
 ### Separate production and adapter backlog
 

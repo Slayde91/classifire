@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -26,6 +27,9 @@ from ..security import has_permission
 
 MAX_PAYLOAD_BYTES = 256 * 1024
 SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-v1"
+IMPORTED_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-v2"
+MAX_ARTIFACT_BYTES = MAX_PAYLOAD_BYTES + 32768
+MAX_IMPORT_LINEAGE = 16
 EvidenceState = Literal["Confirmed", "Inferred", "Provisional", "Unresolved"]
 EntityId = Annotated[UUID, Field(strict=False)]
 Label = Annotated[str, Field(min_length=1, max_length=200)]
@@ -265,6 +269,134 @@ def create_for_existing_project(db: Session, actor: User, project_id: str) -> Dr
         return _create(db, actor, project)
 
 
+_ENVELOPE_KEYS = frozenset(
+    {
+        "schema_version",
+        "artifact_id",
+        "project_id",
+        "revision",
+        "parent_hash",
+        "created_by",
+        "created_at",
+        "state",
+        "provenance",
+        "review_status",
+        "content",
+        "sha256",
+    }
+)
+_LINEAGE_KEYS = frozenset(
+    {
+        "schema_version",
+        "artifact_id",
+        "project_id",
+        "revision",
+        "created_by",
+        "created_at",
+        "sha256",
+        "file_sha256",
+    }
+)
+
+
+def _valid_hash(value: Any) -> bool:
+    return type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def _claim_metadata(value: dict[str, Any]) -> None:
+    # These are portable claims, never proof that the named foreign identity exists.
+    if value["schema_version"] not in (SCHEMA_VERSION, IMPORTED_SCHEMA_VERSION):
+        raise ValueError("schema")
+    for name in ("artifact_id", "project_id", "created_by"):
+        field = value[name]
+        if type(field) is not str or str(UUID(field)) != field:
+            raise ValueError("identity")
+    if type(value["revision"]) is not int or not 1 <= value["revision"] <= 2_147_483_647:
+        raise ValueError("revision")
+    if type(value["created_at"]) is not str or len(value["created_at"]) > 40:
+        raise ValueError("timestamp")
+    timestamp = datetime.fromisoformat(value["created_at"])
+    if timestamp.tzinfo is None or timestamp.astimezone(UTC).isoformat() != value["created_at"]:
+        raise ValueError("timestamp")
+    if not _valid_hash(value["sha256"]):
+        raise ValueError("hash")
+
+
+def _validate_lineage(entries: Any) -> None:
+    if type(entries) is not list or not 1 <= len(entries) <= MAX_IMPORT_LINEAGE:
+        raise ValueError("lineage")
+    for entry in entries:
+        if type(entry) is not dict or set(entry) != _LINEAGE_KEYS:
+            raise ValueError("lineage")
+        _claim_metadata(entry)
+        if not _valid_hash(entry["file_sha256"]):
+            raise ValueError("lineage")
+
+
+def _envelope_shape(envelope: Any) -> None:
+    if type(envelope) is not dict:
+        raise ValueError("shape")
+    version = envelope.get("schema_version")
+    expected = _ENVELOPE_KEYS
+    if version == IMPORTED_SCHEMA_VERSION:
+        expected = expected | {"import_lineage"}
+    if set(envelope) != expected:
+        raise ValueError("shape")
+    if envelope["state"] != "Draft" or envelope["review_status"] != "unreviewed":
+        raise ValueError("authority")
+    if version == SCHEMA_VERSION:
+        if envelope["provenance"] != "manual":
+            raise ValueError("provenance")
+    elif version == IMPORTED_SCHEMA_VERSION:
+        if envelope["provenance"] not in ("imported", "manual_edit"):
+            raise ValueError("provenance")
+        _validate_lineage(envelope["import_lineage"])
+    else:
+        raise ValueError("schema")
+
+
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError("duplicate")
+        value[key] = item
+    return value
+
+
+def _reject_json_constant(_constant: str) -> None:
+    raise ValueError("nonfinite")
+
+
+def validate_portable_artifact(raw: bytes) -> dict[str, Any]:
+    """Validate a bounded Draft artifact; uploaded identity/history remain untrusted."""
+    try:
+        if type(raw) is not bytes or not 1 <= len(raw) <= MAX_ARTIFACT_BYTES:
+            raise ValueError("size")
+        envelope = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_json_constant,
+        )
+        _envelope_shape(envelope)
+        envelope = cast(dict[str, Any], envelope)
+        _claim_metadata(envelope)
+        parent = envelope["parent_hash"]
+        if (envelope["revision"] == 1 and parent is not None) or (
+            envelope["revision"] > 1 and not _valid_hash(parent)
+        ):
+            raise ValueError("parent")
+        unsigned = {key: value for key, value in envelope.items() if key != "sha256"}
+        if hashlib.sha256(_json(unsigned)).hexdigest() != envelope["sha256"]:
+            raise ValueError("checksum")
+        content, _findings = validate_payload(envelope["content"])
+        if content.model_dump(mode="json") != envelope["content"]:
+            raise ValueError("content")
+        return envelope
+    except (ValueError, TypeError, KeyError, RecursionError, UnicodeError, OverflowError) as exc:
+        raise DraftScopeError("DRAFT_IMPORT_INVALID") from exc
+
+
 def _read(db: Session, draft: DraftScope, revision: int) -> dict[str, Any]:
     row = db.scalar(
         select(DraftScopeRevision)
@@ -276,37 +408,21 @@ def _read(db: Session, draft: DraftScope, revision: int) -> dict[str, Any]:
     if row is None:
         raise DraftScopeError("DRAFT_REVISION_NOT_FOUND", 404)
     try:
-        if len(row.envelope_json.encode("utf-8")) > MAX_PAYLOAD_BYTES + 4096:
+        if len(row.envelope_json.encode("utf-8")) > MAX_ARTIFACT_BYTES:
             raise ValueError("oversize")
         envelope = json.loads(row.envelope_json)
-        expected_keys = {
-            "schema_version",
-            "artifact_id",
-            "project_id",
-            "revision",
-            "parent_hash",
-            "created_by",
-            "created_at",
-            "state",
-            "provenance",
-            "review_status",
-            "content",
-            "sha256",
-        }
-        if not isinstance(envelope, dict) or set(envelope) != expected_keys:
-            raise ValueError("shape")
+        _envelope_shape(envelope)
+        envelope = cast(dict[str, Any], envelope)
         digest = envelope.pop("sha256")
         if digest != row.content_hash or hashlib.sha256(_json(envelope)).hexdigest() != digest:
             raise ValueError("hash")
         if (
-            envelope["schema_version"] != SCHEMA_VERSION
-            or envelope["artifact_id"] != draft.id
+            envelope["artifact_id"] != draft.id
             or envelope["project_id"] != draft.project_id
             or envelope["revision"] != row.revision
             or envelope["created_by"] != row.created_by_id
             or envelope["parent_hash"] != row.parent_hash
             or envelope["state"] != "Draft"
-            or envelope["provenance"] != "manual"
             or envelope["review_status"] != "unreviewed"
         ):
             raise ValueError("binding")
@@ -334,7 +450,7 @@ def _read(db: Session, draft: DraftScope, revision: int) -> dict[str, Any]:
         if _json(envelope).decode("utf-8") != row.envelope_json:
             raise ValueError("serialization")
         return envelope
-    except (ValueError, TypeError, KeyError, RecursionError, UnicodeError) as exc:
+    except (ValueError, TypeError, KeyError, RecursionError, UnicodeError, OverflowError) as exc:
         raise DraftScopeError("DRAFT_REVISION_INTEGRITY_FAILED", 409) from exc
 
 
@@ -367,6 +483,19 @@ def revision_bytes(db: Session, actor: User, draft_id: str, revision: int | None
 def save_revision(
     db: Session, actor: User, draft_id: str, expected_revision: int, payload: dict
 ) -> dict[str, Any]:
+    return _append_revision(db, actor, draft_id, expected_revision, payload)
+
+
+def _append_revision(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    expected_revision: int,
+    payload: dict,
+    *,
+    import_source: dict[str, Any] | None = None,
+    source_file_sha256: str | None = None,
+) -> dict[str, Any]:
     actor = _actor(db, actor, "project:write")
     draft = get_draft(db, actor, draft_id)
     if type(expected_revision) is not int or expected_revision < 0:
@@ -386,7 +515,8 @@ def save_revision(
             )
             if changed.rowcount != 1:  # type: ignore[attr-defined]
                 raise DraftScopeError("DRAFT_REVISION_CONFLICT", 409)
-            parent = _read(db, draft, expected_revision)["sha256"] if expected_revision else None
+            prior = _read(db, draft, expected_revision) if expected_revision else None
+            parent = prior["sha256"] if prior else None
             created = datetime.now(UTC)
             envelope = {
                 "schema_version": SCHEMA_VERSION,
@@ -401,7 +531,27 @@ def save_revision(
                 "review_status": "unreviewed",
                 "content": content.model_dump(mode="json"),
             }
+            if import_source is not None:
+                lineage = list(import_source.get("import_lineage", []))
+                lineage.append(
+                    {key: import_source[key] for key in _LINEAGE_KEYS if key != "file_sha256"}
+                    | {"file_sha256": source_file_sha256}
+                )
+                if len(lineage) > MAX_IMPORT_LINEAGE:
+                    raise DraftScopeError("DRAFT_IMPORT_LINEAGE_LIMIT")
+                envelope.update(
+                    schema_version=IMPORTED_SCHEMA_VERSION,
+                    provenance="imported",
+                    import_lineage=lineage,
+                )
+            elif prior is not None and prior["schema_version"] == IMPORTED_SCHEMA_VERSION:
+                envelope.update(
+                    schema_version=IMPORTED_SCHEMA_VERSION,
+                    provenance="manual_edit",
+                    import_lineage=prior["import_lineage"],
+                )
             envelope["sha256"] = hashlib.sha256(_json(envelope)).hexdigest()
+            _envelope_shape(envelope)
             db.add(
                 DraftScopeRevision(
                     draft_scope_id=draft.id,
@@ -416,11 +566,19 @@ def save_revision(
             record_audit(
                 db,
                 actor=actor,
-                action="draft_scope.save",
+                action="draft_scope.import" if import_source is not None else "draft_scope.save",
                 entity_type="draft_scope",
                 entity_id=draft.id,
                 project_id=draft.project_id,
-                new_value={"revision": expected_revision + 1, "sha256": envelope["sha256"]},
+                new_value={"revision": expected_revision + 1, "sha256": envelope["sha256"]}
+                | (
+                    {
+                        "source_file_sha256": source_file_sha256,
+                        "source_sha256": import_source["sha256"],
+                    }
+                    if import_source is not None
+                    else {}
+                ),
                 previous_value={"revision": expected_revision, "sha256": parent},
             )
             db.flush()
@@ -428,3 +586,72 @@ def save_revision(
         return envelope
     except IntegrityError as exc:
         raise DraftScopeError("DRAFT_REVISION_CONFLICT", 409) from exc
+
+
+def _content_counts(content: dict[str, Any]) -> dict[str, int]:
+    return {
+        name: len(content[name])
+        for name in ("defects", "openings", "services", "observations", "assumptions", "exclusions")
+    }
+
+
+def preview_import(db: Session, actor: User, draft_id: str, raw: bytes) -> dict[str, Any]:
+    """Preview replacement of content only; no audit or persistence side effects."""
+    with db.no_autoflush:
+        actor = _actor(db, actor, "project:write")
+        current = read_revision(db, actor, draft_id)
+        source = validate_portable_artifact(raw)
+        if len(source.get("import_lineage", [])) >= MAX_IMPORT_LINEAGE:
+            raise DraftScopeError("DRAFT_IMPORT_LINEAGE_LIMIT")
+        _content, findings = validate_payload(source["content"])
+        findings.append(
+            {
+                "code": "IMPORT_HISTORY_UNTRUSTED",
+                "path": "",
+                "severity": "warning",
+                "message": (
+                    "Imported identities and history are unverified claims; "
+                    "local approval is not granted."
+                ),
+            }
+        )
+        return {
+            "expected_revision": current["revision"],
+            "current_hash": current["sha256"],
+            "source": source,
+            "source_file_sha256": hashlib.sha256(raw).hexdigest(),
+            "content": source["content"],
+            "findings": findings,
+            "before_counts": _content_counts(current["content"]),
+            "after_counts": _content_counts(source["content"]),
+        }
+
+
+def apply_import(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    expected_revision: int,
+    raw: bytes,
+    expected_source_hash: str,
+) -> dict[str, Any]:
+    """Explicit authorized import command; callers bind/confirm their preview separately."""
+    actor = _actor(db, actor, "project:write")
+    current = read_revision(db, actor, draft_id)
+    if type(expected_revision) is not int or expected_revision != current["revision"]:
+        raise DraftScopeError("DRAFT_REVISION_CONFLICT", 409)
+    source = validate_portable_artifact(raw)
+    file_hash = hashlib.sha256(raw).hexdigest()
+    if not _valid_hash(expected_source_hash) or file_hash != expected_source_hash:
+        raise DraftScopeError("DRAFT_IMPORT_SOURCE_CHANGED", 409)
+    if len(source.get("import_lineage", [])) >= MAX_IMPORT_LINEAGE:
+        raise DraftScopeError("DRAFT_IMPORT_LINEAGE_LIMIT")
+    return _append_revision(
+        db,
+        actor,
+        draft_id,
+        expected_revision,
+        source["content"],
+        import_source=source,
+        source_file_sha256=file_hash,
+    )
