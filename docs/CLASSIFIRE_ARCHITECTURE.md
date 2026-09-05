@@ -4,7 +4,9 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main implementation:** 7e8f473 (PR #174 merge, 2026-09-05)
+**Verified shared-main baseline:** 9c0fc7d (PR #175 merge, 2026-09-05)
+
+**Latest executable-change baseline:** 7e8f473 (PR #174)
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -101,6 +103,24 @@ Production startup validates configuration before storage work, never runs
 configured database to match the packaged migration head. Development retains
 convenient schema creation/seeding. This is narrow hardening, not deployment
 proof.
+
+### Verified execution boundary and worker debt
+
+Controllers determine stage order and correction bounds through injected
+inference ports. Separate Physical/Validator contexts do not prove a deployed
+autonomous fleet. OpenClaw transport lives under services; that placement does
+not make it a provider-neutral domain layer.
+
+BackgroundJob and worker.run_once() are existing extension points. The worker
+claims a queued job with a row lock, marks it running, then fails it because no
+handlers are registered. Its selector does not honour run_after. Durable stages,
+lease expiry, cancellation and crash recovery remain gaps. Record them now;
+implement the coordinator only in its later scoped migration.
+
+The controlled-write plugin defaults to phase8-admission-only. Broader catalog
+entries and Mission Control bootstrap code do not prove working API routes,
+deployed tools or an operational fleet. Inventory callers/profiles/tests before
+deciding what the replacement must preserve.
 
 ## 4. Domain model
 
@@ -310,7 +330,10 @@ Owned clean report bytes
 proposal-only application service. It is not an operator surface: callers must
 provide the transaction and no-tool port. The shared proposal-review lifecycle provides a scoped internal reviewer UI for registered package metadata, with explicit reader grants and administrator-only immutable review annotations. It does not wire that UI, an API, or a CLI to execute the runner. No real-provider run is implemented or authorised.
 
-### Latest operational evidence
+### Latest documented operational evidence
+
+The following is retained historical evidence; the receipt and UAT database
+were not reopened during the 2026-09-05 documentation reconciliation.
 
 The authorised 2026-09-01 proposal-only attempt started inference and failed at
 the first blind-inventory call. It safely returned
@@ -492,13 +515,36 @@ desk assumption or model estimate into a confirmed canonical fact.
 
 ### Accepted hybrid target (migration not implemented)
 
-The hybrid architecture decision is accepted at the verified PR #174 baseline.
+The hybrid decision merged in PR #175 at 9c0fc7d, with executable code
+unchanged from the PR #174 baseline.
 The first migration task is to characterise the used OpenClaw contracts with
 synthetic golden and negative tests before adding CLASSIFIRE-owned job/run/stage
 state or a provider-neutral inference adapter. Portable `ProjectPackage`, MCP,
 standalone-client, and OpenClaw-retirement capabilities remain planned. No part
 of this documentation decision grants canonical, technical, commercial, lock,
 deployment, provider-run, or Human Release authority.
+
+### Unresolved decisions, migrations and technical debt
+
+| Decision/gap | Constraint and next evidence |
+| --- | --- |
+| Durable jobs | Extend BackgroundJob/worker where suitable; define transactions, idempotency, leases, retries, cancellation and recovery after characterisation. Use forward-only migrations in that later task. |
+| Inference replacement | Preserve ports, context isolation, evidence/version binding and receipts. Provider/endpoint, privacy, egress, retention/residency and secret policy need validation. |
+| ProjectPackage v1 | Define project/estimate membership, rights/redaction, profiles, schema compatibility and signature trust. Database/storage remain live truth; imports never activate foreign authority. |
+| Package integrity | Separate semantic and byte hashes; deterministic manifest entries, external final archive hash. Prove blank-instance import before existing-project conflict handling. |
+| Interfaces/tenancy | MCP/standalone share application commands; prove identity mapping, tenant/project isolation and human review. Scoped reviewer grants are not full tenancy proof. |
+| Offline use | Local backend/database and safe revision exchange need a separate decision. Do not assume SQLite reproduces PostgreSQL locking or permit automatic bidirectional merges. |
+| Operations/cost | Clean-machine setup, backup/restore, safe traces, monitoring, rollback and accepted-result cost/latency remain unmeasured. Changing frameworks alone does not prove savings. |
+
+**Migration impact:** additive contract characterisation, durable runs and a
+feature-flagged provider adapter, packages/shared clients, then retirement after
+Decision 0001 parity gates. Preserve historical migrations and receipt readers,
+signed admissions and human authority. Do not create a general agent platform
+or duplicate business rules in MCP/UI.
+
+**Verification limit:** PR #175 implements none of those gaps. The reconciled
+baseline has 70 passing focused synthetic contract/security tests and successful
+main CI 33899855871, not production, recovery-parity or fleet-utilisation proof.
 
 ### Completed report-governance integration
 

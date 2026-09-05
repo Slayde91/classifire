@@ -2,7 +2,9 @@
 
 **Roadmap status:** Active
 
-**Verified shared-main implementation:** 7e8f473 (PR #174 merge, 2026-09-05)
+**Verified shared-main baseline:** 9c0fc7d (PR #175 merge, 2026-09-05)
+
+**Latest executable-change baseline:** 7e8f473 (PR #174)
 
 This roadmap records verified implementation, remaining gates, and execution
 order. It does not grant operational authority. Current source, tests,
@@ -20,6 +22,7 @@ for the accepted hybrid target and migration gates.
 | --- | --- |
 | **Completed foundation** | Implemented and verified for the stated narrow boundary; later product gates may remain. |
 | **In progress** | Material implementation exists but exit criteria are incomplete. |
+| **Reordered** | Priority changed; phase and authority dependencies remain. |
 | **Planned** | Approved direction without completed implementation. |
 | **Blocked** | An upstream evidence, authority, safety, or implementation gate prevents progress. |
 | **Deprecated / superseded** | Retained for history or compatibility; not the current build path. |
@@ -65,12 +68,15 @@ first observed `main` push run `33516292114` also passed on merge `b6409a5`,
 including tests and the one-head Alembic check. Each PR #105-#174 check and
 corresponding `main` validation then passed through PR #174. The PR #174 check
 was `33892514672` on `e587cf8`; post-merge `main` run `33892921342` passed on
-`7e8f473`. GitHub's branch-protection endpoint still returns
+`7e8f473`. PR #175 merged the documentation-only hybrid decision as
+9c0fc7d; exact main run 33899855871 succeeded. The reconciliation also passed
+70 focused synthetic contract/security tests. GitHub's branch-protection endpoint still returns
 HTTP 403 because the current private-repository plan requires GitHub Pro or
 public visibility for that configuration; required-check configuration remains
 unverified.
 
-The newest controlled Phase 8 attempt is not a proposal result. Runtime
+The latest documented historical Phase 8 attempt is not a proposal result.
+Its receipts/database were not reopened in this documentation reconciliation. Runtime
 inference began, then failed at the first blind-inventory call with
 `VISUAL_PROPOSAL_FAILED` / `INFERENCE_PORT_FAILED`. Rollback/no-write/no-lock
 boundaries held. Its historical receipt retained only the transport exception
@@ -129,6 +135,28 @@ The desk-quote path is a bounded proposal-only exception. It does not advance
 Phases 8-14 and is not a technical selection or canonical output.
 
 ## 4. Prioritised build plan
+
+### Priority reconciliation after PR #175
+
+| Work | Status | Dependency / completion evidence |
+| --- | --- | --- |
+| Hybrid decision | **Completed documentation** | PR #175 accepts Decision 0001; runtime migration is unimplemented. |
+| OpenClaw characterisation | **Next / reordered first** | Map actual callers/contracts to existing tests; add only demonstrated synthetic gaps. A passing suite alone does not prove the full inventory. |
+| Durable jobs/replacement adapter | **Upcoming / planned** | Characterisation first; extend BackgroundJob/worker. Current worker has no handlers. |
+| ProjectPackage export/download | **Upcoming / planned** | Membership, rights, profiles, revisions and deterministic jobs. Policy-permitted Drafts need not await Phase 14 or OpenClaw retirement. |
+| Quarantined import | **Upcoming / planned** | Stable export/schema/integrity; new-project import before conflict handling. |
+| MCP/standalone package clients | **Upcoming / planned** | Shared authenticated commands, permission/isolation and package contracts. |
+| OpenClaw/Mission Control retirement | **Blocked on parity** | Security, receipts, recovery, visibility, compatibility, clean-machine and rollback evidence; separate operational authority. |
+| Mandatory autonomous fleet | **Superseded target** | Optional bounded inference replaces fleet expansion. Existing adapter/receipt support is not removed. |
+| Technical/production follow-ups | **Separate backlog** | Preserve Phase 2/15 gates; do not broaden the next contract task. |
+| Real UAT and Phases 9-14 | **Blocked** | Fresh authority, evidence, semantic approval and governed replacement lock remain required. |
+
+The active reconciliation is documentation-only. Characterisation builds on
+transport/runtime/controller/runner/security tests: 70 passed on the verified
+baseline. Record missing retry/cancellation/recovery as future requirements,
+not invented existing guarantees. Do not build adapters, jobs, packages or UI
+in the first task. [Session Handoff](./SESSION_HANDOFF.md#start-here--next-session)
+defines files, commands and completion criteria.
 
 ### Immediate next action
 
@@ -459,7 +487,7 @@ private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
 **Remaining:** the root checkout is conflicted recovery evidence; hosted `main`
-validation passed through PR #174, but the current GitHub plan prevents
+validation passed through PR #175, but the current GitHub plan prevents
 branch-protection configuration; clean-machine and release reproducibility
 remain incomplete.
 
