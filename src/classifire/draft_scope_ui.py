@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 from .config import get_settings
 from .db import get_db
 from .models import DraftScope, User
+from .outputs.draft_system_review import sections as system_sections
+from .outputs.draft_system_review import summary as system_summary
 from .security import verify_csrf
 from .services.draft_scope import (
     MAX_ARTIFACT_BYTES,
@@ -38,6 +40,7 @@ from .services.draft_scope_reports import (
     report_bytes,
     report_freshness,
 )
+from .services.draft_system_matches import read_match_revision
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -617,6 +620,12 @@ def scope_report_page(request: Request, db: Db, draft_id: str, report_id: str) -
             report=report_id,
             snapshot=snapshot,
             stale=stale,
+            system_summary=system_summary(snapshot["system_match"])
+            if snapshot.get("system_match")
+            else [],
+            system_sections=system_sections(snapshot["system_match"])
+            if snapshot.get("system_match")
+            else [],
         ),
         headers={"Cache-Control": "no-store"},
     )
@@ -639,7 +648,12 @@ def download_scope_report(
         if format == "pdf"
         else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    filename = f"CLASSIFIRE-Scope-Report-{snapshot['report_id']}.{format}"
+    prefix = (
+        "CLASSIFIRE-Scope-System-Report"
+        if snapshot.get("system_match")
+        else "CLASSIFIRE-Scope-Report"
+    )
+    filename = f"{prefix}-{snapshot['report_id']}.{format}"
     return Response(
         content,
         media_type=media_type,
@@ -649,3 +663,76 @@ def download_scope_report(
             "X-Content-Type-Options": "nosniff",
         },
     )
+
+
+@router.get("/scopes/{draft_id}/system-matches/{match_id}/reports", response_class=HTMLResponse)
+def system_reports_page(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    match_id: str,
+    revision: int | None = None,
+) -> HTMLResponse:
+    user = _require(request, db, "project:read")
+    _require(request, db, "technical:read")
+    try:
+        draft = get_draft(db, user, draft_id)
+        match = read_match_revision(db, user, draft_id, match_id, revision)
+        latest = read_match_revision(db, user, draft_id, match_id)
+        reports = list_reports(db, user, draft_id)
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return templates.TemplateResponse(
+        request,
+        "draft_scope_reports.html",
+        _context(
+            request,
+            db,
+            draft=draft,
+            project=draft.project,
+            envelope=match["scope"],
+            match_envelope=match,
+            latest_match_revision=latest["revision"],
+            system_sections=system_sections(match),
+            system_summary=system_summary(match),
+            reports=reports,
+            report=None,
+            snapshot=None,
+            stale=False,
+            preview_url=f"/scopes/{draft_id}/system-matches/{match_id}/reports",
+        ),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.post("/scopes/{draft_id}/system-matches/{match_id}/reports")
+def create_system_report(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    match_id: str,
+    form: FormData,
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _require(request, db, "project:write")
+    _require(request, db, "technical:read")
+    if set(form) != {"csrf_token", "match_revision"}:
+        raise HTTPException(422, "Select one saved review revision")
+    raw = form["match_revision"]
+    if not raw.isascii() or not raw.isdigit() or len(raw) > 10 or int(raw) < 1:
+        raise HTTPException(422, "A valid saved review revision is required")
+    try:
+        match = read_match_revision(db, user, draft_id, match_id, int(raw))
+        report = create_report(
+            db,
+            user,
+            draft_id,
+            match["scope"]["revision"],
+            match_id=match_id,
+            match_revision=match["revision"],
+        )
+        db.commit()
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return RedirectResponse(f"/scopes/{draft_id}/reports/{report.id}", 303)

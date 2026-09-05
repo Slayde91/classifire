@@ -31,6 +31,7 @@
   {% endif %}
   <div class="scope-context-actions">
     <a class="button button-primary" href="{{ match_url }}/download?revision={{ envelope.revision }}">Download saved candidate review JSON</a>
+    <a class="button button-secondary" href="{{ match_url }}/reports?revision={{ envelope.revision }}">Scope and system PDF/Excel reports</a>
     <a class="button button-secondary" href="{{ base_url }}">All candidate reviews</a>
   </div>
   <form method="get" action="{{ match_url }}" class="stack-form">

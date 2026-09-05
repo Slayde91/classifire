@@ -2,12 +2,12 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.10 - retained pricing XLSX and explicit Draft-rate selection.
+**Architecture version:** 5.11 - independent saved Scope/system review reporting.
 
-**Verified shared baseline:** `98048b7e940433c492297aeecc7dec8fce0dea2b`, merged
-PR #195; PR/main CI succeeded. Current pricing branch is
-`feat/draft-pricing-xlsx-20260906`. This is its prepublication checkpoint;
-source/tests and live Git/PR/CI determine implementation/publication truth.
+**Verified shared baseline:** `b6792f998ae73c6755a84cd4f1f8a24afa6dc00f`, merged
+PR #196. Exact-head CI 33988763234 and main CI 33989222878 succeeded. Current
+report branch: `feat/draft-system-reports-20260906`. This is a prepublication
+checkpoint; live Git/PR/CI determine publication, not the document version.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -78,13 +78,13 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | Publish the bounded PDF slice, then explicit applicability inputs and constraint review. ChatGPT remains planned. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Extend measured service-size review next; ChatGPT remains planned. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
-| Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and local DraftPdfSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
+| Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
-| Packages | Scope v1/v2 exchange plus local v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Whole-project archives, candidate/estimate import and rights/membership projection remain later work; these artifacts are not a complete ProjectPackage. |
-| Reporting | Separate merged scope-only and estimate-only Draft snapshots and PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
+| Packages | Scope v1/v2 exchange plus v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Whole-project archives, candidate/estimate import and rights/membership projection remain later work; these artifacts are not a complete ProjectPackage. |
+| Reporting | Scope-only and estimate-only Draft snapshots plus current scope-and-system profile; paired PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
 ### Implemented manual Draft Scope slice (P0)
@@ -1262,9 +1262,42 @@ Windows parser limits are not a complete sandbox. Scanner operations, source dow
 retention and full portability remain open. Recovery notes and workbook rows remain
 unapproved human/source claims; this does not deliver all pricing methods or recovery.
 
-**Next proposed UI slice:** scope-and-system PDF/XLSX from one saved match plus
-its embedded Scope, without creating an Estimate or rerunning matching. Preserve
-partial measured-limit status; full applicability is still separate required work.
+### Implemented current increment: independent scope-and-system reports (P4b)
+
+Current architecture -> change -> reason: extend the existing `draft_scope_reports`
+service/table and `outputs/draft_scope.py` renderers with a second snapshot profile,
+rather than creating another report pipeline. Saved review revisions already contain
+an exact Scope and source-bound candidate evidence; reporting that review should not
+require a Draft Estimate. `draft_scope_ui.py` adds explicit preview/create routes
+linked from candidate review. Shared presentation shows readable saved findings,
+then complete captured source/decision/numeric detail, in UI/PDF/XLSX.
+
+`CLASSIFIRE-DRAFT-SCOPE-REPORT-v2`, profile `scope-and-system`, renderer 2 adds the
+complete validated saved `system_match` to the existing snapshot. Embedded Scopes
+must be exactly equal. Exact retained review identity/hash/content is checked before
+retention and on reads. Both outputs persist atomically in `DraftScopeReport`;
+old scope-only schema-v1/renderer-1 downloads are never regenerated. No database
+migration, dependency, agent or scheduler is added. This is an additive application
+contract; all readers must retain both versions. Each output remains capped at 8 MiB.
+
+Project ownership/read and active-human boundaries remain. Creation additionally
+requires project write; all system-profile reads/exports require technical read,
+matching the existing review JSON boundary. Estimate export is not required for a
+non-estimate artifact. Users without technical access do not receive these report
+entries in the recent-report list. CSRF, bounded forms, exact source binding,
+metadata-only audit and escaped/literal output handling remain enforced.
+
+Latest Scope/project/review changes and source/release/scan uncertainty mark a
+retained report stale without rewriting it. Historical source claims stay historical;
+no live source file or approval is silently embedded or granted. Reporting calls no
+retrieval, calculation, provider or canonical writer. Full applicability, pricing and
+human release remain unavailable in this profile. See [contract](./DRAFT_SYSTEM_REPORT_CONTRACT.md).
+
+**Next proposed visible slice:** explicit service-size review against existing pinned
+minimum/maximum service-size fields in the current measured-limit UI. Resolve the
+meaning of the source's size constraint before comparing; unsupported configurations
+remain unresolved. This improves material technical coverage before combined-report
+polish. It does not change the accepted architecture or complete P2b.
 
 ### Separate production and adapter backlog
 

@@ -1,4 +1,4 @@
-"""Independent scope-only Draft reporting from exact retained revisions.
+"""Independent Scope and saved-system Draft reporting from exact retained revisions.
 
 Interfaces share these use cases. No estimation, matching, AI or canonical physical
 writer is invoked. Mutating use cases flush; the caller commits its transaction.
@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session, defer
 
 from ..audit import record_audit
 from ..models import DraftScope, DraftScopeReport, Project, User, new_id
+from ..security import has_permission
 from .draft_scope import (
     MAX_ARTIFACT_BYTES,
     DraftScopeError,
@@ -30,11 +31,15 @@ from .draft_scope import (
     read_revision,
     validate_payload,
 )
+from .draft_system_match_contract import MAX_MATCH_BYTES
+from .draft_system_match_contract import validate_envelope as validate_match
+from .draft_system_matches import match_staleness, read_match_revision
 
 REPORT_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-REPORT-v1"
 MAX_OUTPUT_BYTES = 8 * 1024 * 1024
 REPORT_LIST_LIMIT = 20
-MAX_REPORT_SNAPSHOT_BYTES = MAX_ARTIFACT_BYTES + 8192
+MAX_REPORT_SNAPSHOT_BYTES = MAX_ARTIFACT_BYTES + MAX_MATCH_BYTES + 8192
+SYSTEM_REPORT_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-REPORT-v2"
 REPORT_KEYS = frozenset(
     {
         "schema_version",
@@ -85,15 +90,22 @@ def _identity(value: Any) -> None:
 def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
     """Pure report contract validation, shared with deterministic renderers."""
     try:
-        if type(snapshot) is not dict or set(snapshot) != REPORT_KEYS:
+        if type(snapshot) is not dict:
             raise ValueError("shape")
-        if len(_canonical(snapshot)) > MAX_REPORT_SNAPSHOT_BYTES:
+        system_profile = snapshot.get("profile") == "scope-and-system"
+        expected_keys = REPORT_KEYS | ({"system_match"} if system_profile else set())
+        if set(snapshot) != expected_keys:
+            raise ValueError("shape")
+        if len(_canonical(snapshot)) > (
+            MAX_REPORT_SNAPSHOT_BYTES if system_profile else MAX_ARTIFACT_BYTES + 8192
+        ):
             raise ValueError("size")
         if (
-            snapshot["schema_version"] != REPORT_SCHEMA_VERSION
-            or snapshot["profile"] != "scope-only"
+            snapshot["schema_version"]
+            != (SYSTEM_REPORT_SCHEMA_VERSION if system_profile else REPORT_SCHEMA_VERSION)
+            or snapshot["profile"] not in ("scope-only", "scope-and-system")
             or type(snapshot["render_version"]) is not int
-            or snapshot["render_version"] != 1
+            or snapshot["render_version"] != (2 if system_profile else 1)
             or snapshot["state"] != "Draft"
             or snapshot["review_status"] != "unreviewed"
         ):
@@ -130,6 +142,10 @@ def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
             raise ValueError("scope")
         if not _valid_hash(scope["sha256"]) or _checksum(scope) != scope["sha256"]:
             raise ValueError("scope")
+        if system_profile:
+            validate_match(snapshot["system_match"])
+            if snapshot["system_match"]["scope"] != scope:
+                raise ValueError("match scope")
         if not _valid_hash(snapshot["sha256"]) or _checksum(snapshot) != snapshot["sha256"]:
             raise ValueError("checksum")
     except (ValueError, TypeError, KeyError, RecursionError, UnicodeError, OverflowError) as exc:
@@ -169,27 +185,46 @@ def _output(value: Any, format_name: str) -> bytes:
     return value
 
 
-def create_report(db: Session, actor: User, draft_id: str, revision: int) -> DraftScopeReport:
+def create_report(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    revision: int,
+    *,
+    match_id: str | None = None,
+    match_revision: int | None = None,
+) -> DraftScopeReport:
     """Capture one explicit saved Scope revision and atomically retain both outputs."""
     from ..outputs.draft_scope import render_scope_report_pdf, render_scope_report_xlsx
 
     actor, draft = _access(db, actor, draft_id, write=True)
     if type(revision) is not int or revision < 1:
         raise DraftScopeReportError("DRAFT_REVISION_NOT_FOUND", 404)
+    if (match_id is None) != (match_revision is None):
+        raise DraftScopeReportError("DRAFT_REPORT_MATCH_REQUIRED", 422)
+    match = (
+        read_match_revision(db, actor, draft_id, match_id, match_revision)
+        if match_id is not None
+        else None
+    )
     scope = _scope(db, actor, draft_id, revision)
+    if match is not None and match["scope"] != scope:
+        raise DraftScopeReportError("DRAFT_REPORT_MATCH_SCOPE_MISMATCH", 422)
     created = datetime.now(UTC)
     snapshot = {
-        "schema_version": REPORT_SCHEMA_VERSION,
+        "schema_version": SYSTEM_REPORT_SCHEMA_VERSION if match else REPORT_SCHEMA_VERSION,
         "report_id": new_id(),
         "project": _project(db, draft),
         "scope": scope,
-        "profile": "scope-only",
-        "render_version": 1,
+        "profile": "scope-and-system" if match else "scope-only",
+        "render_version": 2 if match else 1,
         "created_by": actor.id,
         "created_at": created.isoformat(),
         "state": "Draft",
         "review_status": "unreviewed",
     }
+    if match is not None:
+        snapshot["system_match"] = match
     snapshot["sha256"] = _checksum(snapshot)
     validate_report_snapshot(snapshot)
     frozen = _canonical(snapshot)
@@ -210,6 +245,14 @@ def create_report(db: Session, actor: User, draft_id: str, revision: int) -> Dra
         with _atomic(db):
             actor, draft = _access(db, actor, draft_id, write=True)
             if _scope(db, actor, draft_id, revision) != scope:
+                raise DraftScopeReportError("DRAFT_REPORT_SOURCE_CHANGED", 409)
+            if (
+                match is not None
+                and read_match_revision(
+                    db, actor, draft_id, match["artifact_id"], match["revision"]
+                )
+                != match
+            ):
                 raise DraftScopeReportError("DRAFT_REPORT_SOURCE_CHANGED", 409)
             report = DraftScopeReport(
                 id=snapshot["report_id"],
@@ -266,6 +309,10 @@ def _retained(
         if len(row.snapshot_json.encode("utf-8")) > MAX_REPORT_SNAPSHOT_BYTES:
             raise ValueError("size")
         snapshot = cast(dict[str, Any], json.loads(row.snapshot_json))
+        if type(snapshot) is not dict:
+            raise ValueError("shape")
+        if snapshot.get("profile") == "scope-and-system":
+            actor = _actor(db, actor, "technical:read")
         validate_report_snapshot(snapshot)
         timestamp = (
             row.created_at.replace(tzinfo=UTC) if row.created_at.tzinfo is None else row.created_at
@@ -284,11 +331,22 @@ def _retained(
             raise ValueError("binding")
         if _scope(db, actor, draft_id, row.scope_revision) != snapshot["scope"]:
             raise ValueError("source")
+        match = snapshot.get("system_match")
+        if (
+            match is not None
+            and read_match_revision(db, actor, draft_id, match["artifact_id"], match["revision"])
+            != match
+        ):
+            raise ValueError("match source")
         for format_name in ("pdf", "xlsx"):
             output = _output(getattr(row, format_name + "_bytes"), format_name)
             if hashlib.sha256(output).hexdigest() != getattr(row, format_name + "_sha256"):
                 raise ValueError("output")
         return row, snapshot
+    except DraftScopeError as exc:
+        if exc.status_code == 403:
+            raise
+        raise DraftScopeReportError("DRAFT_REPORT_INTEGRITY_FAILED", 409) from exc
     except (ValueError, TypeError, KeyError, RecursionError, UnicodeError, OverflowError) as exc:
         raise DraftScopeReportError("DRAFT_REPORT_INTEGRITY_FAILED", 409) from exc
 
@@ -306,10 +364,21 @@ def list_reports(db: Session, actor: User, draft_id: str) -> list[DraftScopeRepo
             .limit(REPORT_LIST_LIMIT)
         )
     )
+    visible = []
     for report in reports:
+        if not has_permission(actor, "technical:read"):
+            try:
+                if len(report.snapshot_json.encode("utf-8")) > MAX_REPORT_SNAPSHOT_BYTES:
+                    raise ValueError("size")
+                profile = json.loads(report.snapshot_json).get("profile")
+            except (ValueError, TypeError, AttributeError, RecursionError, UnicodeError) as exc:
+                raise DraftScopeReportError("DRAFT_REPORT_INTEGRITY_FAILED", 409) from exc
+            if profile == "scope-and-system":
+                continue
+        visible.append(report)
         _retained(db, actor, draft_id, report.id)
         db.expire(report, ["pdf_bytes", "xlsx_bytes"])
-    return reports
+    return visible
 
 
 def read_report(db: Session, actor: User, draft_id: str, report_id: str) -> dict[str, Any]:
@@ -353,8 +422,28 @@ def report_freshness(
     row, snapshot = _retained(db, actor, draft_id, report_id)
     db.expire(row, ["pdf_bytes", "xlsx_bytes"])
     current = _scope(db, actor, draft_id)
+    match_stale = False
+    match = snapshot.get("system_match")
+    if match is not None:
+        latest = read_match_revision(db, actor, draft_id, match["artifact_id"])
+        if storage_root is None:
+            raise DraftScopeReportError("DRAFT_REPORT_STORAGE_REQUIRED", 422)
+        match_stale = bool(
+            latest["sha256"] != match["sha256"]
+            or match_staleness(
+                db,
+                actor,
+                draft_id,
+                match["artifact_id"],
+                match["revision"],
+                storage_root=storage_root,
+            )
+        )
     return bool(
-        scope_evidence_staleness(db, actor, draft_id, snapshot["scope"], storage_root=storage_root)
+        match_stale
+        or scope_evidence_staleness(
+            db, actor, draft_id, snapshot["scope"], storage_root=storage_root
+        )
         or current["revision"] != snapshot["scope"]["revision"]
         or current["sha256"] != snapshot["scope"]["sha256"]
         or _project(db, draft) != snapshot["project"]
