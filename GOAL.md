@@ -154,26 +154,25 @@ PR #197 merged independent reporting of one saved candidate review and its exact
 Scope, including technical-read boundaries and visible staleness. PDF/XLSX survive
 edits/restart and retain unapproved status. No Estimate or matching run is required.
 
-## Merged service-size review and current complete-report increment
+## Merged reports and current package download increment
 
-PR #198 merged explicit service-size ranges and measurement/source meanings. Recorded
-outside diameters alone can be compared with pinned limits. Partial/unapproved status,
-unsupported meanings and unassessed instance coverage remain explicit.
+PR #198 merged explicit service-size review; PR #199 merged complete Draft reports.
+All four Draft report choices exist. Their partial/unapproved status remains explicit.
 
-The current complete Draft report profile presents one saved Estimate, its physical
-Scope, optional full technical review and commercial lines/history together in PDF
-and XLSX. Missing sections remain unavailable. It reuses existing snapshots and does
-not rerun upstream capabilities. PROJECT_STATE.md records verification/publication.
+The current selected Draft ProjectPackage UI configures one coherent saved Scope,
+optional review/Estimate and retained report pairs, previews without writes, saves a
+new package revision and downloads exact ZIP bytes. Source files stay external or
+withheld; existing artifact provenance and history are preserved. This is selected
+workspace portability, not all project records, original evidence or a database backup.
+See PROJECT_STATE.md for evidence/publication and remaining limitations.
 
-After publishing this fourth report choice, prioritize **configurable Draft
-ProjectPackage preview, save and download** over further report polish. Users select
-coherent saved capability revisions and existing outputs; Scope-only packages must
-not require matching or estimating. Preserve exact content and history, explicit
-included/external/withheld evidence, project/export rights and immutable archive
-bytes. Do not treat the older untracked archive candidate as the current Draft schema.
-Safe new-project import and shared ChatGPT access follow the demonstrated command.
+After publication, prioritize **safe new-project package import** across selected
+capability artifacts and outputs. Validate complete declared membership and schemas,
+preserve original provenance, map local identities explicitly, and keep missing
+sources/foreign approval unresolved. Never silently discard unsupported artifacts or
+grant authority from imported claims. Deliver the shared import use case and UI
+together, then expose proven commands through ChatGPT.
 
-The full goal remains active: broad Scope formats/analysis, actual applicability,
-pricing defaults/inferred methods, complete package exchange, ChatGPT integration
-and production readiness remain unfinished. No report profile grants approval or
-removes human-release gates. OpenClaw retirement still requires proven protections.
+The full goal remains active: broader Scope analysis, actual applicability, pricing
+defaults/inference, complete package coverage/exchange, ChatGPT and production readiness
+remain unfinished. OpenClaw retirement requires proven replacement protections.

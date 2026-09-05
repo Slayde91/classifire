@@ -1,99 +1,92 @@
 # CLASSIFIRE Project State
 
-**Verified snapshot:** 2026-09-06 AEST. **Health:** usable bounded Draft prototype;
+Verified snapshot: 2026-09-06 AEST. Health: working bounded Draft UI prototype;
 full product and production readiness remain incomplete. Accepted ADRs 0001/0002
-retain independent capabilities, shared deterministic services, optional AI and
-OpenClaw retirement only after proven replacement protections. Live governed state
-remains in the database/retained storage; portable artifacts never grant authority.
+retain independent capabilities, shared deterministic services and optional AI.
+OpenClaw retirement still requires proven replacement protections.
 
-**Verified shared baseline:** `e9f9263125438674e8c59f2e6d660b1609878035`,
-[merged PR #198](https://github.com/Slayde91/classifire/pull/198).
-Exact-head [CI 33994014117](https://github.com/Slayde91/classifire/actions/runs/33994014117)
-passed 1,427 tests; [main CI 33994444807](https://github.com/Slayde91/classifire/actions/runs/33994444807)
-succeeded. Service-size review, preceding reports/pricing and the supplied logo are merged.
-**Current increment:** `feat/draft-complete-reports-20260906`, isolated worktree
-`C:\CLASSIFIRE\.tmp\draft-complete-reports-20260906`, based on that main.
-This is a prepublication checkpoint; live Git/PR/CI outrank it.
+Shared baseline: `06442b15e164a1c91dd350944666f510ac22ed62`,
+[merged PR #199](https://github.com/Slayde91/classifire/pull/199).
+[Exact-head CI 33996804767](https://github.com/Slayde91/classifire/actions/runs/33996804767)
+passed 1,439 tests; [main CI 33997262382](https://github.com/Slayde91/classifire/actions/runs/33997262382)
+succeeded. All four Draft report choices and the supplied logo are merged.
+Current increment: `feat/draft-project-package-20260906`, worktree
+`C:\CLASSIFIRE\.tmp\draft-project-package-20260906`. This is a prepublication
+checkpoint; live Git/PR/CI determine its publication state.
 
-## Evidence-based implementation snapshot
+## Implementation snapshot
 
-| Area | Implemented and evidenced | Remaining gap |
+| Capability | Verified implementation | Remaining gap |
 | --- | --- | --- |
-| Scope | Manual editor, exact JSON/import, graph validation, PDF page-linked observations | Other formats, automated analysis, richer instances/planes/treatments and contradictions |
-| Technical | Source-bound candidate retrieval, decisions/history, pinned fields and thickness/gap/service-size reviews | Partial numeric checks are not applicability; authorized interpretation, coverage, material/FRL/insulation/configuration remain unresolved |
-| Estimating | Manual rates/unknowns, original/override history, omit/restore, exact-cell XLSX selection, exact attached review | Governed defaults/inference, broader components, recovery and pricing formats |
-| Reporting | Merged scope-only, scope-and-system and estimate-only PDF/XLSX; current complete profile combines saved physical/technical/commercial content | Complete-profile publication; production report/release acceptance remains separate |
-| Packages | Individual Scope/review/Estimate JSON and immutable reports | Configurable ProjectPackage ZIP, safe capability imports, membership/export policy |
-| UI/integration | Shared FastAPI/Jinja services and exact supplied logo | Shared ChatGPT adapter, full tenant/privacy and operational assurance |
-| Operations | Existing canonical authority, admissions/locks, human release and exact-byte foundations | Production Phase 8-14 exits and OpenClaw replacement parity remain unproven |
+| Scope | Manual editing, exact JSON import/export, graph checks, PDF page-linked observations | Broader formats/analysis, richer instances/planes/treatments and contradictions |
+| Technical | Source-bound candidates, saved decisions/history, partial thickness/gap/service-size checks | Full authorized applicability, coverage, materials/FRL/insulation/configuration |
+| Estimate | Provisional manual rates, exact-cell XLSX selection, original/override history, missing/omitted work | Governed defaults/inference, broader components and recovery |
+| Reports | Scope-only, scope-and-system, estimate-only and complete retained PDF/XLSX | Professional/production acceptance and release gates remain separate |
+| Packages | Current selected Draft configuration, preview, save, history and ZIP download | Publication, safe imports, source-body/full-project/history coverage |
+| Interfaces | Shared FastAPI/Jinja use cases; supplied logo exact in UI and outputs | ChatGPT adapter and full tenant/operational assurance |
+| Authority | Existing governed persistence, admissions/locks and human release boundaries | Production Phase 8-14 exits and OpenClaw replacement parity unproven |
 
-## Current complete-report increment
+## Current package increment
 
-Users select a saved Estimate and Complete profile, inspect its exact Scope, optional
-full technical review and commercial details, then explicitly retain/download both
-formats. Missing sections are unavailable; empty work never becomes a complete quote.
-Partial values, unknowns, original/override history, source claims and unapproved
-technical status are preserved. The profile never invokes another capability.
+Users choose one Scope revision, optional coherent review/Estimate revisions and
+selected existing report pairs. Preview performs no database writes. Explicit save
+creates an immutable package revision; changed membership creates another revision.
+Downloads retain exact original bytes. Mismatched inputs, changed previews, stale
+package save versions, invalid archives and revoked content permissions are refused.
+Source/dependency changes are shown without rewriting history.
 
-Report schema v2/renderer 3 reuses DraftEstimateReport persistence and permissions.
-Original estimate-only schema/renderer and form remain supported. Shared Scope and
-technical presentation avoid a parallel reporting pipeline. No new migration,
-dependency, provider, agent or canonical authority. See
-[the complete-profile contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md).
+Migration 0034 adds DraftProjectPackage in the existing database, with parent/revision,
+manifest/archive hashes and creator/time. Existing artifact readers and report
+integrity/permissions are reused; no provider, new dependency or canonical writer.
+Source bodies remain external/withheld with provenance pointers. This packages
+selected workspace revisions, not every project record or original source file.
+The older untracked generic archive candidate remains unshipped. See
+[contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md).
 
-## Verification and project health
+## Verification and health
 
-- **111 affected regression tests passed**, one existing Starlette warning, 227.81
-  seconds. Covers complete/Estimate/Scope/system report services/UI and service-size
-  compatibility. Final encoding and historical-preview staleness checks: **7 affected UI tests
-  passed** in 26.28 seconds, including rendered HTML and stale-preview regression checks.
-- Initial form-shape failures were corrected by preserving the old estimate-only
-  form; no assertion was removed to hide them. The formerly unsupported Complete
-  profile test now rejects an unknown canonical profile under the amended contract.
-- Real Chrome: imported multi-opening Scope, v3 measured review, priced/unknown
-  work and a reasoned override; explicitly generated populated and missing-section
-  complete reports. Saved AUD 440.00 subtotal, one unpriced line, Scope revision 3
-  and Estimate revision 5 remained unchanged after later edits. No page errors.
-- Actual process restart preserved both PDF/XLSX pairs and exact Estimate JSON.
-  All 12 populated-report and four missing-report PDF pages inspected; all ten
-  populated workbook sheet views inspected. Real workbook values/types, absence
-  of formulas/links, and embedded exact logo verified independently.
-- Preview limitation: artifact-tool emitted images but exited 1 without diagnostics,
-  omitted the logo in its preview and displayed an empty shared-string index as a
-  number. openpyxl/raw ZIP verified that cell is actually empty and the logo bytes
-  are correct. Native Excel rendering remains unverified.
-- Synthetic demo: four Scope revisions, two match revisions, two Draft Estimates,
-  seven Estimate revisions and two report pairs. Zero canonical Estimates,
-  EstimateLines, Openings, Services or Physical Model Locks. No customer evidence,
-  operational database, provider, deployment or release was used.
-- Exact supplied PNG remains in the live UI and workbook:
-  `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+- 43 focused package, HTTP, migration, lineage, packaging and preflight tests passed
+  in 65.43 seconds. Warnings: existing Starlette/Alembic deprecations and an intentional
+  malformed ZIP duplicate-name fixture. The broader affected migration/report/package
+  regression also passed: **98 tests**, three warnings, 389.05 seconds.
+- Initial import, fixture and template-context wiring errors were diagnosed and fixed.
+  Audit assertions now explicitly allow the three expected create/download events;
+  canonical/source counts remain unchanged. No failing production assertion was hidden.
+- Mypy passed for 179 source files; Ruff, Bandit and one Alembic head (0034) passed.
+  Hosted CI must also qualify the extended PostgreSQL pricing-source permission test.
+- Real Chrome configured Scope-only, combined and reconfigured package revisions.
+  Downloaded three ZIPs; all remained exact after a real process restart. No page errors.
+  UI screenshot inspected; exact supplied logo verified by bytes.
+- Independent ZIP inspection checked every member size/hash, exact Scope/review/
+  Estimate dependencies, retained AUD 440.00 subtotal and original report PDF/XLSX
+  bytes. The combined archive has seven entries including its manifest.
+- Synthetic fixture is a marked copy of the previous report demo, with only local
+  storage paths relocated. Three package revisions exist; canonical Estimates,
+  lines, Openings, Services and Physical Model Locks all remain zero. No customer
+  evidence, operational database, provider, deployment or release was used.
 
-Ruff, Mypy (176 source files), Bandit and one Alembic head (0033) passed.
-Final link/Git checks and exact-head hosted CI are required before merge.
-The PostgreSQL pricing-source regression now includes the complete profile and must
-pass in hosted CI; local report tests alone do not prove that separate check.
-No concrete blocker is currently known. The full platform goal remains active.
+Final diff/link checks and exact-head hosted CI are required before merge. No concrete
+blocker is currently known. The full platform goal remains active.
 
 ## Local changes and active work
 
-Current changes: report service/profile, UI/templates, shared render composition,
-focused tests, pricing regression extension and aligned docs. AGENTS.md and accepted
-ADRs already express the approved direction and were reviewed without extra rewrites.
-Protected conflicted legacy root, older demos/worktrees and three unrelated untracked
-ProjectPackage candidates remain preserved. Do not stage recovery files or `.tmp`
-runtime data. Receipts/harnesses/downloads stay under `.tmp/complete-report-artifacts`
-and `.tmp/scope-browser-test-tools`; the isolated demo runs at port 8808.
+Current files: package service/UI/template, model/migration, router and Scope link,
+readiness head, focused tests, pricing permission regression, current-head migration
+expectations and aligned docs. Existing migration histories remain unchanged;
+the prior pricing migration test is pinned to 0033 so it still checks its own downgrade.
+AGENTS.md and accepted ADRs already match the approved direction and remain unchanged.
+
+The conflicted legacy root and unrelated older package candidate files are preserved.
+Local-only demo, browser harnesses, ZIPs and receipts are under
+`.tmp/draft-package-demo-20260906`, `.tmp/package-artifacts` and
+`.tmp/scope-browser-test-tools`. Do not stage them. Demo URL: port 8809.
 
 ## Recommended Next Actions
 
-1. Finish current complete-profile checks/publication if outstanding; inspect live
-   Git/PR/CI first so an older checkpoint does not cause duplicate work.
-2. Deliver **configurable Draft ProjectPackage preview, save and download** over
-   coherent selected saved capability revisions and existing reports, with explicit
-   membership, omissions, source references, rights and exact-byte persistence.
-   Scope-only packaging must not force matching/estimating. The older untracked
-   archive candidate predates these Draft contracts; reassess it before reuse.
-3. Follow with safe new-project package import and a shared ChatGPT adapter. Broader
-   evidence analysis, actual applicability, governed estimating and production gates
-   remain required; four Draft report choices do not complete the platform.
+1. Finish package-download verification/publication if outstanding; inspect live
+   Git/PR/CI first to avoid repeating completed work.
+2. Deliver safe new-project package import with full selected membership, explicit
+   local identity mapping, retained foreign provenance and unresolved external sources.
+   Include review/Estimate contracts; do not silently discard unsupported artifacts.
+3. Share proven commands through ChatGPT. Broader evidence analysis, actual applicability,
+   governed estimating and full package/production coverage remain required.

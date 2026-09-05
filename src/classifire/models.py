@@ -1141,6 +1141,26 @@ class DraftEstimateReport(RecordMixin, Base):
     xlsx_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class DraftProjectPackage(RecordMixin, Base):
+    """Immutable selected Draft artifacts; never canonical or imported authority."""
+
+    __tablename__ = "draft_project_packages"
+    __table_args__ = (
+        UniqueConstraint("draft_scope_id", "revision", name="uq_draft_package_revision"),
+        CheckConstraint("revision >= 1", name="ck_draft_package_revision"),
+        CheckConstraint("length(archive_bytes) > 0 AND length(archive_bytes) <= 67108864",
+                        name="ck_draft_package_size"),
+    )
+    draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_hash: Mapped[str | None] = mapped_column(String(64))
+    manifest_json: Mapped[str] = mapped_column(Text, nullable=False)
+    manifest_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    archive_bytes: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    archive_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class Estimate(RecordMixin, Base):
     __tablename__ = "estimates"
     __table_args__ = (
