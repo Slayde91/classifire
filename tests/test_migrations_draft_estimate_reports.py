@@ -43,7 +43,7 @@ def test_forward_report_migration_preserves_estimate_and_requires_exact_revision
         old = revision_bytes(db, actor, draft.id, estimate.id)
         ids = (draft.id, estimate.id)
         db.commit()
-    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
+    _upgrade(url, environment, "0031_draft_estimate_reports", enforce_sqlite_foreign_keys=True)
     inspector = inspect(engine)
     assert "draft_estimate_reports" in inspector.get_table_names()
     assert any(
@@ -56,7 +56,7 @@ def test_forward_report_migration_preserves_estimate_and_requires_exact_revision
         report = create_report(db, actor, *ids, 2)
         db.commit()
         assert report_bytes(db, actor, *ids, report.id, "pdf").startswith(b"%PDF-")
-        assert assess_deployment_lineage(db).status == "READY"
+        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
         assert (
             db.scalar(text("SELECT version_num FROM alembic_version"))
             == "0031_draft_estimate_reports"

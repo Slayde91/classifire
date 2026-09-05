@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
@@ -342,14 +343,19 @@ def report_bytes(
     return value
 
 
-def report_freshness(db: Session, actor: User, draft_id: str, report_id: str) -> bool:
+def report_freshness(
+    db: Session, actor: User, draft_id: str, report_id: str, *, storage_root: Path | None = None
+) -> bool:
     """True means stale; retained snapshots and outputs are never rewritten."""
+    from .draft_pdf_intake import scope_evidence_staleness
+
     actor, draft = _access(db, actor, draft_id)
     row, snapshot = _retained(db, actor, draft_id, report_id)
     db.expire(row, ["pdf_bytes", "xlsx_bytes"])
     current = _scope(db, actor, draft_id)
     return bool(
-        current["revision"] != snapshot["scope"]["revision"]
+        scope_evidence_staleness(db, actor, draft_id, snapshot["scope"], storage_root=storage_root)
+        or current["revision"] != snapshot["scope"]["revision"]
         or current["sha256"] != snapshot["scope"]["sha256"]
         or _project(db, draft) != snapshot["project"]
     )

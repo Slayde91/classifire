@@ -27,3 +27,11 @@
 <section class="panel"><h2>Import history</h2><p class="scope-hint">Source identities, authors and ancestry below are unverified claims. Importing does not grant review or approval.</p>
 {% for source in envelope.import_lineage %}<details class="scope-import-item"><summary>Source {{ loop.index }} &middot; revision {{ source.revision }}</summary><dl class="scope-import-details">{% for key, value in source.items() %}<dt>{{ key|replace('_', ' ') }}</dt><dd class="scope-item-id">{{ value }}</dd>{% endfor %}</dl></details>{% endfor %}</section>
 {% endif %}
+
+{% if envelope.get('evidence_refs') %}
+<section class="panel"><h2>Saved page-review references</h2>
+<p>These are the selected revision's saved Draft review claims, not technical approval or a fresh source check.</p>
+<ul>{% for ref in envelope.evidence_refs %}<li>{{ ref.original_filename }} &middot; page {{ ref.page_number }} &middot; {{ ref.origin|replace('_',' ') }}
+<details><summary>Saved provenance</summary><dl>{% for key, value in ref.items() %}<dt>{{ key|replace('_',' ') }}</dt><dd class="pdf-source-identity">{{ value }}</dd>{% endfor %}</dl></details></li>{% endfor %}</ul>
+</section>
+{% endif %}

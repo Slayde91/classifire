@@ -2,14 +2,16 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.7 - retained Draft Estimate reports; broader applicability and estimating coverage remain planned
+**Architecture version:** 5.8 - retained PDF page review and backward-compatible Draft Scope v3.
 
-**Verified shared-main baseline:** `24ee6e35f181ed544ae82cdc3bc429ce70f49c3b` (PR #192).
-P0/P1a/P4a/P2a/P3a are merged. PR CI 33967557386 and main CI 33968038437
-passed 1,286 tests, 141 warnings. The supplied logo is already shared-main UI branding.
-**Current increment:** `feat/draft-estimate-reports-20260905`, estimate-only P4b,
-implemented locally and demonstrated on 2026-09-06. Publication is pending at this
-checkpoint; verify current Git/PR evidence before repeating work. See PROJECT_STATE.md.
+**Verified shared-main baseline:** `45c0fdd389b066589881531778e6b7a8b898d754`,
+merged PR #193, feature `acc2f458fa11a4604d617a990eba6a7de99f0842`.
+P0/P1a/P4a/P2a/P3a and estimate-only P4b are merged. PR CI 33974663186 and
+main CI 33975108129 passed 1,315 tests, 141 warnings.
+**Current increment:** `feat/draft-pdf-intake-20260906`, first P1b PDF path,
+implemented locally with real-scanner browser/restart evidence. This is a
+prepublication checkpoint; verify current Git/PR/CI before treating it as merged.
+The supplied original logo is already on main and was verified again in the browser.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -80,13 +82,13 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local estimate-report routes | Finish report publication, then one evidence intake path. ChatGPT adapter remains planned. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | Publish the bounded PDF slice, then explicit applicability inputs and constraint review. ChatGPT remains planned. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
-| Draft persistence | Separate Scope/report/candidate tables plus merged Estimate parent/revisions and local Estimate report retention; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
+| Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and local DraftPdfSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
-| Packages | Scope v1/v2 exchange, candidate JSON and exact manual Estimate JSON download | Whole-project archives, candidate/estimate import and rights/membership projection remain later work; these artifacts are not a complete ProjectPackage. |
-| Reporting | Separate scope-only and local estimate-only Draft snapshots and PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
+| Packages | Scope v1/v2 exchange plus local v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Whole-project archives, candidate/estimate import and rights/membership projection remain later work; these artifacts are not a complete ProjectPackage. |
+| Reporting | Separate merged scope-only and estimate-only Draft snapshots and PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
 ### Implemented manual Draft Scope slice (P0)
@@ -1078,7 +1080,7 @@ PDF/XLSX/DOCX normalisation, merge or re-scope evidence/proposals, invoke the
 single-report runner, call a provider, or grant canonical, technical, commercial, lock,
 deployment, or release authority.
 
-### Implemented locally: estimate-only Draft reporting (first P4b increment)
+### Implemented and merged: estimate-only Draft reporting (first P4b increment)
 
 `services/draft_estimate_reports.py` captures one explicitly selected saved Estimate
 and its exact Scope/optional candidate-review envelope with project labels, author,
@@ -1104,12 +1106,83 @@ calculation. New outputs use the exact supplied PNG; existing outputs are untouc
 
 This is one estimate-only profile, not completion of P4b or production reporting.
 Other technical/combined profiles, production retention limits and export projection
-remain open. After publication, prioritize P1b's first evidence intake UI: source
-retention and a real clean-scan producer must be delivered with its supported path.
-`save_upload` currently leaves pending/not_configured status and `worker.py` has no
-registered handler. Do not substitute a forced clean flag for scanning. Reuse
-verified storage and the report evidence adapter; keep extraction as proposals.
+remain open. The next source-to-Scope interaction is implemented locally below.
 P2b applicability, P3b governed pricing and full portability remain required work.
+
+### Implemented locally: retained PDF evidence review (first P1b increment)
+
+Current architecture -> change: the shared upload service previously left files
+pending/not_configured with no demonstrated Draft scanner consumer. A thin
+`draft_pdf_ui.py` now calls CLASSIFIRE-owned `draft_pdf_intake.py` use cases for
+upload, explicit scan, page viewing and explicit reviewed observations. No new
+agent framework or orchestration server is introduced; OpenClaw is not called.
+
+```mermaid
+flowchart LR
+    UI[Draft PDF upload and review UI] --> S[Authenticated shared intake commands]
+    S --> B[Bounded immutable upload / StoredFile]
+    B --> AV[Explicit exact-byte ClamD scan]
+    AV --> G[PostgreSQL shared quarantine locks]
+    G --> W[Disposable bounded PDF parser process]
+    W --> N[Existing report normalizer / retained page metadata]
+    N --> V[Authorized raster page and unreviewed text]
+    V --> H[Human explicitly saves an observation]
+    H --> D[New Draft Scope v3 revision with page references]
+    D --> R[Independent downstream snapshots / stale checks]
+```
+
+Migration `0032_draft_pdf_sources` adds Draft ownership and an exact StoredFile
+ID/hash/size foreign key, scanner metadata and normalized-document hash. It is
+additive; older revisions and PDF/XLSX bytes remain intact. Downgrade refuses to
+destroy retained evidence. Readiness advances to 0032 while preserving recognized
+0029/0030/0031 upgrade lineages. SQLite manual workflows remain available; the new
+PDF path requires PostgreSQL's existing serialized clean-byte boundary.
+
+`malware_scan.py` streams bytes to configured ClamD using bounded INSTREAM, accepts
+only explicit clean/infected verdicts and records engine/signature database/time.
+Missing, stale, ambiguous, timed-out or changed-database responses never become clean.
+A detected infection quarantines shared bytes, even if the scanning user's permission
+was revoked during processing. The daemon endpoint is trusted infrastructure, not a
+user-supplied URL; restrict its unauthenticated TCP service to trusted private access.
+
+The parser uses the existing report evidence normalizer in a fixed child process,
+with a 30-second timeout and no inherited application/provider/database credentials.
+Source limits: 10 MiB, 50 pages, 20 sources per Draft; normalized metadata 2 MiB and
+PNG preview 4 MiB. Encrypted/embedded-file/oversized PDFs fail closed. Extracted text
+is unreviewed; image-only pages are available as raster previews without claiming OCR.
+Linux adds CPU/address-space limits. Windows has process/timeout and data bounds,
+not a complete OS sandbox. Hosted untrusted multi-user intake still needs deployment
+isolation, concurrency/rate limits, scanner update monitoring and measured capacity.
+
+Uploads use unique temporary files and atomic no-overwrite publication. Parent
+links/reparse points are refused before child creation. Storage-root ACLs remain a
+trusted operational boundary. A per-hash transaction lock prevents cross-Draft source
+adoption; the supported policy binds each retained source to one Draft. There is no
+source deletion UI or automatic garbage collection; quarantine retains bytes.
+Global quotas, retention duration, orphan reconciliation, legal holds and complete
+source export rights remain decisions before customer deployment, not implied by
+this bounded synthetic prototype. Generic `worker.py` remains unwired; this explicit
+synchronous scan command is a real working consumer, not a claim of a general queue.
+
+Scope v3 pins observation content, source/hash/size, page locator/text hash, normalized
+document hash, scan hash and reviewer/time. The full source hash binds page-image
+context; a page text hash alone does not prove pixel identity. Manual edits keep the
+old review hash and expose a stale-review warning; removal affects only the new
+revision. Import always downgrades local source/review claims to imported_unverified,
+without access to source bytes or local approval. Existing v1/v2 bytes stay unchanged.
+See [the PDF/v3 contract](./DRAFT_PDF_EVIDENCE_V1_CONTRACT.md).
+
+New Scope/Estimate reports share `outputs/draft_branding.py` and the exact supplied
+PNG; historical files and canonical/legacy output renderers remain unchanged.
+Scope/Estimate reports retain page-reference claims; source/scan changes flag active
+downstream dependencies as stale without rewriting saved artifacts or outputs.
+Historical generated reports contain previously saved Draft claims, not embedded
+raw PDFs; their downloads retain normal ownership/permission/integrity checks.
+No canonical physical model, technical approval, price, lock or release is created.
+Full applicability still needs explicit structured criteria: current retrieval uses
+only service type/substrate and leaves size, material, orientation, FRL and installation
+criteria missing. Deliver a bounded visible criteria/constraint-review increment next;
+never turn existing text similarity into an Applicable verdict.
 
 ### Separate production and adapter backlog
 

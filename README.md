@@ -33,13 +33,15 @@ partial subtotals and exact historical JSON downloads. Its synthetic browser and
 restart checks passed; P3a is merged in PR #192.
 The sign-in screen and sidebar now use the owner's supplied CLASSIFIRE logo.
 
-The local **estimate-only Draft PDF/XLSX report** increment is demonstrated, with
-unchanged saved downloads after edits and restart. Verify its publication in current
-Git/PR evidence. Next is one supported evidence intake UI path, including genuine
-scan status and retained source provenance.
-Real evidence intake, full applicability, governed pricing and complete
-ProjectPackage/ChatGPT access remain unfinished. See the demo guide for manual
-estimate steps and clearly labelled optional synthetic library setup.
+The **estimate-only Draft PDF/XLSX report** increment is merged in PR #193.
+The first **PDF evidence review UI** is locally demonstrated: upload, genuine scan,
+retained page inspection, explicit page-linked Draft observation and exact saved JSON,
+including persistence after restart. The PDF path requires PostgreSQL and a trusted
+ClamD endpoint; follow the [PDF demo guide](docs/DRAFT_PDF_DEMO.md). Manual editing
+still works without scanning or AI. Verify publication in PROJECT_STATE.md/current Git.
+Full Scope analysis, actual applicability, governed pricing and complete
+ProjectPackage/ChatGPT access remain unfinished. Next is one bounded applicability
+criteria/constraint-review interaction, not more text-retrieval polish.
 See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
 [verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
 Complete visible slices before broad refinement; preserve existing authority and

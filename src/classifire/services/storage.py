@@ -3,8 +3,8 @@ from __future__ import annotations
 import hashlib
 import mimetypes
 import os
-import shutil
 import stat
+import tempfile
 from collections.abc import Collection
 from dataclasses import dataclass
 from pathlib import Path
@@ -499,6 +499,22 @@ def sha256_stream(stream: BinaryIO) -> tuple[str, int]:
     return digest.hexdigest(), size
 
 
+def _make_safe_storage_directory(path: Path) -> None:
+    """Check every parent before creating children; never follow a retained-root link."""
+    if path == Path(path.anchor):
+        raise _binding_error("STORAGE_ROOT_UNSAFE")
+    for component in _path_lineage(path):
+        try:
+            component.mkdir()
+        except FileExistsError:
+            pass
+        metadata = _safe_lstat(
+            component, missing_code="STORAGE_ROOT_INVALID", unsafe_code="STORAGE_ROOT_UNSAFE"
+        )
+        if not stat.S_ISDIR(metadata.st_mode):
+            raise _binding_error("STORAGE_ROOT_INVALID")
+
+
 def save_upload(
     db: Session,
     settings: Settings,
@@ -511,43 +527,55 @@ def save_upload(
     suffix = Path(filename).suffix.lower()
     if suffix not in ALLOWED_EXTENSIONS:
         raise ValueError(f"Unsupported file type: {suffix}")
-    spool = settings.storage_root / ".incoming"
-    spool.mkdir(parents=True, exist_ok=True)
-    temp_path = spool / f"upload-{hashlib.sha256(filename.encode()).hexdigest()[:12]}-{filename}"
+    root = Path(os.path.abspath(settings.storage_root))
+    _make_safe_storage_directory(root)
+    spool = root / ".incoming"
+    _make_safe_storage_directory(spool)
+    descriptor, temporary_name = tempfile.mkstemp(prefix="upload-", dir=spool)
+    temp_path = Path(temporary_name)
     size = 0
     digest = hashlib.sha256()
-    with temp_path.open("wb") as destination:
-        while chunk := upload.file.read(1024 * 1024):
-            size += len(chunk)
-            if size > settings.max_upload_bytes:
-                destination.close()
-                temp_path.unlink(missing_ok=True)
-                raise ValueError(f"File exceeds {settings.max_upload_mb} MB limit")
-            digest.update(chunk)
-            destination.write(chunk)
-    sha = digest.hexdigest()
-    existing = db.scalar(select(StoredFile).where(StoredFile.sha256 == sha))
-    if existing:
+    try:
+        with os.fdopen(descriptor, "wb") as destination:
+            while chunk := upload.file.read(1024 * 1024):
+                size += len(chunk)
+                if size > settings.max_upload_bytes:
+                    raise ValueError(f"File exceeds {settings.max_upload_mb} MB limit")
+                digest.update(chunk)
+                destination.write(chunk)
+        if size < 1:
+            raise ValueError("Empty files are not retained")
+        sha = digest.hexdigest()
+        existing = db.scalar(select(StoredFile).where(StoredFile.sha256 == sha))
+        if existing:
+            if existing.purpose != purpose:
+                raise ValueError(
+                    "File content is already retained for a different evidence purpose"
+                )
+            return existing
+        final_dir = root / sha[:2] / sha[2:4]
+        _make_safe_storage_directory(final_dir)
+        final_path = final_dir / f"{sha}{suffix}"
+        try:
+            # Publish complete bytes atomically; never overwrite a competing upload.
+            os.link(temp_path, final_path)
+        except FileExistsError:
+            retained = read_hashed_storage_artifact(storage_root=root, path=final_path)
+            if retained.sha256 != sha or retained.size_bytes != size:
+                raise ValueError("Retained upload content does not match") from None
+        record = StoredFile(
+            original_filename=filename,
+            media_type=upload.content_type or mimetypes.guess_type(filename)[0],
+            storage_path=str(final_path),
+            sha256=sha,
+            size_bytes=size,
+            purpose=purpose,
+            malware_scan_status="not_configured" if not settings.clamav_host else "pending",
+            uploaded_by_id=user.id if user else None,
+            immutable=True,
+        )
+        db.add(record)
+        db.flush()
+        return record
+    finally:
         temp_path.unlink(missing_ok=True)
-        if existing.purpose != purpose:
-            raise ValueError("File content is already retained for a different evidence purpose")
-        return existing
-    final_dir = settings.storage_root / sha[:2] / sha[2:4]
-    final_dir.mkdir(parents=True, exist_ok=True)
-    final_path = final_dir / f"{sha}{suffix}"
-    shutil.move(str(temp_path), final_path)
-    media_type = upload.content_type or mimetypes.guess_type(filename)[0]
-    record = StoredFile(
-        original_filename=filename,
-        media_type=media_type,
-        storage_path=str(final_path),
-        sha256=sha,
-        size_bytes=size,
-        purpose=purpose,
-        malware_scan_status="not_configured" if not settings.clamav_host else "pending",
-        uploaded_by_id=user.id if user else None,
-        immutable=True,
-    )
-    db.add(record)
-    db.flush()
-    return record

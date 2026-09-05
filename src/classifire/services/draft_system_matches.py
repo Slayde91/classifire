@@ -710,7 +710,11 @@ def match_staleness(
     storage_root: Path,
 ) -> list[str]:
     envelope = read_match_revision(db, actor, draft_id, match_id, revision)
-    reasons: list[str] = []
+    from .draft_pdf_intake import scope_evidence_staleness
+
+    reasons = scope_evidence_staleness(
+        db, actor, draft_id, envelope["scope"], storage_root=storage_root
+    )
     current_scope = _scope(db, actor, draft_id)
     if current_scope["sha256"] != envelope["scope"]["sha256"]:
         reasons.append("SCOPE_CHANGED")

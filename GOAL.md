@@ -124,14 +124,25 @@ one immutable snapshot. Exact amounts, originals/changes, missing work and parti
 coverage survive later edits and restart. It runs independently without AI or
 canonical recalculation. See PROJECT_STATE.md for measured checks/publication.
 
-## Immediate priority: one evidence intake UI path
+## Demonstrated first PDF evidence increment
 
-After report publication, deliver P1b: upload one supported PDF into a Draft-owned
-retained source, observe genuine scan status, inspect exact page evidence and
-explicitly use reviewed observations in the Draft Scope. Build the minimum scan,
-storage, provenance and review support with this visible interaction. Unavailable
-or failed scanning must remain visibly blocked, not become a fake clean result.
-Start with synthetic evidence; preserve the working manual path and optional AI.
+P1b now has a local real-scanner browser demonstration: retain a supported PDF,
+inspect its raster page, explicitly save an observation with exact page/source/review
+provenance, reopen after restart and download a v3 Scope revision. Older revisions
+survive edits; imported page claims confer no local access or approval. PostgreSQL
+provides the existing clean-byte/quarantine boundary; manual entry remains available
+without the scanner. This is bounded evidence review, not complete automated Scope
+analysis. See PROJECT_STATE.md for current validation and publication status.
+
+## Immediate priority: bounded applicability review
+
+Finish P1b publication if still outstanding, then deliver the first P2b visible
+criteria/constraint-review increment. Current matching is source-bound retrieval,
+with most physical criteria still missing. Capture explicit inputs for one supported
+target and compare only authorized structured constraints, exposing reasons and
+unknowns in a saved unapproved revision. Preserve old artifacts, optional manual
+operation and independent stopping; text similarity must not imply applicability.
+Do not invent passive-fire rules to produce a successful demo.
 
 Full applicability, pricing XLSX ingestion/default/inferred methods, other report
 profiles, complete ProjectPackage exchange and shared ChatGPT access remain required.
