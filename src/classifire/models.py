@@ -1001,6 +1001,58 @@ class DraftSystemMatchRevision(RecordMixin, Base):
     created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class DraftEstimate(RecordMixin, Base):
+    """Independent manual estimate bound to saved Draft inputs, never a canonical Estimate."""
+
+    __tablename__ = "draft_estimates"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["draft_scope_id", "scope_revision"],
+            ["draft_scope_revisions.draft_scope_id", "draft_scope_revisions.revision"],
+            name="fk_draft_estimate_scope_revision",
+        ),
+        ForeignKeyConstraint(
+            ["match_id", "match_revision"],
+            ["draft_system_match_revisions.match_id", "draft_system_match_revisions.revision"],
+            name="fk_draft_estimate_match_revision",
+        ),
+        CheckConstraint("scope_revision >= 1", name="ck_draft_estimate_scope_revision"),
+        CheckConstraint("latest_revision >= 0", name="ck_draft_estimate_revision"),
+        CheckConstraint(
+            "(match_id IS NULL AND match_revision IS NULL AND match_hash IS NULL) OR "
+            "(match_id IS NOT NULL AND match_revision IS NOT NULL "
+            "AND match_revision >= 1 AND match_hash IS NOT NULL)",
+            name="ck_draft_estimate_match_binding",
+        ),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
+    scope_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    scope_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    match_id: Mapped[str | None] = mapped_column(ForeignKey("draft_system_matches.id"))
+    match_revision: Mapped[int | None] = mapped_column(Integer)
+    match_hash: Mapped[str | None] = mapped_column(String(64))
+    latest_revision: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    latest_hash: Mapped[str | None] = mapped_column(String(64))
+    basis_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
+class DraftEstimateRevision(RecordMixin, Base):
+    __tablename__ = "draft_estimate_revisions"
+    __table_args__ = (
+        UniqueConstraint("estimate_id", "revision", name="uq_draft_estimate_revision"),
+        CheckConstraint("revision >= 1", name="ck_draft_estimate_saved_revision"),
+    )
+
+    estimate_id: Mapped[str] = mapped_column(ForeignKey("draft_estimates.id"), index=True)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_hash: Mapped[str | None] = mapped_column(String(64))
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    envelope_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
 class Estimate(RecordMixin, Base):
     __tablename__ = "estimates"
     __table_args__ = (

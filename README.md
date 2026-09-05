@@ -1,10 +1,10 @@
-# QUANTIFIRE
+# CLASSIFIRE
 
-![QUANTIFIRE estimating system](assets/brand/generated/quantifire-logo-medium.png)
+<img src="src/classifire/static/brand/classifire-logo.png" alt="CLASSIFIRE estimating system" width="320">
 
 **Passive-fire estimating and technical decision-support system**
 
-QUANTIFIRE is an estimating system produced and developed by Ceasefire PFP.
+CLASSIFIRE is an estimating system produced and developed by Ceasefire PFP.
 
 > **Release status:** pre-production integration build. This repository contains the working application foundation, editable pricing and technical-library services, deterministic calculation and rule engines, branded output renderers, and Mission Control integration scaffolding. It must not be represented as production-authorised until the published release gates and source-parity tests pass.
 
@@ -25,15 +25,18 @@ Synthetic browser demonstrations verified both workflows and persistence after
 restarting the application. Follow the [local demo guide](docs/DRAFT_SCOPE_DEMO.md)
 to try them without using an existing project database or customer evidence.
 
-P0 editing, P1a saved JSON exchange and **scope-only PDF/XLSX reporting** are merged.
-A saved **technical-candidate review** screen is now implemented and locally
-verified: select Scope/release/target, inspect source references and missing criteria,
-keep/reject with notes, save/reopen and download unchanged historical JSON. Verify
-its final publication in current Git/PR evidence. Retrieval is not applicability.
-The next increment is **P3a, an independent manual Draft Estimate UI** with attributed
-rates/overrides, explicit unknowns and partial totals. Real evidence intake, full
-applicability, governed pricing and complete ProjectPackage/ChatGPT access remain
-unfinished. See the demo guide for clearly labelled synthetic library setup.
+P0 editing, P1a saved JSON exchange, scope-only PDF/XLSX reporting and saved
+technical-candidate review are merged. Retrieval is not technical applicability.
+The new **manual Draft Estimate UI** supports explicit AUD unit sell rates,
+unknown quantities/rates, preserved originals and reasoned overrides, omit/restore,
+partial subtotals and exact historical JSON downloads. Its synthetic browser and
+restart checks passed; verify final publication in current Git/PR evidence.
+The sign-in screen and sidebar now use the owner's supplied CLASSIFIRE logo.
+
+Next is **estimate-only Draft PDF/XLSX reporting** over a selected saved estimate.
+Real evidence intake, full applicability, governed pricing and complete
+ProjectPackage/ChatGPT access remain unfinished. See the demo guide for manual
+estimate steps and clearly labelled optional synthetic library setup.
 See the [product goal](GOAL.md), [roadmap](docs/CLASSIFIRE_ROADMAP.md),
 [verified state](docs/PROJECT_STATE.md) and [next-session handoff](docs/SESSION_HANDOFF.md).
 Complete visible slices before broad refinement; preserve existing authority and
@@ -51,7 +54,7 @@ security protections. Agent contributors should read [AGENTS.md](AGENTS.md).
 - Estimate snapshots and audit records
 - Branded PDF and Excel output renderers
 - Mission Control integration client and bootstrap command
-- Proprietary QUANTIFIRE branding assets
+- Current CLASSIFIRE UI logo and retained legacy output assets
 
 ## Local installation
 

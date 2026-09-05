@@ -1,0 +1,149 @@
+{% macro number_text(value) -%}
+{{ 'Unknown' if value is none or value == '' else value }}
+{%- endmacro %}
+{% macro item_label(items, identifier) -%}
+{{ items|selectattr('id', 'equalto', identifier)|map(attribute='label')|first|default(identifier) }}
+{%- endmacro %}
+{% set summary = envelope.summary %}
+{% set selected_target = selected_target|default(none) %}
+{% set available_targets = available_targets|default([]) %}
+<section class="panel" aria-labelledby="estimate-subtotal-heading">
+  <h2 id="estimate-subtotal-heading">Priced work subtotal</h2>
+  <div class="totals-box">
+    <div class="grand"><strong>Partial subtotal, excluding tax</strong><strong>AUD {{ summary.priced_subtotal_ex_tax }}</strong></div>
+    <div><span>Priced lines</span><span>{{ summary.priced_line_count }}</span></div>
+    <div><span>Unpriced lines</span><span>{{ summary.unpriced_line_ids|length }}</span></div>
+    <div><span>Omitted lines</span><span>{{ summary.omitted_line_ids|length }}</span></div>
+  </div>
+  <p>Only active lines with both quantity and rate contribute. Blank means unknown; zero is an explicit value. Omitted work is excluded from this subtotal.</p>
+  <p class="scope-hint">Each quantity is multiplied directly by its unit sell rate, then rounded half up to two decimal places. Rounded line amounts are added. Tax, technical applicability and complete project recovery are not assessed.</p>
+</section>
+<section class="panel scope-findings" aria-labelledby="estimate-coverage-heading">
+  <h2 id="estimate-coverage-heading">Work still outside the subtotal</h2>
+  <p>One service line covers only that service's stated work across all its linked openings. Shared-opening closure is excluded. A line's presence does not prove that all required work is priced.</p>
+  <div class="grid-two">
+    <div><h3>Targets without an estimate line</h3>
+      {% if summary.unrepresented_targets %}<ul>{% for target in summary.unrepresented_targets %}<li>{{ target.label }} &middot; {{ 'service' if target.target_kind == 'service' else 'blank opening' }}<span class="scope-item-id"> ({{ target.target_id }})</span></li>{% endfor %}</ul>{% else %}<p>Each supported target has a retained line. Omitted lines, unknown quantities, unknown rates and additional work can still leave the estimate incomplete.</p>{% endif %}
+    </div>
+    <div><h3>Opening work not assessed</h3>
+      {% if summary.unassessed_opening_ids %}<ul>{% for identifier in summary.unassessed_opening_ids %}<li>{{ item_label(scope.content.openings, identifier) }}<span class="scope-item-id"> ({{ identifier }})</span></li>{% endfor %}</ul>{% else %}<p>No nonblank openings in this Scope. Blank-opening dimensions do not automatically establish a closure quantity.</p>{% endif %}
+      <p class="scope-hint">Nonblank-opening closure and shared work are not priced by this prototype. No quantity is copied once per service/opening link.</p>
+    </div>
+  </div>
+</section>
+{% if envelope.system_match %}
+<section class="panel">
+  <h2>Attached candidate review</h2>
+  <p>Saved review revision {{ envelope.system_match.revision }} &middot; unapproved reference only. No technical system or rate was selected automatically.</p>
+  <p><a href="/scopes/{{ draft.id }}/system-matches/{{ envelope.system_match.artifact_id }}?revision={{ envelope.system_match.revision }}">Open saved candidate review</a></p>
+  <dl class="scope-import-details"><dt>Review ID</dt><dd class="scope-item-id">{{ envelope.system_match.artifact_id }}</dd><dt>Review checksum</dt><dd class="scope-item-id">{{ envelope.system_match.sha256 }}</dd></dl>
+</section>
+{% endif %}
+<section class="panel" aria-labelledby="estimate-lines-heading">
+  <h2 id="estimate-lines-heading">Saved work lines</h2>
+  <p class="scope-hint">Each action saves one new estimate revision. Save changes in one form before opening another target, history revision or page. Targets, units, descriptions and original values stay fixed after addition.</p>
+  {% for line in envelope.lines %}
+  {% set attempted = error_line_id == line.line_id %}
+  {% set values = form_values if attempted else {} %}
+  <article class="scope-item" id="estimate-line-{{ line.line_id }}" aria-labelledby="line-heading-{{ line.line_id }}">
+    <div class="scope-import-item-heading"><h3 id="line-heading-{{ line.line_id }}">{{ loop.index }}. {{ line.label }}</h3><span class="badge badge-draft">{{ line.pricing_status }}</span></div>
+    <p class="scope-preserve-text">{{ line.description }}</p>
+    <dl class="scope-import-details">
+      <dt>Work basis</dt><dd>{{ 'Service-specific work, excluding shared-opening work' if line.target_kind == 'service' else 'Blank-opening closure only' }}</dd>
+      <dt>Unit</dt><dd>{{ line.unit }}</dd>
+      <dt>Original quantity</dt><dd>{{ number_text(line.original_quantity) }} {{ line.unit }}{{ ' (saved Scope)' if line.target_kind == 'service' else ' (manual blank-opening basis)' }}</dd>
+      <dt>Original unit sell rate</dt><dd>{{ number_text(line.original_rate) }} AUD / {{ line.unit }}</dd>
+      <dt>Saved quantity to price</dt><dd>{{ number_text(line.quantity) }} {{ line.unit }}</dd>
+      <dt>Saved unit sell rate</dt><dd>{{ number_text(line.unit_sell_rate) }} AUD / {{ line.unit }}</dd>
+      <dt>Saved line subtotal</dt><dd>{% if line.subtotal_ex_tax is not none %}AUD {{ line.subtotal_ex_tax }} excluding tax{% else %}{{ 'Omitted from subtotal' if line.status == 'omitted' else 'Unpriced - quantity or rate unknown' }}{% endif %}</dd>
+      <dt>Rate / work source note</dt><dd class="scope-preserve-text">{{ line.source_note }}</dd>
+      {% if line.omission_reason %}<dt>Omission reason</dt><dd class="scope-preserve-text">{{ line.omission_reason }}</dd>{% endif %}
+      <dt>Related openings</dt><dd>{% if line.opening_ids %}<ul>{% for identifier in line.opening_ids %}<li>{{ item_label(scope.content.openings, identifier) }} <span class="scope-item-id">({{ identifier }})</span></li>{% endfor %}</ul>{% else %}No linked openings / unresolved{% endif %}</dd>
+    </dl>
+    {% if can_edit %}
+    <details class="scope-import-source"{% if attempted %} open{% endif %}>
+      <summary>{{ 'Restore omitted work' if line.status == 'omitted' else 'Edit price or omit this line' }}</summary>
+      {% if line.status == 'active' %}
+      {% set update_values = values if values.get('action', 'update') == 'update' else {} %}
+      <form method="post" action="{{ estimate_url }}/lines/{{ line.line_id }}" class="form-grid" aria-label="Change price for {{ line.label }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="expected_revision" value="{{ envelope.revision }}">
+        <input type="hidden" name="action" value="update">
+        <div><label for="line-quantity-{{ line.line_id }}">Quantity to price</label><input id="line-quantity-{{ line.line_id }}" name="quantity" type="number" min="0" max="999999999" step="{{ '1' if line.unit == 'each' else '0.000001' }}" value="{{ update_values.get('quantity', '' if line.quantity is none else line.quantity) }}" aria-describedby="line-number-hint-{{ line.line_id }}"></div>
+        <div><label for="line-rate-{{ line.line_id }}">Unit sell rate excluding tax (AUD / {{ line.unit }})</label><input id="line-rate-{{ line.line_id }}" name="unit_sell_rate" type="number" min="0" max="999999999" step="0.000001" value="{{ update_values.get('unit_sell_rate', '' if line.unit_sell_rate is none else line.unit_sell_rate) }}" aria-describedby="line-number-hint-{{ line.line_id }}"></div>
+        <p id="line-number-hint-{{ line.line_id }}" class="scope-hint span-2">Blank means unknown, including when replacing a known value. Zero is an explicit value. {{ 'Each quantities must be whole numbers.' if line.unit == 'each' else 'Quantities support up to six decimal places.' }} Rates support up to six decimal places.</p>
+        <div class="span-2"><label for="line-reason-{{ line.line_id }}">Reason for change</label><textarea id="line-reason-{{ line.line_id }}" name="reason" rows="3" maxlength="4000" required>{{ update_values.get('reason', '') }}</textarea><p class="scope-hint">Required for quantity or rate changes. Earlier values and reasons remain in history.</p></div>
+        <div class="scope-context-actions span-2"><button class="button button-primary" type="submit">Save line changes</button></div>
+      </form>
+      {% endif %}
+      {% set status_action = 'omit' if line.status == 'active' else 'restore' %}
+      <form method="post" action="{{ estimate_url }}/lines/{{ line.line_id }}" class="stack-form scope-import-source" aria-label="{{ 'Omit' if line.status == 'active' else 'Restore' }} {{ line.label }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="expected_revision" value="{{ envelope.revision }}">
+        <input type="hidden" name="action" value="{{ status_action }}">
+        <label for="line-status-reason-{{ line.line_id }}">{{ 'Reason for omission' if line.status == 'active' else 'Reason for restoration' }}</label>
+        <textarea id="line-status-reason-{{ line.line_id }}" name="reason" rows="2" maxlength="4000" required>{{ values.get('reason', '') if values.get('action') == status_action else '' }}</textarea>
+        <p class="scope-hint">This changes only whether the saved line contributes to the subtotal. Save quantity or rate changes separately first.</p>
+        <button class="button button-secondary" type="submit">{{ 'Omit line from subtotal' if line.status == 'active' else 'Restore line to estimate' }}</button>
+      </form>
+    </details>
+    {% elif attempted %}
+    <div class="callout"><strong>Unsaved attempted line changes</strong><dl class="scope-import-details">{% for key in ['action', 'quantity', 'unit_sell_rate', 'reason'] %}{% if key in form_values %}<dt>{{ key|replace('_', ' ')|capitalize }}</dt><dd class="scope-preserve-text">{{ number_text(form_values[key]) }}</dd>{% endif %}{% endfor %}</dl><p>Copy any values or notes you want to keep, then <a href="{{ estimate_url }}" target="_blank" rel="noopener">open the latest revision (new tab)</a>. These changes were not saved.</p></div>
+    {% endif %}
+    <details class="scope-import-source"><summary>Original values, changes and line identity</summary>
+      <dl class="scope-import-details"><dt>Line ID</dt><dd class="scope-item-id">{{ line.line_id }}</dd><dt>Target ID</dt><dd class="scope-item-id">{{ line.target_id }}</dd><dt>Recovery key</dt><dd class="scope-item-id">{{ line.recovery_key }}</dd><dt>Added by / at</dt><dd>{{ line.created_by }} / {{ line.created_at }}</dd></dl>
+      {% for event in line.history %}<div class="scope-import-item"><strong>{{ event.action|capitalize }}</strong> &middot; {{ event.created_at }}<dl class="scope-import-details"><dt>Quantity</dt><dd>{{ number_text(event.before_quantity) }} &rarr; {{ number_text(event.quantity) }} {{ line.unit }}</dd><dt>Unit sell rate</dt><dd>{{ number_text(event.before_rate) }} &rarr; {{ number_text(event.unit_sell_rate) }} AUD / {{ line.unit }}</dd><dt>Reason</dt><dd class="scope-preserve-text">{{ event.reason or 'Initial values recorded' }}</dd><dt>Recorded by</dt><dd class="scope-item-id">{{ event.created_by }}</dd></dl></div>{% endfor %}
+    </details>
+  </article>
+  {% else %}<div class="scope-empty"><h3>No work lines yet</h3><p>Select a supported Scope target below, then enter its work and pricing basis. Nothing has been priced automatically.</p></div>{% endfor %}
+</section>
+{% if can_edit %}
+<section class="panel" id="estimate-add-line" aria-labelledby="estimate-add-heading">
+  <h2 id="estimate-add-heading">Add one work line</h2>
+  {% if envelope.lines|length >= 100 %}<p class="callout">This estimate has reached its 100-line limit. Existing lines and earlier revisions remain available.</p>{% else %}
+  <form method="get" action="{{ estimate_url }}" class="stack-form">
+    <input type="hidden" name="revision" value="{{ envelope.revision }}">
+    <label for="estimate-target">Scope target to price</label>
+    <select id="estimate-target" name="target" required aria-describedby="estimate-target-hint">
+      <option value="">Choose a service or blank opening</option>
+      {% for target in available_targets %}<option value="{{ target.kind }}:{{ target.id }}"{% if selected_target and selected_target.kind == target.kind and selected_target.id == target.id %} selected{% endif %}>{{ target.label }} &middot; {{ 'service once across all links' if target.kind == 'service' else 'blank-opening closure' }}</option>{% endfor %}
+    </select>
+    <p id="estimate-target-hint" class="scope-hint">Showing a target reloads this page. Save other line changes first. Each target can have only one retained line; restore or edit its existing line where appropriate.</p>
+    <button class="button button-secondary" type="submit"{% if not available_targets %} disabled{% endif %}>Show target for pricing</button>
+  </form>
+  {% if not available_targets %}<p class="scope-empty">No supported targets are available in this saved Scope.</p>{% endif %}
+  {% if selected_target %}
+  {% set add_values = form_values if error_line_id == 'add' else {} %}
+  <div class="scope-import-item">
+    <h3>{{ selected_target.label }}</h3>
+    <p>{{ 'Service-specific work once across all linked openings. Shared-opening work is excluded.' if selected_target.kind == 'service' else 'Blank-opening closure only. Enter a manual quantity and explain its basis; dimensions are not converted automatically.' }}</p>
+    <p>Original Scope quantity: <strong>{{ number_text(selected_target.quantity) }}</strong>{% if selected_target.kind == 'service' %} {{ selected_target.unit }}{% endif %}.</p>
+    <p class="scope-item-id">Target: {{ selected_target.id }}</p>
+    {% if selected_target.opening_ids %}<p>Related openings:</p><ul>{% for identifier in selected_target.opening_ids %}<li>{{ item_label(scope.content.openings, identifier) }} <span class="scope-item-id">({{ identifier }})</span></li>{% endfor %}</ul>{% endif %}
+    <form method="post" action="{{ estimate_url }}/lines" class="form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="expected_revision" value="{{ envelope.revision }}">
+      <input type="hidden" name="target_kind" value="{{ selected_target.kind }}">
+      <input type="hidden" name="target_id" value="{{ selected_target.id }}">
+      <div class="span-2"><label for="estimate-line-description">Work description</label><textarea id="estimate-line-description" name="description" rows="2" maxlength="500" required>{{ add_values.get('description', '') }}</textarea></div>
+      <div><label for="estimate-line-unit">Unit</label>
+      {% if selected_target.kind == 'service' %}<input id="estimate-line-unit" value="{{ selected_target.unit }}" readonly><input type="hidden" name="unit" value="{{ selected_target.unit }}"><p class="scope-hint">Fixed to the saved service unit.</p>{% else %}<select id="estimate-line-unit" name="unit"><option value="each"{% if add_values.get('unit', 'each') == 'each' %} selected{% endif %}>each</option><option value="m2"{% if add_values.get('unit') == 'm2' %} selected{% endif %}>m2 (square metres)</option></select>{% endif %}
+      </div>
+      <div><label for="estimate-line-quantity">Quantity to price</label><input id="estimate-line-quantity" name="quantity" type="number" min="0" max="999999999" step="{{ '1' if selected_target.kind == 'service' and selected_target.unit == 'each' else '0.000001' }}" value="{{ add_values.get('quantity', '' if selected_target.quantity is none else selected_target.quantity) }}" aria-describedby="estimate-add-number-hint"></div>
+      <div><label for="estimate-line-rate">Unit sell rate excluding tax (AUD per unit)</label><input id="estimate-line-rate" name="unit_sell_rate" type="number" min="0" max="999999999" step="0.000001" value="{{ add_values.get('unit_sell_rate', '') }}" aria-describedby="estimate-add-number-hint"></div>
+      <p id="estimate-add-number-hint" class="scope-hint">Leave quantity or rate blank when unknown. Zero is explicit. Each quantities must be whole numbers; other supported units and rates allow up to six decimal places. Rates must exclude shared-opening work for service lines.</p>
+      <div class="span-2"><label for="estimate-line-source">Rate / work source note</label><textarea id="estimate-line-source" name="source_note" rows="2" maxlength="4000" required>{{ add_values.get('source_note', '') }}</textarea><p class="scope-hint">Record the manual rate basis and work included.</p></div>
+      <div class="span-2"><label for="estimate-line-reason">Quantity basis / override reason</label><textarea id="estimate-line-reason" name="reason" rows="2" maxlength="4000">{{ add_values.get('reason', '') }}</textarea><p class="scope-hint">Required when changing the original Scope quantity, including replacing it with unknown, or supplying a blank-opening quantity. Do not infer a quantity from the defect count.</p></div>
+      <div class="span-2"><button class="button button-primary" type="submit">Add and calculate line</button><p class="scope-hint">Saves a new estimate revision. The first entered rate is retained as the original rate.</p></div>
+    </form>
+  </div>
+  {% endif %}
+  {% endif %}
+</section>
+{% endif %}
+{% if error_line_id == 'add' and not can_edit %}
+<section class="panel"><h2>Unsaved attempted new line</h2><dl class="scope-import-details">{% for key in ['target_kind', 'target_id', 'description', 'unit', 'quantity', 'unit_sell_rate', 'source_note', 'reason'] %}{% if key in form_values %}<dt>{{ key|replace('_', ' ')|capitalize }}</dt><dd class="scope-preserve-text">{{ number_text(form_values[key]) }}</dd>{% endif %}{% endfor %}</dl><p>Copy any values or notes to keep, then <a href="{{ estimate_url }}" target="_blank" rel="noopener">open the latest revision (new tab)</a>. These changes were not saved.</p></section>
+{% endif %}
+<details class="panel"><summary>Full saved Scope context</summary>
+  {% with envelope=scope %}{% include "draft_scope_report_content.html" %}{% endwith %}
+</details>

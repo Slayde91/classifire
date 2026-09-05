@@ -103,18 +103,31 @@ references, missing criteria and stale dependencies remain visible. Saved JSON d
 not grant approval. See PROJECT_STATE.md for validation and publication evidence.
 Full applicability remains P2b; text relevance must never become a matching verdict.
 
-## Immediate priority: independent Draft Estimate interaction
+## Demonstrated manual estimating increment
 
-After P2a verification/publication, deliver P3a: a bounded user-entered-rate Draft
-Estimate workspace over explicit saved Scope inputs, with an optional candidate-review
-reference. Show unknown quantities/rates and unapproved technical status, preserve
-original rates and reasoned overrides, save/reopen/download revisions, and stop.
-This brings the fourth capability into the working prototype without waiting for
-all technical rules or source formats. It does not complete production estimating.
+P3a adds an independent Draft Estimate UI over an exact saved Scope, optionally
+retaining an unapproved candidate review. It supports explicit AUD unit sell rates,
+unknown quantities/rates, original values and reasoned overrides, omit/restore,
+partial tax-excluded subtotals and immutable JSON downloads. A synthetic Chrome
+journey and actual restart verified eight estimate revisions with unchanged older
+bytes. The supplied CLASSIFIRE logo is now used by the sign-in screen and sidebar.
+See PROJECT_STATE.md for current checks and publication evidence.
 
-Reuse existing Decimal helpers after inspecting their rounding and null behavior.
-Do not create canonical physical rows, require unrelated release pins, call the
-recalculating snapshot builder or turn a kept candidate into an applicable system.
-The roadmap and handoff define the concrete next task and validation boundaries.
+This is manual provisional costing, not complete governed estimating. No library,
+AI, canonical Estimate, Physical Model Lock or technical approval is required or
+created. The supported recovery boundary excludes nonblank-opening closure work.
+
+## Immediate priority: estimate-only Draft PDF and XLSX
+
+After P3a publication, deliver one P4b increment: select a saved Draft Estimate,
+preview it and retain readable PDF/XLSX from one frozen snapshot. Reuse existing
+Draft report retention and authority patterns. Display retained quantities, rates,
+originals, overrides, omissions, unknown work and partial totals without rerunning
+upstream capabilities or the canonical recalculating snapshot builder.
+
+Preserve exact decimal values in both formats; large supported amounts can exceed
+spreadsheet numeric precision. Keep original report files and earlier revisions
+unchanged. This delivers useful output from the manual costing interaction before
+broad refinement. The roadmap and handoff define acceptance and validation.
 Pricing XLSX ingestion, supported inferred/default methods, applicability, source
 intake, other reports and complete portability remain required follow-on work.
