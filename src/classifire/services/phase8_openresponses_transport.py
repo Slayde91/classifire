@@ -14,7 +14,7 @@ import json
 import time
 from collections.abc import Callable, Mapping
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any, Protocol
 from urllib.parse import urlsplit, urlunsplit
 
@@ -66,6 +66,10 @@ _RECEIPT_SAFE_ERROR_CODES = frozenset(
         "ASSISTANT_OUTPUT_INVALID",
         "ASSISTANT_OUTPUT_NOT_JSON",
         "CLIENT_TOOL_CALL_DETECTED",
+        "COMPLETION_EVIDENCE_UNAVAILABLE",
+        "COMPLETION_EVIDENCE_INVALID",
+        "COMPLETION_EVIDENCE_MISMATCH",
+        "COMPLETION_EVIDENCE_INCOMPLETE",
         "CONTROLLER_REQUEST_INVALID",
         "EVIDENCE_FILE_CHANGED",
         "EVIDENCE_FILE_COUNT_INVALID",
@@ -143,6 +147,113 @@ class NoToolSessionAudit:
     session_id_sha256: str
     tool_calls: tuple[str, ...]
     receipt_sha256: str
+
+
+@dataclass(frozen=True, slots=True)
+class ExecutionCompletionContext:
+    agent_id: str
+    session_id_sha256: str
+    request_sha256: str
+    request_body_sha256: str
+    response_sha256: str
+    audit_receipt_sha256: str
+    attestation_receipt_sha256: str
+    started_at_ms: int
+    observed_at_ms: int
+
+    @property
+    def sha256(self) -> str:
+        return canonical_json_sha256(
+            {
+                "schema": "CLASSIFIRE-EXECUTION-COMPLETION-CONTEXT-v1",
+                **asdict(self),
+            }
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ExecutionCompletionEvidence:
+    context_sha256: str
+    receipt_sha256: str
+    terminal_at_ms: int
+    coverage_from_ms: int
+    coverage_through_ms: int
+    writer_enabled: bool
+    writer_healthy: bool
+    pending_events: int
+    dropped_events: int
+    tool_actions: int
+
+
+class ExecutionCompletionVerifier(Protocol):
+    """Trusted application code authenticating durable producer evidence.
+
+    Never derive success solely from model/Gateway fields or an empty audit page.
+    """
+
+    def __call__(
+        self,
+        context: ExecutionCompletionContext,
+    ) -> ExecutionCompletionEvidence: ...
+
+
+def validate_execution_completion(
+    evidence: ExecutionCompletionEvidence,
+    context: ExecutionCompletionContext,
+) -> str:
+    """Validate authenticated verifier output; hashes alone confer no authority."""
+    if not isinstance(context, ExecutionCompletionContext) or not isinstance(
+        evidence, ExecutionCompletionEvidence
+    ):
+        raise Phase8OpenResponsesTransportError("COMPLETION_EVIDENCE_INVALID")
+    hashes = (
+        context.session_id_sha256,
+        context.request_sha256,
+        context.request_body_sha256,
+        context.response_sha256,
+        context.audit_receipt_sha256,
+        context.attestation_receipt_sha256,
+        evidence.context_sha256,
+        evidence.receipt_sha256,
+    )
+    numbers = (
+        context.started_at_ms,
+        context.observed_at_ms,
+        evidence.terminal_at_ms,
+        evidence.coverage_from_ms,
+        evidence.coverage_through_ms,
+        evidence.pending_events,
+        evidence.dropped_events,
+        evidence.tool_actions,
+    )
+    if (
+        not _is_agent_id(context.agent_id)
+        or any(not _is_sha256(value) for value in hashes)
+        or any(type(value) is not int or value < 0 for value in numbers)
+        or type(evidence.writer_enabled) is not bool
+        or type(evidence.writer_healthy) is not bool
+        or context.observed_at_ms < context.started_at_ms
+    ):
+        raise Phase8OpenResponsesTransportError("COMPLETION_EVIDENCE_INVALID")
+    if evidence.context_sha256.upper() != context.sha256:
+        raise Phase8OpenResponsesTransportError("COMPLETION_EVIDENCE_MISMATCH")
+    if (
+        not context.started_at_ms <= evidence.terminal_at_ms <= context.observed_at_ms
+        or evidence.coverage_from_ms > context.started_at_ms
+        or not evidence.terminal_at_ms <= evidence.coverage_through_ms <= context.observed_at_ms
+        or not evidence.writer_enabled
+        or not evidence.writer_healthy
+        or evidence.pending_events != 0
+        or evidence.dropped_events != 0
+        or evidence.tool_actions != 0
+    ):
+        raise Phase8OpenResponsesTransportError("COMPLETION_EVIDENCE_INCOMPLETE")
+    return canonical_json_sha256(
+        {
+            "schema": "CLASSIFIRE-EXECUTION-COMPLETION-v1",
+            **asdict(evidence),
+        }
+    )
 
 
 class NoToolSessionGuard(Protocol):
@@ -436,6 +547,7 @@ class Phase8OpenResponsesTransport:
         session_guard: NoToolSessionGuard,
         runtime_agent_ids: Mapping[str, str],
         prompt_renderer: Phase8VisualPromptRenderer | None = None,
+        completion_verifier: ExecutionCompletionVerifier | None = None,
         clock_ms: Callable[[], int] | None = None,
     ) -> None:
         self._client = client
@@ -443,6 +555,7 @@ class Phase8OpenResponsesTransport:
         self._token_provider = token_provider
         self._packet = evidence_packet
         self._guard = session_guard
+        self._completion_verifier = completion_verifier
         selected_agent_ids = dict(runtime_agent_ids)
         if (
             set(selected_agent_ids) != _ALLOWED_ROLES
@@ -544,6 +657,7 @@ class Phase8OpenResponsesTransport:
         if len(encoded_body) > _MAX_REQUEST_BYTES:
             raise Phase8OpenResponsesTransportError("REQUEST_BODY_TOO_LARGE")
 
+        self._require_completion_verifier()
         try:
             token = self._token_provider()
         except Exception:
@@ -588,15 +702,26 @@ class Phase8OpenResponsesTransport:
         if response is None:
             raise Phase8OpenResponsesTransportError("GATEWAY_REQUEST_FAILED")
         payload, response_id = self._parse_response(response)
+        completion_sha256 = self._verify_completion(
+            agent_id=runtime_agent_id,
+            session_id_sha256=session_id_sha256,
+            request=trusted_request,
+            encoded_body=encoded_body,
+            response=response,
+            audit=audit,
+            attestation_receipt_sha256=attestation.receipt_sha256,
+            started_at_ms=started_at_ms,
+        )
 
         receipt_sha256 = canonical_json_sha256(
             {
-                "schema": "CLASSIFIRE-PHASE8-OPENRESPONSES-TRANSPORT-v1",
+                "schema": "CLASSIFIRE-PHASE8-OPENRESPONSES-TRANSPORT-v2",
                 "request_sha256": canonical_json_sha256(trusted_request),
                 "prompt_template_sha256": rendered.template_sha256,
                 "session_id_sha256": session_id_sha256,
                 "attestation_receipt_sha256": attestation.receipt_sha256,
                 "audit_receipt_sha256": audit.receipt_sha256,
+                "execution_completion_sha256": completion_sha256,
                 "evidence": byte_receipts,
                 "openresponses_response_id_sha256": _sha256_text(response_id),
                 "payload_sha256": canonical_json_sha256(payload),
@@ -788,6 +913,41 @@ class Phase8OpenResponsesTransport:
         ):
             raise Phase8OpenResponsesTransportError("TOOL_AUDIT_MISMATCH")
         return audit
+
+    def _require_completion_verifier(self) -> ExecutionCompletionVerifier:
+        if not callable(self._completion_verifier):
+            raise Phase8OpenResponsesTransportError("COMPLETION_EVIDENCE_UNAVAILABLE")
+        return self._completion_verifier
+
+    def _verify_completion(
+        self,
+        *,
+        agent_id: str,
+        session_id_sha256: str,
+        request: dict[str, Any],
+        encoded_body: bytes,
+        response: httpx.Response,
+        audit: NoToolSessionAudit,
+        attestation_receipt_sha256: str,
+        started_at_ms: int,
+    ) -> str:
+        verifier = self._require_completion_verifier()
+        context = ExecutionCompletionContext(
+            agent_id=agent_id,
+            session_id_sha256=session_id_sha256,
+            request_sha256=canonical_json_sha256(request),
+            request_body_sha256=hashlib.sha256(encoded_body).hexdigest().upper(),
+            response_sha256=hashlib.sha256(response.content).hexdigest().upper(),
+            audit_receipt_sha256=audit.receipt_sha256,
+            attestation_receipt_sha256=attestation_receipt_sha256,
+            started_at_ms=started_at_ms,
+            observed_at_ms=self._clock_ms(),
+        )
+        try:
+            evidence = verifier(context)
+        except Exception:
+            raise Phase8OpenResponsesTransportError("COMPLETION_EVIDENCE_UNAVAILABLE") from None
+        return validate_execution_completion(evidence, context)
 
     @staticmethod
     def _parse_response(response: httpx.Response) -> tuple[dict[str, Any], str]:

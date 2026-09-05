@@ -4,7 +4,7 @@
 
 **Architecture version:** 5.0
 
-**Verified shared-main baseline:** `4ab872334cad326fbd3cc6dad7106f3f448eae14` (PR #181, 2026-09-05)
+**Verified shared-main baseline:** `51e7d601a756141dfbdef5d113e754a9b2833d34` (PR #182, 2026-09-05)
 
 **Latest executable-change baseline:** 4ab8723 (PR #181)
 
@@ -19,38 +19,40 @@ Git state, and retained runtime receipts determine factual implementation state.
 
 ## Contract characterisation progress
 
-PR #181 merged audit-page refusal as `4ab872334cad326fbd3cc6dad7106f3f448eae14`.
-[PR CI 33936702941](https://github.com/Slayde91/classifire/actions/runs/33936702941)
-and [main CI 33936917822](https://github.com/Slayde91/classifire/actions/runs/33936917822)
-were rechecked and passed. Shared main rejects any `nextCursor` field and
-more than 100 audit events. PR #179 uncertain-session-creation refusal and
-PR #180 socket deadlines are already merged.
+PR #182 merged the documentation reconciliation as `51e7d601a756141dfbdef5d113e754a9b2833d34`.
+[Exact main CI 33938506042](https://github.com/Slayde91/classifire/actions/runs/33938506042)
+passed. PR #181 audit-page refusal, PR #180 socket deadlines and PR #179
+uncertain-session-creation refusal remain implemented.
 
-**Remaining shared-main gap:** an empty terminal audit page is only an
-observation of retained events. The source inspection recorded in the
-[contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) found asynchronous,
-potentially disabled/lossy capture without a durable completion certificate.
-The shared-main transport has no completion-verifier acceptance gate.
+**Current implementation candidate (publication must be verified):**
+`feat/phase8-completion-evidence-20260905` now includes shared main `51e7d60`.
+Both transports require an application-configured completion verifier before
+inference token acquisition or HTTP dispatch. Successful acceptance validates
+the exact invocation, durable receipt identity, terminal time and capture
+coverage, writer health, and zero pending/lost/tool records. Version-2 transport
+digests bind that result. Independent no-tool checks and historical audit
+observation receipts remain unchanged.
 
-**Uncommitted local work, not shared implementation:** branch
-`feat/phase8-completion-evidence-20260905` at base `4ab8723`, worktree
-`C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905`, contains changes to two
-transports and three test files, plus an untracked
-`docs/EXECUTION_COMPLETION_CONTRACT.md`. Its proposed required verifier and
-version-2 transport receipts bind execution evidence to the exact invocation.
-Managed runtimes supply no verifier, so the candidate deliberately refuses
-inference before acquiring the inference token or sending HTTP. A trusted
-production producer/verifier is absent. Typed data and hashes do not prove
-producer authority. This reconciliation inspected the diff; it did not rerun
-candidate tests or publish that code.
+**Intentional runtime consequence:** managed factories supply no completion
+verifier, so inference dispatch fails with `COMPLETION_EVIDENCE_UNAVAILABLE`.
+No production evidence producer/verifier is supplied. This is a fail-closed
+consumer boundary, not proof of working production capture or OpenClaw retirement.
+Typed fields and hashes cannot authenticate a producer. See the
+[completion contract](./EXECUTION_COMPLETION_CONTRACT.md).
 
-**Next bounded task:** review, validate and finish that existing completion
-acceptance candidate, including its deliberate runtime refusal and historical
-receipt compatibility. Preserve its changes; do not recreate them. Prove the
-consumer boundary with synthetic tests before normal reviewed publication.
-Durable authenticated evidence production is a subsequent gate; do not
-fabricate provider fields, use repeated empty reads as proof, or remove OpenClaw
-before security and recovery parity.
+**Verified candidate evidence:** 171 synthetic tests passed across the twelve
+transport/security/caller files listed in the handoff. Eight existing Pillow
+deprecation warnings remain. Exact request/response byte binding, missing evidence
+before token/HTTP, invalid/mismatched/incomplete evidence, safe errors, replay
+binding, managed refusal and legacy audit receipt compatibility are covered.
+No real provider, customer evidence, canonical write, lock or release was used.
+
+**Next gated task:** implement the smallest durable CLASSIFIRE execution journal
+and authenticated completion-verifier path, extending BackgroundJob/worker where
+suitable. It must prove capture-before-dispatch, terminal persistence ordering,
+loss detection, invocation ownership and crash/replay recovery using synthetic
+execution. Keep production wiring disabled until a producer can prove the full
+contract. Do not substitute empty audit polling, self-asserted fields or delays.
 
 ## 1. Governing reasoning chain
 
@@ -568,7 +570,7 @@ deployment, provider-run, or Human Release authority.
 
 ### Unresolved decisions, migrations and technical debt
 
-**Proposed consumer change, local only:** the completion-evidence candidate adds
+**Current candidate consumer change, validated but publication pending:** the completion-evidence candidate adds
 a required application-injected verifier to both transports and binds validated
 evidence into version-2 transport digests. Its context includes request/response
 bytes, session, agent, audit and attestation receipts, and invocation times.
@@ -578,15 +580,15 @@ evidence blocks proposal acceptance. Independent no-tool checks remain.
 **Reason and consequences:** shared-main audit pages cannot establish durable
 completion. The candidate closes acceptance without pretending the missing
 producer exists, but managed inference becomes unavailable until a trusted
-producer/verifier is implemented and wired. Review and test this availability
-impact before merging. Typed callback data alone is not authentication.
+producer/verifier is implemented and wired. Synthetic tests prove this availability
+impact; no real provider was exercised. Typed callback data alone is not authentication.
 
 **Migration and unresolved decisions:** verify historical version-1 receipts
 separately from version-2 acceptance; never relabel old observations as complete
 capture. The candidate adds no database migration or provider removal. Prove
 producer identity, persistence ordering, capture health/loss detection, retention,
-clock assumptions and crash/replay recovery before production wiring. The local
-contract is not on main; use the exact candidate path in the handoff.
+clock assumptions and crash/replay recovery before production wiring. The
+[completion contract](./EXECUTION_COMPLETION_CONTRACT.md) records this boundary.
 
 | Decision/gap | Constraint and next evidence |
 | --- | --- |

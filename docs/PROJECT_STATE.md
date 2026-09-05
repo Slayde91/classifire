@@ -2,7 +2,7 @@
 
 **Verified snapshot:** 2026-09-05 (AEST)
 **Product status:** Pre-production implementation and controlled UAT
-**Verified shared-main baseline:** `4ab872334cad326fbd3cc6dad7106f3f448eae14` (PR #181, 2026-09-05)
+**Verified shared-main baseline:** `51e7d601a756141dfbdef5d113e754a9b2833d34` (PR #182, 2026-09-05)
 **Latest executable-change baseline:** 4ab8723 (PR #181)
 
 PR #175 adopted Architecture Decision 0001 in documentation. It did not implement
@@ -12,46 +12,48 @@ under `docs/`; root-level duplicates are not maintained.
 
 ## Contract characterisation progress
 
-PR #181 merged audit-page refusal as `4ab872334cad326fbd3cc6dad7106f3f448eae14`.
-[PR CI 33936702941](https://github.com/Slayde91/classifire/actions/runs/33936702941)
-and [main CI 33936917822](https://github.com/Slayde91/classifire/actions/runs/33936917822)
-were rechecked and passed. Shared main rejects any `nextCursor` field and
-more than 100 audit events. PR #179 uncertain-session-creation refusal and
-PR #180 socket deadlines are already merged.
+PR #182 merged the documentation reconciliation as `51e7d601a756141dfbdef5d113e754a9b2833d34`.
+[Exact main CI 33938506042](https://github.com/Slayde91/classifire/actions/runs/33938506042)
+passed. PR #181 audit-page refusal, PR #180 socket deadlines and PR #179
+uncertain-session-creation refusal remain implemented.
 
-**Remaining shared-main gap:** an empty terminal audit page is only an
-observation of retained events. The source inspection recorded in the
-[contract inventory](./OPENCLAW_CONTRACT_CHARACTERISATION.md) found asynchronous,
-potentially disabled/lossy capture without a durable completion certificate.
-The shared-main transport has no completion-verifier acceptance gate.
+**Current implementation candidate (publication must be verified):**
+`feat/phase8-completion-evidence-20260905` now includes shared main `51e7d60`.
+Both transports require an application-configured completion verifier before
+inference token acquisition or HTTP dispatch. Successful acceptance validates
+the exact invocation, durable receipt identity, terminal time and capture
+coverage, writer health, and zero pending/lost/tool records. Version-2 transport
+digests bind that result. Independent no-tool checks and historical audit
+observation receipts remain unchanged.
 
-**Uncommitted local work, not shared implementation:** branch
-`feat/phase8-completion-evidence-20260905` at base `4ab8723`, worktree
-`C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905`, contains changes to two
-transports and three test files, plus an untracked
-`docs/EXECUTION_COMPLETION_CONTRACT.md`. Its proposed required verifier and
-version-2 transport receipts bind execution evidence to the exact invocation.
-Managed runtimes supply no verifier, so the candidate deliberately refuses
-inference before acquiring the inference token or sending HTTP. A trusted
-production producer/verifier is absent. Typed data and hashes do not prove
-producer authority. This reconciliation inspected the diff; it did not rerun
-candidate tests or publish that code.
+**Intentional runtime consequence:** managed factories supply no completion
+verifier, so inference dispatch fails with `COMPLETION_EVIDENCE_UNAVAILABLE`.
+No production evidence producer/verifier is supplied. This is a fail-closed
+consumer boundary, not proof of working production capture or OpenClaw retirement.
+Typed fields and hashes cannot authenticate a producer. See the
+[completion contract](./EXECUTION_COMPLETION_CONTRACT.md).
 
-**Next bounded task:** review, validate and finish that existing completion
-acceptance candidate, including its deliberate runtime refusal and historical
-receipt compatibility. Preserve its changes; do not recreate them. Prove the
-consumer boundary with synthetic tests before normal reviewed publication.
-Durable authenticated evidence production is a subsequent gate; do not
-fabricate provider fields, use repeated empty reads as proof, or remove OpenClaw
-before security and recovery parity.
+**Verified candidate evidence:** 171 synthetic tests passed across the twelve
+transport/security/caller files listed in the handoff. Eight existing Pillow
+deprecation warnings remain. Exact request/response byte binding, missing evidence
+before token/HTTP, invalid/mismatched/incomplete evidence, safe errors, replay
+binding, managed refusal and legacy audit receipt compatibility are covered.
+No real provider, customer evidence, canonical write, lock or release was used.
+
+**Next gated task:** implement the smallest durable CLASSIFIRE execution journal
+and authenticated completion-verifier path, extending BackgroundJob/worker where
+suitable. It must prove capture-before-dispatch, terminal persistence ordering,
+loss detection, invocation ownership and crash/replay recovery using synthetic
+execution. Keep production wiring disabled until a producer can prove the full
+contract. Do not substitute empty audit polling, self-asserted fields or delays.
 
 ## 1. Project health and publication
 
 | Area | Verified state | Meaning |
 | --- | --- | --- |
-| Shared main | PR #181 merged as 4ab8723, including audit-page refusal. | Hybrid is accepted, not a completed runtime migration. |
-| Hosted CI | [Main run 33936917822](https://github.com/Slayde91/classifire/actions/runs/33936917822) succeeded on exactly `4ab8723`. | Source/test/static/migration evidence, not production or real-UAT proof. |
-| Local synthetic verification | PR #181 recorded 114 contract/security plus 17 caller tests; not rerun in this documentation-only task. | Existing contracts have a passing baseline; full migration parity is not proven. |
+| Shared main | PR #182 merged as 51e7d60; executable main remains PR #181. | Hybrid is accepted, not a completed runtime migration. |
+| Hosted CI | [Main run 33938506042](https://github.com/Slayde91/classifire/actions/runs/33938506042) succeeded on exactly `51e7d60`. | Source/test/static/migration evidence, not production or real-UAT proof. |
+| Local synthetic verification | 171 synthetic candidate tests passed across the twelve handoff files; full CI/publication is verified separately. | Existing contracts have a passing baseline; full migration parity is not proven. |
 | Migration history | One Alembic head: `0026_single_active_technical_release` on `legacy_adjudicated_lineage`. | Preserve forward-only history. |
 | Branch governance | Detailed protection/rules APIs previously returned HTTP 403; basic main metadata reports protected=false and no enforced checks. CODEOWNERS names Slayde91. | Normal PR #176 merge was accepted after policy evidence; never bypass failed checks or required review. |
 | Open work | Issues #42 (retained Phase 8 tooling reconciliation) and #43 (OpenClaw development dependency advisories); draft PRs #9-#13 on legacy feature-to-feature bases. | Reconcile issue contents against source; do not bulk-merge the draft stack. |
@@ -68,12 +70,12 @@ two tests. Staged additions, unstaged code/configuration/plugin/UI/test changes,
 and untracked material are pre-existing recovery evidence. Protected pytest
 directories prevent a complete untracked inventory. None belongs to this change.
 
-Documentation branch: `docs/verified-hybrid-handoff-20260905`, worktree
-`C:\CLASSIFIRE\.tmp\docs-verified-hybrid-handoff-20260905`, created cleanly
-from `4ab8723`. Only the four maintained documents are in publication scope.
-The six-file uncommitted completion candidate above is separate and untouched.
-No open PR for that candidate was found. Verify documentation publication from
-GitHub rather than inferring a future result from this snapshot.
+Current candidate: `feat/phase8-completion-evidence-20260905` in
+`C:\CLASSIFIRE\.tmp\phase8-completion-evidence-20260905`, fast-forwarded safely
+to `51e7d60` with all existing edits retained. Scope: two transport services,
+three tests, the new completion contract, contract inventory and four continuity
+documents. No unrelated root changes belong to this candidate. Verify the actual
+candidate commit, upstream, PR and merge from GitHub before claiming publication.
 
 ## 2. Implemented foundations
 
@@ -134,8 +136,8 @@ it retroactively. No repeat report/provider run is authorised by this snapshot.
 
 - Phases 0-7 and 15 have implemented foundations with incomplete exits.
 - Phase 3 initial contract inventory/tests are merged. The next implementation
-  task is review and completion of the existing uncommitted acceptance gate.
-  Audit-page refusal is merged; durable completion production remains missing.
+  candidate adds required completion acceptance. The next gate is durable
+  authenticated completion production; managed inference remains unavailable.
 - Phase 8 remains blocked on fresh authority, evidence review, semantic approval
   and separately governed canonical/replacement-lock gates.
 - Phases 9-14 remain dependency-blocked; package portability does not bypass them.
@@ -147,16 +149,16 @@ See the [roadmap](./CLASSIFIRE_ROADMAP.md) for phase-specific acceptance criteri
 
 ## 6. Recommended Next Actions
 
-1. **Finish the existing completion-evidence acceptance candidate.**
-   Inspect its exact diff and contract, verify deliberate managed-runtime
-   refusal, test identity/coverage/authority failures and historical receipts,
-   then publish only reviewed scope after CI. Do not duplicate local work.
+1. **After verifying candidate publication, implement durable completion production.**
+   Define and prove a minimal execution journal and authenticated verifier using
+   existing job/service boundaries. Capture must precede dispatch; terminal
+   evidence must be durable and bound to the invocation. Missing, dropped,
+   disabled or interrupted capture must never count as completion.
    [Start Here / Next Session](./SESSION_HANDOFF.md#start-here--next-session)
-   defines the task and acceptance criteria.
-2. **Then prove durable authenticated completion production.**
-   Extend BackgroundJob/worker where suitable. Establish capture-before-dispatch,
-   terminal persistence, loss detection, ownership and recovery evidence before
-   wiring a production verifier. Complete parity gates before OpenClaw retirement.
+   defines the bounded next task and validation.
+2. **Complete recovery and adapter parity before production wiring or retirement.**
+   Prove ownership, idempotency, cancellation, crash/replay and safe diagnostics;
+   retain no-tool, receipt and authority controls. No production verifier exists yet.
 3. **Deliver portable packages and shared interfaces in bounded slices.**
    Define membership/export rights, immutable revisions and downloads, then
    quarantined import and shared ChatGPT/standalone adapters. Draft exports need
@@ -168,17 +170,17 @@ or a general agent platform.
 
 ## 7. Verification and limits
 
-This documentation reconciliation checked live main, PR #181 merge and exact
-successful PR/main CI, open issues/PRs, root conflicts, worker and transport
-source, and the separate candidate diff. PR #181's recorded 131 local tests and
-static checks are historical evidence, not rerun results for the new candidate.
-Documentation scope, UTF-8, links and whitespace are checked before publication;
-verify this branch's CI and merge separately.
+Current candidate validation: 171 synthetic tests passed; full Ruff and Bandit
+passed; one Alembic head remains 0026_single_active_technical_release.
+Full Mypy passed for 142 source files. Hosted CI/publication is checked before merge.
+Source/diff review confirms no permissive production verifier or factory wiring.
+Historical audit observation hashes remain covered; they are not completion proof.
+Eight existing Pillow deprecation warnings remain.
 
-No runtime database, retained customer receipt, real Gateway/provider, canonical
-record, lock, deployment or release was inspected or changed. Upstream audit
-findings above are retained repository evidence, not a new live capture audit.
-Full product usability and production readiness remain unproven.
+Main 51e7d60 and its successful CI were rechecked. No runtime database, retained
+customer receipt, real Gateway/provider, canonical record, lock, deployment or
+release was inspected or changed. Upstream audit findings are retained repository
+evidence, not a new live capture audit. Production readiness remains unproven.
 
 Related: [Architecture](./CLASSIFIRE_ARCHITECTURE.md),
 [Roadmap](./CLASSIFIRE_ROADMAP.md), [Handoff](./SESSION_HANDOFF.md).

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -11,11 +12,14 @@ import pytest
 
 from classifire.services.canonical_submission_state import InitialSubmissionState
 from classifire.services.phase8_openresponses_transport import (
+    ExecutionCompletionContext,
+    ExecutionCompletionEvidence,
     NoToolSessionAttestation,
     NoToolSessionAudit,
     OpenClawGatewayNoToolSessionGuard,
     Phase8OpenResponsesTransport,
     Phase8OpenResponsesTransportError,
+    validate_execution_completion,
 )
 from classifire.services.phase8_property_assessments import PROPERTY_ASSESSMENT_SCHEMA
 from classifire.services.phase8_visual_evidence import (
@@ -193,11 +197,28 @@ class FakeGuard:
         )
 
 
+def _fake_completion(context: ExecutionCompletionContext) -> ExecutionCompletionEvidence:
+    # Synthetic trusted producer; never used by application/runtime composition.
+    return ExecutionCompletionEvidence(
+        context_sha256=context.sha256,
+        receipt_sha256="C" * 64,
+        terminal_at_ms=context.started_at_ms,
+        coverage_from_ms=context.started_at_ms,
+        coverage_through_ms=context.observed_at_ms,
+        writer_enabled=True,
+        writer_healthy=True,
+        pending_events=0,
+        dropped_events=0,
+        tool_actions=0,
+    )
+
+
 def _transport(
     packet: RetainedVisualEvidencePacket,
     handler,
     *,
     guard: FakeGuard | None = None,
+    completion_verifier=_fake_completion,
     token_provider=lambda: "secret-token",  # noqa: B008
     runtime_agent_ids: dict[str, str] | None = None,
     prompt_renderer: object | None = None,
@@ -214,6 +235,7 @@ def _transport(
             token_provider=token_provider,
             evidence_packet=packet,
             session_guard=selected_guard,
+            completion_verifier=completion_verifier,
             runtime_agent_ids=selected_runtime_agent_ids,
             prompt_renderer=prompt_renderer,
             clock_ms=lambda: 1234567890,
@@ -1303,3 +1325,168 @@ def test_terminal_full_audit_page_preserves_tool_detection_without_paging() -> N
     assert audit.tool_calls == ("synthetic-tool",)
     assert len(calls) == 1
     assert calls[0][1]["limit"] == 100
+
+
+@pytest.mark.parametrize(
+    ("change", "code"),
+    [
+        ({"context_sha256": "D" * 64}, "COMPLETION_EVIDENCE_MISMATCH"),
+        ({"receipt_sha256": "untrusted-detail"}, "COMPLETION_EVIDENCE_INVALID"),
+        ({"terminal_at_ms": 99}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"terminal_at_ms": 201}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"coverage_from_ms": 101}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"coverage_through_ms": 99}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"coverage_through_ms": 201}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"writer_enabled": False}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"writer_healthy": False}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"pending_events": 1}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"dropped_events": 1}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"tool_actions": 1}, "COMPLETION_EVIDENCE_INCOMPLETE"),
+        ({"pending_events": True}, "COMPLETION_EVIDENCE_INVALID"),
+        ({"dropped_events": -1}, "COMPLETION_EVIDENCE_INVALID"),
+        ({"tool_actions": 0.0}, "COMPLETION_EVIDENCE_INVALID"),
+        ({"writer_enabled": 1}, "COMPLETION_EVIDENCE_INVALID"),
+        ({"terminal_at_ms": "100"}, "COMPLETION_EVIDENCE_INVALID"),
+    ],
+)
+def test_completion_evidence_rejects_unproven_capture(change, code) -> None:
+    context = ExecutionCompletionContext(
+        agent_id="cf-validator",
+        session_id_sha256="A" * 64,
+        request_sha256="B" * 64,
+        request_body_sha256="C" * 64,
+        response_sha256="D" * 64,
+        audit_receipt_sha256="E" * 64,
+        attestation_receipt_sha256="F" * 64,
+        started_at_ms=100,
+        observed_at_ms=200,
+    )
+    valid = _fake_completion(context)
+    assert len(validate_execution_completion(valid, context)) == 64
+    with pytest.raises(Phase8OpenResponsesTransportError) as error:
+        validate_execution_completion(replace(valid, **change), context)
+    assert error.value.code == code
+    assert error.value.receipt_safe_code == code
+    assert "untrusted-detail" not in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "mode", ["missing", "untrusted", "mismatch", "incomplete", "error", "valid"]
+)
+def test_visual_completion_gate_prevents_unverified_proposal(tmp_path: Path, mode: str) -> None:
+    packet = _packet(tmp_path)
+    counts = {"token": 0, "http": 0}
+    wire = {}
+    contexts = []
+
+    def token():
+        counts["token"] += 1
+        return "synthetic-token"
+
+    def handler(request):
+        counts["http"] += 1
+        response = httpx.Response(200, json=_openresponses({"ok": True}))
+        wire["request"] = request.content
+        wire["response"] = response.content
+        return response
+
+    def verifier(context):
+        contexts.append(context)
+        if mode == "untrusted":
+            return {"complete": True}
+        if mode == "error":
+            raise RuntimeError("private-verifier-detail")
+        proof = _fake_completion(context)
+        if mode == "mismatch":
+            return replace(proof, context_sha256="F" * 64)
+        if mode == "incomplete":
+            return replace(proof, pending_events=1)
+        return proof
+
+    transport, guard = _transport(
+        packet,
+        handler,
+        token_provider=token,
+        completion_verifier=None if mode == "missing" else verifier,
+    )
+    if mode == "valid":
+        result = transport.invoke(
+            role="cf-validator", stage="blind_inventory", request=_request(packet)
+        )
+        assert result["payload"] == {"ok": True}
+        assert (
+            contexts[0].request_body_sha256 == hashlib.sha256(wire["request"]).hexdigest().upper()
+        )
+        assert contexts[0].response_sha256 == hashlib.sha256(wire["response"]).hexdigest().upper()
+        assert contexts[0].request_sha256 == canonical_json_sha256(_request(packet))
+        assert contexts[0].agent_id == "cf-validator"
+        assert counts == {"token": 1, "http": 1}
+        assert len(guard.audits) == 1
+        first_receipt = result["transport_receipt_sha256"]
+        transport._completion_verifier = lambda context: replace(
+            _fake_completion(context),
+            receipt_sha256="F" * 64,
+        )
+        changed = transport.invoke(
+            role="cf-validator", stage="blind_inventory", request=_request(packet)
+        )
+        assert changed["transport_receipt_sha256"] != first_receipt
+    else:
+        with pytest.raises(Phase8OpenResponsesTransportError) as error:
+            transport.invoke(role="cf-validator", stage="blind_inventory", request=_request(packet))
+        assert (
+            error.value.code
+            == {
+                "missing": "COMPLETION_EVIDENCE_UNAVAILABLE",
+                "untrusted": "COMPLETION_EVIDENCE_INVALID",
+                "mismatch": "COMPLETION_EVIDENCE_MISMATCH",
+                "incomplete": "COMPLETION_EVIDENCE_INCOMPLETE",
+                "error": "COMPLETION_EVIDENCE_UNAVAILABLE",
+            }[mode]
+        )
+        assert "private-verifier-detail" not in str(error.value)
+        if mode == "missing":
+            assert counts == {"token": 0, "http": 0}
+            assert guard.audits == []
+        else:
+            assert counts == {"token": 1, "http": 1}
+            assert len(guard.audits) == 1
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "agent_id",
+        "session_id_sha256",
+        "request_sha256",
+        "request_body_sha256",
+        "response_sha256",
+        "audit_receipt_sha256",
+        "attestation_receipt_sha256",
+        "started_at_ms",
+        "observed_at_ms",
+    ],
+)
+def test_completion_cannot_be_reused_for_changed_invocation(field: str) -> None:
+    context = ExecutionCompletionContext(
+        agent_id="cf-validator",
+        session_id_sha256="A" * 64,
+        request_sha256="B" * 64,
+        request_body_sha256="C" * 64,
+        response_sha256="D" * 64,
+        audit_receipt_sha256="E" * 64,
+        attestation_receipt_sha256="F" * 64,
+        started_at_ms=100,
+        observed_at_ms=200,
+    )
+    value = getattr(context, field)
+    changed = (
+        value + 1
+        if type(value) is int
+        else ("cf-physical-model" if field == "agent_id" else "0" * 64)
+    )
+    with pytest.raises(Phase8OpenResponsesTransportError) as error:
+        validate_execution_completion(
+            _fake_completion(context), replace(context, **{field: changed})
+        )
+    assert error.value.code == "COMPLETION_EVIDENCE_MISMATCH"

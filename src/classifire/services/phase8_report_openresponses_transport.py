@@ -20,6 +20,7 @@ from .phase8_openresponses_transport import (
     _ALLOWED_ROLES,
     _MAX_OUTPUT_TOKENS,
     _MAX_REQUEST_BYTES,
+    ExecutionCompletionVerifier,
     NoToolSessionGuard,
     Phase8OpenResponsesTransport,
     Phase8OpenResponsesTransportError,
@@ -50,7 +51,7 @@ from .phase8_visual_proposal import (
 )
 
 PHASE8_REPORT_OPENRESPONSES_TRANSPORT_SCHEMA = (
-    "CLASSIFIRE-PHASE8-REPORT-OPENRESPONSES-TRANSPORT-v1"
+    "CLASSIFIRE-PHASE8-REPORT-OPENRESPONSES-TRANSPORT-v2"
 )
 
 _REQUEST_KEYS = {
@@ -80,6 +81,7 @@ class Phase8ReportOpenResponsesTransport:
         token_provider: Callable[[], str],
         runtime_input: Phase8ReportRuntimeInput,
         session_guard: NoToolSessionGuard,
+        completion_verifier: ExecutionCompletionVerifier | None = None,
         runtime_agent_ids: Mapping[str, str],
         clock_ms: Callable[[], int] | None = None,
     ) -> None:
@@ -94,6 +96,7 @@ class Phase8ReportOpenResponsesTransport:
             token_provider=token_provider,
             evidence_packet=runtime_input.visual_packet,
             session_guard=session_guard,
+            completion_verifier=completion_verifier,
             runtime_agent_ids=runtime_agent_ids,
             clock_ms=clock_ms,
         )
@@ -213,6 +216,7 @@ class Phase8ReportOpenResponsesTransport:
         if len(encoded_body) > _MAX_REQUEST_BYTES:
             raise Phase8OpenResponsesTransportError("REQUEST_BODY_TOO_LARGE")
 
+        self._visual_transport._require_completion_verifier()
         try:
             token = self._visual_transport._token_provider()
         except Exception:
@@ -257,6 +261,16 @@ class Phase8ReportOpenResponsesTransport:
         if response is None:
             raise Phase8OpenResponsesTransportError("GATEWAY_REQUEST_FAILED")
         payload, response_id = self._visual_transport._parse_response(response)
+        completion_sha256 = self._visual_transport._verify_completion(
+            agent_id=runtime_agent_id,
+            session_id_sha256=session_id_sha256,
+            request=trusted_request,
+            encoded_body=encoded_body,
+            response=response,
+            audit=audit,
+            attestation_receipt_sha256=attestation.receipt_sha256,
+            started_at_ms=started_at_ms,
+        )
 
         receipt_sha256 = canonical_json_sha256(
             {
@@ -270,6 +284,7 @@ class Phase8ReportOpenResponsesTransport:
                 "session_id_sha256": session_id_sha256,
                 "attestation_receipt_sha256": attestation.receipt_sha256,
                 "audit_receipt_sha256": audit.receipt_sha256,
+                "execution_completion_sha256": completion_sha256,
                 "evidence": byte_receipts,
                 "openresponses_response_id_sha256": _sha256_text(response_id),
                 "payload_sha256": canonical_json_sha256(payload),
