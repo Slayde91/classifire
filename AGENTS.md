@@ -111,7 +111,7 @@ For package changes, read `docs/DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md`. Preserve
 original imported bytes/history and explicit local identity mappings. Imported
 source/review claims never justify a fabricated LibraryRelease or local approval.
 All retained binary ancestors keep current permission and quarantine checks on
-download/re-export. Keep the approved `static/brand/classifire-logo.png` asset in
+download/re-export. Keep the approved `src/classifire/static/brand/classifire-logo.png` asset in
 UI and output paths; do not substitute an older or regenerated logo.
 
 ## OpenClaw, AI and security

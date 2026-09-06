@@ -133,3 +133,15 @@ and existing Draft regressions for the next slice, plus actual client/browser pa
 > commit, normal push, PR and merge when current-head checks/reviews permit. Preserve
 > unrelated work and never bypass CI, approval or release protections. Update the
 > aligned goal/state/architecture/roadmap/handoff from evidence and explain plainly.
+
+
+## Publication checkpoint
+
+PR #203 is open. Initial implementation commit `f02a693cd79efe3ebb994b33866e21b38fa1b249`
+was pushed normally. Initial hosted run 34006909588 correctly refused an old current-
+stack test fixture still stamped 0034; no production guard failed or was weakened.
+The preflight fixture and two remaining current-head migration assertions now expect
+0035. Recheck the latest PR head and full CI before merge; do not bypass that failure.
+
+The follow-up preflight/legacy-lineage checks passed: 10 tests. A fresh committed-
+server Chrome check confirmed exact saved archives/logo and ancestor report inventory.

@@ -102,3 +102,15 @@ worktrees and the three untracked generic-package experiments.
 
 The runnable demo, exact next-session prompt and validation commands are in
 [SESSION_HANDOFF.md](./SESSION_HANDOFF.md).
+
+
+## Publication checkpoint
+
+PR #203 is open. Initial implementation commit `f02a693cd79efe3ebb994b33866e21b38fa1b249`
+was pushed normally. Initial hosted run 34006909588 correctly refused an old current-
+stack test fixture still stamped 0034; no production guard failed or was weakened.
+The preflight fixture and two remaining current-head migration assertions now expect
+0035. Recheck the latest PR head and full CI before merge; do not bypass that failure.
+
+The follow-up preflight/legacy-lineage checks passed: 10 tests. A fresh committed-
+server Chrome check confirmed exact saved archives/logo and ancestor report inventory.
