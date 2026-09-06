@@ -1,8 +1,9 @@
 # CLASSIFIRE Master Roadmap
 
 **Status:** Active; prototype-first delivery approved 2026-09-05. PDF/Excel review,
-bounded PDF suggestions, A/B source profiles and exact-profile review are merged.
-**Verified shared-main baseline:** `af822249b02cf197be62a6e03af32d409a3524fc`.
+bounded PDF suggestions, A/B source profiles and exact-profile review are merged;
+PR #218 adds the first governed Dataset A row observation.
+**Verified shared-main baseline:** `4ea7028e9d256b2b53ae783e16bf75c812c59d57`.
 PR #216 merged the early-T13 lineage/leakage contract after PR #214's profile review;
 required run 34054381404 passed 1,859 tests and all repository quality gates.
 [PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;
@@ -16,7 +17,8 @@ plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.m
 **Build a working, testable UI prototype before broad fine tuning.** Preserve the
   delivered manual graph, PDF/Excel review, optional suggestion and A/B profile workflows.
   The bounded exact-profile review and early T13 evaluation-lineage contract are merged.
-  Deliver one reviewed A-row observation/mapping path next.
+  PR #218 delivers one reviewed A-row observation/mapping path. Deliver one reviewed
+  B system/configuration mapping next.
   Reuse existing pricing/source/review services; do not start bulk extraction,
 model tuning or a replacement agent fleet to achieve these screens.
 
@@ -95,7 +97,7 @@ prototype into it.
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
 | **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
-| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; T1/T5/T7 A/B profiles merged PR #212; early-T12 review merged PR #214; pre-model T13 contract merged PR #216; full T5-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain source/profile/decision history and inspect identity, cells, units, price meaning and gaps. Next add one reviewed A observation/mapping path before B mapping, coverage and separate bottom-up/comparable proposals. Preserve Estimate independence and recovery checks; a reviewed profile is not an approved library. |
+| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; T1/T5/T7 A/B profiles merged PR #212; early-T12 review merged PR #214; pre-model T13 contract merged PR #216; Dataset A row observation in PR #218; full T5-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row history and inspect identity, cells, units, price meaning and gaps. Next add one reviewed B system/configuration mapping before coverage and separate bottom-up/comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
 | **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
@@ -232,12 +234,13 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Deliver one **reviewed A-row observation and product/material/labour/service mapping**
-through the existing pricing UI. Bind it to the exact approved A profile and exact row/
-cells, append immutable review history, reopen and download the same evidence, and stop
-without activating Product/Labour libraries or changing an Estimate. PR #216 established
-the pre-model T13 contract; a persisted roster and executed holdout still require reviewed
-B observations and resolved system/configuration lineage.
+Deliver one **reviewed B system/configuration mapping** through the existing pricing UI.
+Bind the exact approved B profile and row/cells to an approved technical identity, or
+retain an explicit unmatched/ambiguous result. Preserve immutable history and exact
+download without granting technical approval, activating a price library, changing an
+Estimate or revealing a holdout target. PR #216 established the pre-model T13 contract;
+a persisted roster and executed holdout still require reviewed B observations and
+resolved system/configuration lineage.
 Current evidence and exact handoff remain in PROJECT_STATE.md and SESSION_HANDOFF.md.
 This sequence grants no customer-source, live-provider, canonical-write or deployment
 authority. OpenClaw protection parity remains a separate gated track.
@@ -252,15 +255,15 @@ not proof of this new end-to-end capability. Detailed contracts and methods belo
 [Technical Corpus and Dual Pricing Design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md).
 
 T1-T14 are dependency labels, not a requirement for fourteen large sequential builds.
-The pre-model T13 grouping/leakage rules are now merged before reviewed row mapping.
-Build reviewed A/B identities next, then persist the real T13 roster before prediction,
+The pre-model T13 grouping/leakage rules are merged and PR #218 adds reviewed Dataset A
+row identity. Build reviewed B identities next, then persist the real T13 roster before prediction,
 feature selection, measured estimation or calibrated combination can contaminate it.
 Every exposed slice includes its UI, minimum persistence and tests.
 
 | Delivery band | Included work and dependency gate |
 | --- | --- |
 | **First visible corpus/pricing slice** | **A/B profile merged PR #212; review merged PR #214; pre-model T13 contract merged PR #216:** minimum T1 + T5 + T7 identity/profile history, early-T12 exact-profile decision and leakage rules with synthetic data; no library publication or price inference. |
-| **Reviewed vertical slice** | **Active next:** one reviewed A observation and product/material/labour/service mapping, then minimum T2-T4 plus T8 for one retained technical source/configuration, fact provenance and reviewed B-system mapping. Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
+| **Reviewed vertical slice** | **Dataset A row observation implemented in PR #218; active next:** minimum T2-T4 plus T8 for one retained technical source/configuration, fact provenance and reviewed B-system mapping. Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
 | **Controlled breadth and scale** | Expand T2-T8 through bounded resumable imports, deduplication/reprocessing, proper pagination and representative retained sources; T9 coverage exposes gaps. Measure capacity before declaring hundreds/thousands supported. |
 | **Explainable estimating prototype** | T10 separate bottom-up and comparable proposals, T12 review UI, immutable quantities/labour/assumptions and T13 evaluation. T11 comparison is visible before calibrated combination is enabled. |
 | **Validated operation** | T13 establishes approved method/stratum gates; T11 combined proposals use that evidence; T14 operations, feedback, drift and controlled release extend the demonstrated path. |
@@ -268,7 +271,7 @@ Every exposed slice includes its UI, minimum persistence and tests.
 #### T1. Minimum canonical schema and version contracts
 
 **Status:** minimum Draft source identity/version/profile and early-T12 decision contracts
-merged; normalized records remain active.
+merged; first Dataset A normalized observation implemented in PR #218; B records remain active.
 
 - **Objective/scope:** distinguish source identity, normalized technical facts and
   observed versus derived commercial data without redesigning the application.
@@ -336,8 +339,10 @@ merged; normalized records remain active.
 
 #### T5. Dataset A ingestion: general products and services
 
-**Status:** bounded A identity/version/profile preview-save-reopen implemented and
-Exact-profile human review is merged in PR #214.
+**Status:** bounded A identity/version/profile preview-save-reopen and exact-profile
+review are merged through PR #214. PR #218 implements one exact reviewed
+product/material/labour/service row observation; bulk normalization, richer mapping and
+commercial activation remain upcoming.
 
 - **Objective/scope:** profile, then normalize `pricelist.xlsx` as a distinct source
   of products, materials, labour and services; do not assume all rows are buy costs.
@@ -391,6 +396,8 @@ Exact-profile human review is merged in PR #214.
   cap and 897-record pricing list; mixed commercial scope, duplicate systems and missing dates.
 
 #### T8. Firefly price-to-system matching
+
+**Status:** active next after PR #218; no reviewed B mapping exists yet.
 
 - **Objective/scope:** bind B observations to the correct technical system/configuration
   revision without using a price or similar description as proof of suitability.
@@ -659,9 +666,9 @@ new immutable manifest and audit event. A technical-only database constraint
 prevents concurrent publication from leaving two active technical releases.
 
 **Remaining / prioritised amendment:** minimum T1/T5/T7 source identity/profile contracts,
-early-T12 profile review and the pre-model T13 leakage contract are merged. Next deliver
-one reviewed A observation/component/activity mapping, then continue T2-T8
-processing/fact review, resolution/provenance and reviewed B system mappings. Persist a
+early-T12 profile review and the pre-model T13 leakage contract are merged; PR #218 adds
+the first reviewed A observation. Next continue T2-T8 processing/fact review,
+resolution/provenance and reviewed B system mapping. Persist a
 real T13 roster only from those reviewed identities. Extend existing technical/product/labour/
 pricing/release models; no source filename or profile approval grants downstream authority.
 

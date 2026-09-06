@@ -200,7 +200,7 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: map one reviewed A row
+## Immediate delivery priority: map one reviewed B system row
 
 PDF/Excel graph review and optional one-page suggestions are merged through PR #211.
 Preserve their manual fallback, shared graph review, exact history and bounded optional
@@ -219,12 +219,15 @@ bindings, connected alias/configuration/version groups, frozen train/validation/
 rules, target-feature exclusions and canonical hashes. Because reviewed normalized B
 observations do not yet exist, it does not persist a roster or run an evaluation.
 
-Next build one reviewed A observation and product/material/labour/service mapping through
-the existing pricing UI, bound to the approved exact profile and source row. Save, reopen
-and download immutable Draft evidence without activating the Product/Labour libraries or
-changing an Estimate. Follow with one B-system mapping, then instantiate the T13 contract
-from real reviewed identities. Use synthetic fixtures until actual source rights and
-semantics are verified.
+PR #218 adds a reviewed Dataset A product/material/labour/service observation through
+the existing pricing UI, bound to the approved exact profile, decision, source cells and
+row hash. It saves, reopens and downloads immutable Draft evidence without activating a
+commercial library or changing an Estimate.
+
+Next build one reviewed Dataset B system/configuration mapping through the same governed
+UI and exact-row boundary, bound to an approved technical identity or left explicitly
+unresolved. Then instantiate the T13 contract from real reviewed identities. Use synthetic
+fixtures until actual source rights and semantics are verified.
 
 T1-T14 dependencies remain: reviewed identities and field claims, immutable recipes,
 lineage-aware holdouts and measured coverage precede derived costing/calibration.

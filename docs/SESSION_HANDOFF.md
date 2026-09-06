@@ -2,161 +2,151 @@
 
 ## Verified branch and project context
 
-Verified 2026-09-07 on shared main
-`af822249b02cf197be62a6e03af32d409a3524fc`, merge commit for PR #216.
-Feature head `c70a3add36b35792dd17c8de2ed8ebe80caf7776` passed required run
-34054381404 in 17m58s: 1,859 tests, full Ruff, Mypy on 207 source files,
-Bandit and one Alembic head. PR #216 is merged. Its post-merge main run
-34055366570 had started at the last check; verify the final result rather than
-assuming it.
+Verified 2026-09-07 from shared main
+4ea7028e9d256b2b53ae783e16bf75c812c59d57, the merge commit for documentation PR #217.
 
-ADRs 0001/0002 remain accepted. CLASSIFIRE is still one modular deterministic
+PR #218 is open from feat/draft-pricing-row-review-20260907. Feature commit
+b8dbcce adds the first governed Dataset A row-observation workflow. This handoff
+update is part of the same PR. Verify its final head, required CI, merge state and
+post-merge main run rather than assuming publication.
+
+ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic
 application with independently callable Scope, System Match, Estimate and
-Reporting capabilities and optional bounded AI. OpenClaw is transitional.
-PR #216 adds no AI, orchestration, persistence, migration, route, UI, prediction
-or authority.
+Reporting capabilities, portable artifacts and optional bounded AI. OpenClaw
+remains transitional. PR #218 adds no AI, agent, model, canonical write,
+commercial activation, deployment or release authority.
 
 ## Relevant local changes and open issues
 
-The merged early-T13 module
-`src/classifire/services/draft_pricing_evaluation_contract.py`:
+PR #218 extends the existing Draft pricing path:
 
-- binds synthetic/normalized Firefly B members to exact dataset, source,
-  profile, row and target hashes plus availability;
-- computes transitive lineage groups from system identity, alias,
-  configuration cluster, source derivation and version lineage;
-- requires each complete group to stay in training, validation or holdout and
-  requires all three splits;
-- freezes feature availability and accepts only declared technical,
-  independently sourced A/labour or training-observation inputs;
-- rejects held-out/validation inputs, target descendants, policy tampering,
-  changed hashes, foreign Drafts, duplicate JSON keys, noncanonical bytes,
-  stale parents and caller-supplied replay history;
-- records actor/time, canonical manifest hash and explicit zero downstream
-  effects.
+- migration 0042 adds append-only draft_pricing_row_observations;
+- the existing pricing page reconstructs exact rows from a saved profile;
+- an administrator with pricing:approve can preview and explicitly save one
+  product, material, labour or service observation from a current approved
+  general_pricelist profile;
+- the envelope binds Draft, dataset/source/profile/decision/row hashes, exact
+  cells, price meaning, normalized reference, evidence state, unresolved
+  fields, reviewer and time;
+- confirmed observations reject unresolved fields; unusable or formula/error
+  rows, stale/changed/replayed/foreign/corrupt inputs fail closed;
+- reopen and exact JSON download verify stored bytes and bindings;
+- later source versions preserve old observations and mark them stale;
+- Product, LabourComponent, PricingLibraryRecord, LibraryRelease,
+  TechnicalVariant, Estimate, prediction, system-match and release effects
+  remain false.
 
-Twelve focused contract tests passed. The existing
-pricing/profile/review/UI/client/migration regression selection completed at
-100%. Repository-wide Ruff and Bandit passed locally; the changed module passed
-Mypy. Local full Mypy lacked installed ReportLab/PyYAML stubs, while exact PR CI
-installed them and passed all 207 source files.
+Local validation on the rebased feature branch:
 
-The contract is not a saved holdout product feature. Reviewed normalized B
-observations and resolved system/configuration identities do not exist yet, so
-there is no honest roster to persist. No evaluation, target reveal, calibration,
-threshold or accuracy claim was produced.
+- 43 focused feature, UI, migration, deployment and packaging tests passed;
+- all 62 changed/new migration-consumer and feature tests passed;
+- repository-wide Ruff passed;
+- targeted Mypy passed on five changed source files;
+- repository-wide Bandit passed;
+- git diff --check passed;
+- Alembic reports one head: 0042_draft_pricing_row_observations.
 
-The clean implementation worktree
-`C:\CLASSIFIRE\.tmp\pricing-evaluation-lineage-20260907` remains on
-`feat/pricing-evaluation-lineage-20260907` at the merged feature commit. This
-documentation reconciliation was prepared in
-`C:\CLASSIFIRE\.tmp\pricing-lineage-docs-20260907`. Verify its current
-publication state at the start of the next session.
+The real browser and separate-process restart journey has not yet been completed
+for PR #218. TestClient exercised real FastAPI routes, sessions, CSRF, rendered
+HTML, redirects, persistence and downloads with a synthetic XLSX. Browser
+automation previously failed to initialize because its Windows sandbox helper
+exited during setup. Retry when available; do not claim visual proof without it.
 
-The recovery root `C:\CLASSIFIRE` remains on
-`gpt/phase8-linked-original-images` at `de0cc5a`, with 46 unstaged tracked
-changes, 14 staged additions and four DU conflicts at last inspection. Do not
-reset, clean, resolve, broadly stage or publish from it. Preserve all unrelated
-worktrees. The synthetic prototype listener on port 8819 was still running at
-the last check under process 37032; it is not production.
+Actual Dataset A and B layouts, ownership, redistribution rights, price meaning,
+tax/date/unit/inclusion semantics and representative record counts remain
+unverified. Use synthetic fixtures until those decisions are authorized.
+
+The recovery root C:\CLASSIFIRE remains on
+gpt/phase8-linked-original-images at de0cc5a, with 46 unstaged tracked changes,
+14 staged additions and four DU conflicts at last inspection. Do not reset,
+clean, resolve, broadly stage or publish from it. Preserve unrelated worktrees.
+The earlier synthetic listener on port 8819 was process 37032 at last check and
+is not production.
 
 ## Start Here / Next Session
 
-**First task:** implement one reviewed Dataset A row observation and
-product/material/labour/service mapping through the existing pricing UI.
+**First task:** implement one reviewed Dataset B Firefly
+system/configuration mapping through the existing pricing UI.
 
-**Why this is next:** users can upload, profile and review a general price
-workbook, but the approved profile still cannot create a governed normalized
-row. This is the shortest user-visible step toward component and labour costing.
-It also creates the real row identity/provenance pattern that B mapping and a
-persisted T13 roster will later reuse.
+**Why this is next:** Dataset A now has an exact normalized-row evidence record,
+but Firefly B still has only source/profile approval. A reviewed B observation
+and resolved technical identity are required before CLASSIFIRE can persist an
+honest T13 train/validation/holdout roster or compare system prices without
+alias, configuration or version leakage.
 
-**Prerequisites and dependencies:** inspect current Git, worktrees, GitHub
-main/PR/CI and these documents before editing. Confirm PR #216 and its
-post-merge run. Use a new clean current-main worktree. Reuse the existing
-Draft pricing source/profile/decision, canonical JSON/hash, ownership,
-PostgreSQL locking, exact-byte read, audit and download patterns. Require a
-current `approve` decision on an exact `general_pricelist` profile. Use
-synthetic workbooks only because actual A layout, rights and commercial
-semantics remain unverified.
+**Prerequisites and dependencies:** inspect current Git/worktrees, origin/main,
+PR #218, required CI and these documents before editing. Use a clean current-main
+worktree. Reuse DraftPricingSource/Profile/Decision, the Dataset A row-observation
+hash/audit/download pattern, TechnicalVariant and technical release governance,
+and the early-T13 contract. Require a current approved firefly_system_prices
+profile and an eligible approved technical identity. Retain unmatched and
+ambiguous outcomes explicitly. Do not infer identity from filename or price.
 
 **Relevant files/components:**
 
-- `src/classifire/models.py` around `DraftPricingSource*`, `Product` and
-  `LabourComponent`;
-- `src/classifire/services/draft_pricing_contract.py`;
-- `src/classifire/services/draft_pricing_intake.py`;
-- `src/classifire/draft_pricing_ui.py` and
-  `src/classifire/templates/draft_pricing.html`;
-- migrations 0040/0041 and their deployment-lineage registry;
-- current pricing profile/review/UI/client/migration tests;
-- the new T13 contract, roadmap T5/T6/T12/T13, architecture and project state.
+- src/classifire/models.py: DraftPricingSource*, DraftPricingRowObservation,
+  TechnicalVariant and LibraryRelease;
+- src/classifire/services/draft_pricing_contract.py;
+- src/classifire/services/draft_pricing_intake.py;
+- src/classifire/services/draft_pricing_evaluation_contract.py;
+- src/classifire/services/technical.py and technical release services;
+- src/classifire/draft_pricing_ui.py and pricing templates;
+- migration 0042 and deployment_lineage.py;
+- Dataset A observation, pricing UI, technical governance and migration tests;
+- roadmap T2-T8, T12 and T13.
 
-**Definition of done:** an authorized user can open a current approved A
-profile, inspect exact normalized row values and source cells, choose one row,
-classify it as product, material, labour or service, supply the minimum stable
-mapping identity and review reason, preview without writing, explicitly save an
-append-only Draft observation/mapping, reopen it after restart and download the
-exact canonical JSON. The record must bind Draft, dataset/version, source/hash,
-profile/revision/hash, approval-decision hash, worksheet/header/row, exact cells
-and row hash, price meaning, unit, currency, tax basis, date,
-inclusions/exclusions, reviewer/time and explicit unresolved fields.
+**Definition of done:** an authorised user can open a current approved Dataset B
+profile, inspect exact row values/cells, choose one usable row, and preview then
+save an immutable observation mapped to an eligible exact TechnicalVariant and
+configuration identity, or explicitly save unmatched/ambiguous status with a
+reason and unresolved fields. Reopen after restart and download identical
+canonical JSON. Bind all Dataset B source/profile/decision/row hashes and the
+technical release/variant identity and hashable field snapshot.
 
-Stale source/profile/decision, changed row/cells, duplicate/replayed save,
-foreign access, invalid classification/unit/basis, unsupported formula/error
-cells and corrupted stored JSON must fail closed. A newer source/profile must
-leave old history intact and visibly stale. The save must not create or activate
-`Product`, `LabourComponent`, `LibraryRelease`,
-`PricingLibraryRecord`, `TechnicalVariant`, an Estimate change, a system
-match, a prediction or a release.
+Reject stale source/profile/decision/technical release, changed row or variant,
+duplicate/replay, foreign access, invalid or formula/error cells, corrupt stored
+JSON and price-only identity claims. Preserve old history as stale. Do not grant
+technical approval, activate a pricing library, change an Estimate, reveal a
+holdout target, run a model, create a system match, deploy or release.
 
-Demonstrate the real browser interaction with a synthetic A workbook, inspect
-the rendered page and exact download, restart the application and reopen the
-same record. Add meaningful contract/service/UI/migration and compatibility
-tests. Update state/architecture/roadmap/handoff only from measured evidence.
+**Validation commands:** resolve paths first and use the disposable PostgreSQL
+database.
 
-**Validation commands:** resolve paths and environment first, then use the
-explicit disposable PostgreSQL database.
+    $env:PYTHONPATH = Join-Path $PWD 'src'
+    $env:CLASSIFIRE_POSTGRES_TEST_URL = 'postgresql+psycopg://classifire_test@127.0.0.1:15432/classifire_containment_test'
+    $env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN = 'classifire-containment-test-drop-all'
+    $taskTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('pricing-b-map-tests-' + [guid]::NewGuid())
+    C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -p no:cacheprovider --basetemp $taskTemp <targeted tests>
+    C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
+    C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
+    C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
+    C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
 
-```powershell
-$env:PYTHONPATH = Join-Path $PWD 'src'
-$env:PYTHONDONTWRITEBYTECODE = '1'
-$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-$env:CLASSIFIRE_POSTGRES_TEST_URL = 'postgresql+psycopg://classifire_test@127.0.0.1:15432/classifire_containment_test'
-$env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN = 'classifire-containment-test-drop-all'
-$taskTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('pricing-row-review-tests-' + [guid]::NewGuid())
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp $taskTemp <targeted tests>
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
-```
-
-**Blockers/decisions needing validation:** actual A workbook fields, ownership,
-redistribution rights, price meanings, pack/unit/date/tax/inclusion semantics
-and supported counts are unknown. Do not guess them or use customer data.
-Current profile review is effectively administrator-only because
-`pricing_manager` lacks owned Draft project/Estimate reads; do not broaden
-global visibility in this slice. Decide only the minimum synthetic mapping
-vocabulary needed for the demonstrated row, keeping unknowns unresolved.
+**Blockers requiring validation:** the real B schema and rights are unknown; the
+current parser cap may not support the reported B row count; stable
+system/configuration identity and alias rules need representative evidence.
+Current pricing review is effectively administrator-only because pricing_manager
+lacks owned Draft reads. Do not broaden global visibility as a shortcut.
 
 ## Recommended Prompt for New Session
 
 > Continue CLASSIFIRE from verified repository state. First inspect AGENTS.md,
 > GOAL.md, docs/PROJECT_STATE.md, architecture, roadmap, handoff, current
-> Git/worktrees and GitHub main/PR/CI; confirm PR #216 and its post-merge run.
-> Preserve the conflicted C:\CLASSIFIRE root and unrelated local changes; use a
-> clean current-main worktree. Implement the single highest-value next task: a
-> working UI to review one Dataset A workbook row and save/reopen/download an
-> immutable Draft product/material/labour/service observation/mapping bound to
-> the exact approved profile, decision, source cells and row hash. Preview must
-> not write; stale/changed/replayed/foreign/corrupt inputs must fail closed; old
-> history must remain. Do not activate Product/Labour/pricing libraries, change
-> an Estimate, infer a price, match a system, use customer data, add AI/OpenClaw
-> work, deploy or release. Use synthetic XLSX, PostgreSQL locking, existing
-> pricing/audit/hash/download patterns, focused service/UI/migration/no-side-
-> effect tests, real browser/restart/exact-download proof, Ruff, Mypy, Bandit,
-> one Alembic head and required CI. Inspect and classify the full diff, preserve
-> unrelated work, then autonomously commit, push, open/update a PR and merge
-> only when checks and repository rules allow. Update project documents from
-> verified results; avoid speculative breadth.
+> Git/worktrees and GitHub main/PR/CI; confirm PR #218 and its merge before
+> editing. Preserve the conflicted C:\CLASSIFIRE root and unrelated changes;
+> use a clean current-main worktree. Implement the single highest-value next
+> task: a working UI to review one exact approved Dataset B row and save,
+> reopen and download an immutable Firefly system/configuration observation
+> mapped to an eligible exact TechnicalVariant, or explicitly unmatched/
+> ambiguous with reason and unresolved fields. Reuse existing pricing source/
+> profile/decision, Dataset A observation, technical-release, canonical hash,
+> audit, lock and download patterns. Reject stale, changed, replayed, foreign,
+> formula/error, corrupt and price-only identity claims. Grant no technical,
+> pricing-library, Estimate, prediction, holdout-target, system-match, release
+> or deployment authority. Use synthetic data until real rights and semantics
+> are verified. Add focused contract/service/UI/migration/no-side-effect tests,
+> browser/restart/exact-download proof where available, Ruff, Mypy, Bandit,
+> one Alembic head and required CI. Inspect the full diff, preserve unrelated
+> work, then autonomously commit, push, open/update a PR and merge only when
+> checks and repository rules allow. Update docs from measured evidence and
+> avoid speculative breadth.

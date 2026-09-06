@@ -21,9 +21,10 @@ with the minimum supporting contract, persistence and validation in the same sli
 Use GOAL.md and the verified project state to select the next visible increment;
   do not rebuild the completed manual Draft Scope or PDF/Excel/suggestion review paths.
   A/B source identity, profile history and immutable exact-profile review are merged
-  through PR #214. The early T13 lineage/leakage contract is merged in PR #216; because
-  normalized B observations do not exist, persisted holdout execution remains later.
-  Build the first reviewed A-row observation/mapping interaction next.
+  through PR #214. The early T13 lineage/leakage contract is merged in PR #216, and
+  PR #218 adds the first reviewed Dataset A row-observation interaction. Because
+  normalized B observations do not exist, build one reviewed B system/configuration
+  mapping next; persisted holdout execution remains later.
 Inspect current evidence before resuming; never rebuild completed prototype workflows.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
@@ -109,10 +110,11 @@ parallel physical model or automatic approval. Keep the manual path usable.
 For this capability read [the integrated design](./docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
 and roadmap T1-T14 before editing. The bounded visible A/B source-profile interaction
 is merged, including the immutable early-T12 human profile decision in PR #214.
-The pre-model T13 lineage/leakage contract is merged in PR #216. Add one reviewed
-A observation and product/material/labour/service mapping path next. Persist a real
-holdout roster only after reviewed normalized B observations and resolved identities
-exist. Preserve T-stage dependencies and do not treat the complete target schema,
+The pre-model T13 lineage/leakage contract is merged in PR #216. PR #218 adds one
+reviewed A observation and product/material/labour/service mapping path. Add one
+reviewed B system/configuration mapping next. Persist a real holdout roster only after
+reviewed normalized B observations and resolved identities exist. Preserve T-stage
+dependencies and do not treat the complete target schema,
 bulk corpus or estimation model as one implementation task.
 
 - Preserve separate dataset identities: A `pricelist.xlsx` is general products,
