@@ -24,7 +24,10 @@ FIELDS = (
 REQUIRED_MAPPING = ("reference", "description", "unit", "rate", "currency", "tax_basis")
 PROFILE_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-SOURCE-PROFILE-v1"
 PROFILE_DECISION_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-SOURCE-PROFILE-DECISION-v1"
+ROW_OBSERVATION_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-ROW-OBSERVATION-v1"
 PROFILE_DECISIONS = ("approve", "reject", "request_revision")
+ROW_ITEM_KINDS = ("product", "material", "labour", "service")
+ROW_EVIDENCE_STATES = ("confirmed", "provisional")
 DATASET_KINDS = ("general_pricelist", "firefly_system_prices")
 PRICE_MEANINGS = (
     "unknown",
@@ -438,6 +441,231 @@ def validate_profile_decision_envelope(value: Any) -> None:
         raise ValueError("profile decision effects")
     if len(canonical(value)) > 16384:
         raise ValueError("profile decision size")
+
+
+def _validate_observation_row(row: Any) -> None:
+    if type(row) is not dict or set(row) != {
+        "sheet",
+        "sheet_index",
+        "row",
+        "header_row",
+        "mapping",
+        "fields",
+        "values",
+        "problems",
+        "sha256",
+    }:
+        raise ValueError("observation row")
+    if type(row["sheet"]) is not str or not 1 <= len(row["sheet"]) <= 31:
+        raise ValueError("observation sheet")
+    for key, maximum in (("sheet_index", 10), ("row", 1000), ("header_row", 1000)):
+        if type(row[key]) is not int or not 1 <= row[key] <= maximum:
+            raise ValueError("observation row position")
+    if row["row"] <= row["header_row"]:
+        raise ValueError("observation row position")
+    validate_mapping(row["mapping"], 50)
+    if type(row["fields"]) is not dict or set(row["fields"]) != set(FIELDS):
+        raise ValueError("observation fields")
+    for key, cell in row["fields"].items():
+        if cell is None:
+            continue
+        if type(cell) is not dict or set(cell) != {"address", "row", "column", "kind", "value"}:
+            raise ValueError("observation cell")
+        from openpyxl.utils.cell import get_column_letter  # type: ignore[import-untyped]
+
+        if (
+            type(cell["row"]) is not int
+            or cell["row"] != row["row"]
+            or type(cell["column"]) is not int
+            or cell["column"] != row["mapping"][key]
+            or cell["address"] != get_column_letter(cell["column"]) + str(cell["row"])
+            or cell["kind"] not in ("text", "number", "date", "boolean")
+            or type(cell["value"]) is not str
+            or len(cell["value"]) > 4000
+        ):
+            raise ValueError("observation cell")
+    values, problems = row_values(row["fields"])
+    if problems or row["values"] != values or row["problems"] != []:
+        raise ValueError("unusable observation row")
+    if row["sha256"] != digest({key: item for key, item in row.items() if key != "sha256"}):
+        raise ValueError("observation row hash")
+
+
+def row_observation_definition(
+    *,
+    draft_scope_id: str,
+    dataset: dict[str, Any],
+    source: dict[str, Any],
+    profile: dict[str, Any],
+    row: dict[str, Any],
+    item_kind: str,
+    normalized_reference: str,
+    evidence_state: str,
+    review_reason: str,
+    unresolved_fields: list[str],
+) -> dict[str, Any]:
+    value = {
+        "schema_version": ROW_OBSERVATION_SCHEMA,
+        "draft_scope_id": draft_scope_id,
+        "dataset": dataset,
+        "source": source,
+        "profile": profile,
+        "row": row,
+        "interpretation": {
+            "item_kind": item_kind,
+            "normalized_reference": (
+                normalized_reference.strip()
+                if type(normalized_reference) is str
+                else normalized_reference
+            ),
+            "evidence_state": evidence_state,
+            "review_reason": review_reason.strip() if type(review_reason) is str else review_reason,
+            "unresolved_fields": unresolved_fields,
+        },
+        "effects": {
+            "rows_ingested": False,
+            "product_created": False,
+            "material_created": False,
+            "labour_created": False,
+            "service_created": False,
+            "library_activated": False,
+            "technical_approval_granted": False,
+            "system_matching_performed": False,
+            "price_inference_performed": False,
+            "estimate_changed": False,
+            "release_performed": False,
+        },
+    }
+    validate_row_observation_definition(value)
+    return value
+
+
+def validate_row_observation_definition(value: Any) -> None:
+    if type(value) is not dict or set(value) != {
+        "schema_version",
+        "draft_scope_id",
+        "dataset",
+        "source",
+        "profile",
+        "row",
+        "interpretation",
+        "effects",
+    }:
+        raise ValueError("row observation definition")
+    if value["schema_version"] != ROW_OBSERVATION_SCHEMA:
+        raise ValueError("row observation schema")
+    _profile_id(value["draft_scope_id"])
+    dataset = value["dataset"]
+    if type(dataset) is not dict or set(dataset) != {"id", "kind", "version"}:
+        raise ValueError("row observation dataset")
+    _profile_id(dataset["id"])
+    if dataset["kind"] != "general_pricelist":
+        raise ValueError("row observation dataset kind")
+    if type(dataset["version"]) is not int or dataset["version"] < 1:
+        raise ValueError("row observation dataset version")
+    source = value["source"]
+    if type(source) is not dict or set(source) != {
+        "id",
+        "sha256",
+        "size_bytes",
+        "document_sha256",
+    }:
+        raise ValueError("row observation source")
+    _profile_id(source["id"])
+    _profile_hash(source["sha256"])
+    _profile_hash(source["document_sha256"])
+    if type(source["size_bytes"]) is not int or not 1 <= source["size_bytes"] <= 10485760:
+        raise ValueError("row observation source size")
+    profile = value["profile"]
+    if type(profile) is not dict or set(profile) != {
+        "id",
+        "revision",
+        "sha256",
+        "decision_id",
+        "decision_sha256",
+        "price_meaning",
+    }:
+        raise ValueError("row observation profile")
+    _profile_id(profile["id"])
+    _profile_id(profile["decision_id"])
+    _profile_hash(profile["sha256"])
+    _profile_hash(profile["decision_sha256"])
+    if type(profile["revision"]) is not int or profile["revision"] < 1:
+        raise ValueError("row observation profile revision")
+    if profile["price_meaning"] == "unknown":
+        raise ValueError("row observation price meaning")
+    validate_price_meaning(profile["price_meaning"])
+    _validate_observation_row(value["row"])
+    interpretation = value["interpretation"]
+    if type(interpretation) is not dict or set(interpretation) != {
+        "item_kind",
+        "normalized_reference",
+        "evidence_state",
+        "review_reason",
+        "unresolved_fields",
+    }:
+        raise ValueError("row observation interpretation")
+    if interpretation["item_kind"] not in ROW_ITEM_KINDS:
+        raise ValueError("row observation item kind")
+    if interpretation["evidence_state"] not in ROW_EVIDENCE_STATES:
+        raise ValueError("row observation evidence state")
+    for key, maximum in (("normalized_reference", 300), ("review_reason", 4000)):
+        item = interpretation[key]
+        if type(item) is not str or item != item.strip() or not 1 <= len(item) <= maximum:
+            raise ValueError("row observation interpretation")
+    unresolved = interpretation["unresolved_fields"]
+    if (
+        type(unresolved) is not list
+        or unresolved != list(dict.fromkeys(unresolved))
+        or any(type(item) is not str or item not in FIELDS for item in unresolved)
+    ):
+        raise ValueError("row observation unresolved fields")
+    if interpretation["evidence_state"] == "confirmed" and unresolved:
+        raise ValueError("confirmed row observation unresolved")
+    if value["effects"] != {
+        "rows_ingested": False,
+        "product_created": False,
+        "material_created": False,
+        "labour_created": False,
+        "service_created": False,
+        "library_activated": False,
+        "technical_approval_granted": False,
+        "system_matching_performed": False,
+        "price_inference_performed": False,
+        "estimate_changed": False,
+        "release_performed": False,
+    }:
+        raise ValueError("row observation effects")
+    if len(canonical(value)) > 131072:
+        raise ValueError("row observation size")
+
+
+def validate_row_observation_envelope(value: Any) -> None:
+    if type(value) is not dict or set(value) != {
+        "schema_version",
+        "observation_id",
+        "reviewed_at",
+        "reviewed_by_id",
+        "definition",
+        "definition_sha256",
+    }:
+        raise ValueError("row observation envelope")
+    if value["schema_version"] != ROW_OBSERVATION_SCHEMA:
+        raise ValueError("row observation schema")
+    _profile_id(value["observation_id"])
+    _profile_id(value["reviewed_by_id"])
+    try:
+        reviewed_at = datetime.fromisoformat(value["reviewed_at"])
+    except (TypeError, ValueError) as exc:
+        raise ValueError("row observation timestamp") from exc
+    if reviewed_at.tzinfo is None or reviewed_at.utcoffset() != UTC.utcoffset(reviewed_at):
+        raise ValueError("row observation timestamp")
+    validate_row_observation_definition(value["definition"])
+    _profile_hash(value["definition_sha256"])
+    if value["definition_sha256"] != digest(value["definition"]):
+        raise ValueError("row observation definition hash")
+    if len(canonical(value)) > 131072:
+        raise ValueError("row observation size")
 
 
 def validate_selection(selection: Any, lines: list[dict[str, Any]]) -> None:

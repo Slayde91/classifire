@@ -1123,6 +1123,79 @@ class DraftPricingSourceProfileDecision(RecordMixin, Base):
     reviewed_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class DraftPricingRowObservation(RecordMixin, Base):
+    """Append-only human interpretation of one exact approved Dataset A row."""
+
+    __tablename__ = "draft_pricing_row_observations"
+    __table_args__ = (
+        UniqueConstraint(
+            "profile_id",
+            "sheet_index",
+            "row_number",
+            name="uq_draft_pricing_row_observation_profile_row",
+        ),
+        CheckConstraint("profile_revision >= 1", name="ck_draft_pricing_row_observation_revision"),
+        CheckConstraint(
+            "sheet_index >= 1 AND sheet_index <= 10",
+            name="ck_draft_pricing_row_observation_sheet",
+        ),
+        CheckConstraint(
+            "row_number >= 2 AND row_number <= 1000",
+            name="ck_draft_pricing_row_observation_row",
+        ),
+        CheckConstraint(
+            "item_kind IN ('product', 'material', 'labour', 'service')",
+            name="ck_draft_pricing_row_observation_kind",
+        ),
+        CheckConstraint(
+            "evidence_state IN ('confirmed', 'provisional')",
+            name="ck_draft_pricing_row_observation_evidence_state",
+        ),
+        CheckConstraint(
+            "length(normalized_reference) > 0 AND length(normalized_reference) <= 300",
+            name="ck_draft_pricing_row_observation_reference",
+        ),
+        CheckConstraint(
+            "length(review_reason) > 0 AND length(review_reason) <= 4000",
+            name="ck_draft_pricing_row_observation_reason",
+        ),
+        CheckConstraint(
+            "length(observation_json) > 0 AND length(observation_json) <= 131072",
+            name="ck_draft_pricing_row_observation_size",
+        ),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_scopes.id"), index=True, nullable=False
+    )
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_pricing_sources.id"), index=True, nullable=False
+    )
+    profile_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_pricing_source_profiles.id"), index=True, nullable=False
+    )
+    profile_decision_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_pricing_source_profile_decisions.id"), index=True, nullable=False
+    )
+    dataset_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    dataset_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    document_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    profile_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    profile_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    decision_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    sheet_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    row_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    row_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    item_kind: Mapped[str] = mapped_column(String(20), index=True, nullable=False)
+    normalized_reference: Mapped[str] = mapped_column(String(300), nullable=False)
+    evidence_state: Mapped[str] = mapped_column(String(20), nullable=False)
+    review_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    observation_json: Mapped[str] = mapped_column(Text, nullable=False)
+    observation_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    reviewed_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
 class DraftScopeReport(RecordMixin, Base):
     """Retained scope-only Draft snapshot and its two exact rendered outputs."""
 

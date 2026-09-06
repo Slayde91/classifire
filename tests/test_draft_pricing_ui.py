@@ -78,7 +78,7 @@ def test_upload_map_select_download_and_http_boundaries(pdf_app, monkeypatch):
             "csrf_token": token,
             "sheet_index": "1",
             "header_row": "1",
-            "price_meaning": "unknown",
+            "price_meaning": "sell_price",
             **{key: str(value) for key, value in MAPPING.items()},
         }
         bad = client.post(path + "/preview", data={**form, "rate": "1"})
@@ -89,7 +89,7 @@ def test_upload_map_select_download_and_http_boundaries(pdf_app, monkeypatch):
         assert "Apply row 4 rate" not in page.text
         assert "D2: 120.25" in page.text
         assert "Save unapproved profile revision 1" in page.text
-        assert "Price meaning unknown" in page.text
+        assert "Sell price" in page.text
         import re
 
         def hidden(name):
@@ -147,6 +147,56 @@ def test_upload_map_select_download_and_http_boundaries(pdf_app, monkeypatch):
         assert decision_download.status_code == 200
         assert decision_download.json()["profile_sha256"] == profile_hash
         assert decision_download.json()["effects"]["estimate_changed"] is False
+        admin_row_page = admin.get(profile.headers["location"])
+        assert "Classify this exact row" in admin_row_page.text
+        row_preview = admin.post(
+            profile.headers["location"] + "/rows/2/preview",
+            data={
+                "csrf_token": _csrf(admin_row_page.text),
+                "item_kind": "service",
+                "normalized_reference": "SYN-1",
+                "evidence_state": "confirmed",
+                "review_reason": "The retained description identifies service work.",
+                "unresolved_fields": "",
+            },
+        )
+        assert row_preview.status_code == 200, row_preview.text
+        assert "No write has occurred" in row_preview.text
+        assert "Save immutable row observation" in row_preview.text
+
+        def row_hidden(name):
+            return re.search(r'name="' + name + r'" value="([^"]*)"', row_preview.text).group(1)
+
+        row_saved = admin.post(
+            profile.headers["location"] + "/rows/2/observations",
+            data={
+                "csrf_token": _csrf(row_preview.text),
+                "item_kind": row_hidden("item_kind"),
+                "normalized_reference": row_hidden("normalized_reference"),
+                "evidence_state": row_hidden("evidence_state"),
+                "review_reason": row_hidden("review_reason"),
+                "unresolved_fields": row_hidden("unresolved_fields"),
+                "profile_sha256": row_hidden("profile_sha256"),
+                "decision_sha256": row_hidden("decision_sha256"),
+                "row_sha256": row_hidden("row_sha256"),
+                "preview_hash": row_hidden("preview_hash"),
+            },
+            follow_redirects=False,
+        )
+        assert row_saved.status_code == 303, row_saved.text
+        reviewed_row_page = client.get(profile.headers["location"])
+        assert "Reviewed Dataset A observation" in reviewed_row_page.text
+        assert "SYN-1" in reviewed_row_page.text
+        assert "Service" in reviewed_row_page.text
+        observation_path = re.search(
+            r'href="([^"]+/observations/[^"]+/download)"', reviewed_row_page.text
+        ).group(1)
+        observation_download = client.get(observation_path)
+        assert observation_download.status_code == 200
+        assert observation_download.json()["definition"]["row"]["sha256"] == row_hidden(
+            "row_sha256"
+        )
+        assert observation_download.json()["definition"]["effects"]["estimate_changed"] is False
         review_form["csrf_token"] = _csrf(admin.get(profile.headers["location"]).text)
         assert admin.post(review_path, data=review_form).status_code == 409
         assert client.get(base + "/download?revision=2").status_code == 200

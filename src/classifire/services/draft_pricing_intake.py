@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from ..audit import record_audit
 from ..config import Settings
 from ..models import (
+    DraftPricingRowObservation,
     DraftPricingSource,
     DraftPricingSourceProfile,
     DraftPricingSourceProfileDecision,
@@ -31,12 +32,15 @@ from .draft_pricing_contract import (
     PROFILE_DECISION_SCHEMA,
     PROFILE_DECISIONS,
     PROFILE_SCHEMA,
+    ROW_OBSERVATION_SCHEMA,
     digest,
     preview_rows,
     profile_definition,
+    row_observation_definition,
     validate_dataset_kind,
     validate_profile_decision_envelope,
     validate_profile_envelope,
+    validate_row_observation_envelope,
 )
 from .draft_scope import DraftScopeError, _actor, _atomic, get_draft
 from .draft_source_intake import DraftSourceIntake, SourcePolicy
@@ -587,6 +591,440 @@ def save_profile_decision(
         )
         db.flush()
         return envelope
+
+
+def _row_observation_context(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    row_number: int,
+    *,
+    settings: Settings,
+    lock: bool = False,
+) -> tuple[
+    User,
+    DraftPricingSource,
+    DraftPricingSourceProfile,
+    DraftPricingSourceProfileDecision,
+    dict[str, Any],
+    dict[str, Any],
+]:
+    source, _ = _profile_row(db, actor, draft_id, source_id, profile_id)
+    actor = _actor(db, actor, "pricing:approve")
+    if lock:
+        intake()._postgres(db)
+        source = cast(
+            DraftPricingSource,
+            db.scalar(
+                select(DraftPricingSource)
+                .where(
+                    DraftPricingSource.id == source_id,
+                    DraftPricingSource.draft_scope_id == draft_id,
+                )
+                .execution_options(populate_existing=True)
+                .with_for_update()
+            ),
+        )
+    profile = db.scalar(
+        select(DraftPricingSourceProfile)
+        .where(
+            DraftPricingSourceProfile.id == profile_id,
+            DraftPricingSourceProfile.source_id == source_id,
+            DraftPricingSourceProfile.draft_scope_id == draft_id,
+        )
+        .execution_options(populate_existing=True)
+        .with_for_update(nowait=False) if lock else
+        select(DraftPricingSourceProfile).where(
+            DraftPricingSourceProfile.id == profile_id,
+            DraftPricingSourceProfile.source_id == source_id,
+            DraftPricingSourceProfile.draft_scope_id == draft_id,
+        )
+    )
+    if profile is None:
+        raise DraftScopeError("PRICING_PROFILE_NOT_FOUND", 404)
+    profile_value = _profile_value(source, profile)
+    definition = profile_value["definition"]
+    if source.dataset_kind != "general_pricelist":
+        raise DraftScopeError("PRICING_ROW_DATASET_A_REQUIRED", 409)
+    latest_source = db.scalar(
+        select(DraftPricingSource)
+        .where(
+            DraftPricingSource.draft_scope_id == draft_id,
+            DraftPricingSource.dataset_id == source.dataset_id,
+        )
+        .order_by(DraftPricingSource.dataset_version.desc())
+        .limit(1)
+        .with_for_update() if lock else
+        select(DraftPricingSource)
+        .where(
+            DraftPricingSource.draft_scope_id == draft_id,
+            DraftPricingSource.dataset_id == source.dataset_id,
+        )
+        .order_by(DraftPricingSource.dataset_version.desc())
+        .limit(1)
+    )
+    if latest_source is None or latest_source.id != source.id:
+        raise DraftScopeError("PRICING_SOURCE_STALE", 409)
+    latest_profile = db.scalar(
+        select(DraftPricingSourceProfile)
+        .where(
+            DraftPricingSourceProfile.source_id == source_id,
+            DraftPricingSourceProfile.draft_scope_id == draft_id,
+        )
+        .order_by(DraftPricingSourceProfile.revision.desc())
+        .limit(1)
+        .with_for_update() if lock else
+        select(DraftPricingSourceProfile)
+        .where(
+            DraftPricingSourceProfile.source_id == source_id,
+            DraftPricingSourceProfile.draft_scope_id == draft_id,
+        )
+        .order_by(DraftPricingSourceProfile.revision.desc())
+        .limit(1)
+    )
+    if latest_profile is None or latest_profile.id != profile.id:
+        raise DraftScopeError("PRICING_PROFILE_STALE", 409)
+    decision = db.scalar(
+        select(DraftPricingSourceProfileDecision)
+        .where(DraftPricingSourceProfileDecision.profile_id == profile_id)
+        .with_for_update() if lock else
+        select(DraftPricingSourceProfileDecision).where(
+            DraftPricingSourceProfileDecision.profile_id == profile_id
+        )
+    )
+    if decision is None:
+        raise DraftScopeError("PRICING_PROFILE_APPROVAL_REQUIRED", 409)
+    decision_value = _decision_value(source, profile, decision)
+    if decision_value["decision"] != "approve":
+        raise DraftScopeError("PRICING_PROFILE_APPROVAL_REQUIRED", 409)
+    if definition["commercial_basis"]["price_meaning"] == "unknown":
+        raise DraftScopeError("PRICING_PRICE_MEANING_REQUIRED", 409)
+    document_source, document, _ = intake()._document(
+        db, actor, draft_id, source_id, settings.storage_root
+    )
+    if document_source.id != source.id or document_source.document_sha256 != source.document_sha256:
+        raise DraftScopeError("PRICING_SOURCE_CHANGED", 409)
+    selection = definition["selection"]
+    try:
+        rows = preview_rows(
+            document,
+            selection["sheet_index"],
+            selection["header_row"],
+            selection["mapping"],
+        )
+    except (ValueError, TypeError, KeyError) as exc:
+        raise DraftScopeError("PRICING_ROW_INVALID", 422) from exc
+    row = next((item for item in rows if item["row"] == row_number), None)
+    if row is None:
+        raise DraftScopeError("PRICING_ROW_NOT_FOUND", 404)
+    if row["problems"]:
+        raise DraftScopeError("PRICING_ROW_UNUSABLE", 422)
+    return actor, source, profile, decision, profile_value, row
+
+
+def preview_row_observation(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    row_number: int,
+    item_kind: str,
+    normalized_reference: str,
+    evidence_state: str,
+    review_reason: str,
+    unresolved_fields: list[str],
+    *,
+    settings: Settings,
+) -> dict[str, Any]:
+    _, source, profile, decision, profile_value, row = _row_observation_context(
+        db,
+        actor,
+        draft_id,
+        source_id,
+        profile_id,
+        row_number,
+        settings=settings,
+    )
+    try:
+        definition = row_observation_definition(
+            draft_scope_id=draft_id,
+            dataset={
+                "id": source.dataset_id,
+                "kind": source.dataset_kind,
+                "version": source.dataset_version,
+            },
+            source={
+                "id": source.id,
+                "sha256": source.source_sha256,
+                "size_bytes": source.source_size_bytes,
+                "document_sha256": source.document_sha256,
+            },
+            profile={
+                "id": profile.id,
+                "revision": profile.revision,
+                "sha256": profile.profile_sha256,
+                "decision_id": decision.id,
+                "decision_sha256": decision.decision_sha256,
+                "price_meaning": profile_value["definition"]["commercial_basis"][
+                    "price_meaning"
+                ],
+            },
+            row=row,
+            item_kind=item_kind,
+            normalized_reference=normalized_reference,
+            evidence_state=evidence_state,
+            review_reason=review_reason,
+            unresolved_fields=unresolved_fields,
+        )
+    except (ValueError, TypeError, KeyError) as exc:
+        raise DraftScopeError("PRICING_ROW_OBSERVATION_INVALID", 422) from exc
+    return {"definition": definition, "preview_hash": digest(definition)}
+
+
+def save_row_observation(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    row_number: int,
+    item_kind: str,
+    normalized_reference: str,
+    evidence_state: str,
+    review_reason: str,
+    unresolved_fields: list[str],
+    expected_profile_sha256: str,
+    expected_decision_sha256: str,
+    expected_row_sha256: str,
+    expected_preview_hash: str,
+    *,
+    settings: Settings,
+) -> dict[str, Any]:
+    with _atomic(db):
+        actor, source, profile, decision, _, row = _row_observation_context(
+            db,
+            actor,
+            draft_id,
+            source_id,
+            profile_id,
+            row_number,
+            settings=settings,
+            lock=True,
+        )
+        if (
+            profile.profile_sha256 != expected_profile_sha256
+            or decision.decision_sha256 != expected_decision_sha256
+            or row["sha256"] != expected_row_sha256
+        ):
+            raise DraftScopeError("PRICING_ROW_CHANGED", 409)
+        existing = db.scalar(
+            select(DraftPricingRowObservation).where(
+                DraftPricingRowObservation.profile_id == profile_id,
+                DraftPricingRowObservation.sheet_index == row["sheet_index"],
+                DraftPricingRowObservation.row_number == row_number,
+            )
+        )
+        if existing is not None:
+            raise DraftScopeError("PRICING_ROW_ALREADY_REVIEWED", 409)
+        try:
+            preview = preview_row_observation(
+                db,
+                actor,
+                draft_id,
+                source_id,
+                profile_id,
+                row_number,
+                item_kind,
+                normalized_reference,
+                evidence_state,
+                review_reason,
+                unresolved_fields,
+                settings=settings,
+            )
+        except (ValueError, TypeError, KeyError) as exc:
+            raise DraftScopeError("PRICING_ROW_OBSERVATION_INVALID", 422) from exc
+        if preview["preview_hash"] != expected_preview_hash:
+            raise DraftScopeError("PRICING_ROW_CHANGED", 409)
+        reviewed = datetime.now(UTC)
+        observation_id = new_id()
+        envelope = {
+            "schema_version": ROW_OBSERVATION_SCHEMA,
+            "observation_id": observation_id,
+            "reviewed_at": reviewed.isoformat(),
+            "reviewed_by_id": actor.id,
+            "definition": preview["definition"],
+            "definition_sha256": expected_preview_hash,
+        }
+        try:
+            validate_row_observation_envelope(envelope)
+            raw = canonical(envelope)
+        except (ValueError, TypeError, KeyError) as exc:
+            raise DraftScopeError("PRICING_ROW_OBSERVATION_INVALID", 422) from exc
+        interpretation = envelope["definition"]["interpretation"]
+        stored = DraftPricingRowObservation(
+            id=observation_id,
+            draft_scope_id=draft_id,
+            source_id=source_id,
+            profile_id=profile_id,
+            profile_decision_id=decision.id,
+            dataset_id=cast(str, source.dataset_id),
+            dataset_version=cast(int, source.dataset_version),
+            source_sha256=source.source_sha256,
+            document_sha256=cast(str, source.document_sha256),
+            profile_revision=profile.revision,
+            profile_sha256=profile.profile_sha256,
+            decision_sha256=decision.decision_sha256,
+            sheet_index=row["sheet_index"],
+            row_number=row_number,
+            row_sha256=row["sha256"],
+            item_kind=interpretation["item_kind"],
+            normalized_reference=interpretation["normalized_reference"],
+            evidence_state=interpretation["evidence_state"],
+            review_reason=interpretation["review_reason"],
+            observation_json=raw.decode("utf-8"),
+            observation_sha256=hashlib.sha256(raw).hexdigest(),
+            reviewed_by_id=actor.id,
+            created_at=reviewed,
+            updated_at=reviewed,
+        )
+        db.add(stored)
+        draft = get_draft(db, actor, draft_id)
+        record_audit(
+            db,
+            actor=actor,
+            action="draft_pricing.row_observation.save",
+            entity_type="draft_pricing_row_observation",
+            entity_id=observation_id,
+            project_id=draft.project_id,
+            new_value={
+                "profile_id": profile_id,
+                "profile_revision": profile.revision,
+                "row_number": row_number,
+                "row_sha256": row["sha256"],
+                "item_kind": interpretation["item_kind"],
+                "evidence_state": interpretation["evidence_state"],
+                "observation_sha256": stored.observation_sha256,
+            },
+            reason=interpretation["review_reason"],
+        )
+        db.flush()
+        return envelope
+
+
+def _row_observation_value(row: DraftPricingRowObservation) -> dict[str, Any]:
+    try:
+        raw = row.observation_json.encode("utf-8")
+        value = json.loads(raw)
+        validate_row_observation_envelope(value)
+        definition = value["definition"]
+        if (
+            len(raw) > 131072
+            or hashlib.sha256(raw).hexdigest() != row.observation_sha256
+            or value["observation_id"] != row.id
+            or value["reviewed_by_id"] != row.reviewed_by_id
+            or definition["draft_scope_id"] != row.draft_scope_id
+            or definition["dataset"]["id"] != row.dataset_id
+            or definition["dataset"]["version"] != row.dataset_version
+            or definition["source"]["id"] != row.source_id
+            or definition["source"]["sha256"] != row.source_sha256
+            or definition["source"]["document_sha256"] != row.document_sha256
+            or definition["profile"]["id"] != row.profile_id
+            or definition["profile"]["revision"] != row.profile_revision
+            or definition["profile"]["sha256"] != row.profile_sha256
+            or definition["profile"]["decision_id"] != row.profile_decision_id
+            or definition["profile"]["decision_sha256"] != row.decision_sha256
+            or definition["row"]["sheet_index"] != row.sheet_index
+            or definition["row"]["row"] != row.row_number
+            or definition["row"]["sha256"] != row.row_sha256
+            or definition["interpretation"]["item_kind"] != row.item_kind
+            or definition["interpretation"]["normalized_reference"] != row.normalized_reference
+            or definition["interpretation"]["evidence_state"] != row.evidence_state
+            or definition["interpretation"]["review_reason"] != row.review_reason
+        ):
+            raise ValueError("row observation binding")
+    except (ValueError, TypeError, KeyError, UnicodeError, json.JSONDecodeError) as exc:
+        raise DraftScopeError("PRICING_ROW_OBSERVATION_INTEGRITY_FAILED", 409) from exc
+    return cast(dict[str, Any], value)
+
+
+def list_row_observations(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+) -> list[dict[str, Any]]:
+    source, profile = _profile_row(db, actor, draft_id, source_id, profile_id)
+    latest_source = db.scalar(
+        select(DraftPricingSource)
+        .where(
+            DraftPricingSource.draft_scope_id == draft_id,
+            DraftPricingSource.dataset_id == source.dataset_id,
+        )
+        .order_by(DraftPricingSource.dataset_version.desc())
+        .limit(1)
+    )
+    latest_profile = db.scalar(
+        select(DraftPricingSourceProfile)
+        .where(
+            DraftPricingSourceProfile.source_id == source_id,
+            DraftPricingSourceProfile.draft_scope_id == draft_id,
+        )
+        .order_by(DraftPricingSourceProfile.revision.desc())
+        .limit(1)
+    )
+    rows = db.scalars(
+        select(DraftPricingRowObservation)
+        .where(
+            DraftPricingRowObservation.draft_scope_id == draft_id,
+            DraftPricingRowObservation.source_id == source_id,
+            DraftPricingRowObservation.profile_id == profile_id,
+        )
+        .order_by(DraftPricingRowObservation.row_number)
+    ).all()
+    return [
+        {
+            "id": row.id,
+            "row_number": row.row_number,
+            "observation_sha256": row.observation_sha256,
+            "reviewed_at": row.created_at,
+            "reviewed_by": cast(User, db.get(User, row.reviewed_by_id)).full_name,
+            "is_current": (
+                latest_source is not None
+                and latest_source.id == source.id
+                and latest_profile is not None
+                and latest_profile.id == profile.id
+            ),
+            "value": _row_observation_value(row),
+        }
+        for row in rows
+    ]
+
+
+def row_observation_bytes(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    observation_id: str,
+) -> bytes:
+    _profile_row(db, actor, draft_id, source_id, profile_id)
+    row = db.scalar(
+        select(DraftPricingRowObservation).where(
+            DraftPricingRowObservation.id == observation_id,
+            DraftPricingRowObservation.draft_scope_id == draft_id,
+            DraftPricingRowObservation.source_id == source_id,
+            DraftPricingRowObservation.profile_id == profile_id,
+        )
+    )
+    if row is None:
+        raise DraftScopeError("PRICING_ROW_OBSERVATION_NOT_FOUND", 404)
+    _row_observation_value(row)
+    return row.observation_json.encode("utf-8")
 
 
 def save_profile(
