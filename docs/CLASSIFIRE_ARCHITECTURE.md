@@ -2,13 +2,14 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.20 - human-confirmed workbook pricing client commands.
+**Architecture version:** 5.21 - technical corpus and two-source pricing target.
 
-**Verified shared baseline:** `58c7d4aefad87d714a8922d060fbfa2e68b446bb`, merged
-PR #206; PR CI 34015890493 attempt 2 passed 1,511 tests and main CI 34017405923
-succeeded. Current implementation branch `feat/client-workbook-pricing-20260906` exposes
-existing retained-workbook preview and rate selection through the optional resource
-server. Local validation passed; PROJECT_STATE.md records proof and the publication checkpoint.
+**Verified shared baseline:** `a22a02769d3b842d5d0129dbd09273759ae583c1`, merged
+PR #207. Exact PR-head CI 34019881433 passed 1,522 tests; post-merge main CI
+34020498735 completed successfully at this baseline. Workbook preview and human-confirmed rate
+selection are merged, with local browser/restart evidence recorded in PROJECT_STATE.md.
+The corpus, semantic pricing libraries and estimation design below are planned;
+this documentation change adds no executable capability or operational authority.
 Local client parity is not a real ChatGPT connection or production readiness.
 Earlier milestone descriptions are historical checkpoints where a later amendment
 supersedes their status. Current component/amendment sections distinguish remaining coverage.
@@ -22,6 +23,18 @@ This document separates the architecture that is implemented now from the
 adopted target architecture and known gaps. Read it with [PROJECT_STATE.md](./PROJECT_STATE.md)
 and [CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md). Source, tests, migrations,
 Git state, and retained runtime receipts determine factual implementation state.
+[Technical corpus and dual-pricing design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
+contains the detailed component contracts, estimation methods, validation and phased
+acceptance criteria. Its proposed records and workflows extend ADRs 0001/0002; they
+are not claims about existing tables, imported datasets or measured accuracy.
+
+**Architecture change:** extend individual technical intake and generic workbook rate
+selection into governed corpus extraction and two separately versioned pricing inputs.
+**Reason:** consistent system identity, fact provenance and price basis are prerequisites
+to explainable missing-price estimates. **Consequences:** new logical contracts, reviewed
+mappings, immutable recipe/proposal versions and later durable batch work are required.
+**Migration:** extend the existing modular application and persistence with forward changes;
+preserve historical artifacts, authority gates and optional AI under ADRs 0001/0002.
 
 ## Implemented execution boundary and planned package boundary
 
@@ -85,9 +98,13 @@ still applies. Model output is proposed evidence, never authority.
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
 | Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is merged in PR #200; selected-workspace import is merged in PR #203. The optional MCP client covers independent capability commands; real ChatGPT linking remains planned. |
-| Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205 and measured review in PR #206. Workbook source preview and confirmed rate selection are implemented on the current branch, with local validation passed and publication to verify. External linking remains unproven. |
-| Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
-| Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
+| Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205 and measured review in PR #206. Workbook source preview and confirmed rate selection are merged in PR #207. External linking remains unproven. |
+| Orchestration | Deterministic controllers and bounded inference journal; generic worker has no registered handlers | Keep the first source-profile preview bounded and synchronous. Extend existing BackgroundJob for corpus stages, leases/retries and immutable run outputs after the visible prototype; do not introduce an agent fleet or another scheduler database. |
+| Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse independently callable contracts across UI/client. Planned corpus extraction/resolution and pricing coverage/estimation use the same governed application; they do not bypass independent capability prerequisites. |
+| Technical corpus | Individual TechnicalDocument intake, limited PDF metadata, JSONL Draft variants, manual source-bound materialisation/review | Planned batch inventory, versioned extraction/claims, stable system identity, deduplication and exception review for hundreds to thousands of documents. Existing source/review/publication gates remain. |
+| General pricing source A | Generic retained XLSX preview and explicit rate selection; legacy Product/PricingLibraryRecord structures | Planned `general_pricelist` profile for `pricelist.xlsx`: normalize product/material/labour/service observations, source cells and basis, then review component/activity mappings. |
+| Firefly pricing source B | Same bounded XLSX primitives; no dedicated system-price ingestion or resolution | Planned `firefly_system_prices` profile for `pricing_library.xlsx`: retain system-level prices separately, bind reviewed matches to exact SystemRevision/configuration and preserve unmatched/ambiguous rows. |
+| Pricing coverage and proposals | Manual Draft rates, source selection, original values and override history | Planned coverage runs, evidence-based bottom-up/comparable/combined proposals, calibrated review and append-only approval/actual-cost feedback. Observed and derived prices remain distinct after approval. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
 | Packages | Scope v1/v2 exchange plus v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Current selected Draft archive projection and download reuse these readers; whole-project coverage and source-body membership remain planned; imported-origin capability wrappers are implemented below. |
@@ -438,6 +455,22 @@ Authority remains separate for:
 
 Approval for one operation never grants a later authority.
 
+For the planned library workflow, `pricelist.xlsx` and `pricing_library.xlsx` are
+authoritative input datasets with different semantic purposes, not automatically
+authorized commercial or technical truth. Explicit SourceDataset kind and immutable
+DatasetVersion identity govern interpretation; a filename or similar description
+cannot silently choose a profile. The general source supplies component/activity
+price evidence; the Firefly source supplies complete-system price observations and
+comparables. `legacy_package14` remains separately identified during migration.
+
+Original source bytes, extracted claims, normalized identities, mapping decisions,
+calculated proposals and approval decisions are separate records with exact lineage.
+A reviewed estimated price remains derived; approval never turns it into an observed
+source price. Library approval does not prove suitability for a project configuration,
+complete quantities/recovery or Human Release. Dataset/corpus access and export rights
+must be enforced in shared services; existing staff permissions and project ownership
+are foundations, not evidence of production tenant isolation or redistribution rights.
+
 ### Repository tiers
 
 | Tier | Meaning |
@@ -457,7 +490,8 @@ Approval for one operation never grants a later authority.
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
-| Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, atomic governed publication, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus production technical authority remain incomplete |
+| Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, predecessor lineage, locators, independent activation, pinned active releases and atomic publication | Corpus extraction, per-fact multi-document claims, entity resolution and production technical authority remain planned; see sections 4, 5 and 8 |
+| Commercial source intake | Bounded retained XLSX preview/selection and legacy Package 14 CSV/Product imports | Dedicated A/B semantic profiles, reviewed library ingestion/mappings, coverage and pricing estimation are planned; existing generic selection is not either completed library |
 | Estimating/output | Canonical calculation/outputs/desk quotes plus local independent manual Draft Estimate contract, history, partial totals and JSON | All four independent Draft report profiles exist; full pricing, technical-to-component recovery and production release remain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Transitional current implementation. The accepted target is a small CLASSIFIRE-owned deterministic job/run coordinator with bounded optional AI adapters; journal/lifecycle foundations are implemented, but full migration remains incomplete and OpenClaw stays until parity gates pass. Neither control plane owns canonical estimate state. |
 
@@ -479,7 +513,13 @@ claims a queued job with a row lock, marks it running, then fails it because no
 handlers are registered. Its selector does not honour run_after. Durable stages,
 lease expiry, cancellation and crash recovery remain gaps. Record them now;
 PR #184's journal reuses this table in distinct non-queued states;
-the generic worker still has no registered handlers.
+the generic worker still has no registered handlers. The execution journal seals
+bound completion evidence and refuses redispatch of old attempts; it is not a
+resumable corpus queue. Planned corpus jobs must use separate versioned job types,
+explicit new attempts, idempotent stage outputs, bounded concurrency, lease expiry,
+retry/backoff and terminal exception states. Preserve journal semantics and enforce
+source/permission checks at dispatch and consumption, including after a worker restart.
+Job progress may be durable without granting any document/variant approval power.
 
 The controlled-write plugin defaults to phase8-admission-only. Broader catalog
 entries and Mission Control bootstrap code do not prove working API routes,
@@ -502,6 +542,37 @@ Project
 
 An Opening is the aperture or bounded penetration condition. A Service is a
 physical item passing through it. Placeholder Services are prohibited.
+
+### Technical and pricing records: implemented versus planned
+
+Current `models.py` has TechnicalDocument and TechnicalVariant. A variant carries
+an indexed textual `system_id`, globally unique `variant_id`, one optional document
+binding, page/table/figure locators, configuration fields, component/labour JSON and
+revision lineage. There is no separate TechnicalSystem entity, normalized claim graph
+or cross-document identity-resolution service. Existing Product, PricingLibraryRecord,
+LibraryRelease and Draft Estimate records remain reuse points, not proof of the new
+pricing semantics.
+
+The target below describes **logical contracts, not a requirement for one SQL table
+per row**. Extend existing records/services with forward migrations where coherent;
+retain PostgreSQL and content-addressed storage as the initial persistence stack.
+
+| Planned logical record | Identity, content and relationship |
+| --- | --- |
+| SourceDataset / DatasetVersion / SourceRecord | Dataset kind (`technical_corpus`, `general_pricelist`, `firefly_system_prices`, `legacy_package14`), access/export policy, immutable version/source hash, parser/profile version, and document or worksheet/row/cell provenance. Replacements create versions; source records are not approved prices. |
+| CorpusBatch / ExtractionRun | Exact batch members and source/version bindings, per-document bounded stage status, parser/schema/model versions, immutable outputs, failure/retry lineage and resource/cost receipts. Reprocessing creates a new run; it never overwrites accepted claims. |
+| TechnicalSystem / SystemRevision | Stable namespaced system identity with retained external aliases; immutable configuration/revision references existing TechnicalVariant lineage, source claims, limitations and technical-review state. A system family is not an interchangeable tested variant. |
+| Claim / ClaimEvidence / ResolutionDecision | Typed asserted value, unit, uncertainty/confidence reasons, extraction run/version and multiple exact document/page/section/table/figure/cell locators; record support/conflict and human mapping/merge/split decisions without deleting original assertions. |
+| ComponentRecipe / ActivityRecipe | Versioned material/component requirements, quantity expressions and installation/labour activities with units, applicability, evidence and exclusions. Unknown yield, productivity or dimensions stay unknown. Freeze selected recipe versions before costing. |
+| PriceObservation / ComponentMapping / SystemPriceMapping | Exact source kind/version/row and raw/normalized values; price/unit/currency/tax/effective-date basis and inclusions/exclusions; distinguish cost, sell and unknown basis. Link source A to components/activities and source B to exact system revisions with method/confidence/reviewer. |
+| CoverageRun / EstimateProposal | Immutable inventory and coverage classification for a selected technical release and both dataset versions; method-specific amounts/ranges, component/cost-driver inputs, comparables, adjustments, assumptions, source/recipe/mapping versions, exclusions and reasoned confidence. No available evidence means withheld pricing. |
+| ReviewDecision / ApprovedSystemPrice / ActualCostFeedback / EvaluationRun | Append-only decision and corrected/approved amount alongside original proposal; permitted use and approval scope, observed actual cost with basis/date, and reproducible holdout membership/results. Neither approval nor feedback erases source kind or estimated provenance. |
+
+All relationships bind exact revisions rather than mutable names or latest records.
+Normalize units/identifiers with versioned mappings; preserve original text and retain
+ambiguity. Migrations must preserve historical global variant IDs, legacy release and
+row hashes, source locators and saved artifact bytes; existing imports do not gain
+local approval by being associated with a new TechnicalSystem.
 
 ### Pre-technical physical amendments
 
@@ -647,7 +718,73 @@ Historical unbound scope packets remain verifiable as V1, but both the proposal
 runner and the database-backed proposal-review controller reject them rather than
 treating them as approved coverage or using them to assemble a new package.
 
-### 5.3 Linked originals and visual evidence
+### 5.3 Planned corpus and two-library intake pipelines
+
+**Current limits:** technical upload calls `technical.extract_pdf_candidate_metadata`
+for limited PDF text/regex hints, not system extraction; individual retained documents
+can be manually materialised as source-bound Draft variants. The JSONL importer accepts
+prestructured rows, not reports. Existing report locators and Draft PDF/XLSX workers
+are reusable bounded primitives, not corpus parsing or OCR. Draft PDF limits are
+10 MiB, 50 pages, 20 sources per Draft, 2 MiB normalized metadata and a 30-second
+subprocess timeout. Technical upload's general 100 MB setting is not a safe parser
+capacity claim. Corpus limits and deployment isolation need their own measured policy.
+
+**Planned data flow; none of the new corpus/semantic-library stages is implemented:**
+
+```mermaid
+flowchart TD
+    TD[Technical corpus: reports and assessments] --> TS[Retain and scan exact sources]
+    TS --> EX[Versioned bounded parsing and system extraction]
+    EX --> CL[Typed claims, locators and unresolved exceptions]
+    CL --> ER[Normalize identities and review duplicates/conflicts]
+    ER --> TR[Reviewed system revisions and governed technical release]
+    A[pricelist.xlsx: general source A] --> AP[Retain, scan and preview explicit A profile]
+    AP --> AN[Normalize component/activity prices and review mappings]
+    AN --> AR[Versioned general price observations]
+    B[pricing_library.xlsx: Firefly source B] --> BP[Retain, scan and preview explicit B profile]
+    BP --> BN[Normalize system prices and review exact/fuzzy matches]
+    BN --> BR[Versioned system price observations]
+    TR --> C[Coverage run for exact selected versions]
+    AR --> C
+    BR --> C
+    C --> E[Bottom-up, comparable and combined proposals]
+    E --> H[Explainable human review]
+    H --> P[Approved pricing with original observed/derived provenance]
+    P --> F[Actual-cost feedback and held-out evaluation]
+```
+
+A corpus batch records exact members, declared source types/rights, duplicate hashes,
+per-document status and safe failure reasons before processing. Parse text/tables and
+page structure with bounded workers; use OCR or no-tool AI interpretation only where
+a representative source and measured benefit justify them. Extract individual tested
+configurations separately, with installation details, performance and limitations
+linked to retained locators. Normalize typed values before deterministic validation;
+ambiguous identities, conflicting reports and unsupported layouts enter human review.
+A confidence score is diagnostic, not an eligibility decision or permission to approve.
+
+An extraction run binds source bytes, schema, parser/rules and optional model/prompt
+versions. Reprocessing writes new immutable outputs and a reviewable difference from
+the previous run; it does not overwrite accepted claims. Source/approval changes make
+dependent system, mapping and pricing views visibly stale. Retain source bytes and
+review history even when a later configuration is rejected or superseded.
+
+Both workbook pipelines reuse `draft_source_intake`, the bounded XLSX worker, explicit
+sheet/header/column mappings and row/cell hashes. A profile must be explicitly declared:
+A normalizes product/material/labour/service identity, category, units, rates and dates;
+B normalizes individual Firefly system identity/configuration and system-level prices.
+Retain raw values, unknown basis, source errors and formula cells without execution.
+Use exact namespaced identifiers and reviewed aliases first; fuzzy matches are ranked
+proposals with method/features/confidence and an abstention path, never automatic
+technical approval. Many rows may refer to one system or price basis: preserve them,
+then resolve duplicate recovery and version precedence explicitly.
+
+The first deliverable is a visible source-profile/mapping preview using small synthetic
+A/B workbooks. Durable batch stages and large-corpus performance follow that interaction.
+No customer source structure, supplied workbook contents or 1,000-row successful import
+was verified during this documentation exercise. Source inspection and authorized sample
+selection remain prerequisites to each real-source adapter.
+
+### 5.4 Linked originals and visual evidence
 
 Linked-original retrieval is limited by approved host/address/TLS/redirect,
 path/query, MIME, byte, pixel, and runtime policies. A higher-resolution image
@@ -740,8 +877,9 @@ Current shared-main safeguards include:
   activation, search, snapshot, and pinned runtime use; and current
   technical-variant effective/expiry windows at
   activation, search, snapshot, and pinned runtime use;
-- a retained source document on every Draft variant and preserved exact binding
-  through a Draft revision;
+- source-bound manual Draft materialisation and preserved exact document binding
+  through revisions where the source remains the same; legacy/JSONL unbound candidates
+  remain explicitly unresolved and cannot enter the governed review path without binding;
 - a nonblank source locator before technical review, clean hash-verified bytes
   before candidate extraction and Draft-only metadata refresh, and content-safe
   extraction failure diagnostics;
@@ -772,8 +910,31 @@ Current shared-main safeguards include:
   persisted locator values only: they do not read source bytes or grant approval,
   activation, publication, or release authority.
 
-Extraction-assisted and manufacturer-neutral source lineage, clean-machine
-recovery, and production technical authority are not complete. Unsupported
+**Planned corpus extension:** preserve the independent source-review, variant-approval
+and release-publication transitions while adding reviewed system identity and per-fact
+source claims. A normalized identity or fuzzy match does not prove two tested
+configurations are technically equivalent. Resolve duplicate identities separately
+from conflicting claims, expired evidence and substantive system revisions; reviewers
+must see original pages and the complete limitation/configuration context.
+
+The current search performs bounded SQL prefiltering and text/token ranking, not
+calibrated resolution or complete applicability. It considers only the first
+`max(limit * 10, 100)` ordered variants; mixed-service lookup caps 50 and the management
+page caps 500. Corpus retrieval needs pagination/indexed filters and coverage tests
+that include eligible records beyond these caps. Begin with PostgreSQL indexes and
+versioned search projections; add embeddings/vector infrastructure only if a measured
+retrieval gap justifies it. Rebuild projections from exact released revisions; search
+results never become a second technical source of truth.
+
+**Frozen costing-basis gap:** TechnicalVariant contains `component_requirements` and
+`labour_requirements`, but `technical_field_snapshot.FIELD_NAMES` and the current v3
+release record omit both. A pinned v3 manifest therefore does not freeze a complete
+component/labour recipe. Before bottom-up costing, define a versioned recipe/claim
+snapshot and release/artifact compatibility rules; do not read mutable current JSON
+and imply it was published. Old manifests and approval history remain unchanged.
+
+Extraction-assisted and manufacturer-neutral source lineage, clean-machine recovery,
+corpus scale and production technical authority are not complete. Unsupported
 compatibility remains unresolved.
 
 ## 9. Quantity, commercial recovery, snapshots, and outputs
@@ -803,6 +964,66 @@ that timestamp. The output boundary accepts legacy V1 full-payload hashes and
 fails closed for invalid V1/V2 or unsupported packets. This establishes snapshot
 integrity foundations only; it does not prove the independent Phase 12 inputs or
 Human Release.
+
+### Planned two-source pricing coverage and estimation
+
+The current workbook feature applies an explicitly selected observed rate to one
+existing Draft line. It does not ingest either semantic library, map Firefly systems,
+derive missing prices or create a component/recovery ledger. The target uses source A
+for component/material/labour/service evidence and source B for complete-system prices
+and comparables, then records coverage for every selected SystemRevision: directly
+priced, bottom-up derivable, comparable-derived, combined-derived, insufficient evidence
+or requiring review. Keep method/coverage, evidence quality, staleness and approval as
+separate fields; one display label must not hide conflicting prices or missing scope.
+
+The planned deterministic estimation service accepts explicit technical/recipe versions,
+A/B dataset versions, reviewed mappings and a declared commercial basis. It produces a
+proposal and stops. Bottom-up costing sums supported quantities times normalized rates
+and evidenced labour/activity requirements, with separate material/labour/other amounts;
+missing quantity, yield, productivity, unit or cost/sell basis withholds that component.
+Comparable pricing first filters by admissible system/configuration and compatible unit,
+date, currency, tax and inclusions, then weights multiple independent source B comparables
+by declared technical/cost-driver similarities and evidence quality. Approved dimensional
+or installation adjustments require provenance; a text match alone is not a cost model.
+
+Where both estimates exist, retain each result, range and input decomposition. Compare
+on the same basis and reconcile known scope/recovery differences first. A calibrated
+combination may weight independent supported evidence; it must not blindly average
+double-counted material/labour or reuse a complete-system price as component evidence.
+Large unresolved disagreement lowers confidence and requires review; do not hide it in
+a blended amount. Unknown basis or incomparable scope can prevent any combination.
+No exact weighting, tolerance or accuracy claim is established by this document; the
+[companion design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md) defines the explicit
+method and holdout/calibration process for choosing supported policies.
+
+Each proposal preserves source rows/cells, quantities, rates, comparables, adjustments,
+assumptions, excluded/withheld work, method/version and confidence reasons. Human review
+appends its decision/correction and approved price without altering the original result.
+Observed/direct versus derived/estimated remains visible in queries, UI, reports and
+packages after approval. Subsequent actual costs retain their own unit/date/scope and
+are feedback, not replacements for the proposal or unquestioned truth about all jobs.
+
+Holdout evaluation temporarily removes selected known Firefly prices from every allowed
+comparable/mapping/calibration path and tests bottom-up, comparable and combined methods.
+Split connected target-price/system lineage groups across aliases, near-duplicate
+configurations and version copies within supported families; never put an entire
+workbook into one mandatory group. Keep training/calibration/test membership separate,
+and report unseen-family and forward-date stress tests independently. Report error by system type,
+coverage/abstention, interval coverage and confidence calibration, not a single aggregate
+accuracy claim. Establish use-specific thresholds with commercial reviewers from the
+pilot; mandatory review persists outside measured support. Full production estimation
+still requires the project-specific physical/technical prerequisites and recovery gates.
+
+**Legacy migration hazard:** `importers/pricing.py` is a Package 14 CSV importer, not
+an XLSX A/B adapter. It defaults the release to active, can honor row-declared active
+status, derives active Product records, defaults units/basis, substitutes zero for missing rates,
+and can reuse an existing version without checking a changed source hash. Do not route
+new sources through those behaviors or silently reinterpret historical zero/active data.
+Preserve original releases, source rows and hashes as `legacy_package14`; review unknown
+or defaulted basis/prices and create governed replacement mappings/versions through a
+forward migration. Source-derived product-name matching and maximum-price selection are
+not a reviewed general price library. This documented debt is unchanged runtime behavior,
+not evidence of a completed fix or permission to execute the legacy importer.
 
 ### Desk-quote exception boundary
 
@@ -930,8 +1151,22 @@ clock assumptions and crash/replay recovery before production wiring. The
 | Interfaces/tenancy | MCP/standalone share application commands; prove identity mapping, tenant/project isolation and human review. Scoped reviewer grants are not full tenancy proof. |
 | Offline use | Local backend/database and safe revision exchange need a separate decision. Do not assume SQLite reproduces PostgreSQL locking or permit automatic bidirectional merges. |
 | Operations/cost | Clean-machine setup, backup/restore, safe traces, monitoring, rollback and accepted-result cost/latency remain unmeasured. Changing frameworks alone does not prove savings. |
+| Semantic source profiles | Next visible slice: explicitly choose A/B kind, inspect exact worksheet/row mapping and unknown commercial basis, and save/reopen only the minimal profile contract. No filename guessing, automatic activation or inferred prices. |
+| Technical identity/claims | Extend existing Document/Variant identities with stable system revisions, typed multi-source claims and reviewed resolution; preserve global legacy IDs, original values and supersession lineage. |
+| Recipe publication | Current v3 releases omit component/labour JSON. Version and freeze recipe/claim dependencies before costing; retain old release readers and bytes without fabricating historical recipe approval. |
+| Legacy pricing migration | Keep Package 14 CSV history separate. Replace active/default-zero/version-collision behavior for new ingestion through governed forward changes; do not feed A/B workbooks into the legacy importer. |
+| Corpus operations | BackgroundJob has no handlers; add per-document durable stages, attempts/leases/recovery, bounded outputs and review pagination after the UI pilot. Reuse existing PostgreSQL/storage, not another agent framework or mandatory vector database. |
+| Estimation evidence | Verify source structures and commercial basis, then establish leakage-resistant holdouts, unit/scope parity, calibrated weights/thresholds and explicit abstention. Hundreds/thousands scale, accuracy and operating cost remain unmeasured. |
 
-**Migration impact:** P0 adds the Draft revision tables and minimal manual contract.
+**Planned corpus/pricing migration:** logical records in section 4 must be mapped to
+existing tables and narrowly scoped additions, not implemented as a speculative schema
+bundle. Use forward migrations after the required visible slice is defined; current
+head stays 0037 in this documentation change. Preserve prior technical release versions,
+JSONL row/file hash meaning, source lineage, Package 14 records and all saved Draft/report/
+package bytes. New dataset versions and approvals are explicit; imports or backfills
+cannot manufacture source provenance, technical equivalence or commercial authority.
+
+**Historical prototype migration impact:** P0 adds the Draft revision tables and minimal manual contract.
 P1a adds explicit v2 import provenance in existing revision storage without reinterpreting v1 authority.
 P4a adds a retained scope-only snapshot and exact PDF/XLSX pair in migration 0028.
 P2a adds candidate-review revisions and explicit Scope/library dependencies in migration 0029.
@@ -1384,10 +1619,11 @@ project/history coverage, retention/quotas and operational assurance remain debt
 Remaining OpenClaw contract characterisation is required before replacement
 wiring/retirement, not before the manual prototype. Provider execution needs
 its established explicit authority, capture assurance and privacy controls.
-Broader technical-source lineage, formats, pricing inference, full archive
-migration/conflict handling, deployment recovery, scale and accuracy tuning
-follow supported-path needs and user evidence. Never postpone a known security
-or correctness defect on the path exposed by the prototype.
+The technical-corpus and two-library pricing roadmap now gives source profiles,
+reviewed extraction/mapping, coverage and evidence-based pricing explicit staged
+priority. Broad format coverage, full archive migration/conflict handling, deployment
+recovery, scale and accuracy tuning still follow supported-path needs and user evidence.
+Never postpone a known security or correctness defect on the path exposed by the prototype.
 
 Phase 8-14 authoritative exits, canonical submission/locks and Human Release
 remain separately governed. They do not block all independent Draft development.
@@ -1583,8 +1819,8 @@ conditions remain; v3 cannot be downgraded to discard size history. Retained rep
 read the explicit reviewed revision and expose later staleness without changing bytes.
 This is partial Draft technical decision support, never compatibility approval.
 
-This increment is merged in PR #206. Workbook pricing now uses the same boundary
-in the current branch, described below. Complete applicability, broader pricing,
+This increment is merged in PR #206. Workbook pricing uses the same boundary
+through merged PR #207, described below. Complete applicability, broader pricing,
 real ChatGPT OAuth setup and production acceptance remain separate gaps.
 
 
@@ -1592,9 +1828,9 @@ real ChatGPT OAuth setup and production acceptance remain separate gaps.
 
 **Current -> change -> reason:** standalone workbook intake already retains/scans an
 XLSX, previews explicitly mapped cells and applies one source-bound rate to one saved
-Estimate line. The current implementation branch exposes those existing operations to
-the authenticated client. It adds no inference, pricing rule, parser, database or
-orchestration layer. Local tests, browser/restart and output checks passed; publication is a separate checkpoint.
+Estimate line. Merged PR #207 exposes those existing operations to the authenticated
+client. It adds no inference, pricing rule, parser, database or orchestration layer.
+Local tests, browser/restart and output checks passed; exact PR-head CI passed 1,522 tests.
 
 `list_pricing_sources` returns owned-source metadata. `preview_pricing_rows` verifies
 current retained bytes through the shared PostgreSQL containment reader, then returns
@@ -1626,14 +1862,32 @@ original rates and reasoned overrides. Reports still render explicit saved revis
 selecting a workbook rate neither activates a pricing library nor proves technical
 suitability, quantity, commercial applicability or complete recovery.
 
-## Next planned product slice: source-linked structured Draft review
+## Next planned product slice: explicit A/B source-profile UI
 
+The next implementation should let a user declare a retained synthetic workbook as
+general source A or Firefly system-price source B, inspect the selected sheet/header,
+map supported columns and commercial basis, and see unmapped/unknown/invalid fields in
+a no-write preview. Reuse existing workbook intake, exact-byte/scan checks, owner/role
+permissions, explicit confirmation and revision patterns. Save/reopen the minimal
+versioned source-profile/mapping contract and inspect its output; selecting a profile
+must not apply prices, activate a library, resolve technical equivalence or run AI.
+
+This is next because workbook transport and single-row selection now work, but neither
+source has a durable semantic identity or known costing basis. It establishes a visible,
+testable foundation for both pipelines before bulk schemas or estimation. Use synthetic
+fixtures until actual source inspection is separately authorized; do not infer either
+workbook layout from its filename. Follow the companion design and roadmap for exact
+acceptance criteria; completing this slice is not completion of either library import.
+
+## Retained and reordered: source-linked structured Draft review
+
+The A/B source-profile slice now precedes this task; it is reordered, not canceled.
 The current PDF page UI displays retained pages/text and `review_page` appends an
 observation. Existing Draft Defect/Opening/Service models and the editor already
 support a separate physical graph, but Scope v3 `evidence_refs` binds only observation
 IDs/hashes. Entity facts currently have no equivalent page-review binding.
 
-The next bounded workflow should let a human inspect one retained page, draft/edit
+This retained bounded workflow should let a human inspect one retained page, draft/edit
 linked entities using the existing editor, preview without writes, and explicitly
 append one Draft revision with source links. Reuse `validate_payload`, conditional
 revision saving and the shared retained-source reader. Preserve independent entities,

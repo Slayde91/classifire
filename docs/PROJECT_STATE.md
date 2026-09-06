@@ -2,106 +2,127 @@
 
 ## Evidence-based snapshot
 
-Verified 2026-09-06 AEST against isolated source, Git/GitHub and synthetic tests.
-Shared baseline: `58c7d4aefad87d714a8922d060fbfa2e68b446bb`, merged PR #206;
-main CI 34017405923 succeeded. Current increment: `feat/client-workbook-pricing-20260906`
-in `C:\CLASSIFIRE\.tmp\client-workbook-pricing-20260906`. This is an implementation
-checkpoint; inspect live head/PR/CI and the publication receipt before assuming this
-increment is merged. No production deployment or release is claimed.
+Verified 2026-09-06 against current isolated source, Git/GitHub, tests/CI and retained
+synthetic milestone evidence. Shared main is
+`a22a02769d3b842d5d0129dbd09273759ae583c1`, merged PR #207. Feature
+`75f3a8e004269f7e790b76818d89bfc770ab0465` passed exact-head CI 34019881433:
+**1,522 passed**, 141 warnings, Ruff/Bandit and Mypy (193 files). Main CI 34020498735
+also succeeded; feature and merge trees match. No production deployment is claimed.
 
-ADRs 0001/0002 remain accepted: one deterministic modular core, four independently
-callable capabilities, portable explicit revisions and optional AI. The database
-and retained storage govern live state. OpenClaw retirement remains a separate,
-unproven protection-replacement milestone.
+Current branch: `docs/technical-corpus-dual-pricing-20260906` in
+`C:\CLASSIFIRE\.tmp\technical-corpus-dual-pricing-20260906`, based on that merge.
+This increment changes documentation only. The requested corpus and dual-pricing
+capabilities below are target design, not newly implemented runtime behavior.
+Inspect current branch/PR/CI before treating this documentation checkpoint as merged.
+
+ADRs 0001/0002 remain accepted: a deterministic modular core, four independently
+callable capabilities, optional bounded AI and portable explicit revisions. The
+database and retained storage govern live state. OpenClaw retirement still requires
+proven replacement protections. Production Phase 8-14 exits remain separate.
 
 | Capability | Verified bounded implementation | Remaining product gap |
 | --- | --- | --- |
-| Scope | Manual Draft editor/import, retained PDF observations, MCP create/read/edit | Page-linked structured Defect/Opening/Service drafting, more formats and full analysis |
-| System matching | Saved candidates/notes and partial thickness/gap/service-size reviews; measured client commands merged PR #206 | Full authorized applicability and source interpretation; numeric comparisons do not approve compatibility |
-| Estimating | Manual estimates/history and retained workbook selection; this increment adds client preview and human-confirmed selection | Broader validated price bases, extrapolation and complete recovery chain |
-| Reporting | Four independent saved Draft PDF/XLSX profiles with exact client downloads | Production acceptance, professional refinement and governed close-out/release |
+| Scope | Manual Draft editor/import, retained PDF observations and MCP create/read/edit | Page-linked structured Defect/Opening/Service drafting, more formats and full analysis |
+| System matching | Saved candidates/notes, partial thickness/gap/service-size reviews and client commands | Full authorized applicability; bulk document-to-system extraction, stable identity and field-level multi-source claims |
+| Estimating | Manual/history and retained workbook rate selection; PR #207 adds client preview and separate human-confirmed application | Dedicated general/Firefly pipelines, basis/mapping/recipe governance, coverage, comparable estimates and complete recovery |
+| Reporting | Four independent saved Draft PDF/XLSX profiles and exact client downloads | Production acceptance, professional refinement and governed close-out/release |
 | Portability | Selected v1 ZIP, editable new-project import and retained-origin v2 re-export | Complete project/source/history coverage, existing-project merge and production retention |
-| ChatGPT-facing boundary | Optional MCP identity mapping and separate same-human confirmation | Real OAuth/account linking, HTTPS deployment, in-chat files and production operations |
+| ChatGPT-facing boundary | Optional MCP identity mapping and independent client proposals/reads | Real OAuth/account linking, HTTPS deployment, in-chat files and production operations |
 
-## Active work and verified checks
+## Verified implementation evidence
 
-`list_pricing_sources` and `preview_pricing_rows` expose owned retained workbooks
-through existing source containment. The client inspects columns, explicitly maps
-exact cells and proposes `apply_workbook_rate` for a saved Estimate line. Upload/scan
-remains in the UI. Preparing a request never applies a rate; the same human inspects
-source/line details and separately confirms or rejects in the browser.
+PR #207 exposes `list_pricing_sources`, `preview_pricing_rows` and a strict
+`apply_workbook_rate` proposal through existing owned-source containment and pricing
+services. The same human separately reviews and confirms/rejects in the browser.
+Confirmation rechecks rights, expected revision, exact source/document/scan/row,
+column mapping, line and recovery note before one atomic Draft revision. Old pending
+manual request hashes, original rates, source cells and overrides remain intact.
 
-The request binds expected Estimate revision, target line, source/document/scan/row
-identities, mapping and recovery note. Confirmation rechecks current rights and
-shared pricing validation before one atomic revision. Old pending manual commands
-keep their input hashes. Original rates, exact cells, unapproved selection and later
-overrides remain in history. No new migration, dependency, OAuth scope, pricing
-engine, canonical authority or automatic capability chaining.
+Its local focused pricing/client/Estimate/report checks passed **187 tests**, including
+real disposable PostgreSQL confirmation concurrency without skips. Official SDK,
+Chrome and actual restart verified source discovery, exact D2 mapping, rejection,
+confirmation/override history and four byte-identical PDF/XLSX downloads. Both PDFs
+(seven pages total) and workbook cells/types were inspected. Synthetic canonical
+Estimate, line, Opening, Service and Physical Model Lock counts stayed zero.
 
-- Pricing/client-pricing suite: **26 passed** in 148.09 seconds. Added history-rights
-  case and client/Estimate/report regression: **161 passed** in 400.70 seconds.
-  Total **187 passed**, including real disposable PostgreSQL confirmation concurrency;
-  no skips in these successful runs.
-- Coverage includes exact provenance, no early writes, rejection/replay, overrides,
-  current rights/ownership, stale revisions, changed bytes/scans/documents, quarantine,
-  unsupported/formula rates, old pending requests and immutable report/reopen behavior.
-- Ruff/Bandit passed; Mypy passed **193 source files**. Single unchanged migration
-  head: `0037_draft_client_capabilities`.
-- Repository logo matches the supplied PNG exactly, SHA-256
-  `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+The first scan failed closed on stale definitions. The original source was preserved
+and a separate native scanner used genuine current definitions for the successful
+synthetic run; no verdict/freshness/clock or assertion was weakened. These are prior
+milestone receipts, not a new runtime execution for this documentation task. Retained
+receipt filenames and environment limits are in SESSION_HANDOFF.md.
 
-Official MCP SDK + Chrome completed the retained-source recovery and pricing journey:
-source/column discovery, exact mapped D2 preview, rejection without a rate change,
-confirmation at 120.25, then override to 135 retaining original 1.005 and all three
-history events. Four browser/client PDF/XLSX downloads matched exact saved hashes.
-An actual process restart preserved current revision 4, historical revision 3,
-rejected requests and those outputs. No browser errors were reported. The actual source-review panel and current
-Estimate/approved-logo header were visually inspected.
+The repository logo matches the supplied PNG exactly, SHA-256
+`fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+The single migration head remains `0037_draft_client_capabilities`.
 
-Both PDFs were inspected: seven total pages, all with text; the complete report's
-source/history page was visually checked. Both XLSX files retain D2 and 120.25 as
-source data, with no formulas. Read-only synthetic database counts were zero for
-canonical estimates, lines, openings, services and Physical Model Locks.
+## Architecture review findings and active documentation work
 
-The first actual scan failed closed with stale definitions; a duplicate upload into
-a new synthetic project was also refused. The original source was preserved and
-rescanned through a separate native scanner: genuine ClamAV 1.4.4 / daily 28115,
-published 2026-09-06T06:26:06Z, clean at 07:29:29Z. No freshness limit, verdict, clock
-or assertion was weakened. These were environment/harness recovery steps, not domain
-changes. The old scanner/demos and both synthetic projects remain preserved.
+The requested amendment integrates three pipelines: a technical document corpus,
+source A `pricelist.xlsx` for general products/materials/labour/services, and source B
+`pricing_library.xlsx` for Firefly system prices. They converge through reviewed
+technical/configuration mappings, pricing coverage and explainable proposals. Source
+identities, price meaning and observed/derived status stay separate after approval.
+See [the detailed design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md).
 
-Previous milestone: PR #206 exact-head CI 34015890493 attempt 2 passed 1,511 tests;
-main CI succeeded. Its first worker timed out without a reported assertion failure.
-Current increment CI/publication remains separate from that baseline evidence.
+Verified current gaps that drive delivery dependencies:
+
+- TechnicalDocument/TechnicalVariant, source review, JSONL Draft intake and limited
+  PDF metadata extraction exist. There is no full multi-system OCR/table/diagram
+  corpus pipeline, stable TechnicalSystem foreign-key model or per-field multi-source
+  claim resolution. Labour requirements are strings; component requirements are JSON.
+- Technical release v3 does not freeze the complete component/labour recipe. Reproducible
+  costing requires a compatible versioned recipe/publication contract first.
+- Existing XLSX parsing/retained row references cap at **1,000 rows including header**.
+  Pricing listing caps at 897; technical admin at 500 and retrieval uses bounded
+  prefixes. Bulk operation needs pagination, complete counts and bounded processing.
+- Package 14 CSV import is separate from either requested XLSX. It has unsafe defaults
+  for reuse in new intake (including missing-to-zero/default-active behavior), source
+  identity collisions and raw-file manifest semantics that do not establish governed
+  pinned-release usability. Preserve history; new intake stages and reviews explicitly.
+- No typed A/B source identity, approved system-price mapping, complete activity recipe,
+  coverage run, weighted comparable/blend engine or calibrated feedback/holdout model
+  was found. Cost versus unit sell semantics already differ across existing paths.
+- BackgroundJob has no registered handlers or complete durable lease/retry lifecycle.
+  The inference journal records completion/replay; it does not resume old attempts.
+
+Neither named workbook was located in the inspected tracked files, root-level XLSX
+files or scoped data/docs filename searches. This does not prove absence elsewhere.
+No workbook rows or corpus documents were inspected. Layouts, counts, price basis,
+rights and actuals remain unverified; 1,000-plus prices is the user's capacity
+requirement. There are no fitted accuracy metrics or approved pricing-error thresholds.
+
+This branch updates GOAL, AGENTS, architecture, roadmap, state, handoff and the existing
+workbook contract; adds the integrated design; and reorders the immediate priority.
+It performs no source import, runtime change, provider call, pricing-rule change,
+migration, canonical write, lock, deployment or release. Documentation validation
+and current publication evidence belong in the final Git/PR result, not a fabricated
+implementation completion claim.
 
 ## Project health and local changes
 
-The demonstrated synthetic Draft capabilities are useful prototypes. Production
-Phase 8-14 exits, real evidence acceptance, full technical suitability, estimating
-breadth, tenancy/retention and Human Release remain unproven. No AI provider or
-customer data is required for the current slice.
+The demonstrated synthetic Draft interactions are useful prototypes. The full goal
+remains active and incomplete: real-evidence acceptance, full technical suitability,
+estimating breadth, tenancy/retention, production operations and Human Release remain
+unproven. The new design preserves those gates while prioritizing usable UI slices.
 
-Changes: client command/read/request handling, shared pricing-row presentation,
-confirmation panel, focused tests, a separately marked demo database choice and
-aligned documents. AGENTS.md remains accurate. No pricing rules, logo bytes or
-migration history changed. Demo: `http://127.0.0.1:8815/scopes`, marked
-`C:\CLASSIFIRE\.tmp\client-pricing-demo-20260906`; no production deployment.
-
-The legacy root remains on `gpt/phase8-linked-original-images` with four DU conflicts
-and pre-existing staged/unstaged work, inspected read-only with untracked enumeration
-disabled. Nothing there was reset, resolved or staged. Earlier worktrees, demos and
-receipts are unrelated preserved artifacts.
+Only the isolated documentation branch is in scope. The legacy root remains on
+`gpt/phase8-linked-original-images` with four DU conflicts and pre-existing staged/
+unstaged/untracked work, preserved as recovery evidence. Earlier worktrees, demos,
+scanner processes, receipts and the supplied logo remain unrelated preserved assets.
+No root reset, cleanup, resolution or staging is authorized by this amendment.
 
 ## Recommended Next Actions
 
-1. Finish this increment's safe exact-head publication;
-   reconcile the live PR/merge result before starting another branch.
-2. Deliver one source-linked structured Draft workflow from a retained PDF page.
-   `review_page` currently saves observations; the graph/editor already supports
-   Defects/Openings/Services. Scope v3 provenance binds only observations, so add the
-   smallest compatible entity/page binding through existing revision/report/package
-   services. Keep unknown facts unknown and AI optional.
-3. Trial that complete interaction with users; prioritize observed problems over
-   indefinite client parity polish.
+1. Implement one **visible dual-source intake/profile preview**: explicitly choose A
+   or B, retain source/version/hash, inspect supported sheets/headers/counts and flag
+   unknown units, price meaning and capacity limits. Reuse current retention/quarantine
+   and UI services with minimal source/version semantics. Save/reopen the reviewable
+   profile without publishing prices or inferring system matches. Synthetic fixtures
+   unblock development; real schema acceptance needs authorized originals.
+2. Use that evidence to deliver one reviewed technical/system mapping and coverage
+   interaction; establish immutable component/activity recipes before costing. Follow
+   T1-T14 dependencies, with review and blind benchmark design before model tuning.
+3. Retain the source-linked structured Draft PDF workflow as reordered upcoming Scope
+   work. Trial bounded UI interactions before broad optimization or inferred pricing.
 
-[SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the executable next-session prompt.
+[SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the self-contained next-session task.

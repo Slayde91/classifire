@@ -1,5 +1,16 @@
 # Draft pricing workbook selection
 
+## Relationship to the planned two-source libraries
+
+This document describes the implemented generic Draft row-selection contract. It is
+not a dedicated importer for `pricelist.xlsx` (general products/materials/labour/services)
+or `pricing_library.xlsx` (Firefly system prices). Their separately versioned source
+identities, price-basis review, system mappings, bulk capacity and estimated-price
+workflow are planned in the [integrated design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md).
+The 1,000-row limit below includes the header; it cannot accommodate a single sheet
+with 1,000 price rows plus a header. Preserve this contract while adding bounded bulk
+processing and versioned compatibility explicitly; do not silently lift safety limits.
+
 ## Implemented boundary
 
 P3b's first bounded interaction uploads a synthetic/authorized XLSX, explicitly
