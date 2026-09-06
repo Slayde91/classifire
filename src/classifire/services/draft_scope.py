@@ -28,6 +28,7 @@ from .draft_scope_evidence import (
     ENTITY_EVIDENCE_SCHEMA_VERSION,
     EVIDENCE_SCHEMA_VERSION,
     EVIDENCE_SCHEMAS,
+    SUGGESTION_EVIDENCE_SCHEMA_VERSION,
     XLSX_EVIDENCE_SCHEMA_VERSION,
     reference_identity,
     validate_evidence_refs,
@@ -575,15 +576,31 @@ def _revision_envelope(
         if entity_evidence_refs is not None:
             replacements = {reference_identity(ref) for ref in entity_evidence_refs}
             refs = [ref for ref in refs if reference_identity(ref) not in replacements]
-            refs.extend(dict(ref) for ref in entity_evidence_refs)
+            # Human re-review refreshes the target claim without erasing its AI origin.
+            previous = {
+                reference_identity(ref): ref
+                for ref in (basis or {}).get("evidence_refs", [])
+                if "suggestion" in ref
+            }
+            for ref in entity_evidence_refs:
+                replacement = dict(ref)
+                prior_claim = previous.get(reference_identity(ref))
+                if prior_claim is not None and "suggestion" not in replacement:
+                    replacement["suggestion"] = prior_claim["suggestion"]
+                refs.append(replacement)
         entity_version = entity_evidence_refs is not None or (
             basis and basis["schema_version"] == ENTITY_EVIDENCE_SCHEMA_VERSION
         )
         xlsx_version = any(ref.get("source_kind") == "xlsx" for ref in refs) or (
             basis and basis["schema_version"] == XLSX_EVIDENCE_SCHEMA_VERSION
         )
+        suggestion_version = any("suggestion" in ref for ref in refs) or (
+            basis and basis["schema_version"] == SUGGESTION_EVIDENCE_SCHEMA_VERSION
+        )
         envelope.update(
-            schema_version=XLSX_EVIDENCE_SCHEMA_VERSION
+            schema_version=SUGGESTION_EVIDENCE_SCHEMA_VERSION
+            if suggestion_version
+            else XLSX_EVIDENCE_SCHEMA_VERSION
             if xlsx_version
             else ENTITY_EVIDENCE_SCHEMA_VERSION
             if entity_version

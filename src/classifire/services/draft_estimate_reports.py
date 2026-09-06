@@ -18,7 +18,11 @@ from ..models import DraftEstimateReport, User, new_id
 from .draft_estimate_contract import MAX_ESTIMATE_BYTES, validate_envelope
 from .draft_estimates import _estimate, estimate_staleness, read_estimate_revision
 from .draft_scope import DraftScopeError, _atomic, _valid_hash
-from .draft_scope_evidence import ENTITY_EVIDENCE_SCHEMA_VERSION, XLSX_EVIDENCE_SCHEMA_VERSION
+from .draft_scope_evidence import (
+    ENTITY_EVIDENCE_SCHEMA_VERSION,
+    SUGGESTION_EVIDENCE_SCHEMA_VERSION,
+    XLSX_EVIDENCE_SCHEMA_VERSION,
+)
 from .draft_scope_reports import (
     _canonical,
     _checksum,
@@ -55,6 +59,8 @@ class DraftEstimateReportError(DraftScopeError):
 
 
 def _render_version(estimate: dict[str, Any], *, complete: bool) -> int:
+    if estimate["scope"].get("schema_version") == SUGGESTION_EVIDENCE_SCHEMA_VERSION:
+        return 9 if complete else 8
     if estimate["scope"].get("schema_version") == XLSX_EVIDENCE_SCHEMA_VERSION:
         return 7 if complete else 6
     if estimate["scope"].get("schema_version") == ENTITY_EVIDENCE_SCHEMA_VERSION:

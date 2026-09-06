@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Review page suggestions | CLASSIFIRE{% endblock %}
+{% block heading %}Review page suggestions{% endblock %}
+{% macro related_label(items, identifier) %}{% for item in items if item.id == identifier %}{{ item.label }}{% endfor %}{% endmacro %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<p><a href="/scopes/{{ draft.id }}/evidence/{{ source_id }}">&larr; Manual PDF page review</a> &middot; <a href="/scopes/{{ draft.id }}">Saved Draft Scope</a></p>
+{% if errors %}<section class="alert alert-error" role="alert"><strong>Your review was not saved.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></section>{% endif %}
+{% if not suggestion %}
+<section class="panel"><h2>Suggestion source unavailable</h2><p>The retained suggestion or source could not be verified. Editing and saving are disabled. Restore access before reviewing again.</p>{% if recovery_payload is not none %}<p>These submitted entries have not been saved. Keep this data to recover your edits after source access is restored.</p><details><summary>Submitted graph (read-only JSON)</summary><pre class="pdf-recovery-json">{{ recovery_payload|tojson(indent=2) }}</pre></details><details><summary>Submitted page selections (read-only JSON)</summary><pre class="pdf-recovery-json">{{ recovery_targets|default([])|tojson(indent=2) }}</pre></details>{% endif %}</section>
+{% else %}
+<section class="panel"><div class="eyebrow">{{ project.reference }} &middot; {{ project.name }}</div><h2>{{ source.filename }} &middot; page {{ suggestion.page_number }}</h2><p><strong>{{ suggestion.status|capitalize }}</strong> &middot; based on saved Draft revision {{ suggestion.expected_revision }} &middot; current revision {{ suggestion.current_revision }}</p>
+{% if suggestion.applied_revision %}<p>This batch was applied as Draft revision {{ suggestion.applied_revision }}. The retained original proposal below can differ from the edited graph that was saved. <a href="/scopes/{{ draft.id }}/download?revision={{ suggestion.applied_revision }}">Download applied Draft Scope revision {{ suggestion.applied_revision }}</a>.</p>{% elif suggestion.stale %}<p class="callout"><strong>Draft has changed.</strong> This review is read-only. Return to the current saved Draft and request a new suggestion if needed.</p>{% elif suggestion.status == 'rejected' %}<p>This batch was rejected. It did not save a Draft revision.</p>{% endif %}
+<p class="callout">Human review here creates a Draft only. It does not establish technical compatibility, approval or a released physical model.</p></section>
+<div class="pdf-scope-workbench"><div class="pdf-scope-evidence"><section class="panel"><h2>Retained source page {{ suggestion.page_number }}</h2><a href="/scopes/{{ draft.id }}/evidence/{{ source.id }}/pages/{{ suggestion.page_number }}.png" target="_blank" rel="noopener">Open page image</a><div class="pdf-scope-image"><img src="/scopes/{{ draft.id }}/evidence/{{ source.id }}/pages/{{ suggestion.page_number }}.png" alt="Retained PDF page {{ suggestion.page_number }} from {{ source.filename }}" class="pdf-page-preview"></div><details><summary>Extracted source text (unreviewed)</summary><pre class="pdf-extracted-text">{{ selected_page.text or 'No extractable text. Inspect the page image.' }}</pre></details></section>{% include "draft_pdf_suggestion_originals.html" %}</div>
+<div class="pdf-scope-editor">
+{% if can_edit and has_permission('project:write') %}
+<section class="panel scope-project"><h2>Edit and review the complete Draft graph</h2><div id="scope-save-state" role="status" aria-live="polite">Changes have not been saved</div></section>
+<p class="callout">Compare each suggested entry with the source. Edit its fields and links, then tick its page-link checkbox to keep it, or use <strong>Reject suggested item</strong> to remove it. Nothing is selected automatically. Existing entries and manual additions gain no new suggestion reference. Uncertainty must stay visible.</p>
+<p class="scope-hint" id="scope-review-selection-status" role="status" aria-live="polite">No suggestions selected for this page.</p>
+{% include "draft_scope_editor.html" %}
+<section class="panel"><h2>Reject this batch</h2><p>This discards your unsaved review changes and marks the original suggestion batch rejected. The saved Draft stays unchanged.</p><form method="post" action="{{ review_url }}/reject" class="stack-form" data-scope-discard-action><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label class="scope-check" for="suggestion-reject-confirm"><input type="checkbox" id="suggestion-reject-confirm" name="confirm" value="reject" required>Discard these unsaved review changes and reject the batch.</label><button class="button button-secondary" type="submit">Reject this suggestion batch</button></form></section>
+{% else %}
+{% if errors %}<p class="callout">The graph below contains your unsaved attempted changes. It cannot be saved from this stale or closed review. <a href="/scopes/{{ draft.id }}" target="_blank" rel="noopener">Open the current Draft in another tab</a> before reviewing again.</p>{% endif %}
+{% set preview = {'payload': payload, 'page': suggestion.page_number} %}{% set graph_heading = 'Unsaved attempted graph' if errors else 'Original proposed graph (read-only)' %}{% set selected_defects = [] %}{% set selected_openings = [] %}{% set selected_services = [] %}{% include "draft_scope_review_content.html" %}
+{% endif %}</div></div>
+{% endif %}
+{% endblock %}

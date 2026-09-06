@@ -1,31 +1,26 @@
 # CLASSIFIRE Master Roadmap
 
-**Status:** Active; prototype-first delivery approved 2026-09-05. PDF source-linked
-Draft graph review is complete as a bounded increment; Excel defect-register mapping
-is the active Scope increment. The corpus/dual-pricing design remains a separate track.
-**Verified shared-main baseline:** `96680f4ce1b26da5da599bd5cb7894af8d3b28de`
-(PR #209). Required PR CI passed 1,564 tests; main run 34027941914 succeeded.
-The active `feat/defect-xlsx-mapping-20260906` branch implements bounded row mapping,
-explicit image/cell provenance and Scope v5. [PROJECT_STATE.md](./PROJECT_STATE.md)
-records its actual validation and publication; Excel browser/PG/merge proof must not
-be inferred from parser/migration/report checks. Draft increments do not complete
-production Phase 8-14 or authorize OpenClaw retirement.
+**Status:** Active; prototype-first delivery approved 2026-09-05. PDF and Excel
+source-linked Draft reviews are delivered bounded increments (PRs #209/#210).
+**Verified shared-main baseline:** `d2640defd00c23892691da79990a510bee59b2a0`.
+PR #210 CI passed 1,672 tests; main run 34033021353 succeeded. The active source
+increment is optional PDF text/image suggestions with retained proposals, human
+review, Scope v6 and migration 0039. [PROJECT_STATE.md](./PROJECT_STATE.md) records
+measured browser/tests/publication; configured transport is not live AI accuracy.
+Production Phase 8-14 and OpenClaw retirement remain separately gated.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
 ## 1. Delivery decision
 
 **Build a working, testable UI prototype before broad fine tuning.** Preserve the
-persisted manual Scope and merged PDF graph review instead of rebuilding them. The
-active Excel interaction lets a human retain/scan a supported workbook, choose a sheet,
-header/columns and up to 25 rows, edit separate defects/openings/services, explicitly
-link cells/optional images, preview and confirm one Scope v5 revision. Finish its
-supported-path browser/restart, output/import and compatibility evidence before calling
-it delivered. Next Scope work is one optional bounded PDF text/image suggestion path,
-using a Draft-specific adapter and the shared review boundary with synthetic proposals and a manual fallback.
-The A/B workbook profile remains the first separate corpus/pricing slice. Deliver
-screens, minimum contracts and safe persistence together; do not make corpus schema
-perfection, broad AI automation or the full pricing engine prerequisites to this demo.
+manual graph, PDF page review and Excel mapping already delivered. Finish the optional
+one-page suggestion interaction: source consent, retained proposed items, editable
+shared graph, explicit review/confirmation, v6 provenance and manual fallback. Prove
+supported browser/restart and output behavior; a scripted demo is not a live AI run.
+Then deliver the bounded A/B workbook source-profile UI as the next independent user
+interaction. Reuse existing pricing/source services; do not start bulk extraction,
+model tuning or a replacement agent fleet to achieve that screen.
 
 The four capabilities remain independently callable: scope analysis, system
 matching, estimating and reporting. The full evidence-to-Human-Release chain
@@ -98,7 +93,7 @@ prototype into it.
 | --- | --- | --- |
 | **P0. Draft Scope workspace** | **Completed bounded prototype; merged PR #188** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
 | **P1a. Saved Scope import/replacement** | **Completed bounded increment; merged PR #189** | Upload saved Draft Scope JSON, validate/check its declared hash and version, preview identity/content/uncertainty and explicitly append a local revision. Preserve source lineage and prior revisions; reject stale saves and foreign authority. Demonstrate browser round trip and refusal cases. No ZIP or report extraction in this slice. |
-| **P1b. One evidence intake path** | **PDF observations/graph review completed in PRs #194/#209; bounded Excel mapping active** | Retain/scan a supported worksheet; explicitly map 1..25 rows into an editable graph, choose source cells/images and confirm one Scope v5 revision. Preserve PDF v3/v4 history, unknown quantities and manual shared-opening decisions. Prove browser/restart, all four report profiles, exact package round trip and refusal cases. Next: optional bounded PDF text/image suggestions; no automatic physical/technical admission. |
+| **P1b. One evidence intake path** | **PDF/Excel review completed in PRs #194/#209/#210; optional PDF suggestions active** | Retain/scan a supported worksheet; explicitly map 1..25 rows into an editable graph, choose source cells/images and confirm one Scope v5 revision. Preserve PDF v3/v4 history, unknown quantities and manual shared-opening decisions. Prove browser/restart, all four report profiles, exact package round trip and refusal cases. Active: optional bounded PDF suggestions, retained originals and explicit v6 review; no automatic physical/technical admission. |
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
 | **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
@@ -111,7 +106,7 @@ prototype into it.
 
 **Current delivery order:** P0, P1a, P4a, P2a, P3a, all three additional P4b
 profiles, PDF observations and graph P1b (PRs #194/#209), partial measured P2b and
-pricing XLSX P3b are merged. The separate Excel Scope mapping increment is active. The
+pricing XLSX P3b are merged. The Excel Scope mapping increment is merged in PR #210; optional suggestions are active. The
 selected-package P5 increment has a real configuration/save/download/reconfiguration/
 restart journey merged in PR #200; later P5 client parity is merged through PR #207.
 Do not rebuild these slices.
@@ -159,8 +154,8 @@ claims, edited/deleted entity history and unverified imports remain preserved. I
 synthetic browser/restart/report/package proof and required CI are completed bounded
 evidence; they do not prove Excel support or production physical-model admission.
 
-**Active highest-priority increment: bounded Excel defect-register mapping.**
-The active branch uses `draft_scope_xlsx` and the shared source/worker/editor/revision
+**Completed bounded increment: Excel defect-register mapping (PR #210).**
+The merged implementation uses `draft_scope_xlsx` and the shared source/worker/editor/revision
 boundaries. A person selects a supported sheet/header/column mapping and 1..25 rows,
 reviews editable unlinked proposals, connects the graph and explicitly associates
 source rows and chosen image occurrences before preview/confirmation. Scope v5 retains
@@ -185,11 +180,11 @@ and malformed mapping. PROJECT_STATE.md owns results; required CI/review and ver
 merge remain separate gates. No canonical, pricing, technical or provider authority
 is granted by this Draft interaction.
 
-**Next Scope increment after Excel proof:** one optional bounded PDF text/image
+**Active Scope increment:** one optional bounded PDF text/image
 suggestion path through a small Draft-specific adapter using compatible inference
 protections and the same source-review/Scope
-services. Start with synthetic, provider-free proposal fixtures and keep the manual
-path usable. Preserve explicit source bindings and uncertainty, let the human edit
+services. The configured OpenAI transport is default-disabled; synthetic/scripted
+proposal fixtures prove the review workflow while the manual path remains usable. Preserve explicit source bindings and uncertainty, let the human edit
 and confirm, and refuse stale/unsupported suggestions without downstream writes.
 Real provider execution remains separately authorized. Broader OCR, format coverage,
 measurements and cross-report deduplication follow demonstrated need.
@@ -231,21 +226,26 @@ means suppressing known errors, weakening tests or bypassing permissions.
 | Complete all four schemas before building screens | **Superseded.** Evolve compatible contracts alongside demonstrated use cases. |
 | OpenClaw completion/journal/transport foundations | **Completed bounded foundations** (PRs #183-#185); preserve them without making replacement work a P0 dependency. |
 | Remaining capture assurance, general jobs, replacement adapter and retirement | **Separate gated backlog.** Mandatory before applicable provider deployment/retirement, unnecessary for deterministic manual P0. |
-| Technical corpus and dual-pricing breadth | **Retained separate track.** T1-T14 still requires A/B profile, reviewed identity/technical mapping, bounded scale and validated estimation. The completed PDF and active Excel Scope interactions have prototype priority. |
+| Technical corpus and dual-pricing breadth | **Retained separate track.** T1-T14 still requires A/B profile, reviewed identity/technical mapping, bounded scale and validated estimation. The completed PDF/Excel reviews and current optional suggestion interaction precede the A/B profile. |
 | Source-linked structured PDF Draft editor | **Completed bounded increment, PR #209.** Preserve its demonstrated v4 review/history and shared services; do not rebuild it or infer production admission. |
-| Excel defect-register mapping | **Active local increment.** Explicit sheet/header/column/row review, compatible Scope v5 cells/image occurrences and forward 0038; supported-path and publication checks remain. |
-| Optional evidence interpretation | **Upcoming after Excel proof.** One bounded PDF text/image proposal path through a small Draft-specific adapter using compatible inference protections/shared review, synthetic first, manual fallback, no automatic approval. |
+| Excel defect-register mapping | **Completed bounded increment, PR #210.** Explicit sheet/header/column/row review, Scope v5 cells/image occurrences and 0038; preserve demonstrated browser/restart/output history. |
+| Optional evidence interpretation | **Active bounded increment.** One PDF page through a Draft-specific optional adapter, retained generation, shared human review and Scope v6; synthetic proof, manual fallback and no automatic approval. |
 | Existing domain guards, exact-byte reads, snapshot integrity, scoped review and CI | **Retained foundations.** Reuse them; avoid parallel business pipelines or regression. |
 | Legacy draft PRs #9-#13 / dirty root | **Recovery context.** Do not bulk-merge or overwrite. |
 
 ### Immediate next action
 
-Finish the active Excel mapping supported-path verification and publication; do not
-rebuild the completed PDF milestone. [PROJECT_STATE.md](./PROJECT_STATE.md) records
-current evidence and [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) the exact engineering
-handoff. After its exit evidence, continue with the bounded optional PDF text/image
-proposal path above. Keep the A/B profile first within the separate corpus/pricing
-track. This ordering grants no customer-source, provider, canonical-write or deployment
+Finish the active suggestion increment's supported-path validation and publication.
+Then implement the **bounded A/B source-profile UI** above: declare dataset A/B,
+inspect supported mappings and basis gaps, preview, explicitly save and reopen an
+unapproved version. This is next because both report intake paths and the assisted
+review prototype now exist, while generic pricing row selection still lacks semantic
+dataset identity. Current transport does not establish either source's commercial basis.
+Use synthetic workbooks, preserve exact bytes/versions and existing permission/scan
+checks, and do not activate prices, run matching or reprice estimates. Follow T1/T5/T7
+minimum dependencies; later mappings/recipes/holdouts precede derived costing.
+Current evidence and exact handoff remain in PROJECT_STATE.md and SESSION_HANDOFF.md.
+This sequence grants no customer-source, live-provider, canonical-write or deployment
 authority. OpenClaw protection parity remains a separate gated track.
 
 ### Technical-corpus and dual-pricing delivery stages
@@ -925,7 +925,7 @@ import them into the active fire-seal/penetration runtime prematurely.
 - The former package-exporter-first handoff as the current next task.
 - Workbook-client publication as the immediate task: PR #207 is merged.
 - The former A/B-profile-first ordering ahead of the visible report-to-Scope path.
-  PDF graph review is merged and Excel mapping is active; keep the A/B design and
+  PDF/Excel graph review is merged and optional suggestions are active; keep the A/B design and
   T1-T14 requirements as a separate retained track.
 - Blanket deferral of technical corpus and dual-source pricing: replace it with
   the T1-T14 dependency-ordered delivery plan.

@@ -17,7 +17,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
-from ..services.draft_scope_evidence import ENTITY_EVIDENCE_SCHEMAS, XLSX_EVIDENCE_SCHEMA_VERSION
+from ..services.draft_scope_evidence import ENTITY_EVIDENCE_SCHEMAS, WORKBOOK_EVIDENCE_SCHEMAS
 from .common import ATTRIBUTION
 from .draft_branding import DraftLogo as _Logo
 from .draft_branding import supplied_logo_path as _logo_path
@@ -183,7 +183,7 @@ def _context_rows(report: dict[str, Any]) -> list[list[Any]]:
             rows.append(
                 [
                     "Saved evidence-review claim"
-                    if estimate["scope"]["schema_version"] == XLSX_EVIDENCE_SCHEMA_VERSION
+                    if estimate["scope"]["schema_version"] in WORKBOOK_EVIDENCE_SCHEMAS
                     else "Saved page-review claim",
                     _page_reference_id(ref),
                     key,

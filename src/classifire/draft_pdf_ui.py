@@ -22,6 +22,7 @@ from .draft_scope_ui import (
 )
 from .security import verify_csrf
 from .services import draft_pdf_intake as intake
+from .services import draft_pdf_suggestions as suggestions
 from .services.draft_scope import DraftScopeError, get_draft, read_revision, validate_payload
 from .ui import _context, _require, templates
 from .ui_uploads import single_file
@@ -124,6 +125,17 @@ def _source_response(
             raise DraftScopeError("PDF_PAGE_NOT_FOUND", 404)
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
+    history = []
+    history_problem = None
+    if document:
+        try:
+            history = suggestions.list_suggestions(
+                db, user, draft_id, source_id, settings=get_settings()
+            )
+        except DraftScopeError as exc:
+            if exc.status_code in {403, 404}:
+                raise HTTPException(exc.status_code, exc.code) from exc
+            history_problem = exc.code
     return templates.TemplateResponse(
         request,
         "draft_pdf_source.html",
@@ -148,6 +160,11 @@ def _source_response(
             findings=[],
             review_targets=targets or [],
             page_review=True,
+            suggestion_availability=suggestions.availability(
+                get_settings(), port=getattr(request.app.state, "draft_pdf_suggestion_port", None)
+            ),
+            source_suggestions=history,
+            suggestion_history_problem=history_problem,
             review_url=f"/scopes/{draft_id}/evidence/{source_id}/scope",
         ),
         status_code=status_code,

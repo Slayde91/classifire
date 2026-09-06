@@ -2,177 +2,123 @@
 
 ## Verified branch and project context
 
-2026-09-06. Worktree `C:\CLASSIFIRE\.tmp\defect-xlsx-mapping-20260906`, branch
-`feat/defect-xlsx-mapping-20260906`, shared baseline
-`96680f4ce1b26da5da599bd5cb7894af8d3b28de` (merged PDF graph review PR #209).
-Baseline required CI passed 1,564 tests; main run 34027941914 succeeded. Verify current
-head/upstream, diff, PR and checks before assuming this new Excel source checkpoint
-has been published. ADRs 0001/0002 remain accepted; the full production goal is active.
+2026-09-06 source checkpoint. Worktree:
+`C:\CLASSIFIRE\.tmp\draft-pdf-suggestions-20260906`; branch
+`feat/draft-pdf-suggestions-20260906`, initially tracking origin/main. Base/HEAD at
+implementation start: `d2640defd00c23892691da79990a510bee59b2a0` (Excel PR #210).
+Required PR CI passed 1,672 tests; main CI 34033021353 succeeded. This document
+precedes the suggestion increment's own commit/PR/merge; inspect live Git/CI and the
+local publication receipt before treating it as shared main.
 
-## Current increment
+ADRs 0001/0002 remain accepted. The deterministic modular core and optional bounded
+AI are retained. The active slice is one-page PDF suggestions through a Draft-specific
+port, retained generation and explicit human graph review. No canonical Phase8 IDs,
+OpenClaw retirement, technical approval, pricing activation or deployment are involved.
+A working scripted browser demo is not live AI accuracy or production acceptance.
 
-The Excel defect-report path retains/scans a bounded XLSX, shows typed cells and
-supported PNG/JPEG occurrences, accepts explicit sheet/header/column/row choices,
-and drafts only the selected item kinds. The existing graph editor handles shared
-or blank openings and multiple services without automatic relationships or quantity
-inference. A human explicitly selects row/image claims, previews and separately
-confirms one atomic Scope v5 revision. Formula/ambiguous/missing inputs stay unresolved.
+## Local changes and evidence
 
-v5 extends the same evidence_refs union with typed row/cell/image provenance; earlier
-PDF claims remain readable. Changed/deleted items retain historical review warnings,
-re-review updates only a new revision, imports force unverified claims, and selected
-packages inventory the same references with original source bodies external. Four
-report profiles have conditional v5 renderer versions; old outputs remain exact.
-Migration 0038 adds only DraftScopeXlsxSource and reuses the shared retained-file
-boundary. A pure shared envelope builder checks the existing 288 KiB budget during
-preview and final save. No AI provider, canonical physical write, lock, deployment
-or release is added; the existing pricing parser's default behavior stays unchanged.
+Current relevant changes: optional suggestion contract/OpenAI transport/settings;
+DraftPdfSuggestion model and forward 0039; source-bound preparation/read/reject/preview/
+confirmation service; UI and shared editor observation controls; Scope v6 provenance,
+conditional report versions and history/import handling; migration/current-head tests;
+guarded exact synthetic demo fixture; aligned documentation. PROJECT_STATE.md records
+actual checks and remaining proof. Do not copy its prior test counts as current proof.
 
-Changed components: workbook worker/static-picture parser and pure contracts, new
-source model/migration/lineage, shared Scope/evidence/source services, workbook router,
-shared graph/review templates and JavaScript, four-profile renderers, isolated demo
-allowlist and focused source/UI/report/migration tests. See
-[DRAFT_SCOPE_XLSX_V1_CONTRACT.md](./DRAFT_SCOPE_XLSX_V1_CONTRACT.md).
+The supplied logo is preserved and verified in the UI. The legacy root is untouched:
+`gpt/phase8-linked-original-images`, HEAD `de0cc5a`, 46 unstaged tracked modifications,
+14 staged additions and four DU conflicts. Do not clean/reset/resolve/stage or publish
+from it. Preserve unrelated worktrees, older demos, source evidence and local receipts.
 
-## Validation checkpoint
-
-Parser 49, migration/lineage 30, UI/template 19 and mixed workbook/PDF output 20 tests
-have passed. The new router's static checks and both JavaScript syntax checks passed.
-The first real Chrome journey passed 11 checkpoints: later worksheet rows, shared
-opening/two services, separate blank opening, unknown/zero/formula distinctions,
-explicit repeated-image links, preview/edit-back/confirm, v5 JSON, three report pairs,
-selected ZIP and changed/deleted-item history. Earlier downloads stayed byte-identical;
-no browser page errors were recorded. Scope+System is covered by pure output tests;
-the guarded PostgreSQL demo cannot seed a technical release and that guard was preserved.
-
-Final-code fresh review saved r5; a second actual restart/fresh login preserved r2/r5
-JSON, both PNGs, all six report files and ZIP hashes. Pure size tests passed 3 cases;
-full Ruff/Bandit and Mypy on 199 source files passed; Alembic has one head 0038. The rendered Scope/
-Complete reference pages and worksheet ranges were inspected and readable. A separate
-worksheet visualization utility exited nonzero without a diagnostic after producing
-both inspectable PNGs; source workbook hashes stayed exact. See PROJECT_STATE for this
-inspection-tool limitation and read-only canonical counts (all eight models zero).
-
-All 30 new PostgreSQL workflow cases passed across focused runs. Two new test-only
-audit expectations were corrected: the injected failure is confined to save, and the
-HTTP journey asserts one save plus two download events. No runtime guard or assertion
-was weakened. The final remaining-workflow and legacy Scope/import/PDF UI group
-passed **110 tests** in 310.35 seconds. Combined focused groups total **254 passed**,
-no skips, one existing Alembic warning. Independent code/document reviews found no
-blockers. Required PR CI and verified merge remain publication gates at this source
-checkpoint; inspect the live branch/PR rather than inferring its future merge here.
-Publication target: origin/feat/defect-xlsx-mapping-20260906 into main.
-
-## Preserved local changes and runtime context
-
-Preserve the conflicted `C:\CLASSIFIRE` recovery root. Read-only recheck confirms
-HEAD `de0cc5a` on `gpt/phase8-linked-original-images`, 46 unstaged tracked changes,
-14 staged additions and four DU conflicts. Untracked/ignored recovery content was
-not fully enumerated. Do not clean/reset/resolve/stage or publish from that root.
-Preserve earlier worktrees, demos, scanners, receipts and the supplied logo.
-
-New synthetic demo is `http://127.0.0.1:8817/scopes`, marked directory
-`C:\CLASSIFIRE\.tmp\defect-xlsx-demo-20260906`, separate database
-`classifire_draft_xlsx_report_demo` on loopback port 15432 and scanner port 13311. Verify exact
-process command lines and scanner freshness before use/restart. Only this demo's
-launcher may be stopped during its proof; start background processes hidden.
-Log files belong outside the marked data directory before first launch. Read synthetic
-login constants locally in scripts/run_draft_scope_demo.py; never print session keys,
-cookies or credentials. Existing 8816 PDF/8815 pricing and older demos remain untouched.
-
-Receipts and exact synthetic downloads/screenshots are under
-`C:\CLASSIFIRE\.tmp\defect-xlsx-review-artifacts-20260906`. They are local evidence,
-not source files to commit. The separate destructive fixture database is
-`classifire_containment_test`; verify its exact loopback endpoint, ownership and lack
-of other test activity before using the cleanup opt-in. Run such suites serially.
-Never use a demo or customer database for destructive tests.
+Demo `http://127.0.0.1:8818/scopes` uses separately marked directory
+`C:\CLASSIFIRE\.tmp\draft-pdf-suggestions-demo-20260906` and PostgreSQL database
+`classifire_draft_suggestions_demo` on loopback15432, scanner13311. It has an exact
+scripted fixture and no live provider. Verify command lines before stopping its
+launcher; start background helpers hidden. Receipts/downloads/screenshots are under
+`C:\CLASSIFIRE\.tmp\draft-pdf-suggestions-review-artifacts-20260906`; keep these
+synthetic runtime files local. Older 8817/8816/8815 demos are unrelated and preserved.
 
 ## Start Here / Next Session
 
-**First task after the Excel increment is verified and merged:** implement one
-optional, source-bound PDF text/image suggestion interaction feeding the existing
-Draft graph editor. This advances interpretation after both manual upload paths are
-usable, while preserving the human review and deterministic save boundary. Do not
-rebuild manual Scope, PDF page review, Excel mapping, pricing selection or packages.
+**First task:** after verifying the suggestion increment's final checks and merge,
+implement the bounded **A/B pricing-source profile UI**. It is next because PDF/Excel
+human review and the optional interpretation interaction now form a usable Scope
+prototype, while generic pricing workbook transport/row selection still cannot declare
+or preserve the semantic identity and commercial basis of datasets A and B.
 
-**Prerequisites/dependencies:** inspect repository/Git/CI first. If this Excel branch
-has a supported-path failure or unfinished publication, finish that prerequisite
-before starting the next slice. Read the accepted ADRs, current PDF/XLSX contracts,
-existing inference ports/journal and proposal review protections. The existing Phase8
-runners require estimate-bound manifests and canonical identities; they are not directly
-compatible with Draft inputs. Reuse compatible protections through a small Draft-specific
-adapter and shared graph services. Never create canonical records, spoof Phase8 manifests
-or weaken validators to reuse a runner. Synthetic evidence and a controlled adapter
-suffice for development. Real customer/provider workflows,
-credentials, deployment and canonical state changes need separate authorization.
-Lack of a real provider must remain explicit, not be disguised as working AI.
+**Prerequisites:** inspect AGENTS.md, GOAL.md, PROJECT_STATE.md, architecture, roadmap,
+ADRs and `TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md` T1/T5/T7. Inspect live branch/diff,
+main and current PR/CI first; finish genuine outstanding suggestion proof/publication
+before new edits. Use an isolated current-main worktree and preserve unrelated changes.
+No dependency on live AI or the dirty recovery checkout is acceptable.
 
-**Relevant files/components:** services/draft_pdf_intake.py, draft_scope.py,
-draft_scope_evidence.py, draft_scope_xlsx.py, the PDF/Scope routers and shared graph
-editor; services/phase8_visual_proposal.py, phase8_report_assessment_controller.py,
-phase8_report_assessment_input.py and execution_journal.py for compatible port/protection
-patterns, not ready-made Draft runners/storage. Inspect their focused tests and the
-retained PDF source/authority tests.
-Inspect actual file locations and contracts before editing. Future suggestions must
-not become a separate physical model, pricing path or autonomous approval mechanism.
+**Files/components:** existing `draft_pricing_intake.py`, `draft_pricing_contract.py`,
+`draft_pricing_worker.py`, `draft_source_intake.py`, pricing UI/templates and retained
+Draft models; inspect actual paths/callers/tests. Read DRAFT_PRICING_XLSX.md
+and existing source/permission/scan, preview-confirm, revision and audit boundaries.
+Extend these components rather than making a second importer or parallel database.
 
-**Definition of done:** a synthetic retained page and its extracted text can produce
-clearly labelled, bounded proposed defects/openings/services plus source-linked
-observations and unresolved questions in the existing editor. The user can inspect,
-change or reject suggestions and explicitly confirm a valid Draft revision. No
-unattended canonical writes, inferred scale/quantity-one or technical approval. Preserve
-manual operation without AI, exact evidence/revision bindings, stale/revoked-source
-refusal, historical reports/packages and visible uncertainty. Demonstrate the supported
-browser journey and restart; identify real-provider accuracy/operational proof as
-unverified until separately authorized and measured. Do not implement speculative
-bulk agents, model tuning, a new scheduler or unrelated T1-T14 pricing work.
+**Definition of done:** a user can explicitly choose general source A or Firefly
+system-price source B, retain/scan a supported synthetic workbook, inspect a selected
+sheet/header and bounded mapping, see unit/cost-sell/tax/currency/date/inclusion gaps,
+preview without writes, explicitly save an unapproved versioned profile and reopen
+it after restart. Preserve exact source bytes/cell references, previous profile
+versions and missing-versus-zero distinctions. A filename is never proof of source
+identity or price basis. Do not automatically activate a library, infer prices, match
+systems or change an Estimate. No broad corpus extraction/recipe/calibration work in
+this first profile slice. Update contracts/continuity docs from measured evidence.
 
-**Validation:** force source imports to the isolated worktree; unique temp output;
-serial PostgreSQL tests only after exact disposable DB verification. Add targeted
-proposal/source/authority tests, then affected Scope/PDF/XLSX/import/package/report/
-client regressions, browser/restart and inspected outputs. Use current fixture names:
+**Validation:** targeted profile/permission/source/stale/basis/atomic-history tests;
+existing pricing-row and client-proposal regressions; actual browser/restart and
+inspected saved profile/export. Run Ruff, Mypy, Bandit and a single-head Alembic check.
+Force isolated source imports. PostgreSQL tests must run serially only after verifying
+the exact idle disposable `classifire_containment_test` loopback15432 database and
+its explicit cleanup opt-in; never use a demo/customer database. Example setup:
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-$taskTestTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('scope-tests-' + [guid]::NewGuid())
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp $taskTestTemp tests/test_draft_scope_xlsx.py tests/test_draft_pdf_scope_review.py tests/test_draft_scope.py tests/test_draft_package_import.py tests/test_draft_workbook_evidence_outputs.py
+$taskTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('profile-tests-' + [guid]::NewGuid())
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp $taskTemp tests/test_draft_pricing.py
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
 ```
 
-Do not copy credential values from this document; configure the existing guarded test
-URL/opt-in only after verification. Required workflow is
-`.github/workflows/pull-request-validation.yml`. Preserve assertions and authority
-checks. Classify the exact diff, commit only reviewed paths, push normally, open/update
-the PR and merge only after required checks/reviews pass; verify the resulting merge.
+Verify test names and local dev/stub setup before using commands. Run meaningful
+profile tests added by the task as well. Required full workflow is
+`.github/workflows/pull-request-validation.yml`; never bypass failures or review.
+
+**Blockers/decisions:** authorized real A/B sources and their commercial semantics
+remain unverified; synthetic fixtures allow implementation now. Credentials, real
+provider/customer workflows, deployment and canonical operations require separate
+authorization. No known blocker prevents the synthetic source-profile interaction.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from repository evidence. Before editing, read AGENTS.md,
-> GOAL.md, docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md,
-> docs/CLASSIFIRE_ROADMAP.md and docs/SESSION_HANDOFF.md; inspect branch/worktrees,
-> current main, diff, PR/CI and relevant source/tests. Preserve the conflicted
-> C:\CLASSIFIRE root, unrelated local changes and existing demos; use an isolated
-> current-main worktree. Verify the Excel defect-mapping increment is delivered and
-> finish any outstanding validation/publication prerequisite first. Then implement
-> one optional source-bound PDF text/image suggestion interaction through the existing
-> Draft editor: reuse draft_pdf_intake, draft_scope/evidence services, shared UI,
-> compatible inference protections through a small Draft-specific adapter and retained evidence.
-> Do not create canonical records, spoof Phase8 manifests or weaken their validators. This is next
-> because PDF/Excel human review now supplies a usable deterministic foundation for
-> interpretation. Use synthetic evidence and a controlled adapter; do not run real
-> customer/provider workflows, deploy or create canonical state without authorization.
-> Done means reviewable proposed defects/openings/services and unresolved questions,
-> exact source/revision bindings, reject/edit/explicit-save behavior, manual operation
-> without AI, preserved history and no invented quantities or approval. Test no-write
-> proposals, invalid/stale/foreign/revoked inputs, affected Scope/PDF/XLSX/package/report/
-> client behavior, actual browser/restart and inspected outputs; run Ruff, Mypy, Bandit
-> and single-head migration checks with isolated imports and guarded serial disposable
-> PostgreSQL tests. Avoid speculative infrastructure or unrelated pricing work. Continue
-> autonomously through implementation, validation, change classification, explicit-path
-> commit, normal push, PR and merge when required checks/reviews pass; verify the merge
-> and update the four continuity documents with measured facts and any genuine blocker.
+> Continue CLASSIFIRE from verified repository state. Before editing, inspect
+> AGENTS.md, GOAL.md, docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md,
+> docs/CLASSIFIRE_ROADMAP.md, docs/SESSION_HANDOFF.md, accepted ADRs and
+> docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md. Check branch/worktrees, diff,
+> current main and PR/CI; finish any genuine remaining PDF-suggestion validation or
+> publication prerequisite. Preserve the conflicted C:\CLASSIFIRE root, unrelated
+> changes and demos; use an isolated current-main worktree. Next implement one bounded
+> A/B source-profile UI by extending draft_pricing_intake/contract/worker,
+> draft_source_intake and existing pricing UI, models and tests. This is next because
+> report review now works but generic pricing rows lack explicit dataset identity and
+> commercial basis. Done means choose A/B, retain/scan a supported synthetic workbook,
+> inspect sheet/header/mapping and unit/price-basis gaps, preview, explicitly save an
+> unapproved version and reopen after restart with exact evidence/history. Filenames
+> confer no identity or approval. Do not activate prices, infer rates, run matching or
+> reprice estimates. Follow minimal T1/T5/T7 dependencies; avoid speculative bulk AI,
+> recipes/calibration or a second importer. Real sources/semantics remain unverified;
+> do not use customer evidence, live providers, deploy or create canonical state
+> without authorization. Validate new profile and pricing/client regressions, source/
+> permission/stale/atomic refusal, browser/restart and saved outputs; run Ruff, Mypy,
+> Bandit and single-head Alembic with isolated imports and guarded serial disposable
+> PostgreSQL tests. Reconcile docs from evidence, classify the complete diff, preserve
+> unrelated work, commit explicit reviewed paths, push normally, create/update the PR
+> and merge after required CI/reviews pass; verify the resulting merge. Continue
+> autonomously through that workflow when safe, reporting concrete blockers only.

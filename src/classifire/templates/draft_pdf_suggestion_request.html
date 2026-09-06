@@ -1,0 +1,16 @@
+{% set availability = suggestion_availability|default({}) %}
+<section class="panel">
+  <h2>Optional page suggestions</h2>
+  {% if availability.enabled and has_permission('project:write') %}
+  {% if availability.demo %}<p class="callout"><strong>Scripted demonstration.</strong> This local demo loads synthetic suggestions. It does not contact a live AI provider.</p>{% else %}<p>Only page {{ selected_page.page_number }}'s extracted text and rendered image will be sent to {{ availability.provider }} ({{ availability.model }}). Your saved Draft graph is not sent.</p>{% endif %}
+  <p>Suggestions remain unapproved. Review the source, edit or reject each suggestion, then preview and explicitly save. Save current graph edits before requesting suggestions.</p>
+  <form method="post" action="/scopes/{{ draft.id }}/evidence/{{ source.id }}/suggestions" class="stack-form" data-scope-independent-action>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="expected_revision" value="{{ revision }}"><input type="hidden" name="page" value="{{ selected_page.page_number }}"><input type="hidden" name="document_hash" value="{{ document_hash }}">
+    <label class="scope-check" for="pdf-suggestion-consent"><input id="pdf-suggestion-consent" type="checkbox" name="consent" value="yes" required>{% if availability.demo %}Load scripted suggestions for this selected page.{% else %}Send this selected page to the configured provider for suggestions.{% endif %}</label>
+    <button class="button button-secondary" type="submit">{% if availability.demo %}Load demonstration suggestions{% else %}Suggest from this page{% endif %}</button>
+  </form>
+  {% else %}<p class="muted">Optional suggestions are unavailable for this session. Continue with manual page review.</p>{% endif %}
+  <h3>Retained suggestion reviews</h3>
+  {% if suggestion_history_problem|default(none) %}<p class="alert alert-error">Suggestion history is unavailable: {{ suggestion_history_problem|replace('_',' ') }}. Manual page review remains available.</p>{% endif %}
+  <ul>{% for item in source_suggestions|default([]) %}<li><a href="/scopes/{{ draft.id }}/evidence/{{ source.id }}/suggestions/{{ item.id }}">Page {{ item.page_number }} &middot; {{ item.status }} &middot; {{ item.generated_at }}</a> &middot; {% if item.provider == 'scripted' %}scripted demonstration{% else %}{{ item.provider }} / {{ item.model }}{% endif %}; based on Draft revision {{ item.expected_revision }}{% if item.applied_revision %}; applied as revision {{ item.applied_revision }}{% elif item.stale %}; Draft has changed{% endif %}</li>{% else %}<li>No retained suggestion reviews.</li>{% endfor %}</ul>
+</section>

@@ -42,6 +42,7 @@ def main() -> None:
             "classifire_draft_client_pricing_demo",
             "classifire_draft_defect_report_demo",
             "classifire_draft_xlsx_report_demo",
+            "classifire_draft_suggestions_demo",
             "classifire_draft_import_demo",
         ),
         default="classifire_draft_pdf_demo",
@@ -68,7 +69,17 @@ def main() -> None:
         action="store_true",
         help="Seed a separate synthetic outside-diameter fixture in a new SQLite demo",
     )
+    parser.add_argument(
+        "--scripted-pdf-suggestions",
+        action="store_true",
+        help="Enable the labelled exact synthetic PDF suggestion fixture; never a real provider",
+    )
     args = parser.parse_args()
+    if (
+        args.scripted_pdf_suggestions
+        and args.postgres_demo_database != "classifire_draft_suggestions_demo"
+    ):
+        parser.error("Scripted suggestions require their separately named PostgreSQL demo")
     named_database = args.postgres_demo_database != "classifire_draft_pdf_demo"
     if named_database and args.postgres_demo_port is None:
         parser.error("The named demo database requires an explicit loopback PostgreSQL port")
@@ -144,6 +155,7 @@ def main() -> None:
     os.environ.update(
         {
             "CLASSIFIRE_ENV": "test",
+            "CLASSIFIRE_DRAFT_PDF_SUGGESTIONS_ENABLED": "false",
             "CLASSIFIRE_DATABASE_URL": database_url,
             "CLASSIFIRE_STORAGE_ROOT": str(task_dir / "storage"),
             "CLASSIFIRE_SECRET_KEY": session_key,
@@ -282,7 +294,20 @@ def main() -> None:
         "Synthetic/manual Draft data only. No provider or operational release is invoked.",
         flush=True,
     )
-    uvicorn.run("classifire.main:app", host="127.0.0.1", port=args.port)
+    from classifire.main import app
+
+    if args.scripted_pdf_suggestions:
+        from draft_pdf_suggestion_demo_fixture import ScriptedSuggestionPort, pdf_bytes
+
+        fixture_path = task_dir / "synthetic-suggestion-report.pdf"
+        if fixture_path.exists() and (
+            fixture_path.is_symlink() or fixture_path.read_bytes() != pdf_bytes()
+        ):
+            parser.error("Refusing to overwrite an unrelated suggestion fixture")
+        fixture_path.write_bytes(pdf_bytes())
+        app.state.draft_pdf_suggestion_port = ScriptedSuggestionPort()
+        print(f"Scripted suggestion fixture (no real AI): {fixture_path}", flush=True)
+    uvicorn.run(app, host="127.0.0.1", port=args.port)
 
 
 if __name__ == "__main__":

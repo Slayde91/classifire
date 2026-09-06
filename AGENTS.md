@@ -20,11 +20,11 @@ Prioritize a working, testable UI prototype. Deliver one complete user interacti
 with the minimum supporting contract, persistence and validation in the same slice.
 Use GOAL.md and the verified project state to select the next visible increment;
 do not rebuild the completed manual Draft Scope workbench or merged PDF graph review.
-The active Scope slice is bounded Excel defect-register mapping through the same
-services. Finish its supported-path evidence before moving to optional bounded PDF
-text/image suggestions, starting with synthetic proposals and a manual fallback.
-Inspect current completion evidence before resuming; corpus/pricing remains a separate
-required track with its retained dependencies.
+PDF and Excel source review are merged (PRs #209/#210). The current slice adds
+optional source-bound PDF text/image suggestions, retained separately until human
+review and explicit save. Finish its measured supported-path validation/publication
+before moving to the bounded A/B source-profile UI in the retained corpus/pricing track.
+Inspect current evidence before resuming; never rebuild completed prototype workflows.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
 production AI, OpenClaw replacement or every edge case a prerequisite to that demo.
@@ -90,13 +90,14 @@ identifiers without checking migrations, stored data, APIs, scripts and lineage.
 ## Source-linked Draft graph review
 
 Use [the PDF contract](./docs/DRAFT_PDF_EVIDENCE_V1_CONTRACT.md) and
-[the Excel contract](./docs/DRAFT_SCOPE_XLSX_V1_CONTRACT.md) for Scope v3-v5.
+[the Excel contract](./docs/DRAFT_SCOPE_XLSX_V1_CONTRACT.md) and [the optional suggestion contract](./docs/DRAFT_PDF_SUGGESTIONS_V1_CONTRACT.md)
+for Scope v3-v6.
 Keep page, entity and worksheet claims in the same versioned `evidence_refs` union;
 only trusted review creates local source bindings. Excel source purpose/permissions
 remain separate from pricing. Preview without writes, then recheck exact inputs,
 source/scan/page or cells/images, current rights and revision at confirmation.
 Manual edits retain old hashes; deleted entity references stay historical/stale;
-imports stay unverified. Preserve v1-v4 readers, v5 on later PDF/manual saves, and
+imports stay unverified. Preserve v1-v5 readers, v6 suggestion provenance on later PDF/XLSX/manual saves, and
 exact report/package history. Picture anchors show placement, not semantic ownership;
 associate pictures explicitly and never infer quantity from row/defect count.
 Optional AI reuses compatible inference protections through a small Draft-specific
@@ -107,8 +108,8 @@ parallel physical model or automatic approval. Keep the manual path usable.
 
 For this capability read [the integrated design](./docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
 and roadmap T1-T14 before editing. The first slice within this separate track remains
-the bounded visible A/B source-profile interaction. The completed PDF and active Excel
-Scope interactions have immediate prototype priority. Preserve T-stage requirements
+the bounded visible A/B source-profile interaction. The PDF/Excel reviews are delivered; finish the optional suggestion interaction
+before the bounded A/B source-profile milestone. Preserve T-stage requirements
 and dependencies; do not treat the complete target schema or estimation model as one implementation task.
 
 - Preserve separate dataset identities: A `pricelist.xlsx` is general products,

@@ -2,158 +2,123 @@
 
 ## Evidence-based snapshot
 
-Verified 2026-09-06 from the isolated source, Git, tests and synthetic runtime.
-Shared baseline is `96680f4ce1b26da5da599bd5cb7894af8d3b28de`: PR #209 merged
-PDF-to-Draft graph review. Required feature CI passed 1,564 tests plus static checks;
-main run 34027941914 is confirmed successful. Earlier PDF browser/restart proof and
-264 local regressions remain baseline evidence, not this Excel increment's results.
+Verified 2026-09-06 from isolated source, Git, synthetic tests and runtime. Shared
+baseline is `d2640defd00c23892691da79990a510bee59b2a0`, merged Excel PR #210.
+Its exact-head PR CI passed 1,672 tests; post-merge main run 34033021353 succeeded.
+Current branch is `feat/draft-pdf-suggestions-20260906`. This document is a source
+checkpoint before this increment's own publication; verify current PR/CI before reuse.
 
-Current branch: `feat/defect-xlsx-mapping-20260906` in
-`C:\CLASSIFIRE\.tmp\defect-xlsx-mapping-20260906`. It extends the same Draft workflow
-with bounded Excel defect-report mapping. This checkpoint describes source and
-measured validation; inspect current head/upstream, PR/CI and merge evidence before
-calling it shared-main capability. No deployment or production release is claimed.
+ADRs 0001/0002 remain accepted: one modular deterministic core, independent Scope,
+System Match, Estimate and Reporting capabilities, portable revisions and optional
+bounded AI. OpenClaw remains; this Draft adapter does not establish retirement parity.
 
-ADRs 0001/0002 remain accepted: four independent capabilities, deterministic modular
-services, optional bounded AI and portable explicit revisions. Database and retained
-storage govern live state. OpenClaw retirement still needs proven replacement
-protections. A Draft save does not satisfy canonical Phase 8-14 exit gates.
-
-| Capability | Implemented bounded behavior | Remaining product gap |
+| Capability | Implemented and usable within the declared Draft scope | Remaining breadth |
 | --- | --- | --- |
-| Scope | Manual editor/import and client commands; merged PDF page-to-graph review; active Excel upload, typed-cell mapping, explicit row/image-to-item review | Optional OCR/AI proposals, broader source formats, field-level interpretation and complete physical scope |
-| System matching | Saved candidates/notes, partial thickness/gap/service-size review and client commands | Full authorized applicability, corpus extraction, stable technical identity and multi-source field claims |
-| Estimating | Manual/history, retained pricing workbook row selection and separately confirmed client proposals | Dedicated A/B source pipelines, reviewed mappings/recipes, coverage and calibrated estimates |
-| Reporting | Four independent saved PDF/XLSX profiles; active v5 renderers display mixed PDF and workbook claims | Production acceptance, refinement and governed close-out/release |
-| Portability | Selected ZIP export, editable new-project import and retained-origin re-export; shared inventory accepts v5 claims | Complete source/history coverage, source-body export, existing-project merge and production retention |
-| ChatGPT-facing boundary | Optional MCP identity mapping and independent client proposals/reads | Real account linking, HTTPS deployment, in-chat files and operations; PDF/Excel graph UI commands do not yet have client parity |
+| Scope | Manual graph, retained PDF page/entity review, Excel row/cell/image mapping; current optional one-page suggestion review | Live AI accuracy, bulk/cross-page reconciliation, broader formats, richer service-instance/plane models |
+| System Match | Saved candidates/notes, partial thickness/gap/service-size checks and client commands | Full authorized applicability, corpus extraction and multi-source field claims |
+| Estimate | Manual/history, retained pricing-row application and separately confirmed client proposals | Explicit A/B profiles, reviewed mappings/recipes and calibrated estimates |
+| Reporting | Four independent PDF/XLSX profiles over saved snapshots; v6 retains original suggestion claims | Production acceptance and governed close-out/release |
+| Packages | Selected ZIP export, new-project import and retained-origin re-export; v6 refs carried intact | Source-body/history breadth, existing-project merge and production retention |
+| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals | Real linking/HTTPS operations; report intake and suggestion UI commands lack client parity |
 
-## Active Excel workflow
+## Current optional PDF suggestion interaction
 
-Users choose **Excel defect report** in a saved Draft, or the Excel upload choice
-when creating one. The existing retained-source boundary stores and scans the XLSX
-before the isolated parser reads supported visible sheets. Users choose a worksheet,
-header, columns, up to 25 rows, and which kinds of item to draft from each row.
-Pagination makes later rows reachable without silently dropping them.
+The source page offers a separately confirmed request for its text and rendered PNG.
+A configured OpenAI adapter exists but is disabled by default. The isolated demo uses
+an explicitly labelled scripted port that refuses any other page text/image. No live
+provider call, customer evidence, measured AI accuracy or production readiness is claimed.
 
-The same graph editor accepts the proposed defects, openings and services. Matching
-labels never create relationships automatically. A person can join two services to
-one opening, keep a separate blank opening, add/remove items and choose any selected
-row as a source for an item. Selected embedded PNG/JPEG occurrences are linked only
-by explicit choice; workbook placement is context, not proof of a physical relationship.
-The mapper retains raw typed cell values and does not evaluate formulas or reproduce
-Excel's visual number formatting. Missing, invalid or ambiguous values stay unknown
-with visible reasons. Zero stays distinct from an unknown quantity.
+The provider cannot access the saved graph, tools, pricebook or canonical records.
+Strict bounded output supplies local keys, proposed defects/openings/services and
+observations, text quotes and image/text bases. CLASSIFIRE assigns Draft IDs and uses
+the existing graph editor. Proposed dimensions/quantities stay unknown; the user
+supplies corrections and verifies shared-opening relationships. Visible circles,
+defects or proposed records never imply billable quantity one.
 
-Preview makes no writes. Separate signed, same-session confirmation rechecks actor,
-Draft ownership, current revision, exact graph, mapping, selected rows/images and
-source/document/scan hashes. One atomic shared save appends Scope v5; no canonical
-Opening/Service/Estimate, lock, technical approval or AI/provider call is involved.
-The existing artifact budget remains 288 KiB; large selections must use smaller batches.
+Generation retains a separate proposal and audit event, without saving Scope. Users
+inspect originals, edit/delete suggestions, explicitly select every retained proposed
+item for page review, preview without writes, then separately confirm one atomic
+Scope revision. Rejecting a batch preserves its original bytes and saves no Scope.
+Current rights, source/scan/byte identities and revision are rechecked, including after
+rendering and inference. Stale, foreign, quarantined, corrupted or replayed inputs fail.
 
-Scope v5 adds exact workbook row/cell/image claims to the existing evidence_refs
-union. It retains prior PDF observation/entity claims. Manual edits expose stale
-whole-item review hashes; deletion retains historical entity claims; re-review only
-replaces matching claims in a new revision. Imports mark every claim unverified and
-grant no local source access. Packages inventory the claims; original workbook/image
-bytes remain external rather than being silently bundled. Earlier revisions and
-report/package bytes remain exact. The new renderer versions apply only to v5.
-
-Migration `0038_draft_scope_xlsx_sources` adds the Draft-owned source binding while
-reusing StoredFile retention, scanner containment and shared intake. It does not
-change canonical physical tables or the pricing-source contract. Downgrade refuses
-to destroy retained source history. Manual SQLite Draft behavior remains supported;
-retained evidence requires the existing PostgreSQL/storage/scanner setup.
+Scope v6 adds strict nested suggestion provenance in the existing evidence_refs union.
+Original proposed values remain separate from final whole-item hashes and human review.
+Manual edits/deletion/re-review/import preserve history; imported claims remain unverified.
+Existing v1-v5 formats and bytes are preserved. V6 alone selects report versions
+7/8/8/9. The existing package inventory retains refs without silently bundling source
+or raw provider response bodies. Migration 0039 adds only DraftPdfSuggestion retention;
+its downgrade refuses data destruction. See the [contract](./DRAFT_PDF_SUGGESTIONS_V1_CONTRACT.md).
 
 ## Verification checkpoint
 
-- Parser: **49 passed**, including actual pricing, Scope metadata and image CLI modes.
-- Migration/lineage/packaging: **30 passed**, including prior artifact-byte preservation,
-  constraints and refused downgrade; one existing Alembic deprecation warning.
-- UI/template checks: **19 passed**, including the existing PDF preview templates;
-  both JavaScript syntax checks and the new router's Ruff/Mypy/Bandit checks passed.
-- Mixed workbook/PDF output regression: **20 passed** across all four report profiles
-  and older renderer/schema paths. Pure artifact-budget regression: **3 passed**,
-  including exact-limit re-review and refusal before confirmation.
-- Full Ruff and Bandit passed; Mypy passed on **199 source files**, using the existing
-  isolated reportlab/yaml stubs. Alembic reports exactly one head, 0038.
-- Real Chrome passed **11 checkpoints**, with no page errors. After loading final code,
-  a fresh review saved r5. A second actual process restart/fresh login preserved r2/r5
-  JSON, both PNG occurrences, all three real PDF/XLSX report pairs and ZIP hashes.
-  Scope+System is covered by pure output tests; the guarded PostgreSQL demo has no
-  technical release and its SQLite-only synthetic seed guard was preserved.
-- All real workbook cells were checked for formulas/hyperlinks; source formula text
-  stayed literal. All three report covers, representative Scope/Estimate/Complete
-  reference pages and two worksheet ranges were inspected with no clipping/overlap. The separate worksheet rendering
-  utility returned an unexplained nonzero exit after producing both inspectable PNGs;
-  source workbook hashes remained unchanged. This is an inspection-tool limitation,
-  not a claimed clean renderer command. The app's own output generation succeeded.
-- Read-only demo counts: canonical Estimate, EstimateLine, Defect, Opening, Service,
-  EvidenceSource, ServiceOpeningLink and PhysicalModelLock were all zero. The served
-  logo SHA-256 equals the supplied PNG: fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a.
-- All **30 new PostgreSQL service/HTTP cases passed** across the focused runs. Two
-  new test expectations needed correction: scope the injected audit failure to saving,
-  and count the two legitimate download audits alongside the one save. Rollback,
-  no-write and exact audit-event assertions remain intact; application behavior was
-  not changed for either correction. The final remaining-workflow/legacy Scope/import/
-  PDF UI group passed **110 tests** in 310.35 seconds. Combined independent focused
-  groups total **254 passed**, no skips and one existing Alembic deprecation warning.
-  Independent code/document reviews found no blockers. Required PR CI and verified
-  merge remain publication checks; this document does not claim its own future merge.
+- Integrated service/boundary/HTTP and existing PDF review: 61 distinct cases passed.
+  The first run passed 58 with three test-only failures: read-only pages correctly
+  retained the global logout form. Assertions now allow exactly that form and no
+  edit/save form; all five HTTP tests passed on rerun. No application behavior was
+  changed to satisfy those assertions.
+- Contract/transport: 72 pure tests passed, including mocked real HTTP protocol,
+  refusal/tool output, exact quotes, byte limits and raw-chunk timeout checks.
+- V6 provenance/report/package/budget compatibility: 59 passed.
+- Migration/lineage/packaging: 30 passed; one existing Alembic deprecation warning.
+- Suggestion/manual PDF/Excel form regression: 36 passed; JavaScript syntax passed.
+- Full Ruff and Bandit passed. Full Mypy passed on 204 source files using existing
+  isolated reportlab/yaml stub packages. Alembic reports exactly one head, 0039.
+- Actual Chrome: upload, real ClamAV scan, rendered source, explicitly scripted
+  suggestions, edit/preview/edit-back/confirm, reject, history and downloads passed.
+  No browser errors. Saved r2 contains one defect, one shared opening, two services,
+  one unresolved observation and five source/suggestion refs. Quantities remain null.
+- Scope-only, Estimate-only and Complete PDF/XLSX plus ZIP were generated/downloaded.
+  Output inspection verified literal cells, no formulas/hyperlinks and exact nested
+  Scope JSON. Scope+System is covered by pure tests; the PG demo has no technical release.
+  Representative UI/PDF views and native read-only Excel range inspection passed.
+  The separate artifact-tool renderer failed to load skia.node; no dependency changed.
+  A real process restart/fresh Chrome login preserved all Scope/PNG/report/ZIP hashes
+  and applied/rejected history. Read-only demo counts: two Scope revisions, two
+  suggestions (one applied/one rejected); all eight canonical model/lock counts zero.
+- The UI serves the supplied logo, SHA-256
+  `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
 
-The live synthetic demo is `http://127.0.0.1:8817/scopes`; read
-[DRAFT_SCOPE_XLSX_DEMO.md](./DRAFT_SCOPE_XLSX_DEMO.md). Receipts and exact local outputs
-are in `.tmp/defect-xlsx-review-artifacts-20260906`. Verify availability/scanner freshness
-before use. Existing PDF 8816 and pricing 8815 demos remain preserved.
+Synthetic demo: `http://127.0.0.1:8818/scopes`; data under
+`.tmp/draft-pdf-suggestions-demo-20260906`, database `classifire_draft_suggestions_demo`.
+Receipts/downloads are under `.tmp/draft-pdf-suggestions-review-artifacts-20260906`.
+Verify its marker, process and scanner before use. Existing 8817 Excel, 8816 PDF,
+8815 pricing and earlier demos remain preserved.
 
-## Known gaps and active work
+## Known gaps and project health
 
-This is human-selected mapping and review, not automatic image/text interpretation.
-It does not infer service count, scale, hidden substrates, FRL, technical compatibility
-or repair quantities from a photograph. The supported workbook subset is deliberately
-bounded: 10 visible sheets, 1,000 rows including headers, 50 columns, 20,000 grid cells,
-50 supported picture occurrences and a 10 MiB source limit. Unsupported layout,
-active content, external links, hidden/merged content and oversized inputs are refused;
-see [the contract](./DRAFT_SCOPE_XLSX_V1_CONTRACT.md) for precise restrictions.
-Real report layouts and authorized user acceptance have not been verified.
+The supported prototype is progressing with measured manual/assisted review and
+historical-output coverage. Reviewed publication remains the gate for
+this increment. The full production goal is incomplete. A successful scripted fixture
+proves interaction and provenance, not that a model correctly interprets real reports.
 
-The separate [corpus/dual-pricing design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
-and T1-T14 roadmap remain required. A/B source identity, price basis, reviewed mappings
-and immutable component/activity recipes precede costing. Technical release v3 does
-not freeze the complete recipe. Legacy Package 14 defaults do not become trusted A/B
-intake. The original named workbooks were absent from the prior scoped inspection;
-real semantics and prediction accuracy remain unverified.
+A single rendered page can miss fine detail, opposite faces, hidden materials and
+cross-page relationships. Broader OCR, image calibration, real model latency/cost,
+provider-policy approval, production job/cancellation and evidence-format breadth
+remain unverified. The transport's per-I/O timeouts and sampled elapsed budget are
+not a hard whole-call deadline. No general OpenClaw replacement is claimed.
 
-Broader gaps include multi-report deduplication, service-instance/plane modelling,
-field-level provenance, source-inclusive exchange, full tenancy and production
-operations. Optional AI and OpenClaw migration retain their own proof and authority
-requirements. No current test count proves the full production goal complete.
+The approved corpus/dual-pricing track still needs explicit A/B source identity,
+commercial basis, reviewed mappings and immutable component/activity recipes before
+costing. Legacy Package 14 defaults do not establish either dataset. Real workbook
+semantics and price-prediction accuracy remain unverified. Full tenancy, operational
+readiness, canonical Phase 8-14 acceptance and human release gates remain separate.
 
-## Project health and local changes
-
-PDF report review is merged and demonstrated. The Excel extension has meaningful
-parser/migration/UI/browser/restart and automated regression evidence; publication
-is the remaining gate for this bounded increment. The full goal is
-incomplete. Only this isolated implementation branch is in scope for publication.
-
-The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
-46 unstaged tracked modifications, 14 staged additions and four DU conflicts at the
-verified task start. Untracked/ignored recovery material was not fully enumerated.
-Preserve it, unrelated worktrees/demos/scanners/receipts and the supplied logo. New
-runtime fixtures, screenshots and demo data under `.tmp` are synthetic local evidence,
-not files to commit. No unrelated root changes have been adopted into this branch.
+The preserved recovery root was reverified at `de0cc5a`, branch
+`gpt/phase8-linked-original-images`: 46 unstaged tracked modifications, 14 staged
+additions and four DU conflicts. Untracked/ignored recovery material is not fully
+inventoried. This increment uses an isolated branch; no unrelated root changes were
+adopted. Demo/runtime artifacts stay local under .tmp and are not source to commit.
 
 ## Recommended Next Actions
 
-1. After verifying this tested Excel increment's required CI and merge, add one
-   **optional source-bound PDF text/image
-   suggestion interaction** feeding the same editor and human review boundary. Reuse
-   compatible inference protections in a small Draft-specific adapter; begin with synthetic evidence
-   and a controlled adapter. Preserve unknowns and require explicit review/save.
-   Existing Phase8 runners require canonical estimate/defect manifests and cannot
-   consume Draft identities directly; never spoof them or weaken validators. Real
-   provider/customer workflows need their own authorization and evidence.
-2. Deliver A/B profiles, reviewed technical mappings and pricing coverage according
-   to T1-T14 dependencies; establish recipes and benchmarks before model/cost tuning.
+1. Finish this tested suggestion increment's required CI and reviewed publication.
+   Once its merge/checks are verified, implement the **bounded A/B source-profile UI**:
+   declare A/B, inspect supported worksheet/header/mapping and price-basis gaps, preview,
+   explicitly save and reopen an unapproved version using existing pricing intake.
+   This is the next distinct user interaction; do not rebuild PDF/Excel review or add
+   bulk AI, inferred prices or library activation as prerequisites.
+2. Follow T1-T14: reviewed technical/commercial mappings, recipes and lineage-aware
+   holdouts precede costing/calibration. Real sources/providers require authorization.
 
-[SESSION_HANDOFF.md](./SESSION_HANDOFF.md) records the next-session entry point.
+[SESSION_HANDOFF.md](./SESSION_HANDOFF.md) records the self-contained next task.

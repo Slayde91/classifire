@@ -136,7 +136,7 @@ def test_scope_xlsx_upgrade_preserves_native_history_and_enforces_source_binding
     verify_current(engine, ids, expected)
     with Session(engine) as db:
         actor = db.get(User, uid(100))
-        assert assess_deployment_lineage(db).code == "CLEAN_STACK_HEAD_CONFIRMED"
+        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
         for revision, content in scope_history.items():
             assert scopes.revision_bytes(db, actor, ids["draft"], revision) == content
         for fmt, content in scope_outputs.items():
@@ -220,9 +220,11 @@ def test_scope_xlsx_upgrade_preserves_native_history_and_enforces_source_binding
             == retained
         )
         assert connection.execute(text("PRAGMA foreign_key_check")).fetchall() == []
+    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
     verify_current(engine, ids, expected)
     with Session(engine) as db:
         actor = db.get(User, uid(100))
+        assert assess_deployment_lineage(db).code == "CLEAN_STACK_HEAD_CONFIRMED"
         assert (
             packages.package_bytes(db, actor, ids["draft"], ids["draft_project_packages"])
             == expected["package"]
