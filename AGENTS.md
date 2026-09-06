@@ -20,9 +20,9 @@ Prioritize a working, testable UI prototype. Deliver one complete user interacti
 with the minimum supporting contract, persistence and validation in the same slice.
 Use GOAL.md and the verified project state to select the next visible increment;
   do not rebuild the completed manual Draft Scope or PDF/Excel/suggestion review paths.
-  A/B source identity and unapproved profile history are merged. The current candidate
-  adds the smallest immutable human profile-review interaction. Finish its measured
-  publication, then seal the T13 lineage/holdout manifest before reviewed row mapping.
+  A/B source identity, profile history and the smallest immutable human profile-review
+  interaction are merged through PR #214. Seal the T13 lineage/holdout manifest before
+  reviewed row mapping.
 Inspect current evidence before resuming; never rebuild completed prototype workflows.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
@@ -107,8 +107,8 @@ parallel physical model or automatic approval. Keep the manual path usable.
 
 For this capability read [the integrated design](./docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
 and roadmap T1-T14 before editing. The bounded visible A/B source-profile interaction
-is merged, and the active candidate adds an immutable early-T12 human profile decision.
-After verified publication, seal the T13 lineage/holdout manifest; then add one reviewed
+is merged, including the immutable early-T12 human profile decision in PR #214.
+Seal the T13 lineage/holdout manifest; then add one reviewed
 A observation or B-system mapping path. Preserve T-stage dependencies and do not treat the complete target schema,
 bulk corpus or estimation model as one implementation task.
 
