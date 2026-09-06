@@ -160,7 +160,7 @@ calibration or accuracy claim.
   passed and Alembic reports the single head `0042_draft_pricing_row_observations`.
   Required PR run 34058657496 passed all test, Ruff, Mypy, Bandit and one-head Alembic
   steps before merge. Visual browser inspection and a separate-process restart remain
-  to be verified. Post-merge main run 34059650587 was in progress at this reconciliation.
+  to be verified. Post-merge main run 34059650587 passed the same repository gates.
 
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,

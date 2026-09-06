@@ -5,8 +5,8 @@
 Verified 2026-09-07 from shared main
 5b517c232d8ac7a455176fcd67055771a8df73c9, the merge commit for PR #218.
 Exact PR head 02451aaaaf99c8667846ca36650fdd8d0af52b91 passed required run
-34058657496 before merge. Post-merge main run 34059650587 was in progress at this
-reconciliation and must be checked before claiming that separate run passed.
+34058657496 before merge. Post-merge main run 34059650587 also passed the full test,
+Ruff, Mypy, Bandit and one-head Alembic gates.
 
 ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic
 application with independently callable Scope, System Match, Estimate and
