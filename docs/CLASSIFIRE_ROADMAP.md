@@ -3,7 +3,7 @@
 **Status:** Active; prototype-first delivery approved 2026-09-05. PDF/Excel review,
 bounded PDF suggestions, A/B source profiles and exact-profile review are merged;
 PR #218 adds the first governed Dataset A row observation.
-**Verified shared-main baseline:** `4ea7028e9d256b2b53ae783e16bf75c812c59d57`.
+**Verified shared-main baseline:** `5b517c232d8ac7a455176fcd67055771a8df73c9`.
 PR #216 merged the early-T13 lineage/leakage contract after PR #214's profile review;
 required run 34054381404 passed 1,859 tests and all repository quality gates.
 [PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;

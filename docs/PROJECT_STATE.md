@@ -3,12 +3,10 @@
 ## Evidence-based current snapshot
 
 Verified 2026-09-07 on shared main
-`4ea7028e9d256b2b53ae783e16bf75c812c59d57`, merge commit for documentation PR #217.
-The exact PR head `c70a3add36b35792dd17c8de2ed8ebe80caf7776` passed required run
-34054381404 in 17m58s, including 1,859 tests, full Ruff, Mypy on 207 source
-files, Bandit and one Alembic head.
-PR #218 adds the first reviewed Dataset A row-observation UI on feature commit
-`b8dbcce`; its required CI and merge must be verified before treating it as shared main.
+`5b517c232d8ac7a455176fcd67055771a8df73c9`, merge commit for PR #218.
+Exact PR head `02451aaaaf99c8667846ca36650fdd8d0af52b91` passed required run
+34058657496, including the full test, Ruff, Mypy, Bandit and one-head Alembic
+checks. The first reviewed Dataset A row-observation UI is therefore on shared main.
 
 ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic application
 with independently callable Scope, System Match, Estimate and Reporting capabilities,
@@ -160,8 +158,9 @@ calibration or accuracy claim.
   tests passed; all 62 changed/new migration consumers passed. Repository-wide Ruff and
   Bandit passed, targeted Mypy passed on five changed source files, `git diff --check`
   passed and Alembic reports the single head `0042_draft_pricing_row_observations`.
-  Required PR CI, visual browser inspection and real-process restart remain to be
-  verified.
+  Required PR run 34058657496 passed all test, Ruff, Mypy, Bandit and one-head Alembic
+  steps before merge. Visual browser inspection and a separate-process restart remain
+  to be verified. Post-merge main run 34059650587 was in progress at this reconciliation.
 
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,
@@ -198,8 +197,8 @@ ChatGPT linking, OpenClaw retirement, deployment and Human Release remain incomp
 The product has a growing, testable standalone Draft workflow with shared services,
 exact evidence, explicit uncertainty and narrow user-visible increments. PR #218 reuses
 the existing pricing UI and canonical JSON/hash approach without creating another
-importer, rules engine, agent fleet, database or prediction path. Its local checks are
-green; required PR CI and merge remain the publication gate.
+importer, rules engine, agent fleet, database or prediction path. Its local and required
+PR checks passed, and it is merged on shared main.
 
 The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
 46 unstaged tracked modifications, 14 staged additions and four DU conflicts. Its
@@ -208,12 +207,11 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Finish PR #218: verify required CI, merge it, verify the merge commit and main run,
-   then perform the real-process browser/restart/exact-download check if browser control
-   is available.
-2. Deliver one reviewed B-system/configuration mapping using an approved exact profile
+1. Deliver one reviewed B-system/configuration mapping using an approved exact profile
    and technical identity, retaining unmatched/ambiguous outcomes. Only then persist a
    real T13 split roster from reviewed B identities.
+2. Perform the Dataset A real-process browser/restart/exact-download check when browser
+   control is available; keep TestClient proof classified separately.
 3. Define scoped Draft reviewer assignments before production multi-user pricing review;
    do not broaden global project visibility to make `pricing_manager` access work.
 

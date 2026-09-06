@@ -3,12 +3,10 @@
 ## Verified branch and project context
 
 Verified 2026-09-07 from shared main
-4ea7028e9d256b2b53ae783e16bf75c812c59d57, the merge commit for documentation PR #217.
-
-PR #218 is open from feat/draft-pricing-row-review-20260907. Feature commit
-b8dbcce adds the first governed Dataset A row-observation workflow. This handoff
-update is part of the same PR. Verify its final head, required CI, merge state and
-post-merge main run rather than assuming publication.
+5b517c232d8ac7a455176fcd67055771a8df73c9, the merge commit for PR #218.
+Exact PR head 02451aaaaf99c8667846ca36650fdd8d0af52b91 passed required run
+34058657496 before merge. Post-merge main run 34059650587 was in progress at this
+reconciliation and must be checked before claiming that separate run passed.
 
 ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic
 application with independently callable Scope, System Match, Estimate and
@@ -75,7 +73,7 @@ honest T13 train/validation/holdout roster or compare system prices without
 alias, configuration or version leakage.
 
 **Prerequisites and dependencies:** inspect current Git/worktrees, origin/main,
-PR #218, required CI and these documents before editing. Use a clean current-main
+the latest required CI and these documents before editing. Use a clean current-main
 worktree. Reuse DraftPricingSource/Profile/Decision, the Dataset A row-observation
 hash/audit/download pattern, TechnicalVariant and technical release governance,
 and the early-T13 contract. Require a current approved firefly_system_prices
@@ -132,8 +130,8 @@ lacks owned Draft reads. Do not broaden global visibility as a shortcut.
 
 > Continue CLASSIFIRE from verified repository state. First inspect AGENTS.md,
 > GOAL.md, docs/PROJECT_STATE.md, architecture, roadmap, handoff, current
-> Git/worktrees and GitHub main/PR/CI; confirm PR #218 and its merge before
-> editing. Preserve the conflicted C:\CLASSIFIRE root and unrelated changes;
+> Git/worktrees and GitHub main/PR/CI before editing. Preserve the conflicted
+> C:\CLASSIFIRE root and unrelated changes;
 > use a clean current-main worktree. Implement the single highest-value next
 > task: a working UI to review one exact approved Dataset B row and save,
 > reopen and download an immutable Firefly system/configuration observation
