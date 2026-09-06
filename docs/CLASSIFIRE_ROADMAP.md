@@ -1,10 +1,10 @@
 # CLASSIFIRE Master Roadmap
 
 **Status:** Active; prototype-first delivery approved 2026-09-05.
-**Verified shared-main baseline:** `06442b15e164a1c91dd350944666f510ac22ed62` (PR #199).
-All four Draft report profiles are merged; exact-head/main CI succeeded.
-The current selected package download extends the usable UI; validation/publication
-is tracked in PROJECT_STATE.md. No full production phase is completed by these Draft slices.
+**Verified shared-main baseline:** `541c107b9b3552e572d9933b86140b4d6f750120` (PR #200).
+All four Draft report profiles and selected package download are merged; exact-head
+CI 33998891633 and main CI 33999342298 succeeded. Safe new-project import is next.
+No full production phase is completed by these Draft slices.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
@@ -83,16 +83,16 @@ prototype into it.
 | **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; full governed pricing still upcoming** | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Selected Draft package download active local increment; safe import next; client parity follows | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P5. Project portability and shared ChatGPT access** | Selected Draft package download merged PR #200; safe import next; client parity follows | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
 **Current delivery order:** P0, P1a, P4a, P2a, P3a, all three additional P4b
 profiles, first PDF P1b, partial measured P2b and first XLSX P3b are merged. The
 current P5 increment has a real configuration/save/download/reconfiguration/restart
-journey. Finish its checks/publication; do not rebuild earlier slices.
+journey and is merged in PR #200. Do not rebuild earlier slices.
 
-**Active: selected Draft ProjectPackage download.** One coherent Scope workspace,
+**Completed bounded increment: selected Draft ProjectPackage download (PR #200).** One coherent Scope workspace,
 optional review/Estimate and chosen retained report pairs can be previewed without
 writes, explicitly saved as an immutable package revision and downloaded. Source
 bodies stay external/withheld, permissions follow included content, and historical
@@ -158,7 +158,7 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Finish selected package download validation/publication if outstanding. Then deliver
+Selected package download is merged in PR #200. Next deliver
 safe new-project package import with exact membership/provenance and explicit local
 identity/authority rules. SESSION_HANDOFF.md gives prerequisites, files and tests.
 No provider/customer data, canonical write, lock or release is required for the demo.

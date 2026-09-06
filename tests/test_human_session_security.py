@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import re
 from collections.abc import Iterator
 from pathlib import Path
@@ -212,7 +213,7 @@ def test_browser_ui_uses_classifire_branding_and_serves_current_logo() -> None:
 
     with TestClient(app) as client:
         login_page = client.get("/login")
-        logo = client.get("/brand/classifire-logo-master.png")
+        logo = client.get("/brand/classifire-logo.png")
 
     assert login_page.status_code == 200
     assert "CLASSIFIRE" in login_page.text
@@ -220,3 +221,10 @@ def test_browser_ui_uses_classifire_branding_and_serves_current_logo() -> None:
     assert logo.status_code == 200
     assert logo.headers["content-type"] == "image/png"
     assert logo.content.startswith(b"\x89PNG\r\n\x1a\n")
+    assert '/brand/classifire-logo.png' in login_page.text
+    assert '/brand/classifire-logo.png' in (template_dir / "base.html").read_text(
+        encoding="utf-8"
+    )
+    assert hashlib.sha256(logo.content).hexdigest() == (
+        "fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a"
+    )

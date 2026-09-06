@@ -4,10 +4,9 @@
 
 **Architecture version:** 5.14 - selected Draft project package download.
 
-**Verified shared baseline:** `06442b15e164a1c91dd350944666f510ac22ed62`, merged
-PR #199. Exact-head CI 33996804767 passed 1,439 tests; main CI 33997262382 succeeded.
-Current branch: `feat/draft-project-package-20260906`. This is its prepublication
-checkpoint; live Git/PR/CI determine publication, not the document version.
+**Verified shared baseline:** `541c107b9b3552e572d9933b86140b4d6f750120`, merged
+PR #200. Exact-head CI 33998891633 and main CI 33999342298 succeeded, rechecked
+2026-09-06. Selected Draft package download is implemented; ZIP import remains planned.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -79,7 +78,7 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is the current increment; import/ChatGPT remain planned. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is merged in PR #200; import/ChatGPT remain planned. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
@@ -444,7 +443,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has 0030_draft_estimates; local P4b advances the packaged head to 0031_draft_estimate_reports |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has packaged head 0034_draft_project_packages; 0031 report, 0032 PDF source and 0033 pricing source migrations precede it |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -1343,7 +1342,7 @@ Technical/library/export rights remain enforced. The profile grants no approval,
 canonical write, lock or release. No migration or new dependency is required.
 See [the contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md).
 
-### Implemented current increment: selected Draft package (P5)
+### Merged selected Draft package (P5, PR #200)
 
 Current architecture -> change -> reason: users can now collect coherent selected
 Scope/review/Estimate revisions and existing reports in one portable ZIP. Shared

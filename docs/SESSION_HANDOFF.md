@@ -3,18 +3,20 @@
 ## Verified context
 
 2026-09-06 AEST. Current worktree:
-`C:\CLASSIFIRE\.tmp\draft-project-package-20260906`; branch
-`feat/draft-project-package-20260906`, based on shared main
-`06442b15e164a1c91dd350944666f510ac22ed62` (merged PR #199).
-PR #199 exact-head CI 33996804767 passed 1,439 tests; main CI 33997262382 succeeded.
-Current package work is a prepublication checkpoint; inspect live PR/CI before
-continuing or creating another branch. Do not rebuild already merged work.
+`C:\CLASSIFIRE\.tmp\draft-package-import-20260906`; branch
+`docs/prototype-state-logo-verification-20260906`, based on shared main
+`541c107b9b3552e572d9933b86140b4d6f750120` (merged PR #200).
+PR #200 exact-head CI 33998891633 and main CI 33999342298 succeeded, rechecked
+2026-09-06. This branch reconciles documentation and the logo regression test;
+inspect its live publication state before continuing. The retained import branch
+`feat/draft-package-import-20260906` has no import implementation yet.
+Do not rebuild already merged package download.
 
 ADRs 0001/0002 remain accepted: independent capabilities, shared deterministic core,
 optional AI and UI-first delivery. No OpenClaw retirement or production release.
 The full objective remains incomplete despite usable Draft reports and packages.
 
-Current changes: selected package service, UI/template, router/Scope link,
+Merged PR #200: selected package service, UI/template, router/Scope link,
 DraftProjectPackage model and migration 0034, readiness/head expectations,
 package/HTTP/migration tests, pricing-source permission coverage and aligned docs.
 No existing migration was rewritten. No dependency or canonical authority added.
@@ -33,7 +35,7 @@ current Draft package code implements a different, explicit selected-artifact co
 43 focused tests passed in 65.43 seconds; broader affected migration/report/package
 regression passed 98 tests with three warnings in 389.05 seconds.
 Mypy (179 files), Ruff, Bandit and one migration head (0034) passed. Extended
-PostgreSQL pricing/source permissions require hosted CI before merge. Initial wiring
+PostgreSQL pricing/source permissions passed hosted CI. Initial wiring
 failures are fixed; no current known blocker. Final results belong in the PR.
 
 Real Chrome configured and saved Scope-only, combined and reconfigured package
@@ -51,11 +53,16 @@ Receipts/downloads/screenshots: `.tmp/package-artifacts`; browser harnesses:
 `.tmp/scope-browser-test-tools/package-check.cjs` and `package-restart.cjs`.
 Never stage local-only demo data or receipts.
 
+Current reconciliation checks: all four human-session/branding tests passed (one
+existing Starlette deprecation warning), Ruff and diff checks passed. The synthetic
+UI login and image endpoint returned HTTP 200; its image hash equals the exact
+user-supplied PNG. The header and login both reference this asset.
+
 ## Start Here / Next Session
 
 Inspect AGENTS.md, GOAL.md, PROJECT_STATE.md, roadmap/architecture, ADRs, current Git
-status/diff/worktrees and origin/main/PR/CI. Finish selected package publication if
-outstanding. Then use a clean current-main worktree, preserving unrelated changes.
+status/diff/worktrees and origin/main/PR/CI. Package download is merged in PR #200.
+Use a clean current-main worktree, preserving unrelated changes.
 
 **Single next task: safe new-project Draft ProjectPackage import.** Why: users can
 now collect and download selected capabilities, but cannot reopen that ZIP as a new
@@ -112,8 +119,8 @@ broader capabilities and production readiness remain separate unfinished work.
 > docs/CLASSIFIRE_ARCHITECTURE.md, docs/SESSION_HANDOFF.md and accepted ADRs 0001/0002;
 > inspect Git status/diff/worktrees, origin/main, PRs and CI. Preserve the conflicted
 > C:\CLASSIFIRE root, unrelated changes and old package experiments; use an isolated
-> worktree. Finish package-download publication if outstanding; do not repeat merged
-> work. The single next task is safe new-project Draft ProjectPackage import: users
+> worktree. Package download is merged in PR #200; do not repeat it.
+> The single next task is safe new-project Draft ProjectPackage import: users
 > can download selected work but cannot reopen its ZIP and continue in a new project.
 > Inspect draft_project_packages, Scope import, review/Estimate contracts, reports,
 > models/migrations and package UI/tests. The ZIP inspector is structural only.
