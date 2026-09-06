@@ -62,7 +62,7 @@ pagination; measure retrieval recall and latency before adding a vector database
 search cluster. Optional semantic retrieval must be a candidate-finding aid, never
 an authority or hard-constraint bypass.
 
-The first visible slice is a bounded source-profile preview: explicitly select A
+Within this retained corpus/pricing track, the first visible slice is a bounded source-profile preview: explicitly select A
 or B, retain the source/version, inspect sheets/headers/counts and flag unknown units
 or price meaning. It publishes nothing. Add useful mapping/technical-review slices
 next. Batch orchestration and broader formats follow representative UI proof; a fully
@@ -621,7 +621,7 @@ prototype track; they do not renumber or waive Phase 8-14 gates.
 | T2 | Bulk technical document intake | T1 source subset and existing quarantine; durable batching after a bounded review interaction |
 | T3 | Technical extraction and normalization | T2 supported inputs, T1 technical contracts; begin one representative family |
 | T4 | Entity resolution and field provenance | T3 claims; exact/manual review before fuzzy automation and corpus scaling |
-| T5 | A workbook ingestion and normalization | T1 source/basis subset; thin UI profile starts immediately |
+| T5 | A workbook ingestion and normalization | T1 source/basis subset; thin UI profile is first within the corpus/pricing track |
 | T6 | A component/activity mapping | T4 reviewed technical identity/recipe and T5 observations; immutable recipe publication before costing |
 | T7 | B workbook ingestion and normalization | T1 source/basis subset; thin UI profile starts with T5 |
 | T8 | B system matching | T4 technical identities and T7 observations; exact/manual mappings before fuzzy suggestions |
@@ -632,7 +632,7 @@ prototype track; they do not renumber or waive Phase 8-14 gates.
 | T13 | Holdout validation and calibration | Split/provenance policy starts before modeling; compare T10/T11 on untouched known B targets |
 | T14 | Operations, monitoring and feedback | Useful UI and accepted relevant tests first; scale/monitor jobs, drift, source versions and correction outcomes |
 
-**Next single task:** implement a user-visible A/B source intake/profile preview
+**First task within this track:** implement a user-visible A/B source intake/profile preview
 using minimal source/version semantics and existing retained-source controls. This
 unblocks actual schema/basis discovery for both libraries without pretending that
 pricing inference or technical extraction already works. Synthetic fixtures are
@@ -640,8 +640,9 @@ sufficient to build it; real workbook acceptance waits for authorized inputs.
 
 Then demonstrate one reviewed technical/system mapping and coverage interaction,
 add evidenced recipes/independent pricing methods, validate them, and scale proven
-stages. Preserve the retained-PDF structured Draft workflow as reordered upcoming
-Scope work. Neither a complete corpus platform nor pricing-model tuning should block
+stages. The current product priority is the retained-PDF structured Draft workflow,
+then bounded Excel defect-report mapping and optional interpretation; see PROJECT_STATE.md.
+A/B remains the first slice within this separate corpus/pricing track. Neither a complete corpus platform nor pricing-model tuning should block
 users from trying bounded useful UI slices. Review and benchmark safeguards are
 cross-cutting prerequisites, not tasks postponed until after autonomous pricing.
 
@@ -659,7 +660,7 @@ cross-cutting prerequisites, not tasks postponed until after autonomous pricing.
 | Scope and recovery | System prices may include shared-opening work or commercial allowances absent from a component recipe. Distinct coverage and basis must be resolved before applying prices to Draft lines. |
 | Feedback contamination | Human approval is not actual cost truth; predicted prices and their descendants cannot become independent benchmark observations. Preserve lineage and original predictions. |
 | Operational effort and cost | OCR, LLM calls, storage and expert review cost are unmeasured. Capture pages/time/tokens/review minutes per accepted system; budget and benchmark before scaling or selecting a provider. |
-| Product sequencing | A source profile and review workflow is the immediate prototype priority; broad extraction, calibration and production hardening follow proven dependencies. OpenClaw retirement remains separately gated. |
+| Product sequencing | PDF graph review and Excel defect mapping now precede this track; A/B source profile is first within this track; broad extraction, calibration and production hardening follow proven dependencies. OpenClaw retirement remains separately gated. |
 
 Open decisions: accepted source schemas and quantity/cost/sell conventions; canonical
 system granularity and allowed alias resolution; recipe/productivity authority;

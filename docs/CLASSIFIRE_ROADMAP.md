@@ -1,12 +1,13 @@
 # CLASSIFIRE Master Roadmap
 
-**Status:** Active; prototype-first delivery approved 2026-09-05, with the
-technical-corpus and dual-pricing documentation amendment requested 2026-09-06.
-**Verified shared-main baseline:** `a22a02769d3b842d5d0129dbd09273759ae583c1`
-(PR #207), including workbook-pricing client commit `75f3a8e`. PR CI 34019881433
-passed 1,522 tests; main CI 34020498735 succeeded on the merge commit.
-The amendment below is planned delivery, not implementation or evidence of real
-workbook/corpus ingestion.
+**Status:** Active; prototype-first delivery approved 2026-09-05. The latest user
+instruction prioritizes a visible PDF source-linked Draft graph ahead of the retained
+technical-corpus/dual-pricing design approved in PR #208.
+**Verified shared-main baseline:** `080845e2681e292cabb6f201f373a696d1fc40c1`
+(PR #208), including the merged workbook-pricing client from PR #207.
+The active `feat/defect-report-review-20260906` branch implements the bounded PDF
+increment; [PROJECT_STATE.md](./PROJECT_STATE.md) records validation and publication.
+The corpus/pricing stages below remain planned, not evidence of real-source ingestion.
 Draft increments do not complete production Phase 8-14 or authorize OpenClaw retirement.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
@@ -15,11 +16,14 @@ plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.m
 
 **Build a working, testable UI prototype before broad fine tuning.** The persisted
 Draft Scope workspace and several independent workflows already exist. Extend
-them rather than restarting the prototype. The next visible increment is a bounded
-dual-source workbook intake/profile preview: distinguish general products/services
-from Firefly system prices and expose source structure and unresolved price meaning.
-Deliver the screen, minimum shared contract, safe retention and validation together;
-do not build the whole corpus schema or pricing engine before users can try it.
+them rather than restarting the prototype. The active visible increment lets a human
+inspect a retained PDF page, edit separate defects/openings/services, preview their
+page links and explicitly save a Draft graph revision. Complete its browser/restart,
+output and compatibility proof before calling the increment delivered. Next Scope work
+is bounded Excel defect-register mapping through these shared services, then optional
+AI proposals. The A/B workbook profile remains the first separate corpus/pricing slice.
+Deliver screens, minimum contracts, safe persistence and validation together; do not
+make corpus schema perfection or the full pricing engine a prototype prerequisite.
 
 The four capabilities remain independently callable: scope analysis, system
 matching, estimating and reporting. The full evidence-to-Human-Release chain
@@ -92,11 +96,11 @@ prototype into it.
 | --- | --- | --- |
 | **P0. Draft Scope workspace** | **Completed bounded prototype; merged PR #188** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
 | **P1a. Saved Scope import/replacement** | **Completed bounded increment; merged PR #189** | Upload saved Draft Scope JSON, validate/check its declared hash and version, preview identity/content/uncertainty and explicitly append a local revision. Preserve source lineage and prior revisions; reject stale saves and foreign authority. Demonstrate browser round trip and refusal cases. No ZIP or report extraction in this slice. |
-| **P1b. One evidence intake path** | **First PDF increment merged PR #194; structured entity review retained and reordered after the next intake preview** | Upload a bounded PDF, observe real scanning, inspect retained pages, explicitly save page-linked Draft observations, reopen after restart and download intact provenance. Preserve the planned page-to-Defect/Opening/Service workflow alongside the T3/T4 technical review slice; defect evidence and technical-library evidence remain distinct. Other formats, automatic interpretation and full Scope analysis remain upcoming; manual entry needs no AI. |
+| **P1b. One evidence intake path** | **PDF observations merged PR #194; source-linked graph review active, ahead of A/B profiles** | Inspect a retained/scanned page; edit separate Defects/Openings/Services, preview selected page links without writes and explicitly save one Scope v4 revision. Prove reopen/restart, both reference types, changed/deleted/imported claims, four report profiles and exact package round trip. Preserve old bytes and unknown facts. Next: bounded Excel defect-register mapping with cell/image provenance, then optional AI; no automatic physical/technical admission. |
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
 | **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
-| **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; T1/T5/T7 intake preview is next; full T5-T13 pricing remains planned** | Distinguish A general costs/services from B observed Firefly system prices, retain source revisions/cells and review identity, units, price basis and scope. Then add reviewed component/activity and system mappings, coverage, bottom-up/comparable proposals and evidence-calibrated combination. Preserve independent Estimate artifacts, originals, overrides and recovery checks; current workbook selection is not full estimating. |
+| **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; T1/T5/T7 is first within the retained A/B track; full T5-T13 pricing remains planned** | Distinguish A general costs/services from B observed Firefly system prices, retain source revisions/cells and review identity, units, price basis and scope. Then add reviewed component/activity and system mappings, coverage, bottom-up/comparable proposals and evidence-calibrated combination. Preserve independent Estimate artifacts, originals, overrides and recovery checks; current workbook selection is not full estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
 | **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
@@ -141,36 +145,48 @@ workbook discovery, bounded exact-row preview and human-confirmed application of
 already retained/scanned row to an existing Estimate line. It reuses
 `draft_pricing_intake.preview` / `apply_rate`, preserving source/cell/scan hashes,
 units, recovery notes and original/override history. Upload/scan stays in the existing
-UI. PR CI 34019881433 passed 1,522 tests; main CI status is recorded above. No
+UI. PR CI 34019881433 passed 1,522 tests. No
 full-client, general pricebook import, system-price mapping or production claim
 follows from these commands alone.
 
-**Next executable product task: bounded visible dual-source intake/profile preview.**
-The user chooses A (general products/services) or B (Firefly system prices), retains
-an explicitly supported XLSX through the existing security boundary, selects a sheet
-and header, and sees its hash, sheet dimensions/counts, proposed column meanings and
-unit/price-basis anomalies. Persist and reopen the profile as an unapproved source
-revision; do not publish canonical prices, match systems or calculate an estimate.
-Use the smallest SourceDataset/DatasetVersion extension to existing retained
-source/revision abstractions, with one shared service behind the UI. A filename is
-display metadata, never sufficient dataset identity or approval.
+**Active highest-priority increment: source-linked PDF Draft graph review.**
+The existing retained PDF page and shared graph editor now support explicit selection
+of reviewed Defects/Openings/Services. `preview_scope_page` makes no writes; a signed,
+15-minute actor/session/source binding precedes `save_scope_page`. Confirmation checks
+the exact graph, selected items, Scope revision, source/scan/document/page identity and
+current authority before appending one Draft revision. Scope v4 uses a union in the
+same `evidence_refs` array; v1-v3 remain readable and historical bytes remain exact.
+Edited entity facts become stale; deletion retains their historical page claims;
+re-review replaces only the new revision's matching claim. Imports remain unverified.
+This is human-authored Draft review, not AI/OCR or canonical physical-model admission.
 
-Dependencies: inspect existing Draft source/pricing contracts and current permissions;
-use synthetic A/B workbooks in an isolated PostgreSQL/storage environment until actual
-inputs and permitted handling are available. Current interactive limits remain explicit;
-unsupported sizes must be refused without silent truncation. Completion requires a
-browser retain/profile/reopen/restart journey, stable exact hashes and prior revisions,
-explicit unknown basis/mapping, and unsafe-input/foreign-owner/stale/quarantine refusal
-without canonical publication or changes to existing Estimate rates. Tests must cover
-both source types and preserve the existing workbook-selection/client/report workflow.
+Dependencies and exit: an isolated PostgreSQL/storage environment, genuine current
+ClamD signatures and synthetic retained PDF; no customer/provider workflow. Inspect the
+browser preview/edit/confirm/reopen/restart path and the available demo report pairs;
+cover all four PDF/XLSX profiles with focused fixtures. Test no-write preview, tampered/expired/foreign/stale confirmation, revoked rights, changed
+or quarantined sources, graph errors, imported claims and exact package inventory/
+round-trip history. PROJECT_STATE.md records actual results and publication; source
+presence alone does not complete P1b or the four-capability prototype.
 
-**Retained, reordered task:** source-linked structured Draft review from one already
-retained PDF page. Keep separate Defects, Openings and Services, explicit links and
-the smallest compatible entity/page provenance version; v3 binds observations only.
-Resume it with the following technical/mapping vertical slice where useful, preserving
-old Scope/report/package bytes and unknown facts. It is not superseded capability work.
-AI suggestions, real OAuth/account linking and deployment are separate increments;
-provider/account/environment authority is not inferred from this documentation change.
+**Next Scope increment after this PDF milestone:** a bounded Excel defect-register
+mapping UI that previews explicit worksheet/header/column mappings and maps reviewed
+rows to the existing Defect/Opening/Service graph. Reuse retained-source containment,
+shared Scope validation and conditional saves; preserve exact cells and any supported
+image/anchor provenance. Unknown links and unsupported image associations remain
+unresolved. Define the smallest compatible reference extension alongside this visible
+slice; do not claim that existing pricing XLSX parsing is defect-register ingestion.
+Optional AI suggestions come afterward through the same review boundary, with source
+binding and no automatic approval. OCR and broader formats remain upcoming.
+
+**Retained separate corpus/pricing task: bounded A/B intake/profile preview.**
+Users choose general source A or Firefly system-price source B, inspect supported
+sheets/headers, source hashes, units and price-basis gaps, then explicitly save/reopen
+an unapproved source profile. Use synthetic workbooks and minimal shared versioned
+contracts; filenames cannot establish identity or commercial basis. Preserve current
+limits, prior revisions and foreign/stale/quarantine refusal. No canonical library
+publication, system matching or Estimate repricing occurs. The latest user instruction
+changes overall delivery order; the T1-T14 requirements and dependency gates remain.
+Real OAuth/account linking, provider execution and deployment are separate increments.
 
 **First interactive prototype = P0. Four-capability prototype = demonstrated
 P0-P4 behavior**, including P1a/P1b, independent/manual entry and reporting from partial
@@ -199,40 +215,43 @@ means suppressing known errors, weakening tests or bypassing permissions.
 | Complete all four schemas before building screens | **Superseded.** Evolve compatible contracts alongside demonstrated use cases. |
 | OpenClaw completion/journal/transport foundations | **Completed bounded foundations** (PRs #183-#185); preserve them without making replacement work a P0 dependency. |
 | Remaining capture assurance, general jobs, replacement adapter and retirement | **Separate gated backlog.** Mandatory before applicable provider deployment/retirement, unnecessary for deterministic manual P0. |
-| Technical corpus and dual-pricing breadth | **Promoted, dependency-ordered work.** T1-T14 below replaces blanket deferral: visible intake first, reviewed identity/technical mapping next, bounded scale, then validated estimation. Extra formats and nonessential edge cases still follow measured need. |
-| Source-linked structured PDF Draft editor | **Retained and reordered.** Follow the next dual-source profile preview; reuse compatible provenance/review work without merging defect observations with technical authority. |
+| Technical corpus and dual-pricing breadth | **Retained separate track.** T1-T14 requirements remain: A/B profile first within this track, reviewed identity/technical mapping next, bounded scale, then validated estimation. PDF graph review now takes immediate priority. |
+| Source-linked structured PDF Draft editor | **Promoted and active by the latest user instruction.** Deliver and demonstrate the Scope v4 page-linked graph before the A/B profile. Defect evidence remains separate from technical-library authority. |
+| Excel defect-register mapping and optional AI | **Upcoming Scope increments.** Excel mapping follows the PDF demonstration through the same graph/services, preserving exact cell/image provenance; optional AI proposals follow that reviewed path. |
 | Existing domain guards, exact-byte reads, snapshot integrity, scoped review and CI | **Retained foundations.** Reuse them; avoid parallel business pipelines or regression. |
 | Legacy draft PRs #9-#13 / dirty root | **Recovery context.** Do not bulk-merge or overwrite. |
 
 ### Immediate next action
 
-Implement only the bounded dual-source intake/profile preview above: a thin T1 +
-T5 + T7 slice. [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) specifies its first task,
-files, prerequisites and validation. The current request updates documentation only;
-it does not execute that future implementation, import confidential workbooks or
-authorize canonical publication. User trials and visible defects guide subsequent
-mapping, technical coverage and scale. OpenClaw protection parity remains a separate
-gated track.
+Finish the active PDF graph milestone and its supported-path verification/publication;
+[PROJECT_STATE.md](./PROJECT_STATE.md) records the evidence and
+[SESSION_HANDOFF.md](./SESSION_HANDOFF.md) the exact next engineering task. After its
+exit evidence, continue with the bounded Excel defect-register mapping UI described
+above. Keep the A/B profile as the first task of the separate corpus/pricing track;
+its approved design is not cancelled. No customer-source, provider, canonical-write
+or deployment authority follows from this sequencing. OpenClaw protection parity
+remains a separate gated track.
 
 ### Technical-corpus and dual-pricing delivery stages
 
-**Status: proposed implementation; no T stage is complete from this documentation
-amendment.** T1/T5/T7 have the next bounded UI slice. Existing technical intake,
-release governance, Package 14 records and Draft pricing are foundations to extend,
+**Status: proposed implementation; no T stage is completed by the design amendment
+or the active PDF Draft increment.** T1/T5/T7 remain the first bounded UI slice within
+this separate track, after the newly prioritized PDF graph milestone. Existing
+technical intake, release governance, Package 14 records and Draft pricing are foundations to extend,
 not proof of this new end-to-end capability. Detailed contracts and methods belong in
 [Technical Corpus and Dual Pricing Design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md).
 
 T1-T14 are dependency labels, not a requirement for fourteen large sequential builds.
-First deliver the thin source-profile interaction; then one reviewed technical and
-pricing mapping path, then measured bulk capacity, then estimation and calibrated
+Within this track, first deliver the thin source-profile interaction; then one reviewed
+technical and pricing mapping path, then measured bulk capacity, then estimation and calibrated
 combination. Start the T12 review contract and T13 price-lineage holdout manifest
 while designing T1/T5/T7, before price predictions or feature selection can contaminate
 the evaluation. Every exposed slice includes its UI, minimum persistence and tests.
 
 | Delivery band | Included work and dependency gate |
 | --- | --- |
-| **Next visible slice** | Minimum T1 + T5 + T7: distinct A/B source identity and retained profile preview; synthetic data; no library publication or price inference. |
-| **Reviewed vertical slice** | Minimum T2-T4 plus T6/T8: one retained technical source/configuration, fact provenance and reviewed component/system mappings; keep the reordered structured PDF Draft workflow. T12 review states and the T13 holdout policy must be established before this band. |
+| **First visible corpus/pricing slice** | Minimum T1 + T5 + T7: distinct A/B source identity and retained profile preview; synthetic data; no library publication or price inference. |
+| **Reviewed vertical slice** | Minimum T2-T4 plus T6/T8: one retained technical source/configuration, fact provenance and reviewed component/system mappings; reuse applicable source-review infrastructure while keeping defect and technical authority separate. T12 review states and the T13 holdout policy must be established before this band. |
 | **Controlled breadth and scale** | Expand T2-T8 through bounded resumable imports, deduplication/reprocessing, proper pagination and representative retained sources; T9 coverage exposes gaps. Measure capacity before declaring hundreds/thousands supported. |
 | **Explainable estimating prototype** | T10 separate bottom-up and comparable proposals, T12 review UI, immutable quantities/labour/assumptions and T13 evaluation. T11 comparison is visible before calibrated combination is enabled. |
 | **Validated operation** | T13 establishes approved method/stratum gates; T11 combined proposals use that evidence; T14 operations, feedback, drift and controlled release extend the demonstrated path. |
@@ -673,8 +692,9 @@ when the native visibility and recovery evidence are adequate. It may not own
 project state, approval state, workflow truth, or command authority.
 
 T2/T14 extend the native visibility only as needed for retained-source batch progress,
-per-member outcomes, retries and measured cost/throughput. The next small profile UI
-does not require a complete general scheduler, agent fleet or OpenClaw retirement.
+per-member outcomes, retries and measured cost/throughput. Neither the active PDF
+graph UI nor the retained A/B profile requires a complete general scheduler, agent
+fleet or OpenClaw retirement.
 
 **Exit:** operational visibility is useful without a second mutable estimate
 database or approval workflow.
@@ -887,9 +907,10 @@ import them into the active fire-seal/penetration runtime prematurely.
 
 - Infrastructure/schema perfection before an interactive prototype.
 - The former package-exporter-first handoff as the current next task.
-- Workbook-client publication or the structured PDF Draft editor as the immediate
-  next task: PR #207 is merged; the PDF capability is retained but reordered behind
-  the bounded A/B profile preview.
+- Workbook-client publication as the immediate task: PR #207 is merged.
+- The former A/B-profile-first ordering ahead of structured PDF Draft review: the
+  latest user instruction promotes the PDF graph milestone. Keep the A/B design
+  and T1-T14 requirements as a separate retained track.
 - Blanket deferral of technical corpus and dual-source pricing: replace it with
   the T1-T14 dependency-ordered delivery plan.
 - Copying legacy CSV default-zero/auto-active assumptions into a new workbook

@@ -32,7 +32,7 @@ from .services.draft_scope import (
     save_revision,
     validate_payload,
 )
-from .services.draft_scope_evidence import reference_status
+from .services.draft_scope_evidence import reference_label, reference_status
 from .services.draft_scope_reports import (
     DraftScopeReportError,
     create_report,
@@ -169,11 +169,16 @@ def _editor(
             expected_revision=expected_revision,
             saved=saved,
             envelope=envelope or {},
-            package_imported=db.scalar(select(
-                DraftPackageImport.id
-            ).where(DraftPackageImport.draft_scope_id == draft.id)) is not None,
+            package_imported=db.scalar(
+                select(DraftPackageImport.id).where(DraftPackageImport.draft_scope_id == draft.id)
+            )
+            is not None,
             evidence_links=[
-                dict(ref, status=reference_status(ref, payload.get("observations", [])))
+                dict(
+                    ref,
+                    status=reference_status(ref, payload),
+                    target_label=reference_label(ref, payload),
+                )
                 for ref in (envelope or {}).get("evidence_refs", [])
             ],
             errors=errors or [],
@@ -220,6 +225,8 @@ def create_scope(
 ) -> HTMLResponse | RedirectResponse:
     verify_csrf(request, form.get("csrf_token"))
     user = _require(request, db, "project:write")
+    if form.get("next", "") not in {"", "evidence"}:
+        raise HTTPException(422, "Choose manual entry or PDF upload")
     try:
         draft = create_draft_project(db, user, form.get("reference", ""), form.get("name", ""))
         db.commit()
@@ -255,7 +262,10 @@ def create_scope(
             status_code=exc.status_code,
             headers={"Cache-Control": "no-store"},
         )
-    return RedirectResponse(f"/scopes/{draft.id}", status_code=303)
+    destination = f"/scopes/{draft.id}"
+    if form.get("next") == "evidence":
+        destination += "/evidence"
+    return RedirectResponse(destination, status_code=303)
 
 
 @router.get("/scopes/{draft_id}", response_class=HTMLResponse)

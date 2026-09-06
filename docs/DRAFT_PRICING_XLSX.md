@@ -11,6 +11,11 @@ The 1,000-row limit below includes the header; it cannot accommodate a single sh
 with 1,000 price rows plus a header. Preserve this contract while adding bounded bulk
 processing and versioned compatibility explicitly; do not silently lift safety limits.
 
+Defect-report spreadsheets are a separate Scope intake use case, still upcoming.
+This pricing workbook UI does not extract defects, openings or services. Current
+product sequencing is PDF graph review, then bounded Excel defect mapping; A/B
+profiles remain the first slice within the separate corpus/pricing track.
+
 ## Implemented boundary
 
 P3b's first bounded interaction uploads a synthetic/authorized XLSX, explicitly

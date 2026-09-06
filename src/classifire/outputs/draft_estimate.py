@@ -17,6 +17,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
+from ..services.draft_scope_evidence import ENTITY_EVIDENCE_SCHEMA_VERSION
 from .common import ATTRIBUTION
 from .draft_branding import DraftLogo as _Logo
 from .draft_branding import supplied_logo_path as _logo_path
@@ -25,6 +26,8 @@ from .draft_scope import (
     _append_scope_content,
     _control_text,
     _font_coverage,
+    _page_reference_fields,
+    _page_reference_id,
     _pdf_text,
     _segments,
 )
@@ -176,8 +179,8 @@ def _context_rows(report: dict[str, Any]) -> list[list[Any]]:
         for key, value in source.items():
             rows.append(["Unverified imported claim", str(index), key, str(value)])
     for ref in estimate["scope"].get("evidence_refs", []):
-        for key, value in ref.items():
-            rows.append(["Saved page-review claim", ref["observation_id"], key, str(value)])
+        for key, value in _page_reference_fields(estimate["scope"], ref):
+            rows.append(["Saved page-review claim", _page_reference_id(ref), key, str(value)])
     return rows
 
 
@@ -322,6 +325,12 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
     text(
         "Scope assertions and imported history remain unreviewed. No technical approval is implied."
     )
+    if estimate["scope"]["schema_version"] == ENTITY_EVIDENCE_SCHEMA_VERSION:
+        text(
+            "Review status compares saved claims with this selected Scope revision. "
+            "Current source and scan checks are performed separately; "
+            "no physical approval is granted."
+        )
     for kind, identifier, label, value in _context_rows(report):
         if complete and kind in estimate["scope"]["content"]:
             continue

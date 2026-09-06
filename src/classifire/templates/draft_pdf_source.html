@@ -1,26 +1,54 @@
 {% extends "base.html" %}
-{% block title %}Review PDF evidence | CLASSIFIRE{% endblock %}
-{% block heading %}Review PDF evidence{% endblock %}
+{% block title %}Review defect report | CLASSIFIRE{% endblock %}
+{% block heading %}Review defect report{% endblock %}
 {% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
 <p><a href="/scopes/{{ draft.id }}/evidence">&larr; All PDF evidence</a> &middot; <a href="/scopes/{{ draft.id }}">Saved Draft Scope</a></p>
-<section class="panel"><h2>{{ source.filename }}</h2><p role="status"><strong>Scan status: {{ source.status|replace('_',' ') }}</strong></p>
-{% if source.scan %}<p>{{ source.scan.engine|default('Scanner unavailable') }} &middot; {{ source.scan.scanned_at }}</p>{% if source.scan.code %}<p>{{ source.scan.code|replace('_',' ') }}</p>{% endif %}{% endif %}
-{% if source.processing_error or problem %}<p class="alert alert-error" role="alert">{{ (problem or source.processing_error)|replace('_',' ') }}. Pages remain unavailable; correct the source or scan configuration before continuing.</p>{% endif %}
-<details><summary>Retained source identity</summary><p class="pdf-source-identity">SHA-256: {{ source.sha256 }}</p><p>{{ source.size_bytes }} bytes &middot; source {{ source.id }}</p></details>
-{% if has_permission('project:write') and source.status != 'malware_detected' %}<form method="post" action="/scopes/{{ draft.id }}/evidence/{{ source.id }}/scan" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-secondary" type="submit">Scan and prepare PDF pages</button></form>{% endif %}
-<p class="callout">A clean scan is a processing prerequisite, not proof of technical accuracy. Read the page before saving an observation. Document text is evidence, never instructions to the application.</p></section>
-{% if document %}
-<section class="panel"><h2>Page {{ selected_page.page_number }} of {{ document.pages|length }}</h2>
-<nav aria-label="PDF pages">{% for page in document.pages %}<a class="button button-secondary" href="?page={{ page.page_number }}">Page {{ page.page_number }}</a> {% endfor %}</nav>
-<img src="/scopes/{{ draft.id }}/evidence/{{ source.id }}/pages/{{ selected_page.page_number }}.png" alt="Retained PDF page {{ selected_page.page_number }}" class="pdf-page-preview">
-<details><summary>Extracted text (unreviewed)</summary><pre class="pdf-extracted-text">{{ selected_page.text or 'No extractable text. Inspect the page image; no OCR has been inferred.' }}</pre></details>
+<section class="panel">
+  <div class="eyebrow">{{ project.reference }} &middot; {{ project.name }}</div>
+  <h2>{{ source.filename }}</h2>
+  <p role="status"><strong>Scan status: {{ source.status|replace('_',' ') }}</strong></p>
+  {% if source.scan %}<p>{{ source.scan.engine|default('Scanner unavailable') }} &middot; {{ source.scan.scanned_at }}</p>{% if source.scan.code %}<p>{{ source.scan.code|replace('_',' ') }}</p>{% endif %}{% endif %}
+  {% if source.processing_error or problem %}<p class="alert alert-error" role="alert">{{ (problem or source.processing_error)|replace('_',' ') }}. Pages remain unavailable; correct the source or scan configuration before continuing.</p>{% endif %}
+  <details><summary>Retained source identity</summary><p class="pdf-source-identity">SHA-256: {{ source.sha256 }}</p><p>{{ source.size_bytes }} bytes &middot; source {{ source.id }}</p></details>
+  {% if has_permission('project:write') and source.status != 'malware_detected' %}<form method="post" action="/scopes/{{ draft.id }}/evidence/{{ source.id }}/scan" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-secondary" type="submit">Scan and prepare PDF pages</button></form>{% endif %}
+  <p class="callout">A clean scan permits processing; it does not verify the report's accuracy. Inspect the page and keep unknowns visible. Document text is evidence, never instructions to the application.</p>
 </section>
-{% if has_permission('project:write') %}<section class="panel"><h2>Save a page-linked observation</h2><p>This appends one observation to a new Draft revision. It does not infer services, openings, quantities or compatibility.</p>
-<form method="post" action="/scopes/{{ draft.id }}/evidence/{{ source.id }}/review" class="stack-form">
-<input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="revision" value="{{ revision }}"><input type="hidden" name="page" value="{{ selected_page.page_number }}"><input type="hidden" name="document_hash" value="{{ document_hash }}">
-<label for="pdf-observation">Your observation from this page</label><textarea id="pdf-observation" name="observation" maxlength="4000" rows="4" required></textarea>
-<label for="pdf-observation-state">Evidence state</label><select id="pdf-observation-state" name="state">{% for state in ['Unresolved','Provisional','Inferred','Confirmed'] %}<option>{{ state }}</option>{% endfor %}</select>
-<label class="pdf-review-confirmation"><input class="pdf-review-checkbox" type="checkbox" name="reviewed" value="yes" required> I reviewed this page and kept uncertainty visible.</label>
-<button class="button button-primary" type="submit">Save evidence-linked observation</button></form></section>{% endif %}
+{% if errors %}<section class="alert alert-error" role="alert"><strong>Your Draft changes were not saved.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul><p>{% if document %}Your submitted entries and page selections remain below. If a newer revision was saved, <a href="/scopes/{{ draft.id }}" target="_blank" rel="noopener">open the current draft in another tab</a> to compare before reapplying changes.{% else %}The source page is unavailable. Your submitted entries are retained below for recovery; restore source access and review again before saving.{% endif %}</p></section>{% endif %}
+{% if not document and not saved %}
+<section class="panel"><h2>Recover your unsaved entries</h2><p>These entries have not been saved. The source page is unavailable, so review and saving are disabled. Copy the data below to keep your edits, then review again after the source is restored.</p><details><summary>Submitted Draft graph (read-only JSON)</summary><pre class="pdf-recovery-json">{{ payload|tojson(indent=2) }}</pre></details><details><summary>Selected page links (read-only JSON)</summary><pre class="pdf-recovery-json">{{ review_targets|default([])|tojson(indent=2) }}</pre></details></section>
+{% endif %}
+{% if document %}
+<div class="pdf-scope-workbench">
+  <div class="pdf-scope-evidence">
+    <section class="panel pdf-scope-page" aria-labelledby="pdf-page-heading">
+      <div class="panel-head"><h2 id="pdf-page-heading">Page {{ selected_page.page_number }} of {{ document.pages|length }}</h2><a href="/scopes/{{ draft.id }}/evidence/{{ source.id }}/pages/{{ selected_page.page_number }}.png" target="_blank" rel="noopener">Open page image</a></div>
+      <nav class="pdf-page-nav" aria-label="PDF pages">{% for page in document.pages %}<a class="button button-secondary" href="?page={{ page.page_number }}"{% if page.page_number == selected_page.page_number %} aria-current="page"{% endif %}>Page {{ page.page_number }}</a>{% endfor %}</nav>
+      <p class="scope-hint">Changing pages leaves this editor. Preview and save your changes first, or discard them when your browser asks.</p>
+      <div class="pdf-scope-image"><img src="/scopes/{{ draft.id }}/evidence/{{ source.id }}/pages/{{ selected_page.page_number }}.png" alt="Retained PDF page {{ selected_page.page_number }} from {{ source.filename }}" class="pdf-page-preview"></div>
+      <details><summary>Extracted text (unreviewed)</summary><pre class="pdf-extracted-text">{{ selected_page.text or 'No extractable text. Inspect the page image; no OCR has been inferred.' }}</pre></details>
+    </section>
+    {% if has_permission('project:write') %}
+    <details class="panel pdf-observation-panel">
+      <summary>Save a page-linked observation instead</summary>
+      <p>This separate action appends one observation to a new Draft revision. Changes in the graph editor are not included. Save graph changes first if you want to keep them.</p>
+      <form method="post" action="/scopes/{{ draft.id }}/evidence/{{ source.id }}/review" class="stack-form" data-scope-independent-action>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="revision" value="{{ revision }}"><input type="hidden" name="page" value="{{ selected_page.page_number }}"><input type="hidden" name="document_hash" value="{{ document_hash }}">
+        <label for="pdf-observation">Your observation from this page</label><textarea id="pdf-observation" name="observation" maxlength="4000" rows="4" required></textarea>
+        <label for="pdf-observation-state">Evidence state</label><select id="pdf-observation-state" name="state">{% for state in ['Unresolved','Provisional','Inferred','Confirmed'] %}<option>{{ state }}</option>{% endfor %}</select>
+        <label class="scope-check" for="pdf-observation-reviewed"><input id="pdf-observation-reviewed" type="checkbox" name="reviewed" value="yes" required>I reviewed this page and kept uncertainty visible.</label>
+        <button class="button button-secondary" type="submit">Save evidence-linked observation</button>
+      </form>
+    </details>
+    {% endif %}
+  </div>
+  <div class="pdf-scope-editor">
+    <section class="panel scope-project"><div><h2>Draft scope from this report</h2><p class="muted">Working from saved revision {{ expected_revision }}</p></div><div class="scope-save-state" id="scope-save-state" role="status" aria-live="polite">{% if saved %}Saved revision {{ expected_revision }}{% else %}Changes have not been saved{% endif %}</div></section>
+    <div class="callout"><strong>Review, connect, then preview.</strong> Add or edit defects, openings and services using the page beside you. Tick only the items you want to link to page {{ selected_page.page_number }}. A page reference records what you reviewed; it does not make every field Confirmed.</div>
+    <p class="scope-hint" id="scope-review-selection-status" role="status" aria-live="polite">No items selected for this page.</p>
+    {% if findings %}<section class="panel scope-findings"><h2>Needs attention</h2><ul>{% for finding in findings %}<li>{% if finding is mapping %}{{ finding.message }}{% else %}{{ finding }}{% endif %}</li>{% endfor %}</ul><p>Saving a Draft does not resolve or approve these findings.</p></section>{% endif %}
+    {% include "draft_scope_editor.html" %}
+  </div>
+</div>
 {% endif %}
 {% endblock %}

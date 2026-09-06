@@ -44,6 +44,7 @@ from .security import (
     verify_csrf,
 )
 from .services.calculation import D, calculate_estimate_line, recalculate_estimate
+from .services.draft_scope_evidence import reference_label, reference_status
 from .services.initial_canonicalisation_boundary import (
     InitialCanonicalisationAdmissionRequired,
     require_admission_bound_initial_canonicalisation,
@@ -74,6 +75,10 @@ from .services.workflow_guard import (
 
 router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+# Pure saved-claim display, shared by report/import/client review templates.
+templates.env.globals.update(
+    scope_reference_label=reference_label, scope_reference_status=reference_status
+)
 Db = Annotated[Session, Depends(get_db)]
 
 

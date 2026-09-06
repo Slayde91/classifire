@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% block title %}PDF evidence | CLASSIFIRE{% endblock %}
-{% block heading %}Draft Scope evidence{% endblock %}
+{% block title %}Upload defect report | CLASSIFIRE{% endblock %}
+{% block heading %}Upload defect report{% endblock %}
 {% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
 <p><a href="/scopes/{{ draft.id }}">&larr; Saved Draft Scope</a></p>
 <section class="panel"><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2>
-<p>Retain a source PDF, check its scan result, inspect its pages and explicitly save your observations. Extracted text is unreviewed. Uploading never runs matching, pricing or physical-model approval.</p>
-{% if not postgres %}<p class="alert alert-error" role="status">PDF intake requires the PostgreSQL evidence environment for safe scan and quarantine coordination. Manual Scope editing remains available.</p>{% elif has_permission('project:write') %}
+<p>Upload a defect-report PDF, prepare its pages, then review the page beside your defects, openings and services. Preview your changes and explicitly save a source-linked Draft revision. Page observations remain available. Extracted text is unreviewed; the report does not approve a physical model, system or estimate.</p>
+{% if not postgres %}<p class="alert alert-error" role="status">PDF upload is unavailable in this demo environment. It requires a configured PostgreSQL evidence database and a working malware scanner to retain and check files safely. You can still edit and save a manual Draft Scope.</p>{% elif has_permission('project:write') %}
 <form method="post" enctype="multipart/form-data" action="/scopes/{{ draft.id }}/evidence" class="stack-form">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<label for="source-pdf">Source PDF (maximum 10 MiB, 50 pages)</label><input id="source-pdf" type="file" name="file" accept="application/pdf,.pdf" required>
-<button class="button button-primary" type="submit">Retain source PDF</button></form>{% endif %}
+<label for="source-pdf">Defect-report PDF (maximum 10 MiB, 50 pages)</label><input id="source-pdf" type="file" name="file" accept="application/pdf,.pdf" required>
+<button class="button button-primary" type="submit">Upload defect report</button></form>{% endif %}
 </section>
 <section class="panel"><h2>Retained sources</h2><p>Up to 20 PDFs per Draft. Files are retained with their original byte identity; a clean scan is required before page processing.</p>
 {% if sources %}<ul>{% for source in sources %}<li><a href="/scopes/{{ draft.id }}/evidence/{{ source.id }}">{{ source.filename }}</a> &middot; {{ source.status|replace('_',' ') }} &middot; {{ source.size_bytes }} bytes</li>{% endfor %}</ul>{% else %}<p>No PDF sources yet.</p>{% endif %}</section>

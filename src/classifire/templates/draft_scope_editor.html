@@ -1,0 +1,47 @@
+<noscript><div class="alert alert-error">This editor needs JavaScript to add and connect scope items. Enable JavaScript and reload to edit safely.</div></noscript>
+<div class="alert alert-error" id="scope-client-error" role="alert" hidden></div>
+<form method="post" action="{{ review_url ~ '/preview' if page_review|default(false) else '/scopes/' ~ draft.id }}" id="scope-editor" data-page-review="{{ 'true' if page_review|default(false) else 'false' }}"{% if page_review|default(false) %} data-page-number="{{ selected_page.page_number }}"{% endif %} data-can-edit="{{ 'true' if has_permission('project:write') else 'false' }}">
+  {% if not has_permission('project:write') %}<p class="callout">Your account can view this saved draft. Editing requires project write permission.</p>{% endif %}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="expected_revision" value="{{ expected_revision }}">
+  <input type="hidden" name="payload" id="scope-payload" value="">
+  {% if page_review|default(false) %}
+  <input type="hidden" name="page" value="{{ selected_page.page_number }}">
+  <input type="hidden" name="document_hash" value="{{ document_hash }}">
+  <input type="hidden" name="targets" id="scope-review-targets" value="">
+  {% endif %}
+  <fieldset id="scope-edit-controls" disabled>
+    <nav class="scope-section-nav" aria-label="Scope sections"><a href="#scope-defects">Defects</a><a href="#scope-openings">Openings</a><a href="#scope-services">Services</a><a href="#scope-observations">Observations</a><a href="#scope-notes">Assumptions &amp; exclusions</a></nav>
+    <section class="panel scope-section" id="scope-defects" aria-labelledby="defects-heading">
+      <div class="panel-head"><div><h2 id="defects-heading">1. Defects</h2><p class="muted">Give each reported problem a label. A defect can contain several openings and services.</p></div><button class="button button-secondary" type="button" data-add="defects">Add defect</button></div>
+      <div class="scope-items" data-items="defects"></div>
+      <p class="scope-empty" data-empty="defects">No defects yet. Add the first problem you need to describe.</p>
+    </section>
+    <section class="panel scope-section" id="scope-openings" aria-labelledby="openings-heading">
+      <div class="panel-head"><div><h2 id="openings-heading">2. Openings</h2><p class="muted">Record each separate opening and link it to a defect. Enter dimensions in millimetres when known.</p></div><button class="button button-secondary" type="button" data-add="openings">Add opening</button></div>
+      <div class="scope-items" data-items="openings"></div>
+      <p class="scope-empty" data-empty="openings">No openings yet. Shared and blank openings can be recorded separately.</p>
+    </section>
+    <section class="panel scope-section" id="scope-services" aria-labelledby="services-heading">
+      <div class="panel-head"><div><h2 id="services-heading">3. Services</h2><p class="muted">Describe pipes, cables or other services. Select every opening the service passes through.</p></div><button class="button button-secondary" type="button" data-add="services">Add service</button></div>
+      <div class="scope-items" data-items="services"></div>
+      <p class="scope-empty" data-empty="services">No services yet. One defect does not automatically mean one service or quantity one.</p>
+    </section>
+    <section class="panel scope-section" id="scope-observations" aria-labelledby="observations-heading">
+      <div class="panel-head"><div><h2 id="observations-heading">4. Observations &amp; unknowns</h2><p class="muted">Capture missing information, conflicting observations and facts requiring evidence or review.</p></div><button class="button button-secondary" type="button" data-add="observations">Add observation</button></div>
+      <div class="scope-items" data-items="observations"></div>
+      <p class="scope-empty" data-empty="observations">No observations yet. Record uncertainty here instead of filling gaps with guesses.</p>
+    </section>
+    <section class="panel scope-section" id="scope-notes" aria-labelledby="scope-notes-heading">
+      <h2 id="scope-notes-heading">5. Assumptions &amp; exclusions</h2>
+      <div class="form-grid"><label for="scope-assumptions">Assumptions <span class="scope-hint">One assumption per line. These remain unapproved draft notes.</span><textarea id="scope-assumptions" rows="4"></textarea></label><label for="scope-exclusions">Exclusions <span class="scope-hint">One exclusion per line. State work or areas this scope does not cover.</span><textarea id="scope-exclusions" rows="4"></textarea></label></div>
+    </section>
+    <div class="scope-actions">
+      <div>{% if page_review|default(false) %}<button class="button button-primary" type="submit">Preview source-linked draft</button>{% else %}<button class="button button-secondary" type="submit" name="action" value="validate">Validate draft</button><button class="button button-primary" type="submit" name="action" value="save">Save new revision</button>{% endif %}</div>
+      <div><a class="button button-secondary" id="scope-download" href="/scopes/{{ draft.id }}/download?revision={{ expected_revision }}"{% if not saved %} hidden{% endif %}>Download saved Draft Scope JSON</a><span class="scope-hint" id="scope-download-hint"{% if saved %} hidden{% endif %}>Save your changes before downloading.</span></div>
+    </div>
+  </fieldset>
+</form>
+<script type="application/json" id="scope-initial-payload">{{ payload|tojson }}</script>
+{% if page_review|default(false) %}<script type="application/json" id="scope-initial-review-targets">{{ review_targets|default([])|tojson }}</script>{% endif %}
+<script src="/static/draft_scope.js" defer></script>
