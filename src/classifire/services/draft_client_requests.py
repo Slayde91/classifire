@@ -186,7 +186,10 @@ def review(db: Session, authority: ClientAuthority, actor: User, request_id: str
     elif row.command == "capability":
         parsed = capabilities.parse(payload["operation"])
         _owner(db, actor, parsed.draft_id)
-        if isinstance(parsed, (capabilities.CreateMatch, capabilities.ReviewMatch)):
+        if isinstance(
+            parsed,
+            (capabilities.CreateMatch, capabilities.ReviewMatch, capabilities.ReviewMeasurements),
+        ):
             scopes._actor(db, actor, "technical:read")
         if isinstance(
             parsed,

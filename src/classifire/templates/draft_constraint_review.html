@@ -23,7 +23,7 @@
     <details><summary>Conditions still unassessed</summary><ul>{% for item in review.unassessed %}<li>{{ item|replace('_', ' ')|capitalize }}</li>{% endfor %}</ul></details>
     {% if review.published_fields_sha256 is none %}<p class="callout">This older release does not pin structured limits. The saved checks remain unresolved. A new governed release is needed; earlier artifacts are preserved.</p>{% endif %}
   {% endif %}
-  {% if has_permission('project:write') and envelope.revision == latest_revision and not staleness and envelope.candidates and envelope.target.opening_id %}
+  {% if can_edit|default(true) and has_permission('project:write') and envelope.revision == latest_revision and not staleness and envelope.candidates and envelope.target.opening_id %}
   {% set saved = review.inputs if review else {} %}
   <form method="post" action="{{ match_url }}/constraints" class="form-grid">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

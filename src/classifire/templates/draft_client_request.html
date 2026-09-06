@@ -23,7 +23,12 @@
 {% if capability_inputs %}
 {% if capability_inputs.release %}<h3>Selected technical release</h3>{{ fields(capability_inputs.release) }}{% endif %}
 {% if capability_inputs.scope %}{% with envelope=capability_inputs.scope %}{% include 'draft_scope_report_content.html' %}{% endwith %}{% endif %}
-{% if capability_inputs.match %}{% with envelope=capability_inputs.match, scope=capability_inputs.match.scope, form_values={}, can_edit=false, draft={"id": payload.operation.draft_id} %}{% include 'draft_system_match_content.html' %}{% endwith %}{% endif %}
+{% if capability_inputs.match %}
+<h2>Selected saved System Match</h2><p>These are the saved findings. Proposed changes above have not been applied to these checks.</p>
+{% with envelope=capability_inputs.match, scope=capability_inputs.match.scope, form_values={}, can_edit=false, draft={"id": payload.operation.draft_id} %}
+{% include 'draft_system_match_content.html' %}
+{% if envelope.get('constraint_review') %}{% include 'draft_constraint_review.html' %}{% endif %}
+{% endwith %}{% endif %}
 {% if capability_inputs.estimate %}<h2>Selected saved Estimate</h2><p>These are the saved values. Proposed edits above have not been applied to these totals.</p>{% with envelope=capability_inputs.estimate, scope=capability_inputs.estimate.scope, form_values={}, can_edit=false, draft={"id": payload.operation.draft_id} %}{% include 'draft_estimate_content.html' %}{% endwith %}{% endif %}
 {% endif %}
 {% else %}<h2>Save a project package</h2><p>Only these saved revisions and reports are included. Unselected and restricted sources remain outside this export.</p><dl class="scope-import-details">{% for key,value in payload.selection.items() %}<dt>{{ key|replace('_', ' ')|capitalize }}</dt><dd>{{ value if value is not none else 'Not included' }}</dd>{% endfor %}</dl>{% endif %}
