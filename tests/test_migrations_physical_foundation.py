@@ -235,7 +235,7 @@ def test_fresh_database_upgrades_through_physical_foundation(tmp_path: Path) -> 
     assert active_lock_index["unique"]
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0042_draft_pricing_row_observations"
+            "0043_draft_pricing_system_mappings"
         )
         active_lock_index_sql = connection.execute(
             text(

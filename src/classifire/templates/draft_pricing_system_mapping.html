@@ -1,0 +1,82 @@
+{% set mapping = system_mappings|selectattr('row_number', 'equalto', row.row)|first %}
+{% if mapping %}
+<h4>Reviewed Dataset B system mapping</h4>
+<dl class="scope-import-details">
+<dt>Status</dt><dd>{{ mapping.value.definition.interpretation.status|capitalize }}</dd>
+<dt>Normalized reference</dt><dd>{{ mapping.value.definition.interpretation.normalized_reference }}</dd>
+<dt>Technical release</dt><dd>{{ mapping.value.definition.technical_release.version }} &middot; <span class="scope-item-id">{{ mapping.value.definition.technical_release.sha256 }}</span></dd>
+<dt>Selected variant</dt><dd>{% if mapping.value.definition.interpretation.selected_variant_id %}{{ mapping.value.definition.variants[0].variant_id }} &middot; <span class="scope-item-id">{{ mapping.value.definition.interpretation.selected_variant_id }}</span>{% else %}None{% endif %}</dd>
+<dt>Candidate variants</dt><dd>{{ mapping.value.definition.interpretation.candidate_variant_ids|join(', ') if mapping.value.definition.interpretation.candidate_variant_ids else 'None' }}</dd>
+<dt>Identity evidence</dt><dd>{{ mapping.value.definition.interpretation.identity_evidence_fields|join(', ') if mapping.value.definition.interpretation.identity_evidence_fields else 'None' }}</dd>
+<dt>Unresolved fields</dt><dd>{{ mapping.value.definition.interpretation.unresolved_fields|join(', ') if mapping.value.definition.interpretation.unresolved_fields else 'None' }}</dd>
+<dt>Reason</dt><dd>{{ mapping.value.definition.interpretation.review_reason }}</dd>
+<dt>Reviewer</dt><dd>{{ mapping.reviewed_by }} &middot; {{ mapping.reviewed_at }}</dd>
+<dt>Status of dependencies</dt><dd>{% if mapping.is_current %}Current{% else %}Stale history{% endif %}</dd>
+<dt>Mapping hash</dt><dd class="scope-item-id">{{ mapping.mapping_sha256 }}</dd>
+</dl>
+<p><a class="button button-secondary" href="{{ pricing_url }}/{{ source.id }}/profiles/{{ selected_profile.profile_id }}/system-mappings/{{ mapping.id }}/download">Download exact mapping JSON</a></p>
+{% elif system_mapping_preview and system_mapping_preview.definition.row.row == row.row %}
+<h4>System mapping preview</h4>
+<p><strong>No write has occurred.</strong> Check the exact row, technical release, identity evidence and unresolved fields before saving.</p>
+<dl class="scope-import-details">
+<dt>Status</dt><dd>{{ system_mapping_preview.definition.interpretation.status|capitalize }}</dd>
+<dt>Normalized reference</dt><dd>{{ system_mapping_preview.definition.interpretation.normalized_reference }}</dd>
+<dt>Technical release</dt><dd>{{ system_mapping_preview.definition.technical_release.version }}</dd>
+<dt>Selected variant</dt><dd>{{ system_mapping_preview.definition.interpretation.selected_variant_id or 'None' }}</dd>
+<dt>Candidate variants</dt><dd>{{ system_mapping_preview.definition.interpretation.candidate_variant_ids|join(', ') if system_mapping_preview.definition.interpretation.candidate_variant_ids else 'None' }}</dd>
+<dt>Identity evidence</dt><dd>{{ system_mapping_preview.definition.interpretation.identity_evidence_fields|join(', ') if system_mapping_preview.definition.interpretation.identity_evidence_fields else 'None' }}</dd>
+<dt>Unresolved fields</dt><dd>{{ system_mapping_preview.definition.interpretation.unresolved_fields|join(', ') if system_mapping_preview.definition.interpretation.unresolved_fields else 'None' }}</dd>
+<dt>Exact row hash</dt><dd class="scope-item-id">{{ row.sha256 }}</dd>
+</dl>
+<form method="post" action="{{ pricing_url }}/{{ source.id }}/profiles/{{ selected_profile.profile_id }}/rows/{{ row.row }}/system-mappings" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="technical_release_id" value="{{ system_mapping_preview.definition.technical_release.id }}">
+<input type="hidden" name="mapping_status" value="{{ system_mapping_preview.definition.interpretation.status }}">
+<input type="hidden" name="normalized_reference" value="{{ system_mapping_preview.definition.interpretation.normalized_reference }}">
+<input type="hidden" name="selected_variant_id" value="{{ system_mapping_preview.definition.interpretation.selected_variant_id or '' }}">
+<input type="hidden" name="candidate_variant_ids" value="{% if system_mapping_preview.definition.interpretation.status == 'ambiguous' %}{{ system_mapping_preview.definition.interpretation.candidate_variant_ids|join(',') }}{% endif %}">
+<input type="hidden" name="identity_evidence_fields" value="{{ system_mapping_preview.definition.interpretation.identity_evidence_fields|join(',') }}">
+<input type="hidden" name="review_reason" value="{{ system_mapping_preview.definition.interpretation.review_reason }}">
+<input type="hidden" name="unresolved_fields" value="{{ system_mapping_preview.definition.interpretation.unresolved_fields|join(',') }}">
+<input type="hidden" name="profile_sha256" value="{{ selected_profile_meta.profile_sha256 }}">
+<input type="hidden" name="decision_sha256" value="{{ selected_decision.decision_sha256 }}">
+<input type="hidden" name="row_sha256" value="{{ row.sha256 }}">
+<input type="hidden" name="technical_release_sha256" value="{{ system_mapping_preview.definition.technical_release.sha256 }}">
+<input type="hidden" name="preview_hash" value="{{ system_mapping_preview.preview_hash }}">
+<p class="scope-hint">Saving records immutable identity evidence only. It does not approve a technical system, activate a library, assess applicability, infer a price, change an Estimate or release data.</p>
+<button class="button button-primary" type="submit">Save immutable system mapping</button>
+</form>
+{% elif not selected_decision or selected_decision.value.decision != 'approve' or not selected_decision.is_current %}
+<p>The current Dataset B source profile must have an approved human review before its rows can be mapped.</p>
+{% elif selected_profile.definition.commercial_basis.price_meaning == 'unknown' %}
+<p>Declare a specific price meaning in a new profile revision before mapping rows.</p>
+{% elif row.problems %}
+<p>This row cannot be mapped until its mapped-cell problems are resolved.</p>
+{% elif not has_permission('pricing:approve') or not has_permission('technical:read') %}
+<p>An authorised pricing reviewer with technical-library access must map this row.</p>
+{% elif not system_mapping_targets %}
+<p>A single valid active technical release with source-bound variants is required before this row can be mapped.</p>
+{% else %}
+<h4>Map this exact Firefly price row</h4>
+<form method="post" action="{{ pricing_url }}/{{ source.id }}/profiles/{{ selected_profile.profile_id }}/rows/{{ row.row }}/system-mapping/preview" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="technical_release_id" value="{{ system_mapping_targets.release.id }}">
+<label for="system-status-{{ row.row }}">Review result</label>
+<select id="system-status-{{ row.row }}" name="mapping_status" required>{% for state in system_mapping_states %}<option value="{{ state }}">{{ state|capitalize }}</option>{% endfor %}</select>
+<label for="system-reference-{{ row.row }}">Normalized commercial reference</label>
+<input id="system-reference-{{ row.row }}" name="normalized_reference" maxlength="300" value="{{ row['values'].reference or '' }}" required>
+<label for="system-variant-{{ row.row }}">Selected technical variant for Mapped</label>
+<select id="system-variant-{{ row.row }}" name="selected_variant_id"><option value="">None</option>{% for variant in system_mapping_targets.variants %}<option value="{{ variant.id }}">{{ variant.variant_id }} &middot; {{ variant.manufacturer or 'unknown manufacturer' }} &middot; {{ variant.product_family or 'unknown family' }} &middot; {{ variant.frl or 'FRL unresolved' }}</option>{% endfor %}</select>
+<label for="system-candidates-{{ row.row }}">Candidate variant IDs for Ambiguous, comma separated</label>
+<input id="system-candidates-{{ row.row }}" name="candidate_variant_ids" maxlength="1000">
+<label for="system-evidence-{{ row.row }}">Commercial fields that prove identity, comma separated</label>
+<input id="system-evidence-{{ row.row }}" name="identity_evidence_fields" maxlength="200" placeholder="reference,description">
+<p class="scope-hint">Use populated fields from: {{ system_identity_evidence_fields|join(', ') }}. Price, currency and unit cannot prove system identity.</p>
+<label for="system-unresolved-{{ row.row }}">Unresolved fields, comma separated</label>
+<input id="system-unresolved-{{ row.row }}" name="unresolved_fields" maxlength="1000" placeholder="technical_variant,configuration_identity">
+<p class="scope-hint">Mapped requires one selected variant, identity evidence and no unresolved fields. Ambiguous requires at least two candidate IDs and unresolved fields. Unmatched requires unresolved fields and no candidate.</p>
+<label for="system-reason-{{ row.row }}">Why this result is supported</label>
+<textarea id="system-reason-{{ row.row }}" name="review_reason" maxlength="4000" required></textarea>
+<button class="button button-primary" type="submit">Preview system mapping</button>
+</form>
+{% endif %}
