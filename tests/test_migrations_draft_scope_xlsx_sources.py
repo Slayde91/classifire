@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from types import SimpleNamespace
 
 import pytest
 from draft_migration_fixture import fixture, verify_current
@@ -18,6 +19,7 @@ from classifire.models import (
     DraftScopeXlsxSource,
     StoredFile,
     User,
+    new_id,
 )
 from classifire.services import draft_project_packages as packages
 from classifire.services import draft_scope as scopes
@@ -82,17 +84,22 @@ def _pending_source(db, model, draft_id, actor_id, path, content, purpose):
     )
     db.add(stored)
     db.flush()
-    row = model(
-        draft_scope_id=draft_id,
-        stored_file_id=stored.id,
-        source_sha256=stored.sha256,
-        source_size_bytes=stored.size_bytes,
-        created_by_id=actor_id,
-        original_filename=path.name,
+    # This helper intentionally writes a historical schema. A current ORM instance
+    # would include columns introduced by later migrations even when their values are null.
+    row_id = new_id()
+    db.execute(
+        model.__table__.insert().values(
+            id=row_id,
+            draft_scope_id=draft_id,
+            stored_file_id=stored.id,
+            source_sha256=stored.sha256,
+            source_size_bytes=stored.size_bytes,
+            created_by_id=actor_id,
+            original_filename=path.name,
+        )
     )
-    db.add(row)
     db.flush()
-    return row
+    return SimpleNamespace(id=row_id, scan_json=None, document_json=None)
 
 
 def test_scope_xlsx_upgrade_preserves_native_history_and_enforces_source_bindings(case, tmp_path):
