@@ -4,10 +4,10 @@
 
 **Architecture version:** 5.28 - governed Dataset A row observations.
 
-**Verified shared baseline:** `4ea7028e9d256b2b53ae783e16bf75c812c59d57`, merge
-commit for documentation PR #217. PR #218 adds the first governed Dataset A row
-observation after the merged A/B profile, exact-profile review and early-T13 lineage
-contract. [PROJECT_STATE.md](./PROJECT_STATE.md) owns measured validation/publication.
+**Verified shared baseline:** `5b517c232d8ac7a455176fcd67055771a8df73c9`, merge
+commit for PR #218. It includes the first governed Dataset A row observation after the
+merged A/B profile, exact-profile review and early-T13 lineage contract.
+[PROJECT_STATE.md](./PROJECT_STATE.md) owns measured validation/publication.
 No AI or OpenClaw path is used by this increment. Reviewed B system mapping, commercial
 activation, persisted holdout rosters, estimation, real ChatGPT linking and production
 readiness remain open. Earlier milestone descriptions are
