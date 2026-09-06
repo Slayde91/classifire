@@ -3,10 +3,10 @@
 ## Evidence-based current snapshot
 
 Verified 2026-09-07 on shared main
-`39535b0b290fabe852db5e9c85e1cbe639a3740c`, merge commit for PR #214.
-The exact PR head `5e5a36d8d580953bf3566a2492364a6cee77584b` passed required run
-34051699479 in 18m35s, including 1,847 tests, full Ruff, Mypy, Bandit and one
-Alembic head. Post-merge run 34052722376 was started and remains separately tracked.
+`af822249b02cf197be62a6e03af32d409a3524fc`, merge commit for PR #216.
+The exact PR head `c70a3add36b35792dd17c8de2ed8ebe80caf7776` passed required run
+34054381404 in 17m58s, including 1,859 tests, full Ruff, Mypy on 207 source
+files, Bandit and one Alembic head.
 
 ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic application
 with independently callable Scope, System Match, Estimate and Reporting capabilities,
@@ -17,7 +17,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | --- | --- | --- |
 | Scope | Manual graph; retained PDF page/entity review; Excel row/cell/image mapping; optional one-page text/image suggestions with explicit human save | Real-report accuracy, bulk/cross-page reconciliation, broader formats and richer physical relationships |
 | System Match | Saved candidates/notes, partial measured checks and client commands | Complete authorized applicability, corpus extraction and multi-source fact resolution |
-| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles and immutable exact-profile human decisions that do not change an Estimate | Reviewed row ingestion, component/activity recipes, coverage and calibrated proposals |
+| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions and an unwired pre-model T13 leakage contract; none changes an Estimate implicitly | Reviewed row ingestion, component/activity recipes, persisted holdout evaluation, coverage and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
 | ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals | Real OAuth/HTTPS linking; report intake and A/B profile commands lack client parity |
@@ -74,6 +74,33 @@ A/B rows into a commercial library, identify a Firefly system, create a technica
 infer a price, reprice an Estimate, or place profile/source/decision bodies in a
 ProjectPackage.
 
+## Implemented early T13 pricing-evaluation lineage contract
+
+PR #216 adds a deterministic, provider-neutral contract for the benchmark manifest that
+later pricing methods must use. It accepts Firefly B observations only and binds every
+member to exact dataset/version, source/hash, profile/revision/hash, worksheet row/hash,
+target hash and availability time. The target price itself is not stored in this roster.
+
+The builder computes transitive groups across system identity, alias cluster,
+near-duplicate configuration cluster, source derivation and workbook-version lineage.
+Every connected group must stay wholly in training, validation or holdout, and all three
+splits must exist. The fixed policy allows only declared technical, independently sourced
+A/labour or training-observation features. It rejects known target descendants, any
+validation/holdout member used as an input, and any feature unavailable at the frozen
+cutoff.
+
+Canonical bytes, the exact manifest hash, actor/time, append-only parent linkage,
+foreign-Draft checks, policy tampering, noncanonical JSON, duplicate keys, stale lineage
+and caller-supplied replay history fail closed. Explicit effects confirm that the
+contract performs no prediction, row ingestion, library activation, Estimate change or
+release.
+
+This is deliberately a contract and synthetic proof, not a saved product workflow.
+CLASSIFIRE does not yet have reviewed normalized B observations or resolved
+system/configuration lineage from which an honest persisted split roster could be built.
+There is therefore no new table, migration, route or UI and no executed holdout,
+calibration or accuracy claim.
+
 ## Verification checkpoint
 
 - Pricing/profile/UI/client-pricing plus migration, packaging, deployment-lineage and
@@ -107,6 +134,11 @@ ProjectPackage.
 - Review publication evidence: 67 focused pricing/profile/UI/client/migration/lineage
   tests and 44 complete migration/preflight rehearsals passed locally. Required PR CI
   then passed 1,847 tests plus all static, security and migration-head checks.
+- Early-T13 evidence: 12 focused contract tests passed; the existing
+  pricing/profile/review/UI/client/migration regression selection completed at 100%.
+  Full Ruff and Bandit passed locally, the changed module passed Mypy and Alembic
+  remained at 0041. Exact PR #216 CI passed 1,859 tests, full Ruff, full Mypy on 207
+  source files, Bandit and one Alembic head.
 
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,
@@ -115,8 +147,10 @@ logs, database state and workbooks stay under `.tmp` and are not repository sour
 ## Known gaps and active work
 
 The prototype is usable for explicit source classification, profile retention and an
-exact-profile human review decision. That decision has no downstream authority. There
-is no reviewed row observation/import, component/activity mapping, Firefly
+exact-profile human review decision. That decision has no downstream authority. The
+early-T13 contract now blocks declared lineage leakage, but no manifest is persisted
+because reviewed normalized observations and resolved grouping identities do not exist.
+There is no reviewed row observation/import, component/activity mapping, Firefly
 system/configuration mapping, coverage result, bottom-up/comparable calculation,
 holdout execution, calibrated confidence or production release.
 
@@ -138,9 +172,10 @@ ChatGPT linking, OpenClaw retirement, deployment and Human Release remain incomp
 ## Project health
 
 The product has a growing, testable standalone Draft workflow with shared services,
-exact evidence, explicit uncertainty and narrow user-visible increments. This review slice
-extends existing source and pricing abstractions rather than creating another importer,
-rules engine, agent fleet or database. It is merged and its exact-head checks are green.
+exact evidence, explicit uncertainty and narrow user-visible increments. The T13 contract
+extends the existing canonical JSON/hash approach without creating another importer,
+rules engine, agent fleet, database or prediction path. It is merged and its exact-head
+checks are green. The next increment returns to a user-visible review interaction.
 
 The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
 46 unstaged tracked modifications, 14 staged additions and four DU conflicts. Its
@@ -149,10 +184,12 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Define and test the smallest T13 sealed lineage/holdout manifest before any prediction
-   feature selection, retrieval corpus or calibration experiment can contaminate it.
-2. Deliver one reviewed A-row observation/component mapping or B-system mapping vertical
-   slice using the exact-profile decision and sealed lineage boundary before bulk scale.
+1. Deliver one reviewed A-row observation and product/material/labour/service mapping
+   through the existing pricing UI. Bind it to the exact approved A profile and row/cells,
+   retain immutable review history, save/reopen/download it, and stop without activating
+   Product/Labour libraries or changing an Estimate.
+2. Follow with one reviewed B-system/configuration mapping using an approved technical
+   identity. Only then persist a real T13 split roster from those reviewed identities.
 3. Define scoped Draft reviewer assignments before production multi-user pricing review;
    do not broaden global project visibility to make `pricing_manager` access work.
 

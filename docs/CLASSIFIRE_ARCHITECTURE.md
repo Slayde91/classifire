@@ -2,16 +2,16 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.26 - immutable exact-profile human decisions and migration 0041.
+**Architecture version:** 5.27 - early pricing-evaluation lineage and leakage contract.
 
-**Verified shared baseline:** `205cf277ea86f6a47697e617465c8ab102ed8107`, containing
-merged A/B profile PR #212 and CI timeout PR #213. Shared-main run 34047634074 succeeded.
-PR #214 extends the merged A/B profile boundary with one immutable human decision per
-exact profile and forward migration 0041. [PROJECT_STATE.md](./PROJECT_STATE.md) owns
-measured validation/publication. No AI or OpenClaw path is used by this increment.
-Reviewed A/B row ingestion, mappings, estimation, real ChatGPT linking and production
-readiness remain open. Earlier milestone descriptions are historical checkpoints; do not
-infer phase completion from source presence.
+**Verified shared baseline:** `af822249b02cf197be62a6e03af32d409a3524fc`, merge
+commit for PR #216. Exact-head run 34054381404 passed 1,859 tests and all repository
+quality gates. PR #216 adds the early T13 pricing-evaluation lineage contract after the
+merged A/B profile and exact-profile review lifecycle. [PROJECT_STATE.md](./PROJECT_STATE.md)
+owns measured validation/publication. No AI or OpenClaw path is used by this increment.
+Reviewed A/B row ingestion, persisted holdout rosters, mappings, estimation, real ChatGPT
+linking and production readiness remain open. Earlier milestone descriptions are
+historical checkpoints; do not infer phase completion from source presence.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -27,14 +27,24 @@ contains the detailed component contracts, estimation methods, validation and ph
 acceptance criteria. Its proposed records and workflows extend ADRs 0001/0002; they
 are not claims about existing tables, imported datasets or measured accuracy.
 
-**Current bounded architecture change:** extend the merged A/B profile lifecycle with an
-append-only `approve`, `reject` or `request_revision` decision bound to the exact profile
-JSON hash. **Reason:** reviewed ingestion needs a durable human interpretation decision
-without granting that decision downstream authority. **Consequences:** decisions retain
-actor/time/reason/hash history and become stale after a newer profile; reviewed row
-observations, mappings, recipes and estimation remain separate. **Migration:** additive
-0041 adds one terminal decision per exact profile and refuses destructive downgrade;
-existing authority gates and optional AI boundaries remain unchanged.
+**Current bounded architecture change:** add a pure deterministic T13 contract that
+seals exact Firefly B observation lineage into connected training, validation and holdout
+groups before future feature selection. **Reason:** aliases, near-duplicate
+configurations, workbook copies or target-derived values must not make later backtests
+look more accurate than they are. **Consequences:** the contract binds exact
+dataset/source/profile/row/target hashes, computes transitive groups, freezes feature
+availability and fails closed on split contamination, changed policy, corrupt bytes,
+foreign Drafts, stale parents and caller-supplied replay history. It has explicit zero
+prediction, ingestion, library, Estimate and release effects. **Migration:** none. There
+is no persistence or UI until reviewed normalized observations and resolved identities
+exist; inventing placeholder assignments would weaken the boundary.
+
+**Prior bounded change (PR #214):** the merged A/B profile lifecycle has an append-only
+`approve`, `reject` or `request_revision` decision bound to the exact profile JSON
+hash. Decisions retain actor/time/reason/hash history and become stale after a newer
+profile. Migration 0041 adds one terminal decision per exact profile and refuses
+destructive downgrade. A profile decision grants no row, library, system, Estimate,
+technical or release authority.
 
 **Prior bounded change (PR #210):** merged PDF page/entity review and the manual graph editor
 now extend to explicitly mapped worksheet rows and chosen picture occurrences. The
@@ -114,6 +124,7 @@ still applies. Model output is proposed evidence, never authority.
 | Technical corpus | Individual TechnicalDocument intake, limited PDF metadata, JSONL Draft variants, manual source-bound materialisation/review | Planned batch inventory, versioned extraction/claims, stable system identity, deduplication and exception review for hundreds to thousands of documents. Existing source/review/publication gates remain. |
 | General pricing source A | Explicit `general_pricelist` identity, stable source versions, append-only profiles and exact-profile decisions over retained XLSX | Normalize reviewed product/material/labour/service observations and source cells, then review component/activity mappings. |
 | Firefly pricing source B | Separate `firefly_system_prices` identity with the same profile/decision lifecycle; system manufacturer/configuration gaps are explicit | Retain reviewed system-level observations separately, bind them to exact SystemRevision/configuration and preserve unmatched/ambiguous rows. |
+| Pricing evaluation | Pure T13 manifest builder/validator with exact B lineage, computed connected groups, fixed split/leakage policy, cutoff checks, canonical bytes/hash and revision/replay guards; synthetic contract tests only | After reviewed B observations and identities exist, persist/reopen/download actual rosters, enforce access separation, run untouched evaluations and record calibrated limits. |
 | Pricing coverage and proposals | Manual Draft rates, source selection, original values and override history | Planned coverage runs, evidence-based bottom-up/comparable/combined proposals, calibrated review and append-only approval/actual-cost feedback. Observed and derived prices remain distinct after approval. |
 | Draft persistence | Scope/report/candidate/Estimate records, PDF/Excel/pricing source bindings, retained PDF suggestions, 0040 A/B profile history and merged 0041 decision history | Preserve owner/admin checks, exact dependencies, hashes, conditional saves and import lineage. Profile/decision package membership, source-inclusive portability and operating retention limits remain unfinished. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
@@ -1553,15 +1564,41 @@ profile saves, revalidates the exact current profile and appends a separately ha
 decision envelope. Replays, stale/foreign/changed/corrupt inputs fail closed. A later
 profile makes prior decision history stale without changing its bytes. Existing
 `apply_rate` remains a different command. Neither profile nor decision creates Estimate,
-LibraryRelease or TechnicalVariant records. T13 lineage/holdout sealing and reviewed A
-component/activity or B system/configuration mappings are next; package membership,
-client parity, bulk capacity and price prediction remain unresolved.
+LibraryRelease or TechnicalVariant records. Reviewed A component/activity and B
+system/configuration mappings are next; package membership, client parity, bulk capacity
+and price prediction remain unresolved.
 
 The service permission is `pricing:approve`, but the current Draft page also requires
 owned project/Estimate read access. In the demonstrated role model this makes the usable
 reviewer an administrator; `pricing_manager` cannot open another user's Draft. A scoped
 reviewer assignment/read model is unresolved production work. Do not solve it by granting
 global Draft visibility.
+
+### Implemented pre-model pricing-evaluation lineage contract (early T13)
+
+Current architecture -> change -> reason -> consequences -> migration: no protected
+pricing-evaluation boundary existed -> PR #216 adds
+`draft_pricing_evaluation_contract.py` -> later prediction and retrieval work must not
+contaminate its own benchmark -> exact B observation provenance, fixed feature policy and
+connected split grouping are executable before model work begins -> no database migration
+or runtime wiring is added.
+
+The contract binds dataset/version, source/hash, profile/revision/hash, worksheet row/hash,
+hashed target and availability. It computes transitive groups from system identity, alias
+cluster, near-duplicate configuration cluster, source derivation and workbook-version
+lineage. A group cannot cross training, validation and holdout. Feature declarations may
+use technical facts, independently sourced A/labour data or training observations only,
+and nothing available after the frozen cutoff. The canonical envelope preserves
+actor/time, parent/hash lineage and explicit zero prediction, ingestion, library,
+Estimate and release effects.
+
+This is implemented validation, not an implemented evaluation workflow. It has no model,
+target store, table, route, UI or background job. Reopen/exact-byte validation works for
+caller-supplied canonical bytes, while replay checks require the caller to supply known
+hashes. Future persistence must bind these rules to reviewed normalized B observations,
+resolved technical identities, scoped evaluation access and append-only storage. Until
+then there is no saved roster, hidden-target separation, evaluation run, metric,
+calibration or approved threshold.
 
 ### Implemented current increment: independent scope-and-system reports (P4b)
 

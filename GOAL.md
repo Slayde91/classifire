@@ -200,7 +200,7 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: seal evaluation lineage, then map one reviewed row
+## Immediate delivery priority: map one reviewed A row
 
 PDF/Excel graph review and optional one-page suggestions are merged through PR #211.
 Preserve their manual fallback, shared graph review, exact history and bounded optional
@@ -214,10 +214,17 @@ PR #214 adds one immutable approve/reject/request-revision decision against
 an exact profile hash, with reviewer/time/reason history, stale status and exact download.
 It grants no row, library, system, Estimate, technical or release authority.
 
-Next establish the smallest T13 sealed lineage/holdout
-manifest before prediction feature selection or evaluation. Then build one reviewed A
-observation/component mapping or B-system mapping vertical slice. Use synthetic fixtures
-until actual source rights and semantics are verified.
+PR #216 establishes the pre-model T13 lineage/leakage contract: exact B observation
+bindings, connected alias/configuration/version groups, frozen train/validation/holdout
+rules, target-feature exclusions and canonical hashes. Because reviewed normalized B
+observations do not yet exist, it does not persist a roster or run an evaluation.
+
+Next build one reviewed A observation and product/material/labour/service mapping through
+the existing pricing UI, bound to the approved exact profile and source row. Save, reopen
+and download immutable Draft evidence without activating the Product/Labour libraries or
+changing an Estimate. Follow with one B-system mapping, then instantiate the T13 contract
+from real reviewed identities. Use synthetic fixtures until actual source rights and
+semantics are verified.
 
 T1-T14 dependencies remain: reviewed identities and field claims, immutable recipes,
 lineage-aware holdouts and measured coverage precede derived costing/calibration.
