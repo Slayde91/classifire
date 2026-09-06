@@ -114,6 +114,13 @@ All retained binary ancestors keep current permission and quarantine checks on
 download/re-export. Keep the approved `src/classifire/static/brand/classifire-logo.png` asset in
 UI and output paths; do not substitute an older or regenerated logo.
 
+For external client work, read `docs/DRAFT_CLIENT_V1_CONTRACT.md`. Keep the MCP
+adapter optional, map verified external identity to an explicit active local user,
+and preserve current permission/owner checks. Client write tools prepare durable
+proposals; only a separate same-user browser session confirms Draft writes. A tool
+argument, token scope or chat message is not human confirmation. Never expose a
+client method that executes a pending request or acquires canonical approval power.
+
 ## OpenClaw, AI and security
 
 Keep deterministic CLASSIFIRE logic inside CLASSIFIRE. OpenClaw and Mission Control

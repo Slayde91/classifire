@@ -2,16 +2,15 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.16 - editable imported Draft projects.
+**Architecture version:** 5.17 - authenticated Draft client with human confirmation.
 
-**Verified shared baseline:** `13a5b34ebb08eb287aebf02ed218c78ff539f1d5`, merged
-PR #202. Exact-head CI 34002073595 and main CI 34002483886 succeeded.
-Current branch `feat/draft-package-materialization-20260906` implements transactional
-new-project import and v2 re-export. PROJECT_STATE.md records its current validation
-and publication; branch implementation does not imply merge or production readiness.
-Earlier milestone descriptions below are historical checkpoints where a later
-amendment supersedes their status. The component table and final import section
-state the current design; planned product coverage remains separately identified.
+**Verified shared baseline:** `2f79e490049d23a9dc8e34e3aa54fb8d232a960d`, merged
+PR #203. Exact-head CI 34007195747 passed 1,470 tests; main CI 34007644149 succeeded.
+Current branch `feat/chatgpt-draft-client-20260906` adds the optional MCP resource
+server and human review flow. PROJECT_STATE.md records validation/publication;
+local implementation is not proof of an external ChatGPT connection or production readiness.
+Earlier milestone descriptions are historical checkpoints where a later amendment
+supersedes their status. Current component/amendment sections distinguish remaining coverage.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -85,6 +84,7 @@ still applies. Model output is proposed evidence, never authority.
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
 | Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is merged in PR #200; selected-workspace import is implemented on the current branch; ChatGPT remains planned. |
+| Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. External linking and the other capability tools remain incomplete. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
@@ -451,13 +451,13 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared main has packaged head 0034_draft_project_packages; 0031 report, 0032 PDF source and 0033 pricing source migrations precede it |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared baseline is 0035_draft_package_imports; the client branch adds 0036_draft_client_requests without rewriting history |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, hash-bound Draft source-document predecessor lineage, source locators, independent activation, pinned active releases, atomic governed publication, and read-only lineage | Extraction-assisted and manufacturer-neutral lineage plus production technical authority remain incomplete |
-| Estimating/output | Canonical calculation/outputs/desk quotes plus local independent manual Draft Estimate contract, history, partial totals and JSON | Full pricing coverage, technical-to-component recovery, other Draft report profiles and release chain remain incomplete |
+| Estimating/output | Canonical calculation/outputs/desk quotes plus local independent manual Draft Estimate contract, history, partial totals and JSON | All four independent Draft report profiles exist; full pricing, technical-to-component recovery and production release remain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Transitional current implementation. The accepted target is a small CLASSIFIRE-owned deterministic job/run coordinator with bounded optional AI adapters; journal/lifecycle foundations are implemented, but full migration remains incomplete and OpenClaw stays until parity gates pass. Neither control plane owns canonical estimate state. |
 
 Production startup validates configuration before storage work, never runs
@@ -892,8 +892,9 @@ claiming complete protection; legacy empty-list receipts remain observation-only
 This is a verified migration gap, not a new guarantee or permission to remove guards.
 Complete remaining contract gates before production replacement wiring; extend the
 existing journal/BackgroundJob boundary instead of inventing parallel run state.
-Portable `ProjectPackage`, ChatGPT/MCP adapters, production standalone packaging
-and OpenClaw retirement remain planned; the existing standalone Draft UI is implemented. No part
+Selected ProjectPackage exchange and the first optional MCP Draft adapter are
+implemented as described in later amendments. Full project coverage, real ChatGPT
+linking, production standalone packaging and OpenClaw retirement remain incomplete. No part
 of this documentation decision grants canonical, technical, commercial, lock,
 deployment, provider-run, or Human Release authority.
 
@@ -1461,3 +1462,56 @@ quotas, production process sandboxing, tenant isolation, full technical applicab
 governed pricing and ChatGPT authentication/client parity still need their own proof.
 Keep broad polish behind interactive trials; preserve protection parity before
 retiring OpenClaw. ADRs 0001/0002 remain accepted and unchanged.
+
+
+## Implemented client amendment: first authenticated Draft interaction
+
+Current architecture -> change -> reason -> consequences -> migration:
+
+- Existing browser sessions and shared Draft services remain. An opt-in MCP resource
+  server uses the official SDK over Streamable HTTP in the same FastAPI application.
+  This gives ChatGPT-compatible clients shared create/read/edit/package commands
+  without moving business logic into an agent or introducing a second database.
+- The operator enables `draft_client_config` and the `chatgpt` dependency extra.
+  JWT verification uses explicit issuer/resource, pinned public keys, short token
+  lifetime, subject-to-local-User mappings, allowed clients/scopes and local revocation.
+  Every operation checks current account/role/ownership; external clients remain
+  owner-only even when the mapped local user is an administrator. No automatic
+  account linking, client-supplied keys, token passthrough or browser-cookie MCP access.
+- Create/edit/package tools retain a proposed command. Only the same human's browser
+  session, CSRF check and explicit confirmation execute existing Draft services.
+  A compare-and-set and caller-owned transaction bind the decision and resulting
+  revision together. Stale writes, duplicate decisions and revoked grants fail closed.
+  Proposal and human decision audits retain the client, actor, payload hash and result.
+- Read and ZIP download tools use the same saved revisions and existing permissions,
+  integrity and quarantine checks. Downloads use an authenticated backend URL or the
+  existing logged-in browser route; credentials never enter URLs. No capability runs
+  implicitly and foreign approvals remain unverified.
+- Migration 0036 adds only `draft_client_requests`; historical migrations and native
+  artifact bytes remain unchanged. Retained review history prevents destructive downgrade.
+  Current-head readiness fixtures advance explicitly; old upgrade baselines remain old.
+- Scope proposals are rendered with the existing readable Scope component. Sign-in
+  returns only to a validated local review identifier, not an arbitrary redirect URL.
+
+```mermaid
+flowchart LR
+  C[ChatGPT-compatible MCP client] --> A[OAuth resource server]
+  A --> R[Retained client request]
+  H[Signed-in human] --> V[Review and confirm]
+  R --> V
+  V --> D[Shared Draft services]
+  U[Standalone UI] --> D
+  D --> S[Governed database and retained files]
+  A --> D
+  S --> X[Exact authenticated package download]
+```
+
+The client is a deterministic adapter, not an AI provider or orchestration fleet.
+The local proof uses synthetic signed tokens and the official SDK plus Chrome.
+A production OAuth authorization server, account linking, HTTPS deployment and a
+real ChatGPT session have not been configured or demonstrated. Key rotation and
+issuer-side revocation operations still need deployment validation; local policy
+revocation is immediate, otherwise accepted tokens expire within 15 minutes.
+The first tools cover Scope and selected package operations. Independent matching,
+estimating and report-generation tools are the next shared-service extension.
+See [client contract and setup](./DRAFT_CLIENT_V1_CONTRACT.md) for exact boundaries.

@@ -85,7 +85,7 @@ prototype into it.
 | **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; full governed pricing still upcoming** | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Download/preview merged PRs #200/#202; editable import/v2 re-export implemented on current branch, validation/publication active; thin client parity next | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first authenticated client parity locally verified, publication active; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
@@ -102,24 +102,31 @@ bytes stay exact. This does not complete full project/history/source coverage.
 See [contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md).
 
 **Active publication milestone: editable new-project package import.** The current
-branch creates a new owned Draft project through explicit confirmation, preserves
+implementation creates a new owned Draft project through explicit confirmation, preserves
 all selected original artifacts/history/report bytes, maps local identities and
 supports Scope/review/Estimate editing and v2 origin-preserving re-export. Reports
 use existing scan/quarantine controls. Foreign source/approval claims never activate
-local authority. Browser/restart, 506 affected tests and 10 final focused tests passed; finish
-exact-head CI/PR before classifying this as a completed shared increment; preview alone was not that exit.
+local authority. This increment merged in PR #203 at `2f79e49`; exact-head CI passed
+1,470 tests and main CI 34007644149 succeeded. Browser/restart and 506 affected local
+tests also passed; this does not complete full-project source/history coverage.
 
-**Next after this milestone:** a thin authenticated ChatGPT-facing Draft interaction
-using existing commands. Start with create/read/edit/download parity for an owned
-Scope/package, explicit mutation confirmation and no automatic downstream work.
-Inspect the current supported integration/authentication model before choosing the
-adapter. Local synthetic proof precedes external credentials or deployment. Do not
-make every domain edge case a prerequisite to this second interface.
+**Current client increment:** optional MCP Scope/create/edit/package tools, OAuth
+resource verification, durable proposals, same-user browser confirmation and exact
+shared downloads are implemented on `feat/chatgpt-draft-client-20260906`. Official
+SDK/Chrome/restart proof passed. This is not a real ChatGPT account link; external
+OAuth provider configuration, HTTPS publication and account-specific acceptance are
+pending. Finish exact-head CI/PR publication before marking the increment shared.
 
-Then add shared ChatGPT access over these proven commands. Broader evidence analysis,
-actual applicability and governed pricing retain unmet exits; archive transfer does
-not complete them. Source-body export, multiple workspace collections, full revision
-history, production retention/quotas and operational security remain future work.
+**Next executable product task:** extend this same client adapter to the existing
+independent System Match, Estimate and report use cases. Reuse the retained proposal
+and human confirmation flow; keep explicit inputs/revisions and no automatic chaining.
+Prove the same saved results in client and UI with synthetic data. This closes the
+second interface's capability gap without adding a provider, fleet or parallel core.
+Live OAuth/ChatGPT linking proceeds only with the required deployment/account authority.
+
+Broader evidence analysis, actual applicability, governed pricing, source-body export,
+full revision/project coverage, retention/quotas and production security keep their
+unmet exits. Gather user feedback on each usable slice before broad refinement.
 
 Defer every-format intake, OCR/agent automation, exhaustive technical edge coverage,
 general job infrastructure and report polish until the supported interactions have

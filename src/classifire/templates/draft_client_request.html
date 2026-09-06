@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Review client request | CLASSIFIRE{% endblock %}
+{% block heading %}Review proposed Draft change{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<section class="panel">
+<p>Client: <strong>{{ client_id }}</strong> &middot; Status: <strong>{{ row.status }}</strong></p>
+<p>This is a proposal from your connected client. Check the complete change before saving it. Confirmation creates Draft data only; it grants no technical approval, lock or release.</p>
+{% if row.command == 'create' %}<h2>Create a Draft project</h2><dl><dt>Reference</dt><dd>{{ payload.reference }}</dd><dt>Name</dt><dd>{{ payload.name }}</dd></dl>
+{% elif row.command == 'edit' %}<h2>Save a new Scope revision</h2><p>Expected revision {{ payload.expected_revision }}. Current revision {{ previous.revision }}.</p>
+{% with envelope=proposed, scope_content_heading='Proposed Scope content', scope_content_id='proposed-scope-heading' %}{% include 'draft_scope_report_content.html' %}{% endwith %}
+<details><summary>Compare with current saved content</summary>{% with envelope=previous, scope_content_heading='Current saved Scope', scope_content_id='current-scope-heading' %}{% include 'draft_scope_report_content.html' %}{% endwith %}</details>
+{% if findings %}<h3>Validation findings</h3><ul>{% for finding in findings %}<li>{{ finding.message }}</li>{% endfor %}</ul>{% endif %}
+{% else %}<h2>Save a project package</h2><p>Only these saved revisions and reports are included. Unselected and restricted sources remain outside this export.</p><dl class="scope-import-details">{% for key,value in payload.selection.items() %}<dt>{{ key|replace('_', ' ')|capitalize }}</dt><dd>{{ value if value is not none else 'Not included' }}</dd>{% endfor %}</dl>{% endif %}
+{% if row.status == 'pending' %}
+<p>Authorization expires at {{ row.expires_at }} UTC. A stale edit or revoked permission will be refused.</p>
+<form method="post" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="payload_hash" value="{{ row.payload_hash }}">
+<button type="submit" name="decision" value="confirm" class="button button-primary">Confirm and save Draft change</button>
+<button type="submit" name="decision" value="reject" class="button">Reject proposal</button>
+</form>
+{% elif result %}<p>The request is {{ result.status }}.</p>
+{% if result.draft_id %}<p><a href="/scopes/{{ result.draft_id }}">Open saved Draft</a></p>{% endif %}
+{% if result.package_id %}<p><a href="/scopes/{{ result.draft_id }}/packages/{{ result.package_id }}/download">Download saved project package</a></p>{% endif %}
+{% endif %}
+</section>{% endblock %}

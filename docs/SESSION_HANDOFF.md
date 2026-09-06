@@ -1,147 +1,133 @@
 # CLASSIFIRE Session Handoff
 
-## Verified context
+## Verified branch and project context
 
-2026-09-06 AEST. Worktree `C:\CLASSIFIRE\.tmp\draft-package-materialization-20260906`;
-branch `feat/draft-package-materialization-20260906`, based on shared main
-`13a5b34ebb08eb287aebf02ed218c78ff539f1d5` (merged PR #202). PR #202 exact-head CI
-34002073595 and main CI 34002483886 succeeded. This is a checkpoint; recheck live
-publication and current origin/main before continuing. The full product goal remains
-active and incomplete. ADRs 0001/0002 remain accepted; no OpenClaw retirement.
+2026-09-06 AEST. Worktree `C:\CLASSIFIRE\.tmp\chatgpt-draft-client-20260906`, branch
+`feat/chatgpt-draft-client-20260906`, based on main `2f79e490049d23a9dc8e34e3aa54fb8d232a960d`
+(PR #203). PR #203 exact-head CI 34007195747 passed 1,470 tests and main CI 34007644149
+succeeded. Recheck current upstream/head/PR/CI before editing or publishing this branch.
+The full platform goal remains active and incomplete. ADRs 0001/0002 are accepted.
 
-## Current changes and verified issues
+## Work and evidence
 
-New-project import now uses shared semantic inspection, signed confirmation, one
-Draft transaction, explicit local identities, immutable original archive/mapping,
-editable imported Match/Estimate wrappers and origin-preserving v2 re-export.
-Migration 0035 retains native records and separates imported origins from eligible
-library releases. Report attachments reuse PostgreSQL shared scan/quarantine and a
-bounded format worker. Missing or unsafe binaries cannot download/re-export.
+Current changes implement the first optional authenticated MCP client with shared
+Scope/create/edit/package commands. Durable proposals require the same human's UI
+confirmation; SQL compare-and-set prevents double execution. Migration 0036 is
+additive and retains review history. JWT policy explicitly maps external subjects
+and clients to local users/scopes; current role, owner, expiry and revocation checks
+remain mandatory. No provider or canonical approval/lock/release is exposed.
 
-The browser exposed a PostgreSQL Match/Estimate insert-order error; the referenced
-Match revision is now flushed before its Estimate and a full PostgreSQL case was
-added. Historical migration fixtures were updated to insert through actual reflected
-old columns, preserving SQL NULL, original JSON/bytes, FK assertions and downgrade
-refusals. Do not run today's ORM against an old schema or weaken constraints.
+The official SDK and Chrome completed create/edit/package/download with exact
+client/browser bytes and the supplied logo. Actual process restart preserved bytes;
+sign-in returned to the requested review and rejection persisted. The final screen
+reuses the readable Scope component instead of presenting raw JSON as the main review.
+Final presentation/static/CI status must be verified live. Measured suites: 38
+client/migration/readiness checks, 11 PostgreSQL/preflight checks, 74 affected checks
+(one separately passed PostgreSQL test skipped in that run). Mypy passed 190 files;
+Ruff/Bandit passed before final presentation changes. Do not sum overlapping runs.
 
-Measured so far: 23 core/HTTP/readiness checks, six migration checks and PostgreSQL
-retention/re-import/quarantine/rollback checks passed. Chrome completed both package
-profiles through local edits and new ZIP downloads; independent inspection confirmed
-original bytes/history and the edited price. Mypy passed for 186 files. Restart/re-import verification passed with exact downloads and preserved edited
-Estimate/history. Affected regression passed: 506 tests, three warnings. The final focused run passed 10 tests, including populated PostgreSQL import and
-local workbook pricing edits. Ruff, Mypy, Bandit and one 0035 migration head passed.
-Publication remains to be verified against live exact-head CI/PR. Consult current
-command output/CI rather than assuming later completion from this text.
+Local evidence in `C:\CLASSIFIRE\.tmp`:
+`draft-client-browser-receipt.json`, `draft-client-restart-receipt.json`,
+`draft-client-db-receipt.json`, `draft-client-export.zip`, screenshots named
+`draft-client-*.png`, `draft-client-probe.py`, and browser scripts under
+`scope-browser-test-tools`. No receipt contains a real customer/provider token.
+The synthetic token stays inside the marked demo directory and expires in 15 minutes.
 
-Synthetic demo: `http://127.0.0.1:8811/scopes`, login `scope-demo@example.test` /
-`synthetic-scope-demo-only`. Data directory `.tmp/draft-import-demo-20260906`, separately
-marked PostgreSQL database `classifire_draft_import_demo` on loopback port 15432;
-ClamD is loopback port 13310. Launch from this worktree:
+Demo: `http://127.0.0.1:8812/scopes`; login `scope-demo@example.test` /
+`synthetic-scope-demo-only`. Launch from this worktree using:
 
 ```powershell
-C:\CLASSIFIRE\.venv\Scripts\python.exe scripts/run_draft_scope_demo.py --port 8811 --data-dir C:\CLASSIFIRE\.tmp\draft-import-demo-20260906 --postgres-demo-port 15432 --postgres-demo-database classifire_draft_import_demo
+C:\CLASSIFIRE\.venv\Scripts\python.exe scripts/run_draft_scope_demo.py --port 8812 --data-dir C:\CLASSIFIRE\.tmp\draft-client-demo-20260906 --client-demo
 ```
 
-Use hidden background launches and inspect process command lines before stopping
-only this demo. Never reset/adopt another database. Earlier demos and worktrees remain.
-Local-only evidence: `.tmp/import-materialization-browser-receipt.json`,
-`import-materialization-content-receipt.json`, edited JSON/ZIP files and screenshots;
-`import-materialization-restart-receipt.json` and `import-materialization-db-receipt.json`
-record successful restart/re-import and zero canonical Estimate/physical/lock counts. Browser scripts live in
-`.tmp/scope-browser-test-tools`. The exact supplied logo is served and visually checked.
+Use hidden background launches. Inspect command lines before stopping only this
+specific demo. The launcher binds only loopback and a marked synthetic SQLite
+store; it is not a production OAuth server. Earlier import demo at 8811 remains.
+The exact user logo remains `src/classifire/static/brand/classifire-logo.png`.
 
-Preserve the legacy root `gpt/phase8-linked-original-images`: four DU conflicts,
-46 unstaged modifications, 14 staged additions and unrelated untracked files. Old
-pytest directories have enumeration warnings; do not claim a complete untracked
-inventory. Preserve `.tmp/project-package-draft-20260905` and its three generic archive
-experiments. No broad staging, reset, clean, conflict resolution or root publication.
+Legacy root and old worktrees were preserved. The last root inventory recorded four
+DU conflicts, 46 unstaged modifications, 14 staged additions and unrelated untracked
+work; enumeration of some old pytest directories was incomplete. Never broadly stage,
+reset/clean, resolve or publish that root. Recheck any state needed for recovery.
 
 ## Start Here / Next Session
 
-First inspect AGENTS.md, GOAL.md, project state, roadmap, architecture/ADRs, Git status,
-diffs, worktrees, origin/main and exact-head PR/CI. Resolve outstanding verification/
-publication for this import branch before starting a new implementation. All branch
-changes are intended import work; preserve unrelated work and retained demo evidence.
+**First task:** reconcile current branch/PR/CI and finish publication if needed.
+Then extend the existing MCP adapter to the three remaining independently callable
+Draft capabilities: System Match, Estimate and reporting. This is the next product
+increment because their standalone commands exist and the second interface currently
+covers only Scope and selected package operations. Avoid a new orchestration layer.
 
-**Single next product task after import publication: first thin authenticated
-ChatGPT-facing Draft create/read/edit/download workflow over the existing services.**
-The standalone UI and selected-package lifecycle now provide the reusable core; the
-second interface is the remaining user-facing integration requirement. It need not
-wait for every technical/pricing edge case. Do not rebuild the core or fork domain logic.
+**Files:** `draft_client.py`, `draft_client_auth.py`,
+`services/draft_client_requests.py`, `services/draft_system_matches.py`,
+`services/draft_estimates.py`, `services/draft_scope_reports.py`,
+`services/draft_estimate_reports.py`, related UI modules/contracts/tests and
+`docs/DRAFT_CLIENT_V1_CONTRACT.md`. Inspect actual callable signatures and permissions.
 
-Files/components: application route registration, `security.py`, Draft Scope/package
-services, `draft_project_package_ui.py`, existing owner/permission/CSRF patterns,
-capability contracts and `docs/DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md`. Inspect actual
-paths/contracts before editing; no ChatGPT adapter or authentication decision is
-claimed implemented here.
+**Prerequisites/dependencies:** current shared baseline, optional `chatgpt` extra,
+synthetic authorized library/pricing inputs and explicit saved revisions. Preserve
+request confirmation and ownership boundaries, including foreign imported sources.
+Real OAuth provider credentials, HTTPS deployment and ChatGPT account connection
+require separate operational authority; they do not block safe local parity work.
 
-Prerequisites: verify merged import behavior and current integration documentation;
-choose explicit human/client identity, ownership, mutation confirmation and bounded
-file transfer over the existing backend. Existing tenant/project privacy is not fully
-proven. External credentials, HTTPS deployment and app connection are separate
-boundaries; do not expose local writes or substitute agent credentials implicitly.
-No local implementation blocker is established. Local parity can use synthetic clients.
+**Definition of done:** each added capability can be called independently with
+valid explicit inputs, reviewed/confirmed by its human owner, reopened and downloaded
+with the same saved results as the UI. Deny foreign/revoked/stale/replayed requests.
+No automatic analysis/matching/pricing/report chain, no core duplication or canonical
+promotion. Inspect client/browser outcomes and outputs, not only schemas.
 
-Definition of done for the next slice: one authenticated client can create an owned
-Draft, read/edit explicit revisions, validate and retrieve the exact package; denied
-ownership/permissions, stale writes and missing confirmation fail safely. No matching,
-pricing/provider or canonical workflow runs implicitly. Demonstrate UI/client parity
-and restart persistence; document exactly what was and was not connected externally.
-
-Validation for current import changes:
+**Validation:** focused client/auth/service/HTTP and relevant capability/report
+regressions; official SDK + browser saved-artifact/restart parity; Ruff, Mypy,
+Bandit and one Alembic head. For the current client branch:
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp <unique-temp> tests/test_draft_package_materialization.py tests/test_draft_package_import_ui.py tests/test_draft_import_reports.py tests/test_migrations_draft_package_imports.py
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp <unique-temp> tests/test_draft_client.py tests/test_migrations_draft_client_requests.py tests/test_human_session_security.py tests/test_deployment_lineage.py
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
 ```
 
-PostgreSQL tests require the repository's explicitly opted-in disposable
-`classifire_containment_test` fixture; never point destructive tests at a demo,
-customer or operational database. Run relevant new adapter/auth/permission/conflict
-and existing Draft regressions for the next slice, plus actual client/browser parity.
+PostgreSQL tests use the guarded disposable `classifire_containment_test` fixture.
+Verify its isolation before opting in; never target demo/customer/operational stores.
+Use a unique temporary directory and inspect the source import path in worktrees.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from verified repository state. Inspect AGENTS.md, GOAL.md,
+> Continue CLASSIFIRE from verified repository state. Read AGENTS.md, GOAL.md,
 > docs/PROJECT_STATE.md, docs/CLASSIFIRE_ROADMAP.md, docs/CLASSIFIRE_ARCHITECTURE.md,
-> docs/SESSION_HANDOFF.md, accepted ADRs 0001/0002, Git status/diff/worktrees,
-> origin/main and current exact-head PR/CI before editing. Preserve the conflicted
-> C:\CLASSIFIRE root, unrelated changes, old worktrees and synthetic evidence. First
-> finish any outstanding verification/publication of feat/draft-package-materialization-20260906;
-> do not rebuild its editable package import. Then the single next product task is
-> the first thin authenticated ChatGPT-facing Draft create/read/edit/download slice,
-> because the standalone UI and shared package services now provide reusable core
-> behavior and the second interface is missing. Inspect actual route registration,
-> security.py, Draft Scope/package/import services, UI tests and package contracts.
-> Check current official integration guidance; establish human/client identity,
-> ownership and explicit mutation confirmation before exposing writes. Reuse existing
-> services, keep AI optional and avoid speculative infrastructure or automatic
-> capability chaining. Done means a synthetic authenticated client creates, edits,
-> validates and downloads one owned Draft/package with exact bytes, restart/UI parity,
-> and refusal of foreign access, revoked rights, stale writes and unconfirmed changes.
-> Run focused client/auth/service/HTTP/permission/conflict tests, affected Draft/package
-> regressions, Ruff, Mypy, Bandit and migration-head checks. External credentials,
-> deployment and real-provider/customer/canonical operations require separate authority;
-> complete safe local work and report any concrete external blocker. Continue
-> autonomously through implementation, validation, change classification, explicit
-> commit, normal push, PR and merge when current-head checks/reviews permit. Preserve
-> unrelated work and never bypass CI, approval or release protections. Update the
-> aligned goal/state/architecture/roadmap/handoff from evidence and explain plainly.
+> docs/SESSION_HANDOFF.md and docs/DRAFT_CLIENT_V1_CONTRACT.md. Inspect Git status,
+> worktrees, origin/main and current PR/head/CI before editing. Preserve the conflicted
+> C:\CLASSIFIRE root, unrelated local changes, old worktrees and synthetic receipts.
+> First finish any outstanding publication of feat/chatgpt-draft-client-20260906.
+> The next single product task is to expose the existing independent Draft System
+> Match, Estimate and report workflows through that same authenticated MCP adapter,
+> because their UI/shared services exist but the client currently covers only Scope
+> and packages. Inspect draft_client.py, draft_client_auth.py, the retained request
+> service and existing matching/estimate/report services, contracts and tests. Reuse
+> shared domain logic and same-user browser confirmation; require current identity,
+> permissions, ownership and explicit saved inputs. Keep AI optional and never chain
+> capabilities or grant canonical approval implicitly. Use synthetic fixtures only.
+> Done means each capability works independently through client and UI with identical
+> saved artifacts/downloads after restart, with denied foreign, revoked, stale and
+> replayed requests. Run focused client/auth/HTTP/service and affected report tests,
+> official SDK/browser/output checks, Ruff, Mypy, Bandit and migration-head validation.
+> Real OAuth/HTTPS/ChatGPT account setup needs separate authority; complete safe local
+> work and identify exact external blockers. Avoid speculative infrastructure.
+> Continue autonomously through implementation, validation, change classification,
+> explicit commit, normal push, PR and merge after exact-head checks/reviews permit.
+> Never bypass protections; update aligned docs from evidence and explain plainly.
 
 
-## Publication checkpoint
+## Final local validation checkpoint
 
-PR #203 is open. Initial implementation commit `f02a693cd79efe3ebb994b33866e21b38fa1b249`
-was pushed normally. Initial hosted run 34006909588 correctly refused an old current-
-stack test fixture still stamped 0034; no production guard failed or was weakened.
-The preflight fixture and two remaining current-head migration assertions now expect
-0035. Recheck the latest PR head and full CI before merge; do not bypass that failure.
-
-The follow-up preflight/legacy-lineage checks passed: 10 tests. A fresh committed-
-server Chrome check confirmed exact saved archives/logo and ancestor report inventory.
+Final client/auth/readable-Scope regression: 64 passed, one PostgreSQL test skipped
+in that run (the separate PostgreSQL confirmation test passed). Full Ruff, Mypy
+(190 files), Bandit and the single 0036 migration head passed. Final Chrome inspection
+confirmed readable proposed physical content, the exact supplied logo, login return,
+persisted rejection and byte-identical downloads after process restart. Documentation
+links and diff whitespace checks passed. Git publication/full exact-head CI still
+must be checked live; these local results do not establish external ChatGPT linking.

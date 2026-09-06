@@ -1,8 +1,8 @@
 {% macro related_label(items, identifier) -%}
 {{ items|selectattr('id', 'equalto', identifier)|map(attribute='label')|first|default(identifier) }}
 {%- endmacro %}
-<section class="panel scope-import-content" aria-labelledby="scope-import-content-heading">
-  <h2 id="scope-import-content-heading">Saved Scope content</h2>
+<section class="panel scope-import-content" aria-labelledby="{{ scope_content_id|default('scope-import-content-heading') }}">
+  <h2 id="{{ scope_content_id|default('scope-import-content-heading') }}">{{ scope_content_heading|default('Saved Scope content') }}</h2>
   <h3>Defects</h3>
   {% for item in envelope.content.defects %}<article class="scope-import-item"><h4>{{ item.label }}</h4><p class="scope-item-id">ID: {{ item.id }}</p><p class="scope-preserve-text">{{ item.description or 'No description supplied.' }}</p></article>{% else %}<p class="scope-empty">No defects in this revision.</p>{% endfor %}
   <h3>Openings</h3>

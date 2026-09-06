@@ -49,6 +49,7 @@ dev = [
 ]
 postgres = ["psycopg[binary]>=3.2,<4"]
 malware = ["clamd>=1.0,<2"]
+chatgpt = ["mcp>=2.1.1,<3", "PyJWT[crypto]>=2.13,<3"]
 
 [project.scripts]
 classifire = "classifire.cli:app"
