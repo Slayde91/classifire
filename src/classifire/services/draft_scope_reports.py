@@ -31,6 +31,7 @@ from .draft_scope import (
     read_revision,
     validate_payload,
 )
+from .draft_scope_evidence import ENTITY_EVIDENCE_SCHEMA_VERSION
 from .draft_system_match_contract import MAX_MATCH_BYTES
 from .draft_system_match_contract import validate_envelope as validate_match
 from .draft_system_matches import match_staleness, read_match_revision
@@ -87,6 +88,12 @@ def _identity(value: Any) -> None:
         raise ValueError("identity")
 
 
+def _render_version(scope: dict[str, Any], *, system_profile: bool) -> int:
+    if scope.get("schema_version") == ENTITY_EVIDENCE_SCHEMA_VERSION:
+        return 4 if system_profile else 3
+    return 2 if system_profile else 1
+
+
 def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
     """Pure report contract validation, shared with deterministic renderers."""
     try:
@@ -105,7 +112,8 @@ def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
             != (SYSTEM_REPORT_SCHEMA_VERSION if system_profile else REPORT_SCHEMA_VERSION)
             or snapshot["profile"] not in ("scope-only", "scope-and-system")
             or type(snapshot["render_version"]) is not int
-            or snapshot["render_version"] != (2 if system_profile else 1)
+            or snapshot["render_version"]
+            != _render_version(snapshot["scope"], system_profile=system_profile)
             or snapshot["state"] != "Draft"
             or snapshot["review_status"] != "unreviewed"
         ):
@@ -217,7 +225,7 @@ def create_report(
         "project": _project(db, draft),
         "scope": scope,
         "profile": "scope-and-system" if match else "scope-only",
-        "render_version": 2 if match else 1,
+        "render_version": _render_version(scope, system_profile=match is not None),
         "created_by": actor.id,
         "created_at": created.isoformat(),
         "state": "Draft",

@@ -18,6 +18,7 @@ from ..models import DraftEstimateReport, User, new_id
 from .draft_estimate_contract import MAX_ESTIMATE_BYTES, validate_envelope
 from .draft_estimates import _estimate, estimate_staleness, read_estimate_revision
 from .draft_scope import DraftScopeError, _atomic, _valid_hash
+from .draft_scope_evidence import ENTITY_EVIDENCE_SCHEMA_VERSION
 from .draft_scope_reports import (
     _canonical,
     _checksum,
@@ -53,6 +54,12 @@ class DraftEstimateReportError(DraftScopeError):
     """Safe code only; report text, prices and customer data never enter errors."""
 
 
+def _render_version(estimate: dict[str, Any], *, complete: bool) -> int:
+    if estimate["scope"].get("schema_version") == ENTITY_EVIDENCE_SCHEMA_VERSION:
+        return 5 if complete else 4
+    return 3 if complete else 2 if estimate.get("pricing_sources") else 1
+
+
 def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
     try:
         if type(snapshot) is not dict or set(snapshot) != REPORT_KEYS:
@@ -66,7 +73,7 @@ def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
             != (COMPLETE_SCHEMA_VERSION if complete else REPORT_SCHEMA_VERSION)
             or type(snapshot["render_version"]) is not int
             or snapshot["render_version"]
-            != (3 if complete else 2 if snapshot["estimate"].get("pricing_sources") else 1)
+            != _render_version(snapshot["estimate"], complete=complete)
             or snapshot["state"] != "Draft"
             or snapshot["review_status"] != "unreviewed"
         ):
@@ -128,7 +135,7 @@ def create_report(
         "project": _project(db, draft),
         "estimate": envelope,
         "profile": profile,
-        "render_version": 3 if complete else 2 if envelope.get("pricing_sources") else 1,
+        "render_version": _render_version(envelope, complete=complete),
         "created_by": actor.id,
         "created_at": created.isoformat(),
         "state": "Draft",

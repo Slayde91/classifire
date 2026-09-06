@@ -2,166 +2,149 @@
 
 ## Verified branch and project context
 
-2026-09-06. Documentation worktree:
-`C:\CLASSIFIRE\.tmp\technical-corpus-dual-pricing-20260906`;
-branch `docs/technical-corpus-dual-pricing-20260906`.
-Shared baseline is `a22a02769d3b842d5d0129dbd09273759ae583c1`, merged PR #207.
-Its feature `75f3a8e004269f7e790b76818d89bfc770ab0465` passed CI 34019881433:
-1,522 tests, 141 warnings, Ruff/Bandit and Mypy (193 files). Main CI 34020498735
-succeeded, with identical feature/merge trees. No deployment or release occurred.
+2026-09-06. Worktree `C:\CLASSIFIRE\.tmp\defect-report-review-20260906`, branch
+`feat/defect-report-review-20260906`, baseline main
+`080845e2681e292cabb6f201f373a696d1fc40c1` (PR #208). Baseline feature CI passed
+1,522 tests and required static checks. Inspect live head/upstream, PR/CI and merge
+state before continuing; a document cannot include its own final commit hash.
+ADRs 0001/0002 remain accepted. The full production goal remains incomplete.
 
-This is a documentation checkpoint for the requested technical-corpus and dual-pricing
-amendment. Inspect live head/upstream, PR/CI and merge state before starting implementation;
-this file cannot contain its own final commit hash. ADRs 0001/0002 remain accepted.
-The full production goal is active and incomplete.
+## Current increment and verification
 
-## Current changes, verification and open issues
+This increment makes PDF defect-report upload visible and reuses the existing Scope
+graph editor beside the retained page. A person edits defects/openings/services,
+explicitly links selected items, previews, edits back if needed and confirms one
+atomic Draft revision. It adds v4 entity references to the same `evidence_refs` union;
+old observation refs and historical downloads remain readable. Changed/deleted items
+retain warnings. Imports retain unverified claims. Four report profiles support the
+new references and preserve old render versions. Package inventory already consumes
+the same array; exporting a selected Scope does not bundle original PDF bytes.
 
-Changed documentation: GOAL.md, AGENTS.md, docs/CLASSIFIRE_ARCHITECTURE.md (5.21),
-CLASSIFIRE_ROADMAP.md, PROJECT_STATE.md, SESSION_HANDOFF.md and DRAFT_PRICING_XLSX.md;
-new TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md. The integrated design follows the
-requested 16-section order; roadmap T1-T14 records dependencies and acceptance.
-There is no runtime implementation, migration, import, provider execution, pricing
-rule change, canonical write or operational-state change in this amendment.
+No AI/OCR interpretation, Excel defect ingestion, new canonical writer, dependency,
+migration, provider call, deployment or release is added. SQLite still supports manual
+Drafts; retained evidence requires the existing guarded PostgreSQL/storage/scanner setup.
 
-Verified foundations: technical source/variant review and release controls; bounded
-retained PDF/XLSX intake; Product/Labour/PricingLibraryRecord and Decimal calculations;
-four independent Draft capabilities; exact reports/packages and human-confirmed client
-proposals. PR #207 additionally passed 187 focused local tests plus official SDK,
-Chrome, real scan, actual restart and exact PDF/XLSX checks. Those are prior milestone
-evidence; new corpus/dual-source estimation functionality has not been tested or built.
+Changed components: draft_pdf_intake, draft_scope/evidence services, PDF/Scope routers,
+shared editor/preview templates and JS/CSS, report renderers/services/template globals,
+demo database allowlist and three focused test modules. Documentation aligns GOAL,
+AGENTS, architecture 5.22, roadmap, PDF contract/demo and retained corpus/pricing design.
+Final relevant PDF/Scope/report/package/client regression: **264 passed**, no skips,
+one expected malformed-ZIP warning, in 1,308.86 seconds. Full PR CI/review and merge
+remain publication checks; verify their live result before moving to the next task.
 
-New dependencies/gaps: distinct A/B source identity and explicit cost/sell/unit/basis;
-reviewed system/configuration mappings; immutable component/activity recipe publication;
-full coverage/recovery; lineage-aware holdouts and calibration. Existing technical
-release v3 lacks complete BOM/labour snapshots. Generic XLSX row limits include the
-header (maximum 1,000); UI/search caps and job lifecycle do not meet corpus scale.
-Legacy Package 14 CSV defaults, derived Product lineage and raw-file release manifests
-must not be silently reused as trusted new A/B ingestion or independent test evidence.
+Browser proof passed 11 checkpoints with no page errors, including shared opening/two
+services, a separate blank opening and explicit unknown dimensions/quantities. Three
+real PDF/XLSX profiles and package export worked; no technical release was seeded,
+so Scope+System is covered by synthetic output tests rather than this browser run.
+After real restart/fresh login, current/historical Scope JSON, both page images,
+three report pairs and ZIP hashes matched. Changed/deleted item warnings remained.
+Actual report images and workbook cells were inspected. Ruff/Bandit and Mypy (193
+files, existing isolated reportlab/yaml stubs) passed. Alembic still has head 0037.
+Two earlier tests failed in PDF fixture setup; both passed unchanged on rerun.
 
-Neither named workbook was located in inspected tracked/root-level/data/docs locations;
-no workbook cells were read. Actual layout, dates, currency/tax, cost/sell meaning,
-1,000-plus row count and source rights need verification from authorized originals.
-This blocks real-data acceptance, not a synthetic source-profile UI implementation.
-Review thresholds, recipe/productivity authority and broader operating limits remain
-open; do not invent them to make an estimate look complete.
+## Preserved local changes and runtime context
 
-## Preserved local context
+Never work from or repair the conflicted recovery root `C:\CLASSIFIRE`. It remains on
+`gpt/phase8-linked-original-images`, with 46 unstaged tracked modifications, 14 staged
+additions and four DU conflicts at task start. Untracked/ignored recovery material
+was not exhaustively enumerated. Preserve all unrelated changes, worktrees, earlier
+demos/receipts/scanners and the supplied logo; no broad staging/reset/cleanup.
 
-The conflicted root `C:\CLASSIFIRE` remains on `gpt/phase8-linked-original-images`
-with four DU conflicts and pre-existing staged/unstaged/untracked work. Preserve it
-as recovery evidence; never reset, clean, resolve, broad-stage or publish there.
-The prior `client-workbook-pricing-20260906` worktree is unrelated merged work.
-Earlier worktrees/demos/receipts/scanners remain preserved. The approved logo at
-`src/classifire/static/brand/classifire-logo.png` matches the supplied root PNG:
-SHA-256 `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+New synthetic demo: `http://127.0.0.1:8816/scopes`, marked data directory
+`C:\CLASSIFIRE\.tmp\defect-report-demo-20260906`, separate PostgreSQL database
+`classifire_draft_defect_report_demo` on loopback 15432, current ClamD port 13311.
+Owned launcher was restarted during proof. Verify exact live process command line
+before stopping/restarting only this demo; start helpers hidden. Do not assume ports,
+process IDs or scanner freshness remain current. Read launcher login setup locally;
+do not copy credentials, session markers or bearer tokens into handoffs/PRs/logs.
+See DRAFT_PDF_DEMO.md. Existing 8815 and older demos remain separate and preserved.
 
-Prior synthetic runtime receipts under `C:\CLASSIFIRE\.tmp` include
-`client-pricing-publication.json`, `client-pricing-browser-receipt.json`,
-`client-pricing-restart-receipt.json` and `client-pricing-output-inspection.json`,
-plus PDF/XLSX/screenshots. Verify live GitHub state over an older receipt.
-The prior demo directory is `client-pricing-demo-20260906`, URL
-`http://127.0.0.1:8815/scopes`, with separate PostgreSQL database
-`classifire_draft_client_pricing_demo` on loopback 15432. Do not assume it is still
-running or reuse its data as a destructive test fixture. Read local launcher setup
-without copying credentials or bearer tokens into docs, logs or prompts.
-
-The separate guarded test database has been `classifire_containment_test`. Verify
-its ownership, isolation and idle state before any cleanup opt-in. Scanner 13311 was
-a native disposable ClamAV setup; 13310 is an older preserved scanner. Prior scan
-freshness is not current scan authority. Inspect current scanner definitions and
-exact process command lines before operating only owned demos. Background helpers
-must launch hidden. No runtime service was changed for this documentation task.
+Receipts in `C:\CLASSIFIRE\.tmp\defect-report-review-artifacts-20260906` include
+`browser-receipt.json`, `restart-receipt.json`, saved v4/r6 JSON, PDF/XLSX/ZIP files and
+screenshots. They are synthetic local artifacts, not Git content or production proof.
+The separate destructive-test database is `classifire_containment_test`; verify it is
+owned, idle and isolated before using its cleanup opt-in. Never use a demo/customer
+DB for these tests. No operational canonical records or locks were created.
 
 ## Start Here / Next Session
 
-**First task:** implement one bounded, user-visible **dual-source intake/profile
-preview**. A is `pricelist.xlsx` (general products/materials/labour/services); B is
-`pricing_library.xlsx` (Firefly system prices). Explicit source selection, original
-hash/version, sheet/header/count preview and unknown unit/price-basis diagnostics
-must be visible. Save and reopen a Draft profile without publishing prices, mapping
-systems automatically or running estimation. This is the thin T1+T5+T7 slice.
+**First task:** implement one bounded **Excel defect-report mapping** interaction
+feeding the existing Draft Scope graph. This is the next missing upload format after
+the PDF review slice. The existing Excel UI applies prices inside an Estimate and
+cannot serve as a defect-register importer. A/B pricing remains a separate track.
 
-**Why next:** current workbook selection works but has no semantic A/B source identity
-or trustworthy source profile for later mappings and estimates. Actual workbook layouts
-are unknown. A working profile UI exposes those gaps early and supports later decisions;
-a complete corpus schema or AI model is not a prerequisite. The retained-PDF structured
-Draft task remains upcoming but reordered by the owner's latest architecture request.
+**Prerequisites:** verify this PDF change has merged with passing required CI/review;
+otherwise finish its validation/publication first. Inspect current source/Git/docs
+before edits and use an isolated current-main worktree. Reuse source retention,
+scanner containment, bounded workbook parsing and the existing graph editor/save
+boundary. Synthetic fixtures suffice; real-layout acceptance needs authorized sample
+files. Genuine current scanning and disposable PostgreSQL/marked storage are required
+for browser proof. Do not weaken guards if infrastructure is unavailable.
 
-**Files/components:** inspect `models.py`, `services/draft_source_intake.py`,
-`services/draft_pricing_intake.py`, `draft_pricing_worker.py`, `draft_pricing_contract.py`,
-`draft_pricing_ui.py`, `templates/draft_pricing.html`, existing storage/source guards,
-client source preview and migrations. Read docs/DRAFT_PRICING_XLSX.md and the integrated
-design before deciding the smallest SourceDataset/DatasetVersion/profile contract.
-Do not call the legacy CSV importer or activate LibraryRelease/PricingLibraryRecord.
+**Files/components:** docs/DRAFT_PDF_EVIDENCE_V1_CONTRACT.md, DRAFT_PRICING_XLSX.md,
+services/draft_source_intake.py, draft_pdf_intake.py, draft_scope.py,
+draft_scope_evidence.py, draft_pricing_intake.py, draft_pricing_worker.py,
+draft_pricing_contract.py, PDF/Scope routers and shared editor. Inspect existing
+models/migrations/tests before deciding the smallest compatible XLSX source/cell
+reference contract. PDF page references must not be relabelled as spreadsheet cells;
+preserve old schema/readers and append versioned semantics only where necessary.
 
-**Prerequisites/dependencies/blockers:** inspect current main/PR and preserve unrelated
-changes; use an isolated worktree. Verify local development dependencies and current
-fixtures. Use synthetic A/B workbooks, marked storage, disposable PostgreSQL and genuine
-current scanner definitions for source-containment/browser proof. Missing originals
-block real-layout acceptance only. Missing isolation/scanning blocks that runtime proof;
-never weaken guards or substitute customer data. No real OAuth, provider, deployment,
-pricing coefficients or complete technical-system schema is required for this slice.
+**Definition of done:** a user uploads/scans a synthetic XLSX defect register, inspects
+supported sheets/headers/rows, maps selected columns into editable Draft items, reviews
+source cells and unknowns, explicitly resolves any shared-opening relationship and
+confirms one saved revision. Reopen after restart and verify provenance/history and
+selected export/import. Mapping is human-selected; no AI, product/rate application,
+technical approval or canonical writes. Preserve blank/unknown versus zero, reject
+ambiguous/malformed values visibly, and show unsupported/over-limit content without
+silent truncation. Do not assume one row/defect equals one service/opening/quantity.
+Handle duplicate confirmation, stale source/scan/revision, permissions and cross-user
+access. Avoid speculative bulk infrastructure or full corpus/AI work.
 
-**Definition of done:** users explicitly select A/B and retain the source/version;
-inspect supported sheets/headers/physical-row counts, cell kinds and clear basis/unit
-unknowns; save/reopen the profile after restart. Unsupported/capacity-limited content
-must be explicit, never silently truncated or reported fully processed. Preserve
-existing 1,000-including-header parser safety unless a separately bounded/versioned
-change is proven necessary. Keep raw bytes and prior profiles; replay cannot conflate
-A with B, overwrite an existing version or create duplicate authority. Recheck rights,
-source/scan/hash freshness and expected revision. No rate application, system match,
-canonical write or approval occurs. Inspect the actual UI and retained profile; align
-docs, classify changes and complete safe Git publication. Broader bulk capacity and
-estimation are later T stages, not hidden additions to this slice.
-
-**Validation:** add focused source-kind/profile/replay/version tests and relevant UI
-checks; run existing retained-pricing and client regression. Verify test filenames,
-fixture configuration and explicit PostgreSQL isolation before executing:
+**Validation commands:** inspect current fixture names/configuration first. Force
+imports to the isolated worktree; use a unique temporary output directory. Run guarded
+PostgreSQL suites serially only against the verified disposable test database and its
+existing explicit cleanup opt-in. Add focused mapping/cell provenance/refusal tests,
+then run relevant retained-source/PDF/Scope/package/report/client regressions:
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-$profileTestTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('source-profile-tests-' + [guid]::NewGuid())
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp $profileTestTemp tests/test_draft_pricing.py tests/test_draft_pricing_ui.py tests/test_draft_client_pricing.py tests/test_migrations_draft_pricing_sources.py
+$mappingTestTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('defect-mapping-tests-' + [guid]::NewGuid())
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp $mappingTestTemp tests/test_draft_pdf_scope_review.py tests/test_draft_pdf_intake.py tests/test_draft_pricing.py tests/test_draft_scope.py tests/test_draft_package_import.py tests/test_draft_entity_evidence_outputs.py
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
 ```
 
-Run destructive-fixture PostgreSQL suites serially only against the verified disposable
-test database with its documented cleanup opt-in. Report skips and environment limits.
-Demonstrate actual browser upload/scan/profile/save/restart/reopen and inspect output;
-exercise missing/invalid/zero/formula values and clear over-limit refusal. Add migration
-checks if the minimal contract requires a forward migration. Full PR CI has no docs
-path exemption: `.github/workflows/pull-request-validation.yml` runs the required suite.
+Add meaningful UI/worker/migration regression where the chosen implementation changes
+those boundaries. Inspect rendered UI/outputs and demonstrate actual restart; report
+skips honestly. Required PR CI is `.github/workflows/pull-request-validation.yml`.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from verified repository state. Before editing, inspect AGENTS.md,
+> Continue CLASSIFIRE from verified repository state. Before editing, read AGENTS.md,
 > GOAL.md, docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md,
-> docs/CLASSIFIRE_ROADMAP.md, docs/SESSION_HANDOFF.md and
-> docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md; reconcile branch/worktrees, main,
-> current PR/CI and local changes. Preserve the conflicted root, unrelated work,
-> receipts and approved logo; work in an isolated current-main checkout. Implement
-> only the next thin T1+T5+T7 interaction: a visible A/B source intake/profile preview.
-> A pricelist.xlsx means general products/materials/labour/services; B pricing_library.xlsx
-> means Firefly system prices. This is next because current generic workbook selection
-> lacks distinct dataset identity and verified source semantics needed by later mapping
-> and estimation. Reuse draft_source_intake, draft_pricing_intake/worker/contract/UI,
-> storage guards, models and templates; read DRAFT_PRICING_XLSX.md. Add only the minimal
-> source/version/profile contract. Users must choose A/B, retain exact bytes/hash,
-> inspect supported sheets/headers/counts and unit/price-basis gaps, then save/reopen
-> after restart. Preserve unknowns, prior versions and existing parser limits; show
-> unsupported content explicitly. Verify rights, scan/hash freshness, replay and stale
-> revision behavior. No automatic match, rate application, publication or canonical
-> approval. Use synthetic workbooks, marked storage, verified disposable PostgreSQL and
-> current scanner definitions; originals were not located, so real-layout acceptance
-> awaits authorized files, while synthetic development can proceed. Run focused new
-> profile tests plus pricing/UI/client/migration regression, actual browser/restart
-> checks, Ruff/Mypy/Bandit/migration checks and required CI. Align docs, classify local
+> docs/CLASSIFIRE_ROADMAP.md and docs/SESSION_HANDOFF.md; reconcile Git/worktrees,
+> current main and PR/CI. Preserve the conflicted C:\CLASSIFIRE root, unrelated changes,
+> demos/receipts and approved logo; use an isolated current-main worktree. Finish any
+> pending PDF graph-review publication first. Then implement only the next bounded
+> Excel defect-report mapping UI: PDF now has human page-linked graph review, while
+> existing Excel intake handles prices and cannot build a defect register. Reuse
+> draft_source_intake, the bounded workbook worker, Draft Scope services and shared
+> editor; inspect the PDF evidence and pricing XLSX contracts, models and tests before
+> extending source/cell provenance compatibly. Upload/scan a synthetic XLSX, show its
+> sheets/headers/rows, let the person map columns and review editable defects/openings/
+> services plus exact source cells/unknowns, then explicitly confirm one atomic revision.
+> Preserve blanks versus zero, shared-opening decisions, historical bytes and unverified
+> import claims; never infer quantity from defect count. Reopen after actual restart
+> and verify export/import. No AI, pricing/system approval or canonical writes. Real
+> layouts require authorized samples; synthetic implementation is unblocked. Use marked
+> storage, current scanner definitions and verified disposable PostgreSQL; never weaken
+> guards. Add focused mapping, provenance, stale-input, permission and replay tests;
+> run relevant PDF/Scope/pricing/package/report/client regressions, browser/restart,
+> Ruff/Mypy/Bandit/migration checks and required CI. Align documentation, classify local
 > changes and continue autonomously through explicit-path commit, normal push, PR and
-> merge after required checks/reviews pass; verify the merge. Avoid speculative bulk
-> infrastructure/model work, preserve human gates, and do not deploy or release.
+> merge once required checks/reviews pass; verify the merge. Avoid speculative bulk
+> infrastructure/model work and preserve human-only release; do not deploy or release.

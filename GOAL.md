@@ -200,23 +200,31 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: visible dual-source intake profile
+## Immediate delivery priority: source-linked PDF Draft graph
 
-The 2026-09-06 requested architecture amendment makes the next product task a bounded
-UI source intake/profile preview for the two named pricing sources. Users explicitly
-choose A or B, retain its identity/version and inspect supported sheets, headers,
-counts, unit/price-basis gaps and import limits before mapping or publication. Reuse
-retention, quarantine, source preview and Draft service patterns with the smallest
-source/version contract needed for that interaction. Nothing is activated or priced.
-Use synthetic fixtures until authorized original inputs are available and their
-semantics are confirmed; neither workbook was located in the inspected locations.
+The latest approved task brings the visible PDF-to-Draft interaction ahead of the
+retained A/B pricing profile. On the active branch, a human can inspect a retained
+page, edit separate defects/openings/services with explicit links and uncertainty,
+preview selected page references without writes and confirm one saved revision.
+Scope v4 retains old observation references alongside entity kind/ID/hash bindings;
+changed/deleted facts stay visibly stale, imports remain unverified, and earlier
+Scope/report/package bytes remain exact. No AI, OCR, pricing or canonical approval
+is implied. PROJECT_STATE.md records actual tests, browser/restart and publication;
+finish that evidence before classifying the bounded increment as delivered.
 
-This task establishes the evidence needed for later component and system mappings,
-coverage, bottom-up/comparable estimation and calibration. Deliver working review
-slices before broad parsing automation, schema perfection or model fine tuning. The
-roadmap's T1-T14 stages preserve dependencies and human authority. The source-linked
-structured Draft interaction from a retained PDF page remains upcoming but reordered;
-it is not cancelled or implemented by this documentation amendment.
+Next, extend the same Scope services with a bounded Excel defect-register mapping UI:
+explicit sheets/headers/columns, reviewable graph changes, exact cell provenance and
+supported image/anchor identity, with unknown associations left unresolved. Existing
+pricing XLSX intake is reusable infrastructure, not a completed defect importer.
+Optional AI suggestions follow as source-bound proposals behind human review.
+Deliver these interactions before broad automation, schema perfection or model tuning.
+
+The separate technical-corpus/dual-pricing track remains approved. Its first slice is
+still an A/B source-profile preview with minimal durable identity/version, supported
+mapping, explicit unit/price-basis gaps and no activation or inferred prices. Synthetic
+fixtures remain required until authorized originals and their semantics are available.
+The roadmap's T1-T14 requirements, review gates and dependency order remain unchanged;
+PDF priority reorders work without cancelling either library or the corpus design.
 
 The full goal remains active: broader Scope analysis, actual applicability, pricing
 defaults/inference, complete package coverage/exchange, ChatGPT and production readiness

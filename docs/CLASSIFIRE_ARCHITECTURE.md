@@ -2,14 +2,15 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.21 - technical corpus and two-source pricing target.
+**Architecture version:** 5.22 - source-linked Draft graph review; corpus and two-source pricing target retained.
 
-**Verified shared baseline:** `a22a02769d3b842d5d0129dbd09273759ae583c1`, merged
-PR #207. Exact PR-head CI 34019881433 passed 1,522 tests; post-merge main CI
-34020498735 completed successfully at this baseline. Workbook preview and human-confirmed rate
-selection are merged, with local browser/restart evidence recorded in PROJECT_STATE.md.
-The corpus, semantic pricing libraries and estimation design below are planned;
-this documentation change adds no executable capability or operational authority.
+**Verified shared baseline:** `080845e2681e292cabb6f201f373a696d1fc40c1`, including
+merged PR #208's corpus/dual-pricing design and PR #207's workbook client. The active
+`feat/defect-report-review-20260906` increment implements PDF page-to-Draft graph review
+and Scope v4 compatibility. Its test, browser/restart and publication status belongs in
+[PROJECT_STATE.md](./PROJECT_STATE.md); source implementation alone is not a completed demo.
+The user has prioritized this visible PDF workflow ahead of the retained A/B profile
+slice. Corpus extraction, semantic pricing libraries and estimation design remain planned.
 Local client parity is not a real ChatGPT connection or production readiness.
 Earlier milestone descriptions are historical checkpoints where a later amendment
 supersedes their status. Current component/amendment sections distinguish remaining coverage.
@@ -35,6 +36,13 @@ to explainable missing-price estimates. **Consequences:** new logical contracts,
 mappings, immutable recipe/proposal versions and later durable batch work are required.
 **Migration:** extend the existing modular application and persistence with forward changes;
 preserve historical artifacts, authority gates and optional AI under ADRs 0001/0002.
+
+**Current bounded change:** observation-only PDF page review now extends the existing
+Draft editor to explicitly reviewed Defect/Opening/Service links. The same shared
+services validate the graph, preview without writes and append one revision after
+signed same-session confirmation. Scope v4 adds an evidence-reference union, without
+new domain tables, an AI dependency or canonical admission. Older Scope, report and
+package bytes remain readable; see the active milestone at the end of this document.
 
 ## Implemented execution boundary and planned package boundary
 
@@ -97,9 +105,9 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is merged in PR #200; selected-workspace import is merged in PR #203. The optional MCP client covers independent capability commands; real ChatGPT linking remains planned. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; retained PDF upload/scan/page review; active branch adds shared graph editor and signed page-to-entity review | Finish the visible PDF graph demonstration first. Next Scope work is bounded Excel defect-register mapping through the same services, followed by optional AI proposals. A/B pricing profiles remain a separate planned track. The optional MCP client covers existing independent capability commands; PDF graph client parity and real ChatGPT linking remain planned. |
 | Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205 and measured review in PR #206. Workbook source preview and confirmed rate selection are merged in PR #207. External linking remains unproven. |
-| Orchestration | Deterministic controllers and bounded inference journal; generic worker has no registered handlers | Keep the first source-profile preview bounded and synchronous. Extend existing BackgroundJob for corpus stages, leases/retries and immutable run outputs after the visible prototype; do not introduce an agent fleet or another scheduler database. |
+| Orchestration | Deterministic controllers, no-write PDF graph preview/explicit save and bounded inference journal; generic worker has no registered handlers | Keep visible PDF and source-profile interactions bounded. Extend existing BackgroundJob for corpus stages, leases/retries and immutable run outputs after the visible prototype; do not introduce an agent fleet or another scheduler database. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse independently callable contracts across UI/client. Planned corpus extraction/resolution and pricing coverage/estimation use the same governed application; they do not bypass independent capability prerequisites. |
 | Technical corpus | Individual TechnicalDocument intake, limited PDF metadata, JSONL Draft variants, manual source-bound materialisation/review | Planned batch inventory, versioned extraction/claims, stable system identity, deduplication and exception review for hundreds to thousands of documents. Existing source/review/publication gates remain. |
 | General pricing source A | Generic retained XLSX preview and explicit rate selection; legacy Product/PricingLibraryRecord structures | Planned `general_pricelist` profile for `pricelist.xlsx`: normalize product/material/labour/service observations, source cells and basis, then review component/activity mappings. |
@@ -107,8 +115,8 @@ still applies. Model output is proposed evidence, never authority.
 | Pricing coverage and proposals | Manual Draft rates, source selection, original values and override history | Planned coverage runs, evidence-based bottom-up/comparable/combined proposals, calibrated review and append-only approval/actual-cost feedback. Observed and derived prices remain distinct after approval. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
-| Packages | Scope v1/v2 exchange plus v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Current selected Draft archive projection and download reuse these readers; whole-project coverage and source-body membership remain planned; imported-origin capability wrappers are implemented below. |
-| Reporting | Scope-only, estimate-only and scope-and-system Draft snapshots plus merged complete profile; paired PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
+| Packages | Scope v1/v2 exchange and v3 observation claims; active branch adds v4 observation/entity references in the same evidence_refs array, shared readers and exact package inventory | Selected archive projection/import retain the union and mark imported review claims unverified. Existing report/package bytes remain unchanged; whole-project coverage and source-body membership remain planned. |
+| Reporting | All four independent Draft snapshots retain PDF/XLSX; active branch gives Scope v4 new render versions with entity identity and saved review status. Upstream edits flag staleness. Canonical export retains its lock gates. | Preserve old render-version readers and exact retained bytes. New reports use saved artifacts; do not use the recalculating estimate builder for rendering. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
 ### Implemented manual Draft Scope slice (P0)
@@ -778,11 +786,13 @@ proposals with method/features/confidence and an abstention path, never automati
 technical approval. Many rows may refer to one system or price basis: preserve them,
 then resolve duplicate recovery and version precedence explicitly.
 
-The first deliverable is a visible source-profile/mapping preview using small synthetic
-A/B workbooks. Durable batch stages and large-corpus performance follow that interaction.
-No customer source structure, supplied workbook contents or 1,000-row successful import
-was verified during this documentation exercise. Source inspection and authorized sample
-selection remain prerequisites to each real-source adapter.
+The first deliverable within the retained A/B track is a visible source-profile/mapping
+preview using small synthetic workbooks. The newly approved PDF Draft graph milestone
+now takes overall delivery priority. Durable batch stages and large-corpus performance
+still follow the A/B profile interaction; T1-T14 requirements are unchanged. No customer
+source structure, supplied workbook contents or 1,000-row successful import was verified
+by the design amendment. Source inspection and authorized sample selection remain
+prerequisites to each real-source adapter.
 
 ### 5.4 Linked originals and visual evidence
 
@@ -1151,7 +1161,8 @@ clock assumptions and crash/replay recovery before production wiring. The
 | Interfaces/tenancy | MCP/standalone share application commands; prove identity mapping, tenant/project isolation and human review. Scoped reviewer grants are not full tenancy proof. |
 | Offline use | Local backend/database and safe revision exchange need a separate decision. Do not assume SQLite reproduces PostgreSQL locking or permit automatic bidirectional merges. |
 | Operations/cost | Clean-machine setup, backup/restore, safe traces, monitoring, rollback and accepted-result cost/latency remain unmeasured. Changing frameworks alone does not prove savings. |
-| Semantic source profiles | Next visible slice: explicitly choose A/B kind, inspect exact worksheet/row mapping and unknown commercial basis, and save/reopen only the minimal profile contract. No filename guessing, automatic activation or inferred prices. |
+| Scope evidence breadth | Active PDF graph review must pass visible/restart and compatibility checks. Next is bounded Excel defect-register mapping with explicit cell/image provenance through shared Scope services; optional AI proposals follow. Neither Excel defect ingestion nor AI/OCR is implemented by this PDF slice. |
+| Semantic source profiles | Retained first slice within the separate A/B track: explicitly choose kind, inspect exact worksheet/row mapping and unknown commercial basis, and save/reopen only the minimal profile contract. PDF graph review now has overall priority. No filename guessing, automatic activation or inferred prices. |
 | Technical identity/claims | Extend existing Document/Variant identities with stable system revisions, typed multi-source claims and reviewed resolution; preserve global legacy IDs, original values and supersession lineage. |
 | Recipe publication | Current v3 releases omit component/labour JSON. Version and freeze recipe/claim dependencies before costing; retain old release readers and bytes without fabricating historical recipe approval. |
 | Legacy pricing migration | Keep Package 14 CSV history separate. Replace active/default-zero/version-collision behavior for new ingestion through governed forward changes; do not feed A/B workbooks into the legacy importer. |
@@ -1161,7 +1172,7 @@ clock assumptions and crash/replay recovery before production wiring. The
 **Planned corpus/pricing migration:** logical records in section 4 must be mapped to
 existing tables and narrowly scoped additions, not implemented as a speculative schema
 bundle. Use forward migrations after the required visible slice is defined; current
-head stays 0037 in this documentation change. Preserve prior technical release versions,
+head stays 0037; the current Scope v4 extension uses existing JSON revision storage. Preserve prior technical release versions,
 JSONL row/file hash meaning, source lineage, Package 14 records and all saved Draft/report/
 package bytes. New dataset versions and approvals are explicit; imports or backfills
 cannot manufacture source provenance, technical equivalence or commercial authority.
@@ -1351,7 +1362,7 @@ Other technical/combined profiles, production retention limits and export projec
 remain open. The first source-to-Scope interaction is merged in PR #194, described below.
 P2b applicability, P3b governed pricing and full portability remain required work.
 
-### Implemented and merged: retained PDF evidence review (first P1b increment)
+### Historical merged baseline: retained PDF observations (first P1b increment, PR #194)
 
 Current architecture -> change: the shared upload service previously left files
 pending/not_configured with no demonstrated Draft scanner consumer. A thin
@@ -1412,7 +1423,8 @@ context; a page text hash alone does not prove pixel identity. Manual edits keep
 old review hash and expose a stale-review warning; removal affects only the new
 revision. Import always downgrades local source/review claims to imported_unverified,
 without access to source bytes or local approval. Existing v1/v2 bytes stay unchanged.
-See [the PDF/v3 contract](./DRAFT_PDF_EVIDENCE_V1_CONTRACT.md).
+The active v4 graph increment below extends this observation-only baseline.
+See [the PDF evidence contract](./DRAFT_PDF_EVIDENCE_V1_CONTRACT.md).
 
 New Scope/Estimate reports share `outputs/draft_branding.py` and the exact supplied
 PNG; historical files and canonical/legacy output renderers remain unchanged.
@@ -1862,43 +1874,71 @@ original rates and reasoned overrides. Reports still render explicit saved revis
 selecting a workbook rate neither activates a pricing library nor proves technical
 suitability, quantity, commercial applicability or complete recovery.
 
-## Next planned product slice: explicit A/B source-profile UI
+## Active product increment: PDF page-to-Draft graph review (P1b)
 
-The next implementation should let a user declare a retained synthetic workbook as
-general source A or Firefly system-price source B, inspect the selected sheet/header,
-map supported columns and commercial basis, and see unmapped/unknown/invalid fields in
-a no-write preview. Reuse existing workbook intake, exact-byte/scan checks, owner/role
-permissions, explicit confirmation and revision patterns. Save/reopen the minimal
-versioned source-profile/mapping contract and inspect its output; selecting a profile
-must not apply prices, activate a library, resolve technical equivalence or run AI.
+The active branch extends the existing retained-page view and shared Draft editor;
+validation, browser/restart evidence and publication are recorded in PROJECT_STATE.md.
+A human inspects the authorized raster/text, edits separate Defects, Openings and
+Services, preserves explicit relationships and uncertainty, and selects which items
+were reviewed against that page. The graph is not inferred from a defect count or
+price. Manual `Confirmed` remains a Draft assertion, not physical/technical approval.
 
-This is next because workbook transport and single-row selection now work, but neither
-source has a durable semantic identity or known costing basis. It establishes a visible,
-testable foundation for both pipelines before bulk schemas or estimation. Use synthetic
-fixtures until actual source inspection is separately authorized; do not infer either
-workbook layout from its filename. Follow the companion design and roadmap for exact
-acceptance criteria; completing this slice is not completion of either library import.
+`draft_pdf_intake.preview_scope_page` validates the complete payload and exact targets
+without writes. Its review hash binds the actor, Draft revision/hash, normalized graph,
+selected kind/IDs, retained source bytes/size/name, document/scan and page locator/text.
+`draft_pdf_ui` signs that review hash with the actor, Draft, source and browser session
+for 15 minutes. Explicit confirmation calls `save_scope_page`, rechecks current rights,
+ownership and clean source bindings, recomputes the preview and conditionally appends
+one revision. Changed input/source/scan, stale revision, foreign session or expired
+confirmation requires a fresh preview. No matching, Estimate or canonical write runs.
 
-## Retained and reordered: source-linked structured Draft review
+**Compatible artifact change:** `CLASSIFIRE-DRAFT-SCOPE-v4` keeps the same content and
+`evidence_refs` array. It accepts old observation references unchanged and new entity
+references with `target_kind` (`defect`, `opening`, `service`), `target_id` and
+`target_sha256` instead of observation ID/hash. The common source/page/reviewer fields
+remain; entity method is `human_page_entity_review`. The hash covers the complete
+normalized target, including its links and state. At most 100 combined references are
+allowed, within existing graph/artifact limits; this is not bulk analysis capacity.
 
-The A/B source-profile slice now precedes this task; it is reordered, not canceled.
-The current PDF page UI displays retained pages/text and `review_page` appends an
-observation. Existing Draft Defect/Opening/Service models and the editor already
-support a separate physical graph, but Scope v3 `evidence_refs` binds only observation
-IDs/hashes. Entity facts currently have no equivalent page-review binding.
+Manual edits preserve previous review hashes. A deleted entity keeps its historical
+reference and shows a removed-item warning; changed items require review again.
+Re-review replaces the same kind/ID/source/page claim only in the newly appended
+revision. The old observation-deletion behavior remains: prune its reference from the
+new revision only. Imports always mark every reference `imported_unverified`; matching
+local IDs cannot confer source access or review authority. Existing v1-v3 artifacts,
+parent hashes and retained bytes are preserved; no historical backfill is required.
 
-This retained bounded workflow should let a human inspect one retained page, draft/edit
-linked entities using the existing editor, preview without writes, and explicitly
-append one Draft revision with source links. Reuse `validate_payload`, conditional
-revision saving and the shared retained-source reader. Preserve independent entities,
-many-to-many opening/service links, explicit uncertainty and unknown quantities.
-AI-generated suggestions remain optional future input to this human review boundary.
+All four report profiles display target identity and saved review status while the
+shared service checks current source/scan and target staleness. Scope v4 uses renderer
+3 for scope-only, 4 for scope-and-system, 4 for estimate-only and 5 for complete;
+older Scope inputs retain their existing render versions. Saved PDF/XLSX are not
+rerendered on download. The package inventory still names every entry at
+`artifacts/scope.json#/evidence_refs/<index>`; there is no second evidence array or
+implicit raw-PDF export. Import/re-export preserves original archive lineage and bytes.
+The [PDF contract](./DRAFT_PDF_EVIDENCE_V1_CONTRACT.md) defines the exact boundary.
 
-**Contract decision still to implement:** choose the smallest compatible versioned
-entity-to-page provenance representation; define how changed/deleted entity facts
-invalidate or retain their historical claims. Preserve v1-v3 bytes and imported
-unverified lineage. Do not pretend observation-only references prove new entity facts.
-Propagate the chosen binding through reopen, JSON, existing Scope PDF/XLSX and package
-round trip. Recheck source/scan/document/page identity, ownership, permissions and
-expected revision at confirmation. No canonical authority, provider call, technical
-selection or automatic pricing is needed for this planned Draft interaction.
+**Remaining work:** finish the current demonstrated journey and required validation;
+then add a bounded Excel defect-register mapping UI through the same Scope validation,
+preview, revision and provenance services. Preserve exact worksheet/row/cell identity
+and any supported image bytes/anchors explicitly; unsupported or ambiguous associations
+must remain unresolved. Existing pricing XLSX parsing is reusable intake infrastructure,
+not an implemented defect-register importer. Optional AI suggestions follow as proposed
+inputs to human review, never automatic facts. OCR, automatic extraction, Excel defect
+ingestion and provider execution are not added by this PDF increment.
+
+## Retained separate track: explicit A/B source-profile UI
+
+The first corpus/pricing interaction still lets a user declare a retained synthetic
+workbook as general source A or Firefly system-price source B, inspect a selected
+sheet/header, map supported columns and commercial basis, and preview unmapped,
+unknown or invalid values without writes. Save/reopen only the minimal versioned
+source-profile contract using existing exact-byte/scan, ownership and revision checks.
+Selecting a profile must not apply prices, activate a library, resolve technical
+equivalence or run AI. The PDF milestone reorders delivery, not these requirements.
+
+This profile remains necessary because workbook transport/single-row selection do not
+establish semantic source identity or price basis. Use synthetic fixtures until actual
+source inspection is authorized; do not infer layout or basis from filenames. Follow
+the companion design and unchanged T1-T14 dependency gates before mappings, bulk work,
+coverage, bottom-up/comparable estimation or calibration. Completing the first profile
+is not completion of either library import.

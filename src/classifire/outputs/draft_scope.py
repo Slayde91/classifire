@@ -24,6 +24,11 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
+from ..services.draft_scope_evidence import (
+    ENTITY_EVIDENCE_SCHEMA_VERSION,
+    reference_label,
+    reference_status,
+)
 from .common import ATTRIBUTION
 from .draft_branding import DraftLogo
 from .draft_branding import supplied_logo_path as logo_path
@@ -134,6 +139,24 @@ def _metadata(snapshot: dict[str, Any]) -> list[tuple[str, Any]]:
             ),
         ),
     ]
+
+
+def _page_reference_fields(scope: dict[str, Any], ref: dict[str, Any]) -> list[tuple[str, Any]]:
+    """Display saved target status without implying a fresh source or approval check."""
+    fields: list[tuple[str, Any]] = []
+    if scope["schema_version"] == ENTITY_EVIDENCE_SCHEMA_VERSION:
+        fields.extend(
+            [
+                ("target", reference_label(ref, scope["content"])),
+                ("saved_revision_review_status", reference_status(ref, scope["content"])),
+            ]
+        )
+    fields.extend(ref.items())
+    return fields
+
+
+def _page_reference_id(ref: dict[str, Any]) -> str:
+    return str(ref["target_id"] if "target_kind" in ref else ref["observation_id"])
 
 
 def _append_scope_content(
@@ -293,7 +316,7 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
             "the application checks it separately. No technical or physical approval is granted."
         )
         for ref in report["scope"]["evidence_refs"]:
-            for key, value in ref.items():
+            for key, value in _page_reference_fields(report["scope"], ref):
                 text(f"{key.replace('_', ' ')}: {value}", small)
     text("Report and source identity", heading)
     for label, value in _metadata(report):
@@ -586,11 +609,17 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
     if report["scope"].get("evidence_refs"):
         table(
             "Page Review References",
-            ["Observation ID", "Field", "Saved claim"],
             [
-                [ref["observation_id"], key.replace("_", " "), str(value)]
+                "Target ID"
+                if report["scope"]["schema_version"] == ENTITY_EVIDENCE_SCHEMA_VERSION
+                else "Observation ID",
+                "Field",
+                "Saved claim",
+            ],
+            [
+                [_page_reference_id(ref), key.replace("_", " "), str(value)]
                 for ref in report["scope"]["evidence_refs"]
-                for key, value in ref.items()
+                for key, value in _page_reference_fields(report["scope"], ref)
             ],
             [39, 28, 100],
         )

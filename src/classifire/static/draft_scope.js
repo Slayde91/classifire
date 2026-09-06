@@ -7,6 +7,9 @@
   const states = ["Unresolved", "Provisional", "Inferred", "Confirmed"];
   const kinds = ["defects", "openings", "services", "observations"];
   const titles = { defects: "Defect", openings: "Opening", services: "Service", observations: "Observation" };
+  const pageReview = form.dataset.pageReview === "true";
+  const targetKinds = { defects: "defect", openings: "opening", services: "service" };
+  let reviewTargets = [];
   let payload;
   let dirty = document.getElementById("scope-download").hidden;
 
@@ -22,6 +25,32 @@
     document.getElementById("scope-download").hidden = true;
     document.getElementById("scope-download-hint").hidden = false;
     errorBox.hidden = true;
+    updateReviewSummary();
+  }
+
+  function updateReviewSummary() {
+    const summary = document.getElementById("scope-review-selection-status");
+    if (summary) summary.textContent = `${reviewTargets.length} item${reviewTargets.length === 1 ? "" : "s"} selected for page ${form.dataset.pageNumber}. Only explicitly selected items gain a new page reference.`;
+  }
+
+  function addPageReviewControl(card, kind, item) {
+    if (!pageReview || !targetKinds[kind]) return;
+    const targetKind = targetKinds[kind];
+    const label = element("label", "scope-check scope-page-link");
+    const checkbox = element("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `scope-${item.id}-page-review`;
+    const title = `Link this ${targetKind} to page ${form.dataset.pageNumber}`;
+    checkbox.setAttribute("aria-label", title);
+    label.htmlFor = checkbox.id;
+    checkbox.checked = reviewTargets.some((target) => target.target_kind === targetKind && target.target_id === item.id);
+    checkbox.addEventListener("change", () => {
+      reviewTargets = reviewTargets.filter((target) => !(target.target_kind === targetKind && target.target_id === item.id));
+      if (checkbox.checked) reviewTargets.push({ target_kind: targetKind, target_id: item.id });
+      changed();
+    });
+    label.append(checkbox, document.createTextNode(title));
+    card.append(label);
   }
 
   function element(tag, className, text) {
@@ -148,6 +177,7 @@
       return;
     }
     payload[kind] = payload[kind].filter((entry) => entry.id !== item.id);
+    reviewTargets = reviewTargets.filter((target) => !(target.target_kind === targetKinds[kind] && target.target_id === item.id));
     card.remove();
     changed();
     refreshRelations();
@@ -192,6 +222,7 @@
       field(grid, item, "text", "Observation or unknown", { multiline: true, wide: true, maxLength: 4000, required: true });
       selectField(grid, item, "state", "Evidence state", states);
     }
+    addPageReviewControl(card, kind, item);
     const footer = element("div", "scope-item-footer");
     footer.append(element("span", "scope-item-id", `Stable ID: ${item.id}`));
     const remove = element("button", "button button-small scope-remove", `Remove ${titles[kind].toLowerCase()}`);
@@ -222,6 +253,13 @@
 
   try {
     payload = JSON.parse(document.getElementById("scope-initial-payload").textContent);
+    if (pageReview) {
+      reviewTargets = JSON.parse(document.getElementById("scope-initial-review-targets").textContent);
+      if (!Array.isArray(reviewTargets)) throw new Error("Invalid page review selections");
+      reviewTargets.forEach((target) => {
+        if (!target || !Object.values(targetKinds).includes(target.target_kind) || typeof target.target_id !== "string") throw new Error("Invalid page review selection");
+      });
+    }
     kinds.forEach((kind) => {
       if (!Array.isArray(payload[kind])) throw new Error("Invalid scope data");
       payload[kind].forEach((item) => renderItem(kind, item));
@@ -240,9 +278,23 @@
     }));
     refreshEmptyStates();
     document.getElementById("scope-edit-controls").disabled = form.dataset.canEdit !== "true";
-    form.addEventListener("submit", () => {
+    updateReviewSummary();
+    form.addEventListener("submit", (event) => {
+      if (pageReview && !reviewTargets.length) {
+        event.preventDefault();
+        showError("Select at least one defect, opening or service to link to this page before previewing.");
+        return;
+      }
       document.getElementById("scope-payload").value = JSON.stringify(payload);
+      if (pageReview) document.getElementById("scope-review-targets").value = JSON.stringify(reviewTargets);
       dirty = false;
+    });
+    document.querySelectorAll("[data-scope-independent-action]").forEach((independentForm) => {
+      independentForm.addEventListener("submit", (event) => {
+        if (!dirty) return;
+        event.preventDefault();
+        showError("The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before saving a separate page observation.");
+      });
     });
     window.addEventListener("beforeunload", (event) => {
       if (!dirty) return;
