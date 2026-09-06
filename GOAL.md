@@ -178,14 +178,17 @@ mutations remain proposals until the same human confirms them in the standalone 
 Official SDK, browser and restart checks passed with synthetic tokens; a real
 ChatGPT OAuth link and production deployment remain unproven.
 
-The current independent-client increment adds Match retrieval/review, manual Estimate
+The independent-client increment merged in PR #205 adds Match retrieval/review, manual Estimate
 creation/edits and all four report profiles, sharing saved artifacts and exact downloads.
 See PROJECT_STATE.md for measured proof and publication. No implicit capability chain.
 
-After publication, add the existing measured-constraint/service-size review to that
-same confirmed client path. This fills a visible gap in technical review using
-already implemented UI/domain commands. Keep prototype feedback ahead of broad polish;
-real OAuth/account/deployment decisions remain separate and no core rewrite is needed.
+The current increment adds the existing measured-constraint/service-size review to
+that confirmed client path. Next, expose preview and human-confirmed application of
+one already retained/scanned XLSX row to an Estimate line using the existing pricing
+service. Then prioritize user trial and evidence-to-structured-Draft analysis, whose
+missing defect/opening/service drafting behavior remains a larger product gap.
+Keep prototype feedback ahead of broad polish; real OAuth/account/deployment decisions
+remain separate and no core rewrite is needed.
 
 The full goal remains active: broader Scope analysis, actual applicability, pricing
 defaults/inference, complete package coverage/exchange, ChatGPT and production readiness

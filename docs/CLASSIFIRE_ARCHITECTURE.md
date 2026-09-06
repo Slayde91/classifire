@@ -2,13 +2,13 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.18 - independent Draft capability client commands.
+**Architecture version:** 5.19 - human-confirmed measured-review client parity.
 
-**Verified shared baseline:** `bef06e2264944a34f85f72e7d0fb80c83e406997`, merged
-PR #204; main CI 34010757579 succeeded. Current branch
-`feat/client-independent-capabilities-20260906` extends the optional resource server
-to independent Match, Estimate and report operations. PROJECT_STATE.md records
-validation/publication. Local parity is not a real ChatGPT connection or production readiness.
+**Verified shared baseline:** `fd60bb82538c248b73a14e09dd71bec7493ba7da`, merged
+PR #205; main CI 34014555539 succeeded. Current branch
+`feat/client-measured-review-20260906` exposes the existing measured-review commands
+through the same optional resource server. PROJECT_STATE.md records validation and
+the publication checkpoint. Local parity is not a real ChatGPT connection or production readiness.
 Earlier milestone descriptions are historical checkpoints where a later amendment
 supersedes their status. Current component/amendment sections distinguish remaining coverage.
 
@@ -83,8 +83,8 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is merged in PR #200; selected-workspace import is implemented on the current branch; ChatGPT remains planned. |
-| Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. External linking and the other capability tools remain incomplete. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is merged in PR #200; selected-workspace import is merged in PR #203. The optional MCP client covers independent capability commands; real ChatGPT linking remains planned. |
+| Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205; measured review is implemented on this branch. Workbook pricing selection and external linking remain incomplete. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
@@ -451,7 +451,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared baseline is 0036_draft_client_requests; the current branch adds 0037_draft_client_capabilities without rewriting history |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared baseline is 0037_draft_client_capabilities; measured client actions need no new migration or artifact schema |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -1548,8 +1548,43 @@ approvals remain untrusted, and shared quarantine/integrity/export checks still 
 requests. Resource metadata advertises five scopes. The normal app remains usable
 without the optional client, and external tools cannot confirm their own requests.
 
-**Remaining gaps:** measured-constraint/service-size review and workbook price-selection
-client commands, full applicability/pricing/domain breadth, real OAuth/ChatGPT setup,
+**Remaining gaps:** workbook price-selection client commands, full applicability/pricing/domain breadth, real OAuth/ChatGPT setup,
 in-chat downloads, operational tenancy/retention/rate limiting and production acceptance.
-The next bounded task is measured-review client parity against the existing shared
-commands. Technical truth, commercial recovery and Human Release boundaries are unchanged.
+The measured-review amendment below closes that entry gap. Technical truth,
+commercial recovery and Human Release boundaries are unchanged.
+
+
+## Implemented client amendment: measured constraints and service sizes
+
+**Current -> change -> reason:** standalone `save_constraint_review` already retains
+v2 thickness/gap and v3 service-size checks. The client previously exposed only
+candidate retrieval and keep/reject notes. Two strict operations now expose these
+same saved-review commands without creating another rule engine or orchestration layer.
+
+`ConstraintInputs` / `ServiceSizeInputs` describe complete payloads and call the
+shared validator. `inspect_inputs` binds the saved Match/revision and current rights;
+`execute` calls `save_constraint_review` only inside the existing atomic human decision.
+Technical client scope, current local role and owner checks apply; completed browser
+request history also requires current technical read permission. Client receipt
+metadata remains distinct from protected proposal/artifact content.
+
+The human confirmation screen separates proposed values from existing findings and
+includes the shared saved-measurement display in read-only mode. The standalone form
+keeps its existing behavior. No pre-confirmation domain writer or inferred verdict is
+used. Final source integrity, quarantine, active-release and staleness checks remain
+in the existing service. Foreign imported source claims cannot authorize a local
+measurement review; older valid local releases without pinned limits stay unresolved.
+
+**Migration/consequences:** no new table, migration, dependency, scope or artifact
+version. Existing v2/v3 revision contracts, parent hashes, attribution and unassessed
+conditions remain; v3 cannot be downgraded to discard size history. Retained reports
+read the explicit reviewed revision and expose later staleness without changing bytes.
+This is partial Draft technical decision support, never compatibility approval.
+
+**Next proposed slice:** preview and explicitly apply one already retained/scanned
+XLSX row to an existing Estimate line through the same client. Reuse
+`draft_pricing_intake.preview` / `apply_rate`; keep upload/scan in the existing UI.
+After that bounded parity step, prioritize user feedback and a deliberately scoped
+evidence-to-structured-Draft interaction. Current PDF review records observations;
+it does not yet propose linked defects/openings/services. Real ChatGPT OAuth setup,
+complete applicability, broader pricing and production acceptance remain separate gaps.

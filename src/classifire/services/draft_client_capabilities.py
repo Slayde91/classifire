@@ -8,14 +8,15 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, model_validator
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
 from ..draft_client_auth import ESTIMATE, TECHNICAL, ClientAuthority, ClientIdentity
 from ..models import User
+from . import draft_constraint_review as constraints
 from . import draft_estimate_reports as estimate_reports
 from . import draft_estimates as estimates
 from . import draft_scope as scopes
@@ -46,6 +47,50 @@ class ReviewMatch(Command):
     match_id: Identity
     expected_revision: Revision
     decisions: Annotated[list[Decision], Field(max_length=MAX_CANDIDATES)]
+
+
+class ConstraintInputs(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
+    substrate_thickness_mm: str | None
+    annular_gap_min_mm: str | None
+    annular_gap_max_mm: str | None
+    measurement_note: str
+
+    @model_validator(mode="after")
+    def validate_measurements(self) -> Self:
+        # Use the same numeric, range and source-meaning rules as the UI.
+        constraints.validate_inputs(
+            self.model_dump(), service_size=isinstance(self, ServiceSizeInputs)
+        )
+        return self
+
+
+class ServiceSizeInputs(ConstraintInputs):
+    service_size_min_mm: str | None
+    service_size_max_mm: str | None
+    service_size_basis: str = Field(
+        description="Meaning of measured sizes. One of: " + ", ".join(constraints.SIZE_BASES)
+    )
+    source_size_basis: str = Field(
+        description="Unapproved interpretation of source limits. One of: "
+        + ", ".join(constraints.SIZE_BASES)
+    )
+
+
+class ReviewMeasurements(Command):
+    match_id: Identity
+    expected_revision: Revision
+    candidate_id: Identity
+
+
+class ReviewMatchConstraints(ReviewMeasurements):
+    action: Literal["review_match_constraints"]
+    inputs: ConstraintInputs
+
+
+class ReviewMatchServiceSize(ReviewMeasurements):
+    action: Literal["review_match_service_size"]
+    inputs: ServiceSizeInputs
 
 
 class CreateEstimate(Command):
@@ -96,6 +141,8 @@ class EstimateReport(Command):
 CapabilityCommand = Annotated[
     CreateMatch
     | ReviewMatch
+    | ReviewMatchConstraints
+    | ReviewMatchServiceSize
     | CreateEstimate
     | AddEstimateLine
     | OverrideEstimateLine
@@ -144,7 +191,7 @@ def inspect_inputs(
     match = None
     estimate = None
     release = None
-    if isinstance(c, (CreateMatch, ReviewMatch)):
+    if isinstance(c, (CreateMatch, ReviewMatch, ReviewMeasurements)):
         require(db, authority, identity, TECHNICAL)
         matches._access(db, actor, c.draft_id, write=True)
     if isinstance(c, (CreateEstimate, EditEstimate, EstimateReport)):
@@ -169,7 +216,7 @@ def inspect_inputs(
             match = matches.read_match_revision(db, actor, c.draft_id, c.match_id, c.match_revision)
             if match["scope"] != scope:
                 raise scopes.DraftScopeError("CLIENT_MATCH_SCOPE_MISMATCH", 422)
-    if isinstance(c, ReviewMatch):
+    if isinstance(c, (ReviewMatch, ReviewMeasurements)):
         match = matches.read_match_revision(db, actor, c.draft_id, c.match_id)
         if match["revision"] != c.expected_revision:
             raise scopes.DraftScopeError("MATCH_REVISION_CONFLICT", 409)
@@ -219,6 +266,19 @@ def execute(db: Session, actor: User, command: CapabilityCommand) -> dict[str, A
             c.match_id,
             c.expected_revision,
             [d.model_dump() for d in c.decisions],
+        )
+        result.update(match_id=c.match_id, revision=saved["revision"], sha256=saved["sha256"])
+    elif isinstance(c, (ReviewMatchConstraints, ReviewMatchServiceSize)):
+        saved = matches.save_constraint_review(
+            db,
+            actor,
+            c.draft_id,
+            c.match_id,
+            c.expected_revision,
+            c.candidate_id,
+            c.inputs.model_dump(),
+            storage_root=get_settings().storage_root,
+            service_size=isinstance(c, ReviewMatchServiceSize),
         )
         result.update(match_id=c.match_id, revision=saved["revision"], sha256=saved["sha256"])
     elif isinstance(c, CreateEstimate):

@@ -2,10 +2,13 @@
 
 ## Status and purpose
 
-2026-09-06. Local implementation on `feat/chatgpt-draft-client-20260906`; verify
-live PR/head/CI before assuming shared publication. This is a first ChatGPT-compatible
-client surface over the existing standalone core, not production OAuth deployment
-or proof of a connected ChatGPT account. ADRs 0001/0002 remain accepted.
+2026-09-06. The first client and independent capability commands are merged in
+PRs #204/#205; shared baseline `fd60bb82538c248b73a14e09dd71bec7493ba7da` has
+successful main CI 34014555539. The measured-review amendment below is implemented
+on `feat/client-measured-review-20260906`; verify its live publication before assuming
+it is merged. This is a ChatGPT-compatible surface over the standalone core, not
+production OAuth deployment or proof of a connected ChatGPT account. ADRs 0001/0002
+remain accepted.
 
 OpenAI's current [MCP server guide](https://developers.openai.com/plugins/build/mcp-server)
 and [authentication guide](https://developers.openai.com/plugins/build/auth) describe
@@ -131,6 +134,8 @@ its one requested use case and requires a separate human session confirmation.
 | --- | --- | --- |
 | `create_match` | Scope revision, active release ID, opening/service target IDs | Saved unapproved candidate retrieval |
 | `review_match` | Match ID, expected revision, every candidate decision/notes | Append keep/reject/unreviewed decisions; no technical approval |
+| `review_match_constraints` | Match ID, expected revision, candidate ID, exact thickness/gap inputs and evidence note | Append v2 partial measured-limit review |
+| `review_match_service_size` | Same identities; thickness/gap plus measured size range and two size meanings | Append v3 partial review; preserve size history |
 | `create_estimate` | Scope revision, optional paired Match ID/revision, AUD | Create an empty Draft estimate independently of matching |
 | `add_estimate_line` | Estimate ID, expected revision, shared AddLine contract | Validate quantity/unit/recovery and append a manual line |
 | `override_estimate_line` | Estimate ID/revision, line ID, shared Override contract | Preserve original value and append reasoned history |
@@ -168,11 +173,44 @@ ChatGPT consent/reauthorization behavior remains unproven.
 
 Migration 0037 extends the retained command check without changing artifact schemas;
 it preserves existing requests and refuses downgrade over new retained history.
-Measured-constraint/service-size entry, workbook pricing selection and uploads still
-use the standalone UI. No inference provider, canonical lock or release is exposed.
+Workbook pricing selection and uploads still use the standalone UI. The measured-
+review amendment uses the existing capability request discriminator; no new migration. No inference provider, canonical lock or release is exposed.
 
 Current demo: port 8813, marked `client-capabilities-demo-20260906` directory, with
 `--client-demo --seed-technical-library`. Official SDK/Chrome proof covers independent
 estimating before matching, preserved overrides, separate candidate review, four
 profiles and eight byte-identical browser/client downloads. PROJECT_STATE.md and
 SESSION_HANDOFF.md record validation, restart and publication checkpoints.
+
+
+## Measured-review amendment
+
+Both actions use `save_constraint_review` and its shared `validate_inputs`. Base
+`inputs` requires `substrate_thickness_mm`, `annular_gap_min_mm`,
+`annular_gap_max_mm` and `measurement_note`. The size action additionally requires
+`service_size_min_mm`, `service_size_max_mm`, `service_size_basis` and
+`source_size_basis`. Missing/extra keys and number-to-string coercion are refused.
+Measurements are decimal strings in millimetres (up to four decimal places) or
+`null` for unknown; thickness/size must be positive, gaps nonnegative, and supplied
+minimums cannot exceed maximums. The evidence note is nonblank, at most 2,000 characters.
+Size meanings are `unknown`, `outside_diameter`, `nominal_diameter`,
+`rectangular_dimensions` or `bundle_envelope`; the shared rules determine which
+comparisons remain unresolved. Source interpretation is an unapproved human claim.
+
+Preparation binds the selected saved Match and expected revision and requires
+technical scope/current local rights. The separate human screen compares proposed
+values with saved measurements/findings; its saved panel cannot submit another
+measurement form. Confirmation alone invokes the shared writer and rechecks active
+release, retained source bytes/quarantine, target/candidate and revision. A stale,
+foreign-source or otherwise invalid command leaves no partial revision or decision.
+A v3 review cannot be downgraded to v2 and silently lose service-size history.
+
+Results remain `partial_unapproved`, with unassessed conditions and exact prior
+revisions. Historical reports keep their selected review and PDF/XLSX bytes after
+later changes; staleness is separate from saved output. Keeping a candidate or
+recording a value within a numeric limit never approves technical compatibility.
+
+Synthetic demo: `--port 8814 --data-dir C:\CLASSIFIRE\.tmp\client-measured-demo-20260906
+--client-demo --seed-service-size-library`. The existing fixture seeds labelled test
+source/approval/clean metadata; no real scanner or technical approval is claimed.
+See PROJECT_STATE.md and SESSION_HANDOFF.md for the actual validation checkpoint.

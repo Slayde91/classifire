@@ -3,136 +3,152 @@
 ## Verified branch and project context
 
 2026-09-06 AEST. Worktree:
-`C:\CLASSIFIRE\.tmp\client-independent-capabilities-20260906`; branch
-`feat/client-independent-capabilities-20260906`; base shared main
-`bef06e2264944a34f85f72e7d0fb80c83e406997` (merged PR #204). Its main CI
-34010757579 succeeded. Recheck current head/upstream/PR/CI before editing.
-ADRs 0001/0002 are accepted; the full production goal remains active and incomplete.
-This is a pre-publication checkpoint, not a claim that the current branch is merged.
+`C:\CLASSIFIRE\.tmp\client-measured-review-20260906`; branch
+`feat/client-measured-review-20260906`; base/shared main
+`fd60bb82538c248b73a14e09dd71bec7493ba7da` (merged PR #205). Main CI
+34014555539 succeeded; PR #205 feature `d565621730eb69d197ccf499775ad2bce48a6c92`
+passed exact-head CI 34013051763 attempt 2 (1,502 tests). The unchanged retry followed
+a worker timeout; no test/assertion/CI timeout was weakened.
+
+ADRs 0001/0002 remain accepted. The full production goal is active and incomplete.
+This document is the measured-review increment's pre-publication checkpoint; inspect
+its current head/upstream/PR/CI and any local publication receipt before editing.
+Do not infer merge or deploy status from the existence of this file.
 
 ## Current work and verification
 
-The optional client now proposes independent Match retrieval/review, Estimate
-creation/manual lines/overrides/omit/restore, and all four report profiles. It lists
-and reads saved capability artifacts/staleness and downloads exact saved PDF/XLSX.
-Typed commands bind selected input hashes; the existing same-user browser session
-confirms and calls shared services. New technical/estimate scopes also guard nested
-content and ZIPs. No automatic capability chaining or canonical approval is exposed.
-Migration 0037 extends the request check constraint and preserves retained history.
+Two client actions reuse shared `validate_inputs` / `save_constraint_review` for
+v2 thickness/gap and v3 service-size reviews. Preparation binds explicit saved inputs;
+only the same human's separate browser session confirms. Current technical/owner/
+source guards and immutable history remain. The confirmation UI shows prior saved
+measurements separately from proposed values, with no embedded measurement writer.
+No new migration, dependency, domain rule, canonical authority or automatic chaining.
 
-Files: `src/classifire/draft_client*.py`,
-`src/classifire/services/draft_client*.py`, `models.py`,
-`migrations/versions/0037_draft_client_capabilities.py`,
-`services/deployment_lineage.py`, `templates/draft_client_request.html`,
-client/migration/current-head tests, `scripts/run_draft_scope_demo.py` and core docs.
-Current diff is only this authorized increment. Legacy root/unrelated work is preserved.
+Changed files: `services/draft_client_capabilities.py`,
+`services/draft_client_requests.py`, `templates/draft_client_request.html`,
+`templates/draft_constraint_review.html`, `tests/test_draft_client_measurements.py`,
+GOAL and aligned project/client documents. Paths above are under `src/classifire`
+unless prefixed `tests`. AGENTS.md was inspected and remains accurate without changes.
 
-Focused capability/migration/readiness: 26 passed. Affected regression: 192 passed,
-one PostgreSQL test skipped and two existing warnings. Mypy passed 193 files;
-Ruff/Bandit passed. Official SDK + Chrome passed independent estimate/match/review
-and eight exact report downloads. All eight outputs remained exact after actual
-process restart; saved revisions and a rejected review persisted. The review screen,
-correct logo and rendered complete PDF were visually inspected. PostgreSQL race
-coverage is delegated to required CI; this is not a local PostgreSQL run claim.
+Initial regression: 54 passed; focused new suite: 9 passed. Mypy passed 193 files;
+Ruff/Bandit passed and the unchanged single migration head is
+`0037_draft_client_capabilities`. Official SDK + Chrome demonstrated both reviews,
+rejection, unresolved semantics, exact client/UI saved findings and four PDF/XLSX
+outputs. Actual restart preserved current/historical Match revisions, rejected
+requests and all four exact outputs; later input changes make reports stale.
+PDF text and XLSX contents were inspected; the saved report summary was visually
+inspected. Read-only synthetic database counts showed zero canonical physical,
+Estimate or lock rows. No real scanner/provider, operational lock or release ran.
 
 Local receipts/artifacts under `C:\CLASSIFIRE\.tmp`:
-`client-capabilities-browser-receipt.json`, `client-capabilities-output-inspection.json`,
-`client-capabilities-restart-receipt.json`, generated
-`client-capabilities-{profile}.pdf/.xlsx`, screenshots `client-capabilities-*.png`,
-`client-capabilities-probe.py` and browser scripts in `scope-browser-test-tools`.
-The logo served at `/brand/classifire-logo.png` exactly matches the user's root PNG;
+`client-measured-browser-receipt.json`, `client-measured-output-inspection.json`,
+`client-measured-restart-receipt.json`, generated `client-measured-*.pdf/.xlsx`,
+screenshots, `client-measured-probe.py` and browser scripts in `scope-browser-test-tools`.
+The logo served at `/brand/classifire-logo.png` exactly matches the supplied root PNG;
 keep `src/classifire/static/brand/classifire-logo.png` unchanged.
 
-Demo: `http://127.0.0.1:8813/scopes`, login `scope-demo@example.test` /
+Demo: `http://127.0.0.1:8814/scopes`, login `scope-demo@example.test` /
 `synthetic-scope-demo-only`. From this worktree:
 
 ```powershell
-C:\CLASSIFIRE\.venv\Scripts\python.exe scripts/run_draft_scope_demo.py --port 8813 --data-dir C:\CLASSIFIRE\.tmp\client-capabilities-demo-20260906 --client-demo --seed-technical-library
+C:\CLASSIFIRE\.venv\Scripts\python.exe scripts/run_draft_scope_demo.py --port 8814 --data-dir C:\CLASSIFIRE\.tmp\client-measured-demo-20260906 --client-demo --seed-service-size-library
 ```
 
-This is a marked, loopback synthetic SQLite demo. The token is synthetic, stays in
-its marked directory and expires after 15 minutes; restart refreshes it. Never log,
-commit or paste tokens. Inspect exact process command lines before stopping only
-this demo and use hidden background launches. Earlier demos at 8811/8812 remain.
-The root `C:\CLASSIFIRE` is conflicted recovery evidence; do not reset, clean, resolve,
-broad-stage or publish it. Old worktrees and unrelated changes remain untouched.
+This is a marked loopback SQLite demo with explicit seeded technical/clean fixture
+metadata. Its synthetic token stays in the marked directory and expires in 15 minutes;
+restart refreshes it. Never log, paste or commit tokens. Verify exact command lines
+before stopping only the owned demo; background launches must be hidden. Earlier
+demos (including 8813), worktrees and receipts remain unrelated local artifacts.
+The root is still conflicted recovery work on `gpt/phase8-linked-original-images`
+(four DU paths plus pre-existing staged/unstaged changes, inspected read-only).
+Do not reset, clean, resolve, broad-stage or publish that checkout.
 
 ## Start Here / Next Session
 
-**First task:** after verifying/finalizing current publication, expose existing
-measured-constraint and service-size review through the same client confirmation
-boundary. The current client retrieves/reviews candidates but cannot enter these
-measurements; standalone UI/shared services already implement the bounded checks.
-This improves useful technical review without duplicating rules or claiming complete applicability.
+**First task:** after verifying/finalizing current publication, expose preview and
+human-confirmed application of one already retained/scanned XLSX pricing row to an
+existing Draft Estimate line. This closes a proven UI/client gap using existing
+commercial rules. Keep upload/scan in the current UI for this bounded increment.
 
-**Files:** `services/draft_system_matches.py:save_constraint_review`,
-`services/draft_constraint_review.py:validate_inputs`, `draft_system_match_ui.py`,
-`services/draft_client_capabilities.py`, `draft_client_capability_tools.py`,
-`services/draft_client_requests.py`, `templates/draft_client_request.html`,
-`tests/test_draft_client_capabilities.py`, `tests/test_draft_constraint_review*.py`,
-`tests/test_draft_service_size*.py`, and `docs/DRAFT_CLIENT_V1_CONTRACT.md`.
+**Files/components:** `services/draft_pricing_intake.py` (`preview`, `apply_rate`),
+`services/draft_pricing_contract.py`, `services/draft_source_intake.py`,
+`draft_pricing_ui.py`, client capability/tool/request modules and review template,
+`tests/test_draft_pricing.py`, `tests/test_draft_pricing_ui.py`, client and
+Estimate/report tests, and `docs/DRAFT_CLIENT_V1_CONTRACT.md`.
 
-**Prerequisites/dependencies:** current shared main and `.[dev,postgres,chatgpt]`,
-explicit saved Match revision and authorized synthetic source/measurement fixtures.
-Keep client technical scope, current domain permissions, owner identity, stale-input
-checks, source integrity, human confirmation and review history. Real provider data,
-OAuth credentials/account linking and HTTPS deployment need separate authority;
-none is a prerequisite for synthetic parity. No known blocker to this bounded task.
+**Prerequisites/dependencies:** current shared main, `.[dev,postgres,chatgpt]`, an
+owned saved Estimate/line and a retained synthetic workbook. Reuse `workbook_bytes`
+and `MAPPING` fixtures. Source containment tests need the guarded disposable loopback
+PostgreSQL database and marked storage; verify it is isolated/empty/idle before any
+fixture cleanup opt-in. A demo/customer/operational database is never that test target.
+No known implementation blocker; unavailable disposable PostgreSQL blocks its required
+containment proof, not investigation. Real OAuth/account/HTTPS deployment needs separate
+authority and is not a prerequisite for the local synthetic interaction.
 
-**Definition of done:** each supported measured review can be proposed, inspected,
-confirmed/rejected and reopened through client and UI with the same saved revision
-and findings; reports retain that exact reviewed input after restart. Invalid,
-foreign, revoked, stale and replayed requests are denied. Existing source and
-constraint guards remain intact; no invented compatibility or automatic next capability.
-Inspect the UI and output, update docs, classify the diff and complete safe publication.
+**Definition of done:** a client can inspect readable mapped row/cell provenance,
+propose its use and let the same human confirm/reject. Bind the current Estimate
+revision, target line, source/document/row hashes, mapping and recovery note; require
+current estimating client scope, owner and domain/project/estimate/library rights.
+Only confirmation calls `apply_rate`; no partial revision survives failure. Preserve
+original/override history and unchanged retained report bytes after restart. Refuse
+stale/replayed/revoked/foreign requests, changed/quarantined sources, unsupported
+units and formula-derived rates. No pricing inference, new parser or canonical writes.
+Inspect the UI/output, align docs, classify and complete safe publication.
 
-**Validation:** focused client/constraint/service-size/HTTP and report regressions;
-official SDK + browser review and process-restart artifact parity; Ruff, Mypy,
-Bandit, one Alembic head and required exact-head CI. Set the isolated source path:
+**Validation:** pricing/client/estimate-report suites, official SDK + Chrome,
+actual process-restart parity, Ruff/Mypy/Bandit, applicable migration checks and
+required exact-head CI. Inspect repository test configuration before commands:
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp <unique-temp> tests/test_draft_client.py tests/test_draft_client_capabilities.py tests/test_draft_constraint_review.py tests/test_draft_constraint_review_ui.py tests/test_draft_service_size_review.py tests/test_draft_service_size_ui.py
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp <unique-temp> tests/test_draft_pricing.py tests/test_draft_pricing_ui.py tests/test_draft_client.py tests/test_draft_client_capabilities.py tests/test_draft_estimates.py tests/test_draft_estimate_reports.py tests/test_draft_complete_reports.py
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
 ```
 
-PostgreSQL tests require the guarded disposable loopback fixture; verify isolation
-before opting in. Never target a demo/customer/operational database for table cleanup.
+Local Mypy has used stubs at
+`C:\Users\tanas\AppData\Local\Temp\lifecycle-stubs-9f7cfd6c36c84af0b5b19c5f3dcf36c7`
+appended to PYTHONPATH; verify availability rather than copying a stale command.
+Run PostgreSQL suites serially and record skips honestly. Do not weaken containment
+or tests to complete a demo.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from verified repository state. Read AGENTS.md, GOAL.md,
-> docs/PROJECT_STATE.md, docs/CLASSIFIRE_ROADMAP.md, docs/CLASSIFIRE_ARCHITECTURE.md,
-> docs/SESSION_HANDOFF.md and docs/DRAFT_CLIENT_V1_CONTRACT.md. Inspect Git status,
-> worktrees, origin/main and current branch/PR/CI before editing. Preserve the
-> conflicted C:\CLASSIFIRE root, unrelated local changes, old worktrees, receipts and
-> supplied logo. First finish any outstanding publication of
-> feat/client-independent-capabilities-20260906. The single next product task is
-> client parity for the existing measured-constraint and service-size review: the
-> UI/shared services already support it, while MCP currently only retrieves and
-> keeps/rejects candidates. Inspect save_constraint_review in draft_system_matches.py,
-> draft_constraint_review.py, draft_system_match_ui.py, draft_client_capabilities.py,
-> the retained client request service, review template and constraint/service-size tests.
-> Reuse those rules with explicit saved revisions, technical scope, current ownership,
-> source integrity and same-human browser confirmation. Use synthetic fixtures only;
-> real OAuth/account linking/deployment requires separate authority and does not
-> block local work. Done means independently proposed/confirmed/rejected reviews,
-> equal client/UI saved findings and exact report inputs after process restart, with
-> invalid/foreign/revoked/stale/replayed operations refused and no canonical approval
-> or automatic chaining. Run focused client/constraint/service-size/report tests,
-> official SDK + Chrome/restart proof, Ruff, Mypy, Bandit and migration-head/CI checks.
-> Update aligned docs, classify changes and continue autonomously through implementation,
-> validation, explicit-path commit, normal push, PR and merge after required checks
-> and reviews pass. Verify the merge; never bypass controls or add speculative work.
+> Continue CLASSIFIRE from verified repository state. Read AGENTS.md, GOAL.md and
+> docs/PROJECT_STATE.md, CLASSIFIRE_ROADMAP.md, CLASSIFIRE_ARCHITECTURE.md,
+> SESSION_HANDOFF.md and DRAFT_CLIENT_V1_CONTRACT.md. Inspect Git status/worktrees,
+> origin/main and live branch/PR/CI before editing; first finish any outstanding
+> publication of feat/client-measured-review-20260906. Preserve the conflicted root,
+> unrelated work, receipts and supplied logo; use an isolated main-based worktree.
+> The single next task is client preview and human-confirmed application of one
+> already retained/scanned XLSX row to an existing Estimate line. The standalone
+> service already supports it, while the client only supports manual pricing.
+> Reuse draft_pricing_intake.preview/apply_rate, draft_pricing_contract,
+> draft_source_intake, existing pricing UI and client capability/request tools.
+> Keep upload/scan in the UI. Bind saved revision, target line, source/document/row
+> hashes, mapping and recovery note; require current estimating scope, owner and
+> project/estimate/library permissions. Only separate same-human confirmation applies
+> the rate. Use synthetic workbook_bytes/MAPPING fixtures and verified disposable
+> PostgreSQL/storage; unavailable isolation is a containment-test blocker, never a
+> reason to use customer data. Done means readable provenance, confirm/reject/replay
+> proof, denied stale/revoked/foreign/changed/quarantined or unsupported unit/formula
+> inputs, preserved original/override history and exact report bytes after restart.
+> Run focused pricing/client/estimate/report tests, official SDK + browser/restart,
+> Ruff, Mypy, Bandit and migration/CI checks. Update aligned docs, classify changes
+> and continue autonomously through implementation, validation, explicit-path commit,
+> normal push, PR and merge after required exact-head checks/reviews pass. Verify the
+> merge. Do not deploy, use real providers, bypass controls or add speculative work.
+> After this bounded parity slice, prioritize user feedback and the missing
+> evidence-to-structured-Draft interaction instead of indefinite adapter polish.
 
 
-Final local presentation checkpoint: the review labels the selected saved Estimate
-and explicitly separates its totals from proposed edits. All four client capability
-journey/boundary tests passed again after that caption change. Documentation links,
-Ruff and diff whitespace checks passed. Required exact-head CI/publication is the
-remaining step at this pre-commit checkpoint.
+Final local checkpoint: affected client/measurement/report regression **147 passed,
+one PostgreSQL test skipped** in 299.47 seconds. The PostgreSQL confirmation race
+remains for required CI; no local PostgreSQL execution is claimed for this increment.
+The final browser confirmation, saved-measurement comparison and supplied logo were
+visually inspected. Documentation links and diff whitespace checks passed. Exact-head
+CI, PR and merge remain the publication steps at this checkpoint; verify them live.
