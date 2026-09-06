@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -101,13 +102,28 @@ def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
     }
 
 
+def _review_return_path(value: str | None) -> str:
+    prefix = "/client-requests/"
+    if value and value.startswith(prefix):
+        identifier = value[len(prefix):]
+        try:
+            if str(UUID(identifier)) == identifier:
+                return value
+        except ValueError:
+            pass
+    return "/"
+
+
 @router.get("/login", response_class=HTMLResponse, response_model=None)
 def login_page(
     request: Request, db: Db, error: str | None = None
 ) -> HTMLResponse | RedirectResponse:
+    return_to = _review_return_path(request.query_params.get("next"))
     if _user(request, db):
-        return RedirectResponse("/", status_code=303)
-    return templates.TemplateResponse(request, "login.html", _context(request, db, error=error))
+        return RedirectResponse(return_to, status_code=303)
+    return templates.TemplateResponse(
+        request, "login.html", _context(request, db, error=error, return_to=return_to)
+    )
 
 
 @router.post("/login")
@@ -117,15 +133,19 @@ def login_submit(
     email: Annotated[str, Form()],
     password: Annotated[str, Form()],
     csrf_token: Annotated[str, Form()],
+    return_to: Annotated[str, Form()] = "/",
 ) -> RedirectResponse:
     verify_csrf(request, csrf_token)
+    return_to = _review_return_path(return_to)
     user = authenticate_user(db, email, password)
     if not user:
-        return RedirectResponse("/login?error=Invalid+email+or+password", status_code=303)
+        return RedirectResponse(
+            "/login?error=Invalid+email+or+password&next=" + return_to, status_code=303
+        )
     request.session.clear()
     request.session["user_id"] = user.id
     create_csrf_token(request)
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse(return_to, status_code=303)
 
 
 @router.post("/logout")

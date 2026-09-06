@@ -1,116 +1,93 @@
 # CLASSIFIRE Project State
 
-Verified snapshot: 2026-09-06 AEST. Health: working bounded Draft UI prototype;
-full product and production readiness remain incomplete. Accepted ADRs 0001/0002
-retain independent capabilities, a shared deterministic core, optional AI and
-prototype-first delivery. OpenClaw retirement requires proven replacement protections.
+## Evidence-based snapshot
 
-Shared baseline: `13a5b34ebb08eb287aebf02ed218c78ff539f1d5`, merged
-[PR #202](https://github.com/Slayde91/classifire/pull/202). Exact-head CI 34002073595
-and main CI 34002483886 succeeded. Selected package download was merged in PR #200.
+Verified 2026-09-06 AEST from current source, Git/GitHub, tests and synthetic runtime.
+Shared baseline: `2f79e490049d23a9dc8e34e3aa54fb8d232a960d`, merged PR #203.
+Its exact-head CI 34007195747 passed 1,470 tests; main CI 34007644149 succeeded.
+Current worktree: `C:\CLASSIFIRE\.tmp\chatgpt-draft-client-20260906`, branch
+`feat/chatgpt-draft-client-20260906`. Publication of this branch must be checked live.
 
-Current branch: `feat/draft-package-materialization-20260906`, worktree
-`C:\CLASSIFIRE\.tmp\draft-package-materialization-20260906`. This is an implementation
-checkpoint; inspect live PR/head CI before claiming publication or merge.
+Accepted architecture: ADR 0001 hybrid modular core and ADR 0002 independent
+capabilities. Deterministic services, optional AI and portable explicit revisions
+remain the target. No OpenClaw retirement, customer operation or production release.
 
-## Implementation snapshot
-
-| Capability | Implemented bounded behavior | Remaining gap |
+| Capability | Verified bounded implementation | Remaining product gap |
 | --- | --- | --- |
-| Scope | Manual editing, saved import/export, graph checks, PDF page observations | Broader formats/analysis, richer physical entities and contradictions |
-| Technical | Source-bound candidates, review history, partial thickness/gap/service-size checks; editable foreign-origin review | Full authorized applicability; imported source claims stay unverified |
-| Estimate | Provisional manual rates, source-cell XLSX selection, original/override history; editable imported values | Governed defaults/inference, broader components and recovery |
-| Reports | Four retained Draft PDF/XLSX profiles; original imported reports retained behind scan/format checks | Professional/production acceptance, complete source correctness and release gates |
-| Packages | Selected configuration/save/history/download; new-project import, identity mapping, original history retention and v2 re-export | Full-project/history/source coverage, existing-project merges and operating limits |
-| Interfaces | Shared FastAPI/Jinja use cases; exact supplied logo | Authenticated ChatGPT adapter, full client parity and tenant assurance |
-| Authority | Governed persistence, admissions/locks and human release remain separate | Production Phase 8-14 exits and OpenClaw replacement parity |
+| Scope | Manual Draft editor, revisions/import, retained PDF page workflow | Broader Word/XLSX/image/drawing analysis and full governed interpretation |
+| System matching | Saved candidate review and selected measured-constraint checks | Full authorized applicability and evidence coverage |
+| Estimating | Independent Draft estimates, preserved overrides and workbook rate selection | Validated provisional/default pricing breadth and full recovery chain |
+| Reporting | Four independent Draft PDF/XLSX profiles from saved snapshots | Professional/production acceptance and governed close-out/release |
+| Portability | Selected v1 ZIP creation/download; editable new-project import and v2 retained-origin re-export | Complete project/source/history coverage, existing-project merge and production retention |
+| ChatGPT-facing client | Optional MCP Scope/create/edit/package tools, identity mapping, browser confirmation and shared exact downloads on current branch | Real OAuth/account linking, remaining capability tools and production deployment |
 
-## Current import work
+## Active work and measured verification
 
-`draft_package_materialization.create_import` uses one transaction for a new owned
-Project/Draft, existing Scope import, explicit imported Match/Estimate identities,
-original ZIP retention and hashed identity mapping. It preserves original values,
-summary, source claims and history without automatic recalculation. Users may edit
-Scope, review preferences/notes and Estimate values independently. Imported approvals
-never create local LibraryRelease eligibility or canonical physical authority.
+The client branch adds `draft_client.py`, `draft_client_auth.py`, a retained request
+service/table and migration 0036. Existing Draft services remain the only business
+logic. Tools can propose writes; the same human must confirm through the existing
+browser session. Owner/role checks, stale revisions, CSRF, explicit selection,
+foreign-origin restrictions and retained-byte checks remain enforced.
 
-Migration 0035 adds original/archive mapping and report-source tables, imported-origin
-columns and native-versus-foreign Match/file-binding constraints. Native bytes and
-historical migrations remain intact. Match v4 and Estimate v3 wrap their existing
-native contracts; v2 project exports retain current selections and exact original
-ZIP ancestry. The retained mapping binds initial local revisions.
+Executed checks (overlapping suites, not additive coverage claims):
 
-Original report snapshots/PDF/XLSX remain foreign attachments. Report-bearing import
-requires PostgreSQL and existing shared retention/scan/quarantine controls. Scanner
-failure, expired verdicts, changed bytes, active content or lost rights block binary
-and original-ZIP downloads/re-export, including already saved packages. Scope/review/
-Estimate-only import also works on SQLite. No new dependency or provider run.
+- First official MCP HTTP/service journey and token boundaries: 10 passed.
+- Expanded client, new migration and readiness checks: 38 passed.
+- PostgreSQL two-confirmation race plus preflight/legacy lineages: 11 passed.
+- Affected client/auth/Scope/package UI/readiness/packaging regression: 74 passed,
+  one PostgreSQL test skipped in that run; its separate PostgreSQL run passed.
+- Full Mypy: 190 source files passed. Ruff and Bandit passed before the final
+  presentation/documentation reconciliation; recheck final source and exact-head CI.
+- Official SDK client + Chrome: propose/confirm/create/edit/package/download passed;
+  browser and client ZIP bytes matched, quantity remained unknown, no page errors.
+- Actual process restart: saved bytes and SDK reads remained exact; sign-in returned
+  to the pending review and rejection persisted. The supplied logo matched exact bytes.
+- Synthetic database receipt: one Draft workspace/package, five client requests;
+  canonical estimates/lines/openings/services/physical locks all zero at that checkpoint.
 
-## Verification and health
+The PostgreSQL fixture was initially rejected by automatic approval review because
+it uses table cleanup. Read-only inspection then proved its dedicated loopback
+`classifire_containment_test` database had no tables or other sessions; the bounded
+synthetic run was approved and passed. No customer/demo database was reset.
 
-- Core/HTTP/readiness checks: 23 passed, including confirmation, wrong file, CSRF,
-  replay refusal, new ownership, edit/re-export/re-import and reopened records.
-- Six migration checks passed, including actual 0034 -> 0035 retention of native
-  Match/Estimate/revision/package bytes, relationship constraints and refused downgrade.
-- PostgreSQL report lifecycle checks passed for original-byte retention, new owner
-  bindings, nested re-import, scanner absence, rollback and shared sticky quarantine.
-- The browser found a PostgreSQL ordering bug when importing Match plus Estimate;
-  an explicit Match-revision flush fixes it and a populated PostgreSQL regression
-  passed. No constraint was weakened. Affected regression: 506 passed, three warnings.
-- Real Chrome completed Scope-only and populated upload/confirmation, report scan,
-  Scope save, review-note and Estimate price edits, and new ZIP downloads. Independent
-  inspection verified unchanged original ZIP/PDF/XLSX, preserved history and the
-  edited price. Final restart/re-import verification passed, including a further Scope edit.
-- Mypy passed for 186 source files. Ruff and Bandit passed; the final focused run passed 10 tests, including full PostgreSQL import, local
-  workbook edits and migration. Exact-head hosted CI remains a publication prerequisite.
-- The supplied logo is byte-identical to the served asset (SHA-256
-  `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`).
-  Chrome verified exact bytes and the rendered logo was visually inspected.
+## Project health, gaps and local context
 
-Evidence is synthetic. No customer evidence, real provider, operational database,
-governed physical/Estimate submission or lock, deployment or human release was
-authorized or executed. The demo contains zero canonical Estimates/lines, Openings,
-Services and Physical Model Locks; new Project and Draft rows are expected.
-A passing Draft workflow does not complete the product's technical or commercial rules.
+The interactive Draft prototype is usable for the demonstrated synthetic paths.
+That is not complete scope analysis, technical suitability, production estimating or
+release readiness. Preserve production Phase 8-14 gates and explicit uncertainty.
+A real ChatGPT session has not been connected. OAuth authorization-server selection,
+compatible tokens, callback/PKCE/consent, HTTPS deployment and account-specific access
+remain to be established with separate operational authority. Local key/revocation
+policy is implemented; issuer-side revocation/rotation operations remain unproven.
+Read [the client contract](./DRAFT_CLIENT_V1_CONTRACT.md) for precise limits.
 
-## Known gaps and local context
-
-The package is a selected workspace, not a complete database/evidence backup.
-Restricted source bodies stay external/withheld. Size/depth limits, retention/quotas,
-redistribution, existing-project conflict resolution and production parser sandboxing
-need further work. Imported reports are not proof of technical truth or source/snapshot
-agreement. ChatGPT, broader evidence/applicability/pricing and production gates remain
-unfinished. Do not make all that breadth a prerequisite to trying this prototype.
-
-All current branch changes belong to editable package import, its UI, tests,
-migration/contract documentation and a separately marked synthetic import demo.
-The legacy root remains untouched: 46 unstaged modifications, 14 staged additions,
-four DU conflicts and unrelated untracked work. Some old pytest directories cannot
-be enumerated, so the untracked inventory is not guaranteed complete. Preserve older
-worktrees and the three untracked generic-package experiments.
+This branch's local changes belong to the client adapter, human review, optional
+dependencies, migration/readiness, tests, synthetic launcher and aligned docs.
+The legacy root remains recovery material on `gpt/phase8-linked-original-images`:
+prior verified inventory had four DU conflicts, 46 unstaged modifications and 14
+staged additions; inspect afresh before any recovery. It was not edited for this task.
+Old worktrees, source evidence, demos and generic archive experiments remain preserved.
 
 ## Recommended Next Actions
 
-1. Publish the locally verified import milestone through normal exact-head CI/PR
-   review and merge. Regression and restart/re-import checks have passed. Do not substitute more preview polish or a Scope-only result.
-2. Then implement the first thin authenticated ChatGPT-facing Draft interaction using
-   the shared create/read/edit/download commands. Prove ownership, explicit mutation
-   confirmation and local synthetic parity before credentials or external deployment.
-3. Gather user-trial feedback; fix supported-path failures before broad polish. Extend
-   evidence formats, full authorized applicability and governed pricing in bounded
-   visible increments. Preserve production gates and OpenClaw protection parity.
+1. Finish exact-head CI/PR publication; recheck
+   current Git state before assuming this checkpoint's work is merged.
+2. Extend this same authenticated adapter to existing independent System Match,
+   Estimate and report use cases. Reuse human confirmation/shared commands and prove
+   client/UI saved-artifact parity with synthetic data; no implicit capability chaining.
+3. Configure and test a real OAuth/HTTPS ChatGPT link when account/deployment authority
+   is available. Gather user feedback and extend missing domain coverage in visible
+   increments. Do not claim production readiness or retire OpenClaw from prototype tests.
 
-The runnable demo, exact next-session prompt and validation commands are in
-[SESSION_HANDOFF.md](./SESSION_HANDOFF.md).
+[SESSION_HANDOFF.md](./SESSION_HANDOFF.md) carries exact context, checks and next prompt.
 
 
-## Publication checkpoint
+## Final local validation checkpoint
 
-PR #203 is open. Initial implementation commit `f02a693cd79efe3ebb994b33866e21b38fa1b249`
-was pushed normally. Initial hosted run 34006909588 correctly refused an old current-
-stack test fixture still stamped 0034; no production guard failed or was weakened.
-The preflight fixture and two remaining current-head migration assertions now expect
-0035. Recheck the latest PR head and full CI before merge; do not bypass that failure.
-
-The follow-up preflight/legacy-lineage checks passed: 10 tests. A fresh committed-
-server Chrome check confirmed exact saved archives/logo and ancestor report inventory.
+Final client/auth/readable-Scope regression: 64 passed, one PostgreSQL test skipped
+in that run (the separate PostgreSQL confirmation test passed). Full Ruff, Mypy
+(190 files), Bandit and the single 0036 migration head passed. Final Chrome inspection
+confirmed readable proposed physical content, the exact supplied logo, login return,
+persisted rejection and byte-identical downloads after process restart. Documentation
+links and diff whitespace checks passed. Git publication/full exact-head CI still
+must be checked live; these local results do not establish external ChatGPT linking.

@@ -56,5 +56,5 @@ def test_proposal_review_package_lifecycle_migration_upgrades_0013_database(
     )
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0035_draft_package_imports"
+            "0036_draft_client_requests"
         )

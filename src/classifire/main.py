@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -55,7 +55,12 @@ async def lifespan(_app: FastAPI):
         with SessionLocal() as db:
             if not db.scalar(select(User.id).limit(1)):
                 seed_database(db, settings)
-    yield
+    async with AsyncExitStack() as stack:
+        if draft_client_app is not None:
+            await stack.enter_async_context(
+                draft_client_app.router.lifespan_context(draft_client_app)
+            )
+        yield
 
 
 app = FastAPI(
@@ -97,6 +102,8 @@ app.mount("/brand", StaticFiles(directory=str(package_dir / "static" / "brand"))
 async def security_headers(request: Request, call_next):  # type: ignore[no-untyped-def]
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
+    if request.url.path.startswith(("/mcp", "/client-requests/", "/api/draft-client/")):
+        response.headers["Cache-Control"] = "no-store"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
@@ -139,3 +146,15 @@ app.include_router(draft_pricing_ui_router)
 app.include_router(draft_estimate_ui_router)
 app.include_router(draft_project_package_ui_router)
 app.include_router(draft_system_match_ui_router)
+
+# Optional integration dependencies and routes are absent unless explicitly configured.
+draft_client_app = None
+if settings.draft_client_config is not None:
+    from .draft_client import configure
+    from .draft_client_auth import ClientAuthority
+
+    draft_client_app = configure(
+        app,
+        ClientAuthority(settings.draft_client_config, development=settings.env != "production"),
+        SessionLocal,
+    )

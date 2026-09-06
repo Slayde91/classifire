@@ -1211,6 +1211,25 @@ class DraftProjectPackage(RecordMixin, Base):
     archive_hash: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class DraftClientRequest(RecordMixin, Base):
+    """A client's proposal; only a separate human session can execute it."""
+
+    __tablename__ = "draft_client_requests"
+    owner_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    command: Mapped[str] = mapped_column(String(30), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    identity_json: Mapped[str] = mapped_column(Text, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
+    result_json: Mapped[str | None] = mapped_column(Text)
+    __table_args__ = (
+        CheckConstraint("command IN ('create', 'edit', 'package')", name="ck_client_command"),
+        CheckConstraint("status IN ('pending', 'confirmed', 'rejected')", name="ck_client_status"),
+        CheckConstraint("length(payload_json) <= 1048576", name="ck_client_payload_size"),
+    )
+
+
 class Estimate(RecordMixin, Base):
     __tablename__ = "estimates"
     __table_args__ = (

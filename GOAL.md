@@ -166,19 +166,23 @@ withheld; existing artifact provenance and history are preserved. This is select
 workspace portability, not all project records, original evidence or a database backup.
 See PROJECT_STATE.md for evidence/publication and remaining limitations.
 
-The current import branch extends this to a new editable owned Draft project:
+PR #203 extends this to a new editable owned Draft project:
 explicit confirmation, original archive/history retention, local identities,
 optional review/Estimate editing and traceable v2 re-export. Report bytes require
 shared scan/quarantine checks. Foreign approvals never activate local authority.
-See PROJECT_STATE.md for measured checks and publication; a branch implementation
-is not evidence that its PR merged.
+PR #203 merged at `2f79e49`; current facts and later publication remain in PROJECT_STATE.md.
 
-After this import milestone is verified and published, prioritize the first thin,
-authenticated ChatGPT-facing Draft workflow over the same shared commands: create,
-read/edit and download a Scope/package without implicit downstream work. Resolve
-client identity, ownership and confirmation semantics before exposing writes. Prove
-parity locally with synthetic data; external credentials/deployment are separate.
-Do not rebuild the UI/core or wait for all technical/pricing breadth to be perfect.
+The first authenticated client increment now implements an optional MCP adapter
+for owned Scope/create/edit/package operations over those same services. Client
+mutations remain proposals until the same human confirms them in the standalone UI.
+Official SDK, browser and restart checks passed with synthetic tokens; a real
+ChatGPT OAuth link and production deployment remain unproven.
+
+After publication, extend the same adapter to independent System Match, Estimate
+and report use cases. Preserve explicit saved inputs, review and stop points;
+never chain capabilities implicitly. Complete local synthetic parity while external
+OAuth/account/deployment decisions remain separate. Do not rebuild the core or wait
+for every domain edge case before demonstrating this second interface.
 
 The full goal remains active: broader Scope analysis, actual applicability, pricing
 defaults/inference, complete package coverage/exchange, ChatGPT and production readiness

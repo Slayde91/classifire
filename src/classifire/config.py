@@ -100,6 +100,7 @@ class Settings(BaseSettings):
     admin_password: str = "change-me-immediately"  # noqa: S105
     host: str = "127.0.0.1"
     port: int = 8787
+    draft_client_config: Path | None = None
     storage_root: Path = Path("./data/storage")
     max_upload_mb: int = 100
     allowed_origins: Annotated[list[str], NoDecode] = Field(

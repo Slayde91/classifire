@@ -25,6 +25,11 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--port", type=int, default=8796)
     parser.add_argument(
+        "--client-demo",
+        action="store_true",
+        help="Enable synthetic signed-token MCP client proof on loopback only",
+    )
+    parser.add_argument(
         "--postgres-demo-port",
         type=int,
         help="Use loopback classifire_draft_pdf_demo database for PDF evidence",
@@ -147,6 +152,12 @@ def main() -> None:
     if args.postgres_demo_port is not None:
         os.environ["CLASSIFIRE_CLAMAV_HOST"] = "127.0.0.1"
         os.environ["CLASSIFIRE_CLAMAV_PORT"] = str(args.clamav_port)
+    if args.client_demo:
+        os.environ["CLASSIFIRE_DRAFT_CLIENT_CONFIG"] = str(
+            task_dir / "synthetic-client-policy.json"
+        )
+    else:
+        os.environ.pop("CLASSIFIRE_DRAFT_CLIENT_CONFIG", None)
     import uvicorn
     from sqlalchemy import inspect, select, text
 
@@ -206,6 +217,61 @@ def main() -> None:
             )
             db.commit()
             print(f"Synthetic technical release: {release.version} ({release.id})", flush=True)
+    if args.client_demo:
+        # This fixture issues a local test token, not a production OAuth authorization flow.
+        import time
+
+        import jwt
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        from classifire.draft_client_auth import EXPORT, READ, WRITE
+
+        with SessionLocal() as db:
+            actor = db.scalar(select(User).where(User.email == DEMO_EMAIL))
+            if actor is None:
+                parser.error("Synthetic demo account is missing")
+            user_id = actor.id
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        public = jwt.algorithms.RSAAlgorithm.to_jwk(key.public_key(), as_dict=True)
+        public.update(alg="RS256", use="sig", kid="synthetic-local")
+        origin = f"http://127.0.0.1:{args.port}"
+        policy = {
+            "base_url": origin,
+            "issuer": origin,
+            "public_keys": {"synthetic-local": public},
+            "subjects": {"synthetic-human": user_id},
+            "clients": {"synthetic-client": [READ, WRITE, EXPORT]},
+        }
+        policy_path = task_dir / "synthetic-client-policy.json"
+        token_path = task_dir / "synthetic-client-token.txt"
+        if policy_path.is_symlink() or token_path.is_symlink():
+            parser.error("Client demo files must not be symbolic links")
+        policy_path.write_text(json.dumps(policy), encoding="utf-8")
+        now = int(time.time())
+        token = jwt.encode(
+            {
+                "iss": origin,
+                "aud": origin + "/mcp",
+                "sub": "synthetic-human",
+                "client_id": "synthetic-client",
+                "jti": secrets.token_urlsafe(24),
+                "iat": now,
+                "nbf": now,
+                "exp": now + 900,
+                "scope": " ".join([READ, WRITE, EXPORT]),
+            },
+            key,
+            algorithm="RS256",
+            headers={"kid": "synthetic-local", "typ": "at+jwt"},
+        )
+        token_path.write_text(token, encoding="utf-8")
+        os.environ["CLASSIFIRE_DRAFT_CLIENT_CONFIG"] = str(policy_path)
+        print(
+            "Synthetic MCP enabled; local token expires in 15 minutes. No real OAuth link.",
+            flush=True,
+        )
+    else:
+        os.environ.pop("CLASSIFIRE_DRAFT_CLIENT_CONFIG", None)
     print(f"Synthetic local prototype: http://127.0.0.1:{args.port}/scopes", flush=True)
     print(f"Demo login: {DEMO_EMAIL} / {DEMO_PASSWORD}", flush=True)
     print(f"Data directory (reuse after restart): {task_dir}", flush=True)

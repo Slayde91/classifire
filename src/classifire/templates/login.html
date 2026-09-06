@@ -9,6 +9,7 @@
     {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
     <form method="post" action="/login" class="stack-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="return_to" value="{{ return_to|default('/') }}">
       <label>Email<input type="email" name="email" autocomplete="username" required></label>
       <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
       <button class="button button-primary" type="submit">Sign in</button>
