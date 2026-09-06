@@ -98,7 +98,9 @@ def test_suggestion_migration_retains_pdf_xlsx_v5_history_and_enforces_status(ca
     verify_current(engine, ids, expected)
     with Session(engine) as db:
         actor = db.get(User, uid(100))
-        assert assess_deployment_lineage(db).code == "CLEAN_STACK_HEAD_CONFIRMED"
+        # This test intentionally stops at historical revision 0039. Once a later
+        # migration exists, the current deployment guard must continue to fail closed.
+        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
         row = DraftPdfSuggestion(
             draft_scope_id=ids["draft"],
             source_id=ids["draft_pdf_sources"],

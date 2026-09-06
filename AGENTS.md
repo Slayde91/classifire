@@ -19,11 +19,10 @@ Keep AI optional. Four capabilities do not require four agents or four services.
 Prioritize a working, testable UI prototype. Deliver one complete user interaction
 with the minimum supporting contract, persistence and validation in the same slice.
 Use GOAL.md and the verified project state to select the next visible increment;
-do not rebuild the completed manual Draft Scope workbench or merged PDF graph review.
-PDF and Excel source review are merged (PRs #209/#210). The current slice adds
-optional source-bound PDF text/image suggestions, retained separately until human
-review and explicit save. Finish its measured supported-path validation/publication
-before moving to the bounded A/B source-profile UI in the retained corpus/pricing track.
+  do not rebuild the completed manual Draft Scope or PDF/Excel/suggestion review paths.
+  The current candidate adds bounded A/B source identity and unapproved profile history.
+  Finish its measured publication, then deliver the smallest human profile-review
+  interaction before reviewed row ingestion or mapping in the corpus/pricing track.
 Inspect current evidence before resuming; never rebuild completed prototype workflows.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
@@ -107,10 +106,11 @@ parallel physical model or automatic approval. Keep the manual path usable.
 ## Technical corpus and dual-pricing work
 
 For this capability read [the integrated design](./docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
-and roadmap T1-T14 before editing. The first slice within this separate track remains
-the bounded visible A/B source-profile interaction. The PDF/Excel reviews are delivered; finish the optional suggestion interaction
-before the bounded A/B source-profile milestone. Preserve T-stage requirements
-and dependencies; do not treat the complete target schema or estimation model as one implementation task.
+and roadmap T1-T14 before editing. The bounded visible A/B source-profile interaction
+is implemented in the active candidate. After verified publication, the next slice is
+an immutable T12 human profile decision; then one reviewed A observation or B-system
+mapping path. Preserve T-stage dependencies and do not treat the complete target schema,
+bulk corpus or estimation model as one implementation task.
 
 - Preserve separate dataset identities: A `pricelist.xlsx` is general products,
   materials, labour and services; B `pricing_library.xlsx` is Firefly system prices.

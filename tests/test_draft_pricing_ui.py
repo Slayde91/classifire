@@ -12,7 +12,7 @@ from test_shared_file_containment import postgresql_session_factory as _postgres
 
 from classifire.draft_estimate_ui import router as estimate_router
 from classifire.draft_pricing_ui import router
-from classifire.models import User
+from classifire.models import DraftEstimate, User
 from classifire.services import draft_estimates as estimates
 from classifire.services import draft_scope as scope
 
@@ -41,9 +41,15 @@ def test_upload_map_select_download_and_http_boundaries(pdf_app, monkeypatch):
         _login(other, "other")
         page = client.get(base + "/pricing")
         assert page.status_code == 200
+        invalid_kind = client.post(
+            base + "/pricing/upload",
+            data={"csrf_token": _csrf(page.text), "dataset_kind": "filename_guess"},
+            files={"file": ("synthetic.xlsx", workbook_bytes())},
+        )
+        assert invalid_kind.status_code == 422
         response = client.post(
             base + "/pricing/upload",
-            data={"csrf_token": _csrf(page.text)},
+            data={"csrf_token": _csrf(page.text), "dataset_kind": "general_pricelist"},
             files={"file": ("synthetic.xlsx", workbook_bytes())},
             follow_redirects=False,
         )
@@ -58,6 +64,7 @@ def test_upload_map_select_download_and_http_boundaries(pdf_app, monkeypatch):
             "csrf_token": token,
             "sheet_index": "1",
             "header_row": "1",
+            "price_meaning": "unknown",
             **{key: str(value) for key, value in MAPPING.items()},
         }
         bad = client.post(path + "/preview", data={**form, "rate": "1"})
@@ -67,13 +74,44 @@ def test_upload_map_select_download_and_http_boundaries(pdf_app, monkeypatch):
         assert "Apply row 2 rate" in page.text
         assert "Apply row 4 rate" not in page.text
         assert "D2: 120.25" in page.text
+        assert "Save unapproved profile revision 1" in page.text
+        assert "Price meaning unknown" in page.text
         import re
 
         def hidden(name):
             return re.search(r'name="' + name + r'" value="([^"]+)"', page.text).group(1)
 
-        apply = {
+        profile_form = {
             **form,
+            "expected_profile_revision": hidden("expected_profile_revision"),
+            "document_sha256": hidden("document_sha256"),
+            "preview_hash": hidden("preview_hash"),
+        }
+        assert (
+            client.post(
+                path + "/profiles",
+                data={**profile_form, "expected_profile_revision": "+0"},
+            ).status_code
+            == 422
+        )
+        profile = client.post(
+            path + "/profiles", data=profile_form, follow_redirects=False
+        )
+        assert profile.status_code == 303, profile.text
+        assert client.post(path + "/profiles", data=profile_form).status_code == 409
+        profile_page = client.get(profile.headers["location"])
+        assert profile_page.status_code == 200
+        assert "Saved profile revision 1" in profile_page.text
+        assert "Unapproved" in profile_page.text
+        profile_download = client.get(profile.headers["location"] + "/download")
+        assert profile_download.status_code == 200
+        assert profile_download.json()["definition"]["dataset"]["kind"] == "general_pricelist"
+        assert client.get(base + "/download?revision=2").status_code == 200
+        with x.factory() as db:
+            assert db.get(DraftEstimate, estimate.id).latest_revision == 2
+
+        apply = {
+            **{key: value for key, value in form.items() if key != "price_meaning"},
             "expected_revision": "2",
             "line_id": line_id,
             "row_number": "2",

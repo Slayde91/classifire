@@ -2,11 +2,13 @@
 
 ## Relationship to the planned two-source libraries
 
-This document describes the implemented generic Draft row-selection contract. It is
-not a dedicated importer for `pricelist.xlsx` (general products/materials/labour/services)
-or `pricing_library.xlsx` (Firefly system prices). Their separately versioned source
-identities, price-basis review, system mappings, bulk capacity and estimated-price
-workflow are planned in the [integrated design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md).
+This document describes the implemented generic Draft row-selection contract and the
+active bounded A/B source-profile extension. It is not a reviewed row importer for
+`pricelist.xlsx` (general products/materials/labour/services) or
+`pricing_library.xlsx` (Firefly system prices). Their explicit source identities and
+unapproved sheet/mapping/price-meaning profiles now exist; human review, normalized
+observations, system/component mappings, bulk capacity and estimated-price workflow
+remain planned in the [integrated design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md).
 The 1,000-row limit below includes the header; it cannot accommodate a single sheet
 with 1,000 price rows plus a header. Preserve this contract while adding bounded bulk
 processing and versioned compatibility explicitly; do not silently lift safety limits.
@@ -17,8 +19,8 @@ worker with explicit Scope/image modes, a separate DraftScopeXlsxSource binding 
 `draft_scope_xlsx` purpose. It does not apply rates or need pricing-library authority.
 This pricing UI still does not extract defects/openings/services and still refuses
 embedded images. Same-byte cross-purpose adoption remains refused. PDF graph review
-is merged; Excel Scope proof is active, then optional bounded PDF suggestions. A/B
-profiles remain the first slice within the separate corpus/pricing track.
+and Excel review plus optional bounded PDF suggestions are merged. The minimum A/B
+profile interaction is the current first slice within the separate corpus/pricing track.
 
 ## Implemented boundary
 
@@ -34,6 +36,35 @@ reuse by both formats. PDF public entry points remain compatible. The merged
 exact source SHA-256/size, scan receipt and parsed-document SHA-256. PostgreSQL's
 shared quarantine locks remain required for uploaded sources; manual estimating
 still works without PostgreSQL, ClamAV, AI or OpenClaw.
+
+## Explicit A/B source profile lifecycle
+
+Before upload, the pricing screen requires one human declaration:
+`general_pricelist` (A) or `firefly_system_prices` (B). The source filename is never
+used to infer this identity. The same exact bytes and same kind return the existing
+source; attempting to relabel those bytes as the other kind fails. New bytes for the
+same Draft/kind reuse a stable dataset ID and increment the source version. A and B
+have separate stable IDs/version sequences.
+
+After clean scanning, the user chooses the supported sheet/header/column mapping and
+one explicit price meaning: unknown, buy cost, list price, sell price, quoted price or
+actual price. Preview performs no write. It shows data/usable/unresolved row counts,
+row problems, mapped/unmapped fields and current structural/commercial gaps. The A
+profile explicitly lacks a mapped item kind; B explicitly lacks manufacturer and system
+configuration mapping. Unknown price meaning remains a visible gap.
+
+An explicit save appends `CLASSIFIRE-DRAFT-PRICING-SOURCE-PROFILE-v1`. The envelope
+binds the Draft, stable dataset ID/kind/version, exact source and parsed-document hashes,
+source size/name, sheet/header, exact header cells, mapping, price meaning and diagnostics.
+It records creator/time, revision, definition hash and parent-profile hash. Saves re-read
+the exact clean source and compare the submitted source, preview and current profile
+revision. Stale, changed, replayed, foreign or corrupt values fail closed. At most 20
+profile revisions are listed/retained through this bounded UI.
+
+Every profile is `unapproved`. Its contract states that library activation, Estimate
+change, system matching and price inference are false. Saved profiles can be reopened
+and downloaded as exact JSON. The existing `apply_rate` action is separate and remains
+the only action on this screen that explicitly changes an Estimate line.
 
 ## Supported workbook and explicit mapping
 
@@ -94,16 +125,18 @@ worksheet claims do not silently acquire the pricing permission requirements.
 ## UI, service and validation
 
 Routes live under `/scopes/{draft}/estimates/{estimate}/pricing`; upload, scan,
-preview and apply are explicit actions with bounded forms, CSRF and ownership checks.
-Core commands are `draft_pricing_intake.preview` and `apply_rate`; another interface
-must call these same services. No new framework, provider or dependency was added.
+profile preview/save/reopen/download and row apply are explicit actions with bounded
+forms, CSRF and ownership checks. Core commands include `retain_source`,
+`preview_profile`, `save_profile`, `read_profile`, `profile_bytes`, `preview` and
+`apply_rate`; another interface must call these same services. No new framework,
+provider or dependency was added.
 
-Targeted tests: `test_draft_pricing.py`, `test_draft_pricing_ui.py`,
-`test_migrations_draft_pricing_sources.py`, plus affected PDF, Estimate/report,
-Scope UI, deployment and migration regressions. Migration 0033 retains old report
-bytes and refuses destructive downgrade. The active Excel Scope migration advances
-the application head from 0037 to 0038; it does not rewrite this pricing schema/data
-or relax the original worker mode.
+Profile tests are `test_draft_pricing_profiles.py`, `test_draft_pricing_ui.py` and
+`test_migrations_draft_pricing_source_profiles.py`, with existing pricing/client,
+deployment, packaging and migration regressions. Migration 0033 retains the original
+pricing source/Estimate history. Forward migration 0040 adds nullable dataset identity
+and the separate profile table, preserves historical unclassified rows and refuses
+destructive downgrade. The single application head is 0040.
 
 Historical synthetic Chrome demo for the pricing milestone: `http://127.0.0.1:8805/scopes`, separate marked database
 `classifire_draft_pricing_demo` and `.tmp/draft-pricing-demo-20260906` storage.
@@ -113,3 +146,11 @@ remained byte-identical after an actual server restart. No browser page errors.
 The supplied logo is exact on sign-in/sidebar and the report. Browser/output receipts
 are local under `.tmp/pricing-artifacts`; do not commit synthetic runtime databases.
 See PROJECT_STATE.md for current validation and publication status.
+
+Current synthetic profile proof uses `http://127.0.0.1:8819`, marked storage
+`.tmp/pricing-source-profiles-demo-20260907`, database
+`classifire_draft_pricing_profiles_demo`, and real local ClamAV. Both A and B profile
+JSON hashes survived a process restart; A source version 2 reopened and profile saves
+did not advance the Estimate. Native visual inspection was blocked by the browser
+sandbox helper, so repeat layout inspection when available. No real workbook meaning,
+source rights, production scale or price accuracy is claimed.

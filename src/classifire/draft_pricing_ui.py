@@ -5,22 +5,31 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from openpyxl.utils.cell import get_column_letter  # type: ignore[import-untyped]
 
 from .config import get_settings
 from .draft_estimate_ui import Db, _actor, _revision
-from .draft_pdf_ui import _upload
 from .draft_scope_ui import _form_values
 from .security import verify_csrf
 from .services import draft_pricing_intake as pricing
+from .services import malware_scan
 from .services.draft_estimates import read_estimate_revision
-from .services.draft_pricing_contract import FIELDS
+from .services.draft_pricing_contract import DATASET_KINDS, FIELDS, PRICE_MEANINGS
 from .services.draft_scope import DraftScopeError, get_draft
 from .ui import _context, _require, templates
+from .ui_uploads import single_file
 
 router = APIRouter(include_in_schema=False)
-UploadData = Annotated[dict[str, Any], Depends(_upload)]
+
+
+async def _pricing_upload(request: Request, db: Db) -> dict[str, Any]:
+    _require(request, db, "project:write")
+    limit = min(get_settings().max_upload_bytes, malware_scan.MAX_SCAN_BYTES)
+    return await single_file(request, limit, extra_fields=frozenset({"dataset_kind"}))
+
+
+UploadData = Annotated[dict[str, Any], Depends(_pricing_upload)]
 
 
 async def _pricing_form(request: Request) -> dict[str, str]:
@@ -43,6 +52,15 @@ def _form_mapping(form: dict[str, str]) -> dict[str, int | None]:
         raise HTTPException(422, "Map the pricing fields explicitly") from exc
 
 
+def _profile_revision(value: str) -> int:
+    if not value.isascii() or not value.isdecimal() or not 1 <= len(value) <= 10:
+        raise ValueError("profile revision")
+    revision = int(value)
+    if revision < 0:
+        raise ValueError("profile revision")
+    return revision
+
+
 def _page(
     request: Request,
     db: Db,
@@ -50,6 +68,7 @@ def _page(
     draft_id: str,
     estimate_id: str,
     source_id: str | None = None,
+    profile_id: str | None = None,
     *,
     form: dict[str, str] | None = None,
     error: str | None = None,
@@ -60,16 +79,45 @@ def _page(
     source = None
     document = None
     rows: list[dict[str, Any]] = []
+    profiles: list[dict[str, Any]] = []
+    profile_preview = None
+    selected_profile = None
     values = form or {}
     source_api = pricing.intake()
     if source_id is not None:
-        source = source_api.source_info(db, user, draft_id, source_id)
+        source = pricing.source_info(db, user, draft_id, source_id)
+        profiles = pricing.list_profiles(db, user, draft_id, source_id)
+        if profile_id is not None:
+            selected_profile = pricing.read_profile(db, user, draft_id, source_id, profile_id)
+            definition = selected_profile["definition"]
+            values = {
+                "sheet_index": str(definition["selection"]["sheet_index"]),
+                "header_row": str(definition["selection"]["header_row"]),
+                "price_meaning": definition["commercial_basis"]["price_meaning"],
+                **{
+                    field: str(column) if column is not None else ""
+                    for field, column in definition["selection"]["mapping"].items()
+                },
+            }
         if source["ready"]:
             try:
                 _, document, _ = source_api._document(
                     db, user, draft_id, source_id, get_settings().storage_root
                 )
-                if form is not None:
+                if form is not None and "price_meaning" in form:
+                    profile_preview = pricing.preview_profile(
+                        db,
+                        user,
+                        draft_id,
+                        source_id,
+                        _revision(form["sheet_index"]),
+                        _revision(form["header_row"]),
+                        _form_mapping(form),
+                        form["price_meaning"],
+                        settings=get_settings(),
+                    )
+                    rows = profile_preview["rows"]
+                elif form is not None:
                     _, rows = pricing.preview(
                         db,
                         user,
@@ -116,10 +164,15 @@ def _page(
             estimate_url=base_url,
             pricing_url=base_url + "/pricing",
             source=source,
-            sources=source_api.list_sources(db, user, draft_id),
+            sources=pricing.list_sources(db, user, draft_id),
             document=document,
             rows=rows,
+            profiles=profiles,
+            profile_preview=profile_preview,
+            selected_profile=selected_profile,
             fields=FIELDS,
+            dataset_kinds=DATASET_KINDS,
+            price_meanings=PRICE_MEANINGS,
             grids=grids,
             columns=[(col, get_column_letter(col)) for col in range(1, 51)],
             form_values=values,
@@ -147,8 +200,14 @@ def upload_pricing(
     user = _user(request, db, write=True)
     try:
         read_estimate_revision(db, user, draft_id, estimate_id)
-        source = pricing.intake().retain(
-            db, user, draft_id, data["filename"], data["content"], settings=get_settings()
+        source = pricing.retain_source(
+            db,
+            user,
+            draft_id,
+            data["filename"],
+            data["content"],
+            data["dataset_kind"],
+            settings=get_settings(),
         )
         db.commit()
     except DraftScopeError as exc:
@@ -197,13 +256,115 @@ def preview_pricing(
 ) -> HTMLResponse:
     verify_csrf(request, form.get("csrf_token"))
     user = _user(request, db)
-    if set(form) != {"csrf_token", "sheet_index", "header_row", *FIELDS}:
+    if set(form) != {"csrf_token", "sheet_index", "header_row", "price_meaning", *FIELDS}:
         raise HTTPException(422, "Map only the supported pricing fields")
     try:
         return _page(request, db, user, draft_id, estimate_id, source_id, form=form)
     except DraftScopeError as exc:
         db.rollback()
         raise HTTPException(exc.status_code, exc.code) from exc
+
+
+@router.post("/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles")
+def save_pricing_profile(
+    request: Request, db: Db, draft_id: str, estimate_id: str, source_id: str, form: FormData
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db, write=True)
+    if set(form) != {
+        "csrf_token",
+        "sheet_index",
+        "header_row",
+        "price_meaning",
+        *FIELDS,
+        "expected_profile_revision",
+        "document_sha256",
+        "preview_hash",
+    }:
+        raise HTTPException(422, "Confirm only the previewed pricing source profile")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        saved = pricing.save_profile(
+            db,
+            user,
+            draft_id,
+            source_id,
+            _revision(form["sheet_index"]),
+            _revision(form["header_row"]),
+            _form_mapping(form),
+            form["price_meaning"],
+            _profile_revision(form["expected_profile_revision"]),
+            form["document_sha256"],
+            form["preview_hash"],
+            settings=get_settings(),
+        )
+        db.commit()
+    except (DraftScopeError, ValueError) as exc:
+        db.rollback()
+        if isinstance(exc, DraftScopeError):
+            raise HTTPException(exc.status_code, exc.code) from exc
+        raise HTTPException(422, "Choose a valid profile revision") from exc
+    return RedirectResponse(
+        f"/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+        + saved["profile_id"],
+        303,
+    )
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/{profile_id}",
+    response_class=HTMLResponse,
+)
+def pricing_profile(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+) -> HTMLResponse:
+    user = _user(request, db)
+    try:
+        return _page(
+            request,
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            source_id,
+            profile_id=profile_id,
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+    "{profile_id}/download"
+)
+def download_pricing_profile(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+) -> Response:
+    user = _user(request, db)
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        content = pricing.profile_bytes(db, user, draft_id, source_id, profile_id)
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return Response(
+        content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="pricing-profile-{profile_id}.json"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.post(

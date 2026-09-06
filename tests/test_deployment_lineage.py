@@ -21,6 +21,7 @@ def _assessment(  # type: ignore[no-untyped-def]
     scope_xlsx_source_tables: bool = True,
     suggestion_tables: bool = True,
     pricing_source_tables: bool = True,
+    pricing_profile_tables: bool = True,
     package_tables: bool = True,
     import_tables: bool = True,
 ):
@@ -79,6 +80,10 @@ def _assessment(  # type: ignore[no-untyped-def]
             connection.execute(text("CREATE TABLE draft_project_packages (id VARCHAR(36))"))
         if required_tables and pricing_source_tables:
             connection.execute(text("CREATE TABLE draft_pricing_sources (id VARCHAR(36))"))
+        if required_tables and pricing_profile_tables:
+            connection.execute(
+                text("CREATE TABLE draft_pricing_source_profiles (id VARCHAR(36))")
+            )
         if required_tables and scope_xlsx_source_tables:
             connection.execute(text("CREATE TABLE draft_scope_xlsx_sources (id VARCHAR(36))"))
         if required_tables and suggestion_tables:
@@ -102,7 +107,7 @@ def _assessment(  # type: ignore[no-untyped-def]
 
 def test_clean_stack_head_is_ready_only_with_all_required_journal_tables() -> None:
     result = _assessment(
-        "0039_draft_pdf_suggestions",
+        "0040_draft_pricing_source_profiles",
         required_tables=True,
     )
     assert result.status == "READY"
@@ -129,7 +134,7 @@ def test_previous_head_with_stray_legacy_table_requires_retirement() -> None:
 
 def test_current_head_with_stray_legacy_table_fails_as_schema_drift() -> None:
     result = _assessment(
-        "0039_draft_pdf_suggestions",
+        "0040_draft_pricing_source_profiles",
         required_tables=True,
         legacy_submission_table=True,
     )
@@ -150,6 +155,7 @@ def test_legacy_adjudicated_head_fails_closed_for_rehearsal() -> None:
         "draft_package_imports",
         "draft_pdf_sources",
         "draft_pdf_suggestions",
+        "draft_pricing_source_profiles",
         "draft_pricing_sources",
         "draft_project_packages",
         "draft_scope_reports",
@@ -183,7 +189,9 @@ def test_unknown_revision_fails_closed() -> None:
 
 
 def test_current_head_without_draft_tables_fails_as_schema_drift() -> None:
-    result = _assessment("0039_draft_pdf_suggestions", required_tables=True, draft_tables=False)
+    result = _assessment(
+        "0040_draft_pricing_source_profiles", required_tables=True, draft_tables=False
+    )
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_scope_revisions", "draft_scopes")
@@ -191,7 +199,9 @@ def test_current_head_without_draft_tables_fails_as_schema_drift() -> None:
 
 
 def test_current_head_without_report_table_fails_as_schema_drift() -> None:
-    result = _assessment("0039_draft_pdf_suggestions", required_tables=True, report_tables=False)
+    result = _assessment(
+        "0040_draft_pricing_source_profiles", required_tables=True, report_tables=False
+    )
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_scope_reports",)
@@ -199,7 +209,9 @@ def test_current_head_without_report_table_fails_as_schema_drift() -> None:
 
 
 def test_current_head_without_match_tables_fails_as_schema_drift() -> None:
-    result = _assessment("0039_draft_pdf_suggestions", required_tables=True, match_tables=False)
+    result = _assessment(
+        "0040_draft_pricing_source_profiles", required_tables=True, match_tables=False
+    )
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_system_match_revisions", "draft_system_matches")
@@ -207,7 +219,9 @@ def test_current_head_without_match_tables_fails_as_schema_drift() -> None:
 
 
 def test_current_head_without_draft_estimate_tables_is_schema_drift() -> None:
-    result = _assessment("0039_draft_pdf_suggestions", required_tables=True, estimate_tables=False)
+    result = _assessment(
+        "0040_draft_pricing_source_profiles", required_tables=True, estimate_tables=False
+    )
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_estimate_revisions", "draft_estimates")
@@ -215,7 +229,9 @@ def test_current_head_without_draft_estimate_tables_is_schema_drift() -> None:
 
 def test_current_head_without_estimate_report_table_is_schema_drift() -> None:
     result = _assessment(
-        "0039_draft_pdf_suggestions", required_tables=True, estimate_report_tables=False
+        "0040_draft_pricing_source_profiles",
+        required_tables=True,
+        estimate_report_tables=False,
     )
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_estimate_reports",)
@@ -230,7 +246,7 @@ def test_older_recognized_match_head_still_requires_migration() -> None:
 
 def test_current_head_without_pdf_source_table_is_schema_drift() -> None:
     result = _assessment(
-        "0039_draft_pdf_suggestions", required_tables=True, pdf_source_tables=False
+        "0040_draft_pricing_source_profiles", required_tables=True, pdf_source_tables=False
     )
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_pdf_sources",)
@@ -243,7 +259,7 @@ def test_previous_pdf_head_requires_migration():
 
 def test_current_head_requires_pricing_source_table():
     result = _assessment(
-        "0039_draft_pdf_suggestions", required_tables=True, pricing_source_tables=False
+        "0040_draft_pricing_source_profiles", required_tables=True, pricing_source_tables=False
     )
     assert "draft_pricing_sources" in result.missing_tables
     assert result.code != "CLEAN_STACK_HEAD_CONFIRMED"
@@ -257,13 +273,17 @@ def test_previous_pricing_head_requires_migration():
 
 
 def test_current_head_without_package_table_is_schema_drift():
-    result = _assessment("0039_draft_pdf_suggestions", required_tables=True, package_tables=False)
+    result = _assessment(
+        "0040_draft_pricing_source_profiles", required_tables=True, package_tables=False
+    )
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert result.missing_tables == ("draft_project_packages",)
 
 
 def test_import_tables_are_required_and_previous_head_requires_migration():
-    result = _assessment("0039_draft_pdf_suggestions", required_tables=True, import_tables=False)
+    result = _assessment(
+        "0040_draft_pricing_source_profiles", required_tables=True, import_tables=False
+    )
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
     assert set(result.missing_tables) == {"draft_package_imports", "draft_imported_report_sources"}
     assert (
@@ -273,7 +293,9 @@ def test_import_tables_are_required_and_previous_head_requires_migration():
 
 
 def test_client_review_table_is_required_at_current_head():
-    result = _assessment("0039_draft_pdf_suggestions", required_tables=True, client_tables=False)
+    result = _assessment(
+        "0040_draft_pricing_source_profiles", required_tables=True, client_tables=False
+    )
     assert result.status == "BLOCKED"
     assert result.missing_tables == ("draft_client_requests",)
 
@@ -286,7 +308,9 @@ def test_previous_client_head_requires_capability_migration():
 
 def test_current_head_without_scope_xlsx_source_table_is_schema_drift():
     result = _assessment(
-        "0039_draft_pdf_suggestions", required_tables=True, scope_xlsx_source_tables=False
+        "0040_draft_pricing_source_profiles",
+        required_tables=True,
+        scope_xlsx_source_tables=False,
     )
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
@@ -303,7 +327,7 @@ def test_previous_capability_head_requires_scope_xlsx_source_migration():
 
 def test_current_head_requires_retained_pdf_suggestion_table() -> None:
     result = _assessment(
-        "0039_draft_pdf_suggestions", required_tables=True, suggestion_tables=False
+        "0040_draft_pricing_source_profiles", required_tables=True, suggestion_tables=False
     )
     assert result.status == "BLOCKED"
     assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
@@ -316,3 +340,21 @@ def test_previous_xlsx_head_requires_suggestion_migration() -> None:
     assert result.status == "BLOCKED"
     assert result.code == "DATABASE_MIGRATION_REQUIRED"
     assert result.database_write_performed is False
+
+
+def test_previous_suggestion_head_requires_profile_migration() -> None:
+    result = _assessment("0039_draft_pdf_suggestions", required_tables=True)
+    assert result.status == "BLOCKED"
+    assert result.code == "DATABASE_MIGRATION_REQUIRED"
+    assert result.database_write_performed is False
+
+
+def test_current_head_requires_pricing_profile_table() -> None:
+    result = _assessment(
+        "0040_draft_pricing_source_profiles",
+        required_tables=True,
+        pricing_profile_tables=False,
+    )
+    assert result.status == "BLOCKED"
+    assert result.code == "DEPLOYMENT_SCHEMA_DRIFT"
+    assert result.missing_tables == ("draft_pricing_source_profiles",)
