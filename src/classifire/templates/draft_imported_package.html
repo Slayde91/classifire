@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Imported project | CLASSIFIRE{% endblock %}
+{% block heading %}Imported Draft project{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<section class="panel"><h2>{{ draft.project.name }}</h2>
+<p><strong>Foreign sources and approval claims remain unverified.</strong> This new Draft preserves the original ZIP and its history. Local edits create new revisions; imported values are not recalculated automatically.</p>
+<div class="toolbar"><a class="button button-primary" href="/scopes/{{ draft.id }}">Edit Scope</a>
+{% if mapping.match %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/system-matches/{{ mapping.match.local_id }}">Review imported systems</a>{% endif %}
+{% if mapping.estimate %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/estimates/{{ mapping.estimate.local_id }}">Edit imported Estimate</a>{% endif %}
+<a class="button button-secondary" href="/scopes/{{ draft.id }}/packages">Configure new package</a></div>
+<p>Original project: {{ original.project.reference }} &middot; {{ original.project.name }}</p>
+<p style="overflow-wrap:anywhere">Original ZIP SHA-256: {{ imported.archive_hash }}</p>
+<p><a href="/scopes/{{ draft.id }}/imported-package/download">Download exact original ZIP</a> (all included reports must pass current scan and format checks).</p>
+<details><summary>Original to local identity mapping</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ mapping|tojson(indent=2) }}</pre></details></section>
+<section class="panel"><h2>Retained original reports</h2>
+<p>These are foreign attachments, not locally approved reports. Scanning checks file safety; it does not prove technical claims or agreement with report data. A new package retains these exact bytes and their original snapshots in its origin archive.</p>
+{% for source in attachments %}<article class="panel"><h3>{{ source.format|upper }} &middot; {{ source.report }}</h3>
+<p>Scan: {{ source.status }}; format check: {{ source.processing_error or ('processed' if source.ready else 'pending') }}</p>
+{% if has_permission('project:write') %}<form method="post" action="/scopes/{{ draft.id }}/imported-package/reports/{{ source.id }}/scan"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-secondary">Scan and check file</button></form>{% endif %}
+<p><a href="/scopes/{{ draft.id }}/imported-package/reports/{{ source.id }}/download">Download checked original {{ source.format|upper }}</a></p>
+</article>{% else %}<p>No report attachments in this import.</p>{% endfor %}</section>
+{% endblock %}

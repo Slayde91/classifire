@@ -1,96 +1,53 @@
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import create_engine, event, inspect, text, update
+from draft_migration_fixture import fixture, seed, verify_current
+from sqlalchemy import MetaData, Table, inspect, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-from test_draft_scope import sample_payload, uid
-from test_migrations_physical_foundation import _migration_environment, _run_migration, _upgrade
-from test_technical_release_publication import _bound_variant
+from test_draft_project_packages import base_case as _base_case
+from test_draft_project_packages import case as _case
+from test_migrations_physical_foundation import _run_migration, _upgrade
 
-from classifire import physical_models  # noqa: F401
-from classifire.models import DraftSystemMatch, User
-from classifire.services.deployment_lineage import assess_deployment_lineage
-from classifire.services.draft_scope import create_draft_project, save_revision
-from classifire.services.draft_scope_reports import create_report, report_bytes
-from classifire.services.draft_system_matches import create_match, read_match_revision
-from classifire.services.technical_release_publication import publish_governed_technical_release
+base_case = _base_case
+case = _case
 
 
-def test_match_migration_preserves_scope_reports_and_retains_bound_candidate_review(tmp_path):
-    database_url = "sqlite:///" + (tmp_path / "matches-upgrade.sqlite").as_posix()
-    environment = _migration_environment(tmp_path, database_url)
-    _upgrade(database_url, environment, "0028_draft_scope_reports")
-    engine = create_engine(database_url)
-
-    @event.listens_for(engine, "connect")
-    def foreign_keys(connection, _record):
-        connection.execute("PRAGMA foreign_keys=ON")
-
-    storage_root = (tmp_path / "storage").resolve()
-    with Session(engine) as db:
-        actor = User(
-            id=uid(100),
-            email="migration-match@example.test",
-            full_name="Retained owner",
-            password_hash="unused",  # noqa: S106 - isolated migration fixture
-            role="administrator",
-            is_active=True,
-        )  # noqa: S106
-        db.add(actor)
-        db.commit()
-        draft = create_draft_project(db, actor, "BEFORE-0029", "Retained source")
-        content = sample_payload()
-        content["services"][0]["service_type"] = "pipe"
-        save_revision(db, actor, draft.id, 1, content)
-        report = create_report(db, actor, draft.id, 2)
-        old_pdf = report_bytes(db, actor, draft.id, report.id, "pdf")
-        _bound_variant(db, storage_root)
-        release = publish_governed_technical_release(
-            db,
-            version="BEFORE-0029",
-            notes="Synthetic migration fixture",
-            actor=actor,
-            storage_root=storage_root,
-        )
-        draft_id, release_id, report_id = draft.id, release.id, report.id
-        db.commit()
-    _upgrade(
-        database_url, environment, "0029_draft_system_matches", enforce_sqlite_foreign_keys=True
+def test_historical_draft_system_matches_upgrade_preserves_bytes_and_constraints(case, tmp_path):
+    baseline = "0028_draft_scope_reports"
+    target = "0029_draft_system_matches"
+    url, environment, engine, source, ids, expected = fixture(case, tmp_path, baseline)
+    before = set(inspect(engine).get_table_names())
+    # The retained native data is present in the real historical schema before upgrade.
+    _upgrade(url, environment, target, enforce_sqlite_foreign_keys=True)
+    assert (
+        set(["draft_system_matches", "draft_system_match_revisions"])
+        <= set(inspect(engine).get_table_names()) - before
     )
-    inspector = inspect(engine)
-    assert {"draft_system_matches", "draft_system_match_revisions"} <= set(
-        inspector.get_table_names()
-    )
-    assert any(
-        fk["constrained_columns"] == ["draft_scope_id", "scope_revision"]
-        and fk["referred_table"] == "draft_scope_revisions"
-        for fk in inspector.get_foreign_keys("draft_system_matches")
-    )
-    with Session(engine) as db:
-        actor = db.get(User, uid(100))
-        match = create_match(
-            db, actor, draft_id, 2, release_id, uid(2), uid(5), storage_root=storage_root
-        )
-        db.commit()
-        assert read_match_revision(db, actor, draft_id, match.id)["candidates"]
-        assert report_bytes(db, actor, draft_id, report_id, "pdf") == old_pdf
-        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
-        assert (
-            db.scalar(text("SELECT version_num FROM alembic_version"))
-            == "0029_draft_system_matches"
-        )
-        with pytest.raises(IntegrityError):
-            db.execute(
-                update(DraftSystemMatch)
-                .where(DraftSystemMatch.id == match.id)
-                .values(scope_revision=999)
+    seed(source, engine, tables=set(["draft_system_matches", "draft_system_match_revisions"]))
+    table = Table("draft_system_matches", MetaData(), autoload_with=engine)
+    for changes in [{"scope_revision": 999}]:
+        with pytest.raises(IntegrityError), engine.begin() as connection:
+            connection.execute(
+                table.update().where(table.c.id == ids["draft_system_matches"]).values(**changes)
             )
-            db.flush()
-        db.rollback()
-    refusal = _run_migration(
-        database_url, environment, "downgrade", "0028_draft_scope_reports", expect_success=False
-    )
+    with engine.connect() as connection:
+        assert (
+            connection.execute(
+                select(table).where(table.c.id == ids["draft_system_matches"])
+            ).first()
+            is not None
+        )
+    refusal = _run_migration(url, environment, "downgrade", baseline, expect_success=False)
     assert refusal.returncode != 0
     assert "Retained Draft System Match reviews cannot be downgraded" in refusal.stderr
+    # Only current-head application code is used to read these historical records.
+    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
+    missing = (
+        set(inspect(engine).get_table_names())
+        - before
+        - set(["draft_system_matches", "draft_system_match_revisions"])
+        - {"alembic_version", "draft_package_imports", "draft_imported_report_sources"}
+    )
+    seed(source, engine, tables=missing)
+    verify_current(engine, ids, expected)
     engine.dispose()

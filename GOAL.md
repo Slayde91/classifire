@@ -166,16 +166,19 @@ withheld; existing artifact provenance and history are preserved. This is select
 workspace portability, not all project records, original evidence or a database backup.
 See PROJECT_STATE.md for evidence/publication and remaining limitations.
 
-The current import work adds a no-write ZIP inspection screen and shared semantic
-validation of all selected artifacts. It does not yet create an imported project.
-Do not substitute this preview for the required editable round trip.
+The current import branch extends this to a new editable owned Draft project:
+explicit confirmation, original archive/history retention, local identities,
+optional review/Estimate editing and traceable v2 re-export. Report bytes require
+shared scan/quarantine checks. Foreign approvals never activate local authority.
+See PROJECT_STATE.md for measured checks and publication; a branch implementation
+is not evidence that its PR merged.
 
-Prioritize **safe new-project package import** across selected
-capability artifacts and outputs. Validate complete declared membership and schemas,
-preserve original provenance, map local identities explicitly, and keep missing
-sources/foreign approval unresolved. Never silently discard unsupported artifacts or
-grant authority from imported claims. Deliver the shared import use case and UI
-together, then expose proven commands through ChatGPT.
+After this import milestone is verified and published, prioritize the first thin,
+authenticated ChatGPT-facing Draft workflow over the same shared commands: create,
+read/edit and download a Scope/package without implicit downstream work. Resolve
+client identity, ownership and confirmation semantics before exposing writes. Prove
+parity locally with synthetic data; external credentials/deployment are separate.
+Do not rebuild the UI/core or wait for all technical/pricing breadth to be perfect.
 
 The full goal remains active: broader Scope analysis, actual applicability, pricing
 defaults/inference, complete package coverage/exchange, ChatGPT and production readiness

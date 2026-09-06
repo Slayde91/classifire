@@ -10,11 +10,12 @@ from urllib.parse import parse_qsl
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from itsdangerous import BadData, URLSafeTimedSerializer
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .config import get_settings
 from .db import get_db
-from .models import DraftScope, User
+from .models import DraftPackageImport, DraftScope, User
 from .outputs.draft_system_review import sections as system_sections
 from .outputs.draft_system_review import summary as system_summary
 from .security import verify_csrf
@@ -168,6 +169,9 @@ def _editor(
             expected_revision=expected_revision,
             saved=saved,
             envelope=envelope or {},
+            package_imported=db.scalar(select(
+                DraftPackageImport.id
+            ).where(DraftPackageImport.draft_scope_id == draft.id)) is not None,
             evidence_links=[
                 dict(ref, status=reference_status(ref, payload.get("observations", [])))
                 for ref in (envelope or {}).get("evidence_refs", [])

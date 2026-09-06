@@ -564,10 +564,13 @@ def _read(
             envelope["scope"]["artifact_id"] != draft.id
             or envelope["scope"]["revision"] != match.scope_revision
             or envelope["scope"]["sha256"] != match.scope_hash
-            or envelope["release"]["id"] != match.release_id
+            or (match.import_id is None and envelope["release"]["id"] != match.release_id)
             or envelope["release"]["sha256"] != match.release_hash
         ):
             raise ValueError("dependency")
+        from .draft_package_materialization import verify_local_origin
+
+        verify_local_origin(db, draft.id, match.import_id, envelope, "match")
         if _scope(db, actor, draft.id, match.scope_revision) != envelope["scope"]:
             raise ValueError("scope")
         if revision == match.latest_revision and row.content_hash != match.latest_hash:
@@ -672,6 +675,8 @@ def save_constraint_review(
         prior = _read(db, actor, draft, match, expected_revision)
         if prior["schema_version"] == "CLASSIFIRE-DRAFT-SYSTEM-MATCH-v3" and not service_size:
             raise DraftSystemMatchError("MATCH_MEASUREMENT_VERSION_REQUIRED", 422)
+        if match.import_id is not None or match.release_id is None:
+            raise DraftSystemMatchError("MATCH_FOREIGN_SOURCE_UNVERIFIED", 409)
         release, records, _ = _release(db, match.release_id)
         if match_staleness(db, actor, draft_id, match_id, storage_root=storage_root):
             raise DraftSystemMatchError("MATCH_BASIS_STALE", 409)
@@ -791,6 +796,18 @@ def match_staleness(
     reasons = scope_evidence_staleness(
         db, actor, draft_id, envelope["scope"], storage_root=storage_root
     )
+    if "import_origin" in envelope:
+        return list(
+            dict.fromkeys(
+                reasons
+                + ["FOREIGN_TECHNICAL_SOURCES_UNVERIFIED"]
+                + (
+                    ["SCOPE_CHANGED"]
+                    if _scope(db, actor, draft_id)["sha256"] != envelope["scope"]["sha256"]
+                    else []
+                )
+            )
+        )
     current_scope = _scope(db, actor, draft_id)
     if current_scope["sha256"] != envelope["scope"]["sha256"]:
         reasons.append("SCOPE_CHANGED")

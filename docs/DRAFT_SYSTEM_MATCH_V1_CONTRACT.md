@@ -174,3 +174,10 @@ The [v3 service-size review](./DRAFT_SERVICE_SIZE_REVIEW.md) extends saved numer
 review with observed ranges and explicit measurement/source meanings. V1/v2 validation
 and retained bytes remain unchanged. New semantics require the v3 envelope and an
 explicit v3 save; unsupported meanings never become technical approval.
+
+## Imported-origin amendment
+
+Imported v4 wraps validated native v1/v2/v3 content with an explicit unverified
+origin. It has no local LibraryRelease eligibility; saved decisions and notes remain
+editable, while foreign candidates, source constraints and original history remain
+retained. See [ProjectPackage import](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md#imported-project-lifecycle-and-v2-re-export).

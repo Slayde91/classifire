@@ -157,8 +157,11 @@ def apply_rate(
         line["history"].append(event)
         line["unit_sell_rate"] = rate
         line["subtotal_ex_tax"], line["pricing_status"] = line_amount(line)
-        envelope["schema_version"] = "CLASSIFIRE-DRAFT-ESTIMATE-v2"
-        envelope["provenance"] = "manual_and_workbook_unit_sell"
+        if "import_origin" in envelope:
+            envelope["content_schema_version"] = "CLASSIFIRE-DRAFT-ESTIMATE-v2"
+        else:
+            envelope["schema_version"] = "CLASSIFIRE-DRAFT-ESTIMATE-v2"
+            envelope["provenance"] = "manual_and_workbook_unit_sell"
         envelope.setdefault("pricing_sources", []).append(
             {
                 "line_id": line_id,

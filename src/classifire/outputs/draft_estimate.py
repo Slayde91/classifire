@@ -85,7 +85,15 @@ def _metadata(report: dict[str, Any]) -> list[tuple[str, Any]]:
         ("Project", report["project"]["name"]),
         ("Project reference", report["project"]["reference"]),
         ("Status", "DRAFT - UNREVIEWED"),
-        ("Coverage", _LIMITS),
+        (
+            "Coverage",
+            _LIMITS
+            + (
+                " Imported values and source/approval claims are foreign and unverified."
+                if estimate.get("import_origin")
+                else ""
+            ),
+        ),
         (
             "Partial priced subtotal excluding tax (AUD)",
             estimate["summary"]["priced_subtotal_ex_tax"],

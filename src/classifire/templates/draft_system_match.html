@@ -55,7 +55,7 @@
       <dt>Release checksum</dt><dd class="scope-item-id">{{ envelope.release.sha256 }}</dd>
       <dt>Schema / state</dt><dd>{{ envelope.schema_version }} / Draft, unreviewed</dd>
     </dl>
-    {% if has_permission('library:read') %}<p><a href="/releases/{{ envelope.release.id|urlencode|replace('/', '%2F') }}">Open current release record</a></p>{% endif %}
+    {% if has_permission('library:read') and not envelope.import_origin %}<p><a href="/releases/{{ envelope.release.id|urlencode|replace('/', '%2F') }}">Open current release record</a></p>{% endif %}
     <p class="scope-hint">Current record links show library metadata. They are not source-file viewers and do not change this saved review.</p>
   </details>
 {% else %}
@@ -106,7 +106,7 @@
 {% endif %}
 </section>
 {% if match_url %}
-  {% include "draft_constraint_review.html" %}
+  {% if not envelope.import_origin %}{% include "draft_constraint_review.html" %}{% endif %}
   {% set can_edit = has_permission('project:write') and envelope.revision == latest_revision %}
   <form method="post" action="{{ match_url }}/review">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

@@ -242,6 +242,13 @@ def target_for(
 
 
 def validate_envelope(value: dict[str, Any]) -> None:
+    from .draft_import_origin import VERSIONS, native_projection
+
+    if value.get("schema_version") == VERSIONS["match"][0]:
+        if len(canonical(value)) > MAX_MATCH_BYTES:
+            raise ValueError("size")
+        validate_envelope(native_projection(value, "match"))
+        return
     if len(canonical(value)) > MAX_MATCH_BYTES:
         raise ValueError("size")
     model: type[Envelope] = Envelope

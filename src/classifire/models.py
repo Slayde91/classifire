@@ -1025,6 +1025,11 @@ class DraftSystemMatch(RecordMixin, Base):
             ["draft_scope_revisions.draft_scope_id", "draft_scope_revisions.revision"],
             name="fk_draft_system_match_scope_revision",
         ),
+        CheckConstraint(
+            "(release_id IS NOT NULL AND import_id IS NULL) OR "
+            "(release_id IS NULL AND import_id IS NOT NULL)",
+            name="ck_draft_match_origin",
+        ),
         CheckConstraint("scope_revision >= 1", name="ck_draft_system_match_scope_revision"),
         CheckConstraint("latest_revision >= 0", name="ck_draft_system_match_revision"),
     )
@@ -1032,7 +1037,8 @@ class DraftSystemMatch(RecordMixin, Base):
     draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
     scope_revision: Mapped[int] = mapped_column(Integer, nullable=False)
     scope_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    release_id: Mapped[str] = mapped_column(ForeignKey("library_releases.id"), nullable=False)
+    release_id: Mapped[str | None] = mapped_column(ForeignKey("library_releases.id"))
+    import_id: Mapped[str | None] = mapped_column(ForeignKey("draft_package_imports.id"))
     release_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     latest_revision: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     latest_hash: Mapped[str | None] = mapped_column(String(64))
@@ -1082,6 +1088,7 @@ class DraftEstimate(RecordMixin, Base):
 
     draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
     scope_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    import_id: Mapped[str | None] = mapped_column(ForeignKey("draft_package_imports.id"))
     scope_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     match_id: Mapped[str | None] = mapped_column(ForeignKey("draft_system_matches.id"))
     match_revision: Mapped[int | None] = mapped_column(Integer)
@@ -1141,6 +1148,49 @@ class DraftEstimateReport(RecordMixin, Base):
     xlsx_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class DraftPackageImport(RecordMixin, Base):
+    """Immutable foreign archive and local identity map; never source/library authority."""
+    __tablename__ = "draft_package_imports"
+    __table_args__ = (
+        UniqueConstraint("draft_scope_id", name="uq_draft_import_scope"),
+        CheckConstraint("length(archive_bytes) > 0 AND length(archive_bytes) <= 134217728",
+                        name="ck_draft_import_size"),
+    )
+    draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
+    archive_bytes: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    archive_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    mapping_json: Mapped[str] = mapped_column(Text, nullable=False)
+    mapping_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
+class DraftImportedReportSource(RecordMixin, Base):
+    """Draft-owned original report bytes using the shared scan/quarantine lifecycle."""
+    __tablename__ = "draft_imported_report_sources"
+    __table_args__ = (
+        UniqueConstraint("draft_scope_id", "stored_file_id", name="uq_import_report_file"),
+        ForeignKeyConstraint(
+            ["stored_file_id", "source_sha256", "source_size_bytes"],
+            ["stored_files.id", "stored_files.sha256", "stored_files.size_bytes"],
+            name="fk_imported_report_source_bytes",
+        ),
+        CheckConstraint(
+            "source_size_bytes > 0 AND source_size_bytes <= 10485760",
+            name="ck_imported_report_source_size",
+        ),
+    )
+    draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
+    stored_file_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    original_filename: Mapped[str] = mapped_column(String(200), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    scan_json: Mapped[str | None] = mapped_column(Text)
+    document_json: Mapped[str | None] = mapped_column(Text)
+    document_sha256: Mapped[str | None] = mapped_column(String(64))
+    processing_error: Mapped[str | None] = mapped_column(String(80))
+
+
 class DraftProjectPackage(RecordMixin, Base):
     """Immutable selected Draft artifacts; never canonical or imported authority."""
 
@@ -1148,7 +1198,7 @@ class DraftProjectPackage(RecordMixin, Base):
     __table_args__ = (
         UniqueConstraint("draft_scope_id", "revision", name="uq_draft_package_revision"),
         CheckConstraint("revision >= 1", name="ck_draft_package_revision"),
-        CheckConstraint("length(archive_bytes) > 0 AND length(archive_bytes) <= 67108864",
+        CheckConstraint("length(archive_bytes) > 0 AND length(archive_bytes) <= 134217728",
                         name="ck_draft_package_size"),
     )
     draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
