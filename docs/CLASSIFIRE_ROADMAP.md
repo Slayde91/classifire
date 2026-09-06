@@ -1,22 +1,25 @@
 # CLASSIFIRE Master Roadmap
 
-**Status:** Active; prototype-first delivery approved 2026-09-05.
-**Verified shared-main baseline:** `58c7d4aefad87d714a8922d060fbfa2e68b446bb`
-(PR #206); PR CI 34015890493 attempt 2 passed 1,511 tests and main CI 34017405923
-succeeded. Measured-review client parity is merged. Workbook pricing client commands
-are the current implementation increment on `feat/client-workbook-pricing-20260906`;
-local validation passed. See PROJECT_STATE.md for proof and the publication checkpoint.
+**Status:** Active; prototype-first delivery approved 2026-09-05, with the
+technical-corpus and dual-pricing documentation amendment requested 2026-09-06.
+**Verified shared-main baseline:** `a22a02769d3b842d5d0129dbd09273759ae583c1`
+(PR #207), including workbook-pricing client commit `75f3a8e`. PR CI 34019881433
+passed 1,522 tests; main CI 34020498735 succeeded on the merge commit.
+The amendment below is planned delivery, not implementation or evidence of real
+workbook/corpus ingestion.
 Draft increments do not complete production Phase 8-14 or authorize OpenClaw retirement.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
 ## 1. Delivery decision
 
-**Build a working, testable UI prototype before broad fine tuning.** The first
-milestone is a persisted Draft Scope workspace in the existing application.
-Deliver its screen, minimum shared contract, validation, storage and download as
-one usable slice. Do not finish every schema, archive feature, orchestration
-abstraction or edge case before allowing a user to try the product.
+**Build a working, testable UI prototype before broad fine tuning.** The persisted
+Draft Scope workspace and several independent workflows already exist. Extend
+them rather than restarting the prototype. The next visible increment is a bounded
+dual-source workbook intake/profile preview: distinguish general products/services
+from Firefly system prices and expose source structure and unresolved price meaning.
+Deliver the screen, minimum shared contract, safe retention and validation together;
+do not build the whole corpus schema or pricing engine before users can try it.
 
 The four capabilities remain independently callable: scope analysis, system
 matching, estimating and reporting. The full evidence-to-Human-Release chain
@@ -27,6 +30,9 @@ Users may stop, edit, save, export, replace inputs and explicitly continue.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines boundaries;
 [Handoff](./SESSION_HANDOFF.md) specifies the single next engineering task;
 [GOAL.md](../GOAL.md) records the product outcome.
+The [Technical Corpus and Dual Pricing Design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
+defines the proposed data model, estimation methods and review boundaries for
+the T1-T14 delivery stages below. ADRs 0001/0002 remain the governing architecture.
 
 ## 2. Verified starting point
 
@@ -45,10 +51,18 @@ Users may stop, edit, save, export, replace inputs and explicitly continue.
   import/manual-edit/reimport/restart demonstration remains valid. P4a adds a
   saved report interaction with immutable PDF/XLSX files; inspect PROJECT_STATE.md
   for its own validation/publication. No result proves production readiness.
-- Three untracked Draft ProjectPackage files remain in
-  `.tmp/project-package-draft-20260905`; their 22 tests passed in the prior review.
-  They are candidate archive work, not a shipped contract or UI. Reuse compatible
-  pieces when needed, preserving originals and documenting any schema change.
+- An earlier archive candidate at `.tmp/project-package-draft-20260905` had 22
+  passing tests in its historical review. The later shipped selected-package
+  download/import/re-export increments below now define the implemented boundary;
+  the old candidate is recovery context, not the next package implementation task.
+- Existing `Product`, `LabourComponent`, `PricingLibraryRecord`, technical
+  document/variant and release/pinning models are reusable foundations. Package 14
+  CSV import and the bounded Draft XLSX selection path are different implementations;
+  neither establishes ingestion of the two newly specified authoritative inputs.
+- `pricelist.xlsx` (A: general products/services) and `pricing_library.xlsx`
+  (B: Firefly system prices) were not located in inspected tracked/root/data/docs
+  locations. Their structures and contents were not inspected. The requested
+  1,000+ B rows is an input requirement, not a measured corpus count.
 - Historical Phase 8 UAT/lock state was not rechecked against a live database.
   Production and authoritative real-data exits remain unproven.
 
@@ -78,21 +92,22 @@ prototype into it.
 | --- | --- | --- |
 | **P0. Draft Scope workspace** | **Completed bounded prototype; merged PR #188** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
 | **P1a. Saved Scope import/replacement** | **Completed bounded increment; merged PR #189** | Upload saved Draft Scope JSON, validate/check its declared hash and version, preview identity/content/uncertainty and explicitly append a local revision. Preserve source lineage and prior revisions; reject stale saves and foreign authority. Demonstrate browser round trip and refusal cases. No ZIP or report extraction in this slice. |
-| **P1b. One evidence intake path** | **First PDF increment merged PR #194; broader P1b unfinished** | Upload a bounded PDF, observe real scanning, inspect retained pages, explicitly save page-linked Draft observations, reopen after restart and download intact provenance. PostgreSQL/quarantine and authority guards apply. Source-linked structured entity review from one retained page is next after client pricing. Other formats, automatic interpretation and full Scope analysis remain upcoming; manual entry needs no AI. |
+| **P1b. One evidence intake path** | **First PDF increment merged PR #194; structured entity review retained and reordered after the next intake preview** | Upload a bounded PDF, observe real scanning, inspect retained pages, explicitly save page-linked Draft observations, reopen after restart and download intact provenance. Preserve the planned page-to-Defect/Opening/Service workflow alongside the T3/T4 technical review slice; defect evidence and technical-library evidence remain distinct. Other formats, automatic interpretation and full Scope analysis remain upcoming; manual entry needs no AI. |
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
 | **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
-| **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; full governed pricing still upcoming** | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
+| **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; T1/T5/T7 intake preview is next; full T5-T13 pricing remains planned** | Distinguish A general costs/services from B observed Firefly system prices, retain source revisions/cells and review identity, units, price basis and scope. Then add reviewed component/activity and system mappings, coverage, bottom-up/comparable proposals and evidence-calibrated combination. Preserve independent Estimate artifacts, originals, overrides and recovery checks; current workbook selection is not full estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client implementation/validation active; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
 **Current delivery order:** P0, P1a, P4a, P2a, P3a, all three additional P4b
 profiles, first PDF P1b, partial measured P2b and first XLSX P3b are merged. The
-current P5 increment has a real configuration/save/download/reconfiguration/restart
-journey and is merged in PR #200. Do not rebuild earlier slices.
+selected-package P5 increment has a real configuration/save/download/reconfiguration/
+restart journey merged in PR #200; later P5 client parity is merged through PR #207.
+Do not rebuild these slices.
 
 **Completed bounded increment: selected Draft ProjectPackage download (PR #200).** One coherent Scope workspace,
 optional review/Estimate and chosen retained report pairs can be previewed without
@@ -121,30 +136,41 @@ entry using the existing shared rules and human confirmation. Saved and proposed
 values are distinguishable; invalid/foreign/stale source claims cannot be promoted.
 PR CI 34015890493 attempt 2 passed 1,511 tests; main CI 34017405923 succeeded.
 
-**Active client increment:** `feat/client-workbook-pricing-20260906` implements owned
+**Completed bounded client increment (PR #207):** the shared implementation provides owned
 workbook discovery, bounded exact-row preview and human-confirmed application of one
 already retained/scanned row to an existing Estimate line. It reuses
 `draft_pricing_intake.preview` / `apply_rate`, preserving source/cell/scan hashes,
 units, recovery notes and original/override history. Upload/scan stays in the existing
-UI. Local validation passed; publication must finish before this increment is classified
-merged; no full-client or production claim follows from these commands alone.
+UI. PR CI 34019881433 passed 1,522 tests; main CI status is recorded above. No
+full-client, general pricebook import, system-price mapping or production claim
+follows from these commands alone.
 
-**Next executable product task:** source-linked structured Draft review from one
-already retained PDF page. The user inspects the page, drafts/edits separate Defects,
-Openings and Services with explicit links, previews without writes, then confirms
-one saved revision. Reuse the existing editor/models; add the smallest compatible
-versioned entity-to-page provenance contract because current v3 references bind only
-observations. Unknown measurements/quantities stay unknown. AI suggestions can follow
-this working human review path; they are not a prerequisite.
+**Next executable product task: bounded visible dual-source intake/profile preview.**
+The user chooses A (general products/services) or B (Firefly system prices), retains
+an explicitly supported XLSX through the existing security boundary, selects a sheet
+and header, and sees its hash, sheet dimensions/counts, proposed column meanings and
+unit/price-basis anomalies. Persist and reopen the profile as an unapproved source
+revision; do not publish canonical prices, match systems or calculate an estimate.
+Use the smallest SourceDataset/DatasetVersion extension to existing retained
+source/revision abstractions, with one shared service behind the UI. A filename is
+display metadata, never sufficient dataset identity or approval.
 
-Dependencies: finish the current pricing increment, inspect the current Scope/evidence
-contracts, use an owned retained/scanned synthetic PDF and guarded disposable
-PostgreSQL/storage. Completion requires browser save/reopen/restart, intact graph and
-old revisions, JSON plus existing Scope PDF/XLSX/package round-trip provenance, and
-refusal of stale/source/permission violations without canonical writes. User trial
-should guide the next extension and fixes. Do not indefinitely polish client parity
-before delivering missing domain value. Real OAuth/account linking and deployment
-need separate account/environment authority.
+Dependencies: inspect existing Draft source/pricing contracts and current permissions;
+use synthetic A/B workbooks in an isolated PostgreSQL/storage environment until actual
+inputs and permitted handling are available. Current interactive limits remain explicit;
+unsupported sizes must be refused without silent truncation. Completion requires a
+browser retain/profile/reopen/restart journey, stable exact hashes and prior revisions,
+explicit unknown basis/mapping, and unsafe-input/foreign-owner/stale/quarantine refusal
+without canonical publication or changes to existing Estimate rates. Tests must cover
+both source types and preserve the existing workbook-selection/client/report workflow.
+
+**Retained, reordered task:** source-linked structured Draft review from one already
+retained PDF page. Keep separate Defects, Openings and Services, explicit links and
+the smallest compatible entity/page provenance version; v3 binds observations only.
+Resume it with the following technical/mapping vertical slice where useful, preserving
+old Scope/report/package bytes and unknown facts. It is not superseded capability work.
+AI suggestions, real OAuth/account linking and deployment are separate increments;
+provider/account/environment authority is not inferred from this documentation change.
 
 **First interactive prototype = P0. Four-capability prototype = demonstrated
 P0-P4 behavior**, including P1a/P1b, independent/manual entry and reporting from partial
@@ -158,7 +184,7 @@ No placeholder button or hard-coded success screen counts as a capability.
 | Existing authentication, CSRF for browser mutations, appropriate permissions, explicit project/artifact ownership and a controlled test environment | Multi-organization product breadth and production tenancy rollout; never claim cross-tenant isolation without proof |
 | Stable IDs, valid relationships/units, attributed manual input, uncertainty, provenance, durable saves and revision identity | Exhaustive taxonomies, every document format, polished layouts and every rare workflow combination |
 | Preserve canonical guards, technical/commercial separation, deterministic supported calculations and visible Draft status | Real canonical Phase 8-14 acceptance, production lock/release operations and deep accuracy optimization |
-| Bound and validate exposed inputs/downloads, refuse unsafe paths/tampering and avoid secrets or customer fixtures; safe spreadsheet output when exposed | ZIP conflict resolution/offline synchronization before ZIP import exists; large-file/performance tuning before measured need |
+| Bound and validate exposed inputs/downloads, refuse unsafe paths/tampering and avoid secrets or customer fixtures; safe spreadsheet output when exposed | Existing-project package merge/offline synchronization and complete source/history coverage; bulk capacity beyond the selected measured workload |
 | Targeted happy-path and material negative tests, browser inspection, required CI and no known supported-path safety/correctness defect | General agent framework, full scheduler, provider migration and broad failure-matrix expansion unrelated to the selected slice |
 
 Deferring breadth means restricting and declaring the supported scope. It never
@@ -168,24 +194,307 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 | Work | Revised disposition |
 | --- | --- |
-| Finish the generic ProjectPackage exporter before any UI | **Superseded priority.** Keep the candidate; reconcile only what P0 needs, then complete packaging when it serves P5. |
-| Scope-only reporting waits until every capability exists | **Reordered.** P4a follows the proven JSON round trip; other profiles still depend on their actual artifacts. |
+| Finish the generic ProjectPackage exporter before any UI | **Superseded priority.** P0 and selected P5 package flows are complete bounded increments; preserve historical candidates and extend the shipped contracts only for an actual user workflow. |
+| Scope-only reporting waits until every capability exists | **Reordered and delivered.** P4a followed the proven JSON round trip; each later profile retains its own artifact dependencies and bounded completion evidence. |
 | Complete all four schemas before building screens | **Superseded.** Evolve compatible contracts alongside demonstrated use cases. |
 | OpenClaw completion/journal/transport foundations | **Completed bounded foundations** (PRs #183-#185); preserve them without making replacement work a P0 dependency. |
 | Remaining capture assurance, general jobs, replacement adapter and retirement | **Separate gated backlog.** Mandatory before applicable provider deployment/retirement, unnecessary for deterministic manual P0. |
-| Full technical-source lineage, broad pricing inference, all formats and edge cases | **Deferred breadth.** Do only what the selected supported capability needs; no implied source redistribution or learned-price reliability. |
+| Technical corpus and dual-pricing breadth | **Promoted, dependency-ordered work.** T1-T14 below replaces blanket deferral: visible intake first, reviewed identity/technical mapping next, bounded scale, then validated estimation. Extra formats and nonessential edge cases still follow measured need. |
+| Source-linked structured PDF Draft editor | **Retained and reordered.** Follow the next dual-source profile preview; reuse compatible provenance/review work without merging defect observations with technical authority. |
 | Existing domain guards, exact-byte reads, snapshot integrity, scoped review and CI | **Retained foundations.** Reuse them; avoid parallel business pipelines or regression. |
 | Legacy draft PRs #9-#13 / dirty root | **Recovery context.** Do not bulk-merge or overwrite. |
 
 ### Immediate next action
 
-Finish safe publication of the locally verified workbook-pricing client
-increment, then implement the bounded source-linked structured PDF Draft workflow
-above. SESSION_HANDOFF.md specifies the exact first task, prerequisites and validation.
-No provider/customer data, canonical write, lock or release is required for these
-synthetic Draft milestones. Broader evidence/applicability/pricing and OpenClaw
-protection parity remain required work with separate gates. User trials and visible
-defects take priority over broad polish or unrelated infrastructure.
+Implement only the bounded dual-source intake/profile preview above: a thin T1 +
+T5 + T7 slice. [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) specifies its first task,
+files, prerequisites and validation. The current request updates documentation only;
+it does not execute that future implementation, import confidential workbooks or
+authorize canonical publication. User trials and visible defects guide subsequent
+mapping, technical coverage and scale. OpenClaw protection parity remains a separate
+gated track.
+
+### Technical-corpus and dual-pricing delivery stages
+
+**Status: proposed implementation; no T stage is complete from this documentation
+amendment.** T1/T5/T7 have the next bounded UI slice. Existing technical intake,
+release governance, Package 14 records and Draft pricing are foundations to extend,
+not proof of this new end-to-end capability. Detailed contracts and methods belong in
+[Technical Corpus and Dual Pricing Design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md).
+
+T1-T14 are dependency labels, not a requirement for fourteen large sequential builds.
+First deliver the thin source-profile interaction; then one reviewed technical and
+pricing mapping path, then measured bulk capacity, then estimation and calibrated
+combination. Start the T12 review contract and T13 price-lineage holdout manifest
+while designing T1/T5/T7, before price predictions or feature selection can contaminate
+the evaluation. Every exposed slice includes its UI, minimum persistence and tests.
+
+| Delivery band | Included work and dependency gate |
+| --- | --- |
+| **Next visible slice** | Minimum T1 + T5 + T7: distinct A/B source identity and retained profile preview; synthetic data; no library publication or price inference. |
+| **Reviewed vertical slice** | Minimum T2-T4 plus T6/T8: one retained technical source/configuration, fact provenance and reviewed component/system mappings; keep the reordered structured PDF Draft workflow. T12 review states and the T13 holdout policy must be established before this band. |
+| **Controlled breadth and scale** | Expand T2-T8 through bounded resumable imports, deduplication/reprocessing, proper pagination and representative retained sources; T9 coverage exposes gaps. Measure capacity before declaring hundreds/thousands supported. |
+| **Explainable estimating prototype** | T10 separate bottom-up and comparable proposals, T12 review UI, immutable quantities/labour/assumptions and T13 evaluation. T11 comparison is visible before calibrated combination is enabled. |
+| **Validated operation** | T13 establishes approved method/stratum gates; T11 combined proposals use that evidence; T14 operations, feedback, drift and controlled release extend the demonstrated path. |
+
+#### T1. Minimum canonical schema and version contracts
+
+- **Objective/scope:** distinguish source identity, normalized technical facts and
+  observed versus derived commercial data without redesigning the application.
+- **Work:** map existing records; add only the SourceDataset/DatasetVersion,
+  locator, price-basis and revision fields required by the first profile UI.
+  Define compatible extensions for system/configuration mappings and later immutable
+  component/labour/proposal snapshots. These are logical contracts, not a mandate
+  for separate tables or a complete schema before the first screen.
+- **Dependencies:** ADRs 0001/0002, existing source containment and release contracts;
+  early T12 review states and T13 evaluation lineage/split rules.
+- **Deliverables:** reviewed schema changes, migration/compatibility notes and synthetic
+  A/B profile fixtures consumed by the UI.
+- **Acceptance:** dataset types cannot be confused; missing units/basis stay explicit;
+  original bytes and historic artifacts still validate; no imported authority activates.
+- **Risks/data quality:** unverified source layouts, identifier collisions and old
+  defaults; preserve historical records rather than silently normalizing them.
+
+#### T2. Bulk technical-document intake and processing
+
+- **Objective/scope:** retain and track technical reports, assessments and certificates
+  from one demonstrated source through controlled batches at the requested scale.
+- **Work:** extend retained storage, quarantine and the necessary job/run/stage
+  contracts for manifests, duplicate-byte detection, retries, cancellation, resource
+  limits and per-document outcomes; distinguish new bytes from reprocessing.
+- **Dependencies:** minimum T1, source rights and scan policy; pilot one document
+  before scaling; provider execution remains separately controlled.
+- **Deliverables:** intake/status UI, immutable batch/source manifest and resumable
+  worker outcomes with safe diagnostics.
+- **Acceptance:** each submitted member is accepted, refused or pending with a reason;
+  retry/restart loses no source or outcome and never duplicates publication; measured
+  batch/resource evidence precedes any hundreds/thousands capacity claim.
+- **Risks/data quality:** corrupt, encrypted, duplicated or superseded files; malicious
+  payloads, confidential content, OCR quality and unbounded worker cost.
+
+#### T3. Structured technical extraction
+
+- **Objective/scope:** propose source-backed systems, components, materials,
+  dimensions, configurations, installation requirements, performance and limitations.
+- **Work:** begin with one supported retained page/table and a reviewable extraction
+  result; retain document/page/table/figure locators, contradictions and uncertainty.
+  Deterministic parsing is the default; any AI/OCR adapter remains optional and bounded.
+- **Dependencies:** T1/T2 source identity and clean-byte access; T12 review contract;
+  rights/egress authorization before any real provider use.
+- **Deliverables:** versioned extraction proposals and a source-alongside-facts UI;
+  later batch extraction reuses this same service.
+- **Acceptance:** a reviewer can inspect every proposed material fact against retained
+  evidence; unsupported content remains unresolved and no extraction approves a system.
+- **Risks/data quality:** table layout, units, crossed-out clauses, drawings, missing
+  pages and confidence that overstates what the evidence actually supports.
+
+#### T4. Entity resolution and durable provenance
+
+- **Objective/scope:** resolve documents, systems, variants and components without
+  losing distinct configurations, contradictory facts or historical evidence.
+- **Work:** use namespaced exact identifiers and reviewed aliases first; stage
+  deterministic/fuzzy alternatives for human merge/split review. Preserve per-fact
+  source locators, resolution method/version and supersession/reprocessing lineage.
+- **Dependencies:** T1 and the T3 pilot; current technical review/publication controls.
+- **Deliverables:** identity/provenance review UI, explicit mappings and immutable
+  resolution decisions with stale dependency propagation.
+- **Acceptance:** repeated input is idempotent; aliases resolve reproducibly; ambiguous
+  configurations stay separate; reprocessing preserves all former facts and locators.
+- **Risks/data quality:** similar names with different approved conditions, duplicated
+  reports and accidental erasure or elevation of historical evidence.
+
+#### T5. Dataset A ingestion: general products and services
+
+- **Objective/scope:** profile, then normalize `pricelist.xlsx` as a distinct source
+  of products, materials, labour and services; do not assume all rows are buy costs.
+- **Work:** first deliver retained A identity and sheet/header/count/anomaly preview;
+  subsequently add explicit mappings, unit/pack basis, currency/tax, effective dates,
+  price meaning, duplicate policy and reviewed staged import through existing models.
+- **Dependencies:** minimum T1 for preview; actual workbook availability/handling and
+  verified commercial semantics before real import; T12 review and source lineage.
+- **Deliverables:** A profile/import UI and versioned row/cell observations with an
+  explicit mapping to Product/Labour/service concepts.
+- **Acceptance:** every processed row has an outcome and exact provenance; unknown or
+  invalid costs/units remain unusable; no missing rate becomes zero or automatic approval.
+- **Risks/data quality:** supplier packs, mixed cost/sell rows, inconsistent dates,
+  formulas and legacy Package 14-derived products mistaken for independent A evidence.
+
+#### T6. Component and labour/activity mapping
+
+- **Objective/scope:** connect reviewed technical requirements to identifiable
+  materials and installation activities before computing their quantities or cost.
+- **Work:** map components to A product/service revisions and activities to labour
+  bases; define explicit quantity, unit conversion, waste, procurement and productivity
+  inputs. Preserve component requirements and labour/activity snapshots per revision.
+- **Dependencies:** reviewed T3/T4 requirements, staged/reviewed T5 prices and sufficient
+  physical measurements or explicitly limited manual inputs; no Phase 8 gate bypass.
+- **Deliverables:** reviewable mapping UI, unresolved mapping list and versioned
+  component/activity requirements suitable for a bounded bottom-up calculation.
+- **Acceptance:** each cost driver has an identified source and basis or is withheld;
+  no defect-count-to-quantity-one shortcut or invented hours; shared work is identified.
+- **Risks/data quality:** incomplete bills of materials, hidden installation labour,
+  unit mismatches, unsupported productivity and duplicated recovery.
+
+#### T7. Dataset B ingestion: Firefly system prices
+
+- **Objective/scope:** profile, then ingest `pricing_library.xlsx` as distinct observed
+  Firefly system-price evidence, including the requested 1,000+ entries when verified.
+- **Work:** first deliver B identity/profile/anomalies beside A; later provide bounded
+  bulk parsing, pagination, exact cell provenance, source namespaces, deduplication,
+  price/scope/date semantics and immutable reviewed versions.
+- **Dependencies:** minimum T1 for preview; actual input availability and T12 review;
+  capacity-contract extension and T13 holdout lineage before full processing/evaluation.
+- **Deliverables:** B profile/import UI and versioned observations, separate from
+  derived price proposals and from subsequent system mappings.
+- **Acceptance:** supported source counts reconcile without truncation; duplicate keys
+  are handled explicitly; supersession preserves prior observations; no row publishes
+  merely because the user identifies the workbook as authoritative input.
+- **Risks/data quality:** the current 1,000-row including-header parser/retained-contract
+  cap and 897-record pricing list; mixed commercial scope, duplicate systems and missing dates.
+
+#### T8. Firefly price-to-system matching
+
+- **Objective/scope:** bind B observations to the correct technical system/configuration
+  revision without using a price or similar description as proof of suitability.
+- **Work:** implement exact namespaced ID/approved-alias resolution, deterministic
+  candidates and optional fuzzy proposals with method, confidence, alternatives and
+  explicit ambiguity review; check unit, configuration and inclusion compatibility.
+- **Dependencies:** T4 resolved technical identities, T7 retained observations and T12
+  review states; approved technical evidence for any authoritative application.
+- **Deliverables:** side-by-side source/system matching UI and immutable mapping decisions.
+- **Acceptance:** repeated matching is reproducible; ambiguous rows remain unresolved;
+  changed sources/mappings mark dependent proposals stale; duplicates do not create
+  multiple independent observations or overwrite an older mapping.
+- **Risks/data quality:** shared names, broad prices covering several configurations,
+  source aliases and technically incompatible but textually similar systems.
+
+#### T9. Pricing coverage and missing-data status
+
+- **Objective/scope:** make the available pricing routes and unsupported work visible
+  before a user requests an estimate.
+- **Work:** derive coverage from exact dependencies: direct observed Firefly price,
+  bottom-up general-price support, comparable-system support, combined support,
+  insufficient evidence and review needed. Keep primary method and review status
+  separate so approval never relabels a derived price as a direct observation.
+- **Dependencies:** T6/T8 mappings; sufficient scope/unit/basis for the declared route.
+- **Deliverables:** coverage summary and per-system/component reasons in the UI/API.
+- **Acceptance:** every target is represented, including unpriced targets; missing,
+  stale or unapproved inputs cannot disappear behind a total or a green status.
+- **Risks/data quality:** false completeness, circular dependency checks and treating
+  an existing commercial row as sufficient physical or technical evidence.
+
+#### T10. Explainable estimation methods
+
+- **Objective/scope:** implement separate bottom-up and technically comparable
+  proposed prices/ranges for supported cases; retain direct observed pricing distinctly.
+- **Work:** calculate explicit quantities times materials/services plus evidenced labour;
+  apply waste/pack rounding and commercial margins separately. Select comparables with
+  hard technical/commercial filters and versioned differences, weights and adjustments.
+  Retain immutable input/BOM/labour/calculation/recovery snapshots and abstention reasons.
+- **Dependencies:** T6-T9, T12 proposal/review contract and an already sealed T13 holdout
+  assignment. Experimental methods do not imply approved accuracy thresholds.
+- **Deliverables:** independent method proposals and UI breakdowns with sources,
+  assumptions, scope, limitations and reproducible arithmetic.
+- **Acceptance:** missing quantities/productivity remain withheld; no mixed cost/sell
+  or tax/unit comparison; recovery is once per component/activity; calculations reproduce.
+- **Risks/data quality:** unsupported adjustment factors, sparse comparables, correlated
+  costs and currency precision mistaken for evidence of predictive accuracy.
+
+#### T11. Method comparison and controlled combination
+
+- **Objective/scope:** compare the independent T10 results and combine only when their
+  commercial scope and calibration evidence justify it.
+- **Work:** show discrepancies first; align units/date/tax/cost-versus-sell and recovery
+  scope; propose a versioned weighted blend or documented component-level combination
+  using validation evidence, with preserved component contributions and alternatives.
+- **Dependencies:** T10 prototypes and T12 review; experimental comparison may precede
+  T13, but enabling calibrated combination depends on T13 evidence/approved thresholds.
+- **Deliverables:** comparison/review screen and immutable method/version/weight records.
+- **Acceptance:** do not add two complete system prices; material unresolved differences
+  require review or abstention; intervals and weights have measured support, not invented
+  percentages; original method predictions remain available after approval.
+- **Risks/data quality:** double recovery, correlated errors, scope mismatch and a blend
+  that hides disagreement or appears more precise than either input.
+
+#### T12. Confidence, proposals and human review
+
+- **Objective/scope:** make uncertain prices and technical mappings inspectable and
+  correctable without silently converting proposals into commercial/technical truth.
+- **Work:** define states, reasons, actors and immutable correction/approval events early;
+  extend the UI with source/method/assumption breakdown, discrepancy review, overrides
+  and separate confidence dimensions for source, mapping, quantity and price prediction.
+- **Dependencies:** minimum contract alongside T1/T5/T7; richer UI follows T8-T11;
+  calibrated confidence/interval claims depend on T13 rather than reviewer preference.
+- **Deliverables:** review contract first, then a working proposal/compare/approve-or-
+  reject/override history flow using existing authority and release services.
+- **Acceptance:** approvals do not rewrite original proposals or source evidence;
+  observed, derived, expert-adjusted and actual values remain separately typed; stale
+  inputs and insufficient support block the corresponding authoritative transition.
+- **Risks/data quality:** confidence conflated with approval, automation bias and
+  review actions unintentionally enabling system compatibility or Human Release.
+
+#### T13. Holdout validation and calibration
+
+- **Objective/scope:** measure each pricing method against independent known Firefly
+  observations and set defensible release/abstention thresholds before accuracy claims.
+- **Work:** establish a sealed manifest/split policy before modelling; group connected
+  target-price/system lineage, aliases, near-duplicate configurations and version copies
+  within supported families, not entire workbooks. Run unseen-family and forward-date
+  stress tests separately, reporting abstention. Backtest direct-match correctness,
+  bottom-up, comparable and candidate combined methods on
+  the same scope/basis; measure bias, absolute/relative error, interval coverage,
+  confidence calibration and abstention by relevant technical and commercial strata.
+- **Dependencies:** lineage contracts start with T1/T7; execution requires verified B
+  labels and T10/T11 candidates; threshold approval requires adequate independent data.
+- **Deliverables:** reproducible versioned evaluation reports, failure examples,
+  sample-size/coverage limitations and an explicitly approved threshold-setting decision.
+- **Acceptance:** benchmark labels never reach prediction inputs; exclude held-out
+  prices hidden in Package 14-derived products or corrected predictions. No fixed
+  accuracy, confidence percentage or release cutoff is claimed before this evidence.
+- **Risks/data quality:** small/biased samples, zero or mismatched price bases,
+  near-duplicate leakage and training/calibration decisions informed by the final holdout.
+
+#### T14. Operations, monitoring and preserved feedback
+
+- **Objective/scope:** operate the demonstrated corpus/pricing workflow reliably and
+  improve it from separately retained reviewer and actual-cost evidence.
+- **Work:** add appropriate job/queue/index visibility, throughput/cost/failure and
+  quality-drift metrics, retry/recovery/backup/restore controls, versioned reprocessing
+  and feedback linking predictions, human revisions, later outcomes and actual costs.
+  Reuse existing services across standalone and client adapters; no parallel rules engine.
+- **Dependencies:** the supported T2-T13 path and its measured gates; baseline audit,
+  permissions and safe diagnostics apply from the first slice, not only at T14.
+- **Deliverables:** operational runbooks/dashboards, replayable source/version lineage,
+  feedback review UI and controlled evaluation/release/rollback process.
+- **Acceptance:** restart/retry and restored snapshots preserve exact provenance;
+  monitoring contains no confidential rows; actual cost is not confused with sell price;
+  feedback never rewrites the original prediction or silently trains/approves a model.
+- **Risks/data quality:** drift, selective feedback, missing actuals, supplier confidentiality,
+  storage/index growth and production retention/tenant isolation not proven by a prototype.
+
+### Capacity, migration and decision gates
+
+- Extend the current XLSX resource policy and retained row contract deliberately;
+  the existing parser supports at most 1,000 rows **including the header**, ten
+  sheets, 50 columns and 20,000 rectangular cells. Reconcile this with B capacity,
+  the 897-record pricing list and small client previews. Keep bounded previews and
+  confidentiality while adding paginated processing; never silently truncate.
+- Preserve Package 14 CSV records and derived-product lineage. Its missing-rate
+  zero/default-unit/default-active behavior is not the new ingestion policy.
+  Raw-file release hashes and minimal manifests do not satisfy the pinned release
+  reader's canonical manifest-hash/record-inventory checks; reviewed publication
+  and compatibility fixtures must close that migration gap before using new releases.
+- Add explicit source namespaces, cost-versus-sell/unit/pack/scope semantics and
+  immutable BOM/labour snapshots before broad automated estimation. Existing JSON
+  requirements, manual quantities and a selected unit sell rate do not supply them.
+- Actual workbooks, rights, layouts, counts, effective dates and commercial meanings
+  remain unverified inputs; no imported confidential rows belong in repository
+  fixtures, prompts or documentation. These block real-data acceptance, not the
+  synthetic first UI slice or this documentation amendment.
+- Technical corpus authority, rate applicability, measurement/productivity rules,
+  comparable features/adjustments, blending policy and confidence/error thresholds
+  require explicit evidence and the applicable review. No thresholds are approved
+  by this roadmap. Unsupported results remain unpriced or visibly provisional.
 
 ### Authoritative readiness track
 
@@ -207,8 +516,9 @@ authorization and evidence. P0 does not require a real provider or customer file
 private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
-**Remaining:** the root checkout is conflicted recovery evidence. Exact main CI
-passed on `24ee6e3` (PR #192); basic metadata previously reported main unprotected.
+**Remaining:** the root checkout is conflicted recovery evidence. Historical main CI
+passed on `24ee6e3` (PR #192); current baseline evidence is recorded at the top of this
+roadmap. Basic metadata previously reported main unprotected.
 Detailed protection configuration limits were not rechecked here; do not infer
 plan restrictions or bypass CI/review from that fact. Clean-machine and release
 reproducibility remain incomplete.
@@ -302,8 +612,18 @@ exact bound source bytes, and atomically supersedes the prior release with the
 new immutable manifest and audit event. A technical-only database constraint
 prevents concurrent publication from leaving two active technical releases.
 
-**Remaining:** extraction-assisted and manufacturer-neutral lineage,
-clean-machine import/recovery, and full commercial rate-inclusion/recovery rules.
+**Remaining / prioritised amendment:** T1-T8 now define the library backlog:
+minimum source/version contracts, technical-document processing and fact review,
+resolution/provenance, distinct A/B ingestion and reviewed component/system mappings.
+The first T1/T5/T7 profile UI precedes broad schema and scale work. Extend existing
+technical/product/labour/pricing/release models; no source filename grants authority.
+
+The legacy Package 14 CSV path is not either new XLSX importer. Close its release
+manifest/pinning compatibility gap for the new staged/publication path, preserve
+historical rows and derivation lineage, and require explicit price meaning and source
+namespaces. Clean-machine import/recovery, corpus-scale evidence and full commercial
+inclusion/recovery rules remain unproven. New source authority and immutable releases
+must pass their applicable review before canonical use.
 
 **Exit:** every technical/commercial decision cites an immutable authorised
 release and its source cannot silently change after use.
@@ -352,6 +672,10 @@ Control may remain temporarily as a read-only projection and may be retired
 when the native visibility and recovery evidence are adequate. It may not own
 project state, approval state, workflow truth, or command authority.
 
+T2/T14 extend the native visibility only as needed for retained-source batch progress,
+per-member outcomes, retries and measured cost/throughput. The next small profile UI
+does not require a complete general scheduler, agent fleet or OpenClaw retirement.
+
 **Exit:** operational visibility is useful without a second mutable estimate
 database or approval workflow.
 
@@ -372,8 +696,16 @@ runner preflight that rejects legacy/unbound packets before a no-tool port call,
 
 **Remaining:** support for formats beyond PDF/XLSX/DOCX and a separately authorised operator flow. Caption-to-image association and any caption-derived fact remain unsupported. Shared main supplies CLASSIFIRE-owned five-year retention, redaction, legal hold, integrity refusal, a controlled-UAT scoped reviewer surface, explicit reader grants, administrator-only immutable human-review annotations, and a service-only family runner that preflights every member before any no-tool port is created.
 
-The accepted hybrid target also adds a distinct future `ProjectPackage`
-portability boundary. The complete versioned schema, deterministic whole-project
+T2-T4 add the retained technical-corpus intake, extraction/review and per-fact
+resolution/provenance track. T5/T7 reuse the same security principles for A/B workbook
+source revisions; they must not turn confidential libraries into redistributable
+project evidence. The retained P1b structured PDF Draft task remains separate from
+technical-library acceptance. Corpus reprocessing preserves prior source/fact versions
+and makes dependent results stale rather than overwriting historical evidence.
+
+The accepted hybrid target also adds a distinct `ProjectPackage` portability
+boundary. Selected Draft package download/import/re-export is implemented under P5;
+the complete versioned schema, deterministic whole-project
 generation and validation, immutable storage, permission-checked download,
 quarantined import, lineage/conflict handling, export profiles, and signature
 policy are not implemented. This must not be confused with the narrower
@@ -455,6 +787,13 @@ Search only the pinned authorised technical release, evaluate every relevant
 physical condition, preserve mismatches/unknowns, and create one current strategy
 per supported Opening. Pricing never proves suitability.
 
+T3/T4 improve the reviewed source/variant foundation; T8 maps B price observations
+to exact technical configurations only after identity and applicability checks.
+Fuzzy resolution remains a review proposal. T9 coverage may expose candidates or
+commercial gaps independently, but cannot label an unresolved technical match as
+approved because a direct price exists. The Draft mapping prototype is allowed;
+its result does not satisfy Phase 9's authoritative exit.
+
 ### Phase 10 - Quantity and labour
 
 **Status:** Authoritative exit blocked by Phase 9; bounded P3 development is allowed
@@ -462,6 +801,13 @@ per supported Opening. Pricing never proves suitability.
 Derive component quantities and labour from selected systems with explicit
 inputs, units, waste, rounding, procurement, access, productivity, crew, and
 shared-work rules. Missing productivity fails closed.
+
+T6 must first produce reviewed component/activity mappings and sufficient measured
+inputs; T10 then calculates the supported bottom-up method. Immutable requirements,
+BOM, labour/productivity inputs, formulas, units and source revisions must travel with
+the result. Existing free-text/JSON technical requirements and manual Draft quantity
+entry are foundations, not a completed quantity/labour engine. No defensible
+measurement means no invented quantity, crew hours or material recovery.
 
 ### Phase 11 - Commercial recovery
 
@@ -471,6 +817,15 @@ Recover each required component once through an authorised pricing hierarchy
 and explicit inclusion/recovery ledger. The desk-quote prototype remains a
 parallel assumption-led allowance and does not satisfy this exit.
 
+T5/T7 preserve the two pricebooks and cost-versus-sell meaning; T6/T8 establish
+reviewed component/system mappings; T9-T12 supply explicit coverage, separate method
+proposals, discrepancy review and only evidence-calibrated combination. Keep direct
+observed, bottom-up, comparable, combined, expert-adjusted and unresolved values
+identifiable after approval. Component/activity recovery must include shared work
+exactly once. A whole-system rate cannot be silently applied to the existing
+service-only Draft line when its commercial inclusions cover additional work.
+T13 evidence gates method claims; none of these proposals alone grants release authority.
+
 ### Phase 12 - Independent validation and immutable snapshot
 
 **Status:** Authoritative exit blocked by Phases 8-11; Draft artifact identity work is allowed
@@ -479,6 +834,14 @@ Snapshot V2 now keeps volatile generation metadata out of the semantic hash and
 binds the complete document with a separate integrity hash; V1 snapshots remain
 verifiable. Independently validate physical, technical, quantity, labour,
 commercial, formula, recovery, and release integrity.
+
+T13 adds independent pricing holdouts/backtests and confidence/interval calibration;
+prepare split/lineage contracts early so known B prices cannot leak through aliases,
+Package 14-derived products, older versions or reviewer-corrected predictions.
+Offline synthetic/research evaluation is distinct from the Phase 8C real physical-model
+accuracy programme and does not require bypassing its gates. Pricing thresholds must
+be justified and approved per supported stratum. Saved estimates/reports/packages bind
+exact dataset, mapping, BOM/labour, method and review revisions without recalculation.
 
 ### Phase 13 - Canonical output generation
 
@@ -505,6 +868,13 @@ dependency locking, backup/restore, monitoring, incident response, privacy/data
 rights, malicious-evidence and prompt-injection testing, output formula safety,
 performance/cost benchmarks, and rollback exercises.
 
+T2/T14 make corpus/pricing throughput, memory/storage, retry/restart, failure isolation
+and content-safe observability measurable. Validate the requested corpus/pricebook
+scale with representative authorised inputs only when available. Retain predictions,
+corrections and actual costs as distinct immutable feedback; no online learning or
+automatic promotion of corrected prices into independent benchmark truth. Production
+privacy, tenancy, retention and release readiness remain separate evidence gates.
+
 ### Phase 16 - Structural steel and full duct runs
 
 **Status:** Planned / deferred
@@ -517,6 +887,14 @@ import them into the active fire-seal/penetration runtime prematurely.
 
 - Infrastructure/schema perfection before an interactive prototype.
 - The former package-exporter-first handoff as the current next task.
+- Workbook-client publication or the structured PDF Draft editor as the immediate
+  next task: PR #207 is merged; the PDF capability is retained but reordered behind
+  the bounded A/B profile preview.
+- Blanket deferral of technical corpus and dual-source pricing: replace it with
+  the T1-T14 dependency-ordered delivery plan.
+- Copying legacy CSV default-zero/auto-active assumptions into a new workbook
+  pipeline, treating a fuzzy price match as technical approval, or treating a
+  reviewer-approved derived price as an independent observed benchmark label.
 - Treating the full canonical chain as a compulsory user session sequence.
 
 - The conflicted root checkout as a publication, deployment, or bulk-merge path.
@@ -559,6 +937,12 @@ import them into the active fire-seal/penetration runtime prematurely.
 14. OpenClaw retirement requires documented security, provider privacy/egress,
     receipt, recovery, observability, clean-machine, compatibility, and rollback
     parity, including cross-tenant and confused-deputy refusal.
+15. Source A general products/services and source B observed Firefly system prices
+    retain separate identities, versions, provenance and commercial meaning.
+16. Human approval does not erase whether a price was observed, derived, adjusted
+    or an actual cost. Preserve original predictions and the evidence behind changes.
+17. Holdout membership and provenance precede model/calibration decisions. Confidence,
+    blend weights and accuracy thresholds require measured independent support.
 
 ## 8. Related documents
 
@@ -567,6 +951,7 @@ import them into the active fire-seal/penetration runtime prematurely.
 - [ADR 0002 - Independent Capabilities](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md)
 - [Current Project State](./PROJECT_STATE.md)
 - [CLASSIFIRE Architecture](./CLASSIFIRE_ARCHITECTURE.md)
+- [Technical Corpus and Dual Pricing Design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
 - [Architecture Decision 0001 - Hybrid CLASSIFIRE Architecture](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 - [Current Session Handoff](./SESSION_HANDOFF.md)
 - [Desk Quote Assumption Contract](./DESK_QUOTE_ASSUMPTION_CONTRACT.md)

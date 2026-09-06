@@ -50,11 +50,23 @@ The prototype reorders delivery; it does not remove the broader product needs:
   support PDF, DOCX, XLSX, images/drawings and other explicitly supported inputs
   without silently omitting unsupported content. Human review governs technical
   library authority; extracted text or similarity alone is not compatibility.
-- Import the authorized pricing workbook with version/worksheet/cell provenance.
-  Keep technical applicability independent of cost. Preserve original and override
-  values, units, rate inclusions and transparent exact/mapped/component/inferred/
-  user-defined/unresolved price bases. Validate inferred methods before claiming
-  reliability; no forced prices or quantities to fill gaps.
+- Build reviewed technical systems from hundreds to thousands of retained test reports,
+  assessments and certifications, with individual fact provenance, explicit duplicate/
+  configuration resolution, exceptions and versioned reprocessing.
+- Maintain two distinct authoritative inputs: `pricelist.xlsx` for general products,
+  materials, labour and services; `pricing_library.xlsx` for Firefly system prices.
+  Preserve their independent source versions and exact cells. The requested 1,000-plus
+  Firefly prices are a capacity requirement, not a verified workbook count.
+- Make direct pricing and gaps visible. Use evidenced components/activities from A
+  and technically meaningful comparables from B for explainable proposed prices.
+  Reconcile cost/sell basis, units and inclusions before comparing or blending them.
+  Validate methods with blind known-price holdouts; retain human review, original
+  predictions, corrections and separate actuals. Derived prices stay derived after
+  approval. No forced quantities, invented labour or arbitrary AI prices.
+- Keep technical applicability independent of pricing. Unknown price meaning or
+  missing work remains unresolved; preserve rate inclusions, recovery and exact
+  source/recipe/method versions. See the integrated
+  [corpus and dual-pricing design](./docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md).
 - Preserve independently reviewable Scope, System Match and Estimate packages,
   consistent partial/combined PDF and XLSX, traceable scopes/estimates/close-out
   records, and human-only final release. Upstream edits identify stale downstream
@@ -182,20 +194,29 @@ The independent-client increment merged in PR #205 adds Match retrieval/review, 
 creation/edits and all four report profiles, sharing saved artifacts and exact downloads.
 See PROJECT_STATE.md for measured proof and publication. No implicit capability chain.
 
-Measured-constraint/service-size client review is merged in PR #206. The current
-`feat/client-workbook-pricing-20260906` increment exposes retained XLSX
-source discovery, exact mapped-row preview and human-confirmed application to an
-existing Estimate line through the shared pricing service. Local validation passed;
-PROJECT_STATE.md records proof and the publication checkpoint.
+Measured-constraint/service-size client review is merged in PR #206. Workbook
+source discovery, exact mapped-row preview and human-confirmed application through
+shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI passed
+1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
+not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-The next product priority is one source-linked structured Draft interaction from an
-already retained PDF page: inspect the page, draft/edit separate Defects, Openings and
-Services, preview the graph and evidence links, then explicitly save and reopen it.
-Use the existing editor and deterministic services, with a versioned provenance
-extension for entity claims. Unknown facts remain unknown. AI proposal generation
-can follow the working human review path; it is not a prerequisite for this slice.
-Trial this workflow with users before broad polish. Real OAuth/account/deployment
-work remains separate, and the approved modular core does not need a rewrite.
+## Immediate delivery priority: visible dual-source intake profile
+
+The 2026-09-06 requested architecture amendment makes the next product task a bounded
+UI source intake/profile preview for the two named pricing sources. Users explicitly
+choose A or B, retain its identity/version and inspect supported sheets, headers,
+counts, unit/price-basis gaps and import limits before mapping or publication. Reuse
+retention, quarantine, source preview and Draft service patterns with the smallest
+source/version contract needed for that interaction. Nothing is activated or priced.
+Use synthetic fixtures until authorized original inputs are available and their
+semantics are confirmed; neither workbook was located in the inspected locations.
+
+This task establishes the evidence needed for later component and system mappings,
+coverage, bottom-up/comparable estimation and calibration. Deliver working review
+slices before broad parsing automation, schema perfection or model fine tuning. The
+roadmap's T1-T14 stages preserve dependencies and human authority. The source-linked
+structured Draft interaction from a retained PDF page remains upcoming but reordered;
+it is not cancelled or implemented by this documentation amendment.
 
 The full goal remains active: broader Scope analysis, actual applicability, pricing
 defaults/inference, complete package coverage/exchange, ChatGPT and production readiness

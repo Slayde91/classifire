@@ -82,6 +82,35 @@ recalculate or rerun matching merely to render an output.
 Use CLASSIFIRE for new user-facing material. Do not rename legacy QUANTIFIRE/PFEOS
 identifiers without checking migrations, stored data, APIs, scripts and lineage.
 
+## Technical corpus and dual-pricing work
+
+For this capability read [the integrated design](./docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
+and roadmap T1-T14 before editing. Start with the next bounded visible source-profile
+interaction; do not treat the complete target schema or estimation model as the next
+single implementation task.
+
+- Preserve separate dataset identities: A `pricelist.xlsx` is general products,
+  materials, labour and services; B `pricing_library.xlsx` is Firefly system prices.
+  Legacy Package 14 CSV data is not automatically either source. Authoritative input
+  does not grant technical/commercial approval; workbook names do not prove price basis.
+- Retain exact versions/cells/pages and raw values. Missing or invalid prices are not
+  zero. Verify cost/sell/tax/currency, units, configuration, dates and inclusions before
+  arithmetic or matching; never silently inherit legacy importer defaults.
+- Technical extraction and fuzzy identity mappings are reviewable proposals. Preserve
+  multiple configurations, contradictions and per-field evidence. Technical matching,
+  commercial identity mapping and approval remain separate decisions.
+- Costing needs immutable, evidenced component/activity recipes and a recovery ledger.
+  Current technical release fields do not freeze a complete materials/labour recipe;
+  add compatible versioned contracts before claiming reproducible derived costing.
+- Keep observed, derived, corrected, approved and actual outcomes distinct. Do not
+  invent labour/productivity, hide incomplete work or average incompatible price bases.
+  Derived approval never turns a prediction into independent observed training truth.
+- Freeze lineage-aware holdouts before tuning. Exclude target price aliases/duplicates,
+  derivatives and target-derived A costs from all training/retrieval/prompt/cache inputs.
+  Publish measured coverage, errors and limitations before claiming calibrated accuracy.
+- Keep proprietary workbooks/reports out of Git, fixtures and logs. Use synthetic
+  sources for development; real input processing requires its existing authorization.
+
 ## Draft, canonical state and human authority
 
 The governed database and retained storage hold live canonical state. Agent memory,
