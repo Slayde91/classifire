@@ -210,11 +210,11 @@ prerequisite.
 The merged bounded A/B profile increment gives a user an explicit general source A or
 Firefly system-price source B choice, stable source versions, inspectable sheet/header/
 column and commercial-basis gaps, and append-only unapproved profile save/reopen/download.
-The current candidate adds one immutable approve/reject/request-revision decision against
+PR #214 adds one immutable approve/reject/request-revision decision against
 an exact profile hash, with reviewer/time/reason history, stale status and exact download.
 It grants no row, library, system, Estimate, technical or release authority.
 
-After publishing that interaction, establish the smallest T13 sealed lineage/holdout
+Next establish the smallest T13 sealed lineage/holdout
 manifest before prediction feature selection or evaluation. Then build one reviewed A
 observation/component mapping or B-system mapping vertical slice. Use synthetic fixtures
 until actual source rights and semantics are verified.

@@ -2,13 +2,11 @@
 
 ## Evidence-based current snapshot
 
-Verified 2026-09-07 from the isolated worktree
-`C:\CLASSIFIRE\.tmp\pricing-profile-review-20260907`, branch
-`feat/pricing-profile-review-20260907`. It is based on shared main
-`205cf277ea86f6a47697e617465c8ab102ed8107`: A/B profile PR #212 is merged and
-the PR #213 validation-timeout correction has exact shared-main run 34047634074
-green. The T12 review increment below remains candidate source until its commit,
-PR, required checks and merge are verified.
+Verified 2026-09-07 on shared main
+`39535b0b290fabe852db5e9c85e1cbe639a3740c`, merge commit for PR #214.
+The exact PR head `5e5a36d8d580953bf3566a2492364a6cee77584b` passed required run
+34051699479 in 18m35s, including 1,847 tests, full Ruff, Mypy, Bandit and one
+Alembic head. Post-merge run 34052722376 was started and remains separately tracked.
 
 ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic application
 with independently callable Scope, System Match, Estimate and Reporting capabilities,
@@ -106,10 +104,9 @@ ProjectPackage.
   exited during setup. Real HTTP forms, cookies, CSRF, uploads, redirects, rendered HTML
   assertions and downloads were exercised; visual layout still needs a browser check
   when that helper is available.
-- Current review-candidate evidence: 33 migration/lineage tests and five focused
-  profile/service/browser tests passed. Ruff passes on the changed source/tests and
-  targeted Mypy passes on the four changed source modules. Full validation and
-  exact-head CI remain required before publication.
+- Review publication evidence: 67 focused pricing/profile/UI/client/migration/lineage
+  tests and 44 complete migration/preflight rehearsals passed locally. Required PR CI
+  then passed 1,847 tests plus all static, security and migration-head checks.
 
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,
@@ -141,10 +138,9 @@ ChatGPT linking, OpenClaw retirement, deployment and Human Release remain incomp
 ## Project health
 
 The product has a growing, testable standalone Draft workflow with shared services,
-exact evidence, explicit uncertainty and narrow user-visible increments. This A/B slice
+exact evidence, explicit uncertainty and narrow user-visible increments. This review slice
 extends existing source and pricing abstractions rather than creating another importer,
-rules engine, agent fleet or database. Targeted and static checks are green; exact-head
-CI and review are still required before shared-main status.
+rules engine, agent fleet or database. It is merged and its exact-head checks are green.
 
 The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
 46 unstaged tracked modifications, 14 staged additions and four DU conflicts. Its
@@ -153,11 +149,11 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Finish this T12 increment through full validation, explicit diff review, commit, push,
-   PR, required CI and merge; then verify shared-main state.
-2. Define and test the smallest T13 sealed lineage/holdout manifest before any prediction
+1. Define and test the smallest T13 sealed lineage/holdout manifest before any prediction
    feature selection, retrieval corpus or calibration experiment can contaminate it.
-3. Deliver one reviewed A-row observation/component mapping or B-system mapping vertical
+2. Deliver one reviewed A-row observation/component mapping or B-system mapping vertical
    slice using the exact-profile decision and sealed lineage boundary before bulk scale.
+3. Define scoped Draft reviewer assignments before production multi-user pricing review;
+   do not broaden global project visibility to make `pricing_manager` access work.
 
 [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the self-contained next-session task.

@@ -2,14 +2,11 @@
 
 ## Verified branch and project context
 
-Verified 2026-09-07 in
-`C:\CLASSIFIRE\.tmp\pricing-profile-review-20260907` on branch
-`feat/pricing-profile-review-20260907`, based on `origin/main`
-`205cf277ea86f6a47697e617465c8ab102ed8107`. PR #212 merged the A/B source-profile
-interaction. PR #213 raised the validation timeout; exact shared-main run 34047634074
-succeeded. The current branch adds the early-T12 exact-profile human review slice and
-migration 0041. Treat it as candidate work until commit, push, PR, CI and merge are
-verified from Git/GitHub.
+Verified 2026-09-07 on shared main
+`39535b0b290fabe852db5e9c85e1cbe639a3740c`, merge commit for PR #214.
+The exact head `5e5a36d8d580953bf3566a2492364a6cee77584b` passed required run
+34051699479 in 18m35s. PR #214 merges the early-T12 exact-profile human review slice
+and migration 0041. Post-merge run 34052722376 started; verify its final status.
 
 ADRs 0001/0002 remain accepted. The deterministic modular core, independent capabilities
 and optional bounded AI remain unchanged. This work uses no AI or OpenClaw and grants no
@@ -17,7 +14,7 @@ row-import, library, technical, Estimate, canonical, deployment or release autho
 
 ## Relevant local changes and verified evidence
 
-The candidate extends existing profile abstractions:
+The merged implementation extends existing profile abstractions:
 
 - `DraftPricingSourceProfileDecision` retains one immutable decision per exact profile,
   including profile revision/hash, approve/reject/request-revision, reason, reviewer,
@@ -33,11 +30,8 @@ The candidate extends existing profile abstractions:
   permissions, stale/hash/replay/integrity refusal and no Estimate, LibraryRelease or
   TechnicalVariant side effects.
 
-Current evidence: 33 migration/lineage tests and five focused service/browser tests pass;
-changed-path Ruff and targeted Mypy pass. A full Mypy invocation using the system Python
-cannot resolve the repository's optional `jwt`/`mcp` dependencies; rerun it in the project
-environment used by CI. Full regression, Bandit, single-head, diff classification and
-exact-head PR CI remain required before merge.
+Evidence: 67 focused product tests and 44 complete migration/preflight rehearsals passed
+locally. Required PR CI passed all 1,847 tests, full Ruff/Mypy/Bandit and one Alembic head.
 
 The recovery root `C:\CLASSIFIRE` remains at `de0cc5a` on
 `gpt/phase8-linked-original-images`, with 46 unstaged tracked changes, 14 staged additions
@@ -46,8 +40,8 @@ from it. Preserve unrelated worktrees and the running synthetic demo on port 881
 
 ## Start Here / Next Session
 
-**First task:** after verifying that the T12 profile-review change is merged and green,
-implement the smallest T13 pricing-evaluation lineage and holdout manifest boundary.
+**First task:** verify shared-main/post-merge state, then implement the smallest T13
+pricing-evaluation lineage and holdout manifest boundary.
 
 **Why this is next:** CLASSIFIRE can distinguish sources and retain a human decision, but
 prediction work could still leak a target price or a related duplicate into training,
