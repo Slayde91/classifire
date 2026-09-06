@@ -1,12 +1,13 @@
-# Draft PDF evidence and Scope v3/v4 contract
+# Draft PDF evidence and Scope v3-v5 compatibility
 
-Status: the first observation-only P1b path merged in PR #194. The active
-`feat/defect-report-review-20260906` branch extends it to a source-linked Draft graph
-using Scope v4. [PROJECT_STATE.md](./PROJECT_STATE.md) records actual validation,
-browser/restart evidence and publication; implementation is not completion evidence.
-The PDF workflow now precedes the retained A/B pricing-profile slice. ADRs 0001/0002
-remain unchanged. This human-reviewed Draft path grants no physical-model admission,
-technical compatibility, price approval, lock or release.
+Status: observation-only review merged in PR #194; page-to-graph review merged in
+PR #209 at `96680f4ce1b26da5da599bd5cb7894af8d3b28de`. Its required CI passed
+1,564 tests and shared-main CI succeeded. The active Excel branch preserves this
+PDF path while adding compatible Scope v5 workbook claims; see
+[the Excel contract](./DRAFT_SCOPE_XLSX_V1_CONTRACT.md) and
+[PROJECT_STATE.md](./PROJECT_STATE.md) for that increment's actual acceptance evidence.
+ADRs 0001/0002 remain unchanged. Human-reviewed Draft evidence grants no physical-model
+admission, technical compatibility, price approval, lock or release.
 
 ## Shared commands and authority
 
@@ -25,8 +26,9 @@ Manual Scope works on SQLite. Migration 0032 adds DraftPdfSource with exact comp
 StoredFile ID/SHA-256/size binding, owner/filename, scan metadata, processing status,
 normalized JSON and its hash. One StoredFile binds to one Draft source; identical
 bytes cannot be adopted into a different Draft. Downgrade refuses retained data loss.
-Scope v4 reuses the existing JSON revision storage; it adds no database migration or
-new orchestration dependency. Current migration head remains 0037.
+The merged Scope v4 change reused JSON revision storage without a database migration.
+The active Excel increment adds separate source table 0038 from 0037; v5 still uses
+existing Scope revisions and does not change PDF source fields or grant new authority.
 
 ## Lifecycle and limits
 
@@ -88,22 +90,24 @@ that every fact is proven, that a physical model is admitted, or that a technica
 system is suitable. The full source hash retains visual-page identity; the normalized
 page text hash alone is not visual truth. No AI, OCR or real provider is invoked.
 
-## Compatible Scope v3/v4 extension
+## Compatible PDF references through Scope v5
 
-Existing v1-v3 artifacts, hashes, parent history and saved bytes remain valid. The
-graph content schema is unchanged. v2 introduced `import_lineage`, v3 added
-`evidence_refs`, and v4
-uses that same array as an exact union of observation references and entity references.
-It does not add a second evidence array or silently upgrade old revisions. New graph
-review creates v4; manual edits to v4 and imports of v4 retain that version. The
-original observation path
-keeps v3 unless its prior revision is already v4. Maximum 100 combined references and
-the existing 288 KiB overall artifact limit apply; no truncation is permitted.
+Existing artifacts, hashes, parent history and saved bytes remain valid. The graph
+content schema is unchanged. v2 introduced `import_lineage`, v3 added `evidence_refs`,
+and v4 added entity references to that same union. The active v5 extension adds
+worksheet claims, without relabelling a cell as a PDF page or adding a second array.
+It does not silently upgrade old revisions. PDF graph review creates v4 unless the
+prior revision is v5; observation review keeps v3 unless already v4/v5. Later PDF,
+manual and import paths preserve v5 and all its workbook references. Maximum 100
+combined refs and the existing 288 KiB artifact limit apply without truncation.
 
-| Reference type | Exact target fields | Method | Permitted Scope versions |
+| PDF reference type | Exact target fields | Method | Permitted Scope versions |
 | --- | --- | --- | --- |
-| Observation | observation_id, observation_sha256 | human_page_review | v3 and v4 |
-| Entity | target_kind, target_id, target_sha256 | human_page_entity_review | v4 only |
+| Observation | observation_id, observation_sha256 | human_page_review | v3, v4, v5 |
+| Entity | target_kind, target_id, target_sha256 | human_page_entity_review | v4, v5 |
+
+The separate v5 workbook shape is specified in
+[the Excel contract](./DRAFT_SCOPE_XLSX_V1_CONTRACT.md). The PDF shapes remain unchanged.
 
 Each reference also has exactly these common fields:
 
@@ -142,14 +146,15 @@ unverified imports; permission failures still refuse access. Renderers display t
 identity and saved-revision review status, not a claim that source access is currently
 valid. Immutable JSON/PDF/XLSX are never rewritten to update those warnings.
 
-All four profiles support the union. New reports containing Scope v4 require:
+All four profiles support saved PDF claims. The active Excel extension adds conditional
+v5 render versions while retaining v4 and earlier versions:
 
-| Profile | v4 render_version | Older Scope render_version retained |
-| --- | --- | --- |
-| Scope-only | 3 | 1 |
-| Scope-and-system | 4 | 2 |
-| Estimate-only | 4 | 1 manual / 2 with pricing sources |
-| Complete | 5 | 3 |
+| Profile | v5 render_version | v4 render_version | Earlier Scope render_version |
+| --- | --- | --- | --- |
+| Scope-only | 5 | 3 | 1 |
+| Scope-and-system | 6 | 4 | 2 |
+| Estimate-only | 6 | 4 | 1 manual / 2 pricing sources |
+| Complete | 7 | 5 | 3 |
 
 These conditional versions preserve earlier profile readers and exact retained outputs;
 report envelope schemas are unchanged. Saved downloads enforce normal content rights,
@@ -180,8 +185,9 @@ period/legal holds, orphan reconciliation, hosted parser isolation, scanner upda
 monitoring, raw-source export rights and operating capacity require validation before
 customer deployment. A successful synthetic demo does not authorize that deployment.
 
-Next Scope breadth is a bounded Excel defect-register mapping UI using the shared
-graph/revision boundary and explicit cell/image provenance, then optional AI proposals.
-Neither Excel defect ingestion, OCR nor automatic graph extraction is implemented by
-this PDF slice. Technical-corpus and A/B pricing source profiles remain a separate
-approved track with their own source semantics and authority gates.
+The bounded Excel defect-register mapping UI is now an active separate increment,
+using the shared graph/revision boundary and explicit cell/image provenance. Finish
+its proof before optional bounded PDF text/image suggestions through existing ports
+and human review. OCR/automatic interpretation is not supplied by either manual path.
+Technical-corpus and A/B pricing profiles remain a separate approved track with their
+own source semantics and authority gates.

@@ -8,6 +8,10 @@
   const kinds = ["defects", "openings", "services", "observations"];
   const titles = { defects: "Defect", openings: "Opening", services: "Service", observations: "Observation" };
   const pageReview = form.dataset.pageReview === "true";
+  const workbookReview = form.dataset.workbookReview === "true";
+  const sourceReview = pageReview || workbookReview;
+  let rowSources = [];
+  let sheetImages = [];
   const targetKinds = { defects: "defect", openings: "opening", services: "service" };
   let reviewTargets = [];
   let payload;
@@ -30,6 +34,11 @@
 
   function updateReviewSummary() {
     const summary = document.getElementById("scope-review-selection-status");
+    if (summary && workbookReview) {
+      const imageCount = reviewTargets.reduce((count, target) => count + target.image_ids.length, 0);
+      summary.textContent = `${reviewTargets.length} item-to-row references and ${imageCount} explicit image links selected. Existing items gain references only when selected. Image placement does not establish physical relationships.`;
+      return;
+    }
     if (summary) summary.textContent = `${reviewTargets.length} item${reviewTargets.length === 1 ? "" : "s"} selected for page ${form.dataset.pageNumber}. Only explicitly selected items gain a new page reference.`;
   }
 
@@ -51,6 +60,66 @@
     });
     label.append(checkbox, document.createTextNode(title));
     card.append(label);
+  }
+
+  function addWorkbookReviewControls(card, kind, item) {
+    if (!workbookReview || !targetKinds[kind]) return;
+    const targetKind = targetKinds[kind];
+    const details = element("details", "scope-row-links");
+    details.append(element("summary", "", "Source rows and images"));
+    details.append(element("p", "scope-hint", "Choose every supporting selected row. Add image links explicitly; an image anchor is placement context only."));
+    rowSources.forEach((source) => {
+      const rowBox = element("div", "scope-row-choice");
+      const label = element("label", "scope-check");
+      const checkbox = element("input");
+      checkbox.type = "checkbox";
+      checkbox.id = `scope-${item.id}-row-${source.row}`;
+      const title = `Link this ${targetKind} to ${source.label}`;
+      checkbox.setAttribute("aria-label", title);
+      label.htmlFor = checkbox.id;
+      const matches = (target) => target.target_kind === targetKind && target.target_id === item.id && target.row === source.row;
+      checkbox.checked = reviewTargets.some(matches);
+      label.append(checkbox, document.createTextNode(title));
+      const images = element("div", "scope-row-images");
+      function renderImages() {
+        images.replaceChildren();
+        const target = reviewTargets.find(matches);
+        if (!target) return;
+        if (!sheetImages.length) images.append(element("span", "scope-hint", "No retained worksheet images."));
+        sheetImages.forEach((image) => {
+          const imageLabel = element("label", "scope-check");
+          const input = element("input");
+          input.type = "checkbox";
+          input.id = `scope-${item.id}-row-${source.row}-${image.occurrence_id}`;
+          imageLabel.htmlFor = input.id;
+          const name = `Link ${image.label} to this ${targetKind} at ${source.label}`;
+          input.setAttribute("aria-label", name);
+          input.checked = target.image_ids.includes(image.occurrence_id);
+          input.addEventListener("change", () => {
+            target.image_ids = target.image_ids.filter((id) => id !== image.occurrence_id);
+            if (input.checked) target.image_ids.push(image.occurrence_id);
+            changed();
+          });
+          imageLabel.append(input, document.createTextNode(`${image.label}: ${image.anchor_label}`));
+          images.append(imageLabel);
+        });
+      }
+      checkbox.addEventListener("change", () => {
+        reviewTargets = reviewTargets.filter((target) => !matches(target));
+        if (checkbox.checked) reviewTargets.push({ target_kind: targetKind, target_id: item.id, row: source.row, image_ids: [] });
+        renderImages();
+        changed();
+      });
+      renderImages();
+      rowBox.append(label, images);
+      details.append(rowBox);
+    });
+    card.append(details);
+  }
+
+  function relationLabel(items, item, index, title) {
+    const label = item.label || `${title} ${index + 1}`;
+    return workbookReview && items.filter((entry) => entry.label === item.label).length > 1 ? `${label} (${item.id.slice(0, 8)})` : label;
   }
 
   function element(tag, className, text) {
@@ -121,7 +190,7 @@
 
   function fillDefectSelect(select, item) {
     select.replaceChildren(new Option("Not linked / unknown", ""));
-    payload.defects.forEach((defect, index) => select.append(new Option(defect.label || `Defect ${index + 1}`, defect.id)));
+    payload.defects.forEach((defect, index) => select.append(new Option(relationLabel(payload.defects, defect, index, "Defect"), defect.id)));
     if (item.defect_id && !payload.defects.some((defect) => defect.id === item.defect_id)) {
       select.append(new Option(`Unavailable defect (${item.defect_id})`, item.defect_id));
     }
@@ -130,7 +199,7 @@
 
   function fillOpeningChecks(container, item) {
     container.replaceChildren(element("legend", "", "Linked openings"));
-    const choices = payload.openings.map((opening, index) => ({ id: opening.id, label: opening.label || `Opening ${index + 1}` }));
+    const choices = payload.openings.map((opening, index) => ({ id: opening.id, label: relationLabel(payload.openings, opening, index, "Opening") }));
     item.opening_ids.forEach((id) => {
       if (!choices.some((opening) => opening.id === id)) choices.push({ id, label: `Unavailable opening (${id})` });
     });
@@ -223,6 +292,7 @@
       selectField(grid, item, "state", "Evidence state", states);
     }
     addPageReviewControl(card, kind, item);
+    addWorkbookReviewControls(card, kind, item);
     const footer = element("div", "scope-item-footer");
     footer.append(element("span", "scope-item-id", `Stable ID: ${item.id}`));
     const remove = element("button", "button button-small scope-remove", `Remove ${titles[kind].toLowerCase()}`);
@@ -253,12 +323,20 @@
 
   try {
     payload = JSON.parse(document.getElementById("scope-initial-payload").textContent);
-    if (pageReview) {
+    if (sourceReview) {
       reviewTargets = JSON.parse(document.getElementById("scope-initial-review-targets").textContent);
       if (!Array.isArray(reviewTargets)) throw new Error("Invalid page review selections");
       reviewTargets.forEach((target) => {
         if (!target || !Object.values(targetKinds).includes(target.target_kind) || typeof target.target_id !== "string") throw new Error("Invalid page review selection");
       });
+      if (workbookReview) {
+        rowSources = JSON.parse(document.getElementById("scope-initial-row-sources").textContent);
+        sheetImages = JSON.parse(document.getElementById("scope-initial-sheet-images").textContent);
+        if (!Array.isArray(rowSources) || !Array.isArray(sheetImages)) throw new Error("Invalid worksheet source choices");
+        reviewTargets.forEach((target) => {
+          if (!Number.isInteger(target.row) || !Array.isArray(target.image_ids) || target.image_ids.some((id) => typeof id !== "string")) throw new Error("Invalid worksheet review selection");
+        });
+      }
     }
     kinds.forEach((kind) => {
       if (!Array.isArray(payload[kind])) throw new Error("Invalid scope data");
@@ -280,20 +358,20 @@
     document.getElementById("scope-edit-controls").disabled = form.dataset.canEdit !== "true";
     updateReviewSummary();
     form.addEventListener("submit", (event) => {
-      if (pageReview && !reviewTargets.length) {
+      if (sourceReview && !reviewTargets.length) {
         event.preventDefault();
-        showError("Select at least one defect, opening or service to link to this page before previewing.");
+        showError(workbookReview ? "Select at least one source row for a defect, opening or service before previewing." : "Select at least one defect, opening or service to link to this page before previewing.");
         return;
       }
       document.getElementById("scope-payload").value = JSON.stringify(payload);
-      if (pageReview) document.getElementById("scope-review-targets").value = JSON.stringify(reviewTargets);
+      if (sourceReview) document.getElementById("scope-review-targets").value = JSON.stringify(reviewTargets);
       dirty = false;
     });
     document.querySelectorAll("[data-scope-independent-action]").forEach((independentForm) => {
       independentForm.addEventListener("submit", (event) => {
         if (!dirty) return;
         event.preventDefault();
-        showError("The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before saving a separate page observation.");
+        showError(workbookReview ? "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before uploading or scanning another source." : "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before saving a separate page observation.");
       });
     });
     window.addEventListener("beforeunload", (event) => {

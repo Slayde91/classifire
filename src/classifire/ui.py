@@ -35,6 +35,7 @@ from .models import (
     User,
 )
 from .outputs.common import ATTRIBUTION
+from .outputs.draft_scope import _page_reference_fields
 from .physical_models import ServiceOpeningLink
 from .security import (
     authenticate_user,
@@ -77,7 +78,9 @@ router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 # Pure saved-claim display, shared by report/import/client review templates.
 templates.env.globals.update(
-    scope_reference_label=reference_label, scope_reference_status=reference_status
+    scope_reference_label=reference_label,
+    scope_reference_status=reference_status,
+    scope_reference_fields=_page_reference_fields,
 )
 Db = Annotated[Session, Depends(get_db)]
 

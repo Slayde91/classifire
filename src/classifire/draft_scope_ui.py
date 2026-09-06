@@ -225,8 +225,8 @@ def create_scope(
 ) -> HTMLResponse | RedirectResponse:
     verify_csrf(request, form.get("csrf_token"))
     user = _require(request, db, "project:write")
-    if form.get("next", "") not in {"", "evidence"}:
-        raise HTTPException(422, "Choose manual entry or PDF upload")
+    if form.get("next", "") not in {"", "evidence", "workbooks"}:
+        raise HTTPException(422, "Choose manual entry, PDF or Excel upload")
     try:
         draft = create_draft_project(db, user, form.get("reference", ""), form.get("name", ""))
         db.commit()
@@ -263,8 +263,8 @@ def create_scope(
             headers={"Cache-Control": "no-store"},
         )
     destination = f"/scopes/{draft.id}"
-    if form.get("next") == "evidence":
-        destination += "/evidence"
+    if form.get("next") in {"evidence", "workbooks"}:
+        destination += "/" + form["next"]
     return RedirectResponse(destination, status_code=303)
 
 

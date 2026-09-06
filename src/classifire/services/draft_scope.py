@@ -28,6 +28,7 @@ from .draft_scope_evidence import (
     ENTITY_EVIDENCE_SCHEMA_VERSION,
     EVIDENCE_SCHEMA_VERSION,
     EVIDENCE_SCHEMAS,
+    XLSX_EVIDENCE_SCHEMA_VERSION,
     reference_identity,
     validate_evidence_refs,
 )
@@ -507,6 +508,102 @@ def save_revision(
     return _append_revision(db, actor, draft_id, expected_revision, payload)
 
 
+def _revision_envelope(
+    *,
+    draft_id: str,
+    project_id: str,
+    actor_id: str,
+    expected_revision: int,
+    created: datetime,
+    content: dict[str, Any],
+    prior: dict[str, Any] | None,
+    import_source: dict[str, Any] | None = None,
+    source_file_sha256: str | None = None,
+    evidence_ref: dict[str, Any] | None = None,
+    entity_evidence_refs: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Build and validate the exact next envelope without persistence or audit writes."""
+    parent = prior["sha256"] if prior else None
+    envelope: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "artifact_id": draft_id,
+        "project_id": project_id,
+        "revision": expected_revision + 1,
+        "parent_hash": parent,
+        "created_by": actor_id,
+        "created_at": created.isoformat(),
+        "state": "Draft",
+        "provenance": "manual",
+        "review_status": "unreviewed",
+        "content": content,
+    }
+    if import_source is not None:
+        lineage = list(import_source.get("import_lineage", []))
+        lineage.append(
+            {key: import_source[key] for key in _LINEAGE_KEYS if key != "file_sha256"}
+            | {"file_sha256": source_file_sha256}
+        )
+        if len(lineage) > MAX_IMPORT_LINEAGE:
+            raise DraftScopeError("DRAFT_IMPORT_LINEAGE_LIMIT")
+        envelope.update(
+            schema_version=IMPORTED_SCHEMA_VERSION,
+            provenance="imported",
+            import_lineage=lineage,
+        )
+    elif prior is not None and prior.get("import_lineage"):
+        envelope.update(
+            schema_version=IMPORTED_SCHEMA_VERSION,
+            provenance="manual_edit",
+            import_lineage=prior["import_lineage"],
+        )
+    basis = import_source if import_source is not None else prior
+    if (
+        evidence_ref is not None
+        or entity_evidence_refs is not None
+        or (basis and basis["schema_version"] in EVIDENCE_SCHEMAS)
+    ):
+        observations = {item["id"] for item in envelope["content"]["observations"]}
+        refs = [
+            dict(ref)
+            for ref in (basis or {}).get("evidence_refs", [])
+            if "target_kind" in ref or ref["observation_id"] in observations
+        ]
+        if import_source is not None:
+            refs = [dict(ref, origin="imported_unverified") for ref in refs]
+        if evidence_ref is not None:
+            refs.append(dict(evidence_ref))
+        if entity_evidence_refs is not None:
+            replacements = {reference_identity(ref) for ref in entity_evidence_refs}
+            refs = [ref for ref in refs if reference_identity(ref) not in replacements]
+            refs.extend(dict(ref) for ref in entity_evidence_refs)
+        entity_version = entity_evidence_refs is not None or (
+            basis and basis["schema_version"] == ENTITY_EVIDENCE_SCHEMA_VERSION
+        )
+        xlsx_version = any(ref.get("source_kind") == "xlsx" for ref in refs) or (
+            basis and basis["schema_version"] == XLSX_EVIDENCE_SCHEMA_VERSION
+        )
+        envelope.update(
+            schema_version=XLSX_EVIDENCE_SCHEMA_VERSION
+            if xlsx_version
+            else ENTITY_EVIDENCE_SCHEMA_VERSION
+            if entity_version
+            else EVIDENCE_SCHEMA_VERSION,
+            provenance="evidence_review"
+            if evidence_ref is not None or entity_evidence_refs is not None
+            else ("imported" if import_source is not None else "manual_edit"),
+            import_lineage=envelope.get("import_lineage", []),
+            evidence_refs=refs,
+        )
+    envelope["sha256"] = hashlib.sha256(_json(envelope)).hexdigest()
+    try:
+        _envelope_shape(envelope)
+    except (ValueError, TypeError, KeyError) as exc:
+        raise DraftScopeError("DRAFT_EVIDENCE_INVALID") from exc
+    if len(_json(envelope)) > MAX_ARTIFACT_BYTES:
+        raise DraftScopeError("DRAFT_ARTIFACT_TOO_LARGE")
+    return envelope
+
+
 def _append_revision(
     db: Session,
     actor: User,
@@ -541,78 +638,19 @@ def _append_revision(
             prior = _read(db, draft, expected_revision) if expected_revision else None
             parent = prior["sha256"] if prior else None
             created = datetime.now(UTC)
-            envelope: dict[str, Any] = {
-                "schema_version": SCHEMA_VERSION,
-                "artifact_id": draft.id,
-                "project_id": draft.project_id,
-                "revision": expected_revision + 1,
-                "parent_hash": parent,
-                "created_by": actor.id,
-                "created_at": created.isoformat(),
-                "state": "Draft",
-                "provenance": "manual",
-                "review_status": "unreviewed",
-                "content": content.model_dump(mode="json"),
-            }
-            if import_source is not None:
-                lineage = list(import_source.get("import_lineage", []))
-                lineage.append(
-                    {key: import_source[key] for key in _LINEAGE_KEYS if key != "file_sha256"}
-                    | {"file_sha256": source_file_sha256}
-                )
-                if len(lineage) > MAX_IMPORT_LINEAGE:
-                    raise DraftScopeError("DRAFT_IMPORT_LINEAGE_LIMIT")
-                envelope.update(
-                    schema_version=IMPORTED_SCHEMA_VERSION,
-                    provenance="imported",
-                    import_lineage=lineage,
-                )
-            elif prior is not None and prior.get("import_lineage"):
-                envelope.update(
-                    schema_version=IMPORTED_SCHEMA_VERSION,
-                    provenance="manual_edit",
-                    import_lineage=prior["import_lineage"],
-                )
-            basis = import_source if import_source is not None else prior
-            if (
-                evidence_ref is not None
-                or entity_evidence_refs is not None
-                or (basis and basis["schema_version"] in EVIDENCE_SCHEMAS)
-            ):
-                observations = {item["id"] for item in envelope["content"]["observations"]}
-                refs = [
-                    dict(ref)
-                    for ref in (basis or {}).get("evidence_refs", [])
-                    if "target_kind" in ref or ref["observation_id"] in observations
-                ]
-                if import_source is not None:
-                    refs = [dict(ref, origin="imported_unverified") for ref in refs]
-                if evidence_ref is not None:
-                    refs.append(dict(evidence_ref))
-                if entity_evidence_refs is not None:
-                    replacements = {reference_identity(ref) for ref in entity_evidence_refs}
-                    refs = [ref for ref in refs if reference_identity(ref) not in replacements]
-                    refs.extend(dict(ref) for ref in entity_evidence_refs)
-                entity_version = entity_evidence_refs is not None or (
-                    basis and basis["schema_version"] == ENTITY_EVIDENCE_SCHEMA_VERSION
-                )
-                envelope.update(
-                    schema_version=ENTITY_EVIDENCE_SCHEMA_VERSION
-                    if entity_version
-                    else EVIDENCE_SCHEMA_VERSION,
-                    provenance="evidence_review"
-                    if evidence_ref is not None or entity_evidence_refs is not None
-                    else ("imported" if import_source is not None else "manual_edit"),
-                    import_lineage=envelope.get("import_lineage", []),
-                    evidence_refs=refs,
-                )
-            envelope["sha256"] = hashlib.sha256(_json(envelope)).hexdigest()
-            try:
-                _envelope_shape(envelope)
-            except (ValueError, TypeError, KeyError) as exc:
-                raise DraftScopeError("DRAFT_EVIDENCE_INVALID") from exc
-            if len(_json(envelope)) > MAX_ARTIFACT_BYTES:
-                raise DraftScopeError("DRAFT_ARTIFACT_TOO_LARGE")
+            envelope = _revision_envelope(
+                draft_id=draft.id,
+                project_id=draft.project_id,
+                actor_id=actor.id,
+                expected_revision=expected_revision,
+                created=created,
+                content=content.model_dump(mode="json"),
+                prior=prior,
+                import_source=import_source,
+                source_file_sha256=source_file_sha256,
+                evidence_ref=evidence_ref,
+                entity_evidence_refs=entity_evidence_refs,
+            )
             db.add(
                 DraftScopeRevision(
                     draft_scope_id=draft.id,

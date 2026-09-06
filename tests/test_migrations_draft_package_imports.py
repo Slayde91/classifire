@@ -39,7 +39,7 @@ def test_import_upgrade_preserves_all_native_work_and_separates_foreign_authorit
                 "draft_project_packages",
             )
         }
-    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
+    _upgrade(url, environment, "0035_draft_package_imports", enforce_sqlite_foreign_keys=True)
     assert {"draft_package_imports", "draft_imported_report_sources"} <= set(
         inspect(engine).get_table_names()
     )
@@ -99,4 +99,6 @@ def test_import_upgrade_preserves_all_native_work_and_separates_foreign_authorit
         refusal.returncode != 0
         and "Retained foreign package history cannot be downgraded" in refusal.stderr
     )
+    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
+    verify_current(engine, ids, expected)
     engine.dispose()

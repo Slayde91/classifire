@@ -29,10 +29,10 @@
 {% endif %}
 
 {% if envelope.get('evidence_refs') %}
-<section class="panel"><h2>Saved page-review references</h2>
+<section class="panel"><h2>{% if envelope.schema_version == 'CLASSIFIRE-DRAFT-SCOPE-v5' %}Saved evidence-review references{% else %}Saved page-review references{% endif %}</h2>
 <p>These are the selected revision's saved Draft review claims, not technical approval or a fresh source check.</p>
-<ul>{% for ref in envelope.evidence_refs %}<li>{{ ref.original_filename }} &middot; page {{ ref.page_number }} &middot; {{ ref.origin|replace('_',' ') }}
-{% if envelope.schema_version == 'CLASSIFIRE-DRAFT-SCOPE-v4' %}<p>{{ scope_reference_label(ref, envelope.content) }}: {{ scope_reference_status(ref, envelope.content) }}</p>{% endif %}
-<details><summary>Saved provenance</summary><dl>{% for key, value in ref.items() %}<dt>{{ key|replace('_',' ') }}</dt><dd class="pdf-source-identity">{{ value }}</dd>{% endfor %}</dl></details></li>{% endfor %}</ul>
+<ul>{% for ref in envelope.evidence_refs %}<li>{{ ref.original_filename }} &middot; {% if ref.source_kind|default('') == 'xlsx' %}{{ ref.row.sheet }}, row {{ ref.row.row }}{% else %}page {{ ref.page_number }}{% endif %} &middot; {{ ref.origin|replace('_',' ') }}
+{% if envelope.schema_version in ['CLASSIFIRE-DRAFT-SCOPE-v4', 'CLASSIFIRE-DRAFT-SCOPE-v5'] %}<p>{{ scope_reference_label(ref, envelope.content) }}: {{ scope_reference_status(ref, envelope.content) }}</p>{% endif %}
+<details><summary>Saved provenance</summary><dl>{% for key, value in (scope_reference_fields(envelope, ref) if envelope.schema_version == 'CLASSIFIRE-DRAFT-SCOPE-v5' else ref.items()) %}<dt>{{ key|replace('_',' ') }}</dt><dd class="pdf-source-identity">{{ value }}</dd>{% endfor %}</dl></details></li>{% endfor %}</ul>
 </section>
 {% endif %}

@@ -2,149 +2,177 @@
 
 ## Verified branch and project context
 
-2026-09-06. Worktree `C:\CLASSIFIRE\.tmp\defect-report-review-20260906`, branch
-`feat/defect-report-review-20260906`, baseline main
-`080845e2681e292cabb6f201f373a696d1fc40c1` (PR #208). Baseline feature CI passed
-1,522 tests and required static checks. Inspect live head/upstream, PR/CI and merge
-state before continuing; a document cannot include its own final commit hash.
-ADRs 0001/0002 remain accepted. The full production goal remains incomplete.
+2026-09-06. Worktree `C:\CLASSIFIRE\.tmp\defect-xlsx-mapping-20260906`, branch
+`feat/defect-xlsx-mapping-20260906`, shared baseline
+`96680f4ce1b26da5da599bd5cb7894af8d3b28de` (merged PDF graph review PR #209).
+Baseline required CI passed 1,564 tests; main run 34027941914 succeeded. Verify current
+head/upstream, diff, PR and checks before assuming this new Excel source checkpoint
+has been published. ADRs 0001/0002 remain accepted; the full production goal is active.
 
-## Current increment and verification
+## Current increment
 
-This increment makes PDF defect-report upload visible and reuses the existing Scope
-graph editor beside the retained page. A person edits defects/openings/services,
-explicitly links selected items, previews, edits back if needed and confirms one
-atomic Draft revision. It adds v4 entity references to the same `evidence_refs` union;
-old observation refs and historical downloads remain readable. Changed/deleted items
-retain warnings. Imports retain unverified claims. Four report profiles support the
-new references and preserve old render versions. Package inventory already consumes
-the same array; exporting a selected Scope does not bundle original PDF bytes.
+The Excel defect-report path retains/scans a bounded XLSX, shows typed cells and
+supported PNG/JPEG occurrences, accepts explicit sheet/header/column/row choices,
+and drafts only the selected item kinds. The existing graph editor handles shared
+or blank openings and multiple services without automatic relationships or quantity
+inference. A human explicitly selects row/image claims, previews and separately
+confirms one atomic Scope v5 revision. Formula/ambiguous/missing inputs stay unresolved.
 
-No AI/OCR interpretation, Excel defect ingestion, new canonical writer, dependency,
-migration, provider call, deployment or release is added. SQLite still supports manual
-Drafts; retained evidence requires the existing guarded PostgreSQL/storage/scanner setup.
+v5 extends the same evidence_refs union with typed row/cell/image provenance; earlier
+PDF claims remain readable. Changed/deleted items retain historical review warnings,
+re-review updates only a new revision, imports force unverified claims, and selected
+packages inventory the same references with original source bodies external. Four
+report profiles have conditional v5 renderer versions; old outputs remain exact.
+Migration 0038 adds only DraftScopeXlsxSource and reuses the shared retained-file
+boundary. A pure shared envelope builder checks the existing 288 KiB budget during
+preview and final save. No AI provider, canonical physical write, lock, deployment
+or release is added; the existing pricing parser's default behavior stays unchanged.
 
-Changed components: draft_pdf_intake, draft_scope/evidence services, PDF/Scope routers,
-shared editor/preview templates and JS/CSS, report renderers/services/template globals,
-demo database allowlist and three focused test modules. Documentation aligns GOAL,
-AGENTS, architecture 5.22, roadmap, PDF contract/demo and retained corpus/pricing design.
-Final relevant PDF/Scope/report/package/client regression: **264 passed**, no skips,
-one expected malformed-ZIP warning, in 1,308.86 seconds. Full PR CI/review and merge
-remain publication checks; verify their live result before moving to the next task.
+Changed components: workbook worker/static-picture parser and pure contracts, new
+source model/migration/lineage, shared Scope/evidence/source services, workbook router,
+shared graph/review templates and JavaScript, four-profile renderers, isolated demo
+allowlist and focused source/UI/report/migration tests. See
+[DRAFT_SCOPE_XLSX_V1_CONTRACT.md](./DRAFT_SCOPE_XLSX_V1_CONTRACT.md).
 
-Browser proof passed 11 checkpoints with no page errors, including shared opening/two
-services, a separate blank opening and explicit unknown dimensions/quantities. Three
-real PDF/XLSX profiles and package export worked; no technical release was seeded,
-so Scope+System is covered by synthetic output tests rather than this browser run.
-After real restart/fresh login, current/historical Scope JSON, both page images,
-three report pairs and ZIP hashes matched. Changed/deleted item warnings remained.
-Actual report images and workbook cells were inspected. Ruff/Bandit and Mypy (193
-files, existing isolated reportlab/yaml stubs) passed. Alembic still has head 0037.
-Two earlier tests failed in PDF fixture setup; both passed unchanged on rerun.
+## Validation checkpoint
+
+Parser 49, migration/lineage 30, UI/template 19 and mixed workbook/PDF output 20 tests
+have passed. The new router's static checks and both JavaScript syntax checks passed.
+The first real Chrome journey passed 11 checkpoints: later worksheet rows, shared
+opening/two services, separate blank opening, unknown/zero/formula distinctions,
+explicit repeated-image links, preview/edit-back/confirm, v5 JSON, three report pairs,
+selected ZIP and changed/deleted-item history. Earlier downloads stayed byte-identical;
+no browser page errors were recorded. Scope+System is covered by pure output tests;
+the guarded PostgreSQL demo cannot seed a technical release and that guard was preserved.
+
+Final-code fresh review saved r5; a second actual restart/fresh login preserved r2/r5
+JSON, both PNGs, all six report files and ZIP hashes. Pure size tests passed 3 cases;
+full Ruff/Bandit and Mypy on 199 source files passed; Alembic has one head 0038. The rendered Scope/
+Complete reference pages and worksheet ranges were inspected and readable. A separate
+worksheet visualization utility exited nonzero without a diagnostic after producing
+both inspectable PNGs; source workbook hashes stayed exact. See PROJECT_STATE for this
+inspection-tool limitation and read-only canonical counts (all eight models zero).
+
+All 30 new PostgreSQL workflow cases passed across focused runs. Two new test-only
+audit expectations were corrected: the injected failure is confined to save, and the
+HTTP journey asserts one save plus two download events. No runtime guard or assertion
+was weakened. The final remaining-workflow and legacy Scope/import/PDF UI group
+passed **110 tests** in 310.35 seconds. Combined focused groups total **254 passed**,
+no skips, one existing Alembic warning. Independent code/document reviews found no
+blockers. Required PR CI and verified merge remain publication gates at this source
+checkpoint; inspect the live branch/PR rather than inferring its future merge here.
+Publication target: origin/feat/defect-xlsx-mapping-20260906 into main.
 
 ## Preserved local changes and runtime context
 
-Never work from or repair the conflicted recovery root `C:\CLASSIFIRE`. It remains on
-`gpt/phase8-linked-original-images`, with 46 unstaged tracked modifications, 14 staged
-additions and four DU conflicts at task start. Untracked/ignored recovery material
-was not exhaustively enumerated. Preserve all unrelated changes, worktrees, earlier
-demos/receipts/scanners and the supplied logo; no broad staging/reset/cleanup.
+Preserve the conflicted `C:\CLASSIFIRE` recovery root. Read-only recheck confirms
+HEAD `de0cc5a` on `gpt/phase8-linked-original-images`, 46 unstaged tracked changes,
+14 staged additions and four DU conflicts. Untracked/ignored recovery content was
+not fully enumerated. Do not clean/reset/resolve/stage or publish from that root.
+Preserve earlier worktrees, demos, scanners, receipts and the supplied logo.
 
-New synthetic demo: `http://127.0.0.1:8816/scopes`, marked data directory
-`C:\CLASSIFIRE\.tmp\defect-report-demo-20260906`, separate PostgreSQL database
-`classifire_draft_defect_report_demo` on loopback 15432, current ClamD port 13311.
-Owned launcher was restarted during proof. Verify exact live process command line
-before stopping/restarting only this demo; start helpers hidden. Do not assume ports,
-process IDs or scanner freshness remain current. Read launcher login setup locally;
-do not copy credentials, session markers or bearer tokens into handoffs/PRs/logs.
-See DRAFT_PDF_DEMO.md. Existing 8815 and older demos remain separate and preserved.
+New synthetic demo is `http://127.0.0.1:8817/scopes`, marked directory
+`C:\CLASSIFIRE\.tmp\defect-xlsx-demo-20260906`, separate database
+`classifire_draft_xlsx_report_demo` on loopback port 15432 and scanner port 13311. Verify exact
+process command lines and scanner freshness before use/restart. Only this demo's
+launcher may be stopped during its proof; start background processes hidden.
+Log files belong outside the marked data directory before first launch. Read synthetic
+login constants locally in scripts/run_draft_scope_demo.py; never print session keys,
+cookies or credentials. Existing 8816 PDF/8815 pricing and older demos remain untouched.
 
-Receipts in `C:\CLASSIFIRE\.tmp\defect-report-review-artifacts-20260906` include
-`browser-receipt.json`, `restart-receipt.json`, saved v4/r6 JSON, PDF/XLSX/ZIP files and
-screenshots. They are synthetic local artifacts, not Git content or production proof.
-The separate destructive-test database is `classifire_containment_test`; verify it is
-owned, idle and isolated before using its cleanup opt-in. Never use a demo/customer
-DB for these tests. No operational canonical records or locks were created.
+Receipts and exact synthetic downloads/screenshots are under
+`C:\CLASSIFIRE\.tmp\defect-xlsx-review-artifacts-20260906`. They are local evidence,
+not source files to commit. The separate destructive fixture database is
+`classifire_containment_test`; verify its exact loopback endpoint, ownership and lack
+of other test activity before using the cleanup opt-in. Run such suites serially.
+Never use a demo or customer database for destructive tests.
 
 ## Start Here / Next Session
 
-**First task:** implement one bounded **Excel defect-report mapping** interaction
-feeding the existing Draft Scope graph. This is the next missing upload format after
-the PDF review slice. The existing Excel UI applies prices inside an Estimate and
-cannot serve as a defect-register importer. A/B pricing remains a separate track.
+**First task after the Excel increment is verified and merged:** implement one
+optional, source-bound PDF text/image suggestion interaction feeding the existing
+Draft graph editor. This advances interpretation after both manual upload paths are
+usable, while preserving the human review and deterministic save boundary. Do not
+rebuild manual Scope, PDF page review, Excel mapping, pricing selection or packages.
 
-**Prerequisites:** verify this PDF change has merged with passing required CI/review;
-otherwise finish its validation/publication first. Inspect current source/Git/docs
-before edits and use an isolated current-main worktree. Reuse source retention,
-scanner containment, bounded workbook parsing and the existing graph editor/save
-boundary. Synthetic fixtures suffice; real-layout acceptance needs authorized sample
-files. Genuine current scanning and disposable PostgreSQL/marked storage are required
-for browser proof. Do not weaken guards if infrastructure is unavailable.
+**Prerequisites/dependencies:** inspect repository/Git/CI first. If this Excel branch
+has a supported-path failure or unfinished publication, finish that prerequisite
+before starting the next slice. Read the accepted ADRs, current PDF/XLSX contracts,
+existing inference ports/journal and proposal review protections. The existing Phase8
+runners require estimate-bound manifests and canonical identities; they are not directly
+compatible with Draft inputs. Reuse compatible protections through a small Draft-specific
+adapter and shared graph services. Never create canonical records, spoof Phase8 manifests
+or weaken validators to reuse a runner. Synthetic evidence and a controlled adapter
+suffice for development. Real customer/provider workflows,
+credentials, deployment and canonical state changes need separate authorization.
+Lack of a real provider must remain explicit, not be disguised as working AI.
 
-**Files/components:** docs/DRAFT_PDF_EVIDENCE_V1_CONTRACT.md, DRAFT_PRICING_XLSX.md,
-services/draft_source_intake.py, draft_pdf_intake.py, draft_scope.py,
-draft_scope_evidence.py, draft_pricing_intake.py, draft_pricing_worker.py,
-draft_pricing_contract.py, PDF/Scope routers and shared editor. Inspect existing
-models/migrations/tests before deciding the smallest compatible XLSX source/cell
-reference contract. PDF page references must not be relabelled as spreadsheet cells;
-preserve old schema/readers and append versioned semantics only where necessary.
+**Relevant files/components:** services/draft_pdf_intake.py, draft_scope.py,
+draft_scope_evidence.py, draft_scope_xlsx.py, the PDF/Scope routers and shared graph
+editor; services/phase8_visual_proposal.py, phase8_report_assessment_controller.py,
+phase8_report_assessment_input.py and execution_journal.py for compatible port/protection
+patterns, not ready-made Draft runners/storage. Inspect their focused tests and the
+retained PDF source/authority tests.
+Inspect actual file locations and contracts before editing. Future suggestions must
+not become a separate physical model, pricing path or autonomous approval mechanism.
 
-**Definition of done:** a user uploads/scans a synthetic XLSX defect register, inspects
-supported sheets/headers/rows, maps selected columns into editable Draft items, reviews
-source cells and unknowns, explicitly resolves any shared-opening relationship and
-confirms one saved revision. Reopen after restart and verify provenance/history and
-selected export/import. Mapping is human-selected; no AI, product/rate application,
-technical approval or canonical writes. Preserve blank/unknown versus zero, reject
-ambiguous/malformed values visibly, and show unsupported/over-limit content without
-silent truncation. Do not assume one row/defect equals one service/opening/quantity.
-Handle duplicate confirmation, stale source/scan/revision, permissions and cross-user
-access. Avoid speculative bulk infrastructure or full corpus/AI work.
+**Definition of done:** a synthetic retained page and its extracted text can produce
+clearly labelled, bounded proposed defects/openings/services plus source-linked
+observations and unresolved questions in the existing editor. The user can inspect,
+change or reject suggestions and explicitly confirm a valid Draft revision. No
+unattended canonical writes, inferred scale/quantity-one or technical approval. Preserve
+manual operation without AI, exact evidence/revision bindings, stale/revoked-source
+refusal, historical reports/packages and visible uncertainty. Demonstrate the supported
+browser journey and restart; identify real-provider accuracy/operational proof as
+unverified until separately authorized and measured. Do not implement speculative
+bulk agents, model tuning, a new scheduler or unrelated T1-T14 pricing work.
 
-**Validation commands:** inspect current fixture names/configuration first. Force
-imports to the isolated worktree; use a unique temporary output directory. Run guarded
-PostgreSQL suites serially only against the verified disposable test database and its
-existing explicit cleanup opt-in. Add focused mapping/cell provenance/refusal tests,
-then run relevant retained-source/PDF/Scope/package/report/client regressions:
+**Validation:** force source imports to the isolated worktree; unique temp output;
+serial PostgreSQL tests only after exact disposable DB verification. Add targeted
+proposal/source/authority tests, then affected Scope/PDF/XLSX/import/package/report/
+client regressions, browser/restart and inspected outputs. Use current fixture names:
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-$mappingTestTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('defect-mapping-tests-' + [guid]::NewGuid())
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp $mappingTestTemp tests/test_draft_pdf_scope_review.py tests/test_draft_pdf_intake.py tests/test_draft_pricing.py tests/test_draft_scope.py tests/test_draft_package_import.py tests/test_draft_entity_evidence_outputs.py
+$taskTestTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('scope-tests-' + [guid]::NewGuid())
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp $taskTestTemp tests/test_draft_scope_xlsx.py tests/test_draft_pdf_scope_review.py tests/test_draft_scope.py tests/test_draft_package_import.py tests/test_draft_workbook_evidence_outputs.py
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
 ```
 
-Add meaningful UI/worker/migration regression where the chosen implementation changes
-those boundaries. Inspect rendered UI/outputs and demonstrate actual restart; report
-skips honestly. Required PR CI is `.github/workflows/pull-request-validation.yml`.
+Do not copy credential values from this document; configure the existing guarded test
+URL/opt-in only after verification. Required workflow is
+`.github/workflows/pull-request-validation.yml`. Preserve assertions and authority
+checks. Classify the exact diff, commit only reviewed paths, push normally, open/update
+the PR and merge only after required checks/reviews pass; verify the resulting merge.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from verified repository state. Before editing, read AGENTS.md,
+> Continue CLASSIFIRE from repository evidence. Before editing, read AGENTS.md,
 > GOAL.md, docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md,
-> docs/CLASSIFIRE_ROADMAP.md and docs/SESSION_HANDOFF.md; reconcile Git/worktrees,
-> current main and PR/CI. Preserve the conflicted C:\CLASSIFIRE root, unrelated changes,
-> demos/receipts and approved logo; use an isolated current-main worktree. Finish any
-> pending PDF graph-review publication first. Then implement only the next bounded
-> Excel defect-report mapping UI: PDF now has human page-linked graph review, while
-> existing Excel intake handles prices and cannot build a defect register. Reuse
-> draft_source_intake, the bounded workbook worker, Draft Scope services and shared
-> editor; inspect the PDF evidence and pricing XLSX contracts, models and tests before
-> extending source/cell provenance compatibly. Upload/scan a synthetic XLSX, show its
-> sheets/headers/rows, let the person map columns and review editable defects/openings/
-> services plus exact source cells/unknowns, then explicitly confirm one atomic revision.
-> Preserve blanks versus zero, shared-opening decisions, historical bytes and unverified
-> import claims; never infer quantity from defect count. Reopen after actual restart
-> and verify export/import. No AI, pricing/system approval or canonical writes. Real
-> layouts require authorized samples; synthetic implementation is unblocked. Use marked
-> storage, current scanner definitions and verified disposable PostgreSQL; never weaken
-> guards. Add focused mapping, provenance, stale-input, permission and replay tests;
-> run relevant PDF/Scope/pricing/package/report/client regressions, browser/restart,
-> Ruff/Mypy/Bandit/migration checks and required CI. Align documentation, classify local
-> changes and continue autonomously through explicit-path commit, normal push, PR and
-> merge once required checks/reviews pass; verify the merge. Avoid speculative bulk
-> infrastructure/model work and preserve human-only release; do not deploy or release.
+> docs/CLASSIFIRE_ROADMAP.md and docs/SESSION_HANDOFF.md; inspect branch/worktrees,
+> current main, diff, PR/CI and relevant source/tests. Preserve the conflicted
+> C:\CLASSIFIRE root, unrelated local changes and existing demos; use an isolated
+> current-main worktree. Verify the Excel defect-mapping increment is delivered and
+> finish any outstanding validation/publication prerequisite first. Then implement
+> one optional source-bound PDF text/image suggestion interaction through the existing
+> Draft editor: reuse draft_pdf_intake, draft_scope/evidence services, shared UI,
+> compatible inference protections through a small Draft-specific adapter and retained evidence.
+> Do not create canonical records, spoof Phase8 manifests or weaken their validators. This is next
+> because PDF/Excel human review now supplies a usable deterministic foundation for
+> interpretation. Use synthetic evidence and a controlled adapter; do not run real
+> customer/provider workflows, deploy or create canonical state without authorization.
+> Done means reviewable proposed defects/openings/services and unresolved questions,
+> exact source/revision bindings, reject/edit/explicit-save behavior, manual operation
+> without AI, preserved history and no invented quantities or approval. Test no-write
+> proposals, invalid/stale/foreign/revoked inputs, affected Scope/PDF/XLSX/package/report/
+> client behavior, actual browser/restart and inspected outputs; run Ruff, Mypy, Bandit
+> and single-head migration checks with isolated imports and guarded serial disposable
+> PostgreSQL tests. Avoid speculative infrastructure or unrelated pricing work. Continue
+> autonomously through implementation, validation, change classification, explicit-path
+> commit, normal push, PR and merge when required checks/reviews pass; verify the merge
+> and update the four continuity documents with measured facts and any genuine blocker.
