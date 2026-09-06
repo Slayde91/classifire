@@ -1,12 +1,11 @@
 # CLASSIFIRE Master Roadmap
 
 **Status:** Active; prototype-first delivery approved 2026-09-05.
-**Verified shared-main baseline:** `13a5b34ebb08eb287aebf02ed218c78ff539f1d5` (PR #202).
-All four Draft report profiles, package download and semantic preview are merged;
-PR #202 exact-head CI 34002073595 and main CI 34002483886 succeeded. The current
-import branch implements the editable round trip; verify PROJECT_STATE.md and live
-PR/CI before treating that branch as shared main. No full production phase is
-completed by these Draft slices.
+**Verified shared-main baseline:** `bef06e2264944a34f85f72e7d0fb80c83e406997`
+(PR #204); main CI 34010757579 succeeded. Selected package import and the first
+confirmed MCP client are merged. The current branch extends independent capability
+client parity; see PROJECT_STATE.md for its actual validation/publication. Draft
+increments do not complete production Phase 8-14 or authorize OpenClaw retirement.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
@@ -85,7 +84,7 @@ prototype into it.
 | **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; full governed pricing still upcoming** | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first authenticated client parity locally verified, publication active; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client extension active; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
@@ -101,7 +100,7 @@ bodies stay external/withheld, permissions follow included content, and historic
 bytes stay exact. This does not complete full project/history/source coverage.
 See [contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md).
 
-**Active publication milestone: editable new-project package import.** The current
+**Completed bounded increment: editable new-project package import (PR #203).** The current
 implementation creates a new owned Draft project through explicit confirmation, preserves
 all selected original artifacts/history/report bytes, maps local identities and
 supports Scope/review/Estimate editing and v2 origin-preserving re-export. Reports
@@ -110,35 +109,20 @@ local authority. This increment merged in PR #203 at `2f79e49`; exact-head CI pa
 1,470 tests and main CI 34007644149 succeeded. Browser/restart and 506 affected local
 tests also passed; this does not complete full-project source/history coverage.
 
-**Current client increment:** optional MCP Scope/create/edit/package tools, OAuth
-resource verification, durable proposals, same-user browser confirmation and exact
-shared downloads are implemented on `feat/chatgpt-draft-client-20260906`. Official
-SDK/Chrome/restart proof passed. This is not a real ChatGPT account link; external
-OAuth provider configuration, HTTPS publication and account-specific acceptance are
-pending. Finish exact-head CI/PR publication before marking the increment shared.
+**Current client increment:** PR #204's optional Scope/create/edit/package adapter
+is merged. Branch `feat/client-independent-capabilities-20260906` adds typed independent
+Match/review, manual Estimate edits and all four report operations, explicit technical/
+estimating scopes, readable human confirmation and exact retained report downloads.
+Local official SDK/Chrome parity is verified; finish exact-head CI/publication and
+reconcile PROJECT_STATE.md. Real OAuth/account linking and deployment remain pending.
 
-**Next executable product task:** extend this same client adapter to the existing
-independent System Match, Estimate and report use cases. Reuse the retained proposal
-and human confirmation flow; keep explicit inputs/revisions and no automatic chaining.
-Prove the same saved results in client and UI with synthetic data. This closes the
-second interface's capability gap without adding a provider, fleet or parallel core.
-Live OAuth/ChatGPT linking proceeds only with the required deployment/account authority.
-
-Broader evidence analysis, actual applicability, governed pricing, source-body export,
-full revision/project coverage, retention/quotas and production security keep their
-unmet exits. Gather user feedback on each usable slice before broad refinement.
-
-Defer every-format intake, OCR/agent automation, exhaustive technical edge coverage,
-general job infrastructure and report polish until the supported interactions have
-been tried. Scanner availability, safe retained-byte handling, uncertainty and human
-authority remain mandatory on the exposed PDF path. Never invent technical constraints
-or use customer technical/pricing sources without the required authorization.
-
-All four P4b Draft choices are merged; professional/production acceptance remains separate. P2a remains retrieval/review, P3a manual provisional costing; P2b/P3b keep
-their full applicability and governed pricing exits. Trial each usable increment
-before broad refinement. Complete portability and ChatGPT adapters reuse proven
-commands; OpenClaw retirement still depends on verified protection parity. No
-capability executes automatically and no authoritative gate is removed.
+**Next executable product task:** add the existing measured-constraint and service-size
+review to this client, using the same shared rules and explicit human confirmation.
+Its prerequisite is this branch's publication and saved synthetic Match/source inputs.
+Complete one demonstrable review/read/report interaction; do not start a new matching
+engine or treat candidate text overlap as technical compatibility. Then prioritize
+user feedback and missing evidence/pricing coverage. External linking depends on
+separate account/deployment authority; it does not block safe local increments.
 
 **First interactive prototype = P0. Four-capability prototype = demonstrated
 P0-P4 behavior**, including P1a/P1b, independent/manual entry and reporting from partial

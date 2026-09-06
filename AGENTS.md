@@ -120,6 +120,10 @@ and preserve current permission/owner checks. Client write tools prepare durable
 proposals; only a separate same-user browser session confirms Draft writes. A tool
 argument, token scope or chat message is not human confirmation. Never expose a
 client method that executes a pending request or acquires canonical approval power.
+Reuse the typed independent client commands and existing domain validators. Require
+technical/estimate client scopes for nested sensitive content and downloads; never
+automatically expand an existing client grant. Preparing a request is not proof that
+its final domain validation will pass. Preserve exact selected revisions and history.
 
 ## OpenClaw, AI and security
 

@@ -2,13 +2,13 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.17 - authenticated Draft client with human confirmation.
+**Architecture version:** 5.18 - independent Draft capability client commands.
 
-**Verified shared baseline:** `2f79e490049d23a9dc8e34e3aa54fb8d232a960d`, merged
-PR #203. Exact-head CI 34007195747 passed 1,470 tests; main CI 34007644149 succeeded.
-Current branch `feat/chatgpt-draft-client-20260906` adds the optional MCP resource
-server and human review flow. PROJECT_STATE.md records validation/publication;
-local implementation is not proof of an external ChatGPT connection or production readiness.
+**Verified shared baseline:** `bef06e2264944a34f85f72e7d0fb80c83e406997`, merged
+PR #204; main CI 34010757579 succeeded. Current branch
+`feat/client-independent-capabilities-20260906` extends the optional resource server
+to independent Match, Estimate and report operations. PROJECT_STATE.md records
+validation/publication. Local parity is not a real ChatGPT connection or production readiness.
 Earlier milestone descriptions are historical checkpoints where a later amendment
 supersedes their status. Current component/amendment sections distinguish remaining coverage.
 
@@ -60,7 +60,7 @@ validation, storage and permissions are shared across clients.
 ```mermaid
 flowchart TD
     UI[Existing standalone UI / CLI] --> API[Authenticated application use cases]
-    CHAT[Planned ChatGPT adapter] --> API
+    CHAT[Optional MCP client; external ChatGPT linking pending] --> API
     API --> S[Scope]
     API --> T[System matching]
     API --> E[Estimating]
@@ -451,7 +451,7 @@ Approval for one operation never grants a later authority.
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared baseline is 0035_draft_package_imports; the client branch adds 0036_draft_client_requests without rewriting history |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared baseline is 0036_draft_client_requests; the current branch adds 0037_draft_client_capabilities without rewriting history |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -1512,6 +1512,44 @@ A production OAuth authorization server, account linking, HTTPS deployment and a
 real ChatGPT session have not been configured or demonstrated. Key rotation and
 issuer-side revocation operations still need deployment validation; local policy
 revocation is immediate, otherwise accepted tokens expire within 15 minutes.
-The first tools cover Scope and selected package operations. Independent matching,
-estimating and report-generation tools are the next shared-service extension.
+PR #204 first covered Scope and selected package operations. The following amendment
+extends the same confirmed client boundary; real OAuth integration remains unproven.
 See [client contract and setup](./DRAFT_CLIENT_V1_CONTRACT.md) for exact boundaries.
+
+
+## Implemented client amendment: independent capability commands
+
+**Current -> change -> reason:** the first client shared Scope/package commands but
+could not call the other existing Draft capabilities. Typed discriminated operations
+in `services/draft_client_capabilities.py` and the tool adapter now expose saved
+candidate retrieval/keep/reject, independent manual estimating and all four reports.
+They reuse existing services, contracts, rendering and permissions; no new agent,
+workflow framework, database or dependency is introduced. Capability completion stops.
+
+Preparation validates command shape and selected input reads, hashes immutable Scope,
+Match/Estimate/release/project inputs, and saves only a pending request. It does not
+simulate a write then roll it back or calculate a proposed result. The review UI
+shows the exact requested values and readable selected saved inputs. Same-user
+session confirmation rechecks the input binding and invokes the existing service
+inside the atomic decision transaction. Domain validation can refuse confirmation;
+it is not claimed complete merely because preparation succeeded. Estimate edits use
+expected revisions and preserve original rates/history; reports freeze explicit
+saved revisions and never rerun matching or pricing. Reads expose current staleness.
+
+Technical and estimating OAuth scopes are additional to the existing user roles.
+Nested saved content, report downloads and package exports cannot bypass them.
+Existing client configuration is not expanded automatically: clients previously
+exporting sensitive content need explicit grants. v2 whole-origin ZIPs require both
+sensitive scopes until a narrower archive disclosure policy is proven. Foreign
+approvals remain untrusted, and shared quarantine/integrity/export checks still apply.
+
+**Migration/consequences:** additive 0037 extends the request command constraint with
+`capability`; old requests and artifact bytes remain. Downgrade refuses retained new
+requests. Resource metadata advertises five scopes. The normal app remains usable
+without the optional client, and external tools cannot confirm their own requests.
+
+**Remaining gaps:** measured-constraint/service-size review and workbook price-selection
+client commands, full applicability/pricing/domain breadth, real OAuth/ChatGPT setup,
+in-chat downloads, operational tenancy/retention/rate limiting and production acceptance.
+The next bounded task is measured-review client parity against the existing shared
+commands. Technical truth, commercial recovery and Human Release boundaries are unchanged.

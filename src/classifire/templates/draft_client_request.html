@@ -11,6 +11,21 @@
 {% with envelope=proposed, scope_content_heading='Proposed Scope content', scope_content_id='proposed-scope-heading' %}{% include 'draft_scope_report_content.html' %}{% endwith %}
 <details><summary>Compare with current saved content</summary>{% with envelope=previous, scope_content_heading='Current saved Scope', scope_content_id='current-scope-heading' %}{% include 'draft_scope_report_content.html' %}{% endwith %}</details>
 {% if findings %}<h3>Validation findings</h3><ul>{% for finding in findings %}<li>{{ finding.message }}</li>{% endfor %}</ul>{% endif %}
+{% elif row.command == 'capability' %}
+<h2>{{ payload.operation.action|replace('_', ' ')|capitalize }}</h2>
+<p>Only this operation will run. The selected inputs are shown below. Values are proposed instructions to the Draft service; final domain validation occurs when you confirm. Missing quantities and technical decisions remain unresolved.</p>
+{% macro fields(value) %}
+{% if value is mapping %}<dl class="scope-import-details">{% for key,item in value.items() %}<dt>{{ key|replace('_', ' ')|capitalize }}</dt><dd>{{ fields(item) }}</dd>{% endfor %}</dl>
+{% elif value is iterable and value is not string %}<ul>{% for item in value %}<li>{{ fields(item) }}</li>{% endfor %}</ul>
+{% else %}{{ value if value is not none else 'Not supplied' }}{% endif %}
+{% endmacro %}
+{{ fields(payload.operation) }}
+{% if capability_inputs %}
+{% if capability_inputs.release %}<h3>Selected technical release</h3>{{ fields(capability_inputs.release) }}{% endif %}
+{% if capability_inputs.scope %}{% with envelope=capability_inputs.scope %}{% include 'draft_scope_report_content.html' %}{% endwith %}{% endif %}
+{% if capability_inputs.match %}{% with envelope=capability_inputs.match, scope=capability_inputs.match.scope, form_values={}, can_edit=false, draft={"id": payload.operation.draft_id} %}{% include 'draft_system_match_content.html' %}{% endwith %}{% endif %}
+{% if capability_inputs.estimate %}<h2>Selected saved Estimate</h2><p>These are the saved values. Proposed edits above have not been applied to these totals.</p>{% with envelope=capability_inputs.estimate, scope=capability_inputs.estimate.scope, form_values={}, can_edit=false, draft={"id": payload.operation.draft_id} %}{% include 'draft_estimate_content.html' %}{% endwith %}{% endif %}
+{% endif %}
 {% else %}<h2>Save a project package</h2><p>Only these saved revisions and reports are included. Unselected and restricted sources remain outside this export.</p><dl class="scope-import-details">{% for key,value in payload.selection.items() %}<dt>{{ key|replace('_', ' ')|capitalize }}</dt><dd>{{ value if value is not none else 'Not included' }}</dd>{% endfor %}</dl>{% endif %}
 {% if row.status == 'pending' %}
 <p>Authorization expires at {{ row.expires_at }} UTC. A stale edit or revoked permission will be refused.</p>
@@ -22,6 +37,9 @@
 </form>
 {% elif result %}<p>The request is {{ result.status }}.</p>
 {% if result.draft_id %}<p><a href="/scopes/{{ result.draft_id }}">Open saved Draft</a></p>{% endif %}
+{% if result.match_id %}<p><a href="/scopes/{{ result.draft_id }}/system-matches/{{ result.match_id }}">Open saved System Match</a></p>{% endif %}
+{% if result.estimate_id %}<p><a href="/scopes/{{ result.draft_id }}/estimates/{{ result.estimate_id }}">Open saved Estimate</a></p>{% endif %}
+{% if result.report_id %}<p><a href="/scopes/{{ result.draft_id }}{% if result.estimate_id %}/estimates/{{ result.estimate_id }}{% endif %}/reports/{{ result.report_id }}">Open saved report and downloads</a></p>{% endif %}
 {% if result.package_id %}<p><a href="/scopes/{{ result.draft_id }}/packages/{{ result.package_id }}/download">Download saved project package</a></p>{% endif %}
 {% endif %}
 </section>{% endblock %}

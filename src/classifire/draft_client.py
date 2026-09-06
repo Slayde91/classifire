@@ -22,10 +22,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.applications import Starlette
 
-from .draft_client_auth import EXPORT, READ, WRITE, ClientAuthority, ClientIdentity
+from .draft_client_auth import EXPORT, READ, SCOPES, WRITE, ClientAuthority, ClientIdentity
 from .draft_scope_ui import _form_values
 from .models import DraftScope
 from .security import get_optional_user, verify_csrf
+from .services import draft_client_capabilities as capabilities
 from .services import draft_client_requests as commands
 from .services import draft_project_packages as packages
 from .services import draft_scope as scopes
@@ -180,8 +181,10 @@ def configure(
         """Get authenticated exact ZIP download and browser links; no URL credentials."""
         with _client_session(factory) as db:
             try:
-                actor = commands.authorize(db, authority, identity(), EXPORT, draft_id)
-                row, _ = packages.read_package(db, actor, draft_id, package_id)
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, EXPORT, draft_id)
+                row, manifest = packages.read_package(db, actor, draft_id, package_id)
+                capabilities.protect_package(db, authority, principal, actor, draft_id, manifest)
                 return {
                     "sha256": row.archive_hash,
                     "size_bytes": len(row.archive_bytes),
@@ -201,7 +204,7 @@ def configure(
         return {
             "resource": policy.resource,
             "authorization_servers": [policy.issuer],
-            "scopes_supported": [READ, WRITE, EXPORT],
+            "scopes_supported": sorted(SCOPES),
             "bearer_methods_supported": ["header"],
         }
 
@@ -269,6 +272,8 @@ def configure(
         with factory() as db:
             try:
                 actor = commands.authorize(db, authority, principal, EXPORT, draft_id)
+                _row, manifest = packages.read_package(db, actor, draft_id, package_id)
+                capabilities.protect_package(db, authority, principal, actor, draft_id, manifest)
                 content = packages.package_bytes(db, actor, draft_id, package_id)
                 db.commit()
                 return Response(
@@ -283,6 +288,9 @@ def configure(
             except scopes.DraftScopeError as exc:
                 return JSONResponse({"detail": exc.code}, status_code=exc.status_code)
 
+    from .draft_client_capability_tools import register
+
+    register(app, server, authority, factory, identity, propose)
     parsed = urlsplit(policy.base_url)
     mounted = server.streamable_http_app(
         json_response=True,
