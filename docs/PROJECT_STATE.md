@@ -2,92 +2,100 @@
 
 ## Evidence-based snapshot
 
-Verified 2026-09-06 AEST from current source, Git/GitHub, tests and synthetic runtime.
-Shared baseline: `2f79e490049d23a9dc8e34e3aa54fb8d232a960d`, merged PR #203.
-Its exact-head CI 34007195747 passed 1,470 tests; main CI 34007644149 succeeded.
-Current worktree: `C:\CLASSIFIRE\.tmp\chatgpt-draft-client-20260906`, branch
-`feat/chatgpt-draft-client-20260906`. Publication of this branch must be checked live.
+Verified 2026-09-06 AEST against isolated source, current Git/GitHub, synthetic tests
+and the running UI. Shared baseline: `bef06e2264944a34f85f72e7d0fb80c83e406997`,
+merged PR #204. Its main CI 34010757579 succeeded. Current branch:
+`feat/client-independent-capabilities-20260906`, worktree
+`C:\CLASSIFIRE\.tmp\client-independent-capabilities-20260906`.
+This document is a pre-publication checkpoint; verify its branch/PR/CI live.
 
-Accepted architecture: ADR 0001 hybrid modular core and ADR 0002 independent
-capabilities. Deterministic services, optional AI and portable explicit revisions
-remain the target. No OpenClaw retirement, customer operation or production release.
+ADRs 0001/0002 remain accepted: one modular deterministic core, independently
+callable capabilities, portable explicit revisions and optional AI. The database
+and retained storage govern live state. No OpenClaw retirement or production release.
 
 | Capability | Verified bounded implementation | Remaining product gap |
 | --- | --- | --- |
-| Scope | Manual Draft editor, revisions/import, retained PDF page workflow | Broader Word/XLSX/image/drawing analysis and full governed interpretation |
-| System matching | Saved candidate review and selected measured-constraint checks | Full authorized applicability and evidence coverage |
-| Estimating | Independent Draft estimates, preserved overrides and workbook rate selection | Validated provisional/default pricing breadth and full recovery chain |
-| Reporting | Four independent Draft PDF/XLSX profiles from saved snapshots | Professional/production acceptance and governed close-out/release |
-| Portability | Selected v1 ZIP creation/download; editable new-project import and v2 retained-origin re-export | Complete project/source/history coverage, existing-project merge and production retention |
-| ChatGPT-facing client | Optional MCP Scope/create/edit/package tools, identity mapping, browser confirmation and shared exact downloads on current branch | Real OAuth/account linking, remaining capability tools and production deployment |
+| Scope | Manual Draft editor, saved/imported revisions, retained PDF page review; MCP create/read/edit | Broader evidence formats, automatic interpretation and full governed Scope analysis |
+| System matching | Saved candidate retrieval/review; selected measured constraints in UI; current branch adds independent client retrieval/review | Client measured-constraint entry and full authorized applicability coverage; keeping a candidate is not approval |
+| Estimating | Independent Draft estimates, manual lines/overrides/omit/restore, saved workbook rate selection; client manual operations on this branch | Broader validated default/provisional pricing and full recovery chain; client workbook/price-selection actions |
+| Reporting | Four independent saved Draft PDF/XLSX profiles; current client calls and exact downloads | Production acceptance, professional refinement and governed close-out/release |
+| Portability | Selected v1 ZIP; editable new-project import and v2 retained-origin re-export | Complete project/source/history coverage, existing-project merge and production retention |
+| ChatGPT-facing boundary | Optional MCP identity mapping and same-human browser confirmation; all four capability families now callable on this branch | Real OAuth/account linking, HTTPS deployment, in-chat file presentation and production access/operations |
 
-## Active work and measured verification
+## Active work and verification
 
-The client branch adds `draft_client.py`, `draft_client_auth.py`, a retained request
-service/table and migration 0036. Existing Draft services remain the only business
-logic. Tools can propose writes; the same human must confirm through the existing
-browser session. Owner/role checks, stale revisions, CSRF, explicit selection,
-foreign-origin restrictions and retained-byte checks remain enforced.
+The current increment adds typed capability operations and tools over existing
+services, plus additive migration 0037 extending retained request command types.
+Preparation reads and hashes explicit saved inputs; it does not run a domain writer,
+renderer or provider. Confirmation applies the existing domain validation atomically.
+Stale edits, changed inputs, foreign ownership, revoked access, duplicate recovery
+and replay fail closed. Requests never grant technical approval or canonical authority.
 
-Executed checks (overlapping suites, not additive coverage claims):
+New technical/estimate client scopes are additional to current user permissions.
+Existing clients gain no automatic grant. Nested reports, estimates and packages
+retain these checks; v2 archives conservatively require both scopes because they
+retain entire foreign archives. Existing artifact/package schemas and bytes remain.
 
-- First official MCP HTTP/service journey and token boundaries: 10 passed.
-- Expanded client, new migration and readiness checks: 38 passed.
-- PostgreSQL two-confirmation race plus preflight/legacy lineages: 11 passed.
-- Affected client/auth/Scope/package UI/readiness/packaging regression: 74 passed,
-  one PostgreSQL test skipped in that run; its separate PostgreSQL run passed.
-- Full Mypy: 190 source files passed. Ruff and Bandit passed before the final
-  presentation/documentation reconciliation; recheck final source and exact-head CI.
-- Official SDK client + Chrome: propose/confirm/create/edit/package/download passed;
-  browser and client ZIP bytes matched, quantity remained unknown, no page errors.
-- Actual process restart: saved bytes and SDK reads remained exact; sign-in returned
-  to the pending review and rejection persisted. The supplied logo matched exact bytes.
-- Synthetic database receipt: one Draft workspace/package, five client requests;
-  canonical estimates/lines/openings/services/physical locks all zero at that checkpoint.
+Verified in this increment:
 
-The PostgreSQL fixture was initially rejected by automatic approval review because
-it uses table cleanup. Read-only inspection then proved its dedicated loopback
-`classifire_containment_test` database had no tables or other sessions; the bounded
-synthetic run was approved and passed. No customer/demo database was reset.
+- Focused capability, request migration and readiness suite: **26 passed**. Covers
+  four report profiles, direct/browser exact bytes, new app reconstruction, nested
+  permissions, revocation, foreign owners, stale/replayed/rejected requests,
+  duplicate recovery refusal, immutable override history and retained old requests.
+- Official MCP SDK + Chrome: independent estimate before any match, preserved rate
+  override, separate candidate retrieval/review, four report calls and **eight exact
+  PDF/XLSX client/browser downloads**, with no browser page errors.
+- Generated outputs: all PDF pages contain text; XLSX sections/cells preserve the
+  synthetic quantity, 270.00 subtotal and override reason. These saved workbooks use
+  validated snapshot values, not executable formulas. PDF pages were rendered for inspection.
+- The running UI serves the supplied logo byte-for-byte; the sidebar screenshot was
+  visually inspected. SHA-256: `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+- Final affected regression: **192 passed, one PostgreSQL test skipped**, two existing
+  warnings. Full Mypy passed **193 files**; Ruff/Bandit passed. The PostgreSQL
+  confirmation race remains covered by required CI, not a claimed local run here.
+- Actual process restart preserved all eight exact outputs, Estimate revision 3,
+  Match revision 2 and a separately rejected request. No browser page errors.
+- Single migration head: `0037_draft_client_capabilities`. Migration preserves old
+  requests/native packages and refuses downgrade over retained capability history.
 
-## Project health, gaps and local context
+Tests identified and corrected a reused SDK lifespan in the test, missing previous-
+head readiness classification and type narrowing. A browser assertion was corrected
+for the existing canonical decimal format (125.00 is stored as 125); pricing logic
+was not changed. None of these checks establishes real ChatGPT linking or deployment.
 
-The interactive Draft prototype is usable for the demonstrated synthetic paths.
-That is not complete scope analysis, technical suitability, production estimating or
-release readiness. Preserve production Phase 8-14 gates and explicit uncertainty.
-A real ChatGPT session has not been connected. OAuth authorization-server selection,
-compatible tokens, callback/PKCE/consent, HTTPS deployment and account-specific access
-remain to be established with separate operational authority. Local key/revocation
-policy is implemented; issuer-side revocation/rotation operations remain unproven.
-Read [the client contract](./DRAFT_CLIENT_V1_CONTRACT.md) for precise limits.
+## Project health and local context
 
-This branch's local changes belong to the client adapter, human review, optional
-dependencies, migration/readiness, tests, synthetic launcher and aligned docs.
-The legacy root remains recovery material on `gpt/phase8-linked-original-images`:
-prior verified inventory had four DU conflicts, 46 unstaged modifications and 14
-staged additions; inspect afresh before any recovery. It was not edited for this task.
-Old worktrees, source evidence, demos and generic archive experiments remain preserved.
+The demonstrated synthetic Draft interactions work. Full production Phase 8-14
+exits, authorized real evidence, technical suitability, estimating breadth and Human
+Release remain unproven. AI is optional and no provider was used. Operational OAuth,
+key rotation/revocation, tenancy, retention and scaling still require their own proof.
+
+Demo: `http://127.0.0.1:8813/scopes`; marked data directory
+`C:\CLASSIFIRE\.tmp\client-capabilities-demo-20260906`. Earlier demos/worktrees remain.
+Current changes are the client extension, review UI, narrow request migration and
+readiness expectations, synthetic tests/launcher and aligned documentation. The
+legacy root remains conflicted recovery material on `gpt/phase8-linked-original-images`;
+its status was inspected, enumeration of old pytest directories was incomplete, and
+none of that pre-existing work was changed or staged.
 
 ## Recommended Next Actions
 
-1. Finish exact-head CI/PR publication; recheck
-   current Git state before assuming this checkpoint's work is merged.
-2. Extend this same authenticated adapter to existing independent System Match,
-   Estimate and report use cases. Reuse human confirmation/shared commands and prove
-   client/UI saved-artifact parity with synthetic data; no implicit capability chaining.
-3. Configure and test a real OAuth/HTTPS ChatGPT link when account/deployment authority
-   is available. Gather user feedback and extend missing domain coverage in visible
-   increments. Do not claim production readiness or retire OpenClaw from prototype tests.
+1. Verify/finalize this branch's exact-head CI, publication and merge. Use the handoff
+   for current branch evidence; do not infer publication from this checkpoint.
+2. Add the existing measured-constraint and service-size review commands to the same
+   human-confirmed client. They already exist in the UI/shared service, while the
+   current client can only retrieve candidates and save keep/reject notes. This is
+   the next bounded visible improvement to technical decision support, without
+   inventing new compatibility rules or an orchestration layer.
+3. Trial the prototype with users, then broaden formats, authorized applicability,
+   pricing and package coverage from observed needs. Real OAuth/ChatGPT linking needs
+   separate account/deployment authority; it does not block synthetic development.
 
-[SESSION_HANDOFF.md](./SESSION_HANDOFF.md) carries exact context, checks and next prompt.
+[SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains exact continuation instructions.
 
 
-## Final local validation checkpoint
-
-Final client/auth/readable-Scope regression: 64 passed, one PostgreSQL test skipped
-in that run (the separate PostgreSQL confirmation test passed). Full Ruff, Mypy
-(190 files), Bandit and the single 0036 migration head passed. Final Chrome inspection
-confirmed readable proposed physical content, the exact supplied logo, login return,
-persisted rejection and byte-identical downloads after process restart. Documentation
-links and diff whitespace checks passed. Git publication/full exact-head CI still
-must be checked live; these local results do not establish external ChatGPT linking.
+Final local presentation checkpoint: the review labels the selected saved Estimate
+and explicitly separates its totals from proposed edits. All four client capability
+journey/boundary tests passed again after that caption change. Documentation links,
+Ruff and diff whitespace checks passed. Required exact-head CI/publication is the
+remaining step at this pre-commit checkpoint.

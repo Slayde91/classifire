@@ -52,7 +52,8 @@ The file contains `base_url` (exact HTTPS origin), `issuer` (exact issuer string
 `public_keys` (kid -> public RS256 JWK), `subjects` (issuer subject -> existing local
 User UUID), `clients` (client ID -> allowed scopes), and optional `revoked_token_ids`.
 Supported scopes are `classifire:draft:read`, `classifire:draft:propose`, and
-`classifire:draft:export`. Proposal/export tools also require read. No mapping is
+`classifire:draft:export`, plus `classifire:draft:technical` and
+`classifire:draft:estimate`. Proposal/export tools also require read. No mapping is
 inferred from an email address or client payload. User permissions remain additional
 requirements; token scopes never grant a role or canonical authority.
 
@@ -67,7 +68,7 @@ refresh and issuer introspection are not implemented. Local token-ID revocation 
 immediate; issuer-only revocation can otherwise lag until token expiry.
 
 Serve `/.well-known/oauth-protected-resource/mcp` with exact issuer/resource and all
-three supported scopes. The SDK supplies the bearer challenge and protocol handling.
+five supported scopes. The SDK supplies the bearer challenge and protocol handling.
 The selected external authorization server must provide discovery, authorized
 callback/client registration, authorization-code + PKCE S256, consent, correct
 resource/audience and compatible access-token issuance. It owns login/token refresh.
@@ -116,4 +117,62 @@ The local official SDK + Chrome proof creates a request, confirms it, saves a Sc
 edit with unknown quantity, confirms a selected ZIP and compares client/browser
 bytes. A process restart preserved the same artifact and verified sign-in return
 and rejection. Local receipts are listed in SESSION_HANDOFF.md. Full ChatGPT account
-linking, remaining independent capability tools and production acceptance remain open.
+linking and production acceptance remain open. The independent-capability amendment
+below has separate local proof.
+
+
+## Independent-capability amendment (migration 0037)
+
+`propose_capability(operation)` accepts a strict action-specific object. All actions
+include `draft_id`; missing required or extra fields are rejected. The operation stops after
+its one requested use case and requires a separate human session confirmation.
+
+| Action | Explicit inputs | Shared operation |
+| --- | --- | --- |
+| `create_match` | Scope revision, active release ID, opening/service target IDs | Saved unapproved candidate retrieval |
+| `review_match` | Match ID, expected revision, every candidate decision/notes | Append keep/reject/unreviewed decisions; no technical approval |
+| `create_estimate` | Scope revision, optional paired Match ID/revision, AUD | Create an empty Draft estimate independently of matching |
+| `add_estimate_line` | Estimate ID, expected revision, shared AddLine contract | Validate quantity/unit/recovery and append a manual line |
+| `override_estimate_line` | Estimate ID/revision, line ID, shared Override contract | Preserve original value and append reasoned history |
+| `set_estimate_line_status` | Estimate ID/revision, line ID, active/omitted, reason | Omit/restore without deleting history |
+| `scope_report` | Scope revision, optional paired Match ID/revision | Scope-only or scope-and-system saved PDF/XLSX |
+| `estimate_report` | Estimate ID/revision, estimate-only/complete profile | Render that saved estimate snapshot; missing technical data stays unavailable |
+
+Preparation validates shape, permissions and readable selected inputs, binds their
+hash and saves a proposal. It does not execute the domain writer/renderer. Confirmation
+performs full existing business validation; invalid domain data leaves the request
+pending without a partial artifact. Selected historical revisions are deliberate
+inputs; later upstream changes mark outputs stale rather than rewriting them. Edits
+require the expected current revision. No client method confirms a proposal.
+
+Additional tools: `list_technical_releases`, `list_capability_artifacts` (one of
+system-match/estimate/scope-report/estimate-report; existing 20-row service limits),
+`read_capability_artifact` (saved envelope plus staleness), and `report_download`.
+Estimate reports require their parent estimate ID. Report IDs identify immutable
+snapshots, so report reads reject a separate revision number. Downloads return
+hash/size and authenticated/browser links to the exact saved bytes, never a new render.
+
+Bearer endpoints are `/api/draft-client/{draft_id}/reports/{report_id}/{format_name}`
+and `/api/draft-client/{draft_id}/estimates/{estimate_id}/reports/{report_id}/{format_name}`;
+formats are PDF/XLSX. Browser counterparts use the existing `/download?format=...`
+route. Export scope and current included-content domain permissions are mandatory.
+
+Technical scope is needed for Match content and nested technical inputs; estimate
+scope is needed for commercial content. Sensitive data remains guarded in reports,
+lists and package downloads. A v2 archive retains entire original ZIPs, so both
+sensitive scopes are required conservatively even for a Scope-only local selection.
+Existing grants remain unchanged until the operator explicitly adds scopes. Tools
+with conditional content advertise their common minimum scope; callers must obtain
+the required extra advertised resource scopes for the chosen operation. Real
+ChatGPT consent/reauthorization behavior remains unproven.
+
+Migration 0037 extends the retained command check without changing artifact schemas;
+it preserves existing requests and refuses downgrade over new retained history.
+Measured-constraint/service-size entry, workbook pricing selection and uploads still
+use the standalone UI. No inference provider, canonical lock or release is exposed.
+
+Current demo: port 8813, marked `client-capabilities-demo-20260906` directory, with
+`--client-demo --seed-technical-library`. Official SDK/Chrome proof covers independent
+estimating before matching, preserved overrides, separate candidate review, four
+profiles and eight byte-identical browser/client downloads. PROJECT_STATE.md and
+SESSION_HANDOFF.md record validation, restart and publication checkpoints.

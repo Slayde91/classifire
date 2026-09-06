@@ -178,11 +178,14 @@ mutations remain proposals until the same human confirms them in the standalone 
 Official SDK, browser and restart checks passed with synthetic tokens; a real
 ChatGPT OAuth link and production deployment remain unproven.
 
-After publication, extend the same adapter to independent System Match, Estimate
-and report use cases. Preserve explicit saved inputs, review and stop points;
-never chain capabilities implicitly. Complete local synthetic parity while external
-OAuth/account/deployment decisions remain separate. Do not rebuild the core or wait
-for every domain edge case before demonstrating this second interface.
+The current independent-client increment adds Match retrieval/review, manual Estimate
+creation/edits and all four report profiles, sharing saved artifacts and exact downloads.
+See PROJECT_STATE.md for measured proof and publication. No implicit capability chain.
+
+After publication, add the existing measured-constraint/service-size review to that
+same confirmed client path. This fills a visible gap in technical review using
+already implemented UI/domain commands. Keep prototype feedback ahead of broad polish;
+real OAuth/account/deployment decisions remain separate and no core rewrite is needed.
 
 The full goal remains active: broader Scope analysis, actual applicability, pricing
 defaults/inference, complete package coverage/exchange, ChatGPT and production readiness

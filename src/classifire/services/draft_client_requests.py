@@ -19,6 +19,7 @@ from ..draft_client_auth import (
     stored_identity,
 )
 from ..models import DraftClientRequest, User, new_id
+from . import draft_client_capabilities as capabilities
 from . import draft_project_packages as packages
 from . import draft_scope as scopes
 
@@ -88,9 +89,20 @@ def prepare(
             raise scopes.DraftScopeError("CLIENT_REQUEST_INVALID")
         authorize(db, authority, identity, EXPORT, payload["draft_id"])
         preview = packages.preview(db, actor, payload["draft_id"], payload["selection"])
+        capabilities.protect_package(
+            db, authority, identity, actor, payload["draft_id"], preview["manifest"]
+        )
         payload = payload | {
             "preview_hash": preview["preview_hash"],
             "expected_revision": preview["latest_revision"],
+        }
+    elif command == "capability":
+        parsed = capabilities.parse(payload)
+        _owner(db, actor, parsed.draft_id)
+        inspected = capabilities.inspect_inputs(db, authority, identity, actor, parsed)
+        payload = {
+            "operation": parsed.model_dump(mode="json"),
+            "input_hash": inspected["input_hash"],
         }
     else:
         raise scopes.DraftScopeError("CLIENT_REQUEST_INVALID")
@@ -159,6 +171,7 @@ def review(db: Session, authority: ClientAuthority, actor: User, request_id: str
     previous = None
     proposed = None
     findings: list[dict[str, str]] = []
+    capability_inputs = None
     if row.command == "edit":
         _owner(db, actor, payload["draft_id"])
         previous = scopes.read_revision(db, actor, payload["draft_id"])
@@ -166,13 +179,41 @@ def review(db: Session, authority: ClientAuthority, actor: User, request_id: str
         proposed = {"content": content.model_dump(mode="json")}
     elif row.command == "package":
         authorize(db, authority, identity, EXPORT, payload["draft_id"])
-        packages.preview(db, actor, payload["draft_id"], payload["selection"])
+        preview = packages.preview(db, actor, payload["draft_id"], payload["selection"])
+        capabilities.protect_package(
+            db, authority, identity, actor, payload["draft_id"], preview["manifest"]
+        )
+    elif row.command == "capability":
+        parsed = capabilities.parse(payload["operation"])
+        _owner(db, actor, parsed.draft_id)
+        if isinstance(parsed, (capabilities.CreateMatch, capabilities.ReviewMatch)):
+            scopes._actor(db, actor, "technical:read")
+        if isinstance(
+            parsed,
+            (capabilities.CreateEstimate, capabilities.EditEstimate, capabilities.EstimateReport),
+        ):
+            scopes._actor(db, actor, "estimate:read")
+        if (
+            isinstance(parsed, (capabilities.CreateEstimate, capabilities.ScopeReport))
+            and parsed.match_id
+        ):
+            scopes._actor(db, actor, "technical:read")
+        if isinstance(parsed, (capabilities.EditEstimate, capabilities.EstimateReport)):
+            capabilities.estimates.read_estimate_revision(
+                db, actor, parsed.draft_id, parsed.estimate_id
+            )
+        if row.status == "pending":
+            inspected = capabilities.inspect_inputs(db, authority, identity, actor, parsed)
+            if inspected["input_hash"] != payload["input_hash"]:
+                raise scopes.DraftScopeError("CLIENT_INPUT_CHANGED", 409)
+            capability_inputs = inspected["inputs"]
     return {
         "row": row,
         "payload": payload,
         "previous": previous,
         "proposed": proposed,
         "findings": findings,
+        "capability_inputs": capability_inputs,
         "client_id": identity.client_id,
         "result": json.loads(row.result_json) if row.result_json else None,
     }
@@ -236,6 +277,8 @@ def decide(
                     "revision": saved_package.revision,
                     "sha256": saved_package.archive_hash,
                 }
+            elif row.command == "capability":
+                result = capabilities.execute(db, actor, capabilities.parse(payload["operation"]))
             result["status"] = "confirmed"
         db.execute(
             update(DraftClientRequest)

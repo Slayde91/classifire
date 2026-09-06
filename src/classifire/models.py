@@ -1224,7 +1224,9 @@ class DraftClientRequest(RecordMixin, Base):
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
     result_json: Mapped[str | None] = mapped_column(Text)
     __table_args__ = (
-        CheckConstraint("command IN ('create', 'edit', 'package')", name="ck_client_command"),
+        CheckConstraint(
+            "command IN ('create', 'edit', 'package', 'capability')", name="ck_client_command"
+        ),
         CheckConstraint("status IN ('pending', 'confirmed', 'rejected')", name="ck_client_status"),
         CheckConstraint("length(payload_json) <= 1048576", name="ck_client_payload_size"),
     )

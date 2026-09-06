@@ -17,7 +17,7 @@ from test_draft_scope_ui import scope_password_hash as _scope_password_hash
 from test_shared_file_containment import postgresql_session_factory as _postgres
 
 from classifire.draft_client import configure
-from classifire.draft_client_auth import EXPORT, READ, WRITE, ClientAuthority
+from classifire.draft_client_auth import ESTIMATE, EXPORT, READ, TECHNICAL, WRITE, ClientAuthority
 from classifire.draft_project_package_ui import router as package_router
 from classifire.models import DraftClientRequest, DraftScope, Project, User
 from classifire.services import draft_project_packages as packages
@@ -43,6 +43,11 @@ def client_case(scope_app, tmp_path):
     path = tmp_path / "client-policy.json"
     path.write_text(json.dumps(policy), encoding="utf-8")
     authority = ClientAuthority(path)
+    from classifire.draft_estimate_ui import router as estimate_router
+    from classifire.draft_system_match_ui import router as match_router
+
+    scope_app.app.include_router(estimate_router)
+    scope_app.app.include_router(match_router)
     scope_app.app.include_router(package_router)
     mounted = configure(scope_app.app, authority, scope_app.factory)
 
@@ -123,6 +128,11 @@ def test_client_to_human_to_saved_draft_and_exact_package(client_case):
             "propose_project_package",
             "read_client_request",
             "project_package_download",
+            "propose_capability",
+            "list_technical_releases",
+            "list_capability_artifacts",
+            "read_capability_artifact",
+            "report_download",
         }
         pending = tool(
             client,
@@ -249,7 +259,13 @@ def test_discovery_challenge_csrf_replay_and_rejection(client_case):
         assert metadata.status_code == 200
         assert metadata.json()["resource"] == "https://testserver/mcp"
         assert metadata.json()["authorization_servers"] == [case.policy["issuer"]]
-        assert set(metadata.json()["scopes_supported"]) == {READ, WRITE, EXPORT}
+        assert set(metadata.json()["scopes_supported"]) == {
+            READ,
+            WRITE,
+            EXPORT,
+            TECHNICAL,
+            ESTIMATE,
+        }
         token = case.token()
         request = tool(
             client,

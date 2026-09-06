@@ -224,7 +224,7 @@ def main() -> None:
         import jwt
         from cryptography.hazmat.primitives.asymmetric import rsa
 
-        from classifire.draft_client_auth import EXPORT, READ, WRITE
+        from classifire.draft_client_auth import ESTIMATE, EXPORT, READ, TECHNICAL, WRITE
 
         with SessionLocal() as db:
             actor = db.scalar(select(User).where(User.email == DEMO_EMAIL))
@@ -240,7 +240,7 @@ def main() -> None:
             "issuer": origin,
             "public_keys": {"synthetic-local": public},
             "subjects": {"synthetic-human": user_id},
-            "clients": {"synthetic-client": [READ, WRITE, EXPORT]},
+            "clients": {"synthetic-client": [READ, WRITE, EXPORT, TECHNICAL, ESTIMATE]},
         }
         policy_path = task_dir / "synthetic-client-policy.json"
         token_path = task_dir / "synthetic-client-token.txt"
@@ -258,7 +258,7 @@ def main() -> None:
                 "iat": now,
                 "nbf": now,
                 "exp": now + 900,
-                "scope": " ".join([READ, WRITE, EXPORT]),
+                "scope": " ".join([READ, WRITE, EXPORT, TECHNICAL, ESTIMATE]),
             },
             key,
             algorithm="RS256",

@@ -21,7 +21,9 @@ from .services.draft_scope import DraftScopeError
 READ = "classifire:draft:read"
 WRITE = "classifire:draft:propose"
 EXPORT = "classifire:draft:export"
-SCOPES = {READ, WRITE, EXPORT}
+TECHNICAL = "classifire:draft:technical"
+ESTIMATE = "classifire:draft:estimate"
+SCOPES = {READ, WRITE, EXPORT, TECHNICAL, ESTIMATE}
 
 
 class ClientPolicy(BaseModel):
