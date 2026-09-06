@@ -31,7 +31,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--postgres-demo-database",
-        choices=("classifire_draft_pdf_demo", "classifire_draft_pricing_demo"),
+        choices=(
+            "classifire_draft_pdf_demo",
+            "classifire_draft_pricing_demo",
+            "classifire_draft_import_demo",
+        ),
         default="classifire_draft_pdf_demo",
         help="Choose a separately marked synthetic database",
     )
@@ -57,9 +61,9 @@ def main() -> None:
         help="Seed a separate synthetic outside-diameter fixture in a new SQLite demo",
     )
     args = parser.parse_args()
-    pricing_database = args.postgres_demo_database == "classifire_draft_pricing_demo"
-    if pricing_database and args.postgres_demo_port is None:
-        parser.error("The pricing database requires an explicit loopback PostgreSQL port")
+    named_database = args.postgres_demo_database != "classifire_draft_pdf_demo"
+    if named_database and args.postgres_demo_port is None:
+        parser.error("The named demo database requires an explicit loopback PostgreSQL port")
     if not 1024 <= args.port <= 65535:
         parser.error("Choose a local port from 1024 to 65535")
     if args.postgres_demo_port is not None and not 1024 <= args.postgres_demo_port <= 65535:
@@ -80,12 +84,12 @@ def main() -> None:
         expected_keys = {"kind", "session_key"} | (
             {"postgres_port"} if args.postgres_demo_port is not None else set()
         )
-        if pricing_database:
+        if named_database:
             expected_keys.add("postgres_database")
         if (
             set(config) != expected_keys
             or config.get("postgres_database")
-            != (args.postgres_demo_database if pricing_database else None)
+            != (args.postgres_demo_database if named_database else None)
             or config["kind"] != "synthetic-scope-demo-v1"
             or config.get("postgres_port") != args.postgres_demo_port
         ):
@@ -101,9 +105,7 @@ def main() -> None:
             json.dumps(
                 {
                     **(
-                        {"postgres_database": args.postgres_demo_database}
-                        if pricing_database
-                        else {}
+                        {"postgres_database": args.postgres_demo_database} if named_database else {}
                     ),
                     "kind": "synthetic-scope-demo-v1",
                     "session_key": session_key,

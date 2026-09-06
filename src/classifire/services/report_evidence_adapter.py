@@ -656,7 +656,9 @@ def normalise_verified_pdf_report(content: VerifiedStoredFileContent) -> Normali
     )
 
 
-def _xlsx_archive_is_within_policy(report_bytes: bytes) -> None:
+def _xlsx_archive_is_within_policy(
+    report_bytes: bytes, *, allow_static_images: bool = False
+) -> None:
     try:
         with zipfile.ZipFile(io.BytesIO(report_bytes)) as archive:
             entries = tuple(archive.infolist())
@@ -679,7 +681,7 @@ def _xlsx_archive_is_within_policy(report_bytes: bytes) -> None:
                 if total_uncompressed_bytes > _MAX_XLSX_UNCOMPRESSED_BYTES:
                     _fail('REPORT_EVIDENCE_XLSX_ARCHIVE_OUT_OF_POLICY')
                 names.append(name.casefold())
-            forbidden_prefixes = (
+            forbidden_prefixes: tuple[str, ...] = (
                 'xl/vbaproject',
                 'xl/externallinks/',
                 'xl/drawings/',
@@ -692,6 +694,11 @@ def _xlsx_archive_is_within_policy(report_bytes: bytes) -> None:
                 'xl/embeddings/',
                 'xl/connections.xml',
             )
+            if allow_static_images:
+                # Foreign report attachments validate their bounded static images separately.
+                # Evidence/pricing intake keeps the original default-deny policy.
+                forbidden_prefixes = tuple(prefix for prefix in forbidden_prefixes
+                                           if prefix not in ('xl/drawings/', 'xl/media/'))
             if any(
                 name.startswith(prefix)
                 for name in names

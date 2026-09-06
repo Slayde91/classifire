@@ -51,7 +51,7 @@ def test_scope_only_no_write_preview_and_untrusted_lineage(setup):
         assert preview["reports"] == []
         assert preview["archive_sha256"] == row.archive_hash
         assert preview["authority"] == "foreign_unverified"
-        assert preview["import_available"] is False
+        assert preview["import_available"] is True
         assert preview["binary_status"] == "not_scanned_or_opened"
         assert imports.inspect_package(row.archive_bytes).scope["review_status"] == "unreviewed"
         actor.role = "read_only"
@@ -210,4 +210,4 @@ def test_binary_hash_is_not_treated_as_clean_or_truth(case):
         members[f"reports/{report_id}.pdf"] = b"%PDF-1.4 untrusted synthetic bytes"
         preview = imports.preview_import(db, actor, rebuild(manifest, members))
         assert preview["binary_status"] == "not_scanned_or_opened"
-        assert preview["import_available"] is False
+        assert preview["import_available"] is True

@@ -1,3 +1,4 @@
+{% if envelope.import_origin %}<section class="panel"><h2>Imported Estimate: foreign sources unverified</h2><p>Original quantities, rates and override history are preserved. Imported pricing and approval claims are unverified; local changes append history and do not approve technical suitability.</p><a href="/scopes/{{ draft.id }}/imported-package">Original package and identity history</a></section>{% endif %}
 {% macro number_text(value) -%}
 {{ 'Unknown' if value is none or value == '' else value }}
 {%- endmacro %}

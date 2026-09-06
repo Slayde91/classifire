@@ -73,6 +73,6 @@ def test_replacement_lock_outcome_migration_upgrades_existing_0024_database(
     assert "ck_pm_lock_replacement_outcome_no_authority" in checks
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0034_draft_project_packages"
+            "0035_draft_package_imports"
         )
     engine.dispose()

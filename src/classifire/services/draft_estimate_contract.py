@@ -309,6 +309,13 @@ def _line_valid(line: dict[str, Any], scope: dict[str, Any]) -> None:
 
 
 def validate_envelope(value: dict[str, Any]) -> None:
+    from .draft_import_origin import VERSIONS, native_projection
+
+    if value.get("schema_version") == VERSIONS["estimate"][0]:
+        if len(canonical(value)) > MAX_ESTIMATE_BYTES:
+            raise ValueError("size")
+        validate_envelope(native_projection(value, "estimate"))
+        return
     model = (
         PricingEnvelope
         if value.get("schema_version") == "CLASSIFIRE-DRAFT-ESTIMATE-v2"

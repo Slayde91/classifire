@@ -173,3 +173,10 @@ service rather than recreate calculations or authority checks.
 Scope ownership and read authority are checked for every operation. Database/source
 integrity errors are 409; absent artifacts/revisions 404; missing authority 403; invalid
 inputs or capacity 422; stale/duplicate saves 409. Errors expose safe codes only.
+
+## Imported-origin amendment
+
+Imported v3 wraps validated native v1/v2 content with explicit foreign provenance.
+Initial quantities, rates, summary and history are retained without recalculation;
+explicit local edits append history while preserving original values and source
+claims. See [ProjectPackage import](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md#imported-project-lifecycle-and-v2-re-export).

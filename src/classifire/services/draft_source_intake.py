@@ -19,7 +19,7 @@ from starlette.datastructures import Headers
 
 from ..audit import record_audit
 from ..config import Settings
-from ..models import DraftPdfSource, DraftPricingSource, StoredFile, User
+from ..models import DraftImportedReportSource, DraftPdfSource, DraftPricingSource, StoredFile, User
 from . import malware_scan
 from .draft_scope import DraftScopeError, _actor, _atomic, _json, get_draft
 from .storage import (
@@ -35,7 +35,7 @@ from .storage import (
 
 MAX_SOURCES = 20
 MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
-SourceRow = DraftPdfSource | DraftPricingSource
+SourceRow = DraftPdfSource | DraftPricingSource | DraftImportedReportSource
 
 
 @dataclass(frozen=True)
@@ -50,6 +50,8 @@ class SourcePolicy:
     audit_name: str
     process: Callable[[bytes], bytes]
     valid_document: Callable[[dict[str, Any]], bool]
+    allow_supplied_content_reuse: bool = False
+    max_sources: int = MAX_SOURCES
     read_permissions: tuple[str, ...] = ()
     write_permissions: tuple[str, ...] = ()
 
@@ -181,9 +183,14 @@ class DraftSourceIntake:
                     self.policy.model.draft_scope_id == draft_id,
                 )
             )
-            if source is None or existing.purpose != self.policy.purpose:
+            if existing.purpose != self.policy.purpose or (
+                source is None and not self.policy.allow_supplied_content_reuse
+            ):
                 raise DraftScopeError(self.policy.code_prefix + "UPLOAD_CONFLICT", 409)
-            return cast(SourceRow, source)
+            if source is not None:
+                return cast(SourceRow, source)
+            # An explicit exact-byte upload may create a NEW owner-scoped binding.
+            # Never reuse the foreign source row or reset the shared quarantine status.
         # Serialize the per-Draft quota with other source additions.
         from ..models import DraftScope
 
@@ -195,7 +202,7 @@ class DraftSourceIntake:
                 .where(self.policy.model.draft_scope_id == draft_id)
             )
             or 0
-        ) >= MAX_SOURCES:
+        ) >= self.policy.max_sources:
             raise DraftScopeError(self.policy.code_prefix + "SOURCE_LIMIT", 409)
         try:
             with _atomic(db):

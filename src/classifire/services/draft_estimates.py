@@ -267,6 +267,9 @@ def _read(
             raise ValueError("size")
         envelope = cast(dict[str, Any], json.loads(row.envelope_json))
         validate_envelope(envelope)
+        from .draft_package_materialization import verify_local_origin
+
+        verify_local_origin(db, draft.id, estimate.import_id, envelope, "estimate")
         if envelope.get("pricing_sources"):
             _actor(db, actor, "library:read")
         created = (

@@ -10,7 +10,9 @@ from starlette.datastructures import UploadFile
 from .security import verify_csrf
 
 
-async def single_file(request: Request, max_bytes: int) -> dict[str, Any]:
+async def single_file(
+    request: Request, max_bytes: int, *, extra_fields: frozenset[str] = frozenset()
+) -> dict[str, Any]:
     """Callers authorize before reading; multipart temporary files close on every exit."""
     if request.headers.get("content-type", "").split(";")[0].strip() != "multipart/form-data":
         raise HTTPException(415, "Choose a file using the upload form")
@@ -29,8 +31,10 @@ async def single_file(request: Request, max_bytes: int) -> dict[str, Any]:
         return {"type": "http.request", "body": bytes(body), "more_body": False}
 
     parsed_request = Request(request.scope, receive=receive)
-    async with parsed_request.form(max_files=1, max_fields=1) as form:
-        if set(form) != {"csrf_token", "file"} or any(len(form.getlist(k)) != 1 for k in form):
+    async with parsed_request.form(max_files=1, max_fields=1 + len(extra_fields)) as form:
+        if set(form) != {"csrf_token", "file"} | extra_fields or any(
+            len(form.getlist(k)) != 1 for k in form
+        ):
             raise HTTPException(422, "Choose one source file")
         token = form.get("csrf_token")
         verify_csrf(request, token if isinstance(token, str) else None)
@@ -42,4 +46,7 @@ async def single_file(request: Request, max_bytes: int) -> dict[str, Any]:
         content = await file.read(max_bytes + 1)
         if len(content) > max_bytes:
             raise HTTPException(413, "Source upload exceeds the size limit")
-        return {"filename": file.filename or "", "content": content}
+        fields = {key: form[key] for key in extra_fields}
+        if any(not isinstance(value, str) or len(value) > 4096 for value in fields.values()):
+            raise HTTPException(422, "Invalid confirmation fields")
+        return {"filename": file.filename or "", "content": content, **fields}

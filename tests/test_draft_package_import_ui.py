@@ -57,7 +57,7 @@ def test_upload_complete_inspection_no_writes_csrf_bounds_and_permissions(scope_
         assert "No project was created" in response.text
         assert "Foreign and unverified" in response.text
         assert "artifacts/scope.json" in response.text
-        assert "not available yet" in response.text
+        assert "Create imported Draft project" in response.text
         assert packages.digest(raw) in response.text
         assert counts(app.factory) == before
         assert (
@@ -137,3 +137,89 @@ def test_foreign_project_text_is_escaped_and_not_used_as_local_identity(scope_ap
         assert '<script>alert("foreign")</script>' not in response.text
         assert "&lt;script&gt;" in response.text
         assert counts(app.factory) == before
+
+
+def test_confirm_import_roundtrip_replay_changed_file_owner_and_restart(scope_app):  # noqa: F811
+    from test_draft_project_package_ui import fields
+
+    app = scope_app
+    app.app.include_router(ui.router)
+    with TestClient(app.app) as client:
+        _login(client)
+        draft_id = _create(client).rsplit("/", 1)[-1]
+        with app.factory() as db:
+            actor = db.get(User, app.users["owner"])
+            selected = {"scope_revision": 1}
+            preview = packages.preview(db, actor, draft_id, selected)
+            row = packages.create_package(db, actor, draft_id, selected, 0, preview["preview_hash"])
+            raw = row.archive_bytes
+            db.commit()
+        csrf = _csrf(client.get("/package-import").text)
+        preview = client.post(
+            "/package-import/preview",
+            data={"csrf_token": csrf},
+            files={"file": ("project.zip", raw)},
+        )
+        form = fields(preview) | {
+            "reference": "IMPORTED",
+            "name": "Imported editable project",
+            "confirm": "yes",
+        }
+        assert (
+            client.post(
+                "/package-import/confirm", data=form, files={"file": ("changed.zip", raw + b"x")}
+            ).status_code
+            == 409
+        )
+        assert (
+            client.post(
+                "/package-import/confirm",
+                data=form | {"csrf_token": "bad"},
+                files={"file": ("project.zip", raw)},
+            ).status_code
+            == 403
+        )
+        created = client.post(
+            "/package-import/confirm",
+            data=form,
+            files={"file": ("project.zip", raw)},
+            follow_redirects=False,
+        )
+        assert created.status_code == 303, created.text
+        location = created.headers["location"]
+        local_id = location.split("/")[2]
+        assert local_id != draft_id
+        page = client.get(location)
+        assert page.status_code == 200 and "Imported editable project" in page.text
+        assert "Foreign sources and approval claims remain unverified" in page.text
+        assert client.get(location + "/download").content == raw
+        assert (
+            "Imported package, original reports and history"
+            in client.get(f"/scopes/{local_id}").text
+        )
+        # Session-bound token is consumed after this explicit successful confirmation.
+        assert (
+            client.post(
+                "/package-import/confirm", data=form, files={"file": ("project.zip", raw)}
+            ).status_code
+            == 409
+        )
+        selected_page = client.get(f"/scopes/{local_id}/packages")
+        assert selected_page.status_code == 200, selected_page.text
+        saved = client.post(
+            f"/scopes/{local_id}/packages", data=fields(selected_page), follow_redirects=False
+        )
+        assert saved.status_code == 303, saved.text
+        package_path = saved.headers["location"]
+        exported = client.get(package_path + "/download").content
+        manifest, members = packages.inspect_archive(exported)
+        assert manifest["schema_version"].endswith("v2")
+        assert members[manifest["origins"][0]["path"]] == raw
+    with TestClient(app.app) as client:
+        _login(client)
+        assert client.get(location).status_code == 200
+        assert client.get(package_path + "/download").content == exported
+        _login(client, "other")
+        assert client.get(location).status_code in (403, 404)
+        assert client.get(location + "/download").status_code in (403, 404)
+    _assert_no_canonical_scope(app.factory)

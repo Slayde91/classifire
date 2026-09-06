@@ -6,13 +6,13 @@
 <p><a href="/scopes">Back to Draft scopes</a></p>
 <section class="panel">
 <h2>Check a downloaded project ZIP</h2>
-<p>Inspect its saved Scope, system review, Estimate and report inventory. This preview does not create or change a project. Saving an imported project is not available yet.</p>
+<p>Inspect its saved Scope, system review, Estimate and report inventory. This preview does not create or change a project. After inspection, explicitly create a new editable Draft project.</p>
 <p>Uploaded files are treated as untrusted evidence. Nothing in the package grants local technical approval, source access, a lock or release authority.</p>
 {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
 <form method="post" action="/package-import/preview" enctype="multipart/form-data" class="stack-form">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <label for="project-zip">Project ZIP<input id="project-zip" type="file" name="file" accept=".zip,application/zip" required></label>
-<p class="muted">One selected Draft ProjectPackage v1 ZIP, up to {{ max_bytes // 1048576 }} MiB. Earlier Scope JSON downloads use the Scope import screen.</p>
+<p class="muted">One selected Draft ProjectPackage v1 or v2 ZIP, up to {{ max_bytes // 1048576 }} MiB. Earlier Scope JSON downloads use the Scope import screen.</p>
 <button type="submit" class="button button-primary">Inspect package</button>
 </form></section>
 {% if result %}
@@ -37,6 +37,17 @@
 </tbody></table></div>
 <h3>Unavailable source bodies</h3>
 <ul>{% for item in result.manifest.source_manifest %}<li>{{ item.kind|replace('_',' ') }}: {{ item.membership }} &middot; {{ item.reference }}</li>{% else %}<li>No source references recorded. Source completeness is unverified.</li>{% endfor %}</ul>
-<p>Original revision/author/history claims remain foreign. Cross-project identity mapping, safe binary retention and explicit transactional import are still required before this ZIP can become a new editable project.</p>
-</section>{% endif %}
+<p>Original revision/author/history claims remain foreign. Imported reports are retained as unverified attachments. They require a configured scanner and successful format checks before download or re-export.</p>
+</section>
+<section class="panel"><h2>Create a new Draft project</h2>
+<p>Choose the same ZIP again and confirm the new project details. Your existing projects are unchanged. Report-bearing packages require PostgreSQL storage; scan failure leaves their retained attachments unavailable.</p>
+<form method="post" action="/package-import/confirm" enctype="multipart/form-data" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="preview_token" value="{{ preview_token }}">
+<label>New project reference<input name="reference" maxlength="80" required></label>
+<label>New project name<input name="name" maxlength="240" required></label>
+<label>Same inspected ZIP<input type="file" name="file" accept=".zip,application/zip" required></label>
+<label><input type="checkbox" name="confirm" value="yes" required> Create a new Draft; imported sources and approval claims remain unverified.</label>
+<button class="button button-primary" type="submit">Create imported Draft project</button>
+</form></section>{% endif %}
 {% endblock %}

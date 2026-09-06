@@ -2,7 +2,8 @@
 
 Status: implemented current P5 increment; see PROJECT_STATE.md and live Git/PR/CI
 for verification/publication. This is a selected Draft workspace package, not a
-whole database backup, full project extraction or safe import implementation.
+whole database backup or full project extraction. v1 export remains byte-compatible;
+new-project import and imported-project v2 re-export are described below.
 
 ## Current architecture -> change -> consequences
 
@@ -17,7 +18,8 @@ holds its Scope workspace, package revision/parent hash, exact manifest, origina
 ZIP bytes and hashes, creator and timestamp. Unique workspace/revision plus an
 expected revision prevent conflicting saves. The existing SQLite-safe transaction
 helper preserves caller rollback; callers own commit. Older migrations are unchanged.
-Deployment readiness recognizes 0033 as requiring migration, not a current database.
+Migration 0035 now adds imported origins; deployment readiness requires that head.
+0033/0034 remain recognized upgrade lineages.
 
 ## Selection and lifecycle
 
@@ -69,7 +71,7 @@ does not save an imported project or make uploaded report binaries downloadable.
 ## Archive and verification
 
 Sorted JSON and ZIP members, fixed ZIP timestamps/attributes and stored compression
-make a given saved manifest reproducible. Bounds: 64 MiB archive, 2 MiB manifest,
+make a given saved manifest reproducible. Native v1 bounds: 64 MiB archive, 2 MiB manifest,
 28 members. File paths are generated, never taken from original filenames. Member
 size/SHA-256 and exact ZIP re-encoding are checked without filesystem extraction;
 unsafe, duplicate, extra, compressed, altered and oversized archive members fail.
@@ -79,8 +81,9 @@ The new `draft_package_import.inspect_package` additionally validates the comple
 manifest/selection/source inventory and every JSON artifact/report dependency. Its
 authorized preview is read-only; foreign approval remains unverified. Binary header
 and hash checks do not establish malware safety or agreement with the snapshot.
-Input is bounded by the lesser of 64 MiB and configured upload size. Safe retention,
-local identity mapping and transactional import remain unimplemented.
+Input uses configured upload limits plus its v1/v2 archive limit. Safe retention,
+local identity mapping and transactional import are implemented below; structural ZIP
+checks alone still confer no import or download authority.
 
 Tests cover no-write preview, coherent dependencies, unchanged history, rollback,
 conflicting saves, permission loss, source policy, malformed archives and forward
@@ -88,11 +91,80 @@ migration. A synthetic Chrome journey saves Scope-only/combined/reconfigured
 packages and verifies exact ZIP downloads after actual restart. The combined ZIP
 retains the original PDF/XLSX bytes; this increment does not rerender those outputs.
 
+## Imported project lifecycle and v2 re-export
+
+Implemented in `draft_package_import`, `draft_package_materialization`,
+`draft_import_origin` and `draft_import_reports`. These shared use cases serve the UI;
+no provider, canonical physical model, eligible technical release or release lock is
+created. Preview is read-only. A 15-minute signed confirmation binds exact ZIP hash,
+active user and current session/nonce; it is consumed in that browser session after
+success. The user supplies a new project reference/name and explicitly confirms.
+This is not a distributed exactly-once request journal.
+
+One transaction creates a new owned Project/Draft Scope, imports Scope as local
+revision 2 through its existing lineage contract, and creates local Match/Estimate
+revision 1 where present. Each gets a new top-level identity. Scope entity IDs and
+Estimate line IDs remain scoped inside that new workspace. Original line values,
+summary, decisions, source references and historical authors/times are retained;
+import does not silently recalculate. Later explicit edits append local history.
+
+Migration 0035 adds immutable `draft_package_imports` (original archive and hashed
+identity mapping) and Draft-owned `draft_imported_report_sources`. Match has either
+a native LibraryRelease or an imported origin, enforced by a database constraint;
+it never fabricates a local release. Estimate origin is separately bound. Existing
+native rows, revisions, FKs and package bytes are preserved. Initial local revision
+hashes bind the retained mapping. Destructive downgrade is refused.
+
+Imported Match uses `CLASSIFIRE-DRAFT-SYSTEM-MATCH-v4`; imported Estimate uses
+`CLASSIFIRE-DRAFT-ESTIMATE-v3`. Both declare `content_schema_version`,
+`provenance: package_import` and `CLASSIFIRE-IMPORTED-ORIGIN-v1`: import ID, original
+archive hash, source schema/artifact/revision, semantic hash, exact file hash and
+`authority: foreign_unverified`. Native content validators still apply. Native
+formats remain unchanged. Original candidate/source/constraint facts and original
+Estimate history prefixes cannot be overwritten. Users may edit review preferences
+and Estimate values; fresh technical measurement review requires separately chosen
+current local sources. UI and newly generated reports identify foreign authority.
+
+Report snapshots and PDF/XLSX remain exact original members inside the original ZIP.
+They do not become fake native report rows. Each binary also receives its own local
+source binding via existing shared retention/scan/quarantine controls. Original
+bytes may be supplied again for a new owned binding; the caller cannot adopt another
+owner's record by hash or reset shared quarantine. Bindings enforce exact file hash
+and size. Report-bearing import requires PostgreSQL. Scope/review/Estimate-only
+import also works on SQLite.
+
+A scan must be current and clean, followed by a bounded separate-process format
+check before report or original-ZIP download/re-export. Missing scanner, malware,
+expired scan, processing failure, changed bytes and lost rights fail closed. Checks
+are repeated for saved package downloads, including all ancestors. PDF checks reject
+active actions/forms/attachments and bound pages/objects. XLSX rejects formulas,
+external relationships and active content; static PNG logos are permitted only by
+the report worker's bounded image policy. Existing evidence/pricing XLSX intake
+keeps its strict image rejection. Scanning/format checks do not prove report claims
+or numerical agreement with source snapshots. Production OS sandboxing remains an
+operational assurance task; process separation alone is not that proof.
+
+`CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v2` retains the selected current local artifacts and
+one exact original ZIP at `origins/<sha256>.zip`, with original-to-local mapping.
+That original can itself contain an origin. Semantic inspection recursively validates
+all included packages and mappings; every original report/history byte remains
+available without flattening or silently dropping it. v1 remains 64 MiB/28 members;
+v2 is bounded to 128 MiB/32 members, 8 archive levels and a cumulative 256 MiB
+inspection budget. Import refuses a depth that could not be re-exported within the
+level bound. Configured upload limits and individual attachment limits still apply.
+Re-export must fit its archive limits; unlimited history/size is not promised.
+
+All included descendant capabilities govern permissions. Estimate writes require
+Estimate write rights; Estimate exports require export rights; restricted pricing
+references require library read rights. New reports render selected local revisions
+without matching or estimating again. A source hash, imported author or foreign
+approval cannot grant local library, project or human-release authority.
+
 ## Remaining work
 
-Next: safe new-project package import and local provenance/identity mapping across
-all retained capability artifacts, with explicit unresolved external sources and no
-foreign authority. Then share proven use cases through ChatGPT. Broader source-body
-membership/redistribution, multiple workspace/artifact collections, full history,
-retention/quotas and full project coverage remain planned. These limits do not
-complete production readiness or authorize OpenClaw retirement.
+Selected-workspace portability is distinct from whole-project completeness. Source
+bodies remain external/withheld; multiple workspaces, complete revision histories,
+redistribution policy, quota/retention operations and existing-project conflict
+resolution remain planned. Thin ChatGPT access should reuse these proven commands,
+with explicit authenticated ownership and a bounded end-to-end demonstration.
+OpenClaw retirement and production acceptance require their own verified exits.

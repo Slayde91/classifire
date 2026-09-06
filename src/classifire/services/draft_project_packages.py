@@ -22,7 +22,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, defer
 
 from ..audit import record_audit
-from ..models import DraftProjectPackage, User, new_id
+from ..config import get_settings
+from ..models import DraftPackageImport, DraftProjectPackage, User, new_id
 from . import draft_estimate_reports as estimate_reports
 from . import draft_estimates as estimates
 from . import draft_scope as scopes
@@ -30,9 +31,12 @@ from . import draft_scope_reports as scope_reports
 from . import draft_system_matches as matches
 
 SCHEMA = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v1"
-MAX_ARCHIVE = 64 * 1024 * 1024
+SCHEMA_V2 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v2"
+MAX_ARCHIVE = 128 * 1024 * 1024
+MAX_V1_ARCHIVE = 64 * 1024 * 1024
 MAX_MANIFEST = 2 * 1024 * 1024
-MAX_MEMBERS = 28
+MAX_MEMBERS = 32
+MAX_V1_MEMBERS = 28
 NOTICE = (
     "Selected Draft revisions only; not a complete database backup. Source files and "
     "unselected artifacts/history are not included. Retained review/provenance claims "
@@ -97,7 +101,9 @@ def encode(value: Any) -> bytes:
 def _archive(manifest: dict[str, Any], members: dict[str, bytes]) -> bytes:
     stream = io.BytesIO()
     all_members = {**members, "manifest.json": encode(manifest)}
-    if len(all_members) > MAX_MEMBERS or sum(map(len, all_members.values())) > MAX_ARCHIVE:
+    limit = MAX_ARCHIVE if manifest.get("schema_version") == SCHEMA_V2 else MAX_V1_ARCHIVE
+    member_limit = MAX_MEMBERS if manifest.get("schema_version") == SCHEMA_V2 else MAX_V1_MEMBERS
+    if len(all_members) > member_limit or sum(map(len, all_members.values())) > limit:
         raise PackageError("PACKAGE_TOO_LARGE", 413)
     with ZipFile(stream, "w", compression=ZIP_STORED) as archive:
         for name, content in sorted(all_members.items()):
@@ -106,7 +112,7 @@ def _archive(manifest: dict[str, Any], members: dict[str, bytes]) -> bytes:
             info.external_attr = 0o100600 << 16
             archive.writestr(info, content)
     result = stream.getvalue()
-    if len(result) > MAX_ARCHIVE:
+    if len(result) > limit:
         raise PackageError("PACKAGE_TOO_LARGE", 413)
     return result
 
@@ -130,12 +136,16 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
                 raise ValueError("members")
             manifest = json.loads(archive.read("manifest.json"))
             if (
-                manifest["schema_version"] != SCHEMA
+                manifest["schema_version"] not in (SCHEMA, SCHEMA_V2)
                 or manifest["state"] != "Draft"
                 or manifest["authority"] != "historical_only"
                 or encode(manifest) != archive.read("manifest.json")
             ):
                 raise ValueError("manifest")
+            if manifest["schema_version"] == SCHEMA and (
+                len(content) > MAX_V1_ARCHIVE or len(items) > MAX_V1_MEMBERS
+            ):
+                raise ValueError("legacy bounds")
             entries = manifest["members"]
             if type(entries) is not list or len(entries) > MAX_MEMBERS - 1:
                 raise ValueError("inventory")
@@ -143,7 +153,13 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
             for entry in entries:
                 name = entry["path"]
                 if (
-                    not re.fullmatch(r"(?:artifacts|reports)/[a-z0-9_-]+\.(?:json|pdf|xlsx)", name)
+                    not (
+                        re.fullmatch(r"(?:artifacts|reports)/[a-z0-9_-]+\.(?:json|pdf|xlsx)", name)
+                        or (
+                            manifest["schema_version"] == SCHEMA_V2
+                            and re.fullmatch(r"origins/[0-9a-f]{64}\.zip", name)
+                        )
+                    )
                     or name in members
                     or set(entry) != {"path", "sha256", "size_bytes"}
                 ):
@@ -280,6 +296,34 @@ def _compose(
             for name, value in sorted(members.items())
         ],
     }
+    origin_row = db.scalar(
+        select(DraftPackageImport).where(DraftPackageImport.draft_scope_id == draft_id)
+    )
+    if origin_row is not None:
+        from .draft_import_reports import original_archive
+        from .draft_package_materialization import read_import
+
+        origin_row, _original, mapping = read_import(db, actor, draft_id, export=True)
+        origin_content = original_archive(db, actor, draft_id, settings=get_settings())
+        path = f"origins/{origin_row.archive_hash}.zip"
+        members[path] = origin_content
+        manifest.update(
+            schema_version=SCHEMA_V2,
+            origins=[
+                {
+                    "import_id": origin_row.id,
+                    "path": path,
+                    "sha256": origin_row.archive_hash,
+                    "mapping": mapping,
+                }
+            ],
+            notice=("Selected Draft revisions plus original imported archives; "
+                    "foreign history and source claims remain unverified."),
+        )
+        manifest["members"] = [
+            {"path": name, "sha256": digest(value), "size_bytes": len(value)}
+            for name, value in sorted(members.items())
+        ]
     if len(encode(manifest)) > MAX_MANIFEST:
         raise PackageError("PACKAGE_TOO_LARGE", 413)
     _archive(manifest, members)

@@ -1,10 +1,12 @@
 # CLASSIFIRE Master Roadmap
 
 **Status:** Active; prototype-first delivery approved 2026-09-05.
-**Verified shared-main baseline:** `541c107b9b3552e572d9933b86140b4d6f750120` (PR #200).
-All four Draft report profiles and selected package download are merged; exact-head
-CI 33998891633 and main CI 33999342298 succeeded. Safe new-project import is next.
-No full production phase is completed by these Draft slices.
+**Verified shared-main baseline:** `13a5b34ebb08eb287aebf02ed218c78ff539f1d5` (PR #202).
+All four Draft report profiles, package download and semantic preview are merged;
+PR #202 exact-head CI 34002073595 and main CI 34002483886 succeeded. The current
+import branch implements the editable round trip; verify PROJECT_STATE.md and live
+PR/CI before treating that branch as shared main. No full production phase is
+completed by these Draft slices.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
 
@@ -83,7 +85,7 @@ prototype into it.
 | **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; full governed pricing still upcoming** | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Selected Draft package download merged PR #200; import active with local semantic preview; transactional import outstanding; client parity follows | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P5. Project portability and shared ChatGPT access** | Download/preview merged PRs #200/#202; editable import/v2 re-export implemented on current branch, validation/publication active; thin client parity next | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
@@ -99,20 +101,20 @@ bodies stay external/withheld, permissions follow included content, and historic
 bytes stay exact. This does not complete full project/history/source coverage.
 See [contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md).
 
-**Active: safe new-project package import; not complete.** A local no-write upload
-preview now validates every selected JSON artifact, report snapshot and dependency,
-and inventories untrusted binaries without opening them. Transactional creation,
-foreign/local identity mapping, safe binary retention and editable round trip remain
-required. Do not count preview alone as the import exit.
+**Active publication milestone: editable new-project package import.** The current
+branch creates a new owned Draft project through explicit confirmation, preserves
+all selected original artifacts/history/report bytes, maps local identities and
+supports Scope/review/Estimate editing and v2 origin-preserving re-export. Reports
+use existing scan/quarantine controls. Foreign source/approval claims never activate
+local authority. Browser/restart, 506 affected tests and 10 final focused tests passed; finish
+exact-head CI/PR before classifying this as a completed shared increment; preview alone was not that exit.
 
-**Next implementation within this task:** Users should upload a supported package,
-inspect its complete selected membership and foreign provenance, explicitly import
-into a new local Draft project, reopen and continue supported independent capabilities.
-Validate ZIP bounds/members/hashes and every capability schema, map identities and
-cross-artifact dependencies, preserve original history/outputs and mark external
-sources unresolved. Never activate foreign approval, release or lock claims. Do not
-silently drop review/Estimate artifacts or assume existing Scope JSON import handles
-them. Ship the minimum necessary import contracts together with this visible UI.
+**Next after this milestone:** a thin authenticated ChatGPT-facing Draft interaction
+using existing commands. Start with create/read/edit/download parity for an owned
+Scope/package, explicit mutation confirmation and no automatic downstream work.
+Inspect the current supported integration/authentication model before choosing the
+adapter. Local synthetic proof precedes external credentials or deployment. Do not
+make every domain edge case a prerequisite to this second interface.
 
 Then add shared ChatGPT access over these proven commands. Broader evidence analysis,
 actual applicability and governed pricing retain unmet exits; archive transfer does
@@ -164,12 +166,13 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Selected package download is merged in PR #200. Next deliver
-safe new-project package import with exact membership/provenance and explicit local
-identity/authority rules. SESSION_HANDOFF.md gives prerequisites, files and tests.
-No provider/customer data, canonical write, lock or release is required for the demo.
-ChatGPT access, broader evidence/applicability/pricing and OpenClaw protection parity
-remain required work with their own verification gates.
+Complete current import verification/publication, then build the first thin,
+authenticated ChatGPT-facing Draft workflow over the proven shared services.
+SESSION_HANDOFF.md specifies files, prerequisites and completion evidence. No
+provider/customer data, canonical write, lock or release is required for local parity.
+Broader evidence/applicability/pricing and OpenClaw protection parity remain required
+work with separate verification gates. User trials and visible defects take priority
+over broad polish or unrelated infrastructure.
 
 ### Authoritative readiness track
 

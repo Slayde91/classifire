@@ -43,9 +43,18 @@ def sections(match: dict[str, Any]) -> list[dict[str, Any]]:
         for key, value in match.items()
         if key not in ("scope", "candidates", "decisions", "constraint_review")
     }
-    result = [
+    result: list[dict[str, Any]] = [
         {"title": "Saved review and coverage", "rows": [("Authority", NOTICE), *_rows(overview)]}
     ]
+    if match.get("import_origin"):
+        result[0]["rows"].insert(
+            0,
+            (
+                "Imported authority",
+                "Foreign sources, measurements and approval claims are unverified. "
+                    "No local library eligibility is granted.",
+            ),
+        )
     decisions = {item["candidate_id"]: item for item in match["decisions"]}
     labels = {
         "keep": "Kept for review - not approved",

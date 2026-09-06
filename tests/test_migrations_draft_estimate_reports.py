@@ -1,77 +1,50 @@
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import create_engine, event, inspect, text, update
+from draft_migration_fixture import fixture, seed, verify_current
+from sqlalchemy import MetaData, Table, inspect, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-from test_draft_estimates import add_payload
-from test_draft_scope import sample_payload, uid
-from test_migrations_physical_foundation import _migration_environment, _run_migration, _upgrade
+from test_draft_project_packages import base_case as _base_case
+from test_draft_project_packages import case as _case
+from test_migrations_physical_foundation import _run_migration, _upgrade
 
-from classifire.models import DraftEstimateReport, User
-from classifire.services.deployment_lineage import assess_deployment_lineage
-from classifire.services.draft_estimate_reports import create_report, report_bytes
-from classifire.services.draft_estimates import add_line, create_estimate, revision_bytes
-from classifire.services.draft_scope import create_draft_project, save_revision
+base_case = _base_case
+case = _case
 
 
-def test_forward_report_migration_preserves_estimate_and_requires_exact_revision(tmp_path):
-    url = "sqlite:///" + (tmp_path / "report-upgrade.sqlite").as_posix()
-    environment = _migration_environment(tmp_path, url)
-    _upgrade(url, environment, "0030_draft_estimates")
-    engine = create_engine(url)
-
-    @event.listens_for(engine, "connect")
-    def foreign_keys(connection, _record):
-        connection.execute("PRAGMA foreign_keys=ON")
-
-    with Session(engine) as db:
-        actor = User(
-            id=uid(100),
-            email="report-migration@example.test",
-            full_name="Synthetic owner",
-            password_hash="unused",  # noqa: S106 - isolated non-authenticating fixture
-            role="administrator",
-            is_active=True,
-        )
-        db.add(actor)
-        db.commit()
-        draft = create_draft_project(db, actor, "BEFORE-0031", "Retained estimate")
-        save_revision(db, actor, draft.id, 1, sample_payload())
-        estimate = create_estimate(db, actor, draft.id, 2)
-        add_line(db, actor, draft.id, estimate.id, 1, add_payload())
-        old = revision_bytes(db, actor, draft.id, estimate.id)
-        ids = (draft.id, estimate.id)
-        db.commit()
-    _upgrade(url, environment, "0031_draft_estimate_reports", enforce_sqlite_foreign_keys=True)
-    inspector = inspect(engine)
-    assert "draft_estimate_reports" in inspector.get_table_names()
-    assert any(
-        fk["constrained_columns"] == ["estimate_id", "estimate_revision"]
-        for fk in inspector.get_foreign_keys("draft_estimate_reports")
-    )
-    with Session(engine) as db:
-        actor = db.get(User, uid(100))
-        assert revision_bytes(db, actor, *ids) == old
-        report = create_report(db, actor, *ids, 2)
-        db.commit()
-        assert report_bytes(db, actor, *ids, report.id, "pdf").startswith(b"%PDF-")
-        assert assess_deployment_lineage(db).code == "DATABASE_MIGRATION_REQUIRED"
-        assert (
-            db.scalar(text("SELECT version_num FROM alembic_version"))
-            == "0031_draft_estimate_reports"
-        )
-        with pytest.raises(IntegrityError):
-            db.execute(
-                update(DraftEstimateReport)
-                .where(DraftEstimateReport.id == report.id)
-                .values(estimate_revision=999)
+def test_historical_draft_estimate_reports_upgrade_preserves_bytes_and_constraints(case, tmp_path):
+    baseline = "0030_draft_estimates"
+    target = "0031_draft_estimate_reports"
+    url, environment, engine, source, ids, expected = fixture(case, tmp_path, baseline)
+    before = set(inspect(engine).get_table_names())
+    # The retained native data is present in the real historical schema before upgrade.
+    _upgrade(url, environment, target, enforce_sqlite_foreign_keys=True)
+    assert set(["draft_estimate_reports"]) <= set(inspect(engine).get_table_names()) - before
+    seed(source, engine, tables=set(["draft_estimate_reports"]))
+    table = Table("draft_estimate_reports", MetaData(), autoload_with=engine)
+    for changes in [{"estimate_revision": 999}]:
+        with pytest.raises(IntegrityError), engine.begin() as connection:
+            connection.execute(
+                table.update().where(table.c.id == ids["draft_estimate_reports"]).values(**changes)
             )
-            db.flush()
-        db.rollback()
-    refusal = _run_migration(
-        url, environment, "downgrade", "0030_draft_estimates", expect_success=False
-    )
+    with engine.connect() as connection:
+        assert (
+            connection.execute(
+                select(table).where(table.c.id == ids["draft_estimate_reports"])
+            ).first()
+            is not None
+        )
+    refusal = _run_migration(url, environment, "downgrade", baseline, expect_success=False)
     assert refusal.returncode != 0
     assert "Retained Draft Estimate reports cannot be downgraded" in refusal.stderr
+    # Only current-head application code is used to read these historical records.
+    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
+    missing = (
+        set(inspect(engine).get_table_names())
+        - before
+        - set(["draft_estimate_reports"])
+        - {"alembic_version", "draft_package_imports", "draft_imported_report_sources"}
+    )
+    seed(source, engine, tables=missing)
+    verify_current(engine, ids, expected)
     engine.dispose()

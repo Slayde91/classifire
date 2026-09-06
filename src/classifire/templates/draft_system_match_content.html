@@ -1,3 +1,4 @@
+{% if envelope.import_origin %}<section class="panel"><h2>Imported review: foreign sources unverified</h2><p>Original technical references, measurements and decisions are retained claims. They do not identify authorized local library records. You can add review notes or start a separate review against current local sources.</p><a href="/scopes/{{ draft.id }}/imported-package">Original package and identity history</a></section>{% endif %}
 {% macro item_label(items, identifier) -%}
 {{ items|selectattr('id', 'equalto', identifier)|map(attribute='label')|first|default(identifier) }}
 {%- endmacro %}
@@ -46,7 +47,7 @@
   <article class="scope-import-item" aria-labelledby="candidate-heading-{{ candidate.candidate_id }}">
     <div class="scope-import-item-heading"><h3 id="candidate-heading-{{ candidate.candidate_id }}">{{ candidate.variant_id }}</h3><span class="badge badge-draft">Unapproved candidate</span></div>
     <p>System {{ candidate.system_id }} &middot; {{ candidate.fields.manufacturer or 'Manufacturer not supplied' }} &middot; {{ candidate.fields.product_family or 'Product family not supplied' }}</p>
-    <p><a href="/technical/variants/{{ candidate.candidate_id|urlencode|replace('/', '%2F') }}" target="_blank" rel="noopener">Open current variant record (new tab)</a></p>
+    {% if not envelope.import_origin %}<p><a href="/technical/variants/{{ candidate.candidate_id|urlencode|replace('/', '%2F') }}" target="_blank" rel="noopener">Open current variant record (new tab)</a></p>{% endif %}
     {% if candidate.blockers %}<div class="callout"><strong>Findings to review</strong><ul>{% for code in candidate.blockers %}<li>{{ code|replace('_', ' ')|capitalize }}</li>{% endfor %}</ul><p class="scope-hint">Text differences signal a potential conflict to investigate, not a completed technical assessment.</p></div>{% endif %}
     <h4>Captured source</h4>
     {% if candidate.source.state == 'bound' and candidate.source.verification == 'exact_bytes' %}
@@ -60,7 +61,7 @@
         <dt>File checksum</dt><dd class="scope-item-id">{{ document.stored_file.sha256 }}</dd>
         <dt>File size</dt><dd>{{ document.stored_file.size_bytes }} bytes</dd>
       </dl>
-      <p><a href="/technical/documents/{{ document.id|urlencode|replace('/', '%2F') }}" target="_blank" rel="noopener">Open current technical document record (new tab)</a></p>
+      {% if not envelope.import_origin %}<p><a href="/technical/documents/{{ document.id|urlencode|replace('/', '%2F') }}" target="_blank" rel="noopener">Open current technical document record (new tab)</a></p>{% endif %}
     {% else %}
       <p class="callout"><strong>Source verification unresolved.</strong> {% if candidate.source.state == 'legacy_unbound' %}This is a legacy unbound source record.{% else %}The captured manifest has no verified source binding.{% endif %} A reference alone does not establish retained evidence or technical authority.</p>
       <dl class="scope-import-details"><dt>Declared reference</dt><dd>{{ candidate.release_record.get('source_document_reference') or 'Not supplied' }}</dd><dt>Declared page</dt><dd>{{ candidate.release_record.get('source_page') or 'Not supplied' }}</dd></dl>

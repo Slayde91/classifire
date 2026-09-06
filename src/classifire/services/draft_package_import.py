@@ -8,7 +8,7 @@ Their safety and agreement with a report snapshot are NOT established by this ch
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -60,6 +60,19 @@ class Manifest(BaseModel):
     members: Annotated[list[Member], Field(min_length=1, max_length=packages.MAX_MEMBERS - 1)]
 
 
+class OriginReference(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    import_id: str
+    path: str
+    sha256: Hash
+    mapping: dict[str, Any]
+
+
+class ManifestV2(Manifest):
+    schema_version: Literal["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v2"]  # type: ignore[assignment]
+    origins: Annotated[list[OriginReference], Field(min_length=1, max_length=1)]
+
+
 @dataclass(frozen=True)
 class InspectedPackage:
     manifest: dict[str, Any]
@@ -69,6 +82,100 @@ class InspectedPackage:
     estimate: dict[str, Any] | None
     reports: list[dict[str, Any]]
     archive_sha256: str
+    origins: dict[str, InspectedPackage] = field(default_factory=dict)
+
+    def walk(self):
+        yield self
+        for item in self.origins.values():
+            yield from item.walk()
+
+    def report_members(self, prefix: str = ""):
+        for report in self.reports:
+            yield (
+                report,
+                {fmt: prefix + f"reports/{report['report_id']}.{fmt}" for fmt in ("pdf", "xlsx")},
+            )
+        for path, item in self.origins.items():
+            yield from item.report_members(prefix + path + "!")
+
+    def resolve(self, path: str) -> bytes:
+        if "!" not in path:
+            return self.members[path]
+        origin, nested = path.split("!", 1)
+        return self.origins[origin].resolve(nested)
+
+
+def validate_origin_mapping(
+    mapping: dict[str, Any], original: InspectedPackage, project_id: str, draft_id: str
+) -> None:
+    """Require a complete one-to-one retained origin inventory, including descendants."""
+    if set(mapping) != {
+        "schema_version",
+        "project",
+        "scope",
+        "match",
+        "estimate",
+        "reports",
+        "entity_ids",
+    }:
+        raise ValueError("mapping fields")
+    if (
+        mapping["schema_version"] != "CLASSIFIRE-IMPORT-MAPPING-v1"
+        or mapping["project"] != {"source_id": original.scope["project_id"], "local_id": project_id}
+        or mapping["entity_ids"] != "retained_within_new_scope"
+    ):
+        raise ValueError("mapping project")
+    for kind in ("scope", "match", "estimate"):
+        source = getattr(original, kind)
+        bound = mapping[kind]
+        if source is None:
+            if bound is not None:
+                raise ValueError("mapping unexpected artifact")
+            continue
+        if set(bound) != {
+            "source_id",
+            "source_revision",
+            "source_sha256",
+            "local_id",
+            "local_revision",
+            "local_sha256",
+        }:
+            raise ValueError("mapping artifact fields")
+        for key, source_key in (
+            ("source_id", "artifact_id"),
+            ("source_revision", "revision"),
+            ("source_sha256", "sha256"),
+        ):
+            if bound[key] != source[source_key]:
+                raise ValueError("mapping source")
+        UUID(bound["local_id"])
+        if (
+            not scopes._valid_hash(bound["local_sha256"])
+            or type(bound["local_revision"]) is not int
+            or bound["local_revision"] != (2 if kind == "scope" else 1)
+        ):
+            raise ValueError("mapping local revision")
+    if mapping["scope"]["local_id"] != draft_id:
+        raise ValueError("mapping scope")
+    expected = list(original.report_members())
+    if type(mapping["reports"]) is not list or len(mapping["reports"]) != len(expected):
+        raise ValueError("mapping report inventory")
+    for record, (report, paths) in zip(mapping["reports"], expected, strict=True):
+        if (
+            set(record) != {"source_report_id", "profile", "members"}
+            or record["source_report_id"] != report["report_id"]
+            or record["profile"] != report["profile"]
+            or set(record["members"]) != {"pdf", "xlsx"}
+        ):
+            raise ValueError("mapping report")
+        for fmt, member in record["members"].items():
+            if (
+                set(member) != {"source_id", "path", "sha256"}
+                or member["path"] != paths[fmt]
+                or member["sha256"] != packages.digest(original.resolve(paths[fmt]))
+            ):
+                raise ValueError("mapping report bytes")
+            UUID(member["source_id"])
 
 
 def _json(content: bytes, limit: int) -> dict[str, Any]:
@@ -84,15 +191,36 @@ def _json(content: bytes, limit: int) -> dict[str, Any]:
     return value
 
 
-def inspect_package(content: bytes) -> InspectedPackage:
+def inspect_package(
+    content: bytes, *, _depth: int = 0, _budget: list[int] | None = None
+) -> InspectedPackage:
     """Validate every declared JSON artifact and its exact selected dependency graph.
 
     Hashes prove consistency with this input, never authenticity, clean binaries,
     local access, technical applicability, approval or complete historical coverage.
     """
     try:
+        if _budget is None:
+            _budget = [packages.MAX_ARCHIVE * 2]
+        _budget[0] -= len(content)
+        if _depth >= 8 or _budget[0] < 0:
+            raise ValueError("origin nesting bounds")
         manifest, members = packages.inspect_archive(content)
-        parsed = Manifest.model_validate(manifest)
+        parsed = (
+            ManifestV2 if manifest.get("schema_version") == packages.SCHEMA_V2 else Manifest
+        ).model_validate(manifest)
+        origins = {}
+        if isinstance(parsed, ManifestV2):
+            for ref in parsed.origins:
+                if (
+                    str(UUID(ref.import_id)) != ref.import_id
+                    or ref.path != f"origins/{ref.sha256}.zip"
+                ):
+                    raise ValueError("origin reference")
+                raw = members[ref.path]
+                if packages.digest(raw) != ref.sha256:
+                    raise ValueError("origin archive hash")
+                origins[ref.path] = inspect_package(raw, _depth=_depth + 1, _budget=_budget)
         if parsed.model_dump(mode="json") != manifest:
             raise ValueError("manifest normalization")
         if str(UUID(parsed.package_id)) != parsed.package_id:
@@ -103,7 +231,7 @@ def inspect_package(content: bytes) -> InspectedPackage:
         selected = parsed.selection
         if set(selected.scope_reports) & set(selected.estimate_reports):
             raise ValueError("duplicate report selection")
-        wanted = {"artifacts/scope.json"}
+        wanted = {"artifacts/scope.json", *origins}
         if selected.match_id:
             wanted.add("artifacts/system-match.json")
         if selected.estimate_id:
@@ -180,8 +308,28 @@ def inspect_package(content: bytes) -> InspectedPackage:
             for fmt in ("pdf", "xlsx"):
                 scope_reports._output(members[f"reports/{report_id}.{fmt}"], fmt)
             reports.append(snapshot)
+        from .draft_import_origin import origin_for
+
+        refs = parsed.origins if isinstance(parsed, ManifestV2) else []
+        for kind, artifact in (("match", match), ("estimate", estimate)):
+            if artifact is not None and "import_origin" in artifact:
+                origin = artifact["import_origin"]
+                bound_ref = next((r for r in refs if r.import_id == origin["import_id"]), None)
+                if bound_ref is None:
+                    raise ValueError("missing original archive")
+                source = getattr(origins[bound_ref.path], kind)
+                if source is None or origin != origin_for(
+                    bound_ref.import_id, bound_ref.sha256, source
+                ):
+                    raise ValueError("unbound original artifact")
+                if bound_ref.mapping[kind]["local_id"] != artifact["artifact_id"]:
+                    raise ValueError("origin local identity")
+        for ref in refs:
+            original = origins[ref.path]
+            mapping = ref.mapping
+            validate_origin_mapping(mapping, original, parsed.project.id, parsed.draft_scope_id)
         return InspectedPackage(
-            manifest, members, scope, match, estimate, reports, packages.digest(content)
+            manifest, members, scope, match, estimate, reports, packages.digest(content), origins
         )
     except packages.PackageError:
         raise
@@ -204,12 +352,13 @@ def preview_import(db: Session, actor: User, content: bytes) -> dict[str, Any]:
         actor = scopes._actor(db, actor, "project:write")
         actor = scopes._actor(db, actor, "project:read")
         inspected = inspect_package(content)
-        if inspected.match:
-            actor = scopes._actor(db, actor, "technical:read")
-        if inspected.estimate:
-            actor = scopes._actor(db, actor, "estimate:read")
-            if inspected.estimate.get("pricing_sources"):
-                actor = scopes._actor(db, actor, "library:read")
+        for included in inspected.walk():
+            if included.match:
+                actor = scopes._actor(db, actor, "technical:read")
+            if included.estimate:
+                actor = scopes._actor(db, actor, "estimate:read")
+                if included.estimate.get("pricing_sources"):
+                    actor = scopes._actor(db, actor, "library:read")
         return {
             "manifest": inspected.manifest,
             "archive_sha256": inspected.archive_sha256,
@@ -218,10 +367,12 @@ def preview_import(db: Session, actor: User, content: bytes) -> dict[str, Any]:
             "match_candidates": len(inspected.match["candidates"]) if inspected.match else 0,
             "estimate_lines": len(inspected.estimate["lines"]) if inspected.estimate else 0,
             "reports": [
-                {"report_id": r["report_id"], "profile": r["profile"]} for r in inspected.reports
+                {"report_id": r["report_id"], "profile": r["profile"]}
+                for included in inspected.walk()
+                for r in included.reports
             ],
             "source_count": len(inspected.manifest["source_manifest"]),
-            "import_available": False,
+            "import_available": True,
             "binary_status": "not_scanned_or_opened",
             "authority": "foreign_unverified",
         }

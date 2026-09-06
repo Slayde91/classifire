@@ -2,13 +2,16 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.15 - selected-package semantic upload preview.
+**Architecture version:** 5.16 - editable imported Draft projects.
 
-**Verified shared baseline:** `541c107b9b3552e572d9933b86140b4d6f750120`, merged
-PR #200. Exact-head CI 33998891633 and main CI 33999342298 succeeded, rechecked
-2026-09-06. PR #201 merged as `d2709d8`; its exact-head and main CI succeeded.
-Selected Draft package download is implemented; transactional ZIP import remains planned.
-The current import branch adds the read-only upload inspection boundary described below.
+**Verified shared baseline:** `13a5b34ebb08eb287aebf02ed218c78ff539f1d5`, merged
+PR #202. Exact-head CI 34002073595 and main CI 34002483886 succeeded.
+Current branch `feat/draft-package-materialization-20260906` implements transactional
+new-project import and v2 re-export. PROJECT_STATE.md records its current validation
+and publication; branch implementation does not imply merge or production readiness.
+Earlier milestone descriptions below are historical checkpoints where a later
+amendment supersedes their status. The component table and final import section
+state the current design; planned product coverage remains separately identified.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -39,7 +42,8 @@ or validates deterministic archives. A supplied inventory cannot prove database
 completeness, and a callback interface cannot establish an export policy.
 That candidate remains unshipped. The current Draft-specific implementation below
 adds selected artifact projection, rights, immutable persistence and download; full
-project coverage, source-body export and quarantined import remain unfinished.
+project coverage and source-body export remain unfinished; the import amendment
+below implements selected-workspace exchange.
 
 Do not reuse `services/snapshot.py:build_estimate_snapshot` as a read-only package
 extractor: it calls `recalculate_estimate`. Future projection must preserve a
@@ -80,12 +84,12 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is merged in PR #200; import/ChatGPT remain planned. |
+| Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is merged in PR #200; selected-workspace import is implemented on the current branch; ChatGPT remains planned. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
-| Packages | Scope v1/v2 exchange plus v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Current selected Draft archive projection and download reuse these readers; whole-project coverage, source-body membership and capability imports remain later work. |
+| Packages | Scope v1/v2 exchange plus v3 page-reference claims, candidate JSON and exact manual Estimate JSON download | Current selected Draft archive projection and download reuse these readers; whole-project coverage and source-body membership remain planned; imported-origin capability wrappers are implemented below. |
 | Reporting | Scope-only, estimate-only and scope-and-system Draft snapshots plus merged complete profile; paired PDF/XLSX retention; upstream edits flag stale reports. Canonical export retains its lock gates. | Add other profiles only when independently versioned inputs exist; do not use the recalculating estimate builder for rendering. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
@@ -164,7 +168,8 @@ not silent truncation. Raw source attachments and complete foreign revision hist
 are not stored by this narrow import; the complete ProjectPackage/evidence-retention
 boundary remains separate. See the [v1/v2 contract](./DRAFT_SCOPE_V1_CONTRACT.md).
 
-**Implemented for reports and candidate reviews; planned for other artifacts:** pin input/release revisions and hashes.
+**Implemented for Draft artifacts, reports and selected packages:** pin input/release
+revisions and hashes. Broader canonical package coverage remains planned.
 Upstream edits mark affected downstream relationships stale without changing the
 old artifact's content or approval history. The user chooses to compare or rerun.
 A report snapshot captures selected revisions and freshness so PDF and XLSX agree.
@@ -360,7 +365,8 @@ bounded. No new dependency or infrastructure was added. `D(None)` and canonical
 unknowns and round unit rates before multiplication. Existing canonical Estimate
 creation, locked line writers, recalculation, snapshots and human-release gates
 are unchanged. P3b default/inferred methods and broader source coverage, full recovery, taxes,
-Estimate import and estimate/combined PDF/XLSX profiles remain planned.
+Historical checkpoint: Estimate import and the additional PDF/XLSX profiles were
+planned here; the later reporting and imported-origin amendments supersede this status.
 
 The supplied original UI PNG is served at `static/brand/classifire-logo.png`
 (SHA-256 `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`).
@@ -936,7 +942,8 @@ or duplicate business rules in MCP/UI.
 
 **Historical verification:** PR #175 was documentation-only; its 70 focused
 contract/security tests and main CI 33899855871 describe that older baseline.
-Current shared main is `24ee6e3`, including P3a through PR #192, with main CI
+At that historical checkpoint, shared main was `24ee6e3`, including P3a through
+PR #192, with main CI
 33968038437 (1,286 tests, 141 warnings). P4b local verification includes 233 combined
 regression passes, 17 report-HTTP/migration/readiness passes and 15 historical
 migration/preflight checks. Browser creation, later edits and actual restart retained
@@ -1403,35 +1410,54 @@ domains requiring their own schemas, sources, calculations, and acceptance
 evidence.
 
 
-### Current import work: semantic upload preview (P5, import incomplete)
+### Implemented amendment: editable imported projects and v2 origin archives
 
-Current architecture -> change -> reason: archive hashes alone cannot establish
-valid capability content or coherent dependencies. `services/draft_package_import.py`
-adds a pure `inspect_package` function over the existing bounded ZIP inspector and
-capability/report validators. Its authorized `preview_import` use case adds active
-human project write/read and included technical/Estimate/pricing-library read checks.
-No foreign identifier is used to load a local project, release or source.
+**Current architecture -> change -> reason:** PR #202 could inspect a selected ZIP,
+but could not reopen it as editable work. The existing modular services now expose
+explicit new-project import, owner-scoped local revisions and traceable re-export.
+No new orchestration framework, provider dependency or autonomous agent is required.
 
-`/package-import` and its POST `/preview` route display a complete declared inventory,
-capability counts, report profiles, Scope findings and explicitly unverified foreign
-claims. `ui_uploads.single_file` shares the bounded multipart parser with PDF intake;
-existing PDF/pricing limits still apply. Package input is capped at the lesser of
-64 MiB and configured upload size. Forms reject duplicate/extra fields and files,
-require CSRF and close temporary multipart files. No new dependency or migration.
+| Component | Implemented responsibility | Boundary |
+| --- | --- | --- |
+| UI | Upload/preview, explicit confirmation, new imported-project screen, Scope/review/Estimate links, report scan/download and normal package configuration | Session, active human, ownership, CSRF, exact-file confirmation; untrusted labels escaped |
+| Shared integration/use cases | `draft_package_import.inspect_package` and `preview_import`; `draft_package_materialization.create_import` | A future ChatGPT adapter calls these services; it must not duplicate domain rules |
+| Orchestration | Existing synchronous explicit commands and transaction helper | No hidden automatic capability chaining, provider run, canonical admission, lock or release |
+| Domain services | Existing Scope import/revisions, Match review, Estimate edits and report snapshot renderers | Exact dependencies, preserved original values, visible staleness and foreign authority |
+| Optional AI | Existing proposal adapters only | No AI is needed for this import or manual prototype |
+| Persistence | Migration 0035 adds original ZIP/mapping retention and imported report bindings; native rows/revisions retained | Match has exactly one native-release or imported-origin basis; no fake local eligibility |
+| Package schema | Native v1 unchanged; imported-project v2 includes selected local artifacts plus exact `origins/<sha>.zip` and mapping | Bound recursive inventory, immutable foreign history, no source-body redistribution or approval transfer |
+| Validation/security | Existing schemas/byte hashes/permissions, shared scan/quarantine and bounded report worker | PostgreSQL required for report-bearing import; active or unscanned binaries never download/re-export |
 
-Checks include strict manifest fields/types, exact selected membership and source
-pointers, every supported JSON schema/hash, selected revisions, embedded Scope/review/
-Estimate equality and report identity/profile/dependencies. Deterministic validation
-can verify a saved Estimate summary but never creates or recalculates an Estimate.
-Report bytes receive only bounded header/hash checks: no parser, scanner, rendering,
-external fetch or download executes. This is not proof of binary safety or visual/
-numeric agreement with a snapshot. No imported data or audit record is persisted.
+**Data flow:** upload -> read-only semantic inspection -> signed exact-file/session
+confirmation -> one new owned Draft transaction -> preserve original ZIP and map new
+artifact identities -> retain report attachments pending scan -> independently edit
+Scope/review/Estimate -> validate and save new local revisions -> explicitly select
+coherent revisions -> recheck all included origin rights and binary readiness -> save
+and download a v2 package. Restart uses database/storage; chat or agent memory is
+irrelevant. Reimport preserves nested originals instead of silently dropping outputs.
 
-**Remaining migration, not implemented:** scan/quarantine and retain original bytes,
-map foreign-to-local identities and lineage, then explicitly create a new owned Draft
-project and all supported selected capabilities transactionally. Existing
-`DraftSystemMatch.release_id` requires a local LibraryRelease; do not manufacture an
-eligible release from foreign claims. Extend the existing contracts/persistence with
-an explicit imported/unverified origin before local editing, reporting or re-export.
-Original report bytes must survive without acquiring local report approval. This
-preview is a prerequisite, not the completed import or production acceptance gate.
+**Consequences:** Imported Match v4 and Estimate v3 wrap their existing native content
+schemas with explicit `foreign_unverified` origins. Original values and history stay
+intact. Local review notes/decisions and Estimate overrides are editable; foreign
+technical measurement evidence cannot be rebound implicitly to a local release.
+Report snapshots/PDF/XLSX stay original foreign attachments; new local reports carry
+unverified-origin warnings. Current access and shared quarantine are checked again
+when downloading previously saved packages. Scope-only and nonbinary imports can
+use SQLite; report-bearing imports require existing PostgreSQL containment support.
+
+**Migration:** 0034 -> 0035 preserves native artifact/revision/package bytes and
+relationships, adds imported-origin tables/columns and enforces origin/file binding.
+Historical migrations are unchanged. Revised migration fixtures use reflected old
+columns and retain FK, exact-byte and downgrade-refusal assertions. A current ORM is
+not run against an unmigrated historical schema. No operational database was migrated.
+
+See [the package contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md#imported-project-lifecycle-and-v2-re-export)
+for fields, size/depth limits, supported formats and failure behavior.
+
+**Planned and unresolved:** This remains selected-workspace portability, not every
+project record, source body or full revision graph. Imported signatures/approvals
+never activate local authority. Existing-project merges, redistribution, retention/
+quotas, production process sandboxing, tenant isolation, full technical applicability,
+governed pricing and ChatGPT authentication/client parity still need their own proof.
+Keep broad polish behind interactive trials; preserve protection parity before
+retiring OpenClaw. ADRs 0001/0002 remain accepted and unchanged.
