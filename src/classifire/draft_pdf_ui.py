@@ -6,7 +6,6 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
-from starlette.datastructures import UploadFile
 
 from .config import get_settings
 from .draft_scope_ui import Db, FormData
@@ -14,37 +13,15 @@ from .security import verify_csrf
 from .services import draft_pdf_intake as intake
 from .services.draft_scope import DraftScopeError, get_draft, read_revision
 from .ui import _context, _require, templates
+from .ui_uploads import single_file
 
 router = APIRouter(include_in_schema=False)
 
 
 async def _upload(request: Request, db: Db) -> dict[str, Any]:
     _require(request, db, "project:write")
-    limit = min(get_settings().max_upload_bytes, intake.malware_scan.MAX_SCAN_BYTES) + 16384
-    body = bytearray()
-    async for chunk in request.stream():
-        if len(body) + len(chunk) > limit:
-            raise HTTPException(413, "Source upload exceeds the size limit")
-        body.extend(chunk)
-    delivered = False
-
-    async def receive() -> dict[str, Any]:
-        nonlocal delivered
-        if delivered:
-            return {"type": "http.disconnect"}
-        delivered = True
-        return {"type": "http.request", "body": bytes(body), "more_body": False}
-
-    parsed_request = Request(request.scope, receive=receive)
-    async with parsed_request.form(max_files=1, max_fields=1) as form:
-        if set(form) != {"csrf_token", "file"} or any(len(form.getlist(k)) != 1 for k in form):
-            raise HTTPException(422, "Choose one source file")
-        token = form.get("csrf_token")
-        verify_csrf(request, token if isinstance(token, str) else None)
-        file = form["file"]
-        if not isinstance(file, UploadFile):
-            raise HTTPException(422, "Choose one source file")
-        return {"filename": file.filename or "", "content": await file.read()}
+    limit = min(get_settings().max_upload_bytes, intake.malware_scan.MAX_SCAN_BYTES)
+    return await single_file(request, limit)
 
 
 UploadData = Annotated[dict[str, Any], Depends(_upload)]

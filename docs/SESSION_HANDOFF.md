@@ -2,140 +2,115 @@
 
 ## Verified context
 
-2026-09-06 AEST. Current worktree:
-`C:\CLASSIFIRE\.tmp\draft-package-import-20260906`; branch
-`docs/prototype-state-logo-verification-20260906`, based on shared main
-`541c107b9b3552e572d9933b86140b4d6f750120` (merged PR #200).
-PR #200 exact-head CI 33998891633 and main CI 33999342298 succeeded, rechecked
-2026-09-06. This branch reconciles documentation and the logo regression test;
-inspect its live publication state before continuing. The retained import branch
-`feat/draft-package-import-20260906` has no import implementation yet.
-Do not rebuild already merged package download.
+2026-09-06 AEST. Worktree `C:\CLASSIFIRE\.tmp\draft-package-import-v1-20260906`;
+branch `feat/draft-package-import-v1-20260906`, based on shared main
+`d2709d84c70d7295624cb090ce1d6f6190dab5f1` (PR #201).
+PR #201 exact-head CI 33999996200 rerun and main CI succeeded. PR #200 already merged
+selected package download. Inspect live current-branch PR/CI before publication or
+continuation; this file is a checkpoint, not evidence of a later merge.
 
-ADRs 0001/0002 remain accepted: independent capabilities, shared deterministic core,
+ADRs 0001/0002 are accepted: independent capabilities, shared deterministic core,
 optional AI and UI-first delivery. No OpenClaw retirement or production release.
-The full objective remains incomplete despite usable Draft reports and packages.
+The full objective remains incomplete. Import preview is not completed import.
 
-Merged PR #200: selected package service, UI/template, router/Scope link,
-DraftProjectPackage model and migration 0034, readiness/head expectations,
-package/HTTP/migration tests, pricing-source permission coverage and aligned docs.
-No existing migration was rewritten. No dependency or canonical authority added.
-AGENTS.md already aligns and is unchanged.
+## Current changes and checks
 
-Preserve the legacy `C:\CLASSIFIRE` root on `gpt/phase8-linked-original-images`:
-four DU conflicts, staged/unstaged recovery changes and unrelated untracked files.
-Never reset, clean, resolve, stage or publish that root implicitly. Also preserve
-three untracked files in `.tmp/project-package-draft-20260905`:
-`docs/PROJECT_PACKAGE_V1_CONTRACT.md`, `src/classifire/services/project_package.py`,
-`tests/test_project_package.py`. They remain an older generic archive experiment;
-current Draft package code implements a different, explicit selected-artifact contract.
+Shared `services/draft_package_import.py` validates selected ZIP manifest, all JSON
+artifact/report schemas, exact dependencies and source inventory. Package UI adds
+`/package-import` and `/package-import/preview`; the Scope list links to it.
+`ui_uploads.single_file` reuses PDF intake's bounded multipart pattern. Existing PDF
+and pricing routes now share that helper. No new dependency, database migration or
+imported local record. Original report bytes are not opened/scanned/downloaded.
 
-## Verification and open work
+Three service and two HTTP tests passed. Affected package/PDF/pricing HTTP regression:
+14 passed, 5 PostgreSQL-dependent skipped locally. Mypy (181 files), Ruff and Bandit
+passed. Pricing import-preview permission coverage requires hosted PostgreSQL CI.
+Chrome inspected Scope-only/populated ZIPs, refused invalid bytes and showed the exact
+supplied logo. A fresh marked demo retains zero project/Draft/canonical records.
 
-43 focused tests passed in 65.43 seconds; broader affected migration/report/package
-regression passed 98 tests with three warnings in 389.05 seconds.
-Mypy (179 files), Ruff, Bandit and one migration head (0034) passed. Extended
-PostgreSQL pricing/source permissions passed hosted CI. Initial wiring
-failures are fixed; no current known blocker. Final results belong in the PR.
+Demo: `http://127.0.0.1:8810/package-import`; login `scope-demo@example.test` /
+`synthetic-scope-demo-only`. Data: `.tmp/draft-import-preview-demo-20260906`.
+Launcher: `scripts/run_draft_scope_demo.py --port 8810 --data-dir <that-directory>`.
+Inspect process IDs/command lines before stopping only this demo. Earlier 8809 demo
+and `.tmp/package-artifacts` ZIPs are unchanged.
+Receipts: `.tmp/import-preview-browser-receipt.json`, `import-preview-db-counts.json`;
+screenshots `import-preview-*.png`; browser script
+`.tmp/scope-browser-test-tools/import-preview-check.cjs`. These remain local-only.
 
-Real Chrome configured and saved Scope-only, combined and reconfigured package
-revisions. All three ZIPs stayed exact after actual restart. Independent archive
-inspection checked membership/hashes, embedded dependency equality, saved 440.00
-subtotal and original report PDF/XLSX. Exact supplied logo remains visible and
-byte-identical. Canonical Estimate/line, Opening, Service and Lock counts remain zero.
-
-Demo: `http://127.0.0.1:8809/scopes`, separate marked synthetic directory
-`.tmp/draft-package-demo-20260906`, copied from the prior synthetic report fixture;
-original demo untouched. Login `scope-demo@example.test` / `synthetic-scope-demo-only`.
-Launcher: `scripts/run_draft_scope_demo.py --port 8809 --data-dir <that-directory>`.
-Inspect current process IDs/command lines before stopping only this demo.
-Receipts/downloads/screenshots: `.tmp/package-artifacts`; browser harnesses:
-`.tmp/scope-browser-test-tools/package-check.cjs` and `package-restart.cjs`.
-Never stage local-only demo data or receipts.
-
-Current reconciliation checks: all four human-session/branding tests passed (one
-existing Starlette deprecation warning), Ruff and diff checks passed. The synthetic
-UI login and image endpoint returned HTTP 200; its image hash equals the exact
-user-supplied PNG. The header and login both reference this asset.
+Preserve the legacy root on `gpt/phase8-linked-original-images`: four DU conflicts,
+46 unstaged modifications and 14 staged additions, plus unrelated untracked files.
+Preserve `.tmp/project-package-draft-20260905` and its three untracked generic archive
+files. The older `feat/draft-package-import-20260906` branch had no import code.
+Do not reset, clean, resolve, broadly stage or publish recovery work.
 
 ## Start Here / Next Session
 
-Inspect AGENTS.md, GOAL.md, PROJECT_STATE.md, roadmap/architecture, ADRs, current Git
-status/diff/worktrees and origin/main/PR/CI. Package download is merged in PR #200.
-Use a clean current-main worktree, preserving unrelated changes.
+Inspect AGENTS.md, GOAL.md, project state, roadmap, architecture/ADRs, Git status,
+worktrees, origin/main, PRs and exact-head CI. Preserve unrelated work and continue
+from an isolated current-main worktree once current publication is resolved.
 
-**Single next task: safe new-project Draft ProjectPackage import.** Why: users can
-now collect and download selected capabilities, but cannot reopen that ZIP as a new
-local project and continue their work. This advances portability before extra polish.
+**Single next task: complete safe new-project Draft ProjectPackage import.** Users
+can now download and inspect selected work; they still cannot reopen the ZIP as a new
+editable local project. Do not replace this task with more preview polish.
 
-Files: `services/draft_project_packages.py`, Scope import and envelope validators,
-`draft_system_matches.py`/match contracts, `draft_estimates.py`/Estimate contracts,
-report snapshot readers, models/migrations, package UI/templates and focused tests.
-Read `docs/DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md` before treating the structural ZIP
-inspector as a semantic importer: it is explicitly not one.
+Files: `services/draft_package_import.py`, `draft_project_packages.py`, Scope import,
+`draft_system_match_contract.py`/`draft_system_matches.py`, Estimate contracts/services,
+report snapshot readers, models/migrations, package UI/templates and tests.
+Read `docs/DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md` and architecture's import section.
 
-Prerequisites: package-download merge and current dependency schemas; bounded
-archive validation; explicit ownership/identity/lineage mapping and import policy for
-Scope, review, Estimate and reports. Retain original bytes, versioned history and
-uncertainty, preserve cross-artifact references and keep unavailable external sources
-unresolved. Never grant local library eligibility, approval, lock or release from
-foreign claims. Imported records need safe local read/edit semantics before being
-passed to other capabilities. Do not silently discard unsupported package members.
+Prerequisites/dependencies: full selected semantic validation now exists. Establish
+explicit local identities and foreign provenance, immutable original-byte retention,
+scanner/quarantine handling for PDF/XLSX, and atomic ownership-bound import. Existing
+`DraftSystemMatch.release_id` requires a local release: do not create fake library
+eligibility to satisfy that FK. Imported approvals/source claims remain unresolved.
+Use existing persistence and shared use cases, not another parallel application.
+No external blocker is currently established; these are remaining implementation work.
 
-Done: real UI upload, no-write preview of complete declared membership and findings,
-explicit transactional import into a new owned Draft project, reopen after restart,
-and re-export with traceable foreign-to-local identities and preserved saved values.
-Scope-only and populated packages both work; invalid/mixed/oversized/unsafe input and
-foreign authority are refused or explicitly retained unresolved under the approved
-contract. No provider, recalculation, canonical write or customer data. Original local
-work and imported files remain unchanged. Update documentation and classify gaps.
+Definition of done: actual UI upload/preview, explicit transaction creating one new
+owned Draft project, retained original artifacts/history/outputs, explicit identity
+mapping, local read/edit semantics for Scope/review/Estimate, restart and traceable
+re-export for both Scope-only and populated packages. No dropped unsupported members,
+implicit recalculation/provider/canonical write/lock/release or foreign authority.
+Scanner failure, revoked rights, malformed input and rollback must fail safely.
 
-Validation: focused package/import service and HTTP tests; identity/dependency,
-permission/CSRF, malformed ZIP, uncertainty and rollback tests; real synthetic
-browser round trip/restart and independent ZIP/content inspection. Run affected
-Scope/review/Estimate/report regressions and migration compatibility where changed:
+Validation: import service/HTTP/permission/CSRF/unsafe archive/identity/rollback tests;
+affected Scope/review/Estimate/report/upload and migration tests; real synthetic
+browser round trip/restart and independent ZIP/content inspection. Current commands:
 
 ```powershell
 $env:PYTHONPATH = Join-Path $PWD 'src'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp <unique-temp> tests/test_draft_project_packages.py tests/test_draft_project_package_ui.py tests/test_migrations_draft_project_packages.py tests/test_draft_complete_reports.py
+C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -o addopts= -q -p no:cacheprovider --basetemp <unique-temp> tests/test_draft_package_import.py tests/test_draft_package_import_ui.py tests/test_draft_project_packages.py tests/test_draft_project_package_ui.py tests/test_draft_pdf_ui.py tests/test_draft_pricing_ui.py
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
 C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
 ```
 
-Check actual files/dependencies first. Continue through explicit staging, commit,
-normal push, PR and safe merge after required exact-head CI/reviews; verify merge.
-Access denial, failed CI, unresolved material authority/domain rules or required
-review are blockers to report, not bypass. ChatGPT and full source/project coverage,
-broader capabilities and production readiness remain separate unfinished work.
-
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from verified repository state. Before editing read AGENTS.md,
-> GOAL.md, docs/PROJECT_STATE.md, docs/CLASSIFIRE_ROADMAP.md,
-> docs/CLASSIFIRE_ARCHITECTURE.md, docs/SESSION_HANDOFF.md and accepted ADRs 0001/0002;
-> inspect Git status/diff/worktrees, origin/main, PRs and CI. Preserve the conflicted
-> C:\CLASSIFIRE root, unrelated changes and old package experiments; use an isolated
-> worktree. Package download is merged in PR #200; do not repeat it.
-> The single next task is safe new-project Draft ProjectPackage import: users
-> can download selected work but cannot reopen its ZIP and continue in a new project.
-> Inspect draft_project_packages, Scope import, review/Estimate contracts, reports,
-> models/migrations and package UI/tests. The ZIP inspector is structural only.
-> Establish complete selected-member validation and explicit local identity/lineage
-> mapping. Preserve all included capability artifacts, original bytes, uncertainty,
-> history and dependency links; external sources remain unresolved. Never silently
-> drop unsupported members or grant authority from foreign approvals/library claims.
-> Done means actual UI upload, no-write preview, explicit transactional new-project
-> import, correct reopening after restart and traceable re-export for Scope-only and
-> populated packages. Add service/HTTP/permission/CSRF/rollback and unsafe-archive tests;
-> run affected capability/report/migration regressions with worktree PYTHONPATH and
-> unique no-cache temp storage, Ruff, Mypy, Bandit, one migration head and real
-> synthetic browser/archive inspection. No customer data, providers, recalculation,
-> canonical writes or release. Keep docs aligned. Continue autonomously through
-> implementation, validation, classification, explicit commit, normal push, PR and
-> safe merge after required exact-head CI/reviews; verify merge. Report genuine
-> authority/domain/access/CI/review blockers without bypassing them. Avoid speculative
-> work; ChatGPT, broader capabilities and full production readiness remain unfinished.
+> Continue CLASSIFIRE from verified repository state. Read AGENTS.md, GOAL.md,
+> docs/PROJECT_STATE.md, docs/CLASSIFIRE_ROADMAP.md, docs/CLASSIFIRE_ARCHITECTURE.md,
+> docs/SESSION_HANDOFF.md and accepted ADRs 0001/0002; inspect Git status/diff/worktrees,
+> origin/main and current PR/CI before editing. Preserve the conflicted C:\CLASSIFIRE
+> root, unrelated local work and older package experiments; use an isolated worktree.
+> The single next task is complete safe new-project Draft ProjectPackage import:
+> download and no-write semantic inspection exist, but users cannot reopen the ZIP
+> as an editable local project. Inspect draft_package_import, package/Scope services,
+> Match/Estimate contracts, report readers, models/migrations, UI and tests. Reuse
+> current validation; do not rebuild preview or substitute Scope-only import. Retain
+> all selected original artifacts/history/output bytes, map identities explicitly,
+> scan/quarantine binaries and create new owned Draft records transactionally.
+> Existing Match release_id needs an explicit imported-origin solution, never a fake
+> eligible library release. Foreign sources/approvals remain unresolved. Done means
+> actual UI confirmation, full local Scope/review/Estimate read/edit, restart and
+> traceable re-export for Scope-only and populated packages, with no silent omissions
+> or recalculation/canonical authority. Run focused service/HTTP/CSRF/permission/
+> unsafe-archive/identity/rollback tests, affected capability/upload/report/migration
+> regressions, Ruff/Mypy/Bandit/one migration head, plus real synthetic browser and
+> ZIP inspection. Use worktree PYTHONPATH and unique no-cache test storage. Preserve
+> the supplied logo. No customer data or real providers. Keep docs aligned; continue
+> autonomously through implementation, validation, classification, explicit commit,
+> normal push, PR and safe merge after required exact-head CI/reviews. Verify merge;
+> report concrete blockers without bypassing them. Keep the full platform goal active.

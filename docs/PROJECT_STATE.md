@@ -1,90 +1,86 @@
 # CLASSIFIRE Project State
 
 Verified snapshot: 2026-09-06 AEST. Health: working bounded Draft UI prototype;
-full product and production readiness remain incomplete. Accepted ADRs 0001/0002
-retain independent capabilities, shared deterministic services and optional AI.
-OpenClaw retirement still requires proven replacement protections.
+full product and production readiness remain incomplete. ADRs 0001/0002 retain
+independent capabilities, shared deterministic services, optional AI and UI-first
+delivery. OpenClaw retirement still requires proven replacement protections.
 
-Shared baseline: `541c107b9b3552e572d9933b86140b4d6f750120`,
-[merged PR #200](https://github.com/Slayde91/classifire/pull/200).
-[Exact-head CI 33998891633](https://github.com/Slayde91/classifire/actions/runs/33998891633)
-and [main CI 33999342298](https://github.com/Slayde91/classifire/actions/runs/33999342298)
-succeeded, rechecked 2026-09-06. All four Draft report choices, selected package
-download and the supplied logo are merged. Safe new-project ZIP import is not implemented.
+Shared baseline: `d2709d84c70d7295624cb090ce1d6f6190dab5f1`, merged
+[PR #201](https://github.com/Slayde91/classifire/pull/201); exact-head CI 33999996200
+passed 1,456 tests on rerun and main CI succeeded. The first run crossed midnight
+and exposed an existing collection-time date fixture; assertions were not weakened.
+PR #200 already merged selected package download at `541c107`.
+
+Current branch: `feat/draft-package-import-v1-20260906`, worktree
+`C:\CLASSIFIRE\.tmp\draft-package-import-v1-20260906`. This is an implementation
+checkpoint; verify live PR/head CI before claiming publication.
 
 ## Implementation snapshot
 
-| Capability | Verified implementation | Remaining gap |
+| Capability | Implemented bounded behavior | Remaining gap |
 | --- | --- | --- |
-| Scope | Manual editing, exact JSON import/export, graph checks, PDF page-linked observations | Broader formats/analysis, richer instances/planes/treatments and contradictions |
-| Technical | Source-bound candidates, saved decisions/history, partial thickness/gap/service-size checks | Full authorized applicability, coverage, materials/FRL/insulation/configuration |
-| Estimate | Provisional manual rates, exact-cell XLSX selection, original/override history, missing/omitted work | Governed defaults/inference, broader components and recovery |
-| Reports | Scope-only, scope-and-system, estimate-only and complete retained PDF/XLSX | Professional/production acceptance and release gates remain separate |
-| Packages | Current selected Draft configuration, preview, save, history and ZIP download | Safe imports, source-body/full-project/history coverage |
-| Interfaces | Shared FastAPI/Jinja use cases; supplied logo exact in UI and outputs | ChatGPT adapter and full tenant/operational assurance |
-| Authority | Existing governed persistence, admissions/locks and human release boundaries | Production Phase 8-14 exits and OpenClaw replacement parity unproven |
+| Scope | Manual editing, saved JSON import/export, graph checks, PDF page observations | Broader evidence formats/analysis, richer physical entities and contradictions |
+| Technical | Source-bound candidates, decision history, partial thickness/gap/service-size checks | Full authorized applicability, materials/FRL/insulation/configuration coverage |
+| Estimate | Provisional manual rates, source-cell XLSX selection, original/override history | Governed defaults/inference, broader components and recovery |
+| Reports | Four retained Draft PDF/XLSX profiles | Professional/production acceptance and release gates |
+| Packages | Merged configuration/save/history/download; current no-write ZIP semantic preview | Transactional new-project import, local identity mapping, safe binary retention, editable re-export; full-project/history/source coverage |
+| Interfaces | Shared FastAPI/Jinja use cases; exact supplied logo | ChatGPT adapter, complete tenant/operational assurance |
+| Authority | Governed persistence, admissions/locks and human release remain separate | Production Phase 8-14 exits and OpenClaw replacement parity |
 
-## Merged package increment
+## Current import work and known gaps
 
-Users choose one Scope revision, optional coherent review/Estimate revisions and
-selected existing report pairs. Preview performs no database writes. Explicit save
-creates an immutable package revision; changed membership creates another revision.
-Downloads retain exact original bytes. Mismatched inputs, changed previews, stale
-package save versions, invalid archives and revoked content permissions are refused.
-Source/dependency changes are shown without rewriting history.
+The new upload screen checks a complete selected package before any local import.
+Strict manifest and capability schemas, source pointers, exact selected membership,
+report profiles and embedded dependency equality are validated through existing
+services. Rehashed inconsistent content is refused. All four report profiles and
+original Estimate override history are preserved in inspection. Project/technical/
+Estimate/pricing-library permissions follow included content; CSRF and bounded forms
+apply. Project labels are escaped and never select a local project by foreign ID.
 
-Migration 0034 adds DraftProjectPackage in the existing database, with parent/revision,
-manifest/archive hashes and creator/time. Existing artifact readers and report
-integrity/permissions are reused; no provider, new dependency or canonical writer.
-Source bodies remain external/withheld with provenance pointers. This packages
-selected workspace revisions, not every project record or original source file.
-The older untracked generic archive candidate remains unshipped. See
-[contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md).
+PDF/XLSX members are only inventoried with size/header/hash checks. They are not
+opened, scanned, rendered, retained or downloaded. This neither proves safe binaries
+nor correct report contents. Imported technical/library/approval claims remain foreign
+and unverified. No project, canonical record or audit event is created by preview.
 
-## Verification and health
+**Import remains active and incomplete.** The next change must create a new owned
+Draft project transactionally while preserving all selected capability records,
+original bytes, history and identity mapping. Existing Match records require a local
+LibraryRelease; importing must not fabricate one or activate foreign authority.
+Scope-only substitution or silently dropping review/Estimate/report members is not done.
 
-- 43 focused package, HTTP, migration, lineage, packaging and preflight tests passed
-  in 65.43 seconds. Warnings: existing Starlette/Alembic deprecations and an intentional
-  malformed ZIP duplicate-name fixture. The broader affected migration/report/package
-  regression also passed: **98 tests**, three warnings, 389.05 seconds.
-- Initial import, fixture and template-context wiring errors were diagnosed and fixed.
-  Audit assertions now explicitly allow the three expected create/download events;
-  canonical/source counts remain unchanged. No failing production assertion was hidden.
-- Mypy passed for 179 source files; Ruff, Bandit and one Alembic head (0034) passed.
-  Hosted PR and main CI have now succeeded, including PostgreSQL validation.
-- Real Chrome configured Scope-only, combined and reconfigured package revisions.
-  Downloaded three ZIPs; all remained exact after a real process restart. No page errors.
-  UI screenshot inspected; exact supplied logo verified by bytes.
-- Independent ZIP inspection checked every member size/hash, exact Scope/review/
-  Estimate dependencies, retained AUD 440.00 subtotal and original report PDF/XLSX
-  bytes. The combined archive has seven entries including its manifest.
-- Synthetic fixture is a marked copy of the previous report demo, with only local
-  storage paths relocated. Three package revisions exist; canonical Estimates,
-  lines, Openings, Services and Physical Model Locks all remain zero. No customer
-  evidence, operational database, provider, deployment or release was used.
+## Verification and project health
 
-Package publication is complete; no concrete blocker is currently known. The full
-platform goal remains active. The running synthetic UI on port 8809 returned the
-supplied logo with SHA-256 `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`;
-its login page references that same asset. No replacement image was generated.
+- New service tests: 3 passed, including all four report profiles, original history,
+  permissions, no writes and 20 rehashed invalid-content scenarios.
+- New HTTP tests: 2 passed, one existing Starlette warning; upload, CSRF, body/file
+  bounds, duplicate files, permission denial, text escaping and no record creation.
+- Affected package/PDF/pricing HTTP regression: 14 passed, 5 PostgreSQL-dependent
+  cases skipped locally, two warnings. Hosted CI must cover those cases before merge.
+- Full Mypy passed for 181 source files; Ruff and Bandit passed. No migration or
+  dependency added. Shared source inventory preserves the existing ZIP format.
+- Three previous synthetic exported ZIPs passed independent semantic inspection.
+  Real Chrome uploaded Scope-only and populated packages, displayed inventory and
+  unverified claims, and refused an invalid ZIP without page errors. The exact
+  supplied logo remained byte-identical. The screenshot was visually inspected.
+- A fresh marked synthetic SQLite demo contains zero Projects, Draft Scopes, package
+  records, canonical Estimates/lines, Openings, Services or Physical Model Locks
+  after inspection. No operational/customer data or real provider was used.
 
 ## Local changes and active work
 
-Merged PR #200 files: package service/UI/template, model/migration, router and Scope link,
-readiness head, focused tests, pricing permission regression, current-head migration
-expectations and aligned docs. Existing migration histories remain unchanged;
-the prior pricing migration test is pinned to 0033 so it still checks its own downgrade.
-AGENTS.md and accepted ADRs already match the approved direction and remain unchanged.
+Current files: semantic import inspection service, package UI/template and Scope link,
+shared bounded upload helper/PDF adapter, reused source inventory, service/HTTP and
+pricing-permission tests, and aligned docs. AGENTS.md and ADRs already align.
 
-The conflicted legacy root and unrelated older package candidate files are preserved.
-Local-only demo, browser harnesses, ZIPs and receipts are under
-`.tmp/draft-package-demo-20260906`, `.tmp/package-artifacts` and
-`.tmp/scope-browser-test-tools`. Do not stage them. Demo URL: port 8809.
+Preserve the legacy root (four DU conflicts, 46 unstaged modifications, 14 staged
+additions) and older untracked generic package experiment. Never stage local-only
+synthetic data, screenshots or receipts. Current demo is port 8810 at
+`.tmp/draft-import-preview-demo-20260906`; the previous package demo on 8809 is untouched.
 
 ## Recommended Next Actions
 
-1. Deliver safe new-project package import with full selected membership, explicit
-   local identity mapping, retained foreign provenance and unresolved external sources.
-   Include review/Estimate contracts; do not silently discard unsupported artifacts.
-2. Share proven commands through ChatGPT. Broader evidence analysis, actual applicability,
-   governed estimating and full package/production coverage remain required.
+1. Complete safe new-project package import using the current semantic preview:
+   explicit identity/origin contracts, clean/quarantined original-byte retention,
+   transactional local Draft records, reopen/edit and traceable full selected re-export.
+2. Expose proven shared commands through ChatGPT, then broaden evidence analysis,
+   actual applicability, governed estimating and full project/production coverage.

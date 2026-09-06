@@ -13,11 +13,13 @@ from .db import get_db
 from .security import has_permission, verify_csrf
 from .services import draft_estimate_reports as estimate_reports
 from .services import draft_estimates as estimates
+from .services import draft_package_import as imports
 from .services import draft_project_packages as packages
 from .services import draft_scope as scopes
 from .services import draft_scope_reports as scope_reports
 from .services import draft_system_matches as matches
 from .ui import _context, _require, templates
+from .ui_uploads import single_file
 
 router = APIRouter(include_in_schema=False)
 Db = Annotated[Session, Depends(get_db)]
@@ -200,3 +202,62 @@ def download_package(request: Request, db: Db, draft_id: str, package_id: str) -
             "X-Content-Type-Options": "nosniff",
         },
     )
+
+
+def _import_preview_page(
+    request: Request,
+    db: Db,
+    result: dict | None = None,
+    error: str | None = None,
+    status: int = 200,
+) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request,
+        name="draft_package_import.html",
+        context=_context(
+            request,
+            db,
+            active_nav="draft_scopes",
+            result=result,
+            error=error,
+            max_bytes=min(get_settings().max_upload_bytes, packages.MAX_ARCHIVE),
+        ),
+        status_code=status,
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+    )
+
+
+@router.get("/package-import", response_class=HTMLResponse)
+def package_import_page(request: Request, db: Db) -> HTMLResponse:
+    _require(request, db, "project:write")
+    return _import_preview_page(request, db)
+
+
+@router.post("/package-import/preview", response_class=HTMLResponse)
+async def preview_package_import(request: Request, db: Db) -> HTMLResponse:
+    user = _require(request, db, "project:write")
+    try:
+        upload = await single_file(
+            request, min(get_settings().max_upload_bytes, packages.MAX_ARCHIVE)
+        )
+        result = imports.preview_import(db, user, upload["content"])
+        return _import_preview_page(request, db, result=result)
+    except scopes.DraftScopeError as exc:
+        if exc.status_code == 403:
+            raise HTTPException(
+                403, "Your account cannot inspect the included capabilities"
+            ) from exc
+        return _import_preview_page(
+            request,
+            db,
+            error=(
+                "The package could not be validated. Choose an unchanged supported CLASSIFIRE "
+                "project ZIP with complete selected artifacts and matching dependencies. "
+                "No project was created."
+            ),
+            status=exc.status_code,
+        )
+    except HTTPException as exc:
+        if exc.status_code == 403:
+            raise
+        return _import_preview_page(request, db, error=str(exc.detail), status=exc.status_code)

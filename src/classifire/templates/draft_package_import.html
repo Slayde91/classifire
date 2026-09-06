@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Inspect project package | CLASSIFIRE{% endblock %}
+{% block heading %}Inspect a project package{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<p><a href="/scopes">Back to Draft scopes</a></p>
+<section class="panel">
+<h2>Check a downloaded project ZIP</h2>
+<p>Inspect its saved Scope, system review, Estimate and report inventory. This preview does not create or change a project. Saving an imported project is not available yet.</p>
+<p>Uploaded files are treated as untrusted evidence. Nothing in the package grants local technical approval, source access, a lock or release authority.</p>
+{% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+<form method="post" action="/package-import/preview" enctype="multipart/form-data" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="project-zip">Project ZIP<input id="project-zip" type="file" name="file" accept=".zip,application/zip" required></label>
+<p class="muted">One selected Draft ProjectPackage v1 ZIP, up to {{ max_bytes // 1048576 }} MiB. Earlier Scope JSON downloads use the Scope import screen.</p>
+<button type="submit" class="button button-primary">Inspect package</button>
+</form></section>
+{% if result %}
+<section class="panel"><h2>Package inspection</h2>
+<p><strong>JSON contracts and selected dependencies validated.</strong> This checks the submitted file's consistency, not whether its claims are true. No project was created.</p>
+<dl><dt>Foreign project</dt><dd>{{ result.manifest.project.reference }} &middot; {{ result.manifest.project.name }}</dd>
+<dt>Foreign package revision</dt><dd>{{ result.manifest.revision }}</dd>
+<dt>Original ZIP SHA-256</dt><dd style="overflow-wrap:anywhere">{{ result.archive_sha256 }}</dd>
+<dt>Approval and source claims</dt><dd>Foreign and unverified</dd></dl>
+<h3>Selected capabilities</h3>
+<ul>{% for name,state in result.manifest.capabilities.items() %}<li>{{ name|replace('_',' ')|capitalize }}: {{ state|replace('_',' ') }}</li>{% endfor %}</ul>
+<p>{{ result.match_candidates }} technical candidates; {{ result.estimate_lines }} Estimate lines; {{ result.reports|length }} retained report snapshots.</p>
+<dl>{% for name,count in result.scope_counts.items() %}<dt>{{ name|capitalize }}</dt><dd>{{ count }}</dd>{% endfor %}</dl>
+<h3>Scope findings</h3>
+{% if result.scope_findings %}<ul>{% for item in result.scope_findings %}<li>{{ item.message }}</li>{% endfor %}</ul>{% else %}<p>No structural Scope findings. This does not prove complete evidence or a reviewed physical model.</p>{% endif %}
+<h3>Report profiles</h3>
+<ul>{% for item in result.reports %}<li>{{ item.profile }} &middot; {{ item.report_id }}</li>{% else %}<li>No reports selected</li>{% endfor %}</ul>
+<p>PDF/XLSX sizes, file headers and declared hashes were checked. These files have not been malware-scanned, opened or checked for agreement with the snapshot. No binary preview or download is provided.</p>
+<h3>Complete declared member inventory</h3>
+<div style="overflow-x:auto"><table><thead><tr><th>Member</th><th>Bytes</th><th>SHA-256</th></tr></thead><tbody>
+{% for item in result.manifest.members %}<tr><td>{{ item.path }}</td><td>{{ item.size_bytes }}</td><td style="overflow-wrap:anywhere;max-width:26rem">{{ item.sha256 }}</td></tr>{% endfor %}
+</tbody></table></div>
+<h3>Unavailable source bodies</h3>
+<ul>{% for item in result.manifest.source_manifest %}<li>{{ item.kind|replace('_',' ') }}: {{ item.membership }} &middot; {{ item.reference }}</li>{% else %}<li>No source references recorded. Source completeness is unverified.</li>{% endfor %}</ul>
+<p>Original revision/author/history claims remain foreign. Cross-project identity mapping, safe binary retention and explicit transactional import are still required before this ZIP can become a new editable project.</p>
+</section>{% endif %}
+{% endblock %}

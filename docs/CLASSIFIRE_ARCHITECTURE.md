@@ -2,11 +2,13 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.14 - selected Draft project package download.
+**Architecture version:** 5.15 - selected-package semantic upload preview.
 
 **Verified shared baseline:** `541c107b9b3552e572d9933b86140b4d6f750120`, merged
 PR #200. Exact-head CI 33998891633 and main CI 33999342298 succeeded, rechecked
-2026-09-06. Selected Draft package download is implemented; ZIP import remains planned.
+2026-09-06. PR #201 merged as `d2709d8`; its exact-head and main CI succeeded.
+Selected Draft package download is implemented; transactional ZIP import remains planned.
+The current import branch adds the read-only upload inspection boundary described below.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -1399,3 +1401,37 @@ The [roadmap](./CLASSIFIRE_ROADMAP.md) controls delivery order; the
 Structural-steel protection and complete fire-rated duct runs remain deferred
 domains requiring their own schemas, sources, calculations, and acceptance
 evidence.
+
+
+### Current import work: semantic upload preview (P5, import incomplete)
+
+Current architecture -> change -> reason: archive hashes alone cannot establish
+valid capability content or coherent dependencies. `services/draft_package_import.py`
+adds a pure `inspect_package` function over the existing bounded ZIP inspector and
+capability/report validators. Its authorized `preview_import` use case adds active
+human project write/read and included technical/Estimate/pricing-library read checks.
+No foreign identifier is used to load a local project, release or source.
+
+`/package-import` and its POST `/preview` route display a complete declared inventory,
+capability counts, report profiles, Scope findings and explicitly unverified foreign
+claims. `ui_uploads.single_file` shares the bounded multipart parser with PDF intake;
+existing PDF/pricing limits still apply. Package input is capped at the lesser of
+64 MiB and configured upload size. Forms reject duplicate/extra fields and files,
+require CSRF and close temporary multipart files. No new dependency or migration.
+
+Checks include strict manifest fields/types, exact selected membership and source
+pointers, every supported JSON schema/hash, selected revisions, embedded Scope/review/
+Estimate equality and report identity/profile/dependencies. Deterministic validation
+can verify a saved Estimate summary but never creates or recalculates an Estimate.
+Report bytes receive only bounded header/hash checks: no parser, scanner, rendering,
+external fetch or download executes. This is not proof of binary safety or visual/
+numeric agreement with a snapshot. No imported data or audit record is persisted.
+
+**Remaining migration, not implemented:** scan/quarantine and retain original bytes,
+map foreign-to-local identities and lineage, then explicitly create a new owned Draft
+project and all supported selected capabilities transactionally. Existing
+`DraftSystemMatch.release_id` requires a local LibraryRelease; do not manufacture an
+eligible release from foreign claims. Extend the existing contracts/persistence with
+an explicit imported/unverified origin before local editing, reporting or re-export.
+Original report bytes must survive without acquiring local report approval. This
+preview is a prerequisite, not the completed import or production acceptance gate.
