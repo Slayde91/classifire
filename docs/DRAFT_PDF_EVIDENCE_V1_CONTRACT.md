@@ -191,3 +191,11 @@ its proof before optional bounded PDF text/image suggestions through existing po
 and human review. OCR/automatic interpretation is not supplied by either manual path.
 Technical-corpus and A/B pricing profiles remain a separate approved track with their
 own source semantics and authority gates.
+
+## Compatible optional suggestion amendment
+
+[Optional PDF suggestions and Scope v6](./DRAFT_PDF_SUGGESTIONS_V1_CONTRACT.md)
+add retained inference origins to the same evidence-reference union. The existing
+manual review contract above is unchanged. Later PDF/XLSX/manual saves preserve v6
+and prior suggestion claims; imports grant no local source, execution or approval
+authority. A scripted review demonstration is not live-provider accuracy evidence.

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -101,6 +101,9 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8787
     draft_client_config: Path | None = None
+    draft_pdf_suggestions_enabled: bool = False
+    draft_pdf_suggestions_model: str | None = None
+    draft_pdf_suggestions_api_key: SecretStr | None = Field(default=None, exclude=True)
     storage_root: Path = Path("./data/storage")
     max_upload_mb: int = 100
     allowed_origins: Annotated[list[str], NoDecode] = Field(

@@ -7,12 +7,15 @@
   const states = ["Unresolved", "Provisional", "Inferred", "Confirmed"];
   const kinds = ["defects", "openings", "services", "observations"];
   const titles = { defects: "Defect", openings: "Opening", services: "Service", observations: "Observation" };
+  const suggestionReview = form.dataset.suggestionReview === "true";
+  const suggestedItems = new Map();
   const pageReview = form.dataset.pageReview === "true";
   const workbookReview = form.dataset.workbookReview === "true";
   const sourceReview = pageReview || workbookReview;
   let rowSources = [];
   let sheetImages = [];
   const targetKinds = { defects: "defect", openings: "opening", services: "service" };
+  if (suggestionReview) targetKinds.observations = "observation";
   let reviewTargets = [];
   let payload;
   let dirty = document.getElementById("scope-download").hidden;
@@ -43,7 +46,7 @@
   }
 
   function addPageReviewControl(card, kind, item) {
-    if (!pageReview || !targetKinds[kind]) return;
+    if (!pageReview || !targetKinds[kind] || (suggestionReview && !suggestedItems.has(item.id))) return;
     const targetKind = targetKinds[kind];
     const label = element("label", "scope-check scope-page-link");
     const checkbox = element("input");
@@ -257,6 +260,13 @@
   function renderItem(kind, item) {
     const card = element("fieldset", "scope-item");
     card.append(element("legend", "", titles[kind]));
+    if (suggestedItems.has(item.id)) {
+      const note = element("p", "callout", "Suggested entry - unreviewed. Edit it, then explicitly link it to the page, or reject it. ");
+      const link = element("a", "", "View original suggestion and source basis");
+      link.href = `#suggestion-original-${item.id}`;
+      note.append(link);
+      card.append(note);
+    }
     const grid = element("div", "form-grid");
     card.append(grid);
     if (kind === "defects") {
@@ -295,7 +305,7 @@
     addWorkbookReviewControls(card, kind, item);
     const footer = element("div", "scope-item-footer");
     footer.append(element("span", "scope-item-id", `Stable ID: ${item.id}`));
-    const remove = element("button", "button button-small scope-remove", `Remove ${titles[kind].toLowerCase()}`);
+    const remove = element("button", "button button-small scope-remove", `${suggestedItems.has(item.id) ? "Reject suggested" : "Remove"} ${titles[kind].toLowerCase()}`);
     remove.type = "button";
     remove.addEventListener("click", () => removeItem(kind, item, card));
     footer.append(remove);
@@ -323,6 +333,11 @@
 
   try {
     payload = JSON.parse(document.getElementById("scope-initial-payload").textContent);
+    if (suggestionReview) {
+      const items = JSON.parse(document.getElementById("scope-initial-suggestion-items").textContent);
+      if (!Array.isArray(items)) throw new Error("Invalid retained suggestion items");
+      items.forEach((item) => suggestedItems.set(item.target_id, item));
+    }
     if (sourceReview) {
       reviewTargets = JSON.parse(document.getElementById("scope-initial-review-targets").textContent);
       if (!Array.isArray(reviewTargets)) throw new Error("Invalid page review selections");
@@ -358,7 +373,17 @@
     document.getElementById("scope-edit-controls").disabled = form.dataset.canEdit !== "true";
     updateReviewSummary();
     form.addEventListener("submit", (event) => {
-      if (sourceReview && !reviewTargets.length) {
+      if (suggestionReview && kinds.some((kind) => payload[kind].some((item) => suggestedItems.has(item.id) && !reviewTargets.some((target) => target.target_kind === targetKinds[kind] && target.target_id === item.id)))) {
+        event.preventDefault();
+        showError("Review and link every kept suggestion to this page, or reject that suggested item, before previewing.");
+        return;
+      }
+      if (suggestionReview && !reviewTargets.length) {
+        event.preventDefault();
+        showError("Keep and review at least one suggested item, or use Reject this suggestion batch to discard them all.");
+        return;
+      }
+      if (sourceReview && !suggestionReview && !reviewTargets.length) {
         event.preventDefault();
         showError(workbookReview ? "Select at least one source row for a defect, opening or service before previewing." : "Select at least one defect, opening or service to link to this page before previewing.");
         return;
@@ -371,8 +396,11 @@
       independentForm.addEventListener("submit", (event) => {
         if (!dirty) return;
         event.preventDefault();
-        showError(workbookReview ? "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before uploading or scanning another source." : "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before saving a separate page observation.");
+        showError(workbookReview ? "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before uploading or scanning another source." : "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before starting a separate page action such as an observation or optional suggestion request.");
       });
+    });
+    document.querySelectorAll("[data-scope-discard-action]").forEach((discardForm) => {
+      discardForm.addEventListener("submit", () => { dirty = false; });
     });
     window.addEventListener("beforeunload", (event) => {
       if (!dirty) return;

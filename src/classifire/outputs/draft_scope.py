@@ -26,7 +26,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from ..services.draft_scope_evidence import (
     ENTITY_EVIDENCE_SCHEMAS,
-    XLSX_EVIDENCE_SCHEMA_VERSION,
+    WORKBOOK_EVIDENCE_SCHEMAS,
     reference_label,
     reference_status,
 )
@@ -177,6 +177,32 @@ def _page_reference_fields(scope: dict[str, Any], ref: dict[str, Any]) -> list[t
                         json.dumps(value, sort_keys=True) if isinstance(value, dict) else value,
                     )
                 )
+    elif "suggestion" in ref:
+        fields.extend((key, value) for key, value in ref.items() if key != "suggestion")
+        fields.append(
+            (
+                "suggestion_notice",
+                "Original AI proposal retained separately from human-edited facts; "
+                "no approval or execution authority",
+            )
+        )
+        for key, value in ref["suggestion"].items():
+            if key == "proposed_item":
+                import json
+
+                for item_key, item_value in value.items():
+                    fields.append(
+                        (
+                            "original_proposed_" + item_key,
+                            "Unknown"
+                            if item_value is None
+                            else json.dumps(item_value, ensure_ascii=False)
+                            if isinstance(item_value, (list, dict))
+                            else item_value,
+                        )
+                    )
+            else:
+                fields.append(("suggestion_" + key, value))
     else:
         fields.extend(ref.items())
     return fields
@@ -339,7 +365,7 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
     if report["scope"].get("evidence_refs"):
         text(
             "Saved evidence-review references"
-            if report["scope"]["schema_version"] == XLSX_EVIDENCE_SCHEMA_VERSION
+            if report["scope"]["schema_version"] in WORKBOOK_EVIDENCE_SCHEMAS
             else "Saved page-review references",
             heading,
         )
@@ -641,7 +667,7 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
     if report["scope"].get("evidence_refs"):
         table(
             "Evidence References"
-            if report["scope"]["schema_version"] == XLSX_EVIDENCE_SCHEMA_VERSION
+            if report["scope"]["schema_version"] in WORKBOOK_EVIDENCE_SCHEMAS
             else "Page Review References",
             [
                 "Target ID"

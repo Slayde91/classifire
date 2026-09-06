@@ -1,0 +1,13 @@
+<section class="panel">
+  <h2>Original suggestions and source basis</h2>
+  <p>{% if suggestion.provider == 'scripted' %}<strong>Scripted demonstration &middot; no live provider call.</strong>{% else %}Provider: {{ suggestion.provider }}{% endif %} &middot; model {{ suggestion.model }} &middot; {{ suggestion.generated_at }}</p>
+  <p>These original suggestions stay retained when you edit or reject them. They are unreviewed interpretations, not technical approval. A source quote does not prove an interpretation is correct.</p>
+  {% for item in suggestion['items'] %}<article class="scope-import-item" id="suggestion-original-{{ item.target_id }}">
+    <h3>{{ item.target_kind|capitalize }}: {{ item.proposed_item.label|default(item.proposed_item.text|default('')) }}</h3>
+    <p><strong>Basis:</strong> {{ item.basis }} &middot; <span class="scope-item-id">{{ item.target_id }}</span></p>
+    {% if item.quote %}<blockquote class="scope-preserve-text">{{ item.quote }}</blockquote>{% else %}<p class="muted">No extracted-text quote supplied. Inspect the page image.</p>{% endif %}
+    <p class="scope-preserve-text"><strong>Rationale:</strong> {{ item.rationale }}</p>
+    <details><summary>All original proposed fields</summary><dl class="scope-import-details">{% for key, value in item.proposed_item.items() %}<dt>{{ key|replace('_',' ') }}</dt><dd class="scope-preserve-text">{% if value is none %}Unknown{% elif value is sameas true %}Yes{% elif value is sameas false %}No{% elif value is string or value is number %}{{ value }}{% else %}{{ value|join(', ') or 'None' }}{% endif %}</dd>{% endfor %}</dl></details>
+  </article>{% endfor %}
+  <details><summary>Suggestion identity and checksums</summary><dl class="scope-import-details"><dt>Suggestion ID</dt><dd class="scope-item-id">{{ suggestion.id }}</dd><dt>Prompt version</dt><dd>{{ suggestion.prompt_version }}</dd>{% for key in ['input_sha256','response_sha256','page_image_sha256'] %}<dt>{{ key|replace('_',' ') }}</dt><dd class="pdf-source-identity">{{ suggestion[key] }}</dd>{% endfor %}</dl></details>
+</section>

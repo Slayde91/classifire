@@ -952,6 +952,34 @@ class DraftPdfSource(RecordMixin, Base):
     document_sha256: Mapped[str | None] = mapped_column(String(64))
 
 
+class DraftPdfSuggestion(RecordMixin, Base):
+    """Retained optional inference proposal; never a canonical model or approval."""
+
+    __tablename__ = "draft_pdf_suggestions"
+    __table_args__ = (
+        CheckConstraint("base_revision >= 1", name="ck_draft_pdf_suggestion_revision"),
+        CheckConstraint(
+            "status IN ('pending', 'applied', 'rejected')",
+            name="ck_draft_pdf_suggestion_status",
+        ),
+        CheckConstraint(
+            "(status = 'applied' AND applied_revision IS NOT NULL "
+            "AND applied_revision = base_revision + 1) OR "
+            "(status != 'applied' AND applied_revision IS NULL)",
+            name="ck_draft_pdf_suggestion_applied",
+        ),
+        CheckConstraint("length(proposal_json) <= 131072", name="ck_draft_pdf_suggestion_size"),
+    )
+    draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
+    source_id: Mapped[str] = mapped_column(ForeignKey("draft_pdf_sources.id"), index=True)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    base_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    proposal_json: Mapped[str] = mapped_column(Text, nullable=False)
+    proposal_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
+    applied_revision: Mapped[int | None] = mapped_column(Integer)
+
+
 class DraftScopeXlsxSource(RecordMixin, Base):
     """Draft-owned defect XLSX and scan metadata, separate from pricing authority."""
 

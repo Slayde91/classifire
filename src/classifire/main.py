@@ -24,6 +24,7 @@ from .api.workflow_actions import router as workflow_actions_router
 from .config import get_settings, require_production_configuration
 from .db import Base, SessionLocal, engine
 from .draft_estimate_ui import router as draft_estimate_ui_router
+from .draft_pdf_suggestion_ui import router as draft_pdf_suggestion_ui_router
 from .draft_pdf_ui import router as draft_pdf_ui_router
 from .draft_pricing_ui import router as draft_pricing_ui_router
 from .draft_project_package_ui import router as draft_project_package_ui_router
@@ -143,6 +144,7 @@ app.include_router(proposal_review_admin_router)
 
 app.include_router(draft_scope_ui_router)
 app.include_router(draft_pdf_ui_router)
+app.include_router(draft_pdf_suggestion_ui_router)
 app.include_router(draft_scope_xlsx_ui_router)
 app.include_router(draft_pricing_ui_router)
 app.include_router(draft_estimate_ui_router)

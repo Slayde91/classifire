@@ -28,6 +28,7 @@
       <div class="pdf-scope-image"><img src="/scopes/{{ draft.id }}/evidence/{{ source.id }}/pages/{{ selected_page.page_number }}.png" alt="Retained PDF page {{ selected_page.page_number }} from {{ source.filename }}" class="pdf-page-preview"></div>
       <details><summary>Extracted text (unreviewed)</summary><pre class="pdf-extracted-text">{{ selected_page.text or 'No extractable text. Inspect the page image; no OCR has been inferred.' }}</pre></details>
     </section>
+    {% include "draft_pdf_suggestion_request.html" %}
     {% if has_permission('project:write') %}
     <details class="panel pdf-observation-panel">
       <summary>Save a page-linked observation instead</summary>

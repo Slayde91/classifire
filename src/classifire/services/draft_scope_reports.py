@@ -31,7 +31,11 @@ from .draft_scope import (
     read_revision,
     validate_payload,
 )
-from .draft_scope_evidence import ENTITY_EVIDENCE_SCHEMA_VERSION, XLSX_EVIDENCE_SCHEMA_VERSION
+from .draft_scope_evidence import (
+    ENTITY_EVIDENCE_SCHEMA_VERSION,
+    SUGGESTION_EVIDENCE_SCHEMA_VERSION,
+    XLSX_EVIDENCE_SCHEMA_VERSION,
+)
 from .draft_system_match_contract import MAX_MATCH_BYTES
 from .draft_system_match_contract import validate_envelope as validate_match
 from .draft_system_matches import match_staleness, read_match_revision
@@ -89,6 +93,8 @@ def _identity(value: Any) -> None:
 
 
 def _render_version(scope: dict[str, Any], *, system_profile: bool) -> int:
+    if scope.get("schema_version") == SUGGESTION_EVIDENCE_SCHEMA_VERSION:
+        return 8 if system_profile else 7
     if scope.get("schema_version") == XLSX_EVIDENCE_SCHEMA_VERSION:
         return 6 if system_profile else 5
     if scope.get("schema_version") == ENTITY_EVIDENCE_SCHEMA_VERSION:

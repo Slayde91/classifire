@@ -2,19 +2,18 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.23 - reviewed Excel defect mapping and compatible Scope v5; corpus/pricing target retained.
+**Architecture version:** 5.24 - optional retained PDF suggestions and compatible Scope v6.
 
-**Verified shared baseline:** `96680f4ce1b26da5da599bd5cb7894af8d3b28de`, merged
-PDF graph-review PR #209. Required PR CI passed 1,564 tests; main run 34027941914
-succeeded. The active `feat/defect-xlsx-mapping-20260906` branch implements bounded
-Excel defect-register mapping with Scope v5 and forward migration 0038. Its current
-PostgreSQL, browser/restart and publication results belong in
-[PROJECT_STATE.md](./PROJECT_STATE.md); do not infer them from implementation.
-Optional bounded PDF text/image suggestions follow Excel proof. Corpus extraction,
-semantic A/B pricing libraries and estimated-price methods remain a separate planned
-track. Local client parity is not real ChatGPT linking or production readiness.
-Earlier milestone descriptions are historical checkpoints where a later amendment
-supersedes their status. Current component/amendment sections distinguish remaining coverage.
+**Verified shared baseline:** `d2640defd00c23892691da79990a510bee59b2a0`, merged
+Excel defect-review PR #210. Required PR CI passed 1,672 tests and main run 34033021353
+succeeded. The active `feat/draft-pdf-suggestions-20260906` source adds one optional
+page interpretation adapter, retained proposals, human review and forward migration
+0039. [PROJECT_STATE.md](./PROJECT_STATE.md) owns measured validation/publication.
+A configured OpenAI adapter is implemented but disabled by default; no live provider
+execution or accuracy is claimed. Manual PDF/Excel Scope review remains available.
+Corpus/A-B pricing, real ChatGPT linking and production readiness remain open.
+Earlier milestone descriptions are historical checkpoints; the amendment below is
+current for optional suggestions. Do not infer phase completion from source presence.
 
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -38,7 +37,7 @@ mappings, immutable recipe/proposal versions and later durable batch work are re
 **Migration:** extend the existing modular application and persistence with forward changes;
 preserve historical artifacts, authority gates and optional AI under ADRs 0001/0002.
 
-**Current bounded change:** merged PDF page/entity review and the manual graph editor
+**Prior bounded change (PR #210):** merged PDF page/entity review and the manual graph editor
 now extend to explicitly mapped worksheet rows and chosen picture occurrences. The
 same deterministic validation, no-write preview and atomic revision services remain.
 Scope v5 extends the evidence-reference union; migration 0038 adds a purpose-specific
@@ -109,7 +108,7 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja independent capability routes; merged PDF page/entity review; active branch adds retained Excel upload/scan, explicit row mapping and signed graph confirmation | Finish Excel browser/restart and publication proof. Next: optional bounded PDF text/image proposals through a Draft-specific adapter/shared review, with a manual fallback. A/B profiles remain separate; evidence-graph MCP commands and real ChatGPT linking remain planned. |
+| Interfaces/API | FastAPI/Jinja independent routes; merged PDF/Excel source review; active branch adds retained optional PDF suggestions and signed human graph confirmation | Finish suggestion validation/publication, then the bounded A/B source-profile UI. Preserve manual fallback; evidence-graph MCP commands and real ChatGPT linking remain planned. |
 | Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205 and measured review in PR #206. Workbook source preview and confirmed rate selection are merged in PR #207. External linking remains unproven. |
 | Orchestration | Deterministic controllers, no-write PDF/Excel graph previews and explicit atomic saves; bounded inference journal; generic worker has no registered handlers | Keep visible source interactions bounded. Extend existing BackgroundJob for necessary corpus stages, leases/retries and immutable outcomes after the visible prototype; no new fleet or scheduler database. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse independently callable contracts across UI/client. Planned corpus extraction/resolution and pricing coverage/estimation use the same governed application; they do not bypass independent capability prerequisites. |
@@ -117,10 +116,10 @@ still applies. Model output is proposed evidence, never authority.
 | General pricing source A | Generic retained XLSX preview and explicit rate selection; legacy Product/PricingLibraryRecord structures | Planned `general_pricelist` profile for `pricelist.xlsx`: normalize product/material/labour/service observations, source cells and basis, then review component/activity mappings. |
 | Firefly pricing source B | Same bounded XLSX primitives; no dedicated system-price ingestion or resolution | Planned `firefly_system_prices` profile for `pricing_library.xlsx`: retain system-level prices separately, bind reviewed matches to exact SystemRevision/configuration and preserve unmatched/ambiguous rows. |
 | Pricing coverage and proposals | Manual Draft rates, source selection, original values and override history | Planned coverage runs, evidence-based bottom-up/comparable/combined proposals, calibrated review and append-only approval/actual-cost feedback. Observed and derived prices remain distinct after approval. |
-| Draft persistence | Scope/report/candidate/Estimate records, PDF/pricing retained-source bindings; active 0038 adds DraftScopeXlsxSource with separate purpose and composite byte identity | Preserve owner/admin checks, exact dependencies, parent hashes, conditional saves and import lineage. Source-inclusive portability and operating retention limits remain unfinished. |
+| Draft persistence | Scope/report/candidate/Estimate records and merged PDF/Excel/pricing source bindings; active 0039 retains DraftPdfSuggestion proposals separately from Scope v6 revisions | Preserve owner/admin checks, exact dependencies, parent hashes, conditional saves and import lineage. Source-inclusive portability and operating retention limits remain unfinished. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
-| Packages | Scope v1-v4 exchange is merged; active v5 adds worksheet-cell and image-occurrence claims to the same evidence_refs union and exact package inventory | Preserve earlier readers/bytes and mark imported claims unverified. Selected archive projections retain descriptors; whole-project/source-body membership remains planned. |
-| Reporting | Four independent retained Draft PDF/XLSX profiles; active v5 uses conditional render versions 5/6/6/7, preserving earlier profile versions | Render explicit saved Scope/Match/Estimate snapshots, including cell/image claims. Current source checks remain separate from saved status; do not recalculate or rerender retained downloads. Canonical export keeps its locks. |
+| Packages | Scope v1-v5 exchange is merged; active v6 adds original suggestion claims to the same evidence_refs union and exact package inventory | Preserve earlier readers/bytes and mark imported claims unverified. Selected archive projections retain descriptors; whole-project/source-body membership remains planned. |
+| Reporting | Four independent retained Draft PDF/XLSX profiles; active v6 uses conditional render versions 7/8/8/9, preserving earlier profile versions | Render explicit saved Scope/Match/Estimate snapshots, including cell/image claims. Current source checks remain separate from saved status; do not recalculate or rerender retained downloads. Canonical export keeps its locks. |
 | Security | Session/CSRF, active human permissions, Draft owner/admin access, bounded forms/JSON and safe download names | Preserve these checks on import. Existing shared project metadata means full tenant/project privacy is still unproven. |
 
 ### Implemented manual Draft Scope slice (P0)
@@ -497,7 +496,7 @@ are foundations, not evidence of production tenant isolation or redistribution r
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | Shared baseline is 0037_draft_client_capabilities; active Excel source binding advances head to 0038_draft_scope_xlsx_sources and adds Scope v5 |
+| Persistence | SQLAlchemy with packaged Alembic migrations | Shared baseline is 0038_draft_scope_xlsx_sources; optional retained PDF suggestions advance head to 0039_draft_pdf_suggestions and add Scope v6 |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
@@ -1165,8 +1164,8 @@ clock assumptions and crash/replay recovery before production wiring. The
 | Interfaces/tenancy | MCP/standalone share application commands; prove identity mapping, tenant/project isolation and human review. Scoped reviewer grants are not full tenancy proof. |
 | Offline use | Local backend/database and safe revision exchange need a separate decision. Do not assume SQLite reproduces PostgreSQL locking or permit automatic bidirectional merges. |
 | Operations/cost | Clean-machine setup, backup/restore, safe traces, monitoring, rollback and accepted-result cost/latency remain unmeasured. Changing frameworks alone does not prove savings. |
-| Scope evidence breadth | PDF graph review is merged in PR #209. Active Excel mapping must finish supported-path, browser/restart and compatibility evidence. Next is one optional bounded PDF text/image suggestion through existing ports and shared review, with synthetic/provider-free proof and a manual fallback. Automatic extraction/OCR and real-evidence acceptance remain open. |
-| Semantic source profiles | Retained first slice within the separate A/B track: explicitly choose kind, inspect exact worksheet/row mapping and unknown commercial basis, and save/reopen only the minimal profile contract. The active Excel Scope interaction has overall prototype priority. No filename guessing, automatic activation or inferred prices. |
+| Scope evidence breadth | PDF/Excel graph review is merged in PRs #209/#210. Current optional PDF suggestions use a Draft-specific adapter and shared review, with scripted workflow proof and a manual fallback. Automatic extraction/OCR and real-evidence acceptance remain open. |
+| Semantic source profiles | Retained first slice within the separate A/B track: explicitly choose kind, inspect exact worksheet/row mapping and unknown commercial basis, and save/reopen only the minimal profile contract. Complete the optional PDF suggestion proof/publication before this bounded A/B interaction. No filename guessing, automatic activation or inferred prices. |
 | Technical identity/claims | Extend existing Document/Variant identities with stable system revisions, typed multi-source claims and reviewed resolution; preserve global legacy IDs, original values and supersession lineage. |
 | Recipe publication | Current v3 releases omit component/labour JSON. Version and freeze recipe/claim dependencies before costing; retain old release readers and bytes without fabricating historical recipe approval. |
 | Legacy pricing migration | Keep Package 14 CSV history separate. Replace active/default-zero/version-collision behavior for new ingestion through governed forward changes; do not feed A/B workbooks into the legacy importer. |
@@ -1927,7 +1926,7 @@ The [PDF contract](./DRAFT_PDF_EVIDENCE_V1_CONTRACT.md) defines the exact bounda
 evidence acceptance remain open. The following Excel increment builds on this completed
 PDF interaction without changing its human-review or canonical boundaries.
 
-## Active product increment: Excel defect-register mapping and Scope v5
+## Delivered bounded increment: Excel defect-register mapping and Scope v5 (PR #210)
 
 **Current architecture -> change:** retained PDF evidence and generic pricing workbook
 selection already exist. `draft_scope_xlsx` adds one independently callable Scope intake
@@ -1980,8 +1979,49 @@ limits apply without truncation. Retention, hosted isolation, larger batches, so
 inclusive export and real-layout acceptance remain open. The
 [Excel contract](./DRAFT_SCOPE_XLSX_V1_CONTRACT.md) defines limits and exact fields;
 PROJECT_STATE.md owns parser/migration/report/PostgreSQL/browser/publication evidence.
-Next, after this supported path is proven, add bounded optional PDF text/image proposals
-through a small Draft-specific adapter using compatible inference protections and the same explicit source-review boundary.
+The following amendment adds bounded optional PDF proposals to this proven foundation.
+
+## Current amendment: optional PDF suggestions and Scope v6
+
+**Current architecture -> change:** manual PDF/Excel review already uses the retained
+source boundary and shared Draft graph writer. Add a small Draft-specific inference
+port and optional direct OpenAI transport. Existing Phase8/OpenClaw runners require
+canonical estimate/defect manifests and remain unchanged; no canonical identities are
+fabricated to reuse them. **Reason:** a user can start interpretation from a selected
+page while retaining the proven deterministic review/save path. **Consequences:**
+proposal retention and portable AI-origin claims must remain distinct from reviewed
+values and authority. **Migration:** additive 0039 plus compatible Scope v6 readers;
+no historical backfill, canonical schema rewrite or orchestration replacement.
+
+The browser confirms one selected page's text and rendered PNG before submission.
+The adapter has no tools, project graph, pricebook or canonical writer. CLASSIFIRE
+validates strict returned arrays/local keys/quotes/links, assigns Draft IDs and maps
+them into the existing editor. Suggested dimensions/quantities are null; openings
+and services are Inferred and observations Unresolved. Source/rights/revision checks
+run before and after inference. Manual review works when AI is disabled or fails.
+
+`DraftPdfSuggestion` stores a bounded immutable proposal JSON/hash and explicit
+pending/applied/rejected lifecycle. Generation changes proposal/audit records only.
+A no-write preview checks the whole edited graph, every retained suggested item,
+source identities and existing artifact budget. A separate signed same-session
+confirmation uses the shared atomic Scope revision writer and records application.
+Rejection never saves Scope. Applied or stale proposals cannot be replayed as writes.
+
+Scope v6 extends the existing evidence-reference union with a strict nested suggestion
+claim: original normalized item, provider/model/prompt version, input/response/image
+hashes, generation time, basis, quote and rationale. Human-reviewed final values have
+an independent whole-item hash and reviewer/time. Edits, deletion, re-review and
+imports preserve history; imported claims grant no local execution or source authority.
+Prior v1-v5 artifacts remain supported. Only v6 selects report render versions
+7/8/8/9 (Scope / Scope+System / Estimate / Complete). Packages preserve the same refs
+and exact nested artifacts; raw source/proposal bodies are not silently bundled.
+
+**Operational limitations:** no live-provider accuracy/cost/latency proof, exhaustive
+OCR, cross-page/report reconciliation, semantic image calibration, production job
+scheduler or general cancellation guarantee. One page, bounded calls/bytes and
+explicit user requests are the supported slice. This adapter does not demonstrate
+OpenClaw protection parity or authorize retirement. The
+[suggestion contract](./DRAFT_PDF_SUGGESTIONS_V1_CONTRACT.md) specifies controls/limits.
 
 ## Retained separate track: explicit A/B source-profile UI
 
