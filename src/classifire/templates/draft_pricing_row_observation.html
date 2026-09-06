@@ -1,0 +1,67 @@
+{% set observation = row_observations|selectattr('row_number', 'equalto', row.row)|first %}
+{% if observation %}
+<h4>Reviewed Dataset A observation</h4>
+<dl class="scope-import-details">
+<dt>Classification</dt><dd>{{ observation.value.definition.interpretation.item_kind|capitalize }}</dd>
+<dt>Normalized reference</dt><dd>{{ observation.value.definition.interpretation.normalized_reference }}</dd>
+<dt>Evidence state</dt><dd>{{ observation.value.definition.interpretation.evidence_state|capitalize }}</dd>
+<dt>Reason</dt><dd>{{ observation.value.definition.interpretation.review_reason }}</dd>
+<dt>Unresolved fields</dt><dd>{{ observation.value.definition.interpretation.unresolved_fields|join(', ') if observation.value.definition.interpretation.unresolved_fields else 'None' }}</dd>
+<dt>Reviewer</dt><dd>{{ observation.reviewed_by }} &middot; {{ observation.reviewed_at }}</dd>
+<dt>Status</dt><dd>{% if observation.is_current %}Current{% else %}Stale history{% endif %}</dd>
+<dt>Observation hash</dt><dd class="scope-item-id">{{ observation.observation_sha256 }}</dd>
+</dl>
+<p><a class="button button-secondary" href="{{ pricing_url }}/{{ source.id }}/profiles/{{ selected_profile.profile_id }}/observations/{{ observation.id }}/download">Download exact observation JSON</a></p>
+{% elif row_observation_preview and row_observation_preview.definition.row.row == row.row %}
+<h4>Review observation preview</h4>
+<p><strong>No write has occurred.</strong> Check the exact row, classification, evidence state and unresolved fields before saving.</p>
+<dl class="scope-import-details">
+<dt>Classification</dt><dd>{{ row_observation_preview.definition.interpretation.item_kind|capitalize }}</dd>
+<dt>Normalized reference</dt><dd>{{ row_observation_preview.definition.interpretation.normalized_reference }}</dd>
+<dt>Evidence state</dt><dd>{{ row_observation_preview.definition.interpretation.evidence_state|capitalize }}</dd>
+<dt>Reason</dt><dd>{{ row_observation_preview.definition.interpretation.review_reason }}</dd>
+<dt>Unresolved fields</dt><dd>{{ row_observation_preview.definition.interpretation.unresolved_fields|join(', ') if row_observation_preview.definition.interpretation.unresolved_fields else 'None' }}</dd>
+<dt>Exact row hash</dt><dd class="scope-item-id">{{ row.sha256 }}</dd>
+</dl>
+<form method="post" action="{{ pricing_url }}/{{ source.id }}/profiles/{{ selected_profile.profile_id }}/rows/{{ row.row }}/observations" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="item_kind" value="{{ row_observation_preview.definition.interpretation.item_kind }}">
+<input type="hidden" name="normalized_reference" value="{{ row_observation_preview.definition.interpretation.normalized_reference }}">
+<input type="hidden" name="evidence_state" value="{{ row_observation_preview.definition.interpretation.evidence_state }}">
+<input type="hidden" name="review_reason" value="{{ row_observation_preview.definition.interpretation.review_reason }}">
+<input type="hidden" name="unresolved_fields" value="{{ row_observation_preview.definition.interpretation.unresolved_fields|join(',') }}">
+<input type="hidden" name="profile_sha256" value="{{ selected_profile_meta.profile_sha256 }}">
+<input type="hidden" name="decision_sha256" value="{{ selected_decision.decision_sha256 }}">
+<input type="hidden" name="row_sha256" value="{{ row.sha256 }}">
+<input type="hidden" name="preview_hash" value="{{ row_observation_preview.preview_hash }}">
+<p class="scope-hint">Saving creates immutable review evidence only. It does not create a product, material, labour item or service; activate a library; change an Estimate; or release data.</p>
+<button class="button button-primary" type="submit">Save immutable row observation</button>
+</form>
+{% elif selected_profile.definition.dataset.kind != 'general_pricelist' %}
+<p>Row classification is available only for Dataset A general price lists.</p>
+{% elif not selected_decision or selected_decision.value.decision != 'approve' or not selected_decision.is_current %}
+<p>The current source profile must have an approved human review before its rows can be classified.</p>
+{% elif selected_profile.definition.commercial_basis.price_meaning == 'unknown' %}
+<p>Declare a specific price meaning in a new profile revision before classifying rows.</p>
+{% elif row.problems %}
+<p>This row cannot be classified until its mapped-cell problems are resolved.</p>
+{% elif has_permission('pricing:approve') %}
+<h4>Classify this exact row</h4>
+<form method="post" action="{{ pricing_url }}/{{ source.id }}/profiles/{{ selected_profile.profile_id }}/rows/{{ row.row }}/preview" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="row-kind-{{ row.row }}">What does this row represent?</label>
+<select id="row-kind-{{ row.row }}" name="item_kind" required>{% for kind in row_item_kinds %}<option value="{{ kind }}">{{ kind|capitalize }}</option>{% endfor %}</select>
+<label for="row-reference-{{ row.row }}">Normalized reference</label>
+<input id="row-reference-{{ row.row }}" name="normalized_reference" maxlength="300" value="{{ row['values'].reference or '' }}" required>
+<label for="row-state-{{ row.row }}">Evidence state</label>
+<select id="row-state-{{ row.row }}" name="evidence_state" required>{% for state in row_evidence_states %}<option value="{{ state }}">{{ state|capitalize }}</option>{% endfor %}</select>
+<label for="row-unresolved-{{ row.row }}">Unresolved mapped fields, comma separated</label>
+<input id="row-unresolved-{{ row.row }}" name="unresolved_fields" placeholder="manufacturer, supplier">
+<p class="scope-hint">Use only mapped field names such as materials, inclusions or exclusions. Choose Provisional when anything remains unresolved; Confirmed requires an empty unresolved list.</p>
+<label for="row-reason-{{ row.row }}">Why this classification is supported</label>
+<textarea id="row-reason-{{ row.row }}" name="review_reason" maxlength="4000" required></textarea>
+<button class="button button-primary" type="submit">Preview row observation</button>
+</form>
+{% else %}
+<p>An authorised pricing reviewer must classify this row.</p>
+{% endif %}

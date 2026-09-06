@@ -20,6 +20,8 @@ from .services.draft_pricing_contract import (
     FIELDS,
     PRICE_MEANINGS,
     PROFILE_DECISIONS,
+    ROW_EVIDENCE_STATES,
+    ROW_ITEM_KINDS,
 )
 from .services.draft_scope import DraftScopeError, get_draft
 from .ui import _context, _require, templates
@@ -66,6 +68,13 @@ def _profile_revision(value: str) -> int:
     return revision
 
 
+def _unresolved_fields(value: str) -> list[str]:
+    fields = [] if not value.strip() else [item.strip() for item in value.split(",")]
+    if fields != list(dict.fromkeys(fields)) or any(item not in FIELDS for item in fields):
+        raise ValueError("unresolved fields")
+    return fields
+
+
 def _page(
     request: Request,
     db: Db,
@@ -78,6 +87,7 @@ def _page(
     form: dict[str, str] | None = None,
     error: str | None = None,
     status_code: int = 200,
+    row_observation_preview: dict[str, Any] | None = None,
 ) -> HTMLResponse:
     draft = get_draft(db, user, draft_id)
     envelope = read_estimate_revision(db, user, draft_id, estimate_id)
@@ -90,6 +100,7 @@ def _page(
     selected_profile = None
     selected_profile_meta = None
     selected_decision = None
+    row_observations: list[dict[str, Any]] = []
     values = form or {}
     source_api = pricing.intake()
     if source_id is not None:
@@ -101,6 +112,9 @@ def _page(
             selected_profile_meta = next(item for item in profiles if item["id"] == profile_id)
             selected_decision = next(
                 (item for item in profile_decisions if item["profile_id"] == profile_id), None
+            )
+            row_observations = pricing.list_row_observations(
+                db, user, draft_id, source_id, profile_id
             )
             definition = selected_profile["definition"]
             values = {
@@ -130,7 +144,7 @@ def _page(
                         settings=get_settings(),
                     )
                     rows = profile_preview["rows"]
-                elif form is not None:
+                elif form is not None and "sheet_index" in form:
                     _, rows = pricing.preview(
                         db,
                         user,
@@ -139,6 +153,18 @@ def _page(
                         _revision(form["sheet_index"]),
                         _revision(form["header_row"]),
                         _form_mapping(form),
+                        settings=get_settings(),
+                    )
+                elif selected_profile is not None:
+                    definition = selected_profile["definition"]
+                    _, rows = pricing.preview(
+                        db,
+                        user,
+                        draft_id,
+                        source_id,
+                        definition["selection"]["sheet_index"],
+                        definition["selection"]["header_row"],
+                        definition["selection"]["mapping"],
                         settings=get_settings(),
                     )
             except DraftScopeError as exc:
@@ -186,7 +212,11 @@ def _page(
             selected_profile=selected_profile,
             selected_profile_meta=selected_profile_meta,
             selected_decision=selected_decision,
+            row_observations=row_observations,
+            row_observation_preview=row_observation_preview,
             profile_decisions_allowed=PROFILE_DECISIONS,
+            row_item_kinds=ROW_ITEM_KINDS,
+            row_evidence_states=ROW_EVIDENCE_STATES,
             fields=FIELDS,
             dataset_kinds=DATASET_KINDS,
             price_meanings=PRICE_MEANINGS,
@@ -452,6 +482,163 @@ def download_pricing_profile_decision(
         headers={
             "Content-Disposition": (
                 f'attachment; filename="pricing-profile-decision-{decision_id}.json"'
+            ),
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+    "{profile_id}/rows/{row_number}/preview",
+    response_class=HTMLResponse,
+)
+def preview_pricing_row_observation(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+    row_number: int,
+    form: FormData,
+) -> HTMLResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    if set(form) != {
+        "csrf_token",
+        "item_kind",
+        "normalized_reference",
+        "evidence_state",
+        "review_reason",
+        "unresolved_fields",
+    }:
+        raise HTTPException(422, "Review only the selected exact pricing row")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        preview = pricing.preview_row_observation(
+            db,
+            user,
+            draft_id,
+            source_id,
+            profile_id,
+            row_number,
+            form["item_kind"],
+            form["normalized_reference"],
+            form["evidence_state"],
+            form["review_reason"],
+            _unresolved_fields(form["unresolved_fields"]),
+            settings=get_settings(),
+        )
+        return _page(
+            request,
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            source_id,
+            profile_id,
+            form=form,
+            row_observation_preview=preview,
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    except ValueError as exc:
+        raise HTTPException(422, "Choose a valid row interpretation") from exc
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+    "{profile_id}/rows/{row_number}/observations"
+)
+def save_pricing_row_observation(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+    row_number: int,
+    form: FormData,
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    if set(form) != {
+        "csrf_token",
+        "item_kind",
+        "normalized_reference",
+        "evidence_state",
+        "review_reason",
+        "unresolved_fields",
+        "profile_sha256",
+        "decision_sha256",
+        "row_sha256",
+        "preview_hash",
+    }:
+        raise HTTPException(422, "Save only the previewed exact pricing row")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        pricing.save_row_observation(
+            db,
+            user,
+            draft_id,
+            source_id,
+            profile_id,
+            row_number,
+            form["item_kind"],
+            form["normalized_reference"],
+            form["evidence_state"],
+            form["review_reason"],
+            _unresolved_fields(form["unresolved_fields"]),
+            form["profile_sha256"],
+            form["decision_sha256"],
+            form["row_sha256"],
+            form["preview_hash"],
+            settings=get_settings(),
+        )
+        db.commit()
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(422, "Choose a valid row interpretation") from exc
+    return RedirectResponse(
+        f"/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/{profile_id}",
+        303,
+    )
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+    "{profile_id}/observations/{observation_id}/download"
+)
+def download_pricing_row_observation(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+    observation_id: str,
+) -> Response:
+    user = _user(request, db)
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        content = pricing.row_observation_bytes(
+            db, user, draft_id, source_id, profile_id, observation_id
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return Response(
+        content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="pricing-row-observation-{observation_id}.json"'
             ),
             "Cache-Control": "no-store",
             "X-Content-Type-Options": "nosniff",
