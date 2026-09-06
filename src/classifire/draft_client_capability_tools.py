@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse, Response
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
+from pydantic import StrictInt
 from sqlalchemy.orm import Session, sessionmaker
 
 from .config import get_settings
@@ -27,9 +28,11 @@ from .services import draft_client_capabilities as capabilities
 from .services import draft_client_requests as commands
 from .services import draft_estimate_reports as estimate_reports
 from .services import draft_estimates as estimates
+from .services import draft_pricing_intake as pricing
 from .services import draft_scope as scopes
 from .services import draft_scope_reports as scope_reports
 from .services import draft_system_matches as matches
+from .services.draft_source_intake import MAX_SOURCES
 
 Kind = Literal["system-match", "estimate", "scope-report", "estimate-report"]
 
@@ -138,6 +141,116 @@ def register(
                 return {"releases": matches.list_technical_releases(db, actor)}
             except scopes.DraftScopeError as exc:
                 raise ToolError(exc.code) from None
+
+    @server.tool(
+        annotations=read,
+        meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ, ESTIMATE]}]},
+    )
+    def list_pricing_sources(draft_id: str) -> dict[str, Any]:
+        """List retained workbook metadata for an owned Draft. Library read permission is
+        also required. Ready is metadata only; preview verifies current source bytes.
+        Upload and scan remain separate actions in the standalone UI.
+        """
+        with _client_session(factory) as db:
+            try:
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, READ, draft_id)
+                capabilities.require(db, authority, principal, ESTIMATE)
+                return {
+                    "sources": pricing.intake().list_sources(db, actor, draft_id),
+                    "limit": MAX_SOURCES,
+                }
+            except scopes.DraftScopeError as exc:
+                raise ToolError(exc.code) from None
+
+    @server.tool(
+        annotations=read,
+        meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ, ESTIMATE]}]},
+    )
+    def preview_pricing_rows(
+        draft_id: str,
+        source_id: str,
+        sheet_index: StrictInt = 1,
+        header_row: StrictInt = 1,
+        mapping: capabilities.PricingMapping | None = None,
+        after_row: StrictInt = 0,
+    ) -> dict[str, Any]:
+        """Inspect five workbook rows after an actual worksheet row number. Without a
+        mapping, show sheet summaries and sample cells capped at 200 characters with
+        explicit truncation markers. With a complete mapping, return exact mapped cells,
+        row hashes and unresolved problems. No rate is applied or formula evaluated.
+        Requires estimating scope, current library read permission and verified source.
+        """
+        with _client_session(factory) as db:
+            try:
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, READ, draft_id)
+                capabilities.require(db, authority, principal, ESTIMATE)
+                if any(type(value) is not int for value in (sheet_index, header_row, after_row)):
+                    raise scopes.DraftScopeError("PRICING_MAPPING_INVALID", 422)
+                settings = get_settings()
+                source, document, _ = pricing.intake()._document(
+                    db, actor, draft_id, source_id, settings.storage_root
+                )
+                sheets = document["sheets"]
+                if not 1 <= sheet_index <= len(sheets):
+                    raise scopes.DraftScopeError("PRICING_MAPPING_INVALID", 422)
+                sheet = sheets[sheet_index - 1]
+                if not 1 <= header_row <= sheet["rows"] or not 0 <= after_row <= sheet["rows"]:
+                    raise scopes.DraftScopeError("PRICING_MAPPING_INVALID", 422)
+                limit = 5
+                if mapping is not None:
+                    source, mapped = pricing.preview(
+                        db,
+                        actor,
+                        draft_id,
+                        source_id,
+                        sheet_index,
+                        header_row,
+                        mapping.model_dump(),
+                        settings=settings,
+                    )
+                    remaining = [row for row in mapped if row["row"] > after_row]
+                    rows = remaining[:limit]
+                    return {
+                        "mode": "mapped",
+                        "source": capabilities.pricing_source_binding(source),
+                        "rows": rows,
+                        "next_after_row": rows[-1]["row"] if len(remaining) > limit else None,
+                        "limit": limit,
+                    }
+                end_row = min(after_row + limit, sheet["rows"])
+                samples = []
+                for number in range(after_row + 1, end_row + 1):
+                    cells = []
+                    for cell in sheet["cells"]:
+                        if cell["row"] != number:
+                            continue
+                        value = cell["value"]
+                        cells.append(
+                            cell
+                            | {
+                                "value": value[:200],
+                                "truncated": len(value) > 200,
+                                "original_length": len(value),
+                            }
+                        )
+                    samples.append({"row": number, "cells": cells})
+                return {
+                    "mode": "unmapped",
+                    "source": capabilities.pricing_source_binding(source),
+                    "sheets": [
+                        {key: item[key] for key in ("index", "name", "rows", "columns")}
+                        for item in sheets
+                    ],
+                    "rows": samples,
+                    "next_after_row": end_row if end_row < sheet["rows"] else None,
+                    "limit": limit,
+                }
+            except scopes.DraftScopeError as exc:
+                raise ToolError(exc.code) from None
+            except (ValueError, TypeError, KeyError, IndexError):
+                raise ToolError("PRICING_MAPPING_INVALID") from None
 
     @server.tool(annotations=read, meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ]}]})
     def list_capability_artifacts(

@@ -2,102 +2,106 @@
 
 ## Evidence-based snapshot
 
-Verified 2026-09-06 AEST against isolated source, Git/GitHub, synthetic tests and the
-running UI. Shared main: `fd60bb82538c248b73a14e09dd71bec7493ba7da`, merged PR #205.
-Its main CI 34014555539 succeeded. Current branch:
-`feat/client-measured-review-20260906`, worktree
-`C:\CLASSIFIRE\.tmp\client-measured-review-20260906`.
-This is a pre-publication checkpoint; inspect the branch's live PR/head/CI before
-assuming its current increment is merged.
+Verified 2026-09-06 AEST against isolated source, Git/GitHub and synthetic tests.
+Shared baseline: `58c7d4aefad87d714a8922d060fbfa2e68b446bb`, merged PR #206;
+main CI 34017405923 succeeded. Current increment: `feat/client-workbook-pricing-20260906`
+in `C:\CLASSIFIRE\.tmp\client-workbook-pricing-20260906`. This is an implementation
+checkpoint; inspect live head/PR/CI and the publication receipt before assuming this
+increment is merged. No production deployment or release is claimed.
 
-ADRs 0001/0002 remain accepted: one deterministic modular core, independently callable
-capabilities, portable explicit revisions and optional AI. The database and retained
-storage govern live state. OpenClaw retirement and production release remain unproven.
+ADRs 0001/0002 remain accepted: one deterministic modular core, four independently
+callable capabilities, portable explicit revisions and optional AI. The database
+and retained storage govern live state. OpenClaw retirement remains a separate,
+unproven protection-replacement milestone.
 
 | Capability | Verified bounded implementation | Remaining product gap |
 | --- | --- | --- |
-| Scope | Manual Draft editor, saved/imported revisions, retained PDF page review; MCP create/read/edit | More evidence formats and structured evidence-to-Defect/Opening/Service drafting; full governed analysis |
-| System matching | Saved candidates/notes and partial thickness/gap/service-size checks; current branch adds both measured-review client commands | Full authorized applicability and source interpretation; numeric checks do not approve compatibility |
-| Estimating | Independent manual estimates, overrides/omit/restore and standalone retained workbook row selection; client manual operations merged PR #205 | Client workbook row preview/application, broader validated price bases and full recovery chain |
-| Reporting | Four independent saved Draft PDF/XLSX profiles; client operations and exact downloads | Production acceptance, professional refinement and governed close-out/release |
-| Portability | Selected v1 ZIP; editable new-project import and v2 retained-origin re-export | Complete project/source/history coverage, existing-project merge and production retention |
-| ChatGPT-facing boundary | Optional MCP identity mapping and same-human browser confirmation across all four capability families | Real OAuth/account linking, HTTPS deployment, in-chat files and production operations |
+| Scope | Manual Draft editor/import, retained PDF observations, MCP create/read/edit | Page-linked structured Defect/Opening/Service drafting, more formats and full analysis |
+| System matching | Saved candidates/notes and partial thickness/gap/service-size reviews; measured client commands merged PR #206 | Full authorized applicability and source interpretation; numeric comparisons do not approve compatibility |
+| Estimating | Manual estimates/history and retained workbook selection; this increment adds client preview and human-confirmed selection | Broader validated price bases, extrapolation and complete recovery chain |
+| Reporting | Four independent saved Draft PDF/XLSX profiles with exact client downloads | Production acceptance, professional refinement and governed close-out/release |
+| Portability | Selected v1 ZIP, editable new-project import and retained-origin v2 re-export | Complete project/source/history coverage, existing-project merge and production retention |
+| ChatGPT-facing boundary | Optional MCP identity mapping and separate same-human confirmation | Real OAuth/account linking, HTTPS deployment, in-chat files and production operations |
 
-## Active work and verification
+## Active work and verified checks
 
-The current increment exposes `review_match_constraints` and `review_match_service_size`
-through the existing typed capability request. Strict inputs reuse the shared validator;
-only separate browser confirmation calls `save_constraint_review`. No migration,
-domain rule, scope or dependency was added. Preparation saves only a proposal and binds
-the current Match revision. The human sees proposed values separately from the saved
-measurement record; the embedded saved panel has no authoring form.
+`list_pricing_sources` and `preview_pricing_rows` expose owned retained workbooks
+through existing source containment. The client inspects columns, explicitly maps
+exact cells and proposes `apply_workbook_rate` for a saved Estimate line. Upload/scan
+remains in the UI. Preparing a request never applies a rate; the same human inspects
+source/line details and separately confirms or rejects in the browser.
 
-Current technical grants, human permissions and ownership still apply. Confirmation
-rechecks source integrity/quarantine, release, candidate/target and staleness. Failed
-commands leave no partial revision/decision; imported source claims confer no local
-authority. v3 cannot be downgraded to drop size history. Reports retain explicit reviewed
-inputs; later changes flag staleness without changing their bytes.
+The request binds expected Estimate revision, target line, source/document/scan/row
+identities, mapping and recovery note. Confirmation rechecks current rights and
+shared pricing validation before one atomic revision. Old pending manual commands
+keep their input hashes. Original rates, exact cells, unapproved selection and later
+overrides remain in history. No new migration, dependency, OAuth scope, pricing
+engine, canonical authority or automatic capability chaining.
 
-Verified in this increment:
-
-- Existing measurement/UI/client regression: **54 passed**. New measured-client
-  suite: **9 passed** covering human confirmation/rejection, invalid numeric inputs,
-  permissions and protected history, stale/replayed/revoked requests, source byte/
-  quarantine/limit changes, unknown candidates, downgrade and real synthetic ZIP import.
-- Official MCP SDK + Chrome: both input formats, saved/proposed comparison, no early
-  Match write, confirm/reject, within/outside/unresolved checks and no browser errors.
-- Scope-and-system and complete reports capture the exact reviewed Match; **four
-  PDF/XLSX downloads match browser/client bytes**. Later review and an actual process
-  restart preserve those files and historical Match revision 3, while current revision
-  4 retains the unresolved revised size interpretation. Rejection persists.
-- All 17 generated PDF pages contain text. XLSX measurement sections retain the saved
-  size meanings and partial/unapproved status; these outputs contain no formulas.
-  The PDF's saved technical summary was visually inspected.
-- Synthetic database inspection: zero canonical estimates, lines, openings, services
-  or Physical Model Locks. The seeded technical source is labelled fixture metadata,
-  not a claimed real scan, technical approval or provider result.
-- Mypy passed 193 source files; Ruff/Bandit passed. Single unchanged Alembic head:
-  `0037_draft_client_capabilities`.
-- The served logo exactly matches the supplied PNG, SHA-256
+- Pricing/client-pricing suite: **26 passed** in 148.09 seconds. Added history-rights
+  case and client/Estimate/report regression: **161 passed** in 400.70 seconds.
+  Total **187 passed**, including real disposable PostgreSQL confirmation concurrency;
+  no skips in these successful runs.
+- Coverage includes exact provenance, no early writes, rejection/replay, overrides,
+  current rights/ownership, stale revisions, changed bytes/scans/documents, quarantine,
+  unsupported/formula rates, old pending requests and immutable report/reopen behavior.
+- Ruff/Bandit passed; Mypy passed **193 source files**. Single unchanged migration
+  head: `0037_draft_client_capabilities`.
+- Repository logo matches the supplied PNG exactly, SHA-256
   `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
 
-The previous PR #205 exact-head CI passed 1,502 tests on unchanged retry attempt 2;
-its first worker timed out without a reported assertion failure. Main CI succeeded.
-This is prior milestone evidence, separate from this branch's required checks.
+Official MCP SDK + Chrome completed the retained-source recovery and pricing journey:
+source/column discovery, exact mapped D2 preview, rejection without a rate change,
+confirmation at 120.25, then override to 135 retaining original 1.005 and all three
+history events. Four browser/client PDF/XLSX downloads matched exact saved hashes.
+An actual process restart preserved current revision 4, historical revision 3,
+rejected requests and those outputs. No browser errors were reported. The actual source-review panel and current
+Estimate/approved-logo header were visually inspected.
 
-## Project health and local context
+Both PDFs were inspected: seven total pages, all with text; the complete report's
+source/history page was visually checked. Both XLSX files retain D2 and 120.25 as
+source data, with no formulas. Read-only synthetic database counts were zero for
+canonical estimates, lines, openings, services and Physical Model Locks.
 
-The demonstrated synthetic Draft workflows work. Production Phase 8-14 exits, real
-evidence, full technical suitability, estimating breadth and Human Release remain
-unproven. AI is optional; no inference provider was used. Real OAuth operations,
-tenancy, retention, scaling and production acceptance require separate validation.
+The first actual scan failed closed with stale definitions; a duplicate upload into
+a new synthetic project was also refused. The original source was preserved and
+rescanned through a separate native scanner: genuine ClamAV 1.4.4 / daily 28115,
+published 2026-09-06T06:26:06Z, clean at 07:29:29Z. No freshness limit, verdict, clock
+or assertion was weakened. These were environment/harness recovery steps, not domain
+changes. The old scanner/demos and both synthetic projects remain preserved.
 
-Current demo: `http://127.0.0.1:8814/scopes`, marked directory
-`C:\CLASSIFIRE\.tmp\client-measured-demo-20260906`. Earlier demos/worktrees remain.
-Current changes are two client dispatch/validation files, two review templates,
-one synthetic test file and aligned documentation. No logo bytes or domain rules changed.
+Previous milestone: PR #206 exact-head CI 34015890493 attempt 2 passed 1,511 tests;
+main CI succeeded. Its first worker timed out without a reported assertion failure.
+Current increment CI/publication remains separate from that baseline evidence.
+
+## Project health and local changes
+
+The demonstrated synthetic Draft capabilities are useful prototypes. Production
+Phase 8-14 exits, real evidence acceptance, full technical suitability, estimating
+breadth, tenancy/retention and Human Release remain unproven. No AI provider or
+customer data is required for the current slice.
+
+Changes: client command/read/request handling, shared pricing-row presentation,
+confirmation panel, focused tests, a separately marked demo database choice and
+aligned documents. AGENTS.md remains accurate. No pricing rules, logo bytes or
+migration history changed. Demo: `http://127.0.0.1:8815/scopes`, marked
+`C:\CLASSIFIRE\.tmp\client-pricing-demo-20260906`; no production deployment.
+
 The legacy root remains on `gpt/phase8-linked-original-images` with four DU conflicts
-and pre-existing staged/unstaged work, verified read-only with untracked enumeration
-disabled. None of that recovery work or older local artifacts was changed/staged.
+and pre-existing staged/unstaged work, inspected read-only with untracked enumeration
+disabled. Nothing there was reset, resolved or staged. Earlier worktrees, demos and
+receipts are unrelated preserved artifacts.
 
 ## Recommended Next Actions
 
-1. Verify/finalize this increment's exact-head checks, PR and merge; the handoff
-   distinguishes this documentation checkpoint from the live publication result.
-2. Add client preview and human-confirmed application of one already retained/scanned
-   XLSX row to an existing Estimate line. The UI/shared `draft_pricing_intake` service
-   already implements this useful source-backed path; the client currently does not.
-   Preserve source/cell hashes, units, recovery notes and original/override history.
-3. Trial the usable workflows with users and prioritize evidence-to-structured-Draft
-   analysis. Existing PDF review saves observations, but does not propose linked
-   physical entities. Avoid indefinite client polish before filling that domain gap.
+1. Finish this increment's safe exact-head publication;
+   reconcile the live PR/merge result before starting another branch.
+2. Deliver one source-linked structured Draft workflow from a retained PDF page.
+   `review_page` currently saves observations; the graph/editor already supports
+   Defects/Openings/Services. Scope v3 provenance binds only observations, so add the
+   smallest compatible entity/page binding through existing revision/report/package
+   services. Keep unknown facts unknown and AI optional.
+3. Trial that complete interaction with users; prioritize observed problems over
+   indefinite client parity polish.
 
 [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the executable next-session prompt.
-
-
-Final local checkpoint: affected client/measurement/report regression **147 passed,
-one PostgreSQL test skipped** in 299.47 seconds. The PostgreSQL confirmation race
-remains for required CI; no local PostgreSQL execution is claimed for this increment.
-The final browser confirmation, saved-measurement comparison and supplied logo were
-visually inspected. Documentation links and diff whitespace checks passed. Exact-head
-CI, PR and merge remain the publication steps at this checkpoint; verify them live.

@@ -39,6 +39,7 @@ def main() -> None:
         choices=(
             "classifire_draft_pdf_demo",
             "classifire_draft_pricing_demo",
+            "classifire_draft_client_pricing_demo",
             "classifire_draft_import_demo",
         ),
         default="classifire_draft_pdf_demo",

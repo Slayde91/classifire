@@ -29,6 +29,22 @@
 {% include 'draft_system_match_content.html' %}
 {% if envelope.get('constraint_review') %}{% include 'draft_constraint_review.html' %}{% endif %}
 {% endwith %}{% endif %}
+{% if capability_inputs.pricing is defined %}
+<section class="panel" aria-labelledby="workbook-rate-heading">
+<h2 id="workbook-rate-heading">Proposed workbook rate</h2>
+<p>Workbook: <strong>{{ capability_inputs.pricing.source.filename }}</strong>. This is an unapproved source selection. It does not establish technical suitability or activate a pricing library.</p>
+<details><summary>Retained workbook identity</summary>{{ fields(capability_inputs.pricing.source) }}</details>
+{% with row=capability_inputs.pricing.row, pricing_cells_open=true %}
+{% include 'draft_pricing_row_content.html' %}
+{% if row.problems %}<ul>{% for problem in row.problems %}<li>{{ problem|replace('_', ' ')|capitalize }}</li>{% endfor %}</ul>{% endif %}
+{% endwith %}
+{% with line=capability_inputs.pricing.target_line %}
+<h3>Selected saved line</h3><p>{{ line.description }}</p>
+<dl class="scope-import-details"><dt>Quantity / unit</dt><dd>{{ line.quantity if line.quantity is not none else 'Unknown' }} / {{ line.unit }}</dd><dt>Current unit sell rate</dt><dd>{{ line.unit_sell_rate if line.unit_sell_rate is not none else 'Unknown' }}</dd><dt>Original unit sell rate</dt><dd>{{ line.original_rate if line.original_rate is not none else 'Unknown' }}</dd></dl>
+{% endwith %}
+<p>Check that the inclusions, exclusions and units cover this line without duplicate recovery. Only confirmation can apply this row; saved totals below have not changed.</p>
+</section>
+{% endif %}
 {% if capability_inputs.estimate %}<h2>Selected saved Estimate</h2><p>These are the saved values. Proposed edits above have not been applied to these totals.</p>{% with envelope=capability_inputs.estimate, scope=capability_inputs.estimate.scope, form_values={}, can_edit=false, draft={"id": payload.operation.draft_id} %}{% include 'draft_estimate_content.html' %}{% endwith %}{% endif %}
 {% endif %}
 {% else %}<h2>Save a project package</h2><p>Only these saved revisions and reports are included. Unselected and restricted sources remain outside this export.</p><dl class="scope-import-details">{% for key,value in payload.selection.items() %}<dt>{{ key|replace('_', ' ')|capitalize }}</dt><dd>{{ value if value is not none else 'Not included' }}</dd>{% endfor %}</dl>{% endif %}

@@ -182,13 +182,20 @@ The independent-client increment merged in PR #205 adds Match retrieval/review, 
 creation/edits and all four report profiles, sharing saved artifacts and exact downloads.
 See PROJECT_STATE.md for measured proof and publication. No implicit capability chain.
 
-The current increment adds the existing measured-constraint/service-size review to
-that confirmed client path. Next, expose preview and human-confirmed application of
-one already retained/scanned XLSX row to an Estimate line using the existing pricing
-service. Then prioritize user trial and evidence-to-structured-Draft analysis, whose
-missing defect/opening/service drafting behavior remains a larger product gap.
-Keep prototype feedback ahead of broad polish; real OAuth/account/deployment decisions
-remain separate and no core rewrite is needed.
+Measured-constraint/service-size client review is merged in PR #206. The current
+`feat/client-workbook-pricing-20260906` increment exposes retained XLSX
+source discovery, exact mapped-row preview and human-confirmed application to an
+existing Estimate line through the shared pricing service. Local validation passed;
+PROJECT_STATE.md records proof and the publication checkpoint.
+
+The next product priority is one source-linked structured Draft interaction from an
+already retained PDF page: inspect the page, draft/edit separate Defects, Openings and
+Services, preview the graph and evidence links, then explicitly save and reopen it.
+Use the existing editor and deterministic services, with a versioned provenance
+extension for entity claims. Unknown facts remain unknown. AI proposal generation
+can follow the working human review path; it is not a prerequisite for this slice.
+Trial this workflow with users before broad polish. Real OAuth/account/deployment
+work remains separate, and the approved modular core does not need a rewrite.
 
 The full goal remains active: broader Scope analysis, actual applicability, pricing
 defaults/inference, complete package coverage/exchange, ChatGPT and production readiness
