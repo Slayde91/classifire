@@ -21,6 +21,16 @@ FIELDS = (
     "exclusions",
 )
 REQUIRED_MAPPING = ("reference", "description", "unit", "rate", "currency", "tax_basis")
+PROFILE_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-SOURCE-PROFILE-v1"
+DATASET_KINDS = ("general_pricelist", "firefly_system_prices")
+PRICE_MEANINGS = (
+    "unknown",
+    "buy_cost",
+    "list_price",
+    "sell_price",
+    "quoted_price",
+    "actual_price",
+)
 
 
 def validate_mapping(mapping: Any, columns: int) -> None:
@@ -95,6 +105,288 @@ def preview_rows(
         row["sha256"] = digest(row)
         result.append(row)
     return result
+
+
+def validate_dataset_kind(value: Any) -> str:
+    if type(value) is not str or value not in DATASET_KINDS:
+        raise ValueError("dataset kind")
+    return value
+
+
+def validate_price_meaning(value: Any) -> str:
+    if type(value) is not str or value not in PRICE_MEANINGS:
+        raise ValueError("price meaning")
+    return value
+
+
+def profile_definition(
+    document: dict[str, Any],
+    *,
+    draft_scope_id: str,
+    source_id: str,
+    dataset_id: str,
+    dataset_kind: str,
+    dataset_version: int,
+    source_sha256: str,
+    source_size_bytes: int,
+    original_filename: str,
+    document_sha256: str,
+    sheet_index: int,
+    header_row: int,
+    mapping: dict[str, int | None],
+    price_meaning: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    validate_dataset_kind(dataset_kind)
+    validate_price_meaning(price_meaning)
+    rows = preview_rows(document, sheet_index, header_row, mapping)
+    sheet = document["sheets"][sheet_index - 1]
+    cells = {(cell["row"], cell["column"]): cell for cell in sheet["cells"]}
+    header_cells = {
+        field: cells.get((header_row, column)) if column is not None else None
+        for field, column in mapping.items()
+    }
+    problem_counts: dict[str, int] = {}
+    for row in rows:
+        for problem in row["problems"]:
+            problem_counts[problem] = problem_counts.get(problem, 0) + 1
+    gaps = [field + "_unmapped" for field in FIELDS if mapping[field] is None]
+    if price_meaning == "unknown":
+        gaps.append("price_meaning_unknown")
+    if dataset_kind == "general_pricelist":
+        gaps.append("item_kind_not_supported_by_current_mapping")
+    else:
+        gaps.extend(
+            (
+                "system_manufacturer_not_supported_by_current_mapping",
+                "system_configuration_not_supported_by_current_mapping",
+            )
+        )
+    if problem_counts:
+        gaps.append("row_anomalies_require_review")
+    definition = {
+        "schema_version": PROFILE_SCHEMA,
+        "draft_scope_id": draft_scope_id,
+        "dataset": {
+            "id": dataset_id,
+            "kind": dataset_kind,
+            "version": dataset_version,
+        },
+        "source": {
+            "id": source_id,
+            "sha256": source_sha256,
+            "size_bytes": source_size_bytes,
+            "original_filename": original_filename,
+            "document_sha256": document_sha256,
+        },
+        "selection": {
+            "sheet_index": sheet_index,
+            "sheet_name": sheet["name"],
+            "header_row": header_row,
+            "mapping": mapping,
+            "header_cells": header_cells,
+        },
+        "commercial_basis": {"price_meaning": price_meaning},
+        "diagnostics": {
+            "sheet_rows": sheet["rows"],
+            "sheet_columns": sheet["columns"],
+            "data_rows": len(rows),
+            "usable_rate_rows": sum(not row["problems"] for row in rows),
+            "unresolved_rows": sum(bool(row["problems"]) for row in rows),
+            "problem_counts": dict(sorted(problem_counts.items())),
+            "mapped_fields": [field for field in FIELDS if mapping[field] is not None],
+            "unmapped_fields": [field for field in FIELDS if mapping[field] is None],
+            "gaps": list(dict.fromkeys(gaps)),
+        },
+        "approval_status": "unapproved",
+        "effects": {
+            "library_activated": False,
+            "estimate_changed": False,
+            "system_matching_performed": False,
+            "price_inference_performed": False,
+        },
+    }
+    validate_profile_definition(definition)
+    return definition, rows
+
+
+def _profile_id(value: Any) -> None:
+    if type(value) is not str or not 1 <= len(value) <= 36:
+        raise ValueError("profile identity")
+
+
+def _profile_hash(value: Any, *, optional: bool = False) -> None:
+    if optional and value is None:
+        return
+    if type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise ValueError("profile hash")
+
+
+def _profile_cell(value: Any, row: int, column: int | None) -> None:
+    if column is None:
+        if value is not None:
+            raise ValueError("profile header cell")
+        return
+    if type(value) is not dict or set(value) != {"address", "row", "column", "kind", "value"}:
+        raise ValueError("profile header cell")
+    from openpyxl.utils.cell import get_column_letter  # type: ignore[import-untyped]
+
+    if (
+        value["row"] != row
+        or value["column"] != column
+        or value["address"] != get_column_letter(column) + str(row)
+        or value["kind"] not in ("text", "number", "date", "formula", "boolean", "error")
+        or type(value["value"]) is not str
+        or len(value["value"]) > 4000
+    ):
+        raise ValueError("profile header cell")
+
+
+def validate_profile_definition(value: Any) -> None:
+    if type(value) is not dict or set(value) != {
+        "schema_version",
+        "draft_scope_id",
+        "dataset",
+        "source",
+        "selection",
+        "commercial_basis",
+        "diagnostics",
+        "approval_status",
+        "effects",
+    }:
+        raise ValueError("profile definition")
+    if value["schema_version"] != PROFILE_SCHEMA or value["approval_status"] != "unapproved":
+        raise ValueError("profile authority")
+    _profile_id(value["draft_scope_id"])
+    dataset = value["dataset"]
+    if type(dataset) is not dict or set(dataset) != {"id", "kind", "version"}:
+        raise ValueError("profile dataset")
+    _profile_id(dataset["id"])
+    validate_dataset_kind(dataset["kind"])
+    if type(dataset["version"]) is not int or dataset["version"] < 1:
+        raise ValueError("profile dataset version")
+    source = value["source"]
+    if type(source) is not dict or set(source) != {
+        "id",
+        "sha256",
+        "size_bytes",
+        "original_filename",
+        "document_sha256",
+    }:
+        raise ValueError("profile source")
+    _profile_id(source["id"])
+    _profile_hash(source["sha256"])
+    _profile_hash(source["document_sha256"])
+    if type(source["size_bytes"]) is not int or not 1 <= source["size_bytes"] <= 10485760:
+        raise ValueError("profile source size")
+    if (
+        type(source["original_filename"]) is not str
+        or not 1 <= len(source["original_filename"]) <= 200
+    ):
+        raise ValueError("profile source name")
+    selection = value["selection"]
+    if type(selection) is not dict or set(selection) != {
+        "sheet_index",
+        "sheet_name",
+        "header_row",
+        "mapping",
+        "header_cells",
+    }:
+        raise ValueError("profile selection")
+    if type(selection["sheet_index"]) is not int or not 1 <= selection["sheet_index"] <= 10:
+        raise ValueError("profile sheet")
+    if type(selection["sheet_name"]) is not str or not 1 <= len(selection["sheet_name"]) <= 31:
+        raise ValueError("profile sheet")
+    if type(selection["header_row"]) is not int or not 1 <= selection["header_row"] <= 1000:
+        raise ValueError("profile header")
+    validate_mapping(selection["mapping"], 50)
+    if type(selection["header_cells"]) is not dict or set(selection["header_cells"]) != set(FIELDS):
+        raise ValueError("profile header cells")
+    for field in FIELDS:
+        _profile_cell(
+            selection["header_cells"][field],
+            selection["header_row"],
+            selection["mapping"][field],
+        )
+    basis = value["commercial_basis"]
+    if type(basis) is not dict or set(basis) != {"price_meaning"}:
+        raise ValueError("profile basis")
+    validate_price_meaning(basis["price_meaning"])
+    diagnostics = value["diagnostics"]
+    if type(diagnostics) is not dict or set(diagnostics) != {
+        "sheet_rows",
+        "sheet_columns",
+        "data_rows",
+        "usable_rate_rows",
+        "unresolved_rows",
+        "problem_counts",
+        "mapped_fields",
+        "unmapped_fields",
+        "gaps",
+    }:
+        raise ValueError("profile diagnostics")
+    for key, maximum in (("sheet_rows", 1000), ("sheet_columns", 50), ("data_rows", 999)):
+        if type(diagnostics[key]) is not int or not 0 <= diagnostics[key] <= maximum:
+            raise ValueError("profile diagnostics count")
+    for key in ("usable_rate_rows", "unresolved_rows"):
+        if type(diagnostics[key]) is not int or diagnostics[key] < 0:
+            raise ValueError("profile diagnostics count")
+    if diagnostics["usable_rate_rows"] + diagnostics["unresolved_rows"] != diagnostics["data_rows"]:
+        raise ValueError("profile diagnostics total")
+    if (
+        type(diagnostics["mapped_fields"]) is not list
+        or diagnostics["mapped_fields"]
+        != [field for field in FIELDS if selection["mapping"][field]]
+        or type(diagnostics["unmapped_fields"]) is not list
+        or diagnostics["unmapped_fields"]
+        != [field for field in FIELDS if not selection["mapping"][field]]
+        or type(diagnostics["problem_counts"]) is not dict
+        or any(
+            type(key) is not str or type(count) is not int or count < 1
+            for key, count in diagnostics["problem_counts"].items()
+        )
+        or type(diagnostics["gaps"]) is not list
+        or len(diagnostics["gaps"]) != len(set(diagnostics["gaps"]))
+        or any(type(gap) is not str or not 1 <= len(gap) <= 100 for gap in diagnostics["gaps"])
+    ):
+        raise ValueError("profile diagnostics")
+    if value["effects"] != {
+        "library_activated": False,
+        "estimate_changed": False,
+        "system_matching_performed": False,
+        "price_inference_performed": False,
+    }:
+        raise ValueError("profile effects")
+    if len(canonical(value)) > 131072:
+        raise ValueError("profile size")
+
+
+def validate_profile_envelope(value: Any) -> None:
+    if type(value) is not dict or set(value) != {
+        "schema_version",
+        "profile_id",
+        "revision",
+        "parent_profile_sha256",
+        "created_at",
+        "created_by_id",
+        "definition",
+        "definition_sha256",
+    }:
+        raise ValueError("profile envelope")
+    if value["schema_version"] != PROFILE_SCHEMA:
+        raise ValueError("profile schema")
+    _profile_id(value["profile_id"])
+    _profile_id(value["created_by_id"])
+    if type(value["revision"]) is not int or value["revision"] < 1:
+        raise ValueError("profile revision")
+    _profile_hash(value["parent_profile_sha256"], optional=True)
+    if type(value["created_at"]) is not str or not 1 <= len(value["created_at"]) <= 64:
+        raise ValueError("profile timestamp")
+    validate_profile_definition(value["definition"])
+    _profile_hash(value["definition_sha256"])
+    if value["definition_sha256"] != digest(value["definition"]):
+        raise ValueError("profile definition hash")
+    if len(canonical(value)) > 131072:
+        raise ValueError("profile size")
 
 
 def validate_selection(selection: Any, lines: list[dict[str, Any]]) -> None:

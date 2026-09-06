@@ -1023,6 +1023,21 @@ class DraftPricingSource(RecordMixin, Base):
             "source_size_bytes > 0 AND source_size_bytes <= 10485760",
             name="ck_draft_pricing_source_size",
         ),
+        CheckConstraint(
+            "(dataset_id IS NULL AND dataset_kind IS NULL AND dataset_version IS NULL) OR "
+            "(dataset_id IS NOT NULL AND dataset_kind IN "
+            "('general_pricelist', 'firefly_system_prices') AND dataset_version >= 1)",
+            name="ck_draft_pricing_source_dataset_identity",
+        ),
+        UniqueConstraint(
+            "draft_scope_id",
+            "dataset_kind",
+            "dataset_version",
+            name="uq_draft_pricing_source_dataset_version",
+        ),
+        UniqueConstraint(
+            "dataset_id", "dataset_version", name="uq_draft_pricing_source_stable_version"
+        ),
     )
     draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
     stored_file_id: Mapped[str] = mapped_column(String(36), nullable=False)
@@ -1034,6 +1049,37 @@ class DraftPricingSource(RecordMixin, Base):
     processing_error: Mapped[str | None] = mapped_column(String(80))
     document_json: Mapped[str | None] = mapped_column(Text)
     document_sha256: Mapped[str | None] = mapped_column(String(64))
+    dataset_id: Mapped[str | None] = mapped_column(String(36), index=True)
+    dataset_kind: Mapped[str | None] = mapped_column(String(32), index=True)
+    dataset_version: Mapped[int | None] = mapped_column(Integer)
+
+
+class DraftPricingSourceProfile(RecordMixin, Base):
+    """Append-only unapproved interpretation of one exact Draft pricing source version."""
+
+    __tablename__ = "draft_pricing_source_profiles"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_id", "revision", name="uq_draft_pricing_source_profile_revision"
+        ),
+        CheckConstraint("revision >= 1", name="ck_draft_pricing_source_profile_revision"),
+        CheckConstraint(
+            "length(profile_json) > 0 AND length(profile_json) <= 131072",
+            name="ck_draft_pricing_source_profile_size",
+        ),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_scopes.id"), index=True, nullable=False
+    )
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_pricing_sources.id"), index=True, nullable=False
+    )
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_profile_sha256: Mapped[str | None] = mapped_column(String(64))
+    profile_json: Mapped[str] = mapped_column(Text, nullable=False)
+    profile_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
 class DraftScopeReport(RecordMixin, Base):

@@ -200,28 +200,25 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: optional interpretation, then A/B source profiles
+## Immediate delivery priority: review retained A/B source profiles
 
-PDF graph review is merged in PR #209. Excel defect-register mapping is merged in
-PR #210 at `d2640defd00c23892691da79990a510bee59b2a0`; its required PR and main CI
-passed. Preserve both manual intake paths, shared graph review and exact history.
+PDF/Excel graph review and optional one-page suggestions are merged through PR #211.
+Preserve their manual fallback, shared graph review, exact history and bounded optional
+AI boundary. Do not make live-provider deployment or OpenClaw retirement a prototype
+prerequisite.
 
-The active `feat/draft-pdf-suggestions-20260906` increment adds optional one-page
-text/image suggestions. The configured OpenAI adapter is disabled by default;
-synthetic/scripted browser proof and mocked transport tests do not establish live
-AI accuracy. Suggestions are retained apart from Scope. A human inspects, edits or
-rejects them, then explicitly confirms a v6 Draft revision carrying original proposed
-values and source/inference provenance. Dimensions and quantities start unknown.
-Finish the supported-path validation and publication recorded in PROJECT_STATE.md.
-Do not make live-provider deployment or OpenClaw retirement a prototype prerequisite.
+The current bounded A/B profile increment gives a user an explicit general source A or
+Firefly system-price source B choice, stable source versions, inspectable sheet/header/
+column and commercial-basis gaps, and append-only unapproved profile save/reopen/download.
+Finish its evidence-based publication as recorded in PROJECT_STATE.md.
 
-The next bounded engineering interaction is the A/B source-profile UI in the approved
-technical-corpus/dual-pricing track. A user declares general source A or Firefly system
-price source B, inspects supported sheet/header/column mappings and commercial-basis
-gaps, then explicitly saves and reopens an unapproved versioned profile. Reuse retained
-pricing intake and shared validation. A filename does not establish dataset identity,
-cost/sell/tax/currency basis or approval. No prices are activated or inferred by this
-profile. Use synthetic fixtures until actual sources and processing are authorized.
+The next visible interaction is a small T12 human decision on an exact saved profile.
+An authorized reviewer can approve, reject or request revision with a reason and inspect
+immutable history. Reuse current review, permission, audit and revision services. This
+decision must not import or activate rows, match systems, infer prices, modify an Estimate
+or grant technical/release authority. Follow with one reviewed A observation or B-system
+mapping vertical slice. Use synthetic fixtures until actual source rights and semantics
+are verified.
 
 T1-T14 dependencies remain: reviewed identities and field claims, immutable recipes,
 lineage-aware holdouts and measured coverage precede derived costing/calibration.
