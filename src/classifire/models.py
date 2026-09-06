@@ -1082,6 +1082,47 @@ class DraftPricingSourceProfile(RecordMixin, Base):
     created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class DraftPricingSourceProfileDecision(RecordMixin, Base):
+    """Append-only human decision bound to one exact pricing source profile."""
+
+    __tablename__ = "draft_pricing_source_profile_decisions"
+    __table_args__ = (
+        UniqueConstraint("profile_id", name="uq_draft_pricing_profile_decision_profile"),
+        CheckConstraint(
+            "profile_revision >= 1", name="ck_draft_pricing_profile_decision_revision"
+        ),
+        CheckConstraint(
+            "decision IN ('approve', 'reject', 'request_revision')",
+            name="ck_draft_pricing_profile_decision_value",
+        ),
+        CheckConstraint(
+            "length(reason) > 0 AND length(reason) <= 4000",
+            name="ck_draft_pricing_profile_decision_reason",
+        ),
+        CheckConstraint(
+            "length(decision_json) > 0 AND length(decision_json) <= 16384",
+            name="ck_draft_pricing_profile_decision_size",
+        ),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_scopes.id"), index=True, nullable=False
+    )
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_pricing_sources.id"), index=True, nullable=False
+    )
+    profile_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_pricing_source_profiles.id"), index=True, nullable=False
+    )
+    profile_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    profile_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    decision: Mapped[str] = mapped_column(String(32), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    decision_json: Mapped[str] = mapped_column(Text, nullable=False)
+    decision_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    reviewed_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
 class DraftScopeReport(RecordMixin, Base):
     """Retained scope-only Draft snapshot and its two exact rendered outputs."""
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from datetime import UTC, datetime
 from typing import Any
 
 from .draft_system_match_contract import canonical, digest
@@ -22,6 +23,8 @@ FIELDS = (
 )
 REQUIRED_MAPPING = ("reference", "description", "unit", "rate", "currency", "tax_basis")
 PROFILE_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-SOURCE-PROFILE-v1"
+PROFILE_DECISION_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-SOURCE-PROFILE-DECISION-v1"
+PROFILE_DECISIONS = ("approve", "reject", "request_revision")
 DATASET_KINDS = ("general_pricelist", "firefly_system_prices")
 PRICE_MEANINGS = (
     "unknown",
@@ -387,6 +390,54 @@ def validate_profile_envelope(value: Any) -> None:
         raise ValueError("profile definition hash")
     if len(canonical(value)) > 131072:
         raise ValueError("profile size")
+
+
+def validate_profile_decision_envelope(value: Any) -> None:
+    if type(value) is not dict or set(value) != {
+        "schema_version",
+        "decision_id",
+        "draft_scope_id",
+        "source_id",
+        "profile_id",
+        "profile_revision",
+        "profile_sha256",
+        "decision",
+        "reason",
+        "reviewed_at",
+        "reviewed_by_id",
+        "effects",
+    }:
+        raise ValueError("profile decision envelope")
+    if value["schema_version"] != PROFILE_DECISION_SCHEMA:
+        raise ValueError("profile decision schema")
+    for key in ("decision_id", "draft_scope_id", "source_id", "profile_id", "reviewed_by_id"):
+        _profile_id(value[key])
+    if type(value["profile_revision"]) is not int or value["profile_revision"] < 1:
+        raise ValueError("profile decision revision")
+    _profile_hash(value["profile_sha256"])
+    if value["decision"] not in PROFILE_DECISIONS:
+        raise ValueError("profile decision")
+    reason = value["reason"]
+    if type(reason) is not str or reason != reason.strip() or not 1 <= len(reason) <= 4000:
+        raise ValueError("profile decision reason")
+    try:
+        reviewed_at = datetime.fromisoformat(value["reviewed_at"])
+    except (TypeError, ValueError) as exc:
+        raise ValueError("profile decision timestamp") from exc
+    if reviewed_at.tzinfo is None or reviewed_at.utcoffset() != UTC.utcoffset(reviewed_at):
+        raise ValueError("profile decision timestamp")
+    if value["effects"] != {
+        "rows_ingested": False,
+        "library_activated": False,
+        "technical_approval_granted": False,
+        "system_matching_performed": False,
+        "price_inference_performed": False,
+        "estimate_changed": False,
+        "release_performed": False,
+    }:
+        raise ValueError("profile decision effects")
+    if len(canonical(value)) > 16384:
+        raise ValueError("profile decision size")
 
 
 def validate_selection(selection: Any, lines: list[dict[str, Any]]) -> None:

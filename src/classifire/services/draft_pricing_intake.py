@@ -17,18 +17,28 @@ from sqlalchemy.orm import Session
 
 from ..audit import record_audit
 from ..config import Settings
-from ..models import DraftPricingSource, DraftPricingSourceProfile, DraftScope, User, new_id
+from ..models import (
+    DraftPricingSource,
+    DraftPricingSourceProfile,
+    DraftPricingSourceProfileDecision,
+    DraftScope,
+    User,
+    new_id,
+)
 from . import draft_estimates as estimates
 from .draft_estimate_contract import line_amount
 from .draft_pricing_contract import (
+    PROFILE_DECISION_SCHEMA,
+    PROFILE_DECISIONS,
     PROFILE_SCHEMA,
     digest,
     preview_rows,
     profile_definition,
     validate_dataset_kind,
+    validate_profile_decision_envelope,
     validate_profile_envelope,
 )
-from .draft_scope import DraftScopeError, _atomic, get_draft
+from .draft_scope import DraftScopeError, _actor, _atomic, get_draft
 from .draft_source_intake import DraftSourceIntake, SourcePolicy
 from .draft_system_match_contract import canonical
 
@@ -323,6 +333,260 @@ def list_profiles(
         }
         for row in rows
     ]
+
+
+def _decision_value(
+    source: DraftPricingSource,
+    profile: DraftPricingSourceProfile,
+    row: DraftPricingSourceProfileDecision,
+) -> dict[str, Any]:
+    _profile_value(source, profile)
+    try:
+        raw = row.decision_json.encode("utf-8")
+        value = json.loads(raw)
+        validate_profile_decision_envelope(value)
+        if (
+            len(raw) > 16384
+            or hashlib.sha256(raw).hexdigest() != row.decision_sha256
+            or value["decision_id"] != row.id
+            or value["draft_scope_id"] != row.draft_scope_id
+            or value["source_id"] != row.source_id
+            or value["profile_id"] != row.profile_id
+            or value["profile_revision"] != row.profile_revision
+            or value["profile_sha256"] != row.profile_sha256
+            or value["decision"] != row.decision
+            or value["reason"] != row.reason
+            or value["reviewed_by_id"] != row.reviewed_by_id
+            or row.draft_scope_id != profile.draft_scope_id
+            or row.source_id != profile.source_id
+            or row.profile_id != profile.id
+            or row.profile_revision != profile.revision
+            or row.profile_sha256 != profile.profile_sha256
+        ):
+            raise ValueError("profile decision binding")
+    except (ValueError, TypeError, KeyError, UnicodeError, json.JSONDecodeError) as exc:
+        raise DraftScopeError("PRICING_PROFILE_DECISION_INTEGRITY_FAILED", 409) from exc
+    return cast(dict[str, Any], value)
+
+
+def list_profile_decisions(
+    db: Session, actor: User, draft_id: str, source_id: str
+) -> list[dict[str, Any]]:
+    _, source_row = intake()._source(db, actor, draft_id, source_id)
+    source = cast(DraftPricingSource, source_row)
+    latest_revision = db.scalar(
+        select(func.max(DraftPricingSourceProfile.revision)).where(
+            DraftPricingSourceProfile.source_id == source_id,
+            DraftPricingSourceProfile.draft_scope_id == draft_id,
+        )
+    )
+    rows = db.execute(
+        select(DraftPricingSourceProfileDecision, DraftPricingSourceProfile)
+        .join(
+            DraftPricingSourceProfile,
+            DraftPricingSourceProfile.id == DraftPricingSourceProfileDecision.profile_id,
+        )
+        .where(
+            DraftPricingSourceProfileDecision.source_id == source_id,
+            DraftPricingSourceProfileDecision.draft_scope_id == draft_id,
+        )
+        .order_by(DraftPricingSourceProfileDecision.created_at.desc())
+        .limit(MAX_PROFILE_REVISIONS)
+    ).all()
+    return [
+        {
+            "id": decision.id,
+            "profile_id": profile.id,
+            "profile_revision": profile.revision,
+            "decision_sha256": decision.decision_sha256,
+            "reviewed_at": decision.created_at,
+            "reviewed_by": cast(User, db.get(User, decision.reviewed_by_id)).full_name,
+            "is_current": profile.revision == latest_revision,
+            "value": _decision_value(source, profile, decision),
+        }
+        for decision, profile in rows
+    ]
+
+
+def _decision_row(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    decision_id: str,
+) -> tuple[DraftPricingSource, DraftPricingSourceProfile, DraftPricingSourceProfileDecision]:
+    source, profile = _profile_row(db, actor, draft_id, source_id, profile_id)
+    row = db.scalar(
+        select(DraftPricingSourceProfileDecision).where(
+            DraftPricingSourceProfileDecision.id == decision_id,
+            DraftPricingSourceProfileDecision.profile_id == profile_id,
+            DraftPricingSourceProfileDecision.source_id == source_id,
+            DraftPricingSourceProfileDecision.draft_scope_id == draft_id,
+        )
+    )
+    if row is None:
+        raise DraftScopeError("PRICING_PROFILE_DECISION_NOT_FOUND", 404)
+    return source, profile, row
+
+
+def read_profile_decision(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    decision_id: str,
+) -> dict[str, Any]:
+    source, profile, row = _decision_row(
+        db, actor, draft_id, source_id, profile_id, decision_id
+    )
+    return _decision_value(source, profile, row)
+
+
+def profile_decision_bytes(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    decision_id: str,
+) -> bytes:
+    source, profile, row = _decision_row(
+        db, actor, draft_id, source_id, profile_id, decision_id
+    )
+    _decision_value(source, profile, row)
+    return row.decision_json.encode("utf-8")
+
+
+def save_profile_decision(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    expected_profile_sha256: str,
+    decision: str,
+    reason: str,
+) -> dict[str, Any]:
+    with _atomic(db):
+        source, _ = _profile_row(db, actor, draft_id, source_id, profile_id)
+        actor = _actor(db, actor, "pricing:approve")
+        source_api = intake()
+        source_api._postgres(db)
+        source = cast(
+            DraftPricingSource,
+            db.scalar(
+                select(DraftPricingSource)
+                .where(
+                    DraftPricingSource.id == source_id,
+                    DraftPricingSource.draft_scope_id == draft_id,
+                )
+                .execution_options(populate_existing=True)
+                .with_for_update()
+            ),
+        )
+        profile = db.scalar(
+            select(DraftPricingSourceProfile)
+            .where(
+                DraftPricingSourceProfile.id == profile_id,
+                DraftPricingSourceProfile.source_id == source_id,
+                DraftPricingSourceProfile.draft_scope_id == draft_id,
+            )
+            .execution_options(populate_existing=True)
+            .with_for_update()
+        )
+        if profile is None:
+            raise DraftScopeError("PRICING_PROFILE_NOT_FOUND", 404)
+        _profile_value(source, profile)
+        latest = db.scalar(
+            select(DraftPricingSourceProfile)
+            .where(
+                DraftPricingSourceProfile.source_id == source_id,
+                DraftPricingSourceProfile.draft_scope_id == draft_id,
+            )
+            .order_by(DraftPricingSourceProfile.revision.desc())
+            .limit(1)
+            .with_for_update()
+        )
+        if latest is None or latest.id != profile.id:
+            raise DraftScopeError("PRICING_PROFILE_STALE", 409)
+        if expected_profile_sha256 != profile.profile_sha256:
+            raise DraftScopeError("PRICING_PROFILE_CHANGED", 409)
+        existing = db.scalar(
+            select(DraftPricingSourceProfileDecision).where(
+                DraftPricingSourceProfileDecision.profile_id == profile_id
+            )
+        )
+        if existing is not None:
+            raise DraftScopeError("PRICING_PROFILE_ALREADY_REVIEWED", 409)
+        normalized_reason = reason.strip() if type(reason) is str else reason
+        if decision not in PROFILE_DECISIONS or type(normalized_reason) is not str:
+            raise DraftScopeError("PRICING_PROFILE_DECISION_INVALID", 422)
+        reviewed = datetime.now(UTC)
+        decision_id = new_id()
+        envelope = {
+            "schema_version": PROFILE_DECISION_SCHEMA,
+            "decision_id": decision_id,
+            "draft_scope_id": draft_id,
+            "source_id": source_id,
+            "profile_id": profile_id,
+            "profile_revision": profile.revision,
+            "profile_sha256": profile.profile_sha256,
+            "decision": decision,
+            "reason": normalized_reason,
+            "reviewed_at": reviewed.isoformat(),
+            "reviewed_by_id": actor.id,
+            "effects": {
+                "rows_ingested": False,
+                "library_activated": False,
+                "technical_approval_granted": False,
+                "system_matching_performed": False,
+                "price_inference_performed": False,
+                "estimate_changed": False,
+                "release_performed": False,
+            },
+        }
+        try:
+            validate_profile_decision_envelope(envelope)
+            raw = canonical(envelope)
+        except (ValueError, TypeError, KeyError) as exc:
+            raise DraftScopeError("PRICING_PROFILE_DECISION_INVALID", 422) from exc
+        row = DraftPricingSourceProfileDecision(
+            id=decision_id,
+            draft_scope_id=draft_id,
+            source_id=source_id,
+            profile_id=profile_id,
+            profile_revision=profile.revision,
+            profile_sha256=profile.profile_sha256,
+            decision=decision,
+            reason=normalized_reason,
+            decision_json=raw.decode("utf-8"),
+            decision_sha256=hashlib.sha256(raw).hexdigest(),
+            reviewed_by_id=actor.id,
+            created_at=reviewed,
+            updated_at=reviewed,
+        )
+        db.add(row)
+        draft = get_draft(db, actor, draft_id)
+        record_audit(
+            db,
+            actor=actor,
+            action="draft_pricing.profile.review",
+            entity_type="draft_pricing_source_profile_decision",
+            entity_id=row.id,
+            project_id=draft.project_id,
+            new_value={
+                "decision": decision,
+                "profile_id": profile_id,
+                "profile_revision": profile.revision,
+                "profile_sha256": profile.profile_sha256,
+                "decision_sha256": row.decision_sha256,
+            },
+            reason=normalized_reason,
+        )
+        db.flush()
+        return envelope
 
 
 def save_profile(

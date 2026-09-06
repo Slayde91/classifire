@@ -1,10 +1,10 @@
 # CLASSIFIRE Master Roadmap
 
-**Status:** Active; prototype-first delivery approved 2026-09-05. PDF/Excel report
-review and optional bounded PDF suggestions are merged through PR #211.
-**Verified shared-main baseline:** `ae6ca72a95cd623f5088c9adfb6729d6fa276770`.
-PR #211 CI passed 1,835 tests; main run 34037569758 succeeded. The active candidate
-is the minimum T1/T5/T7 A/B pricing-source profile interaction with migration 0040.
+**Status:** Active; prototype-first delivery approved 2026-09-05. PDF/Excel review,
+bounded PDF suggestions and A/B source profiles are merged through PR #212.
+**Verified shared-main baseline:** `205cf277ea86f6a47697e617465c8ab102ed8107`.
+PR #213 corrected the CI timeout and main run 34047634074 succeeded. The active
+candidate is the early-T12 exact-profile human review interaction with migration 0041.
 [PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;
 synthetic profile proof is not real-workbook semantic validation.
 Production Phase 8-14 and OpenClaw retirement remain separately gated.
@@ -14,11 +14,10 @@ plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.m
 ## 1. Delivery decision
 
 **Build a working, testable UI prototype before broad fine tuning.** Preserve the
-delivered manual graph, PDF/Excel review and optional suggestion workflows. Finish and
-publish the bounded A/B workbook profile interaction: explicit source kind, retained
-version, inspectable mapping/basis gaps, no-write preview and unapproved profile history.
-Then add a small human profile-review interaction before reviewed row ingestion or
-mapping. Reuse existing pricing/source/review services; do not start bulk extraction,
+  delivered manual graph, PDF/Excel review, optional suggestion and A/B profile workflows.
+  Finish and publish the bounded exact-profile human review interaction, then seal the
+  T13 evaluation lineage/holdout manifest before one reviewed A/B row-mapping path.
+  Reuse existing pricing/source/review services; do not start bulk extraction,
 model tuning or a replacement agent fleet to achieve these screens.
 
 The four capabilities remain independently callable: scope analysis, system
@@ -96,7 +95,7 @@ prototype into it.
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
 | **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
-| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; minimum T1/T5/T7 A/B profile candidate implemented/tested; profile review and full T5-T13 remain active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain source/profile revisions and inspect identity, cells, units, price meaning and gaps. Next record an immutable human profile decision, then add reviewed observations/mappings, coverage and separate bottom-up/comparable proposals. Preserve Estimate independence and recovery checks; a profile is not an approved library. |
+| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; T1/T5/T7 A/B profiles merged PR #212; early-T12 exact-profile review implemented/tested candidate; full T5-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain source/profile/decision history and inspect identity, cells, units, price meaning and gaps. Next seal T13 lineage, then add one reviewed observation/mapping path before coverage and separate bottom-up/comparable proposals. Preserve Estimate independence and recovery checks; a reviewed profile is not an approved library. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
 | **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
@@ -105,8 +104,9 @@ prototype into it.
 
 **Current delivery order:** P0, P1a, P4a, P2a, P3a, all three additional P4b
 profiles, PDF observations/graph/optional suggestions P1b (through PR #211), partial
-measured P2b and generic pricing XLSX P3b are merged. The bounded A/B profile candidate
-is implemented and tested pending publication. The
+measured P2b and generic pricing XLSX P3b are merged. The bounded A/B profile is merged
+in PR #212; the exact-profile human review candidate is implemented and tested pending
+publication. The
 selected-package P5 increment has a real configuration/save/download/reconfiguration/
 restart journey merged in PR #200; later P5 client parity is merged through PR #207.
 Do not rebuild these slices.
@@ -226,44 +226,42 @@ means suppressing known errors, weakening tests or bypassing permissions.
 | Technical corpus and dual-pricing breadth | **Retained separate track.** T1-T14 still requires A/B profile, reviewed identity/technical mapping, bounded scale and validated estimation. The completed PDF/Excel reviews and current optional suggestion interaction precede the A/B profile. |
 | Source-linked structured PDF Draft editor | **Completed bounded increment, PR #209.** Preserve its demonstrated v4 review/history and shared services; do not rebuild it or infer production admission. |
 | Excel defect-register mapping | **Completed bounded increment, PR #210.** Explicit sheet/header/column/row review, Scope v5 cells/image occurrences and 0038; preserve demonstrated browser/restart/output history. |
-| Optional evidence interpretation | **Active bounded increment.** One PDF page through a Draft-specific optional adapter, retained generation, shared human review and Scope v6; synthetic proof, manual fallback and no automatic approval. |
+| Optional evidence interpretation | **Completed bounded increment, PR #211.** One PDF page through a Draft-specific optional adapter, retained generation, shared human review and Scope v6; synthetic proof, manual fallback and no automatic approval. |
 | Existing domain guards, exact-byte reads, snapshot integrity, scoped review and CI | **Retained foundations.** Reuse them; avoid parallel business pipelines or regression. |
 | Legacy draft PRs #9-#13 / dirty root | **Recovery context.** Do not bulk-merge or overwrite. |
 
 ### Immediate next action
 
-Finish the active A/B profile candidate's diff review, exact-head CI and publication.
-Then implement the smallest **T12 pricing-source profile review** interaction: an
-authorized human records approve/reject/request-revision with a reason against the exact
-saved profile hash, and can reopen/download immutable decision history. This is next
-because source identity and interpretation are now visible but still unapproved. Reuse
-existing review/permission/audit/revision services. Approval must not ingest rows,
-activate a library, match systems, infer prices or reprice an Estimate. Establish the
-T13 sealed lineage/holdout policy before any prediction feature selection; one reviewed
-A-row or B-system mapping vertical slice follows the review contract.
+Finish the active **T12 pricing-source profile review** candidate's full validation,
+diff review, exact-head CI and publication. It records one approve/reject/request-revision
+decision with a reason against an exact profile hash and preserves immutable download and
+stale history without ingesting rows, activating a library, matching systems, inferring
+prices or repricing an Estimate. Then establish and test the T13 sealed lineage/holdout
+manifest before prediction feature selection. One reviewed A-row observation/component
+mapping or B-system mapping vertical slice follows those two contracts.
 Current evidence and exact handoff remain in PROJECT_STATE.md and SESSION_HANDOFF.md.
 This sequence grants no customer-source, live-provider, canonical-write or deployment
 authority. OpenClaw protection parity remains a separate gated track.
 
 ### Technical-corpus and dual-pricing delivery stages
 
-**Status: active implementation.** The minimum visible part of T1/T5/T7 is implemented
-and tested as a candidate; the stages remain incomplete until reviewed ingestion,
+**Status: active implementation.** The minimum visible part of T1/T5/T7 is merged and
+the early-T12 review is an implemented/tested candidate; the stages remain incomplete until reviewed ingestion,
 mapping, capacity and their stated acceptance evidence exist. Existing
 technical intake, release governance, Package 14 records and Draft pricing are foundations to extend,
 not proof of this new end-to-end capability. Detailed contracts and methods belong in
 [Technical Corpus and Dual Pricing Design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md).
 
 T1-T14 are dependency labels, not a requirement for fourteen large sequential builds.
-Within this track, first deliver the thin source-profile interaction; then one reviewed
-technical and pricing mapping path, then measured bulk capacity, then estimation and calibrated
-combination. Start the T12 review contract and T13 price-lineage holdout manifest
-while designing T1/T5/T7, before price predictions or feature selection can contaminate
-the evaluation. Every exposed slice includes its UI, minimum persistence and tests.
+Within this track, publish the profile-review interaction; then seal T13 lineage before
+one reviewed technical/pricing mapping path, measured bulk capacity, estimation and
+calibrated combination. The T13 price-lineage holdout manifest must precede price
+predictions or feature selection that could contaminate evaluation. Every exposed slice
+includes its UI, minimum persistence and tests.
 
 | Delivery band | Included work and dependency gate |
 | --- | --- |
-| **First visible corpus/pricing slice** | **Implemented/tested candidate:** minimum T1 + T5 + T7 distinct A/B source identity, versioned retained profile preview/save/reopen/download with synthetic data; publication pending; no library publication or price inference. |
+| **First visible corpus/pricing slice** | **A/B profile merged PR #212; review candidate implemented/tested:** minimum T1 + T5 + T7 identity/profile history and early-T12 exact-profile decision with synthetic data; no library publication or price inference. |
 | **Reviewed vertical slice** | Minimum T2-T4 plus T6/T8: one retained technical source/configuration, fact provenance and reviewed component/system mappings; reuse applicable source-review infrastructure while keeping defect and technical authority separate. T12 review states and the T13 holdout policy must be established before this band. |
 | **Controlled breadth and scale** | Expand T2-T8 through bounded resumable imports, deduplication/reprocessing, proper pagination and representative retained sources; T9 coverage exposes gaps. Measure capacity before declaring hundreds/thousands supported. |
 | **Explainable estimating prototype** | T10 separate bottom-up and comparable proposals, T12 review UI, immutable quantities/labour/assumptions and T13 evaluation. T11 comparison is visible before calibrated combination is enabled. |
@@ -271,8 +269,8 @@ the evaluation. Every exposed slice includes its UI, minimum persistence and tes
 
 #### T1. Minimum canonical schema and version contracts
 
-**Status:** minimum Draft source identity/version/profile contract implemented and
-tested in the active candidate; normalized technical/commercial records remain active.
+**Status:** minimum Draft source identity/version/profile contract merged; early-T12
+decision contract implemented/tested in the active candidate; normalized records remain active.
 
 - **Objective/scope:** distinguish source identity, normalized technical facts and
   observed versus derived commercial data without redesigning the application.
@@ -341,7 +339,7 @@ tested in the active candidate; normalized technical/commercial records remain a
 #### T5. Dataset A ingestion: general products and services
 
 **Status:** bounded A identity/version/profile preview-save-reopen implemented and
-tested with synthetic input; reviewed row ingestion/mapping remains upcoming.
+Exact-profile human review is implemented/tested in the current candidate.
 
 - **Objective/scope:** profile, then normalize `pricelist.xlsx` as a distinct source
   of products, materials, labour and services; do not assume all rows are buy costs.
@@ -377,6 +375,7 @@ tested with synthetic input; reviewed row ingestion/mapping remains upcoming.
 
 **Status:** bounded B identity/version/profile preview-save-reopen implemented and
 tested with synthetic input; verified real semantics, scale and system mapping remain upcoming.
+Exact-profile human review is implemented/tested in the current candidate.
 
 - **Objective/scope:** profile, then ingest `pricing_library.xlsx` as distinct observed
   Firefly system-price evidence, including the requested 1,000+ entries when verified.
@@ -458,6 +457,9 @@ tested with synthetic input; verified real semantics, scale and system mapping r
   that hides disagreement or appears more precise than either input.
 
 #### T12. Confidence, proposals and human review
+
+**Status:** early exact-profile decision UI/service/persistence implemented and tested
+in the active candidate; mapping, price-proposal, override and confidence review remain upcoming.
 
 - **Objective/scope:** make uncertain prices and technical mappings inspectable and
   correctable without silently converting proposals into commercial/technical truth.
@@ -654,10 +656,10 @@ new immutable manifest and audit event. A technical-only database constraint
 prevents concurrent publication from leaving two active technical releases.
 
 **Remaining / prioritised amendment:** minimum T1/T5/T7 source identity/profile contracts
-are implemented in the active candidate. Next add the T12 human profile decision, then
-continue T2-T8 technical-document processing/fact review, resolution/provenance, reviewed
-A observations and component/activity mappings, and reviewed B system mappings. Seal T13
-lineage/holdout policy before prediction work. Extend existing technical/product/labour/
+are merged and the early-T12 human profile decision is implemented in the active candidate.
+Next seal the T13 lineage/holdout policy, then continue T2-T8 processing/fact review,
+resolution/provenance, reviewed A observations/component mappings and reviewed B system
+mappings. Extend existing technical/product/labour/
 pricing/release models; no source filename or profile approval grants downstream authority.
 
 The legacy Package 14 CSV path is not either new XLSX importer. Close its release

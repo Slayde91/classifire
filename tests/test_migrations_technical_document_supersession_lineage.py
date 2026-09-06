@@ -27,6 +27,6 @@ def test_technical_document_lineage_migration_upgrades_0015_database(tmp_path: P
     ]
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0040_draft_pricing_source_profiles"
+            "0041_draft_pricing_profile_decisions"
         )
     engine.dispose()
