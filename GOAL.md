@@ -200,25 +200,24 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: review retained A/B source profiles
+## Immediate delivery priority: seal evaluation lineage, then map one reviewed row
 
 PDF/Excel graph review and optional one-page suggestions are merged through PR #211.
 Preserve their manual fallback, shared graph review, exact history and bounded optional
 AI boundary. Do not make live-provider deployment or OpenClaw retirement a prototype
 prerequisite.
 
-The current bounded A/B profile increment gives a user an explicit general source A or
+The merged bounded A/B profile increment gives a user an explicit general source A or
 Firefly system-price source B choice, stable source versions, inspectable sheet/header/
 column and commercial-basis gaps, and append-only unapproved profile save/reopen/download.
-Finish its evidence-based publication as recorded in PROJECT_STATE.md.
+The current candidate adds one immutable approve/reject/request-revision decision against
+an exact profile hash, with reviewer/time/reason history, stale status and exact download.
+It grants no row, library, system, Estimate, technical or release authority.
 
-The next visible interaction is a small T12 human decision on an exact saved profile.
-An authorized reviewer can approve, reject or request revision with a reason and inspect
-immutable history. Reuse current review, permission, audit and revision services. This
-decision must not import or activate rows, match systems, infer prices, modify an Estimate
-or grant technical/release authority. Follow with one reviewed A observation or B-system
-mapping vertical slice. Use synthetic fixtures until actual source rights and semantics
-are verified.
+After publishing that interaction, establish the smallest T13 sealed lineage/holdout
+manifest before prediction feature selection or evaluation. Then build one reviewed A
+observation/component mapping or B-system mapping vertical slice. Use synthetic fixtures
+until actual source rights and semantics are verified.
 
 T1-T14 dependencies remain: reviewed identities and field claims, immutable recipes,
 lineage-aware holdouts and measured coverage precede derived costing/calibration.

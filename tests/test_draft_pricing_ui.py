@@ -35,10 +35,24 @@ def test_upload_map_select_download_and_http_boundaries(pdf_app, monkeypatch):
         envelope = estimates.add_line(db, actor, x.ids[2], estimate.id, 1, add_payload())
         line_id = envelope["lines"][0]["line_id"]
         base = f"/scopes/{x.ids[2]}/estimates/{estimate.id}"
+        db.add(
+            User(
+                email="admin@scope.example.test",
+                full_name="Synthetic pricing reviewer",
+                password_hash=actor.password_hash,
+                role="administrator",
+                is_active=True,
+            )
+        )
         db.commit()
-    with TestClient(x.app) as client, TestClient(x.app) as other:
+    with (
+        TestClient(x.app) as client,
+        TestClient(x.app) as other,
+        TestClient(x.app) as admin,
+    ):
         _login(client)
         _login(other, "other")
+        _login(admin, "admin")
         page = client.get(base + "/pricing")
         assert page.status_code == 200
         invalid_kind = client.post(
@@ -106,6 +120,35 @@ def test_upload_map_select_download_and_http_boundaries(pdf_app, monkeypatch):
         profile_download = client.get(profile.headers["location"] + "/download")
         assert profile_download.status_code == 200
         assert profile_download.json()["definition"]["dataset"]["kind"] == "general_pricelist"
+        review_path = profile.headers["location"] + "/decisions"
+        profile_hash = re.search(
+            r'name="profile_sha256" value="([0-9a-f]{64})"',
+            admin.get(profile.headers["location"]).text,
+        ).group(1)
+        review_form = {
+            "csrf_token": _csrf(profile_page.text),
+            "profile_sha256": profile_hash,
+            "decision": "approve",
+            "reason": "The exact mapping and sell-price declaration were checked.",
+        }
+        assert client.post(review_path, data=review_form).status_code == 403
+        admin_page = admin.get(profile.headers["location"])
+        review_form["csrf_token"] = _csrf(admin_page.text)
+        reviewed = admin.post(review_path, data=review_form, follow_redirects=False)
+        assert reviewed.status_code == 303, reviewed.text
+        reopened = client.get(profile.headers["location"])
+        assert "Human review decision" in reopened.text
+        assert "Approve" in reopened.text
+        assert "exact mapping and sell-price declaration" in reopened.text
+        decision_path = re.search(
+            r'href="([^"]+/decisions/[^"]+/download)"', reopened.text
+        ).group(1)
+        decision_download = client.get(decision_path)
+        assert decision_download.status_code == 200
+        assert decision_download.json()["profile_sha256"] == profile_hash
+        assert decision_download.json()["effects"]["estimate_changed"] is False
+        review_form["csrf_token"] = _csrf(admin.get(profile.headers["location"]).text)
+        assert admin.post(review_path, data=review_form).status_code == 409
         assert client.get(base + "/download?revision=2").status_code == 200
         with x.factory() as db:
             assert db.get(DraftEstimate, estimate.id).latest_revision == 2

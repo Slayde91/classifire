@@ -7,8 +7,8 @@ from dataclasses import asdict, dataclass
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-CLEAN_STACK_HEAD = "0040_draft_pricing_source_profiles"
-PREVIOUS_CLEAN_STACK_HEAD = "0039_draft_pdf_suggestions"
+CLEAN_STACK_HEAD = "0041_draft_pricing_profile_decisions"
+PREVIOUS_CLEAN_STACK_HEAD = "0040_draft_pricing_source_profiles"
 # Preserve recognized upgrade lineages as the current head advances.
 MIGRATION_REQUIRED_HEADS = frozenset(
     {
@@ -23,6 +23,7 @@ MIGRATION_REQUIRED_HEADS = frozenset(
         "0037_draft_client_capabilities",
         "0038_draft_scope_xlsx_sources",
         "0039_draft_pdf_suggestions",
+        "0040_draft_pricing_source_profiles",
     }
 )
 LEGACY_CLEAN_STACK_HEAD = "0007_reconcile_adjudicated_admission_lineages"
@@ -35,6 +36,7 @@ REQUIRED_TABLES = frozenset(
         "draft_imported_report_sources",
         "draft_pricing_sources",
         "draft_pricing_source_profiles",
+        "draft_pricing_source_profile_decisions",
         "draft_pdf_sources",
         "draft_scope_xlsx_sources",
         "draft_pdf_suggestions",

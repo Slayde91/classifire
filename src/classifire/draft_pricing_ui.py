@@ -15,7 +15,12 @@ from .security import verify_csrf
 from .services import draft_pricing_intake as pricing
 from .services import malware_scan
 from .services.draft_estimates import read_estimate_revision
-from .services.draft_pricing_contract import DATASET_KINDS, FIELDS, PRICE_MEANINGS
+from .services.draft_pricing_contract import (
+    DATASET_KINDS,
+    FIELDS,
+    PRICE_MEANINGS,
+    PROFILE_DECISIONS,
+)
 from .services.draft_scope import DraftScopeError, get_draft
 from .ui import _context, _require, templates
 from .ui_uploads import single_file
@@ -80,15 +85,23 @@ def _page(
     document = None
     rows: list[dict[str, Any]] = []
     profiles: list[dict[str, Any]] = []
+    profile_decisions: list[dict[str, Any]] = []
     profile_preview = None
     selected_profile = None
+    selected_profile_meta = None
+    selected_decision = None
     values = form or {}
     source_api = pricing.intake()
     if source_id is not None:
         source = pricing.source_info(db, user, draft_id, source_id)
         profiles = pricing.list_profiles(db, user, draft_id, source_id)
+        profile_decisions = pricing.list_profile_decisions(db, user, draft_id, source_id)
         if profile_id is not None:
             selected_profile = pricing.read_profile(db, user, draft_id, source_id, profile_id)
+            selected_profile_meta = next(item for item in profiles if item["id"] == profile_id)
+            selected_decision = next(
+                (item for item in profile_decisions if item["profile_id"] == profile_id), None
+            )
             definition = selected_profile["definition"]
             values = {
                 "sheet_index": str(definition["selection"]["sheet_index"]),
@@ -168,8 +181,12 @@ def _page(
             document=document,
             rows=rows,
             profiles=profiles,
+            profile_decisions=profile_decisions,
             profile_preview=profile_preview,
             selected_profile=selected_profile,
+            selected_profile_meta=selected_profile_meta,
+            selected_decision=selected_decision,
+            profile_decisions_allowed=PROFILE_DECISIONS,
             fields=FIELDS,
             dataset_kinds=DATASET_KINDS,
             price_meanings=PRICE_MEANINGS,
@@ -361,6 +378,81 @@ def download_pricing_profile(
         media_type="application/json",
         headers={
             "Content-Disposition": f'attachment; filename="pricing-profile-{profile_id}.json"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+    "{profile_id}/decisions"
+)
+def review_pricing_profile(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+    form: FormData,
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    if set(form) != {"csrf_token", "profile_sha256", "decision", "reason"}:
+        raise HTTPException(422, "Review only the selected pricing source profile")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        saved = pricing.save_profile_decision(
+            db,
+            user,
+            draft_id,
+            source_id,
+            profile_id,
+            form["profile_sha256"],
+            form["decision"],
+            form["reason"],
+        )
+        db.commit()
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return RedirectResponse(
+        f"/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+        + saved["profile_id"],
+        303,
+    )
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+    "{profile_id}/decisions/{decision_id}/download"
+)
+def download_pricing_profile_decision(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+    decision_id: str,
+) -> Response:
+    user = _user(request, db)
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        content = pricing.profile_decision_bytes(
+            db, user, draft_id, source_id, profile_id, decision_id
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return Response(
+        content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="pricing-profile-decision-{decision_id}.json"'
+            ),
             "Cache-Control": "no-store",
             "X-Content-Type-Options": "nosniff",
         },

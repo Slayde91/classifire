@@ -3,12 +3,12 @@
 ## Evidence-based current snapshot
 
 Verified 2026-09-07 from the isolated worktree
-`C:\CLASSIFIRE\.tmp\pricing-source-profiles-20260907`, branch
-`feat/pricing-source-profiles-20260907`. The branch is based on shared main
-`ae6ca72a95cd623f5088c9adfb6729d6fa276770`, merged PDF-suggestion PR #211.
-PR #211 exact-head CI passed 1,835 tests and post-merge main run 34037569758
-succeeded. The A/B profile increment described below is a tested, uncommitted source
-checkpoint until its own commit, PR, required checks and merge are verified.
+`C:\CLASSIFIRE\.tmp\pricing-profile-review-20260907`, branch
+`feat/pricing-profile-review-20260907`. It is based on shared main
+`205cf277ea86f6a47697e617465c8ab102ed8107`: A/B profile PR #212 is merged and
+the PR #213 validation-timeout correction has exact shared-main run 34047634074
+green. The T12 review increment below remains candidate source until its commit,
+PR, required checks and merge are verified.
 
 ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic application
 with independently callable Scope, System Match, Estimate and Reporting capabilities,
@@ -19,12 +19,12 @@ this pricing increment neither invokes it nor proves retirement parity.
 | --- | --- | --- |
 | Scope | Manual graph; retained PDF page/entity review; Excel row/cell/image mapping; optional one-page text/image suggestions with explicit human save | Real-report accuracy, bulk/cross-page reconciliation, broader formats and richer physical relationships |
 | System Match | Saved candidates/notes, partial measured checks and client commands | Complete authorized applicability, corpus extraction and multi-source fact resolution |
-| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals and A/B source profiles that do not change an Estimate | Reviewed row ingestion, component/activity recipes, coverage and calibrated proposals |
+| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles and immutable exact-profile human decisions that do not change an Estimate | Reviewed row ingestion, component/activity recipes, coverage and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
 | ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals | Real OAuth/HTTPS linking; report intake and A/B profile commands lack client parity |
 
-## Current implemented A/B pricing-source profile increment
+## Current implemented A/B pricing-source profile and review increment
 
 The Draft Estimate pricing screen now asks the user to declare one of two different
 source meanings before upload:
@@ -56,9 +56,24 @@ historical Draft pricing sources and an append-only profile table. Historical so
 remain valid but unclassified. The downgrade refuses retained-profile destruction.
 There is exactly one Alembic head.
 
-This is the minimum T1/T5/T7 visible slice. It does not import approved A/B rows into a
-commercial library, approve a profile, identify a Firefly system, create a technical
-match, infer a price, reprice an Estimate, or place profile/source bodies in a
+The current T12 slice adds one immutable human decision per exact saved profile.
+An administrator with `pricing:approve` can approve, reject or request revision with
+a required reason. The decision envelope records reviewer, UTC time, profile revision,
+exact profile JSON hash, explicit false effects and its own exact hash. Users with
+normal read access can reopen and download the exact decision JSON. Saving a newer
+profile leaves the old decision unchanged and visibly stale; the newer profile may
+receive its own decision. A decision replay, stale profile, changed hash, foreign
+project, missing permission or corrupted stored envelope fails closed.
+
+Migration `0041_draft_pricing_profile_decisions` adds the append-only decision table,
+enforces one decision per exact profile and refuses destructive downgrade. Review
+serializes on the retained source row with profile saving. This decision reviews the
+source interpretation only: it does not ingest rows, activate a library, grant technical
+approval, match systems, infer prices, alter an Estimate or release output.
+
+This is the minimum T1/T5/T7 plus early-T12 visible slice. It does not import reviewed
+A/B rows into a commercial library, identify a Firefly system, create a technical match,
+infer a price, reprice an Estimate, or place profile/source/decision bodies in a
 ProjectPackage.
 
 ## Verification checkpoint
@@ -91,6 +106,10 @@ ProjectPackage.
   exited during setup. Real HTTP forms, cookies, CSRF, uploads, redirects, rendered HTML
   assertions and downloads were exercised; visual layout still needs a browser check
   when that helper is available.
+- Current review-candidate evidence: 33 migration/lineage tests and five focused
+  profile/service/browser tests passed. Ruff passes on the changed source/tests and
+  targeted Mypy passes on the four changed source modules. Full validation and
+  exact-head CI remain required before publication.
 
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,
@@ -98,9 +117,9 @@ logs, database state and workbooks stay under `.tmp` and are not repository sour
 
 ## Known gaps and active work
 
-The prototype is usable for explicit source classification and profile retention, but
-the profile is unapproved and has no downstream authority. There is no review decision
-record, reviewed row observation/import, component/activity mapping, Firefly
+The prototype is usable for explicit source classification, profile retention and an
+exact-profile human review decision. That decision has no downstream authority. There
+is no reviewed row observation/import, component/activity mapping, Firefly
 system/configuration mapping, coverage result, bottom-up/comparable calculation,
 holdout execution, calibrated confidence or production release.
 
@@ -134,14 +153,11 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Finish this increment through explicit diff review, commit, push, PR, required CI and
-   merge; then verify the resulting shared-main commit and post-merge checks.
-2. Implement the smallest T12 **pricing-source profile review** interaction: an authorized
-   human can review the exact saved profile, record approve/reject/request-revision with
-   a reason in immutable history, and reopen/export the decision. Approval must not
-   activate rows, publish a library, match systems or change an Estimate.
-3. Before any price prediction or feature selection, define and test the T13 sealed
-   lineage/holdout manifest. Then deliver one reviewed A-row or B-system mapping vertical
-   slice before attempting bulk corpus scale or inferred prices.
+1. Finish this T12 increment through full validation, explicit diff review, commit, push,
+   PR, required CI and merge; then verify shared-main state.
+2. Define and test the smallest T13 sealed lineage/holdout manifest before any prediction
+   feature selection, retrieval corpus or calibration experiment can contaminate it.
+3. Deliver one reviewed A-row observation/component mapping or B-system mapping vertical
+   slice using the exact-profile decision and sealed lineage boundary before bulk scale.
 
 [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the self-contained next-session task.
