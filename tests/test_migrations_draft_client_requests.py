@@ -24,7 +24,7 @@ def test_client_request_migration_preserves_native_packages_and_review_history(c
         case, tmp_path, "0035_draft_package_imports"
     )
     assert "draft_client_requests" not in inspect(engine).get_table_names()
-    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
+    _upgrade(url, environment, "0036_draft_client_requests", enforce_sqlite_foreign_keys=True)
     verify_current(engine, ids, expected)
     with Session(engine) as db:
         db.add(
@@ -51,6 +51,7 @@ def test_client_request_migration_preserves_native_packages_and_review_history(c
         refusal.returncode != 0
         and "Retained client review history prevents downgrade" in refusal.stderr
     )
+    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
     verify_current(engine, ids, expected)
     engine.dispose()
 
@@ -72,7 +73,7 @@ def test_capability_migration_retains_existing_requests_and_refuses_history_loss
         db.add(row)
         db.commit()
         request_id = row.id
-    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
+    _upgrade(url, environment, "0037_draft_client_capabilities", enforce_sqlite_foreign_keys=True)
     verify_current(engine, ids, expected)
     with Session(engine) as db:
         retained = db.get(DraftClientRequest, request_id)
@@ -100,5 +101,6 @@ def test_capability_migration_retains_existing_requests_and_refuses_history_loss
         refusal.returncode != 0
         and "Retained capability requests prevent downgrade" in refusal.stderr
     )
+    _upgrade(url, environment, "head", enforce_sqlite_foreign_keys=True)
     verify_current(engine, ids, expected)
     engine.dispose()

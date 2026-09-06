@@ -17,7 +17,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
-from ..services.draft_scope_evidence import ENTITY_EVIDENCE_SCHEMA_VERSION
+from ..services.draft_scope_evidence import ENTITY_EVIDENCE_SCHEMAS, XLSX_EVIDENCE_SCHEMA_VERSION
 from .common import ATTRIBUTION
 from .draft_branding import DraftLogo as _Logo
 from .draft_branding import supplied_logo_path as _logo_path
@@ -180,7 +180,16 @@ def _context_rows(report: dict[str, Any]) -> list[list[Any]]:
             rows.append(["Unverified imported claim", str(index), key, str(value)])
     for ref in estimate["scope"].get("evidence_refs", []):
         for key, value in _page_reference_fields(estimate["scope"], ref):
-            rows.append(["Saved page-review claim", _page_reference_id(ref), key, str(value)])
+            rows.append(
+                [
+                    "Saved evidence-review claim"
+                    if estimate["scope"]["schema_version"] == XLSX_EVIDENCE_SCHEMA_VERSION
+                    else "Saved page-review claim",
+                    _page_reference_id(ref),
+                    key,
+                    str(value),
+                ]
+            )
     return rows
 
 
@@ -325,7 +334,7 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
     text(
         "Scope assertions and imported history remain unreviewed. No technical approval is implied."
     )
-    if estimate["scope"]["schema_version"] == ENTITY_EVIDENCE_SCHEMA_VERSION:
+    if estimate["scope"]["schema_version"] in ENTITY_EVIDENCE_SCHEMAS:
         text(
             "Review status compares saved claims with this selected Scope revision. "
             "Current source and scan checks are performed separately; "

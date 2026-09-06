@@ -19,7 +19,14 @@ from starlette.datastructures import Headers
 
 from ..audit import record_audit
 from ..config import Settings
-from ..models import DraftImportedReportSource, DraftPdfSource, DraftPricingSource, StoredFile, User
+from ..models import (
+    DraftImportedReportSource,
+    DraftPdfSource,
+    DraftPricingSource,
+    DraftScopeXlsxSource,
+    StoredFile,
+    User,
+)
 from . import malware_scan
 from .draft_scope import DraftScopeError, _actor, _atomic, _json, get_draft
 from .storage import (
@@ -35,7 +42,7 @@ from .storage import (
 
 MAX_SOURCES = 20
 MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
-SourceRow = DraftPdfSource | DraftPricingSource | DraftImportedReportSource
+SourceRow = DraftPdfSource | DraftPricingSource | DraftImportedReportSource | DraftScopeXlsxSource
 
 
 @dataclass(frozen=True)

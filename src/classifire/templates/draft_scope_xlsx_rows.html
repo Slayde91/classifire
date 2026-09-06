@@ -1,0 +1,6 @@
+{% for source_row in rows %}
+<details class="scope-import-item"{% if loop.first %} open{% endif %}><summary><strong>{{ source_row.sheet }} &middot; row {{ source_row.row }}</strong></summary>
+<dl class="scope-import-details">{% for field, label in fields %}{% set cell = source_row.fields.get(field) %}<dt>{{ label }}</dt><dd>{% if cell %}<strong>{{ cell.address }}</strong> <span class="badge badge-draft">{{ cell.kind }}</span><div class="scope-preserve-text">{{ cell.value }}</div>{% else %}<span class="muted">Unknown / not mapped or blank</span>{% endif %}</dd>{% endfor %}</dl>
+{% if source_row.sha256 %}<details><summary>Row identity</summary><p class="scope-item-id">{{ source_row.sha256 }}</p></details>{% endif %}
+</details>
+{% endfor %}

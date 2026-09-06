@@ -25,7 +25,8 @@ from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from ..services.draft_scope_evidence import (
-    ENTITY_EVIDENCE_SCHEMA_VERSION,
+    ENTITY_EVIDENCE_SCHEMAS,
+    XLSX_EVIDENCE_SCHEMA_VERSION,
     reference_label,
     reference_status,
 )
@@ -144,14 +145,40 @@ def _metadata(snapshot: dict[str, Any]) -> list[tuple[str, Any]]:
 def _page_reference_fields(scope: dict[str, Any], ref: dict[str, Any]) -> list[tuple[str, Any]]:
     """Display saved target status without implying a fresh source or approval check."""
     fields: list[tuple[str, Any]] = []
-    if scope["schema_version"] == ENTITY_EVIDENCE_SCHEMA_VERSION:
+    if scope["schema_version"] in ENTITY_EVIDENCE_SCHEMAS:
         fields.extend(
             [
                 ("target", reference_label(ref, scope["content"])),
                 ("saved_revision_review_status", reference_status(ref, scope["content"])),
             ]
         )
-    fields.extend(ref.items())
+    if ref.get("source_kind") == "xlsx":
+        fields.extend((key, value) for key, value in ref.items() if key not in {"row", "images"})
+        row = ref["row"]
+        for key in ("sheet", "sheet_index", "row", "header_row", "sha256"):
+            fields.append(("source_row_" + key, row[key]))
+        for key, cell in row["fields"].items():
+            if cell is None:
+                description = (
+                    "Not mapped"
+                    if row["mapping"][key] is None
+                    else f"Column {row['mapping'][key]}: blank source cell"
+                )
+            else:
+                description = f"{row['sheet']}!{cell['address']} ({cell['kind']}): {cell['value']}"
+            fields.append(("mapped_" + key, description))
+        import json
+
+        for image in ref["images"]:
+            for key, value in image.items():
+                fields.append(
+                    (
+                        f"image_{image['occurrence_id']}_{key}",
+                        json.dumps(value, sort_keys=True) if isinstance(value, dict) else value,
+                    )
+                )
+    else:
+        fields.extend(ref.items())
     return fields
 
 
@@ -310,7 +337,12 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
     if not report["scope"].get("import_lineage"):
         text("No imported source history. Draft remains unreviewed.")
     if report["scope"].get("evidence_refs"):
-        text("Saved page-review references", heading)
+        text(
+            "Saved evidence-review references"
+            if report["scope"]["schema_version"] == XLSX_EVIDENCE_SCHEMA_VERSION
+            else "Saved page-review references",
+            heading,
+        )
         text(
             "These are saved Draft review claims. Current source/scan availability may change; "
             "the application checks it separately. No technical or physical approval is granted."
@@ -608,10 +640,12 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
     )
     if report["scope"].get("evidence_refs"):
         table(
-            "Page Review References",
+            "Evidence References"
+            if report["scope"]["schema_version"] == XLSX_EVIDENCE_SCHEMA_VERSION
+            else "Page Review References",
             [
                 "Target ID"
-                if report["scope"]["schema_version"] == ENTITY_EVIDENCE_SCHEMA_VERSION
+                if report["scope"]["schema_version"] in ENTITY_EVIDENCE_SCHEMAS
                 else "Observation ID",
                 "Field",
                 "Saved claim",

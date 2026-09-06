@@ -41,6 +41,7 @@ def main() -> None:
             "classifire_draft_pricing_demo",
             "classifire_draft_client_pricing_demo",
             "classifire_draft_defect_report_demo",
+            "classifire_draft_xlsx_report_demo",
             "classifire_draft_import_demo",
         ),
         default="classifire_draft_pdf_demo",

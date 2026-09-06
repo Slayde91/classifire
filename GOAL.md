@@ -200,31 +200,39 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: source-linked PDF Draft graph
+## Immediate delivery priority: reviewed Excel defect mapping
 
-The latest approved task brings the visible PDF-to-Draft interaction ahead of the
-retained A/B pricing profile. On the active branch, a human can inspect a retained
-page, edit separate defects/openings/services with explicit links and uncertainty,
-preview selected page references without writes and confirm one saved revision.
-Scope v4 retains old observation references alongside entity kind/ID/hash bindings;
-changed/deleted facts stay visibly stale, imports remain unverified, and earlier
-Scope/report/package bytes remain exact. No AI, OCR, pricing or canonical approval
-is implied. PROJECT_STATE.md records actual tests, browser/restart and publication;
-finish that evidence before classifying the bounded increment as delivered.
+The PDF page-to-Draft graph milestone is merged in PR #209 at
+`96680f4ce1b26da5da599bd5cb7894af8d3b28de`. Preserve its retained page review,
+explicit graph links, uncertainty and exact historical outputs; do not rebuild it.
+The active `feat/defect-xlsx-mapping-20260906` branch extends those shared services
+with a bounded Excel defect-register interaction. A human chooses a sheet/header,
+maps columns, selects up to 25 rows, edits separate defects/openings/services and
+explicitly chooses cell/image references before preview and confirmation. Scope v5
+preserves PDF history alongside typed cell and image-occurrence/anchor claims.
+Source storage is purpose-separated from pricing by forward migration 0038.
 
-Next, extend the same Scope services with a bounded Excel defect-register mapping UI:
-explicit sheets/headers/columns, reviewable graph changes, exact cell provenance and
-supported image/anchor identity, with unknown associations left unresolved. Existing
-pricing XLSX intake is reusable infrastructure, not a completed defect importer.
-Optional AI suggestions follow as source-bound proposals behind human review.
-Deliver these interactions before broad automation, schema perfection or model tuning.
+Finish the Excel supported-path, browser/restart, report/package and publication
+proof before classifying it as delivered; PROJECT_STATE.md records actual results.
+No automatic quantities, image interpretation, technical approval or canonical
+promotion is implied. Existing pricing XLSX selection remains a separate Estimate
+workflow. [The Excel contract](./docs/DRAFT_SCOPE_XLSX_V1_CONTRACT.md) states supported
+layouts and limits; unsupported values/associations remain visible and unresolved.
+
+Next, deliver one bounded optional PDF text/image suggestion path using the existing
+compatible inference protections through a Draft-specific adapter and shared Scope
+review services. Never fabricate canonical Phase8 identities. Start with synthetic,
+provider-free proposals and a working manual fallback; preserve source bindings,
+uncertainty and explicit human review before any save. Real provider execution needs
+its existing authorization and safety protections. Do not treat the new manual
+mapping UI as AI analysis or make a broad extraction framework its prerequisite.
 
 The separate technical-corpus/dual-pricing track remains approved. Its first slice is
 still an A/B source-profile preview with minimal durable identity/version, supported
 mapping, explicit unit/price-basis gaps and no activation or inferred prices. Synthetic
 fixtures remain required until authorized originals and their semantics are available.
 The roadmap's T1-T14 requirements, review gates and dependency order remain unchanged;
-PDF priority reorders work without cancelling either library or the corpus design.
+Scope prototype priority does not cancel either library or the corpus design.
 
 The full goal remains active: broader Scope analysis, actual applicability, pricing
 defaults/inference, complete package coverage/exchange, ChatGPT and production readiness

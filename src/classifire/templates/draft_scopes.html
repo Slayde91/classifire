@@ -19,7 +19,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <label for="scope-reference">Project reference<input id="scope-reference" name="reference" value="{{ reference|default('') }}" maxlength="100" placeholder="e.g. CF-001" required></label>
     <label for="scope-name">Project name<input id="scope-name" name="name" value="{{ name|default('') }}" maxlength="300" placeholder="e.g. Building A inspection" required></label>
-    <div class="span-2 scope-create-actions"><button class="button button-primary" type="submit" name="next" value="evidence">Upload defect report</button><button class="button button-secondary" type="submit" name="next" value="">Create Draft Scope</button></div>
+    <div class="span-2 scope-create-actions"><button class="button button-primary" type="submit" name="next" value="evidence">Upload PDF defect report</button><button class="button button-secondary" type="submit" name="next" value="workbooks">Upload Excel defect report</button><button class="button button-secondary" type="submit" name="next" value="">Create Draft Scope</button></div>
   </form>
 </section>
 {% endif %}
@@ -30,7 +30,7 @@
     <div class="project-head"><div><div class="eyebrow">{{ draft.reference }}</div><h2>{{ draft.name }}</h2></div><span class="badge badge-draft">Draft</span></div>
     <p class="muted">Saved revision {{ draft.latest_revision }} &middot; awaiting review</p>
     <a class="button button-secondary" href="/scopes/{{ draft.id }}">Open draft</a>
-    {% if has_permission('project:write') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/evidence">Upload defect report</a>{% endif %}
+    {% if has_permission('project:write') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/evidence">PDF defect report</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/workbooks">Excel defect report</a>{% endif %}
   </article>
   {% else %}
   <div class="panel scope-empty"><h3>Your first scope starts here</h3><p>Use the form above to create a draft. No system selection, pricing or AI is needed.</p></div>

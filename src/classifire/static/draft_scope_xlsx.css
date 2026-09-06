@@ -1,0 +1,24 @@
+.xlsx-column-mapping { margin-top: 18px; }
+#xlsx-mapping-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+.xlsx-row-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; margin: 20px 0 12px; }
+.xlsx-row-toolbar label { max-width: 180px; }
+.xlsx-grid { max-height: 650px; overflow: auto; }
+.xlsx-grid table { min-width: 900px; }
+.xlsx-grid th, .xlsx-grid td { vertical-align: top; min-width: 150px; max-width: 360px; }
+.xlsx-grid th:first-child { min-width: 50px; }
+.xlsx-grid td:nth-child(2) { min-width: 160px; }
+.xlsx-grid .scope-check { margin-bottom: 8px; }
+.xlsx-grid summary { white-space: normal; overflow-wrap: anywhere; }
+.xlsx-selected-rows { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0; }
+.xlsx-selected-rows p { width: 100%; margin: 0; }
+.xlsx-image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.xlsx-image-grid figure { margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.xlsx-image-grid img { display: block; max-width: 100%; max-height: 280px; margin: 0 auto 10px; object-fit: contain; }
+.xlsx-image-grid figcaption { font-size: 13px; overflow-wrap: anywhere; }
+.xlsx-scope-evidence { min-width: 0; max-height: 90vh; overflow: auto; position: sticky; top: 12px; }
+.scope-row-links { margin-top: 14px; padding: 12px; border: 1px solid #bfd9ee; border-radius: 7px; background: #eef6fc; }
+.scope-row-links > summary { font-weight: 650; }
+.scope-row-choice { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.scope-row-images { padding: 8px 0 0 22px; display: grid; gap: 8px; }
+.scope-row-images .scope-check { font-size: 12px; }
+@media (max-width: 1200px) { .xlsx-scope-evidence { position: static; max-height: 600px; } }

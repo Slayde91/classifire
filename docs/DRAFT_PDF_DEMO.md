@@ -49,7 +49,7 @@ belongs to this demo. Preserve 8815 and all older demos/scanners.
 
 ## User interaction
 
-1. On Draft Scopes, enter the project name and choose **Upload defect report**, or
+1. On Draft Scopes, enter the project name and choose **Upload PDF defect report**, or
    open a saved Draft and use its upload button. PostgreSQL mode is required; SQLite
    displays an explicit evidence-setup message.
 2. Retain one synthetic PDF (maximum 10 MiB/50 pages), then choose **Scan and prepare
@@ -110,5 +110,4 @@ and later-edit warnings. Its scanner database date was 2026-08-30 and is histori
 do not assume it remains fresh. Existing v1-v3 Scope and report readers stay compatible.
 
 See [the evidence contract](./DRAFT_PDF_EVIDENCE_V1_CONTRACT.md) for exact bounds and
-remaining gaps. Excel defect mapping and optional image/text proposals are subsequent
-slices; production technical applicability, pricing and Human Release remain separate.
+remaining gaps. The Excel defect-mapping companion is documented in [DRAFT_SCOPE_XLSX_DEMO.md](./DRAFT_SCOPE_XLSX_DEMO.md). Optional image/text proposals remain planned; production technical applicability, pricing and Human Release remain separate.

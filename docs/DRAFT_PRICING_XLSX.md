@@ -11,9 +11,13 @@ The 1,000-row limit below includes the header; it cannot accommodate a single sh
 with 1,000 price rows plus a header. Preserve this contract while adding bounded bulk
 processing and versioned compatibility explicitly; do not silently lift safety limits.
 
-Defect-report spreadsheets are a separate Scope intake use case, still upcoming.
-This pricing workbook UI does not extract defects, openings or services. Current
-product sequencing is PDF graph review, then bounded Excel defect mapping; A/B
+Defect-report spreadsheets now have a separate active Scope mapping increment; see
+[the Excel Scope contract](./DRAFT_SCOPE_XLSX_V1_CONTRACT.md). It reuses the bounded
+worker with explicit Scope/image modes, a separate DraftScopeXlsxSource binding and
+`draft_scope_xlsx` purpose. It does not apply rates or need pricing-library authority.
+This pricing UI still does not extract defects/openings/services and still refuses
+embedded images. Same-byte cross-purpose adoption remains refused. PDF graph review
+is merged; Excel Scope proof is active, then optional bounded PDF suggestions. A/B
 profiles remain the first slice within the separate corpus/pricing track.
 
 ## Implemented boundary
@@ -25,7 +29,7 @@ LibraryRelease, technical approval, canonical Estimate, physical model or releas
 The existing CSV importer remains separate and is not called by this UI.
 
 `draft_source_intake.py` extracts the proven PDF retention/scanning boundary for
-reuse by both formats. PDF public entry points remain compatible. The new
+reuse by both formats. PDF public entry points remain compatible. The merged
 `DraftPricingSource` model and additive migration 0033 bind the Draft, StoredFile,
 exact source SHA-256/size, scan receipt and parsed-document SHA-256. PostgreSQL's
 shared quarantine locks remain required for uploaded sources; manual estimating
@@ -73,14 +77,19 @@ Later manual overrides retain this historical source entry without claiming it i
 the current rate. Unknown and omitted work retain existing Estimate semantics.
 
 Estimate JSON includes frozen provenance. Explicit Estimate reporting renders both
-PDF and XLSX from the same selected revision, using renderer version 2 for workbook
-provenance (v1 for manual-only reports). The PDF includes workbook selections and
-XLSX adds a Pricing sources sheet with literal safe strings. Historical downloads
-remain exact after further edits/restart. Workbook-containing reads/exports additionally
-require `library:read`; project ownership and estimate/export permissions still apply.
+PDF and XLSX from the same selected revision. Estimate-only render version 2 carries
+pricing provenance for older Scope inputs (v1 for manual-only); Scope v4 selects
+version 4 and the active v5 selects 6, preserving every historical version. The PDF
+includes workbook selections and XLSX adds a Pricing sources sheet with literal safe strings. Historical downloads
+remain exact after further edits/restart. Reads/exports containing pricing-source claims
+additionally require `library:read`; project ownership and estimate/export permissions
+still apply.
 Live source quarantine, stale scan or changed bindings make dependent Estimates/reports
 visibly stale. Downloading a retained snapshot does not reapply a price or approve it.
-Full retained-workbook download and ProjectPackage import/export remain separate work.
+Full retained-workbook download remains separate work. Selected ProjectPackage
+projection/import/re-export follows [its contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md),
+retains declared pricing claims and keeps source bodies external/withheld. Scope-only
+worksheet claims do not silently acquire the pricing permission requirements.
 
 ## UI, service and validation
 
@@ -92,9 +101,11 @@ must call these same services. No new framework, provider or dependency was adde
 Targeted tests: `test_draft_pricing.py`, `test_draft_pricing_ui.py`,
 `test_migrations_draft_pricing_sources.py`, plus affected PDF, Estimate/report,
 Scope UI, deployment and migration regressions. Migration 0033 retains old report
-bytes and refuses destructive downgrade; 0032 is now migration-required.
+bytes and refuses destructive downgrade. The active Excel Scope migration advances
+the application head from 0037 to 0038; it does not rewrite this pricing schema/data
+or relax the original worker mode.
 
-Synthetic Chrome demo: `http://127.0.0.1:8805/scopes`, separate marked database
+Historical synthetic Chrome demo for the pricing milestone: `http://127.0.0.1:8805/scopes`, separate marked database
 `classifire_draft_pricing_demo` and `.tmp/draft-pricing-demo-20260906` storage.
 The real ClamD/browser journey selected Rates!D5 = AUD 120.25, retained original
 AUD 100, then saved a reasoned AUD 125 override. Revisions 2/3/4 and PDF/XLSX

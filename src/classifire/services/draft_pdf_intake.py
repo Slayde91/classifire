@@ -387,15 +387,26 @@ def scope_evidence_staleness(
             reasons.append("SCOPE_SOURCE_UNVERIFIED")
             continue
         if reference_changed(ref, scope["content"]):
-            reasons.append("SCOPE_PAGE_REVIEW_CHANGED")
+            reasons.append(
+                "SCOPE_WORKBOOK_REVIEW_CHANGED"
+                if ref.get("source_kind") == "xlsx"
+                else "SCOPE_PAGE_REVIEW_CHANGED"
+            )
         if storage_root is None:
             reasons.append("SCOPE_SOURCE_CHECK_UNAVAILABLE")
             continue
         try:
             # Use only the caller-supplied retained root, never ambient application settings.
-            source, _document_value, content = _document(
-                db, actor, draft_id, ref["source_id"], storage_root
-            )
+            if ref.get("source_kind") == "xlsx":
+                from .draft_scope_xlsx import intake as workbook_intake
+
+                source, _document_value, content = workbook_intake()._document(
+                    db, actor, draft_id, ref["source_id"], storage_root
+                )
+            else:
+                source, _document_value, content = _document(
+                    db, actor, draft_id, ref["source_id"], storage_root
+                )
             if (
                 content.sha256 != ref["source_sha256"]
                 or source.document_sha256 != ref["document_sha256"]

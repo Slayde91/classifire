@@ -19,11 +19,12 @@ Keep AI optional. Four capabilities do not require four agents or four services.
 Prioritize a working, testable UI prototype. Deliver one complete user interaction
 with the minimum supporting contract, persistence and validation in the same slice.
 Use GOAL.md and the verified project state to select the next visible increment;
-do not rebuild the completed manual Draft Scope workbench. The latest approved order
-prioritizes the PDF page-to-Draft graph demonstration ahead of A/B source profiles.
-After that milestone, the next Scope slice is bounded Excel defect-register mapping
-through the same services, followed by optional AI proposals. Inspect current completion
-evidence before resuming; the corpus/pricing track remains separately required.
+do not rebuild the completed manual Draft Scope workbench or merged PDF graph review.
+The active Scope slice is bounded Excel defect-register mapping through the same
+services. Finish its supported-path evidence before moving to optional bounded PDF
+text/image suggestions, starting with synthetic proposals and a manual fallback.
+Inspect current completion evidence before resuming; corpus/pricing remains a separate
+required track with its retained dependencies.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
 production AI, OpenClaw replacement or every edge case a prerequisite to that demo.
@@ -88,23 +89,27 @@ identifiers without checking migrations, stored data, APIs, scripts and lineage.
 
 ## Source-linked Draft graph review
 
-Use [the PDF evidence contract](./docs/DRAFT_PDF_EVIDENCE_V1_CONTRACT.md) for Scope v4.
-Keep observations and entity claims in the same versioned `evidence_refs` union; only
-trusted page review can create local source bindings. Preview without writes, then
-recheck exact inputs, source/scan/page, current rights and revision at confirmation.
-Manual edits retain old hashes; deleted entity references remain historical/stale;
-imports stay unverified. Preserve v1-v3 readers and exact report/package history.
-Do not describe this human-entered PDF workflow as automatic analysis, OCR, Excel
-import or canonical approval. Any future Excel/AI path must extend the shared Scope
-services with explicit provenance rather than invent a parallel physical model.
+Use [the PDF contract](./docs/DRAFT_PDF_EVIDENCE_V1_CONTRACT.md) and
+[the Excel contract](./docs/DRAFT_SCOPE_XLSX_V1_CONTRACT.md) for Scope v3-v5.
+Keep page, entity and worksheet claims in the same versioned `evidence_refs` union;
+only trusted review creates local source bindings. Excel source purpose/permissions
+remain separate from pricing. Preview without writes, then recheck exact inputs,
+source/scan/page or cells/images, current rights and revision at confirmation.
+Manual edits retain old hashes; deleted entity references stay historical/stale;
+imports stay unverified. Preserve v1-v4 readers, v5 on later PDF/manual saves, and
+exact report/package history. Picture anchors show placement, not semantic ownership;
+associate pictures explicitly and never infer quantity from row/defect count.
+Optional AI reuses compatible inference protections through a small Draft-specific
+adapter and shared review services as proposals, never a
+parallel physical model or automatic approval. Keep the manual path usable.
 
 ## Technical corpus and dual-pricing work
 
 For this capability read [the integrated design](./docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
 and roadmap T1-T14 before editing. The first slice within this separate track remains
-the bounded visible A/B source-profile interaction; the latest user instruction puts
-PDF Draft graph review ahead of it. Preserve T-stage requirements and dependencies;
-do not treat the complete target schema or estimation model as one implementation task.
+the bounded visible A/B source-profile interaction. The completed PDF and active Excel
+Scope interactions have immediate prototype priority. Preserve T-stage requirements
+and dependencies; do not treat the complete target schema or estimation model as one implementation task.
 
 - Preserve separate dataset identities: A `pricelist.xlsx` is general products,
   materials, labour and services; B `pricing_library.xlsx` is Firefly system prices.
