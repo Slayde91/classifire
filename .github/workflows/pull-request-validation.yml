@@ -13,7 +13,7 @@ jobs:
   validation:
     name: Python validation
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     services:
       containment-postgres:
         image: postgres:16-alpine
