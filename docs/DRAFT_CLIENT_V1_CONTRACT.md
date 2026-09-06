@@ -2,11 +2,11 @@
 
 ## Status and purpose
 
-2026-09-06. The first client and independent capability commands are merged in
-PRs #204/#205; shared baseline `fd60bb82538c248b73a14e09dd71bec7493ba7da` has
-successful main CI 34014555539. The measured-review amendment below is implemented
-on `feat/client-measured-review-20260906`; verify its live publication before assuming
-it is merged. This is a ChatGPT-compatible surface over the standalone core, not
+2026-09-06. PRs #204/#205/#206 merge the initial, independent-capability and measured-
+review clients. Shared baseline `58c7d4aefad87d714a8922d060fbfa2e68b446bb` has
+successful main CI 34017405923. The workbook-pricing amendment below is implemented
+on `feat/client-workbook-pricing-20260906`; local validation passed.
+Verify its live publication status. This is a ChatGPT-compatible surface over the standalone core, not
 production OAuth deployment or proof of a connected ChatGPT account. ADRs 0001/0002
 remain accepted.
 
@@ -140,6 +140,7 @@ its one requested use case and requires a separate human session confirmation.
 | `add_estimate_line` | Estimate ID, expected revision, shared AddLine contract | Validate quantity/unit/recovery and append a manual line |
 | `override_estimate_line` | Estimate ID/revision, line ID, shared Override contract | Preserve original value and append reasoned history |
 | `set_estimate_line_status` | Estimate ID/revision, line ID, active/omitted, reason | Omit/restore without deleting history |
+| `apply_workbook_rate` | Estimate ID/revision, line/source IDs, explicit worksheet mapping/row, expected document/row hashes, recovery note | Shared source-bound rate application; retain original rate and override history |
 | `scope_report` | Scope revision, optional paired Match ID/revision | Scope-only or scope-and-system saved PDF/XLSX |
 | `estimate_report` | Estimate ID/revision, estimate-only/complete profile | Render that saved estimate snapshot; missing technical data stays unavailable |
 
@@ -173,8 +174,10 @@ ChatGPT consent/reauthorization behavior remains unproven.
 
 Migration 0037 extends the retained command check without changing artifact schemas;
 it preserves existing requests and refuses downgrade over new retained history.
-Workbook pricing selection and uploads still use the standalone UI. The measured-
-review amendment uses the existing capability request discriminator; no new migration. No inference provider, canonical lock or release is exposed.
+Workbook upload/scan remains in the standalone UI; the pricing amendment below
+exposes preview and confirmed selection. Measured review and workbook selection use
+the existing capability request discriminator; neither requires a new migration.
+No inference provider, canonical lock or release is exposed.
 
 Current demo: port 8813, marked `client-capabilities-demo-20260906` directory, with
 `--client-demo --seed-technical-library`. Official SDK/Chrome proof covers independent
@@ -214,3 +217,63 @@ Synthetic demo: `--port 8814 --data-dir C:\CLASSIFIRE\.tmp\client-measured-demo-
 --client-demo --seed-service-size-library`. The existing fixture seeds labelled test
 source/approval/clean metadata; no real scanner or technical approval is claimed.
 See PROJECT_STATE.md and SESSION_HANDOFF.md for the actual validation checkpoint.
+
+
+## Workbook-pricing amendment
+
+This implementation extends the existing retained-workbook service. It does not add
+an upload/scan tool, formula engine, pricing inference, approval or library-release
+operation. Local validation passed; use PROJECT_STATE.md and SESSION_HANDOFF.md for proof
+and the publication checkpoint.
+
+| Read tool | Inputs and bounded result |
+| --- | --- |
+| `list_pricing_sources` | `draft_id`; up to 20 owned workbook metadata entries (`id`, filename/hash/size, scan/status/readiness, document hash). Metadata readiness is not proof of current usable bytes. |
+| `preview_pricing_rows` | `draft_id`, `source_id`; `sheet_index=1`, `header_row=1`, `mapping=null`, `after_row=0`. Returns `mode`, verified `source`, up to five `rows`, `next_after_row` and `limit=5`. |
+
+Both tools require read/estimate client scopes, current local estimate/library read
+permission and client ownership. Preview invokes the existing retained-source reader:
+PostgreSQL quarantine support, a current clean scan, intact bytes and valid normalized
+document are required. It performs no scan, provider call or Draft mutation.
+
+Without a mapping, preview supplies worksheet names/dimensions and five physical rows
+at a time. Cells retain address/type and show at most 200 characters with explicit
+`truncated` and `original_length` fields. With a mapping, rows are the complete shared
+pricing preview records: exact cells/values, worksheet/row/column mapping, row hash
+and unresolved problems. Mapped provenance is not truncated. `after_row` is an actual
+worksheet row number; `next_after_row=null` ends paging. Mapping/cursor fields reject
+string/boolean coercion and out-of-range positions.
+
+The verified source binding is `source_id`, `source_sha256`, `document_sha256`,
+`scan_sha256`, `filename` and `size_bytes`. It identifies the bytes, normalized document
+and current scan selected for this proposal, without embedding credentials or paths.
+
+`apply_workbook_rate` requires `draft_id`, `estimate_id`, `expected_revision`,
+`line_id`, `source_id`, `sheet_index`, `header_row`, `mapping`, `row_number`,
+`expected_document_hash`, `expected_row_hash` and `recovery_note` (1-4,000 characters;
+confirmation requires nonblank text). Hashes are 64 lowercase hexadecimal characters.
+The mapping requires positive integer columns for `reference`, `description`, `unit`,
+`rate`, `currency` and `tax_basis`. Optional `rate_date`, `labour`, `materials`,
+`inclusions` and `exclusions` accept a positive integer or null and default to null.
+The shared validator checks actual bounds and duplicate columns; no columns are guessed.
+
+Preparation requires proposing/estimating scopes plus current write/library rights,
+reads the saved Estimate and target line, calls `draft_pricing_intake.preview`, checks
+the submitted document/row hashes and binds source/scan/row/line inputs to the durable
+request. The human screen shows those exact cells, problems, recovery note and saved
+line/totals. Preparation does not apply a rate or claim complete domain validation.
+
+Only separate same-user browser confirmation invokes `draft_pricing_intake.apply_rate`.
+It rechecks rights, current input binding and revision; shared rules refuse unresolved
+rates, formulas, unsupported currency/tax/units and a unit mismatch with the target
+line. Failure leaves the request pending without a partial Estimate revision. A new
+scan or changed source/document/line requires a fresh proposal. Completed browser
+request history also checks current `library:read`; client receipt metadata remains
+separate from protected pricing content.
+
+The saved Estimate v2 selection preserves the source and row, original rate, reasoned
+override event and `unreviewed` status. Later manual overrides keep that history.
+Existing estimate-only/complete reports and packages retain their selected snapshots,
+source provenance and current permission checks. No new table, migration, dependency,
+OAuth scope or artifact schema is added. Pre-existing command input hashes retain
+their original five-key shape so already pending manual requests survive this upgrade.

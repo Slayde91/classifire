@@ -19,14 +19,17 @@ from ..models import User
 from . import draft_constraint_review as constraints
 from . import draft_estimate_reports as estimate_reports
 from . import draft_estimates as estimates
+from . import draft_pricing_intake as pricing
 from . import draft_scope as scopes
 from . import draft_scope_reports as scope_reports
 from . import draft_system_matches as matches
 from .draft_estimate_contract import AddLine, Override
+from .draft_source_intake import SourceRow
 from .draft_system_match_contract import MAX_CANDIDATES, Decision, target_for
 
 Identity = Annotated[str, Field(min_length=1, max_length=36)]
 Revision = Annotated[int, Field(ge=1)]
+Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 
 
 class Command(BaseModel):
@@ -124,6 +127,36 @@ class SetEstimateLineStatus(EditEstimate):
     reason: Annotated[str, Field(min_length=1, max_length=4000)]
 
 
+class PricingMapping(BaseModel):
+    """Column shape only; shared preview validates actual columns and uniqueness."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
+    reference: Revision
+    description: Revision
+    unit: Revision
+    rate: Revision
+    currency: Revision
+    tax_basis: Revision
+    rate_date: Revision | None = None
+    labour: Revision | None = None
+    materials: Revision | None = None
+    inclusions: Revision | None = None
+    exclusions: Revision | None = None
+
+
+class ApplyWorkbookRate(EditEstimate):
+    action: Literal["apply_workbook_rate"]
+    line_id: Identity
+    source_id: Identity
+    sheet_index: Revision
+    header_row: Revision
+    mapping: PricingMapping
+    row_number: Revision
+    expected_document_hash: Sha256
+    expected_row_hash: Sha256
+    recovery_note: Annotated[str, Field(min_length=1, max_length=4000)]
+
+
 class ScopeReport(Command):
     action: Literal["scope_report"]
     scope_revision: Revision
@@ -147,6 +180,7 @@ CapabilityCommand = Annotated[
     | AddEstimateLine
     | OverrideEstimateLine
     | SetEstimateLineStatus
+    | ApplyWorkbookRate
     | ScopeReport
     | EstimateReport,
     Field(discriminator="action"),
@@ -176,6 +210,20 @@ def protect_content(
         require(db, authority, identity, TECHNICAL)
     if isinstance(value.get("estimate"), dict):
         protect_content(db, authority, identity, value["estimate"])
+
+
+def pricing_source_binding(source: SourceRow) -> dict[str, Any]:
+    """Call only after the shared source reader has verified current retained bytes."""
+    if source.scan_json is None or source.document_sha256 is None:
+        raise scopes.DraftScopeError("PRICING_XLSX_SOURCE_NOT_READY", 409)
+    return {
+        "source_id": source.id,
+        "source_sha256": source.source_sha256,
+        "document_sha256": source.document_sha256,
+        "scan_sha256": hashlib.sha256(source.scan_json.encode("utf-8")).hexdigest(),
+        "filename": source.original_filename,
+        "size_bytes": source.source_size_bytes,
+    }
 
 
 def inspect_inputs(
@@ -239,6 +287,33 @@ def inspect_inputs(
         "release": release,
         "project": project,
     }
+    if isinstance(c, ApplyWorkbookRate):
+        scopes._actor(db, actor, "library:read")
+        if estimate is None:
+            raise scopes.DraftScopeError("CLIENT_CAPABILITY_INPUT_INVALID", 422)
+        target = estimates._line(estimate, c.line_id)
+        source, rows = pricing.preview(
+            db,
+            actor,
+            c.draft_id,
+            c.source_id,
+            c.sheet_index,
+            c.header_row,
+            c.mapping.model_dump(),
+            settings=get_settings(),
+        )
+        if source.document_sha256 != c.expected_document_hash:
+            raise scopes.DraftScopeError("PRICING_SOURCE_CHANGED", 409)
+        priced_row = next((row for row in rows if row["row"] == c.row_number), None)
+        if priced_row is None or priced_row["sha256"] != c.expected_row_hash:
+            raise scopes.DraftScopeError("PRICING_ROW_CHANGED", 409)
+        # Keep the old five-key hash shape for every pre-existing command so
+        # already-retained pending requests remain valid across this upgrade.
+        inputs["pricing"] = {
+            "source": pricing_source_binding(source),
+            "row": priced_row,
+            "target_line": target,
+        }
     raw = json.dumps(inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return {"inputs": inputs, "input_hash": hashlib.sha256(raw.encode()).hexdigest()}
 
@@ -300,6 +375,20 @@ def execute(db: Session, actor: User, command: CapabilityCommand) -> dict[str, A
             saved = estimates.override_line(*args, c.line_id, c.override.model_dump())
         elif isinstance(c, SetEstimateLineStatus):
             saved = estimates.set_line_status(*args, c.line_id, c.status, c.reason)
+        elif isinstance(c, ApplyWorkbookRate):
+            saved = pricing.apply_rate(
+                *args,
+                c.line_id,
+                c.source_id,
+                c.sheet_index,
+                c.header_row,
+                c.mapping.model_dump(),
+                c.row_number,
+                c.expected_document_hash,
+                c.expected_row_hash,
+                c.recovery_note,
+                settings=get_settings(),
+            )
         else:
             raise scopes.DraftScopeError("CLIENT_CAPABILITY_INPUT_INVALID", 422)
         result.update(estimate_id=c.estimate_id, revision=saved["revision"], sha256=saved["sha256"])

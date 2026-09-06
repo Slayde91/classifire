@@ -2,13 +2,14 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.19 - human-confirmed measured-review client parity.
+**Architecture version:** 5.20 - human-confirmed workbook pricing client commands.
 
-**Verified shared baseline:** `fd60bb82538c248b73a14e09dd71bec7493ba7da`, merged
-PR #205; main CI 34014555539 succeeded. Current branch
-`feat/client-measured-review-20260906` exposes the existing measured-review commands
-through the same optional resource server. PROJECT_STATE.md records validation and
-the publication checkpoint. Local parity is not a real ChatGPT connection or production readiness.
+**Verified shared baseline:** `58c7d4aefad87d714a8922d060fbfa2e68b446bb`, merged
+PR #206; PR CI 34015890493 attempt 2 passed 1,511 tests and main CI 34017405923
+succeeded. Current implementation branch `feat/client-workbook-pricing-20260906` exposes
+existing retained-workbook preview and rate selection through the optional resource
+server. Local validation passed; PROJECT_STATE.md records proof and the publication checkpoint.
+Local client parity is not a real ChatGPT connection or production readiness.
 Earlier milestone descriptions are historical checkpoints where a later amendment
 supersedes their status. Current component/amendment sections distinguish remaining coverage.
 
@@ -84,7 +85,7 @@ still applies. Model output is proposed evidence, never authority.
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
 | Interfaces/API | FastAPI/Jinja Scope/import/report/candidate/Estimate routes; local PDF upload/scan/page-review routes | PDF, workbook pricing and partial measured checks are implemented. Service-size review and complete reporting are merged. Selected ProjectPackage download is merged in PR #200; selected-workspace import is merged in PR #203. The optional MCP client covers independent capability commands; real ChatGPT linking remains planned. |
-| Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205; measured review is implemented on this branch. Workbook pricing selection and external linking remain incomplete. |
+| Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205 and measured review in PR #206. Workbook source preview and confirmed rate selection are implemented on the current branch, with local validation passed and publication to verify. External linking remains unproven. |
 | Orchestration | Deterministic controllers and bounded inference journal; generic worker incomplete | Ordinary synchronous bounded manual commands for P0. Add durable jobs only when a selected long-running workflow needs them. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse rules behind independently validated capability contracts; do not duplicate business logic in UI or adapters. |
 | Draft persistence | Separate Scope/report/candidate tables plus merged Estimate/report retention and DraftPdfSource and DraftPricingSource bindings; owner/admin checks, exact dependencies, hash/parent validation and conditional saves | Preserve imported-source lineage and separate retention; full archive exchange and operating limits need further work. |
@@ -1548,10 +1549,11 @@ approvals remain untrusted, and shared quarantine/integrity/export checks still 
 requests. Resource metadata advertises five scopes. The normal app remains usable
 without the optional client, and external tools cannot confirm their own requests.
 
-**Remaining gaps:** workbook price-selection client commands, full applicability/pricing/domain breadth, real OAuth/ChatGPT setup,
-in-chat downloads, operational tenancy/retention/rate limiting and production acceptance.
-The measured-review amendment below closes that entry gap. Technical truth,
-commercial recovery and Human Release boundaries are unchanged.
+**Remaining gaps:** full applicability/pricing/domain breadth, real OAuth/ChatGPT
+setup, in-chat downloads, operational tenancy/retention/rate limiting and production
+acceptance. The following amendments expose existing measured-review and workbook
+pricing commands through the same client. Technical truth, commercial recovery and
+Human Release boundaries are unchanged.
 
 
 ## Implemented client amendment: measured constraints and service sizes
@@ -1581,10 +1583,68 @@ conditions remain; v3 cannot be downgraded to discard size history. Retained rep
 read the explicit reviewed revision and expose later staleness without changing bytes.
 This is partial Draft technical decision support, never compatibility approval.
 
-**Next proposed slice:** preview and explicitly apply one already retained/scanned
-XLSX row to an existing Estimate line through the same client. Reuse
-`draft_pricing_intake.preview` / `apply_rate`; keep upload/scan in the existing UI.
-After that bounded parity step, prioritize user feedback and a deliberately scoped
-evidence-to-structured-Draft interaction. Current PDF review records observations;
-it does not yet propose linked defects/openings/services. Real ChatGPT OAuth setup,
-complete applicability, broader pricing and production acceptance remain separate gaps.
+This increment is merged in PR #206. Workbook pricing now uses the same boundary
+in the current branch, described below. Complete applicability, broader pricing,
+real ChatGPT OAuth setup and production acceptance remain separate gaps.
+
+
+## Implemented client amendment: retained workbook rate selection
+
+**Current -> change -> reason:** standalone workbook intake already retains/scans an
+XLSX, previews explicitly mapped cells and applies one source-bound rate to one saved
+Estimate line. The current implementation branch exposes those existing operations to
+the authenticated client. It adds no inference, pricing rule, parser, database or
+orchestration layer. Local tests, browser/restart and output checks passed; publication is a separate checkpoint.
+
+`list_pricing_sources` returns owned-source metadata. `preview_pricing_rows` verifies
+current retained bytes through the shared PostgreSQL containment reader, then returns
+five worksheet rows at a time. Unmapped samples declare truncation; mapped rows retain
+exact cells, source/row hashes and unresolved problems. The client chooses explicit
+columns; no header guessing, formula evaluation or inferred rate is introduced.
+
+`ApplyWorkbookRate` binds the current Estimate/line, column mapping, selected row and
+verified source/document/scan identities in the existing durable request. Preparation
+uses `draft_pricing_intake.preview` and saves no estimate change. The browser shows
+the exact cells and requested recovery note alongside the saved line and totals.
+Only the same human's confirmed request invokes `apply_rate`. Current rights, input
+binding, units, supported price values and expected revision are checked again; a
+failed operation rolls back the decision and artifact together.
+
+Read tools require read/estimate client scopes plus local estimate/library access and
+strict client ownership. Preparing/applying adds the existing write permissions.
+Pending and completed browser request history requires current `library:read`.
+Source-bearing estimates, reports and packages retain their shared access checks.
+Upload and scan stay explicit standalone UI actions; preview never silently scans.
+This path requires existing PostgreSQL quarantine support and a clean, current scan.
+A source-list ready flag alone is not proof that a source can now be used.
+
+**Migration/consequences:** no new migration, table, dependency, OAuth scope or artifact
+version. Existing capability requests carry the additional action, and pre-existing
+commands preserve their original five-key input-hash shape across upgrade. The shared
+Estimate v2 contract retains source cells and an unapproved selection event alongside
+original rates and reasoned overrides. Reports still render explicit saved revisions;
+selecting a workbook rate neither activates a pricing library nor proves technical
+suitability, quantity, commercial applicability or complete recovery.
+
+## Next planned product slice: source-linked structured Draft review
+
+The current PDF page UI displays retained pages/text and `review_page` appends an
+observation. Existing Draft Defect/Opening/Service models and the editor already
+support a separate physical graph, but Scope v3 `evidence_refs` binds only observation
+IDs/hashes. Entity facts currently have no equivalent page-review binding.
+
+The next bounded workflow should let a human inspect one retained page, draft/edit
+linked entities using the existing editor, preview without writes, and explicitly
+append one Draft revision with source links. Reuse `validate_payload`, conditional
+revision saving and the shared retained-source reader. Preserve independent entities,
+many-to-many opening/service links, explicit uncertainty and unknown quantities.
+AI-generated suggestions remain optional future input to this human review boundary.
+
+**Contract decision still to implement:** choose the smallest compatible versioned
+entity-to-page provenance representation; define how changed/deleted entity facts
+invalidate or retain their historical claims. Preserve v1-v3 bytes and imported
+unverified lineage. Do not pretend observation-only references prove new entity facts.
+Propagate the chosen binding through reopen, JSON, existing Scope PDF/XLSX and package
+round trip. Recheck source/scan/document/page identity, ownership, permissions and
+expected revision at confirmation. No canonical authority, provider call, technical
+selection or automatic pricing is needed for this planned Draft interaction.

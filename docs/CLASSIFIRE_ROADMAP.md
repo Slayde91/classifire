@@ -1,10 +1,11 @@
 # CLASSIFIRE Master Roadmap
 
 **Status:** Active; prototype-first delivery approved 2026-09-05.
-**Verified shared-main baseline:** `fd60bb82538c248b73a14e09dd71bec7493ba7da`
-(PR #205); main CI 34014555539 succeeded. Selected package import and independent
-human-confirmed MCP capabilities are merged. Measured-review client parity is the
-current bounded increment; see PROJECT_STATE.md for actual validation/publication.
+**Verified shared-main baseline:** `58c7d4aefad87d714a8922d060fbfa2e68b446bb`
+(PR #206); PR CI 34015890493 attempt 2 passed 1,511 tests and main CI 34017405923
+succeeded. Measured-review client parity is merged. Workbook pricing client commands
+are the current implementation increment on `feat/client-workbook-pricing-20260906`;
+local validation passed. See PROJECT_STATE.md for proof and the publication checkpoint.
 Draft increments do not complete production Phase 8-14 or authorize OpenClaw retirement.
 **Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
 plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
@@ -77,14 +78,14 @@ prototype into it.
 | --- | --- | --- |
 | **P0. Draft Scope workspace** | **Completed bounded prototype; merged PR #188** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
 | **P1a. Saved Scope import/replacement** | **Completed bounded increment; merged PR #189** | Upload saved Draft Scope JSON, validate/check its declared hash and version, preview identity/content/uncertainty and explicitly append a local revision. Preserve source lineage and prior revisions; reject stale saves and foreign authority. Demonstrate browser round trip and refusal cases. No ZIP or report extraction in this slice. |
-| **P1b. One evidence intake path** | **First PDF increment merged PR #194; broader P1b unfinished** | Upload a bounded PDF, observe real scanning, inspect retained pages, explicitly save page-linked Draft observations, reopen after restart and download intact provenance. PostgreSQL/quarantine and authority guards apply. Other formats, automatic interpretation and full Scope analysis remain upcoming; manual entry needs no AI. |
+| **P1b. One evidence intake path** | **First PDF increment merged PR #194; broader P1b unfinished** | Upload a bounded PDF, observe real scanning, inspect retained pages, explicitly save page-linked Draft observations, reopen after restart and download intact provenance. PostgreSQL/quarantine and authority guards apply. Source-linked structured entity review from one retained page is next after client pricing. Other formats, automatic interpretation and full Scope analysis remain upcoming; manual entry needs no AI. |
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
 | **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
 | **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; full governed pricing still upcoming** | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured-review parity active; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client implementation/validation active; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
@@ -115,25 +116,35 @@ scopes, readable human confirmation and exact retained report downloads. Feature
 34013051763 attempt 2 passed 1,502 tests; main CI 34014555539 succeeded. Its first
 worker timed out with no reported assertion failure; the unchanged retry passed.
 
-**Current client increment:** `feat/client-measured-review-20260906` adds v2/v3
-measured-review entry with the existing shared rules and human confirmation. The
-saved and proposed values are distinguishable; invalid/foreign/stale source claims
-cannot be promoted. Verify its exact-head CI/publication before classifying it merged.
+**Completed measured-review client increment:** PR #206 merged v2/v3 measurement
+entry using the existing shared rules and human confirmation. Saved and proposed
+values are distinguishable; invalid/foreign/stale source claims cannot be promoted.
+PR CI 34015890493 attempt 2 passed 1,511 tests; main CI 34017405923 succeeded.
 
-**Next executable product task:** client preview and human-confirmed application of
-one already retained/scanned XLSX pricing row to an existing Estimate line. Reuse the
-working standalone `draft_pricing_intake.preview` / `apply_rate` path, preserving
-source/cell hashes, units, recovery notes and original/override history. Dependencies:
-this increment's publication, an owned saved Estimate/line, retained synthetic workbook
-and guarded disposable PostgreSQL/storage for containment proof. Upload/scan remains
-in the existing UI; no new parser or pricing inference is needed for the increment.
+**Active client increment:** `feat/client-workbook-pricing-20260906` implements owned
+workbook discovery, bounded exact-row preview and human-confirmed application of one
+already retained/scanned row to an existing Estimate line. It reuses
+`draft_pricing_intake.preview` / `apply_rate`, preserving source/cell/scan hashes,
+units, recovery notes and original/override history. Upload/scan stays in the existing
+UI. Local validation passed; publication must finish before this increment is classified
+merged; no full-client or production claim follows from these commands alone.
 
-**Following priority:** user trial and evidence-to-structured-Draft analysis. PDF page
-review currently saves linked observations; it does not produce reviewed, linked
-Defects/Openings/Services. Define that bounded interaction from actual user needs,
-then extend the shared Draft contract without borrowing canonical write authority.
-Do not indefinitely polish client parity before delivering missing domain value.
-Real OAuth/account linking and deployment need separate account/environment authority.
+**Next executable product task:** source-linked structured Draft review from one
+already retained PDF page. The user inspects the page, drafts/edits separate Defects,
+Openings and Services with explicit links, previews without writes, then confirms
+one saved revision. Reuse the existing editor/models; add the smallest compatible
+versioned entity-to-page provenance contract because current v3 references bind only
+observations. Unknown measurements/quantities stay unknown. AI suggestions can follow
+this working human review path; they are not a prerequisite.
+
+Dependencies: finish the current pricing increment, inspect the current Scope/evidence
+contracts, use an owned retained/scanned synthetic PDF and guarded disposable
+PostgreSQL/storage. Completion requires browser save/reopen/restart, intact graph and
+old revisions, JSON plus existing Scope PDF/XLSX/package round-trip provenance, and
+refusal of stale/source/permission violations without canonical writes. User trial
+should guide the next extension and fixes. Do not indefinitely polish client parity
+before delivering missing domain value. Real OAuth/account linking and deployment
+need separate account/environment authority.
 
 **First interactive prototype = P0. Four-capability prototype = demonstrated
 P0-P4 behavior**, including P1a/P1b, independent/manual entry and reporting from partial
@@ -168,13 +179,13 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Complete current import verification/publication, then build the first thin,
-authenticated ChatGPT-facing Draft workflow over the proven shared services.
-SESSION_HANDOFF.md specifies files, prerequisites and completion evidence. No
-provider/customer data, canonical write, lock or release is required for local parity.
-Broader evidence/applicability/pricing and OpenClaw protection parity remain required
-work with separate verification gates. User trials and visible defects take priority
-over broad polish or unrelated infrastructure.
+Finish safe publication of the locally verified workbook-pricing client
+increment, then implement the bounded source-linked structured PDF Draft workflow
+above. SESSION_HANDOFF.md specifies the exact first task, prerequisites and validation.
+No provider/customer data, canonical write, lock or release is required for these
+synthetic Draft milestones. Broader evidence/applicability/pricing and OpenClaw
+protection parity remain required work with separate gates. User trials and visible
+defects take priority over broad polish or unrelated infrastructure.
 
 ### Authoritative readiness track
 

@@ -201,6 +201,8 @@ def review(db: Session, authority: ClientAuthority, actor: User, request_id: str
             and parsed.match_id
         ):
             scopes._actor(db, actor, "technical:read")
+        if isinstance(parsed, capabilities.ApplyWorkbookRate):
+            scopes._actor(db, actor, "library:read")
         if isinstance(parsed, (capabilities.EditEstimate, capabilities.EstimateReport)):
             capabilities.estimates.read_estimate_revision(
                 db, actor, parsed.draft_id, parsed.estimate_id
