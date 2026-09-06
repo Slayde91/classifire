@@ -83,7 +83,7 @@ prototype into it.
 | **P3b. Governed pricing and estimating coverage** | **First XLSX preview/selection merged PR #196; full governed pricing still upcoming** | Import authorised pricing XLSX with source cells, units, labour/materials and inclusions. Support validated exact/mapped/component/inferred/user-defined/unresolved defaults and overrides; check applicability, extrapolation, units and shared-work recovery. Complete independent Estimate Package behavior rather than treating a manual worksheet as finished estimating. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Selected Draft package download merged PR #200; safe import next; client parity follows | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P5. Project portability and shared ChatGPT access** | Selected Draft package download merged PR #200; import active with local semantic preview; transactional import outstanding; client parity follows | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
@@ -99,7 +99,13 @@ bodies stay external/withheld, permissions follow included content, and historic
 bytes stay exact. This does not complete full project/history/source coverage.
 See [contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md).
 
-**Next: safe new-project package import.** Users should upload a supported package,
+**Active: safe new-project package import; not complete.** A local no-write upload
+preview now validates every selected JSON artifact, report snapshot and dependency,
+and inventories untrusted binaries without opening them. Transactional creation,
+foreign/local identity mapping, safe binary retention and editable round trip remain
+required. Do not count preview alone as the import exit.
+
+**Next implementation within this task:** Users should upload a supported package,
 inspect its complete selected membership and foreign provenance, explicitly import
 into a new local Draft project, reopen and continue supported independent capabilities.
 Validate ZIP bounds/members/hashes and every capability schema, map identities and

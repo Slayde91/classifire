@@ -11,6 +11,7 @@
 <div class="alert alert-error" role="alert"><strong>The draft could not be created.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
 {% endif %}
 {% if has_permission('project:write') %}
+<p><a class="button button-secondary" href="/package-import">Inspect a downloaded project ZIP</a></p>
 <section class="panel scope-create" aria-labelledby="new-scope-heading">
   <div class="panel-head"><h2 id="new-scope-heading">Start a new draft</h2><span class="badge badge-draft">Manual entry</span></div>
   <p class="muted">This creates a project and its first Draft Scope revision.</p>

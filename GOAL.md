@@ -166,6 +166,10 @@ withheld; existing artifact provenance and history are preserved. This is select
 workspace portability, not all project records, original evidence or a database backup.
 See PROJECT_STATE.md for evidence/publication and remaining limitations.
 
+The current import work adds a no-write ZIP inspection screen and shared semantic
+validation of all selected artifacts. It does not yet create an imported project.
+Do not substitute this preview for the required editable round trip.
+
 Prioritize **safe new-project package import** across selected
 capability artifacts and outputs. Validate complete declared membership and schemas,
 preserve original provenance, map local identities explicitly, and keep missing

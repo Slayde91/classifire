@@ -63,7 +63,8 @@ Revoked access denies saved package reads/downloads; inaccessible packages are n
 listed. Scope-only packages retain the existing Scope read/download boundary.
 CSRF, bounded forms and duplicate/unknown selection-field refusal remain enforced.
 No imported claim, approval, signature or lock can gain local authority through this
-export. No archive upload/import route exists in this increment.
+export. A separate `/package-import` upload inspection screen now exists, but it
+does not save an imported project or make uploaded report binaries downloadable.
 
 ## Archive and verification
 
@@ -74,6 +75,12 @@ size/SHA-256 and exact ZIP re-encoding are checked without filesystem extraction
 unsafe, duplicate, extra, compressed, altered and oversized archive members fail.
 The structural inspector is not a semantic importer or authorization verifier;
 service reads additionally reconstruct exact content through authorized readers.
+The new `draft_package_import.inspect_package` additionally validates the complete
+manifest/selection/source inventory and every JSON artifact/report dependency. Its
+authorized preview is read-only; foreign approval remains unverified. Binary header
+and hash checks do not establish malware safety or agreement with the snapshot.
+Input is bounded by the lesser of 64 MiB and configured upload size. Safe retention,
+local identity mapping and transactional import remain unimplemented.
 
 Tests cover no-write preview, coherent dependencies, unchanged history, rollback,
 conflicting saves, permission loss, source policy, malformed archives and forward

@@ -169,6 +169,43 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
         raise PackageError("PACKAGE_ARCHIVE_INVALID", 409) from exc
 
 
+def source_manifest(
+    scope: dict[str, Any], match: dict[str, Any] | None, estimate: dict[str, Any] | None
+) -> list[dict[str, str]]:
+    """Exact source inventory shared by export and foreign-package validation."""
+    sources = []
+    for index, _ref in enumerate(scope.get("evidence_refs", [])):
+        sources.append(
+            {
+                "kind": "project_evidence",
+                "membership": "external",
+                "reference": f"artifacts/scope.json#/evidence_refs/{index}",
+                "reason": "Source bytes not included; retained/imported claims stay unverified",
+            }
+        )
+    if match:
+        for index, _candidate in enumerate(match["candidates"]):
+            sources.append(
+                {
+                    "kind": "technical_source",
+                    "membership": "withheld",
+                    "reference": f"artifacts/system-match.json#/candidates/{index}/source",
+                    "reason": "Restricted library source body; saved review claims only",
+                }
+            )
+    if estimate:
+        for index, _source in enumerate(estimate.get("pricing_sources", [])):
+            sources.append(
+                {
+                    "kind": "pricing_source",
+                    "membership": "withheld",
+                    "reference": f"artifacts/estimate.json#/pricing_sources/{index}",
+                    "reason": "Restricted pricing workbook body; retained cell provenance only",
+                }
+            )
+    return sources
+
+
 def _compose(
     db: Session,
     actor: User,
@@ -220,36 +257,7 @@ def _compose(
         members[f"reports/{report_id}.json"] = encode(snapshot)
         for fmt in ("pdf", "xlsx"):
             members[f"reports/{report_id}.{fmt}"] = getattr(estimate_row, fmt + "_bytes")
-    sources = []
-    for index, _ref in enumerate(scope.get("evidence_refs", [])):
-        sources.append(
-            {
-                "kind": "project_evidence",
-                "membership": "external",
-                "reference": f"artifacts/scope.json#/evidence_refs/{index}",
-                "reason": "Source bytes not included; retained/imported claims stay unverified",
-            }
-        )
-    if match:
-        for index, _candidate in enumerate(match["candidates"]):
-            sources.append(
-                {
-                    "kind": "technical_source",
-                    "membership": "withheld",
-                    "reference": f"artifacts/system-match.json#/candidates/{index}/source",
-                    "reason": "Restricted library source body; saved review claims only",
-                }
-            )
-    if estimate:
-        for index, _source in enumerate(estimate.get("pricing_sources", [])):
-            sources.append(
-                {
-                    "kind": "pricing_source",
-                    "membership": "withheld",
-                    "reference": f"artifacts/estimate.json#/pricing_sources/{index}",
-                    "reason": "Restricted pricing workbook body; retained cell provenance only",
-                }
-            )
+    sources = source_manifest(scope, match, estimate)
     manifest = {
         "schema_version": SCHEMA,
         "state": "Draft",
