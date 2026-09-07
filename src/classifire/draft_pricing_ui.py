@@ -11,7 +11,9 @@ from openpyxl.utils.cell import get_column_letter  # type: ignore[import-untyped
 from .config import get_settings
 from .draft_estimate_ui import Db, _actor, _revision
 from .draft_scope_ui import _form_values
+from .security import has_permission as user_has_permission
 from .security import verify_csrf
+from .services import draft_pricing_evaluation_rosters as evaluation_rosters
 from .services import draft_pricing_intake as pricing
 from .services import malware_scan
 from .services.draft_estimates import read_estimate_revision
@@ -106,6 +108,7 @@ def _page(
     status_code: int = 200,
     row_observation_preview: dict[str, Any] | None = None,
     system_mapping_preview: dict[str, Any] | None = None,
+    evaluation_roster_preview: dict[str, Any] | None = None,
 ) -> HTMLResponse:
     draft = get_draft(db, user, draft_id)
     envelope = read_estimate_revision(db, user, draft_id, estimate_id)
@@ -121,8 +124,15 @@ def _page(
     row_observations: list[dict[str, Any]] = []
     system_mappings: list[dict[str, Any]] = []
     system_mapping_targets = None
+    evaluation_roster_history: list[dict[str, Any]] = []
     values = form or {}
     source_api = pricing.intake()
+    if user_has_permission(user, "pricing:approve") and user_has_permission(
+        user, "technical:read"
+    ):
+        evaluation_roster_history = evaluation_rosters.list_rosters(
+            db, user, draft_id, settings=get_settings()
+        )
     if source_id is not None:
         source = pricing.source_info(db, user, draft_id, source_id)
         profiles = pricing.list_profiles(db, user, draft_id, source_id)
@@ -254,6 +264,8 @@ def _page(
             system_mappings=system_mappings,
             system_mapping_targets=system_mapping_targets,
             system_mapping_preview=system_mapping_preview,
+            evaluation_roster_history=evaluation_roster_history,
+            evaluation_roster_preview=evaluation_roster_preview,
             profile_decisions_allowed=PROFILE_DECISIONS,
             row_item_kinds=ROW_ITEM_KINDS,
             row_evidence_states=ROW_EVIDENCE_STATES,
@@ -281,6 +293,122 @@ def pricing_page(request: Request, db: Db, draft_id: str, estimate_id: str) -> H
         return _page(request, db, user, draft_id, estimate_id)
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/evaluation-roster/preview",
+    response_class=HTMLResponse,
+)
+def preview_pricing_evaluation_roster(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    form: FormData,
+) -> HTMLResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    if set(form) != {"csrf_token"}:
+        raise HTTPException(422, "Preview only the current governed Dataset B mappings")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        preview = evaluation_rosters.preview_roster(
+            db, user, draft_id, settings=get_settings()
+        )
+        return _page(
+            request,
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            evaluation_roster_preview=preview,
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/evaluation-rosters"
+)
+def save_pricing_evaluation_roster(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    form: FormData,
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    if set(form) != {
+        "csrf_token",
+        "roster_id",
+        "manifest_id",
+        "created_at",
+        "revision",
+        "parent_manifest_sha256",
+        "mapping_inventory_sha256",
+        "preview_hash",
+    }:
+        raise HTTPException(422, "Save only the exact previewed evaluation roster")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        evaluation_rosters.save_roster(
+            db,
+            user,
+            draft_id,
+            roster_id=form["roster_id"],
+            manifest_id=form["manifest_id"],
+            created_at=form["created_at"],
+            expected_revision=_revision(form["revision"]),
+            expected_parent_manifest_sha256=form["parent_manifest_sha256"] or None,
+            expected_mapping_inventory_sha256=form["mapping_inventory_sha256"],
+            expected_preview_hash=form["preview_hash"],
+            settings=get_settings(),
+        )
+        db.commit()
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return RedirectResponse(
+        f"/scopes/{draft_id}/estimates/{estimate_id}/pricing",
+        303,
+    )
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/evaluation-rosters/"
+    "{roster_id}/download"
+)
+def download_pricing_evaluation_roster(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    roster_id: str,
+) -> Response:
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        content = evaluation_rosters.roster_bytes(db, user, draft_id, roster_id)
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return Response(
+        content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="pricing-evaluation-roster-{roster_id}.json"'
+            ),
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.post("/scopes/{draft_id}/estimates/{estimate_id}/pricing/upload")

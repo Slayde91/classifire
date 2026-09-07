@@ -6,6 +6,7 @@ import pytest
 
 from classifire.services.draft_pricing_evaluation_contract import (
     PricingEvaluationLineageError,
+    assign_target_blind_splits,
     build_lineage_manifest,
     lineage_manifest_bytes,
     load_lineage_manifest,
@@ -116,6 +117,47 @@ def test_manifest_order_and_transitive_lineage_groups_are_deterministic() -> Non
         "price-observation-1",
         "price-observation-2",
     ]
+
+
+def test_target_blind_split_assignment_is_deterministic_and_keeps_groups_together() -> None:
+    members = [
+        {
+            "observation_id": item["observation_id"],
+            "lineage_keys": item["lineage_keys"],
+        }
+        for item in [
+            _observation(1, "training", alias="connected-alias"),
+            _observation(2, "training", alias="connected-alias"),
+            _observation(3, "validation"),
+            _observation(4, "holdout"),
+        ]
+    ]
+
+    forward = assign_target_blind_splits(members)
+    reverse = assign_target_blind_splits(list(reversed(members)))
+
+    assert forward == reverse
+    assert forward["price-observation-1"] == forward["price-observation-2"]
+    assert set(forward.values()) == {"training", "validation", "holdout"}
+
+
+def test_target_blind_split_assignment_rejects_targets_and_insufficient_groups() -> None:
+    member = {
+        "observation_id": "price-observation-1",
+        "lineage_keys": _observation(1, "training")["lineage_keys"],
+    }
+    with pytest.raises(PricingEvaluationLineageError, match="split member"):
+        assign_target_blind_splits([{**member, "target": {"rate": "123.45"}}])
+    with pytest.raises(PricingEvaluationLineageError, match="insufficient independent"):
+        assign_target_blind_splits(
+            [
+                member,
+                {
+                    "observation_id": "price-observation-2",
+                    "lineage_keys": _observation(2, "validation")["lineage_keys"],
+                },
+            ]
+        )
 
 
 def test_connected_alias_or_group_crossing_splits_fails_closed() -> None:

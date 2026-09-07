@@ -1279,6 +1279,39 @@ class DraftPricingSystemMapping(RecordMixin, Base):
     reviewed_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class DraftPricingEvaluationRoster(RecordMixin, Base):
+    """Append-only target-blind pricing evaluation split roster."""
+
+    __tablename__ = "draft_pricing_evaluation_rosters"
+    __table_args__ = (
+        UniqueConstraint(
+            "draft_scope_id",
+            "revision",
+            name="uq_draft_pricing_evaluation_roster_revision",
+        ),
+        CheckConstraint(
+            "revision >= 1", name="ck_draft_pricing_evaluation_roster_revision"
+        ),
+        CheckConstraint(
+            "length(roster_json) > 0 AND length(roster_json) <= 1048576",
+            name="ck_draft_pricing_evaluation_roster_size",
+        ),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_scopes.id"), index=True, nullable=False
+    )
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    manifest_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    parent_manifest_sha256: Mapped[str | None] = mapped_column(String(64))
+    mapping_inventory_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    feature_cutoff_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    roster_json: Mapped[str] = mapped_column(Text, nullable=False)
+    roster_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
 class DraftScopeReport(RecordMixin, Base):
     """Retained scope-only Draft snapshot and its two exact rendered outputs."""
 

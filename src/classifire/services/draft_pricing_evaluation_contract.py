@@ -43,6 +43,7 @@ DENIED_FEATURE_ORIGINS = (
 MAX_MANIFEST_BYTES = 1024 * 1024
 MAX_OBSERVATIONS = 10_000
 MAX_FEATURE_DECLARATIONS = 500
+TARGET_BLIND_SPLIT_CYCLE = ("training", "validation", "holdout", "training", "training")
 
 _TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")
 _HASH = re.compile(r"[0-9a-f]{64}")
@@ -216,6 +217,45 @@ def _connected_groups(observations: list[dict[str, Any]]) -> list[dict[str, Any]
             }
         )
     return sorted(groups, key=lambda item: item["lineage_group_id"])
+
+
+def assign_target_blind_splits(
+    lineage_members: Iterable[dict[str, Any]],
+) -> dict[str, str]:
+    prepared: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for raw in lineage_members:
+        member = _exact_dict(raw, {"observation_id", "lineage_keys"}, "split member")
+        observation_id = _token(member["observation_id"], "observation identity")
+        if observation_id in seen:
+            raise PricingEvaluationLineageError("duplicate observation")
+        seen.add(observation_id)
+        lineage = _exact_dict(
+            member["lineage_keys"], set(REQUIRED_LINEAGE_KEYS), "lineage keys"
+        )
+        for key in REQUIRED_LINEAGE_KEYS:
+            _token(lineage[key], f"lineage key {key}")
+        prepared.append(
+            {
+                "observation_id": observation_id,
+                "lineage_keys": copy.deepcopy(lineage),
+                "split": "training",
+            }
+        )
+        if len(prepared) > MAX_OBSERVATIONS:
+            raise PricingEvaluationLineageError("too many lineage members")
+    if not prepared:
+        raise PricingEvaluationLineageError("lineage members")
+
+    groups = _connected_groups(prepared)
+    if len(groups) < len(SPLITS):
+        raise PricingEvaluationLineageError("insufficient independent lineage groups")
+    assignments: dict[str, str] = {}
+    for index, group in enumerate(groups):
+        split = TARGET_BLIND_SPLIT_CYCLE[index % len(TARGET_BLIND_SPLIT_CYCLE)]
+        for member in group["members"]:
+            assignments[member["observation_id"]] = split
+    return {key: assignments[key] for key in sorted(assignments)}
 
 
 def _validate_features(
@@ -442,7 +482,7 @@ def validate_lineage_manifest(
 
 
 def lineage_manifest_bytes(value: Any) -> bytes:
-    return canonical(validate_lineage_manifest(value))
+    return cast(bytes, canonical(validate_lineage_manifest(value)))
 
 
 def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
