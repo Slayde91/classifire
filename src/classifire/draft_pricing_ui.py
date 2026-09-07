@@ -13,6 +13,7 @@ from .draft_estimate_ui import Db, _actor, _revision
 from .draft_scope_ui import _form_values
 from .security import has_permission as user_has_permission
 from .security import verify_csrf
+from .services import draft_pricing_coverage as pricing_coverage
 from .services import draft_pricing_evaluation_rosters as evaluation_rosters
 from .services import draft_pricing_intake as pricing
 from .services import malware_scan
@@ -29,6 +30,7 @@ from .services.draft_pricing_contract import (
     SYSTEM_MAPPING_UNRESOLVED_FIELDS,
 )
 from .services.draft_scope import DraftScopeError, get_draft
+from .services.draft_system_match_contract import canonical
 from .ui import _context, _require, templates
 from .ui_uploads import single_file
 
@@ -109,6 +111,7 @@ def _page(
     row_observation_preview: dict[str, Any] | None = None,
     system_mapping_preview: dict[str, Any] | None = None,
     evaluation_roster_preview: dict[str, Any] | None = None,
+    pricing_coverage_preview: dict[str, Any] | None = None,
 ) -> HTMLResponse:
     draft = get_draft(db, user, draft_id)
     envelope = read_estimate_revision(db, user, draft_id, estimate_id)
@@ -130,6 +133,7 @@ def _page(
     if user_has_permission(user, "pricing:approve") and user_has_permission(
         user, "technical:read"
     ):
+        system_mapping_targets = pricing.list_system_mapping_targets(db, user, draft_id)
         evaluation_roster_history = evaluation_rosters.list_rosters(
             db, user, draft_id, settings=get_settings()
         )
@@ -157,9 +161,6 @@ def _page(
                         source_id,
                         profile_id,
                         settings=get_settings(),
-                    )
-                    system_mapping_targets = pricing.list_system_mapping_targets(
-                        db, user, draft_id
                     )
                 except DraftScopeError as exc:
                     if exc.status_code != 403:
@@ -266,6 +267,7 @@ def _page(
             system_mapping_preview=system_mapping_preview,
             evaluation_roster_history=evaluation_roster_history,
             evaluation_roster_preview=evaluation_roster_preview,
+            pricing_coverage_preview=pricing_coverage_preview,
             profile_decisions_allowed=PROFILE_DECISIONS,
             row_item_kinds=ROW_ITEM_KINDS,
             row_evidence_states=ROW_EVIDENCE_STATES,
@@ -293,6 +295,81 @@ def pricing_page(request: Request, db: Db, draft_id: str, estimate_id: str) -> H
         return _page(request, db, user, draft_id, estimate_id)
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/coverage/preview",
+    response_class=HTMLResponse,
+)
+def preview_pricing_coverage(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    form: FormData,
+) -> HTMLResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    if set(form) != {"csrf_token", "technical_release_id"}:
+        raise HTTPException(422, "Preview one current governed technical release")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        preview = pricing_coverage.preview_coverage(
+            db,
+            user,
+            draft_id,
+            form["technical_release_id"],
+            settings=get_settings(),
+        )
+        return _page(
+            request,
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            pricing_coverage_preview=preview,
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/coverage.json"
+)
+def download_pricing_coverage(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    technical_release_id: str,
+) -> Response:
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        content = canonical(
+            pricing_coverage.preview_coverage(
+                db,
+                user,
+                draft_id,
+                technical_release_id,
+                settings=get_settings(),
+            )
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return Response(
+        content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": 'attachment; filename="pricing-coverage.json"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.post(
