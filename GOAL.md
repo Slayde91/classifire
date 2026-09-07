@@ -200,7 +200,7 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: map one reviewed B system row
+## Immediate delivery priority: persist the first governed T13 roster
 
 PDF/Excel graph review and optional one-page suggestions are merged through PR #211.
 Preserve their manual fallback, shared graph review, exact history and bounded optional
@@ -217,17 +217,26 @@ It grants no row, library, system, Estimate, technical or release authority.
 PR #216 establishes the pre-model T13 lineage/leakage contract: exact B observation
 bindings, connected alias/configuration/version groups, frozen train/validation/holdout
 rules, target-feature exclusions and canonical hashes. Because reviewed normalized B
-observations do not yet exist, it does not persist a roster or run an evaluation.
+observations did not yet exist at that point, so it does not persist a roster or run an
+evaluation.
 
 PR #218 adds a reviewed Dataset A product/material/labour/service observation through
 the existing pricing UI, bound to the approved exact profile, decision, source cells and
 row hash. It saves, reopens and downloads immutable Draft evidence without activating a
 commercial library or changing an Estimate.
 
-Next build one reviewed Dataset B system/configuration mapping through the same governed
-UI and exact-row boundary, bound to an approved technical identity or left explicitly
-unresolved. Then instantiate the T13 contract from real reviewed identities. Use synthetic
-fixtures until actual source rights and semantics are verified.
+PR #220 adds that governed Dataset B interaction. An authorised reviewer can inspect one
+exact usable Firefly price row, preview without writing, and immutably record it as mapped
+to an eligible source-bound variant or explicitly unmatched/ambiguous. Exact source,
+profile, decision, row, release and technical snapshots remain bound; no technical,
+commercial, Estimate, prediction, holdout or release authority is granted.
+
+Next persist the first application T13 lineage roster from current reviewed mapped B
+records. Derive and freeze lineage without reading target prices for assignment, require
+training/validation/holdout coverage, and return an explicit insufficient-evidence result
+when fewer than three independent connected groups exist. Keep actual target values out
+of the roster and all validation/holdout inputs. Use synthetic fixtures until actual
+source rights, semantics, identity lineage and split policy are verified.
 
 T1-T14 dependencies remain: reviewed identities and field claims, immutable recipes,
 lineage-aware holdouts and measured coverage precede derived costing/calibration.
