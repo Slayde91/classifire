@@ -2,10 +2,10 @@
 
 **Status:** Active; prototype-first delivery approved 2026-09-05. PDF/Excel review,
 bounded PDF suggestions, A/B source profiles, exact-profile review, Dataset A/B row
-governance and the target-blind T13 roster are merged through PR #222.
-**Verified shared-main baseline:** `abfbffc54a48f498f6c59764824ad9754b2839d6`.
-PR #222 head run 34140315496 passed 1,875 tests and all repository gates;
-post-merge main run 34141924350 passed the same workflow.
+governance, target-blind T13 roster and read-only T9 coverage are merged through PR #224.
+**Verified shared-main baseline:** `75817f04f4ff5433b7cfc348daf8454a6b243b3d`.
+PR #224 head run 34148949367 and post-merge main run 34150861778 each passed
+1,877 tests and all repository gates.
 [PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;
 synthetic profile proof is not real-workbook semantic validation.
 Production Phase 8-14 and OpenClaw retirement remain separately gated.
@@ -19,9 +19,10 @@ plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.m
   The bounded exact-profile review and early T13 evaluation-lineage contract are merged.
   PR #218 delivers one reviewed A-row observation, PR #220 delivers one reviewed
   B system/configuration mapping and PR #222 persists the first governed T13 roster.
-  Build a bounded T9 coverage-status interaction next. Reuse existing pricing/source/
-  review services; do not start bulk extraction, model tuning or a replacement agent
-  fleet to achieve that screen.
+  PR #224 delivers bounded no-write T9 coverage for every active technical target.
+  Build one governed T6 component/activity recipe-link interaction next. Reuse existing
+  technical/pricing/review services; do not start bulk extraction, model tuning or a
+  replacement agent fleet to achieve that screen.
 
 The four capabilities remain independently callable: scope analysis, system
 matching, estimating and reporting. The full evidence-to-Human-Release chain
@@ -98,7 +99,7 @@ prototype into it.
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
 | **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
-| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; persisted T13 roster PR #222; full T5-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster history and inspect identity, cells, units, price meaning and gaps. Next expose T9 coverage and missing-data status before separate bottom-up/comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
+| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; T13 roster PR #222; bounded T9 coverage PR #224; T6/T10-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster history and inspect identity, cells, units, price meaning and gaps. The first coverage screen now exposes direct, review, stale and insufficient states; next connect one governed component/activity recipe before separate bottom-up/comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
 | **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
@@ -110,7 +111,8 @@ profiles, PDF observations/graph/optional suggestions P1b (through PR #211), par
 measured P2b and generic pricing XLSX P3b are merged. The bounded A/B profile is merged
   in PR #212, exact-profile human review is merged in PR #214, the pre-model
   T13 contract is merged in PR #216, Dataset A observations in PR #218, Dataset B
-  mappings in PR #220 and the persisted target-blind roster in PR #222. The
+  mappings in PR #220, the persisted target-blind roster in PR #222 and bounded
+  read-only T9 coverage in PR #224. The
 selected-package P5 increment has a real configuration/save/download/reconfiguration/
 restart journey merged in PR #200; later P5 client parity is merged through PR #207.
 Do not rebuild these slices.
@@ -236,13 +238,14 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Build the first bounded **T9 pricing coverage and missing-data status** interaction from
-current governed technical, Dataset A and Dataset B records. Preview every selected
-technical target and show direct observed B support, bottom-up A support, review needed,
-stale inputs or insufficient evidence with exact reasons. Keep the first slice no-write:
-do not calculate or approve a price, activate a library, change an Estimate or grant
-technical/release authority. PR #222 has frozen the target-blind evaluation roster before
-this later pricing work.
+Build the first bounded **T6 component and labour/activity recipe-link** interaction.
+Select one target from the current technical release, identify its explicit component or
+activity requirement, and link it to one or more current reviewed Dataset A observations.
+Retain units, quantity or productivity basis, recovery boundary, unresolved fields and
+exact target/source/profile/decision/row hashes in a no-write preview followed by an
+explicit immutable save/review step. Do not calculate or approve a price, activate a
+library, change an Estimate or grant technical/release authority. PR #224 now exposes
+why bottom-up A support remains zero until this dependency exists.
 Current evidence and exact handoff remain in PROJECT_STATE.md and SESSION_HANDOFF.md.
 This sequence grants no customer-source, live-provider, canonical-write or deployment
 authority. OpenClaw protection parity remains a separate gated track.
@@ -258,15 +261,16 @@ not proof of this new end-to-end capability. Detailed contracts and methods belo
 
 T1-T14 are dependency labels, not a requirement for fourteen large sequential builds.
 The pre-model T13 grouping/leakage rules are merged, PR #218 adds reviewed Dataset A
-row identity, PR #220 adds B identity mapping and PR #222 persists the target-blind
-roster. Build T9 coverage visibility next, before price proposals. Representative-data
+row identity, PR #220 adds B identity mapping, PR #222 persists the target-blind roster
+and PR #224 adds T9 coverage visibility. Build the first T6 recipe link next, before
+price proposals. Representative-data
 lineage validation, access-separated target opening and evaluation execution remain later.
 Every exposed slice includes its UI, minimum persistence and tests.
 
 | Delivery band | Included work and dependency gate |
 | --- | --- |
 | **First visible corpus/pricing slice** | **A/B profile merged PR #212; review merged PR #214; pre-model T13 contract merged PR #216:** minimum T1 + T5 + T7 identity/profile history, early-T12 exact-profile decision and leakage rules with synthetic data; no library publication or price inference. |
-| **Reviewed vertical slice** | **Dataset A observation PR #218, Dataset B mapping PR #220 and persisted target-blind T13 roster PR #222; broader T2-T8 active/upcoming.** Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
+| **Reviewed vertical slice** | **Dataset A observation PR #218, Dataset B mapping PR #220, target-blind T13 roster PR #222 and read-only T9 coverage PR #224; T6 and broader T2-T8 active/upcoming.** Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
 | **Controlled breadth and scale** | Expand T2-T8 through bounded resumable imports, deduplication/reprocessing, proper pagination and representative retained sources; T9 coverage exposes gaps. Measure capacity before declaring hundreds/thousands supported. |
 | **Explainable estimating prototype** | T10 separate bottom-up and comparable proposals, T12 review UI, immutable quantities/labour/assumptions and T13 evaluation. T11 comparison is visible before calibrated combination is enabled. |
 | **Validated operation** | T13 establishes approved method/stratum gates; T11 combined proposals use that evidence; T14 operations, feedback, drift and controlled release extend the demonstrated path. |
@@ -364,6 +368,10 @@ commercial activation remain upcoming.
 
 #### T6. Component and labour/activity mapping
 
+**Status:** highest-value next bounded slice. Current technical releases do not freeze a
+versioned component/activity recipe and reviewed Dataset A observations have no governed
+target link. Implement one explicit proposal/review interaction before bottom-up support.
+
 - **Objective/scope:** connect reviewed technical requirements to identifiable
   materials and installation activities before computing their quantities or cost.
 - **Work:** map components to A product/service revisions and activities to labour
@@ -420,6 +428,12 @@ validation remain upcoming.
   source aliases and technically incompatible but textually similar systems.
 
 #### T9. Pricing coverage and missing-data status
+
+**Status:** bounded read-only coverage is merged in PR #224. Every active technical-
+release target receives direct B, review-needed, stale-input or insufficient-evidence
+status with exact hashes; current unlinked A evidence remains visible and bottom-up A
+support stays zero. Component recipes, comparable/combined routes and project-specific
+applicability remain upcoming.
 
 - **Objective/scope:** make the available pricing routes and unsupported work visible
   before a user requests an estimate.
@@ -674,9 +688,9 @@ new immutable manifest and audit event. A technical-only database constraint
 prevents concurrent publication from leaving two active technical releases.
 
 **Remaining / prioritised amendment:** minimum T1/T5/T7 source identity/profile contracts,
-early-T12 profile review and the T13 roster boundary are merged through PR #222.
-Add a bounded T9 coverage/missing-data screen next so a user can see supported and
-unsupported technical targets before any proposal. Continue T2-T8 processing/fact review,
+early-T12 profile review, the T13 roster boundary and bounded T9 coverage are merged
+through PR #224. Add one governed T6 component/activity recipe link next so reviewed A
+evidence can support a target without invented association. Continue T2-T8 processing/fact review,
 resolution/provenance and breadth in parallel with representative-source validation.
 Extend existing technical/product/labour/pricing/release models; no source filename,
 profile approval, mapping or roster grants downstream authority.

@@ -2,11 +2,11 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.30 - persisted target-blind pricing evaluation rosters.
+**Architecture version:** 5.31 - deterministic read-only pricing coverage.
 
-**Verified shared baseline:** `abfbffc54a48f498f6c59764824ad9754b2839d6`, merge
-commit for PR #222. It adds the first persisted target-blind T13 roster after the
-governed A/B profile, review, Dataset A observation and Dataset B mapping increments.
+**Verified shared baseline:** `75817f04f4ff5433b7cfc348daf8454a6b243b3d`, merge
+commit for PR #224. It adds deterministic read-only T9 coverage after the governed
+A/B profile, review, Dataset A observation, Dataset B mapping and T13 roster increments.
 [PROJECT_STATE.md](./PROJECT_STATE.md) owns measured validation/publication.
 No AI or OpenClaw path is used by this increment. Evaluation execution, commercial
 activation, estimation, real ChatGPT linking and production readiness remain open.
@@ -27,17 +27,19 @@ contains the detailed component contracts, estimation methods, validation and ph
 acceptance criteria. Its proposed records and workflows extend ADRs 0001/0002; they
 are not claims about existing tables, imported datasets or measured accuracy.
 
-**Current bounded architecture change:** persist one append-only T13 evaluation roster
-behind the existing pricing UI. **Reason:** holdout membership must be frozen before
-later feature selection or model work can leak known Dataset B prices into validation.
-**Consequences:** an authorised no-write preview inventories every reviewed B mapping,
-excludes stale/unmatched/ambiguous records, derives transitive lineage and assigns whole
-groups deterministically without target values. Save rechecks the exact locked
-dependencies and retains canonical roster/manifest bytes, hashes, cutoff, policy,
-revision lineage, actor/time and explicit false effects. Fewer than three independent
-groups cannot save. No target reveal, evaluation, prediction, pricing activation,
-Estimate, technical approval or release occurs. **Migration:** additive 0044 creates
-`draft_pricing_evaluation_rosters` and refuses destructive downgrade.
+**Current bounded architecture change:** expose deterministic T9 coverage for every
+target in the active technical release behind the existing pricing UI and as canonical
+JSON. **Reason:** users need to see supported, stale, unresolved and missing commercial
+evidence before any price proposal. **Consequences:** current mapped B evidence provides
+direct support; ambiguous/stale evidence remains explicit; unsupported targets abstain.
+Reviewed A rows are visible but remain unlinked and provide zero bottom-up support because
+no governed versioned component/activity recipe exists. All price, library, Estimate,
+technical, evaluation and release effects are false. **Migration:** none; PR #224 adds a
+read-only service and UI over existing retained records.
+
+**Prior bounded change (PR #222):** an append-only T13 evaluation roster freezes exact
+eligible/excluded B inventory and target-blind connected-group splits before later model
+or feature work. Migration 0044 creates `draft_pricing_evaluation_rosters`.
 
 **Prior bounded change (PR #220):** append-only human-reviewed Dataset B
 system/configuration mappings bind exact commercial rows to eligible source-bound
@@ -122,16 +124,16 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja independent routes; PDF/Excel source review, optional PDF suggestions, A/B pricing profiles, exact-profile review, Dataset A observations, Dataset B mappings and T13 roster preview/save/reopen/download are implemented through PR #222 | Add client parity for reviewed row records and rosters. Preserve manual fallback; evidence-graph and pricing-profile client commands plus real ChatGPT linking remain planned. |
+| Interfaces/API | FastAPI/Jinja independent routes; PDF/Excel source review, optional PDF suggestions, A/B pricing profiles, exact-profile review, Dataset A observations, Dataset B mappings, T13 roster lifecycle and T9 coverage/JSON are implemented through PR #224 | Add client parity for reviewed row records, rosters and coverage. Preserve manual fallback; evidence-graph and pricing-profile client commands plus real ChatGPT linking remain planned. |
 | Optional external client | `draft_client.py`, `draft_client_auth.py`, `draft_client_requests` and shared Draft services | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205 and measured review in PR #206. Workbook source preview and confirmed rate selection are merged in PR #207. External linking remains unproven. |
 | Orchestration | Deterministic controllers, no-write PDF/Excel graph previews and explicit atomic saves; bounded inference journal; generic worker has no registered handlers | Keep visible source interactions bounded. Extend existing BackgroundJob for necessary corpus stages, leases/retries and immutable outcomes after the visible prototype; no new fleet or scheduler database. |
-| Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers | Reuse independently callable contracts across UI/client. Planned corpus extraction/resolution and pricing coverage/estimation use the same governed application; they do not bypass independent capability prerequisites. |
+| Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers and deterministic read-only pricing coverage | Reuse independently callable contracts across UI/client. Planned corpus extraction/resolution, recipe review and pricing estimation use the same governed application; they do not bypass independent capability prerequisites. |
 | Technical corpus | Individual TechnicalDocument intake, limited PDF metadata, JSONL Draft variants, manual source-bound materialisation/review | Planned batch inventory, versioned extraction/claims, stable system identity, deduplication and exception review for hundreds to thousands of documents. Existing source/review/publication gates remain. |
 | General pricing source A | Explicit `general_pricelist` identity, stable source versions, append-only profiles/decisions and exact reviewed product/material/labour/service row observations over retained cells | Commercial activation, richer component/activity recipes and representative real-source validation remain planned. |
 | Firefly pricing source B | Separate `firefly_system_prices` identity/profile/decision lifecycle plus append-only exact-row mappings to an eligible active-release variant or explicit unmatched/ambiguous outcome | Add representative-source breadth, candidate/alias resolution and package/client coverage while keeping observed prices separate from technical applicability and derived proposals. |
 | Pricing evaluation | Pure T13 contract plus persisted 0044 roster revisions over current mapped B records; target-blind connected-group assignment, explicit exclusions/insufficient evidence, scoped access, cutoff/freshness, exact dependencies, canonical bytes/hash, history and download are implemented | Validate v1 lineage/split policy with authorised representative data, then add access-separated target opening, untouched evaluation, metrics and approved calibrated limits. |
-| Pricing coverage and proposals | Manual Draft rates, source selection, original values and override history | Add a bounded T9 coverage-status UI first; later add evidence-based bottom-up/comparable/combined proposals, calibrated review and append-only approval/actual-cost feedback. Observed and derived prices remain distinct after approval. |
-| Draft persistence | Scope/report/candidate/Estimate records, PDF/Excel/pricing source bindings, retained PDF suggestions, 0040 A/B profile history, 0041 decisions, 0042 Dataset A observations, 0043 Dataset B mappings and 0044 T13 rosters | Preserve owner/admin checks, exact dependencies, hashes, conditional saves and import lineage. Pricing evidence package membership, source-inclusive portability and operating retention limits remain unfinished. |
+| Pricing coverage and proposals | Manual Draft rates, source selection, original values and override history plus bounded T9 coverage over all active-release targets | Add one governed T6 component/activity recipe link before evidence-based bottom-up/comparable/combined proposals, calibrated review and append-only approval/actual-cost feedback. Observed and derived prices remain distinct after approval. |
+| Draft persistence | Scope/report/candidate/Estimate records, PDF/Excel/pricing source bindings, retained PDF suggestions, 0040 A/B profile history, 0041 decisions, 0042 Dataset A observations, 0043 Dataset B mappings and 0044 T13 rosters; T9 coverage is computed and not stored | Preserve owner/admin checks, exact dependencies, hashes, conditional saves and import lineage. Pricing evidence package membership, source-inclusive portability and operating retention limits remain unfinished. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
 | Packages | Scope v1-v6 exchange is merged; v6 carries original suggestion claims in the same evidence_refs union and exact package inventory | Preserve earlier readers/bytes and mark imported claims unverified. A/B profile/source membership and whole-project/source-body coverage remain planned. |
 | Reporting | Four independent retained Draft PDF/XLSX profiles; merged v6 uses conditional render versions 7/8/8/9, preserving earlier profile versions | Render explicit saved Scope/Match/Estimate snapshots, including cell/image claims. Current source checks remain separate from saved status; do not recalculate or rerender retained downloads. Canonical export keeps its locks. |
@@ -511,13 +513,13 @@ are foundations, not evidence of production tenant isolation or redistribution r
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | A/B profiles use 0040, profile review uses 0041, Dataset A observations use 0042 and Dataset B system mappings advance the single head to 0043_draft_pricing_system_mappings |
+| Persistence | SQLAlchemy with packaged Alembic migrations | A/B profiles use 0040, profile review uses 0041, Dataset A observations use 0042, Dataset B mappings use 0043 and T13 rosters advance the single head to 0044_draft_pricing_evaluation_rosters; T9 coverage adds no table |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, predecessor lineage, locators, independent activation, pinned active releases and atomic publication | Corpus extraction, per-fact multi-document claims, entity resolution and production technical authority remain planned; see sections 4, 5 and 8 |
-| Commercial source intake | Bounded retained XLSX preview/selection, explicit A/B source versions, unapproved profile revisions, immutable exact-profile decisions, governed Dataset A observations, Dataset B mapped/unmatched/ambiguous identity records and legacy Package 14 CSV/Product imports | Commercial activation, coverage and pricing estimation remain planned; reviewed evidence is not an activated library |
+| Commercial source intake | Bounded retained XLSX preview/selection, explicit A/B source versions, unapproved profile revisions, immutable exact-profile decisions, governed Dataset A observations, Dataset B mapped/unmatched/ambiguous identity records, T13 rosters, read-only T9 coverage and legacy Package 14 CSV/Product imports | Commercial activation, governed component/activity recipes and pricing estimation remain planned; reviewed evidence is not an activated library |
 | Estimating/output | Canonical calculation/outputs/desk quotes plus local independent manual Draft Estimate contract, history, partial totals and JSON | All four independent Draft report profiles exist; full pricing, technical-to-component recovery and production release remain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Transitional current implementation. The accepted target is a small CLASSIFIRE-owned deterministic job/run coordinator with bounded optional AI adapters; journal/lifecycle foundations are implemented, but full migration remains incomplete and OpenClaw stays until parity gates pass. Neither control plane owns canonical estimate state. |
 
@@ -994,16 +996,21 @@ fails closed for invalid V1/V2 or unsupported packets. This establishes snapshot
 integrity foundations only; it does not prove the independent Phase 12 inputs or
 Human Release.
 
-### Planned two-source pricing coverage and estimation
+### Implemented coverage boundary and planned two-source estimation
 
-The current workbook feature applies an explicitly selected observed rate to one
-existing Draft line. It does not ingest either semantic library, map Firefly systems,
-derive missing prices or create a component/recovery ledger. The target uses source A
-for component/material/labour/service evidence and source B for complete-system prices
-and comparables, then records coverage for every selected SystemRevision: directly
-priced, bottom-up derivable, comparable-derived, combined-derived, insufficient evidence
-or requiring review. Keep method/coverage, evidence quality, staleness and approval as
-separate fields; one display label must not hide conflicting prices or missing scope.
+The existing workbook feature applies an explicitly selected observed rate to one
+Draft line. PR #224 additionally computes a read-only T9 inventory for every active
+technical-release target. It reports current direct B support, ambiguous review, stale
+input or insufficient evidence with exact release/target/mapping hashes. Current reviewed
+A observations remain visible at the inventory level but unassigned; bottom-up support
+is zero because a governed component/activity recipe link does not exist.
+
+This implemented coverage boundary neither ingests a semantic library nor derives a
+price or component/recovery ledger. The planned extension uses source A for component/
+material/labour/service evidence and source B for complete-system observations and
+comparables, then adds bottom-up, comparable and combined proposal states. Keep method,
+coverage, evidence quality, staleness and approval as separate fields; one display label
+must not hide conflicting prices or missing scope.
 
 The planned deterministic estimation service accepts explicit technical/recipe versions,
 A/B dataset versions, reviewed mappings and a declared commercial basis. It produces a
@@ -1181,7 +1188,7 @@ clock assumptions and crash/replay recovery before production wiring. The
 | Offline use | Local backend/database and safe revision exchange need a separate decision. Do not assume SQLite reproduces PostgreSQL locking or permit automatic bidirectional merges. |
 | Operations/cost | Clean-machine setup, backup/restore, safe traces, monitoring, rollback and accepted-result cost/latency remain unmeasured. Changing frameworks alone does not prove savings. |
 | Scope evidence breadth | PDF/Excel graph review is merged in PRs #209/#210. Current optional PDF suggestions use a Draft-specific adapter and shared review, with scripted workflow proof and a manual fallback. Automatic extraction/OCR and real-evidence acceptance remain open. |
-| Semantic source profiles | A/B identity/profile history and immutable decisions are merged through PR #214; PR #218 adds exact Dataset A observations, PR #220 adds Dataset B identity mappings and PR #222 adds persisted target-blind T13 rosters. Visual layout/restart inspection and representative-source validation remain. T9 coverage status, commercial activation and package inclusion are next; no filename guessing, automatic activation or inferred prices. |
+| Semantic source profiles | A/B identity/profile history and immutable decisions are merged through PR #214; PR #218 adds exact Dataset A observations, PR #220 adds Dataset B identity mappings, PR #222 adds persisted target-blind T13 rosters and PR #224 adds read-only T9 coverage. Visual layout/restart inspection and representative-source validation remain. T6 recipe linkage, commercial activation and package inclusion are next; no filename guessing, automatic activation or inferred prices. |
 | Technical identity/claims | Extend existing Document/Variant identities with stable system revisions, typed multi-source claims and reviewed resolution; preserve global legacy IDs, original values and supersession lineage. |
 | Recipe publication | Current v3 releases omit component/labour JSON. Version and freeze recipe/claim dependencies before costing; retain old release readers and bytes without fabricating historical recipe approval. |
 | Legacy pricing migration | Keep Package 14 CSV history separate. Replace active/default-zero/version-collision behavior for new ingestion through governed forward changes; do not feed A/B workbooks into the legacy importer. |
@@ -1191,7 +1198,7 @@ clock assumptions and crash/replay recovery before production wiring. The
 **Planned corpus/pricing migration:** logical records in section 4 must be mapped to
 existing tables and narrowly scoped additions, not implemented as a speculative schema
 bundle. Use forward migrations after the required visible slice is defined. The active
-head is 0038 for the separate Excel source binding; Scope v5 still uses existing JSON
+head is 0044 for the T13 roster journal; Scope v5 still uses existing JSON
 revision storage. Preserve prior technical release versions,
 JSONL row/file hash meaning, source lineage, Package 14 records and all saved Draft/report/
 package bytes. New dataset versions and approvals are explicit; imports or backfills
@@ -1675,6 +1682,34 @@ change, technical approval, background job or release. Representative real data 
 validate the grouping/split policy before the first access-separated evaluation run.
 Until then there is no saved roster, hidden-target separation, evaluation run, metric,
 calibration or approved threshold.
+
+### Implemented read-only pricing coverage (T9, PR #224)
+
+Current architecture -> change -> reason -> consequences -> migration: governed A/B
+records and technical releases existed without one target-wide support view -> add a
+deterministic coverage service plus pricing-page and exact-JSON adapters -> show missing
+commercial evidence before any pricing proposal -> every active-release target receives
+an explicit direct, review, stale or insufficient status without downstream authority ->
+no migration because the result is recomputed from existing exact records.
+
+`services/draft_pricing_coverage.py` loads the current active technical release and
+validates each current/stale Dataset B mapping envelope. A current direct mapping supports
+its exact target; ambiguous candidate mappings retain review reasons; stale mappings
+remain stale; absent evidence abstains. A direct target may still carry a review flag when
+companion ambiguous or stale evidence exists. Ordering and canonical bytes are stable.
+
+Reviewed Dataset A observations are listed as current or stale unlinked evidence.
+The service intentionally assigns none to a target: the technical v3 release record does
+not freeze `component_requirements` or `labour_requirements`, and no versioned recipe
+review links those requirements to A observations. Inferring this association would turn
+mutable or name-similar data into false published costing authority.
+
+The UI is a thin adapter over the same service. Reads require existing Draft/pricing/
+technical permissions; foreign access and corrupt envelopes fail closed. There is no
+write, new table, background job, agent, model, price calculation, proposal, activation,
+Estimate change, technical approval, target reveal, evaluation, deployment or release.
+The next bounded migration is T6: define and review one versioned recipe basis before
+bottom-up support or T10 price proposals.
 
 ### Implemented current increment: independent scope-and-system reports (P4b)
 
@@ -2175,20 +2210,22 @@ explicit user requests are the supported slice. This adapter does not demonstrat
 OpenClaw protection parity or authorize retirement. The
 [suggestion contract](./DRAFT_PDF_SUGGESTIONS_V1_CONTRACT.md) specifies controls/limits.
 
-## Retained separate track: explicit A/B source-profile UI
+## Implemented pricing evidence track through T9
 
-The first corpus/pricing interaction still lets a user declare a retained synthetic
+The first corpus/pricing interaction lets a user declare a retained synthetic
 workbook as general source A or Firefly system-price source B, inspect a selected
 sheet/header, map supported columns and commercial basis, and preview unmapped,
 unknown or invalid values without writes. Save/reopen the minimal versioned source-profile
 contract using existing exact-byte/scan, ownership and revision checks. An authorized
-human may separately record one immutable exact-profile decision. Neither selecting nor
-reviewing a profile applies prices, activates a library, resolves technical equivalence
-or runs AI. PDF/Excel Scope priority reorders delivery, not these requirements.
+human may separately record one immutable exact-profile decision. Later merged increments
+add exact reviewed A observations, B identity mappings, a target-blind T13 roster and
+read-only T9 coverage. None applies prices, activates a library, resolves technical
+applicability or runs AI.
 
 This profile remains necessary because workbook transport/single-row selection do not
 establish semantic source identity or price basis. Use synthetic fixtures until actual
-source inspection is authorized; do not infer layout or basis from filenames. Follow
-the companion design and unchanged T1-T14 dependency gates before mappings, bulk work,
-coverage, bottom-up/comparable estimation or calibration. Completing the first profile
-is not completion of either library import.
+source inspection is authorized; do not infer layout or basis from filenames. Continue
+to follow the companion design and unchanged T1-T14 dependency gates. T6 recipe review,
+representative-source breadth, bottom-up/comparable estimation and calibration remain
+unfinished. Existing profiles, mappings, rosters and coverage are not completion of
+either library import.
