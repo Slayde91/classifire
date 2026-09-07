@@ -22,6 +22,9 @@ from .services.draft_pricing_contract import (
     PROFILE_DECISIONS,
     ROW_EVIDENCE_STATES,
     ROW_ITEM_KINDS,
+    SYSTEM_IDENTITY_EVIDENCE_FIELDS,
+    SYSTEM_MAPPING_STATES,
+    SYSTEM_MAPPING_UNRESOLVED_FIELDS,
 )
 from .services.draft_scope import DraftScopeError, get_draft
 from .ui import _context, _require, templates
@@ -75,6 +78,20 @@ def _unresolved_fields(value: str) -> list[str]:
     return fields
 
 
+def _comma_values(
+    value: str, *, allowed: tuple[str, ...] | None = None, maximum: int = 20
+) -> list[str]:
+    values = [] if not value.strip() else [item.strip() for item in value.split(",")]
+    if (
+        len(values) > maximum
+        or values != list(dict.fromkeys(values))
+        or any(not item or len(item) > 100 for item in values)
+        or (allowed is not None and any(item not in allowed for item in values))
+    ):
+        raise ValueError("comma values")
+    return values
+
+
 def _page(
     request: Request,
     db: Db,
@@ -88,6 +105,7 @@ def _page(
     error: str | None = None,
     status_code: int = 200,
     row_observation_preview: dict[str, Any] | None = None,
+    system_mapping_preview: dict[str, Any] | None = None,
 ) -> HTMLResponse:
     draft = get_draft(db, user, draft_id)
     envelope = read_estimate_revision(db, user, draft_id, estimate_id)
@@ -101,6 +119,8 @@ def _page(
     selected_profile_meta = None
     selected_decision = None
     row_observations: list[dict[str, Any]] = []
+    system_mappings: list[dict[str, Any]] = []
+    system_mapping_targets = None
     values = form or {}
     source_api = pricing.intake()
     if source_id is not None:
@@ -113,10 +133,27 @@ def _page(
             selected_decision = next(
                 (item for item in profile_decisions if item["profile_id"] == profile_id), None
             )
-            row_observations = pricing.list_row_observations(
-                db, user, draft_id, source_id, profile_id
-            )
             definition = selected_profile["definition"]
+            if definition["dataset"]["kind"] == "general_pricelist":
+                row_observations = pricing.list_row_observations(
+                    db, user, draft_id, source_id, profile_id
+                )
+            else:
+                try:
+                    system_mappings = pricing.list_system_mappings(
+                        db,
+                        user,
+                        draft_id,
+                        source_id,
+                        profile_id,
+                        settings=get_settings(),
+                    )
+                    system_mapping_targets = pricing.list_system_mapping_targets(
+                        db, user, draft_id
+                    )
+                except DraftScopeError as exc:
+                    if exc.status_code != 403:
+                        raise
             values = {
                 "sheet_index": str(definition["selection"]["sheet_index"]),
                 "header_row": str(definition["selection"]["header_row"]),
@@ -214,9 +251,15 @@ def _page(
             selected_decision=selected_decision,
             row_observations=row_observations,
             row_observation_preview=row_observation_preview,
+            system_mappings=system_mappings,
+            system_mapping_targets=system_mapping_targets,
+            system_mapping_preview=system_mapping_preview,
             profile_decisions_allowed=PROFILE_DECISIONS,
             row_item_kinds=ROW_ITEM_KINDS,
             row_evidence_states=ROW_EVIDENCE_STATES,
+            system_mapping_states=SYSTEM_MAPPING_STATES,
+            system_identity_evidence_fields=SYSTEM_IDENTITY_EVIDENCE_FIELDS,
+            system_mapping_unresolved_fields=SYSTEM_MAPPING_UNRESOLVED_FIELDS,
             fields=FIELDS,
             dataset_kinds=DATASET_KINDS,
             price_meanings=PRICE_MEANINGS,
@@ -639,6 +682,194 @@ def download_pricing_row_observation(
         headers={
             "Content-Disposition": (
                 f'attachment; filename="pricing-row-observation-{observation_id}.json"'
+            ),
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+    "{profile_id}/rows/{row_number}/system-mapping/preview",
+    response_class=HTMLResponse,
+)
+def preview_pricing_system_mapping(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+    row_number: int,
+    form: FormData,
+) -> HTMLResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    if set(form) != {
+        "csrf_token",
+        "technical_release_id",
+        "mapping_status",
+        "normalized_reference",
+        "selected_variant_id",
+        "candidate_variant_ids",
+        "identity_evidence_fields",
+        "review_reason",
+        "unresolved_fields",
+    }:
+        raise HTTPException(422, "Map only the selected exact Firefly system-price row")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        candidates = sorted(_comma_values(form["candidate_variant_ids"]))
+        preview = pricing.preview_system_mapping(
+            db,
+            user,
+            draft_id,
+            source_id,
+            profile_id,
+            row_number,
+            form["technical_release_id"],
+            form["mapping_status"],
+            form["normalized_reference"],
+            form["selected_variant_id"] or None,
+            candidates,
+            _comma_values(
+                form["identity_evidence_fields"],
+                allowed=SYSTEM_IDENTITY_EVIDENCE_FIELDS,
+            ),
+            form["review_reason"],
+            _comma_values(
+                form["unresolved_fields"],
+                allowed=SYSTEM_MAPPING_UNRESOLVED_FIELDS,
+            ),
+            settings=get_settings(),
+        )
+        return _page(
+            request,
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            source_id,
+            profile_id,
+            form=form,
+            system_mapping_preview=preview,
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    except ValueError as exc:
+        raise HTTPException(422, "Choose a valid system mapping") from exc
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+    "{profile_id}/rows/{row_number}/system-mappings"
+)
+def save_pricing_system_mapping(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+    row_number: int,
+    form: FormData,
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    if set(form) != {
+        "csrf_token",
+        "technical_release_id",
+        "mapping_status",
+        "normalized_reference",
+        "selected_variant_id",
+        "candidate_variant_ids",
+        "identity_evidence_fields",
+        "review_reason",
+        "unresolved_fields",
+        "profile_sha256",
+        "decision_sha256",
+        "row_sha256",
+        "technical_release_sha256",
+        "preview_hash",
+    }:
+        raise HTTPException(422, "Save only the previewed Firefly system-price mapping")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        pricing.save_system_mapping(
+            db,
+            user,
+            draft_id,
+            source_id,
+            profile_id,
+            row_number,
+            form["technical_release_id"],
+            form["mapping_status"],
+            form["normalized_reference"],
+            form["selected_variant_id"] or None,
+            sorted(_comma_values(form["candidate_variant_ids"])),
+            _comma_values(
+                form["identity_evidence_fields"],
+                allowed=SYSTEM_IDENTITY_EVIDENCE_FIELDS,
+            ),
+            form["review_reason"],
+            _comma_values(
+                form["unresolved_fields"],
+                allowed=SYSTEM_MAPPING_UNRESOLVED_FIELDS,
+            ),
+            form["profile_sha256"],
+            form["decision_sha256"],
+            form["row_sha256"],
+            form["technical_release_sha256"],
+            form["preview_hash"],
+            settings=get_settings(),
+        )
+        db.commit()
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(422, "Choose a valid system mapping") from exc
+    return RedirectResponse(
+        f"/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/{profile_id}",
+        303,
+    )
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
+    "{profile_id}/system-mappings/{mapping_id}/download"
+)
+def download_pricing_system_mapping(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    source_id: str,
+    profile_id: str,
+    mapping_id: str,
+) -> Response:
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        content = pricing.system_mapping_bytes(
+            db, user, draft_id, source_id, profile_id, mapping_id
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return Response(
+        content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="pricing-system-mapping-{mapping_id}.json"'
             ),
             "Cache-Control": "no-store",
             "X-Content-Type-Options": "nosniff",

@@ -38,7 +38,7 @@ def test_empty_stray_legacy_table_is_retired(tmp_path: Path) -> None:
     assert "physical_model_initial_submissions" not in inspect(engine).get_table_names()
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0042_draft_pricing_row_observations"
+            "0043_draft_pricing_system_mappings"
         )
 
 

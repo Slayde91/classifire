@@ -1196,6 +1196,89 @@ class DraftPricingRowObservation(RecordMixin, Base):
     reviewed_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class DraftPricingSystemMapping(RecordMixin, Base):
+    """Append-only human mapping of one exact Dataset B row to technical identity."""
+
+    __tablename__ = "draft_pricing_system_mappings"
+    __table_args__ = (
+        UniqueConstraint(
+            "profile_id",
+            "sheet_index",
+            "row_number",
+            name="uq_draft_pricing_system_mapping_profile_row",
+        ),
+        CheckConstraint("profile_revision >= 1", name="ck_draft_pricing_system_mapping_revision"),
+        CheckConstraint(
+            "sheet_index >= 1 AND sheet_index <= 10",
+            name="ck_draft_pricing_system_mapping_sheet",
+        ),
+        CheckConstraint(
+            "row_number >= 2 AND row_number <= 1000",
+            name="ck_draft_pricing_system_mapping_row",
+        ),
+        CheckConstraint(
+            "mapping_status IN ('mapped', 'unmatched', 'ambiguous')",
+            name="ck_draft_pricing_system_mapping_status",
+        ),
+        CheckConstraint(
+            "(mapping_status = 'mapped' AND technical_variant_id IS NOT NULL "
+            "AND technical_variant_snapshot_sha256 IS NOT NULL) OR "
+            "(mapping_status IN ('unmatched', 'ambiguous') AND technical_variant_id IS NULL "
+            "AND technical_variant_snapshot_sha256 IS NULL)",
+            name="ck_draft_pricing_system_mapping_variant",
+        ),
+        CheckConstraint(
+            "length(normalized_reference) > 0 AND length(normalized_reference) <= 300",
+            name="ck_draft_pricing_system_mapping_reference",
+        ),
+        CheckConstraint(
+            "length(review_reason) > 0 AND length(review_reason) <= 4000",
+            name="ck_draft_pricing_system_mapping_reason",
+        ),
+        CheckConstraint(
+            "length(mapping_json) > 0 AND length(mapping_json) <= 524288",
+            name="ck_draft_pricing_system_mapping_size",
+        ),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_scopes.id"), index=True, nullable=False
+    )
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_pricing_sources.id"), index=True, nullable=False
+    )
+    profile_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_pricing_source_profiles.id"), index=True, nullable=False
+    )
+    profile_decision_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_pricing_source_profile_decisions.id"), index=True, nullable=False
+    )
+    dataset_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    dataset_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    document_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    profile_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    profile_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    decision_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    sheet_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    row_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    row_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    mapping_status: Mapped[str] = mapped_column(String(20), index=True, nullable=False)
+    normalized_reference: Mapped[str] = mapped_column(String(300), nullable=False)
+    review_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    technical_release_id: Mapped[str] = mapped_column(
+        ForeignKey("library_releases.id"), index=True, nullable=False
+    )
+    technical_release_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    technical_variant_id: Mapped[str | None] = mapped_column(
+        ForeignKey("technical_variants.id"), index=True
+    )
+    technical_variant_snapshot_sha256: Mapped[str | None] = mapped_column(String(64))
+    mapping_json: Mapped[str] = mapped_column(Text, nullable=False)
+    mapping_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    reviewed_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
 class DraftScopeReport(RecordMixin, Base):
     """Retained scope-only Draft snapshot and its two exact rendered outputs."""
 

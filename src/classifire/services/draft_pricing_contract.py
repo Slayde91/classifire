@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import re
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
-from .draft_system_match_contract import canonical, digest
+from .draft_system_match_contract import canonical, digest, validate_binding
+from .technical_field_snapshot import FIELD_NAMES as TECHNICAL_FIELD_NAMES
 
 FIELDS = (
     "reference",
@@ -25,9 +26,19 @@ REQUIRED_MAPPING = ("reference", "description", "unit", "rate", "currency", "tax
 PROFILE_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-SOURCE-PROFILE-v1"
 PROFILE_DECISION_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-SOURCE-PROFILE-DECISION-v1"
 ROW_OBSERVATION_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-ROW-OBSERVATION-v1"
+SYSTEM_MAPPING_SCHEMA = "CLASSIFIRE-DRAFT-PRICING-SYSTEM-MAPPING-v1"
 PROFILE_DECISIONS = ("approve", "reject", "request_revision")
 ROW_ITEM_KINDS = ("product", "material", "labour", "service")
 ROW_EVIDENCE_STATES = ("confirmed", "provisional")
+SYSTEM_MAPPING_STATES = ("mapped", "unmatched", "ambiguous")
+SYSTEM_IDENTITY_EVIDENCE_FIELDS = ("reference", "description", "inclusions", "exclusions")
+SYSTEM_MAPPING_UNRESOLVED_FIELDS = (
+    *FIELDS,
+    "technical_variant",
+    "configuration_identity",
+    "source_alias",
+    "commercial_scope",
+)
 DATASET_KINDS = ("general_pricelist", "firefly_system_prices")
 PRICE_MEANINGS = (
     "unknown",
@@ -666,6 +677,341 @@ def validate_row_observation_envelope(value: Any) -> None:
         raise ValueError("row observation definition hash")
     if len(canonical(value)) > 131072:
         raise ValueError("row observation size")
+
+
+def _system_mapping_variant_snapshot(value: Any) -> None:
+    keys = {
+        "id",
+        "key",
+        "variant_id",
+        "system_id",
+        "record_version",
+        "source_hash",
+        "technical_fields",
+        "technical_fields_sha256",
+        "release_record",
+        "release_record_sha256",
+        "source_verification",
+        "sha256",
+    }
+    if type(value) is not dict or set(value) != keys:
+        raise ValueError("system mapping variant")
+    _profile_id(value["id"])
+    for key in ("key", "variant_id", "system_id"):
+        item = value[key]
+        if type(item) is not str or item != item.strip() or not 1 <= len(item) <= 300:
+            raise ValueError("system mapping variant identity")
+    if type(value["record_version"]) is not int or value["record_version"] < 1:
+        raise ValueError("system mapping variant revision")
+    _profile_hash(value["source_hash"])
+    fields = value["technical_fields"]
+    if (
+        type(fields) is not dict
+        or set(fields) != set(TECHNICAL_FIELD_NAMES)
+        or any(
+            item is not None
+            and type(item) not in (str, bool)
+            or type(item) is str
+            and len(item) > 4000
+            for item in fields.values()
+        )
+    ):
+        raise ValueError("system mapping technical fields")
+    _profile_hash(value["technical_fields_sha256"])
+    if value["technical_fields_sha256"] != digest(fields):
+        raise ValueError("system mapping technical fields hash")
+    record = value["release_record"]
+    if type(record) is not dict or set(record) != {
+        "id",
+        "key",
+        "variant_id",
+        "system_id",
+        "frl",
+        "source_document_reference",
+        "source_page",
+        "source_hash",
+        "record_version",
+        "technical_fields",
+        "source_binding",
+    }:
+        raise ValueError("system mapping release record")
+    if (
+        record["id"] != value["id"]
+        or record["key"] != value["key"]
+        or record["variant_id"] != value["variant_id"]
+        or record["system_id"] != value["system_id"]
+        or record["source_hash"] != value["source_hash"]
+        or record["record_version"] != value["record_version"]
+        or record["technical_fields"] != fields
+    ):
+        raise ValueError("system mapping release binding")
+    for key, maximum in (
+        ("frl", 100),
+        ("source_document_reference", 300),
+        ("source_page", 100),
+    ):
+        item = record[key]
+        if item is not None and (type(item) is not str or len(item) > maximum):
+            raise ValueError("system mapping release record")
+    validate_binding(record["source_binding"])
+    if record["source_binding"]["state"] != "bound":
+        raise ValueError("system mapping source binding")
+    _profile_hash(value["release_record_sha256"])
+    if value["release_record_sha256"] != digest(record):
+        raise ValueError("system mapping release record hash")
+    verification = value["source_verification"]
+    if type(verification) is not dict or set(verification) != {"method"}:
+        raise ValueError("system mapping source verification")
+    if verification["method"] != "exact_bytes":
+        raise ValueError("system mapping source verification")
+    _profile_hash(value["sha256"])
+    if value["sha256"] != digest({key: item for key, item in value.items() if key != "sha256"}):
+        raise ValueError("system mapping variant hash")
+
+
+def system_mapping_definition(
+    *,
+    draft_scope_id: str,
+    dataset: dict[str, Any],
+    source: dict[str, Any],
+    profile: dict[str, Any],
+    row: dict[str, Any],
+    technical_release: dict[str, Any],
+    variants: list[dict[str, Any]],
+    mapping_status: str,
+    normalized_reference: str,
+    selected_variant_id: str | None,
+    candidate_variant_ids: list[str],
+    identity_evidence_fields: list[str],
+    review_reason: str,
+    unresolved_fields: list[str],
+) -> dict[str, Any]:
+    value = {
+        "schema_version": SYSTEM_MAPPING_SCHEMA,
+        "draft_scope_id": draft_scope_id,
+        "dataset": dataset,
+        "source": source,
+        "profile": profile,
+        "row": row,
+        "technical_release": technical_release,
+        "variants": variants,
+        "interpretation": {
+            "status": mapping_status,
+            "normalized_reference": (
+                normalized_reference.strip()
+                if type(normalized_reference) is str
+                else normalized_reference
+            ),
+            "selected_variant_id": selected_variant_id,
+            "candidate_variant_ids": candidate_variant_ids,
+            "identity_evidence_fields": identity_evidence_fields,
+            "review_reason": review_reason.strip() if type(review_reason) is str else review_reason,
+            "unresolved_fields": unresolved_fields,
+        },
+        "effects": {
+            "pricing_system_mapping_recorded": True,
+            "rows_ingested": False,
+            "library_activated": False,
+            "technical_approval_granted": False,
+            "technical_applicability_assessed": False,
+            "system_match_package_changed": False,
+            "price_inference_performed": False,
+            "estimate_changed": False,
+            "holdout_assigned": False,
+            "release_performed": False,
+        },
+    }
+    validate_system_mapping_definition(value)
+    return value
+
+
+def validate_system_mapping_definition(value: Any) -> None:
+    if type(value) is not dict or set(value) != {
+        "schema_version",
+        "draft_scope_id",
+        "dataset",
+        "source",
+        "profile",
+        "row",
+        "technical_release",
+        "variants",
+        "interpretation",
+        "effects",
+    }:
+        raise ValueError("system mapping definition")
+    if value["schema_version"] != SYSTEM_MAPPING_SCHEMA:
+        raise ValueError("system mapping schema")
+    _profile_id(value["draft_scope_id"])
+    dataset = value["dataset"]
+    if (
+        type(dataset) is not dict
+        or set(dataset) != {"id", "kind", "version"}
+        or dataset["kind"] != "firefly_system_prices"
+    ):
+        raise ValueError("system mapping dataset")
+    _profile_id(dataset["id"])
+    if type(dataset["version"]) is not int or dataset["version"] < 1:
+        raise ValueError("system mapping dataset version")
+    source = value["source"]
+    if type(source) is not dict or set(source) != {
+        "id",
+        "sha256",
+        "size_bytes",
+        "document_sha256",
+    }:
+        raise ValueError("system mapping source")
+    _profile_id(source["id"])
+    _profile_hash(source["sha256"])
+    _profile_hash(source["document_sha256"])
+    if type(source["size_bytes"]) is not int or not 1 <= source["size_bytes"] <= 10485760:
+        raise ValueError("system mapping source size")
+    profile = value["profile"]
+    if type(profile) is not dict or set(profile) != {
+        "id",
+        "revision",
+        "sha256",
+        "decision_id",
+        "decision_sha256",
+        "price_meaning",
+    }:
+        raise ValueError("system mapping profile")
+    _profile_id(profile["id"])
+    _profile_id(profile["decision_id"])
+    _profile_hash(profile["sha256"])
+    _profile_hash(profile["decision_sha256"])
+    if type(profile["revision"]) is not int or profile["revision"] < 1:
+        raise ValueError("system mapping profile revision")
+    if profile["price_meaning"] == "unknown":
+        raise ValueError("system mapping price meaning")
+    validate_price_meaning(profile["price_meaning"])
+    _validate_observation_row(value["row"])
+    release = value["technical_release"]
+    if type(release) is not dict or set(release) != {
+        "id",
+        "version",
+        "sha256",
+        "effective_date",
+    }:
+        raise ValueError("system mapping technical release")
+    _profile_id(release["id"])
+    _profile_hash(release["sha256"])
+    if (
+        type(release["version"]) is not str
+        or release["version"] != release["version"].strip()
+        or not 1 <= len(release["version"]) <= 50
+    ):
+        raise ValueError("system mapping technical release")
+    if release["effective_date"] is not None:
+        try:
+            date.fromisoformat(release["effective_date"])
+        except (TypeError, ValueError) as exc:
+            raise ValueError("system mapping technical release") from exc
+    variants = value["variants"]
+    if type(variants) is not list or len(variants) > 20:
+        raise ValueError("system mapping variants")
+    for variant in variants:
+        _system_mapping_variant_snapshot(variant)
+    variant_ids = [variant["id"] for variant in variants]
+    if variant_ids != sorted(set(variant_ids)):
+        raise ValueError("system mapping variants")
+    interpretation = value["interpretation"]
+    if type(interpretation) is not dict or set(interpretation) != {
+        "status",
+        "normalized_reference",
+        "selected_variant_id",
+        "candidate_variant_ids",
+        "identity_evidence_fields",
+        "review_reason",
+        "unresolved_fields",
+    }:
+        raise ValueError("system mapping interpretation")
+    status = interpretation["status"]
+    if status not in SYSTEM_MAPPING_STATES:
+        raise ValueError("system mapping status")
+    for key, maximum in (("normalized_reference", 300), ("review_reason", 4000)):
+        item = interpretation[key]
+        if type(item) is not str or item != item.strip() or not 1 <= len(item) <= maximum:
+            raise ValueError("system mapping interpretation")
+    selected = interpretation["selected_variant_id"]
+    if selected is not None:
+        _profile_id(selected)
+    candidates = interpretation["candidate_variant_ids"]
+    if (
+        type(candidates) is not list
+        or candidates != sorted(set(candidates))
+        or len(candidates) > 20
+        or any(type(item) is not str or not 1 <= len(item) <= 36 for item in candidates)
+        or candidates != variant_ids
+    ):
+        raise ValueError("system mapping candidates")
+    evidence = interpretation["identity_evidence_fields"]
+    if (
+        type(evidence) is not list
+        or evidence != list(dict.fromkeys(evidence))
+        or any(item not in SYSTEM_IDENTITY_EVIDENCE_FIELDS for item in evidence)
+        or any(not value["row"]["values"].get(item) for item in evidence)
+    ):
+        raise ValueError("system mapping identity evidence")
+    unresolved = interpretation["unresolved_fields"]
+    if (
+        type(unresolved) is not list
+        or unresolved != list(dict.fromkeys(unresolved))
+        or any(item not in SYSTEM_MAPPING_UNRESOLVED_FIELDS for item in unresolved)
+    ):
+        raise ValueError("system mapping unresolved fields")
+    if status == "mapped":
+        if selected is None or candidates != [selected] or len(variants) != 1 or not evidence:
+            raise ValueError("mapped system identity")
+        if unresolved:
+            raise ValueError("mapped system unresolved")
+    elif status == "ambiguous":
+        if selected is not None or len(candidates) < 2 or not evidence or not unresolved:
+            raise ValueError("ambiguous system identity")
+    elif selected is not None or candidates or variants or not unresolved:
+        raise ValueError("unmatched system identity")
+    if value["effects"] != {
+        "pricing_system_mapping_recorded": True,
+        "rows_ingested": False,
+        "library_activated": False,
+        "technical_approval_granted": False,
+        "technical_applicability_assessed": False,
+        "system_match_package_changed": False,
+        "price_inference_performed": False,
+        "estimate_changed": False,
+        "holdout_assigned": False,
+        "release_performed": False,
+    }:
+        raise ValueError("system mapping effects")
+    if len(canonical(value)) > 524288:
+        raise ValueError("system mapping size")
+
+
+def validate_system_mapping_envelope(value: Any) -> None:
+    if type(value) is not dict or set(value) != {
+        "schema_version",
+        "mapping_id",
+        "reviewed_at",
+        "reviewed_by_id",
+        "definition",
+        "definition_sha256",
+    }:
+        raise ValueError("system mapping envelope")
+    if value["schema_version"] != SYSTEM_MAPPING_SCHEMA:
+        raise ValueError("system mapping schema")
+    _profile_id(value["mapping_id"])
+    _profile_id(value["reviewed_by_id"])
+    try:
+        reviewed_at = datetime.fromisoformat(value["reviewed_at"])
+    except (TypeError, ValueError) as exc:
+        raise ValueError("system mapping timestamp") from exc
+    if reviewed_at.tzinfo is None or reviewed_at.utcoffset() != UTC.utcoffset(reviewed_at):
+        raise ValueError("system mapping timestamp")
+    validate_system_mapping_definition(value["definition"])
+    _profile_hash(value["definition_sha256"])
+    if value["definition_sha256"] != digest(value["definition"]):
+        raise ValueError("system mapping definition hash")
+    if len(canonical(value)) > 524288:
+        raise ValueError("system mapping size")
 
 
 def validate_selection(selection: Any, lines: list[dict[str, Any]]) -> None:

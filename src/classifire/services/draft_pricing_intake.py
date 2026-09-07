@@ -8,7 +8,7 @@ import json
 import os
 import subprocess  # nosec B404
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, cast
 
@@ -22,7 +22,12 @@ from ..models import (
     DraftPricingSource,
     DraftPricingSourceProfile,
     DraftPricingSourceProfileDecision,
+    DraftPricingSystemMapping,
     DraftScope,
+    LibraryRelease,
+    StoredFile,
+    TechnicalDocument,
+    TechnicalVariant,
     User,
     new_id,
 )
@@ -33,21 +38,39 @@ from .draft_pricing_contract import (
     PROFILE_DECISIONS,
     PROFILE_SCHEMA,
     ROW_OBSERVATION_SCHEMA,
+    SYSTEM_MAPPING_SCHEMA,
     digest,
     preview_rows,
     profile_definition,
     row_observation_definition,
+    system_mapping_definition,
     validate_dataset_kind,
     validate_profile_decision_envelope,
     validate_profile_envelope,
     validate_row_observation_envelope,
+    validate_system_mapping_envelope,
 )
 from .draft_scope import DraftScopeError, _actor, _atomic, get_draft
 from .draft_source_intake import DraftSourceIntake, SourcePolicy
-from .draft_system_match_contract import canonical
+from .draft_system_match_contract import canonical, validate_binding
+from .release_scope import ReleaseScopeError, active_technical_release_ids
+from .storage import (
+    StoredFileBindingError,
+    read_clean_stored_file_for_update,
+    read_verified_stored_file,
+)
+from .technical_field_snapshot import technical_fields
+from .technical_release_publication import TECHNICAL_RELEASE_MANIFEST_SCHEMA
+from .technical_validity import (
+    technical_document_authority_blockers,
+    technical_release_source_binding,
+    technical_variant_logical_key,
+)
 
 SCHEMA = "CLASSIFIRE-DRAFT-PRICING-XLSX-v1"
 MAX_PROFILE_REVISIONS = 20
+MAX_SYSTEM_MAPPING_VARIANTS = 20
+MAX_SYSTEM_MAPPING_OPTIONS = 100
 
 
 def _process(content: bytes) -> bytes:
@@ -603,6 +626,7 @@ def _row_observation_context(
     *,
     settings: Settings,
     lock: bool = False,
+    dataset_kind: str = "general_pricelist",
 ) -> tuple[
     User,
     DraftPricingSource,
@@ -646,8 +670,13 @@ def _row_observation_context(
         raise DraftScopeError("PRICING_PROFILE_NOT_FOUND", 404)
     profile_value = _profile_value(source, profile)
     definition = profile_value["definition"]
-    if source.dataset_kind != "general_pricelist":
-        raise DraftScopeError("PRICING_ROW_DATASET_A_REQUIRED", 409)
+    if source.dataset_kind != dataset_kind:
+        code = (
+            "PRICING_ROW_DATASET_A_REQUIRED"
+            if dataset_kind == "general_pricelist"
+            else "PRICING_ROW_DATASET_B_REQUIRED"
+        )
+        raise DraftScopeError(code, 409)
     latest_source = db.scalar(
         select(DraftPricingSource)
         .where(
@@ -1025,6 +1054,688 @@ def row_observation_bytes(
         raise DraftScopeError("PRICING_ROW_OBSERVATION_NOT_FOUND", 404)
     _row_observation_value(row)
     return row.observation_json.encode("utf-8")
+
+
+def _active_technical_release(
+    db: Session,
+    actor: User,
+    release_id: str,
+    *,
+    lock: bool = False,
+) -> tuple[User, LibraryRelease, dict[str, dict[str, Any]], set[str]]:
+    actor = _actor(db, actor, "technical:read")
+    statement = select(LibraryRelease).where(
+        LibraryRelease.id == release_id,
+        LibraryRelease.library_type == "technical",
+    )
+    if lock:
+        statement = statement.with_for_update()
+    release = db.scalar(statement.execution_options(populate_existing=True))
+    if release is None:
+        raise DraftScopeError("PRICING_TECHNICAL_RELEASE_NOT_FOUND", 404)
+    if release.status != "active" or (
+        release.effective_date is not None and release.effective_date > date.today()
+    ):
+        raise DraftScopeError("PRICING_TECHNICAL_RELEASE_STALE", 409)
+    try:
+        active_ids = active_technical_release_ids(db, release)
+        manifest = release.source_manifest
+        if (
+            type(manifest) is not dict
+            or manifest.get("schema") != TECHNICAL_RELEASE_MANIFEST_SCHEMA
+            or type(manifest.get("records")) is not list
+            or type(manifest.get("record_count")) is not int
+            or manifest["record_count"] != len(manifest["records"])
+            or not 1 <= len(manifest["records"]) <= 10000
+            or type(release.release_hash) is not str
+        ):
+            raise ValueError("manifest")
+        records: dict[str, dict[str, Any]] = {}
+        for item in manifest["records"]:
+            if (
+                type(item) is not dict
+                or type(item.get("id")) is not str
+                or item["id"] in records
+            ):
+                raise ValueError("manifest")
+            records[item["id"]] = item
+        if set(records) != active_ids:
+            raise ValueError("manifest")
+    except (ReleaseScopeError, ValueError, TypeError, KeyError) as exc:
+        raise DraftScopeError("PRICING_TECHNICAL_RELEASE_INVALID", 409) from exc
+    return actor, release, records, active_ids
+
+
+def list_system_mapping_targets(
+    db: Session,
+    actor: User,
+    draft_id: str,
+) -> dict[str, Any] | None:
+    get_draft(db, actor, draft_id)
+    actor = _actor(db, actor, "pricing:approve")
+    actor = _actor(db, actor, "technical:read")
+    releases = list(
+        db.scalars(
+            select(LibraryRelease)
+            .where(
+                LibraryRelease.library_type == "technical",
+                LibraryRelease.status == "active",
+            )
+            .order_by(LibraryRelease.created_at.desc(), LibraryRelease.id)
+            .limit(2)
+        ).all()
+    )
+    if not releases:
+        return None
+    if len(releases) != 1:
+        raise DraftScopeError("PRICING_TECHNICAL_RELEASE_AMBIGUOUS", 409)
+    _, release, records, active_ids = _active_technical_release(
+        db, actor, releases[0].id
+    )
+    variants = list(
+        db.scalars(
+            select(TechnicalVariant)
+            .where(TechnicalVariant.id.in_(active_ids))
+            .order_by(TechnicalVariant.variant_id, TechnicalVariant.id)
+            .limit(MAX_SYSTEM_MAPPING_OPTIONS + 1)
+        ).all()
+    )
+    options = []
+    for variant in variants[:MAX_SYSTEM_MAPPING_OPTIONS]:
+        record = records[variant.id]
+        binding = record.get("source_binding")
+        if type(binding) is not dict or binding.get("state") != "bound":
+            continue
+        options.append(
+            {
+                "id": variant.id,
+                "key": record.get("key"),
+                "variant_id": variant.variant_id,
+                "system_id": variant.system_id,
+                "manufacturer": variant.manufacturer,
+                "product_family": variant.product_family,
+                "frl": variant.frl,
+            }
+        )
+    return {
+        "release": {
+            "id": release.id,
+            "version": release.version,
+            "sha256": release.release_hash,
+            "effective_date": (
+                release.effective_date.isoformat() if release.effective_date else None
+            ),
+        },
+        "variants": options,
+        "truncated": len(variants) > MAX_SYSTEM_MAPPING_OPTIONS,
+    }
+
+
+def _technical_variant_snapshot(
+    db: Session,
+    variant_id: str,
+    records: dict[str, dict[str, Any]],
+    active_ids: set[str],
+    *,
+    settings: Settings,
+    lock: bool,
+) -> dict[str, Any]:
+    if variant_id not in active_ids:
+        raise DraftScopeError("PRICING_TECHNICAL_VARIANT_NOT_ELIGIBLE", 409)
+    statement = select(TechnicalVariant).where(TechnicalVariant.id == variant_id)
+    if lock:
+        statement = statement.with_for_update()
+    variant = db.scalar(statement.execution_options(populate_existing=True))
+    if variant is None:
+        raise DraftScopeError("PRICING_TECHNICAL_VARIANT_NOT_FOUND", 404)
+    record = records.get(variant.id)
+    fields = technical_fields(variant)
+    document: TechnicalDocument | None = None
+    stored: StoredFile | None = None
+    if variant.technical_document_id:
+        document_statement = select(TechnicalDocument).where(
+            TechnicalDocument.id == variant.technical_document_id
+        )
+        if lock:
+            document_statement = document_statement.with_for_update()
+        document = db.scalar(document_statement.execution_options(populate_existing=True))
+        if document is not None:
+            stored_statement = select(StoredFile).where(
+                StoredFile.id == document.stored_file_id
+            )
+            if lock:
+                stored_statement = stored_statement.with_for_update()
+            stored = db.scalar(stored_statement.execution_options(populate_existing=True))
+    expected_binding = technical_release_source_binding(
+        technical_document_id=variant.technical_document_id,
+        technical_document_key=document.document_id if document else None,
+        technical_document_reference=document.reference if document else None,
+        technical_document_revision=document.revision if document else None,
+        stored_file_id=document.stored_file_id if document else None,
+        stored_file_sha256=stored.sha256 if stored else None,
+        stored_file_size_bytes=stored.size_bytes if stored else None,
+        source_document_reference=variant.source_document_reference,
+        source_page=variant.source_page,
+        source_table=variant.source_table,
+        source_figure=variant.source_figure,
+    )
+    try:
+        if (
+            type(record) is not dict
+            or set(record) != {
+                "id", "key", "variant_id", "system_id", "frl",
+                "source_document_reference", "source_page", "source_hash",
+                "record_version", "technical_fields", "source_binding",
+            }
+            or record["id"] != variant.id
+            or record["key"] != technical_variant_logical_key(
+                variant_id=variant.variant_id, source_json=variant.source_json
+            )
+            or record["variant_id"] != variant.variant_id
+            or record["system_id"] != variant.system_id
+            or record["frl"] != variant.frl
+            or record["source_document_reference"] != variant.source_document_reference
+            or record["source_page"] != variant.source_page
+            or record["source_hash"] != variant.source_hash
+            or record["record_version"] != variant.record_version
+            or record["technical_fields"] != fields
+            or record["source_binding"] != expected_binding
+        ):
+            raise ValueError("record")
+        validate_binding(record["source_binding"])
+        if record["source_binding"]["state"] != "bound":
+            raise ValueError("binding")
+        if (
+            document is None
+            or stored is None
+            or technical_document_authority_blockers(
+                status=document.status,
+                expiry_date=document.expiry_date,
+                stored_file_present=True,
+                stored_file_purpose=stored.purpose,
+                stored_file_scan_status=stored.malware_scan_status,
+                stored_file_immutable=stored.immutable,
+            )
+            or type(variant.source_hash) is not str
+            or variant.source_hash != stored.sha256
+        ):
+            raise ValueError("source")
+        if lock and db.get_bind().dialect.name == "postgresql":
+            read_clean_stored_file_for_update(
+                db,
+                stored_file_id=stored.id,
+                storage_root=settings.storage_root,
+                required_purpose="technical_evidence",
+            )
+        else:
+            read_verified_stored_file(
+                stored,
+                storage_root=settings.storage_root,
+                required_purpose="technical_evidence",
+            )
+    except (ValueError, TypeError, KeyError, StoredFileBindingError) as exc:
+        raise DraftScopeError("PRICING_TECHNICAL_VARIANT_INVALID", 409) from exc
+    snapshot = {
+        "id": variant.id,
+        "key": record["key"],
+        "variant_id": variant.variant_id,
+        "system_id": variant.system_id,
+        "record_version": variant.record_version,
+        "source_hash": variant.source_hash,
+        "technical_fields": fields,
+        "technical_fields_sha256": digest(fields),
+        "release_record": copy.deepcopy(record),
+        "release_record_sha256": digest(record),
+        "source_verification": {"method": "exact_bytes"},
+    }
+    snapshot["sha256"] = digest(snapshot)
+    return snapshot
+
+
+def _mapping_variant_ids(
+    mapping_status: str,
+    selected_variant_id: str | None,
+    candidate_variant_ids: list[str],
+) -> list[str]:
+    selected = selected_variant_id.strip() if type(selected_variant_id) is str else None
+    selected = selected or None
+    if (
+        type(candidate_variant_ids) is not list
+        or any(type(item) is not str or not 1 <= len(item) <= 36 for item in candidate_variant_ids)
+        or candidate_variant_ids != sorted(set(candidate_variant_ids))
+        or len(candidate_variant_ids) > MAX_SYSTEM_MAPPING_VARIANTS
+    ):
+        raise DraftScopeError("PRICING_SYSTEM_MAPPING_INVALID", 422)
+    if mapping_status == "mapped":
+        if selected is None or candidate_variant_ids:
+            raise DraftScopeError("PRICING_SYSTEM_MAPPING_INVALID", 422)
+        return [selected]
+    if mapping_status == "ambiguous":
+        if selected is not None or len(candidate_variant_ids) < 2:
+            raise DraftScopeError("PRICING_SYSTEM_MAPPING_INVALID", 422)
+        return candidate_variant_ids
+    if mapping_status == "unmatched":
+        if selected is not None or candidate_variant_ids:
+            raise DraftScopeError("PRICING_SYSTEM_MAPPING_INVALID", 422)
+        return []
+    raise DraftScopeError("PRICING_SYSTEM_MAPPING_INVALID", 422)
+
+
+def preview_system_mapping(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    row_number: int,
+    technical_release_id: str,
+    mapping_status: str,
+    normalized_reference: str,
+    selected_variant_id: str | None,
+    candidate_variant_ids: list[str],
+    identity_evidence_fields: list[str],
+    review_reason: str,
+    unresolved_fields: list[str],
+    *,
+    settings: Settings,
+) -> dict[str, Any]:
+    actor, source, profile, decision, profile_value, row = _row_observation_context(
+        db,
+        actor,
+        draft_id,
+        source_id,
+        profile_id,
+        row_number,
+        settings=settings,
+        dataset_kind="firefly_system_prices",
+    )
+    actor, release, records, active_ids = _active_technical_release(
+        db, actor, technical_release_id
+    )
+    variant_ids = _mapping_variant_ids(
+        mapping_status, selected_variant_id, candidate_variant_ids
+    )
+    variants = [
+        _technical_variant_snapshot(
+            db,
+            variant_id,
+            records,
+            active_ids,
+            settings=settings,
+            lock=False,
+        )
+        for variant_id in variant_ids
+    ]
+    try:
+        definition = system_mapping_definition(
+            draft_scope_id=draft_id,
+            dataset={
+                "id": source.dataset_id,
+                "kind": source.dataset_kind,
+                "version": source.dataset_version,
+            },
+            source={
+                "id": source.id,
+                "sha256": source.source_sha256,
+                "size_bytes": source.source_size_bytes,
+                "document_sha256": source.document_sha256,
+            },
+            profile={
+                "id": profile.id,
+                "revision": profile.revision,
+                "sha256": profile.profile_sha256,
+                "decision_id": decision.id,
+                "decision_sha256": decision.decision_sha256,
+                "price_meaning": profile_value["definition"]["commercial_basis"][
+                    "price_meaning"
+                ],
+            },
+            row=row,
+            technical_release={
+                "id": release.id,
+                "version": release.version,
+                "sha256": release.release_hash,
+                "effective_date": (
+                    release.effective_date.isoformat()
+                    if release.effective_date
+                    else None
+                ),
+            },
+            variants=variants,
+            mapping_status=mapping_status,
+            normalized_reference=normalized_reference,
+            selected_variant_id=(
+                variant_ids[0] if mapping_status == "mapped" else None
+            ),
+            candidate_variant_ids=variant_ids,
+            identity_evidence_fields=identity_evidence_fields,
+            review_reason=review_reason,
+            unresolved_fields=unresolved_fields,
+        )
+    except (ValueError, TypeError, KeyError) as exc:
+        raise DraftScopeError("PRICING_SYSTEM_MAPPING_INVALID", 422) from exc
+    return {"definition": definition, "preview_hash": digest(definition)}
+
+
+def save_system_mapping(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    row_number: int,
+    technical_release_id: str,
+    mapping_status: str,
+    normalized_reference: str,
+    selected_variant_id: str | None,
+    candidate_variant_ids: list[str],
+    identity_evidence_fields: list[str],
+    review_reason: str,
+    unresolved_fields: list[str],
+    expected_profile_sha256: str,
+    expected_decision_sha256: str,
+    expected_row_sha256: str,
+    expected_technical_release_sha256: str,
+    expected_preview_hash: str,
+    *,
+    settings: Settings,
+) -> dict[str, Any]:
+    with _atomic(db):
+        actor, source, profile, decision, _, row = _row_observation_context(
+            db,
+            actor,
+            draft_id,
+            source_id,
+            profile_id,
+            row_number,
+            settings=settings,
+            lock=True,
+            dataset_kind="firefly_system_prices",
+        )
+        actor, release, _, _ = _active_technical_release(
+            db, actor, technical_release_id, lock=True
+        )
+        if (
+            profile.profile_sha256 != expected_profile_sha256
+            or decision.decision_sha256 != expected_decision_sha256
+            or row["sha256"] != expected_row_sha256
+            or release.release_hash != expected_technical_release_sha256
+        ):
+            raise DraftScopeError("PRICING_SYSTEM_MAPPING_CHANGED", 409)
+        existing = db.scalar(
+            select(DraftPricingSystemMapping).where(
+                DraftPricingSystemMapping.profile_id == profile_id,
+                DraftPricingSystemMapping.sheet_index == row["sheet_index"],
+                DraftPricingSystemMapping.row_number == row_number,
+            )
+        )
+        if existing is not None:
+            raise DraftScopeError("PRICING_SYSTEM_ALREADY_MAPPED", 409)
+        preview = preview_system_mapping(
+            db,
+            actor,
+            draft_id,
+            source_id,
+            profile_id,
+            row_number,
+            technical_release_id,
+            mapping_status,
+            normalized_reference,
+            selected_variant_id,
+            candidate_variant_ids,
+            identity_evidence_fields,
+            review_reason,
+            unresolved_fields,
+            settings=settings,
+        )
+        if preview["preview_hash"] != expected_preview_hash:
+            raise DraftScopeError("PRICING_SYSTEM_MAPPING_CHANGED", 409)
+        reviewed = datetime.now(UTC)
+        mapping_id = new_id()
+        envelope = {
+            "schema_version": SYSTEM_MAPPING_SCHEMA,
+            "mapping_id": mapping_id,
+            "reviewed_at": reviewed.isoformat(),
+            "reviewed_by_id": actor.id,
+            "definition": preview["definition"],
+            "definition_sha256": expected_preview_hash,
+        }
+        try:
+            validate_system_mapping_envelope(envelope)
+            raw = canonical(envelope)
+        except (ValueError, TypeError, KeyError) as exc:
+            raise DraftScopeError("PRICING_SYSTEM_MAPPING_INVALID", 422) from exc
+        interpretation = envelope["definition"]["interpretation"]
+        variants = envelope["definition"]["variants"]
+        selected_snapshot = variants[0] if mapping_status == "mapped" else None
+        stored = DraftPricingSystemMapping(
+            id=mapping_id,
+            draft_scope_id=draft_id,
+            source_id=source_id,
+            profile_id=profile_id,
+            profile_decision_id=decision.id,
+            dataset_id=cast(str, source.dataset_id),
+            dataset_version=cast(int, source.dataset_version),
+            source_sha256=source.source_sha256,
+            document_sha256=cast(str, source.document_sha256),
+            profile_revision=profile.revision,
+            profile_sha256=profile.profile_sha256,
+            decision_sha256=decision.decision_sha256,
+            sheet_index=row["sheet_index"],
+            row_number=row_number,
+            row_sha256=row["sha256"],
+            mapping_status=interpretation["status"],
+            normalized_reference=interpretation["normalized_reference"],
+            review_reason=interpretation["review_reason"],
+            technical_release_id=release.id,
+            technical_release_sha256=cast(str, release.release_hash),
+            technical_variant_id=(
+                selected_snapshot["id"] if selected_snapshot else None
+            ),
+            technical_variant_snapshot_sha256=(
+                selected_snapshot["sha256"] if selected_snapshot else None
+            ),
+            mapping_json=raw.decode("utf-8"),
+            mapping_sha256=hashlib.sha256(raw).hexdigest(),
+            reviewed_by_id=actor.id,
+            created_at=reviewed,
+            updated_at=reviewed,
+        )
+        db.add(stored)
+        draft = get_draft(db, actor, draft_id)
+        record_audit(
+            db,
+            actor=actor,
+            action="draft_pricing.system_mapping.save",
+            entity_type="draft_pricing_system_mapping",
+            entity_id=mapping_id,
+            project_id=draft.project_id,
+            new_value={
+                "profile_id": profile_id,
+                "profile_revision": profile.revision,
+                "row_number": row_number,
+                "row_sha256": row["sha256"],
+                "mapping_status": interpretation["status"],
+                "technical_release_id": release.id,
+                "technical_release_sha256": release.release_hash,
+                "technical_variant_id": stored.technical_variant_id,
+                "mapping_sha256": stored.mapping_sha256,
+            },
+            reason=interpretation["review_reason"],
+        )
+        db.flush()
+        return envelope
+
+
+def _system_mapping_value(row: DraftPricingSystemMapping) -> dict[str, Any]:
+    try:
+        raw = row.mapping_json.encode("utf-8")
+        value = json.loads(raw)
+        validate_system_mapping_envelope(value)
+        definition = value["definition"]
+        interpretation = definition["interpretation"]
+        variants = definition["variants"]
+        selected = variants[0] if interpretation["status"] == "mapped" else None
+        if (
+            len(raw) > 524288
+            or hashlib.sha256(raw).hexdigest() != row.mapping_sha256
+            or value["mapping_id"] != row.id
+            or value["reviewed_by_id"] != row.reviewed_by_id
+            or definition["draft_scope_id"] != row.draft_scope_id
+            or definition["dataset"]["id"] != row.dataset_id
+            or definition["dataset"]["version"] != row.dataset_version
+            or definition["source"]["id"] != row.source_id
+            or definition["source"]["sha256"] != row.source_sha256
+            or definition["source"]["document_sha256"] != row.document_sha256
+            or definition["profile"]["id"] != row.profile_id
+            or definition["profile"]["revision"] != row.profile_revision
+            or definition["profile"]["sha256"] != row.profile_sha256
+            or definition["profile"]["decision_id"] != row.profile_decision_id
+            or definition["profile"]["decision_sha256"] != row.decision_sha256
+            or definition["row"]["sheet_index"] != row.sheet_index
+            or definition["row"]["row"] != row.row_number
+            or definition["row"]["sha256"] != row.row_sha256
+            or interpretation["status"] != row.mapping_status
+            or interpretation["normalized_reference"] != row.normalized_reference
+            or interpretation["review_reason"] != row.review_reason
+            or definition["technical_release"]["id"] != row.technical_release_id
+            or definition["technical_release"]["sha256"]
+            != row.technical_release_sha256
+            or (selected["id"] if selected else None) != row.technical_variant_id
+            or (selected["sha256"] if selected else None)
+            != row.technical_variant_snapshot_sha256
+        ):
+            raise ValueError("system mapping binding")
+    except (ValueError, TypeError, KeyError, UnicodeError, json.JSONDecodeError) as exc:
+        raise DraftScopeError("PRICING_SYSTEM_MAPPING_INTEGRITY_FAILED", 409) from exc
+    return cast(dict[str, Any], value)
+
+
+def _system_mapping_dependencies_current(
+    db: Session,
+    actor: User,
+    row: DraftPricingSystemMapping,
+    value: dict[str, Any],
+    *,
+    settings: Settings,
+) -> bool:
+    try:
+        _, source, profile, decision, _, source_row = _row_observation_context(
+            db,
+            actor,
+            row.draft_scope_id,
+            row.source_id,
+            row.profile_id,
+            row.row_number,
+            settings=settings,
+            dataset_kind="firefly_system_prices",
+        )
+        definition = value["definition"]
+        release_value = definition["technical_release"]
+        _, release, records, active_ids = _active_technical_release(
+            db, actor, row.technical_release_id
+        )
+        if (
+            source.source_sha256 != row.source_sha256
+            or source.document_sha256 != row.document_sha256
+            or profile.profile_sha256 != row.profile_sha256
+            or decision.id != row.profile_decision_id
+            or decision.decision_sha256 != row.decision_sha256
+            or source_row["sha256"] != row.row_sha256
+            or release.release_hash != row.technical_release_sha256
+            or release_value["version"] != release.version
+            or release_value["effective_date"]
+            != (
+                release.effective_date.isoformat()
+                if release.effective_date
+                else None
+            )
+        ):
+            return False
+        current_variants = [
+            _technical_variant_snapshot(
+                db,
+                variant["id"],
+                records,
+                active_ids,
+                settings=settings,
+                lock=False,
+            )
+            for variant in definition["variants"]
+        ]
+        expected_variants = cast(list[dict[str, Any]], definition["variants"])
+        return current_variants == expected_variants
+    except DraftScopeError as exc:
+        if exc.status_code == 403:
+            raise
+        return False
+
+
+def list_system_mappings(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    *,
+    settings: Settings,
+) -> list[dict[str, Any]]:
+    _profile_row(db, actor, draft_id, source_id, profile_id)
+    actor = _actor(db, actor, "pricing:approve")
+    actor = _actor(db, actor, "technical:read")
+    rows = db.scalars(
+        select(DraftPricingSystemMapping)
+        .where(
+            DraftPricingSystemMapping.draft_scope_id == draft_id,
+            DraftPricingSystemMapping.source_id == source_id,
+            DraftPricingSystemMapping.profile_id == profile_id,
+        )
+        .order_by(DraftPricingSystemMapping.row_number)
+    ).all()
+    result = []
+    for row in rows:
+        value = _system_mapping_value(row)
+        reviewer = cast(User, db.get(User, row.reviewed_by_id))
+        result.append(
+            {
+                "id": row.id,
+                "row_number": row.row_number,
+                "mapping_status": row.mapping_status,
+                "mapping_sha256": row.mapping_sha256,
+                "reviewed_at": row.created_at,
+                "reviewed_by": reviewer.full_name,
+                "is_current": _system_mapping_dependencies_current(
+                    db, actor, row, value, settings=settings
+                ),
+                "value": value,
+            }
+        )
+    return result
+
+
+def system_mapping_bytes(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    source_id: str,
+    profile_id: str,
+    mapping_id: str,
+) -> bytes:
+    _profile_row(db, actor, draft_id, source_id, profile_id)
+    actor = _actor(db, actor, "pricing:approve")
+    _actor(db, actor, "technical:read")
+    row = db.scalar(
+        select(DraftPricingSystemMapping).where(
+            DraftPricingSystemMapping.id == mapping_id,
+            DraftPricingSystemMapping.draft_scope_id == draft_id,
+            DraftPricingSystemMapping.source_id == source_id,
+            DraftPricingSystemMapping.profile_id == profile_id,
+        )
+    )
+    if row is None:
+        raise DraftScopeError("PRICING_SYSTEM_MAPPING_NOT_FOUND", 404)
+    _system_mapping_value(row)
+    return row.mapping_json.encode("utf-8")
 
 
 def save_profile(

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import re
+
 from fastapi.testclient import TestClient
 from test_draft_estimates import add_payload
 from test_draft_pdf_ui import pdf_app as _pdf_app
@@ -9,12 +12,15 @@ from test_draft_scope import sample_payload
 from test_draft_scope_ui import _csrf, _login
 from test_draft_scope_ui import scope_password_hash as _password_hash
 from test_shared_file_containment import postgresql_session_factory as _postgres_fixture
+from test_technical_release_publication import _bound_variant, _publish
 
 from classifire.draft_estimate_ui import router as estimate_router
 from classifire.draft_pricing_ui import router
 from classifire.models import DraftEstimate, User
 from classifire.services import draft_estimates as estimates
+from classifire.services import draft_pricing_intake as pricing
 from classifire.services import draft_scope as scope
+from classifire.services.draft_system_match_contract import canonical
 
 pdf_app = _pdf_app
 pdf_setup = _pdf_setup
@@ -218,3 +224,160 @@ def test_upload_map_select_download_and_http_boundaries(pdf_app, monkeypatch):
         assert download.status_code == 200, download.text
         assert download.json()["pricing_sources"][0]["row"]["fields"]["rate"]["address"] == "D2"
         assert client.post(path + "/apply", data=apply).status_code == 409
+
+
+def test_dataset_b_system_mapping_preview_save_and_download_ui(pdf_app, monkeypatch):
+    x = pdf_app
+    monkeypatch.setattr("classifire.draft_pricing_ui.get_settings", lambda: x.settings)
+    monkeypatch.setattr("classifire.draft_estimate_ui.get_settings", lambda: x.settings)
+    x.app.include_router(estimate_router)
+    x.app.include_router(router)
+    with x.factory() as db:
+        owner = db.get(User, x.ids[0])
+        scope.save_revision(db, owner, x.ids[2], 1, sample_payload())
+        estimate = estimates.create_estimate(db, owner, x.ids[2], 2)
+        admin = User(
+            email="admin@scope.example.test",
+            full_name="Synthetic Dataset B reviewer",
+            password_hash=owner.password_hash,
+            role="administrator",
+            is_active=True,
+        )
+        db.add(admin)
+        db.flush()
+        variant, _ = _bound_variant(db, x.settings.storage_root, suffix="UI-B")
+        release = _publish(
+            db,
+            actor=admin,
+            storage_root=x.settings.storage_root,
+            version="TECH-UI-B",
+        )
+        source = pricing.retain_source(
+            db,
+            owner,
+            x.ids[2],
+            "dataset-b.xlsx",
+            workbook_bytes(),
+            "firefly_system_prices",
+            settings=x.settings,
+        )
+        pricing.intake().scan_source(db, owner, x.ids[2], source.id, settings=x.settings)
+        preview = pricing.preview_profile(
+            db,
+            owner,
+            x.ids[2],
+            source.id,
+            1,
+            1,
+            MAPPING,
+            "sell_price",
+            settings=x.settings,
+        )
+        profile = pricing.save_profile(
+            db,
+            owner,
+            x.ids[2],
+            source.id,
+            1,
+            1,
+            MAPPING,
+            "sell_price",
+            0,
+            source.document_sha256,
+            preview["preview_hash"],
+            settings=x.settings,
+        )
+        pricing.save_profile_decision(
+            db,
+            admin,
+            x.ids[2],
+            source.id,
+            profile["profile_id"],
+            hashlib.sha256(canonical(profile)).hexdigest(),
+            "approve",
+            "The exact Dataset B profile was checked.",
+        )
+        db.commit()
+        release_id = release.id
+        variant_id = variant.id
+        profile_path = (
+            f"/scopes/{x.ids[2]}/estimates/{estimate.id}/pricing/{source.id}/profiles/"
+            f"{profile['profile_id']}"
+        )
+    with TestClient(x.app) as client, TestClient(x.app) as admin_client:
+        _login(client)
+        _login(admin_client, "admin")
+        owner_page = client.get(profile_path)
+        assert owner_page.status_code == 200
+        assert "authorised pricing reviewer with technical-library access" in owner_page.text
+        admin_page = admin_client.get(profile_path)
+        assert admin_page.status_code == 200
+        assert "Map this exact Firefly price row" in admin_page.text
+        row_path = profile_path + "/rows/2/system-mapping"
+        form = {
+            "csrf_token": _csrf(admin_page.text),
+            "technical_release_id": release_id,
+            "mapping_status": "mapped",
+            "normalized_reference": "SYN-1",
+            "selected_variant_id": variant_id,
+            "candidate_variant_ids": "",
+            "identity_evidence_fields": "reference,description",
+            "review_reason": "The exact reference and description identify this variant.",
+            "unresolved_fields": "",
+        }
+        denied = client.post(
+            row_path + "/preview",
+            data={**form, "csrf_token": _csrf(owner_page.text)},
+        )
+        assert denied.status_code == 403
+        mapping_preview = admin_client.post(row_path + "/preview", data=form)
+        assert mapping_preview.status_code == 200, mapping_preview.text
+        assert "No write has occurred" in mapping_preview.text
+        assert "Save immutable system mapping" in mapping_preview.text
+
+        def hidden(name):
+            match = re.search(
+                r'name="' + name + r'" value="([^"]*)"', mapping_preview.text
+            )
+            assert match is not None
+            return match.group(1)
+
+        save_form = {
+            "csrf_token": _csrf(mapping_preview.text),
+            **{
+                name: hidden(name)
+                for name in (
+                    "technical_release_id",
+                    "mapping_status",
+                    "normalized_reference",
+                    "selected_variant_id",
+                    "candidate_variant_ids",
+                    "identity_evidence_fields",
+                    "review_reason",
+                    "unresolved_fields",
+                    "profile_sha256",
+                    "decision_sha256",
+                    "row_sha256",
+                    "technical_release_sha256",
+                    "preview_hash",
+                )
+            },
+        }
+        saved = admin_client.post(
+            row_path + "s", data=save_form, follow_redirects=False
+        )
+        assert saved.status_code == 303, saved.text
+        reviewed = admin_client.get(profile_path)
+        assert "Reviewed Dataset B system mapping" in reviewed.text
+        assert "Current" in reviewed.text
+        download_match = re.search(
+            r'href="([^"]+/system-mappings/[^"]+/download)"', reviewed.text
+        )
+        assert download_match is not None
+        assert client.get(download_match.group(1)).status_code == 403
+        downloaded = admin_client.get(download_match.group(1))
+        assert downloaded.status_code == 200
+        assert downloaded.json()["definition"]["interpretation"]["selected_variant_id"] == (
+            variant_id
+        )
+        assert downloaded.json()["definition"]["effects"]["estimate_changed"] is False
