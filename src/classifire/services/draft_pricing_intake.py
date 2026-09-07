@@ -1441,6 +1441,10 @@ def save_system_mapping(
     settings: Settings,
 ) -> dict[str, Any]:
     with _atomic(db):
+        get_draft(db, actor, draft_id)
+        _actor(db, actor, "pricing:approve")
+        _actor(db, actor, "technical:read")
+        db.scalar(select(DraftScope.id).where(DraftScope.id == draft_id).with_for_update())
         actor, source, profile, decision, _, row = _row_observation_context(
             db,
             actor,
@@ -1618,6 +1622,7 @@ def _system_mapping_dependencies_current(
     value: dict[str, Any],
     *,
     settings: Settings,
+    lock: bool = False,
 ) -> bool:
     try:
         _, source, profile, decision, _, source_row = _row_observation_context(
@@ -1628,12 +1633,13 @@ def _system_mapping_dependencies_current(
             row.profile_id,
             row.row_number,
             settings=settings,
+            lock=lock,
             dataset_kind="firefly_system_prices",
         )
         definition = value["definition"]
         release_value = definition["technical_release"]
         _, release, records, active_ids = _active_technical_release(
-            db, actor, row.technical_release_id
+            db, actor, row.technical_release_id, lock=lock
         )
         if (
             source.source_sha256 != row.source_sha256
@@ -1659,7 +1665,7 @@ def _system_mapping_dependencies_current(
                 records,
                 active_ids,
                 settings=settings,
-                lock=False,
+                lock=lock,
             )
             for variant in definition["variants"]
         ]
