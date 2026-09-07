@@ -24,8 +24,10 @@ Use GOAL.md and the verified project state to select the next visible increment;
   through PR #214. The early T13 lineage/leakage contract is merged in PR #216,
   PR #218 adds the first reviewed Dataset A row-observation interaction, PR #220
   adds reviewed Dataset B mapped/unmatched/ambiguous system identity, and PR #222
-  adds the first persisted target-blind T13 roster UI. Build the first deterministic
-  T9 coverage-status interaction next; prediction and holdout execution remain later.
+  adds the first persisted target-blind T13 roster UI. PR #224 adds the first
+  deterministic no-write T9 coverage-status UI and exact JSON for every active
+  technical target. Build the first governed T6 component/activity recipe link next;
+  prediction, price proposals and holdout execution remain later.
 Inspect current evidence before resuming; never rebuild completed prototype workflows.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
@@ -117,8 +119,12 @@ the first reviewed B system/configuration mapping path against a source-bound ac
 technical release. PR #222 persists a target-blind roster from current mapped B
 records, excludes unmatched/ambiguous/stale records, and fails visibly when fewer than
 three independent groups exist. Reuse that frozen boundary for later evaluation.
-Build T9 coverage status before pricing proposals, preserving T-stage dependencies
-without treating the complete target schema, bulk corpus or model as one task.
+PR #224 adds read-only T9 coverage over every active technical target. It reports
+direct B support, ambiguous review, stale input and insufficient evidence, and keeps
+bottom-up A support at zero because reviewed A rows still lack governed versioned
+recipe links. Build one reviewable T6 component/activity recipe link before any
+bottom-up price proposal, preserving T-stage dependencies without treating the
+complete target schema, bulk corpus or model as one task.
 
 - Preserve separate dataset identities: A `pricelist.xlsx` is general products,
   materials, labour and services; B `pricing_library.xlsx` is Firefly system prices.
