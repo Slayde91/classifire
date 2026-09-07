@@ -2,11 +2,12 @@
 
 ## Evidence-based current snapshot
 
-Verified 2026-09-07 on shared main
-`5b517c232d8ac7a455176fcd67055771a8df73c9`, merge commit for PR #218.
-Exact PR head `02451aaaaf99c8667846ca36650fdd8d0af52b91` passed required run
-34058657496, including the full test, Ruff, Mypy, Bandit and one-head Alembic
-checks. The first reviewed Dataset A row-observation UI is therefore on shared main.
+Verified 2026-09-08 on shared main
+`58ff6fdb308b4c4b9c9ed5215b9e938c43c4b5d4`, merge commit for PR #220.
+Exact PR head `f29110339359f74ea85460ee58a40117be9df12d` passed run
+34127607174 with 1,868 tests, Ruff, Mypy, Bandit and one-head Alembic
+checks. Post-merge main run 34127945847 passed the same workflow. The governed
+Dataset B system-mapping UI is therefore on shared main.
 
 ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic application
 with independently callable Scope, System Match, Estimate and Reporting capabilities,
@@ -17,7 +18,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | --- | --- | --- |
 | Scope | Manual graph; retained PDF page/entity review; Excel row/cell/image mapping; optional one-page text/image suggestions with explicit human save | Real-report accuracy, bulk/cross-page reconciliation, broader formats and richer physical relationships |
 | System Match | Saved candidates/notes, partial measured checks and client commands | Complete authorized applicability, corpus extraction and multi-source fact resolution |
-| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, a reviewed Dataset A row-observation UI in PR #218 and an unwired pre-model T13 leakage contract; observations do not change an Estimate implicitly | Reviewed B system mapping, component/activity recipes, persisted holdout evaluation, coverage and calibrated proposals |
+| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B system mappings in PR #220 and an unwired pre-model T13 leakage contract; review records do not change an Estimate implicitly | Component/activity recipes, persisted holdout roster/evaluation, coverage and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
 | ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals | Real OAuth/HTTPS linking; report intake and A/B profile commands lack client parity |
@@ -84,10 +85,28 @@ unusable rows and formula/error mapped cells fail closed. A later source keeps o
 history and marks it stale. Migration `0042_draft_pricing_row_observations` adds the
 append-only table and refuses destructive downgrade.
 
-This is the minimum T1/T5/T7 plus early-T12 visible slice. It does not activate reviewed
-A/B rows in a commercial library, identify a Firefly system, create a technical match,
-infer a price, reprice an Estimate, or place profile/source/decision bodies in a
-ProjectPackage.
+PR #220 adds an append-only human mapping for one exact usable row from a current
+approved firefly_system_prices profile. An administrator with pricing:approve and
+technical:read can preview without a write, then record mapped, ambiguous or
+unmatched. A mapped result requires one exact eligible variant and populated
+non-price identity evidence. Ambiguous retains at least two exact candidates plus
+unresolved fields. Unmatched retains no candidate and explicit unresolved fields.
+Price, currency and unit cannot prove system identity.
+
+The mapping envelope binds the Draft, B dataset/version, retained source/document,
+approved profile/decision, exact worksheet row/cells, active technical release hash,
+variant identity, current technical-field snapshot, release-record snapshot, exact
+technical source binding and verified source bytes. Reviewer, reason, uncertainty,
+canonical JSON and hashes are immutable. Stale source/profile/decision/release, changed
+row/variant, replay, foreign access, invalid/formula rows, corrupt JSON and price-only
+identity fail closed. Old valid bytes remain available and visibly stale when a
+dependency changes. Migration 0043_draft_pricing_system_mappings adds the journal,
+refuses destructive downgrade and is the single Alembic head.
+
+This is the minimum T1/T5/T7/T8 plus early-T12 visible slice. Neither A observations nor
+B mappings activate a commercial library, approve technical applicability, create a
+System Match, infer a price, reprice an Estimate, assign a holdout or place their source
+bodies in a ProjectPackage.
 
 ## Implemented early T13 pricing-evaluation lineage contract
 
@@ -111,10 +130,11 @@ contract performs no prediction, row ingestion, library activation, Estimate cha
 release.
 
 This is deliberately a contract and synthetic proof, not a saved product workflow.
-CLASSIFIRE does not yet have reviewed normalized B observations or resolved
-system/configuration lineage from which an honest persisted split roster could be built.
-There is therefore no new table, migration, route or UI and no executed holdout,
-calibration or accuracy claim.
+PR #220 now supplies current reviewed mapped B identities as eligible inputs, but the
+contract is not wired to them and no roster table, route or UI exists. A roster still
+needs at least three independent connected lineage groups, a target-blind assignment
+policy, scoped access and explicit insufficient-evidence behavior. There is no executed
+holdout, calibration or accuracy claim.
 
 ## Verification checkpoint
 
@@ -161,6 +181,15 @@ calibration or accuracy claim.
   Required PR run 34058657496 passed all test, Ruff, Mypy, Bandit and one-head Alembic
   steps before merge. Visual browser inspection and a separate-process restart remain
   to be verified. Post-merge main run 34059650587 passed the same repository gates.
+- PR #220 local evidence: the full Draft Pricing regression group passed; all modified
+  migration/lineage consumers passed; the final service/UI/migration selection passed
+  37 tests with three environment-specific skips. Repository-wide Ruff and Bandit,
+  targeted Mypy on all six changed production files, git diff --check and the single
+  Alembic head 0043_draft_pricing_system_mappings passed. TestClient covered rendered
+  Dataset B permission denial, no-write preview, explicit save, reopen and exact download.
+  A separate visual-browser/restart journey was not run. Exact PR-head run 34127607174
+  passed 1,868 tests and all repository gates; post-merge main run 34127945847 passed
+  the same validation workflow.
 
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,
@@ -169,13 +198,12 @@ logs, database state and workbooks stay under `.tmp` and are not repository sour
 ## Known gaps and active work
 
 The prototype is usable for explicit source classification, profile retention,
-exact-profile human review and one governed Dataset A row observation. Those records
-have no downstream authority. The
-early-T13 contract now blocks declared lineage leakage, but no manifest is persisted
-because reviewed normalized observations and resolved grouping identities do not exist.
-There is no reviewed B system/configuration mapping, commercial activation or detailed
-component/activity recipe, coverage result, bottom-up/comparable calculation,
-holdout execution, calibrated confidence or production release.
+exact-profile human review, governed Dataset A row observations and exact reviewed
+Dataset B mapped/unmatched/ambiguous identity records. Those records have no downstream
+authority. The early-T13 contract blocks declared lineage leakage, but no manifest is
+persisted and the production lineage/split policy is unresolved. There is no commercial
+activation or detailed component/activity recipe, coverage result, bottom-up/comparable
+calculation, holdout execution, calibrated confidence or production release.
 
 Real A/B workbook layouts, ownership, redistribution rights, price meanings, tax/date/
 inclusion semantics and supported record counts have not been verified. The current
@@ -195,10 +223,10 @@ ChatGPT linking, OpenClaw retirement, deployment and Human Release remain incomp
 ## Project health
 
 The product has a growing, testable standalone Draft workflow with shared services,
-exact evidence, explicit uncertainty and narrow user-visible increments. PR #218 reuses
-the existing pricing UI and canonical JSON/hash approach without creating another
-importer, rules engine, agent fleet, database or prediction path. Its local and required
-PR checks passed, and it is merged on shared main.
+exact evidence, explicit uncertainty and narrow user-visible increments. PR #220 reuses
+the existing pricing UI, source containment, technical-release governance and canonical
+JSON/hash approach without creating another importer, rules engine, agent fleet,
+database or prediction path. It is merged on shared main.
 
 The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
 46 unstaged tracked modifications, 14 staged additions and four DU conflicts. Its
@@ -207,11 +235,12 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Deliver one reviewed B-system/configuration mapping using an approved exact profile
-   and technical identity, retaining unmatched/ambiguous outcomes. Only then persist a
-   real T13 split roster from reviewed B identities.
-2. Perform the Dataset A real-process browser/restart/exact-download check when browser
-   control is available; keep TestClient proof classified separately.
+1. Persist the first governed T13 lineage roster from current reviewed mapped B records.
+   Build lineage and split assignment without target-price access; save only when all
+   three splits contain independent connected groups, otherwise show explicit
+   insufficient evidence. Do not run a prediction or expose validation/holdout targets.
+2. Perform a real-process browser/restart/exact-download check for the Dataset B mapping
+   UI when browser control is available; keep TestClient proof classified separately.
 3. Define scoped Draft reviewer assignments before production multi-user pricing review;
    do not broaden global project visibility to make `pricing_manager` access work.
 
