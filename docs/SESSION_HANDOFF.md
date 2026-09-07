@@ -15,9 +15,9 @@ Reporting capabilities, portable artifacts and optional bounded AI. OpenClaw
 remains transitional. T9 coverage uses no agent or provider and grants no
 canonical, technical, commercial, deployment or release authority.
 
-This handoff is being reconciled on `docs/pr224-final-state-20260908` in
-`C:\CLASSIFIRE\.tmp\pr224-final-state-20260908`. Verify its documentation
-PR and current `origin/main` before starting new work.
+The six-file state, architecture, roadmap and handoff reconciliation merged in
+PR #225 at `1d1365d8684704857fecbd59bbe45fdd0cc4de6d`. Recheck current
+`origin/main`, worktrees and CI before starting new work.
 
 ## Relevant local changes and open issues
 
