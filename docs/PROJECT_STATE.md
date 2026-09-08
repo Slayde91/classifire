@@ -286,7 +286,7 @@ rules remain unvalidated.
   `75817f04f4ff5433b7cfc348daf8454a6b243b3d` passed 1,877 tests, full Ruff,
   Mypy on 212 source files, Bandit and the migration-head check.
 - Active T6 candidate local evidence after the approved cleanup: **130 affected tests
-  passed in 262.36 seconds** on the disposable PostgreSQL database, including technical
+  passed in 267.31 seconds** on the disposable PostgreSQL database, including technical
   release v4/v3 compatibility, recipe contract/service, authenticated TestClient UI, T9
   completeness/precedence, migration packaging and deployment lineage. PostgreSQL
   lifecycle tests exercised locking, access, replay, staleness, timezone/timestamp
@@ -296,8 +296,9 @@ rules remain unvalidated.
   bytes/evidence.
   Repository Ruff, targeted Mypy, Bandit, `git diff --check` and the single Alembic head
   `0045_draft_pricing_recipe_links` passed. AST comparison confirmed the five restored
-  files retain the exact Python semantics of the pre-cleanup backup without its formatter
-  churn. Repository-wide Mypy remains locally blocked
+  files matched the pre-cleanup T6 semantics after cleanup; a later CI regression then
+  deliberately limited strict recipe-presence coupling to v3/v4 so legacy v2 releases
+  remain readable. Repository-wide Mypy remains locally blocked
   by pre-existing missing ReportLab/PyYAML stubs; the full pytest run was stopped at 11%
   without failures because its projected runtime was about one hour. Publication and CI
   are not yet evidence.

@@ -55,8 +55,10 @@ The user-approved cleanup is complete for `models.py`, `draft_pricing_intake.py`
 `draft_pricing_contract.py`, `draft_system_matches.py` and
 `test_technical_release_publication.py`. They were restored from `origin/main` and only
 their T6 semantic edits were reapplied. An AST comparison against the fresh pre-cleanup
-backup at `C:\CLASSIFIRE\.tmp\t6-pre-cleanup-current-20260908` passed, while the five-file
-diff fell to 116 insertions and 11 deletions.
+backup at `C:\CLASSIFIRE\.tmp\t6-pre-cleanup-current-20260908` passed at that cleanup
+checkpoint, while the five-file diff fell to 116 insertions and 11 deletions. A later CI
+regression required one deliberate semantic correction in `draft_system_matches.py`:
+strict recipe-presence coupling applies to v3/v4, while legacy v2 remains readable.
 
 Real recipe meaning, units, yields, productivity, recovery rules, source rights and
 representative scale remain unverified. Recipe links are not package members. There is
@@ -65,7 +67,7 @@ no T10 amount calculation, activation, evaluation run, calibration or production
 ## Validation evidence
 
 After the approved cleanup, the complete affected regression set passed **130 tests in
-262.36 seconds** against the disposable PostgreSQL database. It covered
+267.31 seconds** against the disposable PostgreSQL database. It covered
 v3/v4 technical
 release compatibility, recipe snapshots/contracts, recipe service and authenticated
 TestClient UI, T9 completeness/precedence, migration packaging and deployment lineage.
@@ -137,8 +139,9 @@ OpenClaw retirement or production readiness.
 > feat/draft-pricing-t6-recipe-20260908 candidate; do not rebuild it. Its highest-value
 > remaining task is to retain the completed five-file cleanup and verify the semantic v4 recipe snapshot,
 > immutable T6 review links, guarded T9 coverage, migration 0045, UI, tests and docs.
-> The approved restore-and-reapply cleanup has already completed and AST semantic parity
-> passed against C:\CLASSIFIRE\.tmp\t6-pre-cleanup-current-20260908; do not repeat it.
+> The approved restore-and-reapply cleanup has already completed; its AST checkpoint
+> passed against C:\CLASSIFIRE\.tmp\t6-pre-cleanup-current-20260908. Preserve the later
+> intentional v2 compatibility correction and do not repeat the cleanup.
 > Preserve v3 bytes/readers and all
 > authority boundaries. Run all affected PostgreSQL T6/T9/release/migration tests, Ruff
 > on changed Python, targeted Mypy, Bandit, Alembic one-head and git diff --check. Inspect

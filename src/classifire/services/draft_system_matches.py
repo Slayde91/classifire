@@ -149,8 +149,9 @@ def _release(
             if manifest.get("schema") in SUPPORTED_TECHNICAL_RELEASE_MANIFEST_SCHEMAS:
                 if record.get("technical_fields") != _fields(variant):
                     raise ValueError("published_constraints")
-            if ("recipe_snapshot" in record) != (
-                manifest.get("schema") == TECHNICAL_RELEASE_MANIFEST_SCHEMA
+            if manifest.get("schema") in SUPPORTED_TECHNICAL_RELEASE_MANIFEST_SCHEMAS and (
+                ("recipe_snapshot" in record)
+                != (manifest.get("schema") == TECHNICAL_RELEASE_MANIFEST_SCHEMA)
             ):
                 raise ValueError("published_recipe_version")
             if manifest.get("schema") == TECHNICAL_RELEASE_MANIFEST_SCHEMA:
