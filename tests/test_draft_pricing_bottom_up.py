@@ -1,5 +1,3 @@
-import re
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
@@ -90,18 +88,24 @@ def test_bottom_up_calculates_exact_sell_amount_and_remains_read_only(pdf_setup)
                     target.id,
                     {requirement["id"]: "2"},
                     settings=x.settings,
+                    quantity_source="manual_preview",
                 )
             assert denied.value.status_code == expected
 
         withheld = bottom_up.preview_bottom_up(
-            db, reviewer, x.ids[2], release.id, target.id, {}, settings=x.settings
+            db,
+            reviewer,
+            x.ids[2],
+            release.id,
+            target.id,
+            {},
+            settings=x.settings,
+            quantity_source="manual_preview",
         )
         assert withheld["status"] == "withheld"
         assert withheld["total_ex_tax"] is None
         assert withheld["effects"]["price_calculated"] is False
-        assert withheld["lines"][0]["calculation"]["withheld_reasons"] == [
-            "quantity_required"
-        ]
+        assert withheld["lines"][0]["calculation"]["withheld_reasons"] == ["quantity_required"]
 
         result = bottom_up.preview_bottom_up(
             db,
@@ -111,6 +115,7 @@ def test_bottom_up_calculates_exact_sell_amount_and_remains_read_only(pdf_setup)
             target.id,
             {requirement["id"]: "2"},
             settings=x.settings,
+            quantity_source="manual_preview",
         )
         assert result["status"] == "calculated"
         assert result["total_ex_tax"] == "600.00"
@@ -139,6 +144,7 @@ def test_bottom_up_calculates_exact_sell_amount_and_remains_read_only(pdf_setup)
                 target.id,
                 {requirement["id"]: "2.0"},
                 settings=x.settings,
+                quantity_source="manual_preview",
             )
         )
         assert _counts(db) == before
@@ -152,10 +158,35 @@ def test_bottom_up_calculates_exact_sell_amount_and_remains_read_only(pdf_setup)
                 target.id,
                 {requirement["id"]: "1.5"},
                 settings=x.settings,
+                quantity_source="manual_preview",
             )
 
 
-def test_bottom_up_ui_calculates_and_downloads_exact_json(pdf_app, monkeypatch):
+def test_bottom_up_manual_preview_remains_available_but_governed_mode_withholds(pdf_setup):
+    x = pdf_setup
+    with x.factory() as db:
+        _, _, reviewer, target, release, requirement = _linked(db, x)
+        governed = bottom_up.preview_bottom_up(
+            db, reviewer, x.ids[2], release.id, target.id, settings=x.settings
+        )
+        manual = bottom_up.preview_bottom_up(
+            db,
+            reviewer,
+            x.ids[2],
+            release.id,
+            target.id,
+            {requirement["id"]: "2"},
+            settings=x.settings,
+            quantity_source="manual_preview",
+        )
+        assert governed["status"] == "withheld"
+        assert governed["lines"][0]["calculation"]["withheld_reasons"] == [
+            "project_quantity_basis_required"
+        ]
+        assert manual["total_ex_tax"] == "600.00"
+
+
+def test_bottom_up_ui_requires_saved_quantity_basis(pdf_app, monkeypatch):
     x = pdf_app
     monkeypatch.setattr("classifire.draft_pricing_ui.get_settings", lambda: x.settings)
     monkeypatch.setattr("classifire.draft_estimate_ui.get_settings", lambda: x.settings)
@@ -171,15 +202,6 @@ def test_bottom_up_ui_calculates_and_downloads_exact_json(pdf_app, monkeypatch):
             f"/pricing-proposals/bottom-up/{release.id}/{target.id}"
         )
         before = _counts(db)
-        expected_preview = bottom_up.preview_bottom_up(
-            db,
-            reviewer,
-            x.ids[2],
-            release.id,
-            target.id,
-            {requirement["id"]: "2"},
-            settings=x.settings,
-        )
 
     with TestClient(x.app) as owner_client, TestClient(x.app) as admin_client:
         _login(owner_client)
@@ -188,61 +210,25 @@ def test_bottom_up_ui_calculates_and_downloads_exact_json(pdf_app, monkeypatch):
         page = admin_client.get(path)
         assert page.status_code == 200, page.text
         assert "Bottom-up proposal preview" in page.text
-        assert "does not guess from the recipe notes" in page.text
-        assert re.search(r'id="quantity-1"[^>]*\brequired\b', page.text) is None
+        assert "does not guess from defect counts or notes" in page.text
+        assert "No current compatible project quantity is saved" in page.text
         withheld = admin_client.post(
             path,
-            data={
-                "csrf_token": _csrf(page.text),
-                f"quantity__{requirement['id']}": "",
-            },
+            data={"csrf_token": _csrf(page.text)},
         )
         assert withheld.status_code == 200, withheld.text
         assert "Result: Withheld" in withheld.text
-        assert "quantity required" in withheld.text
-        form = {
-            "csrf_token": _csrf(withheld.text),
-            f"quantity__{requirement['id']}": "2",
-        }
-        preview = admin_client.post(path, data=form)
-        assert preview.status_code == 200, preview.text
-        assert "Total excluding GST: $600.00 AUD" in preview.text
-        assert "2 each" in preview.text
-        assert "Exact proposal dependencies" in preview.text
-        assert expected_preview["coverage_sha256"] in preview.text
-        assert expected_preview["technical_release"]["id"] in preview.text
-        assert expected_preview["technical_release"]["sha256"] in preview.text
-        assert expected_preview["technical_target"]["id"] in preview.text
-        assert expected_preview["technical_target"]["snapshot_sha256"] in preview.text
-        assert expected_preview["technical_target"]["release_record_sha256"] in preview.text
-        assert expected_preview["lines"][0]["recipe_link"]["id"] in preview.text
-        assert expected_preview["lines"][0]["recipe_link"]["sha256"] in preview.text
-        assert expected_preview["lines"][0]["observation"]["id"] in preview.text
-        assert expected_preview["lines"][0]["observation"]["sha256"] in preview.text
-        expected = re.search(
-            r'name="expected_proposal_sha256" value="([a-f0-9]{64})"', preview.text
+        assert "project quantity basis required" in withheld.text
+        assert (
+            admin_client.post(
+                path,
+                data={
+                    "csrf_token": _csrf(withheld.text),
+                    f"quantity__{requirement['id']}": "2",
+                },
+            ).status_code
+            == 422
         )
-        assert expected is not None
-        downloaded = admin_client.post(
-            path.replace("/bottom-up/", "/bottom-up-download/"),
-            data={
-                "csrf_token": _csrf(preview.text),
-                "expected_proposal_sha256": expected.group(1),
-                f"quantity__{requirement['id']}": "2",
-            },
-        )
-        assert downloaded.status_code == 200
-        assert canonical(downloaded.json()) == downloaded.content
-        assert downloaded.json()["total_ex_tax"] == "600.00"
-        assert downloaded.headers["x-content-type-options"] == "nosniff"
-        assert admin_client.post(
-            path.replace("/bottom-up/", "/bottom-up-download/"),
-            data={
-                "csrf_token": _csrf(preview.text),
-                "expected_proposal_sha256": "0" * 64,
-                f"quantity__{requirement['id']}": "2",
-            },
-        ).status_code == 409
 
     with x.factory() as db:
         assert _counts(db) == before
