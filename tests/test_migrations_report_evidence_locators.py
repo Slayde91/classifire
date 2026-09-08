@@ -56,7 +56,7 @@ def test_report_locator_migration_upgrades_existing_0010_database(tmp_path: Path
     )
     with engine.connect() as connection:
         assert connection.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == (
-            '0045_draft_pricing_recipe_links'
+            '0046_draft_pricing_quantity_bases'
         )
     engine.dispose()
 
@@ -85,6 +85,6 @@ def test_docx_locator_migration_admits_safe_document_paragraph_and_table_kinds(
     assert "'document_table'" in item_kind_constraint
     with engine.connect() as connection:
         assert connection.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == (
-            '0045_draft_pricing_recipe_links'
+            '0046_draft_pricing_quantity_bases'
         )
     engine.dispose()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from ..config import Settings
 from ..models import DraftPricingRowObservation, User
 from .draft_pricing_coverage import preview_coverage
 from .draft_pricing_intake import _row_observation_value
+from .draft_pricing_quantities import current_quantity_bases
 from .draft_pricing_recipes import recipe_review_context
 from .draft_scope import DraftScopeError
 from .draft_system_match_contract import canonical, digest
@@ -55,14 +56,16 @@ def preview_bottom_up(
     draft_id: str,
     technical_release_id: str,
     technical_target_id: str,
-    quantities: dict[str, str],
+    quantities: dict[str, str] | None = None,
     *,
     settings: Settings,
+    quantity_source: Literal["governed", "manual_preview"] = "governed",
 ) -> dict[str, Any]:
     """Calculate a transparent proposal from exact governed recipe dependencies.
 
-    Numeric quantities are explicit preview-only inputs. No value is inferred
-    from descriptive recipe notes and no database record is changed.
+    Governed mode reads only current immutable Scope-bound quantity records.
+    Manual mode preserves the earlier explicit, read-only prototype for tests
+    and comparison. Neither mode infers values from notes or changes the database.
     """
 
     coverage = preview_coverage(db, actor, draft_id, technical_release_id, settings=settings)
@@ -88,24 +91,55 @@ def preview_bottom_up(
     for link in context["links"]:
         requirement_id = link["value"]["definition"]["requirement"]["id"]
         latest[requirement_id] = link
+    submitted = quantities or {}
     requirement_ids = {item["id"] for item in context["requirements"]}
-    unknown = sorted(set(quantities) - requirement_ids)
+    unknown = sorted(set(submitted) - requirement_ids)
     if unknown:
         raise DraftScopeError("BOTTOM_UP_QUANTITY_REQUIREMENT_UNKNOWN", 422)
+    governed = (
+        current_quantity_bases(
+            db,
+            actor,
+            draft_id,
+            technical_release_id,
+            technical_target_id,
+            settings=settings,
+        )
+        if quantity_source == "governed"
+        else {}
+    )
 
     lines: list[dict[str, Any]] = []
     for requirement in context["requirements"]:
         requirement_id = requirement["id"]
         link = latest.get(requirement_id)
+        saved_basis = governed.get(requirement_id)
+        quantity_basis = (
+            {
+                "id": saved_basis["id"],
+                "sha256": saved_basis["sha256"],
+                "definition_sha256": saved_basis["value"]["definition_sha256"],
+                "scope": saved_basis["value"]["definition"]["scope"],
+                "recipe_link": saved_basis["value"]["definition"]["recipe_link"],
+                "quantity_basis": saved_basis["value"]["definition"]["quantity_basis"],
+            }
+            if saved_basis is not None
+            else None
+        )
         if link is None:
             lines.append(
                 {
                     "requirement": requirement,
                     "recipe_link": None,
+                    "quantity_basis": quantity_basis,
                     "observation": None,
                     "calculation": {
                         "status": "withheld",
-                        "quantity": _quantity(quantities.get(requirement_id), ""),
+                        "quantity": (
+                            quantity_basis["quantity_basis"]["quantity"]
+                            if quantity_basis is not None
+                            else _quantity(submitted.get(requirement_id), "")
+                        ),
                         "unit": None,
                         "unit_rate": None,
                         "currency": None,
@@ -157,9 +191,19 @@ def preview_bottom_up(
                 if row_values.get("unit") != interpretation["unit"]:
                     reasons.append("unit_mismatch")
 
-        quantity = _quantity(quantities.get(requirement_id), interpretation["unit"] or "")
-        if quantity is None:
-            reasons.append("quantity_required")
+        if quantity_source == "governed":
+            if quantity_basis is None:
+                quantity = None
+                reasons.append("project_quantity_basis_required")
+            else:
+                saved = quantity_basis["quantity_basis"]
+                quantity = _quantity(saved["quantity"], saved["unit"])
+                if saved["unit"] != interpretation["unit"]:
+                    reasons.append("project_quantity_unit_mismatch")
+        else:
+            quantity = _quantity(submitted.get(requirement_id), interpretation["unit"] or "")
+            if quantity is None:
+                reasons.append("quantity_required")
         rate = row_values.get("rate")
         amount = None
         if not reasons and rate is not None and quantity is not None:
@@ -174,6 +218,7 @@ def preview_bottom_up(
                     "id": link["id"],
                     "sha256": hashlib.sha256(canonical(link["value"])).hexdigest(),
                 },
+                "quantity_basis": quantity_basis,
                 "observation": observations[0] if len(observations) == 1 else None,
                 "calculation": {
                     "status": "calculated" if amount is not None else "withheld",
@@ -214,7 +259,11 @@ def preview_bottom_up(
         "total_ex_tax": total,
         "lines": lines,
         "limitations": [
-            "quantities_are_explicit_preview_only_inputs",
+            (
+                "quantities_are_current_saved_scope_service_bases"
+                if quantity_source == "governed"
+                else "quantities_are_explicit_preview_only_inputs"
+            ),
             "one_reviewed_observation_per_requirement_is_supported_in_this_prototype",
             "preview_does_not_prove_project_specific_technical_applicability",
             "preview_does_not_create_or_change_an_estimate",

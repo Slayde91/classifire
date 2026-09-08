@@ -17,6 +17,7 @@ from .services import draft_pricing_bottom_up as pricing_bottom_up
 from .services import draft_pricing_coverage as pricing_coverage
 from .services import draft_pricing_evaluation_rosters as evaluation_rosters
 from .services import draft_pricing_intake as pricing
+from .services import draft_pricing_quantities as pricing_quantities
 from .services import draft_pricing_recipes as pricing_recipes
 from .services import malware_scan
 from .services.draft_estimates import read_estimate_revision
@@ -132,6 +133,8 @@ def _page(
     pricing_coverage_preview: dict[str, Any] | None = None,
     bottom_up_preview: dict[str, Any] | None = None,
     bottom_up_submitted: bool = False,
+    quantity_basis_context: dict[str, Any] | None = None,
+    quantity_basis_preview: dict[str, Any] | None = None,
 ) -> HTMLResponse:
     draft = get_draft(db, user, draft_id)
     envelope = read_estimate_revision(db, user, draft_id, estimate_id)
@@ -288,6 +291,8 @@ def _page(
             pricing_coverage_preview=pricing_coverage_preview,
             bottom_up_preview=bottom_up_preview,
             bottom_up_submitted=bottom_up_submitted,
+            quantity_basis_context=quantity_basis_context,
+            quantity_basis_preview=quantity_basis_preview,
             profile_decisions_allowed=PROFILE_DECISIONS,
             row_item_kinds=ROW_ITEM_KINDS,
             row_evidence_states=ROW_EVIDENCE_STATES,
@@ -390,11 +395,6 @@ def download_pricing_coverage(
     )
 
 
-def _bottom_up_quantities(form: dict[str, str]) -> dict[str, str]:
-    prefix = "quantity__"
-    return {key[len(prefix) :]: value for key, value in form.items() if key.startswith(prefix)}
-
-
 def _bottom_up(
     db: Db,
     user: Any,
@@ -402,7 +402,6 @@ def _bottom_up(
     estimate_id: str,
     release_id: str,
     target_id: str,
-    quantities: dict[str, str],
 ) -> dict[str, Any]:
     read_estimate_revision(db, user, draft_id, estimate_id)
     return pricing_bottom_up.preview_bottom_up(
@@ -411,7 +410,6 @@ def _bottom_up(
         draft_id,
         release_id,
         target_id,
-        quantities,
         settings=get_settings(),
     )
 
@@ -430,9 +428,18 @@ def bottom_up_page(
 ) -> HTMLResponse:
     user = _user(request, db)
     try:
-        preview = _bottom_up(db, user, draft_id, estimate_id, release_id, target_id, {})
+        preview = _bottom_up(db, user, draft_id, estimate_id, release_id, target_id)
+        quantity_context = pricing_quantities.quantity_review_context(
+            db, user, draft_id, release_id, target_id, settings=get_settings()
+        )
         return _page(
-            request, db, user, draft_id, estimate_id, bottom_up_preview=preview
+            request,
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            bottom_up_preview=preview,
+            quantity_basis_context=quantity_context,
         )
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
@@ -452,18 +459,13 @@ def preview_bottom_up(
     form: BottomUpFormData,
 ) -> HTMLResponse:
     verify_csrf(request, form.get("csrf_token"))
-    if any(key != "csrf_token" and not key.startswith("quantity__") for key in form):
-        raise HTTPException(422, "Only explicit requirement quantities are accepted")
+    if set(form) != {"csrf_token"}:
+        raise HTTPException(422, "Saved project quantities are required")
     user = _user(request, db)
     try:
-        preview = _bottom_up(
-            db,
-            user,
-            draft_id,
-            estimate_id,
-            release_id,
-            target_id,
-            _bottom_up_quantities(form),
+        preview = _bottom_up(db, user, draft_id, estimate_id, release_id, target_id)
+        quantity_context = pricing_quantities.quantity_review_context(
+            db, user, draft_id, release_id, target_id, settings=get_settings()
         )
         return _page(
             request,
@@ -473,6 +475,7 @@ def preview_bottom_up(
             estimate_id,
             bottom_up_preview=preview,
             bottom_up_submitted=True,
+            quantity_basis_context=quantity_context,
         )
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
@@ -492,23 +495,11 @@ def download_bottom_up(
 ) -> Response:
     verify_csrf(request, form.get("csrf_token"))
     expected = form.get("expected_proposal_sha256")
-    if any(
-        key not in {"csrf_token", "expected_proposal_sha256"}
-        and not key.startswith("quantity__")
-        for key in form
-    ):
+    if set(form) != {"csrf_token", "expected_proposal_sha256"}:
         raise HTTPException(422, "Only exact preview inputs are accepted")
     user = _user(request, db)
     try:
-        preview = _bottom_up(
-            db,
-            user,
-            draft_id,
-            estimate_id,
-            release_id,
-            target_id,
-            _bottom_up_quantities(form),
-        )
+        preview = _bottom_up(db, user, draft_id, estimate_id, release_id, target_id)
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
     if expected != preview["proposal_sha256"]:
@@ -518,6 +509,145 @@ def download_bottom_up(
         media_type="application/json",
         headers={
             "Content-Disposition": 'attachment; filename="bottom-up-proposal-preview.json"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+_QUANTITY_PREVIEW_FIELDS = {
+    "csrf_token",
+    "requirement_id",
+    "scope_revision",
+    "scope_service_id",
+    "review_reason",
+}
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing-proposals/"
+    "bottom-up/{release_id}/{target_id}/quantity-bases/preview",
+    response_class=HTMLResponse,
+)
+def preview_pricing_quantity_basis(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    target_id: str,
+    form: FormData,
+) -> HTMLResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    if set(form) != _QUANTITY_PREVIEW_FIELDS:
+        raise HTTPException(422, "Preview one exact Scope quantity")
+    user = _user(request, db)
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        quantity_preview = pricing_quantities.preview_quantity_basis(
+            db,
+            user,
+            draft_id,
+            release_id,
+            target_id,
+            form["requirement_id"],
+            _revision(form["scope_revision"]),
+            form["scope_service_id"],
+            form["review_reason"],
+            settings=get_settings(),
+        )
+        bottom_up = _bottom_up(db, user, draft_id, estimate_id, release_id, target_id)
+        quantity_context = pricing_quantities.quantity_review_context(
+            db, user, draft_id, release_id, target_id, settings=get_settings()
+        )
+        return _page(
+            request,
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            bottom_up_preview=bottom_up,
+            quantity_basis_context=quantity_context,
+            quantity_basis_preview=quantity_preview,
+        )
+    except (DraftScopeError, ValueError) as exc:
+        if isinstance(exc, DraftScopeError):
+            raise HTTPException(exc.status_code, exc.code) from exc
+        raise HTTPException(422, "Choose a valid saved Scope revision") from exc
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing-proposals/"
+    "bottom-up/{release_id}/{target_id}/quantity-bases"
+)
+def save_pricing_quantity_basis(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    target_id: str,
+    form: FormData,
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    expected = _QUANTITY_PREVIEW_FIELDS | {
+        "scope_sha256",
+        "recipe_link_sha256",
+        "preview_hash",
+    }
+    if set(form) != expected:
+        raise HTTPException(422, "Save only the previewed exact Scope quantity")
+    user = _user(request, db)
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        pricing_quantities.save_quantity_basis(
+            db,
+            user,
+            draft_id,
+            release_id,
+            target_id,
+            form["requirement_id"],
+            _revision(form["scope_revision"]),
+            form["scope_service_id"],
+            form["review_reason"],
+            expected_scope_sha256=form["scope_sha256"],
+            expected_recipe_link_sha256=form["recipe_link_sha256"],
+            expected_preview_hash=form["preview_hash"],
+            settings=get_settings(),
+        )
+        db.commit()
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return RedirectResponse(
+        f"/scopes/{draft_id}/estimates/{estimate_id}/pricing-proposals/"
+        f"bottom-up/{release_id}/{target_id}",
+        303,
+    )
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing-proposals/"
+    "quantity-bases/{basis_id}/download"
+)
+def download_pricing_quantity_basis(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    basis_id: str,
+) -> Response:
+    user = _user(request, db)
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        content = pricing_quantities.quantity_basis_bytes(db, user, draft_id, basis_id)
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return Response(
+        content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="pricing-quantity-basis-{basis_id}.json"',
             "Cache-Control": "no-store",
             "X-Content-Type-Options": "nosniff",
         },

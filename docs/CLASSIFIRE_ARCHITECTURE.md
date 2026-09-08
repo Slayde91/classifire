@@ -2,9 +2,9 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.36 - merged browser-proven bottom-up proposal prototype.
+**Architecture version:** 5.37 - candidate governed Scope-bound project quantities.
 
-**Verified shared baseline:** `dc5884bee30443af7ffc034e7d4d5a8ef50b0742` on
+**Verified shared baseline:** `3a715d0d27f07a9c072e22db428f8f91d93f1642` on
 `origin/main`. Shared main includes deterministic read-only T9 coverage, the governed
 T6/v4 recipe-review increment and the bounded T10 preview after the A/B profile, review,
 Dataset A observation, Dataset B mapping and T13 roster increments.
@@ -58,6 +58,19 @@ render its fail-closed reason, and show the dependency hashes already present in
 result and the page omitted useful audit detail. **Consequences:** no domain, schema,
 migration, pricing or authority change. Real Chrome 152, exact download, permission and
 server-restart checks now prove the bounded presentation lifecycle with synthetic data.
+
+**Current candidate change:** add an append-only project-quantity record between saved
+Scope and the T10 proposal. **Reason:** a typed preview number cannot be reopened or
+defended as a project fact. **Consequences:** an authorised reviewer selects a service
+from the current immutable Scope revision for one exact frozen recipe requirement;
+preview is no-write and save binds Scope/service, release/target/recipe/link/requirement,
+quantity/unit/state, reviewer, time, reason and hashes. T10's normal path accepts only the
+newest current compatible record and withholds when dependencies change. The old manual
+input remains an explicitly named comparison/test mode and is unavailable in the browser.
+No Estimate, technical, library, evaluation or release authority is added.
+**Migration:** additive forward-only `0046_draft_pricing_quantity_bases`, which becomes
+the candidate deployment head and refuses destructive downgrade. Shared main remains
+5.36/0045 until this candidate is reviewed and merged.
 
 **Prior bounded change (PR #222):** an append-only T13 evaluation roster freezes exact
 eligible/excluded B inventory and target-blind connected-group splits before later model
@@ -535,13 +548,13 @@ are foundations, not evidence of production tenant isolation or redistribution r
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
-| Persistence | SQLAlchemy with packaged Alembic migrations | A/B profiles use 0040, profile review uses 0041, Dataset A observations use 0042, Dataset B mappings use 0043 and T13 rosters use 0044. PR #227 advances the single head to 0045_draft_pricing_recipe_links; T9 coverage adds no table. |
+| Persistence | SQLAlchemy with packaged Alembic migrations | A/B profiles use 0040, profile review uses 0041, Dataset A observations use 0042, Dataset B mappings use 0043 and T13 rosters use 0044. Recipe links use 0045; the candidate Scope-bound quantity journal advances the single head to 0046. |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
 | Proposal-only inference | Blind inventory, Physical proposal, Validator, bounded correction, receipts | No canonical-write or lock capability |
 | Report assessment | Shared components, expected-label admission, an approval-bound proposal-review controller, proposal-only single/family runners, retained single-report/family package lifecycle, and administrator-only immutable human-review annotations | The family runner validates every exact family member's approved source and V2 scope before it creates any injected no-tool port, then preserves separate member packages; no CLI, API, or UI invokes either runner and no real-provider run exists |
 | Technical governance | Document review, clean source-byte checks, source-bound Draft materialisation/variants/revisions, predecessor lineage, locators, independent activation, pinned active releases and atomic publication | Corpus extraction, per-fact multi-document claims, entity resolution and production technical authority remain planned; see sections 4, 5 and 8 |
-| Commercial source intake | Bounded retained XLSX preview/selection, explicit A/B source versions, unapproved profile revisions, immutable exact-profile decisions, governed Dataset A observations, Dataset B mapped/unmatched/ambiguous identity records, T13 rosters, read-only T9 coverage, governed T6 recipe links and legacy Package 14 CSV/Product imports. | Commercial activation, representative recipe breadth and pricing estimation remain planned; reviewed evidence is not an activated library |
+| Commercial source intake | Bounded retained XLSX preview/selection, explicit A/B source versions, unapproved profile revisions, immutable exact-profile decisions, governed Dataset A observations, Dataset B mapped/unmatched/ambiguous identity records, T13 rosters, read-only T9 coverage, governed T6 recipe links, candidate Scope-bound quantities and legacy Package 14 CSV/Product imports. | Commercial activation, representative recipe/quantity breadth and broader pricing estimation remain planned; reviewed evidence is not an activated library |
 | Estimating/output | Canonical calculation/outputs/desk quotes plus local independent manual Draft Estimate contract, history, partial totals and JSON | All four independent Draft report profiles exist; full pricing, technical-to-component recovery and production release remain incomplete |
 | Orchestration | OpenClaw boundary and Mission Control client/bootstrap | Transitional current implementation. The accepted target is a small CLASSIFIRE-owned deterministic job/run coordinator with bounded optional AI adapters; journal/lifecycle foundations are implemented, but full migration remains incomplete and OpenClaw stays until parity gates pass. Neither control plane owns canonical estimate state. |
 
@@ -1039,10 +1052,10 @@ comparables, then broadens bottom-up and adds comparable and combined proposal s
 coverage, evidence quality, staleness and approval as separate fields; one display label
 must not hide conflicting prices or missing scope.
 
-The deterministic T10 service already accepts explicit technical/recipe versions,
-reviewed mappings, a declared sell-price basis and preview-only quantities. It produces a
-proposal and stops. The next planned extension governs quantity against an exact saved
-Scope revision and frozen requirement. Broader bottom-up costing sums supported quantities times normalized rates
+The deterministic T10 service accepts explicit technical/recipe versions, reviewed
+mappings and a declared sell-price basis. The candidate quantity journal supplies one
+current Scope service quantity per frozen requirement; missing or stale records withhold
+the result. It produces a proposal and stops. Broader bottom-up costing sums supported quantities times normalized rates
 and evidenced labour/activity requirements, with separate material/labour/other amounts;
 missing quantity, yield, productivity, unit or cost/sell basis withholds that component.
 Comparable pricing first filters by admissible system/configuration and compatible unit,
@@ -1216,7 +1229,7 @@ clock assumptions and crash/replay recovery before production wiring. The
 | Offline use | Local backend/database and safe revision exchange need a separate decision. Do not assume SQLite reproduces PostgreSQL locking or permit automatic bidirectional merges. |
 | Operations/cost | Clean-machine setup, backup/restore, safe traces, monitoring, rollback and accepted-result cost/latency remain unmeasured. Changing frameworks alone does not prove savings. |
 | Scope evidence breadth | PDF/Excel graph review is merged in PRs #209/#210. Current optional PDF suggestions use a Draft-specific adapter and shared review, with scripted workflow proof and a manual fallback. Automatic extraction/OCR and real-evidence acceptance remain open. |
-| Semantic source profiles | A/B identity/profile history and immutable decisions are merged through PR #214; PR #218 adds exact Dataset A observations, PR #220 adds Dataset B identity mappings, PR #222 adds persisted target-blind T13 rosters, PR #224 adds read-only T9 coverage and PR #227 adds T6 recipe linkage with guarded A coverage. Visual layout/restart inspection, representative-source validation, commercial activation and package inclusion remain; no filename guessing, automatic activation or inferred prices. |
+| Semantic source profiles | A/B identity/profile history and immutable decisions are merged through PR #214; PR #218 adds exact Dataset A observations, PR #220 adds Dataset B identity mappings, PR #222 adds persisted target-blind T13 rosters, PR #224 adds read-only T9 coverage and PR #227 adds T6 recipe linkage with guarded A coverage. The current candidate adds one Scope-bound project quantity per frozen requirement. Representative-source validation, commercial activation and package inclusion remain; no filename guessing, automatic activation or inferred prices. |
 | Technical identity/claims | Extend existing Document/Variant identities with stable system revisions, typed multi-source claims and reviewed resolution; preserve global legacy IDs, original values and supersession lineage. |
 | Recipe publication | Shared-main v3 releases omit component/labour JSON. PR #227 adds forward v4 recipe snapshots, strict validation and immutable review links while retaining v3 readers and bytes without fabricating historical approval. Representative semantics and production acceptance remain open. |
 | Legacy pricing migration | Keep Package 14 CSV history separate. Replace active/default-zero/version-collision behavior for new ingestion through governed forward changes; do not feed A/B workbooks into the legacy importer. |
@@ -1226,7 +1239,8 @@ clock assumptions and crash/replay recovery before production wiring. The
 **Planned corpus/pricing migration:** logical records in section 4 must be mapped to
 existing tables and narrowly scoped additions, not implemented as a speculative schema
 bundle. Use forward migrations after the required visible slice is defined. The active
-shared-main head is 0045 for the T6 recipe-link journal, and Scope v5 still uses existing JSON
+shared-main head is 0045 for the T6 recipe-link journal; the current candidate advances
+it to 0046 for Scope-bound quantities. Scope v5 still uses existing JSON
 revision storage. Preserve prior technical release versions,
 JSONL row/file hash meaning, source lineage, Package 14 records and all saved Draft/report/
 package bytes. New dataset versions and approvals are explicit; imports or backfills
@@ -1708,10 +1722,10 @@ This is implemented split governance, not evaluation execution. There is no mode
 target-value store, target reveal, metric calculation, library activation, Estimate
 change, technical approval, background job or release. Representative real data must
 validate the grouping/split policy before the first access-separated evaluation run.
-Until then there is no saved roster, hidden-target separation, evaluation run, metric,
-calibration or approved threshold.
+Until then there is no representative-data-validated roster, hidden-target separation,
+evaluation run, metric, calibration or approved threshold.
 
-### Implemented T9 coverage, T6 recipe review and bounded T10 preview
+### Implemented T9 coverage, T6 recipe review and candidate governed T10 quantities
 
 Current architecture -> change -> reason -> consequences -> migration: governed A/B
 records and technical releases existed without one target-wide support view -> add a
@@ -1744,13 +1758,28 @@ evaluation, deployment or release.
 The PR #229 T10 service remains inside the same deterministic application boundary. It
 rechecks T9 eligibility, loads every frozen recipe requirement, selects the latest link,
 and reloads the exact retained Dataset A observation row. It never parses quantity,
-yield, productivity or recovery prose into numbers. The reviewer enters numeric
-quantities for this preview only. One current confirmed observation with `sell_price`
+yield, productivity or recovery prose into numbers. PR #229's explicit numeric input
+remains a named manual comparison mode. The current candidate's normal UI path instead
+loads only the newest current `DraftPricingQuantityBasis` for each requirement. One
+current confirmed observation with `sell_price`
 and a matching unit produces a Decimal line amount rounded half-up to two places; a
 missing link, quantity, compatible unit, current evidence or supported price meaning
 produces an explicit withheld line and no total. The HTML adapter and hash-checked JSON
-download call the same service. This prototype adds no table, background job, agent or
-canonical write. Multi-observation recipes and governed numeric yield/productivity,
+download call the same service.
+
+`services/draft_pricing_quantities.py` is the shared deterministic boundary for
+quantity preview/save/read. The strict v1 contract stores canonical JSON plus duplicate
+relational bindings to the current saved Scope revision/service and exact
+release/target/recipe-link/requirement. Database and service checks constrain quantity,
+unit and size; all dependency hashes are rechecked on save and read. History is
+append-only. Only the latest record for a requirement can be current, and any newer Scope
+revision or recipe link makes prior history stale. The browser exposes compatible saved
+Scope services, no-write preview, explicit save, history and exact download.
+
+Migration `0046_draft_pricing_quantity_bases` adds the purpose-specific table and
+deployment-readiness requirement. It does not alter historical migrations or Scope JSON.
+This prototype adds no background job, agent or canonical Estimate write.
+Multi-observation recipes and governed numeric yield/productivity,
 waste/pack, recovery and margin rules remain proposed work.
 
 Real Chrome 152 UAT now proves the UI can reach this service from pricing coverage,
