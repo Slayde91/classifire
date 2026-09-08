@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Recipe review | CLASSIFIRE{% endblock %}
+{% block heading %}Component and activity recipe review{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<p><a href="{{ pricing_url }}">&larr; Pricing workspace</a></p>
+<section class="panel">
+<h2>{{ review.technical_target.variant_id }} &middot; {{ review.technical_target.system_id }}</h2>
+<p>Technical release <strong>{{ review.technical_release.version }}</strong> &middot; <span class="scope-item-id">{{ review.technical_release.sha256 }}</span></p>
+<p class="callout">Link one frozen component or activity requirement to reviewed Dataset A evidence. This records evidence and basis only. It does not calculate a price, approve a system, activate a library, change an Estimate, run an evaluation or release data.</p>
+<p>Frozen requirements: {{ review.requirements|length }} &middot; current Dataset A observations: {{ review.observations|length }}</p>
+{% for item in review.requirements %}<article class="scope-import-item"><p><strong>{{ item.kind|capitalize }} &middot; {{ item.label }}</strong></p><p>Frozen path: <span class="scope-item-id">{{ item.path }}</span><br>Source-value hash: <span class="scope-item-id">{{ item.source_value_sha256 }}</span></p><pre>{{ item.source_value|tojson(indent=2) }}</pre></article>{% endfor %}
+</section>
+{% if review.links %}<section class="panel"><h2>Immutable review history</h2>
+{% for item in review.links %}<article class="scope-import-item"><p><strong>{{ item.value.definition.requirement.label }}</strong> &middot; {{ item.value.definition.interpretation.status|capitalize }} &middot; {{ item.value.definition.interpretation.evidence_state|capitalize }} &middot; {% if item.current %}Current{% else %}Stale{% endif %}</p><p>{{ item.value.definition.interpretation.review_reason }}</p><p><a href="{{ pricing_url }}/recipe-links/{{ item.id }}/download">Download exact review JSON</a></p></article>{% endfor %}
+</section>{% endif %}
+{% if preview %}<section class="panel"><h2>Review preview</h2><p><strong>No write has occurred.</strong> Check the exact requirement, evidence and recovery boundary before saving.</p>
+<dl class="scope-import-details"><dt>Requirement</dt><dd>{{ preview.definition.requirement.label }}</dd><dt>Status</dt><dd>{{ preview.definition.interpretation.status }}</dd><dt>Evidence</dt><dd>{{ preview.definition.observations|length }} observation(s) &middot; {{ preview.definition.interpretation.evidence_state }}</dd><dt>Unit</dt><dd>{{ preview.definition.interpretation.unit or 'Unresolved' }}</dd><dt>Quantity basis</dt><dd>{{ preview.definition.interpretation.quantity_basis or 'Unresolved' }}</dd><dt>Yield basis</dt><dd>{{ preview.definition.interpretation.yield_basis or 'Unresolved' }}</dd><dt>Productivity basis</dt><dd>{{ preview.definition.interpretation.productivity_basis or 'Unresolved' }}</dd><dt>Recovery boundary</dt><dd>{{ preview.definition.interpretation.recovery_boundary or 'Unresolved' }}</dd><dt>Preview hash</dt><dd class="scope-item-id">{{ preview.preview_hash }}</dd></dl>
+{% for item in preview.definition.observations %}<article class="scope-import-item"><p><strong>Selected evidence: {{ item.item_kind }} &middot; {{ item.normalized_reference }}</strong></p><p>{{ item.evidence_state|capitalize }} &middot; unit {{ item.unit or 'unresolved' }}<br>Observation: <span class="scope-item-id">{{ item.id }}</span><br>Observation hash: <span class="scope-item-id">{{ item.sha256 }}</span><br>Source-row hash: <span class="scope-item-id">{{ item.row_sha256 }}</span></p></article>{% endfor %}
+<form method="post" action="{{ pricing_url }}/recipes/{{ review.technical_release.id }}/{{ review.technical_target.id }}/links" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% for key in ['requirement_id','observation_id_1','observation_id_2','observation_id_3','status','unit','quantity_basis','yield_basis','productivity_basis','recovery_boundary','evidence_state','review_reason','unresolved_fields'] %}<input type="hidden" name="{{ key }}" value="{{ form_values.get(key, '') }}">{% endfor %}
+<input type="hidden" name="technical_release_sha256" value="{{ preview.technical_release_sha256 }}"><input type="hidden" name="technical_variant_snapshot_sha256" value="{{ preview.technical_variant_snapshot_sha256 }}"><input type="hidden" name="recipe_snapshot_sha256" value="{{ preview.recipe_snapshot_sha256 }}"><input type="hidden" name="preview_hash" value="{{ preview.preview_hash }}">
+<button class="button button-primary" type="submit">Save immutable recipe review</button></form>
+</section>{% endif %}
+<section class="panel"><h2>Review a frozen requirement</h2>
+{% if not review.requirements %}<p class="callout">This technical target has no frozen component or activity requirements. Publish a later governed technical release after its recipe is defined.</p>
+{% else %}<form method="post" action="{{ pricing_url }}/recipes/{{ review.technical_release.id }}/{{ review.technical_target.id }}/preview" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="recipe-requirement">Frozen requirement</label><select id="recipe-requirement" name="requirement_id" required>{% for item in review.requirements %}<option value="{{ item.id }}">{{ item.kind|capitalize }} &middot; {{ item.label }}</option>{% endfor %}</select>
+<label for="recipe-status">Review result</label><select id="recipe-status" name="status" required>{% for item in recipe_statuses %}<option value="{{ item }}">{{ item|capitalize }}</option>{% endfor %}</select>
+{% for number in [1,2,3] %}<label for="recipe-observation-{{ number }}">Dataset A observation {{ number }}{% if number > 1 %} (optional){% endif %}</label><select id="recipe-observation-{{ number }}" name="observation_id_{{ number }}"><option value="">None</option>{% for item in review.observations %}<option value="{{ item.id }}">{{ item.item_kind }} &middot; {{ item.normalized_reference }} &middot; {{ item.unit or 'unit unresolved' }}</option>{% endfor %}</select>{% endfor %}
+<label for="recipe-unit">Common unit</label><input id="recipe-unit" name="unit" maxlength="50">
+<label for="recipe-quantity">Quantity basis</label><textarea id="recipe-quantity" name="quantity_basis" maxlength="4000"></textarea>
+<label for="recipe-yield">Yield or consumption basis</label><textarea id="recipe-yield" name="yield_basis" maxlength="4000"></textarea>
+<label for="recipe-productivity">Productivity basis</label><textarea id="recipe-productivity" name="productivity_basis" maxlength="4000"></textarea>
+<label for="recipe-recovery">Recovery boundary</label><textarea id="recipe-recovery" name="recovery_boundary" maxlength="4000"></textarea>
+<label for="recipe-evidence">Evidence state</label><select id="recipe-evidence" name="evidence_state" required>{% for item in recipe_evidence_states %}<option value="{{ item }}">{{ item|capitalize }}</option>{% endfor %}</select>
+<label for="recipe-unresolved">Unresolved fields, comma separated</label><input id="recipe-unresolved" name="unresolved_fields" maxlength="1000"><p class="scope-hint">Allowed: {{ recipe_unresolved_fields|join(', ') }}. A confirmed link cannot have unresolved fields.</p>
+<label for="recipe-reason">Reviewer reason</label><textarea id="recipe-reason" name="review_reason" maxlength="4000" required></textarea>
+<button class="button button-primary" type="submit">Preview recipe review</button></form>{% endif %}
+</section>
+{% endblock %}

@@ -21,6 +21,7 @@ from .storage import (
     read_verified_stored_file,
 )
 from .technical_field_snapshot import technical_fields
+from .technical_recipe_snapshot import TechnicalRecipeSnapshotError, technical_recipe_snapshot
 from .technical_validity import (
     technical_document_authority_blockers,
     technical_release_source_binding,
@@ -28,7 +29,12 @@ from .technical_validity import (
     technical_variant_temporal_blockers,
 )
 
-TECHNICAL_RELEASE_MANIFEST_SCHEMA = "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v3"
+TECHNICAL_RELEASE_MANIFEST_SCHEMA_V3 = "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v3"
+TECHNICAL_RELEASE_MANIFEST_SCHEMA = "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v4"
+SUPPORTED_TECHNICAL_RELEASE_MANIFEST_SCHEMAS = (
+    TECHNICAL_RELEASE_MANIFEST_SCHEMA_V3,
+    TECHNICAL_RELEASE_MANIFEST_SCHEMA,
+)
 
 
 class TechnicalReleasePublicationError(RuntimeError):
@@ -88,11 +94,14 @@ def publish_governed_technical_release(
     if len(active_releases) > 1:
         raise TechnicalReleasePublicationError("TECHNICAL_RELEASE_ACTIVE_STATE_AMBIGUOUS")
     previous = active_releases[0] if active_releases else None
-    records = _locked_current_technical_records(
-        db,
-        storage_root=storage_root,
-        as_of=current_time,
-    )
+    try:
+        records = _locked_current_technical_records(
+            db,
+            storage_root=storage_root,
+            as_of=current_time,
+        )
+    except TechnicalRecipeSnapshotError as exc:
+        raise TechnicalReleasePublicationError("TECHNICAL_RELEASE_RECIPE_INVALID") from exc
     payload = {
         "schema": TECHNICAL_RELEASE_MANIFEST_SCHEMA,
         "release_type": "technical",
@@ -308,6 +317,7 @@ def _technical_record(
         "source_hash": variant.source_hash,
         "record_version": variant.record_version,
         "technical_fields": technical_fields(variant),
+        "recipe_snapshot": technical_recipe_snapshot(variant),
         "source_binding": technical_release_source_binding(
             technical_document_id=variant.technical_document_id,
             technical_document_key=document.document_id if document else None,
@@ -369,7 +379,9 @@ def _hash_manifest(value: dict[str, Any]) -> str:
 
 
 __all__ = [
+    "SUPPORTED_TECHNICAL_RELEASE_MANIFEST_SCHEMAS",
     "TECHNICAL_RELEASE_MANIFEST_SCHEMA",
+    "TECHNICAL_RELEASE_MANIFEST_SCHEMA_V3",
     "TechnicalReleasePublicationError",
     "publish_governed_technical_release",
 ]

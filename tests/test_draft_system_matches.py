@@ -298,6 +298,8 @@ def test_whole_opening_blank_and_service_only_targets_remain_explicit(case):
         "expired_document",
         "dirty_source",
         "missing_bytes",
+        "missing_recipe",
+        "recipe_in_v3",
     ],
 )
 def test_invalid_current_dependencies_refuse_creation_atomically(case, change):
@@ -330,6 +332,17 @@ def test_invalid_current_dependencies_refuse_creation_atomically(case, change):
             stored.malware_scan_status = "infected"
         elif change == "missing_bytes":
             case["source_path"].unlink()
+        elif change == "missing_recipe":
+            manifest = copy.deepcopy(release.source_manifest)
+            for record in manifest["records"]:
+                record.pop("recipe_snapshot")
+            release.source_manifest = manifest
+            release.release_hash = _manifest_hash(manifest)
+        elif change == "recipe_in_v3":
+            manifest = copy.deepcopy(release.source_manifest)
+            manifest["schema"] = "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v3"
+            release.source_manifest = manifest
+            release.release_hash = _manifest_hash(manifest)
         db.commit()
         before = counts(db)
         with pytest.raises(DraftSystemMatchError):

@@ -16,6 +16,7 @@ from .security import verify_csrf
 from .services import draft_pricing_coverage as pricing_coverage
 from .services import draft_pricing_evaluation_rosters as evaluation_rosters
 from .services import draft_pricing_intake as pricing
+from .services import draft_pricing_recipes as pricing_recipes
 from .services import malware_scan
 from .services.draft_estimates import read_estimate_revision
 from .services.draft_pricing_contract import (
@@ -28,6 +29,15 @@ from .services.draft_pricing_contract import (
     SYSTEM_IDENTITY_EVIDENCE_FIELDS,
     SYSTEM_MAPPING_STATES,
     SYSTEM_MAPPING_UNRESOLVED_FIELDS,
+)
+from .services.draft_pricing_recipe_contract import (
+    EVIDENCE_STATES as RECIPE_EVIDENCE_STATES,
+)
+from .services.draft_pricing_recipe_contract import (
+    STATUSES as RECIPE_STATUSES,
+)
+from .services.draft_pricing_recipe_contract import (
+    UNRESOLVED_FIELDS as RECIPE_UNRESOLVED_FIELDS,
 )
 from .services.draft_scope import DraftScopeError, get_draft
 from .services.draft_system_match_contract import canonical
@@ -130,9 +140,7 @@ def _page(
     evaluation_roster_history: list[dict[str, Any]] = []
     values = form or {}
     source_api = pricing.intake()
-    if user_has_permission(user, "pricing:approve") and user_has_permission(
-        user, "technical:read"
-    ):
+    if user_has_permission(user, "pricing:approve") and user_has_permission(user, "technical:read"):
         system_mapping_targets = pricing.list_system_mapping_targets(db, user, draft_id)
         evaluation_roster_history = evaluation_rosters.list_rosters(
             db, user, draft_id, settings=get_settings()
@@ -335,9 +343,7 @@ def preview_pricing_coverage(
         raise HTTPException(exc.status_code, exc.code) from exc
 
 
-@router.get(
-    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/coverage.json"
-)
+@router.get("/scopes/{draft_id}/estimates/{estimate_id}/pricing/coverage.json")
 def download_pricing_coverage(
     request: Request,
     db: Db,
@@ -372,6 +378,229 @@ def download_pricing_coverage(
     )
 
 
+def _recipe_observation_ids(form: dict[str, str]) -> list[str]:
+    values = [
+        form["observation_id_1"].strip(),
+        form["observation_id_2"].strip(),
+        form["observation_id_3"].strip(),
+    ]
+    return [value for value in values if value]
+
+
+def _recipe_page(
+    request: Request,
+    db: Db,
+    user: Any,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    variant_id: str,
+    *,
+    form: dict[str, str] | None = None,
+    preview: dict[str, Any] | None = None,
+) -> HTMLResponse:
+    draft = get_draft(db, user, draft_id)
+    read_estimate_revision(db, user, draft_id, estimate_id)
+    review = pricing_recipes.recipe_review_context(
+        db, user, draft_id, release_id, variant_id, settings=get_settings()
+    )
+    return templates.TemplateResponse(
+        request,
+        "draft_pricing_recipe_link.html",
+        _context(
+            request,
+            db,
+            draft=draft,
+            project=draft.project,
+            pricing_url=f"/scopes/{draft_id}/estimates/{estimate_id}/pricing",
+            review=review,
+            preview=preview,
+            form_values=form or {},
+            recipe_statuses=RECIPE_STATUSES,
+            recipe_evidence_states=RECIPE_EVIDENCE_STATES,
+            recipe_unresolved_fields=RECIPE_UNRESOLVED_FIELDS,
+        ),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/recipes/{release_id}/{variant_id}",
+    response_class=HTMLResponse,
+)
+def pricing_recipe_page(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    variant_id: str,
+) -> HTMLResponse:
+    user = _user(request, db)
+    try:
+        return _recipe_page(request, db, user, draft_id, estimate_id, release_id, variant_id)
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+
+
+_RECIPE_FORM_FIELDS = {
+    "csrf_token",
+    "requirement_id",
+    "observation_id_1",
+    "observation_id_2",
+    "observation_id_3",
+    "status",
+    "unit",
+    "quantity_basis",
+    "yield_basis",
+    "productivity_basis",
+    "recovery_boundary",
+    "evidence_state",
+    "review_reason",
+    "unresolved_fields",
+}
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/recipes/{release_id}/{variant_id}/preview",
+    response_class=HTMLResponse,
+)
+def preview_pricing_recipe_link(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    variant_id: str,
+    form: FormData,
+) -> HTMLResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    if set(form) != _RECIPE_FORM_FIELDS:
+        raise HTTPException(422, "Preview only one exact frozen recipe requirement")
+    try:
+        preview = pricing_recipes.preview_recipe_link(
+            db,
+            user,
+            draft_id,
+            release_id,
+            variant_id,
+            form["requirement_id"],
+            _recipe_observation_ids(form),
+            status=form["status"],
+            unit=form["unit"] or None,
+            quantity_basis=form["quantity_basis"] or None,
+            yield_basis=form["yield_basis"] or None,
+            productivity_basis=form["productivity_basis"] or None,
+            recovery_boundary=form["recovery_boundary"] or None,
+            evidence_state=form["evidence_state"],
+            review_reason=form["review_reason"],
+            unresolved_fields=_comma_values(
+                form["unresolved_fields"], allowed=RECIPE_UNRESOLVED_FIELDS
+            ),
+            settings=get_settings(),
+        )
+        return _recipe_page(
+            request,
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            release_id,
+            variant_id,
+            form=form,
+            preview=preview,
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    except ValueError as exc:
+        raise HTTPException(422, "Choose a valid recipe interpretation") from exc
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/recipes/{release_id}/{variant_id}/links"
+)
+def save_pricing_recipe_link(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    variant_id: str,
+    form: FormData,
+) -> RedirectResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    user = _user(request, db)
+    _require(request, db, "pricing:approve")
+    _require(request, db, "technical:read")
+    expected = _RECIPE_FORM_FIELDS | {
+        "technical_release_sha256",
+        "technical_variant_snapshot_sha256",
+        "recipe_snapshot_sha256",
+        "preview_hash",
+    }
+    if set(form) != expected:
+        raise HTTPException(422, "Save only the previewed exact recipe link")
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        pricing_recipes.save_recipe_link(
+            db,
+            user,
+            draft_id,
+            release_id,
+            variant_id,
+            form["requirement_id"],
+            _recipe_observation_ids(form),
+            status=form["status"],
+            unit=form["unit"] or None,
+            quantity_basis=form["quantity_basis"] or None,
+            yield_basis=form["yield_basis"] or None,
+            productivity_basis=form["productivity_basis"] or None,
+            recovery_boundary=form["recovery_boundary"] or None,
+            evidence_state=form["evidence_state"],
+            review_reason=form["review_reason"],
+            unresolved_fields=_comma_values(
+                form["unresolved_fields"], allowed=RECIPE_UNRESOLVED_FIELDS
+            ),
+            expected_release_sha256=form["technical_release_sha256"],
+            expected_variant_snapshot_sha256=form["technical_variant_snapshot_sha256"],
+            expected_recipe_snapshot_sha256=form["recipe_snapshot_sha256"],
+            expected_preview_hash=form["preview_hash"],
+            settings=get_settings(),
+        )
+        db.commit()
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return RedirectResponse(
+        f"/scopes/{draft_id}/estimates/{estimate_id}/pricing/recipes/{release_id}/{variant_id}",
+        303,
+    )
+
+
+@router.get("/scopes/{draft_id}/estimates/{estimate_id}/pricing/recipe-links/{link_id}/download")
+def download_pricing_recipe_link(
+    request: Request, db: Db, draft_id: str, estimate_id: str, link_id: str
+) -> Response:
+    user = _user(request, db)
+    try:
+        read_estimate_revision(db, user, draft_id, estimate_id)
+        content = pricing_recipes.recipe_link_bytes(db, user, draft_id, link_id)
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    return Response(
+        content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="pricing-recipe-link-{link_id}.json"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
 @router.post(
     "/scopes/{draft_id}/estimates/{estimate_id}/pricing/evaluation-roster/preview",
     response_class=HTMLResponse,
@@ -391,9 +620,7 @@ def preview_pricing_evaluation_roster(
         raise HTTPException(422, "Preview only the current governed Dataset B mappings")
     try:
         read_estimate_revision(db, user, draft_id, estimate_id)
-        preview = evaluation_rosters.preview_roster(
-            db, user, draft_id, settings=get_settings()
-        )
+        preview = evaluation_rosters.preview_roster(db, user, draft_id, settings=get_settings())
         return _page(
             request,
             db,
@@ -406,9 +633,7 @@ def preview_pricing_evaluation_roster(
         raise HTTPException(exc.status_code, exc.code) from exc
 
 
-@router.post(
-    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/evaluation-rosters"
-)
+@router.post("/scopes/{draft_id}/estimates/{estimate_id}/pricing/evaluation-rosters")
 def save_pricing_evaluation_roster(
     request: Request,
     db: Db,
@@ -457,8 +682,7 @@ def save_pricing_evaluation_roster(
 
 
 @router.get(
-    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/evaluation-rosters/"
-    "{roster_id}/download"
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/evaluation-rosters/{roster_id}/download"
 )
 def download_pricing_evaluation_roster(
     request: Request,
@@ -634,8 +858,7 @@ def pricing_profile(
 
 
 @router.get(
-    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
-    "{profile_id}/download"
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/{profile_id}/download"
 )
 def download_pricing_profile(
     request: Request,
@@ -663,8 +886,7 @@ def download_pricing_profile(
 
 
 @router.post(
-    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/"
-    "{profile_id}/decisions"
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing/{source_id}/profiles/{profile_id}/decisions"
 )
 def review_pricing_profile(
     request: Request,

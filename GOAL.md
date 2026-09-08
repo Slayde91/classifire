@@ -200,7 +200,7 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: connect one governed pricing recipe
+## Immediate delivery priority: publish T6, then preview bottom-up pricing
 
 PDF/Excel graph review and optional one-page suggestions are merged through PR #211.
 Preserve their manual fallback, shared graph review, exact history and bounded optional
@@ -241,16 +241,21 @@ technical approval or release action occurs.
 PR #224 adds the first bounded T9 pricing-coverage interaction. It lists every active
 technical-release target, reports current direct B support, ambiguous review, stale
 input and insufficient evidence, identifies exact dependency hashes, and exposes
-unlinked Dataset A observations. The screen and exact JSON are deterministic and
-read-only. Bottom-up A support remains explicitly zero because no governed versioned
-component/activity recipe connects an A row to a technical target.
+unlinked Dataset A observations.
 
-Next add one bounded T6 recipe-review interaction that links one current technical
-target's explicit component or labour requirement to reviewed current Dataset A
-observations with units, quantity/productivity basis, recovery boundary, exact hashes
-and unresolved fields. Save an immutable proposal/review artifact only; do not calculate
-or approve a target price in that slice. This is the smallest prerequisite that can turn
-the T9 bottom-up status from an honest zero into evidence-backed support later.
+The isolated `feat/draft-pricing-t6-recipe-20260908` candidate adds the missing bounded
+T6 interaction: forward v4 releases freeze explicit component/activity requirements,
+an authorised reviewer can preview/save/reopen/download immutable links or unresolved
+outcomes, and T9 consumes bottom-up A support only after every frozen requirement has a
+current confirmed complete link. It remains a review boundary and calculates or approves
+no price. Finish its diff cleanup, validation and publication before starting another
+feature.
+
+After T6 is merged, add one read-only T10 bottom-up proposal preview. It must show each
+component/activity calculation and withhold any result whose unit, quantity, yield,
+productivity, recovery or current evidence is missing. It must not activate a library,
+change an Estimate, approve technical applicability, reveal evaluation targets or
+release output.
 
 T1-T14 dependencies remain: reviewed identities and field claims, immutable recipes,
 lineage-aware holdouts and measured coverage precede derived costing/calibration.

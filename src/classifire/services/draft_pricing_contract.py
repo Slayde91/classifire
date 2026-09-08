@@ -8,6 +8,7 @@ from typing import Any
 
 from .draft_system_match_contract import canonical, digest, validate_binding
 from .technical_field_snapshot import FIELD_NAMES as TECHNICAL_FIELD_NAMES
+from .technical_recipe_snapshot import validate_technical_recipe_snapshot
 
 FIELDS = (
     "reference",
@@ -721,7 +722,7 @@ def _system_mapping_variant_snapshot(value: Any) -> None:
     if value["technical_fields_sha256"] != digest(fields):
         raise ValueError("system mapping technical fields hash")
     record = value["release_record"]
-    if type(record) is not dict or set(record) != {
+    record_keys = {
         "id",
         "key",
         "variant_id",
@@ -733,8 +734,14 @@ def _system_mapping_variant_snapshot(value: Any) -> None:
         "record_version",
         "technical_fields",
         "source_binding",
-    }:
+    }
+    if type(record) is not dict or set(record) not in (
+        record_keys,
+        record_keys | {"recipe_snapshot"},
+    ):
         raise ValueError("system mapping release record")
+    if "recipe_snapshot" in record:
+        validate_technical_recipe_snapshot(record["recipe_snapshot"])
     if (
         record["id"] != value["id"]
         or record["key"] != value["key"]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any, cast
 
 from sqlalchemy import select
@@ -17,8 +18,9 @@ from .draft_pricing_intake import (
     _system_mapping_value,
     _technical_variant_snapshot,
 )
+from .draft_pricing_recipes import list_recipe_links
 from .draft_scope import DraftScopeError, _actor, get_draft
-from .draft_system_match_contract import digest
+from .draft_system_match_contract import canonical, digest
 
 SCHEMA = "CLASSIFIRE-DRAFT-PRICING-COVERAGE-v1"
 STATUSES = (
@@ -112,9 +114,7 @@ def _observation_inventory(
                 "item_kind": row.item_kind,
                 "evidence_state": row.evidence_state,
                 "normalized_reference": row.normalized_reference,
-                "current": _observation_dependencies_current(
-                    db, actor, row, settings=settings
-                ),
+                "current": _observation_dependencies_current(db, actor, row, settings=settings),
                 "target_link": None,
                 "reason": "no_governed_component_activity_recipe_link",
                 "definition_sha256": value["definition_sha256"],
@@ -163,13 +163,15 @@ def _mapping_inventory(
 
 
 def _target_status(
-    target_id: str, mappings: list[dict[str, Any]]
+    target_id: str,
+    mappings: list[dict[str, Any]],
+    recipe_requirements: list[dict[str, Any]],
+    recipe_links: list[dict[str, Any]],
 ) -> tuple[str, str | None, str, list[str], list[dict[str, Any]]]:
     related = [
         item
         for item in mappings
-        if item["selected_variant_id"] == target_id
-        or target_id in item["candidate_variant_ids"]
+        if item["selected_variant_id"] == target_id or target_id in item["candidate_variant_ids"]
     ]
     current_direct = [
         item
@@ -215,13 +217,53 @@ def _target_status(
             ["dataset_b_mapping_ambiguous_for_target"],
             related,
         )
+    latest_by_requirement: dict[str, dict[str, Any]] = {}
+    for item in recipe_links:
+        latest_by_requirement[item["requirement_id"]] = item
+    relevant_links = list(latest_by_requirement.values())
+    stale_recipe = [item for item in relevant_links if not item["current"]]
+    if stale_recipe:
+        return (
+            "stale_input",
+            None,
+            "blocked",
+            ["component_activity_recipe_link_has_stale_dependencies"],
+            related,
+        )
+    complete = [
+        item
+        for item in relevant_links
+        if item["status"] == "linked"
+        and item["evidence_state"] == "confirmed"
+        and not item["unresolved_fields"]
+    ]
+    if recipe_requirements and len(complete) == len(recipe_requirements):
+        return (
+            "bottom_up_a_support",
+            "component_activity_recipe",
+            "ready",
+            ["every_frozen_recipe_requirement_has_current_confirmed_dataset_a_support"],
+            related,
+        )
+    if recipe_requirements and relevant_links:
+        return (
+            "review_needed",
+            None,
+            "review_needed",
+            ["component_activity_recipe_link_is_missing_unresolved_or_provisional"],
+            related,
+        )
     return (
         "insufficient_evidence",
         None,
         "blocked",
         [
             "no_current_reviewed_dataset_b_mapping",
-            "no_governed_component_activity_recipe_link",
+            (
+                "no_governed_component_activity_recipe_link"
+                if recipe_requirements
+                else "technical_release_has_no_frozen_component_activity_recipe"
+            ),
         ],
         related,
     )
@@ -242,11 +284,35 @@ def preview_coverage(
     """
 
     actor = _access(db, actor, draft_id)
-    actor, release, records, active_ids = _active_technical_release(
-        db, actor, technical_release_id
-    )
+    actor, release, records, active_ids = _active_technical_release(db, actor, technical_release_id)
     mappings = _mapping_inventory(db, actor, draft_id, settings=settings)
     observations = _observation_inventory(db, actor, draft_id, settings=settings)
+    stored_recipe_links = list_recipe_links(
+        db,
+        actor,
+        draft_id,
+        settings=settings,
+        release_id=technical_release_id,
+    )
+    recipe_links = []
+    for item in stored_recipe_links:
+        definition = item["value"]["definition"]
+        interpretation = definition["interpretation"]
+        recipe_links.append(
+            {
+                "link_id": item["id"],
+                "link_sha256": hashlib.sha256(canonical(item["value"])).hexdigest(),
+                "current": item["current"],
+                "technical_variant_id": definition["technical_target"]["id"],
+                "requirement_id": definition["requirement"]["id"],
+                "status": interpretation["status"],
+                "evidence_state": interpretation["evidence_state"],
+                "unresolved_fields": interpretation["unresolved_fields"],
+                "observation_ids": [
+                    observation["id"] for observation in definition["observations"]
+                ],
+            }
+        )
     targets = []
     for target_id in sorted(active_ids, key=lambda item: (records[item]["variant_id"], item)):
         snapshot = _technical_variant_snapshot(
@@ -257,8 +323,13 @@ def preview_coverage(
             settings=settings,
             lock=False,
         )
+        recipe = snapshot["release_record"].get("recipe_snapshot")
+        requirements = recipe["requirements"] if type(recipe) is dict else []
+        target_recipe_links = [
+            item for item in recipe_links if item["technical_variant_id"] == target_id
+        ]
         status, method, review_status, reasons, related = _target_status(
-            target_id, mappings
+            target_id, mappings, requirements, target_recipe_links
         )
         targets.append(
             {
@@ -271,6 +342,8 @@ def preview_coverage(
                     "technical_fields_sha256": snapshot["technical_fields_sha256"],
                     "release_record_sha256": snapshot["release_record_sha256"],
                     "source_sha256": snapshot["source_hash"],
+                    "recipe_available": bool(requirements),
+                    "recipe_requirement_count": len(requirements),
                 },
                 "status": status,
                 "primary_method": method,
@@ -279,12 +352,22 @@ def preview_coverage(
                 "dependencies": {
                     "dataset_b_mappings": related,
                     "dataset_a_observations": [],
+                    "recipe_links": target_recipe_links,
                 },
             }
         )
     status_counts = {status: 0 for status in STATUSES}
     for target in targets:
         status_counts[cast(str, target["status"])] += 1
+    linked_observation_ids = {
+        observation_id
+        for item in recipe_links
+        if item["current"]
+        for observation_id in item["observation_ids"]
+    }
+    unlinked_observations = [
+        item for item in observations if item["observation_id"] not in linked_observation_ids
+    ]
     result = {
         "schema_version": SCHEMA,
         "draft_scope_id": draft_id,
@@ -300,27 +383,24 @@ def preview_coverage(
             "target_count": len(targets),
             "status_counts": status_counts,
             "current_unlinked_dataset_a_observations": sum(
-                1 for item in observations if item["current"]
+                1 for item in unlinked_observations if item["current"]
             ),
             "stale_unlinked_dataset_a_observations": sum(
-                1 for item in observations if not item["current"]
+                1 for item in unlinked_observations if not item["current"]
             ),
         },
         "targets": targets,
-        "unlinked_dataset_a_observations": observations,
+        "unlinked_dataset_a_observations": unlinked_observations,
         "unassigned_dataset_b_mappings": [
             item
             for item in mappings
-            if item["selected_variant_id"] is None
-            and not item["candidate_variant_ids"]
+            if item["selected_variant_id"] is None and not item["candidate_variant_ids"]
         ],
         "limitations": [
-            "dataset_a_rows_are_not_linked_to_versioned_component_activity_recipes",
-            "bottom_up_a_support_cannot_be_confirmed_in_this_slice",
             "coverage_does_not_assess_project_specific_technical_applicability",
             "coverage_does_not_calculate_or_approve_a_price",
         ],
-        "effects": EFFECTS,
+        "effects": dict(EFFECTS),
     }
     result["coverage_sha256"] = digest(result)
     return result

@@ -51,6 +51,11 @@ from .storage import (
 )
 from .technical import Candidate, search_variants
 from .technical_field_snapshot import technical_fields as _fields
+from .technical_recipe_snapshot import technical_recipe_snapshot, validate_technical_recipe_snapshot
+from .technical_release_publication import (
+    SUPPORTED_TECHNICAL_RELEASE_MANIFEST_SCHEMAS,
+    TECHNICAL_RELEASE_MANIFEST_SCHEMA,
+)
 from .technical_validity import (
     technical_document_authority_blockers,
     technical_release_source_binding,
@@ -141,9 +146,17 @@ def _release(
             .execution_options(populate_existing=True)
         ):
             record = by_id[variant.id]
-            if manifest.get("schema") == "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v3":
+            if manifest.get("schema") in SUPPORTED_TECHNICAL_RELEASE_MANIFEST_SCHEMAS:
                 if record.get("technical_fields") != _fields(variant):
                     raise ValueError("published_constraints")
+            if ("recipe_snapshot" in record) != (
+                manifest.get("schema") == TECHNICAL_RELEASE_MANIFEST_SCHEMA
+            ):
+                raise ValueError("published_recipe_version")
+            if manifest.get("schema") == TECHNICAL_RELEASE_MANIFEST_SCHEMA:
+                validate_technical_recipe_snapshot(record.get("recipe_snapshot"))
+                if record["recipe_snapshot"] != technical_recipe_snapshot(variant):
+                    raise ValueError("published_recipe")
             for key in (
                 "variant_id",
                 "system_id",
@@ -690,7 +703,8 @@ def save_constraint_review(
         record = records[candidate_id]
         pinned = (
             isinstance(release.source_manifest, dict)
-            and release.source_manifest.get("schema") == "CLASSIFIRE-TECHNICAL-LIBRARY-RELEASE-v3"
+            and release.source_manifest.get("schema")
+            in SUPPORTED_TECHNICAL_RELEASE_MANIFEST_SCHEMAS
             and record.get("technical_fields") == candidate["fields"]
         )
         published_hash = candidate["fields_sha256"] if pinned else None

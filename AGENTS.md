@@ -26,8 +26,9 @@ Use GOAL.md and the verified project state to select the next visible increment;
   adds reviewed Dataset B mapped/unmatched/ambiguous system identity, and PR #222
   adds the first persisted target-blind T13 roster UI. PR #224 adds the first
   deterministic no-write T9 coverage-status UI and exact JSON for every active
-  technical target. Build the first governed T6 component/activity recipe link next;
-  prediction, price proposals and holdout execution remain later.
+  technical target. The isolated `feat/draft-pricing-t6-recipe-20260908` candidate
+  implements the first governed T6 recipe-link UI; finish and publish it before starting
+  a read-only T10 bottom-up proposal preview. Prediction and holdout execution remain later.
 Inspect current evidence before resuming; never rebuild completed prototype workflows.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
@@ -119,12 +120,12 @@ the first reviewed B system/configuration mapping path against a source-bound ac
 technical release. PR #222 persists a target-blind roster from current mapped B
 records, excludes unmatched/ambiguous/stale records, and fails visibly when fewer than
 three independent groups exist. Reuse that frozen boundary for later evaluation.
-PR #224 adds read-only T9 coverage over every active technical target. It reports
-direct B support, ambiguous review, stale input and insufficient evidence, and keeps
-bottom-up A support at zero because reviewed A rows still lack governed versioned
-recipe links. Build one reviewable T6 component/activity recipe link before any
-bottom-up price proposal, preserving T-stage dependencies without treating the
-complete target schema, bulk corpus or model as one task.
+PR #224 adds read-only T9 coverage over every active technical target. The isolated T6
+candidate adds forward v4 frozen recipes, immutable reviewed links and guarded bottom-up
+A support only when every requirement is current, confirmed and complete. Finish its
+cleanup, validation and publication first. Then build one read-only T10 bottom-up
+proposal preview, preserving T-stage dependencies without treating the complete target
+schema, bulk corpus or model as one task.
 
 - Preserve separate dataset identities: A `pricelist.xlsx` is general products,
   materials, labour and services; B `pricing_library.xlsx` is Firefly system prices.
@@ -137,8 +138,9 @@ complete target schema, bulk corpus or model as one task.
   multiple configurations, contradictions and per-field evidence. Technical matching,
   commercial identity mapping and approval remain separate decisions.
 - Costing needs immutable, evidenced component/activity recipes and a recovery ledger.
-  Current technical release fields do not freeze a complete materials/labour recipe;
-  add compatible versioned contracts before claiming reproducible derived costing.
+  The candidate v4 contract freezes the first bounded recipe and review links; it does
+  not yet prove representative recipe meaning, richer unit conversions or reproducible
+  derived costing.
 - Keep observed, derived, corrected, approved and actual outcomes distinct. Do not
   invent labour/productivity, hide incomplete work or average incompatible price bases.
   Derived approval never turns a prediction into independent observed training truth.

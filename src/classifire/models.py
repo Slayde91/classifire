@@ -1312,6 +1312,49 @@ class DraftPricingEvaluationRoster(RecordMixin, Base):
     created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class DraftPricingRecipeLink(RecordMixin, Base):
+    """Append-only reviewed link from one frozen recipe requirement to Dataset A."""
+
+    __tablename__ = "draft_pricing_recipe_links"
+    __table_args__ = (
+        UniqueConstraint("definition_sha256", name="uq_draft_pricing_recipe_link_definition"),
+        CheckConstraint(
+            "mapping_status IN ('linked', 'unresolved')",
+            name="ck_draft_pricing_recipe_link_status",
+        ),
+        CheckConstraint(
+            "evidence_state IN ('confirmed', 'provisional', 'unresolved')",
+            name="ck_draft_pricing_recipe_link_evidence",
+        ),
+        CheckConstraint(
+            "length(link_json) > 0 AND length(link_json) <= 1048576",
+            name="ck_draft_pricing_recipe_link_size",
+        ),
+    )
+
+    draft_scope_id: Mapped[str] = mapped_column(
+        ForeignKey("draft_scopes.id"), index=True, nullable=False
+    )
+    technical_release_id: Mapped[str] = mapped_column(
+        ForeignKey("library_releases.id"), index=True, nullable=False
+    )
+    technical_release_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    technical_variant_id: Mapped[str] = mapped_column(
+        ForeignKey("technical_variants.id"), index=True, nullable=False
+    )
+    technical_variant_snapshot_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    recipe_snapshot_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    requirement_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    requirement_kind: Mapped[str] = mapped_column(String(20), nullable=False)
+    requirement_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    mapping_status: Mapped[str] = mapped_column(String(20), index=True, nullable=False)
+    evidence_state: Mapped[str] = mapped_column(String(20), nullable=False)
+    definition_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    link_json: Mapped[str] = mapped_column(Text, nullable=False)
+    link_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    reviewed_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
 class DraftScopeReport(RecordMixin, Base):
     """Retained scope-only Draft snapshot and its two exact rendered outputs."""
 
