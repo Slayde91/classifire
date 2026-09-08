@@ -3,8 +3,9 @@
 **Status:** Active; prototype-first delivery approved 2026-09-05. PDF/Excel review,
 bounded PDF suggestions, A/B source profiles, exact-profile review, Dataset A/B row
 governance, target-blind T13 roster, T9 coverage and T6 recipe review are merged through
-PR #227. **Verified shared-main baseline:**
-`ca875437fd1d7ab8701117e0c0f1a381efc56300`.
+PR #227. A bounded read-only T10 bottom-up preview is an active tested candidate.
+**Verified shared-main baseline:**
+`6b4b9c821f7a55d0f88e365b462c26bba28d5d53`.
 PR #227 head run 34223161569 and post-merge main run 34224663080 each passed
 1,913 tests and all repository gates.
 [PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;
@@ -22,8 +23,8 @@ plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.m
   B system/configuration mapping and PR #222 persists the first governed T13 roster.
   PR #224 delivers bounded no-write T9 coverage for every active technical target.
   PR #227 adds one governed component/activity recipe-link interaction and lets T9
-  consume only complete current confirmed links. Build one read-only T10 bottom-up
-  proposal preview next. Reuse existing technical/pricing/
+  consume only complete current confirmed links. The active T10 candidate builds one
+  read-only explicit-quantity bottom-up sell-price preview. Reuse existing technical/pricing/
   review services; do not start bulk extraction, model tuning or a replacement agent
   fleet to achieve that screen.
 
@@ -241,11 +242,13 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Build a read-only **T10 bottom-up proposal preview** over the merged bounded T6 component
-and labour/activity recipe-link contract. T10 must consume only
-complete current confirmed links, expose each component/activity calculation and withhold
-missing inputs. It must not approve a price, activate a library, change an Estimate or
-grant technical/evaluation/release authority.
+Review and merge the active read-only **T10 bottom-up proposal preview** over the merged
+T6 component/activity recipe-link contract. Its first supported case uses an explicit
+reviewer-entered quantity, one exact current confirmed Dataset A observation per frozen
+requirement and `sell_price`; all other cases withhold. After that, add governed numeric
+scope/yield/productivity/recovery inputs before supporting multiple observations, waste,
+pack or margins. Do not parse descriptive notes or grant Estimate, library, technical,
+evaluation or release authority.
 Current evidence and exact handoff remain in PROJECT_STATE.md and SESSION_HANDOFF.md.
 This sequence grants no customer-source, live-provider, canonical-write or deployment
 authority. OpenClaw protection parity remains a separate gated track.
@@ -272,7 +275,7 @@ Every exposed slice includes its UI, minimum persistence and tests.
 | **First visible corpus/pricing slice** | **A/B profile merged PR #212; review merged PR #214; pre-model T13 contract merged PR #216:** minimum T1 + T5 + T7 identity/profile history, early-T12 exact-profile decision and leakage rules with synthetic data; no library publication or price inference. |
 | **Reviewed vertical slice** | **Dataset A observation PR #218, Dataset B mapping PR #220, target-blind T13 roster PR #222, read-only T9 coverage PR #224 and T6 recipe review PR #227; broader T2-T8 upcoming.** Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
 | **Controlled breadth and scale** | Expand T2-T8 through bounded resumable imports, deduplication/reprocessing, proper pagination and representative retained sources; T9 coverage exposes gaps. Measure capacity before declaring hundreds/thousands supported. |
-| **Explainable estimating prototype** | T10 separate bottom-up and comparable proposals, T12 review UI, immutable quantities/labour/assumptions and T13 evaluation. T11 comparison is visible before calibrated combination is enabled. |
+| **Explainable estimating prototype** | **Active T10 first slice:** read-only explicit-quantity sell-price calculation, line evidence, withholding and exact JSON. Next add governed quantity/yield/productivity/recovery inputs, then separate comparable proposals, T12 review UI and T13 evaluation. T11 comparison remains later. |
 | **Validated operation** | T13 establishes approved method/stratum gates; T11 combined proposals use that evidence; T14 operations, feedback, drift and controlled release extend the demonstrated path. |
 
 #### T1. Minimum canonical schema and version contracts
@@ -453,6 +456,14 @@ routes and project-specific applicability remain upcoming.
   an existing commercial row as sufficient physical or technical evidence.
 
 #### T10. Explainable estimation methods
+
+**Status:** active. The first tested candidate covers one deterministic bottom-up method
+for a T9-eligible target. It represents every frozen requirement, accepts explicit
+preview-only quantities, supports one current confirmed `sell_price` observation per
+requirement, displays exact Decimal arithmetic and withholds the total when any line is
+missing or incompatible. It persists nothing and adds no migration. Governed scope
+quantities, multiple observations, yield/productivity, waste/pack, recovery, margins,
+comparables, approval and calibration remain upcoming.
 
 - **Objective/scope:** implement separate bottom-up and technically comparable
   proposed prices/ranges for supported cases; retain direct observed pricing distinctly.
@@ -693,8 +704,9 @@ prevents concurrent publication from leaving two active technical releases.
 
 **Remaining / prioritised amendment:** minimum T1/T5/T7 source identity/profile contracts,
 early-T12 profile review, the T13 roster boundary, bounded T9 coverage and governed T6
-recipe links are merged through PR #227. Build the first read-only T10 bottom-up proposal
-preview next. Continue T2-T8 processing/fact review,
+recipe links are merged through PR #227. The first read-only T10 bottom-up proposal is
+an active tested candidate; merge it, then add governed numeric basis breadth. Continue
+T2-T8 processing/fact review,
 resolution/provenance and breadth in parallel with representative-source validation.
 Extend existing technical/product/labour/pricing/release models; no source filename,
 profile approval, mapping or roster grants downstream authority.

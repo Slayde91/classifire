@@ -13,6 +13,7 @@ from .draft_estimate_ui import Db, _actor, _revision
 from .draft_scope_ui import _form_values
 from .security import has_permission as user_has_permission
 from .security import verify_csrf
+from .services import draft_pricing_bottom_up as pricing_bottom_up
 from .services import draft_pricing_coverage as pricing_coverage
 from .services import draft_pricing_evaluation_rosters as evaluation_rosters
 from .services import draft_pricing_intake as pricing
@@ -61,6 +62,13 @@ async def _pricing_form(request: Request) -> dict[str, str]:
 
 
 FormData = Annotated[dict[str, str], Depends(_pricing_form)]
+
+
+async def _bottom_up_form(request: Request) -> dict[str, str]:
+    return await _form_values(request, 128 * 1024, max_fields=128)
+
+
+BottomUpFormData = Annotated[dict[str, str], Depends(_bottom_up_form)]
 
 
 def _user(request: Request, db: Db, *, write: bool = False):
@@ -122,6 +130,8 @@ def _page(
     system_mapping_preview: dict[str, Any] | None = None,
     evaluation_roster_preview: dict[str, Any] | None = None,
     pricing_coverage_preview: dict[str, Any] | None = None,
+    bottom_up_preview: dict[str, Any] | None = None,
+    bottom_up_submitted: bool = False,
 ) -> HTMLResponse:
     draft = get_draft(db, user, draft_id)
     envelope = read_estimate_revision(db, user, draft_id, estimate_id)
@@ -276,6 +286,8 @@ def _page(
             evaluation_roster_history=evaluation_roster_history,
             evaluation_roster_preview=evaluation_roster_preview,
             pricing_coverage_preview=pricing_coverage_preview,
+            bottom_up_preview=bottom_up_preview,
+            bottom_up_submitted=bottom_up_submitted,
             profile_decisions_allowed=PROFILE_DECISIONS,
             row_item_kinds=ROW_ITEM_KINDS,
             row_evidence_states=ROW_EVIDENCE_STATES,
@@ -372,6 +384,140 @@ def download_pricing_coverage(
         media_type="application/json",
         headers={
             "Content-Disposition": 'attachment; filename="pricing-coverage.json"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+def _bottom_up_quantities(form: dict[str, str]) -> dict[str, str]:
+    prefix = "quantity__"
+    return {key[len(prefix) :]: value for key, value in form.items() if key.startswith(prefix)}
+
+
+def _bottom_up(
+    db: Db,
+    user: Any,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    target_id: str,
+    quantities: dict[str, str],
+) -> dict[str, Any]:
+    read_estimate_revision(db, user, draft_id, estimate_id)
+    return pricing_bottom_up.preview_bottom_up(
+        db,
+        user,
+        draft_id,
+        release_id,
+        target_id,
+        quantities,
+        settings=get_settings(),
+    )
+
+
+@router.get(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing-proposals/bottom-up/{release_id}/{target_id}",
+    response_class=HTMLResponse,
+)
+def bottom_up_page(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    target_id: str,
+) -> HTMLResponse:
+    user = _user(request, db)
+    try:
+        preview = _bottom_up(db, user, draft_id, estimate_id, release_id, target_id, {})
+        return _page(
+            request, db, user, draft_id, estimate_id, bottom_up_preview=preview
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing-proposals/bottom-up/{release_id}/{target_id}",
+    response_class=HTMLResponse,
+)
+def preview_bottom_up(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    target_id: str,
+    form: BottomUpFormData,
+) -> HTMLResponse:
+    verify_csrf(request, form.get("csrf_token"))
+    if any(key != "csrf_token" and not key.startswith("quantity__") for key in form):
+        raise HTTPException(422, "Only explicit requirement quantities are accepted")
+    user = _user(request, db)
+    try:
+        preview = _bottom_up(
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            release_id,
+            target_id,
+            _bottom_up_quantities(form),
+        )
+        return _page(
+            request,
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            bottom_up_preview=preview,
+            bottom_up_submitted=True,
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+
+
+@router.post(
+    "/scopes/{draft_id}/estimates/{estimate_id}/pricing-proposals/bottom-up-download/{release_id}/{target_id}"
+)
+def download_bottom_up(
+    request: Request,
+    db: Db,
+    draft_id: str,
+    estimate_id: str,
+    release_id: str,
+    target_id: str,
+    form: BottomUpFormData,
+) -> Response:
+    verify_csrf(request, form.get("csrf_token"))
+    expected = form.get("expected_proposal_sha256")
+    if any(
+        key not in {"csrf_token", "expected_proposal_sha256"}
+        and not key.startswith("quantity__")
+        for key in form
+    ):
+        raise HTTPException(422, "Only exact preview inputs are accepted")
+    user = _user(request, db)
+    try:
+        preview = _bottom_up(
+            db,
+            user,
+            draft_id,
+            estimate_id,
+            release_id,
+            target_id,
+            _bottom_up_quantities(form),
+        )
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from exc
+    if expected != preview["proposal_sha256"]:
+        raise HTTPException(409, "BOTTOM_UP_PREVIEW_CHANGED")
+    return Response(
+        canonical(preview),
+        media_type="application/json",
+        headers={
+            "Content-Disposition": 'attachment; filename="bottom-up-proposal-preview.json"',
             "Cache-Control": "no-store",
             "X-Content-Type-Options": "nosniff",
         },

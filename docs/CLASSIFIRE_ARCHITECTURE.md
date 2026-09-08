@@ -2,15 +2,15 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.33 - merged governed recipe review and guarded coverage.
+**Architecture version:** 5.34 - active read-only bottom-up proposal prototype.
 
-**Verified shared baseline:** `ca875437fd1d7ab8701117e0c0f1a381efc56300` on
+**Verified shared baseline:** `6b4b9c821f7a55d0f88e365b462c26bba28d5d53` on
 `origin/main`. Shared main includes deterministic read-only T9 coverage and the
 governed T6/v4 recipe-review increment after the A/B profile, review, Dataset A
 observation, Dataset B mapping and T13 roster increments.
 [PROJECT_STATE.md](./PROJECT_STATE.md) owns measured validation/publication.
 No AI or OpenClaw path is used by this increment. Evaluation execution, commercial
-activation, estimation, real ChatGPT linking and production readiness remain open.
+activation, broader estimation, real ChatGPT linking and production readiness remain open.
 Earlier milestone descriptions are
 historical checkpoints; do not infer phase completion from source presence.
 
@@ -39,6 +39,17 @@ stale or corrupt inputs fail closed, and ambiguous/stale B evidence still requir
 review. All price, library, Estimate, technical, evaluation and release effects remain
 false. **Migration:** additive `0045_draft_pricing_recipe_links`; v3 releases remain
 readable but cannot claim a recipe that they never froze.
+
+**Active bounded T10 candidate:** add a computed, non-persisted bottom-up preview over
+the exact T9/T6 dependency graph. **Reason:** users need a visible amount calculation
+before broader corpus and model work, but descriptive recipe notes are not safe numeric
+inputs. **Consequences:** an authorised reviewer supplies explicit per-requirement
+quantities; the service accepts only current confirmed complete links, exactly one
+reviewed observation per requirement and an explicit `sell_price`, then exposes each
+quantity x rate calculation and a hash-bound exact JSON download. Any incomplete or
+incompatible line withholds the whole total. No Estimate, approval, activation,
+technical, evaluation or release state changes. **Migration:** none; the preview is
+recomputed and read-only.
 
 **Prior bounded change (PR #222):** an append-only T13 evaluation roster freezes exact
 eligible/excluded B inventory and target-blind connected-group splits before later model
@@ -135,7 +146,7 @@ still applies. Model output is proposed evidence, never authority.
 | General pricing source A | Explicit `general_pricelist` identity, stable source versions, append-only profiles/decisions and exact reviewed product/material/labour/service row observations over retained cells. The candidate can link those observations to frozen recipe requirements. | Commercial activation, representative recipe breadth and real-source validation remain planned. |
 | Firefly pricing source B | Separate `firefly_system_prices` identity/profile/decision lifecycle plus append-only exact-row mappings to an eligible active-release variant or explicit unmatched/ambiguous outcome | Add representative-source breadth, candidate/alias resolution and package/client coverage while keeping observed prices separate from technical applicability and derived proposals. |
 | Pricing evaluation | Pure T13 contract plus persisted 0044 roster revisions over current mapped B records; target-blind connected-group assignment, explicit exclusions/insufficient evidence, scoped access, cutoff/freshness, exact dependencies, canonical bytes/hash, history and download are implemented | Validate v1 lineage/split policy with authorised representative data, then add access-separated target opening, untouched evaluation, metrics and approved calibrated limits. |
-| Pricing coverage and proposals | Manual Draft rates, source selection, original values and override history plus bounded T9 coverage over all active-release targets. The candidate exposes T6 recipe review and guarded bottom-up A coverage without computing a price. | Add a read-only T10 bottom-up proposal preview, then comparable/combined proposals, calibrated review and append-only approval/actual-cost feedback. Observed and derived prices remain distinct after approval. |
+| Pricing coverage and proposals | Manual Draft rates, source selection, original values and override history plus bounded T9 coverage over all active-release targets and merged T6 recipe review. The active T10 candidate computes a read-only explicit-quantity sell-price preview with line evidence, deterministic rounding, withholding and exact JSON. | Add governed scope/yield/productivity/recovery inputs, multi-observation recipes, then comparable/combined proposals, calibrated review and append-only approval/actual-cost feedback. Observed and derived prices remain distinct after approval. |
 | Draft persistence | Scope/report/candidate/Estimate records, PDF/Excel/pricing source bindings, retained PDF suggestions, 0040 A/B profile history, 0041 decisions, 0042 Dataset A observations, 0043 Dataset B mappings and 0044 T13 rosters. The candidate adds append-only 0045 recipe links; T9 coverage remains computed. | Preserve owner/admin checks, exact dependencies, hashes, conditional saves and import lineage. Pricing evidence package membership, source-inclusive portability and operating retention limits remain unfinished. |
 | Canonical physical writes | Existing opening/service UI writes guarded canonical rows | Keep these routes and admission/lock protections intact. Draft Scope saving cannot promote data into them. |
 | Packages | Scope v1-v6 exchange is merged; v6 carries original suggestion claims in the same evidence_refs union and exact package inventory | Preserve earlier readers/bytes and mark imported claims unverified. A/B profile/source membership and whole-project/source-body coverage remain planned. |
@@ -1690,7 +1701,7 @@ validate the grouping/split policy before the first access-separated evaluation 
 Until then there is no saved roster, hidden-target separation, evaluation run, metric,
 calibration or approved threshold.
 
-### Implemented T9 coverage and T6 recipe review
+### Implemented T9 coverage and T6 recipe review; active T10 preview
 
 Current architecture -> change -> reason -> consequences -> migration: governed A/B
 records and technical releases existed without one target-wide support view -> add a
@@ -1718,8 +1729,19 @@ Draft/pricing/technical permissions; foreign, stale, changed, replayed and corru
 fail closed. T9 consumes a link only when every frozen requirement is current, confirmed,
 complete and compatible. This increment adds no background job, agent, model, price
 calculation, proposal, activation, Estimate change, technical approval, target reveal,
-evaluation, deployment or release. The next bounded increment is a read-only T10
-bottom-up proposal preview.
+evaluation, deployment or release.
+
+The active T10 service remains inside the same deterministic application boundary. It
+rechecks T9 eligibility, loads every frozen recipe requirement, selects the latest link,
+and reloads the exact retained Dataset A observation row. It never parses quantity,
+yield, productivity or recovery prose into numbers. The reviewer enters numeric
+quantities for this preview only. One current confirmed observation with `sell_price`
+and a matching unit produces a Decimal line amount rounded half-up to two places; a
+missing link, quantity, compatible unit, current evidence or supported price meaning
+produces an explicit withheld line and no total. The HTML adapter and hash-checked JSON
+download call the same service. This prototype adds no table, background job, agent or
+canonical write. Multi-observation recipes and governed numeric yield/productivity,
+waste/pack, recovery and margin rules remain proposed work.
 
 ### Implemented current increment: independent scope-and-system reports (P4b)
 
