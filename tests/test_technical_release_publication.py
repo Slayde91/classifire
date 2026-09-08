@@ -113,6 +113,8 @@ def _bound_variant(
         expert_review_required=False,
         source_hash=digest,
         source_json=source_json,
+        component_requirements={"sealant": {"unit": "cartridge"}},
+        labour_requirements=["Install sealant"],
     )
     db.add(variant)
     db.flush()
@@ -175,6 +177,9 @@ def test_publication_snapshots_every_active_variant_and_supersedes_atomically(
     assert release.source_manifest["record_count"] == 1
     assert [record["id"] for record in release.source_manifest["records"]] == [variant.id]
     binding = release.source_manifest["records"][0]["source_binding"]
+    recipe = release.source_manifest["records"][0]["recipe_snapshot"]
+    assert recipe["availability"] == "available"
+    assert [item["kind"] for item in recipe["requirements"]] == ["component", "activity"]
     assert binding["state"] == "bound"
     assert binding["technical_document"]["stored_file"]["sha256"] == variant.source_hash
     assert draft.status == "draft"
@@ -203,6 +208,21 @@ def test_publication_rejects_changed_retained_source_bytes_without_writing(
         _publish(db, actor=actor, storage_root=storage_root)
 
     assert rejected.value.code == "TECHNICAL_RELEASE_SOURCE_BYTES_INVALID"
+    assert db.scalar(select(func.count()).select_from(LibraryRelease)) == 0
+    assert db.scalar(select(func.count()).select_from(AuditEvent)) == 0
+
+
+def test_publication_rejects_invalid_recipe_without_writing(db: Session, tmp_path: Path) -> None:
+    storage_root = tmp_path / "storage"
+    actor = _actor(db)
+    variant, _ = _bound_variant(db, storage_root)
+    variant.component_requirements = {"oversized": "x" * 17000}
+    db.flush()
+
+    with pytest.raises(TechnicalReleasePublicationError) as rejected:
+        _publish(db, actor=actor, storage_root=storage_root)
+
+    assert rejected.value.code == "TECHNICAL_RELEASE_RECIPE_INVALID"
     assert db.scalar(select(func.count()).select_from(LibraryRelease)) == 0
     assert db.scalar(select(func.count()).select_from(AuditEvent)) == 0
 

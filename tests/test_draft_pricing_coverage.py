@@ -201,6 +201,10 @@ def _prepared(db, x):
         _bound_variant(db, x.settings.storage_root, suffix=f"COV{index}")[0]
         for index in range(1, 6)
     ]
+    variants[4].labour_requirements = []
+    # Keep one target deliberately bounded to a single component requirement so
+    # the complete bottom-up coverage transition can be proven independently.
+    variants[4].labour_requirements = []
     release = _publish(
         db,
         actor=reviewer,
@@ -208,9 +212,7 @@ def _prepared(db, x):
         version="TECH-COVERAGE-2026.09",
     )
 
-    old_b = _reviewed_source(
-        db, x, owner, reviewer, "firefly_system_prices", 100.0
-    )
+    old_b = _reviewed_source(db, x, owner, reviewer, "firefly_system_prices", 100.0)
     stale = _save_mapping(
         db,
         x,
@@ -221,9 +223,7 @@ def _prepared(db, x):
         "mapped",
         selected=variants[1],
     )
-    current_b = _reviewed_source(
-        db, x, owner, reviewer, "firefly_system_prices", 200.0
-    )
+    current_b = _reviewed_source(db, x, owner, reviewer, "firefly_system_prices", 200.0)
     direct = _save_mapping(
         db,
         x,
@@ -300,6 +300,55 @@ def _counts(db):
     }
 
 
+def test_conflicting_dataset_b_evidence_blocks_complete_bottom_up_recipe() -> None:
+    requirements = [{"id": "requirement-1"}]
+    links = [
+        {
+            "requirement_id": "requirement-1",
+            "current": True,
+            "status": "linked",
+            "evidence_state": "confirmed",
+            "unresolved_fields": [],
+        }
+    ]
+    stale_mapping = {
+        "selected_variant_id": "target-1",
+        "candidate_variant_ids": [],
+        "current": False,
+        "status": "mapped",
+    }
+    ambiguous_mapping = {
+        "selected_variant_id": None,
+        "candidate_variant_ids": ["target-1", "target-2"],
+        "current": True,
+        "status": "ambiguous",
+    }
+    assert (
+        coverage._target_status("target-1", [stale_mapping], requirements, links)[0]
+        == "stale_input"
+    )
+    assert (
+        coverage._target_status("target-1", [ambiguous_mapping], requirements, links)[0]
+        == "review_needed"
+    )
+
+
+def test_bottom_up_requires_every_frozen_recipe_requirement() -> None:
+    requirements = [{"id": "requirement-1"}, {"id": "requirement-2"}]
+    first = {
+        "requirement_id": "requirement-1",
+        "current": True,
+        "status": "linked",
+        "evidence_state": "confirmed",
+        "unresolved_fields": [],
+    }
+    second = {**first, "requirement_id": "requirement-2"}
+    assert coverage._target_status("target-1", [], requirements, [first])[0] == "review_needed"
+    result = coverage._target_status("target-1", [], requirements, [first, second])
+    assert result[0] == "bottom_up_a_support"
+    assert result[1] == "component_activity_recipe"
+
+
 def test_coverage_represents_every_target_and_remains_read_only(pdf_setup):
     x = pdf_setup
     with x.factory() as db:
@@ -309,19 +358,13 @@ def test_coverage_represents_every_target_and_remains_read_only(pdf_setup):
         before = _counts(db)
 
         with pytest.raises(scope.DraftScopeError) as hidden:
-            coverage.preview_coverage(
-                db, foreign, x.ids[2], release.id, settings=x.settings
-            )
+            coverage.preview_coverage(db, foreign, x.ids[2], release.id, settings=x.settings)
         assert hidden.value.status_code == 404
         with pytest.raises(scope.DraftScopeError) as denied:
-            coverage.preview_coverage(
-                db, owner, x.ids[2], release.id, settings=x.settings
-            )
+            coverage.preview_coverage(db, owner, x.ids[2], release.id, settings=x.settings)
         assert denied.value.status_code == 403
 
-        result = coverage.preview_coverage(
-            db, reviewer, x.ids[2], release.id, settings=x.settings
-        )
+        result = coverage.preview_coverage(db, reviewer, x.ids[2], release.id, settings=x.settings)
         repeated = coverage.preview_coverage(
             db, reviewer, x.ids[2], release.id, settings=x.settings
         )
@@ -329,9 +372,7 @@ def test_coverage_represents_every_target_and_remains_read_only(pdf_setup):
         assert result["coverage_sha256"] == digest(
             {key: value for key, value in result.items() if key != "coverage_sha256"}
         )
-        by_variant = {
-            item["technical_target"]["variant_id"]: item for item in result["targets"]
-        }
+        by_variant = {item["technical_target"]["variant_id"]: item for item in result["targets"]}
         assert list(by_variant) == [item.variant_id for item in variants]
         assert by_variant[variants[0].variant_id]["status"] == "direct_b_support"
         assert by_variant[variants[0].variant_id]["primary_method"] == "direct_observed_b"
@@ -347,21 +388,26 @@ def test_coverage_represents_every_target_and_remains_read_only(pdf_setup):
             "insufficient_evidence": 1,
         }
         assert result["summary"]["current_unlinked_dataset_a_observations"] == 1
-        assert result["unlinked_dataset_a_observations"][0]["observation_id"] == (
-            observation["observation_id"]
+        assert (
+            result["unlinked_dataset_a_observations"][0]["observation_id"]
+            == (observation["observation_id"])
         )
         assert result["unlinked_dataset_a_observations"][0]["target_link"] is None
-        assert by_variant[variants[0].variant_id]["dependencies"]["dataset_b_mappings"][
-            0
-        ]["mapping_id"] == direct["mapping_id"]
-        assert by_variant[variants[1].variant_id]["dependencies"]["dataset_b_mappings"][
-            0
-        ]["mapping_id"] == stale["mapping_id"]
+        assert (
+            by_variant[variants[0].variant_id]["dependencies"]["dataset_b_mappings"][0][
+                "mapping_id"
+            ]
+            == direct["mapping_id"]
+        )
+        assert (
+            by_variant[variants[1].variant_id]["dependencies"]["dataset_b_mappings"][0][
+                "mapping_id"
+            ]
+            == stale["mapping_id"]
+        )
         assert {
             item["mapping_id"]
-            for item in by_variant[variants[2].variant_id]["dependencies"][
-                "dataset_b_mappings"
-            ]
+            for item in by_variant[variants[2].variant_id]["dependencies"]["dataset_b_mappings"]
         } == {ambiguous["mapping_id"]}
         assert result["effects"] == coverage.EFFECTS
         assert _counts(db) == before
@@ -369,12 +415,8 @@ def test_coverage_represents_every_target_and_remains_read_only(pdf_setup):
         stored = db.get(DraftPricingSystemMapping, direct["mapping_id"])
         stored.mapping_json += " "
         db.flush()
-        with pytest.raises(
-            scope.DraftScopeError, match="PRICING_SYSTEM_MAPPING_INTEGRITY_FAILED"
-        ):
-            coverage.preview_coverage(
-                db, reviewer, x.ids[2], release.id, settings=x.settings
-            )
+        with pytest.raises(scope.DraftScopeError, match="PRICING_SYSTEM_MAPPING_INTEGRITY_FAILED"):
+            coverage.preview_coverage(db, reviewer, x.ids[2], release.id, settings=x.settings)
 
 
 def test_coverage_ui_preview_and_exact_json(pdf_app, monkeypatch):
@@ -405,13 +447,19 @@ def test_coverage_ui_preview_and_exact_json(pdf_app, monkeypatch):
             "csrf_token": _csrf(admin_page.text),
             "technical_release_id": release_id,
         }
-        assert owner_client.post(
-            base + "/coverage/preview",
-            data={**form, "csrf_token": _csrf(owner_page.text)},
-        ).status_code == 403
-        assert admin_client.post(
-            base + "/coverage/preview", data={**form, "unexpected": "write"}
-        ).status_code == 422
+        assert (
+            owner_client.post(
+                base + "/coverage/preview",
+                data={**form, "csrf_token": _csrf(owner_page.text)},
+            ).status_code
+            == 403
+        )
+        assert (
+            admin_client.post(
+                base + "/coverage/preview", data={**form, "unexpected": "write"}
+            ).status_code
+            == 422
+        )
         preview = admin_client.post(base + "/coverage/preview", data=form)
         assert preview.status_code == 200, preview.text
         assert "Coverage preview" in preview.text

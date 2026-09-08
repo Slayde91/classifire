@@ -60,7 +60,11 @@ from .storage import (
     read_verified_stored_file,
 )
 from .technical_field_snapshot import technical_fields
-from .technical_release_publication import TECHNICAL_RELEASE_MANIFEST_SCHEMA
+from .technical_recipe_snapshot import technical_recipe_snapshot, validate_technical_recipe_snapshot
+from .technical_release_publication import (
+    SUPPORTED_TECHNICAL_RELEASE_MANIFEST_SCHEMAS,
+    TECHNICAL_RELEASE_MANIFEST_SCHEMA,
+)
 from .technical_validity import (
     technical_document_authority_blockers,
     technical_release_source_binding,
@@ -1082,7 +1086,7 @@ def _active_technical_release(
         manifest = release.source_manifest
         if (
             type(manifest) is not dict
-            or manifest.get("schema") != TECHNICAL_RELEASE_MANIFEST_SCHEMA
+            or manifest.get("schema") not in SUPPORTED_TECHNICAL_RELEASE_MANIFEST_SCHEMAS
             or type(manifest.get("records")) is not list
             or type(manifest.get("record_count")) is not int
             or manifest["record_count"] != len(manifest["records"])
@@ -1098,6 +1102,10 @@ def _active_technical_release(
                 or item["id"] in records
             ):
                 raise ValueError("manifest")
+            if ("recipe_snapshot" in item) != (
+                manifest["schema"] == TECHNICAL_RELEASE_MANIFEST_SCHEMA
+            ):
+                raise ValueError("manifest recipe version")
             records[item["id"]] = item
         if set(records) != active_ids:
             raise ValueError("manifest")
@@ -1220,13 +1228,22 @@ def _technical_variant_snapshot(
         source_figure=variant.source_figure,
     )
     try:
+        old_keys = {
+            "id",
+            "key",
+            "variant_id",
+            "system_id",
+            "frl",
+            "source_document_reference",
+            "source_page",
+            "source_hash",
+            "record_version",
+            "technical_fields",
+            "source_binding",
+        }
         if (
             type(record) is not dict
-            or set(record) != {
-                "id", "key", "variant_id", "system_id", "frl",
-                "source_document_reference", "source_page", "source_hash",
-                "record_version", "technical_fields", "source_binding",
-            }
+            or set(record) not in (old_keys, old_keys | {"recipe_snapshot"})
             or record["id"] != variant.id
             or record["key"] != technical_variant_logical_key(
                 variant_id=variant.variant_id, source_json=variant.source_json
@@ -1242,6 +1259,10 @@ def _technical_variant_snapshot(
             or record["source_binding"] != expected_binding
         ):
             raise ValueError("record")
+        if "recipe_snapshot" in record:
+            validate_technical_recipe_snapshot(record["recipe_snapshot"])
+            if record["recipe_snapshot"] != technical_recipe_snapshot(variant):
+                raise ValueError("recipe")
         validate_binding(record["source_binding"])
         if record["source_binding"]["state"] != "bound":
             raise ValueError("binding")

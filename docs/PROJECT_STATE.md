@@ -11,6 +11,13 @@ one-head Alembic checks. Post-merge main run 34150861778 passed the same
 Dataset B mapping, target-blind T13 roster and read-only T9 coverage UI are on
 shared main.
 
+Active isolated candidate `feat/draft-pricing-t6-recipe-20260908` is based on shared
+main `371f628e05298ae59514c401ec8b001d2c747f82`. It implements the first governed T6
+component/activity recipe-review UI and T9 bottom-up consumption rule described below.
+The approved cleanup removed formatter-only churn from five backed-up files while
+preserving semantic parity. Local affected regression, security and migration checks
+pass; commit, PR, CI and merge remain pending.
+
 ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic application
 with independently callable Scope, System Match, Estimate and Reporting capabilities,
 portable versioned artifacts and optional bounded AI. OpenClaw remains transitional;
@@ -20,7 +27,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | --- | --- | --- |
 | Scope | Manual graph; retained PDF page/entity review; Excel row/cell/image mapping; optional one-page text/image suggestions with explicit human save | Real-report accuracy, bulk/cross-page reconciliation, broader formats and richer physical relationships |
 | System Match | Saved candidates/notes, partial measured checks and client commands | Complete authorized applicability, corpus extraction and multi-source fact resolution |
-| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster and read-only T9 coverage; none changes an Estimate implicitly | Component/activity recipes, bottom-up/comparable calculations, holdout execution and calibrated proposals |
+| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review and read-only T9 coverage; none changes an Estimate implicitly | Actual bottom-up/comparable calculations, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
 | ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals | Real OAuth/HTTPS linking; report intake and A/B profile commands lack client parity |
@@ -147,7 +154,7 @@ It stores a commitment to each mapped row and target field, not the price value.
 Unchanged inventory replay, changed inputs, stale dependencies, foreign access and
 corrupt stored bytes fail closed. History shows current versus stale, and exact JSON can
 be downloaded. Migration `0044_draft_pricing_evaluation_rosters` is additive, refuses
-destructive downgrade and is the single Alembic head.
+destructive downgrade and remains the shared-main head before candidate migration 0045.
 
 This remains a split-governance workflow, not evaluation execution. It does not read or
 reveal target prices, select features, train or run a model, compute metrics, activate a
@@ -162,16 +169,45 @@ each result to the exact target, release and mapping hashes. Current mapped B ev
 produces direct support; ambiguous mappings require review; stale mappings remain stale;
 and targets without governed evidence report insufficient evidence.
 
-Current reviewed Dataset A observations are exposed as unlinked evidence at the coverage
-level. No target receives bottom-up A support because no versioned component/activity
-recipe currently connects those observations to a frozen technical requirement. The
-service refuses corrupt mapping envelopes and does not infer a relationship from names,
-prices or mutable technical JSON.
+Current reviewed Dataset A observations are exposed as unlinked evidence until an
+authorised reviewer connects them to a frozen recipe requirement. T9 grants
+`bottom_up_a_support` only when every frozen requirement has a latest current, confirmed,
+complete link. Missing, provisional, unresolved, stale or corrupt links do not qualify;
+stale or ambiguous Dataset B evidence still forces review. The service does not infer a
+relationship from names, prices or mutable technical JSON.
 
 The pricing page renders the same ordered service result and provides an exact canonical
 JSON download. Both declare all price calculation, proposal, library, Estimate, technical,
-evaluation, deployment and release effects false. No database migration or new
-orchestration dependency was added.
+evaluation, deployment and release effects false. PR #224 added no migration; the T6
+linkage described next uses additive migration 0045 and adds no orchestration dependency.
+
+## Active T6 component/activity recipe-review candidate
+
+New technical publications use manifest v4 and freeze bounded component/labour source
+fields plus stable individually addressable requirements. Existing v3 manifests remain
+readable and byte-compatible but correctly report that no frozen recipe is available.
+Both pricing and system-match readers require v4 records to contain a valid recipe and
+forbid recipe injection into v3 records. Invalid or oversized recipe shapes fail
+publication.
+
+An authorised pricing reviewer with technical read access can open a target from T9,
+select one frozen component or activity requirement, select up to three current reviewed
+Dataset A observations, and record unit, quantity/yield or productivity basis, recovery
+boundary, evidence state, unresolved fields and reason. Preview performs no write.
+The page exposes each frozen source value/path/hash and the selected observation identity
+and hashes before save.
+Explicit save locks and rechecks every dependency, appends immutable canonical JSON, and
+supports reopen/history and exact download. Foreign, changed, stale, replayed and corrupt
+inputs fail closed. Canonical recipe JSON rejects non-finite values; confirmed links
+require confirmed observations; authority-effect flags are isolated from caller mutation;
+and retained review time is bound to the stored row. Migration
+`0045_draft_pricing_recipe_links` is additive and refuses
+destructive downgrade.
+
+The link records evidence and interpretation only. It calculates no price, activates no
+library, changes no Estimate, approves no technical applicability, runs no evaluation and
+releases no output. Representative real recipe meanings, yields, productivity and recovery
+rules remain unvalidated.
 
 ## Verification checkpoint
 
@@ -249,6 +285,23 @@ orchestration dependency was added.
 - Post-merge main run 34150861778 on
   `75817f04f4ff5433b7cfc348daf8454a6b243b3d` passed 1,877 tests, full Ruff,
   Mypy on 212 source files, Bandit and the migration-head check.
+- Active T6 candidate local evidence after the approved cleanup: **130 affected tests
+  passed in 267.31 seconds** on the disposable PostgreSQL database, including technical
+  release v4/v3 compatibility, recipe contract/service, authenticated TestClient UI, T9
+  completeness/precedence, migration packaging and deployment lineage. PostgreSQL
+  lifecycle tests exercised locking, access, replay, staleness, timezone/timestamp
+  binding, confirmed-source certainty, canonical finite numbers, immutable effects,
+  invalid-recipe no-write publication, early combined recipe-count rejection, v3/v4
+  recipe-presence coupling in both readers, visible exact review evidence and corrupt
+  bytes/evidence.
+  Repository Ruff, targeted Mypy, Bandit, `git diff --check` and the single Alembic head
+  `0045_draft_pricing_recipe_links` passed. AST comparison confirmed the five restored
+  files matched the pre-cleanup T6 semantics after cleanup; a later CI regression then
+  deliberately limited strict recipe-presence coupling to v3/v4 so legacy v2 releases
+  remain readable. Repository-wide Mypy remains locally blocked
+  by pre-existing missing ReportLab/PyYAML stubs; the full pytest run was stopped at 11%
+  without failures because its projected runtime was about one hour. Publication and CI
+  are not yet evidence.
 
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,
@@ -262,14 +315,14 @@ B identity mappings, immutable target-blind T13 rosters and deterministic T9 cov
 Those records have no downstream authority. The roster freezes the implemented v1 split
 policy, but its synthetic lineage derivation and fixed assignment cycle have not been
 accepted against representative real data. There is no commercial activation or
-versioned component/activity recipe, bottom-up/comparable calculation, holdout execution,
+actual bottom-up/comparable calculation, holdout execution,
 calibrated confidence or production release.
 
-The main dependency exposed by T9 is deliberate: `TechnicalVariant` has mutable
-`component_requirements` and `labour_requirements`, while the current v3 technical
-release snapshot omits both. Reading those fields directly would imply a costing basis
-was released when it was not. A forward-compatible recipe/claim contract and explicit
-human review must freeze that basis before Dataset A evidence can support a target.
+The candidate resolves the first T9 dependency with a forward-only v4 release snapshot
+and explicit human recipe-link review. It does not backfill v3 releases or turn mutable
+technical JSON into historical approval. Remaining T6 breadth is representative recipe
+semantics, richer units, more than three observations in the current UI, activation and
+package membership.
 
 Real A/B workbook layouts, ownership, redistribution rights, price meanings, tax/date/
 inclusion semantics and supported record counts have not been verified. The current
@@ -301,12 +354,11 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Add the first bounded T6 recipe-review interaction. Freeze one technical target's
-   explicit component or labour/activity requirement in a versioned artifact, then let
-   an authorised human link it to current reviewed Dataset A observations with units,
-   quantity/productivity basis, recovery boundary, exact hashes and unresolved fields.
-   Do not calculate or approve a price.
-2. Validate the roster grouping/split policy and parser capacity against authorised
+1. After this candidate is cleaned, published and merged, add the first bounded T10
+   bottom-up proposal preview. Consume only complete current T6 links, show every
+   component/activity calculation and withheld input, and remain read-only with no
+   Estimate, approval, library, evaluation or release effect.
+2. Validate the T6 recipe meanings and roster grouping/split policy against authorised
    representative Dataset B files before any evaluation execution or scale claim.
 3. Perform a real-process browser/restart/exact-download check for the Dataset B mapping,
    T13 roster and T9 coverage UI when browser control is available; keep TestClient proof
