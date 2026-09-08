@@ -18,6 +18,9 @@ Verified 2026-09-09.
 - Current branch: `docs/reconcile-quantity-basis-merge-20260909`, based exactly on
   the PR #233 merge commit. Its only intended changes reconcile the four durable
   documents from candidate language to the merged state and record the CI blocker.
+- PR #234 is open for that documentation reconciliation. Its required Python validation
+  also executed zero steps and failed with the same GitHub account billing/spending
+  annotation, so it must remain unmerged until Actions availability is restored.
 - The recovery root `C:\CLASSIFIRE` remains on
   `gpt/phase8-linked-original-images` at `de0cc5a` with extensive staged,
   unstaged, conflicted and untracked recovery material. It was not edited, reset,
@@ -127,7 +130,7 @@ defects without inventing commercial truth.
 
 **Prerequisites:** inspect `AGENTS.md`, `docs/GOAL.md`, Git/worktrees, current
 `origin/main`, open PRs/checks and the four project documents before editing. First
-verify whether the documentation reconciliation branch/PR and main run 34281851774 were
+verify whether documentation PR #234 and main run 34281851774 were
 completed after GitHub Actions billing was restored. Never bypass required checks.
 Use a fresh current-main worktree, preserve the recovery root and unrelated changes,
 and use synthetic data plus local PostgreSQL/ClamAV boundaries only.
@@ -160,7 +163,7 @@ required CI and merge only where safe.
 > Continue CLASSIFIRE from verified repository state. Inspect AGENTS.md, docs/GOAL.md,
 > Git/worktrees, origin/main, open PRs/checks and the four durable project documents before
 > editing; preserve the conflicted C:\CLASSIFIRE recovery root and unrelated changes.
-> Confirm PR #233 is on main and reconcile the open documentation PR plus failed
+> Confirm PR #233 is on main and reconcile open documentation PR #234 plus failed
 > zero-step main run 34281851774 after GitHub Actions billing is restored; never bypass
 > required checks. Then use a fresh current-main worktree for the highest-value unblocked
 > task: a synthetic real-process browser/restart/exact-download proof of the existing
