@@ -2,7 +2,7 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.37 - governed Scope-bound project quantities.
+**Architecture version:** 5.38 - governed quantities plus measured B/T9/T13 browser lifecycle.
 
 **Verified shared baseline:** `720de41fc828f933107436d70c00ac410feafef7` on
 `origin/main`. Shared main includes deterministic read-only T9 coverage, the governed
@@ -1724,6 +1724,15 @@ change, technical approval, background job or release. Representative real data 
 validate the grouping/split policy before the first access-separated evaluation run.
 Until then there is no representative-data-validated roster, hidden-target separation,
 evaluation run, metric, calibration or approved threshold.
+
+Follow-up real-process Chrome 152 verification used the actual FastAPI/Jinja UI and a
+fresh process/browser restart. It saved three mapped B rows and one unmatched row, derived
+three direct-B coverage targets, saved one target-blind group in each split, reopened every
+current record and reproduced all mapping, roster and coverage bytes exactly. Estimator
+mapping/coverage/roster writes returned HTTP 403. No pricing-library activation, canonical
+Estimate, prediction or evaluation occurred. This verifies the implemented interface and
+persistence lifecycle with synthetic evidence; it does not validate representative B
+semantics, split suitability, scale, malware scanning or model accuracy.
 
 ### Implemented T9 coverage, T6 recipe review and governed T10 quantities
 

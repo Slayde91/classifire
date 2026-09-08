@@ -1,4 +1,4 @@
-# CLASSIFIRE Project State
+﻿# CLASSIFIRE Project State
 
 ## Evidence-based current snapshot
 
@@ -394,6 +394,32 @@ user-supplied file at SHA-256
   source files, Bandit and the single Alembic-head check on
   `ca875437fd1d7ab8701117e0c0f1a381efc56300`.
 
+- Follow-up real-process Chrome 152 UAT closed the combined visual/restart gap for
+  Dataset B mapping, T13 roster and T9 coverage. A loopback FastAPI process and dedicated
+  PostgreSQL database used one synthetic four-row B workbook: an administrator previewed
+  and saved three exact mapped rows and one explicit unmatched row; coverage reported
+  three direct-B targets; the roster placed one independent group in each of training,
+  validation and holdout and excluded the unmatched row. No prediction or evaluation ran.
+- The estimator received HTTP 403 for mapping, coverage and roster mutation. Coverage and
+  both save previews stated that no write had occurred. Final state contained four mapping
+  records and one roster, with zero activated pricing-library records and zero canonical
+  Estimates. Three focused PostgreSQL UI tests passed.
+- A fresh application process and fresh Chrome profile reopened all four current mappings
+  and the current roster. Mapping SHA-256 values remained
+  `115e0b1811b696d087d1af25ba764ac9794993ec8fdf516eb245b5a04fc44930`,
+  `f800681590aa2a6fa1153bad59e959ed3fb59f90777d1f85c0e12e09a8987cc8`,
+  `48a628235ea5396efa90bac869b05cdffa8798ed7134a14a2fa3f5f057361dac`
+  and `cf3c6341a26362f7cfca0468bbf43e62565cfe5c67e9bec2c4e13b792089945e`.
+  Roster SHA-256 remained
+  `96dd273e2cf09f9b1f86c960558a3cd0deeaa668f5f793e3c87673e6a0e919b6`; recomputed
+  coverage remained byte-identical at
+  `6dfdcea053bfa30f5373a2299894442a8a43f89381ed5497d5d5a68756fd2ac4`.
+  Served logo bytes matched the supplied logo at
+  `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+  Screenshots were visually inspected and server logs contained no traceback, exception,
+  error or HTTP 500. The unavailable local ClamAV service was replaced only for seeding
+  this synthetic source; malware-scanner integration was outside this browser proof.
+
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,
 logs, database state and workbooks stay under `.tmp` and are not repository source.
@@ -438,10 +464,10 @@ The product has a growing, testable standalone Draft workflow with shared servic
 exact evidence, explicit uncertainty and narrow user-visible increments. PRs #224/#227/#229 reuse
 the existing pricing UI, mapping integrity checks, technical-release governance and
 canonical JSON/hash approach without creating another importer, rules engine, agent
-fleet, database or prediction path. T10's actual browser, download and restart lifecycle
-is now proven with synthetic data. The merged quantity slice reuses those same
-boundaries and adds one purpose-specific append-only table rather than another pricing
-engine.
+fleet, database or prediction path. T10's actual browser/download/restart lifecycle and the
+combined Dataset B mapping/T9 coverage/T13 roster lifecycle are now proven with synthetic
+data. The merged quantity slice reuses those same boundaries and adds one purpose-specific
+append-only table rather than another pricing engine.
 
 The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
 46 unstaged tracked modifications, 14 staged additions and four DU conflicts. Its
@@ -451,12 +477,10 @@ no root file was staged, reset, cleaned, resolved or published.
 ## Recommended Next Actions
 
 1. Restore GitHub Actions account/billing availability, then rerun main workflow
-   34281851774 so the exact merge commit receives post-merge validation.
-2. Run a real-process browser/restart/exact-download check for the Dataset B mapping,
-   T13 roster and T9 coverage UI using synthetic data.
-3. Validate the T6 recipe meanings and roster grouping/split policy against authorised
+   34281851774 and PR #234 validation so exact shared commits receive required CI.
+2. Validate the T6 recipe meanings and roster grouping/split policy against authorised
    representative Dataset B files before any evaluation execution or scale claim.
-4. Add governed yield/productivity, waste/pack and recovery inputs only after the
+3. Add governed yield/productivity, waste/pack and recovery inputs only after the
    representative quantity and recipe meanings are accepted; never parse descriptive
    notes or double count.
 

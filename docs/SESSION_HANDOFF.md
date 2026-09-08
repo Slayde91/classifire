@@ -21,6 +21,9 @@ Verified 2026-09-09.
 - PR #234 is open for that documentation reconciliation. Its required Python validation
   also executed zero steps and failed with the same GitHub account billing/spending
   annotation, so it must remain unmerged until Actions availability is restored.
+- A separate clean current-main worktree
+  `C:\CLASSIFIRE\.tmp\draft-pricing-b-roster-ui-uat-20260909` contains no tracked
+  change. It was used only to execute the synthetic Dataset B/T9/T13 browser proof.
 - The recovery root `C:\CLASSIFIRE` remains on
   `gpt/phase8-linked-original-images` at `de0cc5a` with extensive staged,
   unstaged, conflicted and untracked recovery material. It was not edited, reset,
@@ -57,6 +60,14 @@ This increment adds no Estimate mutation, technical approval, pricing-library
 activation, evaluation, canonical physical write, release, AI or OpenClaw authority.
 Yield, productivity, waste, pack, recovery, margin, comparables and
 multi-observation arithmetic remain absent.
+
+The existing Dataset B mapping, T9 coverage and T13 roster UI has now also passed a
+synthetic real-process Chrome 152 journey. The administrator saved three mapped rows and
+one unmatched row; coverage showed three direct-B targets; the roster assigned one group
+to each required split and excluded the unmatched row. Estimator mutation attempts
+returned HTTP 403. A fresh server and browser reopened the records and returned identical
+mapping, roster and coverage bytes. This is UI/persistence proof, not representative-data
+semantic validation or evaluation execution.
 
 Open issues:
 
@@ -117,63 +128,81 @@ The proposal JSON is 3,793 bytes with SHA-256
 The supplied logo rendered and matches the served asset at SHA-256
 `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
 
+Dataset B/T9/T13 real-process browser evidence used a dedicated loopback PostgreSQL
+UAT database and synthetic four-row workbook. Four mapping JSON files, one roster and one
+coverage artifact were byte-identical after a server restart and fresh Chrome profile.
+Three focused PostgreSQL UI tests passed in 40.35 seconds. Screenshots were visually
+inspected; the supplied logo matched SHA-256
+`fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`; fully flushed
+server logs contained no traceback, exception, error or HTTP 500. The final database held
+four mapping rows, one roster, zero pricing-library records and zero canonical Estimates.
+Receipts/screenshots remain outside Git at
+`C:\CLASSIFIRE\.tmp\b-roster-browser-uat-20260909-081927-46817af3`.
+The local ClamAV service was unavailable, so only synthetic source seeding used an explicit
+clean-scan stub; the browser proof does not cover malware-scanner integration.
+
 ## Start Here / Next Session
 
-**First task:** run a synthetic real-process browser/restart/exact-download proof for
-the existing Dataset B mapping, T13 roster and T9 coverage workflow.
+**First task:** validate the governed T6 recipe meanings and T13 grouping/split policy
+against authorised representative Dataset B source files.
 
-**Why this is next:** representative validation of T6 recipe meanings and the T13
-grouping/split policy is strategically higher, but it is blocked until authorised
-representative A/B files, usage rights and accepted semantics are available. The browser
-proof is the highest-value unblocked prototype task and can expose real UI/lifecycle
-defects without inventing commercial truth.
+**Why this is next:** synthetic UI, persistence, permission and restart behavior is now
+proven. It cannot tell CLASSIFIRE what real workbook fields mean, whether recipes recover
+the correct work, or whether related price observations stay in one split. Those facts
+must be accepted before evaluation or broader yield/productivity arithmetic is safe.
 
-**Prerequisites:** inspect `AGENTS.md`, `docs/GOAL.md`, Git/worktrees, current
-`origin/main`, open PRs/checks and the four project documents before editing. First
-verify whether documentation PR #234 and main run 34281851774 were
-completed after GitHub Actions billing was restored. Never bypass required checks.
-Use a fresh current-main worktree, preserve the recovery root and unrelated changes,
-and use synthetic data plus local PostgreSQL/ClamAV boundaries only.
+**Prerequisites:** inspect `AGENTS.md`, `docs/GOAL.md`, Git/worktrees, `origin/main`, open
+PRs/checks and these four documents before editing. Confirm the representative files are
+authorised for local use and document their ownership, redistribution limits, price basis,
+tax/date/inclusion meaning, versions and known relationships. Verify PR #234 and main run
+34281851774 after GitHub Actions billing is restored; never bypass required checks. Use a
+fresh current-main worktree, preserve the recovery root and unrelated changes, and never
+commit customer files or confidential values.
 
-**Relevant components:** `src/classifire/draft_pricing_ui.py`,
-`src/classifire/templates/draft_pricing.html`,
+**Relevant components:** `docs/TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md`,
+`src/classifire/services/draft_pricing_contract.py`,
 `src/classifire/services/draft_pricing_intake.py`,
-`src/classifire/services/draft_pricing_coverage.py`,
-`src/classifire/services/draft_pricing_evaluation_rosters.py`, their
-contracts/models/migrations, and focused B-mapping/roster/coverage UI tests.
+`src/classifire/services/draft_pricing_recipes.py`,
+`src/classifire/services/draft_pricing_evaluation_contract.py`,
+`src/classifire/services/draft_pricing_evaluation_rosters.py`, T6/T7/T13 tests and the
+four durable project documents.
 
-**Validation:** prove actual login, coverage navigation, B mapping preview/save/history/
-download, roster preview/save/history/download, permission denial, exact hashes, server
-restart and byte-identical downloads. Visually inspect screenshots and the correct logo.
-Run affected PostgreSQL tests, Ruff, targeted Mypy, Bandit, Alembic one-head and diff
-checks. Broaden tests only if code changes or failures justify it.
+**Validation:** inventory and hash the authorised sources outside Git; inspect workbook
+structure and meanings; map representative records through current profile/mapping/recipe
+contracts; test whether version, alias, source-derivation and near-duplicate relationships
+form leakage-safe connected groups; verify that all required splits can be populated
+without using target prices. If evidence proves a contract defect, implement the smallest
+shared-core correction and add regression tests. Run focused PostgreSQL tests, Ruff,
+targeted Mypy, Bandit, Alembic one-head and diff checks; broaden only when changes warrant.
+Do not run a holdout evaluation or activate commercial data in this task.
 
-**Blockers:** do not use customer files, claim representative validation, run holdout
-evaluation, activate commercial data, deploy, retire OpenClaw or create canonical/release
-state. GitHub publication cannot complete while Actions jobs cannot start.
+**Blockers:** authorised representative A/B files, usage rights and accepted commercial
+semantics are not present in the verified repository. GitHub publication also cannot
+complete while Actions jobs cannot start.
 
-**Definition of done:** the real browser proves the existing B mapping, roster and
-coverage lifecycle across restart with exact auditable artifacts, or the smallest proven
-defect is fixed and the same proof then passes. Retain evidence outside Git, reconcile
-durable documents, classify unrelated changes, and continue through commit, push, PR,
-required CI and merge only where safe.
+**Definition of done:** a traceable representative-data review records each source's
+identity, commercial meaning and lineage; confirms or corrects each frozen T6 recipe and
+T13 connected-group/split rule; leaves unsupported meanings unresolved; proves no target
+price influenced assignment; and passes the affected tests. Update durable documents,
+classify local changes and continue through commit, push, PR, required CI and merge only
+where safe.
 
 ## Recommended Prompt for New Session
 
 > Continue CLASSIFIRE from verified repository state. Inspect AGENTS.md, docs/GOAL.md,
 > Git/worktrees, origin/main, open PRs/checks and the four durable project documents before
 > editing; preserve the conflicted C:\CLASSIFIRE recovery root and unrelated changes.
-> Confirm PR #233 is on main and reconcile open documentation PR #234 plus failed
-> zero-step main run 34281851774 after GitHub Actions billing is restored; never bypass
-> required checks. Then use a fresh current-main worktree for the highest-value unblocked
-> task: a synthetic real-process browser/restart/exact-download proof of the existing
-> Dataset B mapping, T13 roster and T9 coverage UI. Representative recipe/grouping
-> validation remains blocked until authorised A/B files and accepted rights/semantics
-> exist. Reuse existing services and PostgreSQL/ClamAV boundaries; make only the smallest
-> correction a failed journey proves necessary. Prove login, navigation, preview/save/
-> history/download, permission denial, hashes, restart persistence, byte-identical JSON
-> and the supplied CLASSIFIRE logo. Run affected PostgreSQL tests, Ruff, targeted Mypy,
-> Bandit, Alembic one-head and diff checks. Do not invent commercial rules, use customer
-> evidence, run evaluation, activate/release data, deploy or change OpenClaw. Update
-> durable docs from evidence and continue through classification, commit, push, PR,
-> required CI and merge where safe.
+> Confirm PR #234 and failed zero-step main run 34281851774 after GitHub Actions billing is
+> restored; never bypass required checks. The highest-value task is to validate current T6
+> recipe meanings and T13 connected-group/split rules against authorised representative
+> Dataset B files, because synthetic browser/restart proof is complete but cannot establish
+> commercial meaning or leakage-safe real-data grouping. First confirm local-use rights and
+> record source identity, versions, price/tax/date/inclusion meaning and lineage outside
+> Git; never commit customer files or confidential values. Reuse current pricing contracts,
+> ingestion, recipes and roster services. Keep unknowns unresolved, never use target prices
+> for assignment, and do not run evaluation or activate data. If evidence proves a defect,
+> make the smallest shared-core correction with regression tests. Run focused PostgreSQL
+> tests, Ruff, targeted Mypy, Bandit, Alembic one-head and diff checks. Update durable docs
+> from evidence and continue autonomously through classification, commit, push, PR,
+> required CI and merge where safe. If authorised files or rights are absent, do not invent
+> them; report that exact blocker and preserve the verified state.
