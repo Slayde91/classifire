@@ -2,8 +2,12 @@
 
 ## Evidence-based current snapshot
 
-Verified 2026-09-09 from the clean isolated T10 worktree based on shared main
-`6b4b9c821f7a55d0f88e365b462c26bba28d5d53`, merge commit for documentation PR #228.
+Verified 2026-09-09 on shared main
+`6046376c0f29252527b31c9cd8ffe00eddcc5d76`, merge commit for PR #229.
+Exact PR head `af01adefea9e03fdee298f0b2bc7289dd17492b9` passed run
+34241209469 with 1,915 tests, full Ruff, full Mypy, Bandit and one-head Alembic checks.
+Post-merge main run 34243723658 passed the same repository gates on the exact merge
+commit, including 1,915 tests.
 Exact PR head `069a2a82f5296577fa19bceaa730518eef415efc` passed run
 34223161569 with 1,913 tests, Ruff, Mypy on 216 source files, Bandit and
 one-head Alembic checks. Post-merge main run 34224663080 passed the same 1,913-test
@@ -22,7 +26,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | --- | --- | --- |
 | Scope | Manual graph; retained PDF page/entity review; Excel row/cell/image mapping; optional one-page text/image suggestions with explicit human save | Real-report accuracy, bulk/cross-page reconciliation, broader formats and richer physical relationships |
 | System Match | Saved candidates/notes, partial measured checks and client commands | Complete authorized applicability, corpus extraction and multi-source fact resolution |
-| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review and read-only T9 coverage. The active T10 candidate adds one read-only, explicit-quantity bottom-up sell-price preview; none changes an Estimate implicitly. | Governed scope quantities, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
+| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage and one bounded T10 explicit-quantity bottom-up sell-price preview; none changes an Estimate implicitly | Governed scope quantities, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
 | ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals | Real OAuth/HTTPS linking; report intake and A/B profile commands lack client parity |
@@ -204,9 +208,9 @@ library, changes no Estimate, approves no technical applicability, runs no evalu
 releases no output. Representative real recipe meanings, yields, productivity and recovery
 rules remain unvalidated.
 
-## Active T10 bottom-up proposal candidate
+## Implemented bounded T10 bottom-up proposal preview
 
-The isolated T10 candidate adds a deterministic service and visible reviewer screen for
+PR #229 adds a deterministic service and visible reviewer screen for
 targets that T9 marks `bottom_up_a_support`. A reviewer enters an explicit numeric
 quantity for each frozen recipe requirement. CLASSIFIRE then reloads current coverage,
 recipe links and exact reviewed Dataset A rows, and shows quantity x unit sell rate with
@@ -221,8 +225,8 @@ notes are never parsed into numbers. Cost/list/quoted/actual meanings, multiple 
 yield, productivity, waste, pack rounding, margin and project-specific applicability are
 withheld or remain future work. The service performs no database write and grants no
 Estimate, library, technical, evaluation or release authority. Thirteen focused T6/T9/
-T10 PostgreSQL tests, Ruff, targeted Mypy and Bandit pass locally; full repository CI,
-publication and merge remain pending.
+T10 PostgreSQL tests passed locally. Exact-head GitHub CI passed 1,915 tests plus full
+Ruff, Mypy, Bandit and Alembic checks before merge.
 
 ## Verification checkpoint
 
@@ -373,7 +377,8 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Review, publish and merge the bounded T10 candidate after full repository CI passes.
+1. Perform a real-process browser/restart/exact-download check of the merged T10 UI with
+   synthetic data and fix any visible or lifecycle defect before expanding calculation breadth.
 2. Add a governed numeric basis for project quantity, yield/productivity, waste/pack and
    recovery so T10 can expand beyond one sell-rate row per requirement without parsing
    descriptive notes or double counting.
