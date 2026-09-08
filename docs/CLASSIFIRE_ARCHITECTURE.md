@@ -2,12 +2,12 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.34 - merged read-only bottom-up proposal prototype.
+**Architecture version:** 5.35 - browser-proven read-only bottom-up proposal prototype.
 
-**Verified shared baseline:** `6046376c0f29252527b31c9cd8ffe00eddcc5d76` on
-`origin/main`. Shared main includes deterministic read-only T9 coverage and the
-governed T6/v4 recipe-review increment after the A/B profile, review, Dataset A
-observation, Dataset B mapping and T13 roster increments.
+**Verified shared baseline:** `add9ce1ad75f332eff307131c3f69bda9f5d8055` on
+`origin/main`. Shared main includes deterministic read-only T9 coverage, the governed
+T6/v4 recipe-review increment and the bounded T10 preview after the A/B profile, review,
+Dataset A observation, Dataset B mapping and T13 roster increments.
 [PROJECT_STATE.md](./PROJECT_STATE.md) owns measured validation/publication.
 No AI or OpenClaw path is used by this increment. Evaluation execution, commercial
 activation, broader estimation, real ChatGPT linking and production readiness remain open.
@@ -50,6 +50,14 @@ quantity x rate calculation and a hash-bound exact JSON download. Any incomplete
 incompatible line withholds the whole total. No Estimate, approval, activation,
 technical, evaluation or release state changes. **Migration:** none; the preview is
 recomputed and read-only.
+
+**Current T10 hardening candidate:** keep the PR #229 service and contract unchanged,
+allow the browser to submit a blank quantity so the deterministic backend can render its
+fail-closed reason, and show the dependency hashes already present in the proposal.
+**Reason:** actual Chrome UAT found that native HTML validation hid the governed withheld
+result and the page omitted useful audit detail. **Consequences:** no domain, schema,
+migration, pricing or authority change. Real Chrome 152, exact download, permission and
+server-restart checks now prove the bounded presentation lifecycle with synthetic data.
 
 **Prior bounded change (PR #222):** an append-only T13 evaluation roster freezes exact
 eligible/excluded B inventory and target-blind connected-group splits before later model
@@ -1023,16 +1031,18 @@ current reviewed A observations. T9 reports bottom-up A support only when every 
 requirement has a latest current confirmed link with no unresolved fields; otherwise it
 abstains or requires review.
 
-This coverage boundary neither activates a semantic library nor derives a price or
-component/recovery ledger. The planned extension uses source A for component/
+This coverage boundary neither activates a semantic library nor creates an approved
+component/recovery ledger. PR #229 now derives one bounded read-only explicit-quantity
+sell-price proposal from source A. The planned extension broadens source A for component/
 material/labour/service evidence and source B for complete-system observations and
-comparables, then adds bottom-up, comparable and combined proposal states. Keep method,
+comparables, then broadens bottom-up and adds comparable and combined proposal states. Keep method,
 coverage, evidence quality, staleness and approval as separate fields; one display label
 must not hide conflicting prices or missing scope.
 
-The planned deterministic estimation service accepts explicit technical/recipe versions,
-A/B dataset versions, reviewed mappings and a declared commercial basis. It produces a
-proposal and stops. Bottom-up costing sums supported quantities times normalized rates
+The deterministic T10 service already accepts explicit technical/recipe versions,
+reviewed mappings, a declared sell-price basis and preview-only quantities. It produces a
+proposal and stops. The next planned extension governs quantity against an exact saved
+Scope revision and frozen requirement. Broader bottom-up costing sums supported quantities times normalized rates
 and evidenced labour/activity requirements, with separate material/labour/other amounts;
 missing quantity, yield, productivity, unit or cost/sell basis withholds that component.
 Comparable pricing first filters by admissible system/configuration and compatible unit,
@@ -1742,6 +1752,13 @@ produces an explicit withheld line and no total. The HTML adapter and hash-check
 download call the same service. This prototype adds no table, background job, agent or
 canonical write. Multi-observation recipes and governed numeric yield/productivity,
 waste/pack, recovery and margin rules remain proposed work.
+
+Real Chrome 152 UAT now proves the UI can reach this service from pricing coverage,
+display a withheld blank quantity, show exact dependency hashes, calculate
+`2 each x $300 = $600.00`, deny a lower-privilege estimator, download canonical JSON
+and reproduce byte-identical output after a server restart. The presentation hardening
+removes only the browser-required flag and surfaces existing hashes; the service, schema
+and permission boundary remain unchanged.
 
 ### Implemented current increment: independent scope-and-system reports (P4b)
 

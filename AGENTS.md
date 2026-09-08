@@ -26,9 +26,11 @@ Use GOAL.md and the verified project state to select the next visible increment;
   adds reviewed Dataset B mapped/unmatched/ambiguous system identity, and PR #222
   adds the first persisted target-blind T13 roster UI. PR #224 adds the first
   deterministic no-write T9 coverage-status UI and exact JSON for every active
-  technical target. PR #227 implements the first governed T6 recipe-link UI and strict
-  forward v4 recipe snapshots. Build a read-only T10 bottom-up proposal preview next.
-  Prediction and holdout execution remain later.
+  technical target. PR #227 implements governed T6 recipe links and forward v4 recipe
+  snapshots. PR #229 implements the first read-only T10 bottom-up proposal preview;
+  real Chrome/restart UAT has also proven its visible fail-closed and exact-download
+  lifecycle. Build the first governed project-quantity basis next. Prediction and
+  holdout execution remain later.
 Inspect current evidence before resuming; never rebuild completed prototype workflows.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
@@ -120,12 +122,13 @@ the first reviewed B system/configuration mapping path against a source-bound ac
 technical release. PR #222 persists a target-blind roster from current mapped B
 records, excludes unmatched/ambiguous/stale records, and fails visibly when fewer than
 three independent groups exist. Reuse that frozen boundary for later evaluation.
-PR #224 adds read-only T9 coverage over every active technical target. The isolated T6
-candidate adds forward v4 frozen recipes, immutable reviewed links and guarded bottom-up
-A support only when every requirement is current, confirmed and complete. Finish its
-cleanup, validation and publication first. Then build one read-only T10 bottom-up
-proposal preview, preserving T-stage dependencies without treating the complete target
-schema, bulk corpus or model as one task.
+PR #224 adds read-only T9 coverage over every active technical target. PR #227 adds
+forward v4 frozen recipes, immutable reviewed links and guarded bottom-up A support only
+when every requirement is current, confirmed and complete. PR #229 adds one read-only
+T10 bottom-up proposal preview and its real-browser lifecycle is proven. Extend it next
+with one governed project-quantity basis bound to an exact saved Scope revision and
+frozen requirement, preserving T-stage dependencies without treating the complete
+target schema, bulk corpus or model as one task.
 
 - Preserve separate dataset identities: A `pricelist.xlsx` is general products,
   materials, labour and services; B `pricing_library.xlsx` is Firefly system prices.

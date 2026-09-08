@@ -3,19 +3,16 @@
 ## Verified branch and project context
 
 Verified 2026-09-09 from the clean isolated worktree
-`C:\CLASSIFIRE\.tmp\docs-pr229-final-state-20260909`.
+`C:\CLASSIFIRE\.tmp\t10-real-browser-uat-20260909`.
 
-- Shared `origin/main` is `6046376c0f29252527b31c9cd8ffe00eddcc5d76`, the
-  merge commit for PR #229.
-- PR #229 head `af01adefea9e03fdee298f0b2bc7289dd17492b9` passed GitHub run
-  34241209469: 1,915 tests, full Ruff, full Mypy, Bandit and one Alembic head.
-- Post-merge main run 34243723658 passed the same gates and 1,915 tests on the exact
-  merge commit.
-- PR #227 head `069a2a82f5296577fa19bceaa730518eef415efc` passed GitHub run
-  34223161569: 1,913 tests, Ruff, Mypy on 216 source files, Bandit and one Alembic
-  head.
-- Post-merge main run 34224663080 passed the same 1,913-test and repository-gate
-  workflow on the exact merge commit.
+- Current branch: `feat/t10-real-browser-uat-20260909`, created from
+  `origin/main` at `add9ce1ad75f332eff307131c3f69bda9f5d8055` (PR #230 merge).
+- PR #230 run 34246140519 passed 1,915 tests and every repository gate.
+  Post-merge main run 34248498975 passed the same gates on the exact merge commit,
+  including 1,915 tests and Mypy on 217 source files.
+- PR #229 previously merged the bounded T10 read-only bottom-up proposal. Its
+  exact-head run 34241209469 and post-merge run 34243723658 passed 1,915 tests and
+  all repository gates.
 - The accepted architecture remains a deterministic modular core with independently
   callable Scope, System Match, Estimate and Reporting capabilities, portable versioned
   artifacts, bounded optional AI and transitional OpenClaw.
@@ -24,122 +21,124 @@ Verified 2026-09-09 from the clean isolated worktree
   with extensive staged, unstaged, conflicted and untracked recovery material. Do not
   reset, clean, resolve, broadly stage or publish from it.
 
-## Relevant changes and open issues
+## Relevant local changes and open issues
 
-PR #227 delivers the first governed T6 component/activity recipe-review interaction:
+This isolated branch contains one narrow T10 presentation hardening change:
 
-- new technical releases use v4 records containing bounded, hash-bound frozen recipe
-  requirements; v3 remains readable without fabricated recipe approval, and legacy v2
-  compatibility is preserved;
-- authorised reviewers can preview without writing, then explicitly save, reopen, list
-  and download immutable linked or unresolved outcomes;
-- each link binds the exact Draft, release, target, recipe, requirement, Dataset A source,
-  profile, decision, observation and row identities/hashes;
-- foreign, stale, changed, replayed, invalid and corrupt inputs fail closed;
-- migration `0045_draft_pricing_recipe_links` is additive and refuses destructive
-  downgrade;
-- T9 grants bottom-up A support only when every frozen requirement has a latest current,
-  confirmed and complete compatible link;
-- all price calculation, proposal, activation, Estimate, technical approval, evaluation,
-  deployment and release effects remain false.
+- the quantity input no longer uses browser-level `required`, allowing CLASSIFIRE's
+  deterministic backend to display the governed withheld reason for a blank quantity;
+- the result page now displays coverage, technical release, target, recipe-link and
+  observation hashes already present in the proposal;
+- the regression test proves blank-quantity withholding and every displayed dependency;
+- AGENTS.md, GOAL.md and the four project documents are reconciled to the verified state.
 
-The user-approved five-file cleanup is complete. The restored files matched the
-pre-cleanup Python AST at the cleanup checkpoint, and the final diff removed formatter
-churn. The later CI fix intentionally limits strict recipe-presence coupling to v3/v4 so
-legacy v2 releases remain readable.
+The service contract, arithmetic, database schema, migrations and authority boundaries
+are unchanged. T10 remains read-only: it changes no Estimate, library, technical approval,
+evaluation result or release state.
 
-PR #229 adds the first bounded T10 bottom-up proposal: explicit per-requirement
-quantities, one current confirmed `sell_price` observation per frozen requirement,
-deterministic line arithmetic, whole-result withholding, and hash-checked exact JSON.
-It is read-only and changes no Estimate or approval state.
-
-Open issues remain: representative recipe meanings, units, yields, productivity,
-recovery rules, source rights and scale are unverified; recipe links are not package
-members; T10 does not yet support governed scope quantities, multiple observations,
-waste/pack, margin or comparable methods. There is no
-commercial activation, evaluation run,
-calibration, deployment, OpenClaw retirement or production-readiness evidence. A visual
-browser/restart check for this UI has not been run.
+Open issues remain. Quantities are still one-off preview inputs and are not governed
+project records. T10 supports one current confirmed `sell_price` observation per frozen
+requirement, with no multi-observation selection, yield, productivity, waste, pack,
+recovery, margin or comparable method. Representative recipe semantics, actual source
+rights/layouts and T13 grouping remain unvalidated. There is no commercial activation,
+evaluation run, production deployment, OpenClaw retirement or production-readiness proof.
 
 ## Validation evidence
 
-- PR #229 passed 13 focused T6/T9/T10 tests against disposable PostgreSQL locally.
-- Exact-head run 34241209469 passed 1,915 tests and every repository gate.
-- Post-merge main run 34243723658 passed 1,915 tests and every repository gate on
-  `6046376c0f29252527b31c9cd8ffe00eddcc5d76`.
-- 130 affected tests passed in 267.31 seconds against the disposable PostgreSQL database.
-- The CI regression case plus the complete system-match test file passed 42 tests.
-- Repository Ruff passed.
-- Targeted Mypy passed on 11 changed source files.
-- Bandit passed across `src`.
-- Alembic reports one head: `0045_draft_pricing_recipe_links`.
-- `git diff --check` passed with only Git's line-ending notice for this document.
-- Exact PR-head GitHub run 34223161569 passed 1,913 tests and every repository gate.
-- Post-merge main run 34224663080 passed 1,913 tests and every repository gate on
-  `ca875437fd1d7ab8701117e0c0f1a381efc56300`.
-- A local full-suite pytest attempt was stopped at 11% without failure because its
-  projected runtime was about one hour; it is not a local full-suite pass.
+Real Chrome 152 UAT used only synthetic data in disposable PostgreSQL database
+`classifire_draft_t10_demo_20260909_v2` and the loopback application on port 8822.
+It proved:
 
-## Start Here / Next Session
+- reviewer login and navigation from pricing coverage to T10;
+- a blank quantity renders `Result: Withheld` and `quantity required`;
+- `2 each x $300 = $600.00` is shown with exact dependency identities and hashes;
+- a lower-privilege estimator receives HTTP 403;
+- canonical JSON downloads before and after server restart are byte-identical;
+- both 2,999-byte downloads have SHA-256
+  `53fa19cf9fdfc68ca504d4431edb4a73c05a5a7046bab88d1360e28b4f4aeac7`;
+- the embedded proposal SHA-256 is
+  `faca050aa216b559921b578b6f52cfc4f06cb855181c861beefeabe7e971dadf`;
+- browser screenshots were visually inspected and show the approved CLASSIFIRE logo;
+- server logs contain no traceback, exception, HTTP 5xx or application error.
 
-**First task:** perform one real-process browser/restart/exact-download UAT of the merged
-PR #229 T10 bottom-up proposal flow, and fix any defect found within that flow.
+The successful synthetic evidence is retained outside Git at
+`C:\CLASSIFIRE\.tmp\t10-browser-artifacts-20260909-v2`. The first database
+`classifire_draft_t10_demo_20260909` is retained as diagnostic evidence: its intentionally
+mis-shaped helper fixture produced two frozen requirements with only one link, and
+CLASSIFIRE correctly withheld the proposal.
 
-**Why this is next:** service and TestClient evidence prove the bounded calculation, but
-no human-visible browser run has yet proved that a user can find the control, complete the
-form, understand a withheld result, calculate an amount, download the exact JSON and
-repeat the result after an application restart. That proof is the shortest path to a
-working interactive prototype.
-
-**Prerequisites and blockers:** inspect `AGENTS.md`, `GOAL.md`, the four project documents,
-Git/worktrees, current `origin/main`, PR #229 and post-merge CI before editing. Use a new
-clean current-main worktree and synthetic disposable PostgreSQL data. Browser/GUI control
-and a runnable local CLASSIFIRE process are required for the visual part. Preserve the
-conflicted root and unrelated worktrees. Do not use customer evidence, deploy, release,
-change canonical records, relax permissions, or expand calculation semantics during UAT.
-
-**Relevant files/components:** `src/classifire/services/draft_pricing_bottom_up.py`,
-`src/classifire/draft_pricing_ui.py`, `src/classifire/templates/draft_pricing.html`,
-`tests/test_draft_pricing_bottom_up.py`, local startup/configuration and existing synthetic
-T6/T9 fixture builders.
-
-**Validation commands:**
+Focused T6/T9/T10 PostgreSQL validation passed **13 tests in 176.65 seconds**:
 
     $env:PYTHONPATH = Join-Path $PWD 'src'
     $env:CLASSIFIRE_POSTGRES_TEST_URL = 'postgresql+psycopg://classifire_test@127.0.0.1:15432/classifire_containment_test'
     $env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN = 'classifire-containment-test-drop-all'
-    $taskTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('pricing-t10-uat-' + [guid]::NewGuid())
+    $taskTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('pricing-t10-' + [guid]::NewGuid())
     C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -p no:cacheprovider --basetemp $taskTemp tests/test_draft_pricing_bottom_up.py tests/test_draft_pricing_coverage.py tests/test_draft_pricing_recipes.py
-    C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
-    C:\CLASSIFIRE\.venv\Scripts\python.exe -m mypy <changed source files>
-    C:\CLASSIFIRE\.venv\Scripts\python.exe -m bandit -q -r src
-    C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
-    git diff --check
 
-**Definition of done:** retained UAT evidence shows an authorised synthetic user can find
-T10 from pricing coverage, see missing quantities withheld, enter `2 each`, see the exact
-`2 x $300 = $600.00` sell-price calculation, inspect dependency identities, download
-canonical JSON whose hash matches, restart the local process, and reproduce the result.
-Unauthorised access still fails. Any in-scope defect is fixed and tested. If code changes,
-classify the diff and autonomously commit, push, open/update a PR, wait for passing CI,
-merge safely and verify the merge and post-merge CI. If the existing build passes without
-changes, record the exact runtime evidence in all four documents and publish that narrow
-documentation change through the same reviewed workflow.
+Ruff was accidentally pointed at the Jinja HTML template once; those syntax messages
+were a command misuse, not product failures. The correct Ruff target passed.
+Repository-wide Ruff passed, targeted Mypy passed on the T10 UI and service, Bandit
+passed across `src`, Alembic reports the single head
+`0045_draft_pricing_recipe_links`, and `git diff --check` passed. The disposable
+server and Chrome processes were stopped and loopback ports 8822/9223 were verified closed.
+
+## Start Here / Next Session
+
+**First task:** implement the first governed project-quantity basis used by T10.
+
+**Why this is next:** the browser-proven prototype can calculate an amount, but the user
+must retype a quantity every time. A retained quantity tied to the exact saved Scope and
+frozen recipe requirement is the smallest step that turns the calculation into a
+trustworthy project workflow. It is also the prerequisite for later yield, productivity,
+waste, pack and recovery logic.
+
+**Prerequisites and dependencies:** inspect repository and GitHub state before editing.
+Use a fresh clean worktree from current `origin/main`; preserve the conflicted root and
+unrelated worktrees. Reuse existing Draft ownership, revision, canonical JSON/hash,
+append-only review and pricing permission patterns. The quantity must bind to a selected
+saved Scope revision and exact frozen recipe requirement. Determine the supported
+quantity source from the actual Scope contract; never infer it from defect count, free
+text or recipe notes.
+
+**Relevant files/components:** `src/classifire/models.py`, existing additive Alembic
+migrations, `src/classifire/services/draft_pricing_bottom_up.py`,
+`src/classifire/services/draft_pricing_recipes.py`,
+`src/classifire/draft_pricing_ui.py`,
+`src/classifire/templates/draft_pricing.html`, Scope revision services/contracts,
+and the T6/T9/T10 tests.
+
+**Blockers/limits:** no representative customer quantities or approved conversion rules
+are available. Use synthetic data. Do not add yield, productivity, waste, pack, recovery,
+margin, comparables, AI, customer evidence, canonical release, deployment or OpenClaw
+changes in this slice.
+
+**Definition of done:** an authorised user can select a current saved Scope revision and
+frozen requirement, preview an explicit quantity/unit without writing, explicitly save an
+immutable hash-bound quantity record, reopen history after restart and download exact
+JSON. Foreign, stale, changed, replayed, missing or unit-incompatible dependencies fail
+closed without writes. T10 consumes only the latest current compatible saved basis and
+withholds otherwise. Existing manual preview behaviour remains understood and no
+Estimate or approval authority is added. Add focused service/UI/migration/permission/
+restart tests, visually inspect the browser flow, run applicable PostgreSQL tests, Ruff,
+targeted Mypy, Bandit, Alembic one-head and diff checks, then classify and publish safely.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from verified repository state. Inspect AGENTS.md, GOAL.md, the four
-> project documents, Git/worktrees, current origin/main, PR #229 and post-merge CI before
-> editing. Preserve the conflicted C:\CLASSIFIRE root and unrelated changes; use a fresh
-> clean current-main worktree. Perform the single highest-value next task: real-process
-> browser/restart/exact-download UAT of PR #229's read-only T10 bottom-up proposal using
-> synthetic disposable PostgreSQL data. Prove an authorised user can find the control,
-> see a missing quantity withheld, enter 2 each, see 2 x $300 = $600.00, inspect exact
-> dependencies, download canonical hash-matching JSON, restart CLASSIFIRE and reproduce
-> it; prove unauthorised access fails. Relevant files are draft_pricing_bottom_up.py,
-> draft_pricing_ui.py, draft_pricing.html and their T6/T9/T10 tests/startup helpers. Fix
-> only defects found in this flow; do not invent pricing rules, use customer data, deploy,
-> release or expand scope. Run affected PostgreSQL tests, Ruff, targeted Mypy, Bandit,
-> Alembic one-head and diff checks. Update all four documents with exact evidence. Preserve
-> unrelated changes and continue autonomously through classification, commit, push, PR,
-> passing CI, safe merge and post-merge verification where changes are needed.
+> Continue CLASSIFIRE from verified repository state. Before editing, inspect AGENTS.md,
+> GOAL.md, PROJECT_STATE.md, the architecture, roadmap, handoff, Git/worktrees, current
+> origin/main, recent PRs and CI. Preserve the conflicted C:\CLASSIFIRE root and all
+> unrelated local work; use a fresh clean current-main worktree. Implement the single
+> highest-value next slice: a governed T10 project-quantity basis bound to an exact saved
+> Scope revision and frozen recipe requirement. Reuse existing revision, ownership,
+> permission, canonical JSON/hash and append-only review patterns. Provide no-write
+> preview plus explicit immutable save/reopen/history/download; make T10 consume only the
+> latest current compatible basis and withhold foreign, stale, changed, missing or
+> unit-incompatible inputs. Never infer quantity from defect counts or notes. Relevant
+> components are models/migrations, Scope revision contracts, draft_pricing_bottom_up,
+> draft_pricing_recipes, draft_pricing_ui, draft_pricing.html and T6/T9/T10 tests. Use
+> synthetic data; do not add yield/productivity/waste/pack/recovery/margins, AI, customer
+> evidence, release authority, deployment or speculative breadth. Run focused PostgreSQL
+> service/UI/migration/permission/restart tests, visually inspect the browser, then Ruff,
+> targeted Mypy, Bandit, Alembic one-head and diff checks. Update the four project docs
+> from evidence and continue autonomously through classification, commit, push, PR,
+> passing CI, safe merge and post-merge verification.

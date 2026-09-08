@@ -3,11 +3,14 @@
 ## Evidence-based current snapshot
 
 Verified 2026-09-09 on shared main
-`6046376c0f29252527b31c9cd8ffe00eddcc5d76`, merge commit for PR #229.
-Exact PR head `af01adefea9e03fdee298f0b2bc7289dd17492b9` passed run
-34241209469 with 1,915 tests, full Ruff, full Mypy, Bandit and one-head Alembic checks.
-Post-merge main run 34243723658 passed the same repository gates on the exact merge
-commit, including 1,915 tests.
+`add9ce1ad75f332eff307131c3f69bda9f5d8055`, merge commit for documentation PR #230
+after the PR #229 T10 implementation. PR #230 run 34246140519 passed 1,915 tests,
+full Ruff, full Mypy, Bandit and the one-head Alembic check. Post-merge main run
+34248498975 passed the same gates on the exact merge commit, including 1,915 tests
+and Mypy on 217 source files.
+PR #229 head `af01adefea9e03fdee298f0b2bc7289dd17492b9` passed run 34241209469,
+and post-merge run 34243723658 passed the same repository gates on
+`6046376c0f29252527b31c9cd8ffe00eddcc5d76`, including 1,915 tests.
 Exact PR head `069a2a82f5296577fa19bceaa730518eef415efc` passed run
 34223161569 with 1,913 tests, Ruff, Mypy on 216 source files, Bandit and
 one-head Alembic checks. Post-merge main run 34224663080 passed the same 1,913-test
@@ -228,6 +231,22 @@ Estimate, library, technical, evaluation or release authority. Thirteen focused 
 T10 PostgreSQL tests passed locally. Exact-head GitHub CI passed 1,915 tests plus full
 Ruff, Mypy, Bandit and Alembic checks before merge.
 
+Real Chrome 152 UAT on 2026-09-09 then exercised the actual loopback application and
+synthetic PostgreSQL state. It found two presentation defects: browser validation blocked
+blank-quantity submission before CLASSIFIRE could explain why the result was withheld,
+and the screen hid hashes that were already present in the proposal. The candidate
+removes the HTML-only required flag and displays coverage, release, target, recipe-link
+and observation hashes. It does not change pricing rules, persistence or authority.
+
+The browser journey proved reviewer login, navigation from pricing coverage, visible
+blank-quantity withholding, `2 each x $300 = $600.00`, exact dependency display,
+canonical JSON download, lower-privilege HTTP 403, application restart and byte-identical
+download after restart. Both 2,999-byte downloads have SHA-256
+`53fa19cf9fdfc68ca504d4431edb4a73c05a5a7046bab88d1360e28b4f4aeac7`;
+the embedded proposal hash is
+`faca050aa216b559921b578b6f52cfc4f06cb855181c861beefeabe7e971dadf`.
+Screenshots were visually inspected and show the approved CLASSIFIRE logo.
+
 ## Verification checkpoint
 
 - Pricing/profile/UI/client-pricing plus migration, packaging, deployment-lineage and
@@ -337,9 +356,10 @@ exact-profile human review, governed Dataset A row observations, exact reviewed 
 B identity mappings, immutable target-blind T13 rosters and deterministic T9 coverage.
 Those records have no downstream authority. The roster freezes the implemented v1 split
 policy, but its synthetic lineage derivation and fixed assignment cycle have not been
-accepted against representative real data. There is no commercial activation or
-actual bottom-up/comparable calculation, holdout execution,
-calibrated confidence or production release.
+accepted against representative real data. One bounded explicit-quantity bottom-up
+calculation now exists, but it is preview-only and has no governed persisted project
+quantity basis. There is no commercial activation, comparable calculation, holdout
+execution, calibrated confidence or production release.
 
 PR #227 resolves the first T9 dependency with a forward-only v4 release snapshot
 and explicit human recipe-link review. It does not backfill v3 releases or turn mutable
@@ -365,10 +385,11 @@ ChatGPT linking, OpenClaw retirement, deployment and Human Release remain incomp
 ## Project health
 
 The product has a growing, testable standalone Draft workflow with shared services,
-exact evidence, explicit uncertainty and narrow user-visible increments. PRs #224/#227 reuse
+exact evidence, explicit uncertainty and narrow user-visible increments. PRs #224/#227/#229 reuse
 the existing pricing UI, mapping integrity checks, technical-release governance and
 canonical JSON/hash approach without creating another importer, rules engine, agent
-fleet, database or prediction path. It is merged on shared main.
+fleet, database or prediction path. T10's actual browser, download and restart lifecycle
+is now proven with synthetic data; the current candidate only fixes and tests presentation.
 
 The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
 46 unstaged tracked modifications, 14 staged additions and four DU conflicts. Its
@@ -377,13 +398,13 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Perform a real-process browser/restart/exact-download check of the merged T10 UI with
-   synthetic data and fix any visible or lifecycle defect before expanding calculation breadth.
-2. Add a governed numeric basis for project quantity, yield/productivity, waste/pack and
-   recovery so T10 can expand beyond one sell-rate row per requirement without parsing
-   descriptive notes or double counting.
-3. Validate the T6 recipe meanings and roster grouping/split policy against authorised
+1. Add the first governed project-quantity basis, bound to the selected saved Scope
+   revision and exact frozen recipe requirement. Provide no-write preview plus explicit
+   immutable save/reopen/download, and make T10 consume only a current compatible basis.
+2. Validate the T6 recipe meanings and roster grouping/split policy against authorised
    representative Dataset B files before any evaluation execution or scale claim.
+3. Add governed yield/productivity, waste/pack and recovery inputs only after the
+   project-quantity basis is proven; never parse descriptive notes or double count.
 4. Perform a real-process browser/restart/exact-download check for the Dataset B mapping,
    T13 roster and T9 coverage UI when browser control is available; keep TestClient proof
    separate.
