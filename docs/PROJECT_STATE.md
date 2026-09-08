@@ -3,8 +3,14 @@
 ## Evidence-based current snapshot
 
 Verified 2026-09-09 on shared main
-`3a715d0d27f07a9c072e22db428f8f91d93f1642`, merge commit for documentation
-PR #232 after PR #231.
+`720de41fc828f933107436d70c00ac410feafef7`, merge commit for governed quantity
+PR #233 after documentation PR #232.
+PR #233 head `3103236b8a466ff13dd18d0d3e97a6c7886c11c0` passed run 34279792008
+with **1,921 tests**, full Ruff, full Mypy on 220 source files, Bandit and the one-head
+Alembic check. The separate post-merge main run 34281851774 made two attempts but
+executed zero steps: GitHub reported that Actions could not start because recent account
+payments failed or the spending limit must be increased. This is an external CI/account
+blocker, not a test failure; the exact merge commit still lacks post-merge execution.
 PR #231 head `8a714059eef4294f47732aaa797a98e461395fe3` passed run 34256909957
 with 1,915 tests, full Ruff, full Mypy on 217 source files, Bandit and the one-head
 Alembic check. Post-merge main run 34259076280 passed the same gates on the exact
@@ -19,14 +25,12 @@ Exact PR head `069a2a82f5296577fa19bceaa730518eef415efc` passed run
 one-head Alembic checks. Post-merge main run 34224663080 passed the same 1,913-test
 and repository-gate workflow on the exact merge commit.
 
-The isolated candidate branch `feat/draft-pricing-quantity-basis-20260909` now adds
-the first governed T10 project-quantity basis described below. The full local suite
+PR #233 adds the first governed T10 project-quantity basis described below. The full local suite
 passed **1,919 tests** with two skips. Ruff and Bandit passed; focused Mypy passed on
 the five changed Python modules with unavailable third-party stubs ignored, and Alembic
 reports the single `0046_draft_pricing_quantity_bases` head. Strict full Mypy could
-not run locally because the environment lacks ReportLab and PyYAML stub packages.
-Publication and clean CI remain pending, so this paragraph is candidate evidence rather
-than shared-main implementation evidence.
+not run locally because the environment lacks ReportLab and PyYAML stub packages; the
+clean PR runner subsequently passed full Mypy on all 220 source files.
 
 PR #227 implements the first governed T6 component/activity recipe-review UI and
 guarded T9 bottom-up consumption rule described below. The approved cleanup removed
@@ -41,7 +45,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | --- | --- | --- |
 | Scope | Manual graph; retained PDF page/entity review; Excel row/cell/image mapping; optional one-page text/image suggestions with explicit human save | Real-report accuracy, bulk/cross-page reconciliation, broader formats and richer physical relationships |
 | System Match | Saved candidates/notes, partial measured checks and client commands | Complete authorized applicability, corpus extraction and multi-source fact resolution |
-| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage, a bounded manual T10 preview, and a candidate immutable Scope-bound quantity workflow; none changes an Estimate implicitly | Representative quantity semantics, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
+| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage, a bounded manual T10 preview, and an immutable Scope-bound quantity workflow; none changes an Estimate implicitly | Representative quantity semantics, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
 | ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals | Real OAuth/HTTPS linking; report intake and A/B profile commands lack client parity |
@@ -259,9 +263,9 @@ the embedded proposal hash is
 `faca050aa216b559921b578b6f52cfc4f06cb855181c861beefeabe7e971dadf`.
 Screenshots were visually inspected and show the approved CLASSIFIRE logo.
 
-## Candidate governed T10 project-quantity basis
+## Implemented governed T10 project-quantity basis
 
-The current feature branch replaces retyped browser quantities with an explicit review
+PR #233 replaces retyped browser quantities with an explicit review
 of an exact saved Scope service. An authorised pricing reviewer selects one service from
 the current saved Scope revision for one frozen recipe requirement. Preview performs no
 write. Save appends canonical JSON bound to the Scope revision/hash, service identity and
@@ -401,7 +405,7 @@ exact-profile human review, governed Dataset A row observations, exact reviewed 
 B identity mappings, immutable target-blind T13 rosters and deterministic T9 coverage.
 Those records have no downstream authority. The roster freezes the implemented v1 split
 policy, but its synthetic lineage derivation and fixed assignment cycle have not been
-accepted against representative real data. The candidate quantity-basis slice makes one
+accepted against representative real data. The merged quantity-basis slice makes one
 Scope service quantity persistent and auditable, but representative mapping semantics,
 yield, productivity, waste, pack and shared-recovery arithmetic remain absent. There is
 no commercial activation, comparable calculation, holdout
@@ -435,7 +439,7 @@ exact evidence, explicit uncertainty and narrow user-visible increments. PRs #22
 the existing pricing UI, mapping integrity checks, technical-release governance and
 canonical JSON/hash approach without creating another importer, rules engine, agent
 fleet, database or prediction path. T10's actual browser, download and restart lifecycle
-is now proven with synthetic data. The candidate quantity slice reuses those same
+is now proven with synthetic data. The merged quantity slice reuses those same
 boundaries and adds one purpose-specific append-only table rather than another pricing
 engine.
 
@@ -446,13 +450,14 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Validate the T6 recipe meanings and roster grouping/split policy against authorised
+1. Restore GitHub Actions account/billing availability, then rerun main workflow
+   34281851774 so the exact merge commit receives post-merge validation.
+2. Run a real-process browser/restart/exact-download check for the Dataset B mapping,
+   T13 roster and T9 coverage UI using synthetic data.
+3. Validate the T6 recipe meanings and roster grouping/split policy against authorised
    representative Dataset B files before any evaluation execution or scale claim.
-2. Add governed yield/productivity, waste/pack and recovery inputs only after the
+4. Add governed yield/productivity, waste/pack and recovery inputs only after the
    representative quantity and recipe meanings are accepted; never parse descriptive
    notes or double count.
-3. Perform a real-process browser/restart/exact-download check for the Dataset B mapping,
-   T13 roster and T9 coverage UI when browser control is available; keep TestClient proof
-   separate.
 
 [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the self-contained next-session task.
