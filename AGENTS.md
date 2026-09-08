@@ -26,9 +26,9 @@ Use GOAL.md and the verified project state to select the next visible increment;
   adds reviewed Dataset B mapped/unmatched/ambiguous system identity, and PR #222
   adds the first persisted target-blind T13 roster UI. PR #224 adds the first
   deterministic no-write T9 coverage-status UI and exact JSON for every active
-  technical target. The isolated `feat/draft-pricing-t6-recipe-20260908` candidate
-  implements the first governed T6 recipe-link UI; finish and publish it before starting
-  a read-only T10 bottom-up proposal preview. Prediction and holdout execution remain later.
+  technical target. PR #227 implements the first governed T6 recipe-link UI and strict
+  forward v4 recipe snapshots. Build a read-only T10 bottom-up proposal preview next.
+  Prediction and holdout execution remain later.
 Inspect current evidence before resuming; never rebuild completed prototype workflows.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
