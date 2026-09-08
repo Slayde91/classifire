@@ -162,7 +162,7 @@ def test_bottom_up_ui_calculates_and_downloads_exact_json(pdf_app, monkeypatch):
     x.app.include_router(estimate_router)
     x.app.include_router(pricing_router)
     with x.factory() as db:
-        owner, _, _, target, release, requirement = _linked(db, x)
+        owner, _, reviewer, target, release, requirement = _linked(db, x)
         scope.save_revision(db, owner, x.ids[2], 1, sample_payload())
         estimate = estimates.create_estimate(db, owner, x.ids[2], 2)
         db.commit()
@@ -171,6 +171,15 @@ def test_bottom_up_ui_calculates_and_downloads_exact_json(pdf_app, monkeypatch):
             f"/pricing-proposals/bottom-up/{release.id}/{target.id}"
         )
         before = _counts(db)
+        expected_preview = bottom_up.preview_bottom_up(
+            db,
+            reviewer,
+            x.ids[2],
+            release.id,
+            target.id,
+            {requirement["id"]: "2"},
+            settings=x.settings,
+        )
 
     with TestClient(x.app) as owner_client, TestClient(x.app) as admin_client:
         _login(owner_client)
@@ -180,14 +189,36 @@ def test_bottom_up_ui_calculates_and_downloads_exact_json(pdf_app, monkeypatch):
         assert page.status_code == 200, page.text
         assert "Bottom-up proposal preview" in page.text
         assert "does not guess from the recipe notes" in page.text
+        assert re.search(r'id="quantity-1"[^>]*\brequired\b', page.text) is None
+        withheld = admin_client.post(
+            path,
+            data={
+                "csrf_token": _csrf(page.text),
+                f"quantity__{requirement['id']}": "",
+            },
+        )
+        assert withheld.status_code == 200, withheld.text
+        assert "Result: Withheld" in withheld.text
+        assert "quantity required" in withheld.text
         form = {
-            "csrf_token": _csrf(page.text),
+            "csrf_token": _csrf(withheld.text),
             f"quantity__{requirement['id']}": "2",
         }
         preview = admin_client.post(path, data=form)
         assert preview.status_code == 200, preview.text
         assert "Total excluding GST: $600.00 AUD" in preview.text
         assert "2 each" in preview.text
+        assert "Exact proposal dependencies" in preview.text
+        assert expected_preview["coverage_sha256"] in preview.text
+        assert expected_preview["technical_release"]["id"] in preview.text
+        assert expected_preview["technical_release"]["sha256"] in preview.text
+        assert expected_preview["technical_target"]["id"] in preview.text
+        assert expected_preview["technical_target"]["snapshot_sha256"] in preview.text
+        assert expected_preview["technical_target"]["release_record_sha256"] in preview.text
+        assert expected_preview["lines"][0]["recipe_link"]["id"] in preview.text
+        assert expected_preview["lines"][0]["recipe_link"]["sha256"] in preview.text
+        assert expected_preview["lines"][0]["observation"]["id"] in preview.text
+        assert expected_preview["lines"][0]["observation"]["sha256"] in preview.text
         expected = re.search(
             r'name="expected_proposal_sha256" value="([a-f0-9]{64})"', preview.text
         )

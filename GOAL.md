@@ -200,7 +200,7 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: preview bottom-up pricing
+## Immediate delivery priority: govern the bottom-up quantity basis
 
 PDF/Excel graph review and optional one-page suggestions are merged through PR #211.
 Preserve their manual fallback, shared graph review, exact history and bounded optional
@@ -250,11 +250,19 @@ outcomes, and T9 consumes bottom-up A support only after every frozen requiremen
 current confirmed complete link. It remains a review boundary and calculates or approves
 no price.
 
-Add one read-only T10 bottom-up proposal preview next. It must show each
-component/activity calculation and withhold any result whose unit, quantity, yield,
-productivity, recovery or current evidence is missing. It must not activate a library,
-change an Estimate, approve technical applicability, reveal evaluation targets or
-release output.
+PR #229 implements the first read-only T10 bottom-up proposal preview. Real Chrome UAT
+on 2026-09-09 proved the pricing-coverage-to-proposal journey, visible withholding for a
+blank quantity, the exact `2 each x $300 = $600.00` calculation, dependency hashes,
+lower-privilege denial, canonical JSON download and byte-identical reproduction after a
+server restart.
+
+Add one governed project-quantity basis next. Bind an explicit quantity and unit to a
+selected saved Scope revision and exact frozen recipe requirement; preview without a
+write, then explicitly save, reopen and download an immutable review record. T10 may
+consume only a current compatible basis. Missing, stale, unit-incompatible or changed
+Scope dependencies must withhold the result. Do not infer quantity from defect counts or
+notes, activate a library, change an Estimate, approve technical applicability, reveal
+evaluation targets or release output.
 
 T1-T14 dependencies remain: reviewed identities and field claims, immutable recipes,
 lineage-aware holdouts and measured coverage precede derived costing/calibration.
