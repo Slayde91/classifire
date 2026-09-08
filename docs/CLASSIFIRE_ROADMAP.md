@@ -3,9 +3,9 @@
 **Status:** Active; prototype-first delivery approved 2026-09-05. PDF/Excel review,
 bounded PDF suggestions, A/B source profiles, exact-profile review, Dataset A/B row
 governance, target-blind T13 roster, T9 coverage and T6 recipe review are merged through
-PR #227. A bounded read-only T10 bottom-up preview is an active tested candidate.
+PR #227. PR #229 merges a bounded read-only T10 bottom-up preview.
 **Verified shared-main baseline:**
-`6b4b9c821f7a55d0f88e365b462c26bba28d5d53`.
+`6046376c0f29252527b31c9cd8ffe00eddcc5d76`.
 PR #227 head run 34223161569 and post-merge main run 34224663080 each passed
 1,913 tests and all repository gates.
 [PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;
@@ -23,7 +23,7 @@ plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.m
   B system/configuration mapping and PR #222 persists the first governed T13 roster.
   PR #224 delivers bounded no-write T9 coverage for every active technical target.
   PR #227 adds one governed component/activity recipe-link interaction and lets T9
-  consume only complete current confirmed links. The active T10 candidate builds one
+  consume only complete current confirmed links. PR #229 builds one
   read-only explicit-quantity bottom-up sell-price preview. Reuse existing technical/pricing/
   review services; do not start bulk extraction, model tuning or a replacement agent
   fleet to achieve that screen.
@@ -103,7 +103,7 @@ prototype into it.
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
 | **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
-| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; T13 roster PR #222; bounded T9 coverage PR #224; T6/T10-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster history and inspect identity, cells, units, price meaning and gaps. The first coverage screen now exposes direct, review, stale and insufficient states; next connect one governed component/activity recipe before separate bottom-up/comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
+| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; T13 roster PR #222; bounded T9 coverage PR #224; T6 recipe review PR #227; first T10 bottom-up preview PR #229; broader T10-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster history and inspect identity, units, price meaning and gaps. Coverage and the first read-only bottom-up amount are visible. Next prove the browser lifecycle, then add governed numeric basis breadth and separate comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
 | **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
@@ -242,13 +242,12 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Review and merge the active read-only **T10 bottom-up proposal preview** over the merged
-T6 component/activity recipe-link contract. Its first supported case uses an explicit
-reviewer-entered quantity, one exact current confirmed Dataset A observation per frozen
-requirement and `sell_price`; all other cases withhold. After that, add governed numeric
-scope/yield/productivity/recovery inputs before supporting multiple observations, waste,
-pack or margins. Do not parse descriptive notes or grant Estimate, library, technical,
-evaluation or release authority.
+Perform one real-process browser/restart/exact-download UAT of the merged read-only
+**T10 bottom-up proposal preview** with synthetic data. Fix any visible or lifecycle
+defect before expanding breadth. Then add governed numeric scope/yield/productivity/
+recovery inputs before supporting multiple observations, waste, pack or margins. Do not
+parse descriptive notes or grant Estimate, library, technical, evaluation or release
+authority.
 Current evidence and exact handoff remain in PROJECT_STATE.md and SESSION_HANDOFF.md.
 This sequence grants no customer-source, live-provider, canonical-write or deployment
 authority. OpenClaw protection parity remains a separate gated track.
@@ -275,7 +274,7 @@ Every exposed slice includes its UI, minimum persistence and tests.
 | **First visible corpus/pricing slice** | **A/B profile merged PR #212; review merged PR #214; pre-model T13 contract merged PR #216:** minimum T1 + T5 + T7 identity/profile history, early-T12 exact-profile decision and leakage rules with synthetic data; no library publication or price inference. |
 | **Reviewed vertical slice** | **Dataset A observation PR #218, Dataset B mapping PR #220, target-blind T13 roster PR #222, read-only T9 coverage PR #224 and T6 recipe review PR #227; broader T2-T8 upcoming.** Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
 | **Controlled breadth and scale** | Expand T2-T8 through bounded resumable imports, deduplication/reprocessing, proper pagination and representative retained sources; T9 coverage exposes gaps. Measure capacity before declaring hundreds/thousands supported. |
-| **Explainable estimating prototype** | **Active T10 first slice:** read-only explicit-quantity sell-price calculation, line evidence, withholding and exact JSON. Next add governed quantity/yield/productivity/recovery inputs, then separate comparable proposals, T12 review UI and T13 evaluation. T11 comparison remains later. |
+| **Explainable estimating prototype** | **T10 first slice merged PR #229:** read-only explicit-quantity sell-price calculation, line evidence, withholding and exact JSON. Next prove the real UI lifecycle, add governed quantity/yield/productivity/recovery inputs, then separate comparable proposals, T12 review UI and T13 evaluation. T11 comparison remains later. |
 | **Validated operation** | T13 establishes approved method/stratum gates; T11 combined proposals use that evidence; T14 operations, feedback, drift and controlled release extend the demonstrated path. |
 
 #### T1. Minimum canonical schema and version contracts
@@ -457,7 +456,7 @@ routes and project-specific applicability remain upcoming.
 
 #### T10. Explainable estimation methods
 
-**Status:** active. The first tested candidate covers one deterministic bottom-up method
+**Status:** first bounded slice merged in PR #229. It covers one deterministic bottom-up method
 for a T9-eligible target. It represents every frozen requirement, accepts explicit
 preview-only quantities, supports one current confirmed `sell_price` observation per
 requirement, displays exact Decimal arithmetic and withholds the total when any line is
@@ -705,7 +704,7 @@ prevents concurrent publication from leaving two active technical releases.
 **Remaining / prioritised amendment:** minimum T1/T5/T7 source identity/profile contracts,
 early-T12 profile review, the T13 roster boundary, bounded T9 coverage and governed T6
 recipe links are merged through PR #227. The first read-only T10 bottom-up proposal is
-an active tested candidate; merge it, then add governed numeric basis breadth. Continue
+merged in PR #229; prove its real UI lifecycle, then add governed numeric basis breadth. Continue
 T2-T8 processing/fact review,
 resolution/provenance and breadth in parallel with representative-source validation.
 Extend existing technical/product/labour/pricing/release models; no source filename,
