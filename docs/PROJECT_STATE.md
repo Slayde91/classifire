@@ -2,8 +2,8 @@
 
 ## Evidence-based current snapshot
 
-Verified 2026-09-08 on shared main
-`ca875437fd1d7ab8701117e0c0f1a381efc56300`, merge commit for PR #227.
+Verified 2026-09-09 from the clean isolated T10 worktree based on shared main
+`6b4b9c821f7a55d0f88e365b462c26bba28d5d53`, merge commit for documentation PR #228.
 Exact PR head `069a2a82f5296577fa19bceaa730518eef415efc` passed run
 34223161569 with 1,913 tests, Ruff, Mypy on 216 source files, Bandit and
 one-head Alembic checks. Post-merge main run 34224663080 passed the same 1,913-test
@@ -22,7 +22,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | --- | --- | --- |
 | Scope | Manual graph; retained PDF page/entity review; Excel row/cell/image mapping; optional one-page text/image suggestions with explicit human save | Real-report accuracy, bulk/cross-page reconciliation, broader formats and richer physical relationships |
 | System Match | Saved candidates/notes, partial measured checks and client commands | Complete authorized applicability, corpus extraction and multi-source fact resolution |
-| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review and read-only T9 coverage; none changes an Estimate implicitly | Actual bottom-up/comparable calculations, holdout execution and calibrated proposals |
+| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review and read-only T9 coverage. The active T10 candidate adds one read-only, explicit-quantity bottom-up sell-price preview; none changes an Estimate implicitly. | Governed scope quantities, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
 | ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals | Real OAuth/HTTPS linking; report intake and A/B profile commands lack client parity |
@@ -176,7 +176,7 @@ JSON download. Both declare all price calculation, proposal, library, Estimate, 
 evaluation, deployment and release effects false. PR #224 added no migration; the T6
 linkage described next uses additive migration 0045 and adds no orchestration dependency.
 
-## Active T6 component/activity recipe-review candidate
+## Implemented T6 component/activity recipe review
 
 New technical publications use manifest v4 and freeze bounded component/labour source
 fields plus stable individually addressable requirements. Existing v3 manifests remain
@@ -203,6 +203,26 @@ The link records evidence and interpretation only. It calculates no price, activ
 library, changes no Estimate, approves no technical applicability, runs no evaluation and
 releases no output. Representative real recipe meanings, yields, productivity and recovery
 rules remain unvalidated.
+
+## Active T10 bottom-up proposal candidate
+
+The isolated T10 candidate adds a deterministic service and visible reviewer screen for
+targets that T9 marks `bottom_up_a_support`. A reviewer enters an explicit numeric
+quantity for each frozen recipe requirement. CLASSIFIRE then reloads current coverage,
+recipe links and exact reviewed Dataset A rows, and shows quantity x unit sell rate with
+two-decimal half-up rounding. Every line exposes its requirement, link, observation,
+unit, price meaning and calculation; the total is withheld if any required line cannot
+be calculated. The canonical JSON download recomputes the preview and requires the
+expected hash, so changed evidence or inputs cannot be downloaded as the old result.
+
+This first prototype supports exactly one reviewed observation per requirement and only
+an explicitly declared `sell_price`. Quantities are preview-only manual inputs; recipe
+notes are never parsed into numbers. Cost/list/quoted/actual meanings, multiple rows,
+yield, productivity, waste, pack rounding, margin and project-specific applicability are
+withheld or remain future work. The service performs no database write and grants no
+Estimate, library, technical, evaluation or release authority. Thirteen focused T6/T9/
+T10 PostgreSQL tests, Ruff, targeted Mypy and Bandit pass locally; full repository CI,
+publication and merge remain pending.
 
 ## Verification checkpoint
 
@@ -353,13 +373,13 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Add the first bounded T10 bottom-up proposal preview. Consume only complete current
-   T6 links, show every
-   component/activity calculation and withheld input, and remain read-only with no
-   Estimate, approval, library, evaluation or release effect.
-2. Validate the T6 recipe meanings and roster grouping/split policy against authorised
+1. Review, publish and merge the bounded T10 candidate after full repository CI passes.
+2. Add a governed numeric basis for project quantity, yield/productivity, waste/pack and
+   recovery so T10 can expand beyond one sell-rate row per requirement without parsing
+   descriptive notes or double counting.
+3. Validate the T6 recipe meanings and roster grouping/split policy against authorised
    representative Dataset B files before any evaluation execution or scale claim.
-3. Perform a real-process browser/restart/exact-download check for the Dataset B mapping,
+4. Perform a real-process browser/restart/exact-download check for the Dataset B mapping,
    T13 roster and T9 coverage UI when browser control is available; keep TestClient proof
    separate.
 
