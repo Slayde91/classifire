@@ -6,6 +6,8 @@ Verified 2026-09-09 on shared main
 `6046376c0f29252527b31c9cd8ffe00eddcc5d76`, merge commit for PR #229.
 Exact PR head `af01adefea9e03fdee298f0b2bc7289dd17492b9` passed run
 34241209469 with 1,915 tests, full Ruff, full Mypy, Bandit and one-head Alembic checks.
+Post-merge main run 34243723658 passed the same repository gates on the exact merge
+commit, including 1,915 tests.
 Exact PR head `069a2a82f5296577fa19bceaa730518eef415efc` passed run
 34223161569 with 1,913 tests, Ruff, Mypy on 216 source files, Bandit and
 one-head Alembic checks. Post-merge main run 34224663080 passed the same 1,913-test

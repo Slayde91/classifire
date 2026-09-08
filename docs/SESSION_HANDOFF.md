@@ -9,6 +9,8 @@ Verified 2026-09-09 from the clean isolated worktree
   merge commit for PR #229.
 - PR #229 head `af01adefea9e03fdee298f0b2bc7289dd17492b9` passed GitHub run
   34241209469: 1,915 tests, full Ruff, full Mypy, Bandit and one Alembic head.
+- Post-merge main run 34243723658 passed the same gates and 1,915 tests on the exact
+  merge commit.
 - PR #227 head `069a2a82f5296577fa19bceaa730518eef415efc` passed GitHub run
   34223161569: 1,913 tests, Ruff, Mypy on 216 source files, Bandit and one Alembic
   head.
@@ -63,6 +65,8 @@ browser/restart check for this UI has not been run.
 
 - PR #229 passed 13 focused T6/T9/T10 tests against disposable PostgreSQL locally.
 - Exact-head run 34241209469 passed 1,915 tests and every repository gate.
+- Post-merge main run 34243723658 passed 1,915 tests and every repository gate on
+  `6046376c0f29252527b31c9cd8ffe00eddcc5d76`.
 - 130 affected tests passed in 267.31 seconds against the disposable PostgreSQL database.
 - The CI regression case plus the complete system-match test file passed 42 tests.
 - Repository Ruff passed.
