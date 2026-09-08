@@ -2,9 +2,9 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.35 - browser-proven read-only bottom-up proposal prototype.
+**Architecture version:** 5.36 - merged browser-proven bottom-up proposal prototype.
 
-**Verified shared baseline:** `add9ce1ad75f332eff307131c3f69bda9f5d8055` on
+**Verified shared baseline:** `dc5884bee30443af7ffc034e7d4d5a8ef50b0742` on
 `origin/main`. Shared main includes deterministic read-only T9 coverage, the governed
 T6/v4 recipe-review increment and the bounded T10 preview after the A/B profile, review,
 Dataset A observation, Dataset B mapping and T13 roster increments.
@@ -51,9 +51,9 @@ incompatible line withholds the whole total. No Estimate, approval, activation,
 technical, evaluation or release state changes. **Migration:** none; the preview is
 recomputed and read-only.
 
-**Current T10 hardening candidate:** keep the PR #229 service and contract unchanged,
-allow the browser to submit a blank quantity so the deterministic backend can render its
-fail-closed reason, and show the dependency hashes already present in the proposal.
+**Current T10 browser hardening (PR #231):** keep the PR #229 service and contract
+unchanged, allow the browser to submit a blank quantity so the deterministic backend can
+render its fail-closed reason, and show the dependency hashes already present in the proposal.
 **Reason:** actual Chrome UAT found that native HTML validation hid the governed withheld
 result and the page omitted useful audit detail. **Consequences:** no domain, schema,
 migration, pricing or authority change. Real Chrome 152, exact download, permission and
