@@ -3,10 +3,14 @@
 ## Verified branch and project context
 
 Verified 2026-09-09 from the clean isolated worktree
-`C:\CLASSIFIRE\.tmp\t10-real-browser-uat-20260909`.
+`C:\CLASSIFIRE\.tmp\docs-pr231-final-state-20260909`.
 
-- Current branch: `feat/t10-real-browser-uat-20260909`, created from
-  `origin/main` at `add9ce1ad75f332eff307131c3f69bda9f5d8055` (PR #230 merge).
+- Current documentation branch: `docs/pr231-final-state-20260909`, created from
+  `origin/main` at `dc5884bee30443af7ffc034e7d4d5a8ef50b0742` (PR #231 merge).
+- PR #231 head `8a714059eef4294f47732aaa797a98e461395fe3` passed run
+  34256909957: 1,915 tests, full Ruff, full Mypy on 217 source files, Bandit and
+  one Alembic head. Post-merge main run 34259076280 passed the same gates on
+  `dc5884bee30443af7ffc034e7d4d5a8ef50b0742`, including 1,915 tests.
 - PR #230 run 34246140519 passed 1,915 tests and every repository gate.
   Post-merge main run 34248498975 passed the same gates on the exact merge commit,
   including 1,915 tests and Mypy on 217 source files.
@@ -21,16 +25,21 @@ Verified 2026-09-09 from the clean isolated worktree
   with extensive staged, unstaged, conflicted and untracked recovery material. Do not
   reset, clean, resolve, broadly stage or publish from it.
 
-## Relevant local changes and open issues
+## Merged change and open issues
 
-This isolated branch contains one narrow T10 presentation hardening change:
+PR #231 contains one narrow T10 presentation hardening change:
 
 - the quantity input no longer uses browser-level `required`, allowing CLASSIFIRE's
   deterministic backend to display the governed withheld reason for a blank quantity;
 - the result page now displays coverage, technical release, target, recipe-link and
   observation hashes already present in the proposal;
 - the regression test proves blank-quantity withholding and every displayed dependency;
-- AGENTS.md, GOAL.md and the four project documents are reconciled to the verified state.
+- AGENTS.md, GOAL.md and the four project documents select the governed quantity basis
+  as the next task.
+
+The current documentation branch changes only the four project records to replace
+candidate/feature-branch wording with the verified PR #231 merge state. It contains no
+product-code change.
 
 The service contract, arithmetic, database schema, migrations and authority boundaries
 are unchanged. T10 remains read-only: it changes no Estimate, library, technical approval,

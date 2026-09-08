@@ -3,11 +3,13 @@
 ## Evidence-based current snapshot
 
 Verified 2026-09-09 on shared main
-`add9ce1ad75f332eff307131c3f69bda9f5d8055`, merge commit for documentation PR #230
-after the PR #229 T10 implementation. PR #230 run 34246140519 passed 1,915 tests,
-full Ruff, full Mypy, Bandit and the one-head Alembic check. Post-merge main run
-34248498975 passed the same gates on the exact merge commit, including 1,915 tests
-and Mypy on 217 source files.
+`dc5884bee30443af7ffc034e7d4d5a8ef50b0742`, merge commit for PR #231.
+PR #231 head `8a714059eef4294f47732aaa797a98e461395fe3` passed run 34256909957
+with 1,915 tests, full Ruff, full Mypy on 217 source files, Bandit and the one-head
+Alembic check. Post-merge main run 34259076280 passed the same gates on the exact
+merge commit, including 1,915 tests. PR #230 run 34246140519 and post-merge main
+run 34248498975 passed the same repository gates on the prior documentation baseline,
+including 1,915 tests.
 PR #229 head `af01adefea9e03fdee298f0b2bc7289dd17492b9` passed run 34241209469,
 and post-merge run 34243723658 passed the same repository gates on
 `6046376c0f29252527b31c9cd8ffe00eddcc5d76`, including 1,915 tests.
@@ -234,7 +236,7 @@ Ruff, Mypy, Bandit and Alembic checks before merge.
 Real Chrome 152 UAT on 2026-09-09 then exercised the actual loopback application and
 synthetic PostgreSQL state. It found two presentation defects: browser validation blocked
 blank-quantity submission before CLASSIFIRE could explain why the result was withheld,
-and the screen hid hashes that were already present in the proposal. The candidate
+and the screen hid hashes that were already present in the proposal. PR #231
 removes the HTML-only required flag and displays coverage, release, target, recipe-link
 and observation hashes. It does not change pricing rules, persistence or authority.
 
@@ -389,7 +391,7 @@ exact evidence, explicit uncertainty and narrow user-visible increments. PRs #22
 the existing pricing UI, mapping integrity checks, technical-release governance and
 canonical JSON/hash approach without creating another importer, rules engine, agent
 fleet, database or prediction path. T10's actual browser, download and restart lifecycle
-is now proven with synthetic data; the current candidate only fixes and tests presentation.
+is now proven with synthetic data; PR #231 only changes and tests presentation.
 
 The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
 46 unstaged tracked modifications, 14 staged additions and four DU conflicts. Its

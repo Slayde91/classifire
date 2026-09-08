@@ -3,10 +3,10 @@
 **Status:** Active; prototype-first delivery approved 2026-09-05. PDF/Excel review,
 bounded PDF suggestions, A/B source profiles, exact-profile review, Dataset A/B row
 governance, target-blind T13 roster, T9 coverage and T6 recipe review are merged through
-PR #227. PR #229 merges a bounded read-only T10 bottom-up preview; its real Chrome,
-exact-download and restart lifecycle is now proven.
+PR #227. PR #229 merges a bounded read-only T10 bottom-up preview; PR #231 proves
+and hardens its real Chrome, exact-download and restart lifecycle.
 **Verified shared-main baseline:**
-`add9ce1ad75f332eff307131c3f69bda9f5d8055`.
+`dc5884bee30443af7ffc034e7d4d5a8ef50b0742`.
 PR #227 head run 34223161569 and post-merge main run 34224663080 each passed
 1,913 tests and all repository gates.
 [PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;
@@ -27,7 +27,7 @@ plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.m
   consume only complete current confirmed links. PR #229 builds one
   read-only explicit-quantity bottom-up sell-price preview. Real-browser UAT then proved
   visible withholding, exact dependencies, calculation, permission denial, download and
-  restart, and found two presentation defects now fixed in the current candidate. Reuse existing technical/pricing/
+  restart, and found two presentation defects fixed in PR #231. Reuse existing technical/pricing/
   review services; do not start bulk extraction, model tuning or a replacement agent
   fleet to achieve that screen.
 
@@ -473,7 +473,7 @@ comparables, approval and calibration remain upcoming.
 Synthetic real Chrome 152 UAT on 2026-09-09 proved navigation from coverage, blank
 quantity withholding, exact `2 each x $300 = $600.00` arithmetic, dependency identities,
 canonical download, lower-privilege denial and byte-identical output after restart. The
-current presentation candidate removes the browser-only required constraint and exposes
+merged PR #231 removes the browser-only required constraint and exposes
 existing dependency hashes; no calculation, schema or authority boundary changes.
 
 - **Objective/scope:** implement separate bottom-up and technically comparable
