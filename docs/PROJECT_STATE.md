@@ -3,20 +3,15 @@
 ## Evidence-based current snapshot
 
 Verified 2026-09-08 on shared main
-`75817f04f4ff5433b7cfc348daf8454a6b243b3d`, merge commit for PR #224.
-Exact PR head `463682f826b789cdfd4843ed22b0f771b6e2a34a` passed run
-34148949367 with 1,877 tests, Ruff, Mypy on 212 source files, Bandit and
-one-head Alembic checks. Post-merge main run 34150861778 passed the same
-1,877-test and repository-gate workflow on the exact merge commit. The governed
-Dataset B mapping, target-blind T13 roster and read-only T9 coverage UI are on
-shared main.
+`ca875437fd1d7ab8701117e0c0f1a381efc56300`, merge commit for PR #227.
+Exact PR head `069a2a82f5296577fa19bceaa730518eef415efc` passed run
+34223161569 with 1,913 tests, Ruff, Mypy on 216 source files, Bandit and
+one-head Alembic checks. Post-merge main run 34224663080 passed the same 1,913-test
+and repository-gate workflow on the exact merge commit.
 
-Active isolated candidate `feat/draft-pricing-t6-recipe-20260908` is based on shared
-main `371f628e05298ae59514c401ec8b001d2c747f82`. It implements the first governed T6
-component/activity recipe-review UI and T9 bottom-up consumption rule described below.
-The approved cleanup removed formatter-only churn from five backed-up files while
-preserving semantic parity. Local affected regression, security and migration checks
-pass; commit, PR, CI and merge remain pending.
+PR #227 implements the first governed T6 component/activity recipe-review UI and
+guarded T9 bottom-up consumption rule described below. The approved cleanup removed
+formatter-only churn from five backed-up files. No OpenClaw or AI path is involved.
 
 ADRs 0001/0002 remain accepted. CLASSIFIRE is one modular deterministic application
 with independently callable Scope, System Match, Estimate and Reporting capabilities,
@@ -285,7 +280,7 @@ rules remain unvalidated.
 - Post-merge main run 34150861778 on
   `75817f04f4ff5433b7cfc348daf8454a6b243b3d` passed 1,877 tests, full Ruff,
   Mypy on 212 source files, Bandit and the migration-head check.
-- Active T6 candidate local evidence after the approved cleanup: **130 affected tests
+- T6 local evidence after the approved cleanup: **130 affected tests
   passed in 267.31 seconds** on the disposable PostgreSQL database, including technical
   release v4/v3 compatibility, recipe contract/service, authenticated TestClient UI, T9
   completeness/precedence, migration packaging and deployment lineage. PostgreSQL
@@ -300,8 +295,12 @@ rules remain unvalidated.
   deliberately limited strict recipe-presence coupling to v3/v4 so legacy v2 releases
   remain readable. Repository-wide Mypy remains locally blocked
   by pre-existing missing ReportLab/PyYAML stubs; the full pytest run was stopped at 11%
-  without failures because its projected runtime was about one hour. Publication and CI
-  are not yet evidence.
+  without failures because its projected runtime was about one hour.
+- Exact PR head run 34223161569 passed **1,913 tests**, full Ruff, Mypy on 216
+  source files, Bandit and the single Alembic-head check.
+- Post-merge main run 34224663080 passed **1,913 tests**, full Ruff, Mypy on 216
+  source files, Bandit and the single Alembic-head check on
+  `ca875437fd1d7ab8701117e0c0f1a381efc56300`.
 
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,
@@ -318,7 +317,7 @@ accepted against representative real data. There is no commercial activation or
 actual bottom-up/comparable calculation, holdout execution,
 calibrated confidence or production release.
 
-The candidate resolves the first T9 dependency with a forward-only v4 release snapshot
+PR #227 resolves the first T9 dependency with a forward-only v4 release snapshot
 and explicit human recipe-link review. It does not backfill v3 releases or turn mutable
 technical JSON into historical approval. Remaining T6 breadth is representative recipe
 semantics, richer units, more than three observations in the current UI, activation and
@@ -342,7 +341,7 @@ ChatGPT linking, OpenClaw retirement, deployment and Human Release remain incomp
 ## Project health
 
 The product has a growing, testable standalone Draft workflow with shared services,
-exact evidence, explicit uncertainty and narrow user-visible increments. PR #224 reuses
+exact evidence, explicit uncertainty and narrow user-visible increments. PRs #224/#227 reuse
 the existing pricing UI, mapping integrity checks, technical-release governance and
 canonical JSON/hash approach without creating another importer, rules engine, agent
 fleet, database or prediction path. It is merged on shared main.
@@ -354,8 +353,8 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. After this candidate is cleaned, published and merged, add the first bounded T10
-   bottom-up proposal preview. Consume only complete current T6 links, show every
+1. Add the first bounded T10 bottom-up proposal preview. Consume only complete current
+   T6 links, show every
    component/activity calculation and withheld input, and remain read-only with no
    Estimate, approval, library, evaluation or release effect.
 2. Validate the T6 recipe meanings and roster grouping/split policy against authorised

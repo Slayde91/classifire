@@ -200,7 +200,7 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: publish T6, then preview bottom-up pricing
+## Immediate delivery priority: preview bottom-up pricing
 
 PDF/Excel graph review and optional one-page suggestions are merged through PR #211.
 Preserve their manual fallback, shared graph review, exact history and bounded optional
@@ -243,15 +243,14 @@ technical-release target, reports current direct B support, ambiguous review, st
 input and insufficient evidence, identifies exact dependency hashes, and exposes
 unlinked Dataset A observations.
 
-The isolated `feat/draft-pricing-t6-recipe-20260908` candidate adds the missing bounded
-T6 interaction: forward v4 releases freeze explicit component/activity requirements,
+PR #227 adds the missing bounded T6 interaction: forward v4 releases freeze explicit
+component/activity requirements,
 an authorised reviewer can preview/save/reopen/download immutable links or unresolved
 outcomes, and T9 consumes bottom-up A support only after every frozen requirement has a
 current confirmed complete link. It remains a review boundary and calculates or approves
-no price. Finish its diff cleanup, validation and publication before starting another
-feature.
+no price.
 
-After T6 is merged, add one read-only T10 bottom-up proposal preview. It must show each
+Add one read-only T10 bottom-up proposal preview next. It must show each
 component/activity calculation and withhold any result whose unit, quantity, yield,
 productivity, recovery or current evidence is missing. It must not activate a library,
 change an Estimate, approve technical applicability, reveal evaluation targets or

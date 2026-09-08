@@ -2,10 +2,11 @@
 
 **Status:** Active; prototype-first delivery approved 2026-09-05. PDF/Excel review,
 bounded PDF suggestions, A/B source profiles, exact-profile review, Dataset A/B row
-governance, target-blind T13 roster and read-only T9 coverage are merged through PR #224.
-**Verified shared-main baseline:** `75817f04f4ff5433b7cfc348daf8454a6b243b3d`.
-PR #224 head run 34148949367 and post-merge main run 34150861778 each passed
-1,877 tests and all repository gates.
+governance, target-blind T13 roster, T9 coverage and T6 recipe review are merged through
+PR #227. **Verified shared-main baseline:**
+`ca875437fd1d7ab8701117e0c0f1a381efc56300`.
+PR #227 head run 34223161569 and post-merge main run 34224663080 each passed
+1,913 tests and all repository gates.
 [PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;
 synthetic profile proof is not real-workbook semantic validation.
 Production Phase 8-14 and OpenClaw retirement remain separately gated.
@@ -20,9 +21,9 @@ plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.m
   PR #218 delivers one reviewed A-row observation, PR #220 delivers one reviewed
   B system/configuration mapping and PR #222 persists the first governed T13 roster.
   PR #224 delivers bounded no-write T9 coverage for every active technical target.
-  The active T6 candidate adds one governed component/activity recipe-link interaction
-  and lets T9 consume only complete current confirmed links. After it is published,
-  build one read-only T10 bottom-up proposal preview. Reuse existing technical/pricing/
+  PR #227 adds one governed component/activity recipe-link interaction and lets T9
+  consume only complete current confirmed links. Build one read-only T10 bottom-up
+  proposal preview next. Reuse existing technical/pricing/
   review services; do not start bulk extraction, model tuning or a replacement agent
   fleet to achieve that screen.
 
@@ -240,8 +241,8 @@ means suppressing known errors, weakening tests or bypassing permissions.
 
 ### Immediate next action
 
-Complete publication of the bounded **T6 component and labour/activity recipe-link**
-candidate, then build a read-only **T10 bottom-up proposal preview**. T10 must consume only
+Build a read-only **T10 bottom-up proposal preview** over the merged bounded T6 component
+and labour/activity recipe-link contract. T10 must consume only
 complete current confirmed links, expose each component/activity calculation and withhold
 missing inputs. It must not approve a price, activate a library, change an Estimate or
 grant technical/evaluation/release authority.
@@ -261,16 +262,15 @@ not proof of this new end-to-end capability. Detailed contracts and methods belo
 T1-T14 are dependency labels, not a requirement for fourteen large sequential builds.
 The pre-model T13 grouping/leakage rules are merged, PR #218 adds reviewed Dataset A
 row identity, PR #220 adds B identity mapping, PR #222 persists the target-blind roster
-and PR #224 adds T9 coverage visibility. The active T6 candidate adds frozen v4 recipes,
-immutable review links and guarded T9 bottom-up support. Publish it before T10 price
-proposals. Representative-data
+and PR #224 adds T9 coverage visibility. PR #227 adds frozen v4 recipes, immutable
+review links and guarded T9 bottom-up support. Representative-data
 lineage validation, access-separated target opening and evaluation execution remain later.
 Every exposed slice includes its UI, minimum persistence and tests.
 
 | Delivery band | Included work and dependency gate |
 | --- | --- |
 | **First visible corpus/pricing slice** | **A/B profile merged PR #212; review merged PR #214; pre-model T13 contract merged PR #216:** minimum T1 + T5 + T7 identity/profile history, early-T12 exact-profile decision and leakage rules with synthetic data; no library publication or price inference. |
-| **Reviewed vertical slice** | **Dataset A observation PR #218, Dataset B mapping PR #220, target-blind T13 roster PR #222 and read-only T9 coverage PR #224; T6 candidate active and broader T2-T8 upcoming.** Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
+| **Reviewed vertical slice** | **Dataset A observation PR #218, Dataset B mapping PR #220, target-blind T13 roster PR #222, read-only T9 coverage PR #224 and T6 recipe review PR #227; broader T2-T8 upcoming.** Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
 | **Controlled breadth and scale** | Expand T2-T8 through bounded resumable imports, deduplication/reprocessing, proper pagination and representative retained sources; T9 coverage exposes gaps. Measure capacity before declaring hundreds/thousands supported. |
 | **Explainable estimating prototype** | T10 separate bottom-up and comparable proposals, T12 review UI, immutable quantities/labour/assumptions and T13 evaluation. T11 comparison is visible before calibrated combination is enabled. |
 | **Validated operation** | T13 establishes approved method/stratum gates; T11 combined proposals use that evidence; T14 operations, feedback, drift and controlled release extend the demonstrated path. |
@@ -368,8 +368,8 @@ commercial activation remain upcoming.
 
 #### T6. Component and labour/activity mapping
 
-**Status:** bounded user-visible candidate implemented and locally verified; publication
-pending. New v4 technical releases freeze bounded component/labour recipes while v3
+**Status:** bounded user-visible increment merged in PR #227. New v4 technical releases
+freeze bounded component/labour recipes while v3
 readers remain supported without fabricated recipe approval. Authorised users can
 preview/save/reopen/download immutable linked or unresolved outcomes. T9 requires every
 frozen requirement to have a current confirmed complete link before bottom-up support.
@@ -433,8 +433,8 @@ validation remain upcoming.
 
 #### T9. Pricing coverage and missing-data status
 
-**Status:** bounded read-only coverage is merged in PR #224. The active T6 candidate
-extends it with guarded bottom-up A support only after every frozen recipe requirement
+**Status:** bounded read-only coverage is merged in PR #224. PR #227 extends it with
+guarded bottom-up A support only after every frozen recipe requirement
 has a latest current confirmed complete link. Missing/provisional/unresolved/stale links
 remain blocked, and stale or ambiguous B evidence takes precedence. Comparable/combined
 routes and project-specific applicability remain upcoming.
@@ -692,9 +692,9 @@ new immutable manifest and audit event. A technical-only database constraint
 prevents concurrent publication from leaving two active technical releases.
 
 **Remaining / prioritised amendment:** minimum T1/T5/T7 source identity/profile contracts,
-early-T12 profile review, the T13 roster boundary and bounded T9 coverage are merged
-through PR #224. Add one governed T6 component/activity recipe link next so reviewed A
-evidence can support a target without invented association. Continue T2-T8 processing/fact review,
+early-T12 profile review, the T13 roster boundary, bounded T9 coverage and governed T6
+recipe links are merged through PR #227. Build the first read-only T10 bottom-up proposal
+preview next. Continue T2-T8 processing/fact review,
 resolution/provenance and breadth in parallel with representative-source validation.
 Extend existing technical/product/labour/pricing/release models; no source filename,
 profile approval, mapping or roster grants downstream authority.
