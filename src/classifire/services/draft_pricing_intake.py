@@ -989,8 +989,19 @@ def list_row_observations(
     draft_id: str,
     source_id: str,
     profile_id: str,
+    *,
+    after_observation_id: str | None = None,
+    limit: int | None = None,
 ) -> list[dict[str, Any]]:
+    """List observations in row order, optionally as a bounded cursor page."""
+
     source, profile = _profile_row(db, actor, draft_id, source_id, profile_id)
+    if after_observation_id is not None and (
+        type(after_observation_id) is not str or not 1 <= len(after_observation_id) <= 128
+    ):
+        raise DraftScopeError("PRICING_ROW_OBSERVATION_LIST_INVALID", 422)
+    if limit is not None and (type(limit) is not int or not 1 <= limit <= 100):
+        raise DraftScopeError("PRICING_ROW_OBSERVATION_LIST_INVALID", 422)
     latest_source = db.scalar(
         select(DraftPricingSource)
         .where(
@@ -1009,15 +1020,32 @@ def list_row_observations(
         .order_by(DraftPricingSourceProfile.revision.desc())
         .limit(1)
     )
-    rows = db.scalars(
-        select(DraftPricingRowObservation)
-        .where(
-            DraftPricingRowObservation.draft_scope_id == draft_id,
-            DraftPricingRowObservation.source_id == source_id,
-            DraftPricingRowObservation.profile_id == profile_id,
+    statement = select(DraftPricingRowObservation).where(
+        DraftPricingRowObservation.draft_scope_id == draft_id,
+        DraftPricingRowObservation.source_id == source_id,
+        DraftPricingRowObservation.profile_id == profile_id,
+    )
+    if after_observation_id is not None:
+        anchor = db.scalar(
+            select(DraftPricingRowObservation).where(
+                DraftPricingRowObservation.id == after_observation_id,
+                DraftPricingRowObservation.draft_scope_id == draft_id,
+                DraftPricingRowObservation.source_id == source_id,
+                DraftPricingRowObservation.profile_id == profile_id,
+            )
         )
-        .order_by(DraftPricingRowObservation.row_number)
-    ).all()
+        if anchor is None:
+            raise DraftScopeError("PRICING_ROW_OBSERVATION_LIST_INVALID", 422)
+        _row_observation_value(anchor)
+        statement = statement.where(
+            DraftPricingRowObservation.row_number > anchor.row_number
+        )
+    statement = statement.order_by(
+        DraftPricingRowObservation.row_number, DraftPricingRowObservation.id
+    )
+    if limit is not None:
+        statement = statement.limit(limit)
+    rows = db.scalars(statement).all()
     return [
         {
             "id": row.id,

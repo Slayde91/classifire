@@ -258,6 +258,107 @@ def register(
 
     @server.tool(
         annotations=read,
+        meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ, ESTIMATE]}]},
+    )
+    def list_pricing_row_observations(
+        draft_id: str,
+        source_id: str,
+        profile_id: str,
+        after_observation_id: str | None = None,
+    ) -> dict[str, Any]:
+        """List up to 20 reviewed Dataset A row summaries in worksheet order.
+
+        Pass next_after_observation_id to continue. These records preserve human
+        interpretation and evidence state; listing them does not activate prices,
+        create library records, change an Estimate or grant approval.
+        """
+        with _client_session(factory) as db:
+            try:
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, READ, draft_id)
+                capabilities.require(db, authority, principal, ESTIMATE)
+                rows = pricing.list_row_observations(
+                    db,
+                    actor,
+                    draft_id,
+                    source_id,
+                    profile_id,
+                    after_observation_id=after_observation_id,
+                    limit=21,
+                )
+                page = rows[:20]
+                return {
+                    "observations": [
+                        {
+                            "observation_id": item["id"],
+                            "reviewed_at": item["value"]["reviewed_at"],
+                            "reviewed_by": item["reviewed_by"],
+                            "content_sha256": item["observation_sha256"],
+                            "definition_sha256": item["value"]["definition_sha256"],
+                            "dataset_id": item["value"]["definition"]["dataset"]["id"],
+                            "dataset_version": item["value"]["definition"]["dataset"][
+                                "version"
+                            ],
+                            "source_sha256": item["value"]["definition"]["source"][
+                                "sha256"
+                            ],
+                            "profile_revision": item["value"]["definition"]["profile"][
+                                "revision"
+                            ],
+                            "profile_sha256": item["value"]["definition"]["profile"][
+                                "sha256"
+                            ],
+                            "row_number": item["row_number"],
+                            "row_sha256": item["value"]["definition"]["row"]["sha256"],
+                            "item_kind": item["value"]["definition"]["interpretation"][
+                                "item_kind"
+                            ],
+                            "normalized_reference": item["value"]["definition"][
+                                "interpretation"
+                            ]["normalized_reference"],
+                            "evidence_state": item["value"]["definition"][
+                                "interpretation"
+                            ]["evidence_state"],
+                            "unresolved_fields": item["value"]["definition"][
+                                "interpretation"
+                            ]["unresolved_fields"],
+                            "is_current": item["is_current"],
+                        }
+                        for item in page
+                    ],
+                    "next_after_observation_id": (
+                        page[-1]["id"] if len(rows) > len(page) else None
+                    ),
+                    "limit": 20,
+                }
+            except scopes.DraftScopeError as exc:
+                raise ToolError(exc.code) from None
+
+    @server.tool(
+        annotations=read,
+        meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ, ESTIMATE]}]},
+    )
+    def read_pricing_row_observation(
+        draft_id: str, source_id: str, profile_id: str, observation_id: str
+    ) -> dict[str, Any]:
+        """Read one exact reviewed Dataset A row observation without changing it."""
+        with _client_session(factory) as db:
+            try:
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, READ, draft_id)
+                capabilities.require(db, authority, principal, ESTIMATE)
+                content = pricing.row_observation_bytes(
+                    db, actor, draft_id, source_id, profile_id, observation_id
+                )
+                return {
+                    "observation": json.loads(content),
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                    "size_bytes": len(content),
+                }
+            except scopes.DraftScopeError as exc:
+                raise ToolError(exc.code) from None
+    @server.tool(
+        annotations=read,
         meta={
             "securitySchemes": [
                 {"type": "oauth2", "scopes": [READ, ESTIMATE, TECHNICAL]}
