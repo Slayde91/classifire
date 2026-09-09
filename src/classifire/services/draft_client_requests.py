@@ -283,7 +283,10 @@ def decide(
                     "sha256": saved_package.archive_hash,
                 }
             elif row.command == "capability":
-                result = capabilities.execute(db, actor, capabilities.parse(payload["operation"]))
+                result = capabilities.execute(
+                    db, actor, capabilities.parse(payload["operation"]),
+                    reviewed_inputs=info["capability_inputs"],
+                )
             result["status"] = "confirmed"
         db.execute(
             update(DraftClientRequest)

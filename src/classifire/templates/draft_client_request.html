@@ -19,8 +19,25 @@
 {% elif value is iterable and value is not string %}<ul>{% for item in value %}<li>{{ fields(item) }}</li>{% endfor %}</ul>
 {% else %}{{ value if value is not none else 'Not supplied' }}{% endif %}
 {% endmacro %}
-{{ fields(payload.operation) }}
+{% if payload.operation.action != 'review_pdf_scope' %}{{ fields(payload.operation) }}{% endif %}
 {% if capability_inputs %}
+{% if capability_inputs.pdf_scope_review is defined %}
+{% set pdf_review = capability_inputs.pdf_scope_review %}
+{% set preview = pdf_review.preview %}
+<section class="panel" aria-labelledby="pdf-source-review-heading">
+<h2 id="pdf-source-review-heading">Review Scope against the PDF page</h2>
+<p>Source: <strong>{{ preview.original_filename }}</strong>, page {{ preview.page }}.</p>
+<p>Check each selected item against this page before confirming. Saving records your page review as Draft evidence; it does not grant technical approval.</p>
+<p><a href="/scopes/{{ preview.draft_id }}/evidence/{{ preview.source_id }}?page={{ preview.page }}">Open retained source and page review</a></p>
+<img src="/scopes/{{ preview.draft_id }}/evidence/{{ preview.source_id }}/pages/{{ preview.page }}.png" alt="Retained PDF page {{ preview.page }} for review" style="max-width:100%;height:auto">
+<details><summary>Extracted page text</summary><pre>{{ pdf_review.page_text }}</pre></details>
+<h3>Items to link to this page</h3>
+<ul>{% for label in preview.target_labels %}<li>{{ label }}</li>{% endfor %}</ul>
+{% with envelope={"content": preview.payload}, scope_content_heading='Proposed Scope content', scope_content_id='proposed-pdf-scope-heading' %}{% include 'draft_scope_report_content.html' %}{% endwith %}
+{% if preview.findings %}<h3>Validation findings</h3><ul>{% for finding in preview.findings %}<li>{{ finding.message }}</li>{% endfor %}</ul>{% endif %}
+<details><summary>Evidence identity</summary><dl><dt>Source SHA-256</dt><dd>{{ preview.source_sha256 }}</dd><dt>Page locator</dt><dd>{{ preview.locator_key }}</dd><dt>Review SHA-256</dt><dd>{{ preview.review_sha256 }}</dd></dl></details>
+</section>
+{% endif %}
 {% if capability_inputs.release %}<h3>Selected technical release</h3>{{ fields(capability_inputs.release) }}{% endif %}
 {% if capability_inputs.scope %}{% with envelope=capability_inputs.scope %}{% include 'draft_scope_report_content.html' %}{% endwith %}{% endif %}
 {% if capability_inputs.match %}

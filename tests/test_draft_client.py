@@ -127,6 +127,7 @@ def test_client_to_human_to_saved_draft_and_exact_package(client_case):
             "list_draft_pdf_sources",
             "scan_draft_pdf",
             "read_draft_pdf_page",
+            "read_draft_pdf_page_image",
             "propose_draft_project",
             "propose_draft_edit",
             "propose_project_package",

@@ -1,5 +1,44 @@
 # CLASSIFIRE Project State
 
+PR #239 passed all required gates in run 34363299076 and merged at
+`a54a1280806873a5709e8b81d150a9ed5100e6b4`. Post-merge main run 34365529790
+is pending verification. PR #240 run 34365043699 failed its exact tool-discovery expectation
+because the new image tool was missing from the expected list; that expectation is corrected
+without weakening the assertion. All **24 core client tests passed in 73.73 seconds**.
+PR #240 still requires passing current-head CI before merge.
+
+
+Integrated validation after reconciling PR #239 into PR #240: **40 tests passed in
+75.74 seconds**, covering download deadlines, retrieval, PDF client intake/images and
+human-confirmed Scope review. Linux-targeted Mypy passed all 222 source files with local
+untyped-import diagnostics disabled. Ruff and Bandit passed. Both test additions are retained.
+Required PR #240 current-head GitHub validation and merge remain pending.
+
+Latest image/client validation: **6 PDF intake and Scope-review tests passed in 59.21 seconds**.
+The image test verifies native PNG content and exact shared-renderer bytes/hash, read-only
+access, refusal before scan, invalid page/foreign user/missing read scope and changed-source
+refusal, with no Scope revision or pending request. Full Mypy (222 files, local untyped-import
+diagnostics disabled), Ruff, Bandit and diff checks passed. Real ChatGPT image consumption
+and browser visual acceptance remain unverified.
+
+## Current client PDF-to-Scope increment
+
+The candidate now includes a read-only native MCP page-image response with exact source,
+page locator and PNG hash, using the existing renderer and retained-evidence guards.
+It supplies visual evidence to a client without creating Scope content or approvals.
+
+The current candidate adds `review_pdf_scope` to the existing typed client proposal
+flow. It uses the shared PDF preview/save services to bind selected defects, openings and
+services to one retained page. Proposal preparation writes only a pending client request;
+confirmation rechecks exact Scope, source, scan, page and target inputs before appending a
+Scope revision with server-generated human-review references. Existing operations retain
+their original input-hash shape. No migration or downstream capability runs.
+
+Three focused PostgreSQL/MCP tests passed: successful human-confirmed source linkage,
+source-change refusal, and ownership/scope/forged-target refusal. The 57-test client/page-review regression passed in 294.69 seconds; publication is pending. The rendered HTTP page and PNG passed checks; browser automation
+failed to initialize with a sandbox helper error, so visual browser inspection is unverified.
+
+
 ## PDF download deadline correction
 
 PR #238 is merged at `215028664775eeb1bc84828475f1393da1a598be`; its final PR run

@@ -125,8 +125,9 @@ def register(
         annotations=write, meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ, WRITE]}]}
     )
     def propose_capability(operation: capabilities.CapabilityCommand) -> dict[str, Any]:
-        """Propose ONE independent Match, Estimate or report operation. Requires technical/estimate
-        scope for relevant content. Report inputs are saved revisions; nothing runs downstream.
+        """Propose ONE PDF Scope review, Match, Estimate or report operation.
+        Requires technical/estimate scope for relevant content. Report inputs use saved revisions.
+        Nothing runs downstream automatically.
         Human confirmation executes shared validation and may refuse invalid domain inputs.
         """
         return propose("capability", operation.model_dump(mode="json"))

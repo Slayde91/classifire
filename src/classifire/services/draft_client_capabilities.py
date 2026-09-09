@@ -19,6 +19,7 @@ from ..models import User
 from . import draft_constraint_review as constraints
 from . import draft_estimate_reports as estimate_reports
 from . import draft_estimates as estimates
+from . import draft_pdf_intake as pdf
 from . import draft_pricing_intake as pricing
 from . import draft_scope as scopes
 from . import draft_scope_reports as scope_reports
@@ -35,6 +36,22 @@ Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 class Command(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
     draft_id: Identity
+
+
+class PdfReviewTarget(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
+    target_kind: Literal["defect", "opening", "service"]
+    target_id: Identity
+
+
+class ReviewPdfScope(Command):
+    action: Literal["review_pdf_scope"]
+    source_id: Identity
+    expected_revision: Revision
+    page_number: Annotated[int, Field(ge=1, le=50)]
+    expected_document_hash: Sha256
+    content: dict[str, Any]
+    targets: Annotated[list[PdfReviewTarget], Field(min_length=1, max_length=100)]
 
 
 class CreateMatch(Command):
@@ -172,7 +189,8 @@ class EstimateReport(Command):
 
 
 CapabilityCommand = Annotated[
-    CreateMatch
+    ReviewPdfScope
+    | CreateMatch
     | ReviewMatch
     | ReviewMatchConstraints
     | ReviewMatchServiceSize
@@ -314,14 +332,38 @@ def inspect_inputs(
             "row": priced_row,
             "target_line": target,
         }
+    if isinstance(c, ReviewPdfScope):
+        preview = pdf.preview_scope_page(
+            db, actor, c.draft_id, c.source_id, c.expected_revision, c.page_number,
+            c.content, [target.model_dump() for target in c.targets],
+            c.expected_document_hash, settings=get_settings(),
+        )
+        document = pdf.read_document(db, actor, c.draft_id, c.source_id, settings=get_settings())
+        inputs["pdf_scope_review"] = {
+            "preview": preview,
+            "page_text": document["pages"][c.page_number - 1]["text"],
+        }
     raw = json.dumps(inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return {"inputs": inputs, "input_hash": hashlib.sha256(raw.encode()).hexdigest()}
 
 
-def execute(db: Session, actor: User, command: CapabilityCommand) -> dict[str, Any]:
+def execute(
+    db: Session, actor: User, command: CapabilityCommand,
+    *, reviewed_inputs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     c = command
     result: dict[str, Any] = {"draft_id": c.draft_id}
-    if isinstance(c, CreateMatch):
+    if isinstance(c, ReviewPdfScope):
+        if reviewed_inputs is None or "pdf_scope_review" not in reviewed_inputs:
+            raise scopes.DraftScopeError("CLIENT_REVIEW_REQUIRED", 409)
+        reviewed_hash = reviewed_inputs["pdf_scope_review"]["preview"]["review_sha256"]
+        saved = pdf.save_scope_page(
+            db, actor, c.draft_id, c.source_id, c.expected_revision, c.page_number,
+            c.content, [target.model_dump() for target in c.targets],
+            c.expected_document_hash, reviewed_hash, settings=get_settings(),
+        )
+        result.update(revision=saved["revision"], sha256=saved["sha256"])
+    elif isinstance(c, CreateMatch):
         row = matches.create_match(
             db,
             actor,

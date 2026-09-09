@@ -1,5 +1,22 @@
 # CLASSIFIRE Master Roadmap
 
+## Immediate prototype priority: source-linked client Scope review
+
+The same increment exposes bounded page images to the client for visual interpretation;
+previously only the human browser had raster access. Real client image consumption and
+interpretation accuracy remain acceptance tasks, separate from transport tests.
+
+Before the connected ChatGPT trial, finish the current `review_pdf_scope` increment.
+A generic client edit can save content but cannot create the retained-page provenance already
+supported by standalone review. Reuse that shared service through explicit human confirmation.
+Exit: display the page and proposed graph; save exact page/target/reviewer references only
+on confirmation; refuse stale/foreign/forged inputs; preserve old client commands; verify
+HTTP/browser behavior, required tests and publication. Browser inspection currently has an
+environment blocker; it is not a passed milestone. PR #239's independent timeout correction
+remains subject to its own required CI. The next product milestone remains the real ChatGPT
+PDF-to-reviewed-Scope journey; Excel and broader pricing work follow the existing priorities.
+
+
 ## Immediate delivery correction
 
 PR #238's PDF intake is merged at `2150286`. The current fix makes its promised total
