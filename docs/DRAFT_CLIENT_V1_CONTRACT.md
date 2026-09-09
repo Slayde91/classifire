@@ -148,7 +148,12 @@ IP literals, non-HTTPS URLs, user information, non-443 ports, fragments, unsafe 
 malformed escapes, non-public DNS answers, unexpected compression, oversized bodies,
 wrong media types and non-PDF bytes are refused. DNS answers are checked and the TLS
 socket is pinned to the checked public address to prevent DNS rebinding. Every redirect
-is revalidated. Errors contain only stable codes.
+is revalidated. Errors contain only stable codes. Production fetching uses a fixed Python
+worker with the signed URL on stdin and no application environment. The parent kills and
+reaps the worker when the total deadline expires, including stalled DNS or slow headers/body.
+It rechecks returned bytes/hash before retention. Timeout returns `CLIENT_FILE_TOTAL_TIMEOUT`
+and creates no source, proposal or Scope revision. This is process isolation, not an OS
+sandbox; startup and cleanup add small runtime overhead.
 
 A successful upload calls the same `draft_pdf_intake.retain_pdf` service as the browser
 UI and stores only immutable bytes, source hash/size and the safe original filename.
