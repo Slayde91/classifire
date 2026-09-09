@@ -1,10 +1,18 @@
 # CLASSIFIRE Session Handoff
 
+PR #239 passed all required gates in run 34363299076 and merged at
+`a54a1280806873a5709e8b81d150a9ed5100e6b4`. Post-merge main run 34365529790
+is pending verification. PR #240 run 34365043699 failed its exact tool-discovery expectation
+because the new image tool was missing from the expected list; that expectation is corrected
+without weakening the assertion. All **24 core client tests passed in 73.73 seconds**.
+PR #240 still requires passing current-head CI before merge.
+
+
 Integrated validation after reconciling PR #239 into PR #240: **40 tests passed in
 75.74 seconds**, covering download deadlines, retrieval, PDF client intake/images and
 human-confirmed Scope review. Linux-targeted Mypy passed all 222 source files with local
 untyped-import diagnostics disabled. Ruff and Bandit passed. Both test additions are retained.
-Required current-head GitHub validation and merge remain pending.
+Required PR #240 current-head GitHub validation and merge remain pending.
 
 Latest image/client validation: **6 PDF intake and Scope-review tests passed in 59.21 seconds**.
 The image test verifies native PNG content and exact shared-renderer bytes/hash, read-only
@@ -32,8 +40,8 @@ The current source-linked client Scope candidate is in
 PR #238's post-merge run 34358486420 passed. The independent download deadline fix is
 PR #239. Its initial run 34360392428 failed Linux type checking on the Windows-only
 CREATE_NO_WINDOW constant. Correction `000aa3f` uses an explicit platform guard; the
-Linux-targeted type check and 33 retrieval tests passed. Recheck current-head CI before merging. The review branch now includes the timeout commit; merge PR #239 first when its CI passes,
-then verify PR #240 against current main without dropping either increment.
+Linux-targeted type check and 33 retrieval tests passed. The corrected PR #239 is now merged, as recorded above.
+Verify PR #240 against current main without dropping either increment.
 Preserve the conflicted root and all unrelated local work.
 
 ADRs 0001/0002 remain accepted: shared deterministic core, independent capabilities,
@@ -92,8 +100,8 @@ an actual provenance gap in the planned ChatGPT PDF journey: generic edits canno
 trusted page references. Inspect Git, tests and PR state before editing; do not rebuild it.
 
 Prerequisites: preserve root recovery evidence; use the isolated worktree and shared venv;
-use only the disposable PostgreSQL test database and synthetic sources. Verify PR #239's
-required checks before merging it, then reconcile current main without dropping local work.
+use only the disposable PostgreSQL test database and synthetic sources. PR #239 is merged; verify its post-merge run and PR #240 current-head checks.
+Reconcile current main without dropping local work.
 Use existing human confirmation and page-save guards, never client-declared review authority.
 
 Validation commands (choose a fresh temporary directory when rerunning):
@@ -119,7 +127,7 @@ ChatGPT PDF-to-reviewed-Scope journey through an operator-controlled HTTPS/OAuth
 ## Recommended Prompt for New Session
 
 > Continue CLASSIFIRE from repository evidence. Inspect AGENTS.md, GOAL.md, Git/worktrees,
-> docs/PROJECT_STATE.md, the roadmap, current PR #239 checks and the active diff before editing.
+> docs/PROJECT_STATE.md, the roadmap, PR #240 checks and main run 34365529790 and the active diff before editing.
 > Preserve the conflicted root and unrelated work. Finish the source-linked client Scope
 > increment in C:/CLASSIFIRE/.tmp/client-pdf-scope-review-20260910 on
 > feat/client-pdf-scope-review-20260910: review_pdf_scope must reuse shared PDF preview/save

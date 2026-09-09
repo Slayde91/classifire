@@ -1,10 +1,18 @@
 # CLASSIFIRE Project State
 
+PR #239 passed all required gates in run 34363299076 and merged at
+`a54a1280806873a5709e8b81d150a9ed5100e6b4`. Post-merge main run 34365529790
+is pending verification. PR #240 run 34365043699 failed its exact tool-discovery expectation
+because the new image tool was missing from the expected list; that expectation is corrected
+without weakening the assertion. All **24 core client tests passed in 73.73 seconds**.
+PR #240 still requires passing current-head CI before merge.
+
+
 Integrated validation after reconciling PR #239 into PR #240: **40 tests passed in
 75.74 seconds**, covering download deadlines, retrieval, PDF client intake/images and
 human-confirmed Scope review. Linux-targeted Mypy passed all 222 source files with local
 untyped-import diagnostics disabled. Ruff and Bandit passed. Both test additions are retained.
-Required current-head GitHub validation and merge remain pending.
+Required PR #240 current-head GitHub validation and merge remain pending.
 
 Latest image/client validation: **6 PDF intake and Scope-review tests passed in 59.21 seconds**.
 The image test verifies native PNG content and exact shared-renderer bytes/hash, read-only
