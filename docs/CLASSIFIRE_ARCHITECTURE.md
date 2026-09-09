@@ -12,7 +12,7 @@ Dataset B mapping and T13 roster increments.
 [PROJECT_STATE.md](./PROJECT_STATE.md) owns measured validation/publication.
 No AI or OpenClaw path is used by this increment. Evaluation execution, commercial
 activation, broader estimation, real ChatGPT linking and production readiness remain open.
-The current unmerged client candidate exposes the existing deterministic T9
+PR #235 exposes the existing deterministic T9
 coverage service through one read-only MCP tool with owned-project, estimating,
 technical and local pricing-review checks. It adds no new domain rule,
 persistence, agent or orchestration layer; measured behavior and limitations are
@@ -164,8 +164,8 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja independent routes; PDF/Excel source review, optional PDF suggestions, A/B pricing profiles, exact-profile review, Dataset A observations, Dataset B mappings, T13 roster lifecycle, T9 coverage/JSON and T6 recipe preview/save/history/download are on shared main. The current unmerged branch adds MCP T9 coverage parity. | Add client parity for reviewed row records, rosters and recipe links. Preserve manual fallback; evidence-graph and pricing-profile client commands plus real ChatGPT linking remain planned. |
-| Optional external client | draft_client.py, draft_client_auth.py, draft_client_requests and shared Draft services; the current candidate adds read-only preview_pricing_coverage over the shared T9 service | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205, measured review in PR #206 and workbook pricing in PR #207. The T9 candidate requires read/estimate/technical scopes plus current local pricing-review rights. External linking remains unproven. |
+| Interfaces/API | FastAPI/Jinja independent routes; PDF/Excel source review, optional PDF suggestions, A/B pricing profiles, exact-profile review, Dataset A observations, Dataset B mappings, T13 roster lifecycle, T9 coverage/JSON and T6 recipe preview/save/history/download are on shared main. PR #235 adds MCP T9 coverage parity. | Add client parity for reviewed row records, rosters and recipe links. Preserve manual fallback; evidence-graph and pricing-profile client commands plus real ChatGPT linking remain planned. |
+| Optional external client | draft_client.py, draft_client_auth.py, draft_client_requests and shared Draft services; PR #235 adds read-only preview_pricing_coverage over the shared T9 service | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205, measured review in PR #206 and workbook pricing in PR #207. The T9 candidate requires read/estimate/technical scopes plus current local pricing-review rights. External linking remains unproven. |
 | Orchestration | Deterministic controllers, no-write PDF/Excel graph previews and explicit atomic saves; bounded inference journal; generic worker has no registered handlers | Keep visible source interactions bounded. Extend existing BackgroundJob for necessary corpus stages, leases/retries and immutable outcomes after the visible prototype; no new fleet or scheduler database. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers and deterministic pricing coverage. PR #227 adds frozen recipe snapshots and immutable recipe-link review. | Reuse independently callable contracts across UI/client. Planned corpus extraction/resolution and pricing estimation use the same governed application; they do not bypass independent capability prerequisites. |
 | Technical corpus | Individual TechnicalDocument intake, limited PDF metadata, JSONL Draft variants, manual source-bound materialisation/review | Planned batch inventory, versioned extraction/claims, stable system identity, deduplication and exception review for hundreds to thousands of documents. Existing source/review/publication gates remain. |
@@ -2157,7 +2157,7 @@ original rates and reasoned overrides. Reports still render explicit saved revis
 selecting a workbook rate neither activates a pricing library nor proves technical
 suitability, quantity, commercial applicability or complete recovery.
 
-## Current candidate client amendment: read-only T9 pricing coverage
+## PR #235 candidate client amendment: read-only T9 pricing coverage
 
 **Current architecture -> proposed change -> reason:** the standalone pricing
 screen and JSON route already call draft_pricing_coverage.preview_coverage, while

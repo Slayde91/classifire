@@ -14,12 +14,12 @@ Verified 2026-09-09.
   an external CI/account blocker; the exact merge commit lacks post-merge execution.
 - Active isolated worktree:
   C:\CLASSIFIRE\.tmp\draft-client-pricing-coverage-20260909
-- Active branch: feat/draft-client-pricing-coverage-20260909. It contains code commit
+- Active branch: feat/draft-client-pricing-coverage-20260909, published as PR #235. It contains code commit
   7a1149b adds the MCP coverage tool; merge commit 9c5b69d includes the complete
   verified documentation history from PR #234.
-- PR #234 remains open at 2b637bb29b3dba5669f9756e10364744c4ce0255.
-  Its required validation executed zero steps with the same billing/spending
-  annotation. The combined feature PR is intended to supersede it after publication.
+- PR #234 was closed after all three of its documentation commits were included
+  in PR #235. PR #235 is open; run 34323955126 executed zero steps and failed only
+  because GitHub reported the same account billing/spending-limit condition.
 - The recovery root C:\CLASSIFIRE remains on gpt/phase8-linked-original-images
   at de0cc5a with extensive staged, unstaged, conflicted and untracked recovery
   material. It was not edited, reset, cleaned, resolved, broadly staged or published.
@@ -58,7 +58,7 @@ database row.
 
 Open issues:
 
-- The candidate is not on shared main until required PR checks pass and it is merged.
+- PR #235 is not on shared main until required checks pass and it is merged.
 - GitHub Actions cannot currently start new jobs because of the account billing/spending
   state. Never bypass required checks.
 - Real OAuth authorization, HTTPS deployment, account linking and a real ChatGPT
@@ -146,7 +146,7 @@ without inventing those facts.
 
 - Inspect AGENTS.md, docs/GOAL.md, current Git/worktrees, origin/main, open
   PRs/checks and these four durable documents before editing.
-- Confirm the combined feature PR state and preserve this branch if it is still unmerged.
+- Confirm PR #235 and preserve this branch if it is still unmerged.
   Never edit the conflicted root.
 - Reuse draft_pricing_evaluation_rosters.list_rosters and/or roster_bytes; do not
   duplicate roster, grouping, current/stale or integrity rules in the MCP adapter.
@@ -180,7 +180,7 @@ without inventing those facts.
 
 **Blockers:** representative A/B semantics cannot be validated without authorised
 files and usage rights. Publication and merge cannot complete while required GitHub
-Actions jobs cannot start.
+Actions jobs cannot start; PR #235 run 34323955126 confirms this blocker.
 
 **Definition of done:** an authenticated authorised client can list/read a bounded
 saved T13 roster through the same shared service; output is exact, current/stale status
@@ -194,7 +194,7 @@ where safe.
 > Continue CLASSIFIRE from verified repository state. First inspect AGENTS.md,
 > docs/GOAL.md, Git/worktrees, origin/main, open PRs/checks and the four durable
 > documents; preserve the conflicted C:\CLASSIFIRE recovery root and unrelated
-> changes. Confirm the combined feat/draft-client-pricing-coverage-20260909 PR
+> changes. Confirm PR #235 and its feat/draft-client-pricing-coverage-20260909 branch
 > state before editing. The next executable task is bounded read-only MCP access
 > to persisted T13 pricing-evaluation roster history. This follows the candidate
 > preview_pricing_coverage tool because a ChatGPT-compatible client can see
