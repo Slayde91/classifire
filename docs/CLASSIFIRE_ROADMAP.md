@@ -8,14 +8,16 @@ and hardens its real Chrome, exact-download and restart lifecycle. PR #233 adds 
 immutable Scope-bound project quantity and governed T10 consumption. Synthetic real-process
 Chrome/restart proof now also covers Dataset B mapping, T9 coverage and the T13 roster.
 Merged PR #235 exposes the same deterministic T9 coverage plus bounded persisted T13
-roster history through three read-only MCP tools. Direct-main PR #236 adds bounded read-only T6
-recipe-link history through the same shared client boundary. Real ChatGPT OAuth/HTTPS
-linking remains unproven.
+roster history through three read-only MCP tools. Merged PR #236 adds bounded read-only
+T6 recipe-link history through the same shared client boundary. The active row-observation
+branch adds the exact reviewed Dataset A evidence cited by those links. Real ChatGPT
+OAuth/HTTPS linking remains unproven.
 **Verified shared-main baseline:**
-`324f66a2e73330589e43b2ca17529eaf8de61bfe`.
-PR #235 head run 34329434461 attempt 2 passed the full test suite, Ruff, Mypy,
-Bandit and one Alembic head before merge as `324f66a`; post-merge main run 34336769556 passed the same repository gates. PR #236 code-head run 34333784853 passed the same
-repository gates. The earlier PR #233 post-merge run that executed zero steps is
+`aca75415c281f99ab218b564b1287c0e42bef18c`.
+PR #236 final head run 34340361136 passed the full test suite, Ruff, Mypy, Bandit and
+one Alembic head before merge as `aca75415`. Post-merge main run 34342328239 reached
+the configured 30-minute limit while tests were still running; it is not a pass and did
+not identify a failed assertion. PR #237 still requires exact-head CI. The earlier PR #233 post-merge run that executed zero steps is
 historical evidence of a temporary account billing/spending-limit incident, not the
 current CI state.
 PR #227 head run 34223161569 and post-merge main run 34224663080 each passed
@@ -124,7 +126,7 @@ prototype into it.
 | **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; T13 roster PR #222; bounded T9 coverage PR #224; T6 recipe review PR #227; first T10 bottom-up preview PR #229; T10 browser/restart proof complete; Scope-bound quantity PR #233 merged; B mapping/T9/T13 browser-restart proof complete; broader T10-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster/quantity history and inspect identity, units, price meaning and gaps. Coverage and the first bottom-up amount are visible and browser-proven. Validate representative recipe and grouping semantics next, then add numeric-basis breadth and separate comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; PR #235 merged exact read-only T9 coverage and bounded T13 roster history; direct-main PR #236 adds candidate bounded T6 recipe-link history; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; next add bounded reviewed Dataset A row-observation parity while representative source validation is blocked. Inspect round-trip content and client parity. |
+| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; PR #235 merged exact read-only T9 coverage and bounded T13 roster history; PR #236 merged bounded T6 recipe-link history; Dataset A row-observation client parity is an active tested local candidate; external ChatGPT linking pending | Finish and merge the bounded row-evidence read, then prove one visible ChatGPT-compatible PDF intake-to-Scope journey through the existing shared service. Extend ProjectPackage evidence membership only with explicit inclusion/withholding rights and round-trip proof. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
@@ -143,11 +145,12 @@ selected-package P5 increment has a real configuration/save/download/reconfigura
 restart journey merged in PR #200; later P5 client parity is merged through PR #207.
 Merged PR #235 adds deterministic T9 coverage plus cursor-bounded list and exact read of
 persisted T13 roster history with strict read/estimate/technical client grants, local
-pricing-review authority and zero writes. Direct-main PR #236 adds bounded T6 recipe-link
+pricing-review authority and zero writes. Merged PR #236 adds bounded T6 recipe-link
 list/exact-read parity, stable cursor ordering and current/stale status through the same
-permissions and shared service. Its related PostgreSQL selection passes 56 tests;
-source-wide Ruff, Bandit and Mypy-with-known-stub-category-disabled pass.
-Do not rebuild these slices.
+permissions and shared service. Its final exact-head CI passed every repository gate.
+The active row-observation candidate extends the evidence chain with 20-item
+worksheet-order pagination, exact bytes, current/stale state and zero writes; 48 affected
+tests pass after merging current main. Do not rebuild these slices.
 
 **Completed bounded increment: selected Draft ProjectPackage download (PR #200).** One coherent Scope workspace,
 optional review/Estimate and chosen retained report pairs can be previewed without
