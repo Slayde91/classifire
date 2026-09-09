@@ -1,4 +1,4 @@
-# CLASSIFIRE Architecture
+﻿# CLASSIFIRE Architecture
 
 **Document status:** Current pre-production architecture
 
@@ -1340,7 +1340,7 @@ anything.
 ### Strict source-bound report captions on shared main (PR #151)
 
 The PDF normaliser accepts only an explicit, bounded numbered caption prefix and
-stores its category, position, size, sequence, and content hash—not its raw
+stores its category, position, size, sequence, and content hashâ€”not its raw
 wording. Before selected caption wording is exposed in transient documentary
 context, the system normalises the exact verified PDF again and requires the
 same locator and hash. Ambiguous prose, unknown categories, and locator fields
@@ -2193,7 +2193,7 @@ client reads remain planned.
 
 **Current architecture -> proposed change -> reason:** the standalone pricing screen
 already lists and downloads exact persisted T6 recipe links, and T9 coverage consumes
-those links, but an MCP client cannot inspect them. The stacked candidate registers
+those links, but an MCP client cannot inspect them. The direct-main candidate registers
 `list_pricing_recipe_links(draft_id, before_link_id)` and
 `read_pricing_recipe_link(draft_id, link_id)` over `draft_pricing_recipes`. This completes
 one more evidence link in the shared ChatGPT/standalone pricing chain without duplicating
@@ -2381,3 +2381,4 @@ to follow the companion design and unchanged T1-T14 dependency gates. T6 represe
 semantics, source breadth, bottom-up/comparable estimation and calibration remain
 unfinished. Existing profiles, mappings, rosters, recipe links and coverage are not
 completion of either library import.
+
