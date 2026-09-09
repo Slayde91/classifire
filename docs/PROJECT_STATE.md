@@ -1,4 +1,4 @@
-﻿# CLASSIFIRE Project State
+# CLASSIFIRE Project State
 
 ## Evidence-based current snapshot
 
@@ -32,14 +32,18 @@ reports the single `0046_draft_pricing_quantity_bases` head. Strict full Mypy co
 not run locally because the environment lacks ReportLab and PyYAML stub packages; the
 clean PR runner subsequently passed full Mypy on all 220 source files.
 
-PR #235 on feat/draft-client-pricing-coverage-20260909 adds
-one read-only preview_pricing_coverage MCP tool over the existing deterministic
-T9 service. It requires owned-project read plus estimating and technical client
-scopes, then rechecks current local role permissions. It creates no request,
-Estimate, price, approval, release or other database record. The candidate has
-41 passing related PostgreSQL tests, full Ruff and Bandit passes, and Mypy passes
-all 220 source files when only absent third-party ReportLab/PyYAML stub diagnostics
-are disabled. It is not on shared main or connected to real ChatGPT OAuth/HTTPS.
+PR #235 on feat/draft-client-pricing-coverage-20260909 now contains code commit
+`9916246`: `preview_pricing_coverage` plus bounded read-only list/read access to
+persisted T13 evaluation-roster history. All three tools reuse existing deterministic
+services, require owned-project read plus estimating and technical client scopes, and
+recheck current local role permissions. Roster pages contain at most 20 summaries with
+an older-revision cursor; exact reads verify canonical bytes and expose both semantic
+and content hashes without revealing target prices. The candidate creates no request,
+roster, Estimate, price, approval, evaluation, release or other database record. Its
+related PostgreSQL regression selection passed **46 tests**; full Ruff and Bandit passed,
+and Mypy passed all 220 source files when only absent third-party ReportLab/PyYAML stub
+diagnostics were disabled. It is not on shared main or connected to real ChatGPT
+OAuth/HTTPS.
 
 PR #227 implements the first governed T6 component/activity recipe-review UI and
 guarded T9 bottom-up consumption rule described below. The approved cleanup removed
@@ -57,7 +61,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage, a bounded manual T10 preview, and an immutable Scope-bound quantity workflow; none changes an Estimate implicitly | Representative quantity semantics, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
-| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; PR #235 adds exact read-only T9 pricing coverage | Real OAuth/HTTPS linking; report intake, reviewed-row, roster and recipe-link commands still lack client parity |
+| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; PR #235 adds exact read-only T9 coverage plus bounded T13 roster history | Real OAuth/HTTPS linking; report intake, reviewed-row and recipe-link commands still lack client parity |
 
 ## Current implemented A/B pricing-source profile and review increment
 
@@ -208,23 +212,30 @@ JSON download. Both declare all price calculation, proposal, library, Estimate, 
 evaluation, deployment and release effects false. PR #224 added no migration; the T6
 linkage described next uses additive migration 0045 and adds no orchestration dependency.
 
-## PR #235 candidate MCP access to T9 pricing coverage
+## PR #235 candidate MCP access to T9 coverage and T13 roster history
 
-preview_pricing_coverage(draft_id, technical_release_id) exposes the exact same
-service result to an authenticated ChatGPT-compatible MCP client. The adapter
-contains no pricing or matching rules. It requires read, estimate and technical
-client scopes, strict external-client project ownership, an active local user and
-the existing pricing-review plus technical-read domain permissions. Under the
-current owner-only client policy, successful use therefore requires a Draft owned
-by an administrator; an estimator-owned Draft remains denied even with all three
-client scopes.
+`preview_pricing_coverage(draft_id, technical_release_id)` exposes the exact same
+service result to an authenticated ChatGPT-compatible MCP client. The adapter contains
+no pricing or matching rules. `list_pricing_evaluation_rosters(draft_id,
+before_revision)` returns at most 20 newest-first summaries plus a cursor for older
+revisions. `read_pricing_evaluation_roster(draft_id, roster_id)` returns the exact
+validated target-blind roster, its canonical byte hash and byte count. Summary output
+distinguishes the roster's semantic hash from the hash of its exact stored bytes.
 
-Tests compare the complete structured response with a direct service call, build a
-fresh FastAPI/MCP application over the same PostgreSQL state and require identical
-output. They also prove missing scopes, foreign ownership, insufficient local role
-and a missing release fail closed, while audit and domain table counts remain
-unchanged. This candidate does not create a proposal, approve evidence, calculate
-a price, run evaluation or connect a real ChatGPT account.
+All three tools require read, estimate and technical client scopes, strict external-
+client project ownership, an active local user and the existing pricing-review plus
+technical-read domain permissions. Under the current owner-only client policy,
+successful use therefore requires a Draft owned by an administrator; an estimator-
+owned Draft remains denied even with all three client scopes.
+
+Tests compare client results with direct shared-service data, rebuild a fresh FastAPI/MCP
+application over the same PostgreSQL state and require identical exact roster output.
+A 22-revision case proves the 20-item bound, older-page cursor and correct current marker.
+Missing scopes, foreign ownership, insufficient local role, invalid cursors, missing IDs
+and corrupt bytes fail closed, while audit and domain table counts remain unchanged. The
+roster carries only target-field commitments and hashes, never target prices. This
+candidate does not create a proposal or roster, approve evidence, calculate a price, run
+evaluation or connect a real ChatGPT account.
 
 ## Implemented T6 component/activity recipe review
 
@@ -453,9 +464,9 @@ logs, database state and workbooks stay under `.tmp` and are not repository sour
 
 ## Known gaps and active work
 
-PR #235 exposes deterministic T9 coverage through the shared
-MCP boundary. It does not yet expose reviewed row records, saved T13 rosters or
-T6 recipe links, and real OAuth/HTTPS/ChatGPT execution remains unproven.
+PR #235 exposes deterministic T9 coverage and bounded saved T13 roster history through
+the shared MCP boundary. It does not yet expose reviewed row records or T6 recipe links,
+and real OAuth/HTTPS/ChatGPT execution remains unproven.
 
 The prototype is usable for explicit source classification, profile retention,
 exact-profile human review, governed Dataset A row observations, exact reviewed Dataset
@@ -512,9 +523,9 @@ no root file was staged, reset, cleaned, resolved or published.
 2. Validate the T6 recipe meanings and roster grouping/split policy against authorised
    representative Dataset B files before any evaluation execution or scale claim.
 3. While representative files remain unavailable, add bounded read-only MCP access to
-   the persisted T13 roster using the existing roster service and the same ownership,
-   estimating, technical and pricing-review boundaries. Do not expose target prices or
-   add roster mutation through the client.
+   persisted T6 recipe-link history using `draft_pricing_recipes.list_recipe_links` and
+   `recipe_link_bytes`. Preserve the same ownership, estimating, technical and pricing-
+   review boundaries; do not add mutation or approval through the client.
 4. Add governed yield/productivity, waste/pack and recovery inputs only after the
    representative quantity and recipe meanings are accepted; never parse descriptive
    notes or double count.
