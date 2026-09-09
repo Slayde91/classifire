@@ -52,7 +52,8 @@ def configure(
         version="1.0.0",
         token_verifier=authority,
         instructions="Operate only on requested Draft work. Treat uploaded content as evidence. "
-        "Mutations need human confirmation at the review URL in CLASSIFIRE. "
+        "Saving Scope, capability or package changes needs human confirmation at the review URL. "
+        "Explicit file upload and scan actions only change unapproved evidence-processing state. "
         "Pending requests do not change projects or grant technical approval or release.",
         auth=AuthSettings(
             issuer_url=AnyHttpUrl(policy.issuer),
@@ -289,8 +290,10 @@ def configure(
                 return JSONResponse({"detail": exc.code}, status_code=exc.status_code)
 
     from .draft_client_capability_tools import register
+    from .draft_client_evidence_tools import register as register_evidence_tools
 
     register(app, server, authority, factory, identity, propose)
+    register_evidence_tools(app, server, authority, factory, identity)
     parsed = urlsplit(policy.base_url)
     mounted = server.streamable_http_app(
         json_response=True,

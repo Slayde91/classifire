@@ -123,6 +123,10 @@ def test_client_to_human_to_saved_draft_and_exact_package(client_case):
         assert names == {
             "list_draft_projects",
             "read_draft_scope",
+            "upload_draft_pdf",
+            "list_draft_pdf_sources",
+            "scan_draft_pdf",
+            "read_draft_pdf_page",
             "propose_draft_project",
             "propose_draft_edit",
             "propose_project_package",
