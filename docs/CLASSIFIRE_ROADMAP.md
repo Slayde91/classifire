@@ -15,8 +15,9 @@ OAuth/HTTPS linking remains unproven.
 **Verified shared-main baseline:**
 `aca75415c281f99ab218b564b1287c0e42bef18c`.
 PR #236 final head run 34340361136 passed the full test suite, Ruff, Mypy, Bandit and
-one Alembic head before merge as `aca75415`; post-merge main run 34342328239 is still
-executing. The earlier PR #233 post-merge run that executed zero steps is
+one Alembic head before merge as `aca75415`. Post-merge main run 34342328239 reached
+the configured 30-minute limit while tests were still running; it is not a pass and did
+not identify a failed assertion. PR #237 still requires exact-head CI. The earlier PR #233 post-merge run that executed zero steps is
 historical evidence of a temporary account billing/spending-limit incident, not the
 current CI state.
 PR #227 head run 34223161569 and post-merge main run 34224663080 each passed

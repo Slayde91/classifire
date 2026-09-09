@@ -9,8 +9,9 @@ Verified 2026-09-09 from isolated worktrees, local tests and GitHub.
 - PR #236 is merged. Exact head
   `c8b8501a3738188f61dac05c9a494e507bd18103` passed run 34340361136:
   full tests, Ruff, Mypy, Bandit and the one-head Alembic check.
-- Post-merge main run 34342328239 is currently executing on exact merge commit
-  `aca75415`; it is not yet recorded as passed.
+- Post-merge main run 34342328239 reached the workflow's configured 30-minute
+  timeout while tests were still running. It is not a pass and did not identify a
+  failed assertion. PR #237 still requires exact-head CI.
 - Active isolated worktree:
   `C:/CLASSIFIRE/.tmp/draft-client-row-observations-20260909`;
   branch `feat/draft-client-row-observations-20260909`.
@@ -89,8 +90,11 @@ edits. Reinspect status and the full diff before staging.
 
 Open issues:
 
-- The active row-observation branch still needs explicit-path documentation commit,
-  push, direct PR, required CI and merge.
+- PR #237 is open for the active row-observation branch and still needs the corrected
+  documentation commit pushed, required exact-head CI and merge.
+- Full-suite runtime is close to the workflow's 30-minute job timeout. Main run
+  34342328239 timed out during tests; do not describe that run as green or as a test
+  failure without stronger evidence.
 - The standalone UI already exposes PDF defect-report, Excel defect-report and pricing
   workbook uploads. Report intake is not yet available through a proven ChatGPT client
   journey.
@@ -126,8 +130,8 @@ evidence. Leaving it local would preserve a half-finished client chain.
 **Prerequisites and dependencies:**
 
 - Inspect `AGENTS.md`, `docs/GOAL.md`, the current branch/status/diff,
-  `origin/main`, PR #236, run 34342328239 and these four durable documents before
-  editing or publishing.
+  `origin/main`, PRs #236/#237, main run 34342328239 and these four durable documents
+  before editing or publishing.
 - Preserve the conflicted recovery root and every unrelated local change.
 - Confirm the active branch still contains feature commit `b8ed4f7` and merge commit
   `627b555` over `aca75415`.
@@ -175,7 +179,8 @@ are committed and pushed; a direct-main PR passes required CI and merges; result
 
 > Continue CLASSIFIRE from verified repository state. Before editing, inspect
 > `AGENTS.md`, `docs/GOAL.md`, Git/worktrees, the active branch and full diff,
-> `origin/main`, PR #236/run 34342328239, and all four durable documents. Preserve
+> `origin/main`, PRs #236/#237, main run 34342328239 and all four durable
+> documents. Preserve
 > the conflicted `C:/CLASSIFIRE` recovery root and unrelated changes. The single
 > highest-value task is to finish and merge the tested Dataset A row-observation client
 > slice in

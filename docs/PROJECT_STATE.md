@@ -7,8 +7,10 @@ Verified 2026-09-09 on shared main
 T6 recipe-link client PR #236. Exact PR head
 `c8b8501a3738188f61dac05c9a494e507bd18103` passed run 34340361136:
 the full test suite, Ruff, Mypy, Bandit and the one-head Alembic check all passed.
-Post-merge main run 34342328239 is executing on the exact merge commit; do not treat it
-as passed until GitHub reports a terminal success. Earlier run 34281851774 executed zero
+Post-merge main run 34342328239 reached the workflow's configured 30-minute timeout
+while the full test step was still running. It did not pass and did not report a failing
+test assertion. PR #237 still requires exact-head CI. Earlier run 34281851774
+executed zero
 steps during a temporary GitHub billing/spending-limit block; successful later runs prove
 Actions can execute again, so that historical event is no longer the active blocker.
 
@@ -547,7 +549,9 @@ Profile reads verify stored JSON hashes and current source/dataset bindings. Pre
 save additionally re-read the exact clean retained source. Database constraints and
 application services preserve version identity, but production tenant isolation,
 retention, backup/restore, immutable database enforcement and operational monitoring
-remain unproven.
+remain unproven. Full CI duration is also close to the configured 30-minute job timeout;
+run 34342328239 timed out during tests and requires follow-up even though later PR checks
+may pass.
 
 The full production goal, canonical Phase 8-14 acceptance, live provider use, real
 ChatGPT linking, OpenClaw retirement, deployment and Human Release remain incomplete.

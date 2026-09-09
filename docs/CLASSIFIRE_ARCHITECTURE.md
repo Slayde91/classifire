@@ -9,8 +9,9 @@
 T13 roster and T6 recipe-link client reads, the governed T6/v4 recipe-review increment,
 the bounded T10 preview and the immutable Scope-bound quantity journal. Exact PR #236
 head `c8b8501a3738188f61dac05c9a494e507bd18103` passed run 34340361136
-before merge. Post-merge run 34342328239 is still executing; [PROJECT_STATE.md](./PROJECT_STATE.md)
-owns measured validation and publication state.
+before merge. Post-merge run 34342328239 reached the configured 30-minute limit while
+tests were still running; it is neither a pass nor evidence of a failed assertion.
+[PROJECT_STATE.md](./PROJECT_STATE.md) owns measured validation and publication state.
 
 No AI or OpenClaw path is used by this increment. Evaluation execution, commercial
 activation, broader estimation, real ChatGPT linking and production readiness remain
