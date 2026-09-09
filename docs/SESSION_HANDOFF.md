@@ -1,194 +1,102 @@
 # CLASSIFIRE Session Handoff
 
-## Branch and project context
+## Current branch and project context
 
-Verified 2026-09-09 from isolated worktrees, local tests and GitHub.
+The current source-linked client Scope candidate is in
+`C:/CLASSIFIRE/.tmp/client-pdf-scope-review-20260910` on
+`feat/client-pdf-scope-review-20260910`, based on main `2150286` (merged PR #238).
+PR #238's post-merge run 34358486420 passed. The independent download deadline fix is
+PR #239. Its initial run 34360392428 failed Linux type checking on the Windows-only
+CREATE_NO_WINDOW constant. Correction `000aa3f` uses an explicit platform guard; the
+Linux-targeted type check and 33 retrieval tests passed. Recheck current-head CI before merging. Do not confuse the two branches or test scopes.
+Preserve the conflicted root and all unrelated local work.
 
-- Shared baseline before this feature is
-  `d477ff724f3eb6f0229c376728ddba9bea1e75e9`, merge commit for PR #237.
-- PR #237 is merged. Exact head
-  `4ed44ec7543af95541d0d584f8aaa078ad300fde` passed run 34345679363:
-  full tests, Ruff, Mypy, Bandit and the one-head Alembic check.
-- Post-merge main run 34348938960 passed full tests and every repository gate on
-  the exact merge commit. Prior run 34342328239 timed out at the workflow's
-  30-minute limit while tests were still running; it reported no failed assertion.
-- Active isolated worktree:
-  `C:/CLASSIFIRE/.tmp/chatgpt-pdf-intake-20260909`;
-  branch `feat/chatgpt-pdf-intake-20260909`, opened as PR #238. Verify its current`n  exact head, CI and merge status before relying on shared publication.
-- The dirty conflicted `C:/CLASSIFIRE` root is recovery evidence. Do not edit,
-  reset, clean, resolve, broadly stage or publish from it.
-- ADRs 0001/0002 remain accepted: one modular deterministic application,
-  independent capabilities, portable artifacts, bounded optional AI and
-  transitional OpenClaw.
+ADRs 0001/0002 remain accepted: shared deterministic core, independent capabilities,
+optional AI and transitional OpenClaw. This increment changes neither architecture direction
+nor canonical authority. No deployment, customer evidence or real provider run occurred.
 
-## Current implementation
+## Current implementation and relevant changes
 
-Shared main now exposes saved Scope, Match, Estimate, reporting and selected-package
-operations through an opt-in authenticated MCP adapter. PR #237 completes bounded
-read-only client access from T9 coverage and T6 recipe links to exact reviewed Dataset A
-row observations.
+`review_pdf_scope` extends the existing `propose_capability` union with a retained source,
+exact document hash/page, expected Scope revision, full graph and explicit target IDs.
+Preparation calls the shared PDF preview and retains a pending request only. The browser
+shows source raster/text, selected item labels and proposed graph. Confirmation passes the
+verified preview hash to the existing PDF save service, which rechecks exact dependencies
+and appends server-generated page/entity/reviewer references. No downstream capability runs.
+Generic Scope edits and the original command hash shapes remain compatible.
 
-The current feature adds a ChatGPT-compatible PDF intake path over the same services used
-by the standalone UI:
+Relevant code:
+- `src/classifire/services/draft_client_capabilities.py`
+- `src/classifire/services/draft_client_requests.py`
+- `src/classifire/draft_client_capability_tools.py`
+- `src/classifire/templates/draft_client_request.html`
+- `tests/test_draft_client_pdf_scope.py`
+- Shared services: `draft_pdf_intake.py`, `draft_scope.py`.
 
-- `upload_draft_pdf(draft_id, file)` declares
-  `_meta["openai/fileParams"] = ["file"]` and accepts the documented
-  `download_url`, `file_id`, optional `mime_type` and `file_name`;
-- `list_draft_pdf_sources(draft_id)` returns at most 20 owned retained sources;
-- `scan_draft_pdf(draft_id, source_id)` invokes the shared ClamAV/quarantine and
-  disposable parser boundary;
-- `read_draft_pdf_page(draft_id, source_id, page_number)` returns one bounded page,
-  locator, page hash and file manifest.
+The five architecture/roadmap/state/handoff/client-contract documents are also updated.
+No unrelated changes were observed in this isolated worktree; classify the actual diff again
+before staging. PR #239's files belong to its separate clean worktree.
 
-Remote retrieval requires an exact lowercase DNS-host allowlist in
-`CLASSIFIRE_DRAFT_CLIENT_FILE_DOWNLOAD_HOSTS`. It allows HTTPS/443 only, checks every
-DNS answer is public, pins TLS to a checked address, revalidates redirects, bounds time
-and bytes, requests identity encoding and validates response length, MIME and PDF magic.
-A signed URL is used in memory and is never retained or returned.
+## Validation and limitations
 
-Upload and scan require read/propose client scopes, current local project-write
-permission and strict ownership. They mutate unapproved evidence-processing state only.
-They create no observation, defect, service, opening, saved Scope or downstream
-artifact. Saving interpreted Scope content still uses `propose_draft_edit` and
-same-user browser confirmation.
+The initial three PostgreSQL/MCP tests passed, proving human-confirmed page linkage,
+source-change refusal and owner/scope/forged-target refusal. They verify the real rendered
+HTTP review and PNG endpoint. The broader 57-test client/page-review regression passed in 294.69 seconds. Full Ruff, Mypy (222 files, local untyped-import
+diagnostics disabled) and Bandit passed. The final no-downstream-record confirmation
+test also passed in 17.50 seconds.
 
-## Validation evidence
-
-Current feature evidence:
-
-- hardened remote retrieval and configuration: **19 tests passed**;
-- combined client, PDF intake, remote retrieval and PostgreSQL regression:
-  **56 tests passed in 133.59 seconds**;
-- the MCP discovery test proves the exact file metadata and nested input schema;
-- the end-to-end synthetic path proves pending upload -> clean scan/parser -> page text,
-  locator and hashes;
-- the Scope stayed at revision 1 and no `DraftClientRequest` was created by evidence
-  upload/scan/read;
-- missing write scope, foreign ownership, invalid MIME and empty host configuration
-  fail closed before retrieval;
-- focused Ruff passed;
-- focused Mypy passed on the four changed/new production modules;
-- focused Bandit passed on the new client and retrieval boundaries;
-- `git diff --check` passed.
-
-The failed first PostgreSQL invocation was a test-runner setup error: its relative
-`--basetemp` parent did not exist. Re-running with the repository's absolute isolated
-temporary path reached application code and passed. All evidence uses synthetic PDFs
-and a mocked remote transport/ClamAV verdict.
-
-## Relevant local changes and open issues
-
-Intended active-branch paths:
-
-- `.env.example`;
-- `src/classifire/config.py`;
-- `src/classifire/draft_client.py`;
-- `src/classifire/draft_client_evidence_tools.py`;
-- `src/classifire/services/remote_file_retrieval.py`;
-- `tests/test_draft_client.py`;
-- `tests/test_draft_client_pdf_intake.py`;
-- `tests/test_remote_file_retrieval.py`;
-- `docs/DRAFT_CLIENT_V1_CONTRACT.md`;
-- `docs/PROJECT_STATE.md`;
-- `docs/CLASSIFIRE_ARCHITECTURE.md`;
-- `docs/CLASSIFIRE_ROADMAP.md`;
-- `docs/SESSION_HANDOFF.md`.
-
-No unrelated local change was observed in this isolated worktree. Reinspect status and
-the complete diff before staging explicit paths.
-
-Open issues:
-
-- The exact host used by a real ChatGPT file download has not been observed or approved.
-  The default host list is empty and deliberately makes upload fail closed.
-- Real OAuth, HTTPS, ChatGPT account linking and actual provider file transfer are
-  unproven. Do not hard-code an undocumented provider hostname.
-- PDF intake is implemented; ChatGPT file parameters for Excel/DOCX/images remain
-  upcoming.
-- Parsed text and page locators are evidence, not a physical-model conclusion. A real
-  report still needs model interpretation plus explicit human graph review/save.
-- ProjectPackage source bodies and newer pricing-review records remain external or
-  withheld until redistribution/confidentiality rules are approved.
-- Representative report accuracy, production tenancy/retention/monitoring, evaluation,
-  commercial activation, OpenClaw retirement and Human Release remain incomplete.
-- Full CI duration remains close to the 30-minute workflow timeout.
-
-## Project health
-
-This change follows the accepted hybrid architecture. The standalone UI and
-ChatGPT-compatible adapter call the same deterministic PDF intake, storage, scanner,
-parser and Scope services. It adds transport and permission checks, not another business
-pipeline, database, agent or AI provider.
-
-The feature is a working local integration prototype, not a connected ChatGPT product.
-Its main value is removing the backend reason ChatGPT could not accept a selected PDF.
-The next proof must show the visible real-account journey without weakening the host,
-identity, review or evidence boundaries.
+A synthetic review HTML snapshot is at
+`C:/CLASSIFIRE/.tmp/pytest-client-pdf-review-regression/test_client_pdf_review_saves_o0/synthetic-review.html`.
+Browser automation failed twice at runtime initialization with a sandbox helper error.
+Visual browser acceptance is unverified; HTTP tests alone do not finish that milestone.
+The temporary loopback render server has been stopped. An existing service on port 8816
+was preserved. Real HTTPS/OAuth/ChatGPT linking remains unproven; the operator's deployment
+URL and OAuth provider have been requested, without requesting credentials.
 
 ## Start Here / Next Session
 
-**First task:** verify PR #238 publication, then prove the first real ChatGPT PDF-to-Scope
-journey through an operator-controlled HTTPS/OAuth deployment.
+First finish verification and publication of this source-linked Scope increment. It closes
+an actual provenance gap in the planned ChatGPT PDF journey: generic edits cannot attach
+trusted page references. Inspect Git, tests and PR state before editing; do not rebuild it.
 
-**Why this is next:** the backend file contract, secure retrieval, retained upload/scan/page
-flow and human Scope gate are implemented and synthetically tested. A real connected-client
-trial is the shortest way to expose any wrong provider-host, OAuth, attachment, review-link
-or user-flow assumption before the same pattern is extended to Excel.
+Prerequisites: preserve root recovery evidence; use the isolated worktree and shared venv;
+use only the disposable PostgreSQL test database and synthetic sources. Verify PR #239's
+required checks before merging it, then reconcile current main without dropping local work.
+Use existing human confirmation and page-save guards, never client-declared review authority.
 
-**Prerequisites and dependencies:**
+Validation commands (choose a fresh temporary directory when rerunning):
 
-- Inspect `AGENTS.md`, `docs/GOAL.md`, Git/worktrees, `origin/main`, PR #238 and its exact
-  required CI before editing. If the feature is not merged, finish its existing safe
-  publication path first; do not duplicate it.
-- Preserve the dirty `C:/CLASSIFIRE` recovery root and every unrelated local change.
-- Obtain an operator-controlled HTTPS CLASSIFIRE deployment, compatible OAuth issuer/client
-  configuration and a synthetic non-customer PDF approved for the trial.
-- Observe and explicitly approve the real ChatGPT file-download DNS host. Keep the default
-  fail-closed until then; do not add a wildcard or guess a provider hostname.
-- Keep upload/scan separate from interpretation, and keep the same-user browser confirmation
-  before a Scope revision is saved.
+```powershell
+$env:PYTHONPATH=(Join-Path $PWD 'src')
+$env:CLASSIFIRE_POSTGRES_TEST_URL='postgresql+psycopg://classifire_test@127.0.0.1:15432/classifire_containment_test'
+$env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN='classifire-containment-test-drop-all'
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m pytest -p no:cacheprovider --basetemp C:/CLASSIFIRE/.tmp/pytest-client-pdf-review-next tests/test_draft_client_pdf_scope.py tests/test_draft_client_capabilities.py tests/test_draft_client.py tests/test_draft_pdf_scope_review.py
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m ruff check .
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m mypy src --disable-error-code=import-untyped
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m bandit -q -r src
+git diff --check
+```
 
-**Relevant files:**
-
-- `src/classifire/draft_client_evidence_tools.py`;
-- `src/classifire/services/remote_file_retrieval.py`;
-- `src/classifire/services/draft_pdf_intake.py`;
-- `src/classifire/draft_client.py` and `src/classifire/draft_client_auth.py`;
-- `tests/test_draft_client_pdf_intake.py` and `tests/test_remote_file_retrieval.py`;
-- `docs/DRAFT_CLIENT_V1_CONTRACT.md` and the four durable state documents.
-
-**Validation:** rerun the 56-test PostgreSQL/client/PDF selection, Ruff, Mypy, Bandit and
-`git diff --check`. In the real client, verify tool discovery, selected-file upload as
-pending, explicit clean scan/parser result, one page's text/locator/hashes, separate Scope
-proposal, readable browser review, same-user save, and reopen after process restart. Inspect
-persistence/logs/results for absence of the signed URL and verify no Match, Estimate, report,
-approval, release, AI or OpenClaw action ran.
-
-**Blockers:** the real journey cannot run without operator-controlled HTTPS/OAuth configuration
-and the observed exact provider file host. Do not weaken security to work around either.
-This does not block local inspection or safe fixes to PR #238.
-
-**Definition of done:** PR #238 is verified merged with exact-head required CI; one real
-synthetic PDF completes the selected-file -> retained pending -> clean parsed page -> proposed
-Scope -> human-confirmed saved revision journey; evidence records the exact deployment/client
-configuration without secrets; unsafe/unauthorized cases remain closed; restart preserves
-the result; unrelated changes are preserved; any required fixes and aligned documentation
-pass validation and complete the normal commit/push/PR/merge workflow.
+Definition of done: pending proposal leaves Scope unchanged; authorized human review displays
+source and proposed graph; confirmation saves exact page/target/reviewer provenance; stale,
+foreign, invalid and replayed actions fail closed; prior commands work; tests/static checks
+pass; intended files are committed/pushed and required PR CI passes before merge. Record any
+remaining visual acceptance limitation honestly. The subsequent product task is the actual
+ChatGPT PDF-to-reviewed-Scope journey through an operator-controlled HTTPS/OAuth deployment.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from verified repository state. Before editing, inspect `AGENTS.md`,
-> `docs/GOAL.md`, Git/worktrees, `origin/main`, PR #238 and its exact required CI; preserve
-> the conflicted `C:/CLASSIFIRE` recovery root and unrelated changes. First finish PR #238's
-> safe publication if it is not already merged. The single highest-value product task is
-> then to prove one real ChatGPT PDF-to-Scope journey through operator-controlled HTTPS/OAuth:
-> selected synthetic PDF -> exact-host public-DNS/TLS-pinned retrieval -> retained pending
-> source -> explicit scan/parser -> bounded page read -> separate Scope proposal -> same-user
-> browser review/save -> restart/reopen. Obtain the actual provider download host and keep
-> the allowlist fail-closed; never guess or use a wildcard. Verify signed URLs are absent
-> from persistence/logs/results and that no Match, Estimate, report, approval, release, AI
-> or OpenClaw action runs. Run the documented 56-test PostgreSQL/client/PDF selection, Ruff,
-> Mypy, Bandit and `git diff --check`. Record measured evidence, update aligned documentation,
-> preserve unrelated changes, and autonomously inspect, implement only proven fixes, validate,
-> classify, commit, push, open/update the direct-main PR, wait for exact-head CI and merge
-> where safe. Do not begin Excel or speculative provider work until this journey is proven.
+> Continue CLASSIFIRE from repository evidence. Inspect AGENTS.md, GOAL.md, Git/worktrees,
+> docs/PROJECT_STATE.md, the roadmap, current PR #239 checks and the active diff before editing.
+> Preserve the conflicted root and unrelated work. Finish the source-linked client Scope
+> increment in C:/CLASSIFIRE/.tmp/client-pdf-scope-review-20260910 on
+> feat/client-pdf-scope-review-20260910: review_pdf_scope must reuse shared PDF preview/save
+> through the existing human-confirmation workflow, bind exact page/scan/Scope/targets and
+> retain server-generated provenance without downstream actions. Inspect the typed command,
+> request dispatcher, review template and test_draft_client_pdf_scope.py; run the documented
+> client/PDF/PostgreSQL regressions, Ruff, Mypy, Bandit and diff checks. Verify the actual
+> rendered browser page when automation works; otherwise keep that acceptance unproven.
+> Reconcile PR #239/main safely, classify and commit only intended files, push, create/update
+> the direct-main PR and merge only after required CI passes. Then pursue the real ChatGPT
+> PDF-to-Scope trial using the operator's HTTPS/OAuth deployment; do not guess provider hosts,
+> bypass review gates, process customer data or start unrelated speculative work.

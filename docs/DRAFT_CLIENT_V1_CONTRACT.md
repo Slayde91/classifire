@@ -168,6 +168,24 @@ invalid metadata, empty configuration, URL validation, DNS rebinding, redirects,
 content encoding, length, PDF magic and secret-redacted failures. A real ChatGPT account,
 production OAuth/HTTPS, the provider host allowlist and real file transfer remain unproven.
 
+## PDF-to-Scope review operation
+
+`propose_capability` accepts `action: review_pdf_scope`, `draft_id`, `source_id`,
+`expected_revision`, `page_number`, `expected_document_hash`, full Scope `content`, and
+1..100 explicit `targets` (`target_kind`: defect/opening/service, `target_id`). Read/propose
+client grants and current owner/project-write rights are required. No technical/estimate
+grant is added for Scope-only review. Page/entity bounds and semantic validation reuse the
+existing PDF services; arbitrary provenance or reviewer fields are forbidden.
+
+Preparation binds the exact shared preview and makes only a pending request. The review
+screen presents retained page raster/text, proposed graph and selected item labels. The
+same-user CSRF-protected confirmation rechecks the frozen inputs, then invokes the existing
+page-save service with the verified review hash. Server-generated references bind source,
+page, target content, reviewer and time. Changed source/scan/Scope/targets, lost permissions
+or replay are refused. Generic edits remain available and do not manufacture page references.
+No subsequent Match, Estimate or report is run. Existing command hashes and artifact readers
+remain compatible; no migration is required.
+
 ## Independent-capability amendment (migration 0037)
 
 `propose_capability(operation)` accepts a strict action-specific object. All actions

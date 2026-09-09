@@ -1,5 +1,22 @@
 # CLASSIFIRE Architecture
 
+## Client PDF source-review amendment
+
+Current architecture: upload/page reads and generic Scope edits exist, but generic edits
+cannot create local PDF-page review references. The current increment adds one typed
+`review_pdf_scope` operation to `propose_capability`, preserving the existing durable request
+and same-user browser confirmation. It calls `draft_pdf_intake.preview_scope_page` to bind
+source/scan/document/page, selected graph items and current Scope. Human confirmation passes
+the verified review hash into `save_scope_page`; that service rechecks dependencies and
+writes the existing versioned evidence_refs shape. Client-supplied reviewer/provenance fields
+are not accepted. Other commands keep their prior input-hash shape.
+
+The review template displays the authorized page raster/text, selected item labels and
+proposed graph. A source change invalidates confirmation. Consequences: traceable Scope
+saving through the shared client without a parallel graph writer, new schema, migration,
+AI provider, OpenClaw path or downstream execution. External ChatGPT linking and visual
+browser acceptance remain unproven.
+
 **Document status:** Current pre-production architecture
 
 **Architecture version:** 5.44 - ChatGPT-compatible PDF file intake over the shared retained-evidence boundary.

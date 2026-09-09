@@ -1,5 +1,17 @@
 # CLASSIFIRE Master Roadmap
 
+## Immediate prototype priority: source-linked client Scope review
+
+Before the connected ChatGPT trial, finish the current `review_pdf_scope` increment.
+A generic client edit can save content but cannot create the retained-page provenance already
+supported by standalone review. Reuse that shared service through explicit human confirmation.
+Exit: display the page and proposed graph; save exact page/target/reviewer references only
+on confirmation; refuse stale/foreign/forged inputs; preserve old client commands; verify
+HTTP/browser behavior, required tests and publication. Browser inspection currently has an
+environment blocker; it is not a passed milestone. PR #239's independent timeout correction
+remains subject to its own required CI. The next product milestone remains the real ChatGPT
+PDF-to-reviewed-Scope journey; Excel and broader pricing work follow the existing priorities.
+
 **Status:** Active; prototype-first delivery approved 2026-09-05. The standalone
 four-capability prototype, PDF/Excel review and selected ProjectPackage are merged.
 Commercial evidence governance is merged through bounded T9/T10/T13 increments. PR #237

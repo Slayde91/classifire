@@ -1,5 +1,18 @@
 # CLASSIFIRE Project State
 
+## Current client PDF-to-Scope increment
+
+The current candidate adds `review_pdf_scope` to the existing typed client proposal
+flow. It uses the shared PDF preview/save services to bind selected defects, openings and
+services to one retained page. Proposal preparation writes only a pending client request;
+confirmation rechecks exact Scope, source, scan, page and target inputs before appending a
+Scope revision with server-generated human-review references. Existing operations retain
+their original input-hash shape. No migration or downstream capability runs.
+
+Three focused PostgreSQL/MCP tests passed: successful human-confirmed source linkage,
+source-change refusal, and ownership/scope/forged-target refusal. The 57-test client/page-review regression passed in 294.69 seconds; publication is pending. The rendered HTTP page and PNG passed checks; browser automation
+failed to initialize with a sandbox helper error, so visual browser inspection is unverified.
+
 ## Evidence-based current snapshot
 
 Verified 2026-09-09 from shared baseline
