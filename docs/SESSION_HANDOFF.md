@@ -15,10 +15,10 @@ Verified 2026-09-09 from the isolated worktree and GitHub.
   adds bounded T13 roster-history list/read tools and compatible service pagination.
 - PR #234 was closed after its verified documentation commits were incorporated into
   PR #235.
-- Required PR check run 34324384038, job 102378168830, executed zero validation
-  steps. GitHub states that recent account payments failed or the spending limit must
-  be increased. This is an external CI/account blocker, not evidence that tests passed
-  or failed.
+- Required PR checks on the published heads have executed zero validation steps.
+  GitHub states that recent account payments failed or the spending limit must be
+  increased. This is an external CI/account blocker, not evidence that tests passed
+  or failed. Inspect the current PR head/check rather than relying on a historical run ID.
 - The dirty conflicted `C:\CLASSIFIRE` root is recovery evidence. Do not edit, reset,
   clean, resolve, broadly stage or publish from it.
 - ADRs 0001/0002 remain accepted: one modular deterministic application, independent
