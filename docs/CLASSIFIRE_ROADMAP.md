@@ -7,6 +7,8 @@ PR #227. PR #229 merges a bounded read-only T10 bottom-up preview; PR #231 prove
 and hardens its real Chrome, exact-download and restart lifecycle. PR #233 adds the first
 immutable Scope-bound project quantity and governed T10 consumption. Synthetic real-process
 Chrome/restart proof now also covers Dataset B mapping, T9 coverage and the T13 roster.
+A current unmerged P5 candidate exposes the same deterministic T9 coverage
+through one read-only MCP tool; real ChatGPT OAuth/HTTPS linking remains unproven.
 **Verified shared-main baseline:**
 `720de41fc828f933107436d70c00ac410feafef7`.
 PR #233 head run 34279792008 passed 1,921 tests and every repository gate.
@@ -119,7 +121,7 @@ prototype into it.
 | **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; T13 roster PR #222; bounded T9 coverage PR #224; T6 recipe review PR #227; first T10 bottom-up preview PR #229; T10 browser/restart proof complete; Scope-bound quantity PR #233 merged; B mapping/T9/T13 browser-restart proof complete; broader T10-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster/quantity history and inspect identity, units, price meaning and gaps. Coverage and the first bottom-up amount are visible and browser-proven. Validate representative recipe and grouping semantics next, then add numeric-basis breadth and separate comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
+| **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; current unmerged candidate adds exact read-only T9 coverage; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; next add bounded roster parity while representative source validation is blocked. Inspect round-trip content and client parity. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
@@ -136,6 +138,9 @@ makes the normal T10 path require its latest current compatible record. It passe
 full local suite, clean PR CI and a synthetic Chrome/restart journey. The
 selected-package P5 increment has a real configuration/save/download/reconfiguration/
 restart journey merged in PR #200; later P5 client parity is merged through PR #207.
+The current unmerged client candidate adds deterministic T9 coverage with strict
+read/estimate/technical client grants, local pricing-review authority and zero
+writes.
 Do not rebuild these slices.
 
 **Completed bounded increment: selected Draft ProjectPackage download (PR #200).** One coherent Scope workspace,
