@@ -374,3 +374,30 @@ def test_pdf_page_image_returns_bound_png_without_scope_writes(pdf_client_case):
     with case.factory() as db:
         assert scopes.read_revision(db, db.get(User, case.owner_id), case.draft_id)["revision"] == 1
         assert db.scalar(select(func.count()).select_from(DraftClientRequest)) == 0
+
+
+
+def test_download_timeout_retains_no_source_or_scope_change(pdf_client_case, monkeypatch):
+    from classifire.services.remote_file_retrieval import RemoteFileRetrievalError
+
+    case = pdf_client_case
+
+    def timeout(*args, **kwargs):
+        raise RemoteFileRetrievalError("TOTAL_TIMEOUT")
+
+    monkeypatch.setattr(case.evidence_tools, "retrieve_file", timeout)
+    with TestClient(case.app, base_url="https://testserver") as client:
+        result = tool(
+            client, case.token(), "upload_draft_pdf",
+            {"draft_id": case.draft_id, "file": {
+                "download_url": "https://files.example.test/file?token=private-marker",
+                "file_id": "synthetic", "file_name": "report.pdf",
+            }}, error=True,
+        )
+        assert "CLIENT_FILE_TOTAL_TIMEOUT" in str(result)
+        assert "private-marker" not in str(result)
+    with case.factory() as db:
+        assert db.scalar(select(func.count()).select_from(DraftPdfSource)) == 0
+        assert db.scalar(select(func.count()).select_from(DraftClientRequest)) == 0
+        assert scopes.read_revision(db, db.get(User, case.owner_id), case.draft_id)["revision"] == 1
+    assert list(case.settings.storage_root.rglob("*")) == []

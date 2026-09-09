@@ -16,6 +16,16 @@ environment blocker; it is not a passed milestone. PR #239's independent timeout
 remains subject to its own required CI. The next product milestone remains the real ChatGPT
 PDF-to-reviewed-Scope journey; Excel and broader pricing work follow the existing priorities.
 
+
+## Immediate delivery correction
+
+PR #238's PDF intake is merged at `2150286`. The current fix makes its promised total
+download timeout enforceable during blocked DNS and HTTP reads, using the existing
+disposable-process pattern. Local acceptance passed: 71 client/PDF/retrieval tests plus
+Ruff, Mypy and Bandit. Complete required CI/publication before the real ChatGPT trial.
+This correction adds no product phase. The next visible milestone remains the connected
+PDF-to-Scope journey below, followed by the existing Excel/package/pricing priorities.
+
 **Status:** Active; prototype-first delivery approved 2026-09-05. The standalone
 four-capability prototype, PDF/Excel review and selected ProjectPackage are merged.
 Commercial evidence governance is merged through bounded T9/T10/T13 increments. PR #237

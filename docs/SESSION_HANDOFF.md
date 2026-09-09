@@ -1,11 +1,28 @@
 # CLASSIFIRE Session Handoff
 
+Integrated validation after reconciling PR #239 into PR #240: **40 tests passed in
+75.74 seconds**, covering download deadlines, retrieval, PDF client intake/images and
+human-confirmed Scope review. Linux-targeted Mypy passed all 222 source files with local
+untyped-import diagnostics disabled. Ruff and Bandit passed. Both test additions are retained.
+Required current-head GitHub validation and merge remain pending.
+
 Latest image/client validation: **6 PDF intake and Scope-review tests passed in 59.21 seconds**.
 The image test verifies native PNG content and exact shared-renderer bytes/hash, read-only
 access, refusal before scan, invalid page/foreign user/missing read scope and changed-source
 refusal, with no Scope revision or pending request. Full Mypy (222 files, local untyped-import
 diagnostics disabled), Ruff, Bandit and diff checks passed. Real ChatGPT image consumption
 and browser visual acceptance remain unverified.
+
+## Integrated download protection
+
+PR #239 commit `000aa3f` is integrated into this PR #240 branch to resolve overlapping
+documentation and preserve both image and timeout tests. The fixed disposable download
+worker enforces DNS/HTTP deadlines, excludes application credentials, accepts the URL via
+stdin and validates returned bytes. Prior validation: 71 tests passed in 217.00 seconds;
+after the Linux platform-guard correction, 33 retrieval tests and Linux-targeted Mypy passed.
+Required CI remains the merge gate. Relevant files: `remote_file_retrieval.py`,
+`test_remote_file_deadline.py`, `test_remote_file_retrieval.py` and
+`test_draft_client_pdf_intake.py`. No deployment or live evidence was used.
 
 ## Current branch and project context
 
@@ -15,7 +32,8 @@ The current source-linked client Scope candidate is in
 PR #238's post-merge run 34358486420 passed. The independent download deadline fix is
 PR #239. Its initial run 34360392428 failed Linux type checking on the Windows-only
 CREATE_NO_WINDOW constant. Correction `000aa3f` uses an explicit platform guard; the
-Linux-targeted type check and 33 retrieval tests passed. Recheck current-head CI before merging. Do not confuse the two branches or test scopes.
+Linux-targeted type check and 33 retrieval tests passed. Recheck current-head CI before merging. The review branch now includes the timeout commit; merge PR #239 first when its CI passes,
+then verify PR #240 against current main without dropping either increment.
 Preserve the conflicted root and all unrelated local work.
 
 ADRs 0001/0002 remain accepted: shared deterministic core, independent capabilities,
@@ -49,7 +67,7 @@ Relevant code:
 
 The five architecture/roadmap/state/handoff/client-contract documents are also updated.
 No unrelated changes were observed in this isolated worktree; classify the actual diff again
-before staging. PR #239's files belong to its separate clean worktree.
+before staging. PR #239's source and tests are also integrated here; its original worktree remains clean.
 
 ## Validation and limitations
 
@@ -84,7 +102,7 @@ Validation commands (choose a fresh temporary directory when rerunning):
 $env:PYTHONPATH=(Join-Path $PWD 'src')
 $env:CLASSIFIRE_POSTGRES_TEST_URL='postgresql+psycopg://classifire_test@127.0.0.1:15432/classifire_containment_test'
 $env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN='classifire-containment-test-drop-all'
-C:/CLASSIFIRE/.venv/Scripts/python.exe -m pytest -p no:cacheprovider --basetemp C:/CLASSIFIRE/.tmp/pytest-client-pdf-review-next tests/test_draft_client_pdf_scope.py tests/test_draft_client_capabilities.py tests/test_draft_client.py tests/test_draft_pdf_scope_review.py
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m pytest -p no:cacheprovider --basetemp C:/CLASSIFIRE/.tmp/pytest-client-pdf-review-next tests/test_remote_file_deadline.py tests/test_remote_file_retrieval.py tests/test_draft_client_pdf_intake.py tests/test_draft_client_pdf_scope.py tests/test_draft_client_capabilities.py tests/test_draft_client.py tests/test_draft_pdf_scope_review.py
 C:/CLASSIFIRE/.venv/Scripts/python.exe -m ruff check .
 C:/CLASSIFIRE/.venv/Scripts/python.exe -m mypy src --disable-error-code=import-untyped
 C:/CLASSIFIRE/.venv/Scripts/python.exe -m bandit -q -r src
