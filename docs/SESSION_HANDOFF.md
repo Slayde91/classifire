@@ -1,5 +1,15 @@
 # CLASSIFIRE Session Handoff
 
+## Pre-merge client permission correction
+
+PR #241 follow-up fixes the client grant check for v3 packages containing retained foreign
+archives. Both technical and estimating grants are required regardless of archive version;
+native v3 without an origin does not acquire unrelated grant requirements. Ten client-capability
+tests passed in 41.20 seconds, including six actual-token scope combinations. Full Ruff and
+Mypy (222 files) and the affected-file Bandit scan passed. Current-head CI must pass before
+merge; the earlier d452d33 run does not validate this correction. No deployment occurred.
+
+
 ## Current branch and project context
 
 Active worktree: `C:/CLASSIFIRE/.tmp/package-pdf-evidence-20260910`.
@@ -23,7 +33,7 @@ Changed code: `draft_project_packages.py`, `draft_package_import.py`,
 `draft_project_package_ui.py`, and the project/imported-package templates.
 New test: `tests/test_draft_package_pdf_evidence.py`. Architecture, roadmap, project state,
 package contract and this handoff describe the candidate; these are not completion claims.
-All current changes belong to this candidate and are uncommitted; verify actual Git state.
+Candidate commits are on PR #241; verify its latest head, CI and merge state before resuming.
 
 ## Findings and verification
 

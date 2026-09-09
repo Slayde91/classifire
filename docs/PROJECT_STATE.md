@@ -1,5 +1,15 @@
 # CLASSIFIRE Project State
 
+## Pre-merge client permission correction
+
+PR #241 follow-up fixes the client grant check for v3 packages containing retained foreign
+archives. Both technical and estimating grants are required regardless of archive version;
+native v3 without an origin does not acquire unrelated grant requirements. Ten client-capability
+tests passed in 41.20 seconds, including six actual-token scope combinations. Full Ruff and
+Mypy (222 files) and the affected-file Bandit scan passed. Current-head CI must pass before
+merge; the earlier d452d33 run does not validate this correction. No deployment occurred.
+
+
 ## Active package PDF evidence candidate
 
 Shared main `8164d29` (PR #240) passed required run 34365672716 and post-merge run
@@ -16,7 +26,7 @@ HTTP selection/save/download, two import generations, exact-byte retention, sema
 refusal, foreign access denial, shared quarantine and active-PDF rejection. Earlier package,
 import and UI regression passed 28 tests; the stricter attachment-policy run passed seven
 (overlapping coverage). Ruff, Mypy and Bandit passed. Browser acceptance remains unverified.
-The 13 intended files are ready for scoped publication; required PR CI and merge remain.
+The 15 intended files are ready for scoped publication; required PR CI and merge remain.
 
 PR #239 and PR #240 are merged, with required and post-merge checks passed. Older validation
 entries below are historical evidence, not current publication blockers.
