@@ -2,173 +2,184 @@
 
 ## Branch and project context
 
-Verified 2026-09-09.
+Verified 2026-09-09 from the isolated worktree and GitHub.
 
-- Shared `origin/main` is
-  `3a715d0d27f07a9c072e22db428f8f91d93f1642`, merge commit for PR #232.
-- Current isolated worktree:
-  `C:\CLASSIFIRE\.tmp\draft-pricing-quantity-basis-20260909`.
-- Current branch: `feat/draft-pricing-quantity-basis-20260909`, based exactly on
-  that shared-main commit.
-- The branch contains the locally verified governed T10 quantity-basis candidate.
-  It is not shared implementation until reviewed and merged.
-- The recovery root `C:\CLASSIFIRE` remains on
-  `gpt/phase8-linked-original-images` at `de0cc5a` with extensive staged,
-  unstaged, conflicted and untracked recovery material. It was not edited, reset,
-  cleaned, resolved, broadly staged or published.
+- Shared local `origin/main` baseline is
+  `720de41fc828f933107436d70c00ac410feafef7`, the merge commit for PR #233.
+- Active worktree:
+  `C:\CLASSIFIRE\.tmp\draft-client-pricing-coverage-20260909`.
+- Active branch: `feat/draft-client-pricing-coverage-20260909`.
+- PR #235 is open against `main`:
+  <https://github.com/Slayde91/classifire/pull/235>.
+- Code commit `7a1149b` adds read-only T9 pricing coverage. Code commit `9916246`
+  adds bounded T13 roster-history list/read tools and compatible service pagination.
+- PR #234 was closed after its verified documentation commits were incorporated into
+  PR #235.
+- Required PR checks on the published heads have executed zero validation steps.
+  GitHub states that recent account payments failed or the spending limit must be
+  increased. This is an external CI/account blocker, not evidence that tests passed
+  or failed. Inspect the current PR head/check rather than relying on a historical run ID.
+- The dirty conflicted `C:\CLASSIFIRE` root is recovery evidence. Do not edit, reset,
+  clean, resolve, broadly stage or publish from it.
 - ADRs 0001/0002 remain accepted: one modular deterministic application, independent
   Scope/System Match/Estimate/Reporting capabilities, portable artifacts, bounded
   optional AI and transitional OpenClaw.
 
-## Current candidate and open issues
+## Current implementation
 
-The candidate adds the first purpose-specific, append-only
-`DraftPricingQuantityBasis` and migration
-`0046_draft_pricing_quantity_bases`.
+PR #235 now exposes three read-only MCP operations over existing shared services:
 
-An authorised pricing reviewer can:
+- `preview_pricing_coverage(draft_id, technical_release_id)`;
+- `list_pricing_evaluation_rosters(draft_id, before_revision)`;
+- `read_pricing_evaluation_roster(draft_id, roster_id)`.
 
-1. open a T9-eligible bottom-up target;
-2. select a service with an explicit quantity and matching unit from the current
-   immutable Scope revision;
-3. preview the exact binding without a database write;
-4. explicitly save canonical hash-bound JSON;
-5. reopen current/stale history and download the exact record;
-6. let the existing T10 proposal calculate only from the newest current compatible
-   saved basis.
+All require external-client `read`, `estimate` and `technical` scopes, strict Draft
+ownership, an active mapped local user and existing pricing-review plus technical-read
+permissions. Because the current external client is owner-only, successful use requires
+an administrator-owned Draft. An estimator-owned or foreign Draft fails closed.
 
-The record binds Scope revision/hash, service identity/quantity/unit/evidence state,
-technical release/target/recipe hashes, exact recipe link and requirement, reviewer,
-UTC time and reason. Changed Scope, recipe link, requirement, unit or hashes makes
-history stale. Foreign, missing, changed, replayed, corrupt and incompatible inputs
-fail closed. The browser rejects the old typed-quantity fields. The earlier manual
-preview remains only as explicit `quantity_source="manual_preview"` compatibility
-behavior for tests and comparison.
+Roster listing returns newest-first pages of at most 20 summaries and an older-revision
+cursor. It reports semantic roster, exact-content, manifest and mapping-inventory hashes
+separately. Exact read returns the validated canonical roster, its byte hash and size.
+The roster contains target-field commitments and hashes without target price values.
+Only the true latest roster can be marked current, including when an older page is read.
 
-The candidate adds no Estimate mutation, technical approval, pricing-library
-activation, evaluation, canonical physical write, release, AI or OpenClaw authority.
-It does not add yield, productivity, waste, pack, recovery, margin, comparables or
-multi-observation arithmetic.
-
-Files materially changed:
-
-- `src/classifire/models.py`
-- `src/classifire/migrations/versions/0046_draft_pricing_quantity_bases.py`
-- `src/classifire/services/draft_pricing_quantity_contract.py`
-- `src/classifire/services/draft_pricing_quantities.py`
-- `src/classifire/services/draft_pricing_bottom_up.py`
-- `src/classifire/services/deployment_lineage.py`
-- `src/classifire/draft_pricing_ui.py`
-- `src/classifire/templates/draft_pricing.html`
-- focused quantity/bottom-up/migration/deployment tests and migration-head assertions;
-- the four durable project documents.
-
-Open issues:
-
-- representative A/B source files, ownership/rights and accepted recipe/quantity
-  semantics have not been provided or validated;
-- one reviewed `sell_price` observation per requirement is supported;
-- yield, productivity, waste/pack, shared recovery and comparables remain absent;
-- T13 grouping/split policy is synthetic and unaccepted against representative data;
-- no evaluation execution, calibrated confidence, commercial activation, deployment,
-  real ChatGPT OAuth/HTTPS link, OpenClaw retirement or Human Release exists;
-- GitHub previously merged PR #232 immediately when auto-merge was requested, so branch
-  protection enforcement requires separate repository-setting review.
+The adapter performs no pricing, matching, grouping or integrity logic of its own. It
+calls `draft_pricing_coverage` and `draft_pricing_evaluation_rosters`. It creates no client
+request, roster, pricing-library row, Estimate, approval, evaluation, release or other
+database record, and it does not invoke AI or OpenClaw.
 
 ## Validation evidence
 
-Focused quantity, bottom-up, migration, deployment-lineage and packaging set:
+- Focused roster-client integration tests: **3 passed in 43.05 seconds**.
+- Related client/pricing/coverage/roster PostgreSQL selection: **46 passed in
+  289.97 seconds**.
+- A valid 22-revision case proved the 20-summary page bound, older-page cursor and
+  current-marker behavior.
+- Exact roster bytes and hashes were reproduced after rebuilding a fresh FastAPI/MCP
+  application over the same PostgreSQL state.
+- Missing client scopes, foreign ownership, insufficient local role, missing IDs,
+  invalid cursor and corrupt stored bytes failed closed.
+- Audit and relevant domain-table counts were unchanged by all client reads.
+- `python -m ruff check .`: passed.
+- `python -m bandit -r src`: passed; 70,139 lines scanned, no issues.
+- `python -m mypy src --disable-error-code=import-untyped`: passed on 220 source files.
+  Strict local Mypy still depends on absent ReportLab/PyYAML third-party stubs.
+- `git diff --check`: passed before the code commit.
 
-    $env:PYTHONPATH = Join-Path $PWD 'src'
-    $env:CLASSIFIRE_POSTGRES_TEST_URL = 'postgresql+psycopg://classifire_test@127.0.0.1:15432/classifire_containment_test'
-    $env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN = 'classifire-containment-test-drop-all'
-    $taskTemp = Join-Path 'C:\CLASSIFIRE\.tmp' ('quantity-basis-regression-' + [guid]::NewGuid())
-    C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest -p no:cacheprovider --basetemp $taskTemp tests/test_draft_pricing_quantities.py tests/test_draft_pricing_bottom_up.py tests/test_migrations_draft_pricing_quantity_bases.py tests/test_deployment_lineage.py tests/test_migration_packaging.py
+These are local synthetic-data results. Real OAuth, HTTPS deployment, a real ChatGPT
+session and representative Dataset A/B meaning have not been demonstrated.
 
-Result: **47 passed**, one existing warning.
+## Relevant local changes and open issues
 
-Full repository result: **1,919 passed, 2 skipped, 140 warnings** in 3,135.34
-seconds. Full Ruff and Bandit passed. Focused Mypy passed on the five changed modules
-with `--ignore-missing-imports`. Strict full Mypy was locally blocked only by missing
-third-party ReportLab and PyYAML stubs in the environment; clean GitHub CI must run the
-strict configured gate. Alembic reports one head:
-`0046_draft_pricing_quantity_bases`. `git diff --check` passed.
+The intended branch changes are:
 
-Real Chrome 152 UAT used only disposable synthetic database
-`classifire_draft_quantity_uat_20260909_03` and loopback port 8831. It proved
-missing-basis withholding, no-write preview, immutable save, history/reopen, correct
-`2 each x $300 = $600.00`, visible hashes, exact downloads, HTTP 403 for an estimator,
-and byte-identical quantity/proposal JSON after a real server restart. The supplied
-CLASSIFIRE logo rendered and is byte-identical to `C:\CLASSIFIRE\classifire logo.png`
-at SHA-256
-`fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+- `src/classifire/draft_client_capability_tools.py`;
+- `src/classifire/services/draft_pricing_evaluation_rosters.py`;
+- `tests/test_draft_client.py`;
+- `tests/test_draft_client_pricing_rosters.py`;
+- the four durable project documents.
 
-Receipts and screenshots remain outside Git at
-`C:\CLASSIFIRE\.tmp\quantity-basis-browser-artifacts-20260909`.
-The quantity JSON is 1,994 bytes with SHA-256
-`7ae8c65575233d932e192a4d250b0c4b001c25c90cee2a0fc6edfeb091684a7d`.
-The proposal JSON is 3,793 bytes with SHA-256
-`ac8b341a2cbbef9cd499e3363d4012c48f26d93f0bc770180a32dd66fc6be153`.
-Ports 8831 and 9231 were closed and server logs contained no traceback, exception,
-application error or HTTP 5xx.
+No unrelated change was observed in this isolated worktree. Temporary PostgreSQL test
+state and pytest directories remain outside repository source. Verify status again before
+editing or publishing.
+
+Open issues:
+
+- PR #235 is not shared-main capability until required checks pass and it merges.
+- GitHub Actions cannot currently start required jobs because of the account
+  billing/spending-limit state. Never bypass required checks.
+- Real OAuth authorization, HTTPS deployment, account linking and a real ChatGPT session
+  remain unconfigured and unproven.
+- The client still lacks reviewed Dataset A row-observation and T6 recipe-link reads.
+- Representative A/B source files, handling/redistribution rights, price meanings,
+  quantity/recipe semantics and supported scale remain unverified.
+- T13 grouping/split policy remains synthetic and unaccepted against representative data.
+- There is no evaluation execution, calibrated confidence, commercial activation,
+  production deployment, OpenClaw retirement or Human Release.
+
+## Project health
+
+The branch advances the accepted hybrid architecture: ChatGPT-compatible clients and the
+standalone UI use the same deterministic services and PostgreSQL state. No second rules
+engine, database, agent fleet or orchestration dependency was added. The new boundary is
+small, permission-checked, restart-stable, integrity-checked and testable.
+
+The main operational weakness is external CI availability. The main product weakness is
+still representative evidence: synthetic tests prove software behavior but cannot prove
+that real workbook meanings, split policy, recipes or prices are correct.
 
 ## Start Here / Next Session
 
-**First task:** run a real-process browser/restart/exact-download proof for the existing
-Dataset B mapping, T13 roster and T9 coverage workflow.
+**First task:** add bounded read-only MCP access to persisted T6 recipe-link history using
+the existing recipe service.
 
-**Why this is next:** the highest strategic task is representative validation of T6
-recipe meanings and the T13 grouping/split policy, but no authorised representative A/B
-files or accepted rights/semantics are currently available. The browser proof is the
-highest-value unblocked task: it strengthens the interactive prototype and can expose UI
-or lifecycle defects without inventing commercial truth.
+**Why this is next:** coverage and target-blind roster history are now available through
+the shared client boundary, but the client cannot inspect the reviewed Dataset A evidence
+links that justify bottom-up T9 coverage. Representative source validation has higher
+authority but is blocked by absent authorised files, rights and accepted meanings. Recipe-
+link read parity is executable now and continues the shared ChatGPT/standalone path without
+inventing domain facts.
 
-**Prerequisites:** inspect AGENTS.md, GOAL.md, Git/worktrees, current `origin/main`,
-recent PR/CI state and the four project documents before editing. Confirm the
-quantity-basis candidate was merged and main CI passed; otherwise finish or accurately
-reconcile that work first. Use a fresh current-main worktree. Preserve the recovery root
-and unrelated local changes. Use synthetic data and the local PostgreSQL/ClamAV
-boundaries only.
+**Prerequisites and dependencies:**
 
-**Relevant components:** `src/classifire/draft_pricing_ui.py`,
-`src/classifire/templates/draft_pricing.html`,
-`src/classifire/services/draft_pricing_intake.py`,
-`draft_pricing_coverage.py`, `draft_pricing_evaluation_rosters.py`,
-their contracts/models/migrations, and focused B-mapping/roster/coverage UI tests.
+- Inspect `AGENTS.md`, `docs/GOAL.md`, Git/worktrees, `origin/main`, PR #235/checks and
+  these four durable documents before editing.
+- Preserve the conflicted recovery root and any unrelated local work.
+- Reuse `draft_pricing_recipes.list_recipe_links` and `recipe_link_bytes`; do not
+  duplicate link validity, current/stale or integrity rules in the MCP adapter.
+- If a bounded list requires cursor/limit support, extend the existing service
+  compatibly and prove stable ordering for existing UI callers.
+- Preserve strict project ownership, `read`/`estimate`/`technical` client scopes and
+  current local pricing-review plus technical-read permissions.
+- Do not create or modify a link, approve evidence, calculate or activate a price,
+  change an Estimate, run evaluation or grant release authority.
 
-**Validation:** exercise actual login, coverage navigation, B mapping preview/save/
-history/download, roster preview/save/history/download, permission denial, exact hashes,
-server restart and byte-identical downloads. Visually inspect screenshots and the correct
-logo. Run affected PostgreSQL tests, Ruff, targeted Mypy, Bandit, Alembic one-head and
-diff checks. Run broader tests only if code changes or failures justify them.
+**Relevant files:**
 
-**Blockers:** do not use customer files, claim representative validation, run holdout
-evaluation, activate commercial data, deploy, retire OpenClaw or create canonical/release
-state. If existing UIs cannot produce the journey, implement only the smallest shared
-service/UI correction exposed by the test.
+- `src/classifire/draft_client_capability_tools.py`;
+- `src/classifire/services/draft_pricing_recipes.py`;
+- `src/classifire/draft_client_auth.py`;
+- `tests/test_draft_client_pricing_rosters.py` for the current client-test pattern;
+- `tests/test_draft_pricing_recipes.py`;
+- the four durable project documents.
 
-**Definition of done:** the real browser proves the existing B mapping, roster and
-coverage lifecycle across restart with exact auditable artifacts, or a concrete defect is
-fixed and the same proof then passes. Evidence is retained outside Git, durable documents
-are reconciled, unrelated changes are classified, and any safe product/document change
-continues through focused validation, commit, push, PR, required CI and merge.
+**Validation commands:**
+
+- Run focused PostgreSQL client/recipe-link tests with the repository virtual environment,
+  isolated-worktree `PYTHONPATH`, `-p no:cacheprovider` and a unique `--basetemp`.
+- Run related client, pricing coverage, roster and recipe regressions.
+- Run `python -m ruff check .`, relevant Mypy, `python -m bandit -r src` and
+  `git diff --check`.
+- Verify exact bytes after a fresh application/server construction and prove zero writes.
+
+**Blockers:** representative semantics require authorised files and usage rights. PR
+publication can proceed, but merge cannot complete while required GitHub Actions jobs
+cannot start.
+
+**Definition of done:** an authenticated authorised client can list a bounded stable page
+of recipe-link summaries and read one exact integrity-checked link through the shared
+service. Current/stale state and evidence hashes remain intact; access and corrupt-data
+failures are closed; no write or next capability occurs; focused and related tests pass;
+all four documents remain aligned; only reviewed paths are committed/pushed; required CI
+passes and the PR merges where safe.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from verified repository state. First inspect AGENTS.md, GOAL.md,
-> Git/worktrees, current origin/main, recent PR/CI, PROJECT_STATE, architecture, roadmap
-> and handoff; preserve the conflicted C:\CLASSIFIRE recovery root and unrelated changes.
-> Confirm the governed T10 quantity-basis candidate is merged with green main CI, and
-> reconcile it first if not. Then use a fresh current-main worktree for the highest-value
-> unblocked task: a synthetic real-process browser/restart/exact-download proof of the
-> existing Dataset B mapping, T13 roster and T9 coverage UI. This is next because
-> representative recipe/grouping validation is strategically higher but blocked until
-> authorised A/B files and accepted rights/semantics exist. Reuse existing services and
-> PostgreSQL/ClamAV boundaries; inspect actual controls before editing and make only the
-> smallest correction a failed journey proves necessary. Prove login, navigation,
-> preview/save/history/download, permission denial, hashes, restart persistence,
-> byte-identical JSON, and the supplied CLASSIFIRE logo. Run affected PostgreSQL tests,
-> Ruff, targeted Mypy, Bandit, Alembic one-head and diff checks. Do not invent commercial
-> rules, use customer evidence, run evaluation, activate/release data, deploy or change
-> OpenClaw. Update durable docs from evidence, preserve unrelated work, and continue
-> autonomously through classification, commit, push, PR, required CI and merge where safe.
+> Continue CLASSIFIRE from verified repository state. Before editing, inspect `AGENTS.md`,
+> `docs/GOAL.md`, Git/worktrees, `origin/main`, PR #235/checks and the four durable
+> documents. Preserve the conflicted `C:\CLASSIFIRE` recovery root and unrelated changes.
+> The highest-value executable task is bounded read-only MCP access to persisted T6 recipe-
+> link history because T9 coverage and T13 roster history are now client-readable while
+> the reviewed Dataset A links supporting bottom-up coverage are not. Reuse
+> `draft_pricing_recipes.list_recipe_links` and `recipe_link_bytes`; extend their list
+> contract compatibly only if a stable cursor/limit is required. Require strict owned-
+> project access, `read`/`estimate`/`technical` client scopes and current local pricing-
+> review plus technical-read rights. Do not mutate links, approve evidence, calculate or
+> activate prices, change Estimates, run evaluation or grant release authority. Test tool
+> metadata, bounded ordering/cursors, exact bytes after fresh-app restart, current/stale
+> and corrupt-data behavior, missing scopes, foreign access, insufficient role and zero
+> writes. Run focused PostgreSQL tests, related regressions, Ruff, relevant Mypy, Bandit
+> and diff checks. Update all four documents from evidence and continue autonomously
+> through classification, commit, push, PR, required CI and merge where safe. Never
+> bypass the current GitHub Actions billing blocker or speculate about absent source data.
