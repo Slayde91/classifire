@@ -3,14 +3,14 @@
 ## Evidence-based current snapshot
 
 Verified 2026-09-09 on shared main
-`324f66a2e73330589e43b2ca17529eaf8de61bfe`, merge commit for client pricing
-coverage and roster-history PR #235. Exact PR head
-`eab351e3110524b957db50730a169376d63020a1` passed run 34329434461 attempt 2:
-the full test suite, Ruff, Mypy on 220 source files, Bandit and the one-head Alembic
-check all passed. Post-merge main run 34336769556 passed the same repository gates on the exact
-merge commit. Earlier run 34281851774 executed zero steps during a temporary GitHub
-billing/spending-limit block; successful runs for PRs #235/#236 prove Actions can execute
-again, so that historical event is no longer the active operational blocker.
+`aca75415c281f99ab218b564b1287c0e42bef18c`, merge commit for read-only
+T6 recipe-link client PR #236. Exact PR head
+`c8b8501a3738188f61dac05c9a494e507bd18103` passed run 34340361136:
+the full test suite, Ruff, Mypy, Bandit and the one-head Alembic check all passed.
+Post-merge main run 34342328239 is executing on the exact merge commit; do not treat it
+as passed until GitHub reports a terminal success. Earlier run 34281851774 executed zero
+steps during a temporary GitHub billing/spending-limit block; successful later runs prove
+Actions can execute again, so that historical event is no longer the active blocker.
 
 PR #231 head `8a714059eef4294f47732aaa797a98e461395fe3` passed run 34256909957
 with 1,915 tests, full Ruff, full Mypy on 217 source files, Bandit and the one-head
@@ -43,17 +43,23 @@ request, roster, Estimate, price, approval, evaluation, release or other databas
 The related PostgreSQL regression selection passed **46 tests** and the exact PR head
 passed every required repository check before merge.
 
-PR #236 now directly targets `main` at
-`d3054db83a4f03948487b9917aa21d86484d37ac`. It adds bounded read-only list
-and exact-read MCP access to persisted T6 recipe links through the existing shared
-service. Existing standalone callers keep their ascending history behavior; client pages
-return at most 20 newest-first summaries with a stable older-link cursor. The candidate
-exposes dependency hashes, evidence state and current/stale status, creates no database
-record and grants no price or approval authority. Focused tests passed 3 cases, the
-related PostgreSQL selection passed **56 tests**, and exact-head run 34333784853 passed
-the full test suite, Ruff, Mypy, Bandit and the one-head Alembic check. A
-documentation-only reconciliation commit still requires its own final PR check before
-merge.
+Merged PR #236 adds bounded read-only list and exact-read MCP access to persisted
+T6 recipe links through the existing shared service. Existing standalone callers keep
+their ascending history behavior; client pages return at most 20 newest-first summaries
+with a stable older-link cursor. The tools expose dependency hashes, evidence state and
+current/stale status, create no database record and grant no price or approval authority.
+Focused tests passed 3 cases, the related PostgreSQL selection passed **56 tests**, and
+final exact-head run 34340361136 passed every required repository gate before merge as
+`aca75415`.
+
+The isolated row-observation client branch adds bounded list and exact-read access to
+reviewed Dataset A observations through the same deterministic service used by the
+standalone pricing screen. Existing no-argument UI calls remain unbounded in worksheet
+order; the client returns at most 20 rows with an exact continuation cursor. Exact reads
+verify canonical bytes and hashes, and summaries expose source/profile/row identity,
+review state, unresolved fields and current/stale status. Commit `b8ed4f7` was merged
+locally with shared main as `627b555`; the 48 affected PostgreSQL, client and UI tests
+passed on that combined tree. Publication and required CI remain pending.
 PR #227 implements the first governed T6 component/activity recipe-review UI and
 guarded T9 bottom-up consumption rule described below. The approved cleanup removed
 formatter-only churn from five backed-up files. No OpenClaw or AI path is involved.
@@ -70,7 +76,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage, a bounded manual T10 preview, and an immutable Scope-bound quantity workflow; none changes an Estimate implicitly | Representative quantity semantics, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
-| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; PR #235 provides merged exact read-only T9 coverage plus bounded T13 roster history, and direct-main PR #236 adds candidate bounded T6 recipe-link history | Real OAuth/HTTPS linking; report intake and reviewed-row commands still lack client parity |
+| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; PR #235 provides merged exact read-only T9 coverage plus bounded T13 roster history, PR #236 provides merged bounded T6 recipe-link history, and the active branch adds candidate reviewed Dataset A row history | Real OAuth/HTTPS linking and report-intake client parity remain unproven |
 
 ## Current implemented A/B pricing-source profile and review increment
 
@@ -242,11 +248,10 @@ application over the same PostgreSQL state and require identical exact roster ou
 A 22-revision case proves the 20-item bound, older-page cursor and correct current marker.
 Missing scopes, foreign ownership, insufficient local role, invalid cursors, missing IDs
 and corrupt bytes fail closed, while audit and domain table counts remain unchanged. The
-roster carries only target-field commitments and hashes, never target prices. This
-candidate does not create a proposal or roster, approve evidence, calculate a price, run
-evaluation or connect a real ChatGPT account.
+roster carries only target-field commitments and hashes, never target prices. This merged client access creates no proposal or roster, approves no evidence, calculates
+no price, runs no evaluation and does not connect a real ChatGPT account.
 
-## PR #236 candidate MCP access to T6 recipe-link history
+## Merged MCP access to T6 recipe-link history (PR #236)
 
 `list_pricing_recipe_links(draft_id, before_link_id)` returns at most 20 newest-first
 summaries and a stable cursor for older links. `read_pricing_recipe_link(draft_id,
@@ -263,9 +268,25 @@ A changed technical dependency remains readable but is explicitly reported not c
 
 Tests build 22 valid links to prove the page bound and cursor, compare exact bytes and
 hashes after a fresh FastAPI/MCP application is constructed, and prove relevant audit and
-domain counts do not change. The candidate adds no migration, dependency, database write,
-approval, evaluation, Estimate change, release, agent or OpenClaw path. Real OAuth/HTTPS
-and representative source semantics remain unproven.
+domain counts do not change. The merged change adds no migration, dependency, database
+write, approval, evaluation, Estimate change, release, agent or OpenClaw path. Real
+OAuth/HTTPS and representative source semantics remain unproven.
+
+## Active MCP access to Dataset A row-observation history
+
+The isolated branch registers `list_pricing_row_observations` and
+`read_pricing_row_observation` over the existing intake service. Lists are limited to
+20 records, remain stable in worksheet-row and ID order, and use an exact observation as
+the continuation cursor. Exact reads return validated canonical JSON, its SHA-256 and
+byte count. Existing standalone callers keep their original unbounded ordering.
+
+The tools require read and estimate client scopes plus existing local project, estimate
+and library read permissions. They expose row-level provenance, review, uncertainty and
+current/stale state without adding technical-read scope to commercial evidence. Tests
+prove restart-stable bytes, profile-revision staleness, pagination, access failures,
+corruption refusal and zero writes. The change adds no schema, migration, price,
+Estimate, approval, evaluation, release, AI or OpenClaw authority. Publication and
+required CI remain pending.
 
 ## Implemented T6 component/activity recipe review
 
@@ -494,10 +515,10 @@ logs, database state and workbooks stay under `.tmp` and are not repository sour
 
 ## Known gaps and active work
 
-PR #235 now exposes deterministic T9 coverage and bounded saved T13 roster history on
-shared main; PR #236 is the direct-main candidate for bounded saved T6 recipe-link
-history. Reviewed Dataset A row records and report intake still lack client parity, and real
-OAuth/HTTPS/ChatGPT execution remains unproven.
+Shared main now exposes deterministic T9 coverage, bounded saved T13 roster history and
+bounded saved T6 recipe-link history. The active branch closes the read-only Dataset A
+row-record gap, but it is not shared until its PR passes required CI and merges. Report
+intake plus real OAuth/HTTPS/ChatGPT execution remain unproven.
 
 The prototype is usable for explicit source classification, profile retention,
 exact-profile human review, governed Dataset A row observations, exact reviewed Dataset
@@ -549,14 +570,18 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Let the exact PR #236 documentation head pass required CI, merge it normally and
-   verify the resulting `main` commit and post-merge workflow.
-2. Complete the isolated Dataset A row-observation client slice: run related regression
-   tests and repository checks, reconcile these four documents, then commit, push, open
-   a direct or correctly stacked PR and merge only after required CI passes.
-3. Validate T6 recipe meanings and T13 grouping/split policy against authorised
+1. Finish the isolated Dataset A row-observation client slice: run repository checks,
+   commit these four reconciled documents, push, open a direct PR and merge only after
+   required CI passes.
+2. Deliver one visible ChatGPT-compatible PDF intake journey through the existing
+   retained PDF service: select/upload, scan, inspect, review, save Scope and stop. Keep
+   the standalone UI and client on the same domain logic and do not grant automatic
+   matching, pricing or approval authority.
+3. Define and prove the next ProjectPackage evidence-membership increment, including
+   exact pricing-review records and explicit source-body inclusion/withholding rights.
+4. Validate T6 recipe meanings and T13 grouping/split policy against authorised
    representative Dataset B files before evaluation execution or any scale claim.
-4. Add governed yield/productivity, waste/pack and recovery inputs only after the
+5. Add governed yield/productivity, waste/pack and recovery inputs only after the
    representative quantity and recipe meanings are accepted; never parse descriptive
    notes or double count.
 [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the self-contained next-session task.
