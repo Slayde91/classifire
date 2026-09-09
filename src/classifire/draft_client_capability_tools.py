@@ -32,6 +32,7 @@ from .services import draft_estimates as estimates
 from .services import draft_pricing_coverage as pricing_coverage
 from .services import draft_pricing_evaluation_rosters as pricing_rosters
 from .services import draft_pricing_intake as pricing
+from .services import draft_pricing_recipes as pricing_recipes
 from .services import draft_scope as scopes
 from .services import draft_scope_reports as scope_reports
 from .services import draft_system_matches as matches
@@ -371,6 +372,117 @@ def register(
                 content = pricing_rosters.roster_bytes(db, actor, draft_id, roster_id)
                 return {
                     "roster": json.loads(content),
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                    "size_bytes": len(content),
+                }
+            except scopes.DraftScopeError as exc:
+                raise ToolError(exc.code) from None
+
+    @server.tool(
+        annotations=read,
+        meta={
+            "securitySchemes": [
+                {"type": "oauth2", "scopes": [READ, ESTIMATE, TECHNICAL]}
+            ]
+        },
+    )
+    def list_pricing_recipe_links(
+        draft_id: str, before_link_id: str | None = None
+    ) -> dict[str, Any]:
+        """List up to 20 saved recipe-link summaries without changing them.
+
+        Pass next_before_link_id to read an older page. Results expose reviewed
+        evidence state and dependency hashes but do not calculate or activate prices.
+        """
+        with _client_session(factory) as db:
+            try:
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, READ, draft_id)
+                capabilities.require(db, authority, principal, ESTIMATE)
+                capabilities.require(db, authority, principal, TECHNICAL)
+                rows = pricing_recipes.list_recipe_links(
+                    db,
+                    actor,
+                    draft_id,
+                    settings=get_settings(),
+                    before_link_id=before_link_id,
+                    limit=21,
+                )
+                page = rows[:20]
+                return {
+                    "links": [
+                        {
+                            "link_id": item["id"],
+                            "reviewed_at": item["value"]["reviewed_at"],
+                            "link_sha256": item["link_sha256"],
+                            "definition_sha256": item["value"]["definition_sha256"],
+                            "technical_release_id": item["value"]["definition"][
+                                "technical_release"
+                            ]["id"],
+                            "technical_release_sha256": item["value"]["definition"][
+                                "technical_release"
+                            ]["sha256"],
+                            "technical_target_id": item["value"]["definition"][
+                                "technical_target"
+                            ]["id"],
+                            "technical_variant_snapshot_sha256": item["value"][
+                                "definition"
+                            ]["technical_target"]["snapshot_sha256"],
+                            "recipe_snapshot_sha256": item["value"]["definition"][
+                                "technical_target"
+                            ]["recipe_snapshot_sha256"],
+                            "requirement_id": item["value"]["definition"]["requirement"][
+                                "id"
+                            ],
+                            "requirement_kind": item["value"]["definition"][
+                                "requirement"
+                            ]["kind"],
+                            "requirement_path": item["value"]["definition"][
+                                "requirement"
+                            ]["path"],
+                            "requirement_label": item["value"]["definition"][
+                                "requirement"
+                            ]["label"],
+                            "status": item["value"]["definition"]["interpretation"][
+                                "status"
+                            ],
+                            "evidence_state": item["value"]["definition"][
+                                "interpretation"
+                            ]["evidence_state"],
+                            "observation_count": len(
+                                item["value"]["definition"]["observations"]
+                            ),
+                            "current": item["current"],
+                        }
+                        for item in page
+                    ],
+                    "next_before_link_id": (
+                        page[-1]["id"] if len(rows) > len(page) else None
+                    ),
+                    "limit": 20,
+                }
+            except scopes.DraftScopeError as exc:
+                raise ToolError(exc.code) from None
+
+    @server.tool(
+        annotations=read,
+        meta={
+            "securitySchemes": [
+                {"type": "oauth2", "scopes": [READ, ESTIMATE, TECHNICAL]}
+            ]
+        },
+    )
+    def read_pricing_recipe_link(draft_id: str, link_id: str) -> dict[str, Any]:
+        """Read one exact saved recipe link without changing authority or pricing."""
+        with _client_session(factory) as db:
+            try:
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, READ, draft_id)
+                capabilities.require(db, authority, principal, ESTIMATE)
+                capabilities.require(db, authority, principal, TECHNICAL)
+                content = pricing_recipes.recipe_link_bytes(db, actor, draft_id, link_id)
+                return {
+                    "link": json.loads(content),
                     "sha256": hashlib.sha256(content).hexdigest(),
                     "size_bytes": len(content),
                 }

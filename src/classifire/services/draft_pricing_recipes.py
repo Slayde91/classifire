@@ -7,7 +7,7 @@ import json
 from datetime import UTC, datetime
 from typing import Any, cast
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from ..audit import record_audit
@@ -420,8 +420,19 @@ def list_recipe_links(
     settings: Settings,
     release_id: str | None = None,
     variant_id: str | None = None,
+    before_link_id: str | None = None,
+    limit: int | None = None,
 ) -> list[dict[str, Any]]:
+    """List links in legacy ascending order or a bounded newest-first page."""
+
     actor = _access(db, actor, draft_id)
+    if before_link_id is not None and (
+        type(before_link_id) is not str or not 1 <= len(before_link_id) <= 128
+    ):
+        raise DraftScopeError("PRICING_RECIPE_LINK_LIST_INVALID", 422)
+    if limit is not None and (type(limit) is not int or not 1 <= limit <= 100):
+        raise DraftScopeError("PRICING_RECIPE_LINK_LIST_INVALID", 422)
+
     statement = select(DraftPricingRecipeLink).where(
         DraftPricingRecipeLink.draft_scope_id == draft_id
     )
@@ -429,13 +440,48 @@ def list_recipe_links(
         statement = statement.where(DraftPricingRecipeLink.technical_release_id == release_id)
     if variant_id is not None:
         statement = statement.where(DraftPricingRecipeLink.technical_variant_id == variant_id)
-    rows = db.scalars(
-        statement.order_by(DraftPricingRecipeLink.created_at, DraftPricingRecipeLink.id)
-    ).all()
+
+    paged = before_link_id is not None or limit is not None
+    if before_link_id is not None:
+        anchor = db.scalar(
+            select(DraftPricingRecipeLink).where(
+                DraftPricingRecipeLink.id == before_link_id,
+                DraftPricingRecipeLink.draft_scope_id == draft_id,
+            )
+        )
+        if (
+            anchor is None
+            or (release_id is not None and anchor.technical_release_id != release_id)
+            or (variant_id is not None and anchor.technical_variant_id != variant_id)
+        ):
+            raise DraftScopeError("PRICING_RECIPE_LINK_LIST_INVALID", 422)
+        _link_value(anchor)
+        statement = statement.where(
+            or_(
+                DraftPricingRecipeLink.created_at < anchor.created_at,
+                and_(
+                    DraftPricingRecipeLink.created_at == anchor.created_at,
+                    DraftPricingRecipeLink.id < anchor.id,
+                ),
+            )
+        )
+
+    if paged:
+        statement = statement.order_by(
+            DraftPricingRecipeLink.created_at.desc(), DraftPricingRecipeLink.id.desc()
+        )
+    else:
+        statement = statement.order_by(
+            DraftPricingRecipeLink.created_at, DraftPricingRecipeLink.id
+        )
+    if limit is not None:
+        statement = statement.limit(limit)
+    rows = db.scalars(statement).all()
     return [
         {
             "id": row.id,
             "created_at": row.created_at,
+            "link_sha256": row.link_sha256,
             "current": recipe_link_current(db, actor, row, settings=settings),
             "value": _link_value(row),
         }
