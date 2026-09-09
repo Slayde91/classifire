@@ -132,6 +132,7 @@ def test_client_to_human_to_saved_draft_and_exact_package(client_case):
             "list_technical_releases",
             "list_pricing_sources",
             "preview_pricing_rows",
+            "preview_pricing_coverage",
             "list_capability_artifacts",
             "read_capability_artifact",
             "report_download",

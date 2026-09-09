@@ -28,6 +28,7 @@ from .services import draft_client_capabilities as capabilities
 from .services import draft_client_requests as commands
 from .services import draft_estimate_reports as estimate_reports
 from .services import draft_estimates as estimates
+from .services import draft_pricing_coverage as pricing_coverage
 from .services import draft_pricing_intake as pricing
 from .services import draft_scope as scopes
 from .services import draft_scope_reports as scope_reports
@@ -251,6 +252,37 @@ def register(
                 raise ToolError(exc.code) from None
             except (ValueError, TypeError, KeyError, IndexError):
                 raise ToolError("PRICING_MAPPING_INVALID") from None
+
+    @server.tool(
+        annotations=read,
+        meta={
+            "securitySchemes": [
+                {"type": "oauth2", "scopes": [READ, ESTIMATE, TECHNICAL]}
+            ]
+        },
+    )
+    def preview_pricing_coverage(draft_id: str, technical_release_id: str) -> dict[str, Any]:
+        """Preview exact evidence coverage for every target in one technical release.
+
+        This read-only result contains evidence identities and hashes, not prices. It does
+        not assess project applicability, create a proposal, change an Estimate, activate
+        pricing evidence or grant technical approval.
+        """
+        with _client_session(factory) as db:
+            try:
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, READ, draft_id)
+                capabilities.require(db, authority, principal, ESTIMATE)
+                capabilities.require(db, authority, principal, TECHNICAL)
+                return pricing_coverage.preview_coverage(
+                    db,
+                    actor,
+                    draft_id,
+                    technical_release_id,
+                    settings=get_settings(),
+                )
+            except scopes.DraftScopeError as exc:
+                raise ToolError(exc.code) from None
 
     @server.tool(annotations=read, meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ]}]})
     def list_capability_artifacts(
