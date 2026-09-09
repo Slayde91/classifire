@@ -1,5 +1,21 @@
 # CLASSIFIRE Architecture
 
+## PDF download deadline correction
+
+PR #238 is merged at `215028664775eeb1bc84828475f1393da1a598be`; its final PR run
+34356058264 passed all gates. This correction fixes a verified gap: the original total-time
+check ran only after blocking network calls returned. Production retrieval now uses a fixed
+disposable Python process. The parent enforces the deadline across DNS, connection, headers,
+body and redirects, then kills and reaps the worker on timeout. Existing URL/content and
+socket controls remain. The signed URL travels on stdin; application credentials and config
+are excluded from the child environment. The parent rechecks returned PDF bytes and hash.
+This is process isolation, not an OS sandbox. It adds one short-lived process per upload;
+there is no dependency, migration, domain-service change or authority expansion.
+
+The immediate correction requires real-process stall/success tests, a no-persistence MCP
+regression and normal required CI/publication. The next product task remains the real
+ChatGPT PDF-to-Scope journey; this fix does not authorize deployment or customer evidence.
+
 **Document status:** Current pre-production architecture
 
 **Architecture version:** 5.44 - ChatGPT-compatible PDF file intake over the shared retained-evidence boundary.

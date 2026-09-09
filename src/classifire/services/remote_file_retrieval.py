@@ -5,12 +5,20 @@ from __future__ import annotations
 import hashlib
 import http.client
 import ipaddress
+import json
+import math
+import os
 import re
 import socket
 import ssl
+
+# Fixed isolated worker only; no shell or signed URL in arguments.
+import subprocess  # nosec B404
+import sys
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from urllib.parse import unquote, urljoin, urlsplit
 
 REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
@@ -34,9 +42,7 @@ class RemoteFileRetrievalError(RuntimeError):
 class RemoteFilePolicy:
     allowed_hosts: frozenset[str]
     maximum_bytes: int
-    allowed_media_types: frozenset[str] = frozenset(
-        {"application/pdf", "application/octet-stream"}
-    )
+    allowed_media_types: frozenset[str] = frozenset({"application/pdf", "application/octet-stream"})
     maximum_uri_characters: int = 4096
     maximum_redirects: int = 3
     chunk_size: int = 64 * 1024
@@ -47,9 +53,26 @@ class RemoteFilePolicy:
     def __post_init__(self) -> None:
         if (
             not self.allowed_hosts
+            or len(self.allowed_hosts) > 64
             or type(self.maximum_bytes) is not int
             or not 1 <= self.maximum_bytes <= 100 * 1024 * 1024
             or not self.allowed_media_types
+        ):
+            raise RemoteFileRetrievalError("POLICY_INVALID")
+        for limit in (
+            self.connect_timeout_seconds,
+            self.read_timeout_seconds,
+            self.total_timeout_seconds,
+        ):
+            if type(limit) not in {int, float} or not math.isfinite(limit) or not 0 < limit <= 120:
+                raise RemoteFileRetrievalError("POLICY_INVALID")
+        if (
+            type(self.chunk_size) is not int
+            or not 1 <= self.chunk_size <= 1024 * 1024
+            or type(self.maximum_redirects) is not int
+            or not 0 <= self.maximum_redirects <= 10
+            or type(self.maximum_uri_characters) is not int
+            or not 1 <= self.maximum_uri_characters <= 4096
         ):
             raise RemoteFileRetrievalError("POLICY_INVALID")
         for host in self.allowed_hosts:
@@ -266,9 +289,7 @@ def _pinned_https_get(
                     resolved_address_count=len(addresses),
                     tls_version=tls_version,
                 )
-            declared = _declared_length(
-                response.getheader("Content-Length"), policy.maximum_bytes
-            )
+            declared = _declared_length(response.getheader("Content-Length"), policy.maximum_bytes)
             chunks: list[bytes] = []
             received = 0
             while True:
@@ -297,7 +318,7 @@ def _pinned_https_get(
     raise RemoteFileRetrievalError("NETWORK_FAILURE") from None
 
 
-def retrieve_file(
+def _retrieve_in_process(
     uri: str,
     policy: RemoteFilePolicy,
     *,
@@ -355,3 +376,96 @@ def retrieve_file(
             resolved_address_count=response.resolved_address_count,
             tls_version=response.tls_version,
         )
+
+
+def retrieve_file(
+    uri: str,
+    policy: RemoteFilePolicy,
+    *,
+    resolver: Resolver | None = None,
+    transport: Transport | None = None,
+) -> RetrievedFile:
+    """Production downloads run in a killable worker, including DNS and HTTP reads.
+
+    Explicit injected resolver/transport ports are for deterministic local tests;
+    the MCP caller cannot supply either port.
+    """
+    _validate_uri(uri, policy)
+    if resolver is not None or transport is not None:
+        return _retrieve_in_process(
+            uri,
+            policy,
+            resolver=resolver or resolve_public_addresses,
+            transport=transport or _pinned_https_get,
+        )
+    values = asdict(policy)
+    values["allowed_hosts"] = sorted(policy.allowed_hosts)
+    values["allowed_media_types"] = sorted(policy.allowed_media_types)
+    request = json.dumps({"uri": uri, "policy": values}, allow_nan=False).encode("utf-8")
+    try:
+        completed = subprocess.run(  # noqa: S603  # nosec B603
+            [sys.executable, "-I", str(Path(__file__).resolve())],
+            input=request,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=policy.total_timeout_seconds,
+            check=False,
+            env={key: os.environ[key] for key in ("SYSTEMROOT", "WINDIR") if key in os.environ},
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+        )
+    except subprocess.TimeoutExpired:
+        # run() kills and waits for the process before raising; no abandoned fetch.
+        raise RemoteFileRetrievalError("TOTAL_TIMEOUT") from None
+    except OSError:
+        raise RemoteFileRetrievalError("WORKER_FAILURE") from None
+    if completed.returncode != 0 or len(completed.stdout) > policy.maximum_bytes + 4096:
+        raise RemoteFileRetrievalError("WORKER_FAILURE")
+    try:
+        header, separator, content = completed.stdout.partition(b"\n")
+        if not separator or len(header) > 4096:
+            raise ValueError
+        metadata = json.loads(header)
+        if isinstance(metadata, dict) and set(metadata) == {"error"}:
+            code = metadata["error"]
+            if not content and isinstance(code, str) and re.fullmatch(r"[A-Z_]{1,64}", code):
+                raise RemoteFileRetrievalError(code)
+            raise ValueError
+        result = RetrievedFile(content=content, **metadata)
+        if (
+            not content.startswith(b"%PDF-")
+            or not 1 <= len(content) <= policy.maximum_bytes
+            or result.size_bytes != len(content)
+            or result.sha256 != hashlib.sha256(content).hexdigest()
+            or result.media_type != "application/pdf"
+            or result.host not in policy.allowed_hosts
+            or type(result.redirect_count) is not int
+            or not 0 <= result.redirect_count <= policy.maximum_redirects
+        ):
+            raise ValueError
+        return result
+    except (ValueError, TypeError):
+        raise RemoteFileRetrievalError("WORKER_FAILURE") from None
+
+
+def _worker_main() -> None:
+    """No application imports, database configuration, URL arguments or stderr output."""
+    try:
+        request = json.loads(sys.stdin.buffer.read(65537))
+        values = request["policy"]
+        values["allowed_hosts"] = frozenset(values["allowed_hosts"])
+        values["allowed_media_types"] = frozenset(values["allowed_media_types"])
+        result = _retrieve_in_process(request["uri"], RemoteFilePolicy(**values))
+        metadata = asdict(result)
+        del metadata["content"]
+        header = json.dumps(metadata, allow_nan=False).encode("utf-8")
+        if len(header) > 4096:
+            raise RemoteFileRetrievalError("WORKER_FAILURE")
+    except Exception as exc:
+        code = exc.code if isinstance(exc, RemoteFileRetrievalError) else "WORKER_FAILURE"
+        sys.stdout.buffer.write(json.dumps({"error": code}).encode("ascii") + b"\n")
+        return
+    sys.stdout.buffer.write(header + b"\n" + result.content)
+
+
+if __name__ == "__main__":
+    _worker_main()

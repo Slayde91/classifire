@@ -1,25 +1,24 @@
 # CLASSIFIRE Session Handoff
 
-## Branch and project context
+## Current correction and branch context
 
-Verified 2026-09-09 from isolated worktrees, local tests and GitHub.
+PR #238 is merged at `215028664775eeb1bc84828475f1393da1a598be`; required PR run
+34356058264 passed. Recheck post-merge run 34358486420 for the final main result.
+Work proceeds in `C:/CLASSIFIRE/.tmp/pdf-download-deadline-20260909` on
+`fix/pdf-download-deadline-20260909`, based on that merge. The prior PDF worktree is clean.
+Preserve the conflicted root and all unrelated work.
 
-- Shared baseline before this feature is
-  `d477ff724f3eb6f0229c376728ddba9bea1e75e9`, merge commit for PR #237.
-- PR #237 is merged. Exact head
-  `4ed44ec7543af95541d0d584f8aaa078ad300fde` passed run 34345679363:
-  full tests, Ruff, Mypy, Bandit and the one-head Alembic check.
-- Post-merge main run 34348938960 passed full tests and every repository gate on
-  the exact merge commit. Prior run 34342328239 timed out at the workflow's
-  30-minute limit while tests were still running; it reported no failed assertion.
-- Active isolated worktree:
-  `C:/CLASSIFIRE/.tmp/chatgpt-pdf-intake-20260909`;
-  branch `feat/chatgpt-pdf-intake-20260909`, opened as PR #238. Verify its current`n  exact head, CI and merge status before relying on shared publication.
-- The dirty conflicted `C:/CLASSIFIRE` root is recovery evidence. Do not edit,
-  reset, clean, resolve, broadly stage or publish from it.
-- ADRs 0001/0002 remain accepted: one modular deterministic application,
-  independent capabilities, portable artifacts, bounded optional AI and
-  transitional OpenClaw.
+The current correction enforces the download timeout even when DNS or HTTP I/O blocks.
+A fixed disposable worker receives the URL on stdin, returns checked metadata/bytes,
+and is killed and reaped on deadline. Existing Scope and retention services are unchanged.
+Real-process tests cover DNS/header/body stalls and exact successful bytes. The MCP
+regression verifies that timeout creates no source, proposal or Scope revision.
+
+Before the real-account task below, verify this correction's required CI and publication;
+finish its normal commit/push/PR/merge flow if pending. Relevant source/tests are
+`src/classifire/services/remote_file_retrieval.py`, `tests/test_remote_file_deadline.py`,
+`tests/test_draft_client_pdf_intake.py` and `tests/test_remote_file_retrieval.py`.
+No deployment, customer evidence or real provider workflow occurred for this correction.
 
 ## Current implementation
 
@@ -54,7 +53,21 @@ same-user browser confirmation.
 
 ## Validation evidence
 
-Current feature evidence:
+Correction validation: **71 tests passed in 217.00 seconds**; full Ruff, Mypy on 222
+source files with local untyped-import diagnostics disabled, and Bandit passed.
+
+```powershell
+$env:PYTHONPATH=(Join-Path $PWD 'src')
+$env:CLASSIFIRE_POSTGRES_TEST_URL='postgresql+psycopg://classifire_test@127.0.0.1:15432/classifire_containment_test'
+$env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN='classifire-containment-test-drop-all'
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m pytest -p no:cacheprovider --basetemp C:/CLASSIFIRE/.tmp/pytest-deadline-next tests/test_remote_file_deadline.py tests/test_remote_file_retrieval.py tests/test_draft_client_pdf_intake.py tests/test_draft_client.py tests/test_draft_pdf_intake.py
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m ruff check .
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m mypy src --disable-error-code=import-untyped
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m bandit -q -r src
+git diff --check
+```
+
+Original PR #238 feature evidence (historical):
 
 - hardened remote retrieval and configuration: **19 tests passed**;
 - combined client, PDF intake, remote retrieval and PostgreSQL regression:
@@ -78,24 +91,10 @@ and a mocked remote transport/ClamAV verdict.
 
 ## Relevant local changes and open issues
 
-Intended active-branch paths:
-
-- `.env.example`;
-- `src/classifire/config.py`;
-- `src/classifire/draft_client.py`;
-- `src/classifire/draft_client_evidence_tools.py`;
-- `src/classifire/services/remote_file_retrieval.py`;
-- `tests/test_draft_client.py`;
-- `tests/test_draft_client_pdf_intake.py`;
-- `tests/test_remote_file_retrieval.py`;
-- `docs/DRAFT_CLIENT_V1_CONTRACT.md`;
-- `docs/PROJECT_STATE.md`;
-- `docs/CLASSIFIRE_ARCHITECTURE.md`;
-- `docs/CLASSIFIRE_ROADMAP.md`;
-- `docs/SESSION_HANDOFF.md`.
-
-No unrelated local change was observed in this isolated worktree. Reinspect status and
-the complete diff before staging explicit paths.
+Current correction changes: the downloader module, `tests/test_remote_file_deadline.py`,
+`tests/test_draft_client_pdf_intake.py`, and the five architecture/roadmap/state/handoff/client
+contract documents. The original 13-file PDF feature is already merged as PR #238.
+The isolated correction worktree contains no unrelated changes; recheck before publication.
 
 Open issues:
 
@@ -127,7 +126,7 @@ identity, review or evidence boundaries.
 
 ## Start Here / Next Session
 
-**First task:** verify PR #238 publication, then prove the first real ChatGPT PDF-to-Scope
+**First task:** verify the download deadline correction is merged, then prove the first real ChatGPT PDF-to-Scope
 journey through an operator-controlled HTTPS/OAuth deployment.
 
 **Why this is next:** the backend file contract, secure retrieval, retained upload/scan/page
@@ -157,7 +156,7 @@ or user-flow assumption before the same pattern is extended to Excel.
 - `tests/test_draft_client_pdf_intake.py` and `tests/test_remote_file_retrieval.py`;
 - `docs/DRAFT_CLIENT_V1_CONTRACT.md` and the four durable state documents.
 
-**Validation:** rerun the 56-test PostgreSQL/client/PDF selection, Ruff, Mypy, Bandit and
+**Validation:** rerun the 71-test PostgreSQL/client/PDF selection, Ruff, Mypy, Bandit and
 `git diff --check`. In the real client, verify tool discovery, selected-file upload as
 pending, explicit clean scan/parser result, one page's text/locator/hashes, separate Scope
 proposal, readable browser review, same-user save, and reopen after process restart. Inspect
@@ -180,14 +179,16 @@ pass validation and complete the normal commit/push/PR/merge workflow.
 > Continue CLASSIFIRE from verified repository state. Before editing, inspect `AGENTS.md`,
 > `docs/GOAL.md`, Git/worktrees, `origin/main`, PR #238 and its exact required CI; preserve
 > the conflicted `C:/CLASSIFIRE` recovery root and unrelated changes. First finish PR #238's
-> safe publication if it is not already merged. The single highest-value product task is
+> safe publication if it is not already merged. Also inspect and finish the
+> `fix/pdf-download-deadline-20260909` correction if unpublished; include its real-process
+> timeout tests and no-persistence MCP regression. The single highest-value product task is
 > then to prove one real ChatGPT PDF-to-Scope journey through operator-controlled HTTPS/OAuth:
 > selected synthetic PDF -> exact-host public-DNS/TLS-pinned retrieval -> retained pending
 > source -> explicit scan/parser -> bounded page read -> separate Scope proposal -> same-user
 > browser review/save -> restart/reopen. Obtain the actual provider download host and keep
 > the allowlist fail-closed; never guess or use a wildcard. Verify signed URLs are absent
 > from persistence/logs/results and that no Match, Estimate, report, approval, release, AI
-> or OpenClaw action runs. Run the documented 56-test PostgreSQL/client/PDF selection, Ruff,
+> or OpenClaw action runs. Run the documented 71-test PostgreSQL/client/PDF selection, Ruff,
 > Mypy, Bandit and `git diff --check`. Record measured evidence, update aligned documentation,
 > preserve unrelated changes, and autonomously inspect, implement only proven fixes, validate,
 > classify, commit, push, open/update the direct-main PR, wait for exact-head CI and merge
