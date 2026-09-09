@@ -1,5 +1,30 @@
 # CLASSIFIRE Architecture
 
+## Candidate: portable project PDF evidence
+
+Current main `8164d29` includes the PDF image and human-review client workflow (PR #240);
+its required and post-merge checks passed. Existing ProjectPackage v1/v2 preserve source
+references but leave project PDF bodies external. The current candidate adds explicit
+selection of up to four reviewed local PDFs, using the shared retained-byte/scan reader.
+Native selections with PDF bodies use v3; empty PDF selection preserves v1/v2 serialization.
+The existing 128 MiB/32-member ceiling applies to v3; old v1 limits remain unchanged.
+
+The UI previews membership before an explicit save. Source hashes, sizes and document
+identities must match saved Scope references. Import retains PDFs through the existing
+imported-attachment containment service, with an additive v2 identity mapping for those
+attachments. Original/ancestor ZIP download and re-export require current clean checks for
+all included binaries. Imported Scope claims remain foreign; attachment import creates no
+local reviewed physical facts. Supplier/pricing source-body withholding remains unchanged.
+No database migration, new inference provider or new storage service is proposed.
+
+The candidate has passed local lifecycle and legacy regression tests, including HTTP UI
+save/download and two import generations. Publication and visual browser acceptance remain
+outstanding. Evidence uses a new owned imported-attachment binding with the native PDF
+storage purpose and strict imported PDF format checks; existing uniqueness and purpose guards
+are unchanged. PDFs containing active actions are refused by imported attachment processing.
+Real ChatGPT linking remains unverified.
+
+
 ## Client PDF source-review amendment
 
 The read-only `read_draft_pdf_page_image` tool also returns a native MCP PNG image block

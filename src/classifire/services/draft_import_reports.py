@@ -7,6 +7,7 @@ import json
 import os
 import subprocess  # nosec B404
 import sys
+from dataclasses import replace
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -86,6 +87,20 @@ def intake(format_name: str) -> DraftSourceIntake:
     )
 
 
+def evidence_intake() -> DraftSourceIntake:
+    """Import supplies exact archive bytes, never adopts another owner's source by hash.
+
+    Keep the native PDF purpose and create a new owned source binding. Only this explicit
+    import path permits supplied-byte reuse; normal PDF uploads keep their existing policy.
+    """
+    from . import draft_pdf_intake as pdf
+
+    return DraftSourceIntake(replace(
+        intake("pdf").policy, purpose=pdf._intake().policy.purpose,
+        audit_name="draft_import_pdf_evidence",
+    ))
+
+
 def _member(db: Session, actor: User, draft_id: str, source_id: str, *, export: bool = False):
     from .draft_package_materialization import read_import
 
@@ -94,21 +109,26 @@ def _member(db: Session, actor: User, draft_id: str, source_id: str, *, export: 
         for fmt, member in report["members"].items():
             if member["source_id"] == source_id:
                 return row, original, fmt, member
+    for member in mapping.get("evidence", []):
+        if member["source_id"] == source_id:
+            return row, original, "pdf", member
     raise DraftScopeError("IMPORTED_REPORT_NOT_FOUND", 404)
 
 
 def scan(
     db: Session, actor: User, draft_id: str, source_id: str, *, settings: Settings
 ) -> dict[str, Any]:
-    _row, _original, fmt, _member_ref = _member(db, actor, draft_id, source_id)
-    return intake(fmt).scan_source(db, actor, draft_id, source_id, settings=settings)
+    _row, _original, fmt, member = _member(db, actor, draft_id, source_id)
+    service = evidence_intake() if "original_source_id" in member else intake(fmt)
+    return service.scan_source(db, actor, draft_id, source_id, settings=settings)
 
 
 def checked_bytes(
     db: Session, actor: User, draft_id: str, source_id: str, *, settings: Settings
 ) -> bytes:
     _row, original, fmt, member = _member(db, actor, draft_id, source_id, export=True)
-    _source, _document, content = intake(fmt)._document(
+    service = evidence_intake() if "original_source_id" in member else intake(fmt)
+    _source, _document, content = service._document(
         db, actor, draft_id, source_id, settings.storage_root
     )
     if content.content != original.resolve(member["path"]) or content.sha256 != member["sha256"]:
@@ -140,6 +160,8 @@ def original_archive(db: Session, actor: User, draft_id: str, *, settings: Setti
     for report in mapping["reports"]:
         for member in report["members"].values():
             checked_bytes(db, actor, draft_id, member["source_id"], settings=settings)
+    for member in mapping.get("evidence", []):
+        checked_bytes(db, actor, draft_id, member["source_id"], settings=settings)
     return row.archive_bytes
 
 

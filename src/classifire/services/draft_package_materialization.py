@@ -74,7 +74,9 @@ def _retained(
     mapping = json.loads(row.mapping_json)
     if (
         packages.encode(mapping).decode() != row.mapping_json
-        or mapping.get("schema_version") != "CLASSIFIRE-IMPORT-MAPPING-v1"
+        or mapping.get("schema_version") not in (
+            "CLASSIFIRE-IMPORT-MAPPING-v1", "CLASSIFIRE-IMPORT-MAPPING-v2"
+        )
     ):
         raise ValueError("mapping integrity")
     if (
@@ -339,6 +341,19 @@ def create_import(
                     "members": members,
                 }
             )
+        evidence = list(original.evidence_members())
+        if evidence:
+            mapping["schema_version"] = "CLASSIFIRE-IMPORT-MAPPING-v2"
+            mapping["evidence"] = []
+            for source_id, path in evidence:
+                source = reports.evidence_intake().retain(
+                    db, actor, draft.id, f"{source_id}.pdf", original.resolve(path),
+                    settings=settings,
+                )
+                mapping["evidence"].append({
+                    "source_id": source.id, "original_source_id": source_id,
+                    "path": path, "sha256": source.source_sha256,
+                })
         row.mapping_json = packages.encode(mapping).decode()
         row.mapping_hash = packages.digest(row.mapping_json.encode())
         db.flush()

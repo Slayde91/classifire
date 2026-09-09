@@ -73,6 +73,11 @@ class ManifestV2(Manifest):
     origins: Annotated[list[OriginReference], Field(min_length=1, max_length=1)]
 
 
+class ManifestV3(ManifestV2):
+    schema_version: Literal["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v3"]  # type: ignore[assignment]
+    origins: Annotated[list[OriginReference], Field(max_length=1)] = Field(default_factory=list)
+
+
 @dataclass(frozen=True)
 class InspectedPackage:
     manifest: dict[str, Any]
@@ -98,6 +103,12 @@ class InspectedPackage:
         for path, item in self.origins.items():
             yield from item.report_members(prefix + path + "!")
 
+    def evidence_members(self, prefix: str = ""):
+        for source_id in self.manifest["selection"].get("pdf_sources", []):
+            yield source_id, prefix + f"evidence/{source_id}.pdf"
+        for path, item in self.origins.items():
+            yield from item.evidence_members(prefix + path + "!")
+
     def resolve(self, path: str) -> bytes:
         if "!" not in path:
             return self.members[path]
@@ -109,7 +120,8 @@ def validate_origin_mapping(
     mapping: dict[str, Any], original: InspectedPackage, project_id: str, draft_id: str
 ) -> None:
     """Require a complete one-to-one retained origin inventory, including descendants."""
-    if set(mapping) != {
+    evidence = list(original.evidence_members())
+    if set(mapping) != ({
         "schema_version",
         "project",
         "scope",
@@ -117,10 +129,12 @@ def validate_origin_mapping(
         "estimate",
         "reports",
         "entity_ids",
-    }:
+    } | ({"evidence"} if evidence else set())):
         raise ValueError("mapping fields")
     if (
-        mapping["schema_version"] != "CLASSIFIRE-IMPORT-MAPPING-v1"
+        mapping["schema_version"] != (
+            "CLASSIFIRE-IMPORT-MAPPING-v2" if evidence else "CLASSIFIRE-IMPORT-MAPPING-v1"
+        )
         or mapping["project"] != {"source_id": original.scope["project_id"], "local_id": project_id}
         or mapping["entity_ids"] != "retained_within_new_scope"
     ):
@@ -178,6 +192,17 @@ def validate_origin_mapping(
             UUID(member["source_id"])
 
 
+    if evidence:
+        if type(mapping["evidence"]) is not list or len(mapping["evidence"]) != len(evidence):
+            raise ValueError("mapping evidence inventory")
+        for member, (source_id, path) in zip(mapping["evidence"], evidence, strict=True):
+            if (set(member) != {"source_id", "original_source_id", "path", "sha256"}
+                or member["original_source_id"] != source_id or member["path"] != path
+                or member["sha256"] != packages.digest(original.resolve(path))):
+                raise ValueError("mapping evidence bytes")
+            UUID(member["source_id"])
+
+
 def _json(content: bytes, limit: int) -> dict[str, Any]:
     if not 1 <= len(content) <= limit:
         raise ValueError("size")
@@ -207,6 +232,7 @@ def inspect_package(
             raise ValueError("origin nesting bounds")
         manifest, members = packages.inspect_archive(content)
         parsed = (
+            ManifestV3 if manifest.get("schema_version") == packages.SCHEMA_V3 else
             ManifestV2 if manifest.get("schema_version") == packages.SCHEMA_V2 else Manifest
         ).model_validate(manifest)
         origins = {}
@@ -229,9 +255,12 @@ def inspect_package(
         if (parsed.revision == 1) != (parsed.parent_hash is None):
             raise ValueError("package parent")
         selected = parsed.selection
+        if selected.pdf_sources and not isinstance(parsed, ManifestV3):
+            raise ValueError("legacy evidence selection")
         if set(selected.scope_reports) & set(selected.estimate_reports):
             raise ValueError("duplicate report selection")
         wanted = {"artifacts/scope.json", *origins}
+        wanted.update(f"evidence/{sid}.pdf" for sid in selected.pdf_sources)
         if selected.match_id:
             wanted.add("artifacts/system-match.json")
         if selected.estimate_id:
@@ -281,7 +310,18 @@ def inspect_package(
                 or estimate["system_match"] != match
             ):
                 raise ValueError("estimate dependency")
-        if parsed.source_manifest != packages.source_manifest(scope, match, estimate):
+        for source_id in selected.pdf_sources:
+            data = members[f"evidence/{source_id}.pdf"]
+            refs = [ref for ref in scope.get("evidence_refs", [])
+                    if ref.get("source_id") == source_id]
+            if not refs or not data.startswith(b"%PDF-") or any(
+                "page_number" not in ref or ref.get("source_sha256") != packages.digest(data)
+                or ref.get("source_size_bytes") != len(data) for ref in refs
+            ):
+                raise ValueError("PDF evidence binding")
+        if parsed.source_manifest != packages.source_manifest(
+            scope, match, estimate, selected.pdf_sources
+        ):
             raise ValueError("source inventory")
         reports = []
         for report_id in selected.scope_reports + selected.estimate_reports:
