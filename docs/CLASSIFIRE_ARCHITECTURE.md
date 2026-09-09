@@ -9,7 +9,7 @@
 bounded T13 roster-history client access, the governed T6/v4 recipe-review increment,
 the bounded T10 preview and the immutable Scope-bound quantity journal. Exact PR #235
 run 34329434461 passed the full repository workflow before merge; post-merge run
-34336769556 is executing on the merge commit. [PROJECT_STATE.md](./PROJECT_STATE.md)
+34336769556 passed the same repository gates on the merge commit. [PROJECT_STATE.md](./PROJECT_STATE.md)
 owns measured validation and publication state.
 
 No AI or OpenClaw path is used by this increment. Evaluation execution, commercial

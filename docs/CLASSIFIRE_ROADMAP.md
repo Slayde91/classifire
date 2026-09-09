@@ -14,8 +14,7 @@ linking remains unproven.
 **Verified shared-main baseline:**
 `324f66a2e73330589e43b2ca17529eaf8de61bfe`.
 PR #235 head run 34329434461 attempt 2 passed the full test suite, Ruff, Mypy,
-Bandit and one Alembic head before merge as `324f66a`; its post-merge main
-run 34336769556 is executing. PR #236 code-head run 34333784853 passed the same
+Bandit and one Alembic head before merge as `324f66a`; post-merge main run 34336769556 passed the same repository gates. PR #236 code-head run 34333784853 passed the same
 repository gates. The earlier PR #233 post-merge run that executed zero steps is
 historical evidence of a temporary account billing/spending-limit incident, not the
 current CI state.

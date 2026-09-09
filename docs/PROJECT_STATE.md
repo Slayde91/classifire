@@ -7,7 +7,7 @@ Verified 2026-09-09 on shared main
 coverage and roster-history PR #235. Exact PR head
 `eab351e3110524b957db50730a169376d63020a1` passed run 34329434461 attempt 2:
 the full test suite, Ruff, Mypy on 220 source files, Bandit and the one-head Alembic
-check all passed. Post-merge main run 34336769556 is currently executing on the exact
+check all passed. Post-merge main run 34336769556 passed the same repository gates on the exact
 merge commit. Earlier run 34281851774 executed zero steps during a temporary GitHub
 billing/spending-limit block; successful runs for PRs #235/#236 prove Actions can execute
 again, so that historical event is no longer the active operational blocker.

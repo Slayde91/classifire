@@ -9,7 +9,7 @@ Verified 2026-09-09 from isolated worktrees and GitHub.
   for PR #235.
 - PR #235 is merged. Exact head run 34329434461 attempt 2 passed the full test suite,
   Ruff, Mypy, Bandit and the one-head Alembic check. Post-merge main run 34336769556
-  is executing on the exact merge commit.
+  passed the same repository gates on the exact merge commit.
 - PR #236 now targets `main` directly:
   <https://github.com/Slayde91/classifire/pull/236>.
   Its current head before this documentation reconciliation is
