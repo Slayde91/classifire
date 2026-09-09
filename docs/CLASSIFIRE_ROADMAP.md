@@ -2,6 +2,10 @@
 
 ## Immediate prototype priority: source-linked client Scope review
 
+The same increment exposes bounded page images to the client for visual interpretation;
+previously only the human browser had raster access. Real client image consumption and
+interpretation accuracy remain acceptance tasks, separate from transport tests.
+
 Before the connected ChatGPT trial, finish the current `review_pdf_scope` increment.
 A generic client edit can save content but cannot create the retained-page provenance already
 supported by standalone review. Reuse that shared service through explicit human confirmation.

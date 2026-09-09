@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import time
@@ -320,3 +321,56 @@ def test_pdf_client_refuses_unauthorized_owner_and_invalid_metadata(
         assert "CLIENT_FILE_POLICY_INVALID" in str(not_configured)
 
     assert case.fetched == []
+
+
+def test_pdf_page_image_returns_bound_png_without_scope_writes(pdf_client_case):
+    case = pdf_client_case
+    with TestClient(case.app, base_url="https://testserver") as client:
+        token = case.token()
+        source = tool(client, token, "upload_draft_pdf", {
+            "draft_id": case.draft_id, "file": {
+                "download_url": "https://files.example.test/report.pdf",
+                "file_id": "synthetic", "file_name": "inspection.pdf",
+            },
+        })["source"]
+        args = {"draft_id": case.draft_id, "source_id": source["id"], "page_number": 1}
+        tool(client, token, "read_draft_pdf_page_image", args, error=True)
+        tool(client, token, "scan_draft_pdf", {
+            "draft_id": case.draft_id, "source_id": source["id"],
+        })
+        response = rpc(client, case.token(scopes=(READ,)), "tools/call", {
+            "name": "read_draft_pdf_page_image", "arguments": args,
+        })
+        assert response.status_code == 200
+        result = response.json()["result"]
+        assert not result.get("isError")
+        metadata = result["structuredContent"]
+        images = [block for block in result["content"] if block["type"] == "image"]
+        assert len(images) == 1
+        image = base64.b64decode(images[0]["data"], validate=True)
+        assert images[0]["mimeType"] == "image/png"
+        assert image.startswith(b"\x89PNG\r\n\x1a\n")
+        assert metadata["image_sha256"] == hashlib.sha256(image).hexdigest()
+        assert metadata["source"]["id"] == source["id"]
+        assert metadata["source"]["document_sha256"]
+        assert metadata["page_number"] == 1 and metadata["locator_key"]
+        assert metadata["evidence_status"] == "unreviewed"
+        with case.factory() as db:
+            expected = pdf.page_preview(db, db.get(User, case.owner_id), case.draft_id,
+                                        source["id"], 1, settings=case.settings)
+            assert image == expected
+        for invalid_page in (0, 2, True):
+            tool(client, token, "read_draft_pdf_page_image",
+                 dict(args, page_number=invalid_page), error=True)
+        tool(client, case.token(user="other"), "read_draft_pdf_page_image", args, error=True)
+        denied = rpc(client, case.token(scopes=(WRITE,)), "tools/call", {
+            "name": "read_draft_pdf_page_image", "arguments": args,
+        })
+        assert denied.status_code == 401
+        with case.factory() as db:
+            db.get(DraftPdfSource, source["id"]).document_sha256 = "a" * 64
+            db.commit()
+        tool(client, token, "read_draft_pdf_page_image", args, error=True)
+    with case.factory() as db:
+        assert scopes.read_revision(db, db.get(User, case.owner_id), case.draft_id)["revision"] == 1
+        assert db.scalar(select(func.count()).select_from(DraftClientRequest)) == 0

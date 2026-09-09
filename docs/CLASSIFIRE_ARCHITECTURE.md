@@ -2,6 +2,12 @@
 
 ## Client PDF source-review amendment
 
+The read-only `read_draft_pdf_page_image` tool also returns a native MCP PNG image block
+and source/page/locator/image-hash metadata through the existing bounded renderer. It reuses
+owner/read, clean-scan and retained-byte guards. This closes the text-only client gap without
+a new inference provider. Page previews can lose fine detail; image availability does not
+prove interpretation accuracy.
+
 Current architecture: upload/page reads and generic Scope edits exist, but generic edits
 cannot create local PDF-page review references. The current increment adds one typed
 `review_pdf_scope` operation to `propose_capability`, preserving the existing durable request

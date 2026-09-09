@@ -1,6 +1,17 @@
 # CLASSIFIRE Project State
 
+Latest image/client validation: **6 PDF intake and Scope-review tests passed in 59.21 seconds**.
+The image test verifies native PNG content and exact shared-renderer bytes/hash, read-only
+access, refusal before scan, invalid page/foreign user/missing read scope and changed-source
+refusal, with no Scope revision or pending request. Full Mypy (222 files, local untyped-import
+diagnostics disabled), Ruff, Bandit and diff checks passed. Real ChatGPT image consumption
+and browser visual acceptance remain unverified.
+
 ## Current client PDF-to-Scope increment
+
+The candidate now includes a read-only native MCP page-image response with exact source,
+page locator and PNG hash, using the existing renderer and retained-evidence guards.
+It supplies visual evidence to a client without creating Scope content or approvals.
 
 The current candidate adds `review_pdf_scope` to the existing typed client proposal
 flow. It uses the shared PDF preview/save services to bind selected defects, openings and

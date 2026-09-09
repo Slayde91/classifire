@@ -1,5 +1,12 @@
 # CLASSIFIRE Session Handoff
 
+Latest image/client validation: **6 PDF intake and Scope-review tests passed in 59.21 seconds**.
+The image test verifies native PNG content and exact shared-renderer bytes/hash, read-only
+access, refusal before scan, invalid page/foreign user/missing read scope and changed-source
+refusal, with no Scope revision or pending request. Full Mypy (222 files, local untyped-import
+diagnostics disabled), Ruff, Bandit and diff checks passed. Real ChatGPT image consumption
+and browser visual acceptance remain unverified.
+
 ## Current branch and project context
 
 The current source-linked client Scope candidate is in
@@ -25,12 +32,19 @@ verified preview hash to the existing PDF save service, which rechecks exact dep
 and appends server-generated page/entity/reviewer references. No downstream capability runs.
 Generic Scope edits and the original command hash shapes remain compatible.
 
+PR #240 is open for this increment. Its initial head is `98ecb8d`; read current-head CI
+before merging. The subsequent image addition exposes `read_draft_pdf_page_image` using
+the existing renderer and native MCP image blocks. Check the evidence tool and PDF intake
+tests as well as the review flow. Real image interpretation remains unproven.
+
 Relevant code:
 - `src/classifire/services/draft_client_capabilities.py`
 - `src/classifire/services/draft_client_requests.py`
 - `src/classifire/draft_client_capability_tools.py`
 - `src/classifire/templates/draft_client_request.html`
 - `tests/test_draft_client_pdf_scope.py`
+- `src/classifire/draft_client_evidence_tools.py`
+- `tests/test_draft_client_pdf_intake.py`
 - Shared services: `draft_pdf_intake.py`, `draft_scope.py`.
 
 The five architecture/roadmap/state/handoff/client-contract documents are also updated.

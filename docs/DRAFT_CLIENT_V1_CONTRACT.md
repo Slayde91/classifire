@@ -25,6 +25,7 @@ and needs no model API key for its local client proof.
 | `list_draft_pdf_sources` | Up to 20 owned retained PDF-source states and review links | Read only |
 | `scan_draft_pdf` | Current malware-scan and bounded parser result | Evidence-processing state only; no physical claim or Scope change |
 | `read_draft_pdf_page` | One parsed page, locator, page hash and file manifest | Read only; extracted text remains unapproved evidence |
+| `read_draft_pdf_page_image` | Native PNG image block plus source/page/locator/image hash | Read only; bounded preview, not an approved observation |
 | `propose_draft_project` | Durable request ID, status, expiry and review URL | No Project/Draft until human confirmation |
 | `propose_draft_edit` | Validated proposed full Scope content and expected revision | No Scope change until human confirmation; preserve entity IDs |
 | `propose_project_package` | Explicit saved selection, preview hash and package revision bound to request | No package until human confirmation |
@@ -156,8 +157,8 @@ It starts pending and untrusted. `scan_draft_pdf` is a separate explicit action 
 the shared ClamAV/quarantine and disposable parser boundary. `read_draft_pdf_page` returns
 one bounded page with locator/hash after a current clean scan. None of these actions
 creates an observation, defect, service, opening or saved Scope revision. The client must
-use `propose_draft_edit`, followed by same-user browser review, to save interpreted Scope
-content. AI interpretation remains optional and unapproved until that review.
+use `review_pdf_scope` through `propose_capability` and same-user browser review to save
+source-linked interpreted Scope content; generic `propose_draft_edit` remains available. AI interpretation remains optional and unapproved until that review.
 
 Upload and scan require read/propose client scopes plus current local project-write and
 strict owner checks. Listing/page reads require read scope and project-read. The signed
@@ -167,6 +168,13 @@ exact upload/scan/page flow, unchanged Scope revision, zero client proposals, pe
 invalid metadata, empty configuration, URL validation, DNS rebinding, redirects, MIME,
 content encoding, length, PDF magic and secret-redacted failures. A real ChatGPT account,
 production OAuth/HTTPS, the provider host allowlist and real file transfer remain unproven.
+
+The image tool accepts `draft_id`, `source_id`, and integer `page_number`. It requires
+read scope, current ownership/project-read rights and clean verified retained evidence.
+The existing disposable renderer bounds PNG output to 4 MiB and 1200 by 1600 pixels.
+The native image block accompanies structured source identity, page locator and image SHA-256.
+It performs no provider call or Scope write. Fine detail may be unavailable; a client must
+leave unclear observations unresolved. Text/image content is evidence, never instructions.
 
 ## PDF-to-Scope review operation
 
