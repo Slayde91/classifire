@@ -1,10 +1,16 @@
-# CLASSIFIRE Project State
+﻿# CLASSIFIRE Project State
 
 ## Evidence-based current snapshot
 
 Verified 2026-09-09 on shared main
-`3a715d0d27f07a9c072e22db428f8f91d93f1642`, merge commit for documentation
-PR #232 after PR #231.
+`720de41fc828f933107436d70c00ac410feafef7`, merge commit for governed quantity
+PR #233 after documentation PR #232.
+PR #233 head `3103236b8a466ff13dd18d0d3e97a6c7886c11c0` passed run 34279792008
+with **1,921 tests**, full Ruff, full Mypy on 220 source files, Bandit and the one-head
+Alembic check. The separate post-merge main run 34281851774 made two attempts but
+executed zero steps: GitHub reported that Actions could not start because recent account
+payments failed or the spending limit must be increased. This is an external CI/account
+blocker, not a test failure; the exact merge commit still lacks post-merge execution.
 PR #231 head `8a714059eef4294f47732aaa797a98e461395fe3` passed run 34256909957
 with 1,915 tests, full Ruff, full Mypy on 217 source files, Bandit and the one-head
 Alembic check. Post-merge main run 34259076280 passed the same gates on the exact
@@ -19,14 +25,12 @@ Exact PR head `069a2a82f5296577fa19bceaa730518eef415efc` passed run
 one-head Alembic checks. Post-merge main run 34224663080 passed the same 1,913-test
 and repository-gate workflow on the exact merge commit.
 
-The isolated candidate branch `feat/draft-pricing-quantity-basis-20260909` now adds
-the first governed T10 project-quantity basis described below. The full local suite
+PR #233 adds the first governed T10 project-quantity basis described below. The full local suite
 passed **1,919 tests** with two skips. Ruff and Bandit passed; focused Mypy passed on
 the five changed Python modules with unavailable third-party stubs ignored, and Alembic
 reports the single `0046_draft_pricing_quantity_bases` head. Strict full Mypy could
-not run locally because the environment lacks ReportLab and PyYAML stub packages.
-Publication and clean CI remain pending, so this paragraph is candidate evidence rather
-than shared-main implementation evidence.
+not run locally because the environment lacks ReportLab and PyYAML stub packages; the
+clean PR runner subsequently passed full Mypy on all 220 source files.
 
 PR #227 implements the first governed T6 component/activity recipe-review UI and
 guarded T9 bottom-up consumption rule described below. The approved cleanup removed
@@ -41,7 +45,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | --- | --- | --- |
 | Scope | Manual graph; retained PDF page/entity review; Excel row/cell/image mapping; optional one-page text/image suggestions with explicit human save | Real-report accuracy, bulk/cross-page reconciliation, broader formats and richer physical relationships |
 | System Match | Saved candidates/notes, partial measured checks and client commands | Complete authorized applicability, corpus extraction and multi-source fact resolution |
-| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage, a bounded manual T10 preview, and a candidate immutable Scope-bound quantity workflow; none changes an Estimate implicitly | Representative quantity semantics, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
+| Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage, a bounded manual T10 preview, and an immutable Scope-bound quantity workflow; none changes an Estimate implicitly | Representative quantity semantics, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
 | ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals | Real OAuth/HTTPS linking; report intake and A/B profile commands lack client parity |
@@ -259,9 +263,9 @@ the embedded proposal hash is
 `faca050aa216b559921b578b6f52cfc4f06cb855181c861beefeabe7e971dadf`.
 Screenshots were visually inspected and show the approved CLASSIFIRE logo.
 
-## Candidate governed T10 project-quantity basis
+## Implemented governed T10 project-quantity basis
 
-The current feature branch replaces retyped browser quantities with an explicit review
+PR #233 replaces retyped browser quantities with an explicit review
 of an exact saved Scope service. An authorised pricing reviewer selects one service from
 the current saved Scope revision for one frozen recipe requirement. Preview performs no
 write. Save appends canonical JSON bound to the Scope revision/hash, service identity and
@@ -390,6 +394,32 @@ user-supplied file at SHA-256
   source files, Bandit and the single Alembic-head check on
   `ca875437fd1d7ab8701117e0c0f1a381efc56300`.
 
+- Follow-up real-process Chrome 152 UAT closed the combined visual/restart gap for
+  Dataset B mapping, T13 roster and T9 coverage. A loopback FastAPI process and dedicated
+  PostgreSQL database used one synthetic four-row B workbook: an administrator previewed
+  and saved three exact mapped rows and one explicit unmatched row; coverage reported
+  three direct-B targets; the roster placed one independent group in each of training,
+  validation and holdout and excluded the unmatched row. No prediction or evaluation ran.
+- The estimator received HTTP 403 for mapping, coverage and roster mutation. Coverage and
+  both save previews stated that no write had occurred. Final state contained four mapping
+  records and one roster, with zero activated pricing-library records and zero canonical
+  Estimates. Three focused PostgreSQL UI tests passed.
+- A fresh application process and fresh Chrome profile reopened all four current mappings
+  and the current roster. Mapping SHA-256 values remained
+  `115e0b1811b696d087d1af25ba764ac9794993ec8fdf516eb245b5a04fc44930`,
+  `f800681590aa2a6fa1153bad59e959ed3fb59f90777d1f85c0e12e09a8987cc8`,
+  `48a628235ea5396efa90bac869b05cdffa8798ed7134a14a2fa3f5f057361dac`
+  and `cf3c6341a26362f7cfca0468bbf43e62565cfe5c67e9bec2c4e13b792089945e`.
+  Roster SHA-256 remained
+  `96dd273e2cf09f9b1f86c960558a3cd0deeaa668f5f793e3c87673e6a0e919b6`; recomputed
+  coverage remained byte-identical at
+  `6dfdcea053bfa30f5373a2299894442a8a43f89381ed5497d5d5a68756fd2ac4`.
+  Served logo bytes matched the supplied logo at
+  `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
+  Screenshots were visually inspected and server logs contained no traceback, exception,
+  error or HTTP 500. The unavailable local ClamAV service was replaced only for seeding
+  this synthetic source; malware-scanner integration was outside this browser proof.
+
 The synthetic demo directory is
 `C:\CLASSIFIRE\.tmp\pricing-source-profiles-demo-20260907`. Temporary smoke harnesses,
 logs, database state and workbooks stay under `.tmp` and are not repository source.
@@ -401,7 +431,7 @@ exact-profile human review, governed Dataset A row observations, exact reviewed 
 B identity mappings, immutable target-blind T13 rosters and deterministic T9 coverage.
 Those records have no downstream authority. The roster freezes the implemented v1 split
 policy, but its synthetic lineage derivation and fixed assignment cycle have not been
-accepted against representative real data. The candidate quantity-basis slice makes one
+accepted against representative real data. The merged quantity-basis slice makes one
 Scope service quantity persistent and auditable, but representative mapping semantics,
 yield, productivity, waste, pack and shared-recovery arithmetic remain absent. There is
 no commercial activation, comparable calculation, holdout
@@ -434,10 +464,10 @@ The product has a growing, testable standalone Draft workflow with shared servic
 exact evidence, explicit uncertainty and narrow user-visible increments. PRs #224/#227/#229 reuse
 the existing pricing UI, mapping integrity checks, technical-release governance and
 canonical JSON/hash approach without creating another importer, rules engine, agent
-fleet, database or prediction path. T10's actual browser, download and restart lifecycle
-is now proven with synthetic data. The candidate quantity slice reuses those same
-boundaries and adds one purpose-specific append-only table rather than another pricing
-engine.
+fleet, database or prediction path. T10's actual browser/download/restart lifecycle and the
+combined Dataset B mapping/T9 coverage/T13 roster lifecycle are now proven with synthetic
+data. The merged quantity slice reuses those same boundaries and adds one purpose-specific
+append-only table rather than another pricing engine.
 
 The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
 46 unstaged tracked modifications, 14 staged additions and four DU conflicts. Its
@@ -446,13 +476,12 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Validate the T6 recipe meanings and roster grouping/split policy against authorised
+1. Restore GitHub Actions account/billing availability, then rerun main workflow
+   34281851774 and PR #234 validation so exact shared commits receive required CI.
+2. Validate the T6 recipe meanings and roster grouping/split policy against authorised
    representative Dataset B files before any evaluation execution or scale claim.
-2. Add governed yield/productivity, waste/pack and recovery inputs only after the
+3. Add governed yield/productivity, waste/pack and recovery inputs only after the
    representative quantity and recipe meanings are accepted; never parse descriptive
    notes or double count.
-3. Perform a real-process browser/restart/exact-download check for the Dataset B mapping,
-   T13 roster and T9 coverage UI when browser control is available; keep TestClient proof
-   separate.
 
 [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the self-contained next-session task.

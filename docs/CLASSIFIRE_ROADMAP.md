@@ -4,10 +4,15 @@
 bounded PDF suggestions, A/B source profiles, exact-profile review, Dataset A/B row
 governance, target-blind T13 roster, T9 coverage and T6 recipe review are merged through
 PR #227. PR #229 merges a bounded read-only T10 bottom-up preview; PR #231 proves
-and hardens its real Chrome, exact-download and restart lifecycle. The current candidate
-adds the first immutable Scope-bound project quantity and governed T10 consumption.
+and hardens its real Chrome, exact-download and restart lifecycle. PR #233 adds the first
+immutable Scope-bound project quantity and governed T10 consumption. Synthetic real-process
+Chrome/restart proof now also covers Dataset B mapping, T9 coverage and the T13 roster.
 **Verified shared-main baseline:**
-`3a715d0d27f07a9c072e22db428f8f91d93f1642`.
+`720de41fc828f933107436d70c00ac410feafef7`.
+PR #233 head run 34279792008 passed 1,921 tests and every repository gate.
+Post-merge main run 34281851774 executed zero steps on two attempts because GitHub
+reported an account billing/spending-limit block; restore Actions availability and rerun
+that exact merge commit before treating main CI as healthy.
 PR #227 head run 34223161569 and post-merge main run 34224663080 each passed
 1,913 tests and all repository gates.
 [PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;
@@ -28,8 +33,10 @@ plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.m
   consume only complete current confirmed links. PR #229 builds one
   read-only explicit-quantity bottom-up sell-price preview. Real-browser UAT then proved
   visible withholding, exact dependencies, calculation, permission denial, download and
-  restart, and found two presentation defects fixed in PR #231. The current candidate
-  replaces browser-entered quantities with immutable current Scope-service selections.
+  restart, and found two presentation defects fixed in PR #231. PR #233 replaces
+  browser-entered quantities with immutable current Scope-service selections. A later
+  Chrome/restart journey proved three mapped B rows, one unmatched row, target-wide T9
+  coverage, one group in each T13 split, permission denials and byte-identical downloads.
   Reuse existing technical/pricing/
   review services; do not start bulk extraction, model tuning or a replacement agent
   fleet to achieve that screen.
@@ -109,7 +116,7 @@ prototype into it.
 | **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
 | **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
 | **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
-| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; T13 roster PR #222; bounded T9 coverage PR #224; T6 recipe review PR #227; first T10 bottom-up preview PR #229; T10 browser/restart proof complete; Scope-bound quantity candidate verified locally; broader T10-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster/quantity history and inspect identity, units, price meaning and gaps. Coverage and the first bottom-up amount are visible and browser-proven. Validate representative recipe and grouping semantics next, then add numeric-basis breadth and separate comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
+| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; T13 roster PR #222; bounded T9 coverage PR #224; T6 recipe review PR #227; first T10 bottom-up preview PR #229; T10 browser/restart proof complete; Scope-bound quantity PR #233 merged; B mapping/T9/T13 browser-restart proof complete; broader T10-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster/quantity history and inspect identity, units, price meaning and gaps. Coverage and the first bottom-up amount are visible and browser-proven. Validate representative recipe and grouping semantics next, then add numeric-basis breadth and separate comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
 | **P5. Project portability and shared ChatGPT access** | Download/preview/import merged PRs #200/#202/#203; first client merged PR #204; independent Match/Estimate/report client merged PR #205; measured review merged PR #206; workbook pricing client merged PR #207; external ChatGPT linking pending | Bundle declared capability/evidence revisions, validate exact membership and rights, save/download a versioned ProjectPackage and safely import into a new project. A thin ChatGPT client invokes the same proven commands; it need not wait for unrelated domain breadth. Inspect round-trip content and client parity. |
@@ -123,11 +130,10 @@ measured P2b and generic pricing XLSX P3b are merged. The bounded A/B profile is
   T13 contract is merged in PR #216, Dataset A observations in PR #218, Dataset B
   mappings in PR #220, the persisted target-blind roster in PR #222 and bounded
   read-only T9 coverage in PR #224, T6 recipe review in PR #227 and the first T10
-  bottom-up preview in PR #229. Its synthetic real-browser/restart lifecycle has passed. The
-current candidate adds a no-write preview and append-only Scope-service quantity journal,
-then makes the normal T10 path require its latest current compatible record. It has passed
-the full local suite and a synthetic Chrome/restart journey but is not shared work until
-reviewed and merged. The
+  bottom-up preview in PR #229. Its synthetic real-browser/restart lifecycle has passed.
+PR #233 adds a no-write preview and append-only Scope-service quantity journal, then
+makes the normal T10 path require its latest current compatible record. It passed the
+full local suite, clean PR CI and a synthetic Chrome/restart journey. The
 selected-package P5 increment has a real configuration/save/download/reconfiguration/
 restart journey merged in PR #200; later P5 client parity is merged through PR #207.
 Do not rebuild these slices.
@@ -254,13 +260,12 @@ means suppressing known errors, weakening tests or bypassing permissions.
 ### Immediate next action
 
 Validate T6 recipe meanings and the T13 grouping/split policy against authorised
-representative Dataset B sources. Until those files, usage rights and accepted semantics
-are available, strengthen the interactive prototype with a synthetic real-process
-browser/restart/exact-download proof of the existing Dataset B mapping, T13 roster and T9
-coverage workflow. After representative quantity and recipe meanings are accepted, add
-governed yield/productivity/recovery inputs before supporting multiple observations,
-waste, pack or margins. Do not parse descriptive notes or grant Estimate, library,
-technical, evaluation or release authority.
+representative Dataset B sources. The synthetic real-process browser/restart/exact-download
+proof of Dataset B mapping, T9 coverage and the T13 roster is complete; it cannot establish
+real commercial meaning, split suitability or scale. After representative quantity and
+recipe meanings are accepted, add governed yield/productivity/recovery inputs before
+supporting multiple observations, waste, pack or margins. Do not parse descriptive notes
+or grant Estimate, library, technical, evaluation or release authority.
 Current evidence and exact handoff remain in PROJECT_STATE.md and SESSION_HANDOFF.md.
 This sequence grants no customer-source, live-provider, canonical-write or deployment
 authority. OpenClaw protection parity remains a separate gated track.
@@ -285,9 +290,9 @@ Every exposed slice includes its UI, minimum persistence and tests.
 | Delivery band | Included work and dependency gate |
 | --- | --- |
 | **First visible corpus/pricing slice** | **A/B profile merged PR #212; review merged PR #214; pre-model T13 contract merged PR #216:** minimum T1 + T5 + T7 identity/profile history, early-T12 exact-profile decision and leakage rules with synthetic data; no library publication or price inference. |
-| **Reviewed vertical slice** | **Dataset A observation PR #218, Dataset B mapping PR #220, target-blind T13 roster PR #222, read-only T9 coverage PR #224 and T6 recipe review PR #227; broader T2-T8 upcoming.** Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
+| **Reviewed vertical slice** | **Dataset A observation PR #218, Dataset B mapping PR #220, target-blind T13 roster PR #222, read-only T9 coverage PR #224 and T6 recipe review PR #227; combined B/T9/T13 browser-restart proof complete; broader T2-T8 upcoming.** Reuse applicable source-review infrastructure while keeping commercial and technical authority separate. |
 | **Controlled breadth and scale** | Expand T2-T8 through bounded resumable imports, deduplication/reprocessing, proper pagination and representative retained sources; T9 coverage exposes gaps. Measure capacity before declaring hundreds/thousands supported. |
-| **Explainable estimating prototype** | **T10 first slice merged PR #229 and real-browser/restart proof complete; governed Scope-bound quantity candidate verified locally:** read-only sell-price calculation now consumes immutable saved Scope quantities in the normal UI path, with line evidence, withholding and exact JSON. Next validate representative recipe/quantity semantics, then add yield/productivity/recovery inputs, separate comparable proposals, T12 review UI and T13 evaluation. T11 comparison remains later. |
+| **Explainable estimating prototype** | **T10 first slice merged PR #229 and real-browser/restart proof complete; governed Scope-bound quantity merged PR #233:** read-only sell-price calculation now consumes immutable saved Scope quantities in the normal UI path, with line evidence, withholding and exact JSON. Next validate representative recipe/quantity semantics, then add yield/productivity/recovery inputs, separate comparable proposals, T12 review UI and T13 evaluation. T11 comparison remains later. |
 | **Validated operation** | T13 establishes approved method/stratum gates; T11 combined proposals use that evidence; T14 operations, feedback, drift and controlled release extend the demonstrated path. |
 
 #### T1. Minimum canonical schema and version contracts
@@ -470,8 +475,8 @@ routes and project-specific applicability remain upcoming.
 #### T10. Explainable estimation methods
 
 **Status:** first bounded slice merged in PR #229; first governed project-quantity
-candidate verified locally. The merged slice covers one deterministic bottom-up method
-for a T9-eligible target. The candidate binds one explicit saved Scope service
+increment merged in PR #233. The merged slice covers one deterministic bottom-up method
+for a T9-eligible target. PR #233 binds one explicit saved Scope service
 quantity/unit to each frozen requirement through no-write preview and immutable save,
 then makes normal T10 consumption require the newest current compatible record. Missing,
 stale or incompatible quantity evidence withholds the total. Manual input remains a named
@@ -485,7 +490,7 @@ canonical download, lower-privilege denial and byte-identical output after resta
 merged PR #231 removes the browser-only required constraint and exposes
 existing dependency hashes; no calculation, schema or authority boundary changes.
 
-Candidate Chrome UAT additionally proves Scope-service selection, no-write preview,
+PR #233 Chrome UAT additionally proves Scope-service selection, no-write preview,
 immutable save/history/download, visible quantity hashes, HTTP 403, exact
 `2 each x $300 = $600.00` arithmetic and byte-identical quantity/proposal downloads
 after a process restart. Migration 0046 is additive and refuses downgrade. This evidence
@@ -732,7 +737,7 @@ prevents concurrent publication from leaving two active technical releases.
 early-T12 profile review, the T13 roster boundary, bounded T9 coverage and governed T6
 recipe links are merged through PR #227. The first read-only T10 bottom-up proposal is
 merged in PR #229 and its real UI lifecycle is proven. The first Scope-bound quantity
-basis is the current verified candidate. Validate T6 recipe meanings and the T13
+basis is merged in PR #233. Validate T6 recipe meanings and the T13
 grouping/split policy against authorised representative Dataset B sources next; only
 then broaden governed yield/productivity, waste/pack and recovery inputs. Continue
 T2-T8 processing/fact review,
