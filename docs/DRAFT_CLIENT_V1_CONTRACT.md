@@ -2,13 +2,12 @@
 
 ## Status and purpose
 
-2026-09-06. PRs #204/#205/#206 merge the initial, independent-capability and measured-
-review clients. Shared baseline `58c7d4aefad87d714a8922d060fbfa2e68b446bb` has
-successful main CI 34017405923. The workbook-pricing amendment below is implemented
-on `feat/client-workbook-pricing-20260906`; local validation passed.
-Verify its live publication status. This is a ChatGPT-compatible surface over the standalone core, not
-production OAuth deployment or proof of a connected ChatGPT account. ADRs 0001/0002
-remain accepted.
+2026-09-09. Shared main `d477ff724f3eb6f0229c376728ddba9bea1e75e9` includes
+the authenticated Draft client and read-only pricing evidence history through PR #237.
+The PDF-file amendment below is implemented and locally validated in this commit;
+verify its shared publication status from Git before relying on it. This is a
+ChatGPT-compatible surface over the standalone core, not production OAuth deployment
+or proof of a connected ChatGPT account. ADRs 0001/0002 remain accepted.
 
 OpenAI's current [MCP server guide](https://developers.openai.com/plugins/build/mcp-server)
 and [authentication guide](https://developers.openai.com/plugins/build/auth) describe
@@ -22,6 +21,10 @@ and needs no model API key for its local client proof.
 | --- | --- | --- |
 | `list_draft_projects` | Up to 50 owned Draft IDs/revisions and a continuation ID | Read only; no administrator cross-owner access |
 | `read_draft_scope` | Explicit saved Scope revision with validation/provenance | Read only; no refresh of downstream work |
+| `upload_draft_pdf` | Retained pending PDF source plus content hash and review link | Explicit evidence intake only; no scan, interpretation or Scope change |
+| `list_draft_pdf_sources` | Up to 20 owned retained PDF-source states and review links | Read only |
+| `scan_draft_pdf` | Current malware-scan and bounded parser result | Evidence-processing state only; no physical claim or Scope change |
+| `read_draft_pdf_page` | One parsed page, locator, page hash and file manifest | Read only; extracted text remains unapproved evidence |
 | `propose_draft_project` | Durable request ID, status, expiry and review URL | No Project/Draft until human confirmation |
 | `propose_draft_edit` | Validated proposed full Scope content and expected revision | No Scope change until human confirmation; preserve entity IDs |
 | `propose_project_package` | Explicit saved selection, preview hash and package revision bound to request | No package until human confirmation |
@@ -64,7 +67,10 @@ Accepted tokens are RS256 access JWTs (`typ: at+jwt`) with the configured kid,
 issuer, exact `/mcp` resource audience, subject, client ID, token ID, scope, integer
 iat/nbf/exp and at most 900 seconds of lifetime. Private keys, remote key headers,
 unrecognized algorithms/claims used for authority, unknown accounts/clients,
-wrong audiences and expired tokens fail closed. No client-selected URL is fetched.
+wrong audiences and expired tokens fail closed. The PDF upload tool is the sole current
+client-selected URL fetch: it requires HTTPS, an exact operator allowlist, public DNS
+addresses pinned through TLS, bounded redirects/time/bytes, identity encoding, accepted
+PDF media types and PDF magic. Signed download URLs are never stored or returned.
 The application rereads policy for revocation and account/client/scope changes.
 Issuer/resource changes require restart. Keys are operator-pinned; automatic JWKS
 refresh and issuer introspection are not implemented. Local token-ID revocation is
@@ -93,7 +99,9 @@ bearer token and export scope; it returns exact saved ZIP bytes with no-store/no
 The normal browser download instead requires the CLASSIFIRE session. Neither link
 contains a bearer token or a public signed URL. The host/user must use the relevant
 authenticated download method; in-chat file attachment behavior is not yet proven.
-Import/inspection remains available in the standalone UI, not a new MCP upload tool.
+Selected PDF intake is now available through the MCP file parameter described below.
+Package import, Excel defect-report upload and pricing-workbook upload remain standalone-
+only operations.
 
 All included Match/Estimate/report rights and imported ancestor scan/quarantine
 checks remain in shared package services. Download does not generate reports,
@@ -123,6 +131,42 @@ and rejection. Local receipts are listed in SESSION_HANDOFF.md. Full ChatGPT acc
 linking and production acceptance remain open. The independent-capability amendment
 below has separate local proof.
 
+
+## ChatGPT PDF evidence-file amendment
+
+Following OpenAI's current [file-parameter reference](https://developers.openai.com/plugins/reference),
+`upload_draft_pdf(draft_id, file)` declares the top-level `file` input in
+`_meta["openai/fileParams"]`. The strict object accepts the current ChatGPT runtime
+fields `download_url`, `file_id`, optional `mime_type` and optional `file_name`.
+Only `download_url` and `file_id` are required. File bytes do not pass through the
+1 MiB MCP JSON request body.
+
+The operator must set `CLASSIFIRE_DRAFT_CLIENT_FILE_DOWNLOAD_HOSTS` to a comma-separated
+or JSON list of exact lowercase DNS hosts observed for the configured integration.
+The default is empty and fails closed with `CLIENT_FILE_POLICY_INVALID`. Wildcards,
+IP literals, non-HTTPS URLs, user information, non-443 ports, fragments, unsafe paths,
+malformed escapes, non-public DNS answers, unexpected compression, oversized bodies,
+wrong media types and non-PDF bytes are refused. DNS answers are checked and the TLS
+socket is pinned to the checked public address to prevent DNS rebinding. Every redirect
+is revalidated. Errors contain only stable codes.
+
+A successful upload calls the same `draft_pdf_intake.retain_pdf` service as the browser
+UI and stores only immutable bytes, source hash/size and the safe original filename.
+It starts pending and untrusted. `scan_draft_pdf` is a separate explicit action through
+the shared ClamAV/quarantine and disposable parser boundary. `read_draft_pdf_page` returns
+one bounded page with locator/hash after a current clean scan. None of these actions
+creates an observation, defect, service, opening or saved Scope revision. The client must
+use `propose_draft_edit`, followed by same-user browser review, to save interpreted Scope
+content. AI interpretation remains optional and unapproved until that review.
+
+Upload and scan require read/propose client scopes plus current local project-write and
+strict owner checks. Listing/page reads require read scope and project-read. The signed
+download URL is used once in memory and is not written to the request table, audit log,
+source row, retained metadata or tool response. Synthetic tests cover MCP discovery,
+exact upload/scan/page flow, unchanged Scope revision, zero client proposals, permissions,
+invalid metadata, empty configuration, URL validation, DNS rebinding, redirects, MIME,
+content encoding, length, PDF magic and secret-redacted failures. A real ChatGPT account,
+production OAuth/HTTPS, the provider host allowlist and real file transfer remain unproven.
 
 ## Independent-capability amendment (migration 0037)
 

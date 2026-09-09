@@ -2,17 +2,16 @@
 
 ## Evidence-based current snapshot
 
-Verified 2026-09-09 on shared main
-`aca75415c281f99ab218b564b1287c0e42bef18c`, merge commit for read-only
-T6 recipe-link client PR #236. Exact PR head
-`c8b8501a3738188f61dac05c9a494e507bd18103` passed run 34340361136:
+Verified 2026-09-09 from shared baseline
+`d477ff724f3eb6f0229c376728ddba9bea1e75e9`, merge commit for Dataset A
+row-observation client PR #237. Exact head
+`4ed44ec7543af95541d0d584f8aaa078ad300fde` passed run 34345679363:
 the full test suite, Ruff, Mypy, Bandit and the one-head Alembic check all passed.
-Post-merge main run 34342328239 reached the workflow's configured 30-minute timeout
-while the full test step was still running. It did not pass and did not report a failing
-test assertion. PR #237 still requires exact-head CI. Earlier run 34281851774
-executed zero
-steps during a temporary GitHub billing/spending-limit block; successful later runs prove
-Actions can execute again, so that historical event is no longer the active blocker.
+Post-merge main run 34348938960 passed the same full repository gates on the exact merge commit.
+Prior main run 34342328239 reached the workflow's configured 30-minute timeout while
+tests were still running; it neither passed nor reported a failing assertion. Earlier
+run 34281851774 executed zero steps during a temporary GitHub billing/spending-limit
+block; successful later runs prove that historical event is no longer the active blocker.
 
 PR #231 head `8a714059eef4294f47732aaa797a98e461395fe3` passed run 34256909957
 with 1,915 tests, full Ruff, full Mypy on 217 source files, Bandit and the one-head
@@ -54,14 +53,12 @@ Focused tests passed 3 cases, the related PostgreSQL selection passed **56 tests
 final exact-head run 34340361136 passed every required repository gate before merge as
 `aca75415`.
 
-The isolated row-observation client branch adds bounded list and exact-read access to
-reviewed Dataset A observations through the same deterministic service used by the
-standalone pricing screen. Existing no-argument UI calls remain unbounded in worksheet
-order; the client returns at most 20 rows with an exact continuation cursor. Exact reads
-verify canonical bytes and hashes, and summaries expose source/profile/row identity,
-review state, unresolved fields and current/stale status. Commit `b8ed4f7` was merged
-locally with shared main as `627b555`; the 48 affected PostgreSQL, client and UI tests
-passed on that combined tree. Publication and required CI remain pending.
+Merged PR #237 adds bounded list and exact-read access to reviewed Dataset A
+observations through the same deterministic service used by the standalone pricing
+screen. Existing no-argument UI calls remain unbounded in worksheet order; client pages
+return at most 20 rows with an exact continuation cursor. Exact reads verify canonical
+bytes and hashes. The 48 affected PostgreSQL, client and UI tests passed locally, then
+the exact PR head passed every required repository check before merge.
 PR #227 implements the first governed T6 component/activity recipe-review UI and
 guarded T9 bottom-up consumption rule described below. The approved cleanup removed
 formatter-only churn from five backed-up files. No OpenClaw or AI path is involved.
@@ -78,7 +75,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage, a bounded manual T10 preview, and an immutable Scope-bound quantity workflow; none changes an Estimate implicitly | Representative quantity semantics, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
-| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; PR #235 provides merged exact read-only T9 coverage plus bounded T13 roster history, PR #236 provides merged bounded T6 recipe-link history, and the active branch adds candidate reviewed Dataset A row history | Real OAuth/HTTPS linking and report-intake client parity remain unproven |
+| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; merged parity through PR #237 reaches exact Dataset A evidence; the current implementation adds PDF upload/scan/list/page tools over shared services | Real OAuth/HTTPS linking, actual provider file transfer and representative report interpretation remain unproven |
 
 ## Current implemented A/B pricing-source profile and review increment
 
@@ -274,9 +271,9 @@ domain counts do not change. The merged change adds no migration, dependency, da
 write, approval, evaluation, Estimate change, release, agent or OpenClaw path. Real
 OAuth/HTTPS and representative source semantics remain unproven.
 
-## Active MCP access to Dataset A row-observation history
+## Merged MCP access to Dataset A row-observation history (PR #237)
 
-The isolated branch registers `list_pricing_row_observations` and
+PR #237 registers `list_pricing_row_observations` and
 `read_pricing_row_observation` over the existing intake service. Lists are limited to
 20 records, remain stable in worksheet-row and ID order, and use an exact observation as
 the continuation cursor. Exact reads return validated canonical JSON, its SHA-256 and
@@ -287,8 +284,30 @@ and library read permissions. They expose row-level provenance, review, uncertai
 current/stale state without adding technical-read scope to commercial evidence. Tests
 prove restart-stable bytes, profile-revision staleness, pagination, access failures,
 corruption refusal and zero writes. The change adds no schema, migration, price,
-Estimate, approval, evaluation, release, AI or OpenClaw authority. Publication and
-required CI remain pending.
+Estimate, approval, evaluation, release, AI or OpenClaw authority. Exact-head CI
+passed before merge; post-merge main run 34348938960 passed the same repository gates.
+
+## Implemented ChatGPT-compatible PDF evidence intake
+
+The current implementation adds four authenticated MCP
+tools over the same Draft PDF services used by the standalone UI: select/upload one PDF,
+list retained sources, explicitly scan/parse a source, and read one page with its locator
+and hashes. `upload_draft_pdf` declares the official `openai/fileParams` metadata and
+accepts the current `download_url`, `file_id`, optional MIME type and filename shape.
+
+Remote retrieval fails closed unless an operator configures exact lowercase DNS hosts.
+It requires HTTPS and public DNS, pins TLS to the checked address, revalidates redirects,
+bounds time and bytes, refuses credentials/compression/wrong media/PDF magic and never
+retains or returns the signed URL. Retained evidence starts pending. Scan uses the existing
+ClamAV/quarantine and disposable parser boundary. Upload and scan change unapproved
+evidence-processing state only; no observation, defect, opening, service or saved Scope is
+created. Saving interpreted Scope data still uses a separate human-confirmed proposal.
+
+Synthetic validation currently proves 19 safe-retrieval/configuration cases and a combined 56-test
+client/PDF/PostgreSQL selection, including the exact MCP schema, pending-to-clean lifecycle,
+page text/locator/hash, unchanged Scope revision, zero client proposals, permissions and
+empty-policy refusal. Ruff, focused Mypy and focused Bandit pass. Real ChatGPT/OAuth/HTTPS
+file transfer, representative reports and interpretation accuracy remain unproven.
 
 ## Implemented T6 component/activity recipe review
 
@@ -388,6 +407,11 @@ user-supplied file at SHA-256
 `fa738653f44b4bd148de81c6190b7aed572c036e8589f18540b9cdaf02fdb46a`.
 
 ## Verification checkpoint
+
+- Active ChatGPT PDF intake: **55 combined client/PDF/PostgreSQL tests passed** in
+  133.59 seconds; the included hardened retrieval/configuration suite passed 19 tests. Focused Ruff,
+  Mypy on four production files and Bandit on the new boundary passed. This is synthetic
+  local evidence, not a real ChatGPT file transfer or production deployment.
 
 - Pricing/profile/UI/client-pricing plus migration, packaging, deployment-lineage and
   related compatibility suite: **85 passed** in 351.31 seconds against the explicitly
@@ -517,10 +541,10 @@ logs, database state and workbooks stay under `.tmp` and are not repository sour
 
 ## Known gaps and active work
 
-Shared main now exposes deterministic T9 coverage, bounded saved T13 roster history and
-bounded saved T6 recipe-link history. The active branch closes the read-only Dataset A
-row-record gap, but it is not shared until its PR passes required CI and merges. Report
-intake plus real OAuth/HTTPS/ChatGPT execution remain unproven.
+Shared main now exposes deterministic T9 coverage and bounded T13 roster, T6 recipe-link
+and Dataset A row-observation history. The current implementation adds ChatGPT-compatible PDF
+file transport and shared upload/scan/page reads. Real OAuth/HTTPS/ChatGPT execution,
+Excel file parameters and representative report interpretation remain unproven.
 
 The prototype is usable for explicit source classification, profile retention,
 exact-profile human review, governed Dataset A row observations, exact reviewed Dataset
@@ -567,6 +591,10 @@ combined Dataset B mapping/T9 coverage/T13 roster lifecycle are now proven with 
 data. The merged quantity slice reuses those same boundaries and adds one purpose-specific
 append-only table rather than another pricing engine.
 
+The current PDF-intake increment adds only an interface and hardened remote transport over
+the existing retained PDF lifecycle. It preserves the human Scope gate and adds no new
+agent, database, parser, inference provider or downstream authority.
+
 The recovery root remains on `gpt/phase8-linked-original-images` at `de0cc5a`, with
 46 unstaged tracked modifications, 14 staged additions and four DU conflicts. Its
 untracked/ignored recovery material is not fully inventoried. It was inspected only;
@@ -574,18 +602,15 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Finish the isolated Dataset A row-observation client slice: run repository checks,
-   commit these four reconciled documents, push, open a direct PR and merge only after
-   required CI passes.
-2. Deliver one visible ChatGPT-compatible PDF intake journey through the existing
-   retained PDF service: select/upload, scan, inspect, review, save Scope and stop. Keep
-   the standalone UI and client on the same domain logic and do not grant automatic
-   matching, pricing or approval authority.
-3. Define and prove the next ProjectPackage evidence-membership increment, including
-   exact pricing-review records and explicit source-body inclusion/withholding rights.
-4. Validate T6 recipe meanings and T13 grouping/split policy against authorised
-   representative Dataset B files before evaluation execution or any scale claim.
-5. Add governed yield/productivity, waste/pack and recovery inputs only after the
-   representative quantity and recipe meanings are accepted; never parse descriptive
-   notes or double count.
+1. Verify this PDF-intake commit is on shared `main` with exact-head required CI, then prove
+   the visible journey through a real operator-controlled HTTPS/OAuth ChatGPT connection:
+   select a synthetic PDF, upload, scan, inspect pages, propose a Scope edit, complete browser
+   review/save and stop. Record the actual provider file host for the explicit allowlist.
+2. Add Excel defect-report file parameters through the same hardened retrieval and shared
+   retained-XLSX services after the PDF journey is proven.
+3. Define and prove the next ProjectPackage evidence-membership increment, including exact
+   pricing-review records and explicit source-body inclusion/withholding rights.
+4. Validate T6 recipe meanings and T13 grouping/split policy against authorised representative
+   files before evaluation execution, yield/productivity or any scale/accuracy claim.
+
 [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the self-contained next-session task.

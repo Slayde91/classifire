@@ -101,6 +101,9 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8787
     draft_client_config: Path | None = None
+    draft_client_file_download_hosts: Annotated[list[str], NoDecode] = Field(
+        default_factory=list
+    )
     draft_pdf_suggestions_enabled: bool = False
     draft_pdf_suggestions_model: str | None = None
     draft_pdf_suggestions_api_key: SecretStr | None = Field(default=None, exclude=True)
@@ -129,7 +132,9 @@ class Settings(BaseSettings):
     default_length_unit: str = "mm"
     default_area_unit: str = "m2"
 
-    @field_validator("allowed_origins", "trusted_hosts", mode="before")
+    @field_validator(
+        "allowed_origins", "trusted_hosts", "draft_client_file_download_hosts", mode="before"
+    )
     @classmethod
     def split_csv(cls, value: object) -> object:
         if isinstance(value, str):

@@ -2,23 +2,21 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.43 - governed quantities and integrity-checked pricing evidence reads across UI and client boundaries.
+**Architecture version:** 5.44 - ChatGPT-compatible PDF file intake over the shared retained-evidence boundary.
 
-**Verified shared baseline:** `aca75415c281f99ab218b564b1287c0e42bef18c` on
-`origin/main`. Shared main includes deterministic read-only T9 coverage plus bounded
-T13 roster and T6 recipe-link client reads, the governed T6/v4 recipe-review increment,
-the bounded T10 preview and the immutable Scope-bound quantity journal. Exact PR #236
-head `c8b8501a3738188f61dac05c9a494e507bd18103` passed run 34340361136
-before merge. Post-merge run 34342328239 reached the configured 30-minute limit while
-tests were still running; it is neither a pass nor evidence of a failed assertion.
+**Verified shared baseline before this change:** `d477ff724f3eb6f0229c376728ddba9bea1e75e9` on
+`origin/main`, merge commit for PR #237. Exact head
+`4ed44ec7543af95541d0d584f8aaa078ad300fde` passed run 34345679363: full
+tests, Ruff, Mypy, Bandit and one Alembic head. Post-merge main run 34348938960
+passed the same repository gates on the exact merge commit.
 [PROJECT_STATE.md](./PROJECT_STATE.md) owns measured validation and publication state.
 
-No AI or OpenClaw path is used by this increment. Evaluation execution, commercial
-activation, broader estimation, real ChatGPT linking and production readiness remain
-open. Merged PR #236 reuses the same boundary for bounded T6 recipe-link history and
-exact integrity-checked reads. The active row-observation branch extends it to the
-reviewed Dataset A rows cited by those links while preserving UI ordering and adding no
-write or authority. Earlier milestone descriptions are historical checkpoints; do not
+No AI or OpenClaw path is used by this increment. PR #237 completes bounded read-only
+Dataset A row-observation access. The current PDF-intake implementation adds official ChatGPT
+file-parameter transport, DNS-pinned allowlisted retrieval and the existing retained
+upload/scan/page-read services without changing a saved Scope automatically. Real
+ChatGPT linking, production deployment and representative-report accuracy remain open.
+Earlier milestone descriptions are historical checkpoints; do not
 infer phase completion from source presence.
 **Accepted target architecture:** Hybrid deterministic core with bounded,
 optional AI adapters; see
@@ -164,8 +162,8 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja independent routes; PDF/Excel source review, optional PDF suggestions, A/B pricing profiles, exact-profile review, Dataset A observations, Dataset B mappings, T13 roster lifecycle, T9 coverage/JSON and T6 recipe preview/save/history/download are on shared main. PRs #235/#236 add merged MCP T9, roster and recipe-link parity; the active branch adds candidate bounded row-observation history. | Preserve manual fallback; a ChatGPT-compatible report-intake journey, evidence-graph commands, pricing-profile client commands and real external linking remain planned. |
-| Optional external client | draft_client.py, draft_client_auth.py, draft_client_requests and shared Draft services; PRs #235/#236 add merged read-only T9 coverage plus bounded T13 roster and T6 recipe-link history, and the active branch adds candidate Dataset A row list/exact read | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205, measured review in PR #206 and workbook pricing in PR #207. Pricing row reads require read/estimate client scopes plus current local pricing-review rights; recipe/technical reads additionally require technical scope. External linking remains unproven. |
+| Interfaces/API | FastAPI/Jinja independent routes; PDF/Excel source review, optional PDF suggestions, A/B pricing profiles, exact-profile review, Dataset A observations, Dataset B mappings, T13 roster lifecycle, T9 coverage/JSON and T6 recipe preview/save/history/download are on shared main. PRs #235/#236 add merged MCP T9, roster and recipe-link parity; PR #237 adds merged bounded row-observation history, and the current implementation adds shared PDF upload/scan/list/page tools. | Preserve manual fallback; a real ChatGPT report-intake journey, evidence-graph commands, pricing-profile client commands and real external linking remain planned. |
+| Optional external client | draft_client.py, draft_client_auth.py, draft_client_requests and shared Draft services; PRs #235/#236 add merged read-only T9 coverage plus bounded T13 roster and T6 recipe-link history, and PR #237 adds merged Dataset A row list/exact read. The current implementation adds PDF upload/scan/list/page tools | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205, measured review in PR #206 and workbook pricing in PR #207. Pricing row reads require read/estimate client scopes plus current local pricing-review rights; recipe/technical reads additionally require technical scope. External linking remains unproven. |
 | Orchestration | Deterministic controllers, no-write PDF/Excel graph previews and explicit atomic saves; bounded inference journal; generic worker has no registered handlers | Keep visible source interactions bounded. Extend existing BackgroundJob for necessary corpus stages, leases/retries and immutable outcomes after the visible prototype; no new fleet or scheduler database. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers and deterministic pricing coverage. PR #227 adds frozen recipe snapshots and immutable recipe-link review. | Reuse independently callable contracts across UI/client. Planned corpus extraction/resolution and pricing estimation use the same governed application; they do not bypass independent capability prerequisites. |
 | Technical corpus | Individual TechnicalDocument intake, limited PDF metadata, JSONL Draft variants, manual source-bound materialisation/review | Planned batch inventory, versioned extraction/claims, stable system identity, deduplication and exception review for hundreds to thousands of documents. Existing source/review/publication gates remain. |
@@ -553,6 +551,7 @@ are foundations, not evidence of production tenant isolation or redistribution r
 | Layer | Current implementation | Main boundary |
 | --- | --- | --- |
 | Application | FastAPI, CLI, development HTML UI, worker shell, and audit services | Pre-production; not every merged service has an operator/UI flow |
+| Interfaces | Standalone HTML UI plus opt-in authenticated MCP adapter over the same Draft services; the current implementation adds PDF upload/scan/list/page tools with `openai/fileParams` | Real OAuth/HTTPS/ChatGPT file transfer and an MCP App widget remain unproven |
 | Persistence | SQLAlchemy with packaged Alembic migrations | A/B profiles use 0040, profile review uses 0041, Dataset A observations use 0042, Dataset B mappings use 0043 and T13 rosters use 0044. Recipe links use 0045; the merged Scope-bound quantity journal advances the single head to 0046. |
 | Evidence storage | Content-addressed `StoredFile`, Project/Estimate ownership, immutable metadata, verified reads, quarantine | Exact production use requires PostgreSQL transaction semantics |
 | Physical model | Defect, EvidenceSource, Opening, Service, `ServiceOpeningLink`, locks, admissions, submission receipts, governed reopen/amendment execution, and atomic signed replacement-lock execution | Historical UAT records report no accepted replacement lock; live state was not rechecked; code capability does not authorise operation on real project data |
@@ -1340,7 +1339,7 @@ anything.
 ### Strict source-bound report captions on shared main (PR #151)
 
 The PDF normaliser accepts only an explicit, bounded numbered caption prefix and
-stores its category, position, size, sequence, and content hash—not its raw
+stores its category, position, size, sequence, and content hashâ€”not its raw
 wording. Before selected caption wording is exposed in transient documentary
 context, the system normalises the exact verified PDF again and requires the
 same locator and hash. Ambiguous prose, unknown categories, and locator fields
@@ -2216,11 +2215,11 @@ write, approval, evaluation, Estimate change, release, AI or OpenClaw path is ad
 Synthetic PostgreSQL tests prove 22-link pagination, exact restart-stable reads, stale
 status and zero writes; representative source semantics and real OAuth/HTTPS remain open.
 
-## Candidate client amendment: read-only Dataset A row-observation history
+## Implemented client amendment: read-only Dataset A row-observation history (PR #237)
 
-**Current architecture -> proposed change -> reason:** a shared client can now follow
+**Current architecture -> implemented change -> reason:** a shared client can now follow
 T9 coverage to a T13 roster and T6 recipe link, but cannot open the exact reviewed
-Dataset A row referenced by that link. The active branch registers
+Dataset A row referenced by that link. PR #237 registers
 `list_pricing_row_observations(draft_id, source_id, profile_id,
 after_observation_id)` and
 `read_pricing_row_observation(draft_id, source_id, profile_id, observation_id)` over
@@ -2244,6 +2243,34 @@ or other record and invokes no AI or OpenClaw path. No schema, migration or depe
 added. Synthetic PostgreSQL/UI tests prove 20-item paging, exact restart-stable reads,
 staleness and zero writes; representative commercial meaning and real OAuth/HTTPS remain
 open.
+
+## Implemented client amendment: ChatGPT-compatible PDF evidence intake
+
+**Current architecture -> change -> reason:** the standalone UI already retains, scans,
+parses and reviews PDF evidence through shared services, but the MCP client could not
+accept a ChatGPT-selected file. The implementation adds `upload_draft_pdf`,
+`list_draft_pdf_sources`, `scan_draft_pdf` and `read_draft_pdf_page`. The upload tool
+declares the official top-level `file` parameter and passes only its short-lived reference
+through MCP; file bytes are retrieved and sent to `draft_pdf_intake`, so no second PDF
+parser, storage model, Scope writer or database is introduced.
+
+**Security, state and permission boundary:** remote retrieval is HTTPS-only and requires
+an exact operator-configured lowercase DNS-host allowlist. It resolves only public
+addresses, pins TLS to the validated address, revalidates bounded redirects, refuses
+credentials, unsafe paths, compression, oversized or wrongly typed bodies and non-PDF
+magic, and returns redacted stable error codes. Signed URLs are used in memory only and
+are not retained. Upload and scan require read/propose client grants, current project-write
+permission and strict ownership. Read tools require project read. Retained bytes start
+pending; scan uses the existing quarantine and disposable parser boundary.
+
+**Authority and migration consequences:** upload and scan may change only unapproved
+evidence-processing state, matching the standalone UI. They never create an observation,
+defect, opening, service or saved Scope revision. Interpreted Scope content still uses
+`propose_draft_edit` and same-user browser confirmation. No migration, AI provider, agent
+or OpenClaw dependency is added. Synthetic PostgreSQL/MCP tests prove the exact file
+metadata contract, pending -> clean/ready lifecycle, page locator/hash, unchanged Scope
+revision, zero client proposals, permission failures and fail-closed host configuration.
+Real ChatGPT/OAuth/HTTPS transfer and representative-report interpretation remain open.
 
 ## Completed bounded increment: PDF page-to-Draft graph review (P1b, PR #209)
 
