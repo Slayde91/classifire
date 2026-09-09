@@ -168,3 +168,23 @@ redistribution policy, quota/retention operations and existing-project conflict
 resolution remain planned. Thin ChatGPT access should reuse these proven commands,
 with explicit authenticated ownership and a bounded end-to-end demonstration.
 OpenClaw retirement and production acceptance require their own verified exits.
+
+
+## Candidate v3: explicit project PDF membership
+
+Locally implemented and regression-tested; publication and browser acceptance remain. `Selection.pdf_sources`
+contains up to four unique sorted source UUIDs, each referenced by the selected saved Scope
+as local retained PDF evidence. Empty selection omits the new field when serializing, so
+legacy selection/manifests remain unchanged. Selected PDF bytes occupy generated
+`evidence/<source-id>.pdf` paths. Source inventory entries say included and name that path;
+unselected project evidence stays external and technical/pricing bodies stay withheld.
+
+V3 has an explicit origins list (empty or one retained origin), the existing 128 MiB and
+32-member bounds, exact ZIP encoding and unchanged recursion/cumulative inspection limits.
+Export rereads owned, clean retained bytes and compares source/hash/size/document binding to
+Scope references. Import verifies member/Scope/hash consistency but does not trust claims.
+It retains evidence PDFs with the shared imported-attachment service; mapping v2 includes
+original/local attachment identities, paths and hashes. Legacy mapping v1 remains unchanged.
+All evidence binaries, including nested ancestors, require current clean scan/format checks
+before original ZIP download or re-export. PostgreSQL is required for binary retention.
+There is no automatic conversion of imported page references into local human approval.

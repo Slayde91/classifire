@@ -1,11 +1,35 @@
 # CLASSIFIRE Project State
 
-PR #239 passed all required gates in run 34363299076 and merged at
-`a54a1280806873a5709e8b81d150a9ed5100e6b4`. Post-merge main run 34365529790
-is pending verification. PR #240 run 34365043699 failed its exact tool-discovery expectation
-because the new image tool was missing from the expected list; that expectation is corrected
-without weakening the assertion. All **24 core client tests passed in 73.73 seconds**.
-PR #240 still requires passing current-head CI before merge.
+## Pre-merge client permission correction
+
+PR #241 follow-up fixes the client grant check for v3 packages containing retained foreign
+archives. Both technical and estimating grants are required regardless of archive version;
+native v3 without an origin does not acquire unrelated grant requirements. Ten client-capability
+tests passed in 41.20 seconds, including six actual-token scope combinations. Full Ruff and
+Mypy (222 files) and the affected-file Bandit scan passed. Current-head CI must pass before
+merge; the earlier d452d33 run does not validate this correction. No deployment occurred.
+
+
+## Active package PDF evidence candidate
+
+Shared main `8164d29` (PR #240) passed required run 34365672716 and post-merge run
+34368312777. PDF image access and human-confirmed source-linked Scope saves are merged;
+real ChatGPT linking and browser acceptance remain unverified.
+
+Current isolated work adds opt-in inclusion of up to four reviewed project PDFs in a v3
+package, an existing-UI selection, semantic source membership and imported attachment
+scan/download/re-export checks. Empty source selection retains v1/v2 serialization.
+No migration, canonical writes, supplier-workbook export or provider execution is added.
+
+Local validation: the final three PDF-evidence tests passed in 57.58 seconds, including
+HTTP selection/save/download, two import generations, exact-byte retention, semantic tamper
+refusal, foreign access denial, shared quarantine and active-PDF rejection. Earlier package,
+import and UI regression passed 28 tests; the stricter attachment-policy run passed seven
+(overlapping coverage). Ruff, Mypy and Bandit passed. Browser acceptance remains unverified.
+The 15 intended files are ready for scoped publication; required PR CI and merge remain.
+
+PR #239 and PR #240 are merged, with required and post-merge checks passed. Older validation
+entries below are historical evidence, not current publication blockers.
 
 
 Integrated validation after reconciling PR #239 into PR #240: **40 tests passed in

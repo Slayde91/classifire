@@ -486,6 +486,6 @@ def protect_package(
         )
     # Whole foreign archives can contain both kinds of sensitive content. No
     # weaker grant may disclose them merely because only Scope was selected.
-    if manifest["schema_version"] == packages.SCHEMA_V2:
+    if manifest["schema_version"] == packages.SCHEMA_V2 or manifest.get("origins"):
         require(db, authority, identity, TECHNICAL)
         require(db, authority, identity, ESTIMATE)

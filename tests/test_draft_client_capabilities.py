@@ -505,3 +505,26 @@ def test_estimate_status_rejection_and_replay_preserve_history(capability_case):
         content = read(client, c, "estimate", estimate)["artifact"]
         assert content["revision"] == 3 and content["lines"][0]["status"] == "omitted"
         assert len(content["lines"][0]["history"]) == 2
+
+
+@pytest.mark.parametrize("schema", ["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v2",
+                                    "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v3"])
+@pytest.mark.parametrize("grants", [[], [TECHNICAL], [ESTIMATE]])
+def test_origin_package_requires_both_client_grants(capability_case, schema, grants):
+    from classifire.services import draft_client_capabilities as capabilities
+
+    c = capability_case
+    manifest = {"schema_version": schema, "selection": {"scope_revision": 2},
+                "origins": [{"path": "origins/synthetic.zip"}]}
+    identity = c.authority.verify(c.token(scope=" ".join([READ, EXPORT, *grants])))
+    full = c.authority.verify(c.full_token())
+    with c.scope.factory() as db:
+        actor = db.get(User, c.scope.users["owner"])
+        with pytest.raises(scopes.DraftScopeError) as denied:
+            capabilities.protect_package(db, c.authority, identity, actor, c.draft_id, manifest)
+        assert denied.value.status_code == 403
+        capabilities.protect_package(db, c.authority, full, actor, c.draft_id, manifest)
+        # Native v3 with no retained foreign archive does not need unrelated grants.
+        native = {**manifest, "schema_version": "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v3",
+                  "origins": []}
+        capabilities.protect_package(db, c.authority, identity, actor, c.draft_id, native)

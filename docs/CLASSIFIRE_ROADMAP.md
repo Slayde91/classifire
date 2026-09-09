@@ -1,5 +1,23 @@
 # CLASSIFIRE Master Roadmap
 
+## Current independent increment: portable reviewed PDFs
+
+PR #240 is merged at `8164d29`; required and post-merge CI passed. The real ChatGPT
+HTTPS/OAuth trial still needs the operator's deployment details and working browser tooling.
+Excel client upload remains sequenced after that trial. In parallel, advance the documented
+ProjectPackage source-membership gap with opt-in reviewed project PDFs, using existing
+ownership, hash, scan and import containment boundaries. This does not broaden restricted
+supplier-source redistribution or authorize customer evidence processing.
+
+Candidate exit: user selects reviewed PDFs, previews included/external membership, saves and
+downloads exact bytes, imports into a new foreign-unverified Draft, scans attachments and
+re-exports without losing originals. Legacy v1/v2 packages remain readable and unchanged;
+permission loss, changed bytes and unsafe attachments fail closed. The candidate is active,
+not complete: local lifecycle and regression checks passed, while visual browser acceptance
+and required PR publication checks remain outstanding. The client Scope-review implementation
+below is already merged in PR #240; its remaining next action is the real connected trial.
+
+
 ## Immediate prototype priority: source-linked client Scope review
 
 The same increment exposes bounded page images to the client for visual interpretation;

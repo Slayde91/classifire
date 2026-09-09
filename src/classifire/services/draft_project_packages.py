@@ -1,7 +1,7 @@
 """Selected, immutable Draft project interchange. Callers own transactions.
 
 Composition reads existing authorized artifacts, never their capability writers.
-Source bodies remain external/withheld; only selected reports are binary members.
+Project PDFs may be explicitly included; other source bodies remain external/withheld.
 """
 
 from __future__ import annotations
@@ -16,7 +16,16 @@ from typing import Annotated, Any
 from uuid import UUID
 from zipfile import ZIP_STORED, BadZipFile, ZipFile, ZipInfo
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    ValidationError,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, defer
@@ -32,6 +41,7 @@ from . import draft_system_matches as matches
 
 SCHEMA = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v1"
 SCHEMA_V2 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v2"
+SCHEMA_V3 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v3"
 MAX_ARCHIVE = 128 * 1024 * 1024
 MAX_V1_ARCHIVE = 64 * 1024 * 1024
 MAX_MANIFEST = 2 * 1024 * 1024
@@ -51,6 +61,7 @@ class PackageError(scopes.DraftScopeError):
 class Selection(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     scope_revision: Annotated[int, Field(ge=1)]
+    pdf_sources: Annotated[list[str], Field(max_length=4)] = Field(default_factory=list)
     match_id: str | None = None
     match_revision: Annotated[int, Field(ge=1)] | None = None
     estimate_id: str | None = None
@@ -65,12 +76,19 @@ class Selection(BaseModel):
             raise ValueError("identity")
         return value
 
-    @field_validator("scope_reports", "estimate_reports")
+    @field_validator("scope_reports", "estimate_reports", "pdf_sources")
     @classmethod
     def identities(cls, value: list[str]) -> list[str]:
         if len(set(value)) != len(value) or any(str(UUID(v)) != v for v in value):
             raise ValueError("identities")
         return sorted(value)
+
+    @model_serializer(mode="wrap")
+    def portable_selection(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = dict(handler(self))
+        if not self.pdf_sources:
+            value.pop("pdf_sources", None)
+        return value
 
     @model_validator(mode="after")
     def paired(self) -> Selection:
@@ -101,8 +119,9 @@ def encode(value: Any) -> bytes:
 def _archive(manifest: dict[str, Any], members: dict[str, bytes]) -> bytes:
     stream = io.BytesIO()
     all_members = {**members, "manifest.json": encode(manifest)}
-    limit = MAX_ARCHIVE if manifest.get("schema_version") == SCHEMA_V2 else MAX_V1_ARCHIVE
-    member_limit = MAX_MEMBERS if manifest.get("schema_version") == SCHEMA_V2 else MAX_V1_MEMBERS
+    extended = manifest.get("schema_version") in (SCHEMA_V2, SCHEMA_V3)
+    limit = MAX_ARCHIVE if extended else MAX_V1_ARCHIVE
+    member_limit = MAX_MEMBERS if extended else MAX_V1_MEMBERS
     if len(all_members) > member_limit or sum(map(len, all_members.values())) > limit:
         raise PackageError("PACKAGE_TOO_LARGE", 413)
     with ZipFile(stream, "w", compression=ZIP_STORED) as archive:
@@ -136,7 +155,7 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
                 raise ValueError("members")
             manifest = json.loads(archive.read("manifest.json"))
             if (
-                manifest["schema_version"] not in (SCHEMA, SCHEMA_V2)
+                manifest["schema_version"] not in (SCHEMA, SCHEMA_V2, SCHEMA_V3)
                 or manifest["state"] != "Draft"
                 or manifest["authority"] != "historical_only"
                 or encode(manifest) != archive.read("manifest.json")
@@ -156,8 +175,12 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
                     not (
                         re.fullmatch(r"(?:artifacts|reports)/[a-z0-9_-]+\.(?:json|pdf|xlsx)", name)
                         or (
-                            manifest["schema_version"] == SCHEMA_V2
+                            manifest["schema_version"] in (SCHEMA_V2, SCHEMA_V3)
                             and re.fullmatch(r"origins/[0-9a-f]{64}\.zip", name)
+                        )
+                        or (
+                            manifest["schema_version"] == SCHEMA_V3
+                            and re.fullmatch(r"evidence/[a-z0-9-]+\.pdf", name)
                         )
                     )
                     or name in members
@@ -186,7 +209,8 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
 
 
 def source_manifest(
-    scope: dict[str, Any], match: dict[str, Any] | None, estimate: dict[str, Any] | None
+    scope: dict[str, Any], match: dict[str, Any] | None, estimate: dict[str, Any] | None,
+    pdf_sources: list[str] | None = None,
 ) -> list[dict[str, str]]:
     """Exact source inventory shared by export and foreign-package validation."""
     sources = []
@@ -199,6 +223,13 @@ def source_manifest(
                 "reason": "Source bytes not included; retained/imported claims stay unverified",
             }
         )
+    for index, ref in enumerate(scope.get("evidence_refs", [])):
+        if ref.get("source_id") in (pdf_sources or []):
+            sources[index].update(
+                membership="included", path=f"evidence/{ref['source_id']}.pdf",
+                reason=("Exact project PDF bytes included; "
+                        "review claims do not grant local authority"),
+            )
     if match:
         for index, _candidate in enumerate(match["candidates"]):
             sources.append(
@@ -273,7 +304,29 @@ def _compose(
         members[f"reports/{report_id}.json"] = encode(snapshot)
         for fmt in ("pdf", "xlsx"):
             members[f"reports/{report_id}.{fmt}"] = getattr(estimate_row, fmt + "_bytes")
-    sources = source_manifest(scope, match, estimate)
+    if selected.pdf_sources:
+        from . import draft_pdf_intake as pdf
+
+        for source_id in selected.pdf_sources:
+            refs = [ref for ref in scope.get("evidence_refs", [])
+                    if ref.get("source_id") == source_id]
+            if not refs or any(
+                ref.get("origin") != "local_retained" or "page_number" not in ref
+                for ref in refs
+            ):
+                raise PackageError("PACKAGE_PDF_SELECTION_INVALID", 409)
+            source, _document, content = pdf._document(
+                db, actor, draft_id, source_id, get_settings().storage_root,
+            )
+            if any(
+                ref["source_sha256"] != content.sha256
+                or ref["source_size_bytes"] != len(content.content)
+                or ref["document_sha256"] != source.document_sha256
+                for ref in refs
+            ):
+                raise PackageError("PACKAGE_PDF_SOURCE_CHANGED", 409)
+            members[f"evidence/{source_id}.pdf"] = content.content
+    sources = source_manifest(scope, match, estimate, selected.pdf_sources)
     manifest = {
         "schema_version": SCHEMA,
         "state": "Draft",
@@ -324,6 +377,14 @@ def _compose(
             {"path": name, "sha256": digest(value), "size_bytes": len(value)}
             for name, value in sorted(members.items())
         ]
+    if selected.pdf_sources:
+        manifest.update(
+            schema_version=SCHEMA_V3,
+            origins=manifest.get("origins", []),
+            notice=("Selected Draft revisions and explicitly selected project PDFs. "
+                    "Unselected sources stay external or withheld; "
+                    "imported claims remain unverified."),
+        )
     if len(encode(manifest)) > MAX_MANIFEST:
         raise PackageError("PACKAGE_TOO_LARGE", 413)
     _archive(manifest, members)

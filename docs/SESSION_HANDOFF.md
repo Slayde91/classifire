@@ -1,142 +1,103 @@
 # CLASSIFIRE Session Handoff
 
-PR #239 passed all required gates in run 34363299076 and merged at
-`a54a1280806873a5709e8b81d150a9ed5100e6b4`. Post-merge main run 34365529790
-is pending verification. PR #240 run 34365043699 failed its exact tool-discovery expectation
-because the new image tool was missing from the expected list; that expectation is corrected
-without weakening the assertion. All **24 core client tests passed in 73.73 seconds**.
-PR #240 still requires passing current-head CI before merge.
+## Pre-merge client permission correction
 
+PR #241 follow-up fixes the client grant check for v3 packages containing retained foreign
+archives. Both technical and estimating grants are required regardless of archive version;
+native v3 without an origin does not acquire unrelated grant requirements. Ten client-capability
+tests passed in 41.20 seconds, including six actual-token scope combinations. Full Ruff and
+Mypy (222 files) and the affected-file Bandit scan passed. Current-head CI must pass before
+merge; the earlier d452d33 run does not validate this correction. No deployment occurred.
 
-Integrated validation after reconciling PR #239 into PR #240: **40 tests passed in
-75.74 seconds**, covering download deadlines, retrieval, PDF client intake/images and
-human-confirmed Scope review. Linux-targeted Mypy passed all 222 source files with local
-untyped-import diagnostics disabled. Ruff and Bandit passed. Both test additions are retained.
-Required PR #240 current-head GitHub validation and merge remain pending.
-
-Latest image/client validation: **6 PDF intake and Scope-review tests passed in 59.21 seconds**.
-The image test verifies native PNG content and exact shared-renderer bytes/hash, read-only
-access, refusal before scan, invalid page/foreign user/missing read scope and changed-source
-refusal, with no Scope revision or pending request. Full Mypy (222 files, local untyped-import
-diagnostics disabled), Ruff, Bandit and diff checks passed. Real ChatGPT image consumption
-and browser visual acceptance remain unverified.
-
-## Integrated download protection
-
-PR #239 commit `000aa3f` is integrated into this PR #240 branch to resolve overlapping
-documentation and preserve both image and timeout tests. The fixed disposable download
-worker enforces DNS/HTTP deadlines, excludes application credentials, accepts the URL via
-stdin and validates returned bytes. Prior validation: 71 tests passed in 217.00 seconds;
-after the Linux platform-guard correction, 33 retrieval tests and Linux-targeted Mypy passed.
-Required CI remains the merge gate. Relevant files: `remote_file_retrieval.py`,
-`test_remote_file_deadline.py`, `test_remote_file_retrieval.py` and
-`test_draft_client_pdf_intake.py`. No deployment or live evidence was used.
 
 ## Current branch and project context
 
-The current source-linked client Scope candidate is in
-`C:/CLASSIFIRE/.tmp/client-pdf-scope-review-20260910` on
-`feat/client-pdf-scope-review-20260910`, based on main `2150286` (merged PR #238).
-PR #238's post-merge run 34358486420 passed. The independent download deadline fix is
-PR #239. Its initial run 34360392428 failed Linux type checking on the Windows-only
-CREATE_NO_WINDOW constant. Correction `000aa3f` uses an explicit platform guard; the
-Linux-targeted type check and 33 retrieval tests passed. The corrected PR #239 is now merged, as recorded above.
-Verify PR #240 against current main without dropping either increment.
-Preserve the conflicted root and all unrelated local work.
+Active worktree: `C:/CLASSIFIRE/.tmp/package-pdf-evidence-20260910`.
+Branch: `feat/package-pdf-evidence-20260910`, created from `origin/main` at
+`8164d29dbcc6ffc4fe4f309c5fd8bf583cc7f3fd` (PR #240 merge). PR #240 required run
+34365672716 and post-merge run 34368312777 passed. PR #239 is merged at `a54a128`.
+The earlier PDF image/review worktree is clean. Preserve the conflicted legacy root,
+all unrelated worktrees and all customer/operational data. No deployment occurred.
 
-ADRs 0001/0002 remain accepted: shared deterministic core, independent capabilities,
-optional AI and transitional OpenClaw. This increment changes neither architecture direction
-nor canonical authority. No deployment, customer evidence or real provider run occurred.
+## Active implementation and local changes
 
-## Current implementation and relevant changes
+Candidate ProjectPackage v3 explicitly includes up to four reviewed local project PDFs.
+The existing UI selects files, previews membership, saves and downloads an immutable ZIP.
+Empty PDF selection omits the new field, preserving v1/v2 selection serialization.
+V3 keeps existing extended archive/member/recursion bounds. Supplier source bodies remain
+withheld. Import retains exact evidence bytes and a v2 origin mapping, leaving Scope claims
+foreign. Original ZIP and ancestor re-export must check every binary's current scan state.
 
-`review_pdf_scope` extends the existing `propose_capability` union with a retained source,
-exact document hash/page, expected Scope revision, full graph and explicit target IDs.
-Preparation calls the shared PDF preview and retains a pending request only. The browser
-shows source raster/text, selected item labels and proposed graph. Confirmation passes the
-verified preview hash to the existing PDF save service, which rechecks exact dependencies
-and appends server-generated page/entity/reviewer references. No downstream capability runs.
-Generic Scope edits and the original command hash shapes remain compatible.
+Changed code: `draft_project_packages.py`, `draft_package_import.py`,
+`draft_package_materialization.py`, `draft_import_reports.py`,
+`draft_project_package_ui.py`, and the project/imported-package templates.
+New test: `tests/test_draft_package_pdf_evidence.py`. Architecture, roadmap, project state,
+package contract and this handoff describe the candidate; these are not completion claims.
+Candidate commits are on PR #241; verify its latest head, CI and merge state before resuming.
 
-PR #240 is open for this increment. Its initial head is `98ecb8d`; read current-head CI
-before merging. The subsequent image addition exposes `read_draft_pdf_page_image` using
-the existing renderer and native MCP image blocks. Check the evidence tool and PDF intake
-tests as well as the review flow. Real image interpretation remains unproven.
+## Findings and verification
 
-Relevant code:
-- `src/classifire/services/draft_client_capabilities.py`
-- `src/classifire/services/draft_client_requests.py`
-- `src/classifire/draft_client_capability_tools.py`
-- `src/classifire/templates/draft_client_request.html`
-- `tests/test_draft_client_pdf_scope.py`
-- `src/classifire/draft_client_evidence_tools.py`
-- `tests/test_draft_client_pdf_intake.py`
-- Shared services: `draft_pdf_intake.py`, `draft_scope.py`.
+Final PDF-evidence tests: 3 passed in 57.58 seconds. These cover real HTTP selection/save/
+download, source drift and semantic tamper refusal, two import generations, reopen/exact bytes,
+foreign permission refusal, shared quarantine and active PDF actions. Earlier broader package,
+import, attachment and UI regression: 28 passed; stricter attachment-policy regression: seven
+passed (overlapping coverage). Full Ruff and diff checks passed on the final code. Full Mypy
+(222 files, local untyped-import diagnostics disabled) and Bandit passed. No production code
+changed after those checks. Required GitHub checks and publication remain outstanding.
 
-The five architecture/roadmap/state/handoff/client-contract documents are also updated.
-No unrelated changes were observed in this isolated worktree; classify the actual diff again
-before staging. PR #239's source and tests are also integrated here; its original worktree remains clean.
+Initial tests exposed and corrected fixture route ordering, an explicit empty v3 origins
+inventory, source-purpose collision, and global native-PDF source uniqueness. Do not weaken
+those guards: imported evidence uses a separate owned imported-attachment binding while
+preserving native PDF storage purpose. Inspect `evidence_intake()` carefully: it must retain
+strict imported PDF format checks as well as purpose, ownership and shared quarantine.
+Legacy native upload behavior must remain unchanged. No migration has been added.
 
-## Validation and limitations
-
-The initial three PostgreSQL/MCP tests passed, proving human-confirmed page linkage,
-source-change refusal and owner/scope/forged-target refusal. They verify the real rendered
-HTTP review and PNG endpoint. The broader 57-test client/page-review regression passed in 294.69 seconds. Full Ruff, Mypy (222 files, local untyped-import
-diagnostics disabled) and Bandit passed. The final no-downstream-record confirmation
-test also passed in 17.50 seconds.
-
-A synthetic review HTML snapshot is at
-`C:/CLASSIFIRE/.tmp/pytest-client-pdf-review-regression/test_client_pdf_review_saves_o0/synthetic-review.html`.
-Browser automation failed twice at runtime initialization with a sandbox helper error.
-Visual browser acceptance is unverified; HTTP tests alone do not finish that milestone.
-The temporary loopback render server has been stopped. An existing service on port 8816
-was preserved. Real HTTPS/OAuth/ChatGPT linking remains unproven; the operator's deployment
-URL and OAuth provider have been requested, without requesting credentials.
+Browser automation could not initialize. HTTP tests are not visual browser acceptance.
+The operator's existing HTTPS test URL and OAuth provider were requested for the real
+ChatGPT trial; no credentials requested and no answer received at this snapshot. That trial
+remains unverified. Excel client upload stays after the PDF trial; this package work proceeds
+independently against synthetic evidence.
 
 ## Start Here / Next Session
 
-First finish verification and publication of this source-linked Scope increment. It closes
-an actual provenance gap in the planned ChatGPT PDF journey: generic edits cannot attach
-trusted page references. Inspect Git, tests and PR state before editing; do not rebuild it.
+First publish the validated portable reviewed-PDF package lifecycle before another feature.
+This closes the verified gap where downloaded packages carry PDF references but omit the
+original project PDFs needed outside CLASSIFIRE. Inspect Git and current tests before editing.
 
-Prerequisites: preserve root recovery evidence; use the isolated worktree and shared venv;
-use only the disposable PostgreSQL test database and synthetic sources. PR #239 is merged; verify its post-merge run and PR #240 current-head checks.
-Reconcile current main without dropping local work.
-Use existing human confirmation and page-save guards, never client-declared review authority.
-
-Validation commands (choose a fresh temporary directory when rerunning):
+Prerequisites: isolated worktree, shared venv, disposable PostgreSQL on port 15432, synthetic
+fixtures only. Reuse source intake, exact archive validation and imported attachment guards.
+Do not change stored-file purpose or global native-PDF source uniqueness to force tests.
 
 ```powershell
 $env:PYTHONPATH=(Join-Path $PWD 'src')
 $env:CLASSIFIRE_POSTGRES_TEST_URL='postgresql+psycopg://classifire_test@127.0.0.1:15432/classifire_containment_test'
 $env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN='classifire-containment-test-drop-all'
-C:/CLASSIFIRE/.venv/Scripts/python.exe -m pytest -p no:cacheprovider --basetemp C:/CLASSIFIRE/.tmp/pytest-client-pdf-review-next tests/test_remote_file_deadline.py tests/test_remote_file_retrieval.py tests/test_draft_client_pdf_intake.py tests/test_draft_client_pdf_scope.py tests/test_draft_client_capabilities.py tests/test_draft_client.py tests/test_draft_pdf_scope_review.py
+C:/CLASSIFIRE/.venv/Scripts/python.exe -m pytest -p no:cacheprovider --basetemp C:/CLASSIFIRE/.tmp/pytest-package-pdf-next tests/test_draft_package_pdf_evidence.py tests/test_draft_project_packages.py tests/test_draft_package_import.py tests/test_draft_package_materialization.py tests/test_draft_import_reports.py tests/test_draft_project_package_ui.py tests/test_draft_package_import_ui.py
 C:/CLASSIFIRE/.venv/Scripts/python.exe -m ruff check .
 C:/CLASSIFIRE/.venv/Scripts/python.exe -m mypy src --disable-error-code=import-untyped
 C:/CLASSIFIRE/.venv/Scripts/python.exe -m bandit -q -r src
 git diff --check
 ```
 
-Definition of done: pending proposal leaves Scope unchanged; authorized human review displays
-source and proposed graph; confirmation saves exact page/target/reviewer provenance; stale,
-foreign, invalid and replayed actions fail closed; prior commands work; tests/static checks
-pass; intended files are committed/pushed and required PR CI passes before merge. Record any
-remaining visual acceptance limitation honestly. The subsequent product task is the actual
-ChatGPT PDF-to-reviewed-Scope journey through an operator-controlled HTTPS/OAuth deployment.
+Definition of done: explicit UI selection/save/download works; included bytes match reviewed
+sources; import creates no trusted review claims; strict scan/format/permission/integrity
+checks protect direct and ancestor downloads; legacy packages remain byte-compatible;
+regressions and required CI pass; relevant docs are reconciled; reviewed changes are
+committed, pushed, PR-reviewed as required and merged. Verify actual browser/restart where
+available, otherwise label that acceptance incomplete. No deployment or real evidence use.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from repository evidence. Inspect AGENTS.md, GOAL.md, Git/worktrees,
-> docs/PROJECT_STATE.md, the roadmap, PR #240 checks and main run 34365529790 and the active diff before editing.
-> Preserve the conflicted root and unrelated work. Finish the source-linked client Scope
-> increment in C:/CLASSIFIRE/.tmp/client-pdf-scope-review-20260910 on
-> feat/client-pdf-scope-review-20260910: review_pdf_scope must reuse shared PDF preview/save
-> through the existing human-confirmation workflow, bind exact page/scan/Scope/targets and
-> retain server-generated provenance without downstream actions. Inspect the typed command,
-> request dispatcher, review template and test_draft_client_pdf_scope.py; run the documented
-> client/PDF/PostgreSQL regressions, Ruff, Mypy, Bandit and diff checks. Verify the actual
-> rendered browser page when automation works; otherwise keep that acceptance unproven.
-> Reconcile PR #239/main safely, classify and commit only intended files, push, create/update
-> the direct-main PR and merge only after required CI passes. Then pursue the real ChatGPT
-> PDF-to-Scope trial using the operator's HTTPS/OAuth deployment; do not guess provider hosts,
-> bypass review gates, process customer data or start unrelated speculative work.
+> Continue CLASSIFIRE from verified repository state. Inspect AGENTS.md, GOAL.md, Git status,
+> docs/PROJECT_STATE.md, roadmap and the current diff in
+> C:/CLASSIFIRE/.tmp/package-pdf-evidence-20260910 on feat/package-pdf-evidence-20260910.
+> Preserve the conflicted root and unrelated changes. Verify and publish the active ProjectPackage v3
+> opt-in reviewed-PDF lifecycle: shared package composition/inspection, exact source binding,
+> existing UI save/download, owned imported attachments, foreign review state and guarded
+> scan/download/re-export. Inspect evidence_intake's purpose and strict PDF format policy;
+> never weaken storage or ownership guards. Preserve legacy v1/v2 bytes and source withholding.
+> Run the documented package/import/attachment/UI regressions, Ruff, Mypy, Bandit and diff
+> checks; verify rendered UI when tooling works and label any limitation. Update documentation
+> from results, classify/stage only intended files, commit, push, create a main-targeted PR and
+> merge only after required current-head CI passes. No customer evidence, deployment or
+> speculative adjacent feature. Real ChatGPT linking awaits operator HTTPS/OAuth details.
