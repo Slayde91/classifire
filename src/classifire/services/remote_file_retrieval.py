@@ -402,6 +402,9 @@ def retrieve_file(
     values["allowed_hosts"] = sorted(policy.allowed_hosts)
     values["allowed_media_types"] = sorted(policy.allowed_media_types)
     request = json.dumps({"uri": uri, "policy": values}, allow_nan=False).encode("utf-8")
+    creationflags = 0
+    if sys.platform == "win32":
+        creationflags = subprocess.CREATE_NO_WINDOW
     try:
         completed = subprocess.run(  # noqa: S603  # nosec B603
             [sys.executable, "-I", str(Path(__file__).resolve())],
@@ -411,7 +414,7 @@ def retrieve_file(
             timeout=policy.total_timeout_seconds,
             check=False,
             env={key: os.environ[key] for key in ("SYSTEMROOT", "WINDIR") if key in os.environ},
-            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+            creationflags=creationflags,
         )
     except subprocess.TimeoutExpired:
         # run() kills and waits for the process before raising; no abandoned fetch.
