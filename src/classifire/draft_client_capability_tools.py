@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from collections.abc import Callable
 from typing import Any, Literal
 
@@ -29,6 +30,7 @@ from .services import draft_client_requests as commands
 from .services import draft_estimate_reports as estimate_reports
 from .services import draft_estimates as estimates
 from .services import draft_pricing_coverage as pricing_coverage
+from .services import draft_pricing_evaluation_rosters as pricing_rosters
 from .services import draft_pricing_intake as pricing
 from .services import draft_scope as scopes
 from .services import draft_scope_reports as scope_reports
@@ -281,6 +283,97 @@ def register(
                     technical_release_id,
                     settings=get_settings(),
                 )
+            except scopes.DraftScopeError as exc:
+                raise ToolError(exc.code) from None
+
+    @server.tool(
+        annotations=read,
+        meta={
+            "securitySchemes": [
+                {"type": "oauth2", "scopes": [READ, ESTIMATE, TECHNICAL]}
+            ]
+        },
+    )
+    def list_pricing_evaluation_rosters(
+        draft_id: str, before_revision: StrictInt | None = None
+    ) -> dict[str, Any]:
+        """List up to 20 saved target-blind evaluation-roster summaries.
+
+        Results contain commitments and hashes, never target price values. Pass the
+        returned next_before_revision to read an older page. No roster is created or
+        changed and no evaluation is performed.
+        """
+        with _client_session(factory) as db:
+            try:
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, READ, draft_id)
+                capabilities.require(db, authority, principal, ESTIMATE)
+                capabilities.require(db, authority, principal, TECHNICAL)
+                if before_revision is not None and (
+                    type(before_revision) is not int or before_revision < 1
+                ):
+                    raise scopes.DraftScopeError(
+                        "PRICING_EVALUATION_ROSTER_LIST_INVALID", 422
+                    )
+                rows = pricing_rosters.list_rosters(
+                    db,
+                    actor,
+                    draft_id,
+                    settings=get_settings(),
+                    before_revision=before_revision,
+                    limit=21,
+                )
+                page = rows[:20]
+                return {
+                    "rosters": [
+                        {
+                            "roster_id": item["id"],
+                            "revision": item["revision"],
+                            "created_at": item["value"]["created_at"],
+                            "roster_sha256": item["value"]["roster_sha256"],
+                            "content_sha256": item["roster_sha256"],
+                            "manifest_sha256": item["manifest_sha256"],
+                            "mapping_inventory_sha256": item[
+                                "mapping_inventory_sha256"
+                            ],
+                            "is_current": item["is_current"],
+                        }
+                        for item in page
+                    ],
+                    "next_before_revision": (
+                        page[-1]["revision"] if len(rows) > len(page) else None
+                    ),
+                    "limit": 20,
+                }
+            except scopes.DraftScopeError as exc:
+                raise ToolError(exc.code) from None
+
+    @server.tool(
+        annotations=read,
+        meta={
+            "securitySchemes": [
+                {"type": "oauth2", "scopes": [READ, ESTIMATE, TECHNICAL]}
+            ]
+        },
+    )
+    def read_pricing_evaluation_roster(draft_id: str, roster_id: str) -> dict[str, Any]:
+        """Read one exact saved target-blind evaluation roster.
+
+        The roster commits target fields by hash without revealing target price values.
+        This operation does not run evaluation, change pricing or grant approval.
+        """
+        with _client_session(factory) as db:
+            try:
+                principal = identity()
+                actor = commands.authorize(db, authority, principal, READ, draft_id)
+                capabilities.require(db, authority, principal, ESTIMATE)
+                capabilities.require(db, authority, principal, TECHNICAL)
+                content = pricing_rosters.roster_bytes(db, actor, draft_id, roster_id)
+                return {
+                    "roster": json.loads(content),
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                    "size_bytes": len(content),
+                }
             except scopes.DraftScopeError as exc:
                 raise ToolError(exc.code) from None
 

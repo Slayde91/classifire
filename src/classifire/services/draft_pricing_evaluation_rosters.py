@@ -527,17 +527,32 @@ def list_rosters(
     draft_id: str,
     *,
     settings: Settings,
+    before_revision: int | None = None,
+    limit: int | None = None,
 ) -> list[dict[str, Any]]:
     actor, _ = _access(db, actor, draft_id)
+    if before_revision is not None and (
+        type(before_revision) is not int or before_revision < 1
+    ):
+        raise DraftScopeError("PRICING_EVALUATION_ROSTER_LIST_INVALID", 422)
+    if limit is not None and (type(limit) is not int or not 1 <= limit <= 100):
+        raise DraftScopeError("PRICING_EVALUATION_ROSTER_LIST_INVALID", 422)
     inventory, _, _ = _mapping_inventory(db, actor, draft_id, settings=settings)
     current_inventory_sha256 = _inventory_hash(inventory)
-    rows = db.scalars(
-        select(DraftPricingEvaluationRoster)
-        .where(DraftPricingEvaluationRoster.draft_scope_id == draft_id)
-        .order_by(DraftPricingEvaluationRoster.revision.desc())
-    ).all()
+    latest = _latest_roster(db, draft_id)
+    statement = select(DraftPricingEvaluationRoster).where(
+        DraftPricingEvaluationRoster.draft_scope_id == draft_id
+    )
+    if before_revision is not None:
+        statement = statement.where(
+            DraftPricingEvaluationRoster.revision < before_revision
+        )
+    statement = statement.order_by(DraftPricingEvaluationRoster.revision.desc())
+    if limit is not None:
+        statement = statement.limit(limit)
+    rows = db.scalars(statement).all()
     result: list[dict[str, Any]] = []
-    for index, row in enumerate(rows):
+    for row in rows:
         value = _roster_value(row)
         result.append(
             {
@@ -547,7 +562,8 @@ def list_rosters(
                 "roster_sha256": row.roster_sha256,
                 "manifest_sha256": row.manifest_sha256,
                 "mapping_inventory_sha256": row.mapping_inventory_sha256,
-                "is_current": index == 0
+                "is_current": latest is not None
+                and row.id == latest.id
                 and row.mapping_inventory_sha256 == current_inventory_sha256,
                 "value": value,
             }
