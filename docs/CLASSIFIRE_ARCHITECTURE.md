@@ -1,4 +1,4 @@
-﻿# CLASSIFIRE Architecture
+# CLASSIFIRE Architecture
 
 **Document status:** Current pre-production architecture
 
@@ -1340,7 +1340,7 @@ anything.
 ### Strict source-bound report captions on shared main (PR #151)
 
 The PDF normaliser accepts only an explicit, bounded numbered caption prefix and
-stores its category, position, size, sequence, and content hashâ€”not its raw
+stores its category, position, size, sequence, and content hash—not its raw
 wording. Before selected caption wording is exposed in transient documentary
 context, the system normalises the exact verified PDF again and requires the
 same locator and hash. Ambiguous prose, unknown categories, and locator fields
@@ -2381,4 +2381,3 @@ to follow the companion design and unchanged T1-T14 dependency gates. T6 represe
 semantics, source breadth, bottom-up/comparable estimation and calibration remain
 unfinished. Existing profiles, mappings, rosters, recipe links and coverage are not
 completion of either library import.
-
