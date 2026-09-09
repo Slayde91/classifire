@@ -4,7 +4,7 @@
 
 Verified 2026-09-09 from isolated worktrees, local tests and GitHub.
 
-- Shared remote `main` is
+- Shared baseline before this feature is
   `d477ff724f3eb6f0229c376728ddba9bea1e75e9`, merge commit for PR #237.
 - PR #237 is merged. Exact head
   `4ed44ec7543af95541d0d584f8aaa078ad300fde` passed run 34345679363:
@@ -14,7 +14,7 @@ Verified 2026-09-09 from isolated worktrees, local tests and GitHub.
   30-minute limit while tests were still running; it reported no failed assertion.
 - Active isolated worktree:
   `C:/CLASSIFIRE/.tmp/chatgpt-pdf-intake-20260909`;
-  branch `feat/chatgpt-pdf-intake-20260909`, based on current `origin/main`.
+  branch `feat/chatgpt-pdf-intake-20260909`, opened as PR #238. Verify its current`n  exact head, CI and merge status before relying on shared publication.
 - The dirty conflicted `C:/CLASSIFIRE` root is recovery evidence. Do not edit,
   reset, clean, resolve, broadly stage or publish from it.
 - ADRs 0001/0002 remain accepted: one modular deterministic application,
@@ -28,7 +28,7 @@ operations through an opt-in authenticated MCP adapter. PR #237 completes bounde
 read-only client access from T9 coverage and T6 recipe links to exact reviewed Dataset A
 row observations.
 
-The active branch adds a ChatGPT-compatible PDF intake path over the same services used
+The current feature adds a ChatGPT-compatible PDF intake path over the same services used
 by the standalone UI:
 
 - `upload_draft_pdf(draft_id, file)` declares
@@ -54,7 +54,7 @@ same-user browser confirmation.
 
 ## Validation evidence
 
-Current local evidence on the active branch:
+Current feature evidence:
 
 - hardened remote retrieval and configuration: **19 tests passed**;
 - combined client, PDF intake, remote retrieval and PostgreSQL regression:
@@ -127,76 +127,68 @@ identity, review or evidence boundaries.
 
 ## Start Here / Next Session
 
-**First task:** finish, publish and merge the active ChatGPT PDF-intake slice.
+**First task:** verify PR #238 publication, then prove the first real ChatGPT PDF-to-Scope
+journey through an operator-controlled HTTPS/OAuth deployment.
 
-**Why this is next:** the implementation and focused validation are complete locally.
-Merging it gives ChatGPT-compatible clients the missing report-file entry point while
-preserving the existing human Scope gate. Leaving it local would keep the visible
-prototype blocked.
+**Why this is next:** the backend file contract, secure retrieval, retained upload/scan/page
+flow and human Scope gate are implemented and synthetically tested. A real connected-client
+trial is the shortest way to expose any wrong provider-host, OAuth, attachment, review-link
+or user-flow assumption before the same pattern is extended to Excel.
 
 **Prerequisites and dependencies:**
 
-- Read `AGENTS.md`, `docs/GOAL.md`, current Git status/diff, `origin/main`,
-  PR #237/run 34345679363, main run 34348938960 and the five relevant documents.
-- Preserve the dirty recovery root and every unrelated local change.
-- Verify the official file parameter remains a top-level `file` field with
-  `download_url` and `file_id` required.
-- Keep the host allowlist exact and operator-owned. Do not add wildcards, accept private
-  DNS or persist signed URLs.
-- Keep upload/scan separate from Scope interpretation and human-confirmed save.
-- Do not add automatic Match, Estimate, report, approval, release, AI or OpenClaw work.
+- Inspect `AGENTS.md`, `docs/GOAL.md`, Git/worktrees, `origin/main`, PR #238 and its exact
+  required CI before editing. If the feature is not merged, finish its existing safe
+  publication path first; do not duplicate it.
+- Preserve the dirty `C:/CLASSIFIRE` recovery root and every unrelated local change.
+- Obtain an operator-controlled HTTPS CLASSIFIRE deployment, compatible OAuth issuer/client
+  configuration and a synthetic non-customer PDF approved for the trial.
+- Observe and explicitly approve the real ChatGPT file-download DNS host. Keep the default
+  fail-closed until then; do not add a wildcard or guess a provider hostname.
+- Keep upload/scan separate from interpretation, and keep the same-user browser confirmation
+  before a Scope revision is saved.
 
 **Relevant files:**
 
 - `src/classifire/draft_client_evidence_tools.py`;
 - `src/classifire/services/remote_file_retrieval.py`;
 - `src/classifire/services/draft_pdf_intake.py`;
-- `src/classifire/draft_client.py`;
-- `src/classifire/config.py`;
-- `tests/test_draft_client_pdf_intake.py`;
-- `tests/test_remote_file_retrieval.py`;
-- `tests/test_draft_client.py`;
-- `.env.example` and the five updated documentation files.
+- `src/classifire/draft_client.py` and `src/classifire/draft_client_auth.py`;
+- `tests/test_draft_client_pdf_intake.py` and `tests/test_remote_file_retrieval.py`;
+- `docs/DRAFT_CLIENT_V1_CONTRACT.md` and the four durable state documents.
 
-**Validation commands:**
+**Validation:** rerun the 56-test PostgreSQL/client/PDF selection, Ruff, Mypy, Bandit and
+`git diff --check`. In the real client, verify tool discovery, selected-file upload as
+pending, explicit clean scan/parser result, one page's text/locator/hashes, separate Scope
+proposal, readable browser review, same-user save, and reopen after process restart. Inspect
+persistence/logs/results for absence of the signed URL and verify no Match, Estimate, report,
+approval, release, AI or OpenClaw action ran.
 
-```powershell
-$env:PYTHONPATH=(Join-Path $PWD 'src')
-$env:CLASSIFIRE_POSTGRES_TEST_URL='postgresql+psycopg://classifire_test@127.0.0.1:15432/classifire_containment_test'
-$env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN='classifire-containment-test-drop-all'
-C:/CLASSIFIRE/.venv/Scripts/python.exe -m pytest -p no:cacheprovider --basetemp C:/CLASSIFIRE/.tmp/pytest-chatgpt-pdf-final tests/test_draft_client.py tests/test_draft_client_pdf_intake.py tests/test_remote_file_retrieval.py tests/test_draft_pdf_intake.py
-C:/CLASSIFIRE/.venv/Scripts/python.exe -m ruff check .
-C:/CLASSIFIRE/.venv/Scripts/python.exe -m mypy src --disable-error-code=import-untyped
-C:/CLASSIFIRE/.venv/Scripts/python.exe -m bandit -r src
-git diff --check
-```
+**Blockers:** the real journey cannot run without operator-controlled HTTPS/OAuth configuration
+and the observed exact provider file host. Do not weaken security to work around either.
+This does not block local inspection or safe fixes to PR #238.
 
-**Blockers:** required CI must pass and must not be bypassed. A real ChatGPT/OAuth/HTTPS
-trial requires an operator-controlled deployment and the observed exact provider file
-host, but that does not block merging the fail-closed local capability.
-
-**Definition of done:** exact MCP discovery exposes the file parameter; authorized owner
-upload/scan/list/page operations reuse shared services; unsafe URLs/DNS/content and
-unauthorized access fail closed; signed URLs are absent from persistence/results; no
-Scope/downstream artifact runs automatically; targeted and repository checks pass; the
-complete diff contains only intended files; all durable documents align; explicit paths
-are committed and pushed; a direct-main PR passes exact-head CI and merges; resulting
-main and its post-merge workflow are verified.
+**Definition of done:** PR #238 is verified merged with exact-head required CI; one real
+synthetic PDF completes the selected-file -> retained pending -> clean parsed page -> proposed
+Scope -> human-confirmed saved revision journey; evidence records the exact deployment/client
+configuration without secrets; unsafe/unauthorized cases remain closed; restart preserves
+the result; unrelated changes are preserved; any required fixes and aligned documentation
+pass validation and complete the normal commit/push/PR/merge workflow.
 
 ## Recommended Prompt for New Session
 
-> Continue CLASSIFIRE from verified repository state. Inspect `AGENTS.md`,
-> `docs/GOAL.md`, Git/worktrees, the complete active diff, `origin/main`, PR #237 and
-> runs 34345679363/34348938960 before editing. Preserve the conflicted
-> `C:/CLASSIFIRE` recovery root and unrelated changes. The single highest-value task is
-> to finish and merge `feat/chatgpt-pdf-intake-20260909` in
-> `C:/CLASSIFIRE/.tmp/chatgpt-pdf-intake-20260909`: ChatGPT file parameter -> exact-host
-> public-DNS/TLS-pinned retrieval -> shared PDF retain/scan/page read -> separate
-> human-confirmed Scope edit. Verify signed URLs are never retained, unsafe or
-> unauthorized inputs fail closed, and no downstream capability runs. Run the listed
-> PostgreSQL/client/PDF tests, Ruff, Mypy, Bandit and `git diff --check`; inspect and
-> classify the full diff; then autonomously commit explicit paths, push, open a
-> direct-main PR, wait for exact-head required CI and merge where safe. Completion
-> requires the verified MCP schema, passing lifecycle/security tests, aligned
-> documentation and a verified main merge. Avoid speculative provider hosts, AI,
-> pricing, approval, release or OpenClaw changes.
+> Continue CLASSIFIRE from verified repository state. Before editing, inspect `AGENTS.md`,
+> `docs/GOAL.md`, Git/worktrees, `origin/main`, PR #238 and its exact required CI; preserve
+> the conflicted `C:/CLASSIFIRE` recovery root and unrelated changes. First finish PR #238's
+> safe publication if it is not already merged. The single highest-value product task is
+> then to prove one real ChatGPT PDF-to-Scope journey through operator-controlled HTTPS/OAuth:
+> selected synthetic PDF -> exact-host public-DNS/TLS-pinned retrieval -> retained pending
+> source -> explicit scan/parser -> bounded page read -> separate Scope proposal -> same-user
+> browser review/save -> restart/reopen. Obtain the actual provider download host and keep
+> the allowlist fail-closed; never guess or use a wildcard. Verify signed URLs are absent
+> from persistence/logs/results and that no Match, Estimate, report, approval, release, AI
+> or OpenClaw action runs. Run the documented 56-test PostgreSQL/client/PDF selection, Ruff,
+> Mypy, Bandit and `git diff --check`. Record measured evidence, update aligned documentation,
+> preserve unrelated changes, and autonomously inspect, implement only proven fixes, validate,
+> classify, commit, push, open/update the direct-main PR, wait for exact-head CI and merge
+> where safe. Do not begin Excel or speculative provider work until this journey is proven.

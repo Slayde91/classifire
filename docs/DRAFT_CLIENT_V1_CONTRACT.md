@@ -4,8 +4,8 @@
 
 2026-09-09. Shared main `d477ff724f3eb6f0229c376728ddba9bea1e75e9` includes
 the authenticated Draft client and read-only pricing evidence history through PR #237.
-The PDF-file amendment below is implemented and locally validated on
-`feat/chatgpt-pdf-intake-20260909`; verify publication status. This is a
+The PDF-file amendment below is implemented and locally validated in this commit;
+verify its shared publication status from Git before relying on it. This is a
 ChatGPT-compatible surface over the standalone core, not production OAuth deployment
 or proof of a connected ChatGPT account. ADRs 0001/0002 remain accepted.
 

@@ -2,7 +2,7 @@
 
 ## Evidence-based current snapshot
 
-Verified 2026-09-09 on shared main
+Verified 2026-09-09 from shared baseline
 `d477ff724f3eb6f0229c376728ddba9bea1e75e9`, merge commit for Dataset A
 row-observation client PR #237. Exact head
 `4ed44ec7543af95541d0d584f8aaa078ad300fde` passed run 34345679363:
@@ -75,7 +75,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage, a bounded manual T10 preview, and an immutable Scope-bound quantity workflow; none changes an Estimate implicitly | Representative quantity semantics, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
-| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; merged parity through PR #237 reaches exact Dataset A evidence; the active branch adds PDF upload/scan/list/page tools over shared services | Real OAuth/HTTPS linking, actual provider file transfer and representative report interpretation remain unproven |
+| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; merged parity through PR #237 reaches exact Dataset A evidence; the current implementation adds PDF upload/scan/list/page tools over shared services | Real OAuth/HTTPS linking, actual provider file transfer and representative report interpretation remain unproven |
 
 ## Current implemented A/B pricing-source profile and review increment
 
@@ -287,9 +287,9 @@ corruption refusal and zero writes. The change adds no schema, migration, price,
 Estimate, approval, evaluation, release, AI or OpenClaw authority. Exact-head CI
 passed before merge; post-merge main run 34348938960 passed the same repository gates.
 
-## Active ChatGPT-compatible PDF evidence intake
+## Implemented ChatGPT-compatible PDF evidence intake
 
-The isolated `feat/chatgpt-pdf-intake-20260909` branch adds four authenticated MCP
+The current implementation adds four authenticated MCP
 tools over the same Draft PDF services used by the standalone UI: select/upload one PDF,
 list retained sources, explicitly scan/parse a source, and read one page with its locator
 and hashes. `upload_draft_pdf` declares the official `openai/fileParams` metadata and
@@ -542,7 +542,7 @@ logs, database state and workbooks stay under `.tmp` and are not repository sour
 ## Known gaps and active work
 
 Shared main now exposes deterministic T9 coverage and bounded T13 roster, T6 recipe-link
-and Dataset A row-observation history. The active branch adds ChatGPT-compatible PDF
+and Dataset A row-observation history. The current implementation adds ChatGPT-compatible PDF
 file transport and shared upload/scan/page reads. Real OAuth/HTTPS/ChatGPT execution,
 Excel file parameters and representative report interpretation remain unproven.
 
@@ -591,7 +591,7 @@ combined Dataset B mapping/T9 coverage/T13 roster lifecycle are now proven with 
 data. The merged quantity slice reuses those same boundaries and adds one purpose-specific
 append-only table rather than another pricing engine.
 
-The active PDF-intake candidate adds only an interface and hardened remote transport over
+The current PDF-intake increment adds only an interface and hardened remote transport over
 the existing retained PDF lifecycle. It preserves the human Scope gate and adds no new
 agent, database, parser, inference provider or downstream authority.
 
@@ -602,16 +602,15 @@ no root file was staged, reset, cleaned, resolved or published.
 
 ## Recommended Next Actions
 
-1. Finish the isolated ChatGPT PDF-intake slice: run repository checks, exercise the MCP
-   wire contract, commit explicit paths, push, open a direct PR and merge only after exact-
-   head required CI passes.
-2. Prove the visible user journey through a real HTTPS/OAuth ChatGPT connection: select a
-   PDF, upload, scan, inspect pages, propose a Scope edit, complete browser review/save and
-   stop. Record the actual provider file host for the explicit allowlist; do not weaken it.
-3. Add Excel defect-report file parameters through the same hardened retrieval and shared
+1. Verify this PDF-intake commit is on shared `main` with exact-head required CI, then prove
+   the visible journey through a real operator-controlled HTTPS/OAuth ChatGPT connection:
+   select a synthetic PDF, upload, scan, inspect pages, propose a Scope edit, complete browser
+   review/save and stop. Record the actual provider file host for the explicit allowlist.
+2. Add Excel defect-report file parameters through the same hardened retrieval and shared
    retained-XLSX services after the PDF journey is proven.
-4. Define and prove the next ProjectPackage evidence-membership increment, including exact
+3. Define and prove the next ProjectPackage evidence-membership increment, including exact
    pricing-review records and explicit source-body inclusion/withholding rights.
-5. Validate T6 recipe meanings and T13 grouping/split policy against authorised representative
+4. Validate T6 recipe meanings and T13 grouping/split policy against authorised representative
    files before evaluation execution, yield/productivity or any scale/accuracy claim.
+
 [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) contains the self-contained next-session task.

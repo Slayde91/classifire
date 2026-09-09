@@ -3,11 +3,10 @@
 **Status:** Active; prototype-first delivery approved 2026-09-05. The standalone
 four-capability prototype, PDF/Excel review and selected ProjectPackage are merged.
 Commercial evidence governance is merged through bounded T9/T10/T13 increments. PR #237
-merges exact read-only Dataset A row history into the shared client. The active
-`feat/chatgpt-pdf-intake-20260909` branch adds official ChatGPT file-parameter transport
-and shared PDF upload/scan/page-read tools. Real ChatGPT OAuth/HTTPS linking remains
+merges exact read-only Dataset A row history into the shared client. The current implementation adds official ChatGPT file-parameter transport and shared
+PDF upload/scan/page-read tools. Real ChatGPT OAuth/HTTPS linking remains
 unproven.
-**Verified shared-main baseline:**
+**Verified shared-main baseline before this change:**
 `d477ff724f3eb6f0229c376728ddba9bea1e75e9`, merge commit for PR #237.
 Exact head run 34345679363 passed full tests, Ruff, Mypy, Bandit and one Alembic head.
 Post-merge main run 34348938960 passed the same full repository gates on the exact merge commit.
@@ -119,7 +118,7 @@ prototype into it.
 | **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; T13 roster PR #222; bounded T9 coverage PR #224; T6 recipe review PR #227; first T10 bottom-up preview PR #229; T10 browser/restart proof complete; Scope-bound quantity PR #233 merged; B mapping/T9/T13 browser-restart proof complete; broader T10-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster/quantity history and inspect identity, units, price meaning and gaps. Coverage and the first bottom-up amount are visible and browser-proven. Validate representative recipe and grouping semantics next, then add numeric-basis breadth and separate comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
 | **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
 | **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Package download/import and independent client capabilities merged through PR #237; ChatGPT PDF upload/scan/page tools are an active locally tested candidate; real external linking pending | Finish and merge the file-intake candidate, then prove one visible real ChatGPT PDF -> inspected page -> proposed Scope -> human save journey. Extend Excel and ProjectPackage evidence membership only through the same shared services and explicit source rights. |
+| **P5. Project portability and shared ChatGPT access** | Package download/import and independent client capabilities are implemented through PR #237; ChatGPT PDF upload/scan/page tools are implemented and locally tested; real external linking is pending | Prove one visible real ChatGPT PDF -> inspected page -> proposed Scope -> human save journey. Verify this increment is on shared main first. Extend Excel and ProjectPackage evidence membership only through the same shared services and explicit source rights. |
 | **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
 
 
@@ -143,7 +142,7 @@ list/exact-read parity, stable cursor ordering and current/stale status through 
 permissions and shared service. Its final exact-head CI passed every repository gate.
 PR #237 completes the client evidence chain with 20-item Dataset A row pagination, exact
 bytes, current/stale state and zero writes; its exact-head CI passed before merge. The
-active PDF-file candidate reuses the standalone retained-evidence services and adds no
+current PDF-file implementation reuses the standalone retained-evidence services and adds no
 automatic Scope save, AI decision or downstream capability. Do not rebuild these slices.
 
 **Completed bounded increment: selected Draft ProjectPackage download (PR #200).** One coherent Scope workspace,
@@ -262,26 +261,26 @@ means suppressing known errors, weakening tests or bypassing permissions.
 | Source-linked structured PDF Draft editor | **Completed bounded increment, PR #209.** Preserve its demonstrated v4 review/history and shared services; do not rebuild it or infer production admission. |
 | Excel defect-register mapping | **Completed bounded increment, PR #210.** Explicit sheet/header/column/row review, Scope v5 cells/image occurrences and 0038; preserve demonstrated browser/restart/output history. |
 | Optional evidence interpretation | **Completed bounded increment, PR #211.** One PDF page through a Draft-specific optional adapter, retained generation, shared human review and Scope v6; synthetic proof, manual fallback and no automatic approval. |
-| ChatGPT PDF evidence intake | **Active prototype priority.** Official file parameter -> allowlisted DNS-pinned fetch -> existing retained PDF upload/scan/page read -> separate human-confirmed Scope proposal. Real ChatGPT/OAuth/HTTPS proof follows merge. |
+| ChatGPT PDF evidence intake | **Implemented local prototype boundary.** Official file parameter -> allowlisted DNS-pinned fetch -> existing retained PDF upload/scan/page read -> separate human-confirmed Scope proposal. Real ChatGPT/OAuth/HTTPS proof follows merge. |
 | Existing domain guards, exact-byte reads, snapshot integrity, scoped review and CI | **Retained foundations.** Reuse them; avoid parallel business pipelines or regression. |
 | Legacy draft PRs #9-#13 / dirty root | **Recovery context.** Do not bulk-merge or overwrite. |
 
 ### Immediate next action
 
-Finish and merge the active ChatGPT-compatible PDF intake slice. Required exit: the MCP
-tool advertises the official file parameter; an authenticated owner can retain one bounded
-PDF through an exact-host, public-DNS, TLS-pinned fetch; scan it through the existing
-quarantine/parser boundary; list/read one page with hashes and locators; and prove no Scope
-or downstream capability runs automatically. Run targeted PostgreSQL/client/PDF tests and
-repository checks, then direct PR/CI/merge.
+First verify that the current PDF-intake commit is published on shared `main` with exact-head
+required CI. Then prove one visible journey through an operator-controlled HTTPS/OAuth
+ChatGPT connection: select a synthetic PDF, upload it, explicitly scan it, inspect a retained
+page with hashes/locator, propose a Scope edit, complete the existing same-user browser
+review/save and stop. Record the actual provider file host for the exact allowlist; never
+replace that control with a wildcard or undocumented guess.
 
-After merge, prove the visible journey through a real HTTPS/OAuth ChatGPT connection and
-human Scope confirmation. Only then extend the same path to Excel. Representative pricing
-semantics and ProjectPackage source membership remain next-stage work; this prototype-first
-ordering supersedes polishing those details before a user can upload a report in ChatGPT.
-Current evidence and exact handoff remain in PROJECT_STATE.md and SESSION_HANDOFF.md.
-This sequence grants no customer-source, live-AI, canonical-write or deployment authority.
-OpenClaw protection parity remains a separate gated track.
+After that measured journey, extend the same file-parameter and shared-service pattern to
+Excel defect reports. Representative pricing semantics and ProjectPackage source membership
+remain later work; this prototype-first ordering supersedes polishing them before users can
+supply reports through the ChatGPT interface. Current evidence and the exact handoff remain
+in PROJECT_STATE.md and SESSION_HANDOFF.md. This sequence grants no customer-source,
+live-AI, canonical-write or deployment authority. OpenClaw protection parity remains a
+separate gated track.
 
 ### Technical-corpus and dual-pricing delivery stages
 
