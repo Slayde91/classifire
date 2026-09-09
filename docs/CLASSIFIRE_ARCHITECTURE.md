@@ -2,7 +2,7 @@
 
 **Document status:** Current pre-production architecture
 
-**Architecture version:** 5.40 - governed quantities, measured B/T9/T13 lifecycle and candidate MCP T9/roster parity.
+**Architecture version:** 5.41 - governed quantities and candidate MCP T9/roster/recipe-link parity.
 
 **Verified shared baseline:** `720de41fc828f933107436d70c00ac410feafef7` on
 `origin/main`. Shared main includes deterministic read-only T9 coverage, the governed
@@ -17,6 +17,8 @@ history through three read-only MCP tools with owned-project, estimating, techni
 local pricing-review checks. Roster listing is cursor-bounded and exact reads preserve
 canonical hashes without exposing target prices. It adds no new domain rule, persistence,
 agent or orchestration layer; measured behavior and limitations are recorded below.
+Stacked PR #236 reuses the same boundary for bounded T6 recipe-link history and exact
+integrity-checked reads. It preserves legacy UI ordering and adds no write or authority.
 Earlier milestone descriptions are
 historical checkpoints; do not infer phase completion from source presence.
 
@@ -164,8 +166,8 @@ still applies. Model output is proposed evidence, never authority.
 
 | Component | Implemented starting point | Accepted prototype/target work |
 | --- | --- | --- |
-| Interfaces/API | FastAPI/Jinja independent routes; PDF/Excel source review, optional PDF suggestions, A/B pricing profiles, exact-profile review, Dataset A observations, Dataset B mappings, T13 roster lifecycle, T9 coverage/JSON and T6 recipe preview/save/history/download are on shared main. PR #235 adds MCP T9 coverage and bounded T13 roster-history parity. | Add client parity for reviewed row records and recipe links. Preserve manual fallback; evidence-graph and pricing-profile client commands plus real ChatGPT linking remain planned. |
-| Optional external client | draft_client.py, draft_client_auth.py, draft_client_requests and shared Draft services; PR #235 adds read-only T9 coverage plus cursor-bounded list and exact read of persisted T13 rosters | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205, measured review in PR #206 and workbook pricing in PR #207. The pricing candidates require read/estimate/technical scopes plus current local pricing-review rights. External linking remains unproven. |
+| Interfaces/API | FastAPI/Jinja independent routes; PDF/Excel source review, optional PDF suggestions, A/B pricing profiles, exact-profile review, Dataset A observations, Dataset B mappings, T13 roster lifecycle, T9 coverage/JSON and T6 recipe preview/save/history/download are on shared main. PR #235 adds MCP T9/roster parity; stacked PR #236 adds bounded recipe-link history. | Add client parity for reviewed row records. Preserve manual fallback; evidence-graph and pricing-profile client commands plus real ChatGPT linking remain planned. |
+| Optional external client | draft_client.py, draft_client_auth.py, draft_client_requests and shared Draft services; PR #235 adds read-only T9 coverage plus bounded T13 roster history, and stacked PR #236 adds bounded T6 recipe-link list/exact read | OAuth resource server only; client proposals require a separate same-user browser confirmation. Independent Match/Estimate/report commands are merged in PR #205, measured review in PR #206 and workbook pricing in PR #207. Pricing evidence reads require read/estimate/technical scopes plus current local pricing-review rights. External linking remains unproven. |
 | Orchestration | Deterministic controllers, no-write PDF/Excel graph previews and explicit atomic saves; bounded inference journal; generic worker has no registered handlers | Keep visible source interactions bounded. Extend existing BackgroundJob for necessary corpus stages, leases/retries and immutable outcomes after the visible prototype; no new fleet or scheduler database. |
 | Domain services | Physical/evidence guards, technical governance, calculations, snapshot/renderers and deterministic pricing coverage. PR #227 adds frozen recipe snapshots and immutable recipe-link review. | Reuse independently callable contracts across UI/client. Planned corpus extraction/resolution and pricing estimation use the same governed application; they do not bypass independent capability prerequisites. |
 | Technical corpus | Individual TechnicalDocument intake, limited PDF metadata, JSONL Draft variants, manual source-bound materialisation/review | Planned batch inventory, versioned extraction/claims, stable system identity, deduplication and exception review for hundreds to thousands of documents. Existing source/review/publication gates remain. |
@@ -2187,7 +2189,34 @@ mutation, approval, evaluation or release is added. Tests compare exact shared-s
 MCP data, prove unchanged audit/domain table counts, build 22 valid revisions to exercise
 two pages, and rebuild a fresh FastAPI/MCP server over the same PostgreSQL data with
 identical output. Real OAuth, HTTPS and ChatGPT execution remain unproven. Reviewed-row
-and recipe-link client reads remain planned.
+client reads remain planned.
+
+## PR #236 candidate client amendment: read-only T6 recipe-link history
+
+**Current architecture -> proposed change -> reason:** the standalone pricing screen
+already lists and downloads exact persisted T6 recipe links, and T9 coverage consumes
+those links, but an MCP client cannot inspect them. The stacked candidate registers
+`list_pricing_recipe_links(draft_id, before_link_id)` and
+`read_pricing_recipe_link(draft_id, link_id)` over `draft_pricing_recipes`. This completes
+one more evidence link in the shared ChatGPT/standalone pricing chain without duplicating
+recipe or current/stale rules.
+
+**Compatibility, state and pagination:** existing UI callers retain ascending unbounded
+history. Passing a limit/cursor activates newest-first service pagination ordered by
+review time and link ID. The client requests 21 rows, returns at most 20 and emits the
+last returned ID only when older rows exist. Cursor anchors are owned-project records,
+filter-compatible and integrity-checked. Exact read returns validated canonical JSON,
+its byte hash and size. A changed dependency remains readable with `current: false`.
+
+**Security and authority consequences:** both tools are read-only, non-destructive and
+closed-world. They require read, estimate and technical client grants, strict ownership,
+an active mapped local user and existing pricing-review plus technical-read permissions.
+Responses expose reviewed interpretation and evidence/dependency hashes but perform no
+calculation or activation. Missing scopes, foreign ownership, estimator role, invalid
+cursor, missing link and corrupt content fail closed. No migration, dependency, database
+write, approval, evaluation, Estimate change, release, AI or OpenClaw path is added.
+Synthetic PostgreSQL tests prove 22-link pagination, exact restart-stable reads, stale
+status and zero writes; representative source semantics and real OAuth/HTTPS remain open.
 
 ## Completed bounded increment: PDF page-to-Draft graph review (P1b, PR #209)
 

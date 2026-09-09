@@ -45,6 +45,16 @@ and Mypy passed all 220 source files when only absent third-party ReportLab/PyYA
 diagnostics were disabled. It is not on shared main or connected to real ChatGPT
 OAuth/HTTPS.
 
+Stacked PR #236 on `feat/draft-client-recipe-links-20260909` contains code commit
+`9175d8f`. It adds bounded read-only list and exact-read MCP access to persisted T6
+recipe links through the existing shared service. Existing standalone callers keep their
+ascending history behavior; client pages return at most 20 newest-first summaries with a
+stable older-link cursor. The candidate exposes dependency hashes, evidence state and
+current/stale status, creates no database record and grants no price or approval authority.
+Focused tests passed 3 cases, the related PostgreSQL selection passed **56 tests**, and
+full Ruff, Bandit and Mypy-with-only-known-missing-stub-diagnostics-disabled passed.
+It depends on unmerged PR #235 and is not shared-main capability.
+
 PR #227 implements the first governed T6 component/activity recipe-review UI and
 guarded T9 bottom-up consumption rule described below. The approved cleanup removed
 formatter-only churn from five backed-up files. No OpenClaw or AI path is involved.
@@ -61,7 +71,7 @@ this pricing increment neither invokes it nor proves retirement parity.
 | Estimate | Manual/history, explicit retained workbook-row application, confirmed client proposals, A/B source profiles, immutable exact-profile decisions, reviewed Dataset A row observations, governed Dataset B mappings, a persisted target-blind T13 roster, T6 recipe-link review, read-only T9 coverage, a bounded manual T10 preview, and an immutable Scope-bound quantity workflow; none changes an Estimate implicitly | Representative quantity semantics, multi-observation/yield/productivity arithmetic, comparable methods, holdout execution and calibrated proposals |
 | Reporting | Four independent PDF/XLSX profiles over saved snapshots | Production acceptance and governed close-out/Human Release |
 | Packages | Selected ZIP export, new-project import and retained-origin re-export | A/B profile/source-body membership, full history, existing-project merge and production retention |
-| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; PR #235 adds exact read-only T9 coverage plus bounded T13 roster history | Real OAuth/HTTPS linking; report intake, reviewed-row and recipe-link commands still lack client parity |
+| ChatGPT boundary | Optional MCP identity mapping and independent client reads/proposals; PR #235 adds exact read-only T9 coverage plus bounded T13 roster history, and stacked PR #236 adds bounded T6 recipe-link history | Real OAuth/HTTPS linking; report intake and reviewed-row commands still lack client parity |
 
 ## Current implemented A/B pricing-source profile and review increment
 
@@ -236,6 +246,27 @@ and corrupt bytes fail closed, while audit and domain table counts remain unchan
 roster carries only target-field commitments and hashes, never target prices. This
 candidate does not create a proposal or roster, approve evidence, calculate a price, run
 evaluation or connect a real ChatGPT account.
+
+## PR #236 candidate MCP access to T6 recipe-link history
+
+`list_pricing_recipe_links(draft_id, before_link_id)` returns at most 20 newest-first
+summaries and a stable cursor for older links. `read_pricing_recipe_link(draft_id,
+link_id)` returns one exact validated canonical link, its content hash and byte count.
+The adapter uses `draft_pricing_recipes`; it does not reproduce current/stale, integrity,
+recipe or evidence rules. Existing UI calls retain their ascending unbounded behavior.
+
+Both tools require read, estimate and technical client scopes, strict project ownership,
+an active local user and existing pricing-review plus technical-read permissions. They
+surface exact release, technical-target, recipe, requirement, observation, interpretation
+and content hashes without calculating or activating a price. Missing scopes, foreign
+ownership, estimator role, missing IDs, invalid cursors and corrupt content fail closed.
+A changed technical dependency remains readable but is explicitly reported not current.
+
+Tests build 22 valid links to prove the page bound and cursor, compare exact bytes and
+hashes after a fresh FastAPI/MCP application is constructed, and prove relevant audit and
+domain counts do not change. The candidate adds no migration, dependency, database write,
+approval, evaluation, Estimate change, release, agent or OpenClaw path. Real OAuth/HTTPS
+and representative source semantics remain unproven.
 
 ## Implemented T6 component/activity recipe review
 
@@ -464,9 +495,10 @@ logs, database state and workbooks stay under `.tmp` and are not repository sour
 
 ## Known gaps and active work
 
-PR #235 exposes deterministic T9 coverage and bounded saved T13 roster history through
-the shared MCP boundary. It does not yet expose reviewed row records or T6 recipe links,
-and real OAuth/HTTPS/ChatGPT execution remains unproven.
+PR #235 exposes deterministic T9 coverage and bounded saved T13 roster history; stacked
+PR #236 adds bounded saved T6 recipe-link history through the same MCP boundary. Reviewed
+Dataset A row records and report intake still lack client parity, and real
+OAuth/HTTPS/ChatGPT execution remains unproven.
 
 The prototype is usable for explicit source classification, profile retention,
 exact-profile human review, governed Dataset A row observations, exact reviewed Dataset
@@ -523,9 +555,9 @@ no root file was staged, reset, cleaned, resolved or published.
 2. Validate the T6 recipe meanings and roster grouping/split policy against authorised
    representative Dataset B files before any evaluation execution or scale claim.
 3. While representative files remain unavailable, add bounded read-only MCP access to
-   persisted T6 recipe-link history using `draft_pricing_recipes.list_recipe_links` and
-   `recipe_link_bytes`. Preserve the same ownership, estimating, technical and pricing-
-   review boundaries; do not add mutation or approval through the client.
+   reviewed Dataset A row-observation history using `draft_pricing_intake.list_row_observations`
+   and `row_observation_bytes`. Preserve exact source/profile ownership and pricing-review
+   boundaries; do not add observation mutation or commercial activation through the client.
 4. Add governed yield/productivity, waste/pack and recovery inputs only after the
    representative quantity and recipe meanings are accepted; never parse descriptive
    notes or double count.
