@@ -1,5 +1,31 @@
 # CLASSIFIRE Session Handoff
 
+## Current connected-trial preparation
+
+PR #241 is merged at 85874b8; required and post-merge runs 34376174019 and 34378634618
+passed. The owner approved a synthetic-only private OpenAI tunnel/Auth0 trial with no paid
+subscriptions or customer data. Official tunnel-client v0.0.14 is locally installed; a
+runtime key stored outside Git successfully read the approved tunnel and its associations.
+Do not copy credentials, tokens or local secret files into repository documentation.
+
+The dedicated app listener and actual OAuth account/client mapping are not configured yet.
+Public Auth0 discovery uses a trailing-slash issuer; the previous policy loader rejected it.
+The active fix preserves exact issuer spelling while retaining origin-only resource URLs,
+HTTPS checks and exact token issuer matching. No migration or authority grant changes.
+Worktree: C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910; branch fix/auth0-issuer-url-20260910.
+Finish validation/publication of this correction, then configure the dedicated app and
+prove the actual PDF-to-reviewed-Scope journey. No connected trial success is claimed.
+Local validation: 25 non-PostgreSQL client tests passed. After the owner opened Docker,
+the existing synthetic database/scanner containers were restarted and the dedicated
+PostgreSQL concurrency test passed separately (26 affected cases passed in total).
+Targeted Ruff and diff checks passed; earlier full Mypy and affected-file Bandit passed.
+Required full CI must pass before merge. Browser automation still fails before
+initialization; official Auth0 CLI device login is the fallback. Actual Auth0 token
+compatibility, account mapping and the connected user journey remain unverified.
+
+Older pre-merge notes below are historical and do not supersede this checkpoint.
+
+
 ## Pre-merge client permission correction
 
 PR #241 follow-up fixes the client grant check for v3 packages containing retained foreign

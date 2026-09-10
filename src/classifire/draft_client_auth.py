@@ -55,7 +55,6 @@ def load_policy(path: Path, *, development: bool = False) -> ClientPolicy:
             or parsed.password
             or parsed.query
             or parsed.fragment
-            or value.endswith("/")
             or any(c.isspace() for c in value)
         ):
             raise ValueError("Client endpoints require exact HTTPS URLs")
