@@ -1,6 +1,17 @@
 # CLASSIFIRE Master Roadmap
 
-## Current independent increment: portable reviewed PDFs
+## Current priority: synthetic ChatGPT OAuth trial
+
+Portable reviewed PDFs are merged in PR #241; exact-issuer compatibility is merged in
+PR #242. Active: the owner-approved optional-nbf amendment, with all other token admission
+checks retained. Exit: denial/acceptance regression, required CI and verified publication.
+Next: actual human OAuth binding and one synthetic PDF -> inspected evidence -> proposed
+Scope -> human-confirmed save journey. The M2M token probe does not satisfy this exit.
+The tunnel credential and Auth0 CLI login are verified; app/runtime and end-to-end proof
+remain outstanding. Excel client intake and further polish follow this visible trial.
+No production phase, canonical lock or release gate is completed by this amendment.
+
+## Historical increment: portable reviewed PDFs
 
 PR #240 is merged at `8164d29`; required and post-merge CI passed. The real ChatGPT
 HTTPS/OAuth trial still needs the operator's deployment details and working browser tooling.

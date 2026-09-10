@@ -1,6 +1,20 @@
 # CLASSIFIRE Architecture
 
-## Candidate: portable project PDF evidence
+## OAuth token-admission amendment (approved 2026-09-11)
+
+Implemented baseline: PR #242 preserves exact issuer URLs. The approved amendment makes
+nbf optional while enforcing its integer type/time restriction whenever supplied; iat/exp,
+RS256 signature, exact issuer/audience, <=900-second lifetime, explicit account/client
+bindings, revocation and permissions remain mandatory. The candidate extends the existing
+ClientAuthority; no new adapter, schema, key issuer or migration is introduced.
+
+Reason: a cryptographically verified Auth0 RFC 9068 probe token omitted nbf. Absence no
+longer denies an otherwise valid token; present invalid/future values still deny. This
+compatibility amendment is not proof of human login or a connected ChatGPT workflow.
+See DRAFT_CLIENT_V1_CONTRACT.md and PROJECT_STATE.md for contract and execution evidence.
+The historical PDF candidate below was subsequently merged in PR #241.
+
+## Historical candidate: portable project PDF evidence
 
 Current main `8164d29` includes the PDF image and human-review client workflow (PR #240);
 its required and post-merge checks passed. Existing ProjectPackage v1/v2 preserve source

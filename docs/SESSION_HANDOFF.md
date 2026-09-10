@@ -1,30 +1,46 @@
 # CLASSIFIRE Session Handoff
 
-## Current connected-trial preparation
+## Start Here / Next Session
 
-PR #241 is merged at 85874b8; required and post-merge runs 34376174019 and 34378634618
-passed. The owner approved a synthetic-only private OpenAI tunnel/Auth0 trial with no paid
-subscriptions or customer data. Official tunnel-client v0.0.14 is locally installed; a
-runtime key stored outside Git successfully read the approved tunnel and its associations.
-Do not copy credentials, tokens or local secret files into repository documentation.
+Active worktree: C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910.
+Branch: fix/oauth-optional-nbf-20260911, based on origin/main b37f4ef (PR #242 merge).
+PR #242 required CI 34484874131 passed. Preserve the conflicted legacy root and all
+unrelated worktrees. This candidate changes token admission only as explicitly approved:
+nbf may be absent; present values remain integer/time checked. Other authority rules remain.
 
-The dedicated app listener and actual OAuth account/client mapping are not configured yet.
-Public Auth0 discovery uses a trailing-slash issuer; the previous policy loader rejected it.
-The active fix preserves exact issuer spelling while retaining origin-only resource URLs,
-HTTPS checks and exact token issuer matching. No migration or authority grant changes.
-Worktree: C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910; branch fix/auth0-issuer-url-20260910.
-Finish validation/publication of this correction, then configure the dedicated app and
-prove the actual PDF-to-reviewed-Scope journey. No connected trial success is claimed.
-Local validation: 25 non-PostgreSQL client tests passed. After the owner opened Docker,
-the existing synthetic database/scanner containers were restarted and the dedicated
-PostgreSQL concurrency test passed separately (26 affected cases passed in total).
-Targeted Ruff and diff checks passed; earlier full Mypy and affected-file Bandit passed.
-Required full CI must pass before merge. Browser automation still fails before
-initialization; official Auth0 CLI device login is the fallback. Actual Auth0 token
-compatibility, account mapping and the connected user journey remain unverified.
+Local validation: 28 client tests passed, including PostgreSQL concurrency. After
+adding non-finite timestamp denial, both expanded token tests passed again (26 unrelated
+cases deselected). Full Ruff, Mypy (222 files) and changed-module Bandit passed. Required
+full CI remains the publication gate; no live ChatGPT connection is claimed.
 
-Older pre-merge notes below are historical and do not supersede this checkpoint.
+First task: finish validation/publication of this correction, then resume the already
+approved synthetic Auth0/tunnel trial. Files: draft_client_auth.py, test_draft_client.py,
+DRAFT_CLIENT_V1_CONTRACT.md and the current state/architecture/roadmap documentation.
+Use PYTHONPATH pointing at this worktree's src, unique pytest basetemp and no cacheprovider.
+Run tests/test_draft_client.py (including its explicitly opted-in disposable PostgreSQL
+case), Ruff, Mypy and changed-module Bandit; required GitHub checks must pass before merge.
+Done means absent nbf is accepted only with every other required check passing; future or
+malformed nbf, future iat, expiry, invalid signatures/bindings/scopes and revocation deny.
 
+Runtime key and Auth0 CLI login are verified. A real read-only M2M token omits nbf; do not
+map that probe as a human. Actual human token/account binding, dedicated app listener and
+ChatGPT journey remain unverified. Local operator details live outside Git in
+C:/CLASSIFIRE/.tmp/chatgpt-trial-setup-20260910.md. Never print its credential files.
+
+### Recommended Prompt for New Session
+
+Inspect AGENTS.md, Git/worktree state, current code/tests and PR checks before editing.
+Continue fix/oauth-optional-nbf-20260911 in the isolated auth0-issuer-url-20260910 worktree;
+preserve unrelated local changes and the conflicted root. The owner approved optional nbf
+with mandatory present-value validation and all other token/permission checks retained.
+Finish this narrow compatibility correction through targeted client tests (including the
+guarded disposable PostgreSQL case), Ruff/Mypy/Bandit, scoped commit, push, PR and merge only
+when required checks pass. Never redo proven work. Then resume the approved synthetic-only
+Auth0/tunnel trial using the operator runbook; no paid services, customer data or canonical
+writes. Keep M2M probes separate from human account linking. Report evidence and blockers;
+do not claim a connected ChatGPT journey until it actually passes.
+
+Earlier checkpoints below are historical.
 
 ## Pre-merge client permission correction
 
