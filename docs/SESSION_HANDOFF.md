@@ -2,46 +2,71 @@
 
 ## Start Here / Next Session
 
-Worktree: C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910.
-Branch: feat/external-client-demo-20260911, based on shared main 8b2c72f (PR #243).
-PR #243 required and post-merge CI passed. Preserve the conflicted root and unrelated work.
+Worktree: `C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910`.
+Documentation branch: `docs/connected-trial-handoff-20260911`, based on verified shared
+main `255e3c68fd44b1b681563ce851a260793edd9cb0` (PR #244). Recheck branch/PR state before
+editing. Preserve the conflicted legacy root and unrelated worktrees. The launcher branch
+was clean and pushed at `a951b6d`; these four documentation files are the current scoped edit.
 
-Validation: three launcher tests passed in 104.19 seconds, covering actual main.py/MCP
-startup through TestClient, restarts, unsigned request denial, policy preservation, role and
-identity/scope refusals, and the original local-token mode. Full Ruff and Mypy (222 source
-files) and the application Bandit scan passed. The dedicated PostgreSQL trial was prepared and reopened with the same
-estimator ID, one active estimator and zero projects; no listener started. Required CI and
-real human OAuth/ChatGPT linking remain outstanding.
+PR #244 required run 34496922963 passed. Post-merge run 34499154918 was observed running;
+inspect its terminal status. PR #243 required/post-merge CI passed. Launcher tests cover
+startup, restart, policy/identity/role refusals and legacy mode (three passed); both focused
+optional-nbf security regressions passed again. None proves a live ChatGPT connection.
 
-First task: finish validation/publication of the external-policy demo launcher, then use
-it for the approved synthetic-only Auth0/tunnel trial. Files: scripts/run_draft_scope_demo.py,
-tests/test_external_client_demo.py, DRAFT_CLIENT_V1_CONTRACT.md and current project docs.
-Success: an isolated estimator is prepared without serving; exact operator policy survives
-startup/restart; missing authentication and mismatched/broader identities/scopes fail closed;
-existing administrator demos cannot be adopted; original --client-demo still works.
+**First task:** finish the already approved synthetic human OAuth/tunnel trial, then prove
+one visible PDF-to-reviewed-Scope-to-package journey. The launcher is merged; do not redo it.
 
-Validation: PYTHONPATH must point to this worktree's src. Run pytest on
- tests/test_external_client_demo.py with no cacheprovider and a unique basetemp, full Ruff,
-and relevant CI before merge. The test exercises main.py/MCP/login/brand endpoints through
-TestClient and subprocess restarts; it does not prove actual Auth0/ChatGPT linking.
-For real PDF trials use only the separately marked classifire_draft_chatgpt_demo database,
-existing loopback PostgreSQL/ClamAV, and the protected operator directory from the runbook.
-No guessed human subject, callback or M2M-to-human mapping is permitted.
+**Prerequisites and files:** `scripts/run_draft_scope_demo.py`,
+`src/classifire/draft_client_auth.py`, `src/classifire/draft_client.py`,
+`docs/DRAFT_CLIENT_V1_CONTRACT.md`, `tests/test_external_client_demo.py` and
+`tests/test_draft_client.py`. The local operator runbook is
+`C:/CLASSIFIRE/.tmp/chatgpt-trial-setup-20260910.md`; protected configuration, the PKCE
+helper and synthetic data are under its trial-tools directory, excluded from Git.
+Use only the marked `classifire_draft_chatgpt_demo` database and existing loopback
+PostgreSQL/ClamAV. Do not touch customer/canonical databases.
+
+**Runtime checkpoint / blockers:** dedicated Auth0 human client and exact loopback callback
+exist; synthetic API permissions are read/propose/export only. Machine probe remains
+read-only and unmapped. Human login is pending. Inspect the existing callback process and
+any private receipt before restarting; an observation timeout is not process termination.
+The helper rejected wrong state under an idle concurrent connection and listens only on
+127.0.0.1. No successful human policy or ChatGPT connection was verified at this checkpoint.
+Browser automation was unavailable. Obtain the actual ChatGPT callback from its management
+page; no guessed URL, wildcard or tenant-wide setting change. Auth0 CLI credentials are
+relative to the original root directory in this Windows environment; its credential path
+is locally Git-excluded. Never print, stage or copy that file into a worktree.
+
+**Validation and definition of done:** verify actual code+PKCE token through ClientAuthority,
+map only that authenticated human to the prepared estimator, check app/tunnel health and
+unsigned refusal, then perform synthetic PDF upload, text/image inspection, source-linked
+proposal, separate same-user browser confirmation and exact package download. Verify the
+saved evidence references and retained PDF bytes. A proposal is not confirmation. Record
+failures and unresolved review-link reachability honestly; do not weaken guards.
+If code changes, set `$env:PYTHONPATH=Join-Path $PWD 'src'`, run
+`python -m pytest tests/test_draft_client.py tests/test_external_client_demo.py -p no:cacheprovider --basetemp <unique-temp>`,
+relevant PDF/client tests and `python -m ruff check .`; run Mypy/Bandit when source changes
+warrant them. Complete required current-head CI and normal reviewed publication.
 
 ### Recommended Prompt for New Session
 
-Inspect AGENTS.md, Git/worktree state, code/tests and PR checks before editing. Continue
-feat/external-client-demo-20260911 in the isolated auth0-issuer-url-20260910 worktree; preserve
-unrelated changes and the conflicted root. Finish the existing external-policy launcher
-increment through tests/test_external_client_demo.py, full Ruff, required CI and scoped
-commit/push/PR/merge. It must prepare only a synthetic estimator, preserve exact operator
-policy, reject wrong directory/user/resource/scope bindings and retain --client-demo.
-Reuse ClientAuthority/main.py; do not create another auth layer. Then resume the approved
-synthetic Auth0/tunnel PDF-to-reviewed-Scope trial using the contract and local operator
-runbook at C:/CLASSIFIRE/.tmp/chatgpt-trial-setup-20260910.md. Verify actual human subject,
-client and ChatGPT callback; keep the M2M probe unmapped. No paid services, customer evidence,
-canonical writes or secret output. Do not redo proven work or claim connection success
-from token fixtures alone. Record actual validation, Git results and remaining blockers.
+Inspect AGENTS.md, Git/status, current main/PR checks, PROJECT_STATE and the client contract
+before editing. In the isolated auth0-issuer-url-20260910 worktree, preserve the conflicted
+root and unrelated local work. PR #244 merged the external-policy estimator launcher at
+255e3c6; do not rebuild it. The highest-value task is the approved synthetic-only human
+Auth0/private-tunnel PDF-to-reviewed-Scope-to-package trial: local tests do not prove a real
+ChatGPT journey. Read C:/CLASSIFIRE/.tmp/chatgpt-trial-setup-20260910.md and inspect existing
+callback processes/receipts first. User sign-in and the actual ChatGPT callback are remaining
+prerequisites; never invent identities or map the machine probe as human. Reuse
+run_draft_scope_demo.py, draft_client_auth.py, draft_client.py and the marked synthetic
+PostgreSQL/ClamAV setup. Done means real PKCE authorization, exact estimator binding,
+verified app/tunnel readiness, denied unsigned requests, synthetic PDF text/image inspection,
+source-linked proposal, separate same-user confirmation and exact package download with
+retained provenance. Keep secrets out of output/Git; no customer evidence, paid services,
+canonical writes or relaxed guards. For necessary fixes run test_draft_client.py,
+test_external_client_demo.py, affected PDF tests, Ruff and required CI with PYTHONPATH=src
+and unique pytest basetemp. Continue autonomously through implementation, validation,
+classification, scoped commit, push, PR and merge where safe; record actual outcomes and
+blockers. Do not substitute fixtures or speculative infrastructure for end-to-end proof.
 
 Earlier checkpoints below are historical.
 
