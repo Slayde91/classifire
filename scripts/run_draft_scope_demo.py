@@ -20,14 +20,43 @@ DEMO_PASSWORD = "synthetic-scope-demo-only"  # noqa: S105 - synthetic loopback d
 MARKER = "classifire-draft-scope-demo.json"
 
 
+def validate_external_policy(path: Path, origin: str, user_id: str) -> None:
+    """Validate operator bindings without creating identities or changing policy bytes."""
+    from classifire.draft_client_auth import EXPORT, READ, WRITE, load_policy
+
+    policy = load_policy(path, development=True)
+    if (
+        policy.base_url != origin
+        or not policy.issuer.startswith("https://")
+        or len(policy.subjects) != 1
+        or set(policy.subjects.values()) != {user_id}
+        or len(policy.clients) != 1
+    ):
+        raise ValueError("External trial identity or resource mismatch")
+    scopes = next(iter(policy.clients.values()))
+    if READ not in scopes or not set(scopes) <= {READ, WRITE, EXPORT}:
+        raise ValueError("External trial scopes must be limited to Scope and package access")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--port", type=int, default=8796)
-    parser.add_argument(
+    client_mode = parser.add_mutually_exclusive_group()
+    client_mode.add_argument(
         "--client-demo",
         action="store_true",
         help="Enable synthetic signed-token MCP client proof on loopback only",
+    )
+    client_mode.add_argument(
+        "--prepare-external-client",
+        action="store_true",
+        help="Prepare isolated estimator account, print its ID and exit without serving",
+    )
+    client_mode.add_argument(
+        "--external-client-policy",
+        type=Path,
+        help="Use an operator-owned OAuth policy in a prepared estimator demo",
     )
     parser.add_argument(
         "--postgres-demo-port",
@@ -45,6 +74,7 @@ def main() -> None:
             "classifire_draft_xlsx_report_demo",
             "classifire_draft_suggestions_demo",
             "classifire_draft_import_demo",
+            "classifire_draft_chatgpt_demo",
         ),
         default="classifire_draft_pdf_demo",
         help="Choose a separately marked synthetic database",
@@ -76,6 +106,26 @@ def main() -> None:
         help="Enable the labelled exact synthetic PDF suggestion fixture; never a real provider",
     )
     args = parser.parse_args()
+    external_client = args.prepare_external_client or args.external_client_policy is not None
+    external_policy_path = None
+    if external_client and (
+        args.seed_technical_library
+        or args.seed_constraint_library
+        or args.seed_service_size_library
+        or args.scripted_pdf_suggestions
+    ):
+        parser.error("External client trials cannot seed libraries or scripted suggestions")
+    if args.external_client_policy is not None:
+        if args.data_dir is None or not (args.data_dir.expanduser() / MARKER).is_file():
+            parser.error("Prepare an external-client demo directory first")
+        if args.external_client_policy.expanduser().is_symlink():
+            parser.error("External client policy must not be a symbolic link")
+        external_policy_path = args.external_client_policy.expanduser().resolve()
+    if args.postgres_demo_port is not None and external_client:
+        if args.postgres_demo_database != "classifire_draft_chatgpt_demo":
+            parser.error("External client trials require their dedicated PostgreSQL demo database")
+    if args.postgres_demo_database == "classifire_draft_chatgpt_demo" and not external_client:
+        parser.error("The ChatGPT demo database is reserved for external-client trials")
     if (
         args.scripted_pdf_suggestions
         and args.postgres_demo_database != "classifire_draft_suggestions_demo"
@@ -101,13 +151,16 @@ def main() -> None:
         if marker.is_symlink() or marker.stat().st_size > 4096:
             parser.error("Invalid demo directory marker")
         config = json.loads(marker.read_text(encoding="utf-8"))
-        expected_keys = {"kind", "session_key"} | (
-            {"postgres_port"} if args.postgres_demo_port is not None else set()
+        expected_keys = (
+            {"kind", "session_key"}
+            | ({"external_client"} if external_client else set())
+            | ({"postgres_port"} if args.postgres_demo_port is not None else set())
         )
         if named_database:
             expected_keys.add("postgres_database")
         if (
             set(config) != expected_keys
+            or config.get("external_client") != (True if external_client else None)
             or config.get("postgres_database")
             != (args.postgres_demo_database if named_database else None)
             or config["kind"] != "synthetic-scope-demo-v1"
@@ -127,6 +180,7 @@ def main() -> None:
                     **(
                         {"postgres_database": args.postgres_demo_database} if named_database else {}
                     ),
+                    **({"external_client": True} if external_client else {}),
                     "kind": "synthetic-scope-demo-v1",
                     "session_key": session_key,
                     **(
@@ -168,7 +222,9 @@ def main() -> None:
     if args.postgres_demo_port is not None:
         os.environ["CLASSIFIRE_CLAMAV_HOST"] = "127.0.0.1"
         os.environ["CLASSIFIRE_CLAMAV_PORT"] = str(args.clamav_port)
-    if args.client_demo:
+    if external_policy_path is not None:
+        os.environ["CLASSIFIRE_DRAFT_CLIENT_CONFIG"] = str(external_policy_path)
+    elif args.client_demo:
         os.environ["CLASSIFIRE_DRAFT_CLIENT_CONFIG"] = str(
             task_dir / "synthetic-client-policy.json"
         )
@@ -209,7 +265,7 @@ def main() -> None:
                     email=DEMO_EMAIL,
                     full_name="Synthetic Scope Demo",
                     password_hash=hash_password(DEMO_PASSWORD),
-                    role="administrator",
+                    role="estimator" if external_client else "administrator",
                     is_active=True,
                 )
             )
@@ -233,6 +289,32 @@ def main() -> None:
             )
             db.commit()
             print(f"Synthetic technical release: {release.version} ({release.id})", flush=True)
+    if external_client:
+        with SessionLocal() as db:
+            actors = list(db.scalars(select(User)))
+            if (
+                len(actors) != 1
+                or actors[0].email != DEMO_EMAIL
+                or actors[0].role != "estimator"
+                or not actors[0].is_active
+            ):
+                parser.error("External trial requires exactly its active synthetic estimator")
+            user_id = actors[0].id
+        if external_policy_path is not None:
+            try:
+                validate_external_policy(
+                    external_policy_path, f"http://127.0.0.1:{args.port}", user_id
+                )
+            except (OSError, ValueError, TypeError, KeyError):
+                parser.error("External policy is invalid or does not bind this trial's estimator")
+        print(f"Synthetic external-client estimator ID: {user_id}", flush=True)
+        if args.prepare_external_client:
+            print(f"Prepared external-client data directory: {task_dir}", flush=True)
+            print(
+                "No listener started; configure the exact human subject/client policy next.",
+                flush=True,
+            )
+            return
     if args.client_demo:
         # This fixture issues a local test token, not a production OAuth authorization flow.
         import time
@@ -286,7 +368,7 @@ def main() -> None:
             "Synthetic MCP enabled; local token expires in 15 minutes. No real OAuth link.",
             flush=True,
         )
-    else:
+    elif external_policy_path is None:
         os.environ.pop("CLASSIFIRE_DRAFT_CLIENT_CONFIG", None)
     print(f"Synthetic local prototype: http://127.0.0.1:{args.port}/scopes", flush=True)
     print(f"Demo login: {DEMO_EMAIL} / {DEMO_PASSWORD}", flush=True)

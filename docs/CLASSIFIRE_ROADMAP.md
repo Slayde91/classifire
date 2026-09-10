@@ -3,8 +3,9 @@
 ## Current priority: synthetic ChatGPT OAuth trial
 
 Portable reviewed PDFs are merged in PR #241; exact-issuer compatibility is merged in
-PR #242. Active: the owner-approved optional-nbf amendment, with all other token admission
-checks retained. Exit: denial/acceptance regression, required CI and verified publication.
+PR #242. The optional-nbf amendment is merged in PR #243 with required/post-merge CI passing.
+Active: isolated estimator-only external-policy launcher, retaining existing demo ownership
+and authentication boundaries. Exit: restart/denial regression, required CI and publication.
 Next: actual human OAuth binding and one synthetic PDF -> inspected evidence -> proposed
 Scope -> human-confirmed save journey. The M2M token probe does not satisfy this exit.
 The tunnel credential and Auth0 CLI login are verified; app/runtime and end-to-end proof

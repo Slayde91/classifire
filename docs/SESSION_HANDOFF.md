@@ -2,43 +2,46 @@
 
 ## Start Here / Next Session
 
-Active worktree: C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910.
-Branch: fix/oauth-optional-nbf-20260911, based on origin/main b37f4ef (PR #242 merge).
-PR #242 required CI 34484874131 passed. Preserve the conflicted legacy root and all
-unrelated worktrees. This candidate changes token admission only as explicitly approved:
-nbf may be absent; present values remain integer/time checked. Other authority rules remain.
+Worktree: C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910.
+Branch: feat/external-client-demo-20260911, based on shared main 8b2c72f (PR #243).
+PR #243 required and post-merge CI passed. Preserve the conflicted root and unrelated work.
 
-Local validation: 28 client tests passed, including PostgreSQL concurrency. After
-adding non-finite timestamp denial, both expanded token tests passed again (26 unrelated
-cases deselected). Full Ruff, Mypy (222 files) and changed-module Bandit passed. Required
-full CI remains the publication gate; no live ChatGPT connection is claimed.
+Validation: three launcher tests passed in 104.19 seconds, covering actual main.py/MCP
+startup through TestClient, restarts, unsigned request denial, policy preservation, role and
+identity/scope refusals, and the original local-token mode. Full Ruff and Mypy (222 source
+files) and the application Bandit scan passed. The dedicated PostgreSQL trial was prepared and reopened with the same
+estimator ID, one active estimator and zero projects; no listener started. Required CI and
+real human OAuth/ChatGPT linking remain outstanding.
 
-First task: finish validation/publication of this correction, then resume the already
-approved synthetic Auth0/tunnel trial. Files: draft_client_auth.py, test_draft_client.py,
-DRAFT_CLIENT_V1_CONTRACT.md and the current state/architecture/roadmap documentation.
-Use PYTHONPATH pointing at this worktree's src, unique pytest basetemp and no cacheprovider.
-Run tests/test_draft_client.py (including its explicitly opted-in disposable PostgreSQL
-case), Ruff, Mypy and changed-module Bandit; required GitHub checks must pass before merge.
-Done means absent nbf is accepted only with every other required check passing; future or
-malformed nbf, future iat, expiry, invalid signatures/bindings/scopes and revocation deny.
+First task: finish validation/publication of the external-policy demo launcher, then use
+it for the approved synthetic-only Auth0/tunnel trial. Files: scripts/run_draft_scope_demo.py,
+tests/test_external_client_demo.py, DRAFT_CLIENT_V1_CONTRACT.md and current project docs.
+Success: an isolated estimator is prepared without serving; exact operator policy survives
+startup/restart; missing authentication and mismatched/broader identities/scopes fail closed;
+existing administrator demos cannot be adopted; original --client-demo still works.
 
-Runtime key and Auth0 CLI login are verified. A real read-only M2M token omits nbf; do not
-map that probe as a human. Actual human token/account binding, dedicated app listener and
-ChatGPT journey remain unverified. Local operator details live outside Git in
-C:/CLASSIFIRE/.tmp/chatgpt-trial-setup-20260910.md. Never print its credential files.
+Validation: PYTHONPATH must point to this worktree's src. Run pytest on
+ tests/test_external_client_demo.py with no cacheprovider and a unique basetemp, full Ruff,
+and relevant CI before merge. The test exercises main.py/MCP/login/brand endpoints through
+TestClient and subprocess restarts; it does not prove actual Auth0/ChatGPT linking.
+For real PDF trials use only the separately marked classifire_draft_chatgpt_demo database,
+existing loopback PostgreSQL/ClamAV, and the protected operator directory from the runbook.
+No guessed human subject, callback or M2M-to-human mapping is permitted.
 
 ### Recommended Prompt for New Session
 
-Inspect AGENTS.md, Git/worktree state, current code/tests and PR checks before editing.
-Continue fix/oauth-optional-nbf-20260911 in the isolated auth0-issuer-url-20260910 worktree;
-preserve unrelated local changes and the conflicted root. The owner approved optional nbf
-with mandatory present-value validation and all other token/permission checks retained.
-Finish this narrow compatibility correction through targeted client tests (including the
-guarded disposable PostgreSQL case), Ruff/Mypy/Bandit, scoped commit, push, PR and merge only
-when required checks pass. Never redo proven work. Then resume the approved synthetic-only
-Auth0/tunnel trial using the operator runbook; no paid services, customer data or canonical
-writes. Keep M2M probes separate from human account linking. Report evidence and blockers;
-do not claim a connected ChatGPT journey until it actually passes.
+Inspect AGENTS.md, Git/worktree state, code/tests and PR checks before editing. Continue
+feat/external-client-demo-20260911 in the isolated auth0-issuer-url-20260910 worktree; preserve
+unrelated changes and the conflicted root. Finish the existing external-policy launcher
+increment through tests/test_external_client_demo.py, full Ruff, required CI and scoped
+commit/push/PR/merge. It must prepare only a synthetic estimator, preserve exact operator
+policy, reject wrong directory/user/resource/scope bindings and retain --client-demo.
+Reuse ClientAuthority/main.py; do not create another auth layer. Then resume the approved
+synthetic Auth0/tunnel PDF-to-reviewed-Scope trial using the contract and local operator
+runbook at C:/CLASSIFIRE/.tmp/chatgpt-trial-setup-20260910.md. Verify actual human subject,
+client and ChatGPT callback; keep the M2M probe unmapped. No paid services, customer evidence,
+canonical writes or secret output. Do not redo proven work or claim connection success
+from token fixtures alone. Record actual validation, Git results and remaining blockers.
 
 Earlier checkpoints below are historical.
 

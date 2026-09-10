@@ -363,3 +363,41 @@ configured issuer in discovery and JWT verification; never strip or append a sla
 a token match. The resource base URL remains an origin without a path or trailing slash.
 This compatibility correction enables configuration of issuers such as Auth0; it does not
 prove a tenant's token profile or complete a real account-linking trial.
+
+
+## Isolated external OAuth trial launcher
+
+`run_draft_scope_demo.py` keeps the original `--client-demo` fixture separate from two
+new mutually exclusive modes. `--prepare-external-client` creates only an active synthetic
+estimator in a newly marked demo directory, prints its local User ID, and exits without
+starting a listener. It does not generate an OAuth token or infer an external identity.
+
+The operator then supplies an existing JSON policy using `--external-client-policy PATH`.
+It must bind exactly one verified human subject to that exact estimator ID, name one OAuth
+client, use the selected loopback origin and an HTTPS issuer, and grant only read plus
+optional propose/export scopes. Existing ClientAuthority key, schema and URL validation
+still applies. The launcher never rewrites that file or mints a replacement token.
+It rejects administrator/other accounts, different directory modes and policy mismatches.
+Existing application policy reload/permission checks remain in effect after startup.
+
+For the approved PDF trial, first create an empty disposable PostgreSQL database named
+`classifire_draft_chatgpt_demo` on the existing synthetic test server, then run:
+
+```powershell
+python scripts/run_draft_scope_demo.py --prepare-external-client --data-dir <new-protected-directory> --port 8820 --postgres-demo-port 15432 --postgres-demo-database classifire_draft_chatgpt_demo
+```
+
+After configuring the exact human subject/client/public keys in the operator-owned policy:
+
+```powershell
+python scripts/run_draft_scope_demo.py --external-client-policy <policy-path> --data-dir <same-protected-directory> --port 8820 --postgres-demo-port 15432 --postgres-demo-database classifire_draft_chatgpt_demo --clamav-port 13310
+```
+
+The existing database ownership marker must match the selected directory. Nonempty
+unmarked databases and other demo database names remain refused. SQLite is available for
+manual Scope/launcher tests; it does not prove PDF database/scan behavior. External mode
+cannot seed technical libraries or scripted AI fixtures. No migrations or production
+configuration defaults change. Keep the known synthetic browser login local; expose only
+the protected MCP transport through the approved private tunnel, never the whole demo app.
+Provider registration, actual callback, human login/account mapping, file-host allowlist,
+scanner readiness and the real ChatGPT PDF/review journey still require separate evidence.
