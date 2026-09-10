@@ -2,29 +2,29 @@
 
 ## Current connected-trial preparation
 
-PR #241 is merged at 85874b8; required and post-merge runs 34376174019 and 34378634618
-passed. The owner approved a synthetic-only private OpenAI tunnel/Auth0 trial with no paid
-subscriptions or customer data. Official tunnel-client v0.0.14 is locally installed; a
-runtime key stored outside Git successfully read the approved tunnel and its associations.
-Do not copy credentials, tokens or local secret files into repository documentation.
+PR #242 merged at b37f4ef after required run 34484874131 passed. It preserves exact
+trailing-slash OAuth issuers. The approved synthetic-only tunnel/Auth0 trial has a verified
+runtime credential, successful official Auth0 CLI login, and available synthetic PostgreSQL
+and ClamAV services. No real ChatGPT connection or human OAuth account mapping is proven.
 
-The dedicated app listener and actual OAuth account/client mapping are not configured yet.
-Public Auth0 discovery uses a trailing-slash issuer; the previous policy loader rejected it.
-The active fix preserves exact issuer spelling while retaining origin-only resource URLs,
-HTTPS checks and exact token issuer matching. No migration or authority grant changes.
-Worktree: C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910; branch fix/auth0-issuer-url-20260910.
-Finish validation/publication of this correction, then configure the dedicated app and
-prove the actual PDF-to-reviewed-Scope journey. No connected trial success is claimed.
-Local validation: 25 non-PostgreSQL client tests passed. After the owner opened Docker,
-the existing synthetic database/scanner containers were restarted and the dedicated
-PostgreSQL concurrency test passed separately (26 affected cases passed in total).
-Targeted Ruff and diff checks passed; earlier full Mypy and affected-file Bandit passed.
-Required full CI must pass before merge. Browser automation still fails before
-initialization; official Auth0 CLI device login is the fallback. Actual Auth0 token
-compatibility, account mapping and the connected user journey remain unverified.
+A real read-only Auth0 RFC 9068 probe token passed signature, exact issuer/audience and
+600-second lifetime checks, but omitted nbf. On 2026-09-11 the owner explicitly approved
+optional nbf with validation whenever present. The current candidate implements that narrow
+amendment, preserving mandatory signature, issuer, audience, issue-time, expiry, lifetime,
+identity/client binding, revocation and permission checks. No schema or migration changes.
 
-Older pre-merge notes below are historical and do not supersede this checkpoint.
+Local validation: 28 client tests passed, including PostgreSQL concurrency. After
+adding non-finite timestamp denial, both expanded token tests passed again (26 unrelated
+cases deselected). Full Ruff, Mypy (222 files) and changed-module Bandit passed. Required
+full CI remains the publication gate; no live ChatGPT connection is claimed.
 
+### Recommended Next Actions
+
+Validate and publish the optional-nbf correction, then resume the synthetic human OAuth
+and PDF-to-reviewed-Scope trial through the existing client/backend. Keep the probe client
+unmapped to CLASSIFIRE users; it is not a substitute for human account linking. Browser
+control still fails at initialization; use the existing approved CLI/operator setup path.
+Do not expose credentials or customer evidence. Earlier checkpoints below are historical.
 
 ## Pre-merge client permission correction
 

@@ -66,7 +66,9 @@ requirements; token scopes never grant a role or canonical authority.
 
 Accepted tokens are RS256 access JWTs (`typ: at+jwt`) with the configured kid,
 issuer, exact `/mcp` resource audience, subject, client ID, token ID, scope, integer
-iat/nbf/exp and at most 900 seconds of lifetime. Private keys, remote key headers,
+iat/exp and at most 900 seconds of lifetime. Owner-approved amendment (2026-09-11):
+`nbf` is optional; when present it must be an integer and its not-before time is enforced.
+Future issue times and expired tokens remain rejected. Private keys, remote key headers,
 unrecognized algorithms/claims used for authority, unknown accounts/clients,
 wrong audiences and expired tokens fail closed. The PDF upload tool is the sole current
 client-selected URL fetch: it requires HTTPS, an exact operator allowlist, public DNS

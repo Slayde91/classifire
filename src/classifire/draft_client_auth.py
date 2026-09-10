@@ -153,7 +153,6 @@ class ClientAuthority:
                         "aud",
                         "exp",
                         "iat",
-                        "nbf",
                         "sub",
                         "client_id",
                         "jti",
@@ -162,7 +161,9 @@ class ClientAuthority:
                     "strict_aud": True,
                 },
             )
-            if any(type(claims[k]) is not int for k in ("exp", "iat", "nbf")):
+            if any(type(claims[k]) is not int for k in ("exp", "iat")):
+                return None
+            if "nbf" in claims and type(claims["nbf"]) is not int:
                 return None
             if not 0 < claims["exp"] - claims["iat"] <= 900:
                 return None
@@ -186,7 +187,9 @@ class ClientAuthority:
             )
             self.check(identity, READ)
             return identity
-        except (jwt.PyJWTError, OSError, ValueError, KeyError, TypeError, DraftScopeError):
+        except (
+            jwt.PyJWTError, OSError, ValueError, KeyError, TypeError, OverflowError, DraftScopeError
+        ):
             return None
 
     async def verify_token(self, token: str) -> AccessToken | None:

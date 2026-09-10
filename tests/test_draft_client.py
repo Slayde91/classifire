@@ -502,3 +502,62 @@ def test_trailing_slash_issuer_is_preserved_and_matched_exactly(client_case, iss
     case.path.write_text(json.dumps(case.policy), encoding="utf-8")
     with pytest.raises(ValueError, match="base URL must be an origin"):
         ClientAuthority(case.path)
+
+
+def test_optional_nbf_accepts_absence_but_validates_present_values(client_case):
+    case = client_case
+    claims = jwt.decode(case.token(), options={"verify_signature": False})
+    del claims["nbf"]
+
+    def signed(payload):
+        return jwt.encode(payload, case.key, algorithm="RS256",
+                          headers={"kid": "synthetic", "typ": "at+jwt"})
+
+    token = signed(claims)
+    assert case.authority.verify(token) is not None
+    with TestClient(case.scope.app, base_url="https://testserver") as client:
+        assert rpc(client, token, "tools/list").status_code == 200
+    for value in (claims["iat"] - 60, claims["iat"]):
+        assert case.authority.verify(signed({**claims, "nbf": value})) is not None
+    for value in (claims["iat"] + 3600, None, True, False, str(claims["iat"]),
+                  float(claims["iat"]), float("inf"), float("-inf"), float("nan"), [], {}):
+        assert case.authority.verify(signed({**claims, "nbf": value})) is None, repr(value)
+    _assert_no_canonical_scope(case.scope.factory)
+
+
+def test_absent_nbf_preserves_required_claims_and_security_checks(client_case):
+    case = client_case
+    claims = jwt.decode(case.token(), options={"verify_signature": False})
+    del claims["nbf"]
+
+    def signed(payload, **headers):
+        return jwt.encode(payload, case.key, algorithm="RS256",
+                          headers={"kid": "synthetic", "typ": "at+jwt", **headers})
+
+    for field in ("iss", "aud", "iat", "exp", "sub", "client_id", "jti", "scope"):
+        incomplete = {k: v for k, v in claims.items() if k != field}
+        assert case.authority.verify(signed(incomplete)) is None, field
+    invalid = [
+        {"iss": "https://foreign.example.test"},
+        {"aud": "https://foreign.example.test/mcp"},
+        {"aud": [claims["aud"]]},
+        {"sub": "unmapped"}, {"client_id": "unmapped"}, {"jti": ""},
+        {"scope": WRITE}, {"scope": READ + " administrator"},
+        {"iat": claims["iat"] + 60, "exp": claims["iat"] + 600},
+        {"iat": claims["iat"] - 120, "exp": claims["iat"] - 60},
+        {"exp": claims["iat"]}, {"exp": claims["iat"] + 901},
+    ]
+    invalid += [{field: value} for field in ("iat", "exp")
+                for value in (None, True, False, str(claims[field]), float(claims[field]),
+                              float("inf"), float("-inf"), float("nan"))]
+    for overrides in invalid:
+        assert case.authority.verify(signed({**claims, **overrides})) is None, overrides
+    for headers in ({"typ": "JWT"}, {"kid": "unknown"}, {"jku": "https://foreign.test"}):
+        assert case.authority.verify(signed(claims, **headers)) is None
+    token = signed(claims)
+    header, body, signature = token.split(".")
+    changed = ("A" if signature[0] != "A" else "B") + signature[1:]
+    assert case.authority.verify(".".join([header, body, changed])) is None
+    case.policy["revoked_token_ids"] = [claims["jti"]]
+    case.path.write_text(json.dumps(case.policy), encoding="utf-8")
+    assert case.authority.verify(token) is None
