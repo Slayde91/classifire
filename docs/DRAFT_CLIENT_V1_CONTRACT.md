@@ -352,3 +352,12 @@ Existing estimate-only/complete reports and packages retain their selected snaps
 source provenance and current permission checks. No new table, migration, dependency,
 OAuth scope or artifact schema is added. Pre-existing command input hashes retain
 their original five-key shape so already pending manual requests survive this upgrade.
+
+
+## Exact external issuer URLs
+
+The OAuth issuer may end in a slash, including a path-based issuer. Preserve the exact
+configured issuer in discovery and JWT verification; never strip or append a slash to make
+a token match. The resource base URL remains an origin without a path or trailing slash.
+This compatibility correction enables configuration of issuers such as Auth0; it does not
+prove a tenant's token profile or complete a real account-linking trial.

@@ -477,3 +477,28 @@ def test_database_parameters_never_escape_as_tool_errors(client_case, monkeypatc
         assert "CLIENT_DATABASE_UNAVAILABLE" in json.dumps(result)
         assert "synthetic-private-database-parameter" not in json.dumps(result)
         assert "synthetic-private-database-parameter" not in caplog.text
+
+
+@pytest.mark.parametrize("issuer", ["https://auth.example.test/",
+                                   "https://auth.example.test/tenant/"])
+def test_trailing_slash_issuer_is_preserved_and_matched_exactly(client_case, issuer):
+    from fastapi import FastAPI
+
+    case = client_case
+    case.policy["issuer"] = issuer
+    case.path.write_text(json.dumps(case.policy), encoding="utf-8")
+    authority = ClientAuthority(case.path)
+    identity = authority.verify(case.token())
+    assert identity is not None and identity.issuer == issuer
+    assert authority.verify(case.token(iss=issuer.rstrip("/"))) is None
+    app = FastAPI()
+    configure(app, authority, case.scope.factory)
+    with TestClient(app) as client:
+        metadata = client.get("/.well-known/oauth-protected-resource/mcp")
+        assert metadata.status_code == 200
+        assert metadata.json()["authorization_servers"] == [issuer]
+    # The resource base remains an exact origin, not an issuer URL.
+    case.policy["base_url"] += "/"
+    case.path.write_text(json.dumps(case.policy), encoding="utf-8")
+    with pytest.raises(ValueError, match="base URL must be an origin"):
+        ClientAuthority(case.path)
