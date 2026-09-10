@@ -2,29 +2,33 @@
 
 ## Current connected-trial preparation
 
-PR #242 merged at b37f4ef after required run 34484874131 passed. It preserves exact
-trailing-slash OAuth issuers. The approved synthetic-only tunnel/Auth0 trial has a verified
-runtime credential, successful official Auth0 CLI login, and available synthetic PostgreSQL
-and ClamAV services. No real ChatGPT connection or human OAuth account mapping is proven.
+PR #243 is merged at 8b2c72f; required run 34491024733 and post-merge run 34493580028
+passed. Exact Auth0 issuers and the owner-approved optional-nbf admission contract are on
+shared main. The real human ChatGPT connection remains unverified.
 
-A real read-only Auth0 RFC 9068 probe token passed signature, exact issuer/audience and
-600-second lifetime checks, but omitted nbf. On 2026-09-11 the owner explicitly approved
-optional nbf with validation whenever present. The current candidate implements that narrow
-amendment, preserving mandatory signature, issuer, audience, issue-time, expiry, lifetime,
-identity/client binding, revocation and permission checks. No schema or migration changes.
+Active: extend the existing synthetic demo launcher with external-policy preparation/start
+modes. The prepared user is an estimator, policy bindings are explicit and limited to
+Scope/package access, and the original administrator/token fixture remains separate.
+Existing marked-directory/database ownership guards are retained. No domain service,
+canonical schema, migration or production permission changes are introduced.
 
-Local validation: 28 client tests passed, including PostgreSQL concurrency. After
-adding non-finite timestamp denial, both expanded token tests passed again (26 unrelated
-cases deselected). Full Ruff, Mypy (222 files) and changed-module Bandit passed. Required
-full CI remains the publication gate; no live ChatGPT connection is claimed.
+Validation: three launcher tests passed in 104.19 seconds, covering actual main.py/MCP
+startup through TestClient, restarts, unsigned request denial, policy preservation, role and
+identity/scope refusals, and the original local-token mode. Full Ruff and Mypy (222 source
+files) and the application Bandit scan passed. The dedicated PostgreSQL trial was prepared and reopened with the same
+estimator ID, one active estimator and zero projects; no listener started. Required CI and
+real human OAuth/ChatGPT linking remain outstanding.
 
 ### Recommended Next Actions
 
-Validate and publish the optional-nbf correction, then resume the synthetic human OAuth
-and PDF-to-reviewed-Scope trial through the existing client/backend. Keep the probe client
-unmapped to CLASSIFIRE users; it is not a substitute for human account linking. Browser
-control still fails at initialization; use the existing approved CLI/operator setup path.
-Do not expose credentials or customer evidence. Earlier checkpoints below are historical.
+Validate and publish the launcher increment, then configure the exact human OAuth subject/client and prove the visible PDF ->
+evidence review -> proposed Scope -> human save journey. Never map the M2M probe as a human.
+Auth0 already has resource-parameter compatibility enabled. Use the actual connection-
+specific callback supplied by ChatGPT; do not guess an ID or broaden callback allowlists.
+Browser automation remains unavailable; official Auth0 CLI login is verified. Tenant-wide
+issuer-response settings were not changed. Operator secrets stay outside Git.
+
+Earlier checkpoints below are historical.
 
 ## Pre-merge client permission correction
 

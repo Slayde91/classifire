@@ -1,11 +1,21 @@
 # CLASSIFIRE Architecture
 
-## OAuth token-admission amendment (approved 2026-09-11)
+## External-policy trial launcher (candidate)
+
+Extend the existing loopback demo launcher, not the domain or authorization architecture.
+Prepare a separately marked estimator-only demo, then load an exact operator-owned external
+OAuth policy through the existing ClientAuthority/main.py configuration hook. Preserve
+policy bytes, current identity/permission checks and database-directory ownership. Keep
+original --client-demo administrator/token behavior isolated. PostgreSQL PDF trials use the
+new reserved synthetic database name; no production schema or migration changes are needed.
+This is trial preparation, not proof of a real human OAuth or ChatGPT connection.
+
+## OAuth token-admission amendment (merged PR #243)
 
 Implemented baseline: PR #242 preserves exact issuer URLs. The approved amendment makes
 nbf optional while enforcing its integer type/time restriction whenever supplied; iat/exp,
 RS256 signature, exact issuer/audience, <=900-second lifetime, explicit account/client
-bindings, revocation and permissions remain mandatory. The candidate extends the existing
+bindings, revocation and permissions remain mandatory. The merged change extends the existing
 ClientAuthority; no new adapter, schema, key issuer or migration is introduced.
 
 Reason: a cryptographically verified Auth0 RFC 9068 probe token omitted nbf. Absence no
