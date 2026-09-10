@@ -15,11 +15,12 @@ HTTPS checks and exact token issuer matching. No migration or authority grant ch
 Worktree: C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910; branch fix/auth0-issuer-url-20260910.
 Finish validation/publication of this correction, then configure the dedicated app and
 prove the actual PDF-to-reviewed-Scope journey. No connected trial success is claimed.
-Local validation: 25 client tests passed, with the PostgreSQL concurrency test
-excluded after its separate setup timed out. Docker Desktop is not running and no local
-database listener is available. Targeted Ruff and diff checks passed; earlier full Mypy
-and affected-file Bandit checks passed. Required CI must verify the database case before
-merge. Browser automation still fails before initialization; actual Auth0 login, token
+Local validation: 25 non-PostgreSQL client tests passed. After the owner opened Docker,
+the existing synthetic database/scanner containers were restarted and the dedicated
+PostgreSQL concurrency test passed separately (26 affected cases passed in total).
+Targeted Ruff and diff checks passed; earlier full Mypy and affected-file Bandit passed.
+Required full CI must pass before merge. Browser automation still fails before
+initialization; official Auth0 CLI device login is the fallback. Actual Auth0 token
 compatibility, account mapping and the connected user journey remain unverified.
 
 Older pre-merge notes below are historical and do not supersede this checkpoint.
