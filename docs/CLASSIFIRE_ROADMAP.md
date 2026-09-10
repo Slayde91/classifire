@@ -2,15 +2,25 @@
 
 ## Current priority: synthetic ChatGPT OAuth trial
 
-Portable reviewed PDFs are merged in PR #241; exact-issuer compatibility is merged in
-PR #242. The optional-nbf amendment is merged in PR #243 with required/post-merge CI passing.
-Active: isolated estimator-only external-policy launcher, retaining existing demo ownership
-and authentication boundaries. Exit: restart/denial regression, required CI and publication.
-Next: actual human OAuth binding and one synthetic PDF -> inspected evidence -> proposed
-Scope -> human-confirmed save journey. The M2M token probe does not satisfy this exit.
-The tunnel credential and Auth0 CLI login are verified; app/runtime and end-to-end proof
-remain outstanding. Excel client intake and further polish follow this visible trial.
-No production phase, canonical lock or release gate is completed by this amendment.
+| Work | Verified classification | Dependency / next evidence |
+| --- | --- | --- |
+| Portable reviewed PDFs | Merged PR #241 | Real connected download remains part of trial acceptance |
+| Exact issuer and optional nbf | Merged PR #242/#243; required and post-merge CI passed | Preserve all remaining token and permission checks |
+| External-policy estimator demo | Completed bounded implementation, PR #244 at `255e3c6`; required CI passed | Post-merge run 34499154918 was observed running; recheck terminal result |
+| Human OAuth and private tunnel trial | Active setup; no successful human connection yet | Actual login, exact subject/client binding, actual ChatGPT callback, app/tunnel readiness |
+| Visible connected PDF journey | Upcoming immediate product acceptance | Upload synthetic PDF, inspect text/images, propose source-linked Scope, confirm as same human, download exact portable package |
+| Excel client intake and polish | Sequenced after the connected PDF trial | Extend existing Excel services only after the first real client journey is proven |
+
+The launcher development/publication task is superseded by real connection validation;
+do not rebuild it. The tunnel credential and Auth0 CLI login were verified. A dedicated
+human client and local callback are configured; the synthetic machine probe stays read-only
+and unmapped. Operator callback checks are not a substitute for actual human OAuth or
+ChatGPT acceptance. Human sign-in is pending; do not fabricate a subject or callback ID.
+
+Keep the UI prototype priority: validate one usable journey before broadening integration
+or polishing edges. Existing production phases, independent capability requirements,
+canonical lock/release gates and the conditional OpenClaw migration remain in force.
+This trial does not complete them. No paid service or customer-data trial is authorized.
 
 ## Historical increment: portable reviewed PDFs
 

@@ -1,14 +1,32 @@
 # CLASSIFIRE Architecture
 
-## External-policy trial launcher (candidate)
+## Implemented external-policy trial launcher (merged PR #244)
 
-Extend the existing loopback demo launcher, not the domain or authorization architecture.
-Prepare a separately marked estimator-only demo, then load an exact operator-owned external
-OAuth policy through the existing ClientAuthority/main.py configuration hook. Preserve
-policy bytes, current identity/permission checks and database-directory ownership. Keep
-original --client-demo administrator/token behavior isolated. PostgreSQL PDF trials use the
-new reserved synthetic database name; no production schema or migration changes are needed.
-This is trial preparation, not proof of a real human OAuth or ChatGPT connection.
+PR #244 (`255e3c6`) extends the existing loopback demo launcher. Preparation creates a
+separately marked estimator-only demo without serving. Startup loads an exact operator-owned
+OAuth policy through the existing ClientAuthority/main.py configuration hook. Policy bytes,
+current identity/permission checks and database-directory ownership are preserved. Original
+`--client-demo` administrator/token behavior remains isolated. PostgreSQL PDF trials use
+the reserved synthetic database. No domain service, schema or migration is added.
+
+Current architecture -> change -> reason -> consequences: the shared modular application
+already verifies external tokens; its old demo minted local tokens and created an admin.
+The separate external-policy mode permits a limited real-provider trial without changing
+token issuance or granting that user administrator authority. Existing demos cannot be
+silently adopted. Migration impact is a separately prepared synthetic directory/database,
+not a production data migration. ADR 0001/0002 and optional AI remain unchanged.
+
+### Planned integration and remaining proof
+
+Human authorization-code/PKCE, exact external-subject mapping, actual ChatGPT callback and
+tunnel discovery/authentication still require end-to-end verification. The operator-only
+local PKCE helper is test setup, not a second product authorization service. Its callback
+checks do not prove user login. The core remains a resource server; Auth0 issues tokens.
+The existing proposal/same-user browser confirmation boundary remains mandatory.
+
+The tunnel does not establish a public browser-review deployment. Verify review-link
+reachability during the trial; keep any public deployment decision separate. No successful
+ChatGPT session, production release readiness or OpenClaw retirement is claimed.
 
 ## OAuth token-admission amendment (merged PR #243)
 

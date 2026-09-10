@@ -2,31 +2,44 @@
 
 ## Current connected-trial preparation
 
-PR #243 is merged at 8b2c72f; required run 34491024733 and post-merge run 34493580028
-passed. Exact Auth0 issuers and the owner-approved optional-nbf admission contract are on
-shared main. The real human ChatGPT connection remains unverified.
+Verified shared baseline: PR #244 merged at `255e3c6`; required validation run
+34496922963 passed. Post-merge run 34499154918 was last observed running; verify its
+terminal result before claiming a pass. PR #243 required and post-merge CI passed.
+Exact Auth0 issuers and the approved optional-nbf contract are implemented.
 
-Active: extend the existing synthetic demo launcher with external-policy preparation/start
-modes. The prepared user is an estimator, policy bindings are explicit and limited to
-Scope/package access, and the original administrator/token fixture remains separate.
-Existing marked-directory/database ownership guards are retained. No domain service,
-canonical schema, migration or production permission changes are introduced.
+The external-policy demo launcher is implemented, not pending development. It prepares
+an isolated active estimator without starting a listener, then accepts an exact external
+policy through the existing ClientAuthority/main.py hook. Restart preserves policy bytes;
+identity, scope, role and marked database/directory checks fail closed. The original
+administrator/local-token demo remains separate. No domain schema or migration changed.
 
-Validation: three launcher tests passed in 104.19 seconds, covering actual main.py/MCP
-startup through TestClient, restarts, unsigned request denial, policy preservation, role and
-identity/scope refusals, and the original local-token mode. Full Ruff and Mypy (222 source
-files) and the application Bandit scan passed. The dedicated PostgreSQL trial was prepared and reopened with the same
-estimator ID, one active estimator and zero projects; no listener started. Required CI and
-real human OAuth/ChatGPT linking remain outstanding.
+Evidence: three launcher tests passed, covering actual application startup through
+TestClient, restart, authentication/role/policy refusals and legacy mode. Required CI
+passed. The two optional-nbf regressions also passed on recheck. The dedicated PostgreSQL
+trial was prepared/reopened with one active estimator and zero projects.
+
+Operator preparation: the existing Auth0 CLI login works; a dedicated human code-flow
+client and exact loopback callback are configured. The synthetic API defines only draft
+read/propose/export; the machine probe grant remains read-only and unmapped. A local
+PKCE helper passed invalid-state rejection with a concurrent idle connection. These are
+setup observations, not successful human sign-in, app startup or ChatGPT acceptance.
+Credentials and operator artifacts stay outside Git; no customer evidence was processed.
+
+### Project health and active gaps
+
+The merged launcher has passing required CI. Real human authorization, exact account
+binding, ChatGPT callback registration, tunnel/app readiness and the visible end-to-end
+journey remain unverified. Browser automation was unavailable during setup; user login
+is pending. Broader production phases and OpenClaw retirement remain incomplete.
 
 ### Recommended Next Actions
 
-Validate and publish the launcher increment, then configure the exact human OAuth subject/client and prove the visible PDF ->
-evidence review -> proposed Scope -> human save journey. Never map the M2M probe as a human.
-Auth0 already has resource-parameter compatibility enabled. Use the actual connection-
-specific callback supplied by ChatGPT; do not guess an ID or broaden callback allowlists.
-Browser automation remains unavailable; official Auth0 CLI login is verified. Tenant-wide
-issuer-response settings were not changed. Operator secrets stay outside Git.
+Finish the approved synthetic human OAuth trial, then prove one PDF -> inspected evidence
+-> proposed Scope -> same-user browser confirmation -> exact package download journey.
+Inspect any existing callback process/receipt before restarting. Never map the M2M probe
+as a human. Use the actual connection-specific callback supplied by ChatGPT; do not guess
+IDs or broaden allowlists. Tenant-wide issuer-response settings remain unchanged.
+Do not rebuild the merged launcher or weaken authentication to make the trial pass.
 
 Earlier checkpoints below are historical.
 
