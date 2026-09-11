@@ -1,34 +1,47 @@
 # CLASSIFIRE Project State
 
-Validation for this increment: affected client/launcher suites passed (one PostgreSQL-only
-test skipped locally); final OIDC regressions and full Ruff passed. Mypy checked 222
-source files successfully and Bandit passed. Required CI and live activation remain pending.
+Validation checkpoint: 44 affected tests passed; six PostgreSQL-dependent tests
+were skipped locally. Full Ruff, Mypy (222 files) and Bandit passed. Required
+current-head CI/publication and refreshed-client acceptance remain pending.
 
-## Current correction: Auth0 OIDC token compatibility
+## Current milestone: connected synthetic Scope package proven
 
-PR #246 merged at `6c3b9d0` after required CI passed. Its exact external resource
-configuration was activated in the synthetic trial. Auth0 login and code exchange
-succeeded, but CLASSIFIRE returned 401 and ChatGPT could not discover callable tools.
-A signature-verified operator diagnostic reproduced a two-entry audience (the exact
-MCP resource plus issuer `/userinfo`) and `openid email` alongside authorized Draft
-read/propose/export scopes. The existing account/client binding and 600-second
-lifetime matched. No project was created by this diagnostic.
+PR #247 is merged at `5c8ee72d27a9a6370cafaa70c8a061f845a804e4`; required
+Python validation passed. The user reported actual authenticated ChatGPT discovery,
+PDF upload/clean scan, text and page-image inspection, separate human confirmations
+and Scope revision 3. This proves one synthetic journey, not production readiness.
 
-The owner approved a default-off `auth0_oidc_compatibility` policy amendment. It
-preserves exact resource membership, rejects other audience shapes and unknown scopes,
-and removes identity scopes from effective permissions. Tests and publication of this
-increment must be verified before activation; connected discovery and the full PDF
-journey remain acceptance work. No production phase is complete from this correction.
+The downloaded ZIP was independently inspected: three members, five evidence
+references, original PDF byte-identical, Scope revision 3/package revision 1.
+ZIP SHA-256: `e52ce4a512604abc66c0b55690f21f5b9d5ede0bc1b5f915e0ad4cc0842819c0`.
+The local verification receipt records PASS, 13,437 bytes and no application import.
+Scope contains one defect, two separate openings and two services linked only to
+O-01; O-02 is blank. Missing dimensions and service quantities remain unknown.
+No technical matching, pricing, estimating, report rendering or human release was
+proven by this trial. One observation retains stale wording about reviewing page 2;
+correcting saved content requires a normal reviewed revision.
+
+### Project health and active work
+
+The trial needed manual JSON repairs after DRAFT_PAYLOAD_INVALID and
+PACKAGE_SELECTION_INVALID. Source inspection confirms that nested Scope content
+and package selections were advertised as unconstrained dictionaries. The exact
+rejected arguments were unavailable, so their individual causes are not asserted.
+Current candidate derives discovery schemas from existing domain contracts and
+returns bounded, redacted field paths for these two errors. Domain authorization,
+validation, request bytes and separate human confirmation remain unchanged.
+Publication and refreshed-client acceptance of this candidate must be verified.
 
 ### Recommended Next Actions
 
-Finish required CI/publication, enable the approved setting in the protected synthetic
-policy and restart. Verify a real signed read-only MCP call, then refresh ChatGPT's
-connection and run `list_draft_projects`. Only after discovery succeeds, continue the
-synthetic PDF-to-reviewed-Scope-to-portable-package interaction. Keep current grants.
+Finish validation/publication of the schema-discovery correction, refresh the
+connected client's tools, and verify a synthetic proposal using the advertised
+fields without manually prepared JSON. Then extend the existing Excel intake/review
+services to the client as the next visible capability. Keep read/propose/export grants;
+do not expand technical/estimate permissions or restart the test runtime implicitly.
+Production phase gates and conditional OpenClaw retirement remain incomplete.
 
-The following preparation notes are historical checkpoints; this section supersedes
-older statements that human login, PR #246 or external-resource activation are pending.
+The older setup sections below are historical checkpoints, not current blockers.
 
 ## Current connected-trial preparation
 

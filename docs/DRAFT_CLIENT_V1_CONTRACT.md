@@ -1,5 +1,20 @@
 # Draft client v1: authenticated MCP and human confirmation
 
+## Proposal input discovery amendment
+
+Scope content in propose_draft_edit and review_pdf_scope advertises DraftScopePayload;
+propose_project_package.selection advertises Selection, including scope_revision,
+pdf_sources and paired artifact IDs/revisions. Annotations affect discovery only:
+raw dictionaries reach authorized domain validation without normalization or defaults.
+
+Invalid Scope/package proposals retain their error code and add bounded invalid_fields.
+Unknown field names and submitted values are redacted. Cross-field failures may identify
+the root. Errors create no review link or artifact. Schema validity does not replace
+ownership, revision or retained-evidence checks. Human confirmation remains mandatory.
+Refresh connected metadata after an authorized runtime update; publication and live
+acceptance of this candidate must be verified separately.
+
+
 ## Exact external OAuth resource (merged PR #246)
 
 Optional operator-owned `oauth_resource` separates the token audience from `base_url`,

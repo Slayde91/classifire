@@ -104,7 +104,23 @@ class Selection(BaseModel):
 def selection(value: Any) -> Selection:
     try:
         return Selection.model_validate(value)
-    except (ValidationError, ValueError, TypeError) as exc:
+    except ValidationError as exc:
+        findings = [
+            {
+                "path": ".".join(
+                    str(part)
+                    if isinstance(part, int) or part in Selection.model_fields
+                    else "[unknown]"
+                    for part in error["loc"]
+                ),
+                "code": "INVALID_FIELD",
+                "message": "Check the selection field and paired IDs/revisions.",
+                "severity": "error",
+            }
+            for error in exc.errors(include_input=False, include_url=False)[:50]
+        ]
+        raise PackageError("PACKAGE_SELECTION_INVALID", findings=findings) from exc
+    except (ValueError, TypeError) as exc:
         raise PackageError("PACKAGE_SELECTION_INVALID") from exc
 
 
@@ -209,7 +225,9 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
 
 
 def source_manifest(
-    scope: dict[str, Any], match: dict[str, Any] | None, estimate: dict[str, Any] | None,
+    scope: dict[str, Any],
+    match: dict[str, Any] | None,
+    estimate: dict[str, Any] | None,
     pdf_sources: list[str] | None = None,
 ) -> list[dict[str, str]]:
     """Exact source inventory shared by export and foreign-package validation."""
@@ -226,9 +244,11 @@ def source_manifest(
     for index, ref in enumerate(scope.get("evidence_refs", [])):
         if ref.get("source_id") in (pdf_sources or []):
             sources[index].update(
-                membership="included", path=f"evidence/{ref['source_id']}.pdf",
-                reason=("Exact project PDF bytes included; "
-                        "review claims do not grant local authority"),
+                membership="included",
+                path=f"evidence/{ref['source_id']}.pdf",
+                reason=(
+                    "Exact project PDF bytes included; review claims do not grant local authority"
+                ),
             )
     if match:
         for index, _candidate in enumerate(match["candidates"]):
@@ -308,15 +328,19 @@ def _compose(
         from . import draft_pdf_intake as pdf
 
         for source_id in selected.pdf_sources:
-            refs = [ref for ref in scope.get("evidence_refs", [])
-                    if ref.get("source_id") == source_id]
+            refs = [
+                ref for ref in scope.get("evidence_refs", []) if ref.get("source_id") == source_id
+            ]
             if not refs or any(
-                ref.get("origin") != "local_retained" or "page_number" not in ref
-                for ref in refs
+                ref.get("origin") != "local_retained" or "page_number" not in ref for ref in refs
             ):
                 raise PackageError("PACKAGE_PDF_SELECTION_INVALID", 409)
             source, _document, content = pdf._document(
-                db, actor, draft_id, source_id, get_settings().storage_root,
+                db,
+                actor,
+                draft_id,
+                source_id,
+                get_settings().storage_root,
             )
             if any(
                 ref["source_sha256"] != content.sha256
@@ -370,8 +394,10 @@ def _compose(
                     "mapping": mapping,
                 }
             ],
-            notice=("Selected Draft revisions plus original imported archives; "
-                    "foreign history and source claims remain unverified."),
+            notice=(
+                "Selected Draft revisions plus original imported archives; "
+                "foreign history and source claims remain unverified."
+            ),
         )
         manifest["members"] = [
             {"path": name, "sha256": digest(value), "size_bytes": len(value)}
@@ -381,9 +407,11 @@ def _compose(
         manifest.update(
             schema_version=SCHEMA_V3,
             origins=manifest.get("origins", []),
-            notice=("Selected Draft revisions and explicitly selected project PDFs. "
-                    "Unselected sources stay external or withheld; "
-                    "imported claims remain unverified."),
+            notice=(
+                "Selected Draft revisions and explicitly selected project PDFs. "
+                "Unselected sources stay external or withheld; "
+                "imported claims remain unverified."
+            ),
         )
     if len(encode(manifest)) > MAX_MANIFEST:
         raise PackageError("PACKAGE_TOO_LARGE", 413)

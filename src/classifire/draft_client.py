@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any
+from typing import Annotated, Any
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
@@ -16,7 +16,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
-from pydantic import AnyHttpUrl
+from pydantic import AnyHttpUrl, GetPydanticSchema
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
@@ -31,6 +31,50 @@ from .services import draft_client_requests as commands
 from .services import draft_project_packages as packages
 from .services import draft_scope as scopes
 from .ui import _context, templates
+
+# Discovery uses the same selection contract as the UI; preparation still validates
+# the untouched dictionary after checking identity, ownership and permissions.
+PackageInput = Annotated[
+    dict[str, Any],
+    GetPydanticSchema(
+        get_pydantic_json_schema=lambda schema, handler: handler(
+            packages.Selection.__pydantic_core_schema__
+        )
+    ),
+]
+
+
+def _proposal_error(exc: scopes.DraftScopeError) -> str:
+    if exc.code not in {"DRAFT_PAYLOAD_INVALID", "PACKAGE_SELECTION_INVALID"} or not exc.findings:
+        return exc.code
+    fields = set(packages.Selection.model_fields)
+    for model in (
+        scopes.DraftScopePayload,
+        scopes.DraftDefect,
+        scopes.DraftOpening,
+        scopes.DraftService,
+        scopes.DraftObservation,
+    ):
+        fields.update(model.model_fields)
+    # Extra-field names are attacker-controlled too. Return only known schema paths,
+    # bounded array indices and a fixed placeholder; never Pydantic messages/inputs.
+    paths = [
+        ".".join(
+            part
+            if part in fields or (part.isascii() and part.isdigit() and len(part) <= 3)
+            else "[unknown]"
+            for part in str(item.get("path", "")).split(".")[:8]
+        )
+        or "[root]"
+        for item in exc.findings[:50]
+    ]
+    return json.dumps(
+        {
+            "code": exc.code,
+            "invalid_fields": paths,
+            "message": "Check the advertised schema, field types and paired IDs/revisions.",
+        }
+    )
 
 
 @contextmanager
@@ -86,7 +130,7 @@ def configure(
                 db.commit()
                 return value
             except scopes.DraftScopeError as exc:
-                raise ToolError(exc.code) from None
+                raise ToolError(_proposal_error(exc)) from None
 
     read = ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=False)
     write = ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=False)
@@ -141,7 +185,7 @@ def configure(
 
     @server.tool(annotations=write, meta=write_meta)
     def propose_draft_edit(
-        draft_id: str, expected_revision: int, content: dict[str, Any]
+        draft_id: str, expected_revision: int, content: capabilities.ScopeInput
     ) -> dict[str, Any]:
         """Propose full Scope content. Preserve IDs and uncertainty. Human review is required."""
         return propose(
@@ -153,7 +197,7 @@ def configure(
         annotations=write,
         meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ, WRITE, EXPORT]}]},
     )
-    def propose_project_package(draft_id: str, selection: dict[str, Any]) -> dict[str, Any]:
+    def propose_project_package(draft_id: str, selection: PackageInput) -> dict[str, Any]:
         """Propose a ZIP of selected saved revisions and reports for human confirmation."""
         return propose("package", {"draft_id": draft_id, "selection": selection})
 

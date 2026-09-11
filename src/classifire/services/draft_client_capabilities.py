@@ -10,7 +10,15 @@ import hashlib
 import json
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    GetPydanticSchema,
+    TypeAdapter,
+    ValidationError,
+    model_validator,
+)
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
@@ -44,13 +52,25 @@ class PdfReviewTarget(BaseModel):
     target_id: Identity
 
 
+# Advertise the shared domain schema without normalizing raw proposal bytes here.
+# Domain validation remains behind authorization and preserves existing request hashes.
+ScopeInput = Annotated[
+    dict[str, Any],
+    GetPydanticSchema(
+        get_pydantic_json_schema=lambda schema, handler: handler(
+            scopes.DraftScopePayload.__pydantic_core_schema__
+        )
+    ),
+]
+
+
 class ReviewPdfScope(Command):
     action: Literal["review_pdf_scope"]
     source_id: Identity
     expected_revision: Revision
     page_number: Annotated[int, Field(ge=1, le=50)]
     expected_document_hash: Sha256
-    content: dict[str, Any]
+    content: ScopeInput
     targets: Annotated[list[PdfReviewTarget], Field(min_length=1, max_length=100)]
 
 
@@ -334,9 +354,16 @@ def inspect_inputs(
         }
     if isinstance(c, ReviewPdfScope):
         preview = pdf.preview_scope_page(
-            db, actor, c.draft_id, c.source_id, c.expected_revision, c.page_number,
-            c.content, [target.model_dump() for target in c.targets],
-            c.expected_document_hash, settings=get_settings(),
+            db,
+            actor,
+            c.draft_id,
+            c.source_id,
+            c.expected_revision,
+            c.page_number,
+            c.content,
+            [target.model_dump() for target in c.targets],
+            c.expected_document_hash,
+            settings=get_settings(),
         )
         document = pdf.read_document(db, actor, c.draft_id, c.source_id, settings=get_settings())
         inputs["pdf_scope_review"] = {
@@ -348,8 +375,11 @@ def inspect_inputs(
 
 
 def execute(
-    db: Session, actor: User, command: CapabilityCommand,
-    *, reviewed_inputs: dict[str, Any] | None = None,
+    db: Session,
+    actor: User,
+    command: CapabilityCommand,
+    *,
+    reviewed_inputs: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     c = command
     result: dict[str, Any] = {"draft_id": c.draft_id}
@@ -358,9 +388,17 @@ def execute(
             raise scopes.DraftScopeError("CLIENT_REVIEW_REQUIRED", 409)
         reviewed_hash = reviewed_inputs["pdf_scope_review"]["preview"]["review_sha256"]
         saved = pdf.save_scope_page(
-            db, actor, c.draft_id, c.source_id, c.expected_revision, c.page_number,
-            c.content, [target.model_dump() for target in c.targets],
-            c.expected_document_hash, reviewed_hash, settings=get_settings(),
+            db,
+            actor,
+            c.draft_id,
+            c.source_id,
+            c.expected_revision,
+            c.page_number,
+            c.content,
+            [target.model_dump() for target in c.targets],
+            c.expected_document_hash,
+            reviewed_hash,
+            settings=get_settings(),
         )
         result.update(revision=saved["revision"], sha256=saved["sha256"])
     elif isinstance(c, CreateMatch):
