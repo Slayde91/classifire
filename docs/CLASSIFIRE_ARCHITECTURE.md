@@ -3,11 +3,13 @@
 ## Current workbook portability amendment
 
 Shared main PR #249 (a02e895) adds a thin Excel client adapter over existing Scope
-intake/mapping/review services; required CI passed. Runtime activation and refreshed
-ChatGPT acceptance are separate. PR #248 provides exact schemas and safe field errors.
+intake/mapping/review services; required CI passed. PR #250 (27cd8bf) is also
+merged after required CI. Approved synthetic test activation and read-only browser/
+ChatGPT checks passed; full refreshed-client Excel acceptance remains separate.
+PR #248 provides exact schemas and safe field errors.
 
-Current packages include PDFs but previously left workbook bodies external. The new
-candidate adds optional Selection.xlsx_sources and ProjectPackage v4 so reviewed
+Packages previously left workbook bodies external. The merged implementation
+adds optional Selection.xlsx_sources and ProjectPackage v4 so reviewed
 cell/image evidence can travel with its original file. UI and MCP reuse shared
 composition, validation, ownership and explicit-save services. There is no second
 physical model, database migration, dependency or parallel storage pipeline.
@@ -21,7 +23,7 @@ ancestor downloads and re-exports. Foreign claims remain unverified after scanni
 Migration: empty workbook selections preserve v1-v3 serialization and historical
 reconstruction. New workbook-bearing packages need v4-capable consumers. Existing
 archive/nesting bounds and withheld technical/pricing sources remain unchanged.
-Planned/unproven: hosted acceptance, full project history, additional input formats
+Planned/unproven: full refreshed-client Excel acceptance, full project history, additional input formats
 and production assurance. Approved hybrid architecture and human gates are unchanged.
 Earlier sections below are historical where they conflict with this checkpoint.
 
