@@ -78,6 +78,10 @@ class ManifestV3(ManifestV2):
     origins: Annotated[list[OriginReference], Field(max_length=1)] = Field(default_factory=list)
 
 
+class ManifestV4(ManifestV3):
+    schema_version: Literal["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v4"]  # type: ignore[assignment]
+
+
 @dataclass(frozen=True)
 class InspectedPackage:
     manifest: dict[str, Any]
@@ -106,6 +110,8 @@ class InspectedPackage:
     def evidence_members(self, prefix: str = ""):
         for source_id in self.manifest["selection"].get("pdf_sources", []):
             yield source_id, prefix + f"evidence/{source_id}.pdf"
+        for source_id in self.manifest["selection"].get("xlsx_sources", []):
+            yield source_id, prefix + f"evidence/{source_id}.xlsx"
         for path, item in self.origins.items():
             yield from item.evidence_members(prefix + path + "!")
 
@@ -121,20 +127,22 @@ def validate_origin_mapping(
 ) -> None:
     """Require a complete one-to-one retained origin inventory, including descendants."""
     evidence = list(original.evidence_members())
-    if set(mapping) != ({
-        "schema_version",
-        "project",
-        "scope",
-        "match",
-        "estimate",
-        "reports",
-        "entity_ids",
-    } | ({"evidence"} if evidence else set())):
+    if set(mapping) != (
+        {
+            "schema_version",
+            "project",
+            "scope",
+            "match",
+            "estimate",
+            "reports",
+            "entity_ids",
+        }
+        | ({"evidence"} if evidence else set())
+    ):
         raise ValueError("mapping fields")
     if (
-        mapping["schema_version"] != (
-            "CLASSIFIRE-IMPORT-MAPPING-v2" if evidence else "CLASSIFIRE-IMPORT-MAPPING-v1"
-        )
+        mapping["schema_version"]
+        != ("CLASSIFIRE-IMPORT-MAPPING-v2" if evidence else "CLASSIFIRE-IMPORT-MAPPING-v1")
         or mapping["project"] != {"source_id": original.scope["project_id"], "local_id": project_id}
         or mapping["entity_ids"] != "retained_within_new_scope"
     ):
@@ -191,14 +199,16 @@ def validate_origin_mapping(
                 raise ValueError("mapping report bytes")
             UUID(member["source_id"])
 
-
     if evidence:
         if type(mapping["evidence"]) is not list or len(mapping["evidence"]) != len(evidence):
             raise ValueError("mapping evidence inventory")
         for member, (source_id, path) in zip(mapping["evidence"], evidence, strict=True):
-            if (set(member) != {"source_id", "original_source_id", "path", "sha256"}
-                or member["original_source_id"] != source_id or member["path"] != path
-                or member["sha256"] != packages.digest(original.resolve(path))):
+            if (
+                set(member) != {"source_id", "original_source_id", "path", "sha256"}
+                or member["original_source_id"] != source_id
+                or member["path"] != path
+                or member["sha256"] != packages.digest(original.resolve(path))
+            ):
                 raise ValueError("mapping evidence bytes")
             UUID(member["source_id"])
 
@@ -232,8 +242,13 @@ def inspect_package(
             raise ValueError("origin nesting bounds")
         manifest, members = packages.inspect_archive(content)
         parsed = (
-            ManifestV3 if manifest.get("schema_version") == packages.SCHEMA_V3 else
-            ManifestV2 if manifest.get("schema_version") == packages.SCHEMA_V2 else Manifest
+            ManifestV4
+            if manifest.get("schema_version") == packages.SCHEMA_V4
+            else ManifestV3
+            if manifest.get("schema_version") == packages.SCHEMA_V3
+            else ManifestV2
+            if manifest.get("schema_version") == packages.SCHEMA_V2
+            else Manifest
         ).model_validate(manifest)
         origins = {}
         if isinstance(parsed, ManifestV2):
@@ -255,12 +270,15 @@ def inspect_package(
         if (parsed.revision == 1) != (parsed.parent_hash is None):
             raise ValueError("package parent")
         selected = parsed.selection
+        if selected.xlsx_sources and not isinstance(parsed, ManifestV4):
+            raise ValueError("legacy workbook selection")
         if selected.pdf_sources and not isinstance(parsed, ManifestV3):
             raise ValueError("legacy evidence selection")
         if set(selected.scope_reports) & set(selected.estimate_reports):
             raise ValueError("duplicate report selection")
         wanted = {"artifacts/scope.json", *origins}
         wanted.update(f"evidence/{sid}.pdf" for sid in selected.pdf_sources)
+        wanted.update(f"evidence/{sid}.xlsx" for sid in selected.xlsx_sources)
         if selected.match_id:
             wanted.add("artifacts/system-match.json")
         if selected.estimate_id:
@@ -312,15 +330,38 @@ def inspect_package(
                 raise ValueError("estimate dependency")
         for source_id in selected.pdf_sources:
             data = members[f"evidence/{source_id}.pdf"]
-            refs = [ref for ref in scope.get("evidence_refs", [])
-                    if ref.get("source_id") == source_id]
-            if not refs or not data.startswith(b"%PDF-") or any(
-                "page_number" not in ref or ref.get("source_sha256") != packages.digest(data)
-                or ref.get("source_size_bytes") != len(data) for ref in refs
+            refs = [
+                ref for ref in scope.get("evidence_refs", []) if ref.get("source_id") == source_id
+            ]
+            if (
+                not refs
+                or not data.startswith(b"%PDF-")
+                or any(
+                    "page_number" not in ref
+                    or ref.get("source_sha256") != packages.digest(data)
+                    or ref.get("source_size_bytes") != len(data)
+                    for ref in refs
+                )
             ):
                 raise ValueError("PDF evidence binding")
+        for source_id in selected.xlsx_sources:
+            data = members[f"evidence/{source_id}.xlsx"]
+            refs = [
+                ref for ref in scope.get("evidence_refs", []) if ref.get("source_id") == source_id
+            ]
+            if (
+                not refs
+                or not data.startswith(b"PK\x03\x04")
+                or any(
+                    ref.get("source_kind") != "xlsx"
+                    or ref.get("source_sha256") != packages.digest(data)
+                    or ref.get("source_size_bytes") != len(data)
+                    for ref in refs
+                )
+            ):
+                raise ValueError("XLSX evidence binding")
         if parsed.source_manifest != packages.source_manifest(
-            scope, match, estimate, selected.pdf_sources
+            scope, match, estimate, selected.pdf_sources, selected.xlsx_sources
         ):
             raise ValueError("source inventory")
         reports = []

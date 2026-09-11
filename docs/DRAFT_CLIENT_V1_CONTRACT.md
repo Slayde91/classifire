@@ -470,3 +470,9 @@ configuration defaults change. Keep the known synthetic browser login local; exp
 the protected MCP transport through the approved private tunnel, never the whole demo app.
 Provider registration, actual callback, human login/account mapping, file-host allowlist,
 scanner readiness and the real ChatGPT PDF/review journey still require separate evidence.
+
+
+Workbook package selection uses the same optional `xlsx_sources` list advertised
+by the domain-derived input schema. It selects up to four reviewed Scope evidence
+workbooks for ProjectPackage v4, never pricing-library files. Proposal, separate
+human confirmation and all current source/access checks still apply.

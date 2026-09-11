@@ -748,6 +748,7 @@ def test_proposal_discovery_exposes_domain_fields_and_preserves_raw_content(clie
     with TestClient(client_case.scope.app, base_url="https://testserver") as client:
         result = rpc(client, client_case.token(), "tools/list").json()["result"]
         schemas = {tool["name"]: tool["inputSchema"] for tool in result["tools"]}
+
         def check_refs(node, root):
             if isinstance(node, dict):
                 if "$ref" in node:
@@ -772,7 +773,13 @@ def test_proposal_discovery_exposes_domain_fields_and_preserves_raw_content(clie
                 assert field in encoded
             assert '"additionalProperties": false' in encoded
         package = json.dumps(schemas["propose_project_package"])
-        for field in ("scope_revision", "pdf_sources", "match_revision", "estimate_reports"):
+        for field in (
+            "scope_revision",
+            "pdf_sources",
+            "xlsx_sources",
+            "match_revision",
+            "estimate_reports",
+        ):
             assert field in package
 
     raw = {

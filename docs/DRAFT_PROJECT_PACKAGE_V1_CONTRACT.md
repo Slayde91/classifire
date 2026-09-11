@@ -188,3 +188,43 @@ original/local attachment identities, paths and hashes. Legacy mapping v1 remain
 All evidence binaries, including nested ancestors, require current clean scan/format checks
 before original ZIP download or re-export. PostgreSQL is required for binary retention.
 There is no automatic conversion of imported page references into local human approval.
+
+
+## V4 amendment: explicit Scope workbook membership
+
+The shared package service now accepts optional `Selection.xlsx_sources`: at most
+four unique sorted source UUIDs, disjoint from selected PDFs. Each must have a
+local-retained XLSX evidence reference in the selected saved Scope. The UI exposes
+an unchecked workbook choice; MCP discovers the same exact Selection schema.
+Empty workbook selection is omitted on serialization, preserving v1-v3 selections
+and exact historical package reconstruction. New workbook-bearing exports use
+`CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v4`; older readers must upgrade to open these.
+
+Each selected original workbook occupies `evidence/<source-id>.xlsx`; original
+filenames never become paths. Source inventory binds every included reference to
+its member. Export rereads owned/current-clean source bytes and compares their
+hash, size and parsed-document hash to saved evidence. Preview/save/download keep
+existing revision, exact-input and permission checks. The archive retains existing
+128 MiB/32-member and origin-depth/cumulative limits; combined selections can be
+rejected when those limits are exceeded. Restricted pricing and technical-library
+source bodies remain withheld.
+
+Semantic import checks workbook membership, magic, source hash/size and Scope
+reference type. This is consistency checking, not proof of file safety or truth.
+Import retains a new owned attachment through the existing shared intake service,
+using the native Scope workbook purpose and parser. Original pictures and formula
+text are preserved; formulas are never evaluated. The stricter generated-report
+XLSX parser is unchanged. Current malware scan and bounded workbook parsing are
+required before imported workbook/origin download or re-export. Nested ancestors
+remain checked; quarantine propagates across shared exact-byte bindings.
+
+Original/local attachment identities reuse import mapping v2. Imported Scope
+references remain foreign/unverified; parsing does not create local evidence review,
+technical approval, pricing, locks or release. No database migration, dependency or
+parallel storage pipeline is introduced. Standalone and ChatGPT use shared services.
+
+Synthetic validation covers optional UI selection/save/download, original-byte
+identity, unknown quantities, changed source/member refusal, legacy-format refusal,
+import/scan/re-export/two-generation history, foreign ownership and shared quarantine.
+Playwright exercised selection through ZIP download with ASGI test transport; this
+is browser proof, not hosted deployment or real ChatGPT acceptance.

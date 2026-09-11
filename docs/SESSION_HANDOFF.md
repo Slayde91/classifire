@@ -1,5 +1,65 @@
 # CLASSIFIRE Session Handoff
 
+## Start Here / Next Session: finish workbook package publication
+
+Use C:\CLASSIFIRE\.tmp\package-workbook-evidence-20260911, branch
+feat/package-workbook-evidence-20260911. Implementation commit 8b4cff9 is followed
+by merge f48621d integrating PR #249/main a02e895. PR #249 required CI 34606248729
+passed and merge was verified. Recheck actual head/PR/CI before acting; this file
+cannot record its own final commit. Live test activation was not performed.
+
+First task: publish package v4 after required CI, then prepare
+synthetic client acceptance after authorized activation. Files: shared
+services/draft_project_packages.py, draft_package_import.py,
+draft_package_materialization.py, draft_import_reports.py; package UI/templates;
+tests/test_draft_package_xlsx_evidence.py and package/client contracts. Exact MCP
+Selection schema automatically advertises xlsx_sources. Preserve unknown quantities,
+formula text, image bytes, historical formats and human authority boundaries.
+
+Evidence: three workbook and three PDF portability cases passed; 27 package/import/
+browser checks passed (one expected duplicate-ZIP warning); four final workbook/schema
+checks passed. After PR #249 integration, seven client/workbook/schema tests passed;
+full Ruff, Mypy (223 files) and Bandit passed. Playwright/Edge selected, previewed, saved and downloaded
+a ZIP containing the exact workbook; .tmp/package-xlsx-playwright.png was visually
+inspected. ASGI browser transport is not hosted/ChatGPT acceptance.
+
+Prerequisites: worktree src on PYTHONPATH; disposable PostgreSQL loopback 15433,
+classifire_containment_test, explicit
+CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN=classifire-containment-test-drop-all.
+Never use live trial port 15432 for destructive fixtures. Run pytest sequentially
+for client_workbooks, package_xlsx_evidence, package_pdf_evidence, project_packages,
+project_package_ui, package_import, package_import_ui, package_materialization,
+import_reports and the client schema-discovery case. Use -p no:cacheprovider and a
+unique --basetemp. Run Ruff, Mypy and Bandit. Playwright is isolated in ignored
+.tmp/playwright-tools-20260911, not an application dependency.
+
+Done: coherent reviewed diff, passing affected and required CI checks, pushed branch,
+correct PR base/head and verified merge. Activation and real client acceptance need
+separate evidence. No code blocker is established; these validation/acceptance gates
+remain. Preserve legacy root changes: inspection found 46 modified files, 14 additions,
+four DU conflicts and 52 untracked entries. Unreadable old test directories limit the
+inventory. Preserve the separate live trial and unrelated work in all worktrees.
+
+### Recommended Prompt for New Session
+
+Inspect AGENTS.md, GOAL.md, Git/worktrees/main/PR/CI, docs and code before editing.
+Preserve unrelated changes, the conflicted root and live trial. Continue
+feat/package-workbook-evidence-20260911 in its isolated worktree: verify whether
+workbook package v4 is already published, then finish remaining implementation,
+validation, classification, commit, push, PR and merge after required CI/review.
+This is next because PR #249 enables Excel review and portable evidence needs the
+original workbook. Inspect shared package/import/attachment services, package UI,
+test_draft_package_xlsx_evidence.py and client schema discovery. Preserve v1-v3 bytes,
+unknowns, formula-text-only processing, ownership/quarantine and human gates. Run
+workbook/client/schema and package/import regressions sequentially on disposable
+PostgreSQL 15433 with explicit test opt-in, worktree src on PYTHONPATH and unique temp;
+run Ruff, Mypy, Bandit and inspect the browser download. Done requires verified merge.
+Then prepare authorized synthetic ChatGPT Excel acceptance; activation/tool refresh
+are prerequisites. Never widen grants, use customer evidence, restart the live trial
+implicitly or claim production completion. Avoid speculative work.
+
+Earlier handoffs below are historical; do not repeat their completed tasks.
+
 Final local validation checkpoint: 51 existing client regressions passed. The three
 workbook cases passed after restoring fixture registrations; the selected review-image
 endpoint now has an explicit PNG assertion. Playwright rendered the evidence screen,
