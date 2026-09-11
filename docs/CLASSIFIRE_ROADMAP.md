@@ -1,5 +1,26 @@
 # CLASSIFIRE Master Roadmap
 
+## Active independent increment: Word evidence inspection
+
+- Completed shared checkpoint: PR #251 documentation merged as e2fcd15 after CI.
+  The approved Excel test-app activation is preserved; do not repeat it.
+- Active candidate: Word upload -> scan -> inspect body text/table cells/pictures
+  -> reopen -> exact-original download. Local integrated and browser checks passed;
+  publication/required CI remain to be verified before classifying it as merged.
+- Reordered while client refresh is pending: start the standalone Word requirement
+  using existing intake protections. This does not replace Excel acceptance or
+  claim complete Word analysis from a parser/preview screen.
+- Next Word dependency: explicit source-linked human Scope review, then portable
+  evidence references and original-bearing project packages, then thin client tools.
+- Awaiting external interaction: real refreshed-ChatGPT Excel acceptance and its
+  separate human confirmations. No repeated OAuth or grant changes are needed.
+- Still deferred: broader layouts/page rendering, complete project history,
+  remaining technical/commercial capability breadth and all production exits.
+- Candidate deployment dependency: forward migration 0047 and separately authorized
+  activation. No running app or customer/canonical state changed in this increment.
+
+Earlier delivery-order blocks remain historical where superseded above.
+
 ## Current delivery order: connected Excel acceptance
 
 - Completed: PR #249 Excel client tools and PR #250 ProjectPackage v4 workbook

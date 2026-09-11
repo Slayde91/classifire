@@ -1,5 +1,39 @@
 # CLASSIFIRE Project State
 
+## Current candidate: Word evidence inspection
+
+Branch `feat/scope-word-evidence-20260912` extends the existing Draft intake and
+worker with Word upload, explicit malware scan, paragraph/table-cell inspection,
+static-picture previews, reopen and exact-original download. It is implemented
+locally, not yet a merged or deployed capability. PR #251 documentation merged
+as e2fcd15 after CI; the running Excel test app remains unchanged on port 8820.
+
+Verification: 80 integrated Word/UI/migration/lineage/Excel checks passed. Ruff,
+Mypy (227 source files), Bandit and the single Alembic head check passed. The
+synthetic Edge/Playwright journey passed upload/scan/picture/reopen/exact download;
+the rendered screen was inspected. The initial browser harness used an immediate
+count before navigation settled; it now waits for visible prepared evidence.
+Earlier fixture-login, expected-table-list and callable-annotation failures were
+corrected; they are not product successes or unresolved blockers.
+
+Health: candidate is bounded evidence inspection, not complete Word scope analysis.
+Word-to-Scope human review, portable Word evidence references/package membership,
+ChatGPT Word tools, formatted page rendering and broader document layouts remain
+missing. Existing PDF/Excel paths and canonical authority are preserved. Forward
+migration 0047 adds only a Draft-owned Word source table; no live database migration
+or app activation has been performed for this candidate.
+
+### Recommended Next Actions
+
+Complete this candidate's CI-gated publication. Then extend retained Word evidence
+into the existing explicit source-linked Scope review, with versioned provenance
+and portable original-bearing packages. Do not turn image placement into semantic
+ownership or infer quantities. The separate real ChatGPT Excel acceptance remains
+pending refreshed tools and user confirmation; resume it when those are available.
+The full production-platform goal remains incomplete.
+
+The earlier workbook checkpoint below describes the preserved running app.
+
 ## Current checkpoint: workbook code merged and synthetic app updated
 
 PR #249 adds the Excel client tools (merge a02e895). PR #250 adds optional original

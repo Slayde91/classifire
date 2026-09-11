@@ -164,6 +164,13 @@ def main() -> None:
                 result = process_scope(content)
             elif len(sys.argv) == 4 and sys.argv[1] == "--scope-image":
                 result = process_scope_image(content, int(sys.argv[2]), sys.argv[3])
+            elif sys.argv[1:] == ["--word-evidence"] or (
+                len(sys.argv) == 3 and sys.argv[1] == "--word-image"
+            ):
+                from .draft_scope_docx_document import encode, parse
+
+                document, previews = parse(content)
+                result = encode(document) if len(sys.argv) == 2 else previews[sys.argv[2]]
             else:
                 raise ValueError("worker arguments")
         sys.stdout.buffer.write(result)

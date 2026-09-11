@@ -1008,6 +1008,34 @@ class DraftScopeXlsxSource(RecordMixin, Base):
     document_sha256: Mapped[str | None] = mapped_column(String(64))
 
 
+class DraftScopeDocxSource(RecordMixin, Base):
+    """Draft-owned Word report and scan metadata, separate from pricing authority."""
+
+    __tablename__ = "draft_scope_docx_sources"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["stored_file_id", "source_sha256", "source_size_bytes"],
+            ["stored_files.id", "stored_files.sha256", "stored_files.size_bytes"],
+            name="fk_draft_scope_docx_source_bytes",
+        ),
+        UniqueConstraint("stored_file_id", name="uq_draft_scope_docx_source_file"),
+        CheckConstraint(
+            "source_size_bytes > 0 AND source_size_bytes <= 10485760",
+            name="ck_draft_scope_docx_source_size",
+        ),
+    )
+    draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
+    stored_file_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    original_filename: Mapped[str] = mapped_column(String(200), nullable=False)
+    scan_json: Mapped[str | None] = mapped_column(Text)
+    processing_error: Mapped[str | None] = mapped_column(String(80))
+    document_json: Mapped[str | None] = mapped_column(Text)
+    document_sha256: Mapped[str | None] = mapped_column(String(64))
+
+
 class DraftPricingSource(RecordMixin, Base):
     """Draft-owned retained pricing XLSX and scanner/normalization metadata, never approval."""
 

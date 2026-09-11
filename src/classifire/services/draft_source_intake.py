@@ -23,6 +23,7 @@ from ..models import (
     DraftImportedReportSource,
     DraftPdfSource,
     DraftPricingSource,
+    DraftScopeDocxSource,
     DraftScopeXlsxSource,
     StoredFile,
     User,
@@ -42,7 +43,13 @@ from .storage import (
 
 MAX_SOURCES = 20
 MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
-SourceRow = DraftPdfSource | DraftPricingSource | DraftImportedReportSource | DraftScopeXlsxSource
+SourceRow = (
+    DraftPdfSource
+    | DraftPricingSource
+    | DraftImportedReportSource
+    | DraftScopeXlsxSource
+    | DraftScopeDocxSource
+)
 
 
 @dataclass(frozen=True)

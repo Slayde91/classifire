@@ -10,6 +10,7 @@ import os
 import re
 import subprocess  # nosec B404
 import sys
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -40,7 +41,12 @@ from .draft_scope_xlsx_contract import SCHEMA, digest, selected_rows, validate_d
 from .draft_source_intake import DraftSourceIntake, SourcePolicy
 
 
-def _run_worker(content: bytes, *arguments: str, image: bool = False) -> bytes:
+def _run_worker(content: bytes, *arguments: str, image: bool = False, word: bool = False) -> bytes:
+    validator: Callable[[Any], bool] = validate_document
+    if word:
+        from .draft_scope_docx_document import validate_document as validate_word
+
+        validator = validate_word
     environment = {
         key: value
         for key, value in os.environ.items()
@@ -70,7 +76,7 @@ def _run_worker(content: bytes, *arguments: str, image: bool = False) -> bytes:
         else:
             document = json.loads(result.stdout)
             if (
-                not validate_document(document)
+                not validator(document)
                 or document["manifest"]["source_sha256"] != hashlib.sha256(content).hexdigest()
                 or document["manifest"]["source_size_bytes"] != len(content)
             ):
@@ -83,7 +89,9 @@ def _run_worker(content: bytes, *arguments: str, image: bool = False) -> bytes:
         KeyError,
         RecursionError,
     ) as exc:
-        raise DraftScopeError("SCOPE_XLSX_PROCESSING_FAILED") from exc
+        raise DraftScopeError(
+            "SCOPE_DOCX_PROCESSING_FAILED" if word else "SCOPE_XLSX_PROCESSING_FAILED"
+        ) from exc
     return result.stdout
 
 
