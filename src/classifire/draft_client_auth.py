@@ -30,6 +30,7 @@ class ClientPolicy(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     base_url: str
     issuer: str
+    oauth_resource: str | None = None
     public_keys: dict[str, dict[str, Any]]
     subjects: dict[str, str]
     clients: dict[str, list[str]]
@@ -37,7 +38,7 @@ class ClientPolicy(BaseModel):
 
     @property
     def resource(self) -> str:
-        return self.base_url + "/mcp"
+        return self.oauth_resource if self.oauth_resource is not None else self.base_url + "/mcp"
 
 
 def load_policy(path: Path, *, development: bool = False) -> ClientPolicy:
@@ -46,7 +47,7 @@ def load_policy(path: Path, *, development: bool = False) -> ClientPolicy:
     if len(raw) > 1048576:
         raise ValueError("Client policy exceeds limit")
     policy = ClientPolicy.model_validate_json(raw)
-    for value in (policy.base_url, policy.issuer):
+    for value in (policy.base_url, policy.issuer, policy.resource):
         parsed = urlsplit(value)
         local = development and parsed.hostname in {"127.0.0.1", "localhost", "::1"}
         if (parsed.scheme != "https" and not (local and parsed.scheme == "http")) or (
@@ -58,6 +59,8 @@ def load_policy(path: Path, *, development: bool = False) -> ClientPolicy:
             or any(c.isspace() for c in value)
         ):
             raise ValueError("Client endpoints require exact HTTPS URLs")
+    if policy.oauth_resource is not None and urlsplit(policy.oauth_resource).scheme != "https":
+        raise ValueError("Explicit OAuth resource requires HTTPS")
     if urlsplit(policy.base_url).path:
         raise ValueError("Client base URL must be an origin")
     if not policy.public_keys or not policy.subjects or not policy.clients:
@@ -101,8 +104,10 @@ class ClientAuthority:
 
     def policy(self) -> ClientPolicy:
         policy = load_policy(self.path, development=self.development)
-        if (policy.issuer, policy.resource) != (self.initial.issuer, self.initial.resource):
-            raise ValueError("Restart required when client issuer or resource changes")
+        if (policy.base_url, policy.issuer, policy.resource) != (
+            self.initial.base_url, self.initial.issuer, self.initial.resource
+        ):
+            raise ValueError("Restart required when client origin, issuer or resource changes")
         return policy
 
     def check(self, identity: ClientIdentity, scope: str) -> None:
