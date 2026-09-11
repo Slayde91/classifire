@@ -1,5 +1,50 @@
 # CLASSIFIRE Session Handoff
 
+Validation checkpoint: 44 affected tests passed; six PostgreSQL-dependent tests
+were skipped locally. Full Ruff, Mypy (222 files) and Bandit passed. Required
+current-head CI/publication and refreshed-client acceptance remain pending.
+
+## Current Start Here / Next Session (supersedes historical handoff below)
+
+Branch: fix/client-proposal-schema-discovery, based on verified origin/main 5c8ee72
+(PR #247 merged; required CI passed). Worktree: C:\CLASSIFIRE\.tmp\auth0-issuer-url-20260910.
+Preserve the legacy root's unrelated edits, staged additions and four DU conflicts.
+First task: finish proposal-schema discovery and safe error feedback, then verify merge.
+Files: draft_client.py, services/draft_client_capabilities.py,
+services/draft_project_packages.py, tests/test_draft_client.py and the client contract.
+Done: actual tools/list has resolvable domain fields, proposal bytes stay compatible,
+errors reveal useful paths without values, human confirmation remains mandatory,
+relevant tests and required CI pass, and merge is verified.
+
+Prerequisites: isolated worktree src on PYTHONPATH, unique pytest temp directory;
+PostgreSQL tests need a disposable test database, never the live trial database.
+Run client, capability, PDF-scope and package-evidence pytest suites, Ruff, Mypy, Bandit.
+Refresh-client acceptance requires an authorized runtime update; do not implicitly
+restart the live app or expand grants. The local package-verification-receipt.json
+under C:\CLASSIFIRE\.tmp\chatgpt-trial-tools-20260910 records the prior Scope-only
+synthetic trial PASS: three ZIP members, five references, original PDF byte-identical.
+No application import was performed. One stale page-2 observation needs normal review.
+
+### Recommended Prompt for New Session
+
+Inspect AGENTS.md, GOAL.md, current Git/worktrees, shared main, PR/CI, project state and
+roadmap before editing. Preserve unrelated changes and the conflicted C:\CLASSIFIRE
+root. Finish fix/client-proposal-schema-discovery if not merged: inspect draft_client.py,
+draft_client_capabilities.py, draft_project_packages.py and test_draft_client.py.
+This is next because the successful synthetic PDF trial required manual JSON repairs.
+Prove discovery exposes existing domain fields, raw request hashes stay compatible,
+invalid-field feedback hides submitted values, and human confirmation remains required.
+Run test_draft_client, test_draft_client_capabilities, test_draft_client_pdf_scope and
+test_draft_package_pdf_evidence with worktree src on PYTHONPATH, unique temp storage
+and a disposable PostgreSQL test DB, plus Ruff, Mypy and Bandit. Continue autonomously
+through validation, classification, explicit-path commit, push, PR and merge after
+required CI/review; verify the merge. Arrange refreshed-client acceptance without
+assuming deployment authorization. Do not rebuild proven OAuth/PDF transport, expand
+grants, use customer evidence or speculate about missing rejected payloads. After
+this correction, Excel client intake through existing review services is the next
+visible increment. Preserve all four product capabilities and production gates.
+
+
 
 Validation for this increment: affected client/launcher suites passed (one PostgreSQL-only
 test skipped locally); final OIDC regressions and full Ruff passed. Mypy checked 222

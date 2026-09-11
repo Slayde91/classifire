@@ -1,5 +1,19 @@
 # CLASSIFIRE Master Roadmap
 
+## Current delivery order (supersedes historical checkpoints below)
+
+- Completed bounded acceptance: PR #247 merged at 5c8ee72 with required CI passed;
+  user-reported real ChatGPT PDF/Scope review and independently verified package.
+- Active: proposal schema discovery and redacted invalid-field feedback. The trial
+  needed manual JSON repairs; finish regressions, publication and refreshed-client acceptance.
+- Upcoming: Excel client intake/review through existing standalone services.
+- Reordered: fix the observed contract discoverability gap before broadening intake.
+- Superseded: repeating completed OAuth setup or PDF upload/review implementation.
+- Deferred: cosmetic polish; a stale page-2 observation needs a normal reviewed revision.
+- Still gated: remaining independent capability coverage, production exits and OpenClaw
+  retirement. Scope-only export proves none of matching, estimating or report rendering.
+
+
 ## Current delivery order: unblock authenticated discovery
 
 - Completed: PR #246 exact external resource, required CI, matching synthetic Auth0 API,

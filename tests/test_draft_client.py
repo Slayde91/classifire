@@ -480,8 +480,9 @@ def test_database_parameters_never_escape_as_tool_errors(client_case, monkeypatc
         assert "synthetic-private-database-parameter" not in caplog.text
 
 
-@pytest.mark.parametrize("issuer", ["https://auth.example.test/",
-                                   "https://auth.example.test/tenant/"])
+@pytest.mark.parametrize(
+    "issuer", ["https://auth.example.test/", "https://auth.example.test/tenant/"]
+)
 def test_trailing_slash_issuer_is_preserved_and_matched_exactly(client_case, issuer):
     from fastapi import FastAPI
 
@@ -511,8 +512,9 @@ def test_optional_nbf_accepts_absence_but_validates_present_values(client_case):
     del claims["nbf"]
 
     def signed(payload):
-        return jwt.encode(payload, case.key, algorithm="RS256",
-                          headers={"kid": "synthetic", "typ": "at+jwt"})
+        return jwt.encode(
+            payload, case.key, algorithm="RS256", headers={"kid": "synthetic", "typ": "at+jwt"}
+        )
 
     token = signed(claims)
     assert case.authority.verify(token) is not None
@@ -520,8 +522,19 @@ def test_optional_nbf_accepts_absence_but_validates_present_values(client_case):
         assert rpc(client, token, "tools/list").status_code == 200
     for value in (claims["iat"] - 60, claims["iat"]):
         assert case.authority.verify(signed({**claims, "nbf": value})) is not None
-    for value in (claims["iat"] + 3600, None, True, False, str(claims["iat"]),
-                  float(claims["iat"]), float("inf"), float("-inf"), float("nan"), [], {}):
+    for value in (
+        claims["iat"] + 3600,
+        None,
+        True,
+        False,
+        str(claims["iat"]),
+        float(claims["iat"]),
+        float("inf"),
+        float("-inf"),
+        float("nan"),
+        [],
+        {},
+    ):
         assert case.authority.verify(signed({**claims, "nbf": value})) is None, repr(value)
     _assert_no_canonical_scope(case.scope.factory)
 
@@ -532,8 +545,12 @@ def test_absent_nbf_preserves_required_claims_and_security_checks(client_case):
     del claims["nbf"]
 
     def signed(payload, **headers):
-        return jwt.encode(payload, case.key, algorithm="RS256",
-                          headers={"kid": "synthetic", "typ": "at+jwt", **headers})
+        return jwt.encode(
+            payload,
+            case.key,
+            algorithm="RS256",
+            headers={"kid": "synthetic", "typ": "at+jwt", **headers},
+        )
 
     for field in ("iss", "aud", "iat", "exp", "sub", "client_id", "jti", "scope"):
         incomplete = {k: v for k, v in claims.items() if k != field}
@@ -542,15 +559,30 @@ def test_absent_nbf_preserves_required_claims_and_security_checks(client_case):
         {"iss": "https://foreign.example.test"},
         {"aud": "https://foreign.example.test/mcp"},
         {"aud": [claims["aud"]]},
-        {"sub": "unmapped"}, {"client_id": "unmapped"}, {"jti": ""},
-        {"scope": WRITE}, {"scope": READ + " administrator"},
+        {"sub": "unmapped"},
+        {"client_id": "unmapped"},
+        {"jti": ""},
+        {"scope": WRITE},
+        {"scope": READ + " administrator"},
         {"iat": claims["iat"] + 60, "exp": claims["iat"] + 600},
         {"iat": claims["iat"] - 120, "exp": claims["iat"] - 60},
-        {"exp": claims["iat"]}, {"exp": claims["iat"] + 901},
+        {"exp": claims["iat"]},
+        {"exp": claims["iat"] + 901},
     ]
-    invalid += [{field: value} for field in ("iat", "exp")
-                for value in (None, True, False, str(claims[field]), float(claims[field]),
-                              float("inf"), float("-inf"), float("nan"))]
+    invalid += [
+        {field: value}
+        for field in ("iat", "exp")
+        for value in (
+            None,
+            True,
+            False,
+            str(claims[field]),
+            float(claims[field]),
+            float("inf"),
+            float("-inf"),
+            float("nan"),
+        )
+    ]
     for overrides in invalid:
         assert case.authority.verify(signed({**claims, **overrides})) is None, overrides
     for headers in ({"typ": "JWT"}, {"kid": "unknown"}, {"jku": "https://foreign.test"}):
@@ -565,7 +597,8 @@ def test_absent_nbf_preserves_required_claims_and_security_checks(client_case):
 
 
 @pytest.mark.parametrize(
-    "client_case", [{"oauth_resource": "https://gateway.example.test/v1/mcp/synthetic"}],
+    "client_case",
+    [{"oauth_resource": "https://gateway.example.test/v1/mcp/synthetic"}],
     indirect=True,
 )
 def test_external_resource_keeps_exact_audience_and_local_review_origin(client_case):
@@ -578,12 +611,17 @@ def test_external_resource_keeps_exact_audience_and_local_review_origin(client_c
         for audience in ("https://testserver/mcp", resource + "/", resource + "-other", [resource]):
             assert rpc(client, case.token(aud=audience), "tools/list").status_code == 401
         request = tool(
-            client, case.token(), "propose_draft_project",
+            client,
+            case.token(),
+            "propose_draft_project",
             {"reference": "EXT-01", "name": "Synthetic external resource"},
         )
         assert request["review_url"].startswith("https://testserver/client-requests/")
     _assert_no_canonical_scope(case.scope.factory)
-    for field, value in (("oauth_resource", resource + "-changed"), ("base_url", "https://other.example.test")):
+    for field, value in (
+        ("oauth_resource", resource + "-changed"),
+        ("base_url", "https://other.example.test"),
+    ):
         changed = {**case.policy, field: value}
         case.path.write_text(json.dumps(changed), encoding="utf-8")
         assert case.authority.verify(case.token()) is None
@@ -591,9 +629,17 @@ def test_external_resource_keeps_exact_audience_and_local_review_origin(client_c
 
 def test_invalid_explicit_oauth_resources_fail_closed(client_case):
     case = client_case
-    for value in ("", "http://127.0.0.1:8820/mcp", "http://foreign.example.test/mcp",
-                  "https://user:password@example.test/mcp", "https://example.test/mcp?q=1",
-                  "https://example.test/mcp#fragment", "https://exa mple.test/mcp", [], 7):
+    for value in (
+        "",
+        "http://127.0.0.1:8820/mcp",
+        "http://foreign.example.test/mcp",
+        "https://user:password@example.test/mcp",
+        "https://example.test/mcp?q=1",
+        "https://example.test/mcp#fragment",
+        "https://exa mple.test/mcp",
+        [],
+        7,
+    ):
         case.path.write_text(json.dumps({**case.policy, "oauth_resource": value}), encoding="utf-8")
         with pytest.raises(ValueError):
             ClientAuthority(case.path, development=True)
@@ -688,3 +734,93 @@ def test_oidc_compatibility_is_default_off_and_requires_restart(client_case):
     )
     with pytest.raises(ValueError, match="exact HTTPS issuer"):
         ClientAuthority(case.path)
+
+
+def test_proposal_discovery_exposes_domain_fields_and_preserves_raw_content(client_case):
+    from classifire.services.draft_client_capabilities import ReviewPdfScope
+
+    with TestClient(client_case.scope.app, base_url="https://testserver") as client:
+        result = rpc(client, client_case.token(), "tools/list").json()["result"]
+        schemas = {tool["name"]: tool["inputSchema"] for tool in result["tools"]}
+        def check_refs(node, root):
+            if isinstance(node, dict):
+                if "$ref" in node:
+                    assert node["$ref"].startswith("#/")
+                    resolved = root
+                    for part in node["$ref"][2:].split("/"):
+                        resolved = resolved[part.replace("~1", "/").replace("~0", "~")]
+                    assert isinstance(resolved, dict)
+                for value in node.values():
+                    check_refs(value, root)
+            elif isinstance(node, list):
+                for value in node:
+                    check_refs(value, root)
+
+        for schema in schemas.values():
+            check_refs(schema, schema)
+        # MCP may inline or retain definitions. Both must contain the actual nested
+        # contracts, including uncertainty, linkage and the explicit package revision.
+        for name in ("propose_draft_edit", "propose_capability"):
+            encoded = json.dumps(schemas[name])
+            for field in ("opening_ids", "width_mm", "quantity", "Provisional", "defects"):
+                assert field in encoded
+            assert '"additionalProperties": false' in encoded
+        package = json.dumps(schemas["propose_project_package"])
+        for field in ("scope_revision", "pdf_sources", "match_revision", "estimate_reports"):
+            assert field in package
+
+    raw = {
+        "action": "review_pdf_scope",
+        "draft_id": "draft",
+        "source_id": "source",
+        "expected_revision": 1,
+        "page_number": 1,
+        "expected_document_hash": "a" * 64,
+        "content": {"assumptions": ["  preserve raw proposal whitespace  "]},
+        "targets": [{"target_kind": "opening", "target_id": "opening"}],
+    }
+    assert ReviewPdfScope.model_validate(raw).model_dump(mode="json") == raw
+
+
+def test_proposal_validation_feedback_does_not_echo_submitted_values(client_case):
+    case = client_case
+    with TestClient(case.scope.app, base_url="https://testserver") as client:
+        token = case.token()
+        _login(client)
+        request = tool(
+            client, token, "propose_draft_project", {"reference": "SCHEMA", "name": "Synthetic"}
+        )
+        confirm(client, request)
+        draft_id = tool(client, token, "list_draft_projects")["drafts"][0]["draft_id"]
+        for name, arguments, expected in (
+            (
+                "propose_draft_edit",
+                {
+                    "draft_id": draft_id,
+                    "expected_revision": 1,
+                    "content": {
+                        "openings": [{"id": "SECRET-VALUE", "label": "Synthetic"}],
+                        "SECRET-FIELD": "SECRET-CONTENT",
+                    },
+                },
+                "openings.0.id",
+            ),
+            (
+                "propose_project_package",
+                {
+                    "draft_id": draft_id,
+                    "selection": {
+                        "scope_revision": "SECRET-VALUE",
+                        "SECRET-FIELD": "SECRET-CONTENT",
+                    },
+                },
+                "scope_revision",
+            ),
+        ):
+            result = tool(client, token, name, arguments, error=True)
+            text = json.dumps(result)
+            assert expected in text
+            assert "[unknown]" in text
+            assert "SECRET" not in text
+        saved = tool(client, token, "read_draft_scope", {"draft_id": draft_id})
+        assert saved["revision"] == 1

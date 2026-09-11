@@ -1,5 +1,26 @@
 # CLASSIFIRE Architecture
 
+## Current implemented boundary and candidate amendment
+
+PR #247 is merged; the synthetic connected PDF/Scope/package journey is proven by
+user-reported actions and independent ZIP inspection. Historical activation-pending
+notes below are superseded. The MCP adapter and standalone UI share domain services;
+live state remains in governed persistence, with portable versioned representations.
+
+Candidate change: derive discovery fields from existing Scope/Selection models while
+passing raw dictionaries unchanged to authorized domain services. This preserves
+request hashes and validation timing. Invalid Scope/package feedback returns bounded
+known field paths, never submitted values or unknown field names. Human confirmation
+remains separate. Reason: the trial required manual repairs after opaque validation
+errors. Consequences: clearer contracts, no new dependencies, domain schema version,
+database migration, permission or release authority. Publication and refreshed-client
+acceptance remain to be verified; this is not a runtime deployment claim.
+
+Planned: Excel client intake through existing services and broader independent
+capability coverage. Hybrid architecture remains approved; OpenClaw retirement and
+production release still require their existing exit evidence.
+
+
 ## OAuth compatibility amendment: approved, activation pending
 
 Current architecture: the optional MCP adapter shares domain services and verifies an
