@@ -29,7 +29,7 @@ postgresql_session_factory = _postgres
 
 
 @pytest.fixture
-def client_case(scope_app, tmp_path):
+def client_case(scope_app, tmp_path, request):
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     public = jwt.algorithms.RSAAlgorithm.to_jwk(key.public_key(), as_dict=True)
     public.update(alg="RS256", use="sig", kid="synthetic")
@@ -40,6 +40,7 @@ def client_case(scope_app, tmp_path):
         "subjects": scope_app.users,
         "clients": {"synthetic-client": [READ, WRITE, EXPORT]},
     }
+    policy.update(getattr(request, "param", {}))
     path = tmp_path / "client-policy.json"
     path.write_text(json.dumps(policy), encoding="utf-8")
     authority = ClientAuthority(path)
@@ -62,7 +63,7 @@ def client_case(scope_app, tmp_path):
         now = int(time.time())
         claims = {
             "iss": policy["issuer"],
-            "aud": policy["base_url"] + "/mcp",
+            "aud": policy.get("oauth_resource", policy["base_url"] + "/mcp"),
             "sub": user,
             "client_id": "synthetic-client",
             "jti": "synthetic-token",
@@ -561,3 +562,38 @@ def test_absent_nbf_preserves_required_claims_and_security_checks(client_case):
     case.policy["revoked_token_ids"] = [claims["jti"]]
     case.path.write_text(json.dumps(case.policy), encoding="utf-8")
     assert case.authority.verify(token) is None
+
+
+@pytest.mark.parametrize(
+    "client_case", [{"oauth_resource": "https://gateway.example.test/v1/mcp/synthetic"}],
+    indirect=True,
+)
+def test_external_resource_keeps_exact_audience_and_local_review_origin(client_case):
+    case = client_case
+    resource = case.policy["oauth_resource"]
+    with TestClient(case.scope.app, base_url="https://testserver") as client:
+        metadata = client.get("/.well-known/oauth-protected-resource/mcp").json()
+        assert metadata["resource"] == resource
+        assert rpc(client, case.token(), "tools/list").status_code == 200
+        for audience in ("https://testserver/mcp", resource + "/", resource + "-other", [resource]):
+            assert rpc(client, case.token(aud=audience), "tools/list").status_code == 401
+        request = tool(
+            client, case.token(), "propose_draft_project",
+            {"reference": "EXT-01", "name": "Synthetic external resource"},
+        )
+        assert request["review_url"].startswith("https://testserver/client-requests/")
+    _assert_no_canonical_scope(case.scope.factory)
+    for field, value in (("oauth_resource", resource + "-changed"), ("base_url", "https://other.example.test")):
+        changed = {**case.policy, field: value}
+        case.path.write_text(json.dumps(changed), encoding="utf-8")
+        assert case.authority.verify(case.token()) is None
+
+
+def test_invalid_explicit_oauth_resources_fail_closed(client_case):
+    case = client_case
+    for value in ("", "http://127.0.0.1:8820/mcp", "http://foreign.example.test/mcp",
+                  "https://user:password@example.test/mcp", "https://example.test/mcp?q=1",
+                  "https://example.test/mcp#fragment", "https://exa mple.test/mcp", [], 7):
+        case.path.write_text(json.dumps({**case.policy, "oauth_resource": value}), encoding="utf-8")
+        with pytest.raises(ValueError):
+            ClientAuthority(case.path, development=True)

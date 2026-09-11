@@ -93,8 +93,11 @@ def run_demo(directory, *arguments, token=None):
     )
 
 
-def test_external_demo_preparation_restart_and_binding_guards(tmp_path, external_policy):
+@pytest.mark.parametrize("resource", [None, "https://gateway.example.test/v1/mcp/synthetic"])
+def test_external_demo_preparation_restart_and_binding_guards(tmp_path, external_policy, resource):
     key, policy, path = external_policy
+    if resource is not None:
+        policy["oauth_resource"] = resource
     directory = tmp_path / "trial"
     prepared = run_demo(directory, "--prepare-external-client")
     assert prepared.returncode == 0, prepared.stderr
@@ -110,7 +113,7 @@ def test_external_demo_preparation_restart_and_binding_guards(tmp_path, external
     token = jwt.encode(
         {
             "iss": policy["issuer"],
-            "aud": ORIGIN + "/mcp",
+            "aud": resource or ORIGIN + "/mcp",
             "sub": "synthetic-human",
             "client_id": "synthetic-human-client",
             "jti": "synthetic",

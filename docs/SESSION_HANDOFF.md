@@ -1,5 +1,35 @@
 # CLASSIFIRE Session Handoff
 
+## Active correction: exact external OAuth resource
+
+Validation: affected client and launcher suites passed (one PostgreSQL-only test skipped
+locally); full Ruff, Mypy (222 source files) and Bandit passed. Required CI remains pending.
+
+The real ChatGPT request uses the tunnel HTTPS address as its OAuth resource. The previous
+policy derived its audience from the local browser origin. Optional operator-owned
+`oauth_resource` now separates those values; omission preserves `base_url + "/mcp"`.
+Explicit resources require HTTPS without credentials, query, fragment or whitespace.
+Discovery and strict token verification use the same exact resource; changing resource,
+issuer or browser origin requires restart. All signature/time/permission checks remain.
+No domain schema, database migration or additional client grants are introduced.
+
+Human Auth0 login, local authenticated MCP access and the approved tunnel discovery
+correction were verified; the exact ChatGPT callback is registered. This code increment
+still needs completed regression and required CI/publication before configuring the
+matching synthetic Auth0 API/policy and restarting. Real ChatGPT token shape (including
+OIDC scopes) and the full PDF-to-reviewed-Scope-to-package journey remain unproven.
+
+## Current branch / next task
+
+Use `fix/external-oauth-resource-20260911` in the existing isolated worktree. Finish tests
+in test_draft_client.py and test_external_client_demo.py, Ruff/Mypy/Bandit, scoped review,
+commit/push/PR and required-CI/merge. Then configure the observed exact tunnel resource
+in Auth0 and the protected operator policy and restart the approved synthetic trial.
+Preserve unrelated work, current permission scopes and human confirmation boundaries.
+Read the local operator runbook before touching live configuration. The older prompt below
+predates the observed mismatch; this continuation is the current first task.
+
+
 ## Start Here / Next Session
 
 Worktree: `C:/CLASSIFIRE/.tmp/auth0-issuer-url-20260910`.

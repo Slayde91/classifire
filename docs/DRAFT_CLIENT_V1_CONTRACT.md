@@ -1,5 +1,22 @@
 # Draft client v1: authenticated MCP and human confirmation
 
+## Exact external OAuth resource (candidate)
+
+Optional operator-owned `oauth_resource` separates the token audience from `base_url`,
+which remains the browser-review origin. Omission preserves `base_url + "/mcp"`. An explicit
+resource must be an exact HTTPS URL without credentials, query, fragment or whitespace.
+Discovery and MCP authentication advertise/use that same value. Tokens for the old local
+audience, another resource, a trailing-slash variant or an audience array remain rejected.
+Changing resource, issuer or browser origin requires restart; no token/permission checks
+are removed and no additional scopes are granted.
+
+Reason: the real ChatGPT tunnel authorization request supplies the tunnel HTTPS resource,
+not the local MCP address. Configure the same exact value as an Auth0 API identifier and
+in the operator policy after validation/publication. Keep local browser links separate.
+This is an additive configuration migration, not a domain-schema or database migration.
+Real ChatGPT token shape and the full PDF journey remain acceptance work.
+
+
 ## Status and purpose
 
 2026-09-09. Shared main `d477ff724f3eb6f0229c376728ddba9bea1e75e9` includes
