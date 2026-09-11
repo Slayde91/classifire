@@ -43,13 +43,14 @@ def _query(request: Request, latest: int) -> dict:
     allowed = set(packages.Selection.model_fields)
     if set(query) - allowed or any(
         len(query.getlist(k)) > 1
-        for k in allowed - {"scope_reports", "estimate_reports", "pdf_sources"}
+        for k in allowed - {"scope_reports", "estimate_reports", "pdf_sources", "xlsx_sources"}
     ):
         raise HTTPException(422, "Invalid package selection")
     value = {
         "scope_revision": _number(query.get("scope_revision", str(latest))),
         "scope_reports": query.getlist("scope_reports"),
         "pdf_sources": query.getlist("pdf_sources"),
+        "xlsx_sources": query.getlist("xlsx_sources"),
         "estimate_reports": query.getlist("estimate_reports"),
     }
     for kind in ("match", "estimate"):
@@ -107,9 +108,16 @@ def package_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
                 project=scope_reports._project(db, draft),
                 chosen=chosen,
                 scope=scope,
-                pdf_sources={ref["source_id"]: ref["original_filename"]
-                             for ref in scope.get("evidence_refs", [])
-                             if ref.get("origin") == "local_retained" and "page_number" in ref},
+                pdf_sources={
+                    ref["source_id"]: ref["original_filename"]
+                    for ref in scope.get("evidence_refs", [])
+                    if ref.get("origin") == "local_retained" and "page_number" in ref
+                },
+                xlsx_sources={
+                    ref["source_id"]: ref["original_filename"]
+                    for ref in scope.get("evidence_refs", [])
+                    if ref.get("origin") == "local_retained" and ref.get("source_kind") == "xlsx"
+                },
                 reviews=[r for r in reviews if r.scope_hash == scope["sha256"]],
                 costs=[r for r in costs if r.scope_hash == scope["sha256"]],
                 scoped_reports=[r for r in scoped_reports if r.scope_hash == scope["sha256"]],
@@ -357,10 +365,14 @@ def imported_package_page(request: Request, db: Db, draft_id: str) -> HTMLRespon
                 )
                 attachments.append({"format": fmt, "report": report["source_report_id"], **info})
         for member in mapping.get("evidence", []):
-            info = imported_reports.evidence_intake().source_info(
-                db, user, draft_id, member["source_id"],
+            fmt = member["path"].rsplit(".", 1)[-1]
+            info = imported_reports.evidence_intake(fmt).source_info(
+                db,
+                user,
+                draft_id,
+                member["source_id"],
             )
-            attachments.append({"format": "pdf", "report": "Project evidence", **info})
+            attachments.append({"format": fmt, "report": "Project evidence", **info})
         return templates.TemplateResponse(
             request=request,
             name="draft_imported_package.html",

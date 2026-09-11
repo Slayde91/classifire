@@ -87,18 +87,35 @@ def intake(format_name: str) -> DraftSourceIntake:
     )
 
 
-def evidence_intake() -> DraftSourceIntake:
+def evidence_intake(format_name: str = "pdf") -> DraftSourceIntake:
     """Import supplies exact archive bytes, never adopts another owner's source by hash.
 
-    Keep the native PDF purpose and create a new owned source binding. Only this explicit
-    import path permits supplied-byte reuse; normal PDF uploads keep their existing policy.
+    Keep the native evidence purpose and create a new owned source binding. Only this
+    explicit import path permits supplied-byte reuse. Workbooks use the existing Scope
+    evidence parser; the stricter generated-report XLSX policy remains unchanged.
     """
     from . import draft_pdf_intake as pdf
+    from . import draft_scope_xlsx as xlsx
 
-    return DraftSourceIntake(replace(
-        intake("pdf").policy, purpose=pdf._intake().policy.purpose,
-        audit_name="draft_import_pdf_evidence",
-    ))
+    if format_name == "xlsx":
+        return DraftSourceIntake(
+            replace(
+                xlsx.intake().policy,
+                model=DraftImportedReportSource,
+                audit_name="draft_import_xlsx_evidence",
+                allow_supplied_content_reuse=True,
+                max_sources=128,
+            )
+        )
+    if format_name != "pdf":
+        raise DraftScopeError("IMPORTED_REPORT_FORMAT_INVALID", 422)
+    return DraftSourceIntake(
+        replace(
+            intake("pdf").policy,
+            purpose=pdf._intake().policy.purpose,
+            audit_name="draft_import_pdf_evidence",
+        )
+    )
 
 
 def _member(db: Session, actor: User, draft_id: str, source_id: str, *, export: bool = False):
@@ -111,7 +128,7 @@ def _member(db: Session, actor: User, draft_id: str, source_id: str, *, export: 
                 return row, original, fmt, member
     for member in mapping.get("evidence", []):
         if member["source_id"] == source_id:
-            return row, original, "pdf", member
+            return row, original, member["path"].rsplit(".", 1)[-1], member
     raise DraftScopeError("IMPORTED_REPORT_NOT_FOUND", 404)
 
 
@@ -119,7 +136,7 @@ def scan(
     db: Session, actor: User, draft_id: str, source_id: str, *, settings: Settings
 ) -> dict[str, Any]:
     _row, _original, fmt, member = _member(db, actor, draft_id, source_id)
-    service = evidence_intake() if "original_source_id" in member else intake(fmt)
+    service = evidence_intake(fmt) if "original_source_id" in member else intake(fmt)
     return service.scan_source(db, actor, draft_id, source_id, settings=settings)
 
 
@@ -127,7 +144,7 @@ def checked_bytes(
     db: Session, actor: User, draft_id: str, source_id: str, *, settings: Settings
 ) -> bytes:
     _row, original, fmt, member = _member(db, actor, draft_id, source_id, export=True)
-    service = evidence_intake() if "original_source_id" in member else intake(fmt)
+    service = evidence_intake(fmt) if "original_source_id" in member else intake(fmt)
     _source, _document, content = service._document(
         db, actor, draft_id, source_id, settings.storage_root
     )
