@@ -1,5 +1,24 @@
 # CLASSIFIRE Master Roadmap
 
+## Current delivery order: Excel client evidence interaction
+
+- Completed bounded correction: PR #248 merged with required CI; running synthetic
+  app returns field-level errors. User-side cached-schema refresh remains acceptance work.
+- Active: reuse standalone Excel intake/mapping/review through MCP, with cell/image
+  inspection and separate human confirmation of one evidence-linked Scope revision.
+- Candidate exit: synthetic upload -> scan -> inspect rows/pictures -> explicit mapping
+  -> edit relationships -> visible evidence review -> confirm -> saved Scope v5;
+  stale source/rights and incorrect file type fail closed, with PDF regression coverage.
+- Upcoming: actual refreshed ChatGPT Excel acceptance after publication and authorized
+  test activation, followed by the remaining independent capability priorities.
+- Deferred: binary XLSX inclusion in ProjectPackage, bulk/unsupported workbook layouts,
+  arbitrary Word/drawing ingestion and production rollout. These remain goal requirements,
+  not features proved by this bounded increment.
+- No migration or OpenClaw retirement is included; all production exit gates remain.
+
+Historical priorities below are superseded where they describe this work as unstarted.
+
+
 ## Current delivery order (supersedes historical checkpoints below)
 
 - Completed bounded acceptance: PR #247 merged at 5c8ee72 with required CI passed;

@@ -20,7 +20,9 @@ Scope validation/revision persistence and shared editor. Its public use cases ar
 `intake()` for retain/scan/read operations, `prepare_mapping`, `preview_review`,
 `save_review` and `image_preview`. Browser routes live under
 `/scopes/{draft_id}/workbooks`; upload, scan, map, preview and confirm are separate.
-There is no workbook graph client/MCP command in this increment.
+The original standalone increment had no workbook MCP command. The current client
+amendment exposes the same intake/preview/save services through ReviewXlsxScope,
+with explicit source/document/revision and row/image targets plus human confirmation.
 
 Reads require an active human, `project:read` and Draft owner/administrator access;
 writes also require `project:write`. Current rights are rechecked after processing and

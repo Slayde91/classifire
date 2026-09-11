@@ -19,8 +19,29 @@
 {% elif value is iterable and value is not string %}<ul>{% for item in value %}<li>{{ fields(item) }}</li>{% endfor %}</ul>
 {% else %}{{ value if value is not none else 'Not supplied' }}{% endif %}
 {% endmacro %}
-{% if payload.operation.action != 'review_pdf_scope' %}{{ fields(payload.operation) }}{% endif %}
+{% if payload.operation.action not in ['review_pdf_scope', 'review_xlsx_scope'] %}{{ fields(payload.operation) }}{% endif %}
 {% if capability_inputs %}
+{% if capability_inputs.xlsx_scope_review is defined %}
+{% set preview = capability_inputs.xlsx_scope_review %}
+<section class="panel" aria-labelledby="xlsx-source-review-heading">
+<h2 id="xlsx-source-review-heading">Review Scope against workbook evidence</h2>
+<p>Source: <strong>{{ preview.original_filename }}</strong>. Check the selected rows and pictures before confirming. Workbook contents are evidence, never instructions or technical approval.</p>
+<p><a href="/scopes/{{ preview.draft_id }}/workbooks/{{ preview.source_id }}">Open retained workbook and mapping controls</a></p>
+<h3>Selected source cells</h3>
+{% for source_row in preview.rows %}
+<details{% if loop.first %} open{% endif %}><summary>{{ source_row.sheet }} / row {{ source_row.row }}</summary>
+<dl>{% for name, cell in source_row.fields.items() %}<dt>{{ name|replace('_', ' ') }}</dt><dd>{% if cell %}<strong>{{ cell.address }}</strong> ({{ cell.kind }}) <span class="scope-preserve-text">{{ cell.value }}</span>{% else %}Unknown / not mapped{% endif %}</dd>{% endfor %}</dl>
+</details>{% endfor %}
+<h3>Explicitly associated pictures</h3><p>Placement is context only; it does not establish quantity or ownership.</p>
+{% for identity, picture in preview.selected_images.items() %}
+<img src="/scopes/{{ preview.draft_id }}/workbooks/{{ preview.source_id }}/images/{{ preview.plan.sheet_index }}/{{ identity }}.png" alt="Selected workbook picture {{ identity }}" style="max-width:100%;height:auto">
+{% endfor %}
+<h3>Items linked to selected evidence</h3><ul>{% for target in preview.targets %}<li>{{ preview.target_labels[loop.index0] }} / row {{ target.row }}<ul>{% for image_id in target.image_ids %}<li>Associated picture: {{ image_id }}</li>{% else %}<li>No picture associated with this item.</li>{% endfor %}</ul></li>{% endfor %}</ul>
+{% with envelope={"content": preview.payload}, scope_content_heading='Proposed Scope content', scope_content_id='proposed-xlsx-scope-heading' %}{% include 'draft_scope_report_content.html' %}{% endwith %}
+{% if preview.findings %}<h3>Validation findings</h3><ul>{% for finding in preview.findings %}<li>{{ finding.message }}</li>{% endfor %}</ul>{% endif %}
+<details><summary>Evidence identity</summary><p>Document: {{ preview.document_sha256 }}</p><p>Review: {{ preview.review_sha256 }}</p></details>
+</section>
+{% endif %}
 {% if capability_inputs.pdf_scope_review is defined %}
 {% set pdf_review = capability_inputs.pdf_scope_review %}
 {% set preview = pdf_review.preview %}

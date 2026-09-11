@@ -1,5 +1,26 @@
 # Draft client v1: authenticated MCP and human confirmation
 
+## Excel Scope evidence client candidate
+
+upload_draft_scope_xlsx retains a selected runtime file as untrusted Scope evidence;
+list_draft_scope_xlsx_sources lists its state; scan_draft_scope_xlsx explicitly scans
+and parses. read_draft_scope_xlsx_rows returns five rows plus sheet/image descriptors
+and a continuation row; read_draft_scope_xlsx_image returns a bounded PNG.
+preview_draft_scope_xlsx_mapping uses the typed twelve-column mapping and up to 25
+explicit row/kind selections without saving. propose_capability review_xlsx_scope
+binds exact source/document/Scope revision, full graph and row/image targets to
+existing human preview/save review. No downstream capability runs automatically.
+
+File retrieval uses an explicit XLSX policy; PDF defaults and timeout/host protections
+remain. Metadata/magic are preliminary, not proof of a supported workbook. Current
+scan, retained-byte integrity and strict workbook parsing precede reads and review.
+Scope workbooks cannot be adopted as pricing sources. Formula values are never
+calculated; image placement never establishes physical ownership or quantity.
+Six new tools require refreshed client discovery after authorized runtime activation.
+Existing package export references these sources externally; binary XLSX package
+membership is not part of this candidate. No new domain migration or grant is required.
+
+
 ## Proposal input discovery amendment
 
 Scope content in propose_draft_edit and review_pdf_scope advertises DraftScopePayload;

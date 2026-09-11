@@ -1,5 +1,61 @@
 # CLASSIFIRE Session Handoff
 
+Final local validation checkpoint: 51 existing client regressions passed. The three
+workbook cases passed after restoring fixture registrations; the selected review-image
+endpoint now has an explicit PNG assertion. Playwright rendered the evidence screen,
+loaded its picture and confirmed the form, producing revision 2/four source references
+in disposable PostgreSQL. The screenshot was visually inspected. This is an ASGI-test
+browser proof, not a real hosted/ChatGPT Excel trial. The earlier 37-case workbook/
+retrieval/deadline suite passed. Full Ruff, Mypy (223 files) and Bandit passed.
+No required CI/merge or activation is claimed yet. Older failure notes below explain
+resolved fixture setup and route-order corrections; they are not current blockers.
+
+
+## Current Start Here / Next Session: finish Excel client candidate
+
+Worktree C:\CLASSIFIRE\.tmp\client-excel-evidence-20260911; branch
+feat/client-excel-evidence-20260911 based on verified origin/main bd591384 (PR #248).
+Candidate edits are not yet committed/published. Preserve the separate running trial
+worktree and conflicted legacy root. Trial PID 26048/session 1515 runs the merged
+schema correction; its saved Scope remains revision 3. ChatGPT schema refresh requested.
+
+First task: finish the Excel client lifecycle. Files: draft_client_workbook_tools.py,
+services/draft_client_capabilities.py, services/remote_file_retrieval.py,
+templates/draft_client_request.html, client registration and associated tests/contracts.
+The new tools reuse existing XLSX services; review requires explicit row/image targets.
+Initial workbook/download suite: 37 passed. Broader client suite: 51 passed plus three
+fixture setup errors (import cleanup removed fixture registrations); explicit bindings
+are restored and rerun is underway. Static checks passed. Do not call the failed run a pass.
+
+Disposable PostgreSQL container classifire-client-xlsx-test-pg uses loopback 15433 and
+classifire_containment_test; never run destructive fixtures against trial port 15432.
+Set worktree src on PYTHONPATH and the documented test URL/explicit destructive opt-in;
+run client/workbook/PDF/capability and remote-file/deadline regressions sequentially.
+Playwright 1.62.0 is in ignored .tmp/playwright-tools-20260911, outside app dependencies.
+An ignored test_xlsx_client_playwright.py renders/confirms via the ASGI test transport;
+this proves browser interaction, not deployment. Do not run concurrent database suites.
+Done: passing regression + review proof, accurate docs, scoped diff, required CI and
+verified merge. Real refreshed-client Excel acceptance follows authorized activation.
+
+### Recommended Prompt for New Session
+
+Inspect AGENTS.md, GOAL.md, Git/worktrees/main/PR/CI and current project docs before
+editing. Preserve unrelated work, the conflicted C:\CLASSIFIRE root and running trial
+checkout. Finish feat/client-excel-evidence-20260911 in its isolated worktree. It is
+next because PDF client review is proven and defect-register Excel support already
+exists in shared standalone services. Inspect the workbook MCP adapter, typed
+ReviewXlsxScope, explicit remote file-kind checks, human request template and tests.
+Finish fixture-corrected tests, browser review and scope-v5 provenance checks; preserve
+PDF defaults, current permissions, unknown quantities and separate human confirmation.
+Use a disposable PostgreSQL test DB on 15433, worktree src on PYTHONPATH, unique temp
+storage and sequential suites. Run workbook/client/PDF/capability and retrieval/deadline
+tests plus Ruff, Mypy and Bandit. Proceed autonomously through classification, commit,
+push, PR and merge only after required CI/review; verify merge. Keep live activation
+and refreshed ChatGPT acceptance separate. Do not expand grants, use customer data,
+claim XLSX binary packaging, or rebuild the completed PDF/OAuth trial. Preserve all
+four ultimate capabilities and production gates; avoid speculative extensions.
+
+
 Validation checkpoint: 44 affected tests passed; six PostgreSQL-dependent tests
 were skipped locally. Full Ruff, Mypy (222 files) and Bandit passed. Required
 current-head CI/publication and refreshed-client acceptance remain pending.

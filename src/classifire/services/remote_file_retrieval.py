@@ -43,6 +43,7 @@ class RemoteFilePolicy:
     allowed_hosts: frozenset[str]
     maximum_bytes: int
     allowed_media_types: frozenset[str] = frozenset({"application/pdf", "application/octet-stream"})
+    content_kind: str = "pdf"
     maximum_uri_characters: int = 4096
     maximum_redirects: int = 3
     chunk_size: int = 64 * 1024
@@ -50,9 +51,19 @@ class RemoteFilePolicy:
     read_timeout_seconds: float = 20.0
     total_timeout_seconds: float = 45.0
 
+    @property
+    def content_magic(self) -> bytes:
+        return b"%PDF-" if self.content_kind == "pdf" else b"PK\x03\x04"
+
+    @property
+    def content_media_type(self) -> str:
+        return ("application/pdf" if self.content_kind == "pdf" else
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
     def __post_init__(self) -> None:
         if (
-            not self.allowed_hosts
+            self.content_kind not in {"pdf", "xlsx"}
+            or not self.allowed_hosts
             or len(self.allowed_hosts) > 64
             or type(self.maximum_bytes) is not int
             or not 1 <= self.maximum_bytes <= 100 * 1024 * 1024
@@ -360,17 +371,17 @@ def _retrieve_in_process(
         body = response.body
         if (
             not isinstance(body, bytes)
-            or not body.startswith(b"%PDF-")
+            or not body.startswith(policy.content_magic)
             or not 1 <= len(body) <= policy.maximum_bytes
         ):
-            raise RemoteFileRetrievalError("PDF_CONTENT_REJECTED")
+            raise RemoteFileRetrievalError(policy.content_kind.upper() + "_CONTENT_REJECTED")
         if response.declared_length is not None and response.declared_length != len(body):
             raise RemoteFileRetrievalError("CONTENT_LENGTH_MISMATCH")
         return RetrievedFile(
             content=body,
             sha256=hashlib.sha256(body).hexdigest(),
             size_bytes=len(body),
-            media_type="application/pdf",
+            media_type=policy.content_media_type,
             host=host,
             redirect_count=redirect_count,
             resolved_address_count=response.resolved_address_count,
@@ -435,11 +446,11 @@ def retrieve_file(
             raise ValueError
         result = RetrievedFile(content=content, **metadata)
         if (
-            not content.startswith(b"%PDF-")
+            not content.startswith(policy.content_magic)
             or not 1 <= len(content) <= policy.maximum_bytes
             or result.size_bytes != len(content)
             or result.sha256 != hashlib.sha256(content).hexdigest()
-            or result.media_type != "application/pdf"
+            or result.media_type != policy.content_media_type
             or result.host not in policy.allowed_hosts
             or type(result.redirect_count) is not int
             or not 0 <= result.redirect_count <= policy.maximum_redirects
