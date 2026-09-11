@@ -1,12 +1,12 @@
 # Draft client v1: authenticated MCP and human confirmation
 
-## Exact external OAuth resource (candidate)
+## Exact external OAuth resource (merged PR #246)
 
 Optional operator-owned `oauth_resource` separates the token audience from `base_url`,
 which remains the browser-review origin. Omission preserves `base_url + "/mcp"`. An explicit
 resource must be an exact HTTPS URL without credentials, query, fragment or whitespace.
 Discovery and MCP authentication advertise/use that same value. Tokens for the old local
-audience, another resource, a trailing-slash variant or an audience array remain rejected.
+audience, another resource, a trailing-slash variant or an audience array remain rejected under the default strict policy.
 Changing resource, issuer or browser origin requires restart; no token/permission checks
 are removed and no additional scopes are granted.
 
@@ -16,6 +16,22 @@ in the operator policy after validation/publication. Keep local browser links se
 This is an additive configuration migration, not a domain-schema or database migration.
 Real ChatGPT token shape and the full PDF journey remain acceptance work.
 
+
+## Approved opt-in Auth0 OIDC compatibility
+
+`auth0_oidc_compatibility` is an optional strict boolean, default false. Enabling it
+requires an exact HTTPS issuer origin with trailing slash. A token must still address
+the exact configured MCP resource: either a string or exactly the two distinct string
+entries `{resource, issuer + "userinfo"}` in either order. Missing resource, lone lists,
+foreign/duplicate/malformed entries fail closed. Signature/issuer/time checks stay active.
+
+Only `openid` and `email` are allowed as additional identity scopes; remove them from
+ClientIdentity/AccessToken permissions. Other unknown scopes, including profile and
+offline_access, remain rejected. Business permissions still require the token scope,
+operator client grant and current local rights. No automatic account linking or grants.
+Changing compatibility requires restart. Existing policies stay strict without opt-in.
+Tests cover real tool discovery/read, denied writes with read-only tokens, invalid
+recipients/scopes, forged signatures, revoked tokens and identity/time failures.
 
 ## Status and purpose
 

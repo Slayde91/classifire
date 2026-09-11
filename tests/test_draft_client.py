@@ -597,3 +597,94 @@ def test_invalid_explicit_oauth_resources_fail_closed(client_case):
         case.path.write_text(json.dumps({**case.policy, "oauth_resource": value}), encoding="utf-8")
         with pytest.raises(ValueError):
             ClientAuthority(case.path, development=True)
+
+
+@pytest.mark.parametrize(
+    "client_case",
+    [{"issuer": "https://auth.example.test/", "auth0_oidc_compatibility": True}],
+    indirect=True,
+)
+def test_opt_in_oidc_token_discovery_preserves_permissions(client_case):
+    case = client_case
+    resource = case.authority.initial.resource
+    audience = [resource, case.policy["issuer"] + "userinfo"]
+    token = case.token(aud=audience, scope="openid email " + READ)
+    identity = case.authority.verify(token)
+    assert identity is not None and identity.scopes == [READ]
+    with TestClient(case.scope.app, base_url="https://testserver") as client:
+        assert rpc(client, token, "tools/list").status_code == 200
+        assert tool(client, token, "list_draft_projects") is not None
+        tool(
+            client,
+            token,
+            "propose_draft_project",
+            {"reference": "OIDC", "name": "Synthetic"},
+            error=True,
+        )
+    assert case.authority.verify(case.token(aud=list(reversed(audience)))) is not None
+    assert case.authority.verify(case.token()) is not None
+    for invalid in (
+        [resource],
+        audience + ["https://foreign.example/"],
+        [resource, resource],
+        [audience[1]],
+        [audience[1], audience[1]],
+        [resource, 42],
+        [resource, {"value": audience[1]}],
+        audience[1],
+        [resource, audience[1] + "/"],
+        [resource + "/", audience[1]],
+    ):
+        assert case.authority.verify(case.token(aud=invalid)) is None
+    for overrides in (
+        {"scope": "openid email"},
+        {"scope": READ + " profile"},
+        {"scope": READ + " offline_access"},
+        {"scope": READ + " administrator"},
+        {"iss": "https://other.example/"},
+        {"client_id": "other"},
+        {"sub": "unmapped-subject"},
+        {"exp": int(time.time()) - 1},
+        {"iat": int(time.time()) + 60},
+        {"nbf": int(time.time()) + 60},
+        {"exp": int(time.time()) + 1000},
+    ):
+        assert case.authority.verify(case.token(aud=audience, **overrides)) is None
+    other_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    claims = jwt.decode(token, options={"verify_signature": False})
+    forged = jwt.encode(
+        claims, other_key, algorithm="RS256", headers={"kid": "synthetic", "typ": "at+jwt"}
+    )
+    assert case.authority.verify(forged) is None
+    case.path.write_text(
+        json.dumps({**case.policy, "revoked_token_ids": ["synthetic-token"]}), encoding="utf-8"
+    )
+    assert case.authority.verify(token) is None
+    _assert_no_canonical_scope(case.scope.factory)
+
+
+def test_oidc_compatibility_is_default_off_and_requires_restart(client_case):
+    case = client_case
+    assert case.authority.verify(case.token(scope=READ + " openid email")) is None
+    assert case.authority.verify(case.token(aud=[case.authority.initial.resource])) is None
+    case.path.write_text(
+        json.dumps({**case.policy, "issuer": "https://auth.example.test/"}), encoding="utf-8"
+    )
+    strict = ClientAuthority(case.path)
+    case.path.write_text(
+        json.dumps(
+            {
+                **case.policy,
+                "issuer": "https://auth.example.test/",
+                "auth0_oidc_compatibility": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="Restart required"):
+        strict.policy()
+    case.path.write_text(
+        json.dumps({**case.policy, "auth0_oidc_compatibility": True}), encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="exact HTTPS issuer"):
+        ClientAuthority(case.path)

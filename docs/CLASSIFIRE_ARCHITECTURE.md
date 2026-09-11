@@ -1,21 +1,26 @@
 # CLASSIFIRE Architecture
 
-## Active correction: exact external OAuth resource
+## OAuth compatibility amendment: approved, activation pending
 
-The real ChatGPT request uses the tunnel HTTPS address as its OAuth resource. The previous
-policy derived its audience from the local browser origin. Optional operator-owned
-`oauth_resource` now separates those values; omission preserves `base_url + "/mcp"`.
-Explicit resources require HTTPS without credentials, query, fragment or whitespace.
-Discovery and strict token verification use the same exact resource; changing resource,
-issuer or browser origin requires restart. All signature/time/permission checks remain.
-No domain schema, database migration or additional client grants are introduced.
+Current architecture: the optional MCP adapter shares domain services and verifies an
+operator-bound external identity. PR #246 separates the exact OAuth resource from the
+browser origin; it is merged and active in the synthetic test environment.
 
-Human Auth0 login, local authenticated MCP access and the approved tunnel discovery
-correction were verified; the exact ChatGPT callback is registered. This code increment
-still needs completed regression and required CI/publication before configuring the
-matching synthetic Auth0 API/policy and restarting. Real ChatGPT token shape (including
-OIDC scopes) and the full PDF-to-reviewed-Scope-to-package journey remain unproven.
+Approved change: `auth0_oidc_compatibility` defaults to false. When enabled for an exact
+HTTPS issuer origin ending in `/`, the verifier accepts either the exact resource string
+or exactly two distinct audience entries: that resource and `issuer + "userinfo"`.
+An audience containing only userinfo, extra recipients, duplicates or malformed entries
+fails closed. Only the observed `openid` and `email` identity scopes are tolerated and
+removed before constructing application identity. They grant no business permission.
 
+Reason: a signature-verified real Auth0 diagnostic produced this standard identity
+shape and was rejected by the earlier single-audience/business-only-scope contract.
+Consequences: this is an explicit, narrowly bounded admission exception, not arbitrary
+multi-audience acceptance. Signature, issuer, time/lifetime, optional nbf, account/client,
+revocation, ownership and permission checks remain. Changing the setting requires restart.
+Migration: additive operator setting, no database/schema change or expanded client grant.
+Strict existing policies remain unchanged. Required validation/publication and real
+connected discovery precede claiming the amendment works in ChatGPT.
 
 ## Implemented external-policy trial launcher (merged PR #244)
 

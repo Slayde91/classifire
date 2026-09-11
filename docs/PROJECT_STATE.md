@@ -1,24 +1,34 @@
 # CLASSIFIRE Project State
 
-## Active correction: exact external OAuth resource
+Validation for this increment: affected client/launcher suites passed (one PostgreSQL-only
+test skipped locally); final OIDC regressions and full Ruff passed. Mypy checked 222
+source files successfully and Bandit passed. Required CI and live activation remain pending.
 
-Validation: affected client and launcher suites passed (one PostgreSQL-only test skipped
-locally); full Ruff, Mypy (222 source files) and Bandit passed. Required CI remains pending.
+## Current correction: Auth0 OIDC token compatibility
 
-The real ChatGPT request uses the tunnel HTTPS address as its OAuth resource. The previous
-policy derived its audience from the local browser origin. Optional operator-owned
-`oauth_resource` now separates those values; omission preserves `base_url + "/mcp"`.
-Explicit resources require HTTPS without credentials, query, fragment or whitespace.
-Discovery and strict token verification use the same exact resource; changing resource,
-issuer or browser origin requires restart. All signature/time/permission checks remain.
-No domain schema, database migration or additional client grants are introduced.
+PR #246 merged at `6c3b9d0` after required CI passed. Its exact external resource
+configuration was activated in the synthetic trial. Auth0 login and code exchange
+succeeded, but CLASSIFIRE returned 401 and ChatGPT could not discover callable tools.
+A signature-verified operator diagnostic reproduced a two-entry audience (the exact
+MCP resource plus issuer `/userinfo`) and `openid email` alongside authorized Draft
+read/propose/export scopes. The existing account/client binding and 600-second
+lifetime matched. No project was created by this diagnostic.
 
-Human Auth0 login, local authenticated MCP access and the approved tunnel discovery
-correction were verified; the exact ChatGPT callback is registered. This code increment
-still needs completed regression and required CI/publication before configuring the
-matching synthetic Auth0 API/policy and restarting. Real ChatGPT token shape (including
-OIDC scopes) and the full PDF-to-reviewed-Scope-to-package journey remain unproven.
+The owner approved a default-off `auth0_oidc_compatibility` policy amendment. It
+preserves exact resource membership, rejects other audience shapes and unknown scopes,
+and removes identity scopes from effective permissions. Tests and publication of this
+increment must be verified before activation; connected discovery and the full PDF
+journey remain acceptance work. No production phase is complete from this correction.
 
+### Recommended Next Actions
+
+Finish required CI/publication, enable the approved setting in the protected synthetic
+policy and restart. Verify a real signed read-only MCP call, then refresh ChatGPT's
+connection and run `list_draft_projects`. Only after discovery succeeds, continue the
+synthetic PDF-to-reviewed-Scope-to-portable-package interaction. Keep current grants.
+
+The following preparation notes are historical checkpoints; this section supersedes
+older statements that human login, PR #246 or external-resource activation are pending.
 
 ## Current connected-trial preparation
 
