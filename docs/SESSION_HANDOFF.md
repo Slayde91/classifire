@@ -1,5 +1,50 @@
 # CLASSIFIRE Session Handoff
 
+
+Validation for this increment: affected client/launcher suites passed (one PostgreSQL-only
+test skipped locally); final OIDC regressions and full Ruff passed. Mypy checked 222
+source files successfully and Bandit passed. Required CI and live activation remain pending.
+
+## Start Here / Next Session
+
+Current fix branch: `fix/auth0-oidc-token-compatibility-20260912`, isolated worktree
+`C:\CLASSIFIRE\.tmp\auth0-issuer-url-20260910`. Preserve the conflicted legacy root.
+PR #246 merged at `6c3b9d0` with required CI passed; external resource is active.
+Human login succeeded, but discovery returned no callable tools. A verified diagnostic
+confirmed the two-recipient Auth0 audience and openid/email scopes as admission blockers.
+The owner approved the bounded default-off compatibility amendment and test restart.
+
+First task: finish and verify this correction, then prove real authenticated discovery.
+Relevant files: `src/classifire/draft_client_auth.py`, `tests/test_draft_client.py`,
+`tests/test_external_client_demo.py`, `docs/DRAFT_CLIENT_V1_CONTRACT.md`. Run affected
+pytest suites, Ruff, Mypy, Bandit and required CI. Current grants remain read/propose/export;
+identity scopes must not authorize tools. No canonical authority or customer data trial.
+
+Prerequisites: protected operator policy/keys, marked synthetic database, local app,
+private tunnel and Auth0 session. Inspect the ignored operator runbook for current live
+state without printing credentials. Publish only reviewed paths; verify merge before
+activating the approved policy and restarting. Completion requires a signed read-only
+MCP result and actual ChatGPT `list_draft_projects`; a connected label is insufficient.
+The larger synthetic PDF/review/package journey remains next after discovery works.
+
+## Recommended Prompt for New Session
+
+Inspect AGENTS.md, Git/worktree status, current source/tests, PROJECT_STATE and roadmap
+before editing. Preserve the dirty legacy root and unrelated changes. Continue the
+approved Auth0 OIDC compatibility fix in the isolated auth0-issuer-url-20260910 worktree;
+verify whether its branch has already merged before repeating work. The verified token
+has the exact MCP audience plus issuer /userinfo and openid/email scopes; the opt-in
+exception must reject other recipients/scopes and grant only existing business rights.
+Inspect draft_client_auth.py, test_draft_client.py, test_external_client_demo.py and the
+client contract. Run affected pytest suites with isolated PYTHONPATH and a unique temp
+directory, Ruff, Mypy, Bandit and required CI. Continue scoped classification, commit,
+push, PR and merge where safe. Read the ignored operator runbook for credentials-free
+live context; activate/restart only the approved synthetic policy. Prove signed tools/list
+and actual ChatGPT list_draft_projects before proceeding to the synthetic PDF/review/package
+journey. Human login may be needed; do not fabricate results or expand permissions.
+
+## Historical handoff (superseded where inconsistent above)
+
 ## Active correction: exact external OAuth resource
 
 Validation: affected client and launcher suites passed (one PostgreSQL-only test skipped

@@ -31,6 +31,7 @@ class ClientPolicy(BaseModel):
     base_url: str
     issuer: str
     oauth_resource: str | None = None
+    auth0_oidc_compatibility: bool = False
     public_keys: dict[str, dict[str, Any]]
     subjects: dict[str, str]
     clients: dict[str, list[str]]
@@ -61,6 +62,12 @@ def load_policy(path: Path, *, development: bool = False) -> ClientPolicy:
             raise ValueError("Client endpoints require exact HTTPS URLs")
     if policy.oauth_resource is not None and urlsplit(policy.oauth_resource).scheme != "https":
         raise ValueError("Explicit OAuth resource requires HTTPS")
+    if policy.auth0_oidc_compatibility and (
+        urlsplit(policy.issuer).scheme != "https" or urlsplit(policy.issuer).path != "/"
+    ):
+        raise ValueError(
+            "OIDC compatibility requires an exact HTTPS issuer origin with trailing slash"
+        )
     if urlsplit(policy.base_url).path:
         raise ValueError("Client base URL must be an origin")
     if not policy.public_keys or not policy.subjects or not policy.clients:
@@ -104,10 +111,13 @@ class ClientAuthority:
 
     def policy(self) -> ClientPolicy:
         policy = load_policy(self.path, development=self.development)
-        if (policy.base_url, policy.issuer, policy.resource) != (
-            self.initial.base_url, self.initial.issuer, self.initial.resource
+        if (policy.base_url, policy.issuer, policy.resource, policy.auth0_oidc_compatibility) != (
+            self.initial.base_url, self.initial.issuer, self.initial.resource,
+            self.initial.auth0_oidc_compatibility
         ):
-            raise ValueError("Restart required when client origin, issuer or resource changes")
+            raise ValueError(
+                "Restart required when client origin, issuer, resource or compatibility changes"
+            )
         return policy
 
     def check(self, identity: ClientIdentity, scope: str) -> None:
@@ -163,9 +173,19 @@ class ClientAuthority:
                         "jti",
                         "scope",
                     ],
-                    "strict_aud": True,
+                    "strict_aud": not policy.auth0_oidc_compatibility,
                 },
             )
+            if policy.auth0_oidc_compatibility:
+                audience = claims["aud"]
+                if audience != policy.resource and not (
+                    isinstance(audience, list)
+                    and len(audience) == 2
+                    and all(isinstance(value, str) for value in audience)
+                    and len(set(audience)) == 2
+                    and set(audience) == {policy.resource, policy.issuer + "userinfo"}
+                ):
+                    return None
             if any(type(claims[k]) is not int for k in ("exp", "iat")):
                 return None
             if "nbf" in claims and type(claims["nbf"]) is not int:
@@ -178,8 +198,10 @@ class ClientAuthority:
             ):
                 return None
             scopes = claims["scope"].split()
-            if not set(scopes) <= SCOPES:
+            identity_scopes = {"openid", "email"} if policy.auth0_oidc_compatibility else set()
+            if not set(scopes) <= SCOPES | identity_scopes:
                 return None
+            scopes = [scope for scope in scopes if scope in SCOPES]
             identity = ClientIdentity(
                 policy.subjects[claims["sub"]],
                 claims["sub"],

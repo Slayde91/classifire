@@ -1,21 +1,18 @@
 # CLASSIFIRE Master Roadmap
 
-## Active correction: exact external OAuth resource
+## Current delivery order: unblock authenticated discovery
 
-The real ChatGPT request uses the tunnel HTTPS address as its OAuth resource. The previous
-policy derived its audience from the local browser origin. Optional operator-owned
-`oauth_resource` now separates those values; omission preserves `base_url + "/mcp"`.
-Explicit resources require HTTPS without credentials, query, fragment or whitespace.
-Discovery and strict token verification use the same exact resource; changing resource,
-issuer or browser origin requires restart. All signature/time/permission checks remain.
-No domain schema, database migration or additional client grants are introduced.
+- Completed: PR #246 exact external resource, required CI, matching synthetic Auth0 API,
+  protected policy activation and app/tunnel restart; human login and exchange verified.
+- Active: approved opt-in Auth0 OIDC compatibility correction, security regression,
+  required CI and publication. Verified token shape exposed this dependency after login.
+- Next: activate the approved setting; prove signed tools/list and actual ChatGPT
+  `list_draft_projects`, then one complete synthetic PDF/review/package interaction.
+- Deferred: broader Excel client intake, polish and edge-case expansion until that journey.
 
-Human Auth0 login, local authenticated MCP access and the approved tunnel discovery
-correction were verified; the exact ChatGPT callback is registered. This code increment
-still needs completed regression and required CI/publication before configuring the
-matching synthetic Auth0 API/policy and restarting. Real ChatGPT token shape (including
-OIDC scopes) and the full PDF-to-reviewed-Scope-to-package journey remain unproven.
-
+A connected label does not prove callable tools. The discovery failure retrieved no
+projects and created none. Production phases, canonical and human release gates remain.
+Older setup classifications below are historical and superseded by this checkpoint.
 
 ## Current priority: synthetic ChatGPT OAuth trial
 
