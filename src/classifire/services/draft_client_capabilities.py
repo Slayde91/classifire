@@ -30,6 +30,7 @@ from . import draft_estimates as estimates
 from . import draft_pdf_intake as pdf
 from . import draft_pricing_intake as pricing
 from . import draft_scope as scopes
+from . import draft_scope_docx_review as scope_word
 from . import draft_scope_reports as scope_reports
 from . import draft_scope_xlsx as scope_xlsx
 from . import draft_system_matches as matches
@@ -109,8 +110,9 @@ class XlsxPlan(BaseModel):
 
 class XlsxReviewTarget(PdfReviewTarget):
     row: Annotated[int, Field(ge=2, le=1000)]
-    image_ids: Annotated[list[Annotated[str, Field(min_length=1, max_length=200)]],
-                         Field(max_length=50)]
+    image_ids: Annotated[
+        list[Annotated[str, Field(min_length=1, max_length=200)]], Field(max_length=50)
+    ]
 
 
 class ReviewXlsxScope(Command):
@@ -121,6 +123,30 @@ class ReviewXlsxScope(Command):
     plan: XlsxPlan
     content: ScopeInput
     targets: Annotated[list[XlsxReviewTarget], Field(min_length=1, max_length=100)]
+
+
+class WordReviewTarget(PdfReviewTarget):
+    locator: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=80,
+            pattern=r"^body-[1-9][0-9]{0,3}(/row-[1-9][0-9]{0,3}/cell-[1-9][0-9]{0,3}/p-[1-9][0-9]{0,3})?$",
+        ),
+    ]
+    image_ids: Annotated[
+        list[Annotated[str, Field(pattern=r"^picture-([1-9]|[1-3][0-9]|40)$")]],
+        Field(max_length=40),
+    ]
+
+
+class ReviewWordScope(Command):
+    action: Literal["review_word_scope"]
+    source_id: Identity
+    expected_revision: Revision
+    expected_document_hash: Sha256
+    content: ScopeInput
+    targets: Annotated[list[WordReviewTarget], Field(min_length=1, max_length=100)]
 
 
 class CreateMatch(Command):
@@ -260,6 +286,7 @@ class EstimateReport(Command):
 CapabilityCommand = Annotated[
     ReviewPdfScope
     | ReviewXlsxScope
+    | ReviewWordScope
     | CreateMatch
     | ReviewMatch
     | ReviewMatchConstraints
@@ -422,9 +449,28 @@ def inspect_inputs(
         }
     if isinstance(c, ReviewXlsxScope):
         inputs["xlsx_scope_review"] = scope_xlsx.preview_review(
-            db, actor, c.draft_id, c.source_id, c.expected_revision, c.content,
-            c.plan.model_dump(), [target.model_dump() for target in c.targets],
-            c.expected_document_hash, settings=get_settings(),
+            db,
+            actor,
+            c.draft_id,
+            c.source_id,
+            c.expected_revision,
+            c.content,
+            c.plan.model_dump(),
+            [target.model_dump() for target in c.targets],
+            c.expected_document_hash,
+            settings=get_settings(),
+        )
+    if isinstance(c, ReviewWordScope):
+        inputs["word_scope_review"] = scope_word.preview_review(
+            db,
+            actor,
+            c.draft_id,
+            c.source_id,
+            c.expected_revision,
+            c.content,
+            [target.model_dump() for target in c.targets],
+            c.expected_document_hash,
+            settings=get_settings(),
         )
     raw = json.dumps(inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return {"inputs": inputs, "input_hash": hashlib.sha256(raw.encode()).hexdigest()}
@@ -439,13 +485,36 @@ def execute(
 ) -> dict[str, Any]:
     c = command
     result: dict[str, Any] = {"draft_id": c.draft_id}
-    if isinstance(c, ReviewXlsxScope):
+    if isinstance(c, ReviewWordScope):
+        if reviewed_inputs is None or "word_scope_review" not in reviewed_inputs:
+            raise scopes.DraftScopeError("CLIENT_REVIEW_REQUIRED", 409)
+        saved = scope_word.save_review(
+            db,
+            actor,
+            c.draft_id,
+            c.source_id,
+            c.expected_revision,
+            c.content,
+            [target.model_dump() for target in c.targets],
+            c.expected_document_hash,
+            reviewed_inputs["word_scope_review"]["review_sha256"],
+            settings=get_settings(),
+        )
+        result.update(revision=saved["revision"], sha256=saved["sha256"])
+    elif isinstance(c, ReviewXlsxScope):
         if reviewed_inputs is None or "xlsx_scope_review" not in reviewed_inputs:
             raise scopes.DraftScopeError("CLIENT_REVIEW_REQUIRED", 409)
         saved = scope_xlsx.save_review(
-            db, actor, c.draft_id, c.source_id, c.expected_revision, c.content,
-            c.plan.model_dump(), [target.model_dump() for target in c.targets],
-            c.expected_document_hash, reviewed_inputs["xlsx_scope_review"]["review_sha256"],
+            db,
+            actor,
+            c.draft_id,
+            c.source_id,
+            c.expected_revision,
+            c.content,
+            c.plan.model_dump(),
+            [target.model_dump() for target in c.targets],
+            c.expected_document_hash,
+            reviewed_inputs["xlsx_scope_review"]["review_sha256"],
             settings=get_settings(),
         )
         result.update(revision=saved["revision"], sha256=saved["sha256"])

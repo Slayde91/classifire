@@ -1,5 +1,48 @@
 # CLASSIFIRE Session Handoff
 
+## Start Here / Next Session - Word client increment
+
+Use `C:\CLASSIFIRE\.tmp\word-client-20260912`, branch
+`feat/word-client-20260912`, based on c132709. Preserve the conflicted legacy root.
+The local adapter/typed command/template/tests and client contract are uncommitted.
+PR #253 contains only the parent Word review/package work and remains under required
+CI 34657065137; verify current state before integrating its merge. No Word deployment
+has occurred; the existing Excel app on port 8820 must remain untouched.
+
+First task: finish the Word client interaction's gated publication.
+Files: `draft_client_word_tools.py`, `draft_client.py`,
+`services/draft_client_capabilities.py`, `services/remote_file_retrieval.py`,
+`templates/draft_client_request.html`, `tests/test_draft_client_word.py`,
+`tests/test_remote_file_retrieval.py`, and `docs/DRAFT_CLIENT_V1_CONTRACT.md`.
+Prerequisites: isolated synthetic PostgreSQL on 15433 (never live 15432), selected
+worktree src in PYTHONPATH and parent PR merge. 40 integrated checks and one Edge journey passed; screenshot inspected.
+Mypy (229), Ruff and Bandit passed. Final authentication/PDF regressions and corrected tool-catalogue test passed;
+all 81 distinct selected tests now pass. No validation process remains running.
+
+Validation: pytest Word client, client workbooks, client capabilities and remote file
+retrieval tests; Ruff, Mypy and Bandit; isolated Edge journey via
+`C:\CLASSIFIRE\.tmp\test_word_client_playwright.py`. Existing process handles/results
+are in the ignored operator runbook. Poll running handles before launching anything.
+Done: exact discovery schema, retained text/picture reads, visible proposal and separate
+human confirmation prove one evidence-linked revision with unknowns preserved; relevant
+regressions pass, docs match evidence, reviewed commit is pushed and required CI/review
+passes before a verified merge. Live activation is a separate permission boundary.
+
+### Recommended Prompt for New Session
+
+Continue CLASSIFIRE in `C:\CLASSIFIRE\.tmp\word-client-20260912`. Inspect AGENTS.md,
+Git/diff, project state, roadmap, running processes and PR #253 before editing. Finish
+the existing Word MCP/typed-review increment because standalone Word evidence needs
+the same governed client path as PDF/Excel. Reuse its adapter, capabilities, request
+template and tests; preserve unrelated local work and the live Excel app. Verify parent
+PR merge, run Word/client-workbook/capability/retrieval pytest tests in isolated PostgreSQL
+15433 with this worktree's PYTHONPATH, run Ruff/Mypy/Bandit and the synthetic Edge review
+journey. Fix evidenced failures, update docs, classify changes, commit explicit paths,
+push, open PR and merge only after required checks/review pass. Completion requires
+exact discoverable schemas, no Scope write before browser confirmation, traceable saved
+evidence and preserved unknowns. Do not deploy Word, widen grants, process real evidence
+or perform speculative architecture work. Poll existing jobs rather than restarting.
+
 Validation checkpoint: 105 integrated Word/PDF/Excel/package/import/report tests
 passed in 427.25 seconds (the deliberate duplicate-ZIP fixture emitted its expected
 warning). Another 50 mixed-evidence/output checks and one complete Edge journey

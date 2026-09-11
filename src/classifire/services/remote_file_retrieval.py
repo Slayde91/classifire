@@ -57,12 +57,15 @@ class RemoteFilePolicy:
 
     @property
     def content_media_type(self) -> str:
-        return ("application/pdf" if self.content_kind == "pdf" else
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        return {
+            "pdf": "application/pdf",
+            "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        }[self.content_kind]
 
     def __post_init__(self) -> None:
         if (
-            self.content_kind not in {"pdf", "xlsx"}
+            self.content_kind not in {"pdf", "xlsx", "docx"}
             or not self.allowed_hosts
             or len(self.allowed_hosts) > 64
             or type(self.maximum_bytes) is not int

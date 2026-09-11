@@ -281,3 +281,10 @@ The full goal remains active: broader Scope analysis, authorized applicability,
 pricing defaults/inference, complete package exchange, real ChatGPT integration and
 production readiness are unfinished. OpenClaw retirement requires proven protection
 replacements. Current results belong in PROJECT_STATE.md, not this goal statement.
+
+## Word client delivery checkpoint
+
+Complete the shared Word client evidence/review interaction next, with exact schemas,
+retained provenance and separate browser confirmation. Validate before publication;
+activation and real ChatGPT acceptance remain separate steps. This bounded increment
+does not complete the full platform outcome or replace technical/commercial priorities.

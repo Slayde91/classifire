@@ -341,6 +341,9 @@ def configure(
     from .draft_client_workbook_tools import register as register_workbook_tools
 
     register_workbook_tools(server, authority, factory, identity)
+    from .draft_client_word_tools import register as register_word_tools
+
+    register_word_tools(server, authority, factory, identity)
     parsed = urlsplit(policy.base_url)
     mounted = server.streamable_http_app(
         json_response=True,

@@ -1,5 +1,22 @@
 # CLASSIFIRE Architecture
 
+## Word client adapter amendment - local implementation
+
+Current core: retained Word inspection and the PR #253 review/portability services.
+Change: `draft_client_word_tools` calls that same intake for selected-file retention,
+explicit scanning, paginated structural text and bounded native image reads.
+`ReviewWordScope` advertises the existing Scope graph contract and exact Word targets.
+The durable client-request service binds the preview; the existing browser confirmation
+executes shared Word review with fresh authority, source and revision checks.
+
+Reason: expose the independently callable Scope workflow through ChatGPT without a
+parallel parser, physical model or approval path. Consequences: client discovery grows
+by five tools and one typed proposal variant; file retrieval accepts an explicit DOCX
+policy while preserving PDF defaults and shared network protections. No migration,
+new permission or provider is needed. Deployment/discovery refresh and real ChatGPT
+acceptance remain planned, separately authorized work. Broader Word layout reconstruction
+remains unsupported; structural locators never claim rendered page positions.
+
 ## Word review and portability amendment - implemented candidate
 
 Current architecture: PR #252 merged retained Word inspection as c5d4774 after

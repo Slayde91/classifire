@@ -1,5 +1,18 @@
 # CLASSIFIRE Master Roadmap
 
+## Active increment: Word client interaction
+
+- Completed locally: five thin Word tools, typed graph/evidence proposal and browser
+  review rendering over the existing core; 40 integrated checks, one rendered Edge journey, Mypy, Ruff and Bandit passed.
+- Completed locally: final authentication/PDF regressions, with the intentional tool-list
+  update verified; all 81 distinct selected tests passed. Active: gated publication.
+- Dependency: PR #253's exact-head required CI and merge; it is still open at this
+  checkpoint. Do not restart its running validation or call it merged prematurely.
+- Upcoming: approved Word activation, refreshed tools and real ChatGPT acceptance.
+- Preserved: current Excel test app, pending real Excel acceptance and human-only saves.
+- Deferred, not cancelled: broader document coverage, project history, technical and
+  commercial capability breadth, production gates. No agent or orchestration rewrite.
+
 ## Active independent increment: reviewed Word scope and portable originals
 
 - Completed: Word retained inspection merged in PR #252 at c5d4774; required CI
