@@ -31,6 +31,7 @@ from . import draft_pdf_intake as pdf
 from . import draft_pricing_intake as pricing
 from . import draft_scope as scopes
 from . import draft_scope_reports as scope_reports
+from . import draft_scope_xlsx as scope_xlsx
 from . import draft_system_matches as matches
 from .draft_estimate_contract import AddLine, Override
 from .draft_source_intake import SourceRow
@@ -72,6 +73,54 @@ class ReviewPdfScope(Command):
     expected_document_hash: Sha256
     content: ScopeInput
     targets: Annotated[list[PdfReviewTarget], Field(min_length=1, max_length=100)]
+
+
+class XlsxColumns(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
+    defect_label: Annotated[int, Field(ge=1, le=50)] | None
+    defect_description: Annotated[int, Field(ge=1, le=50)] | None
+    location: Annotated[int, Field(ge=1, le=50)] | None
+    opening_label: Annotated[int, Field(ge=1, le=50)] | None
+    plane: Annotated[int, Field(ge=1, le=50)] | None
+    substrate: Annotated[int, Field(ge=1, le=50)] | None
+    width_mm: Annotated[int, Field(ge=1, le=50)] | None
+    height_mm: Annotated[int, Field(ge=1, le=50)] | None
+    service_label: Annotated[int, Field(ge=1, le=50)] | None
+    service_type: Annotated[int, Field(ge=1, le=50)] | None
+    quantity: Annotated[int, Field(ge=1, le=50)] | None
+    unit: Annotated[int, Field(ge=1, le=50)] | None
+
+
+class XlsxRowSelection(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
+    row: Annotated[int, Field(ge=2, le=1000)]
+    kinds: Annotated[
+        list[Literal["defect", "opening", "service"]], Field(min_length=1, max_length=3)
+    ]
+
+
+class XlsxPlan(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
+    sheet_index: Annotated[int, Field(ge=1, le=10)]
+    header_row: Annotated[int, Field(ge=1, le=999)]
+    mapping: XlsxColumns
+    selections: Annotated[list[XlsxRowSelection], Field(min_length=1, max_length=25)]
+
+
+class XlsxReviewTarget(PdfReviewTarget):
+    row: Annotated[int, Field(ge=2, le=1000)]
+    image_ids: Annotated[list[Annotated[str, Field(min_length=1, max_length=200)]],
+                         Field(max_length=50)]
+
+
+class ReviewXlsxScope(Command):
+    action: Literal["review_xlsx_scope"]
+    source_id: Identity
+    expected_revision: Revision
+    expected_document_hash: Sha256
+    plan: XlsxPlan
+    content: ScopeInput
+    targets: Annotated[list[XlsxReviewTarget], Field(min_length=1, max_length=100)]
 
 
 class CreateMatch(Command):
@@ -210,6 +259,7 @@ class EstimateReport(Command):
 
 CapabilityCommand = Annotated[
     ReviewPdfScope
+    | ReviewXlsxScope
     | CreateMatch
     | ReviewMatch
     | ReviewMatchConstraints
@@ -370,6 +420,12 @@ def inspect_inputs(
             "preview": preview,
             "page_text": document["pages"][c.page_number - 1]["text"],
         }
+    if isinstance(c, ReviewXlsxScope):
+        inputs["xlsx_scope_review"] = scope_xlsx.preview_review(
+            db, actor, c.draft_id, c.source_id, c.expected_revision, c.content,
+            c.plan.model_dump(), [target.model_dump() for target in c.targets],
+            c.expected_document_hash, settings=get_settings(),
+        )
     raw = json.dumps(inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return {"inputs": inputs, "input_hash": hashlib.sha256(raw.encode()).hexdigest()}
 
@@ -383,7 +439,17 @@ def execute(
 ) -> dict[str, Any]:
     c = command
     result: dict[str, Any] = {"draft_id": c.draft_id}
-    if isinstance(c, ReviewPdfScope):
+    if isinstance(c, ReviewXlsxScope):
+        if reviewed_inputs is None or "xlsx_scope_review" not in reviewed_inputs:
+            raise scopes.DraftScopeError("CLIENT_REVIEW_REQUIRED", 409)
+        saved = scope_xlsx.save_review(
+            db, actor, c.draft_id, c.source_id, c.expected_revision, c.content,
+            c.plan.model_dump(), [target.model_dump() for target in c.targets],
+            c.expected_document_hash, reviewed_inputs["xlsx_scope_review"]["review_sha256"],
+            settings=get_settings(),
+        )
+        result.update(revision=saved["revision"], sha256=saved["sha256"])
+    elif isinstance(c, ReviewPdfScope):
         if reviewed_inputs is None or "pdf_scope_review" not in reviewed_inputs:
             raise scopes.DraftScopeError("CLIENT_REVIEW_REQUIRED", 409)
         reviewed_hash = reviewed_inputs["pdf_scope_review"]["preview"]["review_sha256"]
