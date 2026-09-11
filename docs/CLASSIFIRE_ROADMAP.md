@@ -1,5 +1,26 @@
 # CLASSIFIRE Master Roadmap
 
+## Current delivery order: portable workbook evidence
+
+- Completed: PR #249 Excel client intake/inspection/review merged at a02e895;
+  required CI passed. Runtime activation and real client acceptance remain separate.
+- Active: ProjectPackage v4 optional Scope workbook membership, exact original
+  retention, scan-gated import/download and nested re-export. Local browser and
+  package regressions and integrated local checks passed; required CI/publication
+  remain the exit gate.
+- Reordered: close the verified missing-original-workbook portability gap before
+  another document format. Reuse shared parsers, evidence and package services.
+- Upcoming: authorized synthetic ChatGPT Excel upload -> inspect -> propose ->
+  human confirm -> original-bearing ZIP acceptance, after publication and tool refresh.
+- Superseded: treating Scope workbook binary packaging as indefinitely deferred or
+  rebuilding the completed PDF/OAuth and standalone workbook review workflows.
+- Deferred: bulk/unsupported layouts, Word/drawings, full project history and
+  production rollout. These remain ultimate goal requirements with separate exits.
+- Unchanged: four independent capabilities, evidence/technical/commercial separation,
+  human release and proven replacement protections before OpenClaw retirement.
+
+Older delivery-order blocks below are historical checkpoints.
+
 ## Current delivery order: Excel client evidence interaction
 
 - Completed bounded correction: PR #248 merged with required CI; running synthetic
