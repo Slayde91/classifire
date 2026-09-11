@@ -1,5 +1,49 @@
 # CLASSIFIRE Project State
 
+Final local validation checkpoint: 51 existing client regressions passed. The three
+workbook cases passed after restoring fixture registrations; the selected review-image
+endpoint now has an explicit PNG assertion. Playwright rendered the evidence screen,
+loaded its picture and confirmed the form, producing revision 2/four source references
+in disposable PostgreSQL. The screenshot was visually inspected. This is an ASGI-test
+browser proof, not a real hosted/ChatGPT Excel trial. The earlier 37-case workbook/
+retrieval/deadline suite passed. Full Ruff, Mypy (223 files) and Bandit passed.
+No required CI/merge or activation is claimed yet. Older failure notes below explain
+resolved fixture setup and route-order corrections; they are not current blockers.
+
+
+## Current increment: Excel evidence through the client
+
+Shared main includes PR #248 at bd591384 (required CI passed). Its schema/error
+correction is running in the synthetic app. Actual connected invalid proposals
+returned redacted field paths and left Scope revision 3 unchanged. Playwright/Edge
+verified local login and the saved Scope. ChatGPT cached-schema refresh is still
+pending user action; do not claim refreshed discovery has been accepted.
+
+The separate Excel candidate adds client upload, scan, bounded row/image reads,
+explicit mapping preview and a source-linked human-reviewed Scope proposal. It
+reuses existing workbook parsing, retained evidence, revision and review services.
+No price/library adoption, technical matching or downstream execution is automatic.
+The browser review shows selected cells, item-to-row/picture associations and the
+proposed graph before confirmation. Existing Scope v5 provenance remains unchanged.
+
+Verification: the initial workbook/download suite passed 37 tests. The broader
+client suite passed 51 tests; three workbook cases hit missing pytest fixture
+registration after import cleanup. Explicit fixture bindings were restored; their
+rerun and the separate Playwright review check are active. Ruff, Mypy (223 source
+files) and Bandit passed before that test-only fixture correction. Required CI,
+publication and real refreshed ChatGPT Excel acceptance remain outstanding.
+
+### Recommended Next Actions
+
+Finish the corrected workbook tests and Playwright review proof, inspect the scoped
+diff, then commit/push/PR/merge after required checks. Keep this candidate separate
+from the running PDF trial. After publication, obtain real client upload/inspection/
+proposal/human-confirmation acceptance using a synthetic XLSX. Do not widen grants,
+use customer workbooks or count this Draft slice as a production phase completion.
+
+Earlier checkpoints below are historical and superseded by this current increment.
+
+
 Validation checkpoint: 44 affected tests passed; six PostgreSQL-dependent tests
 were skipped locally. Full Ruff, Mypy (222 files) and Bandit passed. Required
 current-head CI/publication and refreshed-client acceptance remain pending.

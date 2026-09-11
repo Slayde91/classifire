@@ -1,5 +1,30 @@
 # CLASSIFIRE Architecture
 
+## Excel client amendment: implemented candidate, not deployed
+
+Current: standalone Scope XLSX intake, parsing, mapping and evidence review already
+use DraftSourceIntake and draft_scope_xlsx. The MCP evidence adapter previously
+accepted PDF only, including hard-coded PDF checks in its remote worker and parent.
+
+Change: an explicit pdf/xlsx content policy preserves PDF defaults and checks the
+selected magic/media identity in both retrieval boundaries. XLSX remains untrusted
+until the existing scanner and bounded workbook parser accept it. A thin workbook
+tool module provides upload/scan/list, five-row reads, image reads and mapping preview;
+ReviewXlsxScope uses existing preview_review/save_review with exact source/document/
+scan/revision bindings. The shared human request page displays cells, associations
+and proposed Scope. Token scopes never count as human confirmation.
+
+Reason: let ChatGPT users work with defect registers through the proven standalone
+logic. Consequences: no new storage, dependencies, domain schema version or migration;
+no pricing-source adoption or added grant. Imported authority stays unverified. Old
+command hash shapes and PDF retrieval defaults remain compatible. Existing XLSX
+supported-subset, picture-anchor and formula limitations remain. XLSX source bytes
+are still external to package export; that portability gap is explicitly deferred.
+
+Publication, real client discovery/upload and hosted operational acceptance are not
+proved by source presence. Approved hybrid architecture and production gates remain.
+
+
 ## Current implemented boundary and candidate amendment
 
 PR #247 is merged; the synthetic connected PDF/Scope/package journey is proven by
