@@ -1,7 +1,8 @@
-# Draft Word evidence inspection v1
+# Draft Word evidence and Scope review contract
 
-This candidate is retained evidence inspection, not source-linked Scope review.
-The existing PDF/XLSX review contracts and Scope v1-v6 remain unchanged.
+Retained inspection merged in PR #252 (c5d4774). The current review candidate adds
+explicit Word-to-Scope review and portable originals. Existing Scope v1-v6 readers
+and saved bytes remain supported; new Word claims use Scope v7.
 
 ## User interaction and authority
 
@@ -15,8 +16,9 @@ document integrity and quarantine checks gate all prepared content access.
 The shared `DraftSourceIntake` owns retention/scanning; its Word policy uses
 `DraftScopeDocxSource`, `draft_scope_docx` storage purpose and the existing disposable
 worker. No provider, new runtime dependency, external retrieval or autonomous agent
-is involved. No defect, opening, service, quantity, technical approval or price is
-created. Source statements and image placement have no approval authority.
+is involved. Inspection does not write Scope. A separate explicit review can append
+a Draft Scope revision; it grants no canonical physical-model, technical, commercial
+or release authority. Source statements and picture placement have no approval authority.
 
 ## Exact document contract
 
@@ -56,6 +58,47 @@ prepared document. Historical source hashes do not override current quarantine o
 expired scan checks. Source filenames are escaped for display; the original download
 uses a fixed safe attachment name.
 
+## Explicit graph review and Scope v7
+
+The existing graph editor lets users create/edit distinct defects, openings and
+services, including shared or blank openings and unknown dimensions/quantities.
+Each selected target binds one structural text locator and zero or more explicitly
+selected picture IDs. Any retained picture can support a selected text/target link;
+its original placement is preserved, not treated as semantic ownership.
+
+`draft_scope_docx_review.preview_review` validates the complete graph and selections
+without writes. `CLASSIFIRE-DRAFT-DOCX-SCOPE-REVIEW-v1` binds actor, Draft, exact base
+revision/hash, source bytes/name, document hash, scan hash, normalized payload,
+selected text blocks and picture descriptors. The preview is signed for the same
+user/browser session for 15 minutes. Confirmation repeats current access, ownership,
+clean-scan/quarantine, document and exact-preview checks, then delegates one append
+to the existing guarded Draft revision writer. A stale or altered preview cannot save.
+
+`CLASSIFIRE-DRAFT-SCOPE-v7` extends the shared `evidence_refs` union. A Word claim has
+`source_kind: docx`, `target_kind`, `target_id`, `target_sha256`, source identity/size/
+filename/document/scan hashes, `block: {locator,text,text_sha256}`, `images` containing
+exact selected native picture descriptors, `reviewed_by`, UTC `reviewed_at`,
+`method: human_docx_entity_review` and `origin`. It has no invented page number.
+The existing 100-reference/serialized-artifact bounds apply to the combined history.
+
+V7 retains PDF, Excel and original AI suggestion claims through subsequent reviews
+and manual edits. Changed/deleted items retain old evidence and are visibly stale.
+Imported claims become `imported_unverified`; a scan never turns them into local
+review or approval. New Scope report renderer versions are 9/10; Estimate/complete
+versions are 10/11. Old report versions and bytes remain unchanged. All four profiles
+show text/picture provenance, treating source content as literal text in PDF/XLSX.
+
+## Portable original files
+
+Optional `Selection.docx_sources` includes up to four reviewed Word originals in
+ProjectPackage v5 as `evidence/<source-id>.docx`. Empty selection keeps legacy package
+serialization. Inclusion requires owned, locally reviewed, currently clean and
+intact source bytes and document identity. Import verifies exact member inventory,
+reference kind and hashes, then reuses imported-source retention with the native
+Word evidence parser. A fresh local scan/format check is required before download or
+re-export. All retained ancestors retain permission and quarantine checks. See the
+ProjectPackage contract; no separate storage or migration is added for review.
+
 ## Migration and pending work
 
 Forward-only migration `0047_draft_scope_docx_sources` creates one Draft source table
@@ -64,7 +107,7 @@ size constraint and Draft index. It preserves existing artifacts and history; it
 downgrade refuses deletion of retained evidence. Deployment lineage recognizes the
 previous quantity-basis head as requiring migration. No live activation is implied.
 
-Still required: explicitly reviewed Word-to-Scope graph proposals, versioned Word
-evidence references, portable original-bearing package import/export, ChatGPT tools,
-formatted-page reconstruction, broader layouts and representative report validation.
+Still required: thin ChatGPT Word tools, formatted-page reconstruction, broader
+layouts and representative report validation. The current review/package candidate
+is not deployed; publication and CI must be checked against current GitHub state.
 This bounded screen is not completion of the full Word ingestion or production goal.

@@ -14,7 +14,12 @@ EVIDENCE_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-v3"
 ENTITY_EVIDENCE_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-v4"
 XLSX_EVIDENCE_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-v5"
 SUGGESTION_EVIDENCE_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-v6"
-WORKBOOK_EVIDENCE_SCHEMAS = (XLSX_EVIDENCE_SCHEMA_VERSION, SUGGESTION_EVIDENCE_SCHEMA_VERSION)
+WORD_EVIDENCE_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-v7"
+WORKBOOK_EVIDENCE_SCHEMAS = (
+    XLSX_EVIDENCE_SCHEMA_VERSION,
+    SUGGESTION_EVIDENCE_SCHEMA_VERSION,
+    WORD_EVIDENCE_SCHEMA_VERSION,
+)
 ENTITY_EVIDENCE_SCHEMAS = (ENTITY_EVIDENCE_SCHEMA_VERSION, *WORKBOOK_EVIDENCE_SCHEMAS)
 EVIDENCE_SCHEMAS = (EVIDENCE_SCHEMA_VERSION, *ENTITY_EVIDENCE_SCHEMAS)
 MAX_EVIDENCE_REFS = 100
@@ -56,6 +61,7 @@ XLSX_REF_KEYS = (ENTITY_REF_KEYS - {"page_number", "locator_key", "page_text_sha
     "row",
     "images",
 }
+WORD_REF_KEYS = (XLSX_REF_KEYS - {"row"}) | {"block"}
 TARGET_COLLECTIONS = {"defect": "defects", "opening": "openings", "service": "services"}
 SUGGESTION_TARGET_COLLECTIONS = TARGET_COLLECTIONS | {"observation": "observations"}
 SUGGESTION_CLAIM_SCHEMA = "CLASSIFIRE-DRAFT-PDF-SUGGESTION-CLAIM-v1"
@@ -152,7 +158,9 @@ def reference_identity(ref: dict[str, Any]) -> tuple[str, str, str, int | str]:
         ref.get("target_kind", "observation"),
         ref.get("target_id", ref.get("observation_id", "")),
         ref["source_id"],
-        f"xlsx:{ref['row']['sheet_index']}:{ref['row']['row']}"
+        f"docx:{ref['block']['locator']}"
+        if ref.get("source_kind") == "docx"
+        else f"xlsx:{ref['row']['sheet_index']}:{ref['row']['row']}"
         if ref.get("source_kind") == "xlsx"
         else ref["page_number"],
     )
@@ -169,13 +177,24 @@ def validate_evidence_refs(envelope: dict[str, Any]) -> None:
             raise ValueError("evidence")
         entity = "target_kind" in ref
         xlsx = ref.get("source_kind") == "xlsx"
+        word = ref.get("source_kind") == "docx"
         assisted = "suggestion" in ref
-        expected_keys = XLSX_REF_KEYS if xlsx else ENTITY_REF_KEYS if entity else REF_KEYS
+        expected_keys = (
+            WORD_REF_KEYS
+            if word
+            else XLSX_REF_KEYS
+            if xlsx
+            else ENTITY_REF_KEYS
+            if entity
+            else REF_KEYS
+        )
         if assisted:
             if (
-                envelope["schema_version"] != SUGGESTION_EVIDENCE_SCHEMA_VERSION
+                envelope["schema_version"]
+                not in (SUGGESTION_EVIDENCE_SCHEMA_VERSION, WORD_EVIDENCE_SCHEMA_VERSION)
                 or not entity
                 or xlsx
+                or word
             ):
                 raise ValueError("suggestion evidence version")
             expected_keys = expected_keys | {"suggestion"}
@@ -216,6 +235,20 @@ def validate_evidence_refs(envelope: dict[str, Any]) -> None:
                 if image["occurrence_id"] in image_ids:
                     raise ValueError("duplicate workbook image")
                 image_ids.add(image["occurrence_id"])
+        if word:
+            from .draft_scope_docx_document import validate_picture_claim, validate_text_claim
+
+            if envelope["schema_version"] != WORD_EVIDENCE_SCHEMA_VERSION or not entity:
+                raise ValueError("Word evidence version")
+            validate_text_claim(ref["block"])
+            if type(ref["images"]) is not list or len(ref["images"]) > 40:
+                raise ValueError("Word image claims")
+            image_ids = set()
+            for image in ref["images"]:
+                validate_picture_claim(image)
+                if image["id"] in image_ids:
+                    raise ValueError("duplicate Word image")
+                image_ids.add(image["id"])
         identity = reference_identity(ref)
         if identity in seen:
             raise ValueError("duplicate evidence")
@@ -223,7 +256,7 @@ def validate_evidence_refs(envelope: dict[str, Any]) -> None:
         for key in (
             hash_key,
             "source_sha256",
-            *(("page_text_sha256",) if not xlsx else ()),
+            *(("page_text_sha256",) if not (xlsx or word) else ()),
             "document_sha256",
             "scan_sha256",
         ):
@@ -233,16 +266,18 @@ def validate_evidence_refs(envelope: dict[str, Any]) -> None:
             type(ref["source_size_bytes"]) is not int
             or not 1 <= ref["source_size_bytes"] <= 10485760
             or (
-                not xlsx
+                not (xlsx or word)
                 and (type(ref["page_number"]) is not int or not 1 <= ref["page_number"] <= 50)
             )
         ):
             raise ValueError("evidence range")
-        for key in ("original_filename", *(("locator_key",) if not xlsx else ())):
+        for key in ("original_filename", *(("locator_key",) if not (xlsx or word) else ())):
             if type(ref[key]) is not str or not 1 <= len(ref[key]) <= 200:
                 raise ValueError("evidence label")
         expected_method = (
-            "human_xlsx_row_entity_review"
+            "human_docx_entity_review"
+            if word
+            else "human_xlsx_row_entity_review"
             if xlsx
             else "human_page_entity_review"
             if entity
@@ -281,6 +316,14 @@ def reference_status(
         return (
             "AI suggestion edited/reviewed by a human against this page; "
             "no technical or physical approval"
+        )
+    if ref.get("source_kind") == "docx":
+        if reference_target(ref, content) is None:
+            return "Item removed since Word review; historical source reference retained"
+        if reference_changed(ref, content):
+            return "Item changed since Word review; review again"
+        return (
+            "Item reviewed against selected Word text/pictures; no technical or physical approval"
         )
     if ref.get("source_kind") == "xlsx":
         if reference_target(ref, content) is None:

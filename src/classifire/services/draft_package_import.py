@@ -82,6 +82,10 @@ class ManifestV4(ManifestV3):
     schema_version: Literal["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v4"]  # type: ignore[assignment]
 
 
+class ManifestV5(ManifestV4):
+    schema_version: Literal["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v5"]  # type: ignore[assignment]
+
+
 @dataclass(frozen=True)
 class InspectedPackage:
     manifest: dict[str, Any]
@@ -112,6 +116,8 @@ class InspectedPackage:
             yield source_id, prefix + f"evidence/{source_id}.pdf"
         for source_id in self.manifest["selection"].get("xlsx_sources", []):
             yield source_id, prefix + f"evidence/{source_id}.xlsx"
+        for source_id in self.manifest["selection"].get("docx_sources", []):
+            yield source_id, prefix + f"evidence/{source_id}.docx"
         for path, item in self.origins.items():
             yield from item.evidence_members(prefix + path + "!")
 
@@ -242,7 +248,9 @@ def inspect_package(
             raise ValueError("origin nesting bounds")
         manifest, members = packages.inspect_archive(content)
         parsed = (
-            ManifestV4
+            ManifestV5
+            if manifest.get("schema_version") == packages.SCHEMA_V5
+            else ManifestV4
             if manifest.get("schema_version") == packages.SCHEMA_V4
             else ManifestV3
             if manifest.get("schema_version") == packages.SCHEMA_V3
@@ -270,6 +278,8 @@ def inspect_package(
         if (parsed.revision == 1) != (parsed.parent_hash is None):
             raise ValueError("package parent")
         selected = parsed.selection
+        if selected.docx_sources and not isinstance(parsed, ManifestV5):
+            raise ValueError("legacy Word selection")
         if selected.xlsx_sources and not isinstance(parsed, ManifestV4):
             raise ValueError("legacy workbook selection")
         if selected.pdf_sources and not isinstance(parsed, ManifestV3):
@@ -279,6 +289,7 @@ def inspect_package(
         wanted = {"artifacts/scope.json", *origins}
         wanted.update(f"evidence/{sid}.pdf" for sid in selected.pdf_sources)
         wanted.update(f"evidence/{sid}.xlsx" for sid in selected.xlsx_sources)
+        wanted.update(f"evidence/{sid}.docx" for sid in selected.docx_sources)
         if selected.match_id:
             wanted.add("artifacts/system-match.json")
         if selected.estimate_id:
@@ -360,8 +371,29 @@ def inspect_package(
                 )
             ):
                 raise ValueError("XLSX evidence binding")
+        for source_id in selected.docx_sources:
+            data = members[f"evidence/{source_id}.docx"]
+            refs = [
+                ref for ref in scope.get("evidence_refs", []) if ref.get("source_id") == source_id
+            ]
+            if (
+                not refs
+                or not data.startswith(b"PK\x03\x04")
+                or any(
+                    ref.get("source_kind") != "docx"
+                    or ref.get("source_sha256") != packages.digest(data)
+                    or ref.get("source_size_bytes") != len(data)
+                    for ref in refs
+                )
+            ):
+                raise ValueError("DOCX evidence binding")
         if parsed.source_manifest != packages.source_manifest(
-            scope, match, estimate, selected.pdf_sources, selected.xlsx_sources
+            scope,
+            match,
+            estimate,
+            selected.pdf_sources,
+            selected.xlsx_sources,
+            selected.docx_sources,
         ):
             raise ValueError("source inventory")
         reports = []

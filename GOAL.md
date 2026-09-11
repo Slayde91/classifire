@@ -200,7 +200,18 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: govern the bottom-up quantity basis
+## Immediate delivery priority: complete Word review and shared client access
+
+Word retained inspection is merged in PR #252 (c5d4774). Complete and publish the
+current source-linked human graph review and portable-original interaction, then
+expose it through thin ChatGPT tools over the same services. Require saved/reopened
+provenance, unknown quantities, exact package roundtrip and human confirmation.
+Do not rebuild proven PDF/Excel or quantity-basis work. Resume the separate real
+ChatGPT Excel trial when its tools are refreshed. Broader technical/pricing coverage,
+input layouts and production gates remain part of the full goal.
+
+## Earlier technical/pricing delivery sequence
+
 
 PDF/Excel graph review and optional one-page suggestions are merged through PR #211.
 Preserve their manual fallback, shared graph review, exact history and bounded optional

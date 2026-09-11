@@ -124,18 +124,22 @@ def _review_context(
     expected_revision: int,
     expected_document_hash: str,
     settings: Settings,
+    *,
+    source_api: DraftSourceIntake | None = None,
+    review_schema: str = "CLASSIFIRE-DRAFT-XLSX-SCOPE-REVIEW-v1",
 ) -> tuple[User, dict[str, Any], dict[str, Any], dict[str, Any]]:
     actor = _actor(db, actor, "project:write")
     current = read_revision(db, actor, draft_id)
     if type(expected_revision) is not int or expected_revision != current["revision"]:
         raise DraftScopeError("DRAFT_REVISION_CONFLICT", 409)
-    source, document, content = intake()._document(
+    source_api = source_api or intake()
+    source, document, content = source_api._document(
         db, actor, draft_id, source_id, settings.storage_root
     )
     if source.document_sha256 != expected_document_hash:
-        raise DraftScopeError("SCOPE_XLSX_SOURCE_CHANGED", 409)
+        raise DraftScopeError(source_api.policy.code_prefix + "SOURCE_CHANGED", 409)
     binding = {
-        "schema": "CLASSIFIRE-DRAFT-XLSX-SCOPE-REVIEW-v1",
+        "schema": review_schema,
         "actor_id": actor.id,
         "draft_id": draft_id,
         "expected_revision": expected_revision,

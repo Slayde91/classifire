@@ -1,25 +1,27 @@
 # CLASSIFIRE Master Roadmap
 
-## Active independent increment: Word evidence inspection
+## Active independent increment: reviewed Word scope and portable originals
 
-- Completed shared checkpoint: PR #251 documentation merged as e2fcd15 after CI.
-  The approved Excel test-app activation is preserved; do not repeat it.
-- Active candidate: Word upload -> scan -> inspect body text/table cells/pictures
-  -> reopen -> exact-original download. Local integrated and browser checks passed;
-  publication/required CI remain to be verified before classifying it as merged.
-- Reordered while client refresh is pending: start the standalone Word requirement
-  using existing intake protections. This does not replace Excel acceptance or
-  claim complete Word analysis from a parser/preview screen.
-- Next Word dependency: explicit source-linked human Scope review, then portable
-  evidence references and original-bearing project packages, then thin client tools.
-- Awaiting external interaction: real refreshed-ChatGPT Excel acceptance and its
-  separate human confirmations. No repeated OAuth or grant changes are needed.
-- Still deferred: broader layouts/page rendering, complete project history,
-  remaining technical/commercial capability breadth and all production exits.
-- Candidate deployment dependency: forward migration 0047 and separately authorized
-  activation. No running app or customer/canonical state changed in this increment.
+- Completed: Word retained inspection merged in PR #252 at c5d4774; required CI
+  34653404693 passed. Existing Excel activation is preserved; do not repeat it.
+- Active candidate: Word text/picture selection -> complete graph preview -> human
+  confirmation -> saved/reopened Scope v7 -> original-bearing ProjectPackage v5.
+  Synthetic Edge journey, 105 integrated regressions, 50 output/history checks and
+  static/security checks passed, followed by 73 client/PDF review regressions.
+  Publication and hosted CI/review remain to be verified before calling it merged.
+- Next dependency: thin Word client tools over these same services and typed review
+  requests. Never expose browser confirmation as a client write tool.
+- Reordered while tool refresh is pending: standalone Word scope work advances the
+  required input coverage. It does not replace the real ChatGPT Excel acceptance.
+- Awaiting external interaction: refreshed ChatGPT Excel tools and separate human
+  confirmations. No repeated OAuth setup or grant expansion is needed.
+- Deferred: broader Word layouts/page rendering, full project history, remaining
+  technical/commercial breadth and production exits. Inspection/review is not full
+  production Word analysis or permission to invent unsupported quantities.
+- Deployment dependency: merged migration 0047 plus separately authorized activation.
+  No live app/database/OAuth/canonical state changes are part of this candidate.
 
-Earlier delivery-order blocks remain historical where superseded above.
+Earlier delivery-order blocks are historical where superseded above.
 
 ## Current delivery order: connected Excel acceptance
 

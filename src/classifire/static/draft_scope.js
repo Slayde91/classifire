@@ -11,7 +11,10 @@
   const suggestedItems = new Map();
   const pageReview = form.dataset.pageReview === "true";
   const workbookReview = form.dataset.workbookReview === "true";
-  const sourceReview = pageReview || workbookReview;
+  const wordReview = form.dataset.wordReview === "true";
+  const multiSourceReview = workbookReview || wordReview;
+  const sourceField = wordReview ? "locator" : "row";
+  const sourceReview = pageReview || multiSourceReview;
   let rowSources = [];
   let sheetImages = [];
   const targetKinds = { defects: "defect", openings: "opening", services: "service" };
@@ -37,9 +40,9 @@
 
   function updateReviewSummary() {
     const summary = document.getElementById("scope-review-selection-status");
-    if (summary && workbookReview) {
+    if (summary && multiSourceReview) {
       const imageCount = reviewTargets.reduce((count, target) => count + target.image_ids.length, 0);
-      summary.textContent = `${reviewTargets.length} item-to-row references and ${imageCount} explicit image links selected. Existing items gain references only when selected. Image placement does not establish physical relationships.`;
+      summary.textContent = `${reviewTargets.length} item-to-${wordReview ? "text" : "row"} references and ${imageCount} explicit image links selected. Existing items gain references only when selected. Image placement does not establish physical relationships.`;
       return;
     }
     if (summary) summary.textContent = `${reviewTargets.length} item${reviewTargets.length === 1 ? "" : "s"} selected for page ${form.dataset.pageNumber}. Only explicitly selected items gain a new page reference.`;
@@ -66,21 +69,21 @@
   }
 
   function addWorkbookReviewControls(card, kind, item) {
-    if (!workbookReview || !targetKinds[kind]) return;
+    if (!multiSourceReview || !targetKinds[kind]) return;
     const targetKind = targetKinds[kind];
     const details = element("details", "scope-row-links");
-    details.append(element("summary", "", "Source rows and images"));
-    details.append(element("p", "scope-hint", "Choose every supporting selected row. Add image links explicitly; an image anchor is placement context only."));
+    details.append(element("summary", "", wordReview ? "Source text and pictures" : "Source rows and images"));
+    details.append(element("p", "scope-hint", wordReview ? "Choose supporting text positions and explicitly link any supporting pictures. Placement alone does not establish a relationship." : "Choose every supporting selected row. Add image links explicitly; an image anchor is placement context only."));
     rowSources.forEach((source) => {
       const rowBox = element("div", "scope-row-choice");
       const label = element("label", "scope-check");
       const checkbox = element("input");
       checkbox.type = "checkbox";
-      checkbox.id = `scope-${item.id}-row-${source.row}`;
+      checkbox.id = `scope-${item.id}-row-${source[sourceField]}`;
       const title = `Link this ${targetKind} to ${source.label}`;
       checkbox.setAttribute("aria-label", title);
       label.htmlFor = checkbox.id;
-      const matches = (target) => target.target_kind === targetKind && target.target_id === item.id && target.row === source.row;
+      const matches = (target) => target.target_kind === targetKind && target.target_id === item.id && target[sourceField] === source[sourceField];
       checkbox.checked = reviewTargets.some(matches);
       label.append(checkbox, document.createTextNode(title));
       const images = element("div", "scope-row-images");
@@ -88,12 +91,12 @@
         images.replaceChildren();
         const target = reviewTargets.find(matches);
         if (!target) return;
-        if (!sheetImages.length) images.append(element("span", "scope-hint", "No retained worksheet images."));
+        if (!sheetImages.length) images.append(element("span", "scope-hint", wordReview ? "No retained Word pictures." : "No retained worksheet images."));
         sheetImages.forEach((image) => {
           const imageLabel = element("label", "scope-check");
           const input = element("input");
           input.type = "checkbox";
-          input.id = `scope-${item.id}-row-${source.row}-${image.occurrence_id}`;
+          input.id = `scope-${item.id}-row-${source[sourceField]}-${image.occurrence_id}`;
           imageLabel.htmlFor = input.id;
           const name = `Link ${image.label} to this ${targetKind} at ${source.label}`;
           input.setAttribute("aria-label", name);
@@ -109,7 +112,7 @@
       }
       checkbox.addEventListener("change", () => {
         reviewTargets = reviewTargets.filter((target) => !matches(target));
-        if (checkbox.checked) reviewTargets.push({ target_kind: targetKind, target_id: item.id, row: source.row, image_ids: [] });
+        if (checkbox.checked) reviewTargets.push({ target_kind: targetKind, target_id: item.id, [sourceField]: source[sourceField], image_ids: [] });
         renderImages();
         changed();
       });
@@ -122,7 +125,7 @@
 
   function relationLabel(items, item, index, title) {
     const label = item.label || `${title} ${index + 1}`;
-    return workbookReview && items.filter((entry) => entry.label === item.label).length > 1 ? `${label} (${item.id.slice(0, 8)})` : label;
+    return multiSourceReview && items.filter((entry) => entry.label === item.label).length > 1 ? `${label} (${item.id.slice(0, 8)})` : label;
   }
 
   function element(tag, className, text) {
@@ -344,12 +347,12 @@
       reviewTargets.forEach((target) => {
         if (!target || !Object.values(targetKinds).includes(target.target_kind) || typeof target.target_id !== "string") throw new Error("Invalid page review selection");
       });
-      if (workbookReview) {
+      if (multiSourceReview) {
         rowSources = JSON.parse(document.getElementById("scope-initial-row-sources").textContent);
         sheetImages = JSON.parse(document.getElementById("scope-initial-sheet-images").textContent);
         if (!Array.isArray(rowSources) || !Array.isArray(sheetImages)) throw new Error("Invalid worksheet source choices");
         reviewTargets.forEach((target) => {
-          if (!Number.isInteger(target.row) || !Array.isArray(target.image_ids) || target.image_ids.some((id) => typeof id !== "string")) throw new Error("Invalid worksheet review selection");
+          if ((wordReview ? typeof target.locator !== "string" : !Number.isInteger(target.row)) || !Array.isArray(target.image_ids) || target.image_ids.some((id) => typeof id !== "string")) throw new Error("Invalid worksheet review selection");
         });
       }
     }
@@ -385,7 +388,7 @@
       }
       if (sourceReview && !suggestionReview && !reviewTargets.length) {
         event.preventDefault();
-        showError(workbookReview ? "Select at least one source row for a defect, opening or service before previewing." : "Select at least one defect, opening or service to link to this page before previewing.");
+        showError(wordReview ? "Select at least one text position for a defect, opening or service before previewing." : workbookReview ? "Select at least one source row for a defect, opening or service before previewing." : "Select at least one defect, opening or service to link to this page before previewing.");
         return;
       }
       document.getElementById("scope-payload").value = JSON.stringify(payload);
@@ -396,7 +399,7 @@
       independentForm.addEventListener("submit", (event) => {
         if (!dirty) return;
         event.preventDefault();
-        showError(workbookReview ? "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before uploading or scanning another source." : "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before starting a separate page action such as an observation or optional suggestion request.");
+        showError(multiSourceReview ? "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before uploading or scanning another source." : "The graph has unsaved changes. Preview and save those changes first, or discard them by reloading, before starting a separate page action such as an observation or optional suggestion request.");
       });
     });
     document.querySelectorAll("[data-scope-discard-action]").forEach((discardForm) => {

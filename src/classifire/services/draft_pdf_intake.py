@@ -388,7 +388,9 @@ def scope_evidence_staleness(
             continue
         if reference_changed(ref, scope["content"]):
             reasons.append(
-                "SCOPE_WORKBOOK_REVIEW_CHANGED"
+                "SCOPE_WORD_REVIEW_CHANGED"
+                if ref.get("source_kind") == "docx"
+                else "SCOPE_WORKBOOK_REVIEW_CHANGED"
                 if ref.get("source_kind") == "xlsx"
                 else "SCOPE_PAGE_REVIEW_CHANGED"
             )
@@ -397,7 +399,13 @@ def scope_evidence_staleness(
             continue
         try:
             # Use only the caller-supplied retained root, never ambient application settings.
-            if ref.get("source_kind") == "xlsx":
+            if ref.get("source_kind") == "docx":
+                from .draft_scope_docx import intake as word_intake
+
+                source, _document_value, content = word_intake()._document(
+                    db, actor, draft_id, ref["source_id"], storage_root
+                )
+            elif ref.get("source_kind") == "xlsx":
                 from .draft_scope_xlsx import intake as workbook_intake
 
                 source, _document_value, content = workbook_intake()._document(

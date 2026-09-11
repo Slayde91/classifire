@@ -209,35 +209,8 @@ def validate_document(value: Any) -> bool:
             claimed.extend(block["pictures"])
         ids = []
         for index, picture in enumerate(pictures, 1):
-            if set(picture) != {
-                "member",
-                "sha256",
-                "size_bytes",
-                "media_type",
-                "width",
-                "height",
-                "preview_sha256",
-                "id",
-                "locator",
-            }:
-                return False
+            validate_picture_claim(picture)
             if picture["id"] != f"picture-{index}" or picture["locator"] not in locators:
-                return False
-            if not re.fullmatch(
-                r"word/media/[A-Za-z0-9_.-]+\.(png|jpe?g)", picture["member"], re.I
-            ):
-                return False
-            if any(
-                not re.fullmatch(r"[0-9a-f]{64}", picture[key])
-                for key in ("sha256", "preview_sha256")
-            ):
-                return False
-            if picture["media_type"] not in {"image/png", "image/jpeg"}:
-                return False
-            if any(
-                type(picture[key]) is not int or picture[key] <= 0
-                for key in ("size_bytes", "width", "height")
-            ):
                 return False
             if not any(
                 block["locator"] == picture["locator"] and picture["id"] in block["pictures"]
@@ -253,3 +226,50 @@ def validate_document(value: Any) -> bool:
         return claimed == ids
     except (KeyError, TypeError, ValueError, AttributeError):
         return False
+
+
+def validate_text_claim(block: Any) -> None:
+    if type(block) is not dict or set(block) != {"locator", "text", "text_sha256"}:
+        raise ValueError("Word text claim")
+    if not re.fullmatch(
+        r"body-[1-9][0-9]{0,3}(/row-[1-9][0-9]{0,3}/cell-[1-9][0-9]{0,3}/p-[1-9][0-9]{0,3})?",
+        block["locator"],
+    ):
+        raise ValueError("Word locator")
+    if (
+        type(block["text"]) is not str
+        or len(block["text"]) > 16000
+        or digest(block["text"].encode("utf-8")) != block["text_sha256"]
+    ):
+        raise ValueError("Word text hash")
+
+
+def validate_picture_claim(picture: Any) -> None:
+    if type(picture) is not dict or set(picture) != {
+        "member",
+        "sha256",
+        "size_bytes",
+        "media_type",
+        "width",
+        "height",
+        "preview_sha256",
+        "id",
+        "locator",
+    }:
+        raise ValueError("Word picture claim")
+    if not re.fullmatch(r"picture-([1-9]|[1-3][0-9]|40)", picture["id"]):
+        raise ValueError("Word picture identity")
+    validate_text_claim({"locator": picture["locator"], "text": "", "text_sha256": digest(b"")})
+    if not re.fullmatch(r"word/media/[A-Za-z0-9_.-]+\.(png|jpe?g)", picture["member"], re.I):
+        raise ValueError("Word image member")
+    if any(not re.fullmatch(r"[0-9a-f]{64}", picture[key]) for key in ("sha256", "preview_sha256")):
+        raise ValueError("Word image hash")
+    if picture["media_type"] not in {"image/png", "image/jpeg"}:
+        raise ValueError("Word image type")
+    if any(
+        type(picture[key]) is not int or picture[key] <= 0
+        for key in ("size_bytes", "width", "height")
+    ):
+        raise ValueError("Word image dimensions")
+    if picture["size_bytes"] > 2 * 1024 * 1024 or picture["width"] * picture["height"] > 2_000_000:
+        raise ValueError("Word image size")

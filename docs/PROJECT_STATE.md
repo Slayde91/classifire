@@ -1,36 +1,55 @@
 # CLASSIFIRE Project State
 
-## Current candidate: Word evidence inspection
+Validation checkpoint: 105 integrated Word/PDF/Excel/package/import/report tests
+passed in 427.25 seconds (the deliberate duplicate-ZIP fixture emitted its expected
+warning). Another 50 mixed-evidence/output checks and one complete Edge journey
+passed. Ruff, Mypy (228 source files), Bandit and single Alembic head passed. The final
+73 client/PDF review regressions also passed (279.06 seconds). Local validation is
+complete; required hosted CI/review and actual merge remain to be verified.
 
-Branch `feat/scope-word-evidence-20260912` extends the existing Draft intake and
-worker with Word upload, explicit malware scan, paragraph/table-cell inspection,
-static-picture previews, reopen and exact-original download. It is implemented
-locally, not yet a merged or deployed capability. PR #251 documentation merged
-as e2fcd15 after CI; the running Excel test app remains unchanged on port 8820.
+## Current candidate: reviewed Word scope and portable original evidence
 
-Verification: 80 integrated Word/UI/migration/lineage/Excel checks passed. Ruff,
-Mypy (227 source files), Bandit and the single Alembic head check passed. The
-synthetic Edge/Playwright journey passed upload/scan/picture/reopen/exact download;
-the rendered screen was inspected. The initial browser harness used an immediate
-count before navigation settled; it now waits for visible prepared evidence.
-Earlier fixture-login, expected-table-list and callable-annotation failures were
-corrected; they are not product successes or unresolved blockers.
+Shared main includes PR #252, merged as c5d4774d7b031f6270c1e4cc9725464684a399bc
+on 2026-09-11 at 22:39 UTC after required CI 34653404693 succeeded. That delivered
+Word upload, explicit scan, structural text/picture inspection and original download.
 
-Health: candidate is bounded evidence inspection, not complete Word scope analysis.
-Word-to-Scope human review, portable Word evidence references/package membership,
-ChatGPT Word tools, formatted page rendering and broader document layouts remain
-missing. Existing PDF/Excel paths and canonical authority are preserved. Forward
-migration 0047 adds only a Draft-owned Word source table; no live database migration
-or app activation has been performed for this candidate.
+Branch `feat/word-scope-review-20260912` extends that merged inspection with the
+shared graph editor, explicit Word text/picture links, no-write preview, same-user
+human confirmation and saved Scope v7. ProjectPackage v5 optionally includes exact
+reviewed Word originals; import retains new owned bindings, requires local scanning,
+preserves foreign/unverified claims and checks quarantine across retained ancestors.
+All four PDF/XLSX report profiles preserve Word and previous PDF/Excel/AI provenance.
+No additional migration, dependency, agent or canonical authority is introduced.
+
+Verified: 13 initial integrated review/package tests passed; 50 mixed-evidence/output
+and compatibility tests passed. The complete synthetic Edge/Playwright journey passed
+upload/scan -> one defect/two distinct openings/two services on only the shared
+opening -> preview/human confirmation -> reload -> package download. Unknown
+quantities/dimensions stayed null and downloaded Word bytes matched the upload.
+Review/package screenshots and the generated PDF cover/provenance page were inspected.
+The final expanded/static checks are recorded above; candidate publication is pending.
+No CI/merge for this candidate or live Word activation is implied by local tests.
+
+Earlier new-test failures were fixture mistakes (scan result key, form-parser field,
+report argument). Browser-harness failures were an insecure fake origin and redirects
+followed inside TestClient instead of Edge; both were corrected before the passing
+journey. No product guard or assertion was weakened to pass those failures.
+
+Health: bounded standalone Word review is implemented locally, not full production
+Word interpretation. ChatGPT Word tools, broader Word layout/page reconstruction,
+representative input acceptance, complete project history and remaining technical/
+commercial breadth are unfinished. The hybrid architecture and human release gates
+remain unchanged. The running approved Excel test app on port 8820 is preserved;
+Word deployment requires separate authorization and the already merged 0047 migration.
 
 ### Recommended Next Actions
 
-Complete this candidate's CI-gated publication. Then extend retained Word evidence
-into the existing explicit source-linked Scope review, with versioned provenance
-and portable original-bearing packages. Do not turn image placement into semantic
-ownership or infer quantities. The separate real ChatGPT Excel acceptance remains
-pending refreshed tools and user confirmation; resume it when those are available.
-The full production-platform goal remains incomplete.
+Finish this locally validated candidate's reviewed publication and required-CI merge.
+Then expose Word intake/read/review through the existing typed client request and
+MCP adapters, retaining browser-only confirmation. Resume the separate real ChatGPT
+Excel trial when refreshed tools and human actions are available. Do not repeat its
+OAuth setup, widen grants or silently run matching/estimating. The full platform goal
+remains incomplete.
 
 The earlier workbook checkpoint below describes the preserved running app.
 

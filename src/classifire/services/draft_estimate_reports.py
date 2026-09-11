@@ -21,6 +21,7 @@ from .draft_scope import DraftScopeError, _atomic, _valid_hash
 from .draft_scope_evidence import (
     ENTITY_EVIDENCE_SCHEMA_VERSION,
     SUGGESTION_EVIDENCE_SCHEMA_VERSION,
+    WORD_EVIDENCE_SCHEMA_VERSION,
     XLSX_EVIDENCE_SCHEMA_VERSION,
 )
 from .draft_scope_reports import (
@@ -59,6 +60,8 @@ class DraftEstimateReportError(DraftScopeError):
 
 
 def _render_version(estimate: dict[str, Any], *, complete: bool) -> int:
+    if estimate["scope"].get("schema_version") == WORD_EVIDENCE_SCHEMA_VERSION:
+        return 11 if complete else 10
     if estimate["scope"].get("schema_version") == SUGGESTION_EVIDENCE_SCHEMA_VERSION:
         return 9 if complete else 8
     if estimate["scope"].get("schema_version") == XLSX_EVIDENCE_SCHEMA_VERSION:
