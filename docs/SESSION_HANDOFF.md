@@ -1,62 +1,89 @@
 # CLASSIFIRE Session Handoff
 
-## Start Here / Next Session: finish workbook package publication
+## Start Here / Next Session: prove refreshed ChatGPT Excel acceptance
 
-Use C:\CLASSIFIRE\.tmp\package-workbook-evidence-20260911, branch
-feat/package-workbook-evidence-20260911. Implementation commit 8b4cff9 is followed
-by merge f48621d integrating PR #249/main a02e895. PR #249 required CI 34606248729
-passed and merge was verified. Recheck actual head/PR/CI before acting; this file
-cannot record its own final commit. Live test activation was not performed.
+PR #249 merged at a02e895; PR #250 merged at
+27cd8bf114cb39caff42ae7150be0d66505fd01f after required CI 34609140246 succeeded.
+Do not repeat implementation/publication. This documentation branch is
+docs/workbook-trial-activation-20260912 in the matching .tmp worktree; inspect its
+actual head/PR before publishing or treating it as merged.
 
-First task: publish package v4 after required CI, then prepare
-synthetic client acceptance after authorized activation. Files: shared
-services/draft_project_packages.py, draft_package_import.py,
-draft_package_materialization.py, draft_import_reports.py; package UI/templates;
-tests/test_draft_package_xlsx_evidence.py and package/client contracts. Exact MCP
-Selection schema automatically advertises xlsx_sources. Preserve unknown quantities,
-formula text, image bytes, historical formats and human authority boundaries.
+### Current runtime and preserved work
 
-Evidence: three workbook and three PDF portability cases passed; 27 package/import/
-browser checks passed (one expected duplicate-ZIP warning); four final workbook/schema
-checks passed. After PR #249 integration, seven client/workbook/schema tests passed;
-full Ruff, Mypy (223 files) and Bandit passed. Playwright/Edge selected, previewed, saved and downloaded
-a ZIP containing the exact workbook; .tmp/package-xlsx-playwright.png was visually
-inspected. ASGI browser transport is not hosted/ChatGPT acceptance.
+The user approved the synthetic update after merge, and it completed. Runtime
+checkout: C:\CLASSIFIRE\.tmp\package-workbook-evidence-20260911,
+branch feat/package-workbook-evidence-20260911, tested head 8fc4855; loopback port
+8820, process 23084/session 33857 at verification. Recheck process ownership before
+any action. The same database, storage, OAuth policy and tunnel were retained.
+Do not ask again for the already completed activation or restart unnecessarily.
+Old trial checkout auth0-issuer-url-20260910 remains unchanged as recovery context.
 
-Prerequisites: worktree src on PYTHONPATH; disposable PostgreSQL loopback 15433,
-classifire_containment_test, explicit
-CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN=classifire-containment-test-drop-all.
-Never use live trial port 15432 for destructive fixtures. Run pytest sequentially
-for client_workbooks, package_xlsx_evidence, package_pdf_evidence, project_packages,
-project_package_ui, package_import, package_import_ui, package_materialization,
-import_reports and the client schema-discovery case. Use -p no:cacheprovider and a
-unique --basetemp. Run Ruff, Mypy and Bandit. Playwright is isolated in ignored
-.tmp/playwright-tools-20260911, not an application dependency.
+Live Playwright login/package view and actual authenticated ChatGPT read passed.
+Saved draft 4243d286-6be4-4063-9dcc-06c171c94aee remains revision 3, with Scope SHA
+1ed4098d75b3680305186120dcad7e06dcac594fd396981cd6cf8600bb7820a2.
+The check made no project changes. Screenshot .tmp/live-excel-package-readiness.png
+was visually inspected. Merge monitor 85548 completed; session 33857 now runs the app,
+not a waiting deployment job. Do not terminate it as cleanup.
 
-Done: coherent reviewed diff, passing affected and required CI checks, pushed branch,
-correct PR base/head and verified merge. Activation and real client acceptance need
-separate evidence. No code blocker is established; these validation/acceptance gates
-remain. Preserve legacy root changes: inspection found 46 modified files, 14 additions,
-four DU conflicts and 52 untracked entries. Unreadable old test directories limit the
-inventory. Preserve the separate live trial and unrelated work in all worktrees.
+Preserve unrelated root work (last inventory: 46 modified files, 14 additions,
+four DU conflicts, 52 untracked entries; unreadable old test dirs limit inventory).
+Implementation worktree is clean. Ignored operator helpers/receipts/fixtures are
+local test evidence, not production files or canonical data.
+
+### First task, prerequisites, validation and done
+
+First task: complete the real ChatGPT Excel trial. Refresh of Classifire Test was
+requested; current session metadata lacks the new tools. Inspect actual discovery
+before proceeding, not a connected label. Use a new synthetic project through its
+normal human-confirmed creation; preserve the PDF trial. Fixture:
+C:\CLASSIFIRE\.tmp\synthetic-defect-register-chatgpt.xlsx (7,669 bytes; SHA
+2fb41f642e0ebd30853c6493ea02860ab63634491f56209e0dac0fc30d2a54b5), copied exactly
+from the tested package, two sheets/two pictures. It has not been uploaded.
+
+Relevant files: draft_client_workbook_tools.py; services/draft_scope_xlsx.py,
+draft_client_capabilities.py, draft_project_packages.py, draft_package_import.py,
+draft_import_reports.py; client/package templates; workbook/client/package tests.
+Contracts are shared with the standalone UI. Exact schemas and redacted field errors
+are merged; do not recreate manual JSON workarounds or another schema pipeline.
+
+Done: real discovered Excel tools, retained/clean source, bounded cell and image
+inspection, evidence-linked proposal, separate human confirmation, saved Scope,
+reviewed package selection with original XLSX, and downloaded original-byte/hash
+verification. Preserve uncertainty, formula text without evaluation and explicit
+picture associations. Do not run matching/pricing/release automatically.
+
+For any required fix, use a fresh isolated current-main worktree. Set PYTHONPATH to
+its src; run affected client/workbook/package tests with -p no:cacheprovider and a
+unique --basetemp. PostgreSQL tests require a disposable loopback15433 database named
+classifire_containment_test and explicit destructive-test opt-in; NEVER use live15432.
+Test container is stopped. Run Ruff/Mypy/Bandit as warranted, then scoped commit/push/
+PR/CI/merge. Existing local suites and required PR #250 CI passed; do not rerun them
+without a new change or unresolved concern. Playwright is isolated in .tmp/playwright-tools-20260911.
+
+Blocker for client acceptance: refreshed tools and selected synthetic attachment,
+then actual human decisions. No implementation failure is established. Full production
+scope remains incomplete; a successful synthetic trial is not production completion.
 
 ### Recommended Prompt for New Session
 
-Inspect AGENTS.md, GOAL.md, Git/worktrees/main/PR/CI, docs and code before editing.
-Preserve unrelated changes, the conflicted root and live trial. Continue
-feat/package-workbook-evidence-20260911 in its isolated worktree: verify whether
-workbook package v4 is already published, then finish remaining implementation,
-validation, classification, commit, push, PR and merge after required CI/review.
-This is next because PR #249 enables Excel review and portable evidence needs the
-original workbook. Inspect shared package/import/attachment services, package UI,
-test_draft_package_xlsx_evidence.py and client schema discovery. Preserve v1-v3 bytes,
-unknowns, formula-text-only processing, ownership/quarantine and human gates. Run
-workbook/client/schema and package/import regressions sequentially on disposable
-PostgreSQL 15433 with explicit test opt-in, worktree src on PYTHONPATH and unique temp;
-run Ruff, Mypy, Bandit and inspect the browser download. Done requires verified merge.
-Then prepare authorized synthetic ChatGPT Excel acceptance; activation/tool refresh
-are prerequisites. Never widen grants, use customer evidence, restart the live trial
-implicitly or claim production completion. Avoid speculative work.
+Inspect AGENTS.md, GOAL.md, Git/worktrees/main/PR/CI, current docs and code before
+editing. Preserve unrelated root changes and the running synthetic app. PR #249/#250
+are merged; test activation and read-only browser/ChatGPT verification passed. The
+single next task is real refreshed-ChatGPT Excel acceptance, because code/browser
+proof does not prove the client upload-to-download journey. Verify current runtime
+and tool discovery; refresh is pending. Use .tmp/synthetic-defect-register-chatgpt.xlsx
+in a separate synthetic project through normal human-confirmed creation. Inspect
+workbook MCP/shared Scope/package services and their contracts. Prove upload, clean
+scan, cells/pictures, proposal, human confirmation, saved Scope and package download
+containing exact workbook bytes. Preserve unknowns, formula-text-only processing,
+permissions and existing PDF trial; never auto-confirm human gates or run pricing.
+If a concrete failure requires a fix, work on isolated current main, run affected
+client/workbook/package regressions using disposable PostgreSQL15433 (never live15432),
+explicit test opt-in, worktree src and unique temp; run Ruff/Mypy/Bandit and browser
+checks. Continue autonomously through implementation, validation, classification,
+commit, push, PR and passing-checks merge where safe. Do not rebuild merged work,
+widen grants, use customer evidence or invent production completion. Record actual
+acceptance evidence and the next verified gap.
 
 Earlier handoffs below are historical; do not repeat their completed tasks.
 

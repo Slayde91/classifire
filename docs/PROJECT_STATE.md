@@ -1,43 +1,46 @@
 # CLASSIFIRE Project State
 
-## Current checkpoint: portable Scope workbook evidence
+## Current checkpoint: workbook code merged and synthetic app updated
 
-PR #249 is merged at `a02e8955193781d6ca901b667f2714e38d05186d` after required
-Python validation succeeded (run 34606248729). It adds the six Excel client tools
-and human-reviewed source-linked Scope proposal. Runtime activation and real
-refreshed ChatGPT Excel acceptance are not yet proven.
+PR #249 adds the Excel client tools (merge a02e895). PR #250 adds optional original
+Scope workbook inclusion and ProjectPackage v4 (merge
+27cd8bf114cb39caff42ae7150be0d66505fd01f). Required CI run 34609140246 passed before
+PR #250 merged at 2026-09-11 14:45:12 UTC. Source, tests and merge are verified.
 
-The follow-up branch `feat/package-workbook-evidence-20260911` adds explicit
-workbook inclusion to package configuration, exact original bytes in v4 ZIPs,
-semantic import bindings and scan-gated imported download/re-export. It reuses
-shared Scope evidence and package services. Unknown quantities, original pictures
-and formula text remain intact; imported claims remain unverified. No matching,
-pricing, canonical writes or release occurs as a side effect.
+The user explicitly approved updating the existing synthetic app after merge.
+It now runs tested head 8fc4855 in the package-workbook worktree on loopback 8820;
+startup completed with process 23084. Existing database, OAuth policy and tunnel
+were preserved. Playwright signed in, inspected the updated package screen and
+read revision 3 with unchanged Scope hash. An actual authenticated Classifire Test
+read through ChatGPT returned the same revision/hash and one defect, two openings,
+two services. No project content was created or changed during readiness checks.
 
-Verification: three workbook package tests and three PDF portability tests passed;
-27 package/import/browser checks passed (one expected duplicate-ZIP warning).
-Four final checks passed, including imported workbook HTTP download and exact MCP
-selection-schema discovery. Playwright/Edge selected the checkbox, previewed,
-saved and downloaded a byte-verified ZIP; its screenshot was visually inspected.
-This used synthetic PostgreSQL and ASGI browser transport, not a hosted acceptance
-trial. Ruff, Mypy (222 files before integrating PR #249) and Bandit passed.
-After integrating PR #249, all seven client/workbook/schema tests passed. Full Ruff,
-Mypy (223 source files) and Bandit passed. Required publication CI remains pending.
+### Verification and project health
 
-### Project health and gaps
+Affected package/PDF/workbook and import regressions passed, including 27 package/
+import/browser checks and seven final integrated client/workbook/schema checks.
+Ruff, Mypy (223 files) and Bandit passed locally; required hosted CI also passed.
+The synthetic Playwright package journey selected, saved and downloaded a ZIP with
+byte-identical workbook bytes. Its ASGI test screenshot and the live read-only
+package screenshot were visually inspected. These are distinct forms of evidence.
 
-The connected PDF trial is proven; workbook UI/client code and portable evidence
-are a bounded Draft milestone. Whole-project history, broader document formats,
-remaining capability coverage and production gates are not complete. No OpenClaw
-retirement or production readiness is claimed. The live trial and dirty legacy
-root remain untouched. Earlier checkpoints below are historical.
+Full refreshed-ChatGPT Excel upload/review/download acceptance remains unproven.
+The tool list in this session still lacks new Excel actions; refresh was requested.
+The synthetic workbook is prepared locally but has not been uploaded. Broader input
+formats, complete project history, richer technical/pricing capability coverage and
+production exits remain incomplete. OpenClaw retirement is not claimed.
+
+Known presentation debt: the immutable legacy v1 package notice still says import
+is unavailable, although the current UI supports it. Correct presentation separately;
+do not rewrite frozen historical package bytes to change that text.
 
 ### Recommended Next Actions
 
-Finish required CI/publication of workbook package v4.
-Then obtain authorized synthetic test activation and refreshed ChatGPT Excel
-upload -> inspect -> proposal -> human confirmation -> original-bearing ZIP
-acceptance. Do not repeat OAuth setup, widen grants or use customer evidence.
+Refresh Classifire Test's tools, then prove a separate synthetic Excel project:
+upload -> scan -> inspect cells/pictures -> explicit Scope proposal -> human
+confirmation -> package including original workbook -> verified download. Preserve
+the existing PDF trial. Do not widen grants, infer quantities, approve technical
+systems or calculate prices automatically. Earlier checkpoints below are historical.
 
 Final local validation checkpoint: 51 existing client regressions passed. The three
 workbook cases passed after restoring fixture registrations; the selected review-image

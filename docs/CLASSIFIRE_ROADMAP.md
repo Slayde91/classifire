@@ -1,23 +1,25 @@
 # CLASSIFIRE Master Roadmap
 
-## Current delivery order: portable workbook evidence
+## Current delivery order: connected Excel acceptance
 
-- Completed: PR #249 Excel client intake/inspection/review merged at a02e895;
-  required CI passed. Runtime activation and real client acceptance remain separate.
-- Active: ProjectPackage v4 optional Scope workbook membership, exact original
-  retention, scan-gated import/download and nested re-export. Local browser and
-  package regressions and integrated local checks passed; required CI/publication
-  remain the exit gate.
-- Reordered: close the verified missing-original-workbook portability gap before
-  another document format. Reuse shared parsers, evidence and package services.
-- Upcoming: authorized synthetic ChatGPT Excel upload -> inspect -> propose ->
-  human confirm -> original-bearing ZIP acceptance, after publication and tool refresh.
-- Superseded: treating Scope workbook binary packaging as indefinitely deferred or
-  rebuilding the completed PDF/OAuth and standalone workbook review workflows.
-- Deferred: bulk/unsupported layouts, Word/drawings, full project history and
-  production rollout. These remain ultimate goal requirements with separate exits.
-- Unchanged: four independent capabilities, evidence/technical/commercial separation,
-  human release and proven replacement protections before OpenClaw retirement.
+- Completed: PR #249 Excel client tools and PR #250 ProjectPackage v4 workbook
+  membership, import/download and nested re-export. Both merges and required CI
+  passed; PR #250 merged as 27cd8bf.
+- Completed: explicitly approved synthetic app update; live Playwright login/package
+  screen and actual ChatGPT Scope read passed with revision/hash unchanged.
+- Active: refresh the client's tool catalogue and prove a complete synthetic Excel
+  upload/inspection/proposal/human-confirmation/original-bearing ZIP interaction.
+- Dependencies: refreshed Excel actions and user-selected synthetic attachment;
+  separate human confirmations remain mandatory. Prepared fixture is not an upload.
+- Superseded: republishing the already merged workbook change, repeating OAuth setup
+  or treating workbook source bytes as indefinitely deferred.
+- Upcoming after acceptance: choose the next independent-capability milestone from
+  actual technical/pricing gaps and representative evidence; avoid unsupported rules.
+- Deferred: bulk layouts, additional document formats, complete history and production
+  rollout. These remain goal requirements. Legacy v1 notice presentation is minor debt;
+  immutable historical package bytes remain unchanged.
+- Unchanged: hybrid direction, four independent capabilities, human release and
+  proven replacement protections before OpenClaw retirement.
 
 Older delivery-order blocks below are historical checkpoints.
 
