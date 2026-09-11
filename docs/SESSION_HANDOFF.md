@@ -1,5 +1,67 @@
 # CLASSIFIRE Session Handoff
 
+## Start Here / Next Session: finish Word evidence publication, then source-linked review
+
+Inspect branch `feat/scope-word-evidence-20260912` in
+`C:\CLASSIFIRE\.tmp\scope-word-evidence-20260912`, its diff, current PR and CI before
+editing. It was based on verified main e2fcd15 (PR #251). Candidate implementation:
+Word retained-source inspection UI, shared worker/profile, DraftScopeDocxSource and
+forward migration 0047. Do not rebuild this inspection path if publication proves it.
+
+Verified locally: 80 integrated Word/UI/lineage/migration/Excel tests; Ruff, Mypy227,
+Bandit; one Alembic head; synthetic Playwright upload/scan/picture/reopen/original
+byte equality and visual inspection. Browser harness is the ignored local
+`.tmp/test_word_evidence_playwright.py`; screenshot `.tmp/word-evidence-playwright.png`.
+It is synthetic browser evidence, not ChatGPT Word acceptance or production proof.
+
+Prerequisites: preserve the conflicted root; use an isolated current-main worktree.
+PostgreSQL tests must use disposable `classifire_containment_test` on loopback15433
+with the explicit destructive-test opt-in, never the running app database15432.
+The existing app on8820 remains the already approved Excel build; do not restart
+or migrate it for Word without separate authorization. ChatGPT Excel refresh is
+still pending; resume that user-dependent trial when available.
+
+Next feature: create an explicitly reviewed Scope proposal from the retained Word
+text/pictures. Reuse PDF/XLSX graph review and the shared evidence union. Define a
+versioned Word reference carrying exact source/document/text/image identities,
+retain uncertainty and separate openings/services, recheck all bindings at human
+confirmation, and preserve old readers. Extend package/import boundaries to carry
+original Word evidence without treating foreign claims as local approval. Inspection
+alone cannot satisfy this task. No technical inference, pricing or automatic save.
+
+Definition of done for the current candidate: reviewed diff, successful required
+CI, verified merge and recorded commit. Definition of done for the next increment:
+visible source-linked human review, saved/reopened exact provenance, portable
+original-byte roundtrip, stale/foreign/quarantined denial tests, unaffected old
+PDF/XLSX/history readers and inspected browser outputs.
+
+Validation: set PYTHONPATH to the selected worktree's src. Run targeted pytest for
+Word, PDF/XLSX source review, package/import, migration and client contracts using
+`-p no:cacheprovider --basetemp <unique-temp> -o addopts= -q`; run `python -m ruff
+check .`, `python -m mypy src`, `python -m bandit -r src`, `python -m alembic heads`.
+Run the relevant isolated Playwright journey and inspect downloaded bytes/screens.
+
+### Recommended Prompt for New Session
+
+Continue CLASSIFIRE from verified repository state. Read AGENTS.md, GOAL.md, the
+roadmap, architecture, project state and handoff; inspect Git/worktrees/PR/CI before
+editing and preserve unrelated root/local work. First finish any pending publication
+of feat/scope-word-evidence-20260912; never redo merged work. The single next feature
+is human-reviewed Word-to-Scope evidence binding with portable original-bearing
+packages: the implemented Word screen only retains/scans/displays sources. Reuse
+DraftSourceIntake, draft_scope_docx*, PDF/XLSX review, draft_scope_evidence and package/
+import services. Add versioned source/text/picture provenance, preserve unknowns and
+all old readers, and recheck exact inputs/rights/quarantine at human confirmation.
+Prove save/reopen and original-byte package roundtrip with synthetic tests and a
+rendered browser journey. Use only isolated test databases; do not change the live
+8820 app, OAuth or canonical authority. Run affected pytest, Ruff, Mypy, Bandit and
+single-head migration checks. Continue autonomously through implementation,
+validation, classification, commit, push, PR and merge when required checks/reviews
+pass. Record actual evidence; avoid speculative technical/commercial rules. Resume
+the separate Excel client trial only when refreshed tools and human actions exist.
+
+The following workbook handoff is historical runtime context, not a new restart request.
+
 ## Start Here / Next Session: prove refreshed ChatGPT Excel acceptance
 
 PR #249 merged at a02e895; PR #250 merged at

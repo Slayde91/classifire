@@ -28,6 +28,7 @@ from .draft_pdf_suggestion_ui import router as draft_pdf_suggestion_ui_router
 from .draft_pdf_ui import router as draft_pdf_ui_router
 from .draft_pricing_ui import router as draft_pricing_ui_router
 from .draft_project_package_ui import router as draft_project_package_ui_router
+from .draft_scope_docx_ui import router as draft_scope_docx_ui_router
 from .draft_scope_ui import router as draft_scope_ui_router
 from .draft_scope_xlsx_ui import router as draft_scope_xlsx_ui_router
 from .draft_system_match_ui import router as draft_system_match_ui_router
@@ -146,6 +147,7 @@ app.include_router(draft_scope_ui_router)
 app.include_router(draft_pdf_ui_router)
 app.include_router(draft_pdf_suggestion_ui_router)
 app.include_router(draft_scope_xlsx_ui_router)
+app.include_router(draft_scope_docx_ui_router)
 app.include_router(draft_pricing_ui_router)
 app.include_router(draft_estimate_ui_router)
 app.include_router(draft_project_package_ui_router)

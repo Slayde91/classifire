@@ -1,5 +1,37 @@
 # CLASSIFIRE Architecture
 
+## Word evidence inspection amendment ? implemented candidate
+
+Current shared core supports retained PDF and Scope XLSX review. Legacy canonical
+DOCX parsing is intentionally text-only and rejects pictures. The candidate adds
+a standalone Word evidence screen over the same DraftSourceIntake, StoredFile,
+malware scanner, ownership checks and disposable document worker. It does not add
+a service deployment, agent, dependency or separate physical model.
+
+Reason: Word reports are an explicit product input; showing text while dropping
+embedded photographs would misrepresent the available evidence. The new bounded
+profile accepts body paragraphs, simple table cells and static PNG/JPEG picture
+occurrences, retaining exact original bytes and hashes. Structural positions are
+not rendered page numbers. Preview images are sanitized and show the full source
+image rather than reproducing Word cropping, rotation, annotations or page layout.
+Images are not assigned to physical entities merely from placement.
+
+Security: existing canonical DOCX policy remains the default. Only the Draft Word
+profile opts into static media, then applies tighter archive, XML, image and output
+bounds. External relationships, macros, embedded objects, headers/footers, tracked
+changes, merged/nested tables and unrepresented media fail closed. Every view and
+download rechecks current rights, source/scan integrity and quarantine. Inspection
+cannot change Scope or grant technical, commercial or release authority.
+
+Migration impact: forward-only 0047_draft_scope_docx_sources adds a Draft-owned
+source table and advances deployment lineage. Historical artifacts and Scope v1-v6
+are unchanged. The existing test app has not been migrated or updated for this
+candidate; operational activation requires separate authorization.
+
+Planned, not implemented: Word source-linked entity review, portable Word evidence
+union/package membership, client tools, formatted-page reconstruction and broader
+Word layouts. See DRAFT_SCOPE_DOCX_V1_CONTRACT.md for the implemented limits.
+
 ## Current workbook portability amendment
 
 Shared main PR #249 (a02e895) adds a thin Excel client adapter over existing Scope

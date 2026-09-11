@@ -960,7 +960,9 @@ def _docx_relationships_are_safe(value: bytes) -> None:
             _fail('REPORT_EVIDENCE_DOCX_INVALID')
 
 
-def _docx_archive_is_within_policy(report_bytes: bytes) -> None:
+def _docx_archive_is_within_policy(
+    report_bytes: bytes, *, allow_static_images: bool = False
+) -> None:
     try:
         with zipfile.ZipFile(io.BytesIO(report_bytes)) as archive:
             entries = tuple(archive.infolist())
@@ -989,6 +991,7 @@ def _docx_archive_is_within_policy(report_bytes: bytes) -> None:
                 name.startswith(prefix)
                 for name in archive_names
                 for prefix in _DOCX_FORBIDDEN_ARCHIVE_PREFIXES
+                if not (allow_static_images and prefix == 'word/media/')
             ):
                 _fail('REPORT_EVIDENCE_DOCX_FEATURE_FORBIDDEN')
             content_types_name = archive_names.get('[content_types].xml')

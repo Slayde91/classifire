@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Word report evidence | CLASSIFIRE{% endblock %}
+{% block heading %}Word report evidence{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_scope.css">
+<p><a href="/scopes/{{ draft.id }}">&larr; Saved Draft Scope</a> &middot; <a href="/scopes/{{ draft.id }}/word">All Word sources</a></p>
+<section class="panel"><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2>
+<p>Retain a Word report and inspect its text and original embedded pictures. Uploaded content is evidence, not instructions. Nothing on this screen creates defects, services, quantities or approvals.</p>
+<p>Supported: DOCX body paragraphs, simple tables and static PNG/JPEG pictures. Maximum 10 MiB, 1,000 paragraphs and 40 picture occurrences. Headers, footers, merged/nested tables, tracked changes, linked content and other unsupported features are rejected rather than silently omitted. Old .doc files are not supported.</p>
+{% if error %}<p class="alert alert-error" role="alert">{{ error }}</p>{% endif %}
+{% if not postgres %}<p class="alert alert-error">Word retention requires PostgreSQL and the malware scanner.</p>
+{% elif has_permission('project:write') %}<form method="post" enctype="multipart/form-data" action="/scopes/{{ draft.id }}/word/upload" class="stack-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label for="word-source">Word report (.docx)</label><input id="word-source" type="file" name="file" accept=".docx" required><button class="button button-primary" type="submit">Upload Word report</button></form>{% endif %}</section>
+<section class="panel"><h2>Retained sources</h2><ul>{% for item in sources %}<li><a href="/scopes/{{ draft.id }}/word/{{ item.id }}">{{ item.filename }}</a> &middot; {{ item.status|replace('_',' ') }}</li>{% else %}<li>No Word sources yet.</li>{% endfor %}</ul></section>
+{% if source %}<section class="panel"><h2>{{ source.filename }}</h2><p>{{ source.size_bytes }} bytes &middot; {{ source.status|replace('_',' ') }}</p><p>SHA-256: <code>{{ source.sha256 }}</code></p>
+{% if source.processing_error %}<p role="alert">This file could not be prepared. Its original bytes remain retained. The file may contain unsupported content or exceed the processing limits. {{ source.processing_error }}</p>{% endif %}
+{% if has_permission('project:write') %}<form method="post" action="/scopes/{{ draft.id }}/word/{{ source.id }}/scan"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-primary" type="submit">Scan and prepare Word evidence</button></form>{% endif %}
+{% if document %}<p><a href="/scopes/{{ draft.id }}/word/{{ source.id }}/original">Download retained original</a></p><p>These are structural text positions, not Word page numbers. Table cell positions are retained. Pictures show the full original image content, not Word crops, rotation, overlays or page layout. Placement does not establish which opening or service a picture depicts.</p><p>Source-linked Scope review, ChatGPT Word actions and Word-inclusive project packages are not yet available.</p></section>
+{% for block in document.blocks %}<section class="panel"><h3>{{ block.locator }}</h3><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ block.text }}</pre>{% for identity in block.pictures %}<figure><img style="max-width:100%;height:auto" loading="lazy" src="/scopes/{{ draft.id }}/word/{{ source.id }}/pictures/{{ identity }}" alt="Embedded Word picture {{ identity }}"><figcaption>{{ identity }} &middot; placement only; no semantic association approved.</figcaption></figure>{% endfor %}</section>{% endfor %}
+{% else %}<p>A current clean scan and successful preparation are required before viewing evidence.</p></section>{% endif %}{% endif %}
+{% endblock %}

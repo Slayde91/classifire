@@ -50,6 +50,6 @@ def test_proposal_review_family_package_migration_upgrades_existing_0019_databas
     )
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0046_draft_pricing_quantity_bases"
+            "0047_draft_scope_docx_sources"
         )
     engine.dispose()
