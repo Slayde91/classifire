@@ -43,7 +43,8 @@ def _query(request: Request, latest: int) -> dict:
     allowed = set(packages.Selection.model_fields)
     if set(query) - allowed or any(
         len(query.getlist(k)) > 1
-        for k in allowed - {"scope_reports", "estimate_reports", "pdf_sources", "xlsx_sources"}
+        for k in allowed
+        - {"scope_reports", "estimate_reports", "pdf_sources", "xlsx_sources", "docx_sources"}
     ):
         raise HTTPException(422, "Invalid package selection")
     value = {
@@ -51,6 +52,7 @@ def _query(request: Request, latest: int) -> dict:
         "scope_reports": query.getlist("scope_reports"),
         "pdf_sources": query.getlist("pdf_sources"),
         "xlsx_sources": query.getlist("xlsx_sources"),
+        "docx_sources": query.getlist("docx_sources"),
         "estimate_reports": query.getlist("estimate_reports"),
     }
     for kind in ("match", "estimate"):
@@ -117,6 +119,11 @@ def package_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
                     ref["source_id"]: ref["original_filename"]
                     for ref in scope.get("evidence_refs", [])
                     if ref.get("origin") == "local_retained" and ref.get("source_kind") == "xlsx"
+                },
+                docx_sources={
+                    ref["source_id"]: ref["original_filename"]
+                    for ref in scope.get("evidence_refs", [])
+                    if ref.get("origin") == "local_retained" and ref.get("source_kind") == "docx"
                 },
                 reviews=[r for r in reviews if r.scope_hash == scope["sha256"]],
                 costs=[r for r in costs if r.scope_hash == scope["sha256"]],

@@ -1,36 +1,40 @@
 # CLASSIFIRE Architecture
 
-## Word evidence inspection amendment ? implemented candidate
+## Word review and portability amendment - implemented candidate
 
-Current shared core supports retained PDF and Scope XLSX review. Legacy canonical
-DOCX parsing is intentionally text-only and rejects pictures. The candidate adds
-a standalone Word evidence screen over the same DraftSourceIntake, StoredFile,
-malware scanner, ownership checks and disposable document worker. It does not add
-a service deployment, agent, dependency or separate physical model.
+Current architecture: PR #252 merged retained Word inspection as c5d4774 after
+required CI. It uses the existing DraftSourceIntake, StoredFile, malware scanner,
+owner checks and bounded document worker. The running Excel app is unchanged.
 
-Reason: Word reports are an explicit product input; showing text while dropping
-embedded photographs would misrepresent the available evidence. The new bounded
-profile accepts body paragraphs, simple table cells and static PNG/JPEG picture
-occurrences, retaining exact original bytes and hashes. Structural positions are
-not rendered page numbers. Preview images are sanitized and show the full source
-image rather than reproducing Word cropping, rotation, annotations or page layout.
-Images are not assigned to physical entities merely from placement.
+Change: `draft_scope_docx_review` reuses the existing graph validation, source review
+context and guarded revision writer. The shared editor adds explicit text/picture
+selection, no-write preview and same-user browser confirmation. Scope v7 extends
+the existing evidence union; it does not create another physical model. Word claims
+retain structural positions, exact source/text/image/document hashes and reviewer
+history. Unknown facts stay unknown; picture placement confers no ownership.
 
-Security: existing canonical DOCX policy remains the default. Only the Draft Word
-profile opts into static media, then applies tighter archive, XML, image and output
-bounds. External relationships, macros, embedded objects, headers/footers, tracked
-changes, merged/nested tables and unrepresented media fail closed. Every view and
-download rechecks current rights, source/scan integrity and quarantine. Inspection
-cannot change Scope or grant technical, commercial or release authority.
+Reason: inspection alone cannot satisfy evidence-backed scope creation or portable
+project work. The candidate lets a user complete that interaction using retained
+Word content, with the same human gates as PDF/Excel. ProjectPackage v5 adds optional
+original Word membership and reuses import retention/scanning and ancestor checks.
+PDF/XLSX output profiles preserve those references from one selected saved snapshot.
 
-Migration impact: forward-only 0047_draft_scope_docx_sources adds a Draft-owned
-source table and advances deployment lineage. Historical artifacts and Scope v1-v6
-are unchanged. The existing test app has not been migrated or updated for this
-candidate; operational activation requires separate authorization.
+Consequences: v7/v5 consumers are required for new Word-bearing artifacts. Scope
+v1-v6 and package v1-v4 readers/bytes remain supported. Imports stay unverified;
+manual changes preserve historical references and expose staleness. There are no
+new dependencies, agents, service deployments, canonical permissions or migrations
+beyond the already merged inspection migration 0047. Old report renderer contracts
+remain exact; new Word-aware versions are explicit.
 
-Planned, not implemented: Word source-linked entity review, portable Word evidence
-union/package membership, client tools, formatted-page reconstruction and broader
-Word layouts. See DRAFT_SCOPE_DOCX_V1_CONTRACT.md for the implemented limits.
+Security: current rights, ownership, source/scan/document integrity, quarantine,
+base revision and preview/session identity are checked at confirmation. Preview
+cannot save or grant technical/commercial/release authority. Original-bearing
+package export/import retains current checks across every retained ancestor.
+
+Planned/unproven: ChatGPT Word actions, broader Word layouts, rendered page context,
+representative report acceptance and production assurance. Existing Word parser
+limits remain explicit and reject unsupported content. No live Word activation or
+OpenClaw retirement is claimed. See DRAFT_SCOPE_DOCX_V1_CONTRACT.md.
 
 ## Current workbook portability amendment
 

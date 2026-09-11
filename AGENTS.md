@@ -98,13 +98,13 @@ identifiers without checking migrations, stored data, APIs, scripts and lineage.
 
 Use [the PDF contract](./docs/DRAFT_PDF_EVIDENCE_V1_CONTRACT.md) and
 [the Excel contract](./docs/DRAFT_SCOPE_XLSX_V1_CONTRACT.md) and [the optional suggestion contract](./docs/DRAFT_PDF_SUGGESTIONS_V1_CONTRACT.md)
-for Scope v3-v6.
-Keep page, entity and worksheet claims in the same versioned `evidence_refs` union;
+and [the Word contract](./docs/DRAFT_SCOPE_DOCX_V1_CONTRACT.md) for Scope v3-v7.
+Keep page, entity, worksheet and Word text/picture claims in the same versioned `evidence_refs` union;
 only trusted review creates local source bindings. Excel source purpose/permissions
 remain separate from pricing. Preview without writes, then recheck exact inputs,
 source/scan/page or cells/images, current rights and revision at confirmation.
 Manual edits retain old hashes; deleted entity references stay historical/stale;
-imports stay unverified. Preserve v1-v5 readers, v6 suggestion provenance on later PDF/XLSX/manual saves, and
+imports stay unverified. Preserve v1-v6 readers and suggestion provenance on later PDF/XLSX/Word/manual saves, and
 exact report/package history. Picture anchors show placement, not semantic ownership;
 associate pictures explicitly and never infer quantity from row/defect count.
 Optional AI reuses compatible inference protections through a small Draft-specific

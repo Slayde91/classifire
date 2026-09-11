@@ -54,17 +54,19 @@ async def _bounded_form(request: Request) -> dict[str, str]:
 FormData = Annotated[dict[str, str], Depends(_bounded_form)]
 
 
-def _structured(form: dict[str, str], key: str, kind: type, limit: int) -> Any:
+def _structured(
+    form: dict[str, str], key: str, kind: type, limit: int, *, context: str = "Workbook"
+) -> Any:
     raw = form.get(key, "")
     if len(raw.encode("utf-8")) > limit:
-        raise HTTPException(413, "Workbook review selection exceeds its size limit")
+        raise HTTPException(413, f"{context} review selection exceeds its size limit")
     try:
         value = json.loads(raw, object_pairs_hook=_unique_object)
         if type(value) is not kind:
             raise ValueError("shape")
         return value
     except (ValueError, RecursionError) as exc:
-        raise HTTPException(422, "Use the workbook mapping and review controls") from exc
+        raise HTTPException(422, f"Use the {context.lower()} mapping and review controls") from exc
 
 
 def _signer() -> URLSafeTimedSerializer:

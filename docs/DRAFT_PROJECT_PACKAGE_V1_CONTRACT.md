@@ -228,3 +228,22 @@ identity, unknown quantities, changed source/member refusal, legacy-format refus
 import/scan/re-export/two-generation history, foreign ownership and shared quarantine.
 Playwright exercised selection through ZIP download with ASGI test transport; this
 is browser proof, not hosted deployment or real ChatGPT acceptance.
+
+
+## Word evidence and ProjectPackage v5
+
+The Word review candidate adds optional `Selection.docx_sources` (up to four unique
+source UUIDs, disjoint from PDF/XLSX selections). Empty Word selections are omitted
+from serialized selection, preserving v1-v4 reconstruction. V5 permits exact
+`evidence/<source-id>.docx` members; older package versions reject Word membership.
+The existing aggregate archive/member/nesting bounds still apply, including when
+multiple source formats and reports are selected.
+
+Composition requires selected locally reviewed Scope references of kind `docx`,
+current ownership/read rights, clean retained bytes and exact source/document hashes.
+Import checks the reference kind, member hash/size and complete inventory before
+creating new owned imported attachment bindings. Its Word evidence policy reuses
+the native bounded Word parser; it does not use the generated-report XLSX parser.
+Fresh local scan/format checks gate downloads and re-export, and all retained binary
+ancestors remain subject to current permissions and quarantine. Imported v7 review
+claims stay unverified. No technical/pricing bodies or local authority are added.

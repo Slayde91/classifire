@@ -95,14 +95,15 @@ def evidence_intake(format_name: str = "pdf") -> DraftSourceIntake:
     evidence parser; the stricter generated-report XLSX policy remains unchanged.
     """
     from . import draft_pdf_intake as pdf
+    from . import draft_scope_docx as word
     from . import draft_scope_xlsx as xlsx
 
-    if format_name == "xlsx":
+    if format_name in ("xlsx", "docx"):
         return DraftSourceIntake(
             replace(
-                xlsx.intake().policy,
+                (word if format_name == "docx" else xlsx).intake().policy,
                 model=DraftImportedReportSource,
-                audit_name="draft_import_xlsx_evidence",
+                audit_name=f"draft_import_{format_name}_evidence",
                 allow_supplied_content_reuse=True,
                 max_sources=128,
             )

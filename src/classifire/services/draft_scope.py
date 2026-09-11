@@ -29,6 +29,7 @@ from .draft_scope_evidence import (
     EVIDENCE_SCHEMA_VERSION,
     EVIDENCE_SCHEMAS,
     SUGGESTION_EVIDENCE_SCHEMA_VERSION,
+    WORD_EVIDENCE_SCHEMA_VERSION,
     XLSX_EVIDENCE_SCHEMA_VERSION,
     reference_identity,
     validate_evidence_refs,
@@ -597,8 +598,13 @@ def _revision_envelope(
         suggestion_version = any("suggestion" in ref for ref in refs) or (
             basis and basis["schema_version"] == SUGGESTION_EVIDENCE_SCHEMA_VERSION
         )
+        word_version = any(ref.get("source_kind") == "docx" for ref in refs) or (
+            basis and basis["schema_version"] == WORD_EVIDENCE_SCHEMA_VERSION
+        )
         envelope.update(
-            schema_version=SUGGESTION_EVIDENCE_SCHEMA_VERSION
+            schema_version=WORD_EVIDENCE_SCHEMA_VERSION
+            if word_version
+            else SUGGESTION_EVIDENCE_SCHEMA_VERSION
             if suggestion_version
             else XLSX_EVIDENCE_SCHEMA_VERSION
             if xlsx_version

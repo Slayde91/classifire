@@ -152,7 +152,12 @@ def _page_reference_fields(scope: dict[str, Any], ref: dict[str, Any]) -> list[t
                 ("saved_revision_review_status", reference_status(ref, scope["content"])),
             ]
         )
-    if ref.get("source_kind") == "xlsx":
+    if ref.get("source_kind") == "docx":
+        fields.extend((key, value) for key, value in ref.items() if key not in {"block", "images"})
+        fields.extend(("word_" + key, value) for key, value in ref["block"].items())
+        for image in ref["images"]:
+            fields.extend((f"image_{image['id']}_{key}", value) for key, value in image.items())
+    elif ref.get("source_kind") == "xlsx":
         fields.extend((key, value) for key, value in ref.items() if key not in {"row", "images"})
         row = ref["row"]
         for key in ("sheet", "sheet_index", "row", "header_row", "sha256"):

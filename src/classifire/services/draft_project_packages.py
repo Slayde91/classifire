@@ -43,6 +43,7 @@ SCHEMA = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v1"
 SCHEMA_V2 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v2"
 SCHEMA_V3 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v3"
 SCHEMA_V4 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v4"
+SCHEMA_V5 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v5"
 MAX_ARCHIVE = 128 * 1024 * 1024
 MAX_V1_ARCHIVE = 64 * 1024 * 1024
 MAX_MANIFEST = 2 * 1024 * 1024
@@ -64,6 +65,7 @@ class Selection(BaseModel):
     scope_revision: Annotated[int, Field(ge=1)]
     pdf_sources: Annotated[list[str], Field(max_length=4)] = Field(default_factory=list)
     xlsx_sources: Annotated[list[str], Field(max_length=4)] = Field(default_factory=list)
+    docx_sources: Annotated[list[str], Field(max_length=4)] = Field(default_factory=list)
     match_id: str | None = None
     match_revision: Annotated[int, Field(ge=1)] | None = None
     estimate_id: str | None = None
@@ -78,7 +80,9 @@ class Selection(BaseModel):
             raise ValueError("identity")
         return value
 
-    @field_validator("scope_reports", "estimate_reports", "pdf_sources", "xlsx_sources")
+    @field_validator(
+        "scope_reports", "estimate_reports", "pdf_sources", "xlsx_sources", "docx_sources"
+    )
     @classmethod
     def identities(cls, value: list[str]) -> list[str]:
         if len(set(value)) != len(value) or any(str(UUID(v)) != v for v in value):
@@ -92,11 +96,15 @@ class Selection(BaseModel):
             value.pop("pdf_sources", None)
         if not self.xlsx_sources:
             value.pop("xlsx_sources", None)
+        if not self.docx_sources:
+            value.pop("docx_sources", None)
         return value
 
     @model_validator(mode="after")
     def paired(self) -> Selection:
-        if set(self.pdf_sources) & set(self.xlsx_sources):
+        if set(self.pdf_sources) & set(self.xlsx_sources) or set(self.docx_sources) & (
+            set(self.pdf_sources) | set(self.xlsx_sources)
+        ):
             raise ValueError("source format selection")
         if (
             (self.match_id is None) != (self.match_revision is None)
@@ -141,7 +149,7 @@ def encode(value: Any) -> bytes:
 def _archive(manifest: dict[str, Any], members: dict[str, bytes]) -> bytes:
     stream = io.BytesIO()
     all_members = {**members, "manifest.json": encode(manifest)}
-    extended = manifest.get("schema_version") in (SCHEMA_V2, SCHEMA_V3, SCHEMA_V4)
+    extended = manifest.get("schema_version") in (SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5)
     limit = MAX_ARCHIVE if extended else MAX_V1_ARCHIVE
     member_limit = MAX_MEMBERS if extended else MAX_V1_MEMBERS
     if len(all_members) > member_limit or sum(map(len, all_members.values())) > limit:
@@ -177,7 +185,8 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
                 raise ValueError("members")
             manifest = json.loads(archive.read("manifest.json"))
             if (
-                manifest["schema_version"] not in (SCHEMA, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4)
+                manifest["schema_version"]
+                not in (SCHEMA, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5)
                 or manifest["state"] != "Draft"
                 or manifest["authority"] != "historical_only"
                 or encode(manifest) != archive.read("manifest.json")
@@ -197,16 +206,21 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
                     not (
                         re.fullmatch(r"(?:artifacts|reports)/[a-z0-9_-]+\.(?:json|pdf|xlsx)", name)
                         or (
-                            manifest["schema_version"] in (SCHEMA_V2, SCHEMA_V3, SCHEMA_V4)
+                            manifest["schema_version"]
+                            in (SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5)
                             and re.fullmatch(r"origins/[0-9a-f]{64}\.zip", name)
                         )
                         or (
-                            manifest["schema_version"] in (SCHEMA_V3, SCHEMA_V4)
+                            manifest["schema_version"] in (SCHEMA_V3, SCHEMA_V4, SCHEMA_V5)
                             and re.fullmatch(r"evidence/[a-z0-9-]+\.pdf", name)
                         )
                         or (
-                            manifest["schema_version"] == SCHEMA_V4
+                            manifest["schema_version"] in (SCHEMA_V4, SCHEMA_V5)
                             and re.fullmatch(r"evidence/[a-z0-9-]+\.xlsx", name)
+                        )
+                        or (
+                            manifest["schema_version"] == SCHEMA_V5
+                            and re.fullmatch(r"evidence/[a-z0-9-]+\.docx", name)
                         )
                     )
                     or name in members
@@ -240,6 +254,7 @@ def source_manifest(
     estimate: dict[str, Any] | None,
     pdf_sources: list[str] | None = None,
     xlsx_sources: list[str] | None = None,
+    docx_sources: list[str] | None = None,
 ) -> list[dict[str, str]]:
     """Exact source inventory shared by export and foreign-package validation."""
     sources = []
@@ -267,6 +282,13 @@ def source_manifest(
                 membership="included",
                 path=f"evidence/{ref['source_id']}.xlsx",
                 reason="Exact project workbook bytes included; imported claims stay unverified",
+            )
+    for index, ref in enumerate(scope.get("evidence_refs", [])):
+        if ref.get("source_id") in (docx_sources or []):
+            sources[index].update(
+                membership="included",
+                path=f"evidence/{ref['source_id']}.docx",
+                reason="Exact project Word bytes included; imported claims stay unverified",
             )
     if match:
         for index, _candidate in enumerate(match["candidates"]):
@@ -391,7 +413,32 @@ def _compose(
             ):
                 raise PackageError("PACKAGE_XLSX_SOURCE_CHANGED", 409)
             members[f"evidence/{source_id}.xlsx"] = content.content
-    sources = source_manifest(scope, match, estimate, selected.pdf_sources, selected.xlsx_sources)
+    if selected.docx_sources:
+        from . import draft_scope_docx as docx
+
+        for source_id in selected.docx_sources:
+            refs = [
+                ref for ref in scope.get("evidence_refs", []) if ref.get("source_id") == source_id
+            ]
+            if not refs or any(
+                ref.get("origin") != "local_retained" or ref.get("source_kind") != "docx"
+                for ref in refs
+            ):
+                raise PackageError("PACKAGE_DOCX_SELECTION_INVALID", 409)
+            word_source, _document, content = docx.intake()._document(
+                db, actor, draft_id, source_id, get_settings().storage_root
+            )
+            if any(
+                ref["source_sha256"] != content.sha256
+                or ref["source_size_bytes"] != len(content.content)
+                or ref["document_sha256"] != word_source.document_sha256
+                for ref in refs
+            ):
+                raise PackageError("PACKAGE_DOCX_SOURCE_CHANGED", 409)
+            members[f"evidence/{source_id}.docx"] = content.content
+    sources = source_manifest(
+        scope, match, estimate, selected.pdf_sources, selected.xlsx_sources, selected.docx_sources
+    )
     manifest = {
         "schema_version": SCHEMA,
         "state": "Draft",
@@ -457,6 +504,15 @@ def _compose(
     if selected.xlsx_sources:
         manifest.update(
             schema_version=SCHEMA_V4,
+            origins=manifest.get("origins", []),
+            notice=(
+                "Selected Draft revisions and explicitly selected project evidence files. "
+                "Unselected sources stay external or withheld; imported claims stay unverified."
+            ),
+        )
+    if selected.docx_sources:
+        manifest.update(
+            schema_version=SCHEMA_V5,
             origins=manifest.get("origins", []),
             notice=(
                 "Selected Draft revisions and explicitly selected project evidence files. "
