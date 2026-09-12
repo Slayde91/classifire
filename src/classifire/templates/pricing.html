@@ -1,12 +1,13 @@
-﻿{% extends "base.html" %}
-{% block title %}Pricing library — CLASSIFIRE{% endblock %}
-{% block heading %}Pricing library{% endblock %}
+{% extends "base.html" %}
+{% block title %}Item Price Library | CLASSIFIRE{% endblock %}
+{% block heading %}Item Price Library{% endblock %}
 {% block content %}
+<ul class="section-guidance"><li>Find and compare saved commercial rates using the filters.</li><li>Open a rate to inspect its source or create a Draft revision; historical records stay unchanged.</li></ul>
 <div class="callout"><strong>Controlled commercial library.</strong> Imported Package 14 records are read-only historical source records. Use Create Draft Revision to change a rate without overwriting the original.</div>
 <div class="toolbar">
 <form method="get" class="inline-form">
-<input name="q" value="{{ q }}" placeholder="PKB ID, service, material, substrate, FRL, manufacturer">
-<select name="status"><option value="">All statuses</option><option value="active" {% if status == 'active' %}selected{% endif %}>Active</option><option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option></select>
+<input aria-label="Search library records" name="q" value="{{ q }}" placeholder="PKB ID, service, material, substrate, FRL, manufacturer">
+<select aria-label="Filter by status" name="status"><option value="">All statuses</option><option value="active" {% if status == 'active' %}selected{% endif %}>Active</option><option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option></select>
 <button class="button button-secondary">Search</button>
 </form>
 </div>

@@ -107,6 +107,9 @@ class Settings(BaseSettings):
     draft_pdf_suggestions_enabled: bool = False
     draft_pdf_suggestions_model: str | None = None
     draft_pdf_suggestions_api_key: SecretStr | None = Field(default=None, exclude=True)
+    workspace_chat_enabled: bool = False
+    workspace_chat_model: str | None = None
+    workspace_chat_api_key: SecretStr | None = Field(default=None, exclude=True)
     storage_root: Path = Path("./data/storage")
     max_upload_mb: int = 100
     allowed_origins: Annotated[list[str], NoDecode] = Field(

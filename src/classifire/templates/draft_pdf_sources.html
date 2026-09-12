@@ -2,10 +2,12 @@
 {% block title %}Upload defect report | CLASSIFIRE{% endblock %}
 {% block heading %}Upload defect report{% endblock %}
 {% block content %}
+{% with guidance_items = ["Upload a PDF defect report, scan it and prepare its text and page images.", "Review the evidence, link the proposed Scope items and confirm a saved Draft revision."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 <link rel="stylesheet" href="/static/draft_scope.css">
 <p><a href="/scopes/{{ draft.id }}">&larr; Saved Draft Scope</a> &middot; <a href="/scopes/{{ draft.id }}/workbooks">Upload an Excel defect report</a></p>
 <section class="panel"><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2>
-<p>Upload a defect-report PDF, prepare its pages, then review the page beside your defects, openings and services. Preview your changes and explicitly save a source-linked Draft revision. Page observations remain available. Extracted text is unreviewed; the report does not approve a physical model, system or estimate.</p>
+<p class="scope-hint">Page observations remain available. Extracted text is unreviewed; the report does not approve a physical model, system or estimate.</p>
 {% if not postgres %}<p class="alert alert-error" role="status">PDF upload is unavailable in this demo environment. It requires a configured PostgreSQL evidence database and a working malware scanner to retain and check files safely. You can still edit and save a manual Draft Scope.</p>{% elif has_permission('project:write') %}
 <form method="post" enctype="multipart/form-data" action="/scopes/{{ draft.id }}/evidence" class="stack-form">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

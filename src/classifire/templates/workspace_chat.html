@@ -1,0 +1,28 @@
+{% if draft is defined and expected_revision is defined %}
+<link rel="stylesheet" href="/static/workspace_chat.css">
+<aside id="workspace-chat" class="workspace-chat" data-draft-id="{{ draft.id }}" data-revision="{{ expected_revision }}" data-csrf="{{ csrf_token }}" aria-label="Workspace AI assistant">
+  <button type="button" class="button button-secondary chat-toggle" aria-expanded="false" aria-controls="workspace-chat-body">AI assistant</button>
+  <section id="workspace-chat-body" hidden>
+    <header class="chat-header"><h2>Workspace assistant</h2><button type="button" class="button button-secondary button-small chat-close" aria-label="Close assistant">Close</button></header>
+    <p class="chat-status" role="status" aria-live="polite">Checking availability.</p>
+    <ul class="chat-guidance"><li>Select register records, then preview the saved context.</li><li>Ask about missing information or wording; check the source before using advice.</li><li>Conversation stays in this page and clears when context changes.</li></ul>
+    <p class="chat-selection">No register records selected.</p>
+    <button type="button" class="button button-secondary chat-preview" disabled>Preview selected context</button>
+    <section class="chat-context-summary" aria-label="Selected saved context" hidden>
+      <h3>Saved context</h3><p class="chat-context-basis"></p>
+      <ul class="chat-record-list"></ul>
+      <h4>Source references</h4><ul class="chat-source-list"></ul>
+      <p class="chat-context-note">Source references are saved claims. Images, full source text, systems and prices are not sent.</p>
+    </section>
+    <details class="chat-context"><summary>Exact context JSON</summary><pre></pre></details>
+    <div class="chat-messages" role="log" aria-live="polite" aria-label="Advisory conversation"></div>
+    <form class="chat-form">
+      <label>Question<textarea name="question" rows="3" maxlength="4000" required placeholder="What information needs checking for these records?"></textarea></label>
+      <label class="chat-consent"><input type="checkbox" name="consent" required>Send the previewed saved records and my questions to the configured OpenAI provider.</label>
+      <div class="chat-actions"><button type="submit" class="button button-primary chat-send" disabled>Send question</button><button type="button" class="button button-secondary chat-clear">Clear conversation</button></div>
+    </form>
+    <p class="chat-disclaimer">AI advice is unverified. Nothing is saved or approved. This optional provider connection is separate from the external ChatGPT connector.</p>
+  </section>
+</aside>
+<script src="/static/workspace_chat.js" defer></script>
+{% endif %}

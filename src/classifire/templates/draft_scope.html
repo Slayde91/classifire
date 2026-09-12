@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Draft Scope | {{ project.reference }} | CLASSIFIRE{% endblock %}
-{% block heading %}Draft Scope workspace{% endblock %}
+{% block heading %}Project defect register{% endblock %}
 {% block content %}
+{% set register = register|default({"targets": {}, "match_choices": [], "estimate_choices": [], "warnings": [], "evidence_refs": []}) %}
 <link rel="stylesheet" href="/static/draft_scope.css">
-<div class="scope-context"><a href="/scopes">&larr; All drafts</a><div class="scope-context-actions">{% if has_permission('estimate:read') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/estimates?scope_revision={{ expected_revision }}">Draft Estimates</a>{% endif %}{% if has_permission('technical:read') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/system-matches?scope_revision={{ expected_revision }}">System candidate review</a>{% endif %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/reports?revision={{ expected_revision }}">Scope reports</a>{% if has_permission('project:write') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/import">Import Draft Scope JSON</a>{% endif %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/evidence">PDF defect report</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/workbooks">Excel defect report</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/word">Word report evidence</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/packages?scope_revision={{ expected_revision }}">Project package</a><span class="badge badge-draft">Draft &middot; awaiting review</span></div></div>
+<div class="register-workspace">
+<div class="scope-context"><a href="/projects">&larr; Projects &amp; estimates</a><div class="scope-context-actions">{% if has_permission('estimate:read') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/estimates?scope_revision={{ expected_revision }}">Draft Estimates</a>{% endif %}{% if has_permission('technical:read') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/system-matches?scope_revision={{ expected_revision }}">System candidate review</a>{% endif %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/reports?revision={{ expected_revision }}">Scope reports</a>{% if has_permission('project:write') %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/import">Import Draft Scope JSON</a>{% endif %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/evidence">PDF defect report</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/workbooks">Excel defect report</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/word">Word report evidence</a><a class="button button-secondary" href="/scopes/{{ draft.id }}/packages?scope_revision={{ expected_revision }}">Project package</a><span class="badge badge-draft">Draft &middot; awaiting review</span></div></div>
 {% if package_imported %}<p><a href="/scopes/{{ draft.id }}/imported-package">Imported package, original reports and history</a></p>{% endif %}
 <section class="panel scope-project">
   <div><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2><p class="muted">Working from saved revision {{ expected_revision }}</p></div>
@@ -19,12 +21,24 @@
 </details>
 {% endif %}
 {% if evidence_links %}<details class="panel"><summary>{% if evidence_links|selectattr('source_kind', 'defined')|rejectattr('source_kind', 'equalto', 'pdf')|list %}Saved source-review references{% else %}Saved page-review references{% endif %} ({{ evidence_links|length }})</summary><ul>{% for ref in evidence_links %}<li>{{ ref.original_filename }} &middot; {% if ref.source_kind|default('') == 'docx' %}Word {{ ref.block.locator }}{% elif ref.source_kind|default('') == 'xlsx' %}{{ ref.row.sheet }}, row {{ ref.row.row }}{% else %}page {{ ref.page_number }}{% endif %}{% if ref.target_label %} &middot; {{ ref.target_kind|default('observation') }}: {{ ref.target_label }}{% endif %}: {{ ref.status }}{% if ref.origin == 'local_retained' %} &middot; {% if ref.source_kind|default('') == 'docx' %}<a href="/scopes/{{ draft.id }}/word/{{ ref.source_id }}">Inspect Word source</a>{% elif ref.source_kind|default('pdf') == 'xlsx' %}<a href="/scopes/{{ draft.id }}/workbooks/{{ ref.source_id }}?sheet={{ ref.row.sheet_index }}&amp;row={{ ref.row.row }}">Inspect source row</a>{% else %}<a href="/scopes/{{ draft.id }}/evidence/{{ ref.source_id }}?page={{ ref.page_number }}">Inspect source page</a>{% endif %}{% endif %}<p class="pdf-source-identity">Source SHA-256: {{ ref.source_sha256 }}</p></li>{% endfor %}</ul></details>{% endif %}
-<div class="callout"><strong>Record what you know. Leave unknowns visible.</strong> An opening may contain several services, and a service may pass through several openings. Quantities stay blank until you enter them. Draft entries do not approve a physical model, system or estimate.</div>
+<ul class="section-guidance"><li>Review Defects, Openings and Services together; keep uncertain values visible.</li><li>Select cells or records to edit a range, then validate and save one new revision.</li><li>Blank openings need no Service. Resolve missing parents and historical multiple-opening links in the review queue.</li><li>Choose saved system and estimate revisions below. Draft changes leave their original history intact and mark affected results stale.</li></ul>
+<details class="panel register-artifacts"><summary>Systems and pricing shown in the register</summary>
+<form method="get" class="form-grid">
+<input type="hidden" name="revision" value="{{ expected_revision }}">
+<label>Saved system review<select name="match"><option value="">No review selected</option>{% for item in register.match_choices %}<option value="{{ item.value }}"{% if item.value == register.match_selection %} selected{% endif %}>{{ item.label }}</option>{% endfor %}</select></label>
+<label>Saved estimate<select name="estimate"><option value="">No estimate selected</option>{% for item in register.estimate_choices %}<option value="{{ item.value }}"{% if item.value == register.estimate_selection %} selected{% endif %}>{{ item.label }}</option>{% endfor %}</select></label>
+<button class="button button-secondary" type="submit">Show saved systems and prices</button>
+</form><p class="scope-hint">Amounts are saved Draft line totals excluding tax. A candidate or price does not establish technical suitability.</p>
+</details>
+{% if register.warnings %}<div class="alert alert-warning" role="status"><strong>Selected results need review</strong><ul>{% for warning in register.warnings %}<li>{{ warning }}</li>{% endfor %}</ul></div>{% endif %}
+<script type="application/json" id="scope-register-context">{{ register|tojson }}</script>
 {% if errors %}
 <section class="alert alert-error" role="alert" aria-labelledby="scope-errors-heading"><strong id="scope-errors-heading">Changes were not saved.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul><p>Your submitted entries remain below. Correct the problem before saving again.</p></section>
 {% endif %}
 {% if findings %}
-<section class="panel scope-findings" aria-labelledby="scope-findings-heading"><h2 id="scope-findings-heading">Needs attention</h2><p>These findings stay visible in the Draft Scope. Saving a draft does not resolve or approve them.</p><ul>{% for finding in findings %}<li>{{ finding }}</li>{% endfor %}</ul></section>
+<details class="panel scope-findings"><summary id="scope-findings-heading">Needs attention ({{ findings|length }})</summary><p>These findings stay visible in the Draft Scope. Saving a draft does not resolve or approve them.</p><ul>{% for finding in findings %}<li>{{ finding }}</li>{% endfor %}</ul></details>
 {% endif %}
 {% include "draft_scope_editor.html" %}
+{% include "workspace_chat.html" %}
+</div>
 {% endblock %}

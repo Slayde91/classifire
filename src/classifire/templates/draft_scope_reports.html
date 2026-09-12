@@ -2,6 +2,8 @@
 {% block title %}Scope reports | {{ project.reference }} | CLASSIFIRE{% endblock %}
 {% block heading %}Scope reports{% endblock %}
 {% block content %}
+{% with guidance_items = ["Choose saved Scope and review revisions for the report you need.", "Inspect the saved snapshot and download PDF or Excel without rerunning matching or pricing."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 {% set match = snapshot.get("system_match") if snapshot else match_envelope|default(none) %}
 <link rel="stylesheet" href="/static/draft_scope.css">
 <div class="scope-context"><a href="/scopes/{{ draft.id }}">&larr; Edit Scope</a><span class="badge badge-draft">Draft &middot; awaiting review</span></div>

@@ -2,6 +2,8 @@
 {% block title %}System candidate review | {{ project.reference }} | CLASSIFIRE{% endblock %}
 {% block heading %}System candidate review{% endblock %}
 {% block content %}
+{% with guidance_items = ["Choose saved Scope inputs and review technical-system candidates for the selected target.", "Record decisions and missing information, then save a separate review revision."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 <link rel="stylesheet" href="/static/draft_scope.css">
 {% set form_values = form_values|default({}) %}
 {% set match_url = match_url|default('') %}

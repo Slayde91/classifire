@@ -32,6 +32,7 @@ from .draft_scope_docx_ui import router as draft_scope_docx_ui_router
 from .draft_scope_ui import router as draft_scope_ui_router
 from .draft_scope_xlsx_ui import router as draft_scope_xlsx_ui_router
 from .draft_system_match_ui import router as draft_system_match_ui_router
+from .draft_workspace_chat_ui import router as draft_workspace_chat_ui_router
 from .estimate_pinning import router as estimate_pinning_router
 from .importers.seed import seed_database
 from .library_ui import router as library_ui_router
@@ -152,6 +153,7 @@ app.include_router(draft_pricing_ui_router)
 app.include_router(draft_estimate_ui_router)
 app.include_router(draft_project_package_ui_router)
 app.include_router(draft_system_match_ui_router)
+app.include_router(draft_workspace_chat_ui_router)
 
 # Optional integration dependencies and routes are absent unless explicitly configured.
 draft_client_app = None

@@ -1,7 +1,9 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Estimating rules — CLASSIFIRE{% endblock %}
 {% block heading %}Estimating rules{% endblock %}
 {% block content %}
+{% with guidance_items = ["Review the rules used to check estimates and their current approval status.", "Open a rule or propose a Draft change where permitted; retain its source and reason."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 <div class="callout"><strong>Controlled rule governance.</strong> Rules are versioned records. User suggestions start as Draft and do not affect production estimates until approved. Configurable assumptions must not be represented as legislation without a verified source.</div>
 {% if has_permission('rule:write') %}<details class="panel form-panel"><summary>Propose a rule or revision</summary>
 <form method="post" action="/rules" class="form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
