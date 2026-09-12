@@ -1,8 +1,9 @@
-﻿{% extends "base.html" %}
-{% block title %}Products & materials — CLASSIFIRE{% endblock %}
-{% block heading %}Products & materials{% endblock %}
+{% extends "base.html" %}
+{% block title %}Pricelist Library | CLASSIFIRE{% endblock %}
+{% block heading %}Pricelist Library{% endblock %}
 {% block content %}
-<div class="toolbar"><form method="get" class="inline-form"><input name="q" value="{{ q }}" placeholder="Search SKU or name"><button class="button button-secondary">Search</button></form></div>
+<ul class="section-guidance"><li>Search products and materials by SKU or name.</li><li>Inspect costs and units, then add or revise items where permitted.</li></ul>
+<div class="toolbar"><form method="get" class="inline-form"><input aria-label="Search library records" name="q" value="{{ q }}" placeholder="Search SKU or name"><button class="button button-secondary">Search</button></form></div>
 {% if has_permission('pricing:write') %}
 <details class="panel form-panel"><summary>Add product or material</summary>
 <form method="post" action="/products" class="form-grid">

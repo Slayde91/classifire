@@ -1,0 +1,4 @@
+<nav class="section-nav" aria-label="Libraries">
+  <a href="/libraries"{% if not active_library %} aria-current="page"{% endif %}>All libraries</a>
+  {% for section in library_sections %}<a href="{{ section.href }}"{% if active_library == section.href %} aria-current="page"{% endif %}>{{ section.label }}</a>{% endfor %}
+</nav>

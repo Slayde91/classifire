@@ -1,7 +1,8 @@
-﻿{% extends "base.html" %}
-{% block title %}Markup settings — CLASSIFIRE{% endblock %}
-{% block heading %}Markup settings{% endblock %}
+{% extends "base.html" %}
+{% block title %}Markup Library | CLASSIFIRE{% endblock %}
+{% block heading %}Markup Library{% endblock %}
 {% block content %}
+<ul class="section-guidance"><li>Review product, material and labour markup profiles.</li><li>Save a new global profile where permitted; earlier profiles remain in the history.</li></ul>
 <div class="callout"><strong>Precedence:</strong> estimate-line override &gt; project override &gt; item/category override &gt; global default.</div>
 {% if has_permission('pricing:write') %}
 <section class="panel form-panel"><h2>Global defaults</h2>

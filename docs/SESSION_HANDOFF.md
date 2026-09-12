@@ -1,92 +1,106 @@
 # CLASSIFIRE Session Handoff
 
-Reconciled 2026-09-12 after the controlled Word application acceptance. Read with
-[PROJECT_STATE.md](./PROJECT_STATE.md), [architecture](./CLASSIFIRE_ARCHITECTURE.md),
-[roadmap](./CLASSIFIRE_ROADMAP.md) and the [acceptance record](./WORD_ACCEPTANCE_ACTIVATION.md).
-Repository/runtime evidence overrides this dated checkpoint. The product objective is
-in root `GOAL.md`; there is no `docs/GOAL.md` in this checkout.
+Reconciled 2026-09-13. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
+[workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md),
+[architecture](./CLASSIFIRE_ARCHITECTURE.md), [roadmap](./CLASSIFIRE_ROADMAP.md) and
+[the earlier Word acceptance](./WORD_ACCEPTANCE_ACTIVATION.md). Current source,
+Git/CI and runtime evidence override this checkpoint. Product direction remains in
+root `GOAL.md`; this task does not complete production Phase 8-16 gates.
 
-## Verified position
+## Verified source and runtime
 
-- Shared main eb3ddb3f6ec23bd3ce66d7f7c82b7edaf830c4c2 is PR #257's merge. Its tree
-  matches tested ff0272b. PRs #252-#256 are merged; do not rebuild them.
-- Candidate run 34681923704 and post-merge run 34683024367 each passed 2,043 tests
-  and all checks. Earlier run 34664119693 ended cancelled after its configured limit;
-  that was not a pass. No job was restarted because observation timed out.
-- Owner-approved activation of ff0272b followed actual backup/disposable restore
-  verification and confirmed metadata lineage. Only the Word source table was added;
-  no fake Alembic stamp or downgrade. The private repeatable launcher pins that commit.
-- Actual authenticated browser DOCX upload and real ClamAV scan passed. Connected
-  Word text/image reads and a typed Scope proposal passed. The human separately
-  confirmed the Scope and package in the browser. No agent confirmation was used.
-- Scope revision 2 contains five source references and exact confirmed content.
-  Described pipe/cable services share one opening; a separate blank opening stays
-  separate. Unknown dimensions/quantities remain null. The red placeholder picture
-  supplies no visual proof of the text's pipe/cable assertions.
-- The 12,847-byte ZIP contains only manifest, Scope and byte-exact original DOCX.
-  Repeated browser downloads and the approved process restart preserved it exactly.
-  Prior Scope/package/original history remained intact; 60 other tables did not change.
-  No matching, estimating, reporting, canonical admission, lock or release ran implicitly.
-- Dedicated connector upload/scan and remote attachment transport remain untested.
-  Newly available tools are not completion evidence. No OAuth/tunnel policy changed.
+- Worktree: `C:/CLASSIFIRE/.tmp/integrated-project-workspace-20260913`, branch
+  `feat/integrated-project-workspace-20260913`, base/inspected origin/main
+  7dbc59bfa2fd52bd8238a2f7c5a99d71240420cb. The workspace source, tests and docs are
+  local changes at this checkpoint; append actual publication results after observing them.
+- PR #259 merged diagnostic source e2e8292 as 7dbc59b. Its private receipt records
+  successful PR run 34698452617 and post-merge run 34699704284, each 2,066 tests.
+  Those results belong to the diagnostic change, not the newer workspace diff.
+- The user separately approved diagnostic activation. Fresh backup/restore verified
+  all 69 tables, five Scope revisions, two packages and two stored originals. The
+  approved restart preserved schema/files and exact Scope/package/original history;
+  login-related changes were confined to users/audit events. The saved package route
+  returned 200; an expired one-time review link returned 403.
+- The actual connected upload still returns CLIENT_FILE_UNAPPROVED_HOST. The diagnostic
+  identifies the rejected host privately; no new file or data/schema/file changes occurred
+  in the probe. No allowlist or OAuth/tunnel setting changed. Do not repeat activation
+  or earlier human confirmations to retry this external transport boundary.
+- The integrated workspace browser checks used a separate synthetic app on 8840 and
+  disposable PostgreSQL 15433. They do not deploy the workspace to the diagnostic trial.
+  Preserve the pinned trial runtime and the conflicted root checkout.
 
-Exact operator paths, identities, process details, selected source hashes, user approvals,
-backup/restore evidence and generated artifacts are in the private activation receipt.
-Do not publish that private receipt or copy confidential runtime configuration into Git.
-The accepted runtime checkout must remain pinned and clean while new work uses isolation.
+## What the workspace candidate implements
 
-## Local changes and publication classification
+- Shared Projects & estimates directory and six correctly named Libraries, retaining
+  existing records, URLs and permission/owner boundaries.
+- Spreadsheet-style Draft register with guarded selection/bulk edits, history,
+  relationships, saved result projections, source warnings and an optional advice panel.
+- The blank-opening clarification is preserved: zero Services is valid for a blank
+  Opening. Historical missing/multiple parent links stay in review; no schema rewrite,
+  automatic repair or dummy Service is introduced.
+- Explicit saved systems/prices appear in the register. They remain immutable saved
+  results; Scope edits mark them stale. Full inline matching, overrides and pricing
+  authoring/recalculation are not implemented by this display. One Match and Estimate
+  can be selected at once. Grid selection is contiguous; column preferences are not
+  persisted, and undo covers unsaved grid edits until detailed-editor changes reset it.
+- Chat previews bounded selected saved Scope context. Provider settings default disabled
+  and remained disabled in browser UAT. This optional API panel is not an authenticated
+  external ChatGPT/MCP session. It cannot save/approve data or run downstream capabilities.
 
-This reconciliation changes documentation only. No application contract, architecture,
-migration or runtime activation is introduced. Source feature ff0272b remains on its
-existing branch and PR #257; do not restage it into a documentation PR.
-Local documentation checks passed: 42 relative links/anchors, UTF-8, code fences,
-private-detail exclusions, unchanged application source and Git whitespace. Existing
-application/runtime results above were inspected; no new application test pass is
-claimed for these documentation edits. Use current Git/GitHub to verify publication
-of this reconciliation before claiming it.
+## Verification and evidence
 
-The legacy root remains recovery evidence: 46 unstaged modifications, 14 staged
-additions, four DU conflicts and an interrupted cherry-pick. Its unrelated untracked,
-private and generated material stays untouched. See the
-[local classification](./LOCAL_CHANGE_CLASSIFICATION.md). New private execution helpers,
-screenshots and receipts are ignored local evidence, not publication candidates.
+- 157 unique affected tests across 12 files passed with zero remaining failures/skips.
+  First run: 33 passed and one missing-register template failure. The fail-closed template
+  correction preserved assertions. Remaining runs passed 117 and 7 cases. Selected
+  checkout PYTHONPATH, disabled cache and fresh basetemps were used; PostgreSQL tests
+  touched only `127.0.0.1:15433/classifire_containment_test`.
+- Edge navigation checks preserved synthetic IDs and exact Draft Estimate links, with
+  no page errors or mobile document overflow. These routed requests through ASGI/SQLite.
+- Actual isolated browser UAT performed column bulk edit, undo/redo, saved Scope revision
+  3, reopened revision 2 exactly, retained five source references and null quantities,
+  displayed stale source claims, and previewed saved chat context. No provider call ran.
+- Automated package preview/save/download retained exact Scope 3 and selected original
+  DOCX in a 12,706-byte ZIP. It is a synthetic automated confirmation, not human approval
+  or repetition of the earlier separately human-confirmed Word package. Scope 3 and
+  that same ZIP stayed exact after an isolated 8840-only restart against database 15433.
+- Private receipts: `workspace-regression-20260913/validation-receipt.json`,
+  `workspace-navigation-browser-20260913/receipt.json`, and
+  `integrated-workspace-uat-20260913/` containing `grid-browser-receipt.json`,
+  `package-browser-receipt.json` and `restart-browser-receipt.json`. Logs, screenshots
+  and generated artifacts remain outside Git.
 
-## Next executable task and success criteria
+The original Word acceptance and PRs #252-#258 remain completed historical work;
+do not rebuild their intake, client, confirmation or package paths. The new workspace
+checks are bounded synthetic evidence, not general multimodal accuracy or production
+readiness. A real report has now been supplied for accuracy assessment; keep it private.
+Human reference labels and suitable original/linked images remain necessary before
+measuring service, substrate or quantity accuracy.
 
-The actual connected upload probe returned CLIENT_FILE_UNAPPROVED_HOST. It created
-no new source/Scope/package or scan change. The exact rejected host is not present in
-the response; establish the runtime attachment delivery host before proposing any
-configuration change. Do not guess hosts or broaden the allowlist.
+## Local change classification and next work
 
-Close I2's actual connected upload/scan gap in an explicitly selected synthetic test
-context. First inspect the current tool schemas, existing source inventory and transport
-implementation. Reuse the current client and shared intake services; do not repeat OAuth
-setup, activation, completed project creation or the accepted Scope/package confirmations.
-A new source/destination must be explicitly selected; do not mutate accepted source/scan
-bindings just to obtain another passing test. If user attachment metadata is required,
-prepare the exact request and identify that dependency without widening grants.
+The current candidate contains UI/navigation/templates/styles, register projection and
+editor code, optional bounded advisory transport/configuration, corresponding tests and
+this documentation. It adds no domain model, schema, migration or canonical authority.
+Private test helpers, logs, screenshots and outputs are execution evidence, not files to
+stage. Preserve unrelated changes and the legacy root; its historical conflict inventory
+is in [LOCAL_CHANGE_CLASSIFICATION.md](./LOCAL_CHANGE_CLASSIFICATION.md), not a new audit.
 
-Success: actual connected upload retains the selected original; explicit connected scan
-returns the corresponding document/text/image hashes; no Scope/package or downstream
-state changes occur implicitly. If further Draft edits are needed, separate human browser
-confirmation remains required. Preserve unknowns, contradictory evidence and original bytes.
-Browser upload alone, mocked retrieval and source presence cannot close this transport gap.
+1. Review the complete explicit candidate diff, final checks and remaining acceptance
+   limits. Record commit/push/PR, exact-head successful CI, required reviews and actual
+   merge outcome. Poll existing jobs; never restart because observation timed out.
+2. Keep runtime activation, provider enablement and any exact host-policy/OAuth/tunnel
+   change as separate explicit approval decisions. Do not broaden the allowlist or grant.
+3. Continue accuracy acceptance from an agreed human-labelled report/image sample. Keep
+   unknowns and contradictions visible; use existing retained-source/review services.
+   Do not infer quantity from row/image count or run matching/pricing/release implicitly.
 
-For an evidenced code issue, validate affected tests with that checkout's `src` on
-PYTHONPATH, disabled pytest cache and a fresh basetemp. Destructive PostgreSQL checks use
-only verified disposable port 15433, never the trial on 15432. Use applicable static checks
-and inspect actual outputs. Stage explicit files, push normally, and merge only after
-observed successful exact-head CI and required reviews. Poll live jobs; never use auto-merge
-as an enforcement substitute. No branch deletion or protection change is authorized.
+The full redesign criteria remain incomplete: general accurate multimodal analysis,
+complete inline technical/pricing work, live integrated AI, representative performance
+and comprehensive usability/accessibility acceptance. The retained technical/pricing
+roadmap and production gates remain applicable; no phase is advanced by this handoff.
 
-I3 merge enforcement needs a concrete owner decision. N1 Excel acceptance must be
-reconciled against its own actual evidence. N2 representative recipe/quantity semantics
-precedes broader pricing arithmetic. L1/L2 and all production Phase 8-16 exits remain.
-The full four-capability production objective is still incomplete.
-
-## Recommended Prompt for New Session
+## Recommended prompt for continuation
 
 ```text
-Continue CLASSIFIRE from the verified Word acceptance record and private activation receipt. Inspect AGENTS.md, current Git/worktrees/upstream/diff, source, project state, PR/CI and runtime before changes. Preserve the conflicted root and pinned ff0272b runtime. PRs #252-#257 and the authorized browser Word-to-Scope-to-package journey are complete; do not rebuild or repeat them. Verify the remaining dedicated connected Word upload/scan transport using an explicitly selected synthetic source and destination. Current text/image reads and typed proposals are already proven. Preserve original bytes, unknowns and separate human Draft confirmations; run no downstream capability implicitly. No OAuth/tunnel changes or new activation without explicit approval. Fix only evidenced issues, validate in the selected checkout with fresh test paths and disposable PostgreSQL15433, and publish explicit files through observed successful CI/review/merge. Poll existing jobs without restarting for observation timeout. Record actual results and remaining full-goal gaps.
+Continue CLASSIFIRE's integrated workspace candidate from the verified isolated checkout and acceptance receipts. Inspect AGENTS.md, Git/worktrees/upstream/diff, current PR/CI, project state and runtime. Preserve the conflicted root and the separately approved e2e8292 diagnostic runtime. Do not rebuild completed Word/client/package work or repeat completed human confirmations. Reconcile the workspace's actual publication result, test/browser/package evidence and remaining accuracy, inline technical/pricing and live AI gaps. Keep supplied real evidence private; agree human reference labels and adequate original images before claiming accuracy. No workspace activation, provider enablement or OAuth/tunnel/host-policy change without explicit approval. Use selected-checkout PYTHONPATH and fresh test paths; PostgreSQL tests only on disposable15433. Commit explicit reviewed files, push normally, merge only after observed successful exact-head CI and required reviews, and record actual results and limitations. Poll existing jobs without restarting them because observation timed out.
 ```

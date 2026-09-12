@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Libraries | CLASSIFIRE{% endblock %}
+{% block heading %}Libraries{% endblock %}
+{% block content %}
+<ul class="section-guidance">
+  <li>Find technical evidence, system configurations, item costs, labour and markups.</li>
+  <li>Review the source and status, then open a record or create a revision where permitted.</li>
+  <li>Technical suitability and commercial prices have separate review requirements.</li>
+</ul>
+<section class="panel library-directory" aria-label="Library directory">
+  {% for section in library_sections %}<a class="library-directory-row" href="{{ section.href }}"><span><strong>{{ section.label }}</strong><span class="muted">{{ section.description }}</span></span><span aria-hidden="true">&rarr;</span></a>{% endfor %}
+</section>
+{% endblock %}

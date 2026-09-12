@@ -2,10 +2,12 @@
 {% block title %}Excel defect report | CLASSIFIRE{% endblock %}
 {% block heading %}Excel defect report{% endblock %}
 {% block content %}
+{% with guidance_items = ["Upload and scan an Excel report, then inspect worksheets, cells and pictures.", "Map columns and select rows, review the proposed relationships and confirm a Draft revision."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 <link rel="stylesheet" href="/static/draft_scope.css">
 <link rel="stylesheet" href="/static/draft_scope_xlsx.css">
 <p><a href="/scopes/{{ draft.id }}">&larr; Saved Draft Scope</a> &middot; <a href="/scopes/{{ draft.id }}/evidence">PDF defect reports</a> &middot; <a href="{{ base_url }}">Excel sources</a></p>
-<section class="panel"><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2><p>Retain and scan an Excel defect register. Choose a worksheet, map columns and select up to 25 rows for one reviewed Draft batch. Connect the proposed items before saving; a spreadsheet row is not automatically one opening, service or quantity.</p>
+<section class="panel"><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2><p class="scope-hint">Each reviewed batch contains up to 25 rows. A spreadsheet row does not establish one opening, service or quantity; review the relationships before saving.</p>
 {% if postgres and has_permission('project:write') %}<form method="post" action="{{ base_url }}/upload" enctype="multipart/form-data" class="stack-form" data-scope-independent-action><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label for="scope-xlsx-file">Excel defect-report XLSX file</label><input id="scope-xlsx-file" type="file" name="file" accept=".xlsx" required><button type="submit" class="button button-primary">Upload Excel defect report</button></form>{% elif not postgres %}<p class="callout">Excel upload requires the configured PostgreSQL evidence database, retained storage and a working malware scanner. Manual Scope editing remains available.</p>{% endif %}
 <p class="scope-hint">Bounded XLSX support: 10 MiB, 10 visible sheets, 1,000 rows including headers, 50 columns per sheet and 20,000 cells overall. Formulas are shown as source text and never evaluated. Unsupported content is refused visibly. Prices are not applied through this workflow.</p>
 {% if sources %}<details><summary>Retained Excel sources ({{ sources|length }})</summary><ul>{% for item in sources %}<li><a href="{{ base_url }}/{{ item.id }}">{{ item.filename }}</a> &middot; {{ item.status|replace('_',' ') }}</li>{% endfor %}</ul></details>{% endif %}</section>

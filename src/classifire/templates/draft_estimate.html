@@ -2,6 +2,8 @@
 {% block title %}Draft Estimate | {{ project.reference }} | CLASSIFIRE{% endblock %}
 {% block heading %}Draft Estimate{% endblock %}
 {% block content %}
+{% with guidance_items = ["Build or review a Draft estimate from the selected saved Scope and optional system review.", "Check quantities, rates and missing information before explicitly saving a revision."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 <link rel="stylesheet" href="/static/draft_scope.css">
 {% set form_values = form_values|default({}) %}
 {% set estimate_url = estimate_url|default('') %}

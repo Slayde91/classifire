@@ -1,9 +1,10 @@
-﻿{% extends "base.html" %}
-{% block title %}Technical systems — CLASSIFIRE{% endblock %}
-{% block heading %}Technical system library{% endblock %}
+{% extends "base.html" %}
+{% block title %}Technical System Library | CLASSIFIRE{% endblock %}
+{% block heading %}Technical System Library{% endblock %}
 {% block content %}
+<ul class="section-guidance"><li>Search system configurations and inspect their source evidence and review status.</li><li>Review or revise a system where permitted; Draft changes require approval before activation.</li></ul>
 <div class="callout"><strong>Technical authority control.</strong> Editing creates a Draft CLASSIFIRE revision. The imported source variant remains unchanged. Draft revisions require technical review and approval before activation.</div>
-<div class="toolbar"><form method="get" class="inline-form"><input name="q" value="{{ q }}" placeholder="Variant, system, service, material, substrate, FRL or source"><select name="status"><option value="">All statuses</option>{% for s in ['active','draft','in_review','rejected','superseded','retired'] %}<option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s.replace('_',' ')|title }}</option>{% endfor %}</select><button class="button button-secondary">Search</button></form></div>
+<div class="toolbar"><form method="get" class="inline-form"><input aria-label="Search library records" name="q" value="{{ q }}" placeholder="Variant, system, service, material, substrate, FRL or source"><select aria-label="Filter by status" name="status"><option value="">All statuses</option>{% for s in ['active','draft','in_review','rejected','superseded','retired'] %}<option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s.replace('_',' ')|title }}</option>{% endfor %}</select><button class="button button-secondary">Search</button></form></div>
 <section class="panel"><div class="panel-head"><h2>Variant register</h2><span class="muted">Active {{ counts.get('active',0) }} · Draft {{ counts.get('draft',0) }} · In review {{ counts.get('in_review',0) }}</span></div><div class="table-wrap"><table><thead><tr><th>Variant</th><th>System</th><th>Service</th><th>Substrate</th><th>FRL</th><th>Source</th><th>Status</th><th></th></tr></thead><tbody>
 {% for v in variants %}<tr><td class="mono">{{ v.variant_id }}</td><td class="mono">{{ v.system_id }}</td><td>{{ v.service_type or '—' }}<div class="muted small">{{ v.service_material or '' }}</div></td><td>{{ v.substrate_type or '—' }}</td><td>{{ v.frl or '—' }}</td><td>{{ v.source_document_reference or '—' }} {{ v.source_page or '' }}</td><td><span class="badge badge-{{ v.status }}">{{ v.status }}</span></td><td><a class="button button-small button-secondary" href="/technical/variants/{{ v.id }}">View</a></td></tr>{% else %}<tr><td colspan="8" class="empty">No technical variants match the filter.</td></tr>{% endfor %}
 </tbody></table></div></section>

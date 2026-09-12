@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, select
+from sqlalchemy import false, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from .audit import record_audit
@@ -19,6 +19,8 @@ from .db import get_db
 from .models import (
     AuditEvent,
     ChangeProposal,
+    DraftEstimate,
+    DraftScope,
     Estimate,
     EstimateLine,
     EstimatingRule,
@@ -44,7 +46,9 @@ from .security import (
     resolve_session_user,
     verify_csrf,
 )
+from .services import draft_estimates as draft_estimate_service
 from .services.calculation import D, calculate_estimate_line, recalculate_estimate
+from .services.draft_scope import list_drafts
 from .services.draft_scope_evidence import reference_label, reference_status
 from .services.initial_canonicalisation_boundary import (
     InitialCanonicalisationAdmissionRequired,
@@ -98,11 +102,88 @@ def _require(request: Request, db: Session, permission: str) -> User:
     return user
 
 
+LIBRARY_SECTIONS = (
+    {
+        "href": "/technical",
+        "label": "Technical Evidence Library",
+        "permission": "technical:read",
+        "description": "Retain source reports and review their evidence before approval.",
+    },
+    {
+        "href": "/technical/variants",
+        "label": "Technical System Library",
+        "permission": "technical:read",
+        "description": "Inspect system configurations, source references and review status.",
+    },
+    {
+        "href": "/pricing",
+        "label": "Item Price Library",
+        "permission": "library:read",
+        "description": "Find commercial rates and create controlled revisions where permitted.",
+    },
+    {
+        "href": "/products",
+        "label": "Pricelist Library",
+        "permission": "library:read",
+        "description": "Maintain product and material costs, units and item revisions.",
+    },
+    {
+        "href": "/labour",
+        "label": "Labour Library",
+        "permission": "library:read",
+        "description": "Inspect labour components, hourly rates and saved revisions.",
+    },
+    {
+        "href": "/markups",
+        "label": "Markup Library",
+        "permission": "library:read",
+        "description": "Review markup defaults and their historical profiles.",
+    },
+)
+
+
 def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
     user = _user(request, db)
+    path = request.url.path
+    library_sections = [
+        section
+        for section in LIBRARY_SECTIONS
+        if user and has_permission(user, section["permission"])
+    ]
+    active_library = next(
+        (
+            section["href"]
+            for section in reversed(library_sections)
+            if path == section["href"] or path.startswith(section["href"] + "/")
+        ),
+        None,
+    )
+    active_navigation = (
+        "/libraries"
+        if path == "/libraries" or active_library
+        else "/projects"
+        if any(
+            path == prefix or path.startswith(prefix + "/")
+            for prefix in (
+                "/projects",
+                "/scopes",
+                "/estimates",
+                "/package-import",
+                "/client-requests",
+            )
+        )
+        else next(
+            (prefix for prefix in ("/rules", "/proposal-reviews", "/releases", "/audit", "/docs")
+             if path == prefix or path.startswith(prefix + "/")),
+            path,
+        )
+    )
     return {
         "request": request,
         "user": user,
+        "library_sections": library_sections,
+        "active_library": active_library,
+        "active_navigation": active_navigation,
         "csrf_token": create_csrf_token(request),
         "attribution": ATTRIBUTION,
         "has_permission": lambda permission: bool(user and has_permission(user, permission)),
@@ -485,15 +566,74 @@ def technical_upload(
     return RedirectResponse("/technical", status_code=303)
 
 
-@router.get("/projects", response_class=HTMLResponse)
-def projects_page(request: Request, db: Db) -> HTMLResponse:
-    _require(request, db, "project:read")
+@router.get("/libraries", response_class=HTMLResponse)
+def libraries_page(request: Request, db: Db) -> HTMLResponse:
+    _require(request, db, "library:read")
+    return templates.TemplateResponse(request, "libraries.html", _context(request, db))
+
+
+def _project_workspace(
+    request: Request,
+    db: Session,
+    *,
+    errors: list[str] | None = None,
+    reference: str = "",
+    name: str = "",
+    status_code: int = 200,
+) -> HTMLResponse:
+    user = _require(request, db, "project:read")
+    drafts = list_drafts(db, user)
+    drafts_by_project: dict[str, list[DraftScope]] = {}
+    draft_estimates_by_project: dict[str, list[DraftEstimate]] = {}
+    draft_estimate_unavailable: set[str] = set()
+    for draft in drafts:
+        drafts_by_project.setdefault(draft.project_id, []).append(draft)
+        if has_permission(user, "estimate:read"):
+            try:
+                saved_estimates = draft_estimate_service.list_estimates(db, user, draft.id)
+            except draft_estimate_service.DraftEstimateError:
+                # Keep a damaged or inaccessible saved dependency visibly unresolved
+                # without revealing its content or hiding other accessible projects.
+                draft_estimate_unavailable.add(draft.project_id)
+            else:
+                draft_estimates_by_project.setdefault(draft.project_id, []).extend(saved_estimates)
+    # Draft-only project identity follows the same owner/admin boundary as its
+    # Scope. Existing legacy projects and estimate access retain their policy.
     projects = db.scalars(
-        select(Project).options(selectinload(Project.estimates)).order_by(Project.updated_at.desc())
+        select(Project)
+        .where(
+            or_(
+                ~Project.id.in_(select(DraftScope.project_id)),
+                Project.id.in_(drafts_by_project),
+                Project.estimates.any() if has_permission(user, "estimate:read") else false(),
+            )
+        )
+        .options(selectinload(Project.estimates))
+        .order_by(Project.updated_at.desc(), Project.id)
     ).all()
     return templates.TemplateResponse(
-        request, "projects.html", _context(request, db, projects=projects)
+        request,
+        "projects.html",
+        _context(
+            request,
+            db,
+            projects=projects,
+            drafts_by_project=drafts_by_project,
+            draft_count=len(drafts),
+            draft_estimates_by_project=draft_estimates_by_project,
+            draft_estimate_unavailable=draft_estimate_unavailable,
+            errors=errors or [],
+            reference=reference,
+            name=name,
+        ),
+        status_code=status_code,
+        headers={"Cache-Control": "no-store"},
     )
+
+
+@router.get("/projects", response_class=HTMLResponse)
+def projects_page(request: Request, db: Db) -> HTMLResponse:
+    return _project_workspace(request, db)
 
 
 @router.post("/projects")

@@ -1,7 +1,9 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Library releases — CLASSIFIRE{% endblock %}
 {% block heading %}Library release manager{% endblock %}
 {% block content %}
+{% with guidance_items = ["Inspect the exact library versions available for estimate references.", "Open a release to check its contents; publish a new version only through the permitted controls."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 <div class="callout"><strong>Immutable release control.</strong> Estimates should ultimately pin to exact approved release IDs. Publishing a release creates a hashed manifest of the active records at that point in time. Technical Drafts cannot be activated from this screen.</div>
 
 <section class="panel"><div class="panel-head"><h2>Current library state</h2></div>

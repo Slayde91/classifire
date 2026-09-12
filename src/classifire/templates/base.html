@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -6,33 +6,29 @@
   <meta name="description" content="CLASSIFIRE passive-fire estimating and technical decision-support system">
   <title>{% block title %}CLASSIFIRE{% endblock %}</title>
   <link rel="icon" type="image/png" href="/brand/classifire-logo.png">
-  <link rel="stylesheet" href="/static/css/app.css?v=20260906-pdf">
+  <link rel="stylesheet" href="/static/css/app.css?v=20260913-workspace">
 </head>
 <body>
 {% if user %}
+<a class="skip-link" href="#main-content">Skip to workspace</a>
 <div class="shell">
   <aside class="sidebar">
     <a class="brand" href="/" aria-label="CLASSIFIRE estimating system">
       <span class="brand-logo-window"><img src="/brand/classifire-logo.png" alt="CLASSIFIRE estimating system" width="1254" height="1254"></span>
     </a>
     <nav aria-label="Primary navigation">
-      <a href="/" class="nav-link">Dashboard</a>
-      <a href="/projects" class="nav-link">Projects & estimates</a>
-      {% if has_permission is defined and has_permission('project:read') %}<a href="/scopes" class="nav-link">Draft Scope workspace</a>{% endif %}
-      <div class="nav-section">Commercial libraries</div>
-      <a href="/pricing" class="nav-link">Pricing library</a>
-      <a href="/products" class="nav-link">Products & materials</a>
-      <a href="/labour" class="nav-link">Labour</a>
-      <a href="/markups" class="nav-link">Markup settings</a>
-      <div class="nav-section">Technical intelligence</div>
-      <a href="/technical" class="nav-link">Technical evidence</a>
-      <a href="/technical/variants" class="nav-link">Technical systems</a>
-      <a href="/rules" class="nav-link">Estimating rules</a>
+      {% macro nav_item(href, label) %}<a href="{{ href }}" class="nav-link{% if active_navigation == href %} active{% endif %}"{% if active_navigation == href %} aria-current="page"{% endif %}>{{ label }}</a>{% endmacro %}
+      {% if has_permission('project:read') %}
+      {{ nav_item('/', 'Dashboard') }}
+      {{ nav_item('/projects', 'Projects & estimates') }}
+      {% endif %}
+      {% if has_permission('library:read') %}{{ nav_item('/libraries', 'Libraries') }}{% endif %}
+      {% if has_permission('rule:read') %}{{ nav_item('/rules', 'Estimating rules') }}{% endif %}
       <div class="nav-section">Governance</div>
-      {% if has_permission is defined and has_permission('proposal_review:read') %}<a href="/proposal-reviews" class="nav-link">Proposal reviews</a>{% endif %}
-      <a href="/releases" class="nav-link">Library releases</a>
-      <a href="/audit" class="nav-link">Audit history</a>
-      <a href="/docs" class="nav-link">API documentation</a>
+      {% if has_permission('proposal_review:read') %}{{ nav_item('/proposal-reviews', 'Proposal reviews') }}{% endif %}
+      {% if has_permission('library:read') %}{{ nav_item('/releases', 'Library releases') }}{% endif %}
+      {% if has_permission('audit:read') %}{{ nav_item('/audit', 'Audit history') }}{% endif %}
+      {{ nav_item('/docs', 'API documentation') }}
     </nav>
     <div class="sidebar-footer">
       <div class="user-name">{{ user.full_name }}</div>
@@ -43,16 +39,17 @@
       </form>
     </div>
   </aside>
-  <main class="main">
+  <main class="main{% if active_navigation == '/libraries' %} library-workspace{% endif %}" id="main-content" tabindex="-1">
     <header class="topbar">
       <div>
-        <div class="eyebrow">PASSIVE-FIRE ESTIMATING & TECHNICAL INTELLIGENCE</div>
+        <div class="eyebrow">EVIDENCE &middot; SCOPE &middot; ESTIMATING</div>
         <h1>{% block heading %}CLASSIFIRE{% endblock %}</h1>
       </div>
       <div class="status-chip">Controlled workspace</div>
     </header>
-    {% if request.query_params.get('error') %}<div class="alert alert-error">{{ request.query_params.get('error') }}</div>{% endif %}
-    {% if request.query_params.get('success') %}<div class="alert alert-success">{{ request.query_params.get('success') }}</div>{% endif %}
+    {% if active_navigation == '/libraries' %}{% include "partials/library_navigation.html" %}{% endif %}
+    {% if request.query_params.get('error') %}<div class="alert alert-error" role="alert">{{ request.query_params.get('error') }}</div>{% endif %}
+    {% if request.query_params.get('success') %}<div class="alert alert-success" role="status">{{ request.query_params.get('success') }}</div>{% endif %}
     {% block content %}{% endblock %}
     <footer class="page-footer">{{ attribution }}</footer>
   </main>

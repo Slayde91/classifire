@@ -1,13 +1,41 @@
 {% extends "base.html" %}
-{% block title %}Projects & estimates — CLASSIFIRE{% endblock %}
+{% block title %}Projects & estimates | CLASSIFIRE{% endblock %}
 {% block heading %}Projects & estimates{% endblock %}
 {% block content %}
-{% if has_permission('project:write') %}<details class="panel form-panel"><summary>Create project</summary>
-<form method="post" action="/projects" class="form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<label>Project reference<input name="reference" required></label><label>Project name<input name="name" required></label><label class="span-2">Site address<textarea name="site_address" rows="2"></textarea></label><label>Jurisdiction<input name="jurisdiction" value="NSW/ACT, Australia"></label><div><button class="button button-primary">Create project</button></div></form></details>{% endif %}
-<section class="project-grid">
-{% for p in projects %}<article class="project-card"><div class="project-head"><div><div class="eyebrow">{{ p.reference }}</div><h2>{{ p.name }}</h2></div><span class="badge badge-{{ p.status }}">{{ p.status }}</span></div><p>{{ p.site_address or 'No site address' }}</p><p class="muted">{{ p.jurisdiction }}</p>
-<div class="project-estimates">{% for e in p.estimates %}<a href="/estimates/{{ e.id }}"><span>{{ e.reference }}</span><span class="badge badge-{{ e.status }}">{{ e.status }}</span><strong>{{ e.currency }} {{ '%.2f'|format(e.total_incl_tax|float) }}</strong></a>{% else %}<div class="empty">No estimate revisions.</div>{% endfor %}</div>
-{% if has_permission('estimate:write') %}<details><summary>New estimate revision</summary><form method="post" action="/projects/{{ p.id }}/estimates" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>Estimate reference<input name="reference" required></label><label>Title<input name="title" value="Passive-fire estimate" required></label><button class="button button-primary button-small">Create estimate</button></form></details>{% endif %}</article>{% else %}<div class="panel empty">No projects yet.</div>{% endfor %}
+<ul class="section-guidance">
+  <li>Start a project, upload a report and review its defects, openings and services.</li>
+  <li>Open a saved Scope to work with its register, systems, prices and selected outputs.</li>
+  <li>Choose each next step explicitly; saved revisions and unresolved information stay visible.</li>
+</ul>
+{% if errors %}<div class="alert alert-error" role="alert"><strong>The draft could not be created.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+<div class="toolbar workspace-toolbar"><span class="muted">{{ projects|length }} project{% if projects|length != 1 %}s{% endif %} &middot; {{ draft_count }} accessible Draft Scope{% if draft_count != 1 %}s{% endif %}</span>{% if has_permission('project:write') %}<a class="button button-secondary button-small" href="/package-import">Inspect a downloaded project ZIP</a>{% endif %}</div>
+{% if has_permission('project:write') %}
+<details class="panel form-panel workspace-create"{% if errors or not projects %} open{% endif %}>
+  <summary>Start a project</summary>
+  <form method="post" action="/scopes" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="scope-reference">Project reference<input id="scope-reference" name="reference" value="{{ reference|default('') }}" maxlength="100" placeholder="e.g. CF-001" required></label>
+    <label for="scope-name">Project name<input id="scope-name" name="name" value="{{ name|default('') }}" maxlength="300" placeholder="e.g. Building A inspection" required></label>
+    <div class="span-2 workspace-actions"><button class="button button-primary" type="submit" name="next" value="word">Upload Word defect report</button><button class="button button-secondary" type="submit" name="next" value="evidence">Upload PDF defect report</button><button class="button button-secondary" type="submit" name="next" value="workbooks">Upload Excel defect report</button><button class="button button-secondary" type="submit" name="next" value="">Create Draft Scope</button></div>
+  </form>
+</details>
+{% endif %}
+<section class="panel workspace-projects" aria-labelledby="saved-projects-heading">
+  <div class="panel-head"><h2 id="saved-projects-heading">Projects, scope and estimate revisions</h2></div>
+  <p class="workspace-scroll-hint muted" id="projects-scroll-hint">Scroll sideways to see all columns.</p>
+  <div class="table-wrap workspace-table-wrap" role="region" aria-labelledby="saved-projects-heading" aria-describedby="projects-scroll-hint" tabindex="0"><table class="workspace-table"><thead><tr><th scope="col">Project</th><th scope="col">Scope & report review</th><th scope="col">Estimate revisions</th><th scope="col">Project status</th></tr></thead><tbody>
+  {% for p in projects %}
+  <tr data-project-id="{{ p.id }}">
+    <td><strong>{{ p.reference }}</strong><div>{{ p.name }}</div><div class="muted small">{{ p.site_address or 'No site address' }}</div><div class="muted small">{{ p.jurisdiction }}</div></td>
+    <td>{% for draft in drafts_by_project.get(p.id, []) %}<div class="workspace-draft"><a class="workspace-record-link" href="/scopes/{{ draft.id }}">Open register <span class="muted">&middot; Scope revision {{ draft.latest_revision }}</span></a><div class="workspace-actions small">{% if has_permission('project:write') %}<a href="/scopes/{{ draft.id }}/word">Word evidence</a><a href="/scopes/{{ draft.id }}/evidence">PDF evidence</a><a href="/scopes/{{ draft.id }}/workbooks">Excel evidence</a>{% endif %}<a href="/scopes/{{ draft.id }}/packages">Project packages</a></div></div>{% else %}<span class="muted">No accessible Draft Scope.</span>{% endfor %}</td>
+    <td><div class="workspace-estimates">{% for e in draft_estimates_by_project.get(p.id, []) %}<a href="/scopes/{{ e.draft_scope_id }}/estimates/{{ e.id }}?revision={{ e.latest_revision }}"><span>Draft estimate &middot; revision {{ e.latest_revision }}</span><span class="muted small">Scope revision {{ e.scope_revision }}</span></a>{% endfor %}{% if p.id in draft_estimate_unavailable %}<span class="workspace-review-warning" role="status">Saved Draft estimate history needs review before it can be displayed.</span>{% endif %}{% for e in p.estimates if has_permission('estimate:read') %}<a href="/estimates/{{ e.id }}"><span>{{ e.reference }}</span><span class="badge badge-{{ e.status }}">{{ e.status }}</span><strong>{{ e.currency }} {{ '%.2f'|format(e.total_incl_tax|float) }}</strong></a>{% else %}{% if not draft_estimates_by_project.get(p.id) and p.id not in draft_estimate_unavailable %}<span class="muted">No estimate revisions.</span>{% endif %}{% endfor %}</div>{% if has_permission('estimate:write') %}<details class="workspace-inline-create"><summary>New estimate revision</summary><form method="post" action="/projects/{{ p.id }}/estimates" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>Estimate reference<input name="reference" required></label><label>Title<input name="title" value="Passive-fire estimate" required></label><button class="button button-primary button-small">Create estimate</button></form></details>{% endif %}</td>
+    <td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+  </tr>{% else %}<tr><td colspan="4" class="empty">No accessible projects yet.{% if has_permission('project:write') %} Start a project above to upload a report or enter a scope.{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
 </section>
+{% if has_permission('project:write') %}
+<details class="panel form-panel workspace-legacy-create"><summary>Create a project without a Draft Scope</summary>
+<form method="post" action="/projects" class="form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>Project reference<input name="reference" required></label><label>Project name<input name="name" required></label><label class="span-2">Site address<textarea name="site_address" rows="2"></textarea></label><label>Jurisdiction<input name="jurisdiction" value="NSW/ACT, Australia"></label><div><button class="button button-secondary">Create project</button></div></form>
+</details>
+{% endif %}
 {% endblock %}

@@ -1,6 +1,6 @@
 <noscript><div class="alert alert-error">This editor needs JavaScript to add and connect scope items. Enable JavaScript and reload to edit safely.</div></noscript>
 <div class="alert alert-error" id="scope-client-error" role="alert" hidden></div>
-<form method="post" action="{{ review_url ~ '/preview' if page_review|default(false) or (workbook_review|default(false) or word_review|default(false)) else '/scopes/' ~ draft.id }}" id="scope-editor" data-suggestion-review="{{ 'true' if suggestion_review|default(false) else 'false' }}" data-word-review="{{ 'true' if word_review|default(false) else 'false' }}" data-workbook-review="{{ 'true' if workbook_review|default(false) else 'false' }}" data-page-review="{{ 'true' if page_review|default(false) else 'false' }}"{% if page_review|default(false) %} data-page-number="{{ selected_page.page_number }}"{% endif %} data-can-edit="{{ 'true' if has_permission('project:write') else 'false' }}">
+<form method="post" action="{{ review_url ~ '/preview' if page_review|default(false) or (workbook_review|default(false) or word_review|default(false)) else '/scopes/' ~ draft.id ~ (register_selection_query|default('')) }}" id="scope-editor" data-draft-id="{{ draft.id }}" data-suggestion-review="{{ 'true' if suggestion_review|default(false) else 'false' }}" data-word-review="{{ 'true' if word_review|default(false) else 'false' }}" data-workbook-review="{{ 'true' if workbook_review|default(false) else 'false' }}" data-page-review="{{ 'true' if page_review|default(false) else 'false' }}"{% if page_review|default(false) %} data-page-number="{{ selected_page.page_number }}"{% endif %} data-can-edit="{{ 'true' if has_permission('project:write') else 'false' }}">
   {% if not has_permission('project:write') %}<p class="callout">Your account can view this saved draft. Editing requires project write permission.</p>{% endif %}
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   <input type="hidden" name="expected_revision" value="{{ expected_revision }}">
@@ -17,7 +17,13 @@
   {% if workbook_review|default(false) %}<input type="hidden" name="plan" value="{{ plan|tojson|forceescape }}">{% endif %}
   <input type="hidden" name="targets" id="scope-review-targets" value="">
   {% endif %}
+  {% if not (page_review|default(false) or workbook_review|default(false) or word_review|default(false)) %}
+  <section id="scope-register" aria-label="Defect register"></section>
+  {% endif %}
   <fieldset id="scope-edit-controls" disabled>
+    {% if not (page_review|default(false) or workbook_review|default(false) or word_review|default(false)) %}
+    <details class="scope-detail-editor"><summary>Detailed records, relationships and notes</summary>
+    {% endif %}
     <nav class="scope-section-nav" aria-label="Scope sections"><a href="#scope-defects">Defects</a><a href="#scope-openings">Openings</a><a href="#scope-services">Services</a><a href="#scope-observations">Observations</a><a href="#scope-notes">Assumptions &amp; exclusions</a></nav>
     <section class="panel scope-section" id="scope-defects" aria-labelledby="defects-heading">
       <div class="panel-head"><div><h2 id="defects-heading">1. Defects</h2><p class="muted">Give each reported problem a label. A defect can contain several openings and services.</p></div><button class="button button-secondary" type="button" data-add="defects">Add defect</button></div>
@@ -43,6 +49,7 @@
       <h2 id="scope-notes-heading">5. Assumptions &amp; exclusions</h2>
       <div class="form-grid"><label for="scope-assumptions">Assumptions <span class="scope-hint">One assumption per line. These remain unapproved draft notes.</span><textarea id="scope-assumptions" rows="4"></textarea></label><label for="scope-exclusions">Exclusions <span class="scope-hint">One exclusion per line. State work or areas this scope does not cover.</span><textarea id="scope-exclusions" rows="4"></textarea></label></div>
     </section>
+    {% if not (page_review|default(false) or workbook_review|default(false) or word_review|default(false)) %}</details>{% endif %}
     <div class="scope-actions">
       <div>{% if page_review|default(false) or (workbook_review|default(false) or word_review|default(false)) %}<button class="button button-primary" type="submit">Preview source-linked draft</button>{% else %}<button class="button button-secondary" type="submit" name="action" value="validate">Validate draft</button><button class="button button-primary" type="submit" name="action" value="save">Save new revision</button>{% endif %}</div>
       <div><a class="button button-secondary" id="scope-download" href="/scopes/{{ draft.id }}/download?revision={{ expected_revision }}"{% if not saved %} hidden{% endif %}>Download saved Draft Scope JSON</a><span class="scope-hint" id="scope-download-hint"{% if saved %} hidden{% endif %}>Save your changes before downloading.</span></div>
@@ -53,5 +60,6 @@
 {% if page_review|default(false) or (workbook_review|default(false) or word_review|default(false)) %}<script type="application/json" id="scope-initial-review-targets">{{ review_targets|default([])|tojson }}</script>{% endif %}
 {% if (workbook_review|default(false) or word_review|default(false)) %}<script type="application/json" id="scope-initial-row-sources">{{ review_sources|tojson }}</script><script type="application/json" id="scope-initial-sheet-images">{{ sheet_images|tojson }}</script>{% endif %}
 <script src="/static/draft_scope.js" defer></script>
+{% if not (page_review|default(false) or workbook_review|default(false) or word_review|default(false)) %}<link rel="stylesheet" href="/static/draft_register.css"><script src="/static/draft_register.js" defer></script>{% endif %}
 
 {% if suggestion_review|default(false) %}<script type="application/json" id="scope-initial-suggestion-items">{{ suggestion_items|tojson }}</script>{% endif %}

@@ -5,7 +5,7 @@ import binascii
 import hashlib
 import json
 from typing import Annotated, Any
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -19,13 +19,13 @@ from .models import DraftPackageImport, DraftScope, User
 from .outputs.draft_system_review import sections as system_sections
 from .outputs.draft_system_review import summary as system_summary
 from .security import verify_csrf
+from .services.draft_register import register_context
 from .services.draft_scope import (
     MAX_ARTIFACT_BYTES,
     DraftScopeError,
     apply_import,
     create_draft_project,
     get_draft,
-    list_drafts,
     preview_import,
     read_revision,
     revision_bytes,
@@ -42,7 +42,7 @@ from .services.draft_scope_reports import (
     report_freshness,
 )
 from .services.draft_system_matches import match_staleness, read_match_revision
-from .ui import _context, _require, templates
+from .ui import _context, _project_workspace, _require, templates
 
 router = APIRouter(include_in_schema=False)
 Db = Annotated[Session, Depends(get_db)]
@@ -144,6 +144,15 @@ def _finding_text(finding: dict[str, str]) -> str:
     return f"{location}: {finding['message']}" if location else finding["message"]
 
 
+def _register_query(request: Request) -> str:
+    pairs = {
+        key: request.query_params[key]
+        for key in ("match", "estimate")
+        if request.query_params.get(key)
+    }
+    return "?" + urlencode(pairs) if pairs else ""
+
+
 def _editor(
     request: Request,
     db: Session,
@@ -157,6 +166,28 @@ def _editor(
     findings: list[str] | None = None,
     status_code: int = 200,
 ) -> HTMLResponse:
+    actor = _require(request, db, "project:read")
+    get_draft(db, actor, draft.id)
+    try:
+        register = register_context(
+            db,
+            actor,
+            draft.id,
+            expected_revision,
+            storage_root=get_settings().storage_root,
+            match_selection=request.query_params.get("match", ""),
+            estimate_selection=request.query_params.get("estimate", ""),
+        )
+    except DraftScopeError as exc:
+        if saved and exc.status_code == 403:
+            raise _failure(exc) from exc
+        register = {
+            "targets": {},
+            "warnings": ["Saved system or pricing context is unavailable: " + exc.code],
+            "match_choices": [],
+            "estimate_choices": [],
+            "evidence_refs": [],
+        }
     return templates.TemplateResponse(
         request,
         "draft_scope.html",
@@ -166,6 +197,8 @@ def _editor(
             draft=draft,
             project=draft.project,
             payload=payload,
+            register=register,
+            register_selection_query=_register_query(request),
             expected_revision=expected_revision,
             saved=saved,
             envelope=envelope or {},
@@ -191,30 +224,7 @@ def _editor(
 
 @router.get("/scopes", response_class=HTMLResponse)
 def scopes_page(request: Request, db: Db) -> HTMLResponse:
-    user = _require(request, db, "project:read")
-    try:
-        drafts = list_drafts(db, user)
-    except DraftScopeError as exc:
-        raise _failure(exc) from exc
-    return templates.TemplateResponse(
-        request,
-        "draft_scopes.html",
-        _context(
-            request,
-            db,
-            drafts=[
-                {
-                    "id": draft.id,
-                    "reference": draft.project.reference,
-                    "name": draft.project.name,
-                    "latest_revision": draft.latest_revision,
-                }
-                for draft in drafts
-            ],
-            errors=[],
-        ),
-        headers={"Cache-Control": "no-store"},
-    )
+    return _project_workspace(request, db)
 
 
 @router.post("/scopes", response_model=None)
@@ -225,8 +235,8 @@ def create_scope(
 ) -> HTMLResponse | RedirectResponse:
     verify_csrf(request, form.get("csrf_token"))
     user = _require(request, db, "project:write")
-    if form.get("next", "") not in {"", "evidence", "workbooks"}:
-        raise HTTPException(422, "Choose manual entry, PDF or Excel upload")
+    if form.get("next", "") not in {"", "evidence", "workbooks", "word"}:
+        raise HTTPException(422, "Choose manual entry, PDF, Excel or Word upload")
     try:
         draft = create_draft_project(db, user, form.get("reference", ""), form.get("name", ""))
         db.commit()
@@ -239,41 +249,28 @@ def create_scope(
             if exc.status_code == 409
             else "Check the project reference and name."
         )
-        drafts = list_drafts(db, user)
-        return templates.TemplateResponse(
+        return _project_workspace(
             request,
-            "draft_scopes.html",
-            _context(
-                request,
-                db,
-                errors=[message],
-                reference=form.get("reference", "")[:100],
-                name=form.get("name", "")[:300],
-                drafts=[
-                    {
-                        "id": item.id,
-                        "reference": item.project.reference,
-                        "name": item.project.name,
-                        "latest_revision": item.latest_revision,
-                    }
-                    for item in drafts
-                ],
-            ),
+            db,
+            errors=[message],
+            reference=form.get("reference", "")[:100],
+            name=form.get("name", "")[:300],
             status_code=exc.status_code,
-            headers={"Cache-Control": "no-store"},
         )
     destination = f"/scopes/{draft.id}"
-    if form.get("next") in {"evidence", "workbooks"}:
+    if form.get("next") in {"evidence", "workbooks", "word"}:
         destination += "/" + form["next"]
     return RedirectResponse(destination, status_code=303)
 
 
 @router.get("/scopes/{draft_id}", response_class=HTMLResponse)
-def edit_scope(request: Request, db: Db, draft_id: str) -> HTMLResponse:
+def edit_scope(
+    request: Request, db: Db, draft_id: str, revision: int | None = None
+) -> HTMLResponse:
     user = _require(request, db, "project:read")
     try:
         draft = get_draft(db, user, draft_id)
-        envelope = read_revision(db, user, draft_id)
+        envelope = read_revision(db, user, draft_id, revision)
         _model, warnings = validate_payload(envelope["content"])
     except DraftScopeError as exc:
         raise _failure(exc) from exc
@@ -317,7 +314,9 @@ def update_scope(
         if action == "save":
             save_revision(db, user, draft_id, expected_revision, payload)
             db.commit()
-            return RedirectResponse(f"/scopes/{draft_id}", status_code=303)
+            return RedirectResponse(
+                f"/scopes/{draft_id}" + _register_query(request), status_code=303
+            )
     except DraftScopeError as exc:
         db.rollback()
         return _editor(

@@ -2,6 +2,8 @@
 {% block title %}Review defect report | CLASSIFIRE{% endblock %}
 {% block heading %}Review defect report{% endblock %}
 {% block content %}
+{% with guidance_items = ["Inspect the retained report page, text and images beside the proposed Scope.", "Select supporting evidence, preview the complete changes and confirm only after review."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 <link rel="stylesheet" href="/static/draft_scope.css">
 <p><a href="/scopes/{{ draft.id }}/evidence">&larr; All PDF evidence</a> &middot; <a href="/scopes/{{ draft.id }}">Saved Draft Scope</a></p>
 <section class="panel">

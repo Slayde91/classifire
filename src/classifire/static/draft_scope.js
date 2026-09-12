@@ -36,6 +36,7 @@
     document.getElementById("scope-download-hint").hidden = false;
     errorBox.hidden = true;
     updateReviewSummary();
+    if (!sourceReview) queueMicrotask(() => form.dispatchEvent(new CustomEvent("scope:changed")));
   }
 
   function updateReviewSummary() {
@@ -372,6 +373,24 @@
       try { addItem(button.dataset.add); }
       catch { showError("The editor could not add this item. Use a current browser over a secure connection or localhost, then reload before editing."); }
     }));
+    if (!sourceReview) {
+      window.classifireScopeEditor = {
+        read: () => JSON.parse(JSON.stringify(payload)),
+        replace: (next) => {
+          if (form.dataset.canEdit !== "true") throw new Error("Editing requires project write permission.");
+          payload = JSON.parse(JSON.stringify(next));
+          kinds.forEach((kind) => {
+            form.querySelector(`[data-items="${kind}"]`).replaceChildren();
+            payload[kind].forEach((item) => renderItem(kind, item));
+          });
+          ["assumptions", "exclusions"].forEach((name) => {
+            document.getElementById(`scope-${name}`).value = payload[name].join("\n");
+          });
+          refreshEmptyStates();
+          changed();
+        },
+      };
+    }
     refreshEmptyStates();
     document.getElementById("scope-edit-controls").disabled = form.dataset.canEdit !== "true";
     updateReviewSummary();

@@ -2,6 +2,8 @@
 {% block title %}Dashboard — CLASSIFIRE{% endblock %}
 {% block heading %}Dashboard{% endblock %}
 {% block content %}
+{% with guidance_items = ["See recent estimates, library status and open change proposals.", "Open Projects & estimates to continue a project or review a pending item below."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 <section class="metric-grid">
   <div class="metric-card"><span>Projects</span><strong>{{ counts.projects }}</strong></div>
   <div class="metric-card"><span>Estimates</span><strong>{{ counts.estimates }}</strong></div>

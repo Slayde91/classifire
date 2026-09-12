@@ -2,6 +2,8 @@
 {% block title %}{{ "Complete Draft Report" if report_profile == "complete" else "Draft Estimate Report" }} | CLASSIFIRE{% endblock %}
 {% block heading %}{{ "Complete Draft Report" if report_profile == "complete" else "Draft Estimate Report" }}{% endblock %}
 {% block content %}
+{% with guidance_items = ["Create or reopen a report from the selected saved estimate and its existing inputs.", "Inspect its completeness and warnings, then download the saved PDF or workbook."] %}{% include "partials/section_guidance.html" %}{% endwith %}
+
 <link rel="stylesheet" href="/static/draft_scope.css">
 <p><a href="{{ estimate_url }}?revision={{ envelope.revision }}">&larr; Saved Draft Estimate</a></p>
 <section class="panel">
