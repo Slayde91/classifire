@@ -69,6 +69,7 @@ customer facts, credentials, operational URL or private approval receipt belongs
 | --- | --- | --- |
 | Affected regression | 157 unique cases passed across 12 files, no remaining failure/skip | `workspace-regression-20260913/validation-receipt.json`; checkout-specific PYTHONPATH, fresh basetemps, disposable PostgreSQL 15433 only |
 | Final static/focused checks | Full Ruff, Mypy (233 source files), Bandit and one Alembic head passed; 12 template/history and nine navigation checks passed | Mypy caught a SQL expression typing mismatch; using SQLAlchemy false() corrected it without changing query semantics |
+| First hosted CI | 1 failed, 1,993 passed, 337 warnings; fail-fast stopped remaining cases | Run 34703458472 exposed a standalone template render without a permission helper. Reproduced locally; navigation now hides permission-dependent links when the helper is absent. Original assertions retained and a missing-context regression added; 11 focused checks passed. A new source revision requires fresh CI |
 | Failure correction | Initial run: 33 passed, one missing-register template failure; subsequent runs: 117 and 7 passed | All original assertions retained; empty optional register context now fails closed. Earlier failure log remains preserved |
 | Projects/Libraries browser | Existing synthetic IDs and exact saved estimate links visible; no page errors or mobile document overflow | `workspace-navigation-browser-20260913/receipt.json`; Edge routed through isolated ASGI/SQLite fixtures, not the operational runtime |
 | Actual register browser | Column bulk edit, undo/redo, save/reopen and exact older revision succeeded; Scope 3 has five source references; null quantities retained | `integrated-workspace-uat-20260913/grid-browser-receipt.json`; isolated app and synthetic data, no general accuracy measurement |
@@ -86,8 +87,9 @@ The earlier human-confirmed Word package is a separate artifact and is not repla
 - **Accurate multimodal analysis:** retained text/picture upload and human review are
   implemented, but this run does not prove accurate automatic analysis of arbitrary
   reports or calibrated service/substrate/quantity extraction. A real report was supplied
-  for assessment; human reference labels and adequate original/linked images are still
-  needed. No customer details or unsupported accuracy percentage are recorded here.
+  for assessment and its separately approved linked originals were inspected privately;
+  human reference labels are still needed. This assistant review is not an automatic
+  CLASSIFIRE analysis run. No customer details or unsupported accuracy percentage are recorded here.
 - **Full inline system/pricing work:** the register displays selected saved results.
   Creating/reviewing/overriding candidates and editing or recomputing estimates still use
   existing explicit workflows. Input edits mark original results stale instead of silently

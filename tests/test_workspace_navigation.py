@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import secrets
 
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
@@ -263,3 +264,21 @@ def test_workspace_requires_estimate_read_permission_for_saved_draft_estimates(
         assert "PRIVATE-ESTIMATE-PROJECT" not in page.text
         assert "PRIVATE-EST-001" not in page.text
         assert _counts(scope_app) == before
+
+
+def test_navigation_without_permission_context_does_not_advertise_protected_routes() -> None:
+    from types import SimpleNamespace
+
+    from starlette.datastructures import QueryParams
+
+    from classifire.ui import templates
+
+    html = templates.get_template("base.html").render(
+        request=SimpleNamespace(query_params=QueryParams()),
+        user=SimpleNamespace(full_name="Standalone preview", role="administrator"),
+        csrf_token=secrets.token_hex(16),
+        attribution="CLASSIFIRE",
+    )
+    for route in ("/projects", "/libraries", "/rules", "/proposal-reviews", "/releases", "/audit"):
+        assert f'href="{route}"' not in html
+    assert 'href="/docs"' in html

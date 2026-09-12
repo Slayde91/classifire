@@ -18,16 +18,16 @@
     </a>
     <nav aria-label="Primary navigation">
       {% macro nav_item(href, label) %}<a href="{{ href }}" class="nav-link{% if active_navigation == href %} active{% endif %}"{% if active_navigation == href %} aria-current="page"{% endif %}>{{ label }}</a>{% endmacro %}
-      {% if has_permission('project:read') %}
+      {% if has_permission is defined and has_permission('project:read') %}
       {{ nav_item('/', 'Dashboard') }}
       {{ nav_item('/projects', 'Projects & estimates') }}
       {% endif %}
-      {% if has_permission('library:read') %}{{ nav_item('/libraries', 'Libraries') }}{% endif %}
-      {% if has_permission('rule:read') %}{{ nav_item('/rules', 'Estimating rules') }}{% endif %}
+      {% if has_permission is defined and has_permission('library:read') %}{{ nav_item('/libraries', 'Libraries') }}{% endif %}
+      {% if has_permission is defined and has_permission('rule:read') %}{{ nav_item('/rules', 'Estimating rules') }}{% endif %}
       <div class="nav-section">Governance</div>
-      {% if has_permission('proposal_review:read') %}{{ nav_item('/proposal-reviews', 'Proposal reviews') }}{% endif %}
-      {% if has_permission('library:read') %}{{ nav_item('/releases', 'Library releases') }}{% endif %}
-      {% if has_permission('audit:read') %}{{ nav_item('/audit', 'Audit history') }}{% endif %}
+      {% if has_permission is defined and has_permission('proposal_review:read') %}{{ nav_item('/proposal-reviews', 'Proposal reviews') }}{% endif %}
+      {% if has_permission is defined and has_permission('library:read') %}{{ nav_item('/releases', 'Library releases') }}{% endif %}
+      {% if has_permission is defined and has_permission('audit:read') %}{{ nav_item('/audit', 'Audit history') }}{% endif %}
       {{ nav_item('/docs', 'API documentation') }}
     </nav>
     <div class="sidebar-footer">
