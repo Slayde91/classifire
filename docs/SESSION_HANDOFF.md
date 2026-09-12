@@ -5,6 +5,31 @@ Read [PROJECT_STATE.md](./PROJECT_STATE.md), [architecture](./CLASSIFIRE_ARCHITE
 [roadmap](./CLASSIFIRE_ROADMAP.md) and root GOAL.md. The four independent capabilities
 and full production objective remain unchanged and incomplete.
 
+## Latest reporting checkpoint
+
+PR #263 is merged as `d5c19d7`, equal in tree to tested `469a57f`; PR CI
+34711480773 passed 2,199 tests and remaining checks. Post-merge job 34712796245 is
+running at this checkpoint. PR #262 post-merge job 34710331473 passed 2,134 tests.
+
+Active checkout: `C:/CLASSIFIRE/.tmp/multi-review-reports-20260913`, branch
+`feat/multi-review-reports-20260913`, based on `d5c19d7`. Shared collection reporting,
+UI/client confirmation, PDF/XLSX and package mapping v4 are implemented locally.
+Read [the current contract](./MULTI_REVIEW_REPORTS.md) and PROJECT_STATE.md.
+Final combined validation passed 52 new cases; package-screen regressions passed 18.
+Full Ruff, Mypy, Bandit, JavaScript and migration-head checks passed.
+Classify explicit files, commit/push/create its PR,
+observe successful checks and required reviews, then merge and verify the merge.
+Do not restart existing CI jobs because observation expires.
+
+Port 8843 is its separate synthetic SQLite demo; actual restart retained all exact
+Scope/report/ZIP bytes and 66 domain-table inventories. Port 8820 and the earlier
+demos are unchanged. The unapproved 469a57f plan excludes report v3/mapping v4.
+Any later activation needs its exact plan and owner approval. Production readiness,
+accuracy evaluation and protected phase exits remain incomplete.
+
+The following package milestone retains its earlier source checkpoint for continuity;
+this latest checkpoint supersedes its pending-publication and active-checkout claims.
+
 ## Verified publication and runtime
 
 - Workspace PR #260 merged as `3eabb23`; exact-head and post-merge CI passed 2,113 tests

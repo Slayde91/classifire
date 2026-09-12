@@ -5,6 +5,10 @@ for verification/publication. This is a selected Draft workspace package, not a
 whole database backup or full project extraction. v1 export remains byte-compatible;
 new-project import and imported-project v2 re-export are described below.
 
+Collection-bearing reports additionally require every exact review dependency and
+[import mapping v4](./MULTI_REVIEW_REPORTS.md#package-and-import-dependencies).
+The v1-v6 package formats and earlier mapping versions remain supported.
+
 ## Current architecture -> change -> consequences
 
 Existing Scope, System Match, Estimate and report services already retain exact

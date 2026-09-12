@@ -153,6 +153,12 @@ def report_match_mapping(
         if "estimate" in report
         else report.get("system_match")
     )
+    return _report_match_binding(source, paths, mapping)
+
+
+def _report_match_binding(
+    source: dict[str, Any] | None, paths: dict[str, str], mapping: dict[str, Any]
+) -> dict[str, Any] | None:
     if source is None:
         return None
     bound = None
@@ -179,12 +185,37 @@ def report_match_mapping(
     }
 
 
+def requires_report_collection_mapping(original: InspectedPackage) -> bool:
+    """Include ancestor reports: their source bindings must not disappear on reimport."""
+    return any(
+        report.get("schema_version") == scope_reports.MULTI_SYSTEM_REPORT_SCHEMA_VERSION
+        for report, _paths in original.report_members()
+    )
+
+
+def report_match_mappings(
+    report: dict[str, Any], paths: dict[str, str], mapping: dict[str, Any]
+) -> list[dict[str, Any]]:
+    if "estimate" in report:
+        review = report["estimate"].get("system_match")
+        reviews = [review] if review is not None else []
+    else:
+        reviews = scope_reports.report_matches(report)
+    result = []
+    for review in reviews:
+        bound = _report_match_binding(review, paths, mapping)
+        if bound is not None:
+            result.append(bound)
+    return result
+
+
 def validate_origin_mapping(
     mapping: dict[str, Any], original: InspectedPackage, project_id: str, draft_id: str
 ) -> None:
     """Require a complete one-to-one retained origin inventory, including descendants."""
     evidence = list(original.evidence_members())
     collection = bool(original.matches)
+    report_collection = requires_report_collection_mapping(original)
     if set(mapping) != (
         {"schema_version", "project", "scope", "match", "estimate", "reports", "entity_ids"}
         | ({"evidence"} if evidence else set())
@@ -192,7 +223,9 @@ def validate_origin_mapping(
     ):
         raise ValueError("mapping fields")
     expected_version = (
-        "CLASSIFIRE-IMPORT-MAPPING-v3"
+        "CLASSIFIRE-IMPORT-MAPPING-v4"
+        if report_collection
+        else "CLASSIFIRE-IMPORT-MAPPING-v3"
         if collection
         else "CLASSIFIRE-IMPORT-MAPPING-v2"
         if evidence
@@ -255,13 +288,19 @@ def validate_origin_mapping(
     for record, (report, paths) in zip(mapping["reports"], expected, strict=True):
         if (
             set(record)
-            != ({"source_report_id", "profile", "members"} | ({"match"} if collection else set()))
+            != (
+                {"source_report_id", "profile", "members"}
+                | ({"matches"} if report_collection else {"match"} if collection else set())
+            )
             or record["source_report_id"] != report["report_id"]
             or record["profile"] != report["profile"]
             or set(record["members"]) != {"pdf", "xlsx"}
         ):
             raise ValueError("mapping report")
-        if collection and record["match"] != report_match_mapping(report, paths, mapping):
+        if report_collection:
+            if record["matches"] != report_match_mappings(report, paths, mapping):
+                raise ValueError("mapping report reviews")
+        elif collection and record["match"] != report_match_mapping(report, paths, mapping):
             raise ValueError("mapping report review")
         for fmt, member in record["members"].items():
             if (
@@ -491,7 +530,7 @@ def inspect_package(
             limit = (
                 estimate_reports.MAX_REPORT_SNAPSHOT_BYTES
                 if is_estimate
-                else scope_reports.MAX_REPORT_SNAPSHOT_BYTES
+                else scope_reports.MAX_COLLECTION_REPORT_SNAPSHOT_BYTES
             )
             snapshot = _json(members[f"reports/{report_id}.json"], limit)
             if is_estimate:
@@ -500,11 +539,9 @@ def inspect_package(
                     raise ValueError("report estimate")
             else:
                 scope_reports.validate_report_snapshot(snapshot)
-                if snapshot["scope"] != scope or (
-                    snapshot.get("system_match") is not None
-                    and not packages.match_dependency_selected(
-                        snapshot["system_match"], match, matches
-                    )
+                if snapshot["scope"] != scope or any(
+                    not packages.match_dependency_selected(review, match, matches)
+                    for review in scope_reports.report_matches(snapshot)
                 ):
                     raise ValueError("report scope/review")
             # Labels can describe an earlier project-name revision; IDs must agree.

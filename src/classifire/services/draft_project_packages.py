@@ -453,9 +453,9 @@ def _compose(
         members["artifacts/estimate.json"] = encode(estimate)
     for report_id in selected.scope_reports:
         row, snapshot = scope_reports._retained(db, actor, draft_id, report_id)
-        if snapshot["scope"] != scope or (
-            snapshot.get("system_match") is not None
-            and not match_dependency_selected(snapshot["system_match"], match, collection)
+        if snapshot["scope"] != scope or any(
+            not match_dependency_selected(review, match, collection)
+            for review in scope_reports.report_matches(snapshot)
         ):
             raise PackageError("PACKAGE_REPORT_DEPENDENCIES_DIFFER", 409)
         members[f"reports/{report_id}.json"] = encode(snapshot)

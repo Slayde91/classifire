@@ -97,8 +97,10 @@ The earlier human-confirmed Word package is a separate artifact and is not repla
   CLASSIFIRE analysis run. No customer details or unsupported accuracy percentage are recorded here.
 - **Broader system/pricing work:** selected-row manual authoring now reuses the existing
   explicit workflows in a native panel; its separate evidence is linked above. Scope edits
-  still mark results stale. Automatic matching/rate derivation, combined multi-review reporting
-  and broader applicability/pricing assurance remain in the roadmap.
+  still mark results stale. [Combined multi-review reporting](./MULTI_REVIEW_REPORTS.md)
+  is now locally validated, including separate report/package confirmation and restart.
+  Automatic matching/rate derivation and broader applicability/pricing assurance remain
+  in the roadmap.
 - **Embedded live AI:** provider settings default disabled; verified UAT kept them disabled.
   No live response, multimodal provider analysis, pricing/library context or authenticated
   external ChatGPT session is proven. Any provider activation requires its explicit approval.

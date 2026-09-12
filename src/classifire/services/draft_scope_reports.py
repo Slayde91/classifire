@@ -46,6 +46,12 @@ MAX_OUTPUT_BYTES = 8 * 1024 * 1024
 REPORT_LIST_LIMIT = 20
 MAX_REPORT_SNAPSHOT_BYTES = MAX_ARTIFACT_BYTES + MAX_MATCH_BYTES + 8192
 SYSTEM_REPORT_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-REPORT-v2"
+MULTI_SYSTEM_REPORT_SCHEMA_VERSION = "CLASSIFIRE-DRAFT-SCOPE-REPORT-v3"
+MULTI_SYSTEM_RENDER_VERSION = 11
+MAX_REPORT_MATCHES = 30
+MAX_COLLECTION_REPORT_SNAPSHOT_BYTES = (
+    MAX_ARTIFACT_BYTES + MAX_REPORT_MATCHES * MAX_MATCH_BYTES + 8192
+)
 REPORT_KEYS = frozenset(
     {
         "schema_version",
@@ -105,26 +111,52 @@ def _render_version(scope: dict[str, Any], *, system_profile: bool) -> int:
     return 2 if system_profile else 1
 
 
+def report_matches(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    """Normalize exact report dependencies after the report contract is validated."""
+    if snapshot.get("schema_version") == MULTI_SYSTEM_REPORT_SCHEMA_VERSION:
+        return cast(list[dict[str, Any]], snapshot["system_matches"])
+    match = snapshot.get("system_match")
+    return [match] if match is not None else []
+
+
 def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
     """Pure report contract validation, shared with deterministic renderers."""
     try:
         if type(snapshot) is not dict:
             raise ValueError("shape")
         system_profile = snapshot.get("profile") == "scope-and-system"
-        expected_keys = REPORT_KEYS | ({"system_match"} if system_profile else set())
+        collection = snapshot.get("schema_version") == MULTI_SYSTEM_REPORT_SCHEMA_VERSION
+        expected_keys = REPORT_KEYS | (
+            {"system_matches"} if collection else {"system_match"} if system_profile else set()
+        )
         if set(snapshot) != expected_keys:
             raise ValueError("shape")
         if len(_canonical(snapshot)) > (
-            MAX_REPORT_SNAPSHOT_BYTES if system_profile else MAX_ARTIFACT_BYTES + 8192
+            MAX_COLLECTION_REPORT_SNAPSHOT_BYTES
+            if collection
+            else MAX_REPORT_SNAPSHOT_BYTES
+            if system_profile
+            else MAX_ARTIFACT_BYTES + 8192
         ):
             raise ValueError("size")
         if (
             snapshot["schema_version"]
-            != (SYSTEM_REPORT_SCHEMA_VERSION if system_profile else REPORT_SCHEMA_VERSION)
+            != (
+                MULTI_SYSTEM_REPORT_SCHEMA_VERSION
+                if collection
+                else SYSTEM_REPORT_SCHEMA_VERSION
+                if system_profile
+                else REPORT_SCHEMA_VERSION
+            )
+            or (collection and not system_profile)
             or snapshot["profile"] not in ("scope-only", "scope-and-system")
             or type(snapshot["render_version"]) is not int
             or snapshot["render_version"]
-            != _render_version(snapshot["scope"], system_profile=system_profile)
+            != (
+                MULTI_SYSTEM_RENDER_VERSION
+                if collection
+                else _render_version(snapshot["scope"], system_profile=system_profile)
+            )
             or snapshot["state"] != "Draft"
             or snapshot["review_status"] != "unreviewed"
         ):
@@ -161,7 +193,22 @@ def validate_report_snapshot(snapshot: dict[str, Any]) -> None:
             raise ValueError("scope")
         if not _valid_hash(scope["sha256"]) or _checksum(scope) != scope["sha256"]:
             raise ValueError("scope")
-        if system_profile:
+        if collection:
+            from .draft_project_packages import validate_match_collection
+
+            reviews = snapshot["system_matches"]
+            if type(reviews) is not list or not 1 <= len(reviews) <= MAX_REPORT_MATCHES:
+                raise ValueError("match collection")
+            for review in reviews:
+                validate_match(review)
+            identities = [review["artifact_id"] for review in reviews]
+            if identities != sorted(set(identities)):
+                raise ValueError("match order or identity")
+            try:
+                validate_match_collection(scope, reviews)
+            except DraftScopeError as exc:
+                raise ValueError("match scope or target") from exc
+        elif system_profile:
             validate_match(snapshot["system_match"])
             if snapshot["system_match"]["scope"] != scope:
                 raise ValueError("match scope")
@@ -204,6 +251,57 @@ def _output(value: Any, format_name: str) -> bytes:
     return value
 
 
+def preview_report(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    revision: int,
+    *,
+    match_id: str | None = None,
+    match_revision: int | None = None,
+    matches: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Read exact report inputs without rendering, allocating identities or writing."""
+    actor, draft = _access(db, actor, draft_id)
+    if type(revision) is not int or revision < 1:
+        raise DraftScopeReportError("DRAFT_REVISION_NOT_FOUND", 404)
+    if (match_id is None) != (match_revision is None):
+        raise DraftScopeReportError("DRAFT_REPORT_MATCH_REQUIRED", 422)
+    if matches is not None and type(matches) is not list:
+        raise DraftScopeReportError("DRAFT_REPORT_MATCH_REQUIRED", 422)
+    scope = _scope(db, actor, draft_id, revision)
+    reviews = []
+    if matches:
+        from .draft_project_packages import selection, validate_match_collection
+
+        selected = selection(
+            {
+                "scope_revision": revision,
+                "matches": matches,
+                "match_id": match_id,
+                "match_revision": match_revision,
+            }
+        )
+        reviews = [
+            read_match_revision(db, actor, draft_id, item.match_id, item.match_revision)
+            for item in selected.matches
+        ]
+        validate_match_collection(scope, reviews)
+    elif match_id is not None:
+        reviews = [read_match_revision(db, actor, draft_id, match_id, match_revision)]
+        if reviews[0]["scope"] != scope:
+            raise DraftScopeReportError("DRAFT_REPORT_MATCH_SCOPE_MISMATCH", 422)
+    return {
+        "scope": scope,
+        "system_matches": reviews,
+        "project": _project(db, draft),
+        "profile": "scope-and-system" if reviews else "scope-only",
+        "render_version": MULTI_SYSTEM_RENDER_VERSION
+        if matches
+        else _render_version(scope, system_profile=bool(reviews)),
+    }
+
+
 def create_report(
     db: Session,
     actor: User,
@@ -212,37 +310,43 @@ def create_report(
     *,
     match_id: str | None = None,
     match_revision: int | None = None,
+    matches: list[dict[str, Any]] | None = None,
 ) -> DraftScopeReport:
     """Capture one explicit saved Scope revision and atomically retain both outputs."""
     from ..outputs.draft_scope import render_scope_report_pdf, render_scope_report_xlsx
 
     actor, draft = _access(db, actor, draft_id, write=True)
-    if type(revision) is not int or revision < 1:
-        raise DraftScopeReportError("DRAFT_REVISION_NOT_FOUND", 404)
-    if (match_id is None) != (match_revision is None):
-        raise DraftScopeReportError("DRAFT_REPORT_MATCH_REQUIRED", 422)
-    match = (
-        read_match_revision(db, actor, draft_id, match_id, match_revision)
-        if match_id is not None
-        else None
+    inputs = preview_report(
+        db,
+        actor,
+        draft_id,
+        revision,
+        match_id=match_id,
+        match_revision=match_revision,
+        matches=matches,
     )
-    scope = _scope(db, actor, draft_id, revision)
-    if match is not None and match["scope"] != scope:
-        raise DraftScopeReportError("DRAFT_REPORT_MATCH_SCOPE_MISMATCH", 422)
+    scope, reviews = inputs["scope"], inputs["system_matches"]
+    match = reviews[0] if reviews and not matches else None
     created = datetime.now(UTC)
     snapshot = {
-        "schema_version": SYSTEM_REPORT_SCHEMA_VERSION if match else REPORT_SCHEMA_VERSION,
+        "schema_version": MULTI_SYSTEM_REPORT_SCHEMA_VERSION
+        if matches
+        else SYSTEM_REPORT_SCHEMA_VERSION
+        if match
+        else REPORT_SCHEMA_VERSION,
         "report_id": new_id(),
-        "project": _project(db, draft),
+        "project": inputs["project"],
         "scope": scope,
-        "profile": "scope-and-system" if match else "scope-only",
-        "render_version": _render_version(scope, system_profile=match is not None),
+        "profile": inputs["profile"],
+        "render_version": inputs["render_version"],
         "created_by": actor.id,
         "created_at": created.isoformat(),
         "state": "Draft",
         "review_status": "unreviewed",
     }
-    if match is not None:
+    if matches:
+        snapshot["system_matches"] = reviews
+    elif match is not None:
         snapshot["system_match"] = match
     snapshot["sha256"] = _checksum(snapshot)
     validate_report_snapshot(snapshot)
@@ -265,14 +369,14 @@ def create_report(
             actor, draft = _access(db, actor, draft_id, write=True)
             if _scope(db, actor, draft_id, revision) != scope:
                 raise DraftScopeReportError("DRAFT_REPORT_SOURCE_CHANGED", 409)
-            if (
-                match is not None
-                and read_match_revision(
-                    db, actor, draft_id, match["artifact_id"], match["revision"]
-                )
-                != match
-            ):
-                raise DraftScopeReportError("DRAFT_REPORT_SOURCE_CHANGED", 409)
+            for review in reviews:
+                if (
+                    read_match_revision(
+                        db, actor, draft_id, review["artifact_id"], review["revision"]
+                    )
+                    != review
+                ):
+                    raise DraftScopeReportError("DRAFT_REPORT_SOURCE_CHANGED", 409)
             report = DraftScopeReport(
                 id=snapshot["report_id"],
                 draft_scope_id=draft.id,
@@ -325,7 +429,7 @@ def _retained(
     if row is None:
         raise DraftScopeReportError("DRAFT_REPORT_NOT_FOUND", 404)
     try:
-        if len(row.snapshot_json.encode("utf-8")) > MAX_REPORT_SNAPSHOT_BYTES:
+        if len(row.snapshot_json.encode("utf-8")) > MAX_COLLECTION_REPORT_SNAPSHOT_BYTES:
             raise ValueError("size")
         snapshot = cast(dict[str, Any], json.loads(row.snapshot_json))
         if type(snapshot) is not dict:
@@ -350,13 +454,12 @@ def _retained(
             raise ValueError("binding")
         if _scope(db, actor, draft_id, row.scope_revision) != snapshot["scope"]:
             raise ValueError("source")
-        match = snapshot.get("system_match")
-        if (
-            match is not None
-            and read_match_revision(db, actor, draft_id, match["artifact_id"], match["revision"])
-            != match
-        ):
-            raise ValueError("match source")
+        for review in report_matches(snapshot):
+            if (
+                read_match_revision(db, actor, draft_id, review["artifact_id"], review["revision"])
+                != review
+            ):
+                raise ValueError("match source")
         for format_name in ("pdf", "xlsx"):
             output = _output(getattr(row, format_name + "_bytes"), format_name)
             if hashlib.sha256(output).hexdigest() != getattr(row, format_name + "_sha256"):
@@ -387,7 +490,7 @@ def list_reports(db: Session, actor: User, draft_id: str) -> list[DraftScopeRepo
     for report in reports:
         if not has_permission(actor, "technical:read"):
             try:
-                if len(report.snapshot_json.encode("utf-8")) > MAX_REPORT_SNAPSHOT_BYTES:
+                if len(report.snapshot_json.encode("utf-8")) > MAX_COLLECTION_REPORT_SNAPSHOT_BYTES:
                     raise ValueError("size")
                 profile = json.loads(report.snapshot_json).get("profile")
             except (ValueError, TypeError, AttributeError, RecursionError, UnicodeError) as exc:
@@ -442,12 +545,11 @@ def report_freshness(
     db.expire(row, ["pdf_bytes", "xlsx_bytes"])
     current = _scope(db, actor, draft_id)
     match_stale = False
-    match = snapshot.get("system_match")
-    if match is not None:
+    for match in report_matches(snapshot):
         latest = read_match_revision(db, actor, draft_id, match["artifact_id"])
         if storage_root is None:
             raise DraftScopeReportError("DRAFT_REPORT_STORAGE_REQUIRED", 422)
-        match_stale = bool(
+        current_match_stale = bool(
             latest["sha256"] != match["sha256"]
             or match_staleness(
                 db,
@@ -458,6 +560,7 @@ def report_freshness(
                 storage_root=storage_root,
             )
         )
+        match_stale = match_stale or current_match_stale
     return bool(
         match_stale
         or scope_evidence_staleness(
