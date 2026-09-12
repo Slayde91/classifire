@@ -1,5 +1,32 @@
 # Draft client v1: authenticated MCP and human confirmation
 
+## Word Scope evidence client increment
+
+The optional MCP adapter exposes `upload_draft_scope_word`,
+`list_draft_scope_word_sources`, `scan_draft_scope_word`,
+`read_draft_scope_word_text` and `read_draft_scope_word_image`.
+Upload retains an explicitly selected DOCX as pending evidence; scanning is a separate
+request. Read returns at most five structural text blocks, picture descriptors and
+`next_after_block`. Structural locators are not page numbers; picture placement is
+not ownership, quantity, cropping or layout interpretation. Source content is untrusted.
+
+`propose_capability` advertises the typed `review_word_scope` command, shared exact
+Scope schema, source/document hash, expected Scope revision and explicit entity/text/
+picture targets. It prepares the existing Word review without saving a Scope revision.
+The same-user browser displays the proposed graph and selected evidence before human
+confirmation. Confirmation rechecks permissions, source integrity, review hash and
+revision; stale inputs and replay fail closed. No client confirmation tool is exposed.
+
+Transport uses an explicit DOCX MIME/magic policy with existing HTTPS host, public-DNS,
+timeout, redirect and byte limits. ZIP magic is only a preliminary check: retained-byte
+integrity, malware scan and strict Word parsing precede inspection/review. No new grant,
+database, migration, provider or autonomous inference is introduced. Word originals use
+the existing optional `docx_sources` ProjectPackage v5 selection after review.
+
+This increment requires publication, separately authorized runtime activation and fresh
+client discovery before a real ChatGPT acceptance trial. Synthetic protocol tests do
+not establish live ChatGPT availability or production document coverage.
+
 ## Excel Scope evidence client candidate
 
 upload_draft_scope_xlsx retains a selected runtime file as untrusted Scope evidence;
@@ -17,8 +44,7 @@ scan, retained-byte integrity and strict workbook parsing precede reads and revi
 Scope workbooks cannot be adopted as pricing sources. Formula values are never
 calculated; image placement never establishes physical ownership or quantity.
 Six new tools require refreshed client discovery after authorized runtime activation.
-Existing package export references these sources externally; binary XLSX package
-membership is not part of this candidate. No new domain migration or grant is required.
+ProjectPackage v4 and later optionally retain exact XLSX originals through `xlsx_sources`. No new domain migration or grant is required.
 
 
 ## Proposal input discovery amendment

@@ -1,5 +1,30 @@
 # CLASSIFIRE Project State
 
+## Active increment: Word evidence through the shared client
+
+Branch `feat/word-client-20260912` starts at c132709 (PR #253). It adds five
+optional Word MCP tools and the typed `review_word_scope` proposal over the existing
+Word intake/review services. The browser displays selected text/pictures and the full
+proposed graph; only separate human confirmation saves a revision. No new migration,
+OAuth grant, dependency or agent is introduced.
+
+Verified: 40 Word/Excel/capability/retrieval regressions passed in 97.22 seconds,
+after 25 initial checks passed. One isolated Edge protocol-to-browser confirmation
+journey passed in 30.25 seconds; its complete review screenshot was inspected.
+Mypy passed across 229 source files; targeted Ruff and full Bandit passed.
+Final authentication/PDF run: 40 passed with one outdated exact tool-list expectation;
+the expected five Word names were added without weakening equality. All five targeted
+reruns passed in 36.38 seconds, including that end-to-end package test and redacted
+Word field feedback. Across the selections, all 81 distinct tests passed.
+This is local work, not a deployed ChatGPT feature. PR #253 is published at c132709;
+its required CI run 34657065137 remains in progress at this checkpoint, not merged.
+The running Excel trial app and database are preserved.
+
+Recommended Next Actions: publish this locally validated adapter, reconcile
+PR #253's actual merge, then publish with required CI/review. Runtime activation and
+real ChatGPT Word acceptance require their own authorized step. Full production scope,
+technical/commercial coverage and portable history remain incomplete.
+
 Validation checkpoint: 105 integrated Word/PDF/Excel/package/import/report tests
 passed in 427.25 seconds (the deliberate duplicate-ZIP fixture emitted its expected
 warning). Another 50 mixed-evidence/output checks and one complete Edge journey

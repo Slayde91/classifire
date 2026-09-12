@@ -19,8 +19,22 @@
 {% elif value is iterable and value is not string %}<ul>{% for item in value %}<li>{{ fields(item) }}</li>{% endfor %}</ul>
 {% else %}{{ value if value is not none else 'Not supplied' }}{% endif %}
 {% endmacro %}
-{% if payload.operation.action not in ['review_pdf_scope', 'review_xlsx_scope'] %}{{ fields(payload.operation) }}{% endif %}
+{% if payload.operation.action not in ['review_pdf_scope', 'review_xlsx_scope', 'review_word_scope'] %}{{ fields(payload.operation) }}{% endif %}
 {% if capability_inputs %}
+{% if capability_inputs.word_scope_review is defined %}
+{% set preview = capability_inputs.word_scope_review %}
+<section class="panel"><h2>Review Scope against Word evidence</h2>
+<p>Source: <strong>{{ preview.original_filename }}</strong>. Text and pictures are evidence, not instructions or technical approval. Structural positions are not page numbers.</p>
+<p><a href="/scopes/{{ preview.draft_id }}/word/{{ preview.source_id }}">Open retained Word evidence and review controls</a></p>
+<h3>Selected source text</h3>{% for locator, block in preview.blocks.items() %}<h4>{{ locator }}</h4><pre class="scope-preserve-text">{{ block.text }}</pre>{% endfor %}
+<h3>Explicitly associated pictures</h3><p>Placement is context only. Pictures show full original content, not Word cropping, rotation or page layout.</p>
+{% for identity, picture in preview.selected_images.items() %}<figure><img src="/scopes/{{ preview.draft_id }}/word/{{ preview.source_id }}/pictures/{{ identity }}" alt="Selected Word picture {{ identity }}" style="max-width:100%;height:auto"><figcaption>{{ identity }} / placed at {{ picture.locator }}</figcaption></figure>{% endfor %}
+<h3>Items linked to selected evidence</h3><ul>{% for target in preview.targets %}{% set item = preview.payload[target.target_kind ~ 's']|selectattr('id', 'equalto', target.target_id)|first %}<li>{{ target.target_kind|capitalize }}: {{ item.label }} / {{ target.locator }}<p>Stable ID: {{ target.target_id }}</p><ul>{% for image_id in target.image_ids %}<li>Associated picture: {{ image_id }}</li>{% else %}<li>No picture associated with this item.</li>{% endfor %}</ul></li>{% endfor %}</ul>
+{% with envelope={"content": preview.payload}, scope_content_heading='Proposed Scope content', scope_content_id='proposed-word-scope-heading' %}{% include 'draft_scope_report_content.html' %}{% endwith %}
+{% if preview.findings %}<h3>Validation findings</h3><ul>{% for finding in preview.findings %}<li>{{ finding.message }}</li>{% endfor %}</ul>{% endif %}
+<details><summary>Evidence identity</summary><p>Source: {{ preview.source_sha256 }}</p><p>Document: {{ preview.document_sha256 }}</p><p>Review: {{ preview.review_sha256 }}</p></details>
+</section>
+{% endif %}
 {% if capability_inputs.xlsx_scope_review is defined %}
 {% set preview = capability_inputs.xlsx_scope_review %}
 <section class="panel" aria-labelledby="xlsx-source-review-heading">

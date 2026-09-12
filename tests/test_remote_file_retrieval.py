@@ -185,12 +185,15 @@ def test_transport_exception_is_redacted() -> None:
     assert marker not in str(raised.value)
 
 
-def test_xlsx_policy_keeps_pdf_default_and_requires_expected_magic():
+@pytest.mark.parametrize("kind,mime", [
+    ("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+    ("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+])
+def test_office_policy_keeps_pdf_default_and_requires_expected_magic(kind, mime):
     from dataclasses import replace
 
     data = b"PK\x03\x04synthetic workbook transport bytes"
-    mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    policy = replace(POLICY, content_kind="xlsx",
+    policy = replace(POLICY, content_kind=kind,
                      allowed_media_types=frozenset({mime, "application/octet-stream"}))
     def transport(*args):
         return response(body=data, declared_length=len(data), content_type=mime)
@@ -199,24 +202,29 @@ def test_xlsx_policy_keeps_pdf_default_and_requires_expected_magic():
     assert result.media_type == mime
     with pytest.raises(retrieval.RemoteFileRetrievalError, match="CONTENT_TYPE_REJECTED"):
         retrieval.retrieve_file("https://files.example.test/book", POLICY, transport=transport)
-    with pytest.raises(retrieval.RemoteFileRetrievalError, match="XLSX_CONTENT_REJECTED"):
+    with pytest.raises(
+        retrieval.RemoteFileRetrievalError, match=kind.upper() + "_CONTENT_REJECTED"
+    ):
         retrieval.retrieve_file("https://files.example.test/book", policy,
             transport=lambda *args: response(content_type=mime))
 
 
-def test_xlsx_parent_worker_result_is_bound_to_explicit_content_policy(monkeypatch):
+@pytest.mark.parametrize("kind,mime", [
+    ("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+    ("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+])
+def test_office_parent_worker_result_is_bound_to_explicit_content_policy(monkeypatch, kind, mime):
     import json
     from dataclasses import replace
     from types import SimpleNamespace
 
     data = b"PK\x03\x04synthetic workbook transport bytes"
-    mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    policy = replace(POLICY, content_kind="xlsx", allowed_media_types=frozenset({mime}))
+    policy = replace(POLICY, content_kind=kind, allowed_media_types=frozenset({mime}))
     metadata = dict(sha256=hashlib.sha256(data).hexdigest(), size_bytes=len(data),
                     media_type=mime, host="files.example.test", redirect_count=0)
 
     def worker(*args, **kwargs):
-        assert json.loads(kwargs["input"])["policy"]["content_kind"] == "xlsx"
+        assert json.loads(kwargs["input"])["policy"]["content_kind"] == kind
         return SimpleNamespace(returncode=0, stdout=json.dumps(metadata).encode()+b"\n"+data)
 
     monkeypatch.setattr(retrieval.subprocess, "run", worker)
