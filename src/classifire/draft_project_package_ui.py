@@ -3,8 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import secrets
-from typing import Annotated
-from urllib.parse import parse_qsl
+from typing import Annotated, Any
+from urllib.parse import parse_qsl, urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from .config import get_settings
 from .db import get_db
 from .draft_scope_ui import FormData
+from .models import DraftSystemMatch, User
 from .security import has_permission, verify_csrf
 from .services import draft_estimate_reports as estimate_reports
 from .services import draft_estimates as estimates
@@ -44,10 +45,27 @@ def _query(request: Request, latest: int) -> dict:
     if set(query) - allowed or any(
         len(query.getlist(k)) > 1
         for k in allowed
-        - {"scope_reports", "estimate_reports", "pdf_sources", "xlsx_sources", "docx_sources"}
+        - {
+            "scope_reports",
+            "estimate_reports",
+            "pdf_sources",
+            "xlsx_sources",
+            "docx_sources",
+            "matches",
+        }
     ):
         raise HTTPException(422, "Invalid package selection")
+    selected_reviews = query.getlist("matches")
+    if len(selected_reviews) > packages.MAX_SELECTED_MATCHES:
+        raise HTTPException(422, "Too many selected system reviews")
+    references = []
+    for reference in selected_reviews:
+        identity, separator, revision = reference.rpartition(":")
+        if not separator or not identity or not revision or revision.startswith("0"):
+            raise HTTPException(422, "Choose an exact saved system review and revision")
+        references.append({"match_id": identity, "match_revision": _number(revision)})
     value = {
+        "matches": references,
         "scope_revision": _number(query.get("scope_revision", str(latest))),
         "scope_reports": query.getlist("scope_reports"),
         "pdf_sources": query.getlist("pdf_sources"),
@@ -64,6 +82,83 @@ def _query(request: Request, latest: int) -> dict:
     return value
 
 
+def _review_choices(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    scope: dict[str, Any],
+    chosen: packages.Selection,
+    recent: list[DraftSystemMatch],
+) -> list[dict[str, Any]]:
+    """Keep explicitly selected historical reviews even outside the recent list."""
+    selected = {item.match_id: item for item in packages.selected_match_references(chosen)}
+    references = list(selected.values()) + [
+        packages.MatchSelection(match_id=row.id, match_revision=row.latest_revision)
+        for row in recent
+        if row.id not in selected and row.scope_hash == scope["sha256"]
+    ]
+    choices = []
+    for ref in references:
+        review = matches.read_match_revision(db, actor, draft_id, ref.match_id, ref.match_revision)
+        content = review["scope"]["content"]
+        opening = next(
+            (row for row in content["openings"] if row["id"] == review["target"]["opening_id"]),
+            None,
+        )
+        service = next(
+            (row for row in content["services"] if row["id"] == review["target"]["service_id"]),
+            None,
+        )
+        label = " / ".join(
+            [opening["label"] if opening else "Opening not selected"]
+            + (
+                [service["label"]]
+                if service
+                else ["Blank opening" if opening and opening["blank"] else "Whole opening review"]
+            )
+        )
+        choices.append(
+            {
+                "id": ref.match_id,
+                "revision": ref.match_revision,
+                "value": f"{ref.match_id}:{ref.match_revision}",
+                "label": label,
+                "scope_revision": review["scope"]["revision"],
+                "selected": any(item.match_id == ref.match_id for item in chosen.matches),
+            }
+        )
+    return choices
+
+
+def _reopen_register_url(draft_id: str, selected: packages.Selection) -> str:
+    query = [("revision", str(selected.scope_revision))]
+    query.extend(
+        ("match", f"{item.match_id}:{item.match_revision}")
+        for item in packages.selected_match_references(selected)
+    )
+    if selected.estimate_id is not None:
+        query.append(("estimate", f"{selected.estimate_id}:{selected.estimate_revision}"))
+    return f"/scopes/{draft_id}?" + urlencode(query)
+
+
+def _configure_package_url(draft_id: str, selected: packages.Selection) -> str:
+    query = [("scope_revision", str(selected.scope_revision))]
+    if selected.matches:
+        query.extend(
+            ("matches", f"{item.match_id}:{item.match_revision}") for item in selected.matches
+        )
+    for kind in ("match", "estimate"):
+        identity = getattr(selected, kind + "_id")
+        if identity is not None:
+            query.extend(
+                [
+                    (kind + "_id", identity),
+                    (kind + "_revision", str(getattr(selected, kind + "_revision"))),
+                ]
+            )
+    return f"/scopes/{draft_id}/packages?" + urlencode(query)
+
+
 @router.get("/scopes/{draft_id}/packages", response_class=HTMLResponse)
 def package_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
     user = _require(request, db, "project:read")
@@ -76,11 +171,38 @@ def package_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
             if has_permission(user, "technical:read")
             else []
         )
+        review_choices = _review_choices(db, user, draft_id, scope, chosen, reviews)
         costs = (
             estimates.list_estimates(db, user, draft_id)
             if has_permission(user, "estimate:read")
             else []
         )
+        cost_choices = [
+            {
+                "id": row.id,
+                "scope_revision": row.scope_revision,
+                "latest_revision": row.latest_revision,
+                "match_id": row.match_id,
+                "match_revision": row.match_revision,
+            }
+            for row in costs
+            if row.scope_hash == scope["sha256"] and row.id != chosen.estimate_id
+        ]
+        if chosen.estimate_id is not None:
+            selected_cost = estimates.read_estimate_revision(
+                db, user, draft_id, chosen.estimate_id, chosen.estimate_revision
+            )
+            attached = selected_cost["system_match"]
+            cost_choices.insert(
+                0,
+                {
+                    "id": chosen.estimate_id,
+                    "scope_revision": selected_cost["scope"]["revision"],
+                    "latest_revision": selected_cost["revision"],
+                    "match_id": attached["artifact_id"] if attached else None,
+                    "match_revision": attached["revision"] if attached else None,
+                },
+            )
         scoped_reports = scope_reports.list_reports(db, user, draft_id)
         cost_reports = (
             estimate_reports.list_reports(db, user, draft_id, chosen.estimate_id)
@@ -125,8 +247,9 @@ def package_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
                     for ref in scope.get("evidence_refs", [])
                     if ref.get("origin") == "local_retained" and ref.get("source_kind") == "docx"
                 },
-                reviews=[r for r in reviews if r.scope_hash == scope["sha256"]],
-                costs=[r for r in costs if r.scope_hash == scope["sha256"]],
+                reviews=review_choices,
+                max_selected_matches=packages.MAX_SELECTED_MATCHES,
+                costs=cost_choices,
                 scoped_reports=[r for r in scoped_reports if r.scope_hash == scope["sha256"]],
                 cost_reports=cost_reports,
                 packages=packages.list_packages(db, user, draft_id),
@@ -136,6 +259,7 @@ def package_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
                 staleness=stale,
                 saved=None,
             ),
+            headers={"Cache-Control": "no-store"},
         )
     except scopes.DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
@@ -203,7 +327,11 @@ def saved_package(request: Request, db: Db, draft_id: str, package_id: str) -> H
                 staleness=stale,
                 error=None,
                 saved=row,
+                reopen_url=_reopen_register_url(
+                    draft_id, packages.selection(manifest["selection"])
+                ),
             ),
+            headers={"Cache-Control": "no-store"},
         )
     except scopes.DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
@@ -364,6 +492,33 @@ def imported_package_page(request: Request, db: Db, draft_id: str) -> HTMLRespon
     try:
         draft = scopes.get_draft(db, user, draft_id)
         row, original, mapping = materialization.read_import(db, user, draft_id)
+        selected_values: dict[str, Any] = {"scope_revision": mapping["scope"]["local_revision"]}
+        if mapping.get("matches"):
+            selected_values["matches"] = [
+                {"match_id": bound["local_id"], "match_revision": bound["local_revision"]}
+                for bound in imports.match_mappings(mapping)
+            ]
+        for kind in ("match", "estimate"):
+            if mapping[kind] is not None:
+                selected_values[kind + "_id"] = mapping[kind]["local_id"]
+                selected_values[kind + "_revision"] = mapping[kind]["local_revision"]
+        selected = packages.selection(selected_values)
+        review_links = [
+            {
+                "id": ref.match_id,
+                "revision": ref.match_revision,
+                "url": (
+                    f"/scopes/{draft_id}/system-matches/{ref.match_id}"
+                    f"?revision={ref.match_revision}"
+                ),
+            }
+            for ref in packages.selected_match_references(selected)
+        ]
+        estimate_url = (
+            f"/scopes/{draft_id}/estimates/{selected.estimate_id}?revision={selected.estimate_revision}"
+            if selected.estimate_id is not None
+            else None
+        )
         attachments = []
         for report in mapping["reports"]:
             for fmt, member in report["members"].items():
@@ -390,6 +545,10 @@ def imported_package_page(request: Request, db: Db, draft_id: str) -> HTMLRespon
                 draft=draft,
                 imported=row,
                 mapping=mapping,
+                reopen_url=_reopen_register_url(draft_id, selected),
+                configure_url=_configure_package_url(draft_id, selected),
+                review_links=review_links,
+                estimate_url=estimate_url,
                 original=original.manifest,
                 attachments=attachments,
             ),

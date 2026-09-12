@@ -247,3 +247,12 @@ the native bounded Word parser; it does not use the generated-report XLSX parser
 Fresh local scan/format checks gate downloads and re-export, and all retained binary
 ancestors remain subject to current permissions and quarantine. Imported v7 review
 claims stay unverified. No technical/pricing bodies or local authority are added.
+
+## Forward v6: explicit multiple row reviews
+
+The optional `matches` collection extends the existing package boundary without a new
+model or migration. It retains exact row-qualified reviews with deterministic member
+paths and mapping-v3 on import. Legacy v1-v5 bytes and singular rules remain unchanged
+when the collection is absent. Estimate/report dependencies remain exact and do not
+expand implicitly. See [the multi-review contract](./MULTI_REVIEW_PROJECT_PACKAGES.md)
+for selection limits, original-archive retention and client confirmation requirements.

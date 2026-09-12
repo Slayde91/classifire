@@ -39,7 +39,9 @@ Legacy readers/imports retain their existing contract, including historical unre
   record editing remains available in the same workspace.
 - **Systems and prices:** explicit saved Match/Estimate selections project into Proposed
   Technical System and Price columns, with exact revision links, warnings and staleness.
-  One saved Match and one saved Estimate can be selected at a time. The subsequent
+  The initial slice selected one Match and one Estimate. The
+  [multi-review package increment](./MULTI_REVIEW_PROJECT_PACKAGES.md) adds explicit
+  row-review collections and durable package reopening; one Estimate remains selected. The subsequent
   [native row-authoring increment](./REGISTER_ROW_AUTHORING.md) adds explicit candidate
   review and manual estimate editing beside the selected row through these same services.
   Opening-qualified recommendations only appear on their matching Opening. Saved prices
@@ -95,8 +97,8 @@ The earlier human-confirmed Word package is a separate artifact and is not repla
   CLASSIFIRE analysis run. No customer details or unsupported accuracy percentage are recorded here.
 - **Broader system/pricing work:** selected-row manual authoring now reuses the existing
   explicit workflows in a native panel; its separate evidence is linked above. Scope edits
-  still mark results stale. Automatic matching/rate derivation, project-wide result
-  selection and broader applicability/pricing assurance remain in the roadmap.
+  still mark results stale. Automatic matching/rate derivation, combined multi-review reporting
+  and broader applicability/pricing assurance remain in the roadmap.
 - **Embedded live AI:** provider settings default disabled; verified UAT kept them disabled.
   No live response, multimodal provider analysis, pricing/library context or authenticated
   external ChatGPT session is proven. Any provider activation requires its explicit approval.

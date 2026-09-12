@@ -142,8 +142,11 @@ substitute for database authority. Current exports are selected Draft artifacts.
 7. Require current local scanning/containment for retained imported originals; imported
    claims do not become local approval. Re-export checks retained binary ancestors too.
 
-Scope readers preserve v1-v7 evidence history; Word review uses v7. ProjectPackage v1-v5
-readers coexist; v3 adds optional PDFs, v4 optional workbooks, v5 optional DOCX originals.
+Scope readers preserve v1-v7 evidence history; Word review uses v7. ProjectPackage v1-v6
+readers coexist: v3 adds optional PDFs, v4 optional workbooks, v5 optional DOCX originals,
+and v6 an explicit collection of exact row reviews. Collection imports use mapping v3
+within the existing persistence model; no database migration is added. Older binaries
+cannot read these new formats. See [compatibility and recovery limits](./MULTI_REVIEW_PROJECT_PACKAGES.md).
 These are explicit format branches, not a claim that every export uses the newest version.
 Full project history, all audit events, library source bodies and unselected artifacts
 are not automatically present. The schema is not a full database backup.

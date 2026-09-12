@@ -77,7 +77,9 @@ settings are unchanged. Only the separate 8841 synthetic SQLite demo was restart
 
 This implements selected-row manual authoring, not automatic technical approval,
 project-wide matching, library-derived automatic pricing or general report accuracy.
-The register still selects one saved Match and one saved Estimate at a time. Source
+The initial checkpoint selects one saved Match and one saved Estimate at a time.
+The subsequent [multi-review package increment](./MULTI_REVIEW_PROJECT_PACKAGES.md)
+extends explicit row-review selection while retaining one Estimate. Source
 review, broader applicability, governed rates/recovery, scaling and exhaustive
 accessibility remain in the roadmap. The private human-reviewed Draft reference and
 Phase 8/8C gates in [reference readiness](./PHYSICAL_REFERENCE_READINESS.md) are unchanged.

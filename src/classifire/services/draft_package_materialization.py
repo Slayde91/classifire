@@ -42,7 +42,7 @@ def _access(
     if write:
         actor = scopes._actor(db, actor, "project:write")
     for included in value.walk():
-        if included.match:
+        if included.all_matches():
             actor = scopes._actor(db, actor, "technical:read")
         if included.estimate:
             actor = scopes._actor(db, actor, "estimate:read")
@@ -74,7 +74,11 @@ def _retained(
     mapping = json.loads(row.mapping_json)
     if packages.encode(mapping).decode() != row.mapping_json or mapping.get(
         "schema_version"
-    ) not in ("CLASSIFIRE-IMPORT-MAPPING-v1", "CLASSIFIRE-IMPORT-MAPPING-v2"):
+    ) not in (
+        "CLASSIFIRE-IMPORT-MAPPING-v1",
+        "CLASSIFIRE-IMPORT-MAPPING-v2",
+        "CLASSIFIRE-IMPORT-MAPPING-v3",
+    ):
         raise ValueError("mapping integrity")
     if (
         mapping["scope"]["local_id"] != draft_id
@@ -87,8 +91,10 @@ def _retained(
         ("match", DraftSystemMatchRevision, DraftSystemMatchRevision.match_id),
         ("estimate", DraftEstimateRevision, DraftEstimateRevision.estimate_id),
     ):
-        bound = mapping[kind]
-        if bound is not None:
+        bindings = inspection.match_mappings(mapping) if kind == "match" else [mapping[kind]]
+        for bound in bindings:
+            if bound is None:
+                continue
             initial_hash = db.scalar(
                 select(model.content_hash).where(
                     owner_column == bound["local_id"], model.revision == bound["local_revision"]
@@ -96,6 +102,26 @@ def _retained(
             )
             if initial_hash != bound["local_sha256"]:
                 raise ValueError("initial local revision binding")
+            if kind == "match" and original.matches:
+                initial_json = db.scalar(
+                    select(DraftSystemMatchRevision.envelope_json).where(
+                        DraftSystemMatchRevision.match_id == bound["local_id"],
+                        DraftSystemMatchRevision.revision == bound["local_revision"],
+                    )
+                )
+                initial = json.loads(initial_json) if initial_json is not None else {}
+                source_match = original.match_by_id(bound["source_id"])
+                if (
+                    source_match is None
+                    or type(initial) is not dict
+                    or initial.get("artifact_id") != bound["local_id"]
+                    or initial.get("project_id") != mapping["project"]["local_id"]
+                    or initial.get("sha256") != bound["local_sha256"]
+                    or origins.checksum(initial) != bound["local_sha256"]
+                    or initial.get("import_origin")
+                    != origins.origin_for(row.id, row.archive_hash, source_match)
+                ):
+                    raise ValueError("initial local review origin binding")
     return row, original, mapping
 
 
@@ -110,10 +136,10 @@ def read_import(
         row, original, mapping = _retained(db, draft_id, row.id)
         if mapping["project"]["local_id"] != draft.project_id:
             raise ValueError("local project mismatch")
-        _access(db, actor, original, export=export)
-        return row, original, mapping
     except (ValueError, TypeError, KeyError, RecursionError) as exc:
         raise scopes.DraftScopeError("PACKAGE_IMPORT_INTEGRITY_FAILED", 409) from exc
+    _access(db, actor, original, export=export)
+    return row, original, mapping
 
 
 def verify_local_origin(
@@ -124,13 +150,23 @@ def verify_local_origin(
             raise ValueError("unbound imported artifact")
         return
     row, original, mapping = _retained(db, draft_id, import_id)
-    source = original.match if kind == "match" else original.estimate
+    source_id = envelope.get("import_origin", {}).get("source_artifact_id")
+    source = original.match_by_id(source_id) if kind == "match" else original.estimate
+    bound = (
+        next(
+            (item for item in inspection.match_mappings(mapping) if item["source_id"] == source_id),
+            None,
+        )
+        if kind == "match"
+        else mapping[kind]
+    )
     if source is None or envelope.get("import_origin") != origins.origin_for(
         row.id, row.archive_hash, source
     ):
         raise ValueError("foreign origin binding")
     if (
-        mapping[kind]["local_id"] != envelope["artifact_id"]
+        bound is None
+        or bound["local_id"] != envelope["artifact_id"]
         or mapping["project"]["local_id"] != envelope["project_id"]
     ):
         raise ValueError("local origin binding")
@@ -226,9 +262,13 @@ def create_import(
             "reports": [],
             "entity_ids": "retained_within_new_scope",
         }
-        match = None
-        if original.match:
-            match = copy.deepcopy(original.match)
+        if original.matches:
+            mapping["schema_version"] = "CLASSIFIRE-IMPORT-MAPPING-v3"
+            mapping["matches"] = []
+        match: dict[str, Any] | None = None
+        local_matches = {}
+        for source_match in original.all_matches():
+            match = copy.deepcopy(source_match)
             match.update(
                 artifact_id=new_id(),
                 project_id=draft.project_id,
@@ -241,8 +281,8 @@ def create_import(
             match = origins.wrap(
                 match,
                 "match",
-                origins.origin_for(row.id, row.archive_hash, original.match),
-                origins.content_schema(original.match),
+                origins.origin_for(row.id, row.archive_hash, source_match),
+                origins.content_schema(source_match),
             )
             match_contract.validate_envelope(match)
             db.add(
@@ -274,8 +314,16 @@ def create_import(
                 )
             )
             db.flush()  # Persist the referenced Match revision before its Estimate.
-            mapping["match"] = _mapping(original.match, match)
+            local_matches[source_match["artifact_id"]] = match
+            if original.matches:
+                mapping["matches"].append(_mapping(source_match, match))
+            else:
+                mapping["match"] = _mapping(source_match, match)
         if original.estimate:
+            source_review = original.estimate["system_match"]
+            match = (
+                local_matches[source_review["artifact_id"]] if source_review is not None else None
+            )
             estimate = copy.deepcopy(original.estimate)
             estimate.update(
                 artifact_id=new_id(),
@@ -336,11 +384,17 @@ def create_import(
                     "source_report_id": report["report_id"],
                     "profile": report["profile"],
                     "members": members,
+                    **(
+                        {"match": inspection.report_match_mapping(report, report_paths, mapping)}
+                        if original.matches
+                        else {}
+                    ),
                 }
             )
         evidence = list(original.evidence_members())
         if evidence:
-            mapping["schema_version"] = "CLASSIFIRE-IMPORT-MAPPING-v2"
+            if not original.matches:
+                mapping["schema_version"] = "CLASSIFIRE-IMPORT-MAPPING-v2"
             mapping["evidence"] = []
             for source_id, path in evidence:
                 fmt = path.rsplit(".", 1)[-1]
@@ -363,7 +417,7 @@ def create_import(
         row.mapping_json = packages.encode(mapping).decode()
         row.mapping_hash = packages.digest(row.mapping_json.encode())
         db.flush()
-        if match:
+        for match in local_matches.values():
             verify_local_origin(db, draft.id, row.id, match, "match")
         if original.estimate:
             verify_local_origin(db, draft.id, row.id, estimate, "estimate")

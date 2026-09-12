@@ -83,7 +83,8 @@
       if (service && service.state !== "Confirmed") issues.push(service.state + " service");
       if (opening && opening.state !== "Confirmed") issues.push(opening.state + " opening");
       const targetKey=service ? `service:${service.id}` : opening?.blank ? `blank_opening:${opening.id}` : "";
-      const target={...(context.targets?.[targetKey] || {})};
+      const rowKey=service && opening ? `opening:${opening.id}:service:${service.id}` : targetKey;
+      const target={...(context.targets?.[targetKey] || {}),...(context.row_targets?.[rowKey] || {})};
       if (target.system_opening_id !== opening?.id) {
         Object.keys(target).filter(key=>key.startsWith("system_") || key === "status").forEach(key=>delete target[key]);
       }
@@ -271,6 +272,9 @@
   document.addEventListener("classifire:register-results",event=>{
     if (!event.detail || typeof event.detail.targets !== "object") return;
     context=event.detail;render();
+  });
+  document.querySelector("[data-clear-review-selection]")?.addEventListener("click",()=>{
+    document.querySelectorAll('.register-artifacts [name="match"] option').forEach(option=>{option.selected=false;});
   });
   render();
 })();

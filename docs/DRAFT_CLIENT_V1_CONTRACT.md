@@ -522,3 +522,11 @@ Workbook package selection uses the same optional `xlsx_sources` list advertised
 by the domain-derived input schema. It selects up to four reviewed Scope evidence
 workbooks for ProjectPackage v4, never pricing-library files. Proposal, separate
 human confirmation and all current source/access checks still apply.
+
+### Multiple-review package sensitivity
+
+Forward package-v6 selections may include a collection of exact technical reviews.
+Package preparation, browser review/confirmation, download-link and ZIP access require
+the technical client grant for any member, in addition to existing export/local rights.
+An empty legacy review pair does not make a nonempty collection Scope-only. The same
+pending-request and separate same-user browser confirmation boundary remains in force.
