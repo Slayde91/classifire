@@ -260,3 +260,13 @@ paths and mapping-v3 on import. Legacy v1-v5 bytes and singular rules remain unc
 when the collection is absent. Estimate/report dependencies remain exact and do not
 expand implicitly. See [the multi-review contract](./MULTI_REVIEW_PROJECT_PACKAGES.md)
 for selection limits, original-archive retention and client confirmation requirements.
+
+### Complete reports with multiple reviews
+
+A Complete snapshot `CLASSIFIRE-DRAFT-ESTIMATE-REPORT-v3` requires the exact saved
+Estimate and every `system_matches` dependency in the selected package. It reuses
+report collection import mapping v4, including retained ancestors. Additional
+reviews remain report context and do not become Estimate inputs or local approvals.
+Original PDF/XLSX and archive bytes remain unchanged through import/re-export.
+See [Complete report contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md) for compatibility
+and the required recovery boundary after new-format writes.

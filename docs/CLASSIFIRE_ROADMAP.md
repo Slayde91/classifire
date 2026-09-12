@@ -20,7 +20,9 @@ P0-P6 are bounded Draft milestones, not completion of production Phases 0-16.
 | Completed bounded implementation | Manual Draft Scope, JSON round trip, selected-target Match review/measurements, manual/rate-selected Estimate and all four PDF/XLSX report profiles; shared service contracts and tests |
 | Completed bounded implementation | PDF, Excel and Word retained inspection/review; Scope v7 Word evidence; ProjectPackage v5 selected artifacts/originals and governed import/re-export. Word PRs #252-#254 are merged |
 | Completed bounded implementation | Multiple exact register row reviews and ProjectPackage v6 save/reopen/import/re-export merged in PR #263 (`d5c19d7`); post-merge CI is tracked in current state. No production phase exit |
-| Locally validated increment; publication pending | One explicit collection of row reviews produces a frozen scope-and-system PDF/XLSX pair and package import mapping v4. See [report contract](./MULTI_REVIEW_REPORTS.md). Final publication checks remain |
+| Completed bounded implementation | Scope-and-system review collections and import mapping v4 merged in PR #264 (`e96c692`) after 2,251 tests and remaining CI checks passed. Post-merge CI is tracked in PROJECT_STATE. See [report contract](./MULTI_REVIEW_REPORTS.md) |
+| Locally validated increment; publication pending | Exact-row read-only PDF/Word/Excel [source evidence](./REGISTER_SOURCE_EVIDENCE.md), including stale claims and blank/unlinked rows. 122 affected cases and synthetic browser/restart acceptance passed; no production phase exit |
+| Locally validated increment; publication pending | Complete reports retain an exact unchanged Estimate plus explicitly selected row reviews (Estimate report v3/render12); the Estimate-bound review must be included exactly, extras are report-only, and import mapping v4 is reused. Isolated restart preserved exact outputs and checked domain state. See [Complete contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md). No production phase exit |
 | Completed bounded implementation | A/B profiles/review, A observations, B identity mapping, T9 coverage, T6 recipes, T13 roster and governed Scope quantity basis (PR #233); do not rebuild them |
 | Completed correction / verification | I1: PRs #255-#257 merged; candidate and post-merge CI for ff0272b/eb3ddb3 passed 2,043 tests. Earlier run 34664119693 ended cancelled, not passed. PR #254 premature merge remains a disclosed process gap |
 | Verified bounded application acceptance / transport open | I2: authorized Word trial activation, actual browser upload/scan, connected reads/proposal, separate human Scope/package confirmations and exact ZIP/restart passed. Dedicated connected upload/scan transport remains untested; I3 remains an owner decision |
@@ -759,8 +761,11 @@ exact dataset, mapping, BOM/labour, method and review revisions without recalcul
 **Status:** Canonical output exit blocked by Phase 12; independent P4 Draft reporting is allowed
 
 Render technical/client artifacts from the immutable validated snapshot only;
-renderers must not recalculate or reinterpret scope. Desk-quote PDF/XLSX output
-does not mark this canonical phase complete.
+renderers must not recalculate or reinterpret scope. Draft Complete collection
+reports retain extra unapproved review context without changing the saved Estimate,
+its quantities or arithmetic. Their local PDF/XLSX/package acceptance does not satisfy
+canonical validation or Human Release. Desk-quote PDF/XLSX output does not mark this
+canonical phase complete.
 
 ### Phase 14 - Human Release
 

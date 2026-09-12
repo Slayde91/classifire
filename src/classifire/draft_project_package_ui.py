@@ -534,7 +534,17 @@ def imported_package_page(request: Request, db: Db, draft_id: str) -> HTMLRespon
                 draft_id,
                 member["source_id"],
             )
-            attachments.append({"format": fmt, "report": "Project evidence", **info})
+            attachments.append(
+                {
+                    "format": fmt,
+                    "report": "Project evidence",
+                    **info,
+                    "anchor": "evidence-" + hashlib.sha256(member["path"].encode()).hexdigest(),
+                    "original_source_id": member["original_source_id"],
+                    "member_path": member["path"],
+                    "original_sha256": member["sha256"],
+                }
+            )
         return templates.TemplateResponse(
             request=request,
             name="draft_imported_package.html",

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 from urllib.parse import parse_qsl
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -10,8 +10,9 @@ from sqlalchemy.orm import Session
 
 from .config import get_settings
 from .db import get_db
+from .draft_scope_ui import _report_review_choices, _report_review_sections, _report_selection
 from .models import User
-from .outputs.draft_estimate import complete_coverage
+from .outputs.draft_estimate import complete_coverage, complete_report_coverage
 from .outputs.draft_system_review import sections as system_sections
 from .outputs.draft_system_review import summary as system_summary
 from .security import has_permission, verify_csrf
@@ -27,7 +28,7 @@ from .services.draft_estimates import (
     set_line_status,
 )
 from .services.draft_scope import DraftScopeError, get_draft, read_revision
-from .services.draft_system_matches import list_matches
+from .services.draft_system_matches import list_matches, match_staleness, read_match_revision
 from .ui import _context, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -331,19 +332,64 @@ def download_estimate(
     })
 
 
+def _report_choices(
+    pairs: list[tuple[str, str]], *, form: bool = False
+) -> tuple[int | None, str, list[dict[str, Any]]]:
+    allowed = {"revision", "profile", "matches"} | ({"csrf_token"} if form else set())
+    if len(pairs) > 33 or any(key not in allowed for key, _ in pairs):
+        raise HTTPException(422, "Choose a saved Estimate revision and exact review references")
+    profiles = [value for key, value in pairs if key == "profile"]
+    if len(profiles) > 1 or (profiles and profiles[0] not in {"estimate-only", "complete"}):
+        raise HTTPException(422, "Choose Estimate only or Complete report")
+    profile = profiles[0] if profiles else "estimate-only"
+    revision, selected = _report_selection(
+        [(key, value) for key, value in pairs if key != "profile"], form=form
+    )
+    if selected and profile != "complete":
+        raise HTTPException(422, "Additional reviews require the Complete report profile")
+    return revision, profile, selected
+
+
+async def _report_form(request: Request) -> list[tuple[str, str]]:
+    if request.headers.get("content-type", "").split(";")[0] != "application/x-www-form-urlencoded":
+        raise HTTPException(415, "Use a standard form submission")
+    body = bytearray()
+    async for chunk in request.stream():
+        if len(body) + len(chunk) > 8192:
+            raise HTTPException(413, "Report selection exceeds the size limit")
+        body.extend(chunk)
+    try:
+        return parse_qsl(
+            body.decode("utf-8"), keep_blank_values=True, errors="strict", max_num_fields=33
+        )
+    except (ValueError, UnicodeError) as exc:
+        raise HTTPException(422, "Invalid report selection form") from exc
+
+
 @router.get("/scopes/{draft_id}/estimates/{estimate_id}/reports", response_class=HTMLResponse)
 def estimate_reports_page(
     request: Request,
     db: Db,
     draft_id: str,
     estimate_id: str,
-    revision: int | None = None,
-    profile: Literal["estimate-only", "complete"] = "estimate-only",
 ) -> HTMLResponse:
     user = _actor(request, db)
+    revision, profile, selected = _report_choices(list(request.query_params.multi_items()))
     try:
         draft = get_draft(db, user, draft_id)
         envelope = read_estimate_revision(db, user, draft_id, estimate_id, revision)
+        preview = estimate_reports.preview_report(
+            db, user, draft_id, estimate_id, envelope["revision"], profile=profile, matches=selected
+        )
+        reviews = preview["system_matches"]
+        choices = (
+            _report_review_choices(db, user, draft_id, envelope["scope"], reviews)
+            if profile == "complete"
+            else []
+        )
+        if not selected:
+            for choice in choices:
+                choice["selected"] = False
         reports = estimate_reports.list_reports(db, user, draft_id, estimate_id)
         stale = estimate_staleness(
             db,
@@ -356,6 +402,22 @@ def estimate_reports_page(
         latest = read_estimate_revision(db, user, draft_id, estimate_id)
         if latest["sha256"] != envelope["sha256"]:
             stale.append("REPORT_ESTIMATE_CHANGED")
+        if selected:
+            for review in reviews:
+                current = read_match_revision(db, user, draft_id, review["artifact_id"])
+                if current["sha256"] != review["sha256"]:
+                    stale.append("REPORT_REVIEW_CHANGED")
+                stale.extend(
+                    match_staleness(
+                        db,
+                        user,
+                        draft_id,
+                        review["artifact_id"],
+                        review["revision"],
+                        storage_root=get_settings().storage_root,
+                    )
+                )
+            stale = list(dict.fromkeys(stale))
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
     return templates.TemplateResponse(
@@ -373,7 +435,17 @@ def estimate_reports_page(
                 item.id: json.loads(item.snapshot_json)["profile"] for item in reports
             },
             report_profile=profile,
-            complete_coverage=complete_coverage(envelope) if profile == "complete" else [],
+            complete_coverage=complete_report_coverage(envelope, reviews)
+            if selected
+            else complete_coverage(envelope)
+            if profile == "complete"
+            else [],
+            collection_mode=bool(selected),
+            report_review_choices=choices,
+            selected_review_refs=[f"{item['artifact_id']}:{item['revision']}" for item in reviews]
+            if selected
+            else [],
+            system_reviews=_report_review_sections(reviews) if selected else [],
             system_summary=system_summary(envelope["system_match"])
             if profile == "complete" and envelope["system_match"]
             else [],
@@ -393,21 +465,21 @@ def estimate_reports_page(
 
 
 @router.post("/scopes/{draft_id}/estimates/{estimate_id}/reports", response_class=RedirectResponse)
-def create_estimate_report(
+async def create_estimate_report(
     request: Request,
     db: Db,
     draft_id: str,
     estimate_id: str,
-    form: FormData,
 ) -> RedirectResponse:
-    verify_csrf(request, form.get("csrf_token"))
+    pairs = await _report_form(request)
+    verify_csrf(request, dict(pairs).get("csrf_token"))
     user = _actor(request, db, write=True)
-    if set(form) not in ({"csrf_token", "revision"}, {"csrf_token", "revision", "profile"}):
-        raise HTTPException(422, "Choose one saved estimate revision")
-    revision = _revision(form["revision"])
+    revision, profile, selected = _report_choices(pairs, form=True)
+    if revision is None:
+        raise HTTPException(422, "A valid saved Estimate revision is required")
     try:
         report = estimate_reports.create_report(
-            db, user, draft_id, estimate_id, revision, profile=form.get("profile", "estimate-only")
+            db, user, draft_id, estimate_id, revision, profile=profile, matches=selected
         )
         db.commit()
     except DraftScopeError as exc:
@@ -457,8 +529,16 @@ def estimate_report_page(
             reports=[],
             report_profiles={},
             report_profile=snapshot["profile"],
-            complete_coverage=complete_coverage(envelope)
+            complete_coverage=complete_report_coverage(
+                envelope, estimate_reports.report_matches(snapshot)
+            )
+            if snapshot.get("system_matches")
+            else complete_coverage(envelope)
             if snapshot["profile"] == "complete"
+            else [],
+            collection_mode=bool(snapshot.get("system_matches")),
+            system_reviews=_report_review_sections(estimate_reports.report_matches(snapshot))
+            if snapshot.get("system_matches")
             else [],
             system_summary=system_summary(envelope["system_match"])
             if snapshot["profile"] == "complete" and envelope["system_match"]

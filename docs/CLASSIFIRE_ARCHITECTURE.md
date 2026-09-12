@@ -19,6 +19,10 @@ quantity/labour -> commercial recovery -> validation/snapshot -> output -> human
 Users may stop after any capability and resume from explicit saved artifacts. A valid
 manual/imported artifact replaces session dependence, not the required evidence or authority.
 
+The locally implemented [register source evidence view](./REGISTER_SOURCE_EVIDENCE.md)
+reuses the existing intake and row services for read-only exact-revision context.
+Its validation/publication status is tracked separately; no schema or authority changes.
+
 ## Implemented components
 
 ```mermaid
@@ -68,11 +72,20 @@ There is no new service/database/framework introduced by the Word client increme
 
 ## Reports from selected row reviews
 
-The [multiple-review increment](./MULTI_REVIEW_REPORTS.md) extends the existing
-report service/table and scope-and-system profile from one exact review to an explicit
-collection. The UI and typed client command use that shared boundary. Snapshot v3
-and import mapping v4 preserve all dependencies; no model/migration or downstream
-authority changes. Older report snapshots and downloads remain unchanged.
+The [multiple-review increments](./MULTI_REVIEW_REPORTS.md) extend the existing
+Scope and Estimate report services/tables from one review to an explicit collection.
+Scope-and-system uses Scope report v3/render11. The existing Complete profile uses
+Estimate report v3/render12 over the exact unchanged Estimate and its embedded Scope.
+An embedded Estimate review must be explicitly included at its exact revision;
+additional reviews are report-only context and cannot alter arithmetic or recovery.
+
+The UI and typed client commands share no-write preview and separately confirmed
+creation boundaries. Import mapping v4 is reused for all review dependencies,
+including retained ancestor reports. There is no model, migration, new profile or
+downstream authority change. Older snapshots/downloads remain unchanged; readers
+that predate Complete v3 cannot read its new reports/imports merely because they
+already understand mapping v4. An activation or downgrade requires a separate
+exact-version data/storage and rollback plan.
 
 ## Scope and evidence interpretation
 

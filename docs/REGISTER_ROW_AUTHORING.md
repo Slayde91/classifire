@@ -5,6 +5,10 @@ linked Service or blank Opening. It uses the existing application handlers and
 versioned domain services. It introduces no new model, schema, migration, pricing
 engine, provider or canonical authority.
 
+The subsequent [Evidence tab](./REGISTER_SOURCE_EVIDENCE.md) adds read-only source
+inspection to this same panel, including unresolved rows. Its saved-revision view
+can be opened with unsaved Scope edits; write-authoring restrictions below remain.
+
 ## User interaction
 
 1. Open a saved Scope revision and choose a row's Proposed Technical System or Price

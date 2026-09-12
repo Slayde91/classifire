@@ -24,6 +24,7 @@ from .draft_branding import supplied_logo_path as _logo_path
 from .draft_scope import (
     _FONT,
     _append_scope_content,
+    _collection_reviews,
     _control_text,
     _font_coverage,
     _page_reference_fields,
@@ -62,6 +63,69 @@ def complete_coverage(estimate: dict[str, Any]) -> list[tuple[str, str]]:
             else "Unavailable - no Estimate work lines recorded; zero subtotal is not a quote",
         ),
     ]
+
+
+_COLLECTION_NOTICE = (
+    "Complete report profile includes the selected saved Estimate and selected row reviews; "
+    "it does not establish complete evidence, technical suitability, commercial recovery "
+    "or human release. The Estimate and its prices are unchanged. Additional report-only "
+    "reviews are context, not pricing inputs. Shared Services remain distinct at each "
+    "Opening; a blank opening has no Service. Review records are not work quantities."
+)
+
+
+def complete_report_coverage(
+    estimate: dict[str, Any], reviews: list[dict[str, Any]]
+) -> list[tuple[str, str]]:
+    """Collection coverage over validated exact inputs, without changing the Estimate."""
+    bound = estimate["system_match"]
+    legacy = complete_coverage(estimate)
+    return [
+        ("Report coverage", _COLLECTION_NOTICE),
+        legacy[1],
+        (
+            "Estimate-bound review",
+            f"{bound['artifact_id']} / revision {bound['revision']} / SHA-256 {bound['sha256']}. "
+            "Unapproved saved reference; no technical suitability is established."
+            if bound is not None
+            else "None attached to this Estimate; selected reviews are report-only context",
+        ),
+        (
+            "Additional technical context",
+            f"{len(reviews) - (1 if bound is not None else 0)} additional saved row reviews. "
+            "Unapproved report-only context; no price, quantity or recovery change.",
+        ),
+        legacy[3],
+    ]
+
+
+def _complete_reviews(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    if not snapshot.get("system_matches"):
+        return []
+    from ..services.draft_estimate_reports import report_matches
+    from ..services.draft_scope_reports import MULTI_SYSTEM_REPORT_SCHEMA_VERSION
+
+    # Adapt only the presentation fields; _verified already validated the Complete snapshot.
+    result = _collection_reviews(
+        {
+            "schema_version": MULTI_SYSTEM_REPORT_SCHEMA_VERSION,
+            "scope": snapshot["estimate"]["scope"],
+            "system_matches": report_matches(snapshot),
+        }
+    )
+    bound = snapshot["estimate"]["system_match"]
+    bound_key = f"{bound['artifact_id']} / revision {bound['revision']}" if bound else None
+    for review in result:
+        review["identity"].insert(
+            0,
+            (
+                "Relationship to Estimate",
+                "Estimate-bound review - unapproved saved reference"
+                if review["key"] == bound_key
+                else "Additional report-only context - not a pricing input",
+            ),
+        )
+    return result
 
 
 _LIMITS = (
@@ -149,7 +213,11 @@ def _metadata(report: dict[str, Any]) -> list[tuple[str, Any]]:
             ]
         )
     if report["profile"] == "complete":
-        rows.extend(complete_coverage(estimate))
+        rows.extend(
+            complete_report_coverage(estimate, report["system_matches"])
+            if report.get("system_matches")
+            else complete_coverage(estimate)
+        )
     return rows
 
 
@@ -245,6 +313,7 @@ def _coverage_rows(report: dict[str, Any]) -> list[list[str]]:
 
 def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
     report = _verified(snapshot)
+    collection = _complete_reviews(report)
     _font_coverage()
     body = ParagraphStyle("EstimateBody", fontName=_FONT, fontSize=9, leading=13, spaceAfter=5)
     heading = ParagraphStyle(
@@ -272,7 +341,11 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
     estimate = report["estimate"]
     if complete:
         text("Included sections and limitations", heading)
-        for label, value in complete_coverage(estimate):
+        for label, value in (
+            complete_report_coverage(estimate, report["system_matches"])
+            if collection
+            else complete_coverage(estimate)
+        ):
             text(f"{label}: {value}")
         item_heading = ParagraphStyle(
             "CompleteItem",
@@ -284,7 +357,12 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
         )
         _append_scope_content(estimate["scope"], text, heading, item_heading, small)
         text("Saved technical review summary", heading)
-        if estimate["system_match"] is not None:
+        if collection:
+            for review in collection:
+                text(review["label"], item_heading)
+                for label, value in [*review["identity"], *review["summary"]]:
+                    text(f"{label}: {value}")
+        elif estimate["system_match"] is not None:
             for label, value in system_summary(estimate["system_match"]):
                 text(f"{label}: {value}")
         else:
@@ -344,7 +422,17 @@ def render_estimate_report_pdf(snapshot: dict[str, Any]) -> bytes:
         if complete and kind in estimate["scope"]["content"]:
             continue
         text(f"{kind} / {identifier} / {label}: {value}", small)
-    if complete and estimate["system_match"] is not None:
+    if collection:
+        text("Retained technical evidence and decisions", heading)
+        for review in collection:
+            text(review["label"], heading)
+            text("Exact saved review: " + review["key"], small)
+            text(review["identity"][0][1], small)
+            for section in review["sections"]:
+                text(section["title"], heading)
+                for label, value in section["rows"]:
+                    text(f"{label}: {value}", small)
+    elif complete and estimate["system_match"] is not None:
         text("Retained technical evidence and decisions", heading)
         for section in system_sections(estimate["system_match"]):
             text(section["title"], heading)
@@ -398,6 +486,7 @@ def _safe_numeric(value: str | None) -> float | None:
 
 def render_estimate_report_xlsx(snapshot: dict[str, Any]) -> bytes:
     report = _verified(snapshot)
+    collection = _complete_reviews(report)
     complete = report["profile"] == "complete"
     report_title = "Complete Draft Report" if complete else "Draft Estimate Report"
     output = io.BytesIO()
@@ -629,7 +718,53 @@ def render_estimate_report_xlsx(snapshot: dict[str, Any]) -> bytes:
         _context_rows(report),
         [30, 38, 28, 90],
     )
-    if complete:
+    if collection:
+        table(
+            "Technical summary",
+            ["Exact review", "Field", "Saved finding"],
+            [
+                [review["key"], label, value]
+                for review in collection
+                for label, value in [
+                    ("Selected row", review["label"]),
+                    *review["identity"],
+                    *review["summary"],
+                ]
+            ],
+            [45, 40, 100],
+        )
+        table(
+            "Review and coverage",
+            ["Exact review", "Field", "Saved value"],
+            [
+                [review["key"], *row]
+                for review in collection
+                for row in [review["identity"][0], *review["sections"][0]["rows"]]
+            ],
+            [45, 40, 100],
+        )
+        table(
+            "System candidates",
+            ["Exact review", "Candidate", "Field", "Saved value"],
+            [
+                [review["key"], part["title"], *row]
+                for review in collection
+                for part in review["sections"][1:-1]
+                for row in part["rows"]
+            ],
+            [45, 36, 55, 100],
+        )
+        table(
+            "Measured limits",
+            ["Exact review", "Field", "Saved value"],
+            [
+                [review["key"], *row]
+                for review in collection
+                for row in review["sections"][-1]["rows"]
+            ],
+            [45, 55, 100],
+        )
+    elif complete:
         match = estimate["system_match"]
         table(
             "Technical summary",

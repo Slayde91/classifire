@@ -15,6 +15,88 @@ It has a shared authenticated client adapter and portable selected-project ZIPs.
 The accepted hybrid direction (ADRs 0001/0002) remains unchanged. The full production
 platform, broad document interpretation and canonical Phase 8-14 exits are incomplete.
 
+### Active imported-original navigation increment
+
+- Separate checkout `.tmp/imported-evidence-navigation-20260913`, branch
+  `feat/imported-evidence-navigation-20260913`, based on pinned `1de68b9`.
+  The selected local task connects exact imported row references to their existing
+  retained-original review cards; scanning and downloading remain explicit actions.
+  The imported claim remains unverified, without inline text/image previews.
+- Validation passed 94 distinct affected cases: 30 native/core (seven new), eight
+  new HTTP cases and 56 existing register/package UI cases. Full Ruff, Mypy (233 files),
+  Bandit and unchanged single 0047 migration head passed. Independent final source
+  review found no actionable issue. No application correction was needed during tests.
+- Actual synthetic Edge acceptance on 8847 opened the exact original card and left all
+  67 checked domain tables unchanged. Download was refused before the imported binding's
+  explicit source check. After an explicit scan, DOCX and original ZIP downloads matched
+  retained bytes exactly; only the imported-source table changed among those 67 tables.
+  The imported claim stayed unverified, with no inline source body or images. Desktop,
+  mobile, original identity and the three-member ZIP were inspected.
+- Restart preserved the exact review URL/anchor, DOCX, ZIP, Scope revisions 2/3 and all
+  67 checked domain tables, with no rescan, package write or page error. Synthetic
+  acceptance is not customer accuracy, human production acceptance or deployment.
+- Retained logs disclose test-harness corrections: fixture paths/revision assumptions,
+  an audited download inside a no-write check, ZIP member ordering, an overbroad form
+  assertion that caught Logout, and Edge internal assets misclassified as network
+  traffic. HTTP coverage passed across the original and corrected-case runs; its first
+  source manifest saw only Ruff formatting drift, with route/templates stable.
+- Nine reviewed files: four application files, two synthetic tests, three documentation
+  files. No schema, migration, package version, parser, provider or authority change.
+  The prior three publication candidates remain pinned and clean. This additional
+  change is outside their pending public-publication question; no upstream, PR, hosted
+  CI, merge or activation is claimed.
+
+### Locally committed Defect-only source inspection
+
+- New isolated checkout `.tmp/defect-source-evidence-20260913`, branch
+  `feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`.
+  The existing [Evidence service](./REGISTER_SOURCE_EVIDENCE.md) now accepts an exact
+  Defect-only selection, including review-queue Defects with no linked Opening.
+  It returns only that Defect's references and preserves unresolved relationships;
+  it creates no Opening/Service and runs no downstream capability.
+- Local validation passed 89 affected cases: 23 native/core, 52 HTTP and 14 existing
+  workbench/history cases. Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and
+  unchanged single 0047 migration head passed. Core service/test hashes match their
+  validation receipt. The 52-case HTTP pass was observed in the test session; no
+  JUnit XML or test-time source-hash manifest was retained for that run.
+- Actual synthetic Edge acceptance on port 8846 checked each Defect's own sources,
+  historical/stale claims, keyboard focus, unsaved-edit exclusion and desktop/mobile
+  output. A deliberately mismatched Defect fragment was refused. Restart preserved
+  five image URLs and four Scope downloads byte-for-byte; all 67 checked domain
+  tables remained unchanged. No Opening or Service was invented, no provider ran,
+  and no live 15432 database was contacted. This does not establish real-report accuracy.
+- Final source review found no actionable issue. The change contains six application
+  files, two synthetic tests and three documentation files. No model, migration,
+  parser, provider or existing authority change. Commit `1de68b9` is now included
+  in the pending three-commit public-publication question. The `51e3666` activation
+  plan remains pinned and excludes this additional change. Publication, hosted CI
+  and activation are not claimed.
+
+### Locally committed register evidence increment
+
+- Checkout `.tmp/register-source-evidence-20260913`, branch
+  `feat/register-source-evidence-20260913`, based on local Complete-report commit
+  `6d4793b`. [Evidence contract](./REGISTER_SOURCE_EVIDENCE.md) defines exact saved-row
+  PDF/Word/Excel inspection through existing intake readers and current access checks.
+  No migration/model, provider, downstream execution or canonical writer is added.
+- 54 unique core/HTTP cases passed (14 new core, 36 new HTTP and 4 existing register).
+  Full Ruff, Mypy (233 files), Bandit and unchanged single 0047 migration head passed.
+  Another 68 affected authoring/history/chat regressions passed: 122 unique affected
+  cases in total. Actual Edge showed nine verified references across PDF/Word/Excel,
+  including intact originals behind stale claims, blank and unlinked rows. Unsaved
+  edits were excluded, Scope 1/4/6 downloads matched exact retained bytes and all 67
+  checked domain tables stayed unchanged. Desktop/mobile output was inspected; no
+  page errors or mobile document overflow. Restart preserved all 12 checked image URLs,
+  Scope 1/4/6 bytes and all 67 domain tables; source-cell F2 passed.
+- Parent PR #264 post-merge run 34715038796 passed 2,251 tests and remaining checks.
+  Complete-report commit `6d4793b` is clean and local, with no upstream or PR.
+  GitHub confirms `Slayde91/classifire` is public. Automatic approval review rejected
+  its proprietary-source push pending explicit destination approval; that question
+  remains pending. No publication or visibility/protection change is implied.
+- Evidence-tab changes are locally validated; publication remains pending. The pinned Complete-report source,
+  conflicted root and operational 8820 runtime remain untouched. Any new activation
+  requires its own exact tested candidate plan and explicit approval.
+
 ### Merged workspace and current runtime
 
 - PR #260 merged the integrated workspace as `3eabb23ecddce98dc3e8583236f9cb055b218280`.
@@ -60,7 +142,7 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
 - PR #263 merged tested source `469a57f` as `d5c19d74746d4ac1cd2f6e19f63278bf560e53d7`.
   Exact-head CI 34711480773 passed 2,199 tests and all remaining checks. The merged tree
   equals the tested source; no required reviews were configured. Post-merge CI
-  34712796245 is running at this checkpoint; poll that existing job.
+  34712796245 also passed 2,199 tests and all remaining checks.
 - Preserved package checkout: `.tmp/multi-review-package-20260913`, branch
   `feat/multi-review-package-20260913`, based on `48b4b11`. It extends existing register and
   package services to retain multiple exact row reviews, explicit v6 package save/reopen,
@@ -83,7 +165,7 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   not include this newer format change. Future activation needs its exact candidate plan,
   fresh matched backup/disposable restore, CI and explicit approval.
 
-### Current multiple-review reporting increment
+### Merged multiple-review Scope reporting
 
 - Checkout `.tmp/multi-review-reports-20260913`, branch
   `feat/multi-review-reports-20260913`, based on merged `d5c19d7`. The
@@ -94,8 +176,11 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   their focused runs. Final combined verification passed all 52 new cases, including
   actual disposable PostgreSQL import/scan checks; final package-screen regression
   passed 18 cases. Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and the
-  unchanged single 0047 migration-head check passed. Publication remains pending
-  at this source checkpoint.
+  unchanged single 0047 migration-head check passed. PR #264 merged tested source
+  `ccaff7a` as `e96c6928ffdbc11a9bd2fb890105e83f05c87625` after exact-head run
+  34713651083 passed 2,251 tests and all checks. The full merged tree equals the
+  tested source. No required reviews were configured; no human review is claimed.
+  Post-merge job 34715038796 passed 2,251 tests and all remaining checks.
 - Actual 8843 Edge UAT separately saved the three-review report and ZIP. PDF/XLSX
   and ZIP bytes match retention. Restart preserved all exact downloads, Scope and
   66 checked domain tables. All 19 PDF pages and desktop/mobile views were inspected;
@@ -107,6 +192,37 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
 - The 469a57f activation plan excludes this newer report format and is unapproved.
   Live 8820 remains outside this change. The reviewed ten-defect reference remains
   Draft evidence, not measured independent extraction accuracy or system approval.
+
+### Current Complete report increment
+
+- Checkout `.tmp/complete-multi-review-reports-20260913`, branch
+  `feat/complete-multi-review-reports-20260913`, based on merged `e96c692`.
+  The existing Complete profile now accepts up to 30 explicitly selected exact row
+  reviews. It retains the full unchanged Estimate and requires its embedded review
+  in any nonempty collection. Extra reviews are labelled report-only context.
+- [Complete contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md) records snapshot v3,
+  renderer 12 and reuse of import mapping v4. No pricing arithmetic, database model,
+  migration, provider or canonical-write change is introduced. Empty selection
+  preserves legacy formats and client command/input hash shapes.
+- Focused runs passed 53 core/package/legacy cases, 24 UI cases, 18 output cases,
+  13 client collection cases and 10 existing client cases. Full Ruff, Mypy (233
+  files), Bandit and single 0047 migration-head checks passed. Final combined
+  validation passed all 62 new cases in 185.29 seconds, including actual disposable
+  PostgreSQL import/scan checks on port 15433.
+- Actual Edge UAT on isolated SQLite port 8844 saved three reviews with Scope 2
+  and Estimate 4: original rate 1.005, explicit override 1.505, subtotal 3.01 and
+  another line with unknown quantity/subtotal. Report and ZIP saves were separate.
+  PDF/XLSX/ZIP bytes matched retention. All 21 PDF pages were inspected in overviews,
+  pages 1/3 at readable size, and desktop/mobile views showed no observed clipping.
+  XLSX cells/structure were checked programmatically; native Excel was not inspected.
+- Process restart retained exact Scope/PDF/XLSX/ZIP and 66 domain-table hashes.
+  A verification fixture initially compared pretty JSON against compact downloads;
+  diagnosis proved identical values and exact Estimate bytes in the original ZIP.
+  A second restart proved byte-exact raw downloads of Estimate revisions 2 and 4.
+  Original failure/diagnosis are retained; no application guard or test was weakened.
+- Publication remains pending. The unapproved ccaff7a activation plan excludes this
+  newer Complete format. Live 8820 remains at its separately approved diagnostic
+  version; no activation, OAuth/tunnel or host-policy change is included.
 
 ### Earlier Word acceptance checkpoint
 
@@ -224,12 +340,16 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-PRs #260-#262 are merged after successful exact-head CI. Post-merge CI for #260/#261
-also passed; continue observing run 34710331473 for #262. Finish publication of the
-locally verified multi-review package increment with explicit files and successful
-exact-head CI/reviews. Do not restart jobs because observation timed out. Runtime
-activation needs a new exact plan that accounts for v6/mapping-v3 writes and recovery;
-provider/host policy changes remain separate approval decisions.
+PRs #260-#264 and their post-merge checks passed. Complete-report source `6d4793b`,
+register Evidence `51e3666` and Defect-only Evidence `1de68b9` are locally committed
+and pinned. Their publication to the verified public repository awaits explicit
+approval. The separate imported-original navigation increment is locally validated
+and is outside that approval question. After approval, reconcile the exact approved
+commits, PR base/head and dependencies before pushing; observe successful CI and
+required reviews before merge. Never restart a job because observation expires.
+Any activation requires a fresh exact-candidate plan covering new report formats and
+mapping v4, backup/storage parity, disposable restore and explicit owner approval.
+Provider, host policy and OAuth/tunnel changes remain separate approval decisions.
 
 The user-confirmed private Draft reference retains its unknowns; no application
 accuracy result exists. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md) retains

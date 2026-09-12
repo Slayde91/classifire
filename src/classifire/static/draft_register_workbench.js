@@ -7,7 +7,7 @@
   const heading=panel.querySelector("h2"), draftId=scopeForm.dataset.draftId;
   const revision=Number(scopeForm.querySelector('[name="expected_revision"]').value);
   const base=`/scopes/${draftId}`, selectionForm=document.querySelector(".register-artifacts form");
-  let row=null, capability="system", busy=false, dirty=false, currentURL="", opener=null;
+  let row=null, capability="evidence", busy=false, dirty=false, currentURL="", opener=null;
   let selected={system:[...(selectionForm?.querySelector('[name="match"]')?.selectedOptions || [])].map(option=>option.value).filter(Boolean),price:selectionForm?.querySelector('[name="estimate"]')?.value || ""};
   const scopeDirty=()=>document.getElementById("scope-download").hidden;
   const message=text=>{status.textContent=text;};
@@ -15,7 +15,7 @@
     const url=new URL(raw,location.origin);
     if(url.origin!==location.origin || url.username || url.password || url.pathname.includes("%") || url.pathname.includes("\\")) throw new Error("Unsupported workspace address.");
     const prefix=base+"/", tail=url.pathname.startsWith(prefix) ? url.pathname.slice(prefix.length) : "";
-    const get=/^(system-matches|estimates)(\/[a-zA-Z0-9-]+)?$/;
+    const get=/^(register-evidence|(system-matches|estimates)(\/[a-zA-Z0-9-]+)?)$/;
     const post=/^(system-matches|estimates)(\/[a-zA-Z0-9-]+(\/(review|constraints|lines)(\/[a-zA-Z0-9-]+)?)?)?$/;
     if(!(method==="POST" ? post : get).test(tail)) throw new Error("Use an explicit supported capability action.");
     return url;
@@ -23,6 +23,14 @@
   function canLeave() { return !dirty || window.confirm("Discard unsaved review or price entries in this panel?"); }
   function picker(kind) { return `${base}/${kind==="system" ? "system-matches" : "estimates"}?scope_revision=${revision}`; }
   function endpoint(kind) {
+    if(kind==="evidence") {
+      const url=new URL(`${base}/register-evidence`,location.origin);
+      url.searchParams.set("revision",String(revision));
+      if(row?.opening_id)url.searchParams.set("opening_id",row.opening_id);
+      if(row?.service_id)url.searchParams.set("service_id",row.service_id);
+      if(!row?.opening_id && !row?.service_id && row?.defect_id)url.searchParams.set("defect_id",row.defect_id);
+      return url;
+    }
     if(kind==="system")return row?.systemURL || picker(kind);
     const value=selected[kind];
     if(/^[a-zA-Z0-9-]+:[1-9][0-9]*$/.test(value)) {
@@ -32,6 +40,10 @@
     return picker(kind);
   }
   function lockForms() {
+    if(capability==="evidence") {
+      if(scopeDirty())message(`Showing saved Scope revision ${revision}. Unsaved edits are not included; no change was saved.`);
+      return;
+    }
     const content=body.querySelector("[data-workbench-content]");
     const otherScope=content && Number(content.dataset.scopeRevision)!==revision;
     const otherTarget=content?.dataset.capability==="system" && content.dataset.artifactId && row &&
@@ -117,12 +129,14 @@
   }
   async function load(raw,{method="GET",fields=null,fromSave=false}={}) {
     if(busy)return;
+    if(method==="POST" && capability==="evidence"){message("Source evidence is read-only. Use the existing review and confirmation controls to make a correction.");return;}
     if(method==="POST" && scopeDirty()){lockForms();return;}
     let url;
     try{url=allowed(raw,method);}catch(error){message(error.message);return;}
     if(url.searchParams.has("scope_revision") && url.searchParams.get("scope_revision")!==String(revision)) {
       message("Open the desired saved Scope revision in the register before reviewing another row.");return;
     }
+    if(capability==="evidence" && method==="GET")body.replaceChildren();
     busy=true;body.setAttribute("aria-busy","true");const priorInert=scopeForm.inert, priorBodyInert=body.inert;
     scopeForm.inert=true;body.inert=true;
     message(method==="POST" ? "Saving this Draft action..." : "Loading saved inputs...");
@@ -131,8 +145,12 @@
       const finalURL=allowed(response.url,response.redirected ? "GET" : method);
       const html=await response.text();
       const page=new DOMParser().parseFromString(html,"text/html"), content=page.querySelector("[data-workbench-content]");
-      if(!content || content.dataset.draftId!==draftId || content.querySelector("script") || !["system","price"].includes(content.dataset.capability)) {
+      if(!content || content.dataset.draftId!==draftId || content.querySelector("script") || !["system","price","evidence"].includes(content.dataset.capability)) {
         throw new Error(`The action was refused or the session changed (${response.status}). Your entries remain here; reopen the project before retrying.`);
+      }
+      if(content.dataset.capability==="evidence" &&
+         (Number(content.dataset.scopeRevision)!==revision || (!row?.opening_id && !row?.service_id && content.dataset.defectId!==(row?.defect_id || "")) || content.dataset.openingId!==(row?.opening_id || "") || content.dataset.serviceId!==(row?.service_id || ""))) {
+        throw new Error("Source evidence does not match the selected saved row. Reopen the row.");
       }
       capability=content.dataset.capability;
       const target=row?.service_id ? `service:${row.service_id}` : row?.blank ? `blank_opening:${row.opening_id}` : null;
@@ -146,7 +164,7 @@
       panel.querySelectorAll("[data-workbench-tab]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.workbenchTab===capability)));
       if(response.ok) {
         await refreshProjection(body.firstElementChild);
-        message(fromSave || method==="POST" ? "Saved. The register shows the returned artifact revision; earlier values remain in history." : "Saved inputs loaded. Choose and save each action explicitly.");
+        message(capability==="evidence" ? `Source evidence for saved Scope revision ${revision}. No data was changed or sent to AI.` : fromSave || method==="POST" ? "Saved. The register shows the returned artifact revision; earlier values remain in history." : "Saved inputs loaded. Choose and save each action explicitly.");
       } else message(`Changes were not saved (${response.status}). Review the retained entries and errors below.`);
       lockForms();heading.focus({preventScroll:true});
     } catch(error) { message(error.message || "The action could not be verified. Reopen the saved artifact before retrying."); }
@@ -154,16 +172,16 @@
   }
   async function open(detail) {
     if(busy || !canLeave())return;
-    if(scopeDirty() || detail.modified){opener=document.activeElement;panel.hidden=false;body.replaceChildren();row=null;message("Save the Scope before opening technical or price authoring. No capability has run.");heading.focus();return;}
-    if(!detail.row?.opening_id || detail.row.needsReview || panel.dataset[detail.capability]!=="true")return;
+    if(detail.capability!=="evidence" && (scopeDirty() || detail.modified)){opener=document.activeElement;panel.hidden=false;body.replaceChildren();row=null;message("Save the Scope before opening technical or price authoring. No capability has run.");heading.focus();return;}
+    if(!detail.row || (!detail.row.defect_id && !detail.row.opening_id && !detail.row.service_id) || (detail.capability!=="evidence" && (!detail.row.opening_id || detail.row.needsReview)) || panel.dataset[detail.capability]!=="true")return;
     row=detail.row;capability=detail.capability;opener=document.activeElement;dirty=false;
-    panel.hidden=false;panel.querySelector("[data-workbench-target]").textContent=`${row.label || row.opening_id} / Opening ${row.opening_id}${row.service_id ? " / Service "+row.service_id : " / Blank opening"}`;
-    panel.querySelectorAll("[data-workbench-tab]").forEach(button=>{button.disabled=panel.dataset[button.dataset.workbenchTab]!=="true";});
+    panel.hidden=false;panel.querySelector("[data-workbench-target]").textContent=[row.label,row.opening_id ? "Opening "+row.opening_id : row.service_id ? "Parent Opening unresolved" : "Opening relationship unresolved",row.service_id ? "Service "+row.service_id : row.blank ? "Blank opening" : "Services unresolved"].filter(Boolean).join(" / ");
+    panel.querySelectorAll("[data-workbench-tab]").forEach(button=>{button.disabled=panel.dataset[button.dataset.workbenchTab]!=="true" || (button.dataset.workbenchTab!=="evidence" && (row.needsReview || !row.opening_id));});
     await load(detail.savedURL || endpoint(capability));
   }
   document.addEventListener("classifire:register-author",event=>open(event.detail));
   panel.querySelector("[data-workbench-close]").addEventListener("click",()=>{if(busy || !canLeave())return;panel.hidden=true;dirty=false;
-    const returnButton=row && [...document.querySelectorAll("[data-register-capability]")].find(button=>button.dataset.registerOpening===row.opening_id && button.dataset.registerService===(row.service_id || "") && button.dataset.registerCapability===capability);
+    const returnButton=row && [...document.querySelectorAll("[data-register-capability]")].find(button=>button.dataset.registerDefect===(row.defect_id || "") && button.dataset.registerOpening===(row.opening_id || "") && button.dataset.registerService===(row.service_id || "") && button.dataset.registerCapability===capability);
     const target=opener?.isConnected ? opener : returnButton;
     if(target)target.focus();else {const grid=document.getElementById("scope-register");grid.tabIndex=-1;grid.focus();}});
   panel.querySelectorAll("[data-workbench-tab]").forEach(button=>button.addEventListener("click",()=>{

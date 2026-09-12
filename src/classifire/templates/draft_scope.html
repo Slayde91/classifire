@@ -41,10 +41,10 @@
 {% endif %}
 <div class="register-authoring-layout">
 {% include "draft_scope_editor.html" %}
-<aside id="register-workbench" class="register-workbench panel" hidden aria-labelledby="register-workbench-heading" data-system="{{ 'true' if has_permission('technical:read') else 'false' }}" data-price="{{ 'true' if has_permission('estimate:read') else 'false' }}">
-  <div class="register-workbench-header"><h2 id="register-workbench-heading" tabindex="-1">Row review and pricing</h2><button type="button" class="button button-secondary" data-workbench-close>Close</button></div>
+<aside id="register-workbench" data-evidence="true" class="register-workbench panel" hidden aria-labelledby="register-workbench-heading" data-system="{{ 'true' if has_permission('technical:read') else 'false' }}" data-price="{{ 'true' if has_permission('estimate:read') else 'false' }}">
+  <div class="register-workbench-header"><h2 id="register-workbench-heading" tabindex="-1">Row evidence, review and pricing</h2><button type="button" class="button button-secondary" data-workbench-close>Close</button></div>
   <p data-workbench-target></p>
-  <div class="scope-context-actions"><button type="button" class="button button-secondary" data-workbench-tab="system">Technical review</button><button type="button" class="button button-secondary" data-workbench-tab="price">Price</button></div>
+  <div class="scope-context-actions"><button type="button" class="button button-secondary" data-workbench-tab="evidence">Evidence</button><button type="button" class="button button-secondary" data-workbench-tab="system">Technical review</button><button type="button" class="button button-secondary" data-workbench-tab="price">Price</button></div>
   <p class="scope-hint">Each save creates a separate Draft revision. Scope edits, technical approval and package confirmation remain separate.</p>
   <p data-workbench-status role="status" aria-live="polite"></p>
   <div data-workbench-body></div>

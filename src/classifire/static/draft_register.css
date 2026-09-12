@@ -62,3 +62,10 @@
   .register-authoring-layout:has(.register-workbench:not([hidden])) { grid-template-columns:minmax(0,1fr); }
   .register-workbench { position:static; max-height:none; }
 }
+
+.register-evidence-status { display:block; margin-bottom:.35rem; }
+.register-evidence-source { border-top:1px solid var(--color-border,#d8dce2); padding-top:.75rem; margin-top:.75rem; }
+.register-evidence-source pre { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; }
+.register-evidence-source img { display:block; max-width:100%; height:auto; }
+.register-evidence-source figure { margin:.75rem 0; }
+.register-evidence-source figcaption { overflow-wrap:anywhere; }

@@ -304,6 +304,26 @@ class EstimateReport(Command):
     estimate_id: Identity
     estimate_revision: Revision
     profile: Literal["estimate-only", "complete"]
+    matches: Annotated[list[MatchSelection], Field(max_length=MAX_SELECTED_MATCHES)] = Field(
+        default_factory=list
+    )
+
+    @model_validator(mode="after")
+    def complete_reviews(self) -> Self:
+        if self.matches:
+            if self.profile != "complete":
+                raise ValueError("Additional reviews require the complete profile")
+            if len({item.match_id for item in self.matches}) != len(self.matches):
+                raise ValueError("Duplicate review identity")
+            self.matches = sorted(self.matches, key=lambda item: item.match_id)
+        return self
+
+    @model_serializer(mode="wrap")
+    def preserve_legacy_command(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = dict(handler(self))
+        if not self.matches:
+            value.pop("matches", None)
+        return value
 
 
 CapabilityCommand = Annotated[
@@ -431,6 +451,18 @@ def inspect_inputs(
         protect_content(db, authority, identity, estimate)
         if isinstance(c, EditEstimate) and estimate["revision"] != c.expected_revision:
             raise scopes.DraftScopeError("ESTIMATE_REVISION_CONFLICT", 409)
+    if isinstance(c, EstimateReport) and c.matches:
+        require(db, authority, identity, TECHNICAL)
+        report_preview = estimate_reports.preview_report(
+            db,
+            actor,
+            c.draft_id,
+            c.estimate_id,
+            c.estimate_revision,
+            profile=c.profile,
+            matches=[ref.model_dump(mode="json") for ref in c.matches],
+        )
+        report_reviews = report_preview["system_matches"]
     project = scope_reports._project(db, scopes.get_draft(db, actor, c.draft_id))
     inputs: dict[str, Any] = {
         "scope": scope,
@@ -660,7 +692,13 @@ def execute(
         result.update(report_id=report.id, sha256=report.snapshot_hash)
     elif isinstance(c, EstimateReport):
         estimate_report = estimate_reports.create_report(
-            db, actor, c.draft_id, c.estimate_id, c.estimate_revision, profile=c.profile
+            db,
+            actor,
+            c.draft_id,
+            c.estimate_id,
+            c.estimate_revision,
+            profile=c.profile,
+            matches=[ref.model_dump(mode="json") for ref in c.matches] or None,
         )
         result.update(
             estimate_id=c.estimate_id,

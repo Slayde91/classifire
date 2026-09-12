@@ -20,6 +20,7 @@ from .models import DraftPackageImport, DraftScope, User
 from .outputs.draft_system_review import sections as system_sections
 from .outputs.draft_system_review import summary as system_summary
 from .security import has_permission, verify_csrf
+from .services import draft_register as register_service
 from .services.draft_register import register_context
 from .services.draft_scope import (
     MAX_ARTIFACT_BYTES,
@@ -325,6 +326,106 @@ def edit_scope(
         envelope=envelope,
         findings=[_finding_text(item) for item in warnings],
     )
+
+
+def _evidence_query(request: Request, *, image: bool = False) -> dict[str, Any]:
+    pairs = list(request.query_params.multi_items())
+    allowed = {"revision", "opening_id", "service_id", "defect_id"}
+    if image:
+        allowed |= {"ref_index", "image_id"}
+    values = dict(pairs)
+    if (
+        len(request.url.query) > 512
+        or len(values) != len(pairs)
+        or not set(values) <= allowed
+        or "revision" not in values
+    ):
+        raise HTTPException(422, "Choose one saved Scope revision and register row")
+    revision = values["revision"]
+    if not revision.isascii() or not revision.isdigit() or len(revision) > 10:
+        raise HTTPException(422, "A valid saved revision is required")
+    number = int(revision)
+    if str(number) != revision or not 1 <= number <= 2_147_483_647:
+        raise HTTPException(422, "A valid saved revision is required")
+    result: dict[str, Any] = {"scope_revision": number}
+    for field in ("opening_id", "service_id", "defect_id"):
+        value = values.get(field)
+        if value is not None:
+            try:
+                if str(UUID(value)) != value:
+                    raise ValueError("identity")
+            except (ValueError, AttributeError) as exc:
+                raise HTTPException(422, "Choose a saved register row") from exc
+        result[field] = value
+    if result["defect_id"] is not None:
+        if result["opening_id"] or result["service_id"]:
+            raise HTTPException(422, "Choose a Defect alone or an Opening/Service row")
+    else:
+        result.pop("defect_id")
+        if not result["opening_id"] and not result["service_id"]:
+            raise HTTPException(422, "Choose a saved register row")
+    if image:
+        raw_index, image_id = values.get("ref_index", ""), values.get("image_id", "")
+        if (
+            not raw_index.isascii()
+            or not raw_index.isdigit()
+            or len(raw_index) > 4
+            or str(int(raw_index)) != raw_index
+            or not 1 <= len(image_id) <= 128
+        ):
+            raise HTTPException(422, "Choose a retained source picture")
+        result.update(ref_index=int(raw_index), image_id=image_id)
+    return result
+
+
+@router.get("/scopes/{draft_id}/register-evidence", response_class=HTMLResponse)
+def register_evidence_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
+    actor = _require(request, db, "project:read")
+    query = _evidence_query(request)
+    try:
+        draft = get_draft(db, actor, draft_id)
+        evidence = register_service.evidence_context(
+            db, actor, draft_id, settings=get_settings(), **query
+        )
+    except DraftScopeError as exc:
+        raise _failure(exc) from exc
+    params = {"revision": query["scope_revision"]}
+    params.update({key: value for key, value in query.items() if key.endswith("_id") and value})
+    for ref in evidence["refs"]:
+        kind = ref["metadata"].get("source_kind")
+        source_id = ref["metadata"].get("source_id")
+        if ref["availability"] == "verified" and source_id and kind in {"pdf", "docx", "xlsx"}:
+            area = {"pdf": "evidence", "docx": "word", "xlsx": "workbooks"}[kind]
+            ref["review_url"] = f"/scopes/{draft_id}/{area}/{source_id}"
+        for picture in ref["images"]:
+            picture["url"] = f"/scopes/{draft_id}/register-evidence/image?" + urlencode(
+                {**params, "ref_index": ref["index"], "image_id": picture["id"]}
+            )
+    return templates.TemplateResponse(
+        request,
+        "draft_register_evidence.html",
+        _context(
+            request, db, draft=draft, project=draft.project, scope=evidence["scope"],
+            envelope=None, evidence=evidence, workbench_capability="evidence",
+            workspace_register=request.headers.get("X-Classifire-Workspace") == "register",
+        ),
+        headers={"Cache-Control": "no-store", "Vary": "X-Classifire-Workspace, Cookie"},
+    )
+
+
+@router.get("/scopes/{draft_id}/register-evidence/image")
+def register_evidence_image(request: Request, db: Db, draft_id: str) -> Response:
+    actor = _require(request, db, "project:read")
+    query = _evidence_query(request, image=True)
+    try:
+        content, media_type = register_service.evidence_image(
+            db, actor, draft_id, settings=get_settings(), **query
+        )
+    except DraftScopeError as exc:
+        raise _failure(exc) from exc
+    return Response(content, media_type=media_type, headers={
+        "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Vary": "Cookie",
+    })
 
 
 @router.post("/scopes/{draft_id}", response_model=None)

@@ -1,137 +1,183 @@
 # CLASSIFIRE Session Handoff
 
-Reconciled 2026-09-13. Current source, Git/CI and runtime evidence override this checkpoint.
-Read [PROJECT_STATE.md](./PROJECT_STATE.md), [architecture](./CLASSIFIRE_ARCHITECTURE.md),
-[roadmap](./CLASSIFIRE_ROADMAP.md) and root GOAL.md. The four independent capabilities
-and full production objective remain unchanged and incomplete.
+Reconciled 2026-09-13. Current code, Git, CI and runtime evidence override this
+checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
+[architecture](./CLASSIFIRE_ARCHITECTURE.md), [roadmap](./CLASSIFIRE_ROADMAP.md) and
+root GOAL.md. The four independent capabilities and full production objective remain
+unchanged and incomplete.
 
-## Latest reporting checkpoint
+## Verified publication
 
-PR #263 is merged as `d5c19d7`, equal in tree to tested `469a57f`; PR CI
-34711480773 passed 2,199 tests and remaining checks. Post-merge job 34712796245 is
-running at this checkpoint. PR #262 post-merge job 34710331473 passed 2,134 tests.
-
-Active checkout: `C:/CLASSIFIRE/.tmp/multi-review-reports-20260913`, branch
-`feat/multi-review-reports-20260913`, based on `d5c19d7`. Shared collection reporting,
-UI/client confirmation, PDF/XLSX and package mapping v4 are implemented locally.
-Read [the current contract](./MULTI_REVIEW_REPORTS.md) and PROJECT_STATE.md.
-Final combined validation passed 52 new cases; package-screen regressions passed 18.
-Full Ruff, Mypy, Bandit, JavaScript and migration-head checks passed.
-Classify explicit files, commit/push/create its PR,
-observe successful checks and required reviews, then merge and verify the merge.
-Do not restart existing CI jobs because observation expires.
-
-Port 8843 is its separate synthetic SQLite demo; actual restart retained all exact
-Scope/report/ZIP bytes and 66 domain-table inventories. Port 8820 and the earlier
-demos are unchanged. The unapproved 469a57f plan excludes report v3/mapping v4.
-Any later activation needs its exact plan and owner approval. Production readiness,
-accuracy evaluation and protected phase exits remain incomplete.
-
-The following package milestone retains its earlier source checkpoint for continuity;
-this latest checkpoint supersedes its pending-publication and active-checkout claims.
-
-## Verified publication and runtime
-
-- Workspace PR #260 merged as `3eabb23`; exact-head and post-merge CI passed 2,113 tests
-  and all remaining checks. Comparison PR #261 merged as `095ee3d`; exact-head run
-  34707202158 and post-merge run 34708282314 each passed 2,127 tests and remaining checks.
-- Row-authoring PR #262 merged source `6c30361` as
-  `48b4b111f6c8f539a9aa7d8211be5fcb2e61db52`. Exact-head run 34709110199 passed 2,134
-  tests and remaining checks. The merged tree equals the tested source. No required
+- Workspace PR #260 merged as `3eabb23`; exact-head and post-merge CI passed 2,113
+  tests. PR #261 merged as `095ee3d`; both runs passed 2,127 tests.
+- Row authoring PR #262 merged as `48b4b11`; both runs passed 2,134 tests.
+- Packages PR #263 merged as `d5c19d7`, equal in tree to tested `469a57f`.
+  Exact-head run 34711480773 and post-merge run 34712796245 passed 2,199 tests.
+- Scope multi-review reporting PR #264 merged tested `ccaff7a` as
+  `e96c6928ffdbc11a9bd2fb890105e83f05c87625`. Exact-head run 34713651083 passed
+  2,251 tests and all checks. Full merged tree equality was verified. No required
   reviews were configured; no human GitHub review is claimed. Post-merge run
-  34710331473 is still running at this checkpoint; poll the same job.
-- Current checkout: `C:/CLASSIFIRE/.tmp/multi-review-package-20260913`, branch
-  `feat/multi-review-package-20260913`, based on merged `48b4b11`. The coherent change
-  is locally validated but not yet committed or published at this source checkpoint.
-- Live port 8820 remains the separately approved diagnostic source `e2e8292`.
-  Its activation receipt verified fresh backup/restore, all 69 tables, five Scope
-  revisions, two packages and two originals. No newer workspace deployment is implied.
-- Connected upload remains refused by CLIENT_FILE_UNAPPROVED_HOST. No allowlist,
-  OAuth/tunnel, client grant or provider configuration change is part of this increment.
-- Separate synthetic demos: 8840 integrated workspace, 8841 pinned row authoring,
-  8842 current multi-review candidate. Only 8842 was restarted in this increment.
-  PostgreSQL tests used disposable 15433, never live 15432. The 8842 demo uses SQLite.
-- The separate row-authoring rehearsal restored an existing synthetic clone on 15433;
-  all 69 tables/schema/rows and retained artifacts verified. It is not a fresh live backup.
-  The prepared 6c30361 activation plan is unapproved and excludes the newer v6 change.
+  34715038796 passed 2,251 tests and all remaining checks.
 
-## Current implementation
+## Active imported-original navigation
 
-[The multi-review contract](./MULTI_REVIEW_PROJECT_PACKAGES.md) describes the exact
-format, dependency and authority rules. Existing services and tables are extended:
+Separate checkout `.tmp/imported-evidence-navigation-20260913`, branch
+`feat/imported-evidence-navigation-20260913`, base `1de68b9`. Connect a selected
+imported evidence reference to its exact retained-original review card through the
+existing validated package mapping. Preserve lineage, foreign unverified claims,
+current access and explicit scan/download actions. No inline imported preview,
+new parser/schema or approval is implied. All 94 distinct affected cases passed:
+30 core (seven new), eight new HTTP and 56 existing UI cases. Full Ruff, Mypy (233
+files), Bandit and single 0047 head passed. Final read-only source review found no
+issue. Private logs retain the corrected harness failures and formatting-only hash
+drift; no application guard or assertion about required behaviour was weakened.
 
-- Several Opening/Service rows and blank Openings retain explicit saved review choices.
-  Updating one row preserves the others. Repeated URL references represent working
-  choices; a separate package preview/save is the durable checkpoint.
-- Forward ProjectPackage v6 holds exact reviews, an optional existing Estimate and
-  selected individual reports/originals. Extra reviews never become Estimate inputs.
-- Import mapping v3 binds every source review to its exact new local identity. Original
-  archives, report bytes and evidence remain retained; foreign claims stay unverified.
-- Saved/imported workspace links reopen exact selected revisions, including historical
-  items outside the recent picker window. Invalid selections fail visibly.
-- Technical client grants apply to every selected review in preparation, confirmation
-  and downloads. A separate same-user browser confirmation still authorizes Draft writes.
-- No new model, table, migration, dependency, provider or canonical writer is added.
-  Blank openings remain valid with zero Services; unresolved relationships stay in review.
+Browser acceptance retained all 67 checked domain tables before explicit scan,
+refused an unprocessed download, then returned exact DOCX/original ZIP bytes after
+explicit scan. Imported claims stayed unverified. Desktop/mobile, original identity
+and ZIP members were inspected. Restart preserved the same review link/anchor,
+DOCX, ZIP, Scope revisions 2/3 and all 67 tables without rescanning or package writes.
+Only the new isolated demo 8847 and disposable 15433 database were used.
 
-Older binaries cannot read newly written v6 packages or mapping-v3 imports. A future
-activation plan must cover this forward-format recovery boundary; a simple binary
-rollback after new writes is not a transparent downgrade. Preserve user records.
+Private artifacts: `.tmp/imported-evidence-navigation-uat-20260913`,
+`.tmp/imported-evidence-validation-20260913`,
+`.tmp/imported-evidence-core-validation-20260913`, and
+`.tmp/imported-evidence-ui-validation-20260913`. Earlier completed fixtures and
+runtimes remain untouched. Nine files are classified: four application, two synthetic
+test and three documentation files. The local commit message is:
+Link imported evidence to exact retained original review cards.
+Resolve its exact hash from this branch and the private finalization receipt.
 
-## Validation
+Pinned local commits `6d4793b`, `51e3666` and `1de68b9` remain clean. The current
+three-commit public-publication question supersedes the earlier two-commit question;
+this extra navigation change is outside both. No publication or activation approval
+has arrived. Keep the prior candidates pinned while resolving explicit publication
+scope; do not retry the rejected push without the required approval.
 
-109 unique affected tests passed with the selected checkout's PYTHONPATH, disabled
-pytest cache and fresh basetemps. The inventory includes 65 new cases across register,
-package, import, client authorization, UI and original-bearing Word coverage. Full Ruff,
-Mypy (233 source files), Bandit, both JavaScript syntax checks and diff whitespace checks
-passed. Alembic remains at the single 0047_draft_scope_docx_sources head.
+## Locally committed Defect-only source inspection
 
-Actual isolated Edge UAT saved reviews for two Services and a blank Opening, updated
-one, separately saved v6 and reopened the same set. After saving a newer first review,
-restart preserved the package's 2/1/1 selection, exact Scope/ZIP and all review versions.
-All non-login SQLite tables were unchanged by restart verification; canonical counts
-remained zero. Actual ZIP upload, separate import confirmation, exact mapped workspace
-reopening and separate re-export preserved the original archive byte for byte. No page
-errors or mobile document overflow were observed. Desktop/mobile and import screenshots
-and ZIP contents were inspected. These were synthetic automated confirmations.
+Source `.tmp/defect-source-evidence-20260913`, branch
+`feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`. It extends the
+existing read-only Evidence service and panel to select a Defect without an Opening
+or Service, returning only its own references. Missing relationships stay unresolved;
+no physical record is invented. No schema, parser, provider or authority changes.
 
-The separate disposable PostgreSQL regression retained the exact DOCX, five Word
-references, one picture reference, three reviews and nested origins through import and
-re-export. Shared quarantine correctly blocked all copies of the same source. It also
-preserved earlier v5 bytes. The browser package fixture itself contained JSON, not DOCX;
-the Word regression is separate evidence, not a claimed browser Word upload.
+All 89 affected cases passed (23 native/core, 52 HTTP, 14 workbench/history), plus
+full Ruff, Mypy (233 files), Bandit, JavaScript syntax and single 0047 head checks.
+The native/core receipt pins the service/test hashes. The HTTP pass was observed in
+the test session; no JUnit XML or test-time hash manifest was captured for that run.
+Edge acceptance checked exact own-source selection, stale/history retention, keyboard
+focus, unsaved-edit exclusion, desktop/mobile output and refusal of a deliberately
+mismatched Defect fragment. Restart retained five image URLs, Scope revisions 1-4
+byte-for-byte and all 67 checked domain tables. No invented Opening/Service, provider
+call or live 15432 contact. Synthetic sources do not prove real-report accuracy.
 
-Private evidence under C:/CLASSIFIRE/.tmp/:
+Private evidence: `.tmp/defect-source-evidence-uat-20260913` and
+`.tmp/defect-evidence-validation-20260913`. Use only the existing disposable 15433
+`classifire_defect_evidence_demo_20260913` database and port 8846 demo. Preserve
+completed fixture receipts and earlier pinned source/activation plans.
 
-- `multi-review-package-validation-20260913/unique-test-inventory.json` and test logs.
-- `multi-review-package-uat-20260913/`: browser, restart and import-browser receipts,
-  package/re-export ZIPs, screenshots and synthetic SQLite data.
-- `multi-review-package-ui-20260913/`: historical picker and imported landing checks.
-- `multi-review-word-package-tests-20260913-b/`: original-bearing ZIP regression outputs.
+Final source review found no actionable issue. The reviewed change contains six
+application files, two synthetic test files and three documentation files. The local
+commit message is: Allow source inspection for Defects with unresolved relationships.
+Resolve its exact hash from this branch and the private finalization receipt.
+Commit `1de68b9f41582fc5297260d3a838e2851a4defbb` is clean in its pinned checkout
+and is included in the pending three-commit public-publication question. No upstream,
+PR or activation approval exists. Observe exact-head CI and required reviews before
+any merge; keep activation separately approved.
 
-Do not rerun the completed browser creation scripts; their saved Drafts and receipts
-already exist. Login-related table changes are expected only where explicitly recorded.
+## Locally committed register source evidence increment
 
-## Classification, limitations and next work
+Source: `C:/CLASSIFIRE/.tmp/register-source-evidence-20260913`, branch
+`feat/register-source-evidence-20260913`, based on local `6d4793b`.
+The read-only [Evidence tab](./REGISTER_SOURCE_EVIDENCE.md) is implemented; 122 unique
+affected cases and static checks passed. Mixed-source Edge acceptance passed including
+stale, blank/unlinked and unsaved-edit checks with unchanged domain state. Restart
+retained 12 image URLs, three Scope downloads and all 67 checked domain tables exactly;
+source-cell F2 passed. Continue from private `.tmp/register-source-evidence-uat-20260913` and
+`.tmp/register-evidence-validation-20260913` receipts.
+The marked demo uses only PostgreSQL15433 and port8845; never use live15432 for tests.
 
-The current diff consists of shared package/import/register services, client grant
-checks, UI/JavaScript/templates, six synthetic regression files and documentation.
-Private logs, sources, SQLite data and generated outputs remain outside Git. Preserve
-the conflicted root at de0cc5a with CHERRY_PICK_HEAD c3e4c810, all unrelated modifications
-and four DU conflicts, and the older workspace's two untracked browser artifacts.
+The separate Complete-report checkout is clean at `6d4793b`, no upstream or PR.
+Its push was rejected by automatic approval review: the destination is verified
+PUBLIC `Slayde91/classifire`, and explicit proprietary-publication approval is pending.
+Do not retry publication, change visibility/protection or activate a new candidate
+without its applicable approval. Finish local engineering and explicit classification.
 
-1. Finish explicit-file commit/push/PR publication and observe exact-head CI and required
-   reviews before merging. Record the actual commit and merge result in private receipts.
-   Poll existing jobs; an observation timeout is not a reason to restart them.
-2. Prepare a fresh exact-candidate activation/recovery plan before requesting deployment
-   approval. No activation, provider enablement or host/OAuth/tunnel change is authorized here.
-3. Preserve the confirmed private Draft reference and unknowns. Follow
-   [reference readiness](./PHYSICAL_REFERENCE_READINESS.md) before any real evaluation;
-   no application accuracy score or blind independent benchmark is established.
+## Active Complete report increment
 
-The complete redesign and production exits remain open: general multimodal accuracy,
-full technical applicability, calibrated automatic pricing, combined multi-review
-reporting, full project history, representative scale/accessibility and operational
-assurance. One Estimate and existing individual report formats remain selected at a time.
-Do not rebuild completed Word/client/confirmation work or promote synthetic Draft checks
-to technical approval, canonical admission, a Physical Model Lock or production release.
+Checkout: `C:/CLASSIFIRE/.tmp/complete-multi-review-reports-20260913`.
+Branch: `feat/complete-multi-review-reports-20260913`, based on merged `e96c692`.
+The source is implemented and locally verified but publication is pending at this
+checkpoint. The pinned ccaff7a checkout remains unchanged.
+
+[Complete contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md) and
+[multiple-review contract](./MULTI_REVIEW_REPORTS.md) describe the actual change:
+explicit exact review collections for Complete reports, snapshot v3/render 12,
+unchanged Estimate arithmetic/dependencies, separate confirmation, technical grant
+checks and package import mapping-v4 reuse. No model or migration changes.
+
+Focused checks passed 53 core/package/legacy cases, 24 UI, 18 outputs, 13 client
+collection and 10 existing client cases. Full Ruff, Mypy (233 files), Bandit and
+single 0047 migration-head checks passed. Final combined verification passed all 62 new cases in 185.29 seconds, including
+actual disposable PostgreSQL import/scan checks.
+
+Actual Edge UAT on port 8844 retained Scope 2 and Estimate 4 with three selected
+reviews. Original rate 1.005 and override 1.505 yield partial subtotal 3.01; another
+line remains unknown. Report creation and package save were separate. PDF/XLSX/ZIP
+bytes matched retained originals. All 21 PDF pages were visually inspected in
+overviews, pages 1/3 at readable size, plus desktop/mobile screens. No clipping or
+page errors observed. Native Excel was not visually inspected.
+
+An actual restart preserved Scope/PDF/XLSX/ZIP and 66 domain-table hashes. The first
+Estimate comparison used a fixture's reformatted JSON; diagnosis proved identical
+values and the original ZIP's exact Estimate bytes. A second restart retained raw
+Estimate 2/4 downloads byte-for-byte. Keep the original failed verifier and diagnosis;
+no application guard or assertion was weakened.
+
+Private evidence: `C:/CLASSIFIRE/.tmp/complete-multi-review-reports-uat-20260913/`
+contains browser/restart receipts, screenshots, PDF/XLSX/ZIP, original diagnosis,
+verification scripts and synthetic SQLite data. Related output validation is in
+`complete-multi-review-output-checks-20260913/`; UI tests in
+`complete-multi-review-validation-20260913/`. Do not rerun creation scripts against
+these completed fixtures.
+
+## Runtime and approval boundaries
+
+Live 8820 remains the separately approved diagnostic source `e2e8292`. Earlier
+accepted Word/Scope/package confirmations are complete and must not be repeated.
+Connected upload still has the separately recorded host-policy refusal. No new
+OAuth/tunnel, grant, allowlist, provider or live 15432 operation is included.
+
+The unapproved ccaff7a plan covers Scope report v3/mapping v4, not the new Complete
+format. Activation requires an exact tested candidate plan, fresh matched database
+and storage backup, disposable 15433 restore verification and explicit approval.
+Older readers cannot transparently read new Complete-v3 snapshots; retain all later
+records and originals before any recovery decision. Existing absolute StoredFile
+bindings must not be rewritten to bypass containment.
+
+Other preserved synthetic demos: 8840 integrated workspace,8841 row authoring,
+8842 packages,8843 Scope reports. Only 8844 was restarted for this Complete acceptance.
+PostgreSQL tests use disposable 15433/classifire_containment_test, never live 15432.
+
+## Classification and next action
+
+Intentional local changes comprise shared report/package/client services, renderer,
+UI/templates, five synthetic test files and corresponding contract/state documents.
+Private logs, originals, generated outputs and operator state stay outside Git.
+Preserve conflicted root `de0cc5a`, CHERRY_PICK_HEAD `c3e4c810`, all unrelated work
+and four DU conflicts; no root source changes are included.
+
+1. Finish final combined verification, review/classify explicit files, commit/push
+   and create the Complete-report PR. Observe successful CI and required reviews
+   before merging; verify the actual merge and post-merge run.
+2. Prepare its exact-version activation/recovery plan before requesting deployment
+   approval. Existing ccaff7a approval remains false and does not cover this version.
+3. Preserve the confirmed private ten-defect Draft reference and unknowns. Follow
+   [reference readiness](./PHYSICAL_REFERENCE_READINESS.md) before real evaluation.
+   It is not blind independent accuracy evidence or technical approval.
+
+Full production work remains: general multimodal accuracy, full physical entities
+and applicability, calibrated automatic pricing, full project/audit history,
+representative scale/accessibility, operational assurance and protected phase exits.
+Do not turn synthetic Draft confirmations into canonical admission, locks or release.

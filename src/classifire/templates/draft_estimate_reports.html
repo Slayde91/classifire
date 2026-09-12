@@ -28,6 +28,16 @@
     <input id="report-estimate-revision" name="revision" type="number" min="1" value="{{ envelope.revision }}" required>
     <label for="report-profile">Report profile</label>
     <select id="report-profile" name="profile"><option value="estimate-only"{% if report_profile == "estimate-only" %} selected{% endif %}>Estimate only</option><option value="complete"{% if report_profile == "complete" %} selected{% endif %}>Complete - Scope, system review and estimate</option></select>
+    {% if report_profile == "complete" and has_permission('technical:read') %}
+    <fieldset><legend>Exact system reviews for this Complete report</legend>
+      <p class="scope-hint">Additional reviews are report-only context. They do not change the Estimate, quantities or prices. Select none to retain the existing report with only the Estimate's embedded review. Previewing creates no report.</p>
+      {% if envelope.system_match %}<p>When choosing a review collection, explicitly include the Estimate-bound review: {{ envelope.system_match.artifact_id }}, revision {{ envelope.system_match.revision }}. A newer revision is not a substitute.</p>{% endif %}
+      <p class="scope-hint">The most recent 20 reviews are offered; exact selected older reviews and the Estimate-bound review remain available. Each collection review needs a distinct opening/service row or blank opening.</p>
+      {% for item in report_review_choices|default([]) %}
+      {% if item.compatible %}<label><input type="checkbox" name="matches" value="{{ item.value }}"{% if item.selected %} checked{% endif %}> {{ item.label }} &middot; revision {{ item.revision }} <span class="scope-item-id">{{ item.id }}</span>{% if envelope.system_match and item.id == envelope.system_match.artifact_id and item.revision == envelope.system_match.revision %} &middot; Estimate-bound review{% endif %}</label>
+      {% else %}<p>{{ item.label }} &middot; revision {{ item.revision }}. This historical target remains available in the existing single-review report; it cannot be added to a row-review collection. <a href="/scopes/{{ draft.id }}/system-matches/{{ item.id }}/reports?revision={{ item.revision }}">Inspect this saved review</a></p>{% endif %}
+      {% else %}<p>No saved system reviews for this Scope revision.</p>{% endfor %}
+    </fieldset>{% endif %}
     <button type="submit" class="button button-secondary">Preview estimate revision</button>
   </form>
   {% if has_permission('project:write') and has_permission('estimate:write') %}
@@ -35,6 +45,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" name="revision" value="{{ envelope.revision }}">
     {% if report_profile == "complete" %}<input type="hidden" name="profile" value="complete">{% endif %}
+    {% for reference in selected_review_refs|default([]) %}<input type="hidden" name="matches" value="{{ reference }}">{% endfor %}
     <button class="button button-primary" type="submit">Create saved {{ "Complete" if report_profile == "complete" else "Estimate" }} PDF and XLSX</button>
     <p>Creates and retains both files from the previewed revision. No matching or pricing is rerun.</p>
   </form>
@@ -47,11 +58,26 @@
 {% if report_profile == "complete" %}
 <section class="panel"><h2>Included sections and limitations</h2><dl class="scope-import-details">{% for label, value in complete_coverage %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endfor %}</dl></section>
 {% with envelope=scope %}{% include "draft_scope_report_content.html" %}{% endwith %}
+{% if collection_mode|default(false) %}
+<section class="panel"><h2>Saved technical reviews</h2><p>{{ system_reviews|length }} explicitly selected reviews. All remain unapproved. Additional reviews are report-only context; the saved Estimate and its prices are unchanged.</p></section>
+{% for item in system_reviews %}
+{% set review = item.review %}
+<section class="panel" data-report-review="{{ review.artifact_id }}"><h2>Technical review {{ loop.index }}</h2><p>Review {{ review.artifact_id }} &middot; revision {{ review.revision }} <span class="badge badge-draft">Unapproved</span></p>
+<p><strong>{{ 'Estimate-bound review' if review == envelope.system_match else 'Additional report-only context' }}</strong>{% if review != envelope.system_match %}: no price or Estimate change.{% endif %}</p>
+<dl class="scope-import-details">{% for label, value in item.summary %}<dt>{{ label }}</dt><dd class="scope-preserve-text">{{ value }}</dd>{% endfor %}</dl>
+{% for section in item.sections %}<details><summary>{{ section.title }}</summary><dl class="scope-import-details">{% for label, value in section.rows %}<dt>{{ label|capitalize }}</dt><dd class="scope-preserve-text">{{ value }}</dd>{% endfor %}</dl></details>{% endfor %}
+</section>
+<details class="panel"><summary>Inspect captured target and candidates for review {{ loop.index }}</summary>
+{% with envelope=review, scope=review.scope, can_edit=false, form_values={}, match_content_prefix='complete-review-' ~ review.artifact_id ~ '-', scope_content_id='complete-review-' ~ review.artifact_id ~ '-scope-heading' %}{% include "draft_system_match_content.html" %}{% endwith %}
+</details>
+{% endfor %}
+{% else %}
 <section class="panel"><h2>Saved technical review</h2>
 {% if envelope.system_match %}<p>Review revision {{ envelope.system_match.revision }}. Candidate preferences and partial checks remain unapproved.</p>
 <dl class="scope-import-details">{% for label, value in system_summary %}<dt>{{ label }}</dt><dd class="scope-preserve-text">{{ value }}</dd>{% endfor %}</dl>
 {% for section in system_sections %}<details><summary>{{ section.title }}</summary><dl class="scope-import-details">{% for label, value in section.rows %}<dt>{{ label|capitalize }}</dt><dd class="scope-preserve-text">{{ value }}</dd>{% endfor %}</dl></details>{% endfor %}
 {% else %}<p>Unavailable - no System Match attached to this Estimate revision.</p>{% endif %}</section>
+{% endif %}
 {% endif %}
 {% include "draft_estimate_content.html" %}
 {% endblock %}
