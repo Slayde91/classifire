@@ -11,7 +11,9 @@ callable capabilities, optional AI and portable project artifacts. Prioritize a
 user-testable workflow before broad polish; never remove evidence or authority gates.
 P0-P6 are bounded Draft milestones, not completion of production Phases 0-16.
 
-## Completed, active and deferred work
+## Prototype delivery track
+
+### Completed, active and deferred work
 
 | Classification | Current work and evidence |
 | --- | --- |
