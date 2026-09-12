@@ -1,5 +1,13 @@
 # Draft client v1: authenticated MCP and human confirmation
 
+## Multiple-row report requests
+
+The existing typed `scope_report` command accepts an explicit `matches` collection.
+Each entry binds `match_id` and `match_revision`; technical grants apply to every
+review and both downloads. Separate same-user browser confirmation remains required.
+Legacy commands omit an empty collection to preserve pending input hashes. See the
+[shared report contract](./MULTI_REVIEW_REPORTS.md) for validation and limits.
+
 ## Rejected attachment host diagnostic
 
 PDF, Scope XLSX and Word upload retain the existing fail-closed host policy. When a

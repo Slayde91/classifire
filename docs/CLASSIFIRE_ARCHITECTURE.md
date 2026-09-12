@@ -66,6 +66,14 @@ untrusted evidence without saving Scope or granting approval.
 Jinja, Alembic, PDF/XLSX/image libraries and optional PostgreSQL/malware/ChatGPT extras.
 There is no new service/database/framework introduced by the Word client increment.
 
+## Reports from selected row reviews
+
+The [multiple-review increment](./MULTI_REVIEW_REPORTS.md) extends the existing
+report service/table and scope-and-system profile from one exact review to an explicit
+collection. The UI and typed client command use that shared boundary. Snapshot v3
+and import mapping v4 preserve all dependencies; no model/migration or downstream
+authority changes. Older report snapshots and downloads remain unchanged.
+
 ## Scope and evidence interpretation
 
 The Draft graph distinguishes defects, openings, services and observations. Services

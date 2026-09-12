@@ -78,6 +78,7 @@ def _retained(
         "CLASSIFIRE-IMPORT-MAPPING-v1",
         "CLASSIFIRE-IMPORT-MAPPING-v2",
         "CLASSIFIRE-IMPORT-MAPPING-v3",
+        "CLASSIFIRE-IMPORT-MAPPING-v4",
     ):
         raise ValueError("mapping integrity")
     if (
@@ -253,6 +254,7 @@ def create_import(
         )
         db.add(row)
         db.flush()
+        report_collection = inspection.requires_report_collection_mapping(original)
         mapping: dict[str, Any] = {
             "schema_version": "CLASSIFIRE-IMPORT-MAPPING-v1",
             "project": {"source_id": original.scope["project_id"], "local_id": draft.project_id},
@@ -385,7 +387,11 @@ def create_import(
                     "profile": report["profile"],
                     "members": members,
                     **(
-                        {"match": inspection.report_match_mapping(report, report_paths, mapping)}
+                        {"matches": inspection.report_match_mappings(report, report_paths, mapping)}
+                        if report_collection
+                        else {
+                            "match": inspection.report_match_mapping(report, report_paths, mapping)
+                        }
                         if original.matches
                         else {}
                     ),
@@ -414,6 +420,8 @@ def create_import(
                         "sha256": source.source_sha256,
                     }
                 )
+        if report_collection:
+            mapping["schema_version"] = "CLASSIFIRE-IMPORT-MAPPING-v4"
         row.mapping_json = packages.encode(mapping).decode()
         row.mapping_hash = packages.digest(row.mapping_json.encode())
         db.flush()

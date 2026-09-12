@@ -6,6 +6,7 @@ import hashlib
 import json
 from typing import Annotated, Any
 from urllib.parse import parse_qsl, urlencode
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -18,7 +19,7 @@ from .db import get_db
 from .models import DraftPackageImport, DraftScope, User
 from .outputs.draft_system_review import sections as system_sections
 from .outputs.draft_system_review import summary as system_summary
-from .security import verify_csrf
+from .security import has_permission, verify_csrf
 from .services.draft_register import register_context
 from .services.draft_scope import (
     MAX_ARTIFACT_BYTES,
@@ -37,11 +38,13 @@ from .services.draft_scope_reports import (
     DraftScopeReportError,
     create_report,
     list_reports,
+    preview_report,
     read_report,
     report_bytes,
     report_freshness,
+    report_matches,
 )
-from .services.draft_system_matches import match_staleness, read_match_revision
+from .services.draft_system_matches import list_matches, match_staleness, read_match_revision
 from .ui import _context, _project_workspace, _require, templates
 
 router = APIRouter(include_in_schema=False)
@@ -202,6 +205,20 @@ def _editor(
             payload=payload,
             register=register,
             register_selection_query=_register_query(request),
+            register_report_url=None
+            if not register_selection_valid
+            else (
+                f"/scopes/{draft.id}/system-matches/"
+                + register["match_selections"][0].rsplit(":", 1)[0]
+                + "/reports?revision="
+                + register["match_selections"][0].rsplit(":", 1)[1]
+                if len(register.get("match_selections", [])) == 1
+                else f"/scopes/{draft.id}/reports?"
+                + urlencode(
+                    [("revision", str(expected_revision))]
+                    + [("matches", value) for value in register.get("match_selections", [])]
+                )
+            ),
             register_package_query=None
             if not register_selection_valid
             else urlencode(
@@ -583,14 +600,142 @@ def confirm_scope_import(
     return RedirectResponse(f"/scopes/{draft_id}", status_code=303)
 
 
+def _report_selection(
+    pairs: list[tuple[str, str]], *, form: bool = False
+) -> tuple[int | None, list[dict[str, Any]]]:
+    allowed = {"revision", "matches"} | ({"csrf_token"} if form else set())
+    if len(pairs) > 32 or any(key not in allowed for key, _ in pairs):
+        raise HTTPException(422, "Select a saved Scope revision and explicit system reviews")
+    for key in allowed - {"matches"}:
+        if sum(name == key for name, _ in pairs) > 1:
+            raise HTTPException(422, "Duplicate report selection field")
+    values = dict(pairs)
+    raw = values.get("revision")
+    revision = None
+    if raw is not None:
+        if not raw.isascii() or not raw.isdigit() or len(raw) > 10 or int(raw) < 1:
+            raise HTTPException(422, "A valid saved revision is required")
+        revision = int(raw)
+    selected = []
+    for key, value in pairs:
+        if key != "matches":
+            continue
+        identity, separator, version = value.rpartition(":")
+        try:
+            if (
+                not separator
+                or str(UUID(identity)) != identity
+                or not version.isascii()
+                or not version.isdigit()
+                or len(version) > 10
+                or version.startswith("0")
+                or int(version) < 1
+            ):
+                raise ValueError("review")
+        except ValueError as exc:
+            raise HTTPException(422, "Choose an exact saved review ID and revision") from exc
+        selected.append({"match_id": identity, "match_revision": int(version)})
+    if len({item["match_id"] for item in selected}) != len(selected):
+        raise HTTPException(422, "Choose only one revision of each system review")
+    if (form or selected) and revision is None:
+        raise HTTPException(422, "A valid saved revision is required")
+    return revision, selected
+
+
+async def _report_form(request: Request) -> list[tuple[str, str]]:
+    if request.headers.get("content-type", "").split(";")[0] != "application/x-www-form-urlencoded":
+        raise HTTPException(415, "Use a standard form submission")
+    content = bytearray()
+    async for chunk in request.stream():
+        if len(content) + len(chunk) > 8192:
+            raise HTTPException(413, "Report selection exceeds the size limit")
+        content.extend(chunk)
+    try:
+        return parse_qsl(
+            content.decode("utf-8"), keep_blank_values=True, errors="strict", max_num_fields=32
+        )
+    except (UnicodeError, ValueError) as exc:
+        raise HTTPException(422, "Invalid report selection form") from exc
+
+
+def _report_review_sections(reviews: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {"review": item, "summary": system_summary(item), "sections": system_sections(item)}
+        for item in reviews
+    ]
+
+
+def _report_review_choices(
+    db: Session, actor: User, draft_id: str, scope: dict[str, Any], selected: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    selected_ids = {item["artifact_id"] for item in selected}
+    choices = list(selected)
+    if has_permission(actor, "technical:read"):
+        for row in list_matches(db, actor, draft_id):
+            if row.id not in selected_ids and row.scope_hash == scope["sha256"]:
+                try:
+                    choices.append(
+                        read_match_revision(db, actor, draft_id, row.id, row.latest_revision)
+                    )
+                except DraftScopeError:
+                    continue
+    result = []
+    for review in choices:
+        target = review["target"]
+        content = review["scope"]["content"]
+        opening = next(
+            (item for item in content["openings"] if item["id"] == target["opening_id"]), None
+        )
+        service = next(
+            (item for item in content["services"] if item["id"] == target["service_id"]), None
+        )
+        compatible = opening is not None and (service is not None or target["blank_opening"])
+        result.append(
+            {
+                "id": review["artifact_id"],
+                "revision": review["revision"],
+                "value": f"{review['artifact_id']}:{review['revision']}",
+                "label": " / ".join(
+                    [
+                        opening["label"] if opening else "Opening not selected",
+                        service["label"]
+                        if service
+                        else "Blank opening"
+                        if target["blank_opening"]
+                        else "Whole opening",
+                    ]
+                ),
+                "selected": review["artifact_id"] in selected_ids,
+                "compatible": compatible,
+            }
+        )
+    return result
+
+
 @router.get("/scopes/{draft_id}/reports", response_class=HTMLResponse)
-def scope_reports_page(
-    request: Request, db: Db, draft_id: str, revision: int | None = None
-) -> HTMLResponse:
+def scope_reports_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
     user = _require(request, db, "project:read")
+    revision, selected = _report_selection(list(request.query_params.multi_items()))
     try:
         draft = get_draft(db, user, draft_id)
         envelope = read_revision(db, user, draft_id, revision)
+        preview = preview_report(db, user, draft_id, envelope["revision"], matches=selected)
+        reviews = preview["system_matches"]
+        stale = any(
+            read_match_revision(db, user, draft_id, item["artifact_id"])["sha256"] != item["sha256"]
+            or bool(
+                match_staleness(
+                    db,
+                    user,
+                    draft_id,
+                    item["artifact_id"],
+                    item["revision"],
+                    storage_root=get_settings().storage_root,
+                )
+            )
+            for item in reviews
+        )
+        choices = _report_review_choices(db, user, draft_id, envelope, reviews)
         reports = list_reports(db, user, draft_id)
     except (DraftScopeError, DraftScopeReportError) as exc:
         raise HTTPException(exc.status_code, exc.code) from exc
@@ -606,26 +751,26 @@ def scope_reports_page(
             reports=reports,
             report=None,
             snapshot=None,
-            stale=False,
+            stale=stale,
+            collection_mode=bool(selected),
+            report_review_choices=choices,
+            selected_review_refs=[f"{item['artifact_id']}:{item['revision']}" for item in reviews],
+            system_reviews=_report_review_sections(reviews),
         ),
         headers={"Cache-Control": "no-store"},
     )
 
 
 @router.post("/scopes/{draft_id}/reports", response_class=RedirectResponse)
-def create_scope_report(
-    request: Request, db: Db, draft_id: str, form: FormData
-) -> RedirectResponse:
-    verify_csrf(request, form.get("csrf_token"))
+async def create_scope_report(request: Request, db: Db, draft_id: str) -> RedirectResponse:
+    pairs = await _report_form(request)
+    verify_csrf(request, dict(pairs).get("csrf_token"))
     user = _require(request, db, "project:write")
-    raw_revision = form.get("revision", "")
-    if not raw_revision.isascii() or not raw_revision.isdigit() or len(raw_revision) > 10:
-        raise HTTPException(422, "A valid saved revision is required")
-    revision = int(raw_revision)
-    if revision < 1:
+    revision, selected = _report_selection(pairs, form=True)
+    if revision is None:
         raise HTTPException(422, "A valid saved revision is required")
     try:
-        report = create_report(db, user, draft_id, revision)
+        report = create_report(db, user, draft_id, revision, matches=selected)
         db.commit()
     except (DraftScopeError, DraftScopeReportError) as exc:
         db.rollback()
@@ -657,6 +802,8 @@ def scope_report_page(request: Request, db: Db, draft_id: str, report_id: str) -
             report=report_id,
             snapshot=snapshot,
             stale=stale,
+            collection_mode=bool(snapshot.get("system_matches")),
+            system_reviews=_report_review_sections(report_matches(snapshot)),
             system_summary=system_summary(snapshot["system_match"])
             if snapshot.get("system_match")
             else [],
@@ -686,9 +833,7 @@ def download_scope_report(
         else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     prefix = (
-        "CLASSIFIRE-Scope-System-Report"
-        if snapshot.get("system_match")
-        else "CLASSIFIRE-Scope-Report"
+        "CLASSIFIRE-Scope-System-Report" if report_matches(snapshot) else "CLASSIFIRE-Scope-Report"
     )
     filename = f"{prefix}-{snapshot['report_id']}.{format}"
     return Response(

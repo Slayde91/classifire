@@ -15,8 +15,10 @@ from pydantic import (
     ConfigDict,
     Field,
     GetPydanticSchema,
+    SerializerFunctionWrapHandler,
     TypeAdapter,
     ValidationError,
+    model_serializer,
     model_validator,
 )
 from sqlalchemy.orm import Session
@@ -35,6 +37,7 @@ from . import draft_scope_reports as scope_reports
 from . import draft_scope_xlsx as scope_xlsx
 from . import draft_system_matches as matches
 from .draft_estimate_contract import AddLine, Override
+from .draft_project_packages import MAX_SELECTED_MATCHES, MatchSelection, validate_match_collection
 from .draft_source_intake import SourceRow
 from .draft_system_match_contract import MAX_CANDIDATES, Decision, target_for
 
@@ -274,6 +277,26 @@ class ScopeReport(Command):
     scope_revision: Revision
     match_id: Identity | None = None
     match_revision: Revision | None = None
+    matches: Annotated[list[MatchSelection], Field(max_length=MAX_SELECTED_MATCHES)] = Field(
+        default_factory=list
+    )
+
+    @model_validator(mode="after")
+    def explicit_reviews(self) -> Self:
+        if self.matches:
+            if self.match_id is not None or self.match_revision is not None:
+                raise ValueError("Choose one review selection form")
+            if len({item.match_id for item in self.matches}) != len(self.matches):
+                raise ValueError("Duplicate review identity")
+            self.matches = sorted(self.matches, key=lambda item: item.match_id)
+        return self
+
+    @model_serializer(mode="wrap")
+    def preserve_legacy_command(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = dict(handler(self))
+        if not self.matches:
+            value.pop("matches", None)
+        return value
 
 
 class EstimateReport(Command):
@@ -321,7 +344,11 @@ def protect_content(
     """Nested saved technical/commercial content requires its own client grant."""
     if "estimate" in value or "lines" in value:
         require(db, authority, identity, ESTIMATE)
-    if value.get("system_match") is not None or "candidates" in value:
+    if (
+        value.get("system_match") is not None
+        or value.get("system_matches") is not None
+        or "candidates" in value
+    ):
         require(db, authority, identity, TECHNICAL)
     if isinstance(value.get("estimate"), dict):
         protect_content(db, authority, identity, value["estimate"])
@@ -379,6 +406,16 @@ def inspect_inputs(
             match = matches.read_match_revision(db, actor, c.draft_id, c.match_id, c.match_revision)
             if match["scope"] != scope:
                 raise scopes.DraftScopeError("CLIENT_MATCH_SCOPE_MISMATCH", 422)
+    report_reviews = []
+    if isinstance(c, ScopeReport) and c.matches:
+        require(db, authority, identity, TECHNICAL)
+        report_reviews = [
+            matches.read_match_revision(db, actor, c.draft_id, ref.match_id, ref.match_revision)
+            for ref in c.matches
+        ]
+        if scope is None:
+            raise scopes.DraftScopeError("CLIENT_CAPABILITY_INPUT_INVALID", 422)
+        validate_match_collection(scope, report_reviews)
     if isinstance(c, (ReviewMatch, ReviewMeasurements)):
         match = matches.read_match_revision(db, actor, c.draft_id, c.match_id)
         if match["revision"] != c.expected_revision:
@@ -395,13 +432,16 @@ def inspect_inputs(
         if isinstance(c, EditEstimate) and estimate["revision"] != c.expected_revision:
             raise scopes.DraftScopeError("ESTIMATE_REVISION_CONFLICT", 409)
     project = scope_reports._project(db, scopes.get_draft(db, actor, c.draft_id))
-    inputs = {
+    inputs: dict[str, Any] = {
         "scope": scope,
         "match": match,
         "estimate": estimate,
         "release": release,
         "project": project,
     }
+    if report_reviews:
+        # Keep existing five-key input hashes for all legacy pending requests.
+        inputs["matches"] = report_reviews
     if isinstance(c, ApplyWorkbookRate):
         scopes._actor(db, actor, "library:read")
         if estimate is None:
@@ -615,6 +655,7 @@ def execute(
             c.scope_revision,
             match_id=c.match_id,
             match_revision=c.match_revision,
+            matches=[ref.model_dump(mode="json") for ref in c.matches] or None,
         )
         result.update(report_id=report.id, sha256=report.snapshot_hash)
     elif isinstance(c, EstimateReport):

@@ -1,4 +1,4 @@
-"""Pure scope-only Draft renderers; no estimate or database operation is invoked."""
+"""Pure saved Scope/review renderers; no estimate or database operation is invoked."""
 
 from __future__ import annotations
 
@@ -51,6 +51,58 @@ _LINEAGE_KEYS = (
     "sha256",
     "file_sha256",
 )
+
+
+_MULTI_NOTICE = (
+    "Unapproved saved reviews for the explicitly selected Opening/Service rows only. "
+    "A blank opening has no Service. A shared Service may appear at multiple Openings; "
+    "review records are not quantities or counts of physical work. Keeping a candidate "
+    "is a review preference, not technical approval. Partial text and numeric checks do "
+    "not establish compatibility. Other rows remain unassessed by this collection. "
+    "No Estimate, pricing or release is created by this report."
+)
+
+
+def _collection_reviews(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    """One shared presentation of every exact row; legacy reports keep their path."""
+    if not snapshot.get("system_matches"):
+        return []
+    from ..services.draft_scope_reports import report_matches
+
+    content = snapshot["scope"]["content"]
+    openings = {item["id"]: item for item in content["openings"]}
+    services = {item["id"]: item for item in content["services"]}
+    reviews = []
+    for index, match in enumerate(report_matches(snapshot), 1):
+        opening = openings[match["target"]["opening_id"]]
+        service = services.get(match["target"]["service_id"])
+        service_label = service["label"] if service else "Blank opening - no Service"
+        label = f"Review {index}: {opening['label']} / {service_label}"
+        key = f"{match['artifact_id']} / revision {match['revision']}"
+        identity = [
+            ("Review ID", match["artifact_id"]),
+            ("Review revision", str(match["revision"])),
+            ("Review SHA-256", match["sha256"]),
+            ("Opening ID", opening["id"]),
+            ("Opening label", opening["label"]),
+            ("Row kind", "Service at Opening" if service else "Blank opening"),
+            ("Service ID", service["id"] if service else "None - blank opening"),
+            ("Service label", service_label),
+            ("Scope artifact ID", snapshot["scope"]["artifact_id"]),
+            ("Scope revision", str(snapshot["scope"]["revision"])),
+            ("Scope SHA-256", snapshot["scope"]["sha256"]),
+            ("Status", "Unapproved saved review; compatibility remains unresolved"),
+        ]
+        reviews.append(
+            {
+                "key": key,
+                "label": label,
+                "identity": identity,
+                "summary": system_summary(match),
+                "sections": system_sections(match),
+            }
+        )
+    return reviews
 
 
 def _verified(snapshot: dict[str, Any]) -> dict[str, Any]:
@@ -126,7 +178,7 @@ def _metadata(snapshot: dict[str, Any]) -> list[tuple[str, Any]]:
         (
             "Technical system selection",
             "Saved unapproved candidate review; compatibility unresolved"
-            if snapshot.get("system_match")
+            if snapshot.get("system_match") or snapshot.get("system_matches")
             else "Unavailable - not supplied in this scope-only report",
         ),
         ("Pricing and commercial totals", "Unavailable - no estimate was run"),
@@ -135,7 +187,7 @@ def _metadata(snapshot: dict[str, Any]) -> list[tuple[str, Any]]:
             "Manual/imported assertions remain unreviewed. "
             + (
                 "Captured technical-source provenance is not approval for this Scope."
-                if snapshot.get("system_match")
+                if snapshot.get("system_match") or snapshot.get("system_matches")
                 else "No source evidence or approval is established."
             ),
         ),
@@ -292,6 +344,7 @@ def _append_scope_content(
 def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
     """Render every scope item as flowing text, including long notes and links."""
     report = _verified(snapshot)
+    collection = _collection_reviews(report)
     coverage = _font_coverage()
     body = ParagraphStyle("ScopeBody", fontName=_FONT, fontSize=9, leading=13, spaceAfter=5)
     small = ParagraphStyle(
@@ -321,14 +374,18 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
 
     story.extend([DraftLogo(), Spacer(1, 5 * mm)])
     report_title = (
-        "Draft Scope and System Review" if report.get("system_match") else "Draft Scope Report"
+        "Draft Scope and System Review"
+        if report.get("system_match") or collection
+        else "Draft Scope Report"
     )
     text(report_title, title)
     text(report["project"]["name"], item_heading)
     text(f"{report['project']['reference']} | Saved scope revision {report['scope']['revision']}")
     text(_DRAFT, heading)
     text(
-        SYSTEM_NOTICE
+        _MULTI_NOTICE
+        if collection
+        else SYSTEM_NOTICE
         if report.get("system_match")
         else "Scope-only record. Technical selection, pricing and release are unavailable. "
         "Confirmed labels are manual or imported assertions, not approved physical truth."
@@ -346,12 +403,26 @@ def render_scope_report_pdf(snapshot: dict[str, Any]) -> bytes:
             "supported text characters.",
             small,
         )
-    if report.get("system_match"):
+    if collection:
+        text("Selected saved row reviews", heading)
+        for review in collection:
+            text(review["label"], item_heading)
+            for label, value in [*review["identity"], *review["summary"]]:
+                detail(label, value)
+    elif report.get("system_match"):
         text("Saved technical review summary", heading)
         for label, value in system_summary(report["system_match"]):
             detail(label, value)
     _append_scope_content(report["scope"], text, heading, item_heading, small)
-    if report.get("system_match"):
+    if collection:
+        for review in collection:
+            text(review["label"], heading)
+            text("Exact saved review: " + review["key"], small)
+            for section in review["sections"]:
+                text(section["title"], item_heading)
+                for label, value in section["rows"]:
+                    text(f"{label}: {value}", small)
+    elif report.get("system_match"):
         for section in system_sections(report["system_match"]):
             text(section["title"], heading)
             for label, value in section["rows"]:
@@ -446,6 +517,7 @@ def _segments(value: str, width: int) -> list[str]:
 def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
     """Render literal source strings and typed quantities, never inferred totals."""
     report = _verified(snapshot)
+    collection = _collection_reviews(report)
     output = io.BytesIO()
     workbook = xlsxwriter.Workbook(
         output,
@@ -457,7 +529,9 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
         },
     )
     report_title = (
-        "Draft Scope and System Review" if report.get("system_match") else "Draft Scope Report"
+        "Draft Scope and System Review"
+        if report.get("system_match") or collection
+        else "Draft Scope Report"
     )
     formats = _formats(workbook)
     formats["quantity"] = workbook.add_format(
@@ -498,7 +572,7 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
                 {"x_scale": scale, "y_scale": scale, "object_position": 1},
             )
             sheet.merge_range(1, 1, 1, 2, "CLASSIFIRE " + report_title, formats["section"])
-        elif report.get("system_match"):
+        elif report.get("system_match") or collection:
             sheet.set_row(0, 32)
             sheet.merge_range(0, 1, 0, len(headers), f"CLASSIFIRE {name}", formats["title"])
         else:
@@ -578,6 +652,10 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
 
     metadata = [[label, value] for label, value in _metadata(report)]
     metadata += [[f"{key.title()} count", len(content[key])] for key in content]
+    if collection:
+        metadata.extend(
+            [["Selected saved reviews", len(collection)], ["Review coverage", _MULTI_NOTICE]]
+        )
     metadata.append(
         [
             "Text controls",
@@ -688,7 +766,53 @@ def render_scope_report_xlsx(snapshot: dict[str, Any]) -> bytes:
             ],
             [39, 28, 100],
         )
-    if report.get("system_match"):
+    if collection:
+        table(
+            "Selected reviews",
+            ["Exact review", "Field", "Saved value"],
+            [
+                [review["key"], label, value]
+                for review in collection
+                for label, value in [
+                    ("Selected row", review["label"]),
+                    *review["identity"],
+                    *review["summary"],
+                ]
+            ],
+            [45, 40, 100],
+        )
+        table(
+            "Review and coverage",
+            ["Exact review", "Field", "Saved value"],
+            [
+                [review["key"], *row]
+                for review in collection
+                for row in review["sections"][0]["rows"]
+            ],
+            [45, 40, 100],
+        )
+        table(
+            "System candidates",
+            ["Exact review", "Candidate", "Field", "Saved value"],
+            [
+                [review["key"], part["title"], *row]
+                for review in collection
+                for part in review["sections"][1:-1]
+                for row in part["rows"]
+            ],
+            [45, 36, 55, 100],
+        )
+        table(
+            "Measured limits",
+            ["Exact review", "Field", "Saved value"],
+            [
+                [review["key"], *row]
+                for review in collection
+                for row in review["sections"][-1]["rows"]
+            ],
+            [45, 55, 100],
+        )
+    elif report.get("system_match"):
         parts = system_sections(report["system_match"])
         table(
             "Review and coverage",

@@ -44,20 +44,24 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   all 69 table inventories and retained files/schema were unchanged by that probe.
   The allowlist and OAuth/tunnel configuration were not changed.
 
-### Merged row authoring and current multi-review increment
+### Merged row authoring and multi-review packages
 
 - PR #261 merged as `095ee3d`. Its exact-head run 34707202158 and post-merge
   run 34708282314 each passed 2,127 tests and remaining checks.
 - PR #262 merged source `6c30361` as `48b4b111f6c8f539a9aa7d8211be5fcb2e61db52`.
   Exact-head run 34709110199 passed 2,134 tests and remaining checks. The merged tree
   equals the tested source. No required reviews were configured; no human GitHub review
-  is claimed. Post-merge run 34710331473 is running at this checkpoint; poll that job.
+  is claimed. Post-merge run 34710331473 also passed 2,134 tests and remaining checks.
 - [Native row authoring](./REGISTER_ROW_AUTHORING.md) retains its 104 affected local tests
   and actual service/blank review, manual-rate override, 409 conflict and restart evidence.
   A fresh candidate rehearsal restored the existing synthetic PostgreSQL clone on 15433:
   all 69 tables/schema/rows matched, metadata startup was a no-op, and retained packages
   plus the accepted Word Scope/ZIP/original verified. This is not a fresh live 15432 backup.
-- Current checkout: `.tmp/multi-review-package-20260913`, branch
+- PR #263 merged tested source `469a57f` as `d5c19d74746d4ac1cd2f6e19f63278bf560e53d7`.
+  Exact-head CI 34711480773 passed 2,199 tests and all remaining checks. The merged tree
+  equals the tested source; no required reviews were configured. Post-merge CI
+  34712796245 is running at this checkpoint; poll that existing job.
+- Preserved package checkout: `.tmp/multi-review-package-20260913`, branch
   `feat/multi-review-package-20260913`, based on `48b4b11`. It extends existing register and
   package services to retain multiple exact row reviews, explicit v6 package save/reopen,
   collection-aware imported mapping-v3 and the existing technical client-grant boundary.
@@ -73,11 +77,36 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   screenshots and ZIP contents were inspected; no page errors were observed. These are
   synthetic automated confirmations, not human technical or production approval.
   Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and migration-head checks passed.
-  Git/CI publication remains pending at this source checkpoint.
+  Publication is verified above; operational activation remains separate.
 - The operational 8820 diagnostic app, older 8840 workspace and pinned 8841 row-authoring
   demo remain unchanged. The prepared `6c30361` activation plan is not approved and does
   not include this newer format change. Future activation needs its exact candidate plan,
   fresh matched backup/disposable restore, CI and explicit approval.
+
+### Current multiple-review reporting increment
+
+- Checkout `.tmp/multi-review-reports-20260913`, branch
+  `feat/multi-review-reports-20260913`, based on merged `d5c19d7`. The
+  [report contract](./MULTI_REVIEW_REPORTS.md) extends the existing scope-and-system
+  profile with exact selected reviews, report snapshot v3 and import mapping v4.
+  No migration, model, dependency, pricing calculation or provider is introduced.
+- Shared core, UI, typed client, package dependencies and renderer checks passed in
+  their focused runs. Final combined verification passed all 52 new cases, including
+  actual disposable PostgreSQL import/scan checks; final package-screen regression
+  passed 18 cases. Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and the
+  unchanged single 0047 migration-head check passed. Publication remains pending
+  at this source checkpoint.
+- Actual 8843 Edge UAT separately saved the three-review report and ZIP. PDF/XLSX
+  and ZIP bytes match retention. Restart preserved all exact downloads, Scope and
+  66 checked domain tables. All 19 PDF pages and desktop/mobile views were inspected;
+  XLSX values/structure were inspected programmatically, not in native Excel.
+- Evidenced fixes: distinct headings for repeated client review/measurement panels,
+  and Word v7 evidence labels/provenance in report views. Earlier synthetic fixture
+  copying failed the absolute StoredFile-path guard; it was preserved and replaced
+  with a fresh isolated fixture, without changing the guard or stored bindings.
+- The 469a57f activation plan excludes this newer report format and is unapproved.
+  Live 8820 remains outside this change. The reviewed ten-defect reference remains
+  Draft evidence, not measured independent extraction accuracy or system approval.
 
 ### Earlier Word acceptance checkpoint
 

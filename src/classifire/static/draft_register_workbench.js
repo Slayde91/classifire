@@ -112,6 +112,8 @@
     scopeForm.action=url.pathname+url.search;
     const packageLink=document.querySelector("[data-register-package]"),remotePackage=page.querySelector("[data-register-package]");
     if(packageLink && remotePackage)packageLink.href=remotePackage.href;
+    const reportLink=document.querySelector("[data-register-report]"),remoteReport=page.querySelector("[data-register-report]");
+    if(reportLink && remoteReport)reportLink.href=remoteReport.href;
   }
   async function load(raw,{method="GET",fields=null,fromSave=false}={}) {
     if(busy)return;

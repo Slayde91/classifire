@@ -4,6 +4,10 @@ Status: implemented local P4b increment under accepted ADRs 0001/0002. Consult
 PROJECT_STATE.md and live Git/CI for publication. This is a shareable unapproved
 review, not a compatible-system verdict, complete report or human release.
 
+The forward [multiple-row report contract](./MULTI_REVIEW_REPORTS.md) adds v3
+collection snapshots through the same profile. The singular v2 contract below remains
+supported, including exact retained downloads and historical target types.
+
 ## User interaction and shared boundary
 
 From a saved candidate review, choose **Scope and system PDF/Excel reports**, select

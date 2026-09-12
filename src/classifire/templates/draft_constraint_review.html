@@ -1,5 +1,5 @@
-<section class="panel" aria-labelledby="constraint-heading">
-  <h2 id="constraint-heading">Check measured limits</h2>
+<section class="panel" aria-labelledby="{{ match_content_prefix|default('') }}constraint-heading">
+  <h2 id="{{ match_content_prefix|default('') }}constraint-heading">Check measured limits</h2>
   <p>Check substrate thickness, the smallest/largest annular gap and a measured service-size range for one selected opening and service pair. Enter millimetres measured using the retained source's definitions. Leave unknown measurements blank. This does not change the Scope.</p>
   <p class="callout"><strong>Partial checks, not system compatibility.</strong> Service type/material, measurement coverage, fire rating, seal depth, installation conditions and other requirements still need assessment. A value within these limits is not an approved system. Measurements and their source interpretation remain your unapproved review claims.</p>
   {% set review = envelope.get('constraint_review') %}
