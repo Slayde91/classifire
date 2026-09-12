@@ -475,6 +475,70 @@ def _verified_evidence(
         return empty | {"availability": "source_changed"}
 
 
+def _imported_evidence_links(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    scope: dict[str, Any],
+    refs: dict[int, dict[str, Any]],
+) -> dict[int, str]:
+    """Locate retained foreign claims, without reading or approving a local source."""
+    if not refs:
+        return {}
+    from .draft_package_materialization import read_import
+
+    try:
+        _row, original, mapping = read_import(db, actor, draft_id)
+        candidates: dict[int, list[str]] = {index: [] for index in refs}
+        for member in mapping.get("evidence", []):
+            path = member["path"]
+            owner = original
+            parts = path.split("!")
+            for ancestor in parts[:-1]:
+                owner = owner.origins[ancestor]
+            # A later raw Scope import can carry the same source ID and bytes but a
+            # different review. Require the exact retained ancestor and full claim.
+            lineage = {
+                key: owner.scope[key]
+                for key in (
+                    "schema_version",
+                    "artifact_id",
+                    "project_id",
+                    "revision",
+                    "created_by",
+                    "created_at",
+                    "sha256",
+                )
+            } | {"file_sha256": hashlib.sha256(owner.members["artifacts/scope.json"]).hexdigest()}
+            if lineage not in scope.get("import_lineage", []):
+                continue
+            content = original.resolve(path)
+            for index, ref in refs.items():
+                kind = ref.get("source_kind", "pdf")
+                if (
+                    parts[-1] != f"evidence/{ref['source_id']}.{kind}"
+                    or member["original_source_id"] != ref["source_id"]
+                    or member["sha256"] != ref["source_sha256"]
+                    or len(content) != ref["source_size_bytes"]
+                    or not any(
+                        dict(claim, origin="imported_unverified") == ref
+                        for claim in owner.scope.get("evidence_refs", [])
+                    )
+                ):
+                    continue
+                candidates[index].append(path)
+        return {
+            index: f"/scopes/{draft_id}/imported-package#evidence-"
+            + hashlib.sha256(paths[0].encode("utf-8")).hexdigest()
+            for index, paths in candidates.items()
+            if len(paths) == 1
+        }
+    except (DraftScopeError, ValueError, KeyError, TypeError):
+        # Missing/invalid imports and broader package permissions cannot grant a
+        # link. The final Draft check still propagates revoked project access.
+        return {}
+
+
 def evidence_context(
     db: Session,
     actor: User,
@@ -493,11 +557,14 @@ def evidence_context(
         scope = read_revision(db, actor, draft_id, scope_revision)
         selection = _evidence_selection(scope, opening_id, service_id, defect_id=defect_id)
         refs: list[dict[str, Any]] = []
+        imported_refs: dict[int, dict[str, Any]] = {}
         cache: dict[tuple[str, str], Any] = {}
         for index, ref in enumerate(scope.get("evidence_refs", [])):
             role = _evidence_role(ref, selection)
             if role is None:
                 continue
+            if ref["origin"] == "imported_unverified":
+                imported_refs[index] = ref
             refs.append(
                 {
                     "index": index,
@@ -509,6 +576,10 @@ def evidence_context(
                     **_verified_evidence(db, actor, draft_id, scope, ref, settings, cache),
                 }
             )
+        imported_links = _imported_evidence_links(db, actor, draft_id, scope, imported_refs)
+        for ref in refs:
+            if ref["index"] in imported_links:
+                ref["imported_review_url"] = imported_links[ref["index"]]
         get_draft(db, actor, draft_id)
         notices = ["Draft evidence context; no technical or physical approval."]
         if any(ref["role"] in ("opening_context", "defect_context") for ref in refs):

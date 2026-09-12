@@ -16,7 +16,8 @@
 <details><summary>Original to local identity mapping</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ mapping|tojson(indent=2) }}</pre></details></section>
 <section class="panel"><h2>Retained original reports and evidence</h2>
 <p>These are foreign attachments, not locally approved reports. Scanning checks file safety; it does not prove technical claims or agreement with report data. A new package retains these exact bytes and their original snapshots in its origin archive.</p>
-{% for source in attachments %}<article class="panel"><h3>{{ source.format|upper }} &middot; {{ source.report }}</h3>
+{% for source in attachments %}<article class="panel"{% if source.anchor %} id="{{ source.anchor }}" tabindex="-1"{% endif %}><h3>{{ source.format|upper }} &middot; {{ source.report }}</h3>
+{% if source.anchor %}<details><summary>Original file identity</summary><dl style="overflow-wrap:anywhere"><dt>Original source ID</dt><dd>{{ source.original_source_id }}</dd><dt>Retained archive path</dt><dd>{{ source.member_path }}</dd><dt>Original SHA-256</dt><dd>{{ source.original_sha256 }}</dd></dl></details>{% endif %}
 <p>Scan: {{ source.status }}; format check: {{ source.processing_error or ('processed' if source.ready else 'pending') }}</p>
 {% if has_permission('project:write') %}<form method="post" action="/scopes/{{ draft.id }}/imported-package/reports/{{ source.id }}/scan"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-secondary">Scan and check file</button></form>{% endif %}
 <p><a href="/scopes/{{ draft.id }}/imported-package/reports/{{ source.id }}/download">Download checked original {{ source.format|upper }}</a></p>

@@ -19,7 +19,42 @@ unchanged and incomplete.
   reviews were configured; no human GitHub review is claimed. Post-merge run
   34715038796 passed 2,251 tests and all remaining checks.
 
-## Active Defect-only source inspection
+## Active imported-original navigation
+
+Separate checkout `.tmp/imported-evidence-navigation-20260913`, branch
+`feat/imported-evidence-navigation-20260913`, base `1de68b9`. Connect a selected
+imported evidence reference to its exact retained-original review card through the
+existing validated package mapping. Preserve lineage, foreign unverified claims,
+current access and explicit scan/download actions. No inline imported preview,
+new parser/schema or approval is implied. All 94 distinct affected cases passed:
+30 core (seven new), eight new HTTP and 56 existing UI cases. Full Ruff, Mypy (233
+files), Bandit and single 0047 head passed. Final read-only source review found no
+issue. Private logs retain the corrected harness failures and formatting-only hash
+drift; no application guard or assertion about required behaviour was weakened.
+
+Browser acceptance retained all 67 checked domain tables before explicit scan,
+refused an unprocessed download, then returned exact DOCX/original ZIP bytes after
+explicit scan. Imported claims stayed unverified. Desktop/mobile, original identity
+and ZIP members were inspected. Restart preserved the same review link/anchor,
+DOCX, ZIP, Scope revisions 2/3 and all 67 tables without rescanning or package writes.
+Only the new isolated demo 8847 and disposable 15433 database were used.
+
+Private artifacts: `.tmp/imported-evidence-navigation-uat-20260913`,
+`.tmp/imported-evidence-validation-20260913`,
+`.tmp/imported-evidence-core-validation-20260913`, and
+`.tmp/imported-evidence-ui-validation-20260913`. Earlier completed fixtures and
+runtimes remain untouched. Nine files are classified: four application, two synthetic
+test and three documentation files. The local commit message is:
+Link imported evidence to exact retained original review cards.
+Resolve its exact hash from this branch and the private finalization receipt.
+
+Pinned local commits `6d4793b`, `51e3666` and `1de68b9` remain clean. The current
+three-commit public-publication question supersedes the earlier two-commit question;
+this extra navigation change is outside both. No publication or activation approval
+has arrived. Keep the prior candidates pinned while resolving explicit publication
+scope; do not retry the rejected push without the required approval.
+
+## Locally committed Defect-only source inspection
 
 Source `.tmp/defect-source-evidence-20260913`, branch
 `feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`. It extends the
@@ -46,10 +81,10 @@ Final source review found no actionable issue. The reviewed change contains six
 application files, two synthetic test files and three documentation files. The local
 commit message is: Allow source inspection for Defects with unresolved relationships.
 Resolve its exact hash from this branch and the private finalization receipt.
-This additional change is outside the pending two-commit public-publication question
-and has no upstream, PR or activation approval. Next resolve explicit publication
-scope before push/PR, then observe exact-head CI and required reviews before merge.
-Keep activation separately approved.
+Commit `1de68b9f41582fc5297260d3a838e2851a4defbb` is clean in its pinned checkout
+and is included in the pending three-commit public-publication question. No upstream,
+PR or activation approval exists. Observe exact-head CI and required reviews before
+any merge; keep activation separately approved.
 
 ## Locally committed register source evidence increment
 

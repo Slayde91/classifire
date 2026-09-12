@@ -15,7 +15,38 @@ It has a shared authenticated client adapter and portable selected-project ZIPs.
 The accepted hybrid direction (ADRs 0001/0002) remains unchanged. The full production
 platform, broad document interpretation and canonical Phase 8-14 exits are incomplete.
 
-### Active Defect-only source inspection
+### Active imported-original navigation increment
+
+- Separate checkout `.tmp/imported-evidence-navigation-20260913`, branch
+  `feat/imported-evidence-navigation-20260913`, based on pinned `1de68b9`.
+  The selected local task connects exact imported row references to their existing
+  retained-original review cards; scanning and downloading remain explicit actions.
+  The imported claim remains unverified, without inline text/image previews.
+- Validation passed 94 distinct affected cases: 30 native/core (seven new), eight
+  new HTTP cases and 56 existing register/package UI cases. Full Ruff, Mypy (233 files),
+  Bandit and unchanged single 0047 migration head passed. Independent final source
+  review found no actionable issue. No application correction was needed during tests.
+- Actual synthetic Edge acceptance on 8847 opened the exact original card and left all
+  67 checked domain tables unchanged. Download was refused before the imported binding's
+  explicit source check. After an explicit scan, DOCX and original ZIP downloads matched
+  retained bytes exactly; only the imported-source table changed among those 67 tables.
+  The imported claim stayed unverified, with no inline source body or images. Desktop,
+  mobile, original identity and the three-member ZIP were inspected.
+- Restart preserved the exact review URL/anchor, DOCX, ZIP, Scope revisions 2/3 and all
+  67 checked domain tables, with no rescan, package write or page error. Synthetic
+  acceptance is not customer accuracy, human production acceptance or deployment.
+- Retained logs disclose test-harness corrections: fixture paths/revision assumptions,
+  an audited download inside a no-write check, ZIP member ordering, an overbroad form
+  assertion that caught Logout, and Edge internal assets misclassified as network
+  traffic. HTTP coverage passed across the original and corrected-case runs; its first
+  source manifest saw only Ruff formatting drift, with route/templates stable.
+- Nine reviewed files: four application files, two synthetic tests, three documentation
+  files. No schema, migration, package version, parser, provider or authority change.
+  The prior three publication candidates remain pinned and clean. This additional
+  change is outside their pending public-publication question; no upstream, PR, hosted
+  CI, merge or activation is claimed.
+
+### Locally committed Defect-only source inspection
 
 - New isolated checkout `.tmp/defect-source-evidence-20260913`, branch
   `feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`.
@@ -36,9 +67,10 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   and no live 15432 database was contacted. This does not establish real-report accuracy.
 - Final source review found no actionable issue. The change contains six application
   files, two synthetic tests and three documentation files. No model, migration,
-  parser, provider or existing authority change. The `51e3666` activation plan and
-  pending two-commit public-publication question remain pinned and do not include
-  this additional change. Publication, CI and activation are not claimed.
+  parser, provider or existing authority change. Commit `1de68b9` is now included
+  in the pending three-commit public-publication question. The `51e3666` activation
+  plan remains pinned and excludes this additional change. Publication, hosted CI
+  and activation are not claimed.
 
 ### Locally committed register evidence increment
 
@@ -308,12 +340,13 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-PRs #260-#264 and their post-merge checks passed. Complete-report source is locally
-committed as `6d4793b`; finish the Evidence-tab restart/classification and explicit-file
-commit. Publication to the verified public repository awaits explicit approval.
-After approval, reconcile both commits, the PR base/head and their dependencies before
-pushing; observe successful CI and required reviews before merge. Never restart a job
-because observation expires.
+PRs #260-#264 and their post-merge checks passed. Complete-report source `6d4793b`,
+register Evidence `51e3666` and Defect-only Evidence `1de68b9` are locally committed
+and pinned. Their publication to the verified public repository awaits explicit
+approval. The separate imported-original navigation increment is locally validated
+and is outside that approval question. After approval, reconcile the exact approved
+commits, PR base/head and dependencies before pushing; observe successful CI and
+required reviews before merge. Never restart a job because observation expires.
 Any activation requires a fresh exact-candidate plan covering new report formats and
 mapping v4, backup/storage parity, disposable restore and explicit owner approval.
 Provider, host policy and OAuth/tunnel changes remain separate approval decisions.

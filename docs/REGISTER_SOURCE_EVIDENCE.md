@@ -42,6 +42,21 @@ metadata; this endpoint never resolves them as local source authority. AI lineag
 identifiers/hashes may remain metadata, but unavailable previews exclude source quotes
 and proposed values. Source integrity is not technical or physical approval.
 
+## Imported original navigation
+
+An imported row may offer **Review retained imported original** when its exact saved
+reference and import lineage identify one retained evidence member in the validated
+ProjectPackage mapping. The link opens that member's existing review card in another
+tab. Its anchor identifies the full retained archive path, including nested origins;
+a reused local source row does not collapse distinct ancestor cards.
+
+This is navigation, not inline preview or local approval. The row remains
+`imported_unverified`, with no source text or images exposed. Opening Evidence does
+not scan, download, interpret or adopt a foreign source ID. The existing imported
+package page and subsequent explicit scan/download actions recheck current rights
+and source safety. Missing, ambiguous or unavailable bindings offer no original link.
+No model, migration, package format, parser or authority rule changes.
+
 ## Interface and authority
 
 The browser binds a fragment to the exact Draft, revision and selected identity before
