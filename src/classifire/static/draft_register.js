@@ -153,13 +153,31 @@
         const identity=col.frozen ? row[col.key.slice(0,-3)] : null;
         const display=identity?.label || raw;
         const reviewURL=col.key === "system" ? row.target.system_url : col.key === "price" ? row.target.price_url : null;
-        if (typeof reviewURL === "string" && reviewURL.startsWith("/scopes/") && !reviewURL.includes("\\")) {
+        const workbench=document.getElementById("register-workbench");
+        const capability=col.key === "system" ? "system" : col.key === "price" ? "price" : null;
+        if (capability && workbench) {
+          const action=button(display || (capability === "system" ? "Review systems" : "Set price"),()=>{
+            select(r,c);
+            document.dispatchEvent(new CustomEvent("classifire:register-author",{detail:{
+              capability, savedURL:reviewURL, modified, row:{defect_id:row.defect?.id,
+              opening_id:row.opening?.id, service_id:row.service?.id, blank:row.opening?.blank,
+              label:row.service?.label || row.opening?.label, needsReview:row.needsReview,
+              systemURL:row.target.system_url, priceURL:row.target.price_url}
+            }}));
+          });
+          action.dataset.registerOpening=row.opening?.id || "";
+          action.dataset.registerService=row.service?.id || "";
+          action.dataset.registerCapability=capability;
+          action.disabled=row.needsReview || !(row.service || row.opening?.blank) || workbench.dataset[capability] !== "true";
+          action.title=action.disabled ? "Resolve this row's relationships and check access before authoring." : `Work with ${capability === "system" ? "technical candidates" : "prices"} beside this row`;
+          td.append(action);
+        } else if (typeof reviewURL === "string" && reviewURL.startsWith("/scopes/") && !reviewURL.includes("\\")) {
           const link=node("a",display);link.href=reviewURL;link.title=`Review saved ${col.key} result`;td.append(link);
         } else td.textContent=display;
         td.dataset.r=String(r);td.dataset.c=String(c);td.setAttribute("role","gridcell");td.setAttribute("aria-colindex",String(c+2));td.setAttribute("aria-label",`${col.title}: ${display}. ${identity ? "Stable identifier: " + raw : ""}`);td.title=identity ? `${display} - ${raw}. Copy this cell to copy the full stable identifier.` : (raw || "Unknown");
         if(!col.field||!row[col.kind]){td.classList.add("register-protected");td.setAttribute("aria-readonly","true");}
         if(col.frozen){td.classList.add("register-frozen");td.style.left=`${left}px`;left+=col.width;}
-        td.addEventListener("pointerdown",e=>{if(editor||e.button!==0||e.target.closest("a"))return;e.preventDefault();dragging=true;select(r,c,e.shiftKey,true);});
+        td.addEventListener("pointerdown",e=>{if(editor||e.button!==0||e.target.closest("a,button"))return;e.preventDefault();dragging=true;select(r,c,e.shiftKey,true);});
         td.addEventListener("pointerenter",()=>{if(dragging&&!editor)select(r,c,true);});
         td.addEventListener("dblclick",()=>edit(r,c));tr.append(td);
       });body.append(tr);
@@ -208,7 +226,9 @@
     ordered.find(el=>table.compareDocumentPosition(el)&(backwards?2:4))?.focus();
   }
   function edit(r,c,initial) {
-    const col=columns[c],row=rows[r];if(!writable||!col.field||!row?.[col.kind]){showError("This cell is protected. Use the existing review actions for systems, prices and relationships.");return;}
+    const col=columns[c],row=rows[r];
+    if(initial===undefined && ["system","price"].includes(col.key)) { table.querySelector(`td[data-r="${r}"][data-c="${c}"] button`)?.click();return; }
+    if(!writable||!col.field||!row?.[col.kind]){showError("This cell is protected. Use the existing review actions for systems, prices and relationships.");return;}
     const td=table.querySelector(`td[data-r="${r}"][data-c="${c}"]`);select(r,c);const input=node(col.choices?"select":"input");
     if(col.choices)col.choices.forEach(v=>input.append(new Option(v,v)));else input.type="text";
     input.value=initial===undefined?rowValue(row,col):initial;input.setAttribute("aria-label",`Edit ${col.title}`);editor=input;td.replaceChildren(input);input.focus();if(input.select)input.select();let done=false;
@@ -227,6 +247,13 @@
   }
   table.addEventListener("copy",e=>{if(editor||!rows.length)return;const [r0,r1,c0,c1]=bounds();const lines=[];for(let r=r0;r<=r1;r++){const cells=[];for(let c=c0;c<=c1;c++){let v=String(rowValue(rows[r],columns[c]));if(/[\t\r\n"]/.test(v))v='"'+v.replaceAll('"','""')+'"';cells.push(v);}lines.push(cells.join("\t"));}e.clipboardData.setData("text/plain",lines.join("\r\n"));e.preventDefault();});
   table.addEventListener("paste",e=>{if(editor)return;e.preventDefault();try{const matrix=parseTSV(e.clipboardData.getData("text/plain")),[r0,r1,c0,c1]=bounds();if(matrix.length===1&&matrix[0].length===1){applyFill(matrix[0][0]);return;}if((r0!==r1||c0!==c1)&&(matrix.length!==r1-r0+1||matrix[0].length!==c1-c0+1))throw new Error("Clipboard dimensions must match the selected range.");const changes=[];matrix.forEach((values,r)=>values.forEach((v,c)=>changes.push([r0+r,c0+c,v])));commit(changes);}catch(err){showError(err.message);}});
+  table.addEventListener("focusin",event=>{
+    const cell=event.target.closest("td[data-r]");
+    if(cell && event.target===cell && !editor) {
+      const r=Number(cell.dataset.r),c=Number(cell.dataset.c);
+      if(r!==end[0] || c!==end[1])select(r,c);
+    }
+  });
   table.addEventListener("keydown",e=>{if(editor||e.target.closest("a,button,input,select,textarea"))return;const mod=e.ctrlKey||e.metaKey;if(mod&&e.key.toLowerCase()==="z"){e.preventDefault();history(e.shiftKey);return;}if(mod&&e.key.toLowerCase()==="y"){e.preventDefault();history(true);return;}if(mod&&e.key.toLowerCase()==="a"){e.preventDefault();anchor=[0,0];end=[Math.max(0,rows.length-1),columns.length-1];selected();return;}
     if(e.key==="Tab"){if(tabNext(end[0],end[1],e.shiftKey))e.preventDefault();return;}
     const delta={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];if(delta){e.preventDefault();select(end[0]+delta[0],end[1]+delta[1],e.key!=="Tab"&&e.shiftKey,true);return;}
@@ -241,5 +268,9 @@
   // Opening a closed detail panel makes native validation errors discoverable.
   form.addEventListener("invalid",()=>{const details=form.querySelector(".scope-detail-editor");if(details)details.open=true;},true);
   if(!writable)toolbar.querySelectorAll("button,input:not([type=search])").forEach(el=>{el.disabled=true;});
+  document.addEventListener("classifire:register-results",event=>{
+    if (!event.detail || typeof event.detail.targets !== "object") return;
+    context=event.detail;render();
+  });
   render();
 })();

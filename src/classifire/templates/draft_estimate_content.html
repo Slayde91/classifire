@@ -58,7 +58,7 @@
   {% for line in envelope.lines %}
   {% set attempted = error_line_id == line.line_id %}
   {% set values = form_values if attempted else {} %}
-  <article class="scope-item" id="estimate-line-{{ line.line_id }}" aria-labelledby="line-heading-{{ line.line_id }}">
+  <article class="scope-item" data-estimate-target="{{ line.target_kind }}:{{ line.target_id }}" id="estimate-line-{{ line.line_id }}" aria-labelledby="line-heading-{{ line.line_id }}">
     <div class="scope-import-item-heading"><h3 id="line-heading-{{ line.line_id }}">{{ loop.index }}. {{ line.label }}</h3><span class="badge badge-draft">{{ line.pricing_status }}</span></div>
     <p class="scope-preserve-text">{{ line.description }}</p>
     <dl class="scope-import-details">
