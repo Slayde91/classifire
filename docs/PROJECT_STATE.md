@@ -15,6 +15,31 @@ It has a shared authenticated client adapter and portable selected-project ZIPs.
 The accepted hybrid direction (ADRs 0001/0002) remains unchanged. The full production
 platform, broad document interpretation and canonical Phase 8-14 exits are incomplete.
 
+### Active local register evidence increment
+
+- Checkout `.tmp/register-source-evidence-20260913`, branch
+  `feat/register-source-evidence-20260913`, based on local Complete-report commit
+  `6d4793b`. [Evidence contract](./REGISTER_SOURCE_EVIDENCE.md) defines exact saved-row
+  PDF/Word/Excel inspection through existing intake readers and current access checks.
+  No migration/model, provider, downstream execution or canonical writer is added.
+- 54 unique core/HTTP cases passed (14 new core, 36 new HTTP and 4 existing register).
+  Full Ruff, Mypy (233 files), Bandit and unchanged single 0047 migration head passed.
+  Another 68 affected authoring/history/chat regressions passed: 122 unique affected
+  cases in total. Actual Edge showed nine verified references across PDF/Word/Excel,
+  including intact originals behind stale claims, blank and unlinked rows. Unsaved
+  edits were excluded, Scope 1/4/6 downloads matched exact retained bytes and all 67
+  checked domain tables stayed unchanged. Desktop/mobile output was inspected; no
+  page errors or mobile document overflow. Restart preserved all 12 checked image URLs,
+  Scope 1/4/6 bytes and all 67 domain tables; source-cell F2 passed.
+- Parent PR #264 post-merge run 34715038796 passed 2,251 tests and remaining checks.
+  Complete-report commit `6d4793b` is clean and local, with no upstream or PR.
+  GitHub confirms `Slayde91/classifire` is public. Automatic approval review rejected
+  its proprietary-source push pending explicit destination approval; that question
+  remains pending. No publication or visibility/protection change is implied.
+- Evidence-tab changes are locally validated; publication remains pending. The pinned Complete-report source,
+  conflicted root and operational 8820 runtime remain untouched. Any new activation
+  requires its own exact tested candidate plan and explicit approval.
+
 ### Merged workspace and current runtime
 
 - PR #260 merged the integrated workspace as `3eabb23ecddce98dc3e8583236f9cb055b218280`.
@@ -98,7 +123,7 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   `ccaff7a` as `e96c6928ffdbc11a9bd2fb890105e83f05c87625` after exact-head run
   34713651083 passed 2,251 tests and all checks. The full merged tree equals the
   tested source. No required reviews were configured; no human review is claimed.
-  Post-merge job 34715038796 is running at this checkpoint; poll that existing job.
+  Post-merge job 34715038796 passed 2,251 tests and all remaining checks.
 - Actual 8843 Edge UAT separately saved the three-review report and ZIP. PDF/XLSX
   and ZIP bytes match retention. Restart preserved all exact downloads, Scope and
   66 checked domain tables. All 19 PDF pages and desktop/mobile views were inspected;
@@ -258,10 +283,12 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-PRs #260-#264 are merged after observed successful exact-head CI. Post-merge
-checks through #263 passed; poll existing #264 run 34715038796. Finish the current
-Complete-report combined checks, explicit-file commit/push/PR, then observe successful
-CI and required reviews before merge. Never restart a job because observation expires.
+PRs #260-#264 and their post-merge checks passed. Complete-report source is locally
+committed as `6d4793b`; finish the Evidence-tab restart/classification and explicit-file
+commit. Publication to the verified public repository awaits explicit approval.
+After approval, reconcile both commits, the PR base/head and their dependencies before
+pushing; observe successful CI and required reviews before merge. Never restart a job
+because observation expires.
 Any activation requires a fresh exact-candidate plan covering new report formats and
 mapping v4, backup/storage parity, disposable restore and explicit owner approval.
 Provider, host policy and OAuth/tunnel changes remain separate approval decisions.

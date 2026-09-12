@@ -19,6 +19,10 @@ quantity/labour -> commercial recovery -> validation/snapshot -> output -> human
 Users may stop after any capability and resume from explicit saved artifacts. A valid
 manual/imported artifact replaces session dependence, not the required evidence or authority.
 
+The locally implemented [register source evidence view](./REGISTER_SOURCE_EVIDENCE.md)
+reuses the existing intake and row services for read-only exact-revision context.
+Its validation/publication status is tracked separately; no schema or authority changes.
+
 ## Implemented components
 
 ```mermaid

@@ -1,0 +1,27 @@
+{% extends "draft_register_workbench_base.html" if workspace_register|default(false) else "base.html" %}
+{% block title %}Source evidence | CLASSIFIRE{% endblock %}
+{% block heading %}Source evidence{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="/static/draft_register.css">
+<p>Saved Scope revision {{ scope.revision }}. This view is read-only; unsaved edits are not included.</p>
+<ul class="register-guide"><li>Compare saved fields with their retained source text and pictures.</li><li>Opening and Defect references are context; they do not independently prove a Service value.</li><li>Use the source review and its separate confirmation to record corrections. No AI, matching or pricing runs here.</li></ul>
+<p><a href="/scopes/{{ draft.id }}?revision={{ scope.revision }}">Open this saved Scope revision</a></p>
+{% if evidence.selection.relationship_warnings %}<div class="alert alert-warning"><strong>Relationships need review</strong><ul>{% for warning in evidence.selection.relationship_warnings %}<li>{{ warning }}</li>{% endfor %}</ul></div>{% endif %}
+{% for notice in evidence.notices %}<p class="callout">{{ notice }}</p>{% endfor %}
+<details><summary>Saved row values and identities</summary>
+{% for collection, identity in [('defects', evidence.selection.defect_id), ('openings', evidence.selection.opening_id), ('services', evidence.selection.service_id)] %}
+{% for record in scope.content[collection] if record.id == identity %}<h3>{{ collection|capitalize }}</h3><dl class="scope-import-details">{% for field, value in record.items() %}<dt>{{ field|replace('_',' ')|capitalize }}</dt><dd class="scope-preserve-text">{{ 'Unknown / unavailable' if value is none or value == '' else value }}</dd>{% endfor %}</dl>{% endfor %}
+{% endfor %}</details>
+{% for ref in evidence.refs %}
+<section class="register-evidence-source" data-evidence-reference="{{ ref.index }}">
+<h3>{{ ref.label }}</h3>
+<p><strong>{{ 'Service evidence claim' if ref.role == 'selected_service' else 'Opening context' if ref.role == 'opening_context' else 'Defect context' }}</strong></p>
+<p>Saved claim: {{ ref.status|replace('_',' ') }}. {% if ref.availability == 'verified' %}<strong>Retained source binding checked.</strong> This verifies file identity and access, not the truth of the claim.{% elif ref.availability == 'imported_unverified' %}<strong>Imported claim, unverified locally.</strong> Foreign source IDs are not treated as local sources.{% else %}<strong>Source preview unavailable: {{ ref.availability|replace('_',' ') }}.</strong> Saved source claims remain visible; no replacement source is shown.{% endif %}</p>
+{% if ref.review_url %}<p><a href="{{ ref.review_url }}" target="_blank" rel="noopener">Open source review for the current Draft</a>. Corrections require a separate preview and confirmation.</p>{% endif %}
+<details><summary>Source identity and saved review history</summary><dl class="scope-import-details">{% for field, value in ref.metadata.items() %}<dt>{{ field|replace('_',' ')|capitalize }}</dt><dd class="scope-preserve-text">{{ value }}</dd>{% endfor %}</dl></details>
+{% if ref.text is not none %}<h4>Retained source text</h4><pre>{{ ref.text }}</pre>{% endif %}
+{% if ref.fields %}<table><thead><tr><th>Mapped field</th><th>Source cell</th><th>Retained value</th></tr></thead><tbody>{% for field in ref.fields %}<tr><td>{{ field.label }}</td><td>{{ field.address if field.address else 'Mapped cell is blank' if field.mapped else 'Not mapped' }}</td><td>{{ 'Unknown / unavailable' if field.value is none or field.value == '' else field.value }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+{% for picture in ref.images %}<figure><img src="{{ picture.url }}" alt="{{ picture.label }}" loading="lazy"><figcaption>{{ picture.label }}. Retained source context; image placement alone does not prove a physical relationship.</figcaption></figure>{% endfor %}
+</section>
+{% else %}<p>No retained evidence references are attached to this row or its known ancestors. Manual values and unknowns remain as saved.</p>{% endfor %}
+{% endblock %}

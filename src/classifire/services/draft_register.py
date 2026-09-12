@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from ..config import Settings
 from ..models import User
 from ..security import has_permission
 from . import draft_estimates as estimates
 from . import draft_system_matches as matches
 from .draft_scope import DraftScopeError, get_draft, read_revision
-from .draft_scope_evidence import reference_status
+from .draft_scope_evidence import reference_changed, reference_label, reference_status
 
 
 def hierarchy_review(content: dict[str, Any]) -> dict[str, list[str]]:
@@ -222,3 +225,332 @@ def register_context(
         result["warnings"].extend(stale)
     result["warnings"] = list(dict.fromkeys(result["warnings"]))
     return result
+
+
+def _evidence_selection(
+    scope: dict[str, Any], opening_id: str | None, service_id: str | None
+) -> dict[str, Any]:
+    content = scope["content"]
+    opening = next((item for item in content["openings"] if item["id"] == opening_id), None)
+    service = next((item for item in content["services"] if item["id"] == service_id), None)
+    if (
+        (opening_id is None and service_id is None)
+        or (opening_id is not None and opening is None)
+        or (service_id is not None and service is None)
+        or (service is not None and opening_id is None and service["opening_ids"])
+        or (
+            service is not None
+            and opening_id is not None
+            and opening_id not in service["opening_ids"]
+        )
+    ):
+        raise DraftScopeError("REGISTER_EVIDENCE_SELECTION_INVALID", 422)
+    defect_id = opening["defect_id"] if opening else None
+    defect = next((item for item in content["defects"] if item["id"] == defect_id), None)
+    readiness = hierarchy_review(content)
+    return {
+        "opening_id": opening_id,
+        "service_id": service_id,
+        "defect_id": defect_id,
+        "opening_label": opening["label"] if opening else None,
+        "service_label": service["label"] if service else None,
+        "defect_label": defect["label"] if defect else None,
+        "opening_ids": list(service["opening_ids"]) if service else [],
+        "blank": opening["blank"] if opening else None,
+        "relationship_warnings": list(
+            dict.fromkeys(readiness.get(opening_id or "", []) + readiness.get(service_id or "", []))
+        ),
+    }
+
+
+def _evidence_role(ref: dict[str, Any], selection: dict[str, Any]) -> str | None:
+    kind = ref.get("target_kind")
+    if kind in ("service", "opening", "defect") and ref["target_id"] == selection[kind + "_id"]:
+        return "selected_service" if kind == "service" else kind + "_context"
+    return None
+
+
+def _evidence_metadata(ref: dict[str, Any]) -> dict[str, Any]:
+    # Do not expose saved text, mapped values, AI quotes or arbitrary nested source data
+    # when current source access or the exact historical binding cannot be verified.
+    metadata = {
+        key: ref[key]
+        for key in (
+            "source_id",
+            "source_sha256",
+            "source_size_bytes",
+            "original_filename",
+            "document_sha256",
+            "scan_sha256",
+            "reviewed_by",
+            "reviewed_at",
+            "method",
+            "origin",
+            "target_kind",
+            "target_id",
+            "target_sha256",
+        )
+    }
+    kind = ref.get("source_kind", "pdf")
+    metadata["source_kind"] = kind
+    if kind == "docx":
+        metadata.update(locator=ref["block"]["locator"], text_sha256=ref["block"]["text_sha256"])
+    elif kind == "xlsx":
+        row = ref["row"]
+        metadata.update(
+            locator=f"{row['sheet']} / row {row['row']}",
+            sheet=row["sheet"],
+            sheet_index=row["sheet_index"],
+            row=row["row"],
+            row_sha256=row["sha256"],
+            header_row=row["header_row"],
+        )
+        for field, cell in row["fields"].items():
+            metadata[field + "_mapped_column"] = row["mapping"][field]
+            metadata[field + "_cell"] = cell["address"] if cell else None
+    else:
+        metadata.update(
+            locator=ref["locator_key"],
+            page_number=ref["page_number"],
+            text_sha256=ref["page_text_sha256"],
+        )
+    for picture in ref.get("images", []):
+        identity = picture.get("id", picture.get("occurrence_id"))
+        for key, value in picture.items():
+            if key in ("id", "occurrence_id"):
+                continue
+            metadata[f"{identity}_{key}"] = (
+                json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+            )
+    if "suggestion" in ref:
+        for key in (
+            "schema",
+            "suggestion_id",
+            "provider",
+            "model",
+            "prompt_version",
+            "input_sha256",
+            "response_sha256",
+            "page_image_sha256",
+            "generated_at",
+            "basis",
+        ):
+            metadata["suggestion_" + key] = ref["suggestion"][key]
+    return metadata
+
+
+def _evidence_body(ref: dict[str, Any], document: dict[str, Any]) -> dict[str, Any]:
+    """Bind the selected saved text/cells and image claims to the verified document."""
+    kind = ref.get("source_kind", "pdf")
+    text_value, fields, images = None, [], []
+    if kind == "docx":
+        block = next(
+            item for item in document["blocks"] if item["locator"] == ref["block"]["locator"]
+        )
+        if {key: block[key] for key in ref["block"]} != ref["block"]:
+            raise ValueError("Word claim changed")
+        pictures = {item["id"]: item for item in document["pictures"]}
+        for picture in ref["images"]:
+            if pictures.get(picture["id"]) != picture:
+                raise ValueError("Word picture changed")
+            images.append(
+                {"id": picture["id"], "label": f"{picture['id']} at {picture['locator']}"}
+            )
+        text_value = block["text"]
+    elif kind == "xlsx":
+        from .draft_scope_xlsx_contract import selected_rows
+
+        row = ref["row"]
+        _plan, rows = selected_rows(
+            document,
+            {
+                "sheet_index": row["sheet_index"],
+                "header_row": row["header_row"],
+                "mapping": row["mapping"],
+                "selections": [{"row": row["row"], "kinds": [ref["target_kind"]]}],
+            },
+        )
+        if rows != [row]:
+            raise ValueError("Workbook row changed")
+        sheet = document["sheets"][row["sheet_index"] - 1]
+        pictures = {item["occurrence_id"]: item for item in sheet["images"]}
+        for picture in ref["images"]:
+            if pictures.get(picture["occurrence_id"]) != picture:
+                raise ValueError("Workbook picture changed")
+            identity = picture["occurrence_id"]
+            images.append({"id": identity, "label": f"{row['sheet']} / {identity}"})
+        for name, cell in row["fields"].items():
+            fields.append(
+                {
+                    "label": name.replace("_", " "),
+                    "value": cell["value"] if cell else None,
+                    "address": cell["address"] if cell else None,
+                    "kind": cell["kind"] if cell else None,
+                    "mapped": row["mapping"][name] is not None,
+                }
+            )
+    else:
+        page = next(item for item in document["pages"] if item["page_number"] == ref["page_number"])
+        if any(page[key] != ref[key] for key in ("locator_key", "page_text_sha256")):
+            raise ValueError("PDF page changed")
+        text_value = page["text"]
+        images = [{"id": "page", "label": f"Page {ref['page_number']}"}]
+    return {"text": text_value, "fields": fields, "images": images}
+
+
+def _verified_evidence(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    scope: dict[str, Any],
+    ref: dict[str, Any],
+    settings: Settings,
+    cache: dict[tuple[str, str], Any],
+) -> dict[str, Any]:
+    empty: dict[str, Any] = {"text": None, "fields": [], "images": []}
+    if ref["origin"] != "local_retained":
+        # Import mappings retain original bytes, but neither their foreign IDs nor their
+        # foreign document/scan claims are current local source authority.
+        return empty | {"availability": "imported_unverified"}
+    kind = ref.get("source_kind", "pdf")
+    key = (kind, ref["source_id"])
+    try:
+        if key not in cache:
+            from . import draft_pdf_intake, draft_scope_docx, draft_scope_xlsx
+
+            reader = {
+                "pdf": draft_pdf_intake._intake,
+                "docx": draft_scope_docx.intake,
+                "xlsx": draft_scope_xlsx.intake,
+            }[kind]()
+            try:
+                cache[key] = reader._document(
+                    db, actor, draft_id, ref["source_id"], settings.storage_root
+                )
+            except DraftScopeError as exc:
+                cache[key] = exc
+        verified = cache[key]
+        if isinstance(verified, DraftScopeError):
+            raise verified
+        source, document, content = verified
+        if (
+            content.sha256 != ref["source_sha256"]
+            or content.size_bytes != ref["source_size_bytes"]
+            or source.document_sha256 != ref["document_sha256"]
+            or hashlib.sha256(source.scan_json.encode("utf-8")).hexdigest() != ref["scan_sha256"]
+        ):
+            return empty | {"availability": "source_changed"}
+        return _evidence_body(ref, document) | {"availability": "verified"}
+    except DraftScopeError as exc:
+        if exc.status_code == 403:
+            raise
+        return empty | {"availability": "unavailable"}
+    except (ValueError, KeyError, TypeError, StopIteration):
+        return empty | {"availability": "source_changed"}
+
+
+def evidence_context(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    scope_revision: int,
+    opening_id: str | None,
+    service_id: str | None = None,
+    *,
+    settings: Settings,
+) -> dict[str, Any]:
+    """Read one exact register row's source context; never infer relationships or write."""
+    with db.no_autoflush:
+        if type(scope_revision) is not int or not 1 <= scope_revision <= 2147483647:
+            raise DraftScopeError("REGISTER_EVIDENCE_SELECTION_INVALID", 422)
+        scope = read_revision(db, actor, draft_id, scope_revision)
+        selection = _evidence_selection(scope, opening_id, service_id)
+        refs: list[dict[str, Any]] = []
+        cache: dict[tuple[str, str], Any] = {}
+        for index, ref in enumerate(scope.get("evidence_refs", [])):
+            role = _evidence_role(ref, selection)
+            if role is None:
+                continue
+            refs.append(
+                {
+                    "index": index,
+                    "role": role,
+                    "label": reference_label(ref, scope["content"]),
+                    "status": reference_status(ref, scope["content"]),
+                    "claim_changed": reference_changed(ref, scope["content"]),
+                    "metadata": _evidence_metadata(ref),
+                    **_verified_evidence(db, actor, draft_id, scope, ref, settings, cache),
+                }
+            )
+        get_draft(db, actor, draft_id)
+        notices = ["Draft evidence context; no technical or physical approval."]
+        if any(ref["role"] != "selected_service" for ref in refs):
+            notices.append(
+                "Defect and Opening references are inherited context, not proof of this Service."
+            )
+        if not refs:
+            notices.append(
+                "No source references are saved for this row; missing evidence remains unknown."
+            )
+        return {
+            "scope": {key: value for key, value in scope.items() if key != "evidence_refs"},
+            "selection": selection,
+            "refs": refs,
+            "notices": notices,
+        }
+
+
+def evidence_image(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    scope_revision: int,
+    opening_id: str | None,
+    service_id: str | None = None,
+    *,
+    ref_index: int,
+    image_id: str,
+    settings: Settings,
+) -> tuple[bytes, str]:
+    """Recheck the saved reference before an existing bounded image reader runs."""
+    with db.no_autoflush:
+        context = evidence_context(
+            db, actor, draft_id, scope_revision, opening_id, service_id, settings=settings
+        )
+        selected = next((ref for ref in context["refs"] if ref["index"] == ref_index), None)
+        if type(ref_index) is not int or selected is None:
+            raise DraftScopeError("REGISTER_EVIDENCE_IMAGE_NOT_FOUND", 404)
+        if selected["availability"] != "verified":
+            raise DraftScopeError("REGISTER_EVIDENCE_SOURCE_UNAVAILABLE", 409)
+        if type(image_id) is not str or not any(
+            image["id"] == image_id for image in selected["images"]
+        ):
+            raise DraftScopeError("REGISTER_EVIDENCE_IMAGE_NOT_FOUND", 404)
+        from . import draft_pdf_intake, draft_scope_docx, draft_scope_xlsx
+
+        metadata = selected["metadata"]
+        source_id = metadata["source_id"]
+        if metadata["source_kind"] == "docx":
+            value = draft_scope_docx.image_preview(
+                db, actor, draft_id, source_id, image_id, settings=settings
+            )
+        elif metadata["source_kind"] == "xlsx":
+            value = draft_scope_xlsx.image_preview(
+                db,
+                actor,
+                draft_id,
+                source_id,
+                metadata["sheet_index"],
+                image_id,
+                settings=settings,
+            )
+        else:
+            value = draft_pdf_intake.page_preview(
+                db, actor, draft_id, source_id, metadata["page_number"], settings=settings
+            )
+        final = evidence_context(
+            db, actor, draft_id, scope_revision, opening_id, service_id, settings=settings
+        )
+        if selected not in final["refs"]:
+            raise DraftScopeError("REGISTER_EVIDENCE_SOURCE_UNAVAILABLE", 409)
+        return value, "image/png"

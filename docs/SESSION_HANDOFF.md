@@ -17,7 +17,25 @@ unchanged and incomplete.
   `e96c6928ffdbc11a9bd2fb890105e83f05c87625`. Exact-head run 34713651083 passed
   2,251 tests and all checks. Full merged tree equality was verified. No required
   reviews were configured; no human GitHub review is claimed. Post-merge run
-  34715038796 is running; poll that existing job rather than restarting it.
+  34715038796 passed 2,251 tests and all remaining checks.
+
+## Active register source evidence increment
+
+Source: `C:/CLASSIFIRE/.tmp/register-source-evidence-20260913`, branch
+`feat/register-source-evidence-20260913`, based on local `6d4793b`.
+The read-only [Evidence tab](./REGISTER_SOURCE_EVIDENCE.md) is implemented; 122 unique
+affected cases and static checks passed. Mixed-source Edge acceptance passed including
+stale, blank/unlinked and unsaved-edit checks with unchanged domain state. Restart
+retained 12 image URLs, three Scope downloads and all 67 checked domain tables exactly;
+source-cell F2 passed. Continue from private `.tmp/register-source-evidence-uat-20260913` and
+`.tmp/register-evidence-validation-20260913` receipts.
+The marked demo uses only PostgreSQL15433 and port8845; never use live15432 for tests.
+
+The separate Complete-report checkout is clean at `6d4793b`, no upstream or PR.
+Its push was rejected by automatic approval review: the destination is verified
+PUBLIC `Slayde91/classifire`, and explicit proprietary-publication approval is pending.
+Do not retry publication, change visibility/protection or activate a new candidate
+without its applicable approval. Finish local engineering and explicit classification.
 
 ## Active Complete report increment
 

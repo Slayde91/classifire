@@ -155,9 +155,9 @@
         const display=identity?.label || raw;
         const reviewURL=col.key === "system" ? row.target.system_url : col.key === "price" ? row.target.price_url : null;
         const workbench=document.getElementById("register-workbench");
-        const capability=col.key === "system" ? "system" : col.key === "price" ? "price" : null;
+        const capability=col.key === "system" ? "system" : col.key === "price" ? "price" : col.key === "status" ? "evidence" : null;
         if (capability && workbench) {
-          const action=button(display || (capability === "system" ? "Review systems" : "Set price"),()=>{
+          const action=button(capability === "evidence" ? "View sources" : display || (capability === "system" ? "Review systems" : "Set price"),()=>{
             select(r,c);
             document.dispatchEvent(new CustomEvent("classifire:register-author",{detail:{
               capability, savedURL:reviewURL, modified, row:{defect_id:row.defect?.id,
@@ -169,8 +169,9 @@
           action.dataset.registerOpening=row.opening?.id || "";
           action.dataset.registerService=row.service?.id || "";
           action.dataset.registerCapability=capability;
-          action.disabled=row.needsReview || !(row.service || row.opening?.blank) || workbench.dataset[capability] !== "true";
-          action.title=action.disabled ? "Resolve this row's relationships and check access before authoring." : `Work with ${capability === "system" ? "technical candidates" : "prices"} beside this row`;
+          action.disabled=(capability === "evidence" ? !(row.opening || row.service) : (row.needsReview || !(row.service || row.opening?.blank))) || workbench.dataset[capability] !== "true";
+          action.title=capability === "evidence" ? action.disabled ? "Select an Opening or Service row; orphan Defect history remains in saved source-review references." : "Inspect saved source evidence beside this row; no data is changed" : action.disabled ? "Resolve this row's relationships and check access before authoring." : `Work with ${capability === "system" ? "technical candidates" : "prices"} beside this row`;
+          if(capability === "evidence")td.append(node("span",display,"register-evidence-status"));
           td.append(action);
         } else if (typeof reviewURL === "string" && reviewURL.startsWith("/scopes/") && !reviewURL.includes("\\")) {
           const link=node("a",display);link.href=reviewURL;link.title=`Review saved ${col.key} result`;td.append(link);
@@ -228,7 +229,7 @@
   }
   function edit(r,c,initial) {
     const col=columns[c],row=rows[r];
-    if(initial===undefined && ["system","price"].includes(col.key)) { table.querySelector(`td[data-r="${r}"][data-c="${c}"] button`)?.click();return; }
+    if(initial===undefined && ["system","price","status"].includes(col.key)) { table.querySelector(`td[data-r="${r}"][data-c="${c}"] button`)?.click();return; }
     if(!writable||!col.field||!row?.[col.kind]){showError("This cell is protected. Use the existing review actions for systems, prices and relationships.");return;}
     const td=table.querySelector(`td[data-r="${r}"][data-c="${c}"]`);select(r,c);const input=node(col.choices?"select":"input");
     if(col.choices)col.choices.forEach(v=>input.append(new Option(v,v)));else input.type="text";
