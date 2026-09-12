@@ -188,7 +188,11 @@ def _report_match_binding(
 def requires_report_collection_mapping(original: InspectedPackage) -> bool:
     """Include ancestor reports: their source bindings must not disappear on reimport."""
     return any(
-        report.get("schema_version") == scope_reports.MULTI_SYSTEM_REPORT_SCHEMA_VERSION
+        report.get("schema_version")
+        in (
+            scope_reports.MULTI_SYSTEM_REPORT_SCHEMA_VERSION,
+            estimate_reports.MULTI_COMPLETE_SCHEMA_VERSION,
+        )
         for report, _paths in original.report_members()
     )
 
@@ -197,8 +201,7 @@ def report_match_mappings(
     report: dict[str, Any], paths: dict[str, str], mapping: dict[str, Any]
 ) -> list[dict[str, Any]]:
     if "estimate" in report:
-        review = report["estimate"].get("system_match")
-        reviews = [review] if review is not None else []
+        reviews = estimate_reports.report_matches(report)
     else:
         reviews = scope_reports.report_matches(report)
     result = []
@@ -528,15 +531,18 @@ def inspect_package(
         for report_id in selected.scope_reports + selected.estimate_reports:
             is_estimate = report_id in selected.estimate_reports
             limit = (
-                estimate_reports.MAX_REPORT_SNAPSHOT_BYTES
+                estimate_reports.MAX_COLLECTION_REPORT_SNAPSHOT_BYTES
                 if is_estimate
                 else scope_reports.MAX_COLLECTION_REPORT_SNAPSHOT_BYTES
             )
             snapshot = _json(members[f"reports/{report_id}.json"], limit)
             if is_estimate:
                 estimate_reports.validate_report_snapshot(snapshot)
-                if snapshot["estimate"] != estimate:
-                    raise ValueError("report estimate")
+                if snapshot["estimate"] != estimate or any(
+                    not packages.match_dependency_selected(review, match, matches)
+                    for review in estimate_reports.report_matches(snapshot)
+                ):
+                    raise ValueError("report estimate/reviews")
             else:
                 scope_reports.validate_report_snapshot(snapshot)
                 if snapshot["scope"] != scope or any(

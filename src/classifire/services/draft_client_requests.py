@@ -196,13 +196,11 @@ def review(db: Session, authority: ClientAuthority, actor: User, request_id: str
             (capabilities.CreateEstimate, capabilities.EditEstimate, capabilities.EstimateReport),
         ):
             scopes._actor(db, actor, "estimate:read")
-        if (
-            isinstance(parsed, (capabilities.CreateEstimate, capabilities.ScopeReport))
-            and (
-                parsed.match_id
-                or (isinstance(parsed, capabilities.ScopeReport) and parsed.matches)
-            )
+        if isinstance(parsed, (capabilities.CreateEstimate, capabilities.ScopeReport)) and (
+            parsed.match_id or (isinstance(parsed, capabilities.ScopeReport) and parsed.matches)
         ):
+            scopes._actor(db, actor, "technical:read")
+        if isinstance(parsed, capabilities.EstimateReport) and parsed.matches:
             scopes._actor(db, actor, "technical:read")
         if isinstance(parsed, capabilities.ApplyWorkbookRate):
             scopes._actor(db, actor, "library:read")
@@ -287,7 +285,9 @@ def decide(
                 }
             elif row.command == "capability":
                 result = capabilities.execute(
-                    db, actor, capabilities.parse(payload["operation"]),
+                    db,
+                    actor,
+                    capabilities.parse(payload["operation"]),
                     reviewed_inputs=info["capability_inputs"],
                 )
             result["status"] = "confirmed"

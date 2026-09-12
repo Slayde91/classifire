@@ -60,7 +60,7 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
 - PR #263 merged tested source `469a57f` as `d5c19d74746d4ac1cd2f6e19f63278bf560e53d7`.
   Exact-head CI 34711480773 passed 2,199 tests and all remaining checks. The merged tree
   equals the tested source; no required reviews were configured. Post-merge CI
-  34712796245 is running at this checkpoint; poll that existing job.
+  34712796245 also passed 2,199 tests and all remaining checks.
 - Preserved package checkout: `.tmp/multi-review-package-20260913`, branch
   `feat/multi-review-package-20260913`, based on `48b4b11`. It extends existing register and
   package services to retain multiple exact row reviews, explicit v6 package save/reopen,
@@ -83,7 +83,7 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   not include this newer format change. Future activation needs its exact candidate plan,
   fresh matched backup/disposable restore, CI and explicit approval.
 
-### Current multiple-review reporting increment
+### Merged multiple-review Scope reporting
 
 - Checkout `.tmp/multi-review-reports-20260913`, branch
   `feat/multi-review-reports-20260913`, based on merged `d5c19d7`. The
@@ -94,8 +94,11 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   their focused runs. Final combined verification passed all 52 new cases, including
   actual disposable PostgreSQL import/scan checks; final package-screen regression
   passed 18 cases. Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and the
-  unchanged single 0047 migration-head check passed. Publication remains pending
-  at this source checkpoint.
+  unchanged single 0047 migration-head check passed. PR #264 merged tested source
+  `ccaff7a` as `e96c6928ffdbc11a9bd2fb890105e83f05c87625` after exact-head run
+  34713651083 passed 2,251 tests and all checks. The full merged tree equals the
+  tested source. No required reviews were configured; no human review is claimed.
+  Post-merge job 34715038796 is running at this checkpoint; poll that existing job.
 - Actual 8843 Edge UAT separately saved the three-review report and ZIP. PDF/XLSX
   and ZIP bytes match retention. Restart preserved all exact downloads, Scope and
   66 checked domain tables. All 19 PDF pages and desktop/mobile views were inspected;
@@ -107,6 +110,37 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
 - The 469a57f activation plan excludes this newer report format and is unapproved.
   Live 8820 remains outside this change. The reviewed ten-defect reference remains
   Draft evidence, not measured independent extraction accuracy or system approval.
+
+### Current Complete report increment
+
+- Checkout `.tmp/complete-multi-review-reports-20260913`, branch
+  `feat/complete-multi-review-reports-20260913`, based on merged `e96c692`.
+  The existing Complete profile now accepts up to 30 explicitly selected exact row
+  reviews. It retains the full unchanged Estimate and requires its embedded review
+  in any nonempty collection. Extra reviews are labelled report-only context.
+- [Complete contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md) records snapshot v3,
+  renderer 12 and reuse of import mapping v4. No pricing arithmetic, database model,
+  migration, provider or canonical-write change is introduced. Empty selection
+  preserves legacy formats and client command/input hash shapes.
+- Focused runs passed 53 core/package/legacy cases, 24 UI cases, 18 output cases,
+  13 client collection cases and 10 existing client cases. Full Ruff, Mypy (233
+  files), Bandit and single 0047 migration-head checks passed. Final combined
+  validation passed all 62 new cases in 185.29 seconds, including actual disposable
+  PostgreSQL import/scan checks on port 15433.
+- Actual Edge UAT on isolated SQLite port 8844 saved three reviews with Scope 2
+  and Estimate 4: original rate 1.005, explicit override 1.505, subtotal 3.01 and
+  another line with unknown quantity/subtotal. Report and ZIP saves were separate.
+  PDF/XLSX/ZIP bytes matched retention. All 21 PDF pages were inspected in overviews,
+  pages 1/3 at readable size, and desktop/mobile views showed no observed clipping.
+  XLSX cells/structure were checked programmatically; native Excel was not inspected.
+- Process restart retained exact Scope/PDF/XLSX/ZIP and 66 domain-table hashes.
+  A verification fixture initially compared pretty JSON against compact downloads;
+  diagnosis proved identical values and exact Estimate bytes in the original ZIP.
+  A second restart proved byte-exact raw downloads of Estimate revisions 2 and 4.
+  Original failure/diagnosis are retained; no application guard or test was weakened.
+- Publication remains pending. The unapproved ccaff7a activation plan excludes this
+  newer Complete format. Live 8820 remains at its separately approved diagnostic
+  version; no activation, OAuth/tunnel or host-policy change is included.
 
 ### Earlier Word acceptance checkpoint
 
@@ -224,12 +258,13 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-PRs #260-#262 are merged after successful exact-head CI. Post-merge CI for #260/#261
-also passed; continue observing run 34710331473 for #262. Finish publication of the
-locally verified multi-review package increment with explicit files and successful
-exact-head CI/reviews. Do not restart jobs because observation timed out. Runtime
-activation needs a new exact plan that accounts for v6/mapping-v3 writes and recovery;
-provider/host policy changes remain separate approval decisions.
+PRs #260-#264 are merged after observed successful exact-head CI. Post-merge
+checks through #263 passed; poll existing #264 run 34715038796. Finish the current
+Complete-report combined checks, explicit-file commit/push/PR, then observe successful
+CI and required reviews before merge. Never restart a job because observation expires.
+Any activation requires a fresh exact-candidate plan covering new report formats and
+mapping v4, backup/storage parity, disposable restore and explicit owner approval.
+Provider, host policy and OAuth/tunnel changes remain separate approval decisions.
 
 The user-confirmed private Draft reference retains its unknowns; no application
 accuracy result exists. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md) retains

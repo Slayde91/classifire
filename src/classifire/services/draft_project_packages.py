@@ -467,7 +467,10 @@ def _compose(
         estimate_row, snapshot = estimate_reports._retained(
             db, actor, draft_id, selected.estimate_id, report_id, export=True
         )
-        if snapshot["estimate"] != estimate:
+        if snapshot["estimate"] != estimate or any(
+            not match_dependency_selected(review, match, collection)
+            for review in estimate_reports.report_matches(snapshot)
+        ):
             raise PackageError("PACKAGE_REPORT_DEPENDENCIES_DIFFER", 409)
         members[f"reports/{report_id}.json"] = encode(snapshot)
         for fmt in ("pdf", "xlsx"):

@@ -86,6 +86,7 @@
 <p>Each exact review below will appear in the report. These saved claims remain unapproved; no matching or pricing will run.</p>
 {% for review in capability_inputs.matches %}
 <section aria-label="Selected report review {{ loop.index }}"><h3>Review {{ loop.index }} &middot; revision {{ review.revision }}</h3>
+{% if payload.operation.action == 'estimate_report' %}<p>{% if capability_inputs.estimate.system_match and capability_inputs.estimate.system_match.artifact_id == review.artifact_id %}This exact review is attached to the saved Estimate.{% else %}Additional report context only. This review does not change the saved Estimate, its quantities or prices.{% endif %}</p>{% endif %}
 {% with envelope=review, scope=review.scope, form_values={}, can_edit=false, draft={"id": payload.operation.draft_id}, match_content_prefix='client-review-' ~ review.artifact_id ~ '-', scope_content_id='client-review-' ~ review.artifact_id ~ '-scope-heading' %}
 {% include 'draft_system_match_content.html' %}
 {% if envelope.get('constraint_review') %}{% include 'draft_constraint_review.html' %}{% endif %}

@@ -1,5 +1,12 @@
 # Draft client v1: authenticated MCP and human confirmation
 
+The Complete `estimate_report` command accepts up to 30 explicit `matches` pairs.
+Every review must use the Estimate's exact Scope; a nonempty collection must include
+its exact embedded review when present. Extras are report-only context. Technical
+client grants and local permissions apply to preparation, confirmation, history and
+downloads. Empty selection preserves legacy serialization and pending input hashes.
+See [Complete report contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md).
+
 ## Multiple-row report requests
 
 The existing typed `scope_report` command accepts an explicit `matches` collection.
@@ -342,7 +349,7 @@ its one requested use case and requires a separate human session confirmation.
 | `set_estimate_line_status` | Estimate ID/revision, line ID, active/omitted, reason | Omit/restore without deleting history |
 | `apply_workbook_rate` | Estimate ID/revision, line/source IDs, explicit worksheet mapping/row, expected document/row hashes, recovery note | Shared source-bound rate application; retain original rate and override history |
 | `scope_report` | Scope revision, optional paired Match ID/revision | Scope-only or scope-and-system saved PDF/XLSX |
-| `estimate_report` | Estimate ID/revision, estimate-only/complete profile | Render that saved estimate snapshot; missing technical data stays unavailable |
+| `estimate_report` | Estimate ID/revision, estimate-only/complete profile; optional exact `matches` for Complete | Render the unchanged Estimate with explicit saved review context; no implicit matching or pricing |
 
 Preparation validates shape, permissions and readable selected inputs, binds their
 hash and saves a proposal. It does not execute the domain writer/renderer. Confirmation
