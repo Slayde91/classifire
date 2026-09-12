@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "draft_register_workbench_base.html" if workspace_register|default(false) else "base.html" %}
 {% block title %}System candidate review | {{ project.reference }} | CLASSIFIRE{% endblock %}
 {% block heading %}System candidate review{% endblock %}
 {% block content %}

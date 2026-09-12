@@ -80,12 +80,15 @@ def _picker(
     return templates.TemplateResponse(
         request, "draft_system_match.html",
         _context(
-            request, db, draft=draft, project=draft.project, scope=scope,
+            request, db,
+            workspace_register=request.headers.get("X-Classifire-Workspace") == "register",
+            workbench_capability="system", draft=draft, project=draft.project, scope=scope,
             scope_revision=scope["revision"], envelope=None,
             releases=releases, matches=matches, base_url=f"/scopes/{draft.id}/system-matches",
             match_url="", errors=errors or [], form_values=form_values or {},
         ),
-        status_code=status_code, headers={"Cache-Control": "no-store"},
+        status_code=status_code,
+        headers={"Cache-Control": "no-store", "Vary": "X-Classifire-Workspace"},
     )
 
 
@@ -105,13 +108,17 @@ def _detail(
     return templates.TemplateResponse(
         request, "draft_system_match.html",
         _context(
-            request, db, draft=draft, project=draft.project, scope=envelope["scope"],
+            request, db,
+            workspace_register=request.headers.get("X-Classifire-Workspace") == "register",
+            workbench_capability="system", draft=draft, project=draft.project,
+            scope=envelope["scope"],
             envelope=envelope, staleness=staleness, base_url=base_url,
             match_url=f"{base_url}/{envelope['artifact_id']}",
             latest_revision=latest["revision"], errors=errors or [],
             form_values=form_values or {},
         ),
-        status_code=status_code, headers={"Cache-Control": "no-store"},
+        status_code=status_code,
+        headers={"Cache-Control": "no-store", "Vary": "X-Classifire-Workspace"},
     )
 
 

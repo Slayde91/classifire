@@ -39,7 +39,9 @@ Legacy readers/imports retain their existing contract, including historical unre
   record editing remains available in the same workspace.
 - **Systems and prices:** explicit saved Match/Estimate selections project into Proposed
   Technical System and Price columns, with exact revision links, warnings and staleness.
-  One saved Match and one saved Estimate can be selected at a time.
+  One saved Match and one saved Estimate can be selected at a time. The subsequent
+  [native row-authoring increment](./REGISTER_ROW_AUTHORING.md) adds explicit candidate
+  review and manual estimate editing beside the selected row through these same services.
   Opening-qualified recommendations only appear on their matching Opening. Saved prices
   remain independent of that display filter. Reading the register does not run matching,
   create an estimate, recalculate a price or rewrite any saved artifact.
@@ -91,10 +93,10 @@ The earlier human-confirmed Word package is a separate artifact and is not repla
   the user has now confirmed the findings and unknowns as a private Draft reference.
   This assistant review is not an automatic
   CLASSIFIRE analysis run. No customer details or unsupported accuracy percentage are recorded here.
-- **Full inline system/pricing work:** the register displays selected saved results.
-  Creating/reviewing/overriding candidates and editing or recomputing estimates still use
-  existing explicit workflows. Input edits mark original results stale instead of silently
-  replacing prices. Broader matching rules and pricing assurance remain in the roadmap.
+- **Broader system/pricing work:** selected-row manual authoring now reuses the existing
+  explicit workflows in a native panel; its separate evidence is linked above. Scope edits
+  still mark results stale. Automatic matching/rate derivation, project-wide result
+  selection and broader applicability/pricing assurance remain in the roadmap.
 - **Embedded live AI:** provider settings default disabled; verified UAT kept them disabled.
   No live response, multimodal provider analysis, pricing/library context or authenticated
   external ChatGPT session is proven. Any provider activation requires its explicit approval.
@@ -110,7 +112,7 @@ The earlier human-confirmed Word package is a separate artifact and is not repla
 
 PR #260 merged as `3eabb23` after source `6bc9e96` passed run 34704939887
 (2,113 tests plus full static and migration-head checks). No required reviews were
-configured. Post-merge run 34706301132 was still running at 17:00 UTC on 2026-09-12.
+configured. Post-merge run 34706301132 subsequently passed all 2,113 tests and checks.
 The workspace remains isolated on 8840; no workspace activation is claimed.
 
 The privately confirmed Draft reference retains unknowns and cannot be coerced into

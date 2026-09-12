@@ -20,8 +20,8 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
 - PR #260 merged the integrated workspace as `3eabb23ecddce98dc3e8583236f9cb055b218280`.
   Its source `6bc9e96` passed exact-head run 34704939887: 2,113 tests, Ruff, Mypy,
   Bandit and single migration head. No required reviews were configured. The merged
-  tree matches the tested source. Post-merge run 34706301132 was still running at
-  2026-09-12 17:00 UTC; no workspace deployment is implied.
+  tree matches the tested source. Post-merge run 34706301132 also passed all 2,113
+  tests and remaining checks; no workspace deployment is implied.
 - One Projects & estimates directory now includes accessible Draft Scopes, saved Draft
   Estimates and existing estimates. Six existing libraries share one Libraries section.
   Existing URLs, IDs, saved records and permission boundaries are retained.
@@ -32,8 +32,9 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   Isolated Edge UAT saved Scope revision 3 with five source references and null quantities,
   retained exact revision 2, and downloaded an exact original-bearing project ZIP.
 - The embedded advisory panel previews selected saved Scope context. Its provider is
-  disabled in the verified UAT. General accurate multimodal analysis, complete inline
-  system/pricing work and the full redesign acceptance criteria remain incomplete.
+  disabled in the verified UAT. General accurate multimodal analysis, broader automatic
+  system/pricing work and full redesign acceptance remain incomplete. Selected-row manual
+  authoring is implemented in the current isolated increment described below.
 - Separately, approved diagnostic source e2e829209e8342241efebe714803d3c86d80ef6c
   was activated after fresh exact backup/restore checks. This is the diagnostic runtime,
   not activation of the workspace candidate. PR #259 and its post-merge CI each passed
@@ -42,6 +43,22 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   The bounded diagnostic now identifies the rejected host privately. No file was retained;
   all 69 table inventories and retained files/schema were unchanged by that probe.
   The allowlist and OAuth/tunnel configuration were not changed.
+
+### Current row-authoring increment
+
+- PR #261 merged the nullable reference comparison correction as `095ee3d`; exact-head
+  run 34707202158 passed 2,127 tests and all remaining checks. Post-merge run
+  34708282314 was running at this checkpoint; poll it without restarting.
+- `feat/register-row-authoring-20260913` starts from that merged source. A native
+  panel reuses existing technical and estimate forms beside the selected register row,
+  with separate explicit saves and exact saved projection/history updates.
+- 104 affected tests and full static checks pass. Actual synthetic Edge UAT proves
+  service/blank review, manual pricing/override, 409 refusal with retained attempts,
+  unknown preservation and exact saved Scope/estimate history after restart.
+- [Row authoring](./REGISTER_ROW_AUTHORING.md) records controls, evidence and limits.
+  Its source is a local validated increment at this checkpoint; publication/CI must
+  still be observed. Only the separate 8841 SQLite demo was restarted. Live 8820 and
+  the older 8840 workspace remain unchanged; no new activation is implied.
 
 ### Earlier Word acceptance checkpoint
 
@@ -159,19 +176,16 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-The integrated workspace is merged. Observe its existing post-merge job to completion;
-do not restart it because observation timed out. Runtime activation and provider/host
-policy changes remain separate approval decisions. The user has confirmed a privately
-retained Draft reference with its unknowns, but no application accuracy result exists.
-[Physical reference readiness](./PHYSICAL_REFERENCE_READINESS.md) records the existing
-comparator's scope, proposed review taxonomy, source-rights limits and Phase 8/8C gates.
-The current isolated correction addresses a reproduced crash when a single opening
-contains both known and unknown service materials or quantities. All 23 comparator
-tests and both representative-run caller test files pass. Actual CLI outputs retain
-unknowns, return PASS for agreement and MISMATCH for differences, preserve input bytes
-and use no provider or database. Full Ruff, Mypy (233 source files) and Bandit pass.
-Hosted CI/publication for this correction remains to be observed. No schema, migration
-or comparison semantics change, and no real report evaluation is implied.
+PR #260 and its post-merge CI are complete. PR #261 is merged after successful
+exact-head CI; observe its existing post-merge run. Finish publication of the locally
+verified native row-authoring increment with explicit files and observed successful
+CI/reviews. Do not restart jobs because observation timed out. Runtime activation and
+provider/host policy changes remain separate approval decisions.
+
+The user-confirmed private Draft reference retains its unknowns; no application
+accuracy result exists. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md) retains
+the existing comparator scope, proposed taxonomy, source-rights limits and Phase 8/8C
+gates. Do not launch a real report evaluation or invent reference topology implicitly.
 
 The retained I1-I3/N1-N2/L1-L2 backlog below remains valid. I1 and the earlier I2 application
 journey are proven. I2's connected upload/scan transport remains host-policy blocked;

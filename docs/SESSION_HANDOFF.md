@@ -12,14 +12,16 @@ root `GOAL.md`; this task does not complete production Phase 8-16 gates.
 - PR #260 merged as `3eabb23`; source `6bc9e96` on
   `feat/integrated-project-workspace-20260913` matches its upstream and merged tree.
   Exact-head run 34704939887 passed 2,113 tests and all remaining checks. No required
-  reviews were configured. Post-merge run 34706301132 was running at 17:00 UTC on
-  2026-09-12; observe it without restarting. No workspace activation is authorised.
-- The next isolated correction uses `fix/reference-comparison-unknowns-20260913`,
-  based on `3eabb23`. A synthetic comparator audit reproduced TypeError when known
-  and unknown service material or quantity values share one opening. Preserve
-  existing unknown semantics. The correction passes 23 comparator cases, both
-  representative-run caller files, actual CLI PASS/MISMATCH output checks, full Ruff,
-  Mypy (233 files) and Bandit. Hosted CI and publication must still be observed.
+  reviews were configured. Post-merge run 34706301132 subsequently passed all 2,113
+  tests and remaining checks. No workspace activation is authorised.
+- PR #261 merged the comparison correction as `095ee3d`, after source `f882106`
+  passed exact-head run 34707202158 (2,127 tests and all remaining checks). Post-merge
+  run 34708282314 is pending observation. No required reviews were configured.
+- Current checkout: `C:/CLASSIFIRE/.tmp/register-row-authoring-20260913`, branch
+  `feat/register-row-authoring-20260913`, based on merged `095ee3d`. Its native row
+  panel reuses existing technical/estimate handlers and forms. 104 affected tests,
+  full static checks and actual synthetic browser/restart checks pass; publication
+  and exact-head CI remain to be observed. See [row authoring](./REGISTER_ROW_AUTHORING.md).
 - PR #259 merged diagnostic source e2e8292 as 7dbc59b. Its private receipt records
   successful PR run 34698452617 and post-merge run 34699704284, each 2,066 tests.
   Those results belong to the diagnostic change, not the newer workspace diff.
@@ -46,8 +48,8 @@ root `GOAL.md`; this task does not complete production Phase 8-16 gates.
   Opening. Historical missing/multiple parent links stay in review; no schema rewrite,
   automatic repair or dummy Service is introduced.
 - Explicit saved systems/prices appear in the register. They remain immutable saved
-  results; Scope edits mark them stale. Full inline matching, overrides and pricing
-  authoring/recalculation are not implemented by this display. One Match and Estimate
+  results; Scope edits mark them stale. The current row panel adds explicit manual
+  matching review and price authoring/overrides using existing services. One Match and Estimate
   can be selected at once. Grid selection is contiguous; column preferences are not
   persisted, and undo covers unsaved grid edits until detailed-editor changes reset it.
 - Chat previews bounded selected saved Scope context. Provider settings default disabled
@@ -85,17 +87,17 @@ measuring service, substrate or quantity accuracy.
 
 ## Local change classification and next work
 
-The current correction contains one existing comparator change, its synthetic tests,
-three reconciled checkpoint documents and one reference-readiness document. It changes
-no models, schemas, migrations, runtime configuration or canonical authority. Prior
-workspace UI changes are already merged in PR #260. Private test logs, CLI outputs,
-screenshots and original reports remain outside Git. The previous workspace checkout
-retains two untracked generated browser artifacts; preserve them and the conflicted
-legacy root. Root recovery evidence remains de0cc5a with CHERRY_PICK_HEAD c3e4c810
-and pre-existing modifications/conflicts.
+The current increment changes native UI presentation, register JavaScript/styles,
+shared page templates, one new fragment integration test file and checkpoint docs.
+No models, schemas, migrations, provider settings or domain services change. Private
+synthetic scripts, CLI/browser logs and screenshots remain outside Git. Preserve the
+prior workspace's two untracked generated browser artifacts and the conflicted root
+at de0cc5a with CHERRY_PICK_HEAD c3e4c810 and its unrelated modifications/conflicts.
 
-1. Complete the nullable-comparison correction with synthetic regression and CLI
-   evidence; publish explicit files and observe exact-head CI and required reviews.
+1. Review and publish the explicit row-authoring diff. Observe exact-head CI and
+   required reviews before merging; record the resulting commit. Poll the existing
+   comparator post-merge job without restarting it.
+
 2. Keep runtime activation, provider enablement and any exact host-policy/OAuth/tunnel
    change as separate explicit approval decisions. Do not broaden the allowlist or grant.
 3. Preserve the user-confirmed private Draft reference and its unknowns. Follow
@@ -104,12 +106,12 @@ and pre-existing modifications/conflicts.
    gates. Prepare taxonomy and data rights; do not start an unapproved real evaluation.
 
 The full redesign criteria remain incomplete: general accurate multimodal analysis,
-complete inline technical/pricing work, live integrated AI, representative performance
+automatic technical/pricing work, live integrated AI, representative performance
 and comprehensive usability/accessibility acceptance. The retained technical/pricing
 roadmap and production gates remain applicable; no phase is advanced by this handoff.
 
 ## Recommended prompt for continuation
 
 ```text
-Continue CLASSIFIRE after merged integrated workspace PR #260 from the verified isolated checkout and acceptance receipts. Inspect AGENTS.md, Git/worktrees/upstream/diff, current PR/CI, project state and runtime. Preserve the conflicted root and the separately approved e2e8292 diagnostic runtime. Do not rebuild completed Word/client/package work or repeat completed human confirmations. Reconcile the workspace's actual publication result, test/browser/package evidence and remaining accuracy, inline technical/pricing and live AI gaps. Keep supplied real evidence private; preserve the confirmed Draft reference and follow PHYSICAL_REFERENCE_READINESS.md before any accuracy run. No workspace activation, provider enablement or OAuth/tunnel/host-policy change without explicit approval. Use selected-checkout PYTHONPATH and fresh test paths; PostgreSQL tests only on disposable15433. Commit explicit reviewed files, push normally, merge only after observed successful exact-head CI and required reviews, and record actual results and limitations. Poll existing jobs without restarting them because observation timed out.
+Continue CLASSIFIRE after merged workspace PR #260 and comparison correction PR #261; finish the native register row-authoring increment from the verified isolated checkout and acceptance receipts. Inspect AGENTS.md, Git/worktrees/upstream/diff, current PR/CI, project state and runtime. Preserve the conflicted root and the separately approved e2e8292 diagnostic runtime. Do not rebuild completed Word/client/package work or repeat completed human confirmations. Reconcile the workspace's actual publication result, test/browser/package evidence and remaining accuracy, inline technical/pricing and live AI gaps. Keep supplied real evidence private; preserve the confirmed Draft reference and follow PHYSICAL_REFERENCE_READINESS.md before any accuracy run. No workspace activation, provider enablement or OAuth/tunnel/host-policy change without explicit approval. Use selected-checkout PYTHONPATH and fresh test paths; PostgreSQL tests only on disposable15433. Commit explicit reviewed files, push normally, merge only after observed successful exact-head CI and required reviews, and record actual results and limitations. Poll existing jobs without restarting them because observation timed out.
 ```
