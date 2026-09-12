@@ -420,6 +420,120 @@ def test_comparison_preserves_explicit_unknown_service_quantity(tmp_path: Path) 
     assert result["status"] == "PASS"
 
 
+@pytest.mark.parametrize(
+    "values",
+    [
+        [(None, 1), ("PVC", 1)],
+        [("PVC", None), ("PVC", 1)],
+    ],
+    ids=["unknown-material", "unknown-quantity"],
+)
+@pytest.mark.parametrize("reverse_proposal", [False, True])
+@pytest.mark.parametrize("reverse_reference", [False, True])
+def test_comparison_handles_mixed_known_and_unknown_service_groups_in_any_order(
+    tmp_path: Path,
+    values: list[tuple[str | None, int | None]],
+    reverse_proposal: bool,
+    reverse_reference: bool,
+) -> None:
+    template = _proposal()["services"][0]
+    services = [
+        {**template, "service_code": f"S-{index:03}", "material": material, "quantity": quantity}
+        for index, (material, quantity) in enumerate(values, 1)
+    ]
+    if reverse_proposal:
+        services.reverse()
+    proposal = _proposal(services=services)
+    receipt, _ = _completed_controller(proposal)
+    groups = [
+        {"type": "pipe", "material": material, "quantity": quantity}
+        for material, quantity in values
+    ]
+    if reverse_reference:
+        groups.reverse()
+    reference = _reference(
+        [{"substrate": "concrete wall", "blank": False, "service_groups": groups}]
+    )
+    paths = _artifact_paths(tmp_path, proposal, receipt, reference)
+    original_bytes = [path.read_bytes() for path in paths]
+
+    result = compare_phase8_human_reference(
+        proposal_path=paths[0],
+        controller_receipt_path=paths[1],
+        reference_path=paths[2],
+    )
+
+    assert result["status"] == "PASS"
+    assert result["defects"][0]["issues"] == []
+    candidate = result["defects"][0]["candidate_openings"][0]["service_groups"]
+    assert {
+        row["service_code"]: (row["material"], row["quantity"]) for row in candidate
+    } == {f"S-{index:03}": value for index, value in enumerate(values, 1)}
+    assert [path.read_bytes() for path in paths] == original_bytes
+
+
+@pytest.mark.parametrize("field,known_value", [("material", "PVC"), ("quantity", 1)])
+@pytest.mark.parametrize("unknown_in_proposal", [False, True])
+def test_comparison_keeps_unknown_service_values_distinct_from_known_values(
+    tmp_path: Path, field: str, known_value: object, unknown_in_proposal: bool
+) -> None:
+    services = [deepcopy(_proposal()["services"][0]) for _ in range(2)]
+    for index, service in enumerate(services, 1):
+        service["service_code"] = f"S-{index:03}"
+    services[0][field] = None if unknown_in_proposal else known_value
+    proposal = _proposal(services=services)
+    receipt, _ = _completed_controller(proposal)
+    groups = [
+        {"type": row["service_type"], "material": row["material"], "quantity": row["quantity"]}
+        for row in services
+    ]
+    groups[0][field] = known_value if unknown_in_proposal else None
+    reference = _reference(
+        [{"substrate": "concrete wall", "blank": False, "service_groups": groups}]
+    )
+    paths = _artifact_paths(tmp_path, proposal, receipt, reference)
+
+    result = compare_phase8_human_reference(
+        proposal_path=paths[0],
+        controller_receipt_path=paths[1],
+        reference_path=paths[2],
+    )
+
+    assert result["status"] == "MISMATCH"
+    assert result["passed_defect_count"] == 0
+    assert result["mismatch_defect_count"] == 1
+    assert any("topology differs" in issue for issue in result["defects"][0]["issues"])
+
+
+@pytest.mark.parametrize("quantity", [0, ""])
+def test_comparison_rejects_zero_or_empty_reference_quantity_instead_of_treating_it_as_unknown(
+    tmp_path: Path, quantity: object
+) -> None:
+    proposal = _proposal()
+    proposal["services"][0]["quantity"] = None
+    proposal["services"][0]["property_assessments"]["quantity"] = _property_assessment(None)
+    receipt, _ = _completed_controller(proposal)
+    reference = _reference(
+        [
+            {
+                "substrate": "concrete wall",
+                "blank": False,
+                "service_groups": [{"type": "pipe", "material": "PVC", "quantity": quantity}],
+            }
+        ]
+    )
+    paths = _artifact_paths(tmp_path, proposal, receipt, reference)
+
+    with pytest.raises(Phase8HumanReferenceComparisonError) as caught:
+        compare_phase8_human_reference(
+            proposal_path=paths[0],
+            controller_receipt_path=paths[1],
+            reference_path=paths[2],
+        )
+
+    assert caught.value.code == "SERVICE_QUANTITY_INVALID"
+
+
 def test_comparison_detects_substrate_swap_within_service_topology(
     tmp_path: Path,
 ) -> None:

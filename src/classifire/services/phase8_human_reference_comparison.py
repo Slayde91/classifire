@@ -166,7 +166,11 @@ def _opening_signature(row: dict[str, Any]) -> _OpeningSignature:
             "OPENING_SERVICE_GROUPS_INVALID",
             "service_groups must be a list of objects",
         )
-    signatures = sorted(_service_signature(item) for item in groups)
+    # Sort unknowns separately without changing the nullable comparison values.
+    signatures = sorted(
+        (_service_signature(item) for item in groups),
+        key=lambda signature: tuple((value is not None, value or "") for value in signature),
+    )
     if blank and signatures:
         raise Phase8HumanReferenceComparisonError("BLANK_OPENING_HAS_SERVICES")
     if not blank and not signatures:

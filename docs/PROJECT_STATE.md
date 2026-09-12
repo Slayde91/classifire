@@ -15,11 +15,13 @@ It has a shared authenticated client adapter and portable selected-project ZIPs.
 The accepted hybrid direction (ADRs 0001/0002) remains unchanged. The full production
 platform, broad document interpretation and canonical Phase 8-14 exits are incomplete.
 
-### Current workspace candidate and runtime
+### Merged workspace and current runtime
 
-- Candidate: `feat/integrated-project-workspace-20260913`, based on inspected
-  `origin/main` 7dbc59bfa2fd52bd8238a2f7c5a99d71240420cb (PR #259). The workspace
-  changes are local at this checkpoint; no workspace publication or deployment is claimed.
+- PR #260 merged the integrated workspace as `3eabb23ecddce98dc3e8583236f9cb055b218280`.
+  Its source `6bc9e96` passed exact-head run 34704939887: 2,113 tests, Ruff, Mypy,
+  Bandit and single migration head. No required reviews were configured. The merged
+  tree matches the tested source. Post-merge run 34706301132 was still running at
+  2026-09-12 17:00 UTC; no workspace deployment is implied.
 - One Projects & estimates directory now includes accessible Draft Scopes, saved Draft
   Estimates and existing estimates. Six existing libraries share one Libraries section.
   Existing URLs, IDs, saved records and permission boundaries are retained.
@@ -157,12 +159,19 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-The active increment is the requested integrated workspace. Finish its review and
-publication using exact-head CI and required reviews; record the actual result before
-claiming merge. Runtime activation and provider/host-policy changes remain separate
-approval decisions. Next product acceptance needs human reference labels and suitable
-source images before measuring service/substrate/quantity accuracy. A real report has
-been supplied for that assessment; its contents stay private and no accuracy result is claimed.
+The integrated workspace is merged. Observe its existing post-merge job to completion;
+do not restart it because observation timed out. Runtime activation and provider/host
+policy changes remain separate approval decisions. The user has confirmed a privately
+retained Draft reference with its unknowns, but no application accuracy result exists.
+[Physical reference readiness](./PHYSICAL_REFERENCE_READINESS.md) records the existing
+comparator's scope, proposed review taxonomy, source-rights limits and Phase 8/8C gates.
+The current isolated correction addresses a reproduced crash when a single opening
+contains both known and unknown service materials or quantities. All 23 comparator
+tests and both representative-run caller test files pass. Actual CLI outputs retain
+unknowns, return PASS for agreement and MISMATCH for differences, preserve input bytes
+and use no provider or database. Full Ruff, Mypy (233 source files) and Bandit pass.
+Hosted CI/publication for this correction remains to be observed. No schema, migration
+or comparison semantics change, and no real report evaluation is implied.
 
 The retained I1-I3/N1-N2/L1-L2 backlog below remains valid. I1 and the earlier I2 application
 journey are proven. I2's connected upload/scan transport remains host-policy blocked;
