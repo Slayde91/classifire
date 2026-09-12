@@ -1,458 +1,53 @@
 # CLASSIFIRE Master Roadmap
 
-## Active increment: Word client interaction
+Reconciled 2026-09-12. Current facts and exact PR/CI state belong in
+[PROJECT_STATE.md](./PROJECT_STATE.md); architecture in
+[CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md).
 
-- Completed locally: five thin Word tools, typed graph/evidence proposal and browser
-  review rendering over the existing core; 40 integrated checks, one rendered Edge journey, Mypy, Ruff and Bandit passed.
-- Completed locally: final authentication/PDF regressions, with the intentional tool-list
-  update verified; all 81 distinct selected tests passed. Active: gated publication.
-- Dependency: PR #253's exact-head required CI and merge; it is still open at this
-  checkpoint. Do not restart its running validation or call it merged prematurely.
-- Upcoming: approved Word activation, refreshed tools and real ChatGPT acceptance.
-- Preserved: current Excel test app, pending real Excel acceptance and human-only saves.
-- Deferred, not cancelled: broader document coverage, project history, technical and
-  commercial capability breadth, production gates. No agent or orchestration rewrite.
+## Current delivery decision
 
-## Active independent increment: reviewed Word scope and portable originals
+Preserve ADRs 0001/0002: a shared modular deterministic core, four independently
+callable capabilities, optional AI and portable project artifacts. Prioritize a
+user-testable workflow before broad polish; never remove evidence or authority gates.
+P0-P6 are bounded Draft milestones, not completion of production Phases 0-16.
 
-- Completed: Word retained inspection merged in PR #252 at c5d4774; required CI
-  34653404693 passed. Existing Excel activation is preserved; do not repeat it.
-- Active candidate: Word text/picture selection -> complete graph preview -> human
-  confirmation -> saved/reopened Scope v7 -> original-bearing ProjectPackage v5.
-  Synthetic Edge journey, 105 integrated regressions, 50 output/history checks and
-  static/security checks passed, followed by 73 client/PDF review regressions.
-  Publication and hosted CI/review remain to be verified before calling it merged.
-- Next dependency: thin Word client tools over these same services and typed review
-  requests. Never expose browser confirmation as a client write tool.
-- Reordered while tool refresh is pending: standalone Word scope work advances the
-  required input coverage. It does not replace the real ChatGPT Excel acceptance.
-- Awaiting external interaction: refreshed ChatGPT Excel tools and separate human
-  confirmations. No repeated OAuth setup or grant expansion is needed.
-- Deferred: broader Word layouts/page rendering, full project history, remaining
-  technical/commercial breadth and production exits. Inspection/review is not full
-  production Word analysis or permission to invent unsupported quantities.
-- Deployment dependency: merged migration 0047 plus separately authorized activation.
-  No live app/database/OAuth/canonical state changes are part of this candidate.
+## Completed, active and deferred work
 
-Earlier delivery-order blocks are historical where superseded above.
-
-## Current delivery order: connected Excel acceptance
-
-- Completed: PR #249 Excel client tools and PR #250 ProjectPackage v4 workbook
-  membership, import/download and nested re-export. Both merges and required CI
-  passed; PR #250 merged as 27cd8bf.
-- Completed: explicitly approved synthetic app update; live Playwright login/package
-  screen and actual ChatGPT Scope read passed with revision/hash unchanged.
-- Active: refresh the client's tool catalogue and prove a complete synthetic Excel
-  upload/inspection/proposal/human-confirmation/original-bearing ZIP interaction.
-- Dependencies: refreshed Excel actions and user-selected synthetic attachment;
-  separate human confirmations remain mandatory. Prepared fixture is not an upload.
-- Superseded: republishing the already merged workbook change, repeating OAuth setup
-  or treating workbook source bytes as indefinitely deferred.
-- Upcoming after acceptance: choose the next independent-capability milestone from
-  actual technical/pricing gaps and representative evidence; avoid unsupported rules.
-- Deferred: bulk layouts, additional document formats, complete history and production
-  rollout. These remain goal requirements. Legacy v1 notice presentation is minor debt;
-  immutable historical package bytes remain unchanged.
-- Unchanged: hybrid direction, four independent capabilities, human release and
-  proven replacement protections before OpenClaw retirement.
-
-Older delivery-order blocks below are historical checkpoints.
-
-## Current delivery order: Excel client evidence interaction
-
-- Completed bounded correction: PR #248 merged with required CI; running synthetic
-  app returns field-level errors. User-side cached-schema refresh remains acceptance work.
-- Active: reuse standalone Excel intake/mapping/review through MCP, with cell/image
-  inspection and separate human confirmation of one evidence-linked Scope revision.
-- Candidate exit: synthetic upload -> scan -> inspect rows/pictures -> explicit mapping
-  -> edit relationships -> visible evidence review -> confirm -> saved Scope v5;
-  stale source/rights and incorrect file type fail closed, with PDF regression coverage.
-- Upcoming: actual refreshed ChatGPT Excel acceptance after publication and authorized
-  test activation, followed by the remaining independent capability priorities.
-- Deferred: binary XLSX inclusion in ProjectPackage, bulk/unsupported workbook layouts,
-  arbitrary Word/drawing ingestion and production rollout. These remain goal requirements,
-  not features proved by this bounded increment.
-- No migration or OpenClaw retirement is included; all production exit gates remain.
-
-Historical priorities below are superseded where they describe this work as unstarted.
-
-
-## Current delivery order (supersedes historical checkpoints below)
-
-- Completed bounded acceptance: PR #247 merged at 5c8ee72 with required CI passed;
-  user-reported real ChatGPT PDF/Scope review and independently verified package.
-- Active: proposal schema discovery and redacted invalid-field feedback. The trial
-  needed manual JSON repairs; finish regressions, publication and refreshed-client acceptance.
-- Upcoming: Excel client intake/review through existing standalone services.
-- Reordered: fix the observed contract discoverability gap before broadening intake.
-- Superseded: repeating completed OAuth setup or PDF upload/review implementation.
-- Deferred: cosmetic polish; a stale page-2 observation needs a normal reviewed revision.
-- Still gated: remaining independent capability coverage, production exits and OpenClaw
-  retirement. Scope-only export proves none of matching, estimating or report rendering.
-
-
-## Current delivery order: unblock authenticated discovery
-
-- Completed: PR #246 exact external resource, required CI, matching synthetic Auth0 API,
-  protected policy activation and app/tunnel restart; human login and exchange verified.
-- Active: approved opt-in Auth0 OIDC compatibility correction, security regression,
-  required CI and publication. Verified token shape exposed this dependency after login.
-- Next: activate the approved setting; prove signed tools/list and actual ChatGPT
-  `list_draft_projects`, then one complete synthetic PDF/review/package interaction.
-- Deferred: broader Excel client intake, polish and edge-case expansion until that journey.
-
-A connected label does not prove callable tools. The discovery failure retrieved no
-projects and created none. Production phases, canonical and human release gates remain.
-Older setup classifications below are historical and superseded by this checkpoint.
-
-## Current priority: synthetic ChatGPT OAuth trial
-
-| Work | Verified classification | Dependency / next evidence |
-| --- | --- | --- |
-| Portable reviewed PDFs | Merged PR #241 | Real connected download remains part of trial acceptance |
-| Exact issuer and optional nbf | Merged PR #242/#243; required and post-merge CI passed | Preserve all remaining token and permission checks |
-| External-policy estimator demo | Completed bounded implementation, PR #244 at `255e3c6`; required CI passed | Post-merge run 34499154918 was observed running; recheck terminal result |
-| Human OAuth and private tunnel trial | Active setup; no successful human connection yet | Actual login, exact subject/client binding, actual ChatGPT callback, app/tunnel readiness |
-| Visible connected PDF journey | Upcoming immediate product acceptance | Upload synthetic PDF, inspect text/images, propose source-linked Scope, confirm as same human, download exact portable package |
-| Excel client intake and polish | Sequenced after the connected PDF trial | Extend existing Excel services only after the first real client journey is proven |
-
-The launcher development/publication task is superseded by real connection validation;
-do not rebuild it. The tunnel credential and Auth0 CLI login were verified. A dedicated
-human client and local callback are configured; the synthetic machine probe stays read-only
-and unmapped. Operator callback checks are not a substitute for actual human OAuth or
-ChatGPT acceptance. Human sign-in is pending; do not fabricate a subject or callback ID.
-
-Keep the UI prototype priority: validate one usable journey before broadening integration
-or polishing edges. Existing production phases, independent capability requirements,
-canonical lock/release gates and the conditional OpenClaw migration remain in force.
-This trial does not complete them. No paid service or customer-data trial is authorized.
-
-## Historical increment: portable reviewed PDFs
-
-PR #240 is merged at `8164d29`; required and post-merge CI passed. The real ChatGPT
-HTTPS/OAuth trial still needs the operator's deployment details and working browser tooling.
-Excel client upload remains sequenced after that trial. In parallel, advance the documented
-ProjectPackage source-membership gap with opt-in reviewed project PDFs, using existing
-ownership, hash, scan and import containment boundaries. This does not broaden restricted
-supplier-source redistribution or authorize customer evidence processing.
-
-Candidate exit: user selects reviewed PDFs, previews included/external membership, saves and
-downloads exact bytes, imports into a new foreign-unverified Draft, scans attachments and
-re-exports without losing originals. Legacy v1/v2 packages remain readable and unchanged;
-permission loss, changed bytes and unsafe attachments fail closed. The candidate is active,
-not complete: local lifecycle and regression checks passed, while visual browser acceptance
-and required PR publication checks remain outstanding. The client Scope-review implementation
-below is already merged in PR #240; its remaining next action is the real connected trial.
-
-
-## Immediate prototype priority: source-linked client Scope review
-
-The same increment exposes bounded page images to the client for visual interpretation;
-previously only the human browser had raster access. Real client image consumption and
-interpretation accuracy remain acceptance tasks, separate from transport tests.
-
-Before the connected ChatGPT trial, finish the current `review_pdf_scope` increment.
-A generic client edit can save content but cannot create the retained-page provenance already
-supported by standalone review. Reuse that shared service through explicit human confirmation.
-Exit: display the page and proposed graph; save exact page/target/reviewer references only
-on confirmation; refuse stale/foreign/forged inputs; preserve old client commands; verify
-HTTP/browser behavior, required tests and publication. Browser inspection currently has an
-environment blocker; it is not a passed milestone. PR #239's independent timeout correction
-remains subject to its own required CI. The next product milestone remains the real ChatGPT
-PDF-to-reviewed-Scope journey; Excel and broader pricing work follow the existing priorities.
-
-
-## Immediate delivery correction
-
-PR #238's PDF intake is merged at `2150286`. The current fix makes its promised total
-download timeout enforceable during blocked DNS and HTTP reads, using the existing
-disposable-process pattern. Local acceptance passed: 71 client/PDF/retrieval tests plus
-Ruff, Mypy and Bandit. Complete required CI/publication before the real ChatGPT trial.
-This correction adds no product phase. The next visible milestone remains the connected
-PDF-to-Scope journey below, followed by the existing Excel/package/pricing priorities.
-
-**Status:** Active; prototype-first delivery approved 2026-09-05. The standalone
-four-capability prototype, PDF/Excel review and selected ProjectPackage are merged.
-Commercial evidence governance is merged through bounded T9/T10/T13 increments. PR #237
-merges exact read-only Dataset A row history into the shared client. The current implementation adds official ChatGPT file-parameter transport and shared
-PDF upload/scan/page-read tools. Real ChatGPT OAuth/HTTPS linking remains
-unproven.
-**Verified shared-main baseline before this change:**
-`d477ff724f3eb6f0229c376728ddba9bea1e75e9`, merge commit for PR #237.
-Exact head run 34345679363 passed full tests, Ruff, Mypy, Bandit and one Alembic head.
-Post-merge main run 34348938960 passed the same full repository gates on the exact merge commit.
-Prior main run 34342328239 timed out while tests were still running and is neither a pass
-nor evidence of a failed assertion.
-PR #227 head run 34223161569 and post-merge main run 34224663080 each passed
-1,913 tests and all repository gates.
-[PROJECT_STATE.md](./PROJECT_STATE.md) records measured tests/runtime/publication;
-synthetic profile proof is not real-workbook semantic validation.
-Production Phase 8-14 and OpenClaw retirement remain separately gated.
-**Accepted architecture:** [ADR 0001](./ARCHITECTURE_DECISION_0001_HYBRID_ORCHESTRATION.md)
-plus approved [ADR 0002](./ARCHITECTURE_DECISION_0002_INDEPENDENT_CAPABILITIES.md).
-
-## 1. Delivery decision
-
-**Build a working, testable UI prototype before broad fine tuning.** Preserve the
-  delivered manual graph, PDF/Excel review, optional suggestion and A/B profile workflows.
-  The bounded exact-profile review and early T13 evaluation-lineage contract are merged.
-  PR #218 delivers one reviewed A-row observation, PR #220 delivers one reviewed
-  B system/configuration mapping and PR #222 persists the first governed T13 roster.
-  PR #224 delivers bounded no-write T9 coverage for every active technical target.
-  PR #227 adds one governed component/activity recipe-link interaction and lets T9
-  consume only complete current confirmed links. PR #229 builds one
-  read-only explicit-quantity bottom-up sell-price preview. Real-browser UAT then proved
-  visible withholding, exact dependencies, calculation, permission denial, download and
-  restart, and found two presentation defects fixed in PR #231. PR #233 replaces
-  browser-entered quantities with immutable current Scope-service selections. A later
-  Chrome/restart journey proved three mapped B rows, one unmatched row, target-wide T9
-  coverage, one group in each T13 split, permission denials and byte-identical downloads.
-  Reuse existing technical/pricing/
-  review services; do not start bulk extraction, model tuning or a replacement agent
-  fleet to achieve that screen.
-
-The four capabilities remain independently callable: scope analysis, system
-matching, estimating and reporting. The full evidence-to-Human-Release chain
-is a rule for defensible conclusions and authority, not a mandatory user journey.
-Users may stop, edit, save, export, replace inputs and explicitly continue.
-
-[Project State](./PROJECT_STATE.md) records what is actually implemented;
-[Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines boundaries;
-[Handoff](./SESSION_HANDOFF.md) specifies the single next engineering task;
-[GOAL.md](../GOAL.md) records the product outcome.
-The [Technical Corpus and Dual Pricing Design](./TECHNICAL_CORPUS_AND_DUAL_PRICING_DESIGN.md)
-defines the proposed data model, estimation methods and review boundaries for
-the T1-T14 delivery stages below. ADRs 0001/0002 remain the governing architecture.
-
-## 2. Verified starting point
-
-- Existing FastAPI/Jinja UI supports authentication, projects, estimates, manual
-  physical entry, library administration and retained proposal-review screens.
-  P0 now extends that shell with a separate persisted manual Draft Scope workspace;
-  see the [demo](./DRAFT_SCOPE_DEMO.md) and [contract](./DRAFT_SCOPE_V1_CONTRACT.md).
-- Existing opening/service forms write guarded canonical physical rows. Preserve
-  their behavior; a Draft editor must not use them by disabling admission guards.
-- Deterministic domain services, exact-byte evidence handling, technical-library
-  governance, calculation/snapshot/rendering, audit and migrations are foundations.
-- PR #185's completion consumer/journal/lifecycle hooks are merged. Full workflow
-  scheduling, production capture assurance and OpenClaw replacement are incomplete.
-- P0 main CI [33947498324](https://github.com/Slayde91/classifire/actions/runs/33947498324)
-  passed on `96d6869` with 1,020 tests. P1a is merged in PR #189; main CI 33949738802 passed 1,072 tests. Its Chrome
-  import/manual-edit/reimport/restart demonstration remains valid. P4a adds a
-  saved report interaction with immutable PDF/XLSX files; inspect PROJECT_STATE.md
-  for its own validation/publication. No result proves production readiness.
-- An earlier archive candidate at `.tmp/project-package-draft-20260905` had 22
-  passing tests in its historical review. The later shipped selected-package
-  download/import/re-export increments below now define the implemented boundary;
-  the old candidate is recovery context, not the next package implementation task.
-- Existing `Product`, `LabourComponent`, `PricingLibraryRecord`, technical
-  document/variant and release/pinning models are reusable foundations. Package 14
-  CSV import and the bounded Draft XLSX selection path are different implementations;
-  neither establishes ingestion of the two newly specified authoritative inputs.
-- `pricelist.xlsx` (A: general products/services) and `pricing_library.xlsx`
-  (B: Firefly system prices) were not located in inspected tracked/root/data/docs
-  locations. Their structures and contents were not inspected. The requested
-  1,000+ B rows is an input requirement, not a measured corpus count.
-- Historical Phase 8 UAT/lock state was not rechecked against a live database.
-  Production and authoritative real-data exits remain unproven.
-
-## 3. Status and evidence rules
-
-| Status | Meaning |
+| Classification | Current work and evidence |
 | --- | --- |
-| Completed foundation | Narrow implementation and evidence exist; not a completed product milestone. |
-| Next / planned | Approved work, without demonstrated completion. |
-| Active local candidate | Unmerged work to inspect and reuse; not shared-main capability. |
-| Reordered / superseded | A previous delivery priority no longer controls the next task. |
-| Blocked authoritative exit | Required real evidence/approval/operational proof is absent; safe Draft development may continue. |
-| Deferred | Deliberately outside the current prototype path; revisit on evidence or feedback. |
+| Completed bounded implementation | Manual Draft Scope, JSON round trip, selected-target Match review/measurements, manual/rate-selected Estimate and all four PDF/XLSX report profiles; shared service contracts and tests |
+| Completed bounded implementation | PDF, Excel and Word retained inspection/review; Scope v7 Word evidence; ProjectPackage v5 selected artifacts/originals and governed import/re-export. Word PRs #252-#254 are merged |
+| Completed bounded implementation | A/B profiles/review, A observations, B identity mapping, T9 coverage, T6 recipes, T13 roster and governed Scope quantity basis (PR #233); do not rebuild them |
+| Completed correction / verification in progress | I1: PR #255 passed and merged as 7847288; current-main run 34664119693 remains live. PR #254 merged before CI finished; main protection is not enforced at the inspected endpoint |
+| Upcoming immediate | I2: separately authorized Word trial activation and actual user confirmation/package acceptance; I3: owner decision on enforced merge protection |
+| Blocked on external interaction | N1 actual Excel trial needs client tool refresh/attachment/human confirmation. Word activation needs approval. These are not code-absence claims |
+| Near term | N2 representative technical recipe/quantity/commercial meaning acceptance before expanding derived rates |
+| Reordered | Complete visible evidence-to-Scope-to-package acceptance before broad format/scale/prediction work; retain technical/pricing work as an independent track |
+| Superseded | Reimplementing/publishing the already merged PDF/Excel/Word client features; repeating OAuth setup; creating the first governed quantity basis; accumulated old “next session” instructions |
+| Deprecated | Mandatory autonomous fleet/one agent per capability; chat or OpenClaw memory as canonical state; automatic approval from imported claims; root recovery checkout as publication source |
+| Planned/dependency-bound | L1 wider document/corpus/physical-model coverage and full portable history; L2 calibrated methods, operations, production gates and protected OpenClaw retirement |
 
-A UI milestone requires observed browser behavior plus relevant API/service tests.
-A schema, test count, mock screen or successful CI alone does not finish it.
+## Ordered next actions and acceptance
 
-## 4. Prioritised build plan
+The complete objective, evidence, components, dependencies, acceptance, validation and
+uncertainty for I1-I3, N1-N2 and L1-L2 are maintained together under
+[Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions).
+The next session starts with I2 preparation: a concrete Word activation/acceptance
+plan. PR #255 is already merged; monitor current-main CI as an activation prerequisite.
+Do not start another implementation merely because
+an existing run is slow. The handoff carries the exact current task and commands.
 
-### Prototype delivery track
+Each published change must have observed successful checks on the exact head, required
+reviews and no unresolved correctness/security concern before an ordinary merge.
+`--auto` is not proof of enforcement. Do not change repository protection without
+owner authorization. Record merge commit and post-merge CI separately.
 
-Order by user-visible value. Build the minimum shared contracts within each
-slice. Keep each PR focused on its selected increment; do not bundle the whole
-prototype into it.
+## Detailed retained technical and production backlog
 
-| Milestone | Priority/status | User-visible exit and required evidence |
-| --- | --- | --- |
-| **P0. Draft Scope workspace** | **Completed bounded prototype; merged PR #188** | In an isolated synthetic environment, log in, create/open a project, enter one defect with multiple openings/services and an unresolved observation, validate, save, reload/restart, reopen and download the exact saved Draft Scope JSON. Inspect the browser and downloaded content. No matching, pricing or canonical promotion runs. |
-| **P1a. Saved Scope import/replacement** | **Completed bounded increment; merged PR #189** | Upload saved Draft Scope JSON, validate/check its declared hash and version, preview identity/content/uncertainty and explicitly append a local revision. Preserve source lineage and prior revisions; reject stale saves and foreign authority. Demonstrate browser round trip and refusal cases. No ZIP or report extraction in this slice. |
-| **P1b. One evidence intake path** | **PDF/Excel review and optional PDF suggestions completed through PR #211** | Retain/scan a supported source; explicitly review/map proposed records into an editable graph and confirm a saved Scope revision with exact provenance. Preserve unknown quantities and manual shared-opening decisions. No automatic physical/technical admission or measured live-AI accuracy claim. |
-| **P2a. Saved technical-candidate review** | **Completed bounded increment; merged PR #191** | Select saved Scope, explicit technical release and one opening/service target; inspect source-bound candidates and missing criteria, keep/reject with notes, save/reopen/download an unapproved revision and stop. Other Scope items remain explicitly unassessed. Existing ranking is retrieval, never technical applicability. Test invalid/source-less releases, stale Scope/library dependencies, ownership and no Estimate/canonical writes. Demonstrate a synthetic browser interaction. |
-| **P2b. Applicability coverage and matching** | **Substrate/gap merged PR #195; service-size review merged PR #198; full applicability upcoming** | Load saved/manual valid scope in a fresh session, view evidence-bound candidates or unresolved findings from a small synthetic approved library, inspect reasons/limits, save/export a System Match revision and stop without estimating. No keyword-only compatibility or fabricated approvals. |
-| **P3a. Manual Draft Estimate workspace** | **Completed bounded increment; merged PR #192** | Select a saved Scope and optionally attach an exact candidate-review revision; explicitly enter a supported quantity/unit and provisional unit sell rate, show missing/unpriced work and a labelled partial subtotal, preserve original values and reasoned overrides, save/reopen/download exact Draft JSON. No inference, canonical Estimate/lock, automatic recovery or technical approval. Demonstrate browser/restart and Decimal/authority tests. |
-| **P3b. Governed pricing and estimating coverage** | **Generic XLSX selection merged PR #196; A/B profiles PR #212; review PR #214; T13 contract PR #216; Dataset A observation PR #218; Dataset B mapping PR #220; T13 roster PR #222; bounded T9 coverage PR #224; T6 recipe review PR #227; first T10 bottom-up preview PR #229; T10 browser/restart proof complete; Scope-bound quantity PR #233 merged; B mapping/T9/T13 browser-restart proof complete; broader T10-T13 active/upcoming** | Distinguish A general costs/services from B Firefly system-price observations, retain exact source/profile/decision/row/mapping/roster/quantity history and inspect identity, units, price meaning and gaps. Coverage and the first bottom-up amount are visible and browser-proven. Validate representative recipe and grouping semantics next, then add numeric-basis breadth and separate comparable proposals. Preserve Estimate independence and recovery checks; reviewed evidence is not an approved library. |
-| **P4a. Scope-only Draft reports** | **Completed bounded increment; merged PR #190** | Explicitly select a saved Scope, freeze its envelope/project labels/profile version together, preview and download readable PDF plus filterable XLSX from that same retained snapshot. Reopen after restart without output drift. Include missing/unknown values and imported lineage; no estimation or canonical lock bypass. Inspect page images and workbook cells/types. |
-| **P4b. Other independent Draft report profiles** | **Estimate-only merged PR #193; scope-and-system merged PR #197; complete profile merged PR #199** | Select available revisions and scope-only, technical, estimate or combined profile; preview missing/stale sections; download readable PDF and filterable XLSX from the same snapshot. Inspect both formats, IDs, units, formulas and totals. Do not recalculate or require all capabilities to run. |
-| **P5. Project portability and shared ChatGPT access** | Package download/import and independent client capabilities are implemented through PR #237; ChatGPT PDF upload/scan/page tools are implemented and locally tested; real external linking is pending | Prove one visible real ChatGPT PDF -> inspected page -> proposed Scope -> human save journey. Verify this increment is on shared main first. Extend Excel and ProjectPackage evidence membership only through the same shared services and explicit source rights. |
-| **P6. User trial and refinement** | After each usable slice; consolidate after P0-P4 | A user completes the documented tasks; record observed failures and usability feedback, fix supported-path problems, then broaden formats, technical/pricing coverage and edge cases. No fixed timeline or accuracy claim without measurements. |
-
-
-**Current delivery order:** P0, P1a, P4a, P2a, P3a, all three additional P4b
-profiles, PDF observations/graph/optional suggestions P1b (through PR #211), partial
-measured P2b and generic pricing XLSX P3b are merged. The bounded A/B profile is merged
-  in PR #212, exact-profile human review is merged in PR #214, the pre-model
-  T13 contract is merged in PR #216, Dataset A observations in PR #218, Dataset B
-  mappings in PR #220, the persisted target-blind roster in PR #222 and bounded
-  read-only T9 coverage in PR #224, T6 recipe review in PR #227 and the first T10
-  bottom-up preview in PR #229. Its synthetic real-browser/restart lifecycle has passed.
-PR #233 adds a no-write preview and append-only Scope-service quantity journal, then
-makes the normal T10 path require its latest current compatible record. It passed the
-full local suite, clean PR CI and a synthetic Chrome/restart journey. The
-selected-package P5 increment has a real configuration/save/download/reconfiguration/
-restart journey merged in PR #200; later P5 client parity is merged through PR #207.
-Merged PR #235 adds deterministic T9 coverage plus cursor-bounded list and exact read of
-persisted T13 roster history with strict read/estimate/technical client grants, local
-pricing-review authority and zero writes. Merged PR #236 adds bounded T6 recipe-link
-list/exact-read parity, stable cursor ordering and current/stale status through the same
-permissions and shared service. Its final exact-head CI passed every repository gate.
-PR #237 completes the client evidence chain with 20-item Dataset A row pagination, exact
-bytes, current/stale state and zero writes; its exact-head CI passed before merge. The
-current PDF-file implementation reuses the standalone retained-evidence services and adds no
-automatic Scope save, AI decision or downstream capability. Do not rebuild these slices.
-
-**Completed bounded increment: selected Draft ProjectPackage download (PR #200).** One coherent Scope workspace,
-optional review/Estimate and chosen retained report pairs can be previewed without
-writes, explicitly saved as an immutable package revision and downloaded. Source
-bodies stay external/withheld, permissions follow included content, and historical
-bytes stay exact. This does not complete full project/history/source coverage.
-See [contract](./DRAFT_PROJECT_PACKAGE_V1_CONTRACT.md).
-
-**Completed bounded increment: editable new-project package import (PR #203).** The current
-implementation creates a new owned Draft project through explicit confirmation, preserves
-all selected original artifacts/history/report bytes, maps local identities and
-supports Scope/review/Estimate editing and v2 origin-preserving re-export. Reports
-use existing scan/quarantine controls. Foreign source/approval claims never activate
-local authority. This increment merged in PR #203 at `2f79e49`; exact-head CI passed
-1,470 tests and main CI 34007644149 succeeded. Browser/restart and 506 affected local
-tests also passed; this does not complete full-project source/history coverage.
-
-**Completed client increment:** PR #205 merged independent Match retrieval/review,
-manual Estimate edits and all four report operations, explicit technical/estimating
-scopes, readable human confirmation and exact retained report downloads. Feature CI
-34013051763 attempt 2 passed 1,502 tests; main CI 34014555539 succeeded. Its first
-worker timed out with no reported assertion failure; the unchanged retry passed.
-
-**Completed measured-review client increment:** PR #206 merged v2/v3 measurement
-entry using the existing shared rules and human confirmation. Saved and proposed
-values are distinguishable; invalid/foreign/stale source claims cannot be promoted.
-PR CI 34015890493 attempt 2 passed 1,511 tests; main CI 34017405923 succeeded.
-
-**Completed bounded client increment (PR #207):** the shared implementation provides owned
-workbook discovery, bounded exact-row preview and human-confirmed application of one
-already retained/scanned row to an existing Estimate line. It reuses
-`draft_pricing_intake.preview` / `apply_rate`, preserving source/cell/scan hashes,
-units, recovery notes and original/override history. Upload/scan stays in the existing
-UI. PR CI 34019881433 passed 1,522 tests. No
-full-client, general pricebook import, system-price mapping or production claim
-follows from these commands alone.
-
-**Completed bounded increment: PDF page-to-Draft graph review (PR #209).**
-The retained PDF page/shared editor supports explicit Defect/Opening/Service links,
-no-write preview and signed human confirmation of one v4 revision. Old observation
-claims, edited/deleted entity history and unverified imports remain preserved. Its
-synthetic browser/restart/report/package proof and required CI are completed bounded
-evidence; they do not prove Excel support or production physical-model admission.
-
-**Completed bounded increment: Excel defect-register mapping (PR #210).**
-The merged implementation uses `draft_scope_xlsx` and the shared source/worker/editor/revision
-boundaries. A person selects a supported sheet/header/column mapping and 1..25 rows,
-reviews editable unlinked proposals, connects the graph and explicitly associates
-source rows and chosen image occurrences before preview/confirmation. Scope v5 retains
-PDF claims alongside whole-item hashes, exact typed cells/mapping and image byte/preview
-hashes/anchors. Mapped formula/unsupported numeric values stay unresolved. No repeated
-label, row count or image position establishes a physical relationship or quantity.
-
-Dependencies: additive 0038 source binding from 0037, compatible v1-v5/report/package
-readers, existing shared PostgreSQL quarantine locks, retained storage and genuine current
-scanning. Pricing permissions/source purpose stay separate. Use synthetic fixtures;
-real layouts/evidence need their existing authorization. The
-[Excel contract](./DRAFT_SCOPE_XLSX_V1_CONTRACT.md) records the supported static-image
-and worksheet subset; unsupported layouts/limits are refused without silent truncation.
-
-Deliverable/exit: demonstrate upload/scan, sheet/header/mapping and image inspection,
-edit-back, no-write preview, separate confirmation, saved graph, actual restart and
-selected report/package download/import. Verify old PDF/Scope/report/package bytes,
-PDF saves after v5, imported-unverified claims, changed/deleted/re-reviewed items and
-all four report profiles. Test atomic budget/refusal, stale/tampered/expired/replayed
-confirmation, current permissions, foreign owner/purpose, source/scan/quarantine drift
-and malformed mapping. PROJECT_STATE.md owns results; required CI/review and verified
-merge remain separate gates. No canonical, pricing, technical or provider authority
-is granted by this Draft interaction.
-
-**Completed bounded Scope increment (PR #211):** optional one-page PDF text/image
-suggestions use a Draft-specific adapter and the same human graph-review services.
-The configured OpenAI transport remains default-disabled; scripted proof does not
-establish live accuracy. Real provider execution, broader OCR, format coverage,
-measurements and cross-report deduplication remain separately gated.
-
-**Active corpus/pricing candidate: bounded A/B intake/profile preview.** Users choose
-general source A or Firefly system-price source B, retain a stable dataset/source version,
-inspect sheets/headers/cells, price meaning and gaps, then explicitly save/reopen/download
-an append-only unapproved profile. Synthetic HTTP/ClamAV/restart proof and 85 affected
-tests pass. Filenames cannot establish identity or basis; existing limits and
-foreign/stale/quarantine/integrity refusal remain. No row ingestion, library publication,
-system matching, inferred price or Estimate repricing occurs. Required PR CI/review/merge
-remain separate. The T1-T14 dependency gates remain.
-Real OAuth/account linking, provider execution and deployment are separate increments.
-
-**First interactive prototype = P0. Four-capability prototype = demonstrated
-P0-P4 behavior**, including P1a/P1b, independent/manual entry and reporting from partial
-inputs. Full portability/ChatGPT and production readiness are separate exits.
-No placeholder button or hard-coded success screen counts as a capability.
-
-### Minimum controls now; refinement later
-
-| Required for each exposed prototype path | Can wait until needed or after user feedback |
-| --- | --- |
-| Existing authentication, CSRF for browser mutations, appropriate permissions, explicit project/artifact ownership and a controlled test environment | Multi-organization product breadth and production tenancy rollout; never claim cross-tenant isolation without proof |
-| Stable IDs, valid relationships/units, attributed manual input, uncertainty, provenance, durable saves and revision identity | Exhaustive taxonomies, every document format, polished layouts and every rare workflow combination |
-| Preserve canonical guards, technical/commercial separation, deterministic supported calculations and visible Draft status | Real canonical Phase 8-14 acceptance, production lock/release operations and deep accuracy optimization |
-| Bound and validate exposed inputs/downloads, refuse unsafe paths/tampering and avoid secrets or customer fixtures; safe spreadsheet output when exposed | Existing-project package merge/offline synchronization and complete source/history coverage; bulk capacity beyond the selected measured workload |
-| Targeted happy-path and material negative tests, browser inspection, required CI and no known supported-path safety/correctness defect | General agent framework, full scheduler, provider migration and broad failure-matrix expansion unrelated to the selected slice |
-
-Deferring breadth means restricting and declaring the supported scope. It never
-means suppressing known errors, weakening tests or bypassing permissions.
-
-### Work reordered and retained
-
-| Work | Revised disposition |
-| --- | --- |
-| Finish the generic ProjectPackage exporter before any UI | **Superseded priority.** P0 and selected P5 package flows are complete bounded increments; preserve historical candidates and extend the shipped contracts only for an actual user workflow. |
-| Scope-only reporting waits until every capability exists | **Reordered and delivered.** P4a followed the proven JSON round trip; each later profile retains its own artifact dependencies and bounded completion evidence. |
-| Complete all four schemas before building screens | **Superseded.** Evolve compatible contracts alongside demonstrated use cases. |
-| OpenClaw completion/journal/transport foundations | **Completed bounded foundations** (PRs #183-#185); preserve them without making replacement work a P0 dependency. |
-| Remaining capture assurance, general jobs, replacement adapter and retirement | **Separate gated backlog.** Mandatory before applicable provider deployment/retirement, unnecessary for deterministic manual P0. |
-| Technical corpus and dual-pricing breadth | **Retained separate track.** T1-T14 still requires A/B profile, reviewed identity/technical mapping, bounded scale and validated estimation. The completed PDF/Excel reviews and current optional suggestion interaction precede the A/B profile. |
-| Source-linked structured PDF Draft editor | **Completed bounded increment, PR #209.** Preserve its demonstrated v4 review/history and shared services; do not rebuild it or infer production admission. |
-| Excel defect-register mapping | **Completed bounded increment, PR #210.** Explicit sheet/header/column/row review, Scope v5 cells/image occurrences and 0038; preserve demonstrated browser/restart/output history. |
-| Optional evidence interpretation | **Completed bounded increment, PR #211.** One PDF page through a Draft-specific optional adapter, retained generation, shared human review and Scope v6; synthetic proof, manual fallback and no automatic approval. |
-| ChatGPT PDF evidence intake | **Implemented local prototype boundary.** Official file parameter -> allowlisted DNS-pinned fetch -> existing retained PDF upload/scan/page read -> separate human-confirmed Scope proposal. Real ChatGPT/OAuth/HTTPS proof follows merge. |
-| Existing domain guards, exact-byte reads, snapshot integrity, scoped review and CI | **Retained foundations.** Reuse them; avoid parallel business pipelines or regression. |
-| Legacy draft PRs #9-#13 / dirty root | **Recovery context.** Do not bulk-merge or overwrite. |
-
-### Immediate next action
-
-First verify that the current PDF-intake commit is published on shared `main` with exact-head
-required CI. Then prove one visible journey through an operator-controlled HTTPS/OAuth
-ChatGPT connection: select a synthetic PDF, upload it, explicitly scan it, inspect a retained
-page with hashes/locator, propose a Scope edit, complete the existing same-user browser
-review/save and stop. Record the actual provider file host for the exact allowlist; never
-replace that control with a wildcard or undocumented guess.
-
-After that measured journey, extend the same file-parameter and shared-service pattern to
-Excel defect reports. Representative pricing semantics and ProjectPackage source membership
-remain later work; this prototype-first ordering supersedes polishing them before users can
-supply reports through the ChatGPT interface. Current evidence and the exact handoff remain
-in PROJECT_STATE.md and SESSION_HANDOFF.md. This sequence grants no customer-source,
-live-AI, canonical-write or deployment authority. OpenClaw protection parity remains a
-separate gated track.
+The following catalogue preserves the approved dependencies and exit criteria.
+Historical PR references describe bounded increments; the current status table above
+and project state supersede older timing/priority statements. No full production
+phase is promoted to complete by this documentation reconciliation.
 
 ### Technical-corpus and dual-pricing delivery stages
 
@@ -821,11 +416,10 @@ authorization and evidence. P0 does not require a real provider or customer file
 private evidence rules, GitHub pull-request workflow, packaged migrations, and
 receipt/source hashes.
 
-**Remaining:** the root checkout is conflicted recovery evidence. Historical main CI
-passed on `24ee6e3` (PR #192); current baseline evidence is recorded at the top of this
-roadmap. Basic metadata previously reported main unprotected.
-Detailed protection configuration limits were not rechecked here; do not infer
-plan restrictions or bypass CI/review from that fact. Clean-machine and release
+**Remaining:** the root checkout is conflicted recovery evidence. Current validation is recorded in PROJECT_STATE.md. On 2026-09-12 the GitHub
+main protection endpoint returned "Branch not protected". PR #254 merged while
+validation was running; explicitly verify completed checks before any merge.
+Changing repository protection requires owner authorization. Clean-machine and release
 reproducibility remain incomplete.
 
 **Exit:** every publishable change starts from clean current main, is reviewed,
@@ -1214,7 +808,7 @@ import them into the active fire-seal/penetration runtime prematurely.
 - Draft PRs #9-#13 as current-main candidates without selective reconstruction.
 - PR #75 as open work; it merged at `348bce5` and remains a bounded
   proposal-only prototype, with PR #103 evidence-read hardening on shared main.
-- â€œObtain authority and run the approved assessmentâ€ as the immediate task; the
+- "Obtain authority and run the approved assessment" as the immediate task; the
   one authorised attempt already occurred and failed safely.
 - Building the report runner as future work; shared main already composes it.
   The remaining work is formats beyond PDF/XLSX/DOCX,

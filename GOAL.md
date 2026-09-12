@@ -200,15 +200,15 @@ shared pricing services are merged in PR #207 at `a22a027`; its exact-head CI pa
 1,522 tests and main CI succeeded. These are bounded generic workbook interactions,
 not dedicated A/B ingestion, bulk technical extraction or a pricing inference engine.
 
-## Immediate delivery priority: complete Word review and shared client access
+## Immediate delivery priority
 
-Word retained inspection is merged in PR #252 (c5d4774). Complete and publish the
-current source-linked human graph review and portable-original interaction, then
-expose it through thin ChatGPT tools over the same services. Require saved/reopened
-provenance, unknown quantities, exact package roundtrip and human confirmation.
-Do not rebuild proven PDF/Excel or quantity-basis work. Resume the separate real
-ChatGPT Excel trial when its tools are refreshed. Broader technical/pricing coverage,
-input layouts and production gates remain part of the full goal.
+The PDF/Excel/Word client and selected-package increments are implemented; Word
+PRs #252-#254 are merged. Merged source is distinct from hosted CI and live activation.
+Use [PROJECT_STATE.md](./docs/PROJECT_STATE.md#recommended-next-actions) for the single
+current priority and [SESSION_HANDOFF.md](./docs/SESSION_HANDOFF.md) for the next-session
+prompt. Close outstanding validation, then complete the controlled Word acceptance
+journey after separately authorized activation. Do not rebuild the quantity-basis or
+client tools. The full production outcome above remains unchanged and incomplete.
 
 ## Earlier technical/pricing delivery sequence
 
@@ -267,8 +267,8 @@ blank quantity, the exact `2 each x $300 = $600.00` calculation, dependency hash
 lower-privilege denial, canonical JSON download and byte-identical reproduction after a
 server restart.
 
-Add one governed project-quantity basis next. Bind an explicit quantity and unit to a
-selected saved Scope revision and exact frozen recipe requirement; preview without a
+The governed project-quantity basis is implemented in PR #233. It binds an explicit
+quantity and unit to a selected saved Scope revision and exact frozen recipe requirement; preview without a
 write, then explicitly save, reopen and download an immutable review record. T10 may
 consume only a current compatible basis. Missing, stale, unit-incompatible or changed
 Scope dependencies must withhold the result. Do not infer quantity from defect counts or
@@ -278,13 +278,11 @@ evaluation targets or release output.
 T1-T14 dependencies remain: reviewed identities and field claims, immutable recipes,
 lineage-aware holdouts and measured coverage precede derived costing/calibration.
 The full goal remains active: broader Scope analysis, authorized applicability,
-pricing defaults/inference, complete package exchange, real ChatGPT integration and
-production readiness are unfinished. OpenClaw retirement requires proven protection
+pricing defaults/inference, complete package history, broader live ChatGPT acceptance and production readiness
+are unfinished. OpenClaw retirement requires proven protection
 replacements. Current results belong in PROJECT_STATE.md, not this goal statement.
 
-## Word client delivery checkpoint
+## Current checkpoint
 
-Complete the shared Word client evidence/review interaction next, with exact schemas,
-retained provenance and separate browser confirmation. Validate before publication;
-activation and real ChatGPT acceptance remain separate steps. This bounded increment
-does not complete the full platform outcome or replace technical/commercial priorities.
+See PROJECT_STATE.md for verified CI/runtime status and ordered next actions; prior
+increment descriptions above are historical implementation context, not current tasks.

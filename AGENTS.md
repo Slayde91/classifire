@@ -13,7 +13,7 @@ Read [GOAL.md](./GOAL.md), [the roadmap](./docs/CLASSIFIRE_ROADMAP.md),
 
 Build the existing modular application into four independently callable
 capabilities: scope analysis, system matching, estimating and reporting. Reuse
-CLASSIFIRE's domain services across the standalone UI and future ChatGPT integration.
+CLASSIFIRE's domain services across the standalone UI and optional ChatGPT integration.
 Keep AI optional. Four capabilities do not require four agents or four services.
 
 Prioritize a working, testable UI prototype. Deliver one complete user interaction
@@ -29,8 +29,9 @@ Use GOAL.md and the verified project state to select the next visible increment;
   technical target. PR #227 implements governed T6 recipe links and forward v4 recipe
   snapshots. PR #229 implements the first read-only T10 bottom-up proposal preview;
   real Chrome/restart UAT has also proven its visible fail-closed and exact-download
-  lifecycle. Build the first governed project-quantity basis next. Prediction and
-  holdout execution remain later.
+  lifecycle. The governed project-quantity basis is also merged (PR #233). Follow
+  the current PROJECT_STATE.md next actions; representative semantics, prediction
+  and holdout execution remain later.
 Inspect current evidence before resuming; never rebuild completed prototype workflows.
 Do not substitute a schema, backend helper or collection of tests for the user-visible
 milestone. Do not make a complete ProjectPackage ZIP, all four capability schemas,
@@ -125,10 +126,11 @@ three independent groups exist. Reuse that frozen boundary for later evaluation.
 PR #224 adds read-only T9 coverage over every active technical target. PR #227 adds
 forward v4 frozen recipes, immutable reviewed links and guarded bottom-up A support only
 when every requirement is current, confirmed and complete. PR #229 adds one read-only
-T10 bottom-up proposal preview and its real-browser lifecycle is proven. Extend it next
-with one governed project-quantity basis bound to an exact saved Scope revision and
-frozen requirement, preserving T-stage dependencies without treating the complete
-target schema, bulk corpus or model as one task.
+T10 bottom-up proposal preview and its real-browser lifecycle is proven. PR #233 adds
+a governed project-quantity basis bound to an exact saved Scope revision
+and frozen requirement. Validate representative meaning before expanding arithmetic;
+preserve T-stage dependencies without treating the complete target schema, bulk corpus
+or model as one task.
 
 - Preserve separate dataset identities: A `pricelist.xlsx` is general products,
   materials, labour and services; B `pricing_library.xlsx` is Firefly system prices.
