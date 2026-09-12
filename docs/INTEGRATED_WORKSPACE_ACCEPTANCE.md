@@ -88,7 +88,8 @@ The earlier human-confirmed Word package is a separate artifact and is not repla
   implemented, but this run does not prove accurate automatic analysis of arbitrary
   reports or calibrated service/substrate/quantity extraction. A real report was supplied
   for assessment and its separately approved linked originals were inspected privately;
-  human reference labels are still needed. This assistant review is not an automatic
+  the user has now confirmed the findings and unknowns as a private Draft reference.
+  This assistant review is not an automatic
   CLASSIFIRE analysis run. No customer details or unsupported accuracy percentage are recorded here.
 - **Full inline system/pricing work:** the register displays selected saved results.
   Creating/reviewing/overriding candidates and editing or recomputing estimates still use
@@ -107,10 +108,15 @@ The earlier human-confirmed Word package is a separate artifact and is not repla
   Preserve the diagnostic trial and obtain explicit approval before any activation,
   OAuth/tunnel or host-policy change.
 
-The immediate engineering step is review and publication of this bounded candidate
-with observed successful checks. The next accuracy step is an agreed human-labelled
-report/image sample and measured correct/uncertain/withheld outcomes, using existing
-intake/review boundaries without implicitly invoking matching, estimating or release.
+PR #260 merged as `3eabb23` after source `6bc9e96` passed run 34704939887
+(2,113 tests plus full static and migration-head checks). No required reviews were
+configured. Post-merge run 34706301132 was still running at 17:00 UTC on 2026-09-12.
+The workspace remains isolated on 8840; no workspace activation is claimed.
+
+The privately confirmed Draft reference retains unknowns and cannot be coerced into
+fixed topology for the older comparator. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md)
+records the permitted preparation and unresolved contract, rights and roadmap gates.
+No measured application accuracy or Phase 8C execution is claimed.
 
 ## Separate diagnostic runtime checkpoint
 

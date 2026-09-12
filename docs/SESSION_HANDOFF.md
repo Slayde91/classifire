@@ -9,10 +9,17 @@ root `GOAL.md`; this task does not complete production Phase 8-16 gates.
 
 ## Verified source and runtime
 
-- Worktree: `C:/CLASSIFIRE/.tmp/integrated-project-workspace-20260913`, branch
-  `feat/integrated-project-workspace-20260913`, base/inspected origin/main
-  7dbc59bfa2fd52bd8238a2f7c5a99d71240420cb. The workspace source, tests and docs are
-  local changes at this checkpoint; append actual publication results after observing them.
+- PR #260 merged as `3eabb23`; source `6bc9e96` on
+  `feat/integrated-project-workspace-20260913` matches its upstream and merged tree.
+  Exact-head run 34704939887 passed 2,113 tests and all remaining checks. No required
+  reviews were configured. Post-merge run 34706301132 was running at 17:00 UTC on
+  2026-09-12; observe it without restarting. No workspace activation is authorised.
+- The next isolated correction uses `fix/reference-comparison-unknowns-20260913`,
+  based on `3eabb23`. A synthetic comparator audit reproduced TypeError when known
+  and unknown service material or quantity values share one opening. Preserve
+  existing unknown semantics. The correction passes 23 comparator cases, both
+  representative-run caller files, actual CLI PASS/MISMATCH output checks, full Ruff,
+  Mypy (233 files) and Bandit. Hosted CI and publication must still be observed.
 - PR #259 merged diagnostic source e2e8292 as 7dbc59b. Its private receipt records
   successful PR run 34698452617 and post-merge run 34699704284, each 2,066 tests.
   Those results belong to the diagnostic change, not the newer workspace diff.
@@ -78,21 +85,23 @@ measuring service, substrate or quantity accuracy.
 
 ## Local change classification and next work
 
-The current candidate contains UI/navigation/templates/styles, register projection and
-editor code, optional bounded advisory transport/configuration, corresponding tests and
-this documentation. It adds no domain model, schema, migration or canonical authority.
-Private test helpers, logs, screenshots and outputs are execution evidence, not files to
-stage. Preserve unrelated changes and the legacy root; its historical conflict inventory
-is in [LOCAL_CHANGE_CLASSIFICATION.md](./LOCAL_CHANGE_CLASSIFICATION.md), not a new audit.
+The current correction contains one existing comparator change, its synthetic tests,
+three reconciled checkpoint documents and one reference-readiness document. It changes
+no models, schemas, migrations, runtime configuration or canonical authority. Prior
+workspace UI changes are already merged in PR #260. Private test logs, CLI outputs,
+screenshots and original reports remain outside Git. The previous workspace checkout
+retains two untracked generated browser artifacts; preserve them and the conflicted
+legacy root. Root recovery evidence remains de0cc5a with CHERRY_PICK_HEAD c3e4c810
+and pre-existing modifications/conflicts.
 
-1. Review the complete explicit candidate diff, final checks and remaining acceptance
-   limits. Record commit/push/PR, exact-head successful CI, required reviews and actual
-   merge outcome. Poll existing jobs; never restart because observation timed out.
+1. Complete the nullable-comparison correction with synthetic regression and CLI
+   evidence; publish explicit files and observe exact-head CI and required reviews.
 2. Keep runtime activation, provider enablement and any exact host-policy/OAuth/tunnel
    change as separate explicit approval decisions. Do not broaden the allowlist or grant.
-3. Continue accuracy acceptance from an agreed human-labelled report/image sample. Keep
-   unknowns and contradictions visible; use existing retained-source/review services.
-   Do not infer quantity from row/image count or run matching/pricing/release implicitly.
+3. Preserve the user-confirmed private Draft reference and its unknowns. Follow
+   [reference readiness](./PHYSICAL_REFERENCE_READINESS.md): the existing comparator
+   cannot represent unresolved opening count/vacancy, and Phase 8C still has upstream
+   gates. Prepare taxonomy and data rights; do not start an unapproved real evaluation.
 
 The full redesign criteria remain incomplete: general accurate multimodal analysis,
 complete inline technical/pricing work, live integrated AI, representative performance
@@ -102,5 +111,5 @@ roadmap and production gates remain applicable; no phase is advanced by this han
 ## Recommended prompt for continuation
 
 ```text
-Continue CLASSIFIRE's integrated workspace candidate from the verified isolated checkout and acceptance receipts. Inspect AGENTS.md, Git/worktrees/upstream/diff, current PR/CI, project state and runtime. Preserve the conflicted root and the separately approved e2e8292 diagnostic runtime. Do not rebuild completed Word/client/package work or repeat completed human confirmations. Reconcile the workspace's actual publication result, test/browser/package evidence and remaining accuracy, inline technical/pricing and live AI gaps. Keep supplied real evidence private; agree human reference labels and adequate original images before claiming accuracy. No workspace activation, provider enablement or OAuth/tunnel/host-policy change without explicit approval. Use selected-checkout PYTHONPATH and fresh test paths; PostgreSQL tests only on disposable15433. Commit explicit reviewed files, push normally, merge only after observed successful exact-head CI and required reviews, and record actual results and limitations. Poll existing jobs without restarting them because observation timed out.
+Continue CLASSIFIRE after merged integrated workspace PR #260 from the verified isolated checkout and acceptance receipts. Inspect AGENTS.md, Git/worktrees/upstream/diff, current PR/CI, project state and runtime. Preserve the conflicted root and the separately approved e2e8292 diagnostic runtime. Do not rebuild completed Word/client/package work or repeat completed human confirmations. Reconcile the workspace's actual publication result, test/browser/package evidence and remaining accuracy, inline technical/pricing and live AI gaps. Keep supplied real evidence private; preserve the confirmed Draft reference and follow PHYSICAL_REFERENCE_READINESS.md before any accuracy run. No workspace activation, provider enablement or OAuth/tunnel/host-policy change without explicit approval. Use selected-checkout PYTHONPATH and fresh test paths; PostgreSQL tests only on disposable15433. Commit explicit reviewed files, push normally, merge only after observed successful exact-head CI and required reviews, and record actual results and limitations. Poll existing jobs without restarting them because observation timed out.
 ```
