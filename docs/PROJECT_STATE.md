@@ -15,7 +15,32 @@ It has a shared authenticated client adapter and portable selected-project ZIPs.
 The accepted hybrid direction (ADRs 0001/0002) remains unchanged. The full production
 platform, broad document interpretation and canonical Phase 8-14 exits are incomplete.
 
-### Active local register evidence increment
+### Active Defect-only source inspection
+
+- New isolated checkout `.tmp/defect-source-evidence-20260913`, branch
+  `feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`.
+  The existing [Evidence service](./REGISTER_SOURCE_EVIDENCE.md) now accepts an exact
+  Defect-only selection, including review-queue Defects with no linked Opening.
+  It returns only that Defect's references and preserves unresolved relationships;
+  it creates no Opening/Service and runs no downstream capability.
+- Local validation passed 89 affected cases: 23 native/core, 52 HTTP and 14 existing
+  workbench/history cases. Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and
+  unchanged single 0047 migration head passed. Core service/test hashes match their
+  validation receipt. The 52-case HTTP pass was observed in the test session; no
+  JUnit XML or test-time source-hash manifest was retained for that run.
+- Actual synthetic Edge acceptance on port 8846 checked each Defect's own sources,
+  historical/stale claims, keyboard focus, unsaved-edit exclusion and desktop/mobile
+  output. A deliberately mismatched Defect fragment was refused. Restart preserved
+  five image URLs and four Scope downloads byte-for-byte; all 67 checked domain
+  tables remained unchanged. No Opening or Service was invented, no provider ran,
+  and no live 15432 database was contacted. This does not establish real-report accuracy.
+- Final source review found no actionable issue. The change contains six application
+  files, two synthetic tests and three documentation files. No model, migration,
+  parser, provider or existing authority change. The `51e3666` activation plan and
+  pending two-commit public-publication question remain pinned and do not include
+  this additional change. Publication, CI and activation are not claimed.
+
+### Locally committed register evidence increment
 
 - Checkout `.tmp/register-source-evidence-20260913`, branch
   `feat/register-source-evidence-20260913`, based on local Complete-report commit

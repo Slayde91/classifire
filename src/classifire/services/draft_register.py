@@ -228,9 +228,33 @@ def register_context(
 
 
 def _evidence_selection(
-    scope: dict[str, Any], opening_id: str | None, service_id: str | None
+    scope: dict[str, Any],
+    opening_id: str | None,
+    service_id: str | None,
+    *,
+    defect_id: str | None = None,
 ) -> dict[str, Any]:
     content = scope["content"]
+    if defect_id is not None:
+        defect = next((item for item in content["defects"] if item["id"] == defect_id), None)
+        if opening_id is not None or service_id is not None or defect is None:
+            raise DraftScopeError("REGISTER_EVIDENCE_SELECTION_INVALID", 422)
+        linked = any(item["defect_id"] == defect_id for item in content["openings"])
+        return {
+            "opening_id": None,
+            "service_id": None,
+            "defect_id": defect_id,
+            "opening_label": None,
+            "service_label": None,
+            "defect_label": defect["label"],
+            "opening_ids": [],
+            "blank": None,
+            "relationship_warnings": []
+            if linked
+            else [
+                "No Opening is linked to this Defect; its physical relationships remain unresolved."
+            ],
+        }
     opening = next((item for item in content["openings"] if item["id"] == opening_id), None)
     service = next((item for item in content["services"] if item["id"] == service_id), None)
     if (
@@ -266,6 +290,8 @@ def _evidence_selection(
 def _evidence_role(ref: dict[str, Any], selection: dict[str, Any]) -> str | None:
     kind = ref.get("target_kind")
     if kind in ("service", "opening", "defect") and ref["target_id"] == selection[kind + "_id"]:
+        if kind == "defect" and selection["opening_id"] is None and selection["service_id"] is None:
+            return "selected_defect"
         return "selected_service" if kind == "service" else kind + "_context"
     return None
 
@@ -457,6 +483,7 @@ def evidence_context(
     opening_id: str | None,
     service_id: str | None = None,
     *,
+    defect_id: str | None = None,
     settings: Settings,
 ) -> dict[str, Any]:
     """Read one exact register row's source context; never infer relationships or write."""
@@ -464,7 +491,7 @@ def evidence_context(
         if type(scope_revision) is not int or not 1 <= scope_revision <= 2147483647:
             raise DraftScopeError("REGISTER_EVIDENCE_SELECTION_INVALID", 422)
         scope = read_revision(db, actor, draft_id, scope_revision)
-        selection = _evidence_selection(scope, opening_id, service_id)
+        selection = _evidence_selection(scope, opening_id, service_id, defect_id=defect_id)
         refs: list[dict[str, Any]] = []
         cache: dict[tuple[str, str], Any] = {}
         for index, ref in enumerate(scope.get("evidence_refs", [])):
@@ -484,7 +511,7 @@ def evidence_context(
             )
         get_draft(db, actor, draft_id)
         notices = ["Draft evidence context; no technical or physical approval."]
-        if any(ref["role"] != "selected_service" for ref in refs):
+        if any(ref["role"] in ("opening_context", "defect_context") for ref in refs):
             notices.append(
                 "Defect and Opening references are inherited context, not proof of this Service."
             )
@@ -510,12 +537,20 @@ def evidence_image(
     *,
     ref_index: int,
     image_id: str,
+    defect_id: str | None = None,
     settings: Settings,
 ) -> tuple[bytes, str]:
     """Recheck the saved reference before an existing bounded image reader runs."""
     with db.no_autoflush:
         context = evidence_context(
-            db, actor, draft_id, scope_revision, opening_id, service_id, settings=settings
+            db,
+            actor,
+            draft_id,
+            scope_revision,
+            opening_id,
+            service_id,
+            defect_id=defect_id,
+            settings=settings,
         )
         selected = next((ref for ref in context["refs"] if ref["index"] == ref_index), None)
         if type(ref_index) is not int or selected is None:
@@ -549,7 +584,14 @@ def evidence_image(
                 db, actor, draft_id, source_id, metadata["page_number"], settings=settings
             )
         final = evidence_context(
-            db, actor, draft_id, scope_revision, opening_id, service_id, settings=settings
+            db,
+            actor,
+            draft_id,
+            scope_revision,
+            opening_id,
+            service_id,
+            defect_id=defect_id,
+            settings=settings,
         )
         if selected not in final["refs"]:
             raise DraftScopeError("REGISTER_EVIDENCE_SOURCE_UNAVAILABLE", 409)

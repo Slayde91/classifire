@@ -330,7 +330,7 @@ def edit_scope(
 
 def _evidence_query(request: Request, *, image: bool = False) -> dict[str, Any]:
     pairs = list(request.query_params.multi_items())
-    allowed = {"revision", "opening_id", "service_id"}
+    allowed = {"revision", "opening_id", "service_id", "defect_id"}
     if image:
         allowed |= {"ref_index", "image_id"}
     values = dict(pairs)
@@ -348,7 +348,7 @@ def _evidence_query(request: Request, *, image: bool = False) -> dict[str, Any]:
     if str(number) != revision or not 1 <= number <= 2_147_483_647:
         raise HTTPException(422, "A valid saved revision is required")
     result: dict[str, Any] = {"scope_revision": number}
-    for field in ("opening_id", "service_id"):
+    for field in ("opening_id", "service_id", "defect_id"):
         value = values.get(field)
         if value is not None:
             try:
@@ -357,8 +357,13 @@ def _evidence_query(request: Request, *, image: bool = False) -> dict[str, Any]:
             except (ValueError, AttributeError) as exc:
                 raise HTTPException(422, "Choose a saved register row") from exc
         result[field] = value
-    if not result["opening_id"] and not result["service_id"]:
-        raise HTTPException(422, "Choose a saved register row")
+    if result["defect_id"] is not None:
+        if result["opening_id"] or result["service_id"]:
+            raise HTTPException(422, "Choose a Defect alone or an Opening/Service row")
+    else:
+        result.pop("defect_id")
+        if not result["opening_id"] and not result["service_id"]:
+            raise HTTPException(422, "Choose a saved register row")
     if image:
         raw_index, image_id = values.get("ref_index", ""), values.get("image_id", "")
         if (

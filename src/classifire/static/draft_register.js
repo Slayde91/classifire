@@ -162,15 +162,16 @@
             document.dispatchEvent(new CustomEvent("classifire:register-author",{detail:{
               capability, savedURL:reviewURL, modified, row:{defect_id:row.defect?.id,
               opening_id:row.opening?.id, service_id:row.service?.id, blank:row.opening?.blank,
-              label:row.service?.label || row.opening?.label, needsReview:row.needsReview,
+              label:row.service?.label || row.opening?.label || row.defect?.label, needsReview:row.needsReview,
               systemURL:row.target.system_url, priceURL:row.target.price_url}
             }}));
           });
+          action.dataset.registerDefect=row.defect?.id || "";
           action.dataset.registerOpening=row.opening?.id || "";
           action.dataset.registerService=row.service?.id || "";
           action.dataset.registerCapability=capability;
-          action.disabled=(capability === "evidence" ? !(row.opening || row.service) : (row.needsReview || !(row.service || row.opening?.blank))) || workbench.dataset[capability] !== "true";
-          action.title=capability === "evidence" ? action.disabled ? "Select an Opening or Service row; orphan Defect history remains in saved source-review references." : "Inspect saved source evidence beside this row; no data is changed" : action.disabled ? "Resolve this row's relationships and check access before authoring." : `Work with ${capability === "system" ? "technical candidates" : "prices"} beside this row`;
+          action.disabled=(capability === "evidence" ? !(row.defect || row.opening || row.service) : (row.needsReview || !(row.service || row.opening?.blank))) || workbench.dataset[capability] !== "true";
+          action.title=capability === "evidence" ? action.disabled ? "Select a saved Defect, Opening or Service row." : "Inspect saved source evidence beside this row; no data is changed" : action.disabled ? "Resolve this row's relationships and check access before authoring." : `Work with ${capability === "system" ? "technical candidates" : "prices"} beside this row`;
           if(capability === "evidence")td.append(node("span",display,"register-evidence-status"));
           td.append(action);
         } else if (typeof reviewURL === "string" && reviewURL.startsWith("/scopes/") && !reviewURL.includes("\\")) {

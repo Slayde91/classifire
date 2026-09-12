@@ -7,6 +7,7 @@
          data-artifact-id="{{ envelope.artifact_id if envelope else '' }}"
          data-artifact-revision="{{ envelope.revision if envelope else '' }}"
          data-artifact-sha256="{{ envelope.sha256 if envelope else '' }}"
+         data-defect-id="{{ evidence.selection.defect_id or '' if workbench_capability == 'evidence' else '' }}"
          data-opening-id="{{ evidence.selection.opening_id or '' if workbench_capability == 'evidence' else envelope.target.opening_id or '' if envelope and workbench_capability == 'system' else '' }}"
          data-service-id="{{ evidence.selection.service_id or '' if workbench_capability == 'evidence' else envelope.target.service_id or '' if envelope and workbench_capability == 'system' else '' }}">
   <h2>{% block heading %}{% endblock %}</h2>

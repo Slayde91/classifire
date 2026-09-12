@@ -19,7 +19,39 @@ unchanged and incomplete.
   reviews were configured; no human GitHub review is claimed. Post-merge run
   34715038796 passed 2,251 tests and all remaining checks.
 
-## Active register source evidence increment
+## Active Defect-only source inspection
+
+Source `.tmp/defect-source-evidence-20260913`, branch
+`feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`. It extends the
+existing read-only Evidence service and panel to select a Defect without an Opening
+or Service, returning only its own references. Missing relationships stay unresolved;
+no physical record is invented. No schema, parser, provider or authority changes.
+
+All 89 affected cases passed (23 native/core, 52 HTTP, 14 workbench/history), plus
+full Ruff, Mypy (233 files), Bandit, JavaScript syntax and single 0047 head checks.
+The native/core receipt pins the service/test hashes. The HTTP pass was observed in
+the test session; no JUnit XML or test-time hash manifest was captured for that run.
+Edge acceptance checked exact own-source selection, stale/history retention, keyboard
+focus, unsaved-edit exclusion, desktop/mobile output and refusal of a deliberately
+mismatched Defect fragment. Restart retained five image URLs, Scope revisions 1-4
+byte-for-byte and all 67 checked domain tables. No invented Opening/Service, provider
+call or live 15432 contact. Synthetic sources do not prove real-report accuracy.
+
+Private evidence: `.tmp/defect-source-evidence-uat-20260913` and
+`.tmp/defect-evidence-validation-20260913`. Use only the existing disposable 15433
+`classifire_defect_evidence_demo_20260913` database and port 8846 demo. Preserve
+completed fixture receipts and earlier pinned source/activation plans.
+
+Final source review found no actionable issue. The reviewed change contains six
+application files, two synthetic test files and three documentation files. The local
+commit message is: Allow source inspection for Defects with unresolved relationships.
+Resolve its exact hash from this branch and the private finalization receipt.
+This additional change is outside the pending two-commit public-publication question
+and has no upstream, PR or activation approval. Next resolve explicit publication
+scope before push/PR, then observe exact-head CI and required reviews before merge.
+Keep activation separately approved.
+
+## Locally committed register source evidence increment
 
 Source: `C:/CLASSIFIRE/.tmp/register-source-evidence-20260913`, branch
 `feat/register-source-evidence-20260913`, based on local `6d4793b`.

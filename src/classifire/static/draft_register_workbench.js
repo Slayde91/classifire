@@ -28,6 +28,7 @@
       url.searchParams.set("revision",String(revision));
       if(row?.opening_id)url.searchParams.set("opening_id",row.opening_id);
       if(row?.service_id)url.searchParams.set("service_id",row.service_id);
+      if(!row?.opening_id && !row?.service_id && row?.defect_id)url.searchParams.set("defect_id",row.defect_id);
       return url;
     }
     if(kind==="system")return row?.systemURL || picker(kind);
@@ -148,7 +149,7 @@
         throw new Error(`The action was refused or the session changed (${response.status}). Your entries remain here; reopen the project before retrying.`);
       }
       if(content.dataset.capability==="evidence" &&
-         (Number(content.dataset.scopeRevision)!==revision || content.dataset.openingId!==(row?.opening_id || "") || content.dataset.serviceId!==(row?.service_id || ""))) {
+         (Number(content.dataset.scopeRevision)!==revision || (!row?.opening_id && !row?.service_id && content.dataset.defectId!==(row?.defect_id || "")) || content.dataset.openingId!==(row?.opening_id || "") || content.dataset.serviceId!==(row?.service_id || ""))) {
         throw new Error("Source evidence does not match the selected saved row. Reopen the row.");
       }
       capability=content.dataset.capability;
@@ -172,15 +173,15 @@
   async function open(detail) {
     if(busy || !canLeave())return;
     if(detail.capability!=="evidence" && (scopeDirty() || detail.modified)){opener=document.activeElement;panel.hidden=false;body.replaceChildren();row=null;message("Save the Scope before opening technical or price authoring. No capability has run.");heading.focus();return;}
-    if(!detail.row || (!detail.row.opening_id && !detail.row.service_id) || (detail.capability!=="evidence" && (!detail.row.opening_id || detail.row.needsReview)) || panel.dataset[detail.capability]!=="true")return;
+    if(!detail.row || (!detail.row.defect_id && !detail.row.opening_id && !detail.row.service_id) || (detail.capability!=="evidence" && (!detail.row.opening_id || detail.row.needsReview)) || panel.dataset[detail.capability]!=="true")return;
     row=detail.row;capability=detail.capability;opener=document.activeElement;dirty=false;
-    panel.hidden=false;panel.querySelector("[data-workbench-target]").textContent=[row.label,row.opening_id ? "Opening "+row.opening_id : "Parent Opening unresolved",row.service_id ? "Service "+row.service_id : row.blank ? "Blank opening" : "Services unresolved"].filter(Boolean).join(" / ");
+    panel.hidden=false;panel.querySelector("[data-workbench-target]").textContent=[row.label,row.opening_id ? "Opening "+row.opening_id : row.service_id ? "Parent Opening unresolved" : "Opening relationship unresolved",row.service_id ? "Service "+row.service_id : row.blank ? "Blank opening" : "Services unresolved"].filter(Boolean).join(" / ");
     panel.querySelectorAll("[data-workbench-tab]").forEach(button=>{button.disabled=panel.dataset[button.dataset.workbenchTab]!=="true" || (button.dataset.workbenchTab!=="evidence" && (row.needsReview || !row.opening_id));});
     await load(detail.savedURL || endpoint(capability));
   }
   document.addEventListener("classifire:register-author",event=>open(event.detail));
   panel.querySelector("[data-workbench-close]").addEventListener("click",()=>{if(busy || !canLeave())return;panel.hidden=true;dirty=false;
-    const returnButton=row && [...document.querySelectorAll("[data-register-capability]")].find(button=>button.dataset.registerOpening===row.opening_id && button.dataset.registerService===(row.service_id || "") && button.dataset.registerCapability===capability);
+    const returnButton=row && [...document.querySelectorAll("[data-register-capability]")].find(button=>button.dataset.registerDefect===(row.defect_id || "") && button.dataset.registerOpening===(row.opening_id || "") && button.dataset.registerService===(row.service_id || "") && button.dataset.registerCapability===capability);
     const target=opener?.isConnected ? opener : returnButton;
     if(target)target.focus();else {const grid=document.getElementById("scope-register");grid.tabIndex=-1;grid.focus();}});
   panel.querySelectorAll("[data-workbench-tab]").forEach(button=>button.addEventListener("click",()=>{

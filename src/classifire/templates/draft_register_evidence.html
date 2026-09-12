@@ -4,7 +4,7 @@
 {% block content %}
 <link rel="stylesheet" href="/static/draft_register.css">
 <p>Saved Scope revision {{ scope.revision }}. This view is read-only; unsaved edits are not included.</p>
-<ul class="register-guide"><li>Compare saved fields with their retained source text and pictures.</li><li>Opening and Defect references are context; they do not independently prove a Service value.</li><li>Use the source review and its separate confirmation to record corrections. No AI, matching or pricing runs here.</li></ul>
+<ul class="register-guide"><li>Compare saved fields with their retained source text and pictures.</li><li>References from parent records provide context; they do not independently prove a Service value.</li><li>Use the source review and its separate confirmation to record corrections. No AI, matching or pricing runs here.</li></ul>
 <p><a href="/scopes/{{ draft.id }}?revision={{ scope.revision }}">Open this saved Scope revision</a></p>
 {% if evidence.selection.relationship_warnings %}<div class="alert alert-warning"><strong>Relationships need review</strong><ul>{% for warning in evidence.selection.relationship_warnings %}<li>{{ warning }}</li>{% endfor %}</ul></div>{% endif %}
 {% for notice in evidence.notices %}<p class="callout">{{ notice }}</p>{% endfor %}
@@ -15,7 +15,7 @@
 {% for ref in evidence.refs %}
 <section class="register-evidence-source" data-evidence-reference="{{ ref.index }}">
 <h3>{{ ref.label }}</h3>
-<p><strong>{{ 'Service evidence claim' if ref.role == 'selected_service' else 'Opening context' if ref.role == 'opening_context' else 'Defect context' }}</strong></p>
+<p><strong>{{ 'Service evidence claim' if ref.role == 'selected_service' else 'Defect evidence claim' if ref.role == 'selected_defect' else 'Opening context' if ref.role == 'opening_context' else 'Defect context' }}</strong></p>
 <p>Saved claim: {{ ref.status|replace('_',' ') }}. {% if ref.availability == 'verified' %}<strong>Retained source binding checked.</strong> This verifies file identity and access, not the truth of the claim.{% elif ref.availability == 'imported_unverified' %}<strong>Imported claim, unverified locally.</strong> Foreign source IDs are not treated as local sources.{% else %}<strong>Source preview unavailable: {{ ref.availability|replace('_',' ') }}.</strong> Saved source claims remain visible; no replacement source is shown.{% endif %}</p>
 {% if ref.review_url %}<p><a href="{{ ref.review_url }}" target="_blank" rel="noopener">Open source review for the current Draft</a>. Corrections require a separate preview and confirmation.</p>{% endif %}
 <details><summary>Source identity and saved review history</summary><dl class="scope-import-details">{% for field, value in ref.metadata.items() %}<dt>{{ field|replace('_',' ')|capitalize }}</dt><dd class="scope-preserve-text">{{ value }}</dd>{% endfor %}</dl></details>

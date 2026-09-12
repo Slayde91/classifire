@@ -1,19 +1,26 @@
 # Register source evidence
 
 The register's **View sources** action opens retained evidence beside an exact saved
-Opening/Service row. The Evidence tab is read-only and works independently of
+Defect, Opening or Service row. The Evidence tab is read-only and works independently of
 technical review, estimating, AI and package creation. The existing standalone
 PDF, Word and Excel review screens remain the place to preview and confirm corrections.
 
 ## Selection and provenance
 
-An explicit saved Scope revision and Opening/Service identity are required. The
-selected Service must belong to that exact Opening; shared legacy relationships are
-preserved. Blank openings need no Service. An unlinked Service can be inspected from
-the relationship review queue while technical/price authoring stays unavailable.
-Defect and Opening references are clearly labelled inherited context, not proof of
-a Service's values. An orphan Defect without an Opening/Service is outside this
-bounded row endpoint; its existing source-review history remains available.
+An explicit saved Scope revision and selected identity are required. Select either
+one Defect alone or an Opening/Service row; mixed Defect and Opening/Service arguments
+are refused. A selected Defect exposes only its own references, without implicitly
+selecting linked descendants. A Defect with no linked Opening stays in the review
+queue with an explicit unresolved-relationship warning; no placeholder Opening or
+Service is created. Its own references are labelled Defect evidence claims.
+
+For an Opening/Service selection, the selected Service must belong to that exact
+Opening; shared legacy relationships are preserved. Blank openings need no Service.
+An unlinked Service can be inspected from the relationship review queue while
+technical/price authoring stays unavailable.
+Defect and Opening references inherited by another selected row are clearly labelled
+context, not proof of a Service's values. Defect-only inspection can also be requested
+for a Defect that has linked Openings, but descendants are not included implicitly.
 
 The shared `draft_register.evidence_context` service supplies the full-page and native
 panel views. `evidence_image` rechecks the exact selection and current access before
@@ -37,8 +44,8 @@ and proposed values. Source integrity is not technical or physical approval.
 
 ## Interface and authority
 
-The browser binds a fragment to the exact Draft, revision and row before installing
-it. Opening Evidence with unsaved Scope edits explicitly shows the saved revision;
+The browser binds a fragment to the exact Draft, revision and selected identity before
+installing it. Opening Evidence with unsaved Scope edits explicitly shows the saved revision;
 those edits are excluded and no save occurs. Evidence exposes no write form. Source
 review links explicitly open the current Draft's review screen in another tab, where
 existing preview and confirmation rules still apply. Scope, technical, price and
@@ -55,10 +62,10 @@ advisory assistant payload. Technical/price authoring retains its prior gates.
 Current exact results and publication state are in [PROJECT_STATE](./PROJECT_STATE.md).
 The new core and HTTP checks cover native PDF/Word/Excel bindings, quarantine and
 source drift, permission revocation, imported metadata, historical/stale selections,
-blank/unlinked/shared relationships, exact image selection, escaping, unknown/zero
-values and absence of database writes. Browser acceptance uses a separate synthetic
+Defect-only and blank/unlinked/shared relationships, exact image selection, escaping,
+unknown/zero values and absence of database writes. Browser acceptance uses a separate synthetic
 PostgreSQL15433 database and real retained originals/ClamAV scans. It is not a customer
 report accuracy evaluation, production approval or operational deployment.
 
-Imported binary preview through this row panel, orphan-Defect-only selection, broad
-format/scale coverage and general automated interpretation remain incomplete.
+Imported binary preview through this row panel, broad format/scale coverage and
+general automated interpretation remain incomplete.
