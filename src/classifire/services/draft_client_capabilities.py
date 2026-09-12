@@ -641,7 +641,7 @@ def protect_package(
     from . import draft_project_packages as packages
 
     selected = packages.selection(manifest["selection"])
-    if selected.match_id:
+    if packages.selected_match_references(selected):
         require(db, authority, identity, TECHNICAL)
     if selected.estimate_id:
         require(db, authority, identity, ESTIMATE)

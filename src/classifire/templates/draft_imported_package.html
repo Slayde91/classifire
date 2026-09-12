@@ -5,10 +5,11 @@
 <link rel="stylesheet" href="/static/draft_scope.css">
 <section class="panel"><h2>{{ draft.project.name }}</h2>
 <p><strong>Foreign sources and approval claims remain unverified.</strong> This new Draft preserves the original ZIP and its history. Local edits create new revisions; imported values are not recalculated automatically.</p>
-<div class="toolbar"><a class="button button-primary" href="/scopes/{{ draft.id }}">Edit Scope</a>
-{% if mapping.match %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/system-matches/{{ mapping.match.local_id }}">Review imported systems</a>{% endif %}
-{% if mapping.estimate %}<a class="button button-secondary" href="/scopes/{{ draft.id }}/estimates/{{ mapping.estimate.local_id }}">Edit imported Estimate</a>{% endif %}
-<a class="button button-secondary" href="/scopes/{{ draft.id }}/packages">Configure new package</a></div>
+<div class="toolbar"><a class="button button-primary" href="{{ reopen_url }}">Reopen imported workspace</a>
+{% if estimate_url %}<a class="button button-secondary" href="{{ estimate_url }}">Review imported Estimate revision {{ mapping.estimate.local_revision }}</a>{% endif %}
+<a class="button button-secondary" href="{{ configure_url }}">Configure new package</a></div>
+<p>Reopen the exact imported Scope, system reviews and Estimate together. These links retain the imported revisions even after later local edits.</p>
+{% if review_links %}<ul aria-label="Imported system reviews">{% for review in review_links %}<li><a href="{{ review.url }}">Review imported systems {{ loop.index }} &middot; revision {{ review.revision }}</a> <span style="overflow-wrap:anywhere">({{ review.id }})</span></li>{% endfor %}</ul>{% endif %}
 <p>Original project: {{ original.project.reference }} &middot; {{ original.project.name }}</p>
 <p style="overflow-wrap:anywhere">Original ZIP SHA-256: {{ imported.archive_hash }}</p>
 <p><a href="/scopes/{{ draft.id }}/imported-package/download">Download exact original ZIP</a> (all included reports and evidence must pass current scan and format checks).</p>

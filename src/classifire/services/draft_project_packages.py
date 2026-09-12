@@ -44,11 +44,13 @@ SCHEMA_V2 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v2"
 SCHEMA_V3 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v3"
 SCHEMA_V4 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v4"
 SCHEMA_V5 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v5"
+SCHEMA_V6 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v6"
 MAX_ARCHIVE = 128 * 1024 * 1024
 MAX_V1_ARCHIVE = 64 * 1024 * 1024
 MAX_MANIFEST = 2 * 1024 * 1024
 MAX_MEMBERS = 32
 MAX_V1_MEMBERS = 28
+MAX_SELECTED_MATCHES = MAX_MEMBERS - 2
 NOTICE = (
     "Selected Draft revisions only; not a complete database backup. Source files and "
     "unselected artifacts/history are not included. Retained review/provenance claims "
@@ -60,12 +62,28 @@ class PackageError(scopes.DraftScopeError):
     pass
 
 
+class MatchSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    match_id: str
+    match_revision: Annotated[int, Field(ge=1, le=2_147_483_647)]
+
+    @field_validator("match_id")
+    @classmethod
+    def identity(cls, value: str) -> str:
+        if str(UUID(value)) != value:
+            raise ValueError("identity")
+        return value
+
+
 class Selection(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     scope_revision: Annotated[int, Field(ge=1)]
     pdf_sources: Annotated[list[str], Field(max_length=4)] = Field(default_factory=list)
     xlsx_sources: Annotated[list[str], Field(max_length=4)] = Field(default_factory=list)
     docx_sources: Annotated[list[str], Field(max_length=4)] = Field(default_factory=list)
+    matches: Annotated[list[MatchSelection], Field(max_length=MAX_SELECTED_MATCHES)] = Field(
+        default_factory=list
+    )
     match_id: str | None = None
     match_revision: Annotated[int, Field(ge=1)] | None = None
     estimate_id: str | None = None
@@ -89,6 +107,13 @@ class Selection(BaseModel):
             raise ValueError("identities")
         return sorted(value)
 
+    @field_validator("matches")
+    @classmethod
+    def match_identities(cls, value: list[MatchSelection]) -> list[MatchSelection]:
+        if len({item.match_id for item in value}) != len(value):
+            raise ValueError("duplicate review")
+        return sorted(value, key=lambda item: item.match_id)
+
     @model_serializer(mode="wrap")
     def portable_selection(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         value: dict[str, Any] = dict(handler(self))
@@ -98,6 +123,8 @@ class Selection(BaseModel):
             value.pop("xlsx_sources", None)
         if not self.docx_sources:
             value.pop("docx_sources", None)
+        if not self.matches:
+            value.pop("matches", None)
         return value
 
     @model_validator(mode="after")
@@ -110,6 +137,7 @@ class Selection(BaseModel):
             (self.match_id is None) != (self.match_revision is None)
             or (self.estimate_id is None) != (self.estimate_revision is None)
             or (self.estimate_reports and self.estimate_id is None)
+            or (self.matches and (self.match_id is not None or self.match_revision is not None))
         ):
             raise ValueError("selection")
         return self
@@ -138,6 +166,56 @@ def selection(value: Any) -> Selection:
         raise PackageError("PACKAGE_SELECTION_INVALID") from exc
 
 
+def selected_match_references(selected: Selection) -> list[MatchSelection]:
+    """Return only explicitly selected revisions, including the legacy singular form."""
+    if selected.matches:
+        return list(selected.matches)
+    if selected.match_id is not None and selected.match_revision is not None:
+        return [MatchSelection(match_id=selected.match_id, match_revision=selected.match_revision)]
+    return []
+
+
+def match_member_path(match_id: str | None = None) -> str:
+    if match_id is None:
+        return "artifacts/system-match.json"
+    if str(UUID(match_id)) != match_id:
+        raise ValueError("identity")
+    return f"artifacts/system-match-{match_id}.json"
+
+
+def validate_match_collection(scope: dict[str, Any], collection: list[dict[str, Any]]) -> None:
+    """Validate already-authorized/structurally-validated reviews without choosing a row."""
+    if len(collection) > MAX_SELECTED_MATCHES:
+        raise PackageError("PACKAGE_SELECTION_INVALID")
+    targets: set[tuple[str, str | None]] = set()
+    for review in collection:
+        if review["scope"] != scope:
+            raise PackageError("PACKAGE_DEPENDENCIES_DIFFER", 409)
+        target = review["target"]
+        opening_id, service_id = target["opening_id"], target["service_id"]
+        if (
+            opening_id is None
+            or (service_id is None and not target["blank_opening"])
+            or (service_id is not None and target["blank_opening"])
+        ):
+            raise PackageError("PACKAGE_MATCH_TARGET_INVALID", 422)
+        key = (opening_id, service_id)
+        if key in targets:
+            raise PackageError("PACKAGE_MATCH_TARGET_CONFLICT", 422)
+        targets.add(key)
+
+
+def match_dependency_selected(
+    dependency: dict[str, Any] | None,
+    legacy_match: dict[str, Any] | None,
+    collection: list[dict[str, Any]],
+) -> bool:
+    """Extra v6 reviews remain independent; embedded dependencies must be exact members."""
+    if collection:
+        return dependency is None or dependency in collection
+    return dependency == legacy_match
+
+
 def digest(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
@@ -149,7 +227,13 @@ def encode(value: Any) -> bytes:
 def _archive(manifest: dict[str, Any], members: dict[str, bytes]) -> bytes:
     stream = io.BytesIO()
     all_members = {**members, "manifest.json": encode(manifest)}
-    extended = manifest.get("schema_version") in (SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5)
+    extended = manifest.get("schema_version") in (
+        SCHEMA_V2,
+        SCHEMA_V3,
+        SCHEMA_V4,
+        SCHEMA_V5,
+        SCHEMA_V6,
+    )
     limit = MAX_ARCHIVE if extended else MAX_V1_ARCHIVE
     member_limit = MAX_MEMBERS if extended else MAX_V1_MEMBERS
     if len(all_members) > member_limit or sum(map(len, all_members.values())) > limit:
@@ -186,7 +270,7 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
             manifest = json.loads(archive.read("manifest.json"))
             if (
                 manifest["schema_version"]
-                not in (SCHEMA, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5)
+                not in (SCHEMA, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6)
                 or manifest["state"] != "Draft"
                 or manifest["authority"] != "historical_only"
                 or encode(manifest) != archive.read("manifest.json")
@@ -207,19 +291,20 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
                         re.fullmatch(r"(?:artifacts|reports)/[a-z0-9_-]+\.(?:json|pdf|xlsx)", name)
                         or (
                             manifest["schema_version"]
-                            in (SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5)
+                            in (SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6)
                             and re.fullmatch(r"origins/[0-9a-f]{64}\.zip", name)
                         )
                         or (
-                            manifest["schema_version"] in (SCHEMA_V3, SCHEMA_V4, SCHEMA_V5)
+                            manifest["schema_version"]
+                            in (SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6)
                             and re.fullmatch(r"evidence/[a-z0-9-]+\.pdf", name)
                         )
                         or (
-                            manifest["schema_version"] in (SCHEMA_V4, SCHEMA_V5)
+                            manifest["schema_version"] in (SCHEMA_V4, SCHEMA_V5, SCHEMA_V6)
                             and re.fullmatch(r"evidence/[a-z0-9-]+\.xlsx", name)
                         )
                         or (
-                            manifest["schema_version"] == SCHEMA_V5
+                            manifest["schema_version"] in (SCHEMA_V5, SCHEMA_V6)
                             and re.fullmatch(r"evidence/[a-z0-9-]+\.docx", name)
                         )
                     )
@@ -255,6 +340,8 @@ def source_manifest(
     pdf_sources: list[str] | None = None,
     xlsx_sources: list[str] | None = None,
     docx_sources: list[str] | None = None,
+    *,
+    match_collection: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, str]]:
     """Exact source inventory shared by export and foreign-package validation."""
     sources = []
@@ -300,6 +387,17 @@ def source_manifest(
                     "reason": "Restricted library source body; saved review claims only",
                 }
             )
+    for review in sorted(match_collection or [], key=lambda item: item["artifact_id"]):
+        path = match_member_path(review["artifact_id"])
+        for index, _candidate in enumerate(review["candidates"]):
+            sources.append(
+                {
+                    "kind": "technical_source",
+                    "membership": "withheld",
+                    "reference": f"{path}#/candidates/{index}/source",
+                    "reason": "Restricted library source body; saved review claims only",
+                }
+            )
     if estimate:
         for index, _source in enumerate(estimate.get("pricing_sources", [])):
             sources.append(
@@ -329,25 +427,35 @@ def _compose(
         if selected.match_id
         else None
     )
+    collection = [
+        matches.read_match_revision(db, actor, draft_id, item.match_id, item.match_revision)
+        for item in selected.matches
+    ]
+    validate_match_collection(scope, collection)
     estimate = None
     if selected.estimate_id:
         estimates._estimate(db, actor, draft_id, selected.estimate_id, export=True)
         estimate = estimates.read_estimate_revision(
             db, actor, draft_id, selected.estimate_id, selected.estimate_revision
         )
-        if estimate["scope"] != scope or estimate["system_match"] != match:
+        if estimate["scope"] != scope or not match_dependency_selected(
+            estimate["system_match"], match, collection
+        ):
             raise PackageError("PACKAGE_DEPENDENCIES_DIFFER", 409)
     if match and (match["scope"]["sha256"] != scope["sha256"] or match["scope"] != scope):
         raise PackageError("PACKAGE_DEPENDENCIES_DIFFER", 409)
     members = {"artifacts/scope.json": encode(scope)}
     if match:
         members["artifacts/system-match.json"] = encode(match)
+    for review in collection:
+        members[match_member_path(review["artifact_id"])] = encode(review)
     if estimate:
         members["artifacts/estimate.json"] = encode(estimate)
     for report_id in selected.scope_reports:
         row, snapshot = scope_reports._retained(db, actor, draft_id, report_id)
         if snapshot["scope"] != scope or (
-            snapshot.get("system_match") is not None and snapshot["system_match"] != match
+            snapshot.get("system_match") is not None
+            and not match_dependency_selected(snapshot["system_match"], match, collection)
         ):
             raise PackageError("PACKAGE_REPORT_DEPENDENCIES_DIFFER", 409)
         members[f"reports/{report_id}.json"] = encode(snapshot)
@@ -437,7 +545,13 @@ def _compose(
                 raise PackageError("PACKAGE_DOCX_SOURCE_CHANGED", 409)
             members[f"evidence/{source_id}.docx"] = content.content
     sources = source_manifest(
-        scope, match, estimate, selected.pdf_sources, selected.xlsx_sources, selected.docx_sources
+        scope,
+        match,
+        estimate,
+        selected.pdf_sources,
+        selected.xlsx_sources,
+        selected.docx_sources,
+        match_collection=collection,
     )
     manifest = {
         "schema_version": SCHEMA,
@@ -449,7 +563,7 @@ def _compose(
         "notice": NOTICE,
         "capabilities": {
             "scope": "included",
-            "system_match": "included" if match else "not_selected",
+            "system_match": "included" if match or collection else "not_selected",
             "estimate": "included" if estimate else "not_selected",
             "reports": "included"
             if selected.scope_reports or selected.estimate_reports
@@ -517,6 +631,16 @@ def _compose(
             notice=(
                 "Selected Draft revisions and explicitly selected project evidence files. "
                 "Unselected sources stay external or withheld; imported claims stay unverified."
+            ),
+        )
+    if selected.matches:
+        manifest.update(
+            schema_version=SCHEMA_V6,
+            origins=manifest.get("origins", []),
+            notice=(
+                "Explicitly selected Draft revisions and row reviews only. "
+                "Additional reviews do not become estimate or report inputs. "
+                "Source membership stays explicit; imported claims remain unverified."
             ),
         )
     if len(encode(manifest)) > MAX_MANIFEST:
@@ -727,12 +851,12 @@ def staleness(
         reasons.append("PACKAGE_SCOPE_CHANGED")
     if scope_reports._project(db, draft) != manifest["project"]:
         reasons.append("PACKAGE_PROJECT_CHANGED")
-    if chosen.match_id:
+    for reference in selected_match_references(chosen):
         old = matches.read_match_revision(
-            db, actor, draft_id, chosen.match_id, chosen.match_revision
+            db, actor, draft_id, reference.match_id, reference.match_revision
         )
         if (
-            matches.read_match_revision(db, actor, draft_id, chosen.match_id)["sha256"]
+            matches.read_match_revision(db, actor, draft_id, reference.match_id)["sha256"]
             != old["sha256"]
         ):
             reasons.append("PACKAGE_REVIEW_CHANGED")
@@ -741,8 +865,8 @@ def staleness(
                 db,
                 actor,
                 draft_id,
-                chosen.match_id,
-                chosen.match_revision,
+                reference.match_id,
+                reference.match_revision,
                 storage_root=storage_root,
             )
         )

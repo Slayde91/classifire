@@ -8,7 +8,7 @@
   const revision=Number(scopeForm.querySelector('[name="expected_revision"]').value);
   const base=`/scopes/${draftId}`, selectionForm=document.querySelector(".register-artifacts form");
   let row=null, capability="system", busy=false, dirty=false, currentURL="", opener=null;
-  let selected={system:selectionForm?.querySelector('[name="match"]')?.value || "",price:selectionForm?.querySelector('[name="estimate"]')?.value || ""};
+  let selected={system:[...(selectionForm?.querySelector('[name="match"]')?.selectedOptions || [])].map(option=>option.value).filter(Boolean),price:selectionForm?.querySelector('[name="estimate"]')?.value || ""};
   const scopeDirty=()=>document.getElementById("scope-download").hidden;
   const message=text=>{status.textContent=text;};
   function allowed(raw,method="GET") {
@@ -47,7 +47,13 @@
       const field=content.querySelector(`form[method="post"] [name="${name}"]`);
       if(field && !field.value && [...(field.options || [])].some(option=>option.value===value)) field.value=value;
     };
-    if(capability==="system") { set("opening_id",row.opening_id);set("service_id",row.service_id || ""); }
+    if(capability==="system") {
+      set("opening_id",row.opening_id);set("service_id",row.service_id || "");
+      for(const [name,value] of [["opening_id",row.opening_id],["service_id",row.service_id || ""]]) {
+        const field=content.querySelector(`form[method="post"] [name="${name}"]`);
+        if(field) [...field.options].forEach(option=>{option.disabled=option.value!==value;});
+      }
+    }
     // A selected review is optional; the user still explicitly starts the estimate.
   }
   function focusPriceTarget(content) {
@@ -71,12 +77,17 @@
     if(!id || !/^[1-9][0-9]*$/.test(rev || "")) return;
     const kind=content.dataset.capability;
     if(!["system","price"].includes(kind)) return;
-    const next={...selected,[kind]:`${id}:${rev}`};
-    if(kind==="system" && row && content.dataset.openingId===row.opening_id && content.dataset.serviceId===(row.service_id || "")) {
-      row.systemURL=`${base}/system-matches/${id}?revision=${rev}`;
-    }
+    const next={...selected,system:[...selected.system]};
+    if(kind==="system") {
+      const oldContext=JSON.parse(document.getElementById("scope-register-context").textContent);
+      const targetKey=content.dataset.serviceId ? `opening:${content.dataset.openingId}:service:${content.dataset.serviceId}` : `blank_opening:${content.dataset.openingId}`;
+      const previous=oldContext.row_targets?.[targetKey]?.match_selection;
+      next.system=next.system.filter(value=>value!==previous && value!==`${id}:${rev}`);
+      next.system.push(`${id}:${rev}`);
+      if(next.system.length>30)throw new Error("The review was saved. Select up to 30 row reviews before updating the register or saving a package.");
+    } else next.price=`${id}:${rev}`;
     const url=new URL(base,location.origin);url.searchParams.set("revision",String(revision));
-    if(next.system)url.searchParams.set("match",next.system);
+    next.system.forEach(value=>url.searchParams.append("match",value));
     if(next.price)url.searchParams.set("estimate",next.price);
     const response=await fetch(url,{credentials:"same-origin",cache:"no-store"});
     if(!response.ok)throw new Error("Saved artifact is retained, but the register could not refresh. Reopen the saved revision before continuing.");
@@ -84,6 +95,12 @@
     const contextNode=page.getElementById("scope-register-context"), remoteForm=page.querySelector(".register-artifacts form");
     if(!contextNode || !remoteForm)throw new Error("The session or register view changed. Reopen the project.");
     const context=JSON.parse(contextNode.textContent);
+    if(JSON.stringify([...(context.match_selections || [])].sort())!==JSON.stringify([...next.system].sort()) || (context.estimate_selection || "")!==next.price) {
+      throw new Error("Saved artifacts are retained, but the chosen register set could not be verified. Reopen the selection before continuing.");
+    }
+    if(kind==="system" && row && content.dataset.openingId===row.opening_id && content.dataset.serviceId===(row.service_id || "")) {
+      row.systemURL=`${base}/system-matches/${id}?revision=${rev}`;
+    }
     selected=next;
     for(const name of ["match","estimate"]) {
       const current=selectionForm?.querySelector(`[name="${name}"]`), remote=remoteForm.querySelector(`[name="${name}"]`);
@@ -93,6 +110,8 @@
     document.dispatchEvent(new CustomEvent("classifire:register-results",{detail:context}));
     const stateURL=new URL(location.href);stateURL.search=url.search;history.replaceState(null,"",stateURL);
     scopeForm.action=url.pathname+url.search;
+    const packageLink=document.querySelector("[data-register-package]"),remotePackage=page.querySelector("[data-register-package]");
+    if(packageLink && remotePackage)packageLink.href=remotePackage.href;
   }
   async function load(raw,{method="GET",fields=null,fromSave=false}={}) {
     if(busy)return;
@@ -156,7 +175,13 @@
     if(event.submitter?.name)fields.set(event.submitter.name,event.submitter.value);
     if(method==="GET") {
       if(!canLeave())return;const url=new URL(form.getAttribute("action") || currentURL,location.origin);url.search=fields.toString();dirty=false;load(url);
-    } else if(method==="POST") load(form.getAttribute("action") || currentURL,{method,fields});
+    } else if(method==="POST") {
+      if(capability==="system" && row && fields.has("opening_id") &&
+         (fields.get("opening_id")!==row.opening_id || fields.get("service_id")!==(row.service_id || ""))) {
+        message("This review belongs to the selected row. Reopen the intended row before saving.");return;
+      }
+      load(form.getAttribute("action") || currentURL,{method,fields});
+    }
   });
   body.addEventListener("click",event=>{
     const link=event.target.closest("a[href]");if(!link)return;

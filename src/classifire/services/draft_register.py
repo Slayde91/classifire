@@ -68,16 +68,31 @@ def register_context(
     *,
     storage_root: Path,
     match_selection: str = "",
+    match_selections: list[str] | None = None,
     estimate_selection: str = "",
 ) -> dict[str, Any]:
     """No matching, rate calculation, history writes or implicit artifact selection."""
     get_draft(db, actor, draft_id)
     scope = read_revision(db, actor, draft_id, scope_revision)
+    selections = (
+        match_selections
+        if match_selections is not None
+        else ([match_selection] if match_selection else [])
+    )
+    if (
+        (match_selection and match_selections is not None)
+        or len(selections) > 30
+        or len(set(selections)) != len(selections)
+        or any(not value for value in selections)
+    ):
+        raise DraftScopeError("REGISTER_SELECTION_INVALID", 422)
     result: dict[str, Any] = {
         "targets": {},
+        "row_targets": {},
         "match_choices": [],
         "estimate_choices": [],
         "match_selection": match_selection,
+        "match_selections": selections,
         "estimate_selection": estimate_selection,
         "warnings": [],
         "evidence_refs": [
@@ -108,10 +123,12 @@ def register_context(
             }
             for item in estimates.list_estimates(db, actor, draft_id)
         ]
-    selected_match = None
-    if match_selection:
+    selected_matches = []
+    legacy_targets: dict[str, list[dict[str, Any]]] = {}
+    for match_selection in selections:
         identity, revision = _selection(match_selection)
         selected_match = matches.read_match_revision(db, actor, draft_id, identity, revision)
+        selected_matches.append(selected_match)
         if not any(item["value"] == match_selection for item in result["match_choices"]):
             result["match_choices"].append(
                 {
@@ -141,7 +158,15 @@ def register_context(
             {code for item in selected_match["candidates"] for code in item["blockers"]}
         )
         if key:
-            result["targets"].setdefault(key, {}).update(
+            row_key = (
+                f"opening:{target['opening_id']}:service:{target['service_id']}"
+                if target["service_id"]
+                else key
+            )
+            if row_key in result["row_targets"]:
+                raise DraftScopeError("REGISTER_REVIEW_TARGET_CONFLICT", 422)
+            projection = dict(
+                match_selection=match_selection,
                 system_opening_id=target["opening_id"],
                 system_text="; ".join(candidates) or "No candidates retained",
                 system_status="Stale" if stale else "Unapproved candidate review",
@@ -149,7 +174,12 @@ def register_context(
                 system_url=f"/scopes/{draft_id}/system-matches/{identity}?revision={revision}",
                 status="Stale" if stale else "Unapproved",
             )
+            result["row_targets"][row_key] = projection
+            legacy_targets.setdefault(key, []).append(projection)
         result["warnings"].extend(stale)
+    for key, projections in legacy_targets.items():
+        if len(projections) == 1:
+            result["targets"][key] = projections[0].copy()
     if estimate_selection:
         identity, revision = _selection(estimate_selection)
         estimate = estimates.read_estimate_revision(db, actor, draft_id, identity, revision)
@@ -165,9 +195,12 @@ def register_context(
         )
         if estimate["scope"]["sha256"] != scope["sha256"]:
             stale.append("Selected estimate uses a different Scope revision.")
-        if selected_match and (
+        if selected_matches and (
             estimate["system_match"] is None
-            or estimate["system_match"]["sha256"] != selected_match["sha256"]
+            or not any(
+                estimate["system_match"]["sha256"] == selected["sha256"]
+                for selected in selected_matches
+            )
         ):
             stale.append("The selected estimate is not bound to the displayed system review.")
         for line in estimate["lines"]:

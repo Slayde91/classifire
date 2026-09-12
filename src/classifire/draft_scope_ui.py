@@ -145,11 +145,12 @@ def _finding_text(finding: dict[str, str]) -> str:
 
 
 def _register_query(request: Request) -> str:
-    pairs = {
-        key: request.query_params[key]
+    pairs = [
+        (key, value)
         for key in ("match", "estimate")
-        if request.query_params.get(key)
-    }
+        for value in request.query_params.getlist(key)
+        if value
+    ]
     return "?" + urlencode(pairs) if pairs else ""
 
 
@@ -168,6 +169,7 @@ def _editor(
 ) -> HTMLResponse:
     actor = _require(request, db, "project:read")
     get_draft(db, actor, draft.id)
+    register_selection_valid = True
     try:
         register = register_context(
             db,
@@ -175,12 +177,13 @@ def _editor(
             draft.id,
             expected_revision,
             storage_root=get_settings().storage_root,
-            match_selection=request.query_params.get("match", ""),
+            match_selections=[value for value in request.query_params.getlist("match") if value],
             estimate_selection=request.query_params.get("estimate", ""),
         )
     except DraftScopeError as exc:
         if saved and exc.status_code == 403:
             raise _failure(exc) from exc
+        register_selection_valid = False
         register = {
             "targets": {},
             "warnings": ["Saved system or pricing context is unavailable: " + exc.code],
@@ -199,6 +202,27 @@ def _editor(
             payload=payload,
             register=register,
             register_selection_query=_register_query(request),
+            register_package_query=None
+            if not register_selection_valid
+            else urlencode(
+                [("scope_revision", str(expected_revision))]
+                + (
+                    [
+                        ("match_id", register["match_selections"][0].rsplit(":", 1)[0]),
+                        ("match_revision", register["match_selections"][0].rsplit(":", 1)[1]),
+                    ]
+                    if len(register.get("match_selections", [])) == 1
+                    else [("matches", value) for value in register.get("match_selections", [])]
+                )
+                + (
+                    [
+                        ("estimate_id", register["estimate_selection"].rsplit(":", 1)[0]),
+                        ("estimate_revision", register["estimate_selection"].rsplit(":", 1)[1]),
+                    ]
+                    if register.get("estimate_selection")
+                    else []
+                )
+            ),
             expected_revision=expected_revision,
             saved=saved,
             envelope=envelope or {},

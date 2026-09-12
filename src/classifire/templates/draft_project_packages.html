@@ -3,12 +3,12 @@
 {% block heading %}Draft project package{% endblock %}
 {% block content %}
 <link rel="stylesheet" href="/static/draft_scope.css">
-<p><a href="/scopes/{{ draft.id }}">&larr; Draft Scope workspace</a></p>
+<p><a href="/scopes/{{ draft.id }}">&larr; Project register</a></p>
 <section class="panel"><div class="eyebrow">{{ project.reference }}</div><h2>{{ project.name }}</h2>
 <p class="callout">Choose saved work to take with you. Packages retain Draft records and selected report files. You can explicitly include up to four reviewed project PDFs, four Scope workbooks and four Word reports. Other source files remain external or withheld; saved claims do not grant approval. <a href="/package-import">Import a package as a new Draft project</a>.</p>
-{% if error %}<div role="alert" class="alert alert-error">{{ error }}. Choose matching saved revisions before saving. An Estimate must use the exact selected Scope and review; reports must use those same inputs.</div>{% endif %}
+{% if error %}<div role="alert" class="alert alert-error">{{ error }}. Choose matching saved revisions before saving. An Estimate must use the exact selected Scope and one of the selected review revisions; reports must use those same inputs.</div>{% endif %}
 {% if staleness %}<div role="status" class="alert alert-error"><strong>Saved inputs have changed or cannot be verified.</strong> Historical downloads keep their saved values.<ul>{% for reason in staleness %}<li>{{ reason|replace('_',' ')|capitalize }}</li>{% endfor %}</ul></div>{% endif %}
-{% if saved %}<h3>Saved package revision {{ saved.revision }}</h3><p>{{ saved.created_at }}</p><a class="button button-primary" href="/scopes/{{ draft.id }}/packages/{{ saved.id }}/download">Download saved project ZIP</a> <a href="/scopes/{{ draft.id }}/packages">Configure another revision</a><p class="scope-hint">Archive SHA-256: {{ saved.archive_hash }}</p>
+{% if saved %}<h3>Saved package revision {{ saved.revision }}</h3><p>{{ saved.created_at }}</p><a class="button button-primary" href="/scopes/{{ draft.id }}/packages/{{ saved.id }}/download">Download saved project ZIP</a> <a class="button button-secondary" href="{{ reopen_url }}">Reopen saved workspace</a> <a href="/scopes/{{ draft.id }}/packages">Configure another revision</a><p class="scope-hint">Archive SHA-256: {{ saved.archive_hash }}</p>
 {% else %}
 <form method="get" class="stack-form">
 <label for="scope-revision">Scope revision</label><input id="scope-revision" type="number" min="1" name="scope_revision" value="{{ chosen.scope_revision }}" required>
@@ -21,12 +21,21 @@
 {% if docx_sources %}<fieldset><legend>Include reviewed Word reports (optional, up to four)</legend>
 <p>Include the exact original Word file and its embedded pictures. Imported files require a new local scan and Word-format check; their claims stay unverified.</p>
 {% for source_id, filename in docx_sources.items() %}<label><input type="checkbox" name="docx_sources" value="{{ source_id }}"{% if source_id in chosen.docx_sources %} checked{% endif %}>{{ filename }}</label>{% endfor %}</fieldset>{% endif %}
-<label for="package-match">Optional system review</label><select id="package-match" name="match_id"><option value="">No review</option>{% for item in reviews %}<option value="{{ item.id }}"{% if chosen.match_id==item.id %} selected{% endif %}>{{ item.id }} (latest {{ item.latest_revision }})</option>{% endfor %}</select>
+{% if has_permission('technical:read') %}
+<fieldset><legend>Saved system reviews (optional, up to {{ max_selected_matches }})</legend>
+<p>Choose exact revisions for distinct Opening and Service targets. Nothing is selected automatically. Selected historical reviews remain listed even when newer work exists. The package's total file limit also applies.</p>
+{% for item in reviews %}<label style="display:flex;align-items:flex-start;gap:.6rem"><input type="checkbox" name="matches" value="{{ item.value }}"{% if item.selected %} checked{% endif %} style="width:auto;flex:0 0 auto;margin-top:.15rem"><span>{{ item.label }} &middot; review {{ item.id }} revision {{ item.revision }} &middot; Scope {{ item.scope_revision }}</span></label>{% else %}<p>No saved reviews for this Scope revision.</p>{% endfor %}
+</fieldset>
+<details{% if chosen.match_id %} open{% endif %}><summary>Legacy single-review selection</summary>
+<p>Existing single-review links still work. Clear this selection before choosing reviews above.</p>
+<label for="package-match">Optional system review</label><select id="package-match" name="match_id"><option value="">No review</option>{% for item in reviews %}<option value="{{ item.id }}"{% if chosen.match_id==item.id %} selected{% endif %}>{{ item.label }} &middot; {{ item.id }} (offered revision {{ item.revision }})</option>{% endfor %}</select>
 <label for="match-revision">Review revision</label><input id="match-revision" type="number" min="1" name="match_revision" value="{{ chosen.match_revision or 1 }}">
-<label for="package-estimate">Optional Estimate</label><select id="package-estimate" name="estimate_id"><option value="">No Estimate</option>{% for item in costs %}<option value="{{ item.id }}"{% if chosen.estimate_id==item.id %} selected{% endif %}>{{ item.id }} (latest {{ item.latest_revision }})</option>{% endfor %}</select>
+</details>
+{% endif %}
+<label for="package-estimate">Optional Estimate</label><select id="package-estimate" name="estimate_id"><option value="">No Estimate</option>{% for item in costs %}<option value="{{ item.id }}"{% if chosen.estimate_id==item.id %} selected{% endif %}>{{ item.id }} (offered revision {{ item.latest_revision }})</option>{% endfor %}</select>
 <label for="estimate-revision">Estimate revision</label><input id="estimate-revision" type="number" min="1" name="estimate_revision" value="{{ chosen.estimate_revision or 1 }}">
 {% if costs %}<details><summary>Use an Estimate with its exact saved review</summary><ul>{% for item in costs %}<li><a href="?scope_revision={{ item.scope_revision }}&amp;estimate_id={{ item.id }}&amp;estimate_revision={{ item.latest_revision }}{% if item.match_id %}&amp;match_id={{ item.match_id }}&amp;match_revision={{ item.match_revision }}{% endif %}">Preview Estimate {{ item.id }} revision {{ item.latest_revision }} and its required inputs</a></li>{% endfor %}</ul></details>{% endif %}
-<p>Only work based on this Scope is listed. An attached review must match the Estimate's saved review revision. Select an Estimate and preview to see its reports.</p>
+<p>Only work based on this Scope is listed. The Estimate's exact attached review must be included in the selected reviews. Select an Estimate and preview to see its reports.</p>
 <fieldset><legend>Scope / system reports (up to four)</legend>{% for item in scoped_reports %}<label><input type="checkbox" name="scope_reports" value="{{ item.id }}"{% if item.id in chosen.scope_reports %} checked{% endif %}> {{ item.id }} &middot; {{ item.created_at }}</label>{% else %}<p>No saved reports for this Scope revision.</p>{% endfor %}</fieldset>
 <fieldset><legend>Estimate / complete reports (up to four)</legend>{% for item in cost_reports %}<label><input type="checkbox" name="estimate_reports" value="{{ item.id }}"{% if item.id in chosen.estimate_reports %} checked{% endif %}> {{ item.id }} &middot; Estimate revision {{ item.estimate_revision }}</label>{% else %}<p>No Estimate reports selected for preview.</p>{% endfor %}</fieldset>
 <button type="submit" class="button button-secondary">Preview package contents</button></form>

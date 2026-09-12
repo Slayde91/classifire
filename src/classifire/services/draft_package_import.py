@@ -86,6 +86,10 @@ class ManifestV5(ManifestV4):
     schema_version: Literal["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v5"]  # type: ignore[assignment]
 
 
+class ManifestV6(ManifestV5):
+    schema_version: Literal["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v6"]  # type: ignore[assignment]
+
+
 @dataclass(frozen=True)
 class InspectedPackage:
     manifest: dict[str, Any]
@@ -96,6 +100,13 @@ class InspectedPackage:
     reports: list[dict[str, Any]]
     archive_sha256: str
     origins: dict[str, InspectedPackage] = field(default_factory=dict)
+    matches: list[dict[str, Any]] = field(default_factory=list)
+
+    def all_matches(self) -> list[dict[str, Any]]:
+        return [self.match] if self.match is not None else self.matches
+
+    def match_by_id(self, source_id: str) -> dict[str, Any] | None:
+        return next((item for item in self.all_matches() if item["artifact_id"] == source_id), None)
 
     def walk(self):
         yield self
@@ -128,39 +139,88 @@ class InspectedPackage:
         return self.origins[origin].resolve(nested)
 
 
+def match_mappings(mapping: dict[str, Any]) -> list[dict[str, Any]]:
+    """Read exact source/local bindings; legacy mappings keep their original shape."""
+    return mapping.get("matches", []) or ([mapping["match"]] if mapping["match"] else [])
+
+
+def report_match_mapping(
+    report: dict[str, Any], paths: dict[str, str], mapping: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Bind direct reports locally; ancestor-only reports retain source identity only."""
+    source = (
+        report["estimate"].get("system_match")
+        if "estimate" in report
+        else report.get("system_match")
+    )
+    if source is None:
+        return None
+    bound = None
+    if "!" not in paths["pdf"]:
+        bound = next(
+            (
+                item
+                for item in match_mappings(mapping)
+                if item["source_id"] == source["artifact_id"]
+                and item["source_revision"] == source["revision"]
+                and item["source_sha256"] == source["sha256"]
+            ),
+            None,
+        )
+        if bound is None:
+            raise ValueError("report review mapping")
+    return {
+        "source_id": source["artifact_id"],
+        "source_revision": source["revision"],
+        "source_sha256": source["sha256"],
+        "local_id": bound["local_id"] if bound is not None else None,
+        "local_revision": bound["local_revision"] if bound is not None else None,
+        "local_sha256": bound["local_sha256"] if bound is not None else None,
+    }
+
+
 def validate_origin_mapping(
     mapping: dict[str, Any], original: InspectedPackage, project_id: str, draft_id: str
 ) -> None:
     """Require a complete one-to-one retained origin inventory, including descendants."""
     evidence = list(original.evidence_members())
+    collection = bool(original.matches)
     if set(mapping) != (
-        {
-            "schema_version",
-            "project",
-            "scope",
-            "match",
-            "estimate",
-            "reports",
-            "entity_ids",
-        }
+        {"schema_version", "project", "scope", "match", "estimate", "reports", "entity_ids"}
         | ({"evidence"} if evidence else set())
+        | ({"matches"} if collection else set())
     ):
         raise ValueError("mapping fields")
+    expected_version = (
+        "CLASSIFIRE-IMPORT-MAPPING-v3"
+        if collection
+        else "CLASSIFIRE-IMPORT-MAPPING-v2"
+        if evidence
+        else "CLASSIFIRE-IMPORT-MAPPING-v1"
+    )
     if (
-        mapping["schema_version"]
-        != ("CLASSIFIRE-IMPORT-MAPPING-v2" if evidence else "CLASSIFIRE-IMPORT-MAPPING-v1")
+        mapping["schema_version"] != expected_version
         or mapping["project"] != {"source_id": original.scope["project_id"], "local_id": project_id}
         or mapping["entity_ids"] != "retained_within_new_scope"
     ):
         raise ValueError("mapping project")
-    for kind in ("scope", "match", "estimate"):
-        source = getattr(original, kind)
-        bound = mapping[kind]
+    artifact_bindings = [
+        (kind, getattr(original, kind), mapping[kind]) for kind in ("scope", "match", "estimate")
+    ]
+    if collection:
+        if type(mapping["matches"]) is not list or len(mapping["matches"]) != len(original.matches):
+            raise ValueError("mapping review inventory")
+        artifact_bindings.extend(
+            ("match", source, bound)
+            for source, bound in zip(original.matches, mapping["matches"], strict=True)
+        )
+    local_ids = []
+    for kind, source, bound in artifact_bindings:
         if source is None:
             if bound is not None:
                 raise ValueError("mapping unexpected artifact")
             continue
-        if set(bound) != {
+        if type(bound) is not dict or set(bound) != {
             "source_id",
             "source_revision",
             "source_sha256",
@@ -176,13 +236,17 @@ def validate_origin_mapping(
         ):
             if bound[key] != source[source_key]:
                 raise ValueError("mapping source")
-        UUID(bound["local_id"])
+        if str(UUID(bound["local_id"])) != bound["local_id"]:
+            raise ValueError("mapping local identity")
+        local_ids.append(bound["local_id"])
         if (
             not scopes._valid_hash(bound["local_sha256"])
             or type(bound["local_revision"]) is not int
             or bound["local_revision"] != (2 if kind == "scope" else 1)
         ):
             raise ValueError("mapping local revision")
+    if collection and len(local_ids) != len(set(local_ids)):
+        raise ValueError("mapping duplicate local identity")
     if mapping["scope"]["local_id"] != draft_id:
         raise ValueError("mapping scope")
     expected = list(original.report_members())
@@ -190,12 +254,15 @@ def validate_origin_mapping(
         raise ValueError("mapping report inventory")
     for record, (report, paths) in zip(mapping["reports"], expected, strict=True):
         if (
-            set(record) != {"source_report_id", "profile", "members"}
+            set(record)
+            != ({"source_report_id", "profile", "members"} | ({"match"} if collection else set()))
             or record["source_report_id"] != report["report_id"]
             or record["profile"] != report["profile"]
             or set(record["members"]) != {"pdf", "xlsx"}
         ):
             raise ValueError("mapping report")
+        if collection and record["match"] != report_match_mapping(report, paths, mapping):
+            raise ValueError("mapping report review")
         for fmt, member in record["members"].items():
             if (
                 set(member) != {"source_id", "path", "sha256"}
@@ -248,7 +315,9 @@ def inspect_package(
             raise ValueError("origin nesting bounds")
         manifest, members = packages.inspect_archive(content)
         parsed = (
-            ManifestV5
+            ManifestV6
+            if manifest.get("schema_version") == packages.SCHEMA_V6
+            else ManifestV5
             if manifest.get("schema_version") == packages.SCHEMA_V5
             else ManifestV4
             if manifest.get("schema_version") == packages.SCHEMA_V4
@@ -278,6 +347,8 @@ def inspect_package(
         if (parsed.revision == 1) != (parsed.parent_hash is None):
             raise ValueError("package parent")
         selected = parsed.selection
+        if bool(selected.matches) != isinstance(parsed, ManifestV6):
+            raise ValueError("review collection version")
         if selected.docx_sources and not isinstance(parsed, ManifestV5):
             raise ValueError("legacy Word selection")
         if selected.xlsx_sources and not isinstance(parsed, ManifestV4):
@@ -292,6 +363,7 @@ def inspect_package(
         wanted.update(f"evidence/{sid}.docx" for sid in selected.docx_sources)
         if selected.match_id:
             wanted.add("artifacts/system-match.json")
+        wanted.update(packages.match_member_path(ref.match_id) for ref in selected.matches)
         if selected.estimate_id:
             wanted.add("artifacts/estimate.json")
         for report_id in selected.scope_reports + selected.estimate_reports:
@@ -300,7 +372,7 @@ def inspect_package(
             raise ValueError("selected membership")
         expected_capabilities = {
             "scope": "included",
-            "system_match": "included" if selected.match_id else "not_selected",
+            "system_match": "included" if selected.match_id or selected.matches else "not_selected",
             "estimate": "included" if selected.estimate_id else "not_selected",
             "reports": "included"
             if selected.scope_reports or selected.estimate_reports
@@ -326,6 +398,22 @@ def inspect_package(
                 or match["scope"] != scope
             ):
                 raise ValueError("review dependency")
+        matches = []
+        for review_ref in selected.matches:
+            value = _json(
+                members[packages.match_member_path(review_ref.match_id)],
+                match_contract.MAX_MATCH_BYTES,
+            )
+            match_contract.validate_envelope(value)
+            if (
+                value["artifact_id"] != review_ref.match_id
+                or value["revision"] != review_ref.match_revision
+            ):
+                raise ValueError("review collection selection")
+            matches.append(value)
+        if matches:
+            packages.validate_match_collection(scope, matches)
+
         estimate = None
         if selected.estimate_id:
             estimate = _json(
@@ -336,7 +424,7 @@ def inspect_package(
                 estimate["artifact_id"] != selected.estimate_id
                 or estimate["revision"] != selected.estimate_revision
                 or estimate["scope"] != scope
-                or estimate["system_match"] != match
+                or not packages.match_dependency_selected(estimate["system_match"], match, matches)
             ):
                 raise ValueError("estimate dependency")
         for source_id in selected.pdf_sources:
@@ -394,6 +482,7 @@ def inspect_package(
             selected.pdf_sources,
             selected.xlsx_sources,
             selected.docx_sources,
+            match_collection=matches or None,
         ):
             raise ValueError("source inventory")
         reports = []
@@ -412,7 +501,10 @@ def inspect_package(
             else:
                 scope_reports.validate_report_snapshot(snapshot)
                 if snapshot["scope"] != scope or (
-                    snapshot.get("system_match") is not None and snapshot["system_match"] != match
+                    snapshot.get("system_match") is not None
+                    and not packages.match_dependency_selected(
+                        snapshot["system_match"], match, matches
+                    )
                 ):
                     raise ValueError("report scope/review")
             # Labels can describe an earlier project-name revision; IDs must agree.
@@ -424,25 +516,53 @@ def inspect_package(
         from .draft_import_origin import origin_for
 
         refs = parsed.origins if isinstance(parsed, ManifestV2) else []
-        for kind, artifact in (("match", match), ("estimate", estimate)):
+        for kind, artifact in [
+            *(("match", item) for item in ([match] if match is not None else matches)),
+            ("estimate", estimate),
+        ]:
             if artifact is not None and "import_origin" in artifact:
                 origin = artifact["import_origin"]
                 bound_ref = next((r for r in refs if r.import_id == origin["import_id"]), None)
                 if bound_ref is None:
                     raise ValueError("missing original archive")
-                source = getattr(origins[bound_ref.path], kind)
+                original = origins[bound_ref.path]
+                source = (
+                    original.match_by_id(origin["source_artifact_id"])
+                    if kind == "match"
+                    else original.estimate
+                )
                 if source is None or origin != origin_for(
                     bound_ref.import_id, bound_ref.sha256, source
                 ):
                     raise ValueError("unbound original artifact")
-                if bound_ref.mapping[kind]["local_id"] != artifact["artifact_id"]:
+                bound = (
+                    next(
+                        (
+                            item
+                            for item in match_mappings(bound_ref.mapping)
+                            if item["source_id"] == origin["source_artifact_id"]
+                        ),
+                        None,
+                    )
+                    if kind == "match"
+                    else bound_ref.mapping[kind]
+                )
+                if bound is None or bound["local_id"] != artifact["artifact_id"]:
                     raise ValueError("origin local identity")
         for ref in refs:
             original = origins[ref.path]
             mapping = ref.mapping
             validate_origin_mapping(mapping, original, parsed.project.id, parsed.draft_scope_id)
         return InspectedPackage(
-            manifest, members, scope, match, estimate, reports, packages.digest(content), origins
+            manifest,
+            members,
+            scope,
+            match,
+            estimate,
+            reports,
+            packages.digest(content),
+            origins,
+            matches,
         )
     except packages.PackageError:
         raise
@@ -466,7 +586,7 @@ def preview_import(db: Session, actor: User, content: bytes) -> dict[str, Any]:
         actor = scopes._actor(db, actor, "project:read")
         inspected = inspect_package(content)
         for included in inspected.walk():
-            if included.match:
+            if included.all_matches():
                 actor = scopes._actor(db, actor, "technical:read")
             if included.estimate:
                 actor = scopes._actor(db, actor, "estimate:read")
@@ -477,7 +597,8 @@ def preview_import(db: Session, actor: User, content: bytes) -> dict[str, Any]:
             "archive_sha256": inspected.archive_sha256,
             "scope_counts": scopes._content_counts(inspected.scope["content"]),
             "scope_findings": scopes.validate_payload(inspected.scope["content"])[1],
-            "match_candidates": len(inspected.match["candidates"]) if inspected.match else 0,
+            "match_candidates": sum(len(item["candidates"]) for item in inspected.all_matches()),
+            "match_count": len(inspected.all_matches()),
             "estimate_lines": len(inspected.estimate["lines"]) if inspected.estimate else 0,
             "reports": [
                 {"report_id": r["report_id"], "profile": r["profile"]}

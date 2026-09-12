@@ -44,21 +44,40 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   all 69 table inventories and retained files/schema were unchanged by that probe.
   The allowlist and OAuth/tunnel configuration were not changed.
 
-### Current row-authoring increment
+### Merged row authoring and current multi-review increment
 
-- PR #261 merged the nullable reference comparison correction as `095ee3d`; exact-head
-  run 34707202158 passed 2,127 tests and all remaining checks. Post-merge run
-  34708282314 was running at this checkpoint; poll it without restarting.
-- `feat/register-row-authoring-20260913` starts from that merged source. A native
-  panel reuses existing technical and estimate forms beside the selected register row,
-  with separate explicit saves and exact saved projection/history updates.
-- 104 affected tests and full static checks pass. Actual synthetic Edge UAT proves
-  service/blank review, manual pricing/override, 409 refusal with retained attempts,
-  unknown preservation and exact saved Scope/estimate history after restart.
-- [Row authoring](./REGISTER_ROW_AUTHORING.md) records controls, evidence and limits.
-  Its source is a local validated increment at this checkpoint; publication/CI must
-  still be observed. Only the separate 8841 SQLite demo was restarted. Live 8820 and
-  the older 8840 workspace remain unchanged; no new activation is implied.
+- PR #261 merged as `095ee3d`. Its exact-head run 34707202158 and post-merge
+  run 34708282314 each passed 2,127 tests and remaining checks.
+- PR #262 merged source `6c30361` as `48b4b111f6c8f539a9aa7d8211be5fcb2e61db52`.
+  Exact-head run 34709110199 passed 2,134 tests and remaining checks. The merged tree
+  equals the tested source. No required reviews were configured; no human GitHub review
+  is claimed. Post-merge run 34710331473 is running at this checkpoint; poll that job.
+- [Native row authoring](./REGISTER_ROW_AUTHORING.md) retains its 104 affected local tests
+  and actual service/blank review, manual-rate override, 409 conflict and restart evidence.
+  A fresh candidate rehearsal restored the existing synthetic PostgreSQL clone on 15433:
+  all 69 tables/schema/rows matched, metadata startup was a no-op, and retained packages
+  plus the accepted Word Scope/ZIP/original verified. This is not a fresh live 15432 backup.
+- Current checkout: `.tmp/multi-review-package-20260913`, branch
+  `feat/multi-review-package-20260913`, based on `48b4b11`. It extends existing register and
+  package services to retain multiple exact row reviews, explicit v6 package save/reopen,
+  collection-aware imported mapping-v3 and the existing technical client-grant boundary.
+  No new table, migration, model, dependency, provider or canonical writer is introduced.
+- [Multi-review contract](./MULTI_REVIEW_PROJECT_PACKAGES.md) records compatibility and
+  limits. The isolated 8842 Edge journey retained three row reviews, updated one without
+  losing the others, separately saved/downloaded v6, and reopened the exact set. A later
+  review revision did not replace the package's older selection. 109 unique affected
+  tests passed, including retained DOCX and PostgreSQL import/scan/report checks on 15433.
+  Final Edge restart kept the saved 2/1/1 review set despite a newer first review, exact
+  Scope/ZIP/history and all non-login tables. Actual ZIP import created three mapped local
+  reviews; separate re-export retained the byte-exact original archive. Desktop/mobile
+  screenshots and ZIP contents were inspected; no page errors were observed. These are
+  synthetic automated confirmations, not human technical or production approval.
+  Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and migration-head checks passed.
+  Git/CI publication remains pending at this source checkpoint.
+- The operational 8820 diagnostic app, older 8840 workspace and pinned 8841 row-authoring
+  demo remain unchanged. The prepared `6c30361` activation plan is not approved and does
+  not include this newer format change. Future activation needs its exact candidate plan,
+  fresh matched backup/disposable restore, CI and explicit approval.
 
 ### Earlier Word acceptance checkpoint
 
@@ -90,14 +109,14 @@ protections without authorization.
 | --- | --- | --- |
 | Scope | `services/draft_scope.py`: separate defects, openings, services and observations; nullable measurements/quantities; multiple service-opening links; revisions/import/export. PDF page, Excel cell/picture and Word structural text/picture review share guarded revision writing | Draft service/opening graph is narrower than the full production physical model: substrate planes, service instances, treatments and richer relationships are not all separate Draft entities |
 | Evidence intake | `draft_pdf_intake.py`, `draft_scope_xlsx.py`, `draft_scope_docx.py`, shared `draft_source_intake.py`, bounded parser workers, malware/quarantine and retained-byte checks | Supported formats/layouts are bounded. DOCX structural positions are not pages; pictures expose original content, not Word layout/crop semantics. General OCR/drawings/inspection records and representative coverage remain incomplete |
-| Workspace | Shared Projects/Libraries navigation, hierarchy review register, guarded bulk edits, historical selections and saved system/price display | No new domain model or migration. Full inline candidate override, pricing authoring/recalculation and comprehensive visual/accessibility/scale acceptance remain incomplete |
+| Workspace | Shared Projects/Libraries navigation, hierarchy review register, guarded bulk edits, historical selections and saved system/price display | No new domain model or migration. Multi-review package work is locally implemented; automatic pricing/recalculation and comprehensive visual/accessibility/scale acceptance remain incomplete |
 | Workspace advice | `draft_workspace_chat.py`, optional transport and UI preview bounded selected saved Scope records with their ancestors and source-reference claims | Provider disabled in verified UAT; no live provider response proven. This is an advisory API panel, not an embedded authenticated external ChatGPT/MCP session. No automatic writes or implicit capability calls |
 | Optional AI | `draft_pdf_suggestions.py` and suggestion contracts produce reviewable claims, with uncertainty and human decisions | No general autonomous evidence interpretation or proven replacement of every OpenClaw protection; manual workflow remains available |
 | System matching | `draft_system_matches.py`: selected-target retrieval from an authorized retained technical release, immutable candidates, measured constraints/service sizes, human review and dependency staleness | Retrieval is not final suitability. Full configuration/substrate/insulation/installation constraints, bulk technical corpus and representative source coverage are incomplete |
 | Estimating | `draft_estimates.py`, `draft_estimate_contract.py`: independent manual lines, explicit rate methods/overrides, decimal arithmetic, revision history and Scope/optional Match dependencies. Retained workbook rate selection exists | Full six-method automatic default derivation, validated extrapolation, yield/productivity/waste/pack/shared-recovery calculations and representative commercial acceptance are not complete |
 | A/B pricing | Source profiles and review, A row observations, B system mappings, T9 coverage, T6 recipe links, T13 target-blind rosters and T10 bottom-up preview exist. `draft_pricing_quantities.py` already persists governed Scope-bound quantities (PR #233) | Do not rebuild the first quantity-basis feature. Preview is bounded to supported current confirmed sell-price evidence; unsupported inputs withhold amounts. Calibration, comparison/combination, holdout execution and production pricing activation remain later |
 | Reporting | `draft_scope_reports.py` / `draft_estimate_reports.py` and versioned renderers retain paired PDF/XLSX bytes for scope-only, scope-and-system, estimate-only and complete profiles | Draft reports are not canonical release. Do not infer professional acceptance across every input from synthetic examples |
-| Portable project | `draft_project_packages.py`, package inspection/materialization and imported-source services support selected revisions, imported origins and optional retained PDF/XLSX/DOCX originals | ProjectPackage v5 is not a full database backup or complete project/audit history; library source bodies and unselected artifacts are not automatically included |
+| Portable project | `draft_project_packages.py`, package inspection/materialization and imported-source services support selected revisions, imported origins and optional retained PDF/XLSX/DOCX originals | ProjectPackage v1-v6 represents selected revisions, not a full database backup or complete project/audit history; library source bodies and unselected artifacts are not automatically included |
 | Client/UI | `draft_client.py`, typed capabilities, evidence tools and durable client requests reuse the same services. Word adds five tools and `review_word_scope`; exact schemas and bounded redacted field errors are exposed | Client proposals require separate same-user browser confirmation. Word application acceptance and actual connected text/image reads are verified. Dedicated connector Word upload remains host-policy blocked; successful connected scan and remote attachment retrieval remain unproven; Excel transport acceptance must be reconciled separately |
 
 Domain services above are in `src/classifire/services/`; UI/client adapters are
@@ -176,10 +195,11 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-PR #260 and its post-merge CI are complete. PR #261 is merged after successful
-exact-head CI; observe its existing post-merge run. Finish publication of the locally
-verified native row-authoring increment with explicit files and observed successful
-CI/reviews. Do not restart jobs because observation timed out. Runtime activation and
+PRs #260-#262 are merged after successful exact-head CI. Post-merge CI for #260/#261
+also passed; continue observing run 34710331473 for #262. Finish publication of the
+locally verified multi-review package increment with explicit files and successful
+exact-head CI/reviews. Do not restart jobs because observation timed out. Runtime
+activation needs a new exact plan that accounts for v6/mapping-v3 writes and recovery;
 provider/host policy changes remain separate approval decisions.
 
 The user-confirmed private Draft reference retains its unknowns; no application
