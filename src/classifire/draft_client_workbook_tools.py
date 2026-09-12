@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .config import get_settings
 from .draft_client_auth import READ, WRITE, ClientAuthority, ClientIdentity
-from .draft_client_evidence_tools import ChatGPTFile
+from .draft_client_evidence_tools import ChatGPTFile, _remote_file_error
 from .services import draft_client_capabilities as capabilities
 from .services import draft_client_requests as commands
 from .services import draft_scope as scopes
@@ -90,7 +90,7 @@ def register(
                 }
                 return response
             except RemoteFileRetrievalError as exc:
-                raise ToolError("CLIENT_FILE_" + exc.code) from None
+                raise ToolError(_remote_file_error(exc)) from None
             except scopes.DraftScopeError as exc:
                 raise ToolError(exc.code) from None
 

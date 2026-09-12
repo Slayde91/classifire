@@ -42,6 +42,20 @@ class ChatGPTFile(BaseModel):
     file_name: str | None = Field(default=None, max_length=200)
 
 
+def _remote_file_error(exc: RemoteFileRetrievalError) -> str:
+    code = "CLIENT_FILE_" + exc.code
+    if exc.rejected_host is None:
+        return code
+    return json.dumps(
+        {
+            "code": code,
+            "rejected_host": exc.rejected_host,
+            "message": "File host is not approved. An operator must review the exact host "
+            "before any configuration change. No file was retained.",
+        }
+    )
+
+
 def _source_result(base: str, draft_id: str, source: dict[str, Any]) -> dict[str, Any]:
     return {
         "source": source,
@@ -137,7 +151,7 @@ def register(
                 }
                 return result
             except RemoteFileRetrievalError as exc:
-                raise ToolError("CLIENT_FILE_" + exc.code) from None
+                raise ToolError(_remote_file_error(exc)) from None
             except scopes.DraftScopeError as exc:
                 raise ToolError(exc.code) from None
 

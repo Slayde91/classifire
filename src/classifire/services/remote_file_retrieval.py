@@ -33,8 +33,21 @@ _DNS_HOST = re.compile(
 class RemoteFileRetrievalError(RuntimeError):
     """A deliberately redacted remote-file failure."""
 
-    def __init__(self, code: str) -> None:
+    def __init__(self, code: str, *, rejected_host: str | None = None) -> None:
         self.code = code
+        self.rejected_host: str | None = None
+        # A bounded DNS name is useful to the submitting client/operator. Keep the
+        # exception text redacted and never retain the URI, path, query or userinfo.
+        if (
+            code == "UNAPPROVED_HOST"
+            and isinstance(rejected_host, str)
+            and rejected_host.isascii()
+            and _DNS_HOST.fullmatch(rejected_host) is not None
+        ):
+            try:
+                ipaddress.ip_address(rejected_host)
+            except ValueError:
+                self.rejected_host = rejected_host
         super().__init__(f"Remote file retrieval failed: {code}")
 
 
@@ -160,7 +173,7 @@ def _validate_uri(uri: str, policy: RemoteFilePolicy) -> str:
     if parsed.username is not None or parsed.password is not None:
         raise RemoteFileRetrievalError("UNSAFE_USERINFO")
     if host not in policy.allowed_hosts:
-        raise RemoteFileRetrievalError("UNAPPROVED_HOST")
+        raise RemoteFileRetrievalError("UNAPPROVED_HOST", rejected_host=host)
     try:
         ipaddress.ip_address(host.strip("[]"))
     except ValueError:
@@ -442,10 +455,18 @@ def retrieve_file(
         if not separator or len(header) > 4096:
             raise ValueError
         metadata = json.loads(header)
-        if isinstance(metadata, dict) and set(metadata) == {"error"}:
+        if isinstance(metadata, dict) and set(metadata) in (
+            {"error"},
+            {"error", "rejected_host"},
+        ):
             code = metadata["error"]
             if not content and isinstance(code, str) and re.fullmatch(r"[A-Z_]{1,64}", code):
-                raise RemoteFileRetrievalError(code)
+                error = RemoteFileRetrievalError(code, rejected_host=metadata.get("rejected_host"))
+                if "rejected_host" in metadata and (
+                    error.rejected_host is None or error.rejected_host != metadata["rejected_host"]
+                ):
+                    raise ValueError
+                raise error
             raise ValueError
         result = RetrievedFile(content=content, **metadata)
         if (
@@ -479,7 +500,10 @@ def _worker_main() -> None:
             raise RemoteFileRetrievalError("WORKER_FAILURE")
     except Exception as exc:
         code = exc.code if isinstance(exc, RemoteFileRetrievalError) else "WORKER_FAILURE"
-        sys.stdout.buffer.write(json.dumps({"error": code}).encode("ascii") + b"\n")
+        failure = {"error": code}
+        if isinstance(exc, RemoteFileRetrievalError) and exc.rejected_host is not None:
+            failure["rejected_host"] = exc.rejected_host
+        sys.stdout.buffer.write(json.dumps(failure).encode("ascii") + b"\n")
         return
     sys.stdout.buffer.write(header + b"\n" + result.content)
 

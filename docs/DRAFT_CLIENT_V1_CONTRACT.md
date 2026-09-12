@@ -1,5 +1,25 @@
 # Draft client v1: authenticated MCP and human confirmation
 
+## Rejected attachment host diagnostic
+
+PDF, Scope XLSX and Word upload retain the existing fail-closed host policy. When a
+valid DNS hostname is outside that policy, the upload tool error text contains a
+JSON object with `code: CLIENT_FILE_UNAPPROVED_HOST`, `rejected_host` and a fixed
+operator-review message. The hostname is lowercase ASCII, DNS-shaped, at most 253
+characters and not an IP literal. It is a diagnostic for the authenticated submitting
+client; it does not recommend trusting that host or authorize a configuration change.
+
+Only the rejected hostname is exposed. URL paths, queries, userinfo, file IDs/names,
+raw exceptions and signed URLs are excluded. Unsafe URI/userinfo failures and invalid
+hostname shapes keep their existing code-only errors. General exception text remains
+redacted. No new logging or persistent diagnostic table is introduced.
+
+Each redirect is still checked before contact. The isolated worker may return the
+same hostname-only failure metadata; its parent validates the bounded error schema
+again and refuses malformed fields. An upload refusal retains no new file or source,
+creates no Scope/package revision, and triggers no scan or downstream capability.
+Allowlist, DNS/IP, TLS, timeout, byte and authority checks remain unchanged.
+
 ## Word Scope evidence client increment
 
 The optional MCP adapter exposes `upload_draft_scope_word`,
