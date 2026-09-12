@@ -54,6 +54,11 @@ screenshots and receipts are ignored local evidence, not publication candidates.
 
 ## Next executable task and success criteria
 
+The actual connected upload probe returned CLIENT_FILE_UNAPPROVED_HOST. It created
+no new source/Scope/package or scan change. The exact rejected host is not present in
+the response; establish the runtime attachment delivery host before proposing any
+configuration change. Do not guess hosts or broaden the allowlist.
+
 Close I2's actual connected upload/scan gap in an explicitly selected synthetic test
 context. First inspect the current tool schemas, existing source inventory and transport
 implementation. Reuse the current client and shared intake services; do not repeat OAuth

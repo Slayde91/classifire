@@ -109,6 +109,12 @@ corrected, then exact comparisons passed. These required no application-source f
 
 ## Remaining coverage and next action
 
+A subsequent actual connected upload attempt returned CLIENT_FILE_UNAPPROVED_HOST.
+The same-file/same-Draft retention path was inspected as idempotent before this probe.
+The refusal created no new source, Scope revision or package and did not change scan
+bindings or retained files. The response did not expose the rejected host; identifying
+the actual runtime delivery host is a concrete dependency. No allowlist was widened.
+
 The actual upload and scan used browser forms. Dedicated connected Word text/image
 reads and typed proposals passed, but dedicated connected upload/scan and runtime
 remote-attachment retrieval were not exercised. Newly visible tools do not themselves

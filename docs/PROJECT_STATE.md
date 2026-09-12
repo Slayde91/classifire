@@ -71,7 +71,11 @@ Preparation passed 159 affected tests, three PostgreSQL regressions, eight SQLit
 checks, Ruff, Mypy and Bandit. Exact candidate and post-merge CI each passed 2,043 tests.
 These are recorded execution results; documentation edits do not rerun or broaden them.
 Dedicated connector upload/scan and remote attachment transport are not covered by the
-successful browser upload/scan. The complete I2 client transport exit remains open.
+successful browser upload/scan. The complete I2 client transport exit remains open. A later actual
+connected upload attempt was refused with CLIENT_FILE_UNAPPROVED_HOST; no new source,
+Scope revision or package was created. The rejected host was not exposed, and no
+allowlist or runtime setting was changed. Establish the exact runtime delivery host
+and obtain approval for any necessary configuration change before retrying.
 
 Prior local Word feature evidence: 81 distinct selected client/retrieval/auth/PDF tests,
 one Edge client-confirmation journey, Ruff, Mypy (229 source files) and Bandit passed.
