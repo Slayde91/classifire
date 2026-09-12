@@ -179,10 +179,12 @@ The verified source migration head is 0047 (retained Word source rows), followin
 storage; the client adapter adds no migration. Preserve historical migration files and
 old artifact readers; future changes require forward compatibility and restore evidence.
 
-Merged source and live runtime are separate. The existing loopback trial remains the
-previous Excel build; Word activation requires a reviewed version/migration/backup/
-rollback plan and explicit authorization. This reconciliation applies no migrations,
-restarts, OAuth changes, production configuration or customer-data operations.
+Merged source and live runtime are separate. The owner-authorized synthetic trial
+now runs tested ff0272b after successful post-merge CI, disposable restore verification
+and verified additive metadata startup. The confirmed Scope and exact original-bearing
+ZIP survived restart. See the [acceptance record](./WORD_ACCEPTANCE_ACTIVATION.md) for
+coverage and limits. This is an approved trial result, not general deployment authority;
+future activation and OAuth/tunnel changes retain their explicit approval boundary.
 
 ## Planned architecture and unresolved decisions
 
@@ -205,7 +207,8 @@ backlog -> prevent repeat work/false completion -> documentation only, no migrat
 ## Immediate direction
 
 Use the ordered [Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions):
-I1 correction merged and current-main CI monitored; I2 prepare controlled Word
-acceptance, then activate only after successful CI and authorization; I3 owner-approved merge enforcement; N1 Excel acceptance; N2 representative
+I1 correction and CI complete; I2 application acceptance passed with dedicated connected
+upload/scan transport still to verify; I3 owner-approved merge enforcement; N1 Excel
+acceptance; N2 representative
 pricing semantics; L1/L2 broader product/production work. This order does not remove
 any canonical Phase 8-14 prerequisite. The roadmap retains detailed T1-T14/Phase 0-16 exits.

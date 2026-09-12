@@ -206,9 +206,10 @@ The PDF/Excel/Word client and selected-package increments are implemented; Word
 PRs #252-#254 are merged. Merged source is distinct from hosted CI and live activation.
 Use [PROJECT_STATE.md](./docs/PROJECT_STATE.md#recommended-next-actions) for the single
 current priority and [SESSION_HANDOFF.md](./docs/SESSION_HANDOFF.md) for the next-session
-prompt. Close outstanding validation, then complete the controlled Word acceptance
-journey after separately authorized activation. Do not rebuild the quantity-basis or
-client tools. The full production outcome above remains unchanged and incomplete.
+prompt. Authorized Word application acceptance and restart are verified; dedicated
+connected upload/scan transport remains to be exercised. Preserve the completed
+Scope/package confirmations and exact artifacts. Do not rebuild the quantity-basis
+or client tools. The full production outcome above remains unchanged and incomplete.
 
 ## Earlier technical/pricing delivery sequence
 

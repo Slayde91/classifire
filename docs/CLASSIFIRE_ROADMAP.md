@@ -20,9 +20,9 @@ P0-P6 are bounded Draft milestones, not completion of production Phases 0-16.
 | Completed bounded implementation | Manual Draft Scope, JSON round trip, selected-target Match review/measurements, manual/rate-selected Estimate and all four PDF/XLSX report profiles; shared service contracts and tests |
 | Completed bounded implementation | PDF, Excel and Word retained inspection/review; Scope v7 Word evidence; ProjectPackage v5 selected artifacts/originals and governed import/re-export. Word PRs #252-#254 are merged |
 | Completed bounded implementation | A/B profiles/review, A observations, B identity mapping, T9 coverage, T6 recipes, T13 roster and governed Scope quantity basis (PR #233); do not rebuild them |
-| Completed correction / verification in progress | I1: PR #255 passed and merged as 7847288; current-main run 34664119693 remains live. PR #254 merged before CI finished; main protection is not enforced at the inspected endpoint |
-| Upcoming immediate | I2: separately authorized Word trial activation and actual user confirmation/package acceptance; I3: owner decision on enforced merge protection |
-| Blocked on external interaction | N1 actual Excel trial needs client tool refresh/attachment/human confirmation. Word activation needs approval. These are not code-absence claims |
+| Completed correction / verification | I1: PRs #255-#257 merged; candidate and post-merge CI for ff0272b/eb3ddb3 passed 2,043 tests. Earlier run 34664119693 ended cancelled, not passed. PR #254 premature merge remains a disclosed process gap |
+| Verified bounded application acceptance / transport open | I2: authorized Word trial activation, actual browser upload/scan, connected reads/proposal, separate human Scope/package confirmations and exact ZIP/restart passed. Dedicated connected upload/scan transport remains untested; I3 remains an owner decision |
+| Blocked on external interaction | N1 actual Excel trial needs client tool refresh/attachment/human confirmation. Word activation and the completed confirmations already have approval and proof. These are not code-absence claims |
 | Near term | N2 representative technical recipe/quantity/commercial meaning acceptance before expanding derived rates |
 | Reordered | Complete visible evidence-to-Scope-to-package acceptance before broad format/scale/prediction work; retain technical/pricing work as an independent track |
 | Superseded | Reimplementing/publishing the already merged PDF/Excel/Word client features; repeating OAuth setup; creating the first governed quantity basis; accumulated old “next session” instructions |
@@ -34,8 +34,9 @@ P0-P6 are bounded Draft milestones, not completion of production Phases 0-16.
 The complete objective, evidence, components, dependencies, acceptance, validation and
 uncertainty for I1-I3, N1-N2 and L1-L2 are maintained together under
 [Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions).
-The next session starts with I2 preparation: a concrete Word activation/acceptance
-plan. PR #255 is already merged; monitor current-main CI as an activation prerequisite.
+The next I2 task is the remaining dedicated connector upload/scan transport check
+using an explicitly selected synthetic source/destination. Preserve the accepted Word
+project and exact package; do not repeat its completed activation or confirmations.
 Do not start another implementation merely because
 an existing run is slow. The handoff carries the exact current task and commands.
 
