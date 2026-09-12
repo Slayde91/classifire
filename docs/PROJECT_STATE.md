@@ -1,16 +1,9 @@
 # CLASSIFIRE Project State
-Word acceptance preparation after this snapshot is recorded in
-[the migration compatibility validation record](./WORD_ACCEPTANCE_ACTIVATION.md).
-The exact operational plan is retained privately. Disposable PostgreSQL rehearsal
-exposed and corrected version-field, table-rebuild and index-name compatibility
-defects. Activation and actual separate user confirmation remain incomplete;
-verify final candidate CI/publication before proceeding.
 
-CI status snapshot: 2026-09-12 01:20 UTC. Named runs may finish after this audit;
-re-query them before activation or publication decisions.
-
-Reconciled 2026-09-12 against local source, Git diffs, current GitHub PR/CI records,
-configuration, migration head and a read-only check of the existing app listener.
+Reconciled 2026-09-12 after the authorized controlled Word acceptance and restart.
+[The validation record](./WORD_ACCEPTANCE_ACTIVATION.md) distinguishes preparation,
+actual application acceptance and remaining connector transport coverage. Exact
+operator plans, receipts and generated artifacts remain private and outside Git.
 This is an implementation snapshot, not a production-readiness certificate.
 
 ## Current position
@@ -23,14 +16,16 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
 
 | Evidence | Verified state at this checkpoint |
 | --- | --- |
-| Shared source | `origin/main` 7847288511267e78be1de42019bc11d9ec303e40, merge of PR #255 |
+| Shared source | `origin/main` eb3ddb3f6ec23bd3ce66d7f7c82b7edaf830c4c2, merge of PR #257; tree matches tested ff0272b |
 | Word inspection | PR #252 merged as c5d4774; retained DOCX parsing/pictures and migration 0047 |
 | Word review/packages | PR #253 merged as 2fb422e after PR CI 34657065137 succeeded |
 | Word client | PR #254 merged as c496baf; source commit 4e2a2b1. PR CI 34662617629 subsequently succeeded; main CI 34662645680 ended cancelled (not a pass). The merge preceded the PR success |
 | Parent main failure | Run 34658986190: 1 failed / 1,894 passed. Test dates were collected before midnight and evaluated afterwards; this was a test timing error, not evidence of a weakened production guard |
-| Correction | PR #255/18418f3 fixes only the test clock; all 23 targeted tests and hosted run 34662942874 passed. Merged as 7847288 at 2026-09-12 01:12:24 UTC; current-main run 34664119693 is still in progress |
-| Runtime | Loopback 127.0.0.1:8820 still listens under PID 23084. Its preserved checkout is the earlier Excel trial build 8fc4855; this check did not revalidate its database contents or a live ChatGPT journey |
-| Migration | `python -m alembic heads` returned exactly `0047_draft_scope_docx_sources (legacy_adjudicated_lineage) (head)`; no live migration was applied |
+| Correction | PR #255/18418f3 fixes only the test clock; all 23 targeted tests and hosted run 34662942874 passed. Merged as 7847288 at 2026-09-12 01:12:24 UTC; later run 34664119693 exceeded its 30-minute limit and ended cancelled, not passed |
+| Runtime | Authorized synthetic trial activated tested ff0272b after successful post-merge CI; actual user-confirmed Scope and original-bearing ZIP survived an operating-system process restart |
+| Migration | Source head remains 0047. Disposable PostgreSQL history/restore checks passed. Actual trial had verified metadata-created lineage; approved startup added only the Word source table, with no fabricated Alembic stamp or downgrade |
+| Documentation | PR #256 merged as 1f12e4b after successful exact-head CI; its earlier pending-activation statements are superseded by this checkpoint |
+| PostgreSQL correction | PR #257 source ff0272b merged as eb3ddb3 after run 34681923704 passed. Post-merge run 34683024367 passed 2,043 tests and all checks; no job was restarted for an observation timeout |
 
 PR #254 was merged prematurely by `gh pr merge --auto` while its checks were running.
 The GitHub protection endpoint currently reports main unprotected. This is an observed
@@ -50,7 +45,7 @@ protections without authorization.
 | A/B pricing | Source profiles and review, A row observations, B system mappings, T9 coverage, T6 recipe links, T13 target-blind rosters and T10 bottom-up preview exist. `draft_pricing_quantities.py` already persists governed Scope-bound quantities (PR #233) | Do not rebuild the first quantity-basis feature. Preview is bounded to supported current confirmed sell-price evidence; unsupported inputs withhold amounts. Calibration, comparison/combination, holdout execution and production pricing activation remain later |
 | Reporting | `draft_scope_reports.py` / `draft_estimate_reports.py` and versioned renderers retain paired PDF/XLSX bytes for scope-only, scope-and-system, estimate-only and complete profiles | Draft reports are not canonical release. Do not infer professional acceptance across every input from synthetic examples |
 | Portable project | `draft_project_packages.py`, package inspection/materialization and imported-source services support selected revisions, imported origins and optional retained PDF/XLSX/DOCX originals | ProjectPackage v5 is not a full database backup or complete project/audit history; library source bodies and unselected artifacts are not automatically included |
-| Client/UI | `draft_client.py`, typed capabilities, evidence tools and durable client requests reuse the same services. Word adds five tools and `review_word_scope`; exact schemas and bounded redacted field errors are exposed | Client proposals require separate same-user browser confirmation. Word is merged but not activated in the running trial; refreshed discovery and real Word/Excel acceptance are not proven by local tests |
+| Client/UI | `draft_client.py`, typed capabilities, evidence tools and durable client requests reuse the same services. Word adds five tools and `review_word_scope`; exact schemas and bounded redacted field errors are exposed | Client proposals require separate same-user browser confirmation. Word application acceptance and actual connected text/image reads are verified. Dedicated connector Word upload/scan and remote attachment retrieval remain untested; Excel transport acceptance must be reconciled separately |
 
 Domain services above are in `src/classifire/services/`; UI/client adapters are
 in `src/classifire/`.
@@ -58,11 +53,25 @@ The authoritative architecture description is [CLASSIFIRE_ARCHITECTURE.md](./CLA
 
 ## Verification and health
 
-This reconciliation directly inspected source/contracts, relevant tests, staged/unstaged
-root change inventories, current clean worktrees, PR/CI results, dependency configuration,
-worker behavior, migration head and the loopback listener. This reconciliation ran 32 DOCX/parser and pricing recipe/evaluation contract tests
-(32 passed in 10.15s), validated 53 local links/source references across ten edited
-documents, and checked encoding/fences and Git whitespace; historical counts below are prior-run evidence.
+The controlled Word journey used an actual authenticated browser upload, real ClamAV
+scan, retained text/image inspection, connected typed proposal, separate human Scope
+and package confirmations, browser downloads and an approved process restart. The
+connected Word text/image tools became available and returned the same retained content.
+Scope revision 2 retained five source references; its content matched the confirmed
+proposal. Quantities and dimensions stayed null. The image was a 12x8 red placeholder,
+so text assertions remained provisional rather than becoming invented visual facts.
+
+The 12,847-byte ZIP contained exactly the manifest, saved Scope and byte-exact original
+DOCX. Repeated downloads before/after restart matched. All pre-existing Scope revisions,
+packages and originals remained exact; 60 other database tables were unchanged. No
+matching, estimating, reporting, canonical admission, lock or release ran implicitly.
+Runtime policy was unchanged; no OAuth/tunnel configuration change was made.
+
+Preparation passed 159 affected tests, three PostgreSQL regressions, eight SQLite/history
+checks, Ruff, Mypy and Bandit. Exact candidate and post-merge CI each passed 2,043 tests.
+These are recorded execution results; documentation edits do not rerun or broaden them.
+Dedicated connector upload/scan and remote attachment transport are not covered by the
+successful browser upload/scan. The complete I2 client transport exit remains open.
 
 Prior local Word feature evidence: 81 distinct selected client/retrieval/auth/PDF tests,
 one Edge client-confirmation journey, Ruff, Mypy (229 source files) and Bandit passed.
@@ -83,36 +92,35 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-The ordering below is shared by the architecture, roadmap and handoff. I1's correction
-is complete; **I2 preparation is the highest-value next task**, while current-main CI
-remains a prerequisite to activation. A blocked
-external step does not authorize deployment, real evidence use or rule changes.
+The ordering below is shared by the architecture, roadmap and handoff. I1 is complete;
+I2's authorized application journey is proven. **The next I2 action is to close the
+dedicated connector upload/scan transport gap**, without repeating activation or the
+completed confirmations. A new source or project needs an explicitly selected synthetic
+test context; preserve the accepted project's saved evidence. A blocked external step
+does not authorize deployment, customer evidence use or rule changes.
 
 ### Immediate next actions
 
-1. **I1 — Correction complete; monitor current-main validation.** PR #255 passed
-   and merged; do not redo it. Observe current-main run 34664119693 and this docs PR's
-   exact-head checks before deployment/publication completion. Evidence: the failed parent
-   main run, pending current runs and the unprotected branch. Components:
-   `tests/test_technical_activation_boundary.py`, `.github/workflows/pull-request-validation.yml`.
-   Dependency: GitHub checks/review; do not restart live runs or auto-merge pending checks.
-   Acceptance: correction head/checks/merge are already verified; current-main
-   validation is recorded without counting cancellation as success; diagnose actual failures before dependent work. Validation:
-   `python -m pytest tests/test_technical_activation_boundary.py`, Ruff and exact GitHub
-   run/PR inspection. Uncertainty: hosted duration and any newly surfaced failure.
-2. **I2 — Complete one controlled Word client acceptance journey.** Prepare the existing
-   synthetic app update, exact commit/migration/backup/rollback plan and read-only preflight;
-   obtain activation approval before changing the app/database. Then refresh discovery,
-   upload a synthetic DOCX, scan/read text and image, propose, have the user confirm, reopen
-   and download a source-inclusive package. Evidence: source is merged; the live app is
-   still the Excel build. Components: `scripts/run_draft_scope_demo.py`, Word client/intake/
-   review services, client request UI, package services, migration 0047, Word client and
-   package tests. Dependencies: I1, explicit activation approval, existing OAuth/tunnel,
-   user attachment and human confirmation. Acceptance: actual tool calls and saved hashes
-   prove the complete journey, null unknowns remain null, ZIP original matches the source;
-   no matching/pricing/technical approval occurs implicitly. Validation: targeted Word/
-   client/package tests, rendered browser workflow, recorded revision/hash before/after
-   and exact ZIP bytes. Uncertainty: live file metadata/tool caching and supported layouts.
+1. **I1 - Complete.** PR #255 corrected the test clock; PR #257 fixed evidenced
+   PostgreSQL migration-history compatibility. PR #256 documentation is merged.
+   Candidate run 34681923704 and post-merge run 34683024367 passed. Preserve these
+   results and inspect new runs when new changes are published; do not restart jobs
+   because observation is slow or count the earlier cancellation as success.
+2. **I2 - Application acceptance passed; dedicated transport coverage remains.**
+   Authorized activation, actual browser upload/scan, connected Word reads and typed
+   proposal, separate human Scope/package confirmations, exact ZIP and restart all
+   passed. Reuse existing Word client/intake/review/package services and migration 0047.
+   The tools are now discoverable; do not rebuild them or repeat OAuth setup.
+   Next success criteria: an explicitly selected synthetic DOCX reaches the retained
+   source through the actual connected upload tool, explicit connected scan exposes
+   the correct text/image hashes, and no Scope/package or downstream state changes
+   implicitly. Reconcile the supported local-file/runtime attachment transport before
+   calling it; preserve confidential URLs and credentials. Use an explicitly selected
+   test destination, and separate human confirmations if further Draft edits are needed.
+   Validation: real tool results, retained original/scan/document hashes and read-only
+   state comparisons. Unit tests and browser uploads cannot prove this transport.
+   Uncertainty: runtime attachment delivery and supported document layouts; this small
+   placeholder-image fixture is not representative customer evidence.
 3. **I3 — Establish enforced merge checks as an owner decision.** Present the exact
    main protection/ruleset proposal for approval; do not change access/protection as part
    of documentation. Expected outcome: pending or failing CI cannot merge. Evidence:

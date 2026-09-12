@@ -1,132 +1,87 @@
 # CLASSIFIRE Session Handoff
 
-CI status snapshot: 2026-09-12 01:20 UTC. Named runs may finish after this audit;
-re-query them before activation or publication decisions.
+Reconciled 2026-09-12 after the controlled Word application acceptance. Read with
+[PROJECT_STATE.md](./PROJECT_STATE.md), [architecture](./CLASSIFIRE_ARCHITECTURE.md),
+[roadmap](./CLASSIFIRE_ROADMAP.md) and the [acceptance record](./WORD_ACCEPTANCE_ACTIVATION.md).
+Repository/runtime evidence overrides this dated checkpoint. The product objective is
+in root `GOAL.md`; there is no `docs/GOAL.md` in this checkout.
 
-Reconciled 2026-09-12. Read this with [PROJECT_STATE.md](./PROJECT_STATE.md),
-[architecture](./CLASSIFIRE_ARCHITECTURE.md) and [roadmap](./CLASSIFIRE_ROADMAP.md).
-Repository evidence overrides this dated checkpoint.
+## Verified position
 
-## Branch and project context
+- Shared main eb3ddb3f6ec23bd3ce66d7f7c82b7edaf830c4c2 is PR #257's merge. Its tree
+  matches tested ff0272b. PRs #252-#256 are merged; do not rebuild them.
+- Candidate run 34681923704 and post-merge run 34683024367 each passed 2,043 tests
+  and all checks. Earlier run 34664119693 ended cancelled after its configured limit;
+  that was not a pass. No job was restarted because observation timed out.
+- Owner-approved activation of ff0272b followed actual backup/disposable restore
+  verification and confirmed metadata lineage. Only the Word source table was added;
+  no fake Alembic stamp or downgrade. The private repeatable launcher pins that commit.
+- Actual authenticated browser DOCX upload and real ClamAV scan passed. Connected
+  Word text/image reads and a typed Scope proposal passed. The human separately
+  confirmed the Scope and package in the browser. No agent confirmation was used.
+- Scope revision 2 contains five source references and exact confirmed content.
+  Described pipe/cable services share one opening; a separate blank opening stays
+  separate. Unknown dimensions/quantities remain null. The red placeholder picture
+  supplies no visual proof of the text's pipe/cable assertions.
+- The 12,847-byte ZIP contains only manifest, Scope and byte-exact original DOCX.
+  Repeated browser downloads and the approved process restart preserved it exactly.
+  Prior Scope/package/original history remained intact; 60 other tables did not change.
+  No matching, estimating, reporting, canonical admission, lock or release ran implicitly.
+- Dedicated connector upload/scan and remote attachment transport remain untested.
+  Newly available tools are not completion evidence. No OAuth/tunnel policy changed.
 
-- Documentation worktree: `C:\CLASSIFIRE\.tmp\docs-reconcile-current-state-20260912`,
-  branch `docs/reconcile-current-state-20260912`, based on main c496baf and safely
-  fast-forwarded to 7847288. Its intended upstream is the same-named origin branch.
-  This change
-  includes documentation only; no implementation or runtime changes are bundled.
-- Shared main after correction: 7847288511267e78be1de42019bc11d9ec303e40, PR #255.
-  Word inspection/review/package/client source is merged. Do not implement it again.
-- PR #254 merged before CI finished after an auto-merge request. This is a disclosed
-  process failure, not completed CI. The main protection endpoint reports unprotected.
-  Use explicit successful-check verification, never `--auto` as an enforcement substitute.
-- Parent main run 34658986190 failed its midnight-sensitive technical activation test
-  after 1,894 passes. Fix 18418f3 is in separate PR #255; production logic is unchanged,
-  all 23 targeted tests and hosted run 34662942874 passed. PR #255 merged 7847288
-  at 2026-09-12 01:12:24 UTC.
-- Word PR CI 34662617629 passed; merged-main run 34662645680 ended cancelled
-  (not a pass). Corrected-main run 34664119693 remains in progress. Re-query current
-  results. Slow observation does not mean a live job stopped.
-- Existing app: 127.0.0.1:8820, PID 23084, earlier Excel checkout/build 8fc4855.
-  No Word activation, live database migration, OAuth grant or tunnel change occurred.
-  Listener existence does not prove client acceptance or database correctness.
-
-The full target remains incomplete: broader evidence/physical-model coverage, complete
-portable history, representative technical/commercial semantics and production gates.
-The first governed quantity-basis feature already exists in PR #233.
+Exact operator paths, identities, process details, selected source hashes, user approvals,
+backup/restore evidence and generated artifacts are in the private activation receipt.
+Do not publish that private receipt or copy confidential runtime configuration into Git.
+The accepted runtime checkout must remain pinned and clean while new work uses isolation.
 
 ## Local changes and publication classification
 
-The documentation replaces contradictory accumulated checkpoints, keeps detailed T1-T14
-and Phase 0-16 exits, separates implementation from planned work and supplies one task
-order and one paste-ready prompt. Root `CLASSIFIRE_ARCHITECTURE.md`,
-`CLASSIFIRE_ROADMAP.md` and `SESSION_HANDOFF.md` are links to the maintained docs, not
-second copies. AGENTS/GOAL receive only necessary stale-priority corrections.
+This reconciliation changes documentation only. No application contract, architecture,
+migration or runtime activation is introduced. Source feature ff0272b remains on its
+existing branch and PR #257; do not restage it into a documentation PR.
+Local documentation checks passed: 42 relative links/anchors, UTF-8, code fences,
+private-detail exclusions, unchanged application source and Git whitespace. Existing
+application/runtime results above were inspected; no new application test pass is
+claimed for these documentation edits. Use current Git/GitHub to verify publication
+of this reconciliation before claiming it.
 
-See [LOCAL_CHANGE_CLASSIFICATION.md](./LOCAL_CHANGE_CLASSIFICATION.md) for every root
-tracked path and logical untracked group. Legacy root de0cc5a has 46 unstaged modifications,
-14 staged additions, four DU conflicts and an interrupted cherry-pick. It stays untouched.
-All unknown/private/generated material is excluded. Prior Word and test-clock feature
-commits remain on their own clean branches and are not restaged into this documentation PR.
+The legacy root remains recovery evidence: 46 unstaged modifications, 14 staged
+additions, four DU conflicts and an interrupted cherry-pick. Its unrelated untracked,
+private and generated material stays untouched. See the
+[local classification](./LOCAL_CHANGE_CLASSIFICATION.md). New private execution helpers,
+screenshots and receipts are ignored local evidence, not publication candidates.
 
-## Start Here / Next Session
+## Next executable task and success criteria
 
-**First task: I2 — prepare and complete one controlled Word client acceptance journey.**
-Source and synthetic browser tests already exist. The useful next step is bringing the
-existing trial app up to the validated code and proving one real client interaction,
-not rebuilding intake/review or another orchestration layer.
+Close I2's actual connected upload/scan gap in an explicitly selected synthetic test
+context. First inspect the current tool schemas, existing source inventory and transport
+implementation. Reuse the current client and shared intake services; do not repeat OAuth
+setup, activation, completed project creation or the accepted Scope/package confirmations.
+A new source/destination must be explicitly selected; do not mutate accepted source/scan
+bindings just to obtain another passing test. If user attachment metadata is required,
+prepare the exact request and identify that dependency without widening grants.
 
-Prepare all reviewable work before asking for activation permission:
+Success: actual connected upload retains the selected original; explicit connected scan
+returns the corresponding document/text/image hashes; no Scope/package or downstream
+state changes occur implicitly. If further Draft edits are needed, separate human browser
+confirmation remains required. Preserve unknowns, contradictory evidence and original bytes.
+Browser upload alone, mocked retrieval and source presence cannot close this transport gap.
 
-1. Inspect current source, Git/PR/CI and the existing operator startup configuration.
-   PR #255 is merged as 7847288; do not recreate the correction. Run 34664119693 and
-   the documentation PR may still be live; poll their exact handles/results.
-2. Identify the exact deployable commit, current runtime checkout, database version,
-   retained storage, existing policy bindings and startup command without printing keys,
-   connection secrets or signed URLs. Verify prerequisites rather than copying stale paths.
-3. Prepare an explicit synthetic-only backup/restore, migration-0047, restart and rollback
-   plan. Rehearse relevant migration/compatibility checks on a disposable database.
-4. Present the concrete plan for owner approval. **Do not update/restart the existing
-   app, migrate its database or alter OAuth/tunnel configuration without that approval.**
-5. After approved activation and read-only readiness checks, refresh client discovery and
-   conduct one selected DOCX -> scan -> text/picture reads -> typed Scope proposal ->
-   user browser confirmation -> reopened Scope -> original-bearing ZIP journey.
-   Human confirmation is not granted by a chat message or an automated browser test.
+For an evidenced code issue, validate affected tests with that checkout's `src` on
+PYTHONPATH, disabled pytest cache and a fresh basetemp. Destructive PostgreSQL checks use
+only verified disposable port 15433, never the trial on 15432. Use applicable static checks
+and inspect actual outputs. Stage explicit files, push normally, and merge only after
+observed successful exact-head CI and required reviews. Poll live jobs; never use auto-merge
+as an enforcement substitute. No branch deletion or protection change is authorized.
 
-Relevant files/components: `scripts/run_draft_scope_demo.py`,
-`src/classifire/draft_client_word_tools.py`, `src/classifire/draft_client.py`,
-`src/classifire/services/draft_client_capabilities.py`, shared Word intake/review,
-client request UI, project-package/import services and
-`src/classifire/migrations/versions/0047_draft_scope_docx_sources.py`.
-
-Prerequisites/blockers: successful exact-head/current-main checks, owner activation
-approval, available existing test deployment/OAuth/tunnel, runtime attachment metadata
-and separate user confirmation. Word code is merged; activation is not already approved.
-Keep the loopback Excel app and retained test data intact until the approved update.
-Do not widen grants, repeat OAuth setup or use customer evidence implicitly.
-
-Validation: use the exact selected checkout's src in PYTHONPATH. Run targeted tests only
-when preparing a new runtime/migration combination or diagnosing an actual failure:
-
-```powershell
-$env:PYTHONPATH = Join-Path $PWD 'src'
-# Disposable PostgreSQL only; start/verify an isolated test database before this block.
-$env:CLASSIFIRE_POSTGRES_TEST_URL = 'postgresql+psycopg://classifire_test@127.0.0.1:15433/classifire_containment_test'
-$env:CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN = 'classifire-containment-test-drop-all'
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m pytest tests/test_draft_client_word.py tests/test_draft_scope_docx_review.py tests/test_migrations_draft_scope_docx_sources.py -p no:cacheprovider --basetemp C:\CLASSIFIRE\.tmp\pytest-word-acceptance-next -o addopts= -q
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m ruff check .
-C:\CLASSIFIRE\.venv\Scripts\python.exe -m alembic heads
-```
-
-Use a fresh basetemp if the named path exists. Never point destructive fixtures at the
-live database on 15432. Run applicable type/security checks for any code change and
-inspect the browser/ZIP output. Use actual tool results, saved revisions/source hashes
-and downloaded original bytes as acceptance evidence, not chat descriptions.
-
-Definition of done: authorized updated runtime survives restart; current tools are
-actually callable; separate user confirmation saves a traceable revision; two services
-can share one opening while a separate blank opening remains service-free; unsupported
-quantities/dimensions remain null; the downloaded ZIP contains the exact retained source.
-No matching, pricing, technical approval or canonical release runs implicitly. Record
-any unsupported input/client limitation rather than inventing evidence. For a necessary
-code correction, continue through explicit staging, commit, push, PR and verified checks/
-review/merge; no auto-merge shortcut or branch deletion.
-
-## Validation performed for this reconciliation
-
-Source/configuration/contracts and staged/unstaged inventories inspected; current PR/CI
-and protection endpoint checked; listener checked read-only; one Alembic head verified.
-Focused checks: `test_draft_scope_docx.py`, `test_draft_pricing_recipe_contract.py`
-and `test_draft_pricing_evaluation_contract.py`: 32 passed in 10.15s. A local validator
-checked 53 relative links plus explicit source paths across ten edited documents,
-UTF-8/encoding markers and code fences; no errors. `git diff --check` passed.
-No full local suite, live migration or live client acceptance was run for these docs.
+I3 merge enforcement needs a concrete owner decision. N1 Excel acceptance must be
+reconciled against its own actual evidence. N2 representative recipe/quantity semantics
+precedes broader pricing arithmetic. L1/L2 and all production Phase 8-16 exits remain.
+The full four-capability production objective is still incomplete.
 
 ## Recommended Prompt for New Session
 
 ```text
-Continue CLASSIFIRE with one controlled Word-to-Scope-to-package client acceptance journey. First inspect AGENTS.md, Git/worktrees/upstream/diff, docs/PROJECT_STATE.md, current PR/CI and the existing test runtime; preserve unrelated changes and the conflicted C:/CLASSIFIRE root. Word PRs #252-#254 and test-clock correction #255 are merged; do not rebuild them. The loopback app on 8820 still runs the earlier Excel build. Inspect scripts/run_draft_scope_demo.py, Word client/intake/review services, client requests, project packages and migration 0047. Prepare an exact commit, backup/restore, migration, restart and rollback plan; verify current-main CI and rehearse relevant checks in disposable PostgreSQL15433, never live15432. Obtain explicit approval before updating/restarting/migrating the app or changing OAuth/tunnel configuration. After approval, refresh tools and prove synthetic DOCX upload, scan, text/image reads, typed proposal, separate user browser confirmation, reopening and exact original-bearing ZIP download. Keep unknowns null and run no downstream capability implicitly. Validate affected Word/client/review/migration/package pytest tests with this checkout's PYTHONPATH and fresh basetemp, inspect browser/ZIP outputs, and run relevant Ruff/Mypy/Bandit checks for code changes. Fix only evidenced issues; classify and commit explicit files, push, reuse/create the correct PR, and merge only after observed exact-head successful CI/reviews. Poll live jobs without restarting; never use --auto as a substitute for checking gates. Record actual runtime/revision/hash/merge evidence and limitations; do not claim production readiness or use customer evidence.
+Continue CLASSIFIRE from the verified Word acceptance record and private activation receipt. Inspect AGENTS.md, current Git/worktrees/upstream/diff, source, project state, PR/CI and runtime before changes. Preserve the conflicted root and pinned ff0272b runtime. PRs #252-#257 and the authorized browser Word-to-Scope-to-package journey are complete; do not rebuild or repeat them. Verify the remaining dedicated connected Word upload/scan transport using an explicitly selected synthetic source and destination. Current text/image reads and typed proposals are already proven. Preserve original bytes, unknowns and separate human Draft confirmations; run no downstream capability implicitly. No OAuth/tunnel changes or new activation without explicit approval. Fix only evidenced issues, validate in the selected checkout with fresh test paths and disposable PostgreSQL15433, and publish explicit files through observed successful CI/review/merge. Poll existing jobs without restarting for observation timeout. Record actual results and remaining full-goal gaps.
 ```
-
-The full ordered recommendations and uncertainties are in
-[PROJECT_STATE.md](./PROJECT_STATE.md#recommended-next-actions). This prompt targets I2
-preparation; incomplete hosted checks remain prerequisites, not reasons to reimplement I1.
