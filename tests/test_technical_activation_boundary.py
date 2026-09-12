@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from classifire import technical_admin
 from classifire.models import Approval, StoredFile, TechnicalDocument, TechnicalVariant, User
+from classifire.services import technical_validity
 
 
 def _user(db: Session, email: str) -> User:
@@ -554,12 +555,12 @@ def test_technical_activation_activates_an_independently_reviewed_variant(
     [
         (
             "effective_date",
-            date.today() + timedelta(days=1),
+            date(2026, 9, 13),
             "Technical+variant+is+not+yet+effective",
         ),
         (
             "expiry_date",
-            date.today() - timedelta(days=1),
+            date(2026, 9, 11),
             "Technical+variant+has+expired",
         ),
     ],
@@ -570,7 +571,16 @@ def test_technical_activation_refuses_a_temporally_ineligible_variant(
     field_name: str,
     field_value: date,
     error_fragment: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # Collection and execution can straddle midnight in the full CI suite.
+    # Freeze the validator clock, not its eligibility logic or assertions.
+    class ReviewDate(date):
+        @classmethod
+        def today(cls) -> date:
+            return date(2026, 9, 12)
+
+    monkeypatch.setattr(technical_validity, "date", ReviewDate)
     with physical_session() as db:
         requester = _user(db, "requester@example.test")
         approver = _user(db, "approver@example.test")
