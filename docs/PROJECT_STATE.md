@@ -1,4 +1,10 @@
 # CLASSIFIRE Project State
+Word acceptance preparation after this snapshot is recorded in
+[the migration compatibility validation record](./WORD_ACCEPTANCE_ACTIVATION.md).
+The exact operational plan is retained privately. Disposable PostgreSQL rehearsal
+exposed and corrected version-field, table-rebuild and index-name compatibility
+defects. Activation and actual separate user confirmation remain incomplete;
+verify final candidate CI/publication before proceeding.
 
 CI status snapshot: 2026-09-12 01:20 UTC. Named runs may finish after this audit;
 re-query them before activation or publication decisions.

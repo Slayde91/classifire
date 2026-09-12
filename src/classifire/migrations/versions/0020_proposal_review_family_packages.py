@@ -34,7 +34,12 @@ _REPORT_FAMILY = (
 
 
 def upgrade() -> None:
-    with op.batch_alter_table("proposal_review_packages", recreate="always") as batch_op:
+    # SQLite needs a table copy for nullable-column changes. PostgreSQL must
+    # retain the existing parent table and its incoming reader/redaction keys.
+    with op.batch_alter_table(
+        "proposal_review_packages",
+        recreate="always" if op.get_bind().dialect.name == "sqlite" else "auto",
+    ) as batch_op:
         batch_op.add_column(
             sa.Column(
                 "package_kind",
