@@ -35,6 +35,7 @@ from classifire.models import (
     TechnicalVariant,
 )
 from classifire.release_admin import _activate_drafts, _snapshot_records, _technical_logical_key
+from classifire.services import technical_validity
 from classifire.services.release_pinning import (
     PIN_FIELDS,
     active_release,
@@ -393,8 +394,8 @@ def test_active_release_with_a_retired_variant_fails_closed(db) -> None:
 @pytest.mark.parametrize(
     ("field_name", "field_value", "expected_blocker"),
     [
-        ("effective_date", date.today() + timedelta(days=1), "not_yet_effective"),
-        ("expiry_date", date.today() - timedelta(days=1), "expired"),
+        ("effective_date", date(2026, 9, 13), "not_yet_effective"),
+        ("expiry_date", date(2026, 9, 11), "expired"),
     ],
 )
 def test_active_release_with_a_temporally_ineligible_variant_fails_closed(
@@ -402,7 +403,16 @@ def test_active_release_with_a_temporally_ineligible_variant_fails_closed(
     field_name: str,
     field_value: date,
     expected_blocker: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # Collection and execution can straddle midnight in the full suite.
+    # Freeze the review clock without changing eligibility rules or assertions.
+    class ReviewDate(date):
+        @classmethod
+        def today(cls) -> date:
+            return date(2026, 9, 12)
+
+    monkeypatch.setattr(technical_validity, "date", ReviewDate)
     release, variant = _active_release_with_variant(db, variant_status="active")
     setattr(variant, field_name, field_value)
     db.flush()
