@@ -111,8 +111,27 @@ The 77-case native-decision/package/import regression passed with two warnings i
 An additional saved re-export test reproduced a404 for retained nested history; the UI
 now reuses the recursive inspector for display/download. All eight final history/package/
 import UI cases passed with one warning in278.29s.
-Expired scan access was refused without extra writes. The older full run is pinned at1aeded3
-and does not cover this feature. Documentation is reconciled to these results. Actual-main v7
-restart and browser inspection remain unverified; browser initialization is unavailable.
+Expired scan access was refused without extra writes. The older full run at1aeded3 completed
+2,593 passes, two Windows symlink skips and386 warnings in7,243.62 seconds. It does not
+cover this feature or later script/claim fixes; targeted evidence remains separate.
+
+Application23f5110 passed actual-main HTTP startup/restart in test mode on owned15433/8837.
+The same two recorded histories were separately packaged, imported and re-exported. Two
+server processes reopened identical ZIP/JSON, unchanged source Scope3 and imported Scope2.
+Blank openings and unknowns remained; replay, CSRF and undeclared-member refusals caused no
+extra writes. Provider, scanner and downstream capability counters stayed zero. Both owned
+servers stopped. A fresh backup/restore matched71 tables,76 rows, schema and retained bytes;
+a fresh process reopened three exact packages and both decisions without changing rows.
+
+The initial read-only PostgreSQL transaction refused existing source-row locks. The completed
+follow-up used the normal transaction mode with a SQL-mutation rejection guard (346 reads,
+26 source locks, zero mutation attempts) and complete before/after row/schema comparisons.
+Those locks preserve quarantine coordination; no guard was removed. Owner/ACL restoration
+was excluded. Private failed receipts remain: the HTTP harness initially expected409 for a
+missing confirm field (actual422), then for an old-session CSRF (actual403). With current CSRF,
+the old import approval correctly returned409. These corrections changed verification only.
+
+Browser initialization remains unavailable, so rendered-browser and live acceptance are
+unverified. The main app ran in test mode; this is not production configuration approval.
 Synthetic replies/scanner verdicts do not prove real-provider behavior, malware detection,
 report accuracy, technical suitability, raw prompt/version lineage or full history coverage.

@@ -29,15 +29,42 @@ The 77-case native-decision/package/import regression passed, with two warnings,
 on separate owned PostgreSQL15433. A subsequent negative case reproduced a saved re-export
 page refusing its own retained nested history. The page/download now reuse the existing
 recursive reader. The final eight-case HTTP/UI run passed with one warning in278.29s.
-Expired source scans correctly
-refuse page, ZIP and history access without extra writes. The older 2,595-case full run
-remains pinned at1aeded3 and cannot cover
-later fixes or this feature. Poll existing runs; do not replace observation timeouts with
-new runs. Private outputs are in `portable-native-history-validation-20260914` under .tmp.
-Seven final ZIP/HTML artifacts and74 local document-link targets were inspected. Saved/
-imported HTML structure and exact ZIP/JSON assertions passed; browser automation
-remains unavailable. No new actual-main v7 server/restart acceptance or live acceptance is
-claimed. See [the complete history contract](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md).
+Expired source scans correctly refuse page, ZIP and history access without extra writes.
+The full run pinned at `1aeded3` completed: 2,593 passed, two Windows symlink skips and
+386 warnings in 7,243.62 seconds. It covers the 0049 decision candidate, not the later
+script/claim fixes or this package feature. Those have separate targeted results above.
+No job was restarted on observation timeout. Private feature outputs are in
+`portable-native-history-validation-20260914` under .tmp.
+
+Exact application commit `23f5110` passed real `classifire.main:app` HTTP startup/restart
+on an owned synthetic PostgreSQL15433 clone and loopback8837. Separate package previews
+and saves produced history-only and original-bearing v7 ZIPs; separate import preview/
+confirmation created a new Draft, then re-export retained both histories in its original
+archive. A second server process reopened byte-identical ZIP/JSON, source Scope3 and
+imported Scope2. Both blank openings kept unknown dimensions and Unresolved state, with
+zero Services. Bad CSRF, missing confirmation, consumed/session-mismatched import tokens
+and undeclared history members were refused. Only explicit new Draft/package rows,
+login fields and accounted audit entries changed; all original rows were preserved.
+Provider, scanner, matching, estimating and report-generation guards recorded zero calls.
+Both owned server processes stopped; live8820/15432 and the source fixture were untouched.
+
+A fresh backup restored all 71 tables and76 rows exactly, with matching1179 columns,
+450 constraints and398 indexes. The retained original and all three ZIPs matched through
+first process, restart and restore. Fresh application readers made346 reads, including26
+source locks, with zero SQL mutation attempts; all source/restored rows and schema stayed
+unchanged. The initial PostgreSQL read-only-mode attempt refused the existing source-row
+locks. Its follow-up retained those quarantine guards, rejected non-read SQL and compared
+all rows instead; no application guard changed. Database owner/ACL restoration was excluded.
+
+Private receipts are in `native-history-http-restart-23f5110-20260914`: `attempt3` passed;
+`recovery/continuation-receipt.json` completes the exact restore's reader verification.
+The earlier failed harness receipts remain: missing confirmation returns422; an old-session
+CSRF returns403, while a current-session token with an old import approval returns409.
+All three failures were verification-harness mismatches, not changes to application rules.
+Seven targeted artifacts, three real-app ZIPs across restart/restore, six HTTP HTML outputs
+and74 local document-link targets were inspected. Browser initialization still fails before
+interaction; no rendered-browser or live acceptance is claimed. See
+[the complete history contract](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md).
 
 PR #271 remains open at approved `d864c51`, with failed CI and no merge. Local Word-only
 correction `8bce0b0` still awaits separate public approval. All newer feature ancestors and
@@ -85,9 +112,10 @@ Linux arm64/Python 3.12.14 storage run now passed 18 cases with no skips, includ
 file and directory symlink protections. The storage service/test files are unchanged
 since d33f5ec. Declared dependency ranges, pip check and mounted source hashes passed;
 this is not a full Linux suite or deployment certificate. The parent result does not
-cover the newer decision schema. A first full run of the 0049 candidate is now running
-from pinned `1aeded3`, with 2,595 collected cases, selected PYTHONPATH and fresh basetemp
-on disposable15433. Poll its existing handle; no timed-out CI job was restarted.
+cover the newer decision schema. The first full 0049 run completed from pinned `1aeded3`:
+2,593 passed, two Windows symlink skips and386 warnings in7,243.62 seconds, using selected
+PYTHONPATH and fresh basetemp on disposable15433. Its terminal exit and XML were verified;
+it does not cover later changes. No timed-out CI job was restarted.
 
 Actual `classifire.main:app` startup and restart passed over HTTP on isolated8837,
 using a separate migrated synthetic15433 clone. Two distinct Uvicorn processes reopened
@@ -119,7 +147,8 @@ and failures save no Scope change; package and canonical authority remain separa
 Forward migration0049 adds the decision table and required integrity constraints.
 Readiness and only audited current-head test expectations advance; historical0048/0047
 targets stay intact. This is not deployment approval. The prior full suite completed
-on d33f5ec/0048; the newer pinned1aeded3/0049 full run is still pending.
+on d33f5ec/0048; the newer pinned1aeded3/0049 run completed2,593 passes and two skips,
+with386 warnings. Later changes retain their separate targeted validation.
 
 Local validation passed 16 distinct new HTTP/provenance cases across the targeted runs,
 96 existing native regression cases, 49 SQLite migration/readiness/packaging cases,
@@ -1002,8 +1031,9 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    typed additions, separate workbook review and original-bearing package confirmation.
    Its synthetic journey passes. Explicit native proposal retention/reopening is now
    implemented locally, including explicit decision/revision links and selected portable
-   history. Its targeted regressions passed. Complete actual-app restart, then browser and
-   operational acceptance. Full history coverage remains incomplete. Resolve
+   history. Targeted regressions, actual-app HTTP/server restart and exact synthetic
+   backup/restore passed. Complete rendered-browser and operational acceptance; full
+   history coverage remains incomplete. Resolve
    the operational gate separately; do not repeat the proven Word increment. Reuse the existing
    intake/scan/review/client-request/package services. Preserve the demonstrated
    Word/PDF interaction when extending the attachment-to-confirmed-Scope-to-ZIP

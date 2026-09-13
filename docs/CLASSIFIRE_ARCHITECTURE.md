@@ -385,8 +385,10 @@ and activation. C2 has synthetic native Word/PDF/XLSX journeys, with real-provid
 acceptance and broader coverage outstanding. C3 has a synthetically validated
 selected Scope replacement action. Explicit native proposal retention/reopening is
 implemented locally with explicit decision/revision links. Actual-app HTTP/server restart
-passed for the earlier decision candidate. Selected portable history is implemented locally
-with passing targeted regression checks. Its actual-app restart and visual/browser acceptance,
+passed for both the earlier decision candidate and local package-history commit23f5110.
+Selected history has targeted regression and exact synthetic database/storage recovery evidence.
+Source inspection retains transaction row locks for quarantine coordination; no-write behavior
+does not imply compatibility with a PostgreSQL read-only transaction. Rendered-browser,
 broader reviewed actions and operational acceptance remain. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked
 without forcing users through downstream capabilities.
