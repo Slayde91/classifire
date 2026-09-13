@@ -15,7 +15,33 @@ It has a shared authenticated client adapter and portable selected-project ZIPs.
 The accepted hybrid direction (ADRs 0001/0002) remains unchanged. The full production
 platform, broad document interpretation and canonical Phase 8-14 exits are incomplete.
 
-### Active imported-original navigation increment
+### Publication and CI checkpoint
+
+- The owner-approved commits `6d4793b`, `51e3666`, `1de68b9` and `9cdc4a4` merged
+  in [PR #265](https://github.com/Slayde91/classifire/pull/265) as
+  `0e9bf984b2fe074b1bb51c6017bd59516759bd00`. Its full tree equals tested `9cdc4a4`;
+  all 40 reviewed files were included. Explicit owner approval resolved the earlier
+  public-destination block for all four commits.
+- PR run [34725079252](https://github.com/Slayde91/classifire/actions/runs/34725079252)
+  passed 2,399 tests and every remaining check before merge. No required reviews
+  were configured; no human GitHub review is claimed.
+- Post-merge run [34726463470](https://github.com/Slayde91/classifire/actions/runs/34726463470)
+  ended cancelled at the 30-minute job limit. Its log also records a real test
+  failure: 1 failed, 2,295 passed. The import-governance test computed tomorrow at
+  collection but ran after midnight, when that date was correctly eligible.
+  This run did not pass and was not restarted.
+- Separate [PR #266](https://github.com/Slayde91/classifire/pull/266), source `7c9b570`,
+  freezes that test's clock and raises the CI ceiling to 45 minutes. Application
+  rules, assertions and all validation steps are unchanged; PR #255 is preserved.
+  Local reproduction failed before the fix; both rollover cases passed afterwards.
+  All 51 import/activation governance tests, targeted Ruff, diff and workflow
+  invariant checks passed. Existing hosted run `34728245700` is pending completion.
+- No workspace activation follows from publication. The old `9cdc4a4` activation
+  bundle is blocked by failed post-merge CI. A successful exact candidate needs a
+  reconciled plan, separate owner approval, fresh matched backup and disposable
+  restore verification. The approved diagnostic runtime remains separate.
+
+### Merged imported-original navigation increment
 
 - Separate checkout `.tmp/imported-evidence-navigation-20260913`, branch
   `feat/imported-evidence-navigation-20260913`, based on pinned `1de68b9`.
@@ -42,11 +68,10 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   source manifest saw only Ruff formatting drift, with route/templates stable.
 - Nine reviewed files: four application files, two synthetic tests, three documentation
   files. No schema, migration, package version, parser, provider or authority change.
-  The prior three publication candidates remain pinned and clean. This additional
-  change is outside their pending public-publication question; no upstream, PR, hosted
-  CI, merge or activation is claimed.
+  All four candidate checkouts remain pinned. Publication and CI are recorded above;
+  no operational activation is implied.
 
-### Locally committed Defect-only source inspection
+### Merged Defect-only source inspection
 
 - New isolated checkout `.tmp/defect-source-evidence-20260913`, branch
   `feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`.
@@ -67,12 +92,11 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   and no live 15432 database was contacted. This does not establish real-report accuracy.
 - Final source review found no actionable issue. The change contains six application
   files, two synthetic tests and three documentation files. No model, migration,
-  parser, provider or existing authority change. Commit `1de68b9` is now included
-  in the pending three-commit public-publication question. The `51e3666` activation
-  plan remains pinned and excludes this additional change. Publication, hosted CI
-  and activation are not claimed.
+  parser, provider or existing authority change. Commit `1de68b9` is included in
+  merged PR #265. The historical `51e3666` activation plan excludes this increment
+  and grants no authority for a newer candidate.
 
-### Locally committed register evidence increment
+### Merged register evidence increment
 
 - Checkout `.tmp/register-source-evidence-20260913`, branch
   `feat/register-source-evidence-20260913`, based on local Complete-report commit
@@ -89,13 +113,12 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   page errors or mobile document overflow. Restart preserved all 12 checked image URLs,
   Scope 1/4/6 bytes and all 67 domain tables; source-cell F2 passed.
 - Parent PR #264 post-merge run 34715038796 passed 2,251 tests and remaining checks.
-  Complete-report commit `6d4793b` is clean and local, with no upstream or PR.
-  GitHub confirms `Slayde91/classifire` is public. Automatic approval review rejected
-  its proprietary-source push pending explicit destination approval; that question
-  remains pending. No publication or visibility/protection change is implied.
-- Evidence-tab changes are locally validated; publication remains pending. The pinned Complete-report source,
-  conflicted root and operational 8820 runtime remain untouched. Any new activation
-  requires its own exact tested candidate plan and explicit approval.
+  Complete-report commit `6d4793b` and this increment are included in merged PR #265.
+  Explicit owner approval resolved the earlier public-destination block; repository
+  visibility and protection settings were not changed.
+- Evidence-tab changes are published. Pinned source checkouts, the conflicted root
+  and operational runtime remain preserved. Activation still requires its exact
+  tested candidate plan and explicit approval.
 
 ### Merged workspace and current runtime
 
@@ -193,7 +216,7 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   Live 8820 remains outside this change. The reviewed ten-defect reference remains
   Draft evidence, not measured independent extraction accuracy or system approval.
 
-### Current Complete report increment
+### Merged Complete report increment
 
 - Checkout `.tmp/complete-multi-review-reports-20260913`, branch
   `feat/complete-multi-review-reports-20260913`, based on merged `e96c692`.
@@ -220,7 +243,7 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   diagnosis proved identical values and exact Estimate bytes in the original ZIP.
   A second restart proved byte-exact raw downloads of Estimate revisions 2 and 4.
   Original failure/diagnosis are retained; no application guard or test was weakened.
-- Publication remains pending. The unapproved ccaff7a activation plan excludes this
+- Commit `6d4793b` is included in merged PR #265. The ccaff7a activation plan excludes this
   newer Complete format. Live 8820 remains at its separately approved diagnostic
   version; no activation, OAuth/tunnel or host-policy change is included.
 
@@ -254,7 +277,7 @@ protections without authorization.
 | --- | --- | --- |
 | Scope | `services/draft_scope.py`: separate defects, openings, services and observations; nullable measurements/quantities; multiple service-opening links; revisions/import/export. PDF page, Excel cell/picture and Word structural text/picture review share guarded revision writing | Draft service/opening graph is narrower than the full production physical model: substrate planes, service instances, treatments and richer relationships are not all separate Draft entities |
 | Evidence intake | `draft_pdf_intake.py`, `draft_scope_xlsx.py`, `draft_scope_docx.py`, shared `draft_source_intake.py`, bounded parser workers, malware/quarantine and retained-byte checks | Supported formats/layouts are bounded. DOCX structural positions are not pages; pictures expose original content, not Word layout/crop semantics. General OCR/drawings/inspection records and representative coverage remain incomplete |
-| Workspace | Shared Projects/Libraries navigation, hierarchy review register, guarded bulk edits, historical selections and saved system/price display | No new domain model or migration. Multi-review package work is locally implemented; automatic pricing/recalculation and comprehensive visual/accessibility/scale acceptance remain incomplete |
+| Workspace | Shared Projects/Libraries navigation, hierarchy review register, guarded bulk edits, historical selections and saved system/price display | No new domain model or migration. Multi-review packages are merged; automatic pricing/recalculation and comprehensive visual/accessibility/scale acceptance remain incomplete |
 | Workspace advice | `draft_workspace_chat.py`, optional transport and UI preview bounded selected saved Scope records with their ancestors and source-reference claims | Provider disabled in verified UAT; no live provider response proven. This is an advisory API panel, not an embedded authenticated external ChatGPT/MCP session. No automatic writes or implicit capability calls |
 | Optional AI | `draft_pdf_suggestions.py` and suggestion contracts produce reviewable claims, with uncertainty and human decisions | No general autonomous evidence interpretation or proven replacement of every OpenClaw protection; manual workflow remains available |
 | System matching | `draft_system_matches.py`: selected-target retrieval from an authorized retained technical release, immutable candidates, measured constraints/service sizes, human review and dependency staleness | Retrieval is not final suitability. Full configuration/substrate/insulation/installation constraints, bulk technical corpus and representative source coverage are incomplete |
@@ -327,8 +350,9 @@ Word review/package evidence additionally includes 105 integrated tests, 50 hist
 checks, 73 client/PDF checks and an Edge upload/review/package journey. These are bounded
 synthetic checks, not current hosted validation or customer acceptance.
 
-Health: functional Draft prototype, incomplete production assurance. Hosted suites take
-close to the configured 30-minute job budget. Main protection was absent at the recorded
+Health: functional Draft prototype, incomplete production assurance. Post-PR #265 CI
+exhausted its 30-minute budget; PR #266 raises the ceiling to 45 minutes without
+removing checks. Main protection was absent at the recorded
 inspection; CI must be explicitly observed. `worker.py` currently fails queued jobs with
 “No registered handler”; it is not a production document-processing queue.
 
@@ -340,16 +364,14 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-PRs #260-#264 and their post-merge checks passed. Complete-report source `6d4793b`,
-register Evidence `51e3666` and Defect-only Evidence `1de68b9` are locally committed
-and pinned. Their publication to the verified public repository awaits explicit
-approval. The separate imported-original navigation increment is locally validated
-and is outside that approval question. After approval, reconcile the exact approved
-commits, PR base/head and dependencies before pushing; observe successful CI and
-required reviews before merge. Never restart a job because observation expires.
-Any activation requires a fresh exact-candidate plan covering new report formats and
-mapping v4, backup/storage parity, disposable restore and explicit owner approval.
-Provider, host policy and OAuth/tunnel changes remain separate approval decisions.
+PRs #260-#264 and their post-merge checks passed. The four later approved commits
+are merged through PR #265; its post-merge run failed as recorded above. Observe
+PR #266's existing exact-head CI and current review requirements before merging,
+then verify the actual merge and post-merge CI. Never restart a job because an
+observation expires. Reconcile the exact successful candidate's activation plan,
+including new report formats/mapping v4, backup/storage parity and disposable
+restore, before requesting separate owner approval. Provider, host policy and
+OAuth/tunnel changes remain separate decisions.
 
 The user-confirmed private Draft reference retains its unknowns; no application
 accuracy result exists. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md) retains
