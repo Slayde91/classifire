@@ -88,7 +88,11 @@ existing manual path and are not silently retained.
 
 Before a linked review or save, the existing retention service rechecks the owner,
 active write permission, exact proposal, action/source, current context and base revision.
-It locks the Draft and proposal in a consistent order. The same transaction that invokes
+It first locks any retained source bytes, then the Draft and proposal, matching
+retention and the existing source-review writers. It rechecks the generation,
+current context and decision after those locks; rejection follows the same order.
+This avoids opposite source/Draft lock ordering during concurrent operations.
+The same transaction that invokes
 the existing Scope writer records one `DraftWorkspaceProposalDecision`; failure to record
 the decision rolls back the Scope save. No decision service dispatches a Scope writer,
 provider, scanner, Match, Estimate, report, package or canonical admission command.

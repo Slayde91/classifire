@@ -6,6 +6,30 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
+## Latest local native proposal concurrency correction
+
+`fix/native-proposal-lock-order-20260914` extends `af6e75a`. Publication review
+found opposite source/Draft lock ordering between proposal retention and linked
+review/rejection. The actual PostgreSQL15433 race reproduced `DeadlockDetected`;
+pytest stopped after that first failure. Linked review and rejection now acquire
+retained-source locks first and preserve all subsequent under-lock checks. The
+two synthetic review/rejection races passed in 109.42s. Full Ruff, Mypy240 and
+scoped Bandit passed. This is a locking correction, with no schema, provider or
+authority change. All 16 selected regressions passed in 686.35s: both races plus
+14 confirmation/authority/rollback cases. Six unchanged decision-integrity cases
+were deliberately deselected. The four generated Word/PDF/Excel/manual-edit Scope
+bodies match the exact hashes in their separate decisions. Tests used the selected
+checkout PYTHONPATH, fresh basetemp and owned PostgreSQL15433 only.
+
+Private reproduction, review and results are in
+`native-proposal-lock-order-validation-20260914` under .tmp. The manual route/
+confirmation/service review covers 14 files and found this corrected defect.
+Separate evidence/transport, package and decision-test reviews bring recorded
+manual review to 56 of the current 84-file range, including the prior 24-file
+migration/readiness review. Each private ledger entry records its scope and hashes.
+Full-range manual review and rendered-browser acceptance remain incomplete.
+Public approval remains limited to `d864c51`; newer work is still unpublished.
+
 ## Latest local saved-proposal list correction
 
 `fix/native-history-list-order-20260914` extends `23ab398`. Repeated list refreshes

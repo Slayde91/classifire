@@ -438,6 +438,9 @@ def prepare_review_link(
     except (ValueError, TypeError, AttributeError) as exc:
         raise DraftScopeError("CHAT_PROPOSAL_INVALID", 422) from exc
     _owner(db, actor, draft_id, write=True)
+    # Shared source review and retention lock source bytes before the Draft.
+    # Preserve that order, then recheck the proposal after taking its write locks.
+    read_generation(db, actor, draft_id, identity, settings=settings)
     db.scalar(select(DraftScope).where(DraftScope.id == draft_id).with_for_update())
     row = db.scalar(
         select(DraftWorkspaceProposal)
@@ -572,6 +575,8 @@ def reject(db: Session, actor: User, draft_id: str, identity: str, *, settings: 
     """Explicit human rejection closes a proposal without writing any Scope revision."""
     _owner(db, actor, draft_id, write=True)
     with _atomic(db):
+        # Match retention and Scope review: source bytes, then Draft decision locks.
+        read_generation(db, actor, draft_id, identity, settings=settings)
         db.scalar(select(DraftScope).where(DraftScope.id == draft_id).with_for_update())
         opened = reopen(db, actor, draft_id, identity, settings=settings)
         if opened["decision"] is not None:
