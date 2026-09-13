@@ -57,72 +57,64 @@ two package-download audit events. The expired one-time confirmation URL stayed
 expired; the normal saved-project route worked. No confirmation was repeated and no
 new Scope, package, Match, Estimate or report was created.
 
-Workspace chat/PDF suggestions remain disabled. No provider, OAuth/tunnel, host
-allowlist, role or grant change occurred. No saved Match, Estimate, report or imported
+At the earlier 6c1e2a4 activation, workspace chat/PDF suggestions stayed disabled
+and no provider, OAuth/tunnel, host allowlist, role or grant change occurred. No saved Match, Estimate, report or imported
 project existed in this demo, so those operational histories were not exercised.
 This is retained synthetic-state acceptance, not customer accuracy, production
 certification, storage relocation or full-cluster disaster recovery. Historical
 activation plans stay preserved; recovery retains the approved compatibility and
 no-lost-work conditions for the older `e2e8292` rollback source.
 
-## Current authorised increment
+## Current embedded-chat and documentation checkpoint
 
-Current work is isolated in `.tmp/embedded-workspace-chat-20260913`, branch
-`feat/embedded-workspace-chat-20260913`, based on merged `6012d15`. The requested
-interaction is a native collapsible, resizable, docked chat panel accessible from
-the main workspace without an external-page dependency. It reuses the existing
-chat API/transport and domain context services; the external connector is not rebuilt.
+PR #268 is merged: tested 7dbc1cc13b2501b6a449990abc36e330932b42c0 became
+a7e2e7aadd8860636432cb68127a0e83e3a9785c with identical full trees. PR validation
+34736343454 passed 2,428 tests and the remaining checks. The earlier PR test-contract
+failure remains recorded; no production guard was weakened. Local acceptance
+comprised 147 affected cases and a synthetic browser journey using injected replies.
 
-Acceptance must cover exact current project, screen, Scope/Estimate revisions,
-selected Defect/Opening/Service or multiple records, selected technical systems,
-library and pricing context. Register selection must supply context without copying.
-Advice must support analysis, substrate, systems, prices, wording, missing information,
-inconsistencies and summaries while preserving unknowns and current permissions.
-An explicit context preview/hash and consent precede any provider transfer.
-Conversation continuity is opt-in and limited to the same freshly verified context,
-user and a 30-minute expiry; broader history sharing is not approved by convenience.
+The owner subsequently supplied protected server-side gpt-5-mini configuration and
+approved one synthetic connection test plus conditional activation of tested 7dbc1cc.
+Exactly one real request passed strict response/reference checks and preserved unknown
+quantity/substrate without claiming a write. The complete reply was inspected.
+Preparation also reran 55 chat tests and passed 47 activation plus 47 rollback guards.
+No live database was used for those tests; this is not customer accuracy or real
+browser upload/assistant acceptance.
 
-The native panel and typed context extension are implemented. Local backend validation
-passed 55 cases, including all seven library kinds, exact three-review/Estimate history,
-permission changes, stale context, request bounds and the retained Scope-only API.
-Affected navigation/register/Word/package/0047 checks passed 52 cases initially; five
-PostgreSQL-dependent cases then passed on disposable 15433, alongside the repeated
-0047 migration case (six passes, no skips). Live 15432 was not used. Full Ruff,
-Mypy (233 source files), Bandit and the unchanged single 0047 migration head passed.
+Post-merge run34737578361 attempt1 remained queued without a runner for over three
+hours. After the owner explicitly requested a retry, it was cancelled and attempt2
+started on the exact same merge commit. Attempt2 passed
+2,428 tests (385 warnings) in 1,971.54 seconds plus full Ruff, Mypy (233 source
+files), Bandit and the single migration-head check; exact hosted output was read.
+This authorized retry is distinct from restarting because observation timed out.
 
-Actual Edge acceptance used a new private SQLite database, loopback 8851 and two
-scripted replies. It verified global panel presence, selected shared services and blank
-openings, exact saved reviews/Estimate, opt-in sensitive details, full qualified reply
-history, fresh preview before restoration, inline-result refresh invalidation, logout,
-permissions, literal hostile HTML text and desktop/mobile layout. All 66 checked domain
-tables and retained synthetic source files matched; only login timestamps changed.
-No provider request or project write occurred. The private fixture needed seeding-order
-and missing-router corrections; application guards were preserved. The passing run
-emitted a Windows connection-reset callback during teardown and its 15-second thread
-join expired; the process subsequently exited and 8851 had no listener. This is a
-recorded harness limitation, not a clean server-shutdown claim.
+Live8820 remains the approved 6c1e2a4 build with workspace chat disabled. The approved
+7dbc1cc post-merge CI gate is now satisfied; activation still requires fresh matched backup,
+disposable15433 restore verification, guarded restart and real synthetic browser
+acceptance. Earlier project, Scope and package confirmations remain separate and
+complete. The documentation branch does not change the activation candidate.
 
-Initial PR #268 CI run 34735571580 stopped with 639 passes and one failure: an old
-PDF review-page test expected Logout to be the only form. The shared advisory form
-is now explicitly accounted for, with exact field/required-consent assertions; all
-existing no-resave, session, provenance and database checks are retained. This is a
-test-contract update for the authorised UI change, not a weakened application guard.
-The related imported-evidence parser now recognises the single actionless advisory
-form while preserving POST-only requirements for saved actions and the no-scan/no-write
-checks. Its first focused run exposed the matching method-attribute assumption; after
-correction, all eight imported-evidence cases passed. The 27 PDF HTTP/template cases
-also passed, bringing distinct affected local passes to 147. PostgreSQL cases used
-only disposable 15433. The failed run is preserved and was not restarted because of
-an observation timeout. Application source remains identical to the browser-tested
-candidate; this follow-up changes only two test files and this documentation.
+Private exact approval/test/activation receipts are retained under
+.tmp/workspace-chat-activation-7dbc1cc-20260913; no credential values or customer
+evidence are included in these documents. Reobserve actual CI/runtime facts before
+execution rather than treating this checkpoint as a fresh activation proof.
 
-[Embedded assistant boundaries](./EMBEDDED_WORKSPACE_CHAT.md) describe the supported
-context and conversation limits. Publication/CI and operational activation are separate
-checks. This slice enables no provider, model, tools, domain writes or migration.
-No provider credentials/model were verified configured; a concrete configuration and
-activation decision is still required. It does not embed an external ChatGPT session
-or reuse that service's private conversation history. Synthetic replies prove the
-interaction and safeguards, not real model quality or the complete production phase.
+### Clarified product intention and current gap
+
+The owner requests defect-report upload through the ChatGPT integration inside
+CLASSIFIRE and interaction with the data on the current page. The native panel is
+merged and can discuss selected saved data; its endpoints currently accept only
+context/message, with no attachment input or write action. Existing PDF/Word/XLSX
+intake, scan, review, typed client requests and package services are foundations.
+
+The [architecture](./CLASSIFIRE_ARCHITECTURE.md#native-chat-as-a-working-interface),
+[C1-C3 roadmap](./CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
+[assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience) now
+describe the same target: attach and inspect a retained report, explicitly request
+analysis, review a source-bound typed Draft proposal, confirm separately, refresh
+the page and reopen/download exact saved artifacts. Later selected-record actions
+reuse that review path. Uploaded content never becomes instructions or authority;
+original/image provider transfer is still a planned bounded extension.
 
 Accuracy preparation is separate. The existing comparator fix is already merged in
 PR #261. Twenty-four unchanged synthetic comparison/blocked-run checks passed in
@@ -253,17 +245,17 @@ these completed fixtures.
 
 ## Runtime and approval boundaries
 
-Live 8820 was accepted on source `6c1e2a4` under its separately approved plan, as
-recorded above. Earlier Word/Scope/package confirmations remain complete. The
-connected upload host-policy refusal is a separate unresolved transport limit;
-no OAuth/tunnel, grant, allowlist or provider change accompanies this increment.
+Live8820 remains accepted source6c1e2a4. The owner separately approved the exact
+7dbc1cc activation plan and one synthetic gpt-5-mini connection request; that request
+passed and must not be repeated under its consumed one-call approval. Complete the
+remaining recovery/live browser gates before completing activation. The owner also explicitly
+authorized retrying the stalled post-merge run; attempt2 has now passed. Retain
+attempt1 as cancelled and preserve the separate initial PR failure.
 
-The historical `9cdc4a4` and `7c9b570` bundles remain blocked by their failed/cancelled
-post-merge runs. Do not reuse them as successful activation evidence or repeat the
-completed fresh backup/restore and activation merely because an old handoff says pending.
-Older readers cannot transparently read new Complete-v3 snapshots; retain all later
-records and originals before any recovery decision. Existing absolute StoredFile
-bindings must not be rewritten to bypass containment.
+This documentation-only branch is not a new activation candidate. Do not overwrite
+the pinned application checkout, repin its plan, rerun completed confirmations or
+reuse expired prestart/backup proofs. No OAuth/tunnel/allowlist or customer-report
+execution is authorized by document reconciliation.
 
 Other preserved synthetic demos: 8840 integrated workspace,8841 row authoring,
 8842 packages,8843 Scope reports. Only 8844 was restarted for this Complete acceptance.
@@ -271,23 +263,36 @@ PostgreSQL tests use disposable 15433/classifire_containment_test, never live 15
 
 ## Classification and next action
 
-PR #265 published 40 reviewed files; PR #266 contained the separate test/workflow
-repair; PR #267 contained two documentation files. The current working branch adds
-embedded-chat application/UI/tests through their assigned owners. This reconciliation
-owns only PROJECT_STATE, SESSION_HANDOFF and PHYSICAL_REFERENCE_READINESS plus private
-preparation records. Private customer originals, labels, file hashes and operator
-receipts stay outside Git. Preserve the conflicted root and unrelated changes.
+Documentation work is isolated in .tmp/chat-upload-design-docs-20260913, branch
+docs/chat-upload-design-20260913, based on shared main a7e2e7a. Its explicit scope is
+GOAL.md, CLASSIFIRE_ARCHITECTURE.md, CLASSIFIRE_ROADMAP.md, EMBEDDED_WORKSPACE_CHAT.md,
+PROJECT_STATE.md and this handoff. Inspect current GitHub PR/CI state for publication;
+do not infer this documentation change is merged merely because this text exists.
+Private validation/operator artifacts remain outside Git. The conflicted root and
+the clean tested activation checkout remain preserved.
 
-1. Finish the embedded-chat slice against its full acceptance list above. Record actual
-   backend/UI/browser evidence before claiming completion; keep provider activation separate.
-2. Reuse the merged comparator fix. The private accuracy-preparation folder under the
-   existing operational private directory retains the controlled run plan, source/rights
-   manifest and 24-case synthetic receipt. Do not execute customer analysis from that plan:
-   unresolved topology/abstention contracts, rights and Phase 8/8C gates remain.
-3. Preserve activated `6c1e2a4`, exact originals/history and its recovery evidence. Normal
-   publication of this new slice does not authorize a replacement operational runtime.
+Next valid work is the C1 operational gate and C2 native chat report journey described
+in [PROJECT_STATE.md](./PROJECT_STATE.md#recommended-next-actions). The latest request
+authorizes this documentation reconciliation; it does not itself execute the planned
+attachment/action implementation or authorize customer evidence use. Full production
+accuracy, physical entities/applicability, calibrated pricing, full portable history,
+scale/accessibility and protected phase exits remain incomplete.
 
-Full production work remains: general multimodal accuracy, full physical entities
-and applicability, calibrated automatic pricing, full project/audit history,
-representative scale/accessibility, operational assurance and protected phase exits.
-Do not turn synthetic Draft confirmations into canonical admission, locks or release.
+## Copy-ready next-session prompt
+
+Continue CLASSIFIRE from verified repository and receipt state. Read AGENTS.md,
+GOAL.md, PROJECT_STATE, architecture, roadmap and EMBEDDED_WORKSPACE_CHAT. Preserve
+the conflicted C:/CLASSIFIRE root and pinned clean activation checkout. Reconcile
+the docs/chat-upload-design-20260913 branch/PR and poll its existing checks before
+merge; do not restart jobs just because observation timed out. Separately reverify successful
+post-merge run34737578361 attempt2 for a7e2e7a. The owner approved the exact 7dbc1cc
+activation plan; its one real gpt-5-mini synthetic connection test passed and may
+not be repeated. Activate only after exact CI and fresh approved backup/disposable
+15433 restore/restart/rollback proofs. Keep Scope/package confirmations separate.
+The next product design is native chat defect-report attachment/status/inspection,
+typed source-bound Scope proposals and explicit human confirmation, followed by
+reviewed actions on selected page records. Current chat supports selected saved
+text context and advice only; attachments/actions and evidence image transfer remain
+unimplemented. Reuse existing plugin/intake/review/package services and preserve
+unknowns, blank openings and unresolved links. Keep the current task's implementation,
+provider, customer-data and deployment authorizations distinct; record actual results.
