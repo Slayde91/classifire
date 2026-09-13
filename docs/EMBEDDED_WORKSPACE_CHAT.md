@@ -4,7 +4,7 @@ This increment extends the existing optional `draft_workspace_chat` service and
 OpenAI Responses transport. The external ChatGPT/MCP connector is preserved.
 It does not embed a signed-in ChatGPT account or copy its conversation history.
 
-## User interaction
+## Implemented advisory interaction
 
 One collapsible panel is included in the authenticated application layout. On wide
 screens it can dock beside the workspace, and a labelled width control keeps it
@@ -57,16 +57,17 @@ There is no remote tool invocation or automatic transition to another capability
 
 Implementation and exact validation results are recorded in PROJECT_STATE.md and
 private synthetic UAT receipts. Do not infer operational activation from publication.
-The running 8820 build remains the separately approved 6c1e2a4 until another exact
-activation decision and recovery verification.
+The running 8820 build remains the separately approved 6c1e2a4 while the approved
+7dbc1cc plan awaits fresh recovery verification and guarded activation.
 
 The native panel uses the application's configured OpenAI API connection. The
 existing external connector makes CLASSIFIRE tools available inside ChatGPT; it is
 not a browser widget or a credential for this application's model requests.
-No application model/key is currently verified configured, and no real provider
-response is claimed. Synthetic injected responses exercise interaction and safeguards,
-not model accuracy. Model/credential configuration, external data transfer and
-activation remain separately controlled.
+A protected application configuration and one real synthetic gpt-5-mini transport
+reply have now been verified under separate owner approval. The existing synthetic
+browser proof used injected replies; real live-panel acceptance still depends on
+successful post-merge CI and the approved activation/recovery plan. Neither proof
+establishes customer accuracy. See PROJECT_STATE.md for the exact checkpoint.
 
 Original documents, source pictures and complete technical files are not included
 in this context increment. Saved evidence references remain claims with explicit
@@ -77,3 +78,93 @@ and [MCP and connectors](https://developers.openai.com/api/docs/guides/tools-con
 ChatKit describes an embeddable application chat integration. No new ChatKit framework,
 workflow or connector was introduced because this application already has the bounded
 transport and native UI foundations needed for this increment.
+
+## Approved target experience
+
+The owner's 2026-09-13 design intention is to upload defect reports through the
+ChatGPT integration in the CLASSIFIRE UI and interact with data on the current page.
+The native panel is the working surface; the existing external ChatGPT/MCP connector
+remains available over the same backend. The native panel uses an application API
+connection, not an embedded signed-in ChatGPT website or shared ChatGPT account history.
+No connector rebuild or new ChatKit dependency is required by this intention.
+
+| User need | Current evidence | Required extension |
+| --- | --- | --- |
+| Ask about selected page data | Native typed selectors, preview/consent and advisory replies implemented | Complete separately approved real browser activation/acceptance |
+| Attach a defect report in chat | Existing PDF/Word/XLSX UI/client intake services; no file input in the chat panel | Native attachment control and retained-source/status cards using existing intake |
+| Read report evidence while discussing it | Existing format readers; current chat sends saved text context only | Explicit source text/image selection, bounded evidence preview and provider consent |
+| Propose and confirm a page change | Existing typed client requests and browser confirmation; native chat has no write action | Supported action routing, review/diff card and distinct human confirmation |
+| Download a reviewed result | Existing exact saved packages and original-bearing ZIPs | In-context access to the same package review, separate confirmation and exact download |
+
+### Report attachment to saved Draft
+
+1. Attach a supported report in the panel and choose the destination project/Draft.
+   If a new project is needed, present and confirm that creation separately. Display
+   file identity, source purpose, supported limits and accepted/refused status.
+2. Upload to CLASSIFIRE retained storage through existing authenticated intake.
+   Display the retained source and scan state. Upload does not send a file to OpenAI,
+   create Scope entities, assign a system or approve a technical/commercial fact.
+   Repeated clicks or retries must not silently duplicate sources or confirmed writes.
+3. Explicitly request scan/processing; show bounded progress, failure/unsupported
+   reasons and the retained source on reopening. Only clean, currently permitted
+   exact bytes may be read. Reuse existing parsers; do not invent OCR/layout coverage.
+4. Inspect retained text, tables and pictures beside the conversation. Preserve
+   document/page/paragraph/table/cell/picture locators and exact original hashes.
+   Document contents are untrusted evidence, never executable user instructions.
+5. Request analysis; preview exactly which clean text/image evidence and page records
+   will leave the application, then obtain provider consent. The existing chat
+   transport currently accepts text only: image/original transfer is planned and
+   requires its own bounded contract and validation, not an implicit full-file send.
+6. Present a typed Draft proposal with source references, unknowns and conflicts,
+   and a before/after review for existing records. Blank openings may have zero
+   Services. Unresolved links remain held for review rather than guessed into the
+   linked working register; do not erase them merely to satisfy a schema.
+7. A separate, explicit same-user confirmation appends the reviewed revision through
+   existing services. Recheck source hashes, target revision, rights and expiry.
+   Changing selection, editing the page or losing permission invalidates the review.
+   Refresh visible saved rows only after the confirmed write succeeds; show failures.
+8. Reopen the exact saved revision and its retained evidence. Package configuration,
+   package confirmation and original-bearing ZIP download are separate explicit
+   actions. Scope confirmation never creates a package or runs Match/Estimate/Report.
+
+Start with one supported synthetic DOCX journey, reusing Word intake/review and
+ProjectPackage services; apply the same interaction to supported PDF/XLSX afterwards.
+This ordering does not make Word parsing a substitute for general report accuracy.
+
+### Working with data on the page
+
+- Carry current screen/project, selected Defect, Opening, Service or multiple rows,
+  selected technical systems/library/pricing records and exact Scope/Estimate
+  revisions through typed selectors. Use permission-checked server readers.
+- Let users analyse defects/services, review substrate uncertainty, explain systems
+  and pricing, draft wording, find inconsistencies and summarise selected data.
+  Prices do not establish technical suitability; unknown quantities remain unknown.
+- Clearly identify the included selection. Unsaved edits, off-screen unrelated rows,
+  hidden form values, credentials and entire library bodies are not silently captured.
+  Change of context requires a fresh preview and invalidates stale proposed actions.
+- Future explicit edit requests produce supported typed proposals and review cards.
+  Advice alone remains read-only. Unsupported or ambiguous intent stays a question
+  or a stated limitation; it cannot fall through to arbitrary tools or a hidden write.
+- Requests to another capability remain independent and explicitly invoked, with its
+  own prerequisites and review. Preserve current protected-state and release gates.
+- Keep the panel available across the working screens without displacing dense data.
+  Retain collapsible/docked/resizable layout and qualified bounded conversation.
+  Reopening project/source/request/revision state uses durable application records,
+  not transcript text. Do not promise indefinite conversation memory.
+
+### Acceptance for the next implementation
+
+Prove an actual browser journey: attach -> explicit scan -> source inspection ->
+preview/consented analysis -> typed proposal -> distinct human confirmation ->
+updated page -> reopen -> distinct package confirmation -> exact original-bearing ZIP.
+Inspect source and ZIP bytes as well as visible controls; count actual provider calls
+and record model/latency/cost limitations without claiming customer accuracy.
+
+Also prove malformed/oversized/quarantined files, unsupported layouts, foreign
+sources, expired sessions/requests, stale revisions, duplicate submits, changed
+selection, unavailable scanner/provider and prompt injection fail safely. Advice,
+preview and denied actions must leave domain rows unchanged. Preserve blank openings
+and unresolved links. No downstream capability runs implicitly. Use synthetic data,
+selected-checkout PYTHONPATH and fresh test directories; database tests use disposable
+15433, never live15432. Real-provider/customer evidence and operational activation
+retain their separately approved scope.

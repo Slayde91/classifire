@@ -1,7 +1,7 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-13 against the integrated workspace candidate, isolated browser
-and regression receipts, and the completed separately approved workspace activation.
+Reconciled 2026-09-13 against merged PR #268, current CI/activation receipts and the
+owner's clarified in-app chat report-upload and page-interaction intention.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
@@ -53,72 +53,64 @@ two package-download audit events. The expired one-time confirmation URL stayed
 expired; the normal saved-project route worked. No confirmation was repeated and no
 new Scope, package, Match, Estimate or report was created.
 
-Workspace chat/PDF suggestions remain disabled. No provider, OAuth/tunnel, host
-allowlist, role or grant change occurred. No saved Match, Estimate, report or imported
+At the earlier 6c1e2a4 activation, workspace chat/PDF suggestions stayed disabled
+and no provider, OAuth/tunnel, host allowlist, role or grant change occurred. No saved Match, Estimate, report or imported
 project existed in this demo, so those operational histories were not exercised.
 This is retained synthetic-state acceptance, not customer accuracy, production
 certification, storage relocation or full-cluster disaster recovery. Historical
 activation plans stay preserved; recovery retains the approved compatibility and
 no-lost-work conditions for the older `e2e8292` rollback source.
 
-### Current embedded-chat and accuracy-preparation increment
+### Current embedded-chat publication and operational checkpoint
 
-Current work is isolated in `.tmp/embedded-workspace-chat-20260913`, branch
-`feat/embedded-workspace-chat-20260913`, based on merged `6012d15`. The requested
-interaction is a native collapsible, resizable, docked chat panel accessible from
-the main workspace without an external-page dependency. It reuses the existing
-chat API/transport and domain context services; the external connector is not rebuilt.
+PR #268 is merged: tested 7dbc1cc13b2501b6a449990abc36e330932b42c0 became
+a7e2e7aadd8860636432cb68127a0e83e3a9785c with identical full trees. PR validation
+34736343454 passed 2,428 tests and the remaining checks. The earlier PR test-contract
+failure remains recorded; no production guard was weakened. Local acceptance
+comprised 147 affected cases and a synthetic browser journey using injected replies.
 
-Acceptance must cover exact current project, screen, Scope/Estimate revisions,
-selected Defect/Opening/Service or multiple records, selected technical systems,
-library and pricing context. Register selection must supply context without copying.
-Advice must support analysis, substrate, systems, prices, wording, missing information,
-inconsistencies and summaries while preserving unknowns and current permissions.
-An explicit context preview/hash and consent precede any provider transfer.
-Conversation continuity is opt-in and limited to the same freshly verified context,
-user and a 30-minute expiry; broader history sharing is not approved by convenience.
+The owner subsequently supplied protected server-side gpt-5-mini configuration and
+approved one synthetic connection test plus conditional activation of tested 7dbc1cc.
+Exactly one real request passed strict response/reference checks and preserved unknown
+quantity/substrate without claiming a write. The complete reply was inspected.
+Preparation also reran 55 chat tests and passed 47 activation plus 47 rollback guards.
+No live database was used for those tests; this is not customer accuracy or real
+browser upload/assistant acceptance.
 
-The native panel and typed context extension are implemented. Local backend validation
-passed 55 cases, including all seven library kinds, exact three-review/Estimate history,
-permission changes, stale context, request bounds and the retained Scope-only API.
-Affected navigation/register/Word/package/0047 checks passed 52 cases initially; five
-PostgreSQL-dependent cases then passed on disposable 15433, alongside the repeated
-0047 migration case (six passes, no skips). Live 15432 was not used. Full Ruff,
-Mypy (233 source files), Bandit and the unchanged single 0047 migration head passed.
+Post-merge run34737578361 attempt1 remained queued without a runner for over three
+hours. After the owner explicitly requested a retry, it was cancelled and attempt2
+started on the exact same merge commit. Attempt2 passed
+2,428 tests (385 warnings) in 1,971.54 seconds plus full Ruff, Mypy (233 source
+files), Bandit and the single migration-head check; exact hosted output was read.
+This authorized retry is distinct from restarting because observation timed out.
 
-Actual Edge acceptance used a new private SQLite database, loopback 8851 and two
-scripted replies. It verified global panel presence, selected shared services and blank
-openings, exact saved reviews/Estimate, opt-in sensitive details, full qualified reply
-history, fresh preview before restoration, inline-result refresh invalidation, logout,
-permissions, literal hostile HTML text and desktop/mobile layout. All 66 checked domain
-tables and retained synthetic source files matched; only login timestamps changed.
-No provider request or project write occurred. The private fixture needed seeding-order
-and missing-router corrections; application guards were preserved. The passing run
-emitted a Windows connection-reset callback during teardown and its 15-second thread
-join expired; the process subsequently exited and 8851 had no listener. This is a
-recorded harness limitation, not a clean server-shutdown claim.
+Live8820 remains the approved 6c1e2a4 build with workspace chat disabled. The approved
+7dbc1cc post-merge CI gate is now satisfied; activation still requires fresh matched backup,
+disposable15433 restore verification, guarded restart and real synthetic browser
+acceptance. Earlier project, Scope and package confirmations remain separate and
+complete. The documentation branch does not change the activation candidate.
 
-Initial PR #268 CI run 34735571580 stopped with 639 passes and one failure: an old
-PDF review-page test expected Logout to be the only form. The shared advisory form
-is now explicitly accounted for, with exact field/required-consent assertions; all
-existing no-resave, session, provenance and database checks are retained. This is a
-test-contract update for the authorised UI change, not a weakened application guard.
-The related imported-evidence parser now recognises the single actionless advisory
-form while preserving POST-only requirements for saved actions and the no-scan/no-write
-checks. Its first focused run exposed the matching method-attribute assumption; after
-correction, all eight imported-evidence cases passed. The 27 PDF HTTP/template cases
-also passed, bringing distinct affected local passes to 147. PostgreSQL cases used
-only disposable 15433. The failed run is preserved and was not restarted because of
-an observation timeout. Application source remains identical to the browser-tested
-candidate; this follow-up changes only two test files and this documentation.
+Private exact approval/test/activation receipts are retained under
+.tmp/workspace-chat-activation-7dbc1cc-20260913; no credential values or customer
+evidence are included in these documents. Reobserve actual CI/runtime facts before
+execution rather than treating this checkpoint as a fresh activation proof.
 
-[Embedded assistant boundaries](./EMBEDDED_WORKSPACE_CHAT.md) describe the supported
-context and conversation limits. Publication/CI and operational activation are separate
-checks. This slice enables no provider, model, tools, domain writes or migration.
-No provider credentials/model were verified configured; a concrete configuration and
-activation decision is still required. It does not embed an external ChatGPT session
-or reuse that service's private conversation history. Synthetic replies prove the
-interaction and safeguards, not real model quality or the complete production phase.
+### Clarified product intention and current gap
+
+The owner requests defect-report upload through the ChatGPT integration inside
+CLASSIFIRE and interaction with the data on the current page. The native panel is
+merged and can discuss selected saved data; its endpoints currently accept only
+context/message, with no attachment input or write action. Existing PDF/Word/XLSX
+intake, scan, review, typed client requests and package services are foundations.
+
+The [architecture](./CLASSIFIRE_ARCHITECTURE.md#native-chat-as-a-working-interface),
+[C1-C3 roadmap](./CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
+[assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience) now
+describe the same target: attach and inspect a retained report, explicitly request
+analysis, review a source-bound typed Draft proposal, confirm separately, refresh
+the page and reopen/download exact saved artifacts. Later selected-record actions
+reuse that review path. Uploaded content never becomes instructions or authority;
+original/image provider transfer is still a planned bounded extension.
 
 Accuracy preparation is separate. The existing comparator fix is already merged in
 PR #261. Twenty-four unchanged synthetic comparison/blocked-run checks passed in
@@ -451,84 +443,38 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-Complete and validate the native embedded-chat interaction described above, including
-context/permission changes, stale previews, consent, continuity expiry, keyboard and
-mobile layout. Use fake-provider synthetic acceptance first; no real provider is
-configured or implicitly approved. Preserve the activated runtime while this isolated
-increment is built and tested; any later deployment needs its exact approved plan.
+1. **C1 - Complete the already approved advisory-panel activation.** Verify the
+   successful post-merge run34737578361 attempt2 and use the approved 7dbc1cc plan.
+   Perform fresh backup/disposable15433
+   restore/restart/rollback checks, then inspect real synthetic browser replies.
+   The single successful transport request is already consumed and reviewed; do
+   not repeat it. No repeat activation approval is needed within that exact plan.
+2. **C2 - Build native chat report intake and Scope review.** Reuse the existing
+   intake/scan/Word review/client-request/package services, beginning with one
+   supported synthetic DOCX. Finish the visible attachment-to-confirmed-Scope-to-ZIP
+   journey from the [assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).
+   Validate the actual browser, exact originals and distinct confirmations.
+   Implementation with synthetic fixtures does not require live activation or
+   customer evidence; current text-only transport needs an explicit bounded
+   extension before any picture/original transfer to a provider.
+3. **C3 - Add reviewed selected-record actions.** Keep selected-page advice available;
+   a requested edit yields a typed proposal/diff, then an explicit same-user
+   confirmation. Recheck exact revisions, current permissions and stale context.
+   Other capabilities remain independently requested and gated.
+4. **Retained I2/N1 integration acceptance.** Dedicated external connector upload/
+   scan and Excel transport evidence remain unproven; reuse the existing tools and
+   clearly selected synthetic destinations without repeating completed Word
+   confirmations or OAuth setup.
+5. **Retained I3/N2 decisions.** Merge-protection changes require owner approval.
+   Representative technical recipe/quantity/commercial meaning must be reviewed
+   before wider derived-rate methods; no invented yield, productivity or recovery.
+6. **L1/L2 broader work.** Preserve wider report/corpus coverage, full physical
+   entities/history, T11-T14 validation, Phase8/8C accuracy and Phase8-16 production
+   gates, tenant isolation, operational recovery and protected OpenClaw retirement.
 
-Accuracy-test preparation is complete to the bounded extent recorded in
-[reference readiness](./PHYSICAL_REFERENCE_READINESS.md): source/rights inventory,
-contract gaps, run/stop gates and 24 existing synthetic checks. The private Draft
-reference retains all unknowns. No actual application accuracy result exists; do not
-convert uncertain topology, run customer inference or choose thresholds implicitly.
-
-The retained I1-I3/N1-N2/L1-L2 backlog below remains valid. I1 and the earlier I2 application
-journey are proven. I2's connected upload/scan transport remains host-policy blocked;
-do not repeat completed activation/confirmations or broaden grants to bypass it.
-
-### Immediate next actions
-
-1. **I1 - Complete.** PR #255 corrected the test clock; PR #257 fixed evidenced
-   PostgreSQL migration-history compatibility. PR #256 documentation is merged.
-   Candidate run 34681923704 and post-merge run 34683024367 passed. Preserve these
-   results and inspect new runs when new changes are published; do not restart jobs
-   because observation is slow or count the earlier cancellation as success.
-2. **I2 - Application acceptance passed; dedicated transport coverage remains.**
-   Authorized activation, actual browser upload/scan, connected Word reads and typed
-   proposal, separate human Scope/package confirmations, exact ZIP and restart all
-   passed. Reuse existing Word client/intake/review/package services and migration 0047.
-   The tools are now discoverable; do not rebuild them or repeat OAuth setup.
-   Next success criteria: an explicitly selected synthetic DOCX reaches the retained
-   source through the actual connected upload tool, explicit connected scan exposes
-   the correct text/image hashes, and no Scope/package or downstream state changes
-   implicitly. Reconcile the supported local-file/runtime attachment transport before
-   calling it; preserve confidential URLs and credentials. Use an explicitly selected
-   test destination, and separate human confirmations if further Draft edits are needed.
-   Validation: real tool results, retained original/scan/document hashes and read-only
-   state comparisons. Unit tests and browser uploads cannot prove this transport.
-   Uncertainty: runtime attachment delivery and supported document layouts; this small
-   placeholder-image fixture is not representative customer evidence.
-3. **I3 — Establish enforced merge checks as an owner decision.** Present the exact
-   main protection/ruleset proposal for approval; do not change access/protection as part
-   of documentation. Expected outcome: pending or failing CI cannot merge. Evidence:
-   PR #254 incident and protection API response. Acceptance/validation: approved policy
-   and a disposable negative-case PR demonstrate enforcement. Until then use the explicit
-   manual/guarded check sequence. Uncertainty: repository permissions and selected policy.
-
-### Near-term actions
-
-4. **N1 — Finish the pending real Excel acceptance using the existing integration.**
-   Reuse `draft_client_workbook_tools.py`, XLSX review/package services and
-   `tests/test_draft_client_workbooks.py` / `test_draft_package_xlsx_evidence.py`.
-   Depends on refreshed tools, synthetic attachment and human confirmations, not new OAuth.
-   Done: retained workbook -> reviewed Scope -> exact original-bearing ZIP is demonstrated
-   with actual calls and hashes. No current proof is claimed; metadata availability remains
-   an integration uncertainty. Avoid rebuilding already implemented tools or packages.
-5. **N2 — Validate representative quantity/recipe meaning before extending pricing.**
-   Use the existing T6/T9/T10 path, quantity-basis UI, bottom-up service and tests
-   `test_draft_pricing_quantities.py` / `test_draft_pricing_bottom_up.py`.
-   Depends on authorized representative sources and reviewed units/commercial basis.
-   Done: documented supported/withheld cases establish semantic correctness, no double
-   recovery and exact repeatable amounts; approved gaps define the next small UI change.
-   Validate source/Scope/recipe staleness, unit parity and browser/exact JSON output.
-   Uncertainty: pack/yield/productivity/shared-work rules cannot be invented from test data.
-
-### Later or dependency-bound actions
-
-6. **L1 — Broaden evidence/corpus and portable history through bounded UI slices.**
-   Retain T2-T8, full physical entities and complete project history in the roadmap.
-   Extend existing intake/models/package contracts only after representative acceptance
-   defines unsupported formats/history requirements. Validate parser containment, old
-   artifact compatibility, migration/restore, pagination and measured capacity. Current
-   evidence: bounded DOCX/XLSX parsers, selected-only package contract and handlerless worker.
-   Uncertainty: supported workload, retention and storage cost are unmeasured.
-7. **L2 — Production/hybrid assurance and advanced pricing.** Preserve T11-T14 and
-   Phase 8-16 gates, independent evaluation, provider egress/privacy, tenant isolation,
-   backup/restore, operational observability, protected writes and human release.
-   Dependencies: approved semantic evidence and replacement-protection parity. Done means
-   each retained roadmap exit has current test/runtime/receipt evidence; a prototype or
-   model response is insufficient. No OpenClaw retirement, calibrated confidence, fleet
-   replacement or production readiness is claimed. Costs/performance need measurements.
-
-Publication and verification details: [SESSION_HANDOFF.md](./SESSION_HANDOFF.md).
+This reconciliation changes six documentation files only. No code, schema, library,
+provider, OAuth/tunnel or live runtime changes accompany publication. Validate
+Markdown links, intended diff and exact source-based claims; hosted checks and
+required reviews still govern merge. Keep the conflicted root, tested activation
+checkout and private originals/receipts untouched. Current branch/publication
+details and the next-session prompt belong in [SESSION_HANDOFF.md](./SESSION_HANDOFF.md).

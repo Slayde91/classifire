@@ -1,6 +1,7 @@
 # CLASSIFIRE Architecture
 
-Reconciled 2026-09-12 from current local source and approved ADRs. This document
+Reconciled 2026-09-13 from merged source, approved ADRs and the owner's clarified
+in-app chat upload and page-interaction intention. This document
 separates implemented application structure from the target and remaining work.
 Exact branch, CI, runtime and validation facts belong in
 [PROJECT_STATE.md](./PROJECT_STATE.md), not in historical feature narratives.
@@ -28,6 +29,9 @@ Its validation/publication status is tracked separately; no schema or authority 
 ```mermaid
 flowchart TD
   UI[Standalone browser UI] --> APP[FastAPI routes and application commands]
+  PANEL[Native workspace chat panel] --> READ[Permission-checked selected saved context]
+  READ --> PORT[Optional bounded Responses transport]
+  PORT --> ADVICE[Unverified advice with references and unknowns]
   CHAT[ChatGPT MCP client] --> AUTH[OAuth and local identity/permission checks]
   AUTH --> PROPOSE[Durable proposal requests]
   PROPOSE --> HUMAN[Same-user browser review and confirmation]
@@ -57,6 +61,7 @@ untrusted evidence without saving Scope or granting approval.
 | Layer | Implemented components and responsibility |
 | --- | --- |
 | Interfaces | FastAPI/Jinja UI (`ui.py`, `draft_scope_ui.py`, format-specific review routes), API/CLI and optional `draft_client.py` MCP mounting |
+| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; current chat endpoints accept context/message only, with no attachment or mutation action |
 | Authentication | Existing user/session/CSRF checks plus `draft_client_auth.py` and explicit client policy; verified external identity maps to an active local user. Exact resource/issuer/signature/time/scope checks; approved optional nbf/Auth0 compatibility does not remove permission checks |
 | Application commands | `services/draft_client_requests.py` and `draft_client_capabilities.py` create typed durable requests; browser confirmation rechecks rights, owner, dependencies and expected state before executing the shared service |
 | Scope | `draft_scope.py`, `draft_scope_evidence.py`, format review services and shared editor. Immutable revision envelopes with explicit evidence state and unknowns |
@@ -69,6 +74,57 @@ untrusted evidence without saving Scope or granting approval.
 `pyproject.toml` currently declares Python >=3.11, FastAPI, SQLAlchemy, Pydantic,
 Jinja, Alembic, PDF/XLSX/image libraries and optional PostgreSQL/malware/ChatGPT extras.
 There is no new service/database/framework introduced by the Word client increment.
+
+## Native chat as a working interface
+
+The owner clarified on 2026-09-13 that users must be able to upload supported defect
+reports through the ChatGPT integration inside CLASSIFIRE and interact with the
+data on the page through it. A separate external chat page is insufficient for
+that working experience. Keep the native panel available across data-heavy screens,
+with selection-aware context and collapsible/resizable layout.
+
+**Current architecture:** the native panel resolves typed identifiers and exact saved
+revisions through authenticated readers, previews the data, then sends it to the
+existing advisory-only Responses transport after consent. Separately, the existing
+external ChatGPT/MCP client can request intake/scan and prepare durable Draft changes
+for same-user browser confirmation. Ordinary UI intake/review already uses the same
+domain services. The existing plugin is retained.
+
+**Proposed extension:** add report attachment/status and typed action review to the
+native panel using those existing intake, scan, evidence-reader, proposal-request,
+confirmation and package services. Browser routes use the existing user session and
+CSRF checks; external clients retain their OAuth scope/policy checks. The browser
+does not need to loop through external MCP or acquire a second identity.
+
+**Reason:** selected-record advice is implemented, but the panel has no attachment
+input or Draft mutation endpoint. Users otherwise have to move between separate
+controls to complete the report-to-Scope journey.
+
+**Consequences:** distinguish local attachment/intake, explicitly requested scan,
+provider disclosure/consent, analysis proposal, human Draft confirmation and package
+confirmation. A typed action dispatcher admits only supported application commands
+with current authority and sufficient inputs; model text or a generic tool call
+cannot invoke arbitrary services, save data or chain capabilities. A same-user
+review card can live beside the conversation while retaining the existing
+confirmation checks and explicit confirmation control. Typing "confirmed" alone
+does not execute the pending request.
+
+The first slice uses bounded DOCX intake, then the same interaction extends to
+supported PDF and XLSX. Approved technical-source and commercial-library ingestion
+retain their distinct purpose, rights and authority; attaching a defect report
+does not import it as a trusted technical or pricing library.
+
+**Migration impact:** this reconciliation changes documentation only. The first
+implementation should reuse retained sources, immutable Draft revisions and durable
+client requests. No new table, migration, vector store, agent framework or transcript
+store is required by this decision. If a demonstrated gap requires persistence
+changes, document compatibility and use a forward migration before activation.
+This refines the interface under ADRs 0001/0002; their domain/authority rules remain.
+
+Detailed interaction, source-disclosure and acceptance requirements belong in
+[Embedded workspace assistant](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience);
+delivery order belongs in the roadmap's
+[C1-C3 sequence](./CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence).
 
 ## Reports from selected row reviews
 
@@ -203,17 +259,19 @@ The verified source migration head is 0047 (retained Word source rows), followin
 storage; the client adapter adds no migration. Preserve historical migration files and
 old artifact readers; future changes require forward compatibility and restore evidence.
 
-Merged source and live runtime are separate. The owner-authorized synthetic trial
-now runs tested ff0272b after successful post-merge CI, disposable restore verification
-and verified additive metadata startup. The confirmed Scope and exact original-bearing
-ZIP survived restart. See the [acceptance record](./WORD_ACCEPTANCE_ACTIVATION.md) for
-coverage and limits. This is an approved trial result, not general deployment authority;
-future activation and OAuth/tunnel changes retain their explicit approval boundary.
+Merged source and live runtime are separate. The accepted operational workspace
+runs the earlier 6c1e2a4; the native panel is merged through PR #268 and has a
+separately approved conditional activation plan for tested 7dbc1cc. One bounded
+real gpt-5-mini transport test passed with synthetic data. That is not a live-panel
+or report-upload acceptance result. Consult [PROJECT_STATE.md](./PROJECT_STATE.md)
+for observed CI/runtime status; publication of these documents does not repin the
+approved deployment or permit OAuth/tunnel changes.
 
 ## Planned architecture and unresolved decisions
 
 | Gap / decision | Planned direction and validation needed |
 | --- | --- |
+| Native chat upload and reviewed page actions | Reuse existing intake and typed proposal/confirmation services; prove the complete in-context C2/C3 journeys before claiming chat attachment or edit support |
 | Broader physical/evidence representation | Extend current graph and provenance only for a proven user need; explicit instances/planes/treatments and additional report formats need representative acceptance and compatible schemas |
 | General document jobs | Implement bounded resumable stages/attempts/leases/recovery over existing persistence when the interactive pilot establishes need; current worker has no handlers |
 | Technical corpus scale | T2-T8 require retained source revisions, per-field lineage, duplicate/reprocess policy, pagination and measured capacity; no mandatory vector database or agent fleet |
@@ -223,16 +281,15 @@ future activation and OAuth/tunnel changes retain their explicit approval bounda
 | Operational readiness | Tenant separation, backup/restore, clean-machine startup, representative performance/cost, monitoring and production release exits remain unproven |
 | Merge governance | GitHub main protection endpoint reports unprotected; observed premature merge requires explicit check verification now and an owner-approved enforcement decision |
 
-No architecture amendment is proposed by this documentation change: it records current
-implementation against the accepted target. Current -> change -> reason -> consequence:
-contradictory accumulated milestone text -> one evidence-based snapshot plus retained
-backlog -> prevent repeat work/false completion -> documentation only, no migration.
+This interface refinement is documented above as current structure -> proposed
+extension -> reason -> consequences -> migration impact. It neither completes a
+production phase nor retires OpenClaw.
 
 ## Immediate direction
 
-Use the ordered [Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions):
-I1 correction and CI complete; I2 application acceptance passed with dedicated connected
-upload/scan transport still to verify; I3 owner-approved merge enforcement; N1 Excel
-acceptance; N2 representative
-pricing semantics; L1/L2 broader product/production work. This order does not remove
-any canonical Phase 8-14 prerequisite. The roadmap retains detailed T1-T14/Phase 0-16 exits.
+Follow [Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions):
+C1 completes the already approved advisory-panel activation and acceptance; C2 is
+the next implementation slice for chat-based report intake and Scope review; C3
+adds explicitly reviewed selected-record actions. Existing connector transport
+acceptance, independent technical/pricing work and production gates remain tracked
+without forcing users through downstream capabilities.

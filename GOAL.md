@@ -24,10 +24,20 @@ export it and return later. They choose when to run another capability. Required
 information and authority still apply, whether supplied by a preceding capability,
 a saved artifact or manual input. No capability depends on hidden chat context.
 
-Support a standalone interface and a ChatGPT-native interface over the same backend
-use cases and domain rules. Use the current approved ChatGPT integration model when
-that adapter is built; the product does not depend on the legacy plugin label.
-The backend owns permissions, validation, durable state and downloads.
+Support a native ChatGPT-backed working experience inside CLASSIFIRE as well as the
+existing external ChatGPT/MCP client. Users should attach supported defect reports
+in the in-app chat, inspect processing status and evidence, review proposed Scope
+changes, and ask about or propose changes to selected data on the current page
+without copying records or leaving the application. The same panel stays accessible
+across the register, technical/library, pricing, Scope and Estimate screens.
+
+This is the owner's clarified design intention of 2026-09-13, not a claim that chat
+upload or chat actions already work. Keep the existing plugin/connector and reuse
+the shared intake, domain and review services; the backend owns permissions,
+credentials, validation, durable state and downloads. Chat is an optional interface
+to those services. Attachments, model advice and conversational agreement do not
+confirm a Draft write or run another capability. See the
+[embedded assistant contract](./docs/EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).
 
 Support creating, configuring, editing, validating, saving, importing and downloading
 portable capability artifacts and complete ProjectPackage revisions. The governed
@@ -202,14 +212,20 @@ not dedicated A/B ingestion, bulk technical extraction or a pricing inference en
 
 ## Immediate delivery priority
 
-The PDF/Excel/Word client and selected-package increments are implemented; Word
-PRs #252-#254 are merged. Merged source is distinct from hosted CI and live activation.
-Use [PROJECT_STATE.md](./docs/PROJECT_STATE.md#recommended-next-actions) for the single
-current priority and [SESSION_HANDOFF.md](./docs/SESSION_HANDOFF.md) for the next-session
-prompt. Authorized Word application acceptance and restart are verified; dedicated
-connected upload/scan transport remains to be exercised. Preserve the completed
-Scope/package confirmations and exact artifacts. Do not rebuild the quantity-basis
-or client tools. The full production outcome above remains unchanged and incomplete.
+Finish the approved activation and real synthetic browser acceptance of the merged
+native advisory panel when its exact CI and recovery gates pass. In parallel, make
+the next product slice the in-app chat report journey: one supported synthetic DOCX
+attachment through retained evidence, explicit scan/read, a typed Scope proposal,
+separate human confirmation, reopening and a separately confirmed original-bearing
+ZIP. Extend the same interaction to supported PDF and XLSX intake without rebuilding
+their existing services or silently accepting unsupported layouts.
+
+Selection-aware advice is implemented; chat attachments and reviewed page-changing
+actions remain to be built. Follow C1-C3 in the
+[roadmap](./docs/CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
+[PROJECT_STATE.md](./docs/PROJECT_STATE.md#recommended-next-actions) for exact status.
+Preserve completed Word project/Scope/package confirmations and the existing connector.
+Customer accuracy, technical authority and production exits remain separate gates.
 
 ## Earlier technical/pricing delivery sequence
 

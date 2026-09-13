@@ -1,6 +1,6 @@
 # CLASSIFIRE Master Roadmap
 
-Reconciled 2026-09-12. Current facts and exact PR/CI state belong in
+Reconciled 2026-09-13. Current facts and exact PR/CI state belong in
 [PROJECT_STATE.md](./PROJECT_STATE.md); architecture in
 [CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md).
 
@@ -17,37 +17,60 @@ P0-P6 are bounded Draft milestones, not completion of production Phases 0-16.
 
 | Classification | Current work and evidence |
 | --- | --- |
-| Completed bounded implementation | Manual Draft Scope, JSON round trip, selected-target Match review/measurements, manual/rate-selected Estimate and all four PDF/XLSX report profiles; shared service contracts and tests |
-| Completed bounded implementation | PDF, Excel and Word retained inspection/review; Scope v7 Word evidence; ProjectPackage v5 selected artifacts/originals and governed import/re-export. Word PRs #252-#254 are merged |
-| Completed bounded implementation | Multiple exact register row reviews and ProjectPackage v6 save/reopen/import/re-export merged in PR #263 (`d5c19d7`); post-merge CI is tracked in current state. No production phase exit |
-| Completed bounded implementation | Scope-and-system review collections and import mapping v4 merged in PR #264 (`e96c692`) after 2,251 tests and remaining CI checks passed. Post-merge CI is tracked in PROJECT_STATE. See [report contract](./MULTI_REVIEW_REPORTS.md) |
-| Locally validated increment; publication pending | Exact-row read-only PDF/Word/Excel [source evidence](./REGISTER_SOURCE_EVIDENCE.md), including stale claims and blank/unlinked rows. 122 affected cases and synthetic browser/restart acceptance passed; no production phase exit |
-| Locally validated increment; publication pending | Complete reports retain an exact unchanged Estimate plus explicitly selected row reviews (Estimate report v3/render12); the Estimate-bound review must be included exactly, extras are report-only, and import mapping v4 is reused. Isolated restart preserved exact outputs and checked domain state. See [Complete contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md). No production phase exit |
-| Completed bounded implementation | A/B profiles/review, A observations, B identity mapping, T9 coverage, T6 recipes, T13 roster and governed Scope quantity basis (PR #233); do not rebuild them |
-| Completed correction / verification | I1: PRs #255-#257 merged; candidate and post-merge CI for ff0272b/eb3ddb3 passed 2,043 tests. Earlier run 34664119693 ended cancelled, not passed. PR #254 premature merge remains a disclosed process gap |
-| Verified bounded application acceptance / transport open | I2: authorized Word trial activation, actual browser upload/scan, connected reads/proposal, separate human Scope/package confirmations and exact ZIP/restart passed. Dedicated connected upload/scan transport remains untested; I3 remains an owner decision |
-| Blocked on external interaction | N1 actual Excel trial needs client tool refresh/attachment/human confirmation. Word activation and the completed confirmations already have approval and proof. These are not code-absence claims |
-| Near term | N2 representative technical recipe/quantity/commercial meaning acceptance before expanding derived rates |
-| Reordered | Complete visible evidence-to-Scope-to-package acceptance before broad format/scale/prediction work; retain technical/pricing work as an independent track |
-| Superseded | Reimplementing/publishing the already merged PDF/Excel/Word client features; repeating OAuth setup; creating the first governed quantity basis; accumulated old “next session” instructions |
-| Deprecated | Mandatory autonomous fleet/one agent per capability; chat or OpenClaw memory as canonical state; automatic approval from imported claims; root recovery checkout as publication source |
-| Planned/dependency-bound | L1 wider document/corpus/physical-model coverage and full portable history; L2 calibrated methods, operations, production gates and protected OpenClaw retirement |
+| Completed bounded implementation | Manual Draft Scope, JSON round trip, selected-target Match review/measurements, manual/rate-selected Estimate and all four PDF/XLSX report profiles; shared domain services |
+| Completed bounded implementation | PDF/Excel/Word retained inspection/review, Scope v7, selected originals and ProjectPackage v6; Word PRs #252-#254 and multi-review PRs #263/#264 are merged |
+| Completed bounded implementation | Integrated register, row authoring, exact source inspection, imported-original navigation and Complete multi-review reports are merged through PR #265; PR #266 corrected a test clock/CI ceiling and PR #267 reconciled that activation |
+| Completed bounded implementation; operational acceptance pending | PR #268 adds the shared native advisory panel, typed page/record context and bounded qualified conversation; chat has no attachment or mutation endpoint |
+| Approved operational work | C1: exact advisory-panel activation plan and one synthetic provider test approved. The test passed; post-merge CI/recovery/live browser gates remain separately observed in PROJECT_STATE |
+| Next implementation slice | C2: native chat defect-report attachment, retained-source/status display, explicit scan/read, typed Scope proposal and separate human confirmation; reuse existing intake/review/package services |
+| Following bounded slice | C3: user-requested reviewed actions on selected page records, reusing authenticated typed commands and confirmation; advice never writes implicitly |
+| Completed bounded implementation | A/B profiles/review, A observations, B identity mapping, T9 coverage, T6 recipes, T13 roster and governed Scope quantity basis; preserve the independent technical/pricing track |
+| Retained acceptance gap | I2 dedicated external connector upload/scan transport and N1 Excel acceptance remain distinct from browser upload or the new native chat journey; do not repeat completed Word confirmations |
+| Owner decision / independent work | I3 enforced merge policy needs its own approval; N2 representative quantity/recipe/commercial semantics remain before wider pricing methods |
+| Planned/dependency-bound | L1 wider report/corpus/physical-model coverage and full portable history; L2 calibration, operations, production gates and protected OpenClaw retirement |
+| Superseded priority | Rebuilding the existing plugin, upload parsers, review services or package pipeline; a disconnected external chat page as the only working experience |
+| Deprecated | Mandatory autonomous fleet; chat history as canonical state; inferred technical/commercial approval; publication from the conflicted root |
 
 ## Ordered next actions and acceptance
 
-The complete objective, evidence, components, dependencies, acceptance, validation and
-uncertainty for I1-I3, N1-N2 and L1-L2 are maintained together under
-[Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions).
-The next I2 task is the remaining dedicated connector upload/scan transport check
-using an explicitly selected synthetic source/destination. Preserve the accepted Word
-project and exact package; do not repeat its completed activation or confirmations.
-Do not start another implementation merely because
-an existing run is slow. The handoff carries the exact current task and commands.
+The owner's clarified design intention is a ChatGPT integration within CLASSIFIRE
+that accepts defect reports and works with the data on the current page. Reuse the
+existing optional external connector and backend. The native panel must be usable
+without leaving the main environment; no framework replacement is implied.
 
-Each published change must have observed successful checks on the exact head, required
-reviews and no unresolved correctness/security concern before an ordinary merge.
-`--auto` is not proof of enforcement. Do not change repository protection without
-owner authorization. Record merge commit and post-merge CI separately.
+### Embedded chat delivery sequence
+
+These C1-C3 slices refine the existing P6 client/interface work and reuse P1 evidence,
+P0 Scope review and P5 package services. They do not replace the T1-T14 or Phase 0-16
+catalogues or grant canonical exits. Exact status belongs in
+[PROJECT_STATE.md](./PROJECT_STATE.md#recommended-next-actions).
+
+| Slice | Deliverable and dependency | Exit evidence |
+| --- | --- | --- |
+| C1 - Advisory panel operational acceptance | Already merged PR #268; retain approved tested version, secure server-side model configuration, exact CI and fresh backup/disposable restore/restart/rollback gates | Actual synthetic browser selection -> preview/consent -> real reply/follow-up; preserved unknowns and domain state. One transport reply alone does not satisfy this exit |
+| C2 - Report to Scope through native chat | Add the attachment and source/status/review controls to the existing panel. Reuse supported intake, explicit scan, source readers, typed requests and same-user confirmation. Start with one bounded DOCX case, then supported PDF/XLSX. Synthetic implementation can proceed while C1 waits; real-provider/live acceptance retains its approval gates | Browser attachment -> clean retained text/image inspection -> explicitly previewed/consented analysis -> source-bound typed proposal -> distinct human confirmation -> updated register -> reopen -> distinct package confirmation -> exact original-bearing ZIP |
+| C3 - Reviewed actions on selected page records | Extend the same panel with a small supported action set over exact project/Defect/Opening/Service/multiple-row/review/Estimate/library/pricing selections. Reuse existing typed commands; state unavailable actions and prerequisites | Actual selected-record question and requested edit; inspect proposed diff; save only on separate confirmation. Stale selection/revision, changed rights, ambiguity and duplicate submit fail safely; other capabilities never run implicitly |
+
+C2/C3 share the [interaction and negative-case contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).
+The implemented text-only chat transport does not yet send original files or pictures;
+any evidence transfer extension needs explicit selection, disclosure, consent and
+bounded validation. Upload to CLASSIFIRE is separate from transfer to a provider.
+Blank openings remain valid with zero Services; unresolved links are held for review.
+Retained source and revision identity survives reopening without requiring chat memory.
+
+Use selected-checkout PYTHONPATH and a fresh basetemp for affected chat/client/intake/
+review/package tests. Database tests use disposable15433, never live15432. Inspect
+actual browser controls and exact source/ZIP bytes. Keep expensive real-report
+accuracy evaluation behind its separate rights, reference and Phase8/8C decisions.
+
+The older I1 correction is complete. I2/N1 transport evidence and I3 merge-policy
+work remain on the backlog; they do not justify rebuilding the existing integration.
+N2 technical/pricing semantics can progress independently with authorized evidence.
+
+Each published change needs observed successful exact-head checks and required
+reviews before merge. Record merge and post-merge CI separately. Do not restart jobs
+because an observation times out; a separately authorized retry is recorded as a
+new attempt. Documentation publication does not repin an approved deployment.
 
 ## Detailed retained technical and production backlog
 
