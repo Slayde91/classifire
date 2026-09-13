@@ -6,6 +6,17 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
+## Latest local acceptance checkpoint
+
+`test/native-stack-publication-review-20260914` extends `7778166` with direct Word/PDF
+original-bearing package and foreign-history import tests. Both passed in195.41s
+on disposable15433, with one warning and no skips. ZIP/original/JSON equality and
+imported HTML structure were inspected; see PROJECT_STATE.md for evidence limits.
+No production source or schema changed. The 83-file ancestor range is inventoried
+privately, but its full manual confidentiality review is not complete. Continue that
+review and rendered-browser acceptance before presenting a broader publication scope.
+The approved public PR remains pinned to `d864c51`; this checkpoint does not expand it.
+
 ## Local selected native package history
 
 The isolated `feat/portable-native-history-20260914` branch extends `c837ce5`. Existing

@@ -131,6 +131,14 @@ was excluded. Private failed receipts remain: the HTTP harness initially expecte
 missing confirm field (actual422), then for an old-session CSRF (actual403). With current CSRF,
 the old import approval correctly returned409. These corrections changed verification only.
 
+Direct Word and PDF HTTP cases additionally passed on disposable15433: two passes,
+no skips, one warning, 195.41s. Each explicitly retains a generated proposal, saves
+Scope, saves a package with the selected original and decision, then previews and
+confirms import separately. Old pending package bytes remain unchanged; selected
+original/history bytes remain exact. Imported history stays foreign and read-only,
+with no local proposal/decision rows. The saved ZIPs, JSON and HTML structure were
+inspected; this adds format coverage without changing the application or schema.
+
 Browser initialization remains unavailable, so rendered-browser and live acceptance are
 unverified. The main app ran in test mode; this is not production configuration approval.
 Synthetic replies/scanner verdicts do not prove real-provider behavior, malware detection,

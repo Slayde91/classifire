@@ -18,6 +18,7 @@ from test_draft_workspace_proposal_decisions import (  # noqa: F401
     generated,
     opened,
     pdf_app,
+    pdf_evidence_app,
     pdf_setup,
     postgresql_session_factory,
     preview,
@@ -288,3 +289,97 @@ def test_unselected_later_decision_corruption_does_not_invalidate_old_package(
             with pytest.raises(packages.PackageError, match="INTEGRITY"):
                 packages.read_package(db, actor, x.ids[2], selected_url.rsplit("/", 1)[1])
         assert snapshot(x) == before
+
+
+@pytest.mark.parametrize("kind,fixture", [("word", "evidence_app"), ("pdf", "pdf_evidence_app")])
+def test_word_pdf_history_keeps_original_and_foreign_decision_read_only(
+    request, kind, fixture, monkeypatch, tmp_path
+):
+    x = request.getfixturevalue(fixture)
+    configure(x, monkeypatch)
+    with TestClient(x.app) as client:
+        review_path, fields, offer = generated(client, x, kind)
+        identity = fields["native_proposal_id"]
+        source_id = offer["document"]["request"][kind]["source_id"]
+        if kind == "word":
+            downloaded = client.get(f"/scopes/{x.ids[2]}/word/{source_id}/original")
+            assert downloaded.status_code == 200
+            original = downloaded.content
+        else:
+            original = x.pdf_original
+        pending = history.Reference(proposal_id=identity, decision_id=None)
+        old_url, old_bytes = package(client, x, pending, int(fields["expected_revision"]))
+        confirmation = preview(client, review_path, fields, kind)
+        assert commit(client, review_path, confirmation, kind).status_code == 303
+        decision = opened(client, x, identity)["decision"]
+        assert decision["outcome"] == "confirmed"
+        assert client.get(old_url + "/download").content == old_bytes
+        selected = history.Reference(proposal_id=identity, decision_id=decision["id"])
+        collection, extension = (
+            ("docx_sources", "docx") if kind == "word" else ("pdf_sources", "pdf")
+        )
+        path = f"/scopes/{x.ids[2]}/packages"
+        query = [
+            ("scope_revision", str(decision["scope_revision"])),
+            ("native_proposals", selected.query_value()),
+            (collection, source_id),
+        ]
+        before = snapshot(x)
+        shown = client.get(path + "?" + urlencode(query))
+        assert shown.status_code == 200 and snapshot(x) == before
+        saved = client.post(path, data=package_fields(shown), follow_redirects=False)
+        assert saved.status_code == 303
+        saved_url = saved.headers["location"]
+        archive_response = client.get(saved_url + "/download")
+        assert archive_response.status_code == 200
+        content = archive_response.content
+        inspected = inspection.inspect_package(content)
+        assert inspected.manifest["schema_version"] == packages.SCHEMA_V7
+        assert inspected.members[f"evidence/{source_id}.{extension}"] == original
+        member = history.member_path(identity)
+        retained = inspected.histories[0]
+        assert retained["proposal"] == offer["document"] and retained["decision"] == decision
+        raw = client.get(saved_url + "/native-history?" + urlencode({"member": member}))
+        assert raw.status_code == 200 and raw.content == inspected.members[member]
+        assert any(
+            item["kind"] == "native_proposal_source"
+            and item["membership"] == "included"
+            and item["reference"].startswith(kind + ":" + source_id + ":document:")
+            for item in inspected.manifest["source_manifest"]
+        )
+        before = snapshot(x)
+        inspected_page = client.post(
+            "/package-import/preview",
+            data={"csrf_token": fields["csrf_token"]},
+            files={"file": ("synthetic-history.zip", content, "application/zip")},
+        )
+        assert inspected_page.status_code == 200 and snapshot(x) == before
+        assert "1 retained AI history items" in inspected_page.text
+        imported = client.post(
+            "/package-import/confirm",
+            data={
+                **package_fields(inspected_page),
+                "reference": "HISTORY-" + kind.upper(),
+                "name": "Synthetic " + kind + " history",
+                "confirm": "yes",
+            },
+            files={"file": ("synthetic-history.zip", content, "application/zip")},
+            follow_redirects=False,
+        )
+        assert imported.status_code == 303, imported.text
+        imported_url = imported.headers["location"]
+        page = client.get(imported_url + "?" + urlencode({"history": member}))
+        assert page.status_code == 200 and "foreign and unverified" in page.text
+        imported_raw = client.get(imported_url + "/native-history?" + urlencode({"member": member}))
+        assert imported_raw.status_code == 200 and imported_raw.content == raw.content
+        imported_id = imported_url.split("/")[2]
+        assert client.get(f"/scopes/{imported_id}/native-proposals").json() == {"proposals": []}
+        assert client.get(f"/scopes/{imported_id}/native-proposals/{identity}").status_code == 404
+        with x.factory() as db:
+            assert db.scalar(select(func.count()).select_from(DraftWorkspaceProposal)) == 1
+            assert db.scalar(select(func.count()).select_from(DraftWorkspaceProposalDecision)) == 1
+        assert len(x.calls) == 1
+        (tmp_path / (kind + "-original." + extension)).write_bytes(original)
+        (tmp_path / (kind + "-history.zip")).write_bytes(content)
+        (tmp_path / (kind + "-history.json")).write_bytes(raw.content)
+        (tmp_path / (kind + "-imported-history.html")).write_text(page.text, encoding="utf-8")

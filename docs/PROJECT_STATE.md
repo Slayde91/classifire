@@ -7,6 +7,26 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Local Word/PDF package-history acceptance
+
+The isolated `test/native-stack-publication-review-20260914` branch adds direct Word
+and PDF coverage to the existing native-history HTTP tests. Both cases passed on
+owned PostgreSQL15433 with selected-checkout PYTHONPATH and fresh basetemp: two
+passes, no failures or skips, one warning, 195.41 seconds. Each separately confirms
+Scope, package creation and import; the older pending package stays byte-identical.
+Selected original report and history JSON remain exact in the ZIP and imported
+history download. Imports create no local native proposal/decision authority.
+
+The two ZIPs, JSON downloads and imported HTML structure were inspected. The first
+standalone inspection script used the wrong schema-name literal; the preserved
+failure was corrected against the existing v7 constant without application changes.
+Private receipts and synthetic outputs are in
+`native-stack-publication-review-validation-20260914` under .tmp. These tests use
+injected replies/scanner results; browser rendering and real-report accuracy remain
+unverified. This is test/documentation work only, with no migration or live change.
+The larger local range's automated confidentiality screen found no configured
+markers; manual full-range review remains incomplete and publication is unapproved.
+
 ## Local selected native package history
 
 The isolated `feat/portable-native-history-20260914` branch extends `c837ce5`. Existing
