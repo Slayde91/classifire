@@ -291,6 +291,9 @@ def choices(
                 else item["id"] + ":" + decisions.get(item["id"], "none")
             ),
             "selected": item["id"] in pinned,
+            "decision_value": (
+                item["id"] + ":" + decisions[item["id"]] if item["id"] in decisions else None
+            ),
             "has_decision": (
                 pinned[item["id"]].decision_id is not None
                 if item["id"] in pinned

@@ -5,11 +5,13 @@ from __future__ import annotations
 import copy
 import json
 from datetime import UTC, datetime, timedelta
+from html.parser import HTMLParser
 from urllib.parse import urlencode
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
+from starlette.requests import Request
 from test_draft_project_package_ui import fields as package_fields
 from test_draft_workspace_chat import snapshot
 from test_draft_workspace_proposal_decisions import (  # noqa: F401
@@ -383,3 +385,134 @@ def test_word_pdf_history_keeps_original_and_foreign_decision_read_only(
         (tmp_path / (kind + "-history.zip")).write_bytes(content)
         (tmp_path / (kind + "-history.json")).write_bytes(raw.content)
         (tmp_path / (kind + "-imported-history.html")).write_text(page.text, encoding="utf-8")
+
+
+class HistoryOptions(HTMLParser):
+    def __init__(self, text):
+        super().__init__()
+        self.options = {}
+        self.values = set()
+        self.chosen = set()
+        self.current = None
+        self.feed(text)
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "input" and attrs.get("name") == "native_proposals":
+            self.values.add(attrs["value"])
+            if "checked" in attrs:
+                self.chosen.add(attrs["value"])
+        if tag == "select" and attrs.get("name") == "native_proposals":
+            self.current = attrs["id"]
+            self.options[self.current] = {}
+        elif tag == "option" and self.current is not None:
+            self.options[self.current][attrs["value"]] = "selected" in attrs
+            self.values.add(attrs["value"])
+            if "selected" in attrs and attrs["value"]:
+                self.chosen.add(attrs["value"])
+
+    def handle_endtag(self, tag):
+        if tag == "select":
+            self.current = None
+
+
+def test_package_form_can_export_generation_without_recorded_decision(
+    xlsx_evidence_app, monkeypatch, tmp_path
+):
+    x = xlsx_evidence_app
+    configure(x, monkeypatch)
+    with TestClient(x.app) as client:
+        path, fields, _ = generated(client, x, "xlsx")
+        identity = fields["native_proposal_id"]
+        control = "native-history-" + identity
+        package_path = f"/scopes/{x.ids[2]}/packages"
+        before = snapshot(x)
+        pending_page = client.get(package_path)
+        assert pending_page.status_code == 200 and snapshot(x) == before
+        pending_options = HistoryOptions(pending_page.text)
+        assert identity + ":none" in pending_options.values
+        assert not pending_options.chosen
+        assert (
+            commit(client, path, preview(client, path, fields, "xlsx"), "xlsx").status_code == 303
+        )
+        decision = opened(client, x, identity)["decision"]
+        decision_value = identity + ":" + decision["id"]
+        before = snapshot(x)
+        page = client.get(package_path)
+        assert page.status_code == 200 and snapshot(x) == before
+        options = HistoryOptions(page.text)
+        assert identity + ":none" in options.values, (
+            "A recorded decision must not remove the proposal-only choice"
+        )
+        assert decision_value in options.values and not options.chosen
+        archives = []
+        for chosen, expected_decision in ((identity + ":none", None), (decision_value, decision)):
+            before = snapshot(x)
+            shown = client.get(
+                package_path
+                + "?"
+                + urlencode(
+                    [
+                        ("scope_revision", str(decision["scope_revision"])),
+                        ("native_proposals", ""),
+                        ("native_proposals", chosen),
+                    ]
+                )
+            )
+            assert shown.status_code == 200 and snapshot(x) == before
+            selected = HistoryOptions(shown.text).options[control]
+            assert selected[chosen] and sum(selected.values()) == 1
+            response = client.post(package_path, data=package_fields(shown), follow_redirects=False)
+            assert response.status_code == 303
+            url = response.headers["location"] + "/download"
+            content = client.get(url).content
+            parsed = inspection.inspect_package(content)
+            assert parsed.histories[0]["decision"] == expected_decision
+            assert parsed.manifest["selection"]["native_proposals"] == [
+                {
+                    "proposal_id": identity,
+                    "decision_id": decision["id"] if expected_decision else None,
+                }
+            ]
+            archives.append((url, content))
+            (
+                tmp_path / ("with-decision.zip" if expected_decision else "generation-only.zip")
+            ).write_bytes(content)
+            (
+                tmp_path / ("with-decision.html" if expected_decision else "generation-only.html")
+            ).write_text(shown.text, encoding="utf-8")
+        assert all(client.get(url).content == content for url, content in archives)
+        assert opened(client, x, identity)["decision"] == decision
+        assert len(x.calls) == 1
+
+
+def test_package_history_form_empty_choices_keep_strict_reference_limits():
+    identity = "00000000-0000-4000-8000-000000000001"
+    decision = "00000000-0000-4000-8000-000000000002"
+
+    def parsed(values):
+        request = Request(
+            {
+                "type": "http",
+                "query_string": urlencode(
+                    [("native_proposals", value) for value in values]
+                ).encode(),
+            }
+        )
+        return packages.selection(ui._query(request, 1))
+
+    assert parsed(["", ""]).model_dump() == parsed([]).model_dump()
+    selected = parsed(["", identity + ":none", ""])
+    assert selected.native_proposals == [history.Reference(proposal_id=identity, decision_id=None)]
+    maximum = [f"00000000-0000-4000-8000-{index:012}:none" for index in range(1, 11)]
+    assert len(parsed(["", *maximum, ""]).native_proposals) == 10
+    for invalid in (
+        [" "],
+        [identity],
+        [identity + ":"],
+        [identity + ":latest"],
+        [identity + ":none", identity + ":" + decision],
+        [*maximum, "00000000-0000-4000-8000-000000000011:none"],
+    ):
+        with pytest.raises((ui.HTTPException, packages.PackageError)):
+            parsed(invalid)

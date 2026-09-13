@@ -6,6 +6,21 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
+## Latest local package form correction
+
+`fix/native-history-package-choice-20260914` extends `3bdc27d`. Users can explicitly
+exclude a saved proposal, export it without its decision, or include its exact recorded
+decision. The missing proposal-only choice was reproduced after a decision existed.
+Two focused cases and exact ZIP/HTML-structure inspection passed; Full Ruff and Mypy240
+passed. Schema, archive format and confirmation authority are unchanged. Continue
+full-range review and rendered-browser acceptance. Public approval remains `d864c51`
+only; all newer feature ancestors and this correction remain unpublished.
+
+The ten existing history, compatibility and package-page regression cases passed
+with no failures or skips in 398.79s. All 7 generated regression ZIPs were
+inspected successfully. Together with the two focused cases, this is 12 passing tests;
+full Ruff, Mypy240, format, scoped Bandit and 33 local document-link checks passed.
+
 ## Latest local panel correction
 
 `fix/native-history-stale-open-20260914` extends `0dccc61`. It prevents a delayed

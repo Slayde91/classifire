@@ -7,6 +7,30 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Local package-history choice correction
+
+`fix/native-history-package-choice-20260914` extends `3bdc27d`. Review reproduced a
+missing UI choice: once a decision existed, the package form offered the proposal
+only together with that decision. Each proposal now has an explicit excluded,
+proposal-only or proposal-with-decision choice. Existing preview/save and versioned
+history formats remain unchanged; Scope and package confirmation remain separate.
+
+Two focused synthetic HTTP/form and query cases passed on disposable15433 in 82.60s.
+Both ZIPs and page structures were inspected: generation and Scope bytes are identical,
+with decision membership exactly as selected. No unselected originals were added;
+local decisions and earlier downloads remain unchanged. Blank form choices preserve
+legacy selection encoding, while malformed, duplicate and over-limit references fail.
+Full Ruff and Mypy240 passed. Private evidence is in
+`native-history-package-choice-validation-20260914` under .tmp. The first reproduction
+was too specific about control type; its replacement demonstrated the missing user
+choice on unchanged source. Both failures remain recorded. Browser acceptance and
+full-range manual publication review remain incomplete; this work is unpublished.
+
+The ten existing history, compatibility and package-page regression cases passed
+with no failures or skips in 398.79s. All 7 generated regression ZIPs were
+inspected successfully. Together with the two focused cases, this is 12 passing tests;
+full Ruff, Mypy240, format, scoped Bandit and 33 local document-link checks passed.
+
 ## Local saved-proposal display race correction
 
 Review of the unpublished native panel reproduced delayed saved-proposal replies

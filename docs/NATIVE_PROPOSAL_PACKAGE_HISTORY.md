@@ -5,7 +5,12 @@ public publication, activation, browser acceptance or full production AI lineage
 
 ## User interaction
 
-The existing package configuration offers optional, initially unchecked saved AI proposals.
+The existing package configuration offers saved AI proposals, initially excluded.
+For each proposal, choose Do not include, Include proposal only (no decision), or
+Include proposal and recorded decision when one exists. Proposal only remains available
+after a decision is recorded; it omits that decision without changing its local history.
+The form needs no JavaScript. Empty excluded choices do not alter the package selection
+encoding; nonempty choices still require exact identities and the existing ten-item limit.
 Selecting history discloses that the question, included conversation, selected application
 context and generated reply will travel in the ZIP. This can include private project,
 technical or pricing data. Only the retained request conversation is included; this is not
@@ -143,3 +148,15 @@ Browser initialization remains unavailable, so rendered-browser and live accepta
 unverified. The main app ran in test mode; this is not production configuration approval.
 Synthetic replies/scanner verdicts do not prove real-provider behavior, malware detection,
 report accuracy, technical suitability, raw prompt/version lineage or full history coverage.
+
+A local form correction reproduced the missing proposal-only choice after a decision
+was recorded. The corrected HTTP/form and query-boundary checks passed in the
+focused selection (two cases, 82.60s); downloaded ZIPs preserve identical generation
+and Scope bytes with the explicitly selected decision or null. Existing local decision
+and older ZIP bytes stay unchanged. The initial over-specific control-shape failure
+was replaced with a behavior-based reproduction on unchanged application source.
+Full Ruff and Mypy240 passed. This does not establish rendered-browser acceptance.
+
+Ten existing history/compatibility/package-page regression cases passed in 398.79s,
+without failures or skips. All 7 generated regression ZIPs passed inspection.
+The schema and confirmation services are unchanged; public CI remains separate.

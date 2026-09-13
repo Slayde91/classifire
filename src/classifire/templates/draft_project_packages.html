@@ -23,7 +23,15 @@
 {% for source_id, filename in docx_sources.items() %}<label><input type="checkbox" name="docx_sources" value="{{ source_id }}"{% if source_id in chosen.docx_sources %} checked{% endif %}>{{ filename }}</label>{% endfor %}</fieldset>{% endif %}
 {% if native_proposal_choices %}<fieldset><legend>AI proposal history (optional, up to {{ max_native_proposals }})</legend>
 <p>Selected history includes your question, included conversation, disclosed context and generated reply. It can contain private project, technical or pricing information. A recorded decision is captured exactly as selected; it does not grant technical approval. Original files stay separately selected above. Nothing is selected automatically.</p>
-{% for item in native_proposal_choices %}<label style="display:flex;gap:.6rem"><input type="checkbox" name="native_proposals" value="{{ item.value }}"{% if item.selected %} checked{% endif %} style="width:auto"><span>Proposal {{ item.id }} &middot; base Scope {{ item.base_revision }} &middot; {{ item.saved_at }}<br>{% if item.has_decision %}Include the recorded decision (verified at preview){% else %}No decision selected{% endif %}</span></label>{% endfor %}
+{% for item in native_proposal_choices %}
+<label for="native-history-{{ item.id }}">Proposal {{ item.id }} &middot; base Scope {{ item.base_revision }} &middot; {{ item.saved_at }}</label>
+<select id="native-history-{{ item.id }}" name="native_proposals">
+<option value=""{% if not item.selected %} selected{% endif %}>Do not include this proposal</option>
+<option value="{{ item.id }}:none"{% if item.selected and item.value == item.id ~ ':none' %} selected{% endif %}>Include proposal only (no decision)</option>
+{% if item.decision_value %}<option value="{{ item.decision_value }}"{% if item.selected and item.value == item.decision_value %} selected{% endif %}>Include proposal and recorded decision (verified at preview)</option>{% endif %}
+</select>
+{% endfor %}
+<p>Proposal only omits the decision from this package; it does not mean that no decision exists.</p>
 </fieldset>{% endif %}
 {% if has_permission('technical:read') %}
 <fieldset><legend>Saved system reviews (optional, up to {{ max_selected_matches }})</legend>

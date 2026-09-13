@@ -69,6 +69,8 @@ def _query(request: Request, latest: int) -> dict:
         references.append({"match_id": identity, "match_revision": _number(revision)})
     history = []
     for history_value in query.getlist("native_proposals"):
+        if history_value == "":
+            continue  # The form explicitly leaves this proposal out.
         identity, separator, decision = history_value.partition(":")
         if not separator or not identity or not decision:
             raise HTTPException(422, "Choose an exact saved proposal and decision")
