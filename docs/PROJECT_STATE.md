@@ -7,6 +7,27 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Local evidence and proposal test review
+
+`docs/native-evidence-review-20260914` extends `ef790d1`. Eight complete intake,
+evidence, proposal and responsiveness test files were manually reviewed. Their
+unchanged Git content matches 90 passing, unskipped cases in the completed
+`1aeded3` full-suite JUnit record. This is verified prior execution, not a new
+current-checkout test run. No new application defect was found and no application
+code or tests changed.
+
+The reviewed assertions cover exact original/image bytes, selected context and
+consent, format/purpose separation, current scan/access checks, unchanged protected
+tables, preserved unknowns and blank openings, separate signed Scope confirmation
+and replay refusal. The responsiveness test uses a held reader, not a database
+lock. Injected scanners/replies do not prove detection or report accuracy, technical
+suitability, rendered-browser or real-provider/live acceptance.
+
+Private evidence in `native-evidence-review-validation-20260914` under .tmp ties
+each reviewed file to its Git object and JUnit cases. Recorded manual coverage is
+70 of 84 files; five test files and nine documents remain. Public approval still
+covers only `d864c51`; no publication, activation or new provider execution occurred.
+
 ## Local rejection display correction
 
 `fix/native-rejection-display-20260914` extends `567e5a9`. The frontend review

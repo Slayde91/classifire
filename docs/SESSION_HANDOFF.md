@@ -6,7 +6,22 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
-## Latest local rejection display correction
+## Latest local evidence/proposal review checkpoint
+
+`docs/native-evidence-review-20260914` extends `ef790d1`. Eight more complete test
+files were reviewed and their unchanged Git content matched to 90 passing cases
+in the completed `1aeded3` suite, with no matched skips. No new test execution or
+application change was needed. Exact bytes, consent, protected-state preservation,
+unknowns, separate confirmation and refusal cases are covered; synthetic inputs
+are not evidence of report accuracy or operational acceptance.
+
+The private `native-evidence-review-validation-20260914` folder under .tmp records
+70 of 84 reviewed files. Finish the remaining package/history, Scope edit and closed
+PDF review test files, then the nine documents; rendered-browser acceptance also
+remains. Existing PR271 stays at approved `d864c51` with failed CI. Its separate
+`8bce0b0` test correction and all later local work still need public approval.
+
+## Prior local rejection display correction
 
 `fix/native-rejection-display-20260914` extends `567e5a9`. A delayed rejection
 could remove a newer opened proposal's review controls. Cleanup now targets only
