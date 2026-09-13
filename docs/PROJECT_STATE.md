@@ -1,11 +1,42 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-13 after merged PR #269, failed chat acceptance and verified
-rollback, and the bounded offline chat diagnostic fix.
+Reconciled 2026-09-13 after PR #270 post-merge cancellation and the first native
+Word attachment implementation/validation. Live chat remains rolled back.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
+
+## Native Word attachment implementation checkpoint
+
+The first C2 interaction is implemented in an isolated checkout based on merge
+`97c07786355bbe938696aee56131e3f7aefe9dc6`. The existing panel can retain a selected
+DOCX in an existing Draft, show source status, explicitly scan, inspect paged text
+and retained pictures, and reopen the source. Same-byte upload reuses its binding;
+Scope and AI messages do not change implicitly. This adds a thin session adapter,
+panel controls and regression coverage, without schema, dependency or plugin changes.
+
+Validation passed 108 affected Word/client/chat/migration tests with the selected
+checkout PYTHONPATH and a fresh basetemp on disposable PostgreSQL15433. Full Ruff,
+Mypy (234 source files), scoped Bandit and JavaScript syntax checks passed. A separate
+synthetic Chrome journey and server restart verified the visible controls, exact
+original bytes, unchanged Scope and zero provider calls. Desktop and narrow-screen
+screenshots were inspected. The scanner was injected; this is not real malware,
+provider, customer-accuracy or full C2 acceptance. Verify publication from actual
+Git/PR/CI evidence; these local checks are not publication or activation receipts.
+
+C1 diagnostic commit `5454b36` merged through PR #270 as `97c0778`, with full-tree
+equality and 2,450 passing PR tests. Its existing post-merge run
+[34753856708](https://github.com/Slayde91/classifire/actions/runs/34753856708)
+**cancelled at the 45-minute limit**. The log shows continuing progress through 52%
+without a final test summary; no full pass or single-test root cause is established.
+The run was not restarted. New operational test/activation approvals remain absent,
+and activation is blocked. A private unapproved wrapper revision corrected an
+offline-proven TLS environment mismatch; this does not explain the historical502.
+
+Live8820 remains on rollback `6c1e2a4` with chat disabled. Preserve the conflicted
+root, pinned candidate/rollback checkouts and all historical receipts. Complete
+C2 evidence disclosure and typed review next while resolving the CI gate separately.
 
 ## Current position
 
@@ -459,12 +490,14 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-1. **C1 - Diagnose and revalidate advisory chat.** Publish the bounded diagnostic
-   fix after exact CI/reviews. Prepare one exact synthetic follow-up test and
+1. **C1 - Complete successful post-merge CI and revalidate advisory chat.** The
+   diagnostic fix is merged, but its post-merge run cancelled. Diagnose the broader
+   slowdown without counting cancellation as a pass. Prepare one exact synthetic follow-up test and
    conditional activation with fresh recovery proofs for explicit approval.
    All earlier provider-call allowances are consumed. Preserve the failed browser
    attempt and successful rollback; do not infer its cause or retry silently.
-2. **C2 - Build native chat report intake and Scope review.** Reuse the existing
+2. **C2 - Complete report analysis and Scope review.** Native DOCX attachment,
+   status, explicit scan and evidence inspection are implemented. Reuse the existing
    intake/scan/Word review/client-request/package services, beginning with one
    supported synthetic DOCX. Finish the visible attachment-to-confirmed-Scope-to-ZIP
    journey from the [assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).

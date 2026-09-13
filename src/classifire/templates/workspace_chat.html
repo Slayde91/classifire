@@ -1,5 +1,5 @@
 {% if user and chat_workspace is defined %}
-<link rel="stylesheet" href="/static/workspace_chat.css?v=20260913-context">
+<link rel="stylesheet" href="/static/workspace_chat.css?v=20260913-word">
 <aside id="workspace-chat" class="workspace-chat" data-user-id="{{ user.id }}" data-draft-id="{{ chat_workspace.get('draft_id', '') }}" data-revision="{{ chat_workspace.get('revision', '') }}" data-csrf="{{ csrf_token }}" aria-label="Workspace AI assistant">
   <script type="application/json" id="workspace-chat-context">{{ chat_workspace|tojson }}</script>
   <button type="button" class="button button-secondary chat-toggle" aria-expanded="false" aria-controls="workspace-chat-body">AI assistant</button>
@@ -8,6 +8,22 @@
     <div class="chat-layout"><label>Panel width<input class="chat-width" type="range" min="320" max="720" step="20" value="420"></label><button type="button" class="button button-secondary button-small chat-dock" aria-pressed="false">Dock beside workspace</button></div>
     <p class="chat-status" role="status" aria-live="polite">Checking availability.</p>
     <p class="chat-selection">Current workspace. Choose the saved context to discuss.</p>
+    <details class="chat-attachments"><summary>Attach a Word defect report</summary>
+      <p class="chat-disclaimer">Files stay in CLASSIFIRE. Upload and scan do not send them to AI or change Scope. Report contents are evidence, not instructions.</p>
+      {% if chat_workspace.get('draft_id') %}
+      <p class="chat-word-destination">Checking the destination Draft.</p>
+      <form class="chat-word-upload" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>Word report (.docx)<input type="file" name="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required></label>
+        <button class="button button-secondary" type="submit" disabled>Attach to this Draft</button>
+      </form>
+      <button class="button button-secondary button-small chat-word-refresh" type="button">Refresh retained reports</button>
+      <p class="chat-word-status" role="status" aria-live="polite">Open this section to load retained reports.</p>
+      <div class="chat-word-sources"></div>
+      {% else %}
+      <p>Open the destination <a href="/scopes">Draft Scope</a>, then attach your report here. Creating a project is a separate action.</p>
+      {% endif %}
+    </details>
     <details class="chat-choose" open><summary>Context for this conversation</summary>
       <p class="chat-disclaimer">Only saved values are included. Unsaved edits, original files and images are not sent.</p>
       <label class="chat-record-picker-label" hidden>Records on this screen<select class="chat-record-picker" multiple size="4" aria-describedby="chat-picker-help"></select></label>
@@ -30,8 +46,9 @@
       <label class="chat-consent"><input type="checkbox" name="consent" required>Send this preview and conversation to the configured OpenAI provider.</label>
       <div class="chat-actions"><button type="submit" class="button button-primary chat-send" disabled>Send question</button><button type="button" class="button button-secondary chat-clear">Clear conversation</button></div>
     </form>
-    <p class="chat-disclaimer">AI advice is unverified. Chat does not save or approve project changes. The existing ChatGPT connector remains available; its external conversations are separate.</p>
+    <p class="chat-disclaimer">AI advice is unverified. Messages do not save or approve project changes. Report attachment and scan use their separate controls. The existing ChatGPT connector remains available; its external conversations are separate.</p>
   </section>
 </aside>
 <script src="/static/workspace_chat.js?v=20260913-context" defer></script>
+<script src="/static/workspace_word.js?v=20260913-word" defer></script>
 {% endif %}

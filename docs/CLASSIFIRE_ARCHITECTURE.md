@@ -30,6 +30,8 @@ Its validation/publication status is tracked separately; no schema or authority 
 flowchart TD
   UI[Standalone browser UI] --> APP[FastAPI routes and application commands]
   PANEL[Native workspace chat panel] --> READ[Permission-checked selected saved context]
+  PANEL --> WORD[Explicit Word attachment / scan / inspection]
+  WORD --> APP
   READ --> PORT[Optional bounded Responses transport]
   PORT --> ADVICE[Unverified advice with references and unknowns]
   CHAT[ChatGPT MCP client] --> AUTH[OAuth and local identity/permission checks]
@@ -61,7 +63,7 @@ untrusted evidence without saving Scope or granting approval.
 | Layer | Implemented components and responsibility |
 | --- | --- |
 | Interfaces | FastAPI/Jinja UI (`ui.py`, `draft_scope_ui.py`, format-specific review routes), API/CLI and optional `draft_client.py` MCP mounting |
-| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; current chat endpoints accept context/message only, with no attachment or mutation action |
+| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; advisory endpoints accept context/message only; a separate thin session adapter adds explicit Word retain/scan/inspection controls over existing services, without Scope edits or provider disclosure |
 | Authentication | Existing user/session/CSRF checks plus `draft_client_auth.py` and explicit client policy; verified external identity maps to an active local user. Exact resource/issuer/signature/time/scope checks; approved optional nbf/Auth0 compatibility does not remove permission checks |
 | Application commands | `services/draft_client_requests.py` and `draft_client_capabilities.py` create typed durable requests; browser confirmation rechecks rights, owner, dependencies and expected state before executing the shared service |
 | Scope | `draft_scope.py`, `draft_scope_evidence.py`, format review services and shared editor. Immutable revision envelopes with explicit evidence state and unknowns |
@@ -87,18 +89,23 @@ with selection-aware context and collapsible/resizable layout.
 revisions through authenticated readers, previews the data, then sends it to the
 existing advisory-only Responses transport after consent. Separately, the existing
 external ChatGPT/MCP client can request intake/scan and prepare durable Draft changes
-for same-user browser confirmation. Ordinary UI intake/review already uses the same
-domain services. The existing plugin is retained.
+for same-user browser confirmation. Ordinary UI intake/review uses the same domain
+services. The native panel now also
+retains Word reports, explicitly scans them and pages through retained text/pictures
+via `draft_workspace_word_ui.py`; these controls never call the advice transport.
+The existing plugin is retained.
 
-**Proposed extension:** add report attachment/status and typed action review to the
-native panel using those existing intake, scan, evidence-reader, proposal-request,
-confirmation and package services. Browser routes use the existing user session and
+**Proposed extension:** complete explicitly consented report analysis and typed
+action review beside the native attachment controls, using existing evidence-reader,
+proposal-request, confirmation and package services. Browser routes use the existing
+user session and
 CSRF checks; external clients retain their OAuth scope/policy checks. The browser
 does not need to loop through external MCP or acquire a second identity.
 
-**Reason:** selected-record advice is implemented, but the panel has no attachment
-input or Draft mutation endpoint. Users otherwise have to move between separate
-controls to complete the report-to-Scope journey.
+**Reason:** selected-record advice and local Word attachment/inspection are
+implemented, but report content is not yet part of the model contract and the panel
+cannot prepare or confirm Scope changes. The complete report-to-Scope journey
+still needs those distinct review and disclosure boundaries.
 
 **Consequences:** distinguish local attachment/intake, explicitly requested scan,
 provider disclosure/consent, analysis proposal, human Draft confirmation and package
@@ -114,9 +121,11 @@ supported PDF and XLSX. Approved technical-source and commercial-library ingesti
 retain their distinct purpose, rights and authority; attaching a defect report
 does not import it as a trusted technical or pricing library.
 
-**Migration impact:** this reconciliation changes documentation only. The first
-implementation should reuse retained sources, immutable Draft revisions and durable
-client requests. No new table, migration, vector store, agent framework or transcript
+**Migration impact:** the native attachment increment reuses retained sources and
+existing Word readers without changing tables, migration history or dependencies.
+Later proposal work should reuse immutable Draft revisions and the applicable
+session/client review boundaries. No new table, migration, vector store, agent
+framework or transcript
 store is required by this decision. If a demonstrated gap requires persistence
 changes, document compatibility and use a forward migration before activation.
 This refines the interface under ADRs 0001/0002; their domain/authority rules remain.

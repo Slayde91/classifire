@@ -6,6 +6,20 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
+## Current native attachment checkpoint
+
+Work is isolated in `.tmp/native-word-attachments-20260913`, branch
+`feat/native-word-attachments-20260913`, based on merge `97c0778`. The first native
+DOCX attachment/scan/inspection interaction passed 108 affected tests and a synthetic
+browser/restart check. No provider call or live activation was performed. See
+[PROJECT_STATE.md](./PROJECT_STATE.md#native-word-attachment-implementation-checkpoint)
+for measured results and the remaining C2 boundaries.
+
+Diagnostic PR #270 is merged, but existing post-merge run 34753856708 cancelled at
+45 minutes with last complete progress at 52%. It was not restarted and is not a
+pass. Live8820 remains on `6c1e2a4` with chat disabled. A separate exact operational
+approval and successful CI remain required for diagnostic testing/activation.
+
 ## Verified publication
 
 - Workspace PR #260 merged as `3eabb23`; exact-head and post-merge CI passed 2,113
@@ -281,31 +295,36 @@ The approved six-document commit 95d90de was pushed and merged through PR #269 a
 89e58ef after successful PR CI 34747466912. No post-merge run for that merge was visible
 at diagnosis; do not claim it passed or trigger another job to replace missing evidence.
 
-Diagnostic work is isolated in .tmp/workspace-chat-diagnostics-20260913, branch
-fix/workspace-chat-diagnostics-20260913, based on shared main 89e58ef. It changes the
-existing transport, synthetic tests and affected status documents. 77 chat tests and
-full Mypy over 233 source files passed locally. Inspect actual Git/PR/CI evidence for
-publication; this text is not a merge receipt. Private operational helpers/receipts
-stay outside Git. The root retains 46 unstaged modifications, 14 staged additions and
-four DU conflicts.
+Diagnostic commit `5454b36` is published through PR #270 as `97c0778`; preserve
+its pinned checkout and unapproved operational plan. The new attachment branch
+contains the thin Word browser adapter, native panel controls, synthetic tests and
+six reconciled documents. Private browser fixtures, screenshots, retained originals
+and CI receipts stay outside Git. The root retains 46 unstaged modifications,
+14 staged additions and four DU conflicts; preserve its unrelated untracked files.
 
-Next valid work is exact CI/publication and a newly approved bounded diagnostic test,
-then conditional activation only after its gates pass. C2 report intake and C3
-reviewed page actions remain planned; production accuracy and phase exits incomplete.
+The next implementation slice is explicit bounded evidence disclosure and typed
+Scope review inside the panel, while resolving the CI reliability gate separately.
+Inspect exact branch/PR status before publication or merging. Do not count the first
+attachment interaction as complete C2, representative accuracy or production readiness.
 
 ## Copy-ready next-session prompt
 
-Continue CLASSIFIRE from current repository and receipts. Read AGENTS.md, GOAL.md,
-PROJECT_STATE, architecture, roadmap and EMBEDDED_WORKSPACE_CHAT. Preserve the
-conflicted root, both pinned runtime checkouts and original plans. Reconcile
-fix/workspace-chat-diagnostics-20260913 with GitHub and poll existing jobs; never
-restart just because observation timed out. PR #269 merged 95d90de as 89e58ef after
-successful PR CI. The 7dbc1cc activation failed its second browser reply and rolled
-back to 6c1e2a4 with chat disabled. Fresh recovery/browser/ZIP checks passed; domain
-data and storage are intact. The old 502 cause is unknown. All earlier provider-call
-allowances are consumed. Verify 77 offline chat tests and diagnostic publication.
-Execute new real requests or activation only under fresh exact approval. C2 remains
-native chat DOCX attachment/status/inspection, typed Scope proposal, separate human
-confirmation, reopening and distinct package confirmation/exact ZIP; C3 adds reviewed
-selected-record actions. Reuse existing services and preserve unknowns, blank openings,
-unresolved links and completed Word confirmations. Record actual results/limitations.
+Continue CLASSIFIRE from current repository evidence. Read AGENTS.md, GOAL.md,
+docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md, docs/CLASSIFIRE_ROADMAP.md
+and EMBEDDED_WORKSPACE_CHAT. The requested shorter architecture/roadmap filenames
+are absent; these are the existing canonical documents. Preserve the conflicted
+root and pinned runtime/diagnostic checkouts. Reconcile
+feat/native-word-attachments-20260913 with GitHub and inspect its actual PR/CI.
+It implements native DOCX retention, status, explicit scan and paged text/picture
+inspection; 108 affected tests and synthetic browser/restart checks passed.
+Report content still does not enter AI requests; native typed Scope proposals and
+separate confirmations/package download remain to be completed. Reuse existing
+services and preserve unknowns, blank openings and unresolved links. PR #270 merged
+5454b36 as 97c0778 after successful PR CI, but its post-merge run 34753856708 cancelled
+at 45 minutes without a final test summary. Do not restart jobs merely because
+observation timed out or infer a billing/single-test cause. Live8820 remains on
+rollback6c1e2a4 with chat disabled. Old provider allowances are consumed; new real
+requests/activation require a fresh exact approval and successful applicable CI.
+Use selected-checkout PYTHONPATH, fresh basetemp and disposable15433 for tests.
+Inspect/classify explicit files, publish/merge only within authority and successful
+required CI/reviews, and record actual results and remaining production gates.

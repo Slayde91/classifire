@@ -212,16 +212,19 @@ not dedicated A/B ingestion, bulk technical extraction or a pricing inference en
 
 ## Immediate delivery priority
 
-Resolve the advisory panel's failed follow-up through safe diagnostics and offline
-checks, then complete newly approved synthetic testing and guarded activation.
+The safe diagnostic fix is merged in PR #270. Its post-merge run cancelled at the
+45-minute limit without a final test summary; activation remains blocked. Establish
+successful exact CI before separately approved provider testing and guarded activation.
 In parallel, make the next product slice the in-app chat report journey: one supported synthetic DOCX
 attachment through retained evidence, explicit scan/read, a typed Scope proposal,
 separate human confirmation, reopening and a separately confirmed original-bearing
 ZIP. Extend the same interaction to supported PDF and XLSX intake without rebuilding
 their existing services or silently accepting unsupported layouts.
 
-Selection-aware advice is implemented; chat attachments and reviewed page-changing
-actions remain to be built. Follow C1-C3 in the
+Selection-aware advice and the first native DOCX attachment/scan/inspection slice
+are implemented. Evidence-to-AI disclosure, typed Scope proposals and reviewed
+page-changing actions remain to be built; the complete C2 journey is not finished.
+Follow C1-C3 in the
 [roadmap](./docs/CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
 [PROJECT_STATE.md](./docs/PROJECT_STATE.md#recommended-next-actions) for exact status.
 Preserve completed Word project/Scope/package confirmations and the existing connector.

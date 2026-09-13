@@ -117,8 +117,8 @@ No connector rebuild or new ChatKit dependency is required by this intention.
 | User need | Current evidence | Required extension |
 | --- | --- | --- |
 | Ask about selected page data | Native typed selectors, preview/consent and advisory replies implemented | Complete separately approved real browser activation/acceptance |
-| Attach a defect report in chat | Existing PDF/Word/XLSX UI/client intake services; no file input in the chat panel | Native attachment control and retained-source/status cards using existing intake |
-| Read report evidence while discussing it | Existing format readers; current chat sends saved text context only | Explicit source text/image selection, bounded evidence preview and provider consent |
+| Attach a defect report in chat | Native DOCX attachment, retained-source/status cards and explicit scan now reuse existing Word intake; saved sources reopen without chat memory | Complete the wider C2 journey, then extend to supported PDF/XLSX |
+| Read report evidence while discussing it | Native panel pages through retained Word text and pictures under current scan/access checks; current chat sends saved text context only | Explicit evidence selection, bounded model input preview and provider consent |
 | Propose and confirm a page change | Existing typed client requests and browser confirmation; native chat has no write action | Supported action routing, review/diff card and distinct human confirmation |
 | Download a reviewed result | Existing exact saved packages and original-bearing ZIPs | In-context access to the same package review, separate confirmation and exact download |
 
@@ -194,3 +194,33 @@ and unresolved links. No downstream capability runs implicitly. Use synthetic da
 selected-checkout PYTHONPATH and fresh test directories; database tests use disposable
 15433, never live15432. Real-provider/customer evidence and operational activation
 retain their separately approved scope.
+
+## First native Word attachment increment
+
+`draft_workspace_word_ui.py` is a thin browser adapter over `word.intake()` and the
+existing Word picture route. It uses the current session, write/read permissions,
+CSRF and shared bounded multipart reader. It does not call external MCP or create
+another identity, parser, database, source model or provider transport.
+
+Open an existing Draft, open the assistant, then expand **Attach a Word defect
+report**. The destination and accepted size are shown before upload. Explicit scan
+and inspection use separate controls; text is paged in groups of five blocks with
+structural locators, and pictures use the existing exact-byte reader. Duplicate
+same-Draft uploads reuse the source. Current permission determines which write
+controls are available; all operations recheck server authority. Source status is
+processing state, not technical approval, and an expired or changed scan can still
+refuse a later read. Source text is rendered as text, never executed as instructions.
+
+The generated synthetic browser journey verified upload without scan/AI, duplicate
+reuse, explicit scan, retained text/picture inspection, unchanged Scope, exact
+original bytes, question preservation, collapse/dock/resize, narrow layout and
+reopening after the isolated server restarted. It used disposable PostgreSQL15433
+and an injected scanner verdict; it is not real malware or provider acceptance.
+All 108 affected Word/client/chat/migration cases passed. Full Ruff, Mypy over 234
+source files, scoped Bandit and JavaScript syntax checks passed.
+
+This is the first C2 interaction, not the complete report-to-Scope exit. Report
+contents/images still do not enter the advice request. Native typed proposal,
+same-user Scope confirmation and separate package confirmation/download remain
+later increments. Existing manual Word review is available through its own link.
+Live8820 remains on the rollback build; this feature has not been activated.
