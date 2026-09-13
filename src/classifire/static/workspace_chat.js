@@ -202,6 +202,7 @@
     panel.querySelector(".chat-context pre").textContent=JSON.stringify(context,null,2);summary.hidden=false;
   }
   const history = panel.querySelector(".chat-proposal-history");
+  let proposalOpenRequest = 0;
   const historyBase = selector.draft_id ? `/scopes/${encodeURIComponent(selector.draft_id)}/native-proposals` : "";
   async function historyRequest(url, options={}) {
     const response=await fetch(url,{credentials:"same-origin",cache:"no-store",...options});
@@ -217,9 +218,13 @@
         button.textContent=`Open proposal saved ${row.saved_at} (Scope ${row.base_revision})`;
         button.addEventListener("click",async()=>{
           button.disabled=true;
+          let requestEpoch=epoch;
+          const requestId=++proposalOpenRequest;
           try {
             const saved=await historyRequest(`${historyBase}/${encodeURIComponent(row.id)}`);
-            reset(true);const document=saved.document;
+            // Clearing/changing context or choosing another proposal invalidates this read.
+            if(requestEpoch!==epoch || requestId!==proposalOpenRequest)return;
+            reset(true);requestEpoch=epoch;const document=saved.document;
             showContext(document.context);message("user",document.request.question);
             message("assistant",`${document.response.answer}\nUncertainty: ${document.response.uncertainty.join("; ")}`);
             if(saved.can_review){const lineage={id:row.id};showProposal(document.response.proposal,lineage);showEdits(document.response.edit_proposal,lineage);}
@@ -227,7 +232,9 @@
             const disclosure=window.document.createElement("details"),title=window.document.createElement("summary"),raw=window.document.createElement("pre");raw.className="chat-history-json";title.textContent="Retained generation record and original context";raw.textContent=JSON.stringify(document,null,2);disclosure.append(title,raw);messages.append(disclosure);
             showDecision(saved,row.id);
             report(saved.notice);ready=false;form.elements.consent.checked=false;buttons();
-          }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
+          }catch(error){
+            if(requestEpoch===epoch && requestId===proposalOpenRequest)status.textContent=error.message;
+          }finally{button.disabled=false;}
         });list.append(button);
       }
       status.textContent=result.proposals.length ? `${result.proposals.length} saved proposal(s). None is automatically applied.` : "No saved proposals for this Draft.";

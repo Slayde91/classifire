@@ -503,6 +503,14 @@ malware acceptance. Exact validation and publication state belong in PROJECT_STA
 
 ## Session and response failures
 
+Opening a saved proposal is tied to the current conversation context and latest
+proposal choice. Clearing the conversation, changing its context or choosing another
+proposal discards an older read's delayed content and errors. The last choice wins
+regardless of response order; no reply grants consent or runs another capability.
+A local race reproduction failed three checks before correction; all 29 Node VM
+checks now pass, including four delayed-response cases. This executes the shipped
+script against a synthetic DOM/event surface, not a rendered browser.
+
 The native panel treats same-origin login redirects and401 responses as an inactive
 session. It asks the user to sign in again and reload the workspace; it does not replay
 an upload, model request, proposal save or confirmation. Malformed JSON and unexpected

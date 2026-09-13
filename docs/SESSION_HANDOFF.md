@@ -6,6 +6,16 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
+## Latest local panel correction
+
+`fix/native-history-stale-open-20260914` extends `0dccc61`. It prevents a delayed
+saved-proposal read from restoring cleared context or overriding a newer choice.
+Three baseline failures reproduced; 29 Node VM checks pass with the correction.
+The 42 nearby chat/navigation/template/wrapper tests passed without failures or skips.
+Only the panel script, its cache version, synthetic tests and evidence docs change.
+Continue full-range review and browser acceptance; the public approval still covers
+only `d864c51`, and PR271's Word-only correction remains separately unapproved.
+
 ## Latest local acceptance checkpoint
 
 `test/native-stack-publication-review-20260914` extends `7778166` with direct Word/PDF

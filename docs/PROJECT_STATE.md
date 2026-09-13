@@ -7,6 +7,24 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Local saved-proposal display race correction
+
+Review of the unpublished native panel reproduced delayed saved-proposal replies
+restoring cleared conversation text and an older reply replacing the newest choice.
+`fix/native-history-stale-open-20260914` checks the current context and latest explicit
+proposal choice before displaying either content or errors. Three baseline checks
+failed; all 29 shipped-script Node VM checks pass after correction, including four
+race cases. The script cache version is advanced. No backend, schema, provider or
+confirmation boundary changed. Private reproduction and verification evidence is in
+`native-history-stale-open-validation-20260914` under .tmp. Browser initialization
+still fails before interaction; rendered acceptance and full-range manual publication
+review remain incomplete. This correction and its newer ancestors remain unpublished.
+
+The 42 nearby chat, navigation, template and JavaScript-wrapper tests also passed
+with no failures or skips using this checkout's PYTHONPATH and fresh basetemp.
+JavaScript syntax, diff and 35 documentation-link checks passed. No live database,
+provider, activation or public Git action was performed.
+
 ## Local Word/PDF package-history acceptance
 
 The isolated `test/native-stack-publication-review-20260914` branch adds direct Word
