@@ -212,9 +212,9 @@ not dedicated A/B ingestion, bulk technical extraction or a pricing inference en
 
 ## Immediate delivery priority
 
-Finish the approved activation and real synthetic browser acceptance of the merged
-native advisory panel when its exact CI and recovery gates pass. In parallel, make
-the next product slice the in-app chat report journey: one supported synthetic DOCX
+Resolve the advisory panel's failed follow-up through safe diagnostics and offline
+checks, then complete newly approved synthetic testing and guarded activation.
+In parallel, make the next product slice the in-app chat report journey: one supported synthetic DOCX
 attachment through retained evidence, explicit scan/read, a typed Scope proposal,
 separate human confirmation, reopening and a separately confirmed original-bearing
 ZIP. Extend the same interaction to supported PDF and XLSX intake without rebuilding

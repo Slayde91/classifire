@@ -88,11 +88,27 @@ started on the exact same merge commit. Attempt2 passed
 files), Bandit and the single migration-head check; exact hosted output was read.
 This authorized retry is distinct from restarting because observation timed out.
 
-Live8820 remains the approved 6c1e2a4 build with workspace chat disabled. The approved
-7dbc1cc post-merge CI gate is now satisfied; activation still requires fresh matched backup,
-disposable15433 restore verification, guarded restart and real synthetic browser
-acceptance. Earlier project, Scope and package confirmations remain separate and
-complete. The documentation branch does not change the activation candidate.
+The approved 7dbc1cc activation was attempted after successful CI and fresh
+backup/disposable 15433 restore. Startup and the first browser reply passed; the
+follow-up returned HTTP 502. No retry occurred. Both browser sends are consumed.
+The transport erased the failure category, so the historical cause is unknown;
+neither billing nor a timeout is established.
+
+Rollback to 6c1e2a4 with chat disabled passed fresh recovery, restart and browser
+checks. Scope revision 2, Word text/image and the original-bearing ZIP remained exact.
+All domain rows, schema and storage were preserved; only login timestamps and one
+package-download audit event changed. No migration or live database restore occurred.
+Existing project, Scope and package confirmations remain complete. The first reply
+also broadened uncertainty about source-described separate openings; that unverified
+wording did not change saved records or establish report accuracy.
+
+The current diagnostic fix records fixed failure category, elapsed time, received
+byte count, HTTP status when available and a random per-request reference. No
+exception text, body/header, conversation, context or credential is logged.
+Browser errors, model, time/token limits, no tools, no retries and confirmation
+boundaries are unchanged. Offline validation passed 77 chat cases, including the
+reproduced missing-diagnostic regression and synthetic follow-up/partial-read failures.
+Any further provider test and activation need a fresh explicit approved plan.
 
 Private exact approval/test/activation receipts are retained under
 .tmp/workspace-chat-activation-7dbc1cc-20260913; no credential values or customer
@@ -245,17 +261,15 @@ these completed fixtures.
 
 ## Runtime and approval boundaries
 
-Live8820 remains accepted source6c1e2a4. The owner separately approved the exact
-7dbc1cc activation plan and one synthetic gpt-5-mini connection request; that request
-passed and must not be repeated under its consumed one-call approval. Complete the
-remaining recovery/live browser gates before completing activation. The owner also explicitly
-authorized retrying the stalled post-merge run; attempt2 has now passed. Retain
-attempt1 as cancelled and preserve the separate initial PR failure.
+Live 8820 was restored to 6c1e2a4 with chat disabled after the failed 7dbc1cc
+follow-up. Preserve both private activation/rollback receipts and failed observer
+attempts; corrected read-only checks passed. The original single connection request
+and both browser sends are consumed.
 
-This documentation-only branch is not a new activation candidate. Do not overwrite
-the pinned application checkout, repin its plan, rerun completed confirmations or
-reuse expired prestart/backup proofs. No OAuth/tunnel/allowlist or customer-report
-execution is authorized by document reconciliation.
+The current user authorized diagnosis, evidenced fixes, offline tests and normal
+Git publication/merge after successful CI/reviews. New provider requests and activation
+require a separate exact approved plan. Preserve pinned runtime checkouts and old
+plans; no OAuth/tunnel/allowlist or customer-report operation is included.
 
 Other preserved synthetic demos: 8840 integrated workspace,8841 row authoring,
 8842 packages,8843 Scope reports. Only 8844 was restarted for this Complete acceptance.
@@ -263,36 +277,35 @@ PostgreSQL tests use disposable 15433/classifire_containment_test, never live 15
 
 ## Classification and next action
 
-Documentation work is isolated in .tmp/chat-upload-design-docs-20260913, branch
-docs/chat-upload-design-20260913, based on shared main a7e2e7a. Its explicit scope is
-GOAL.md, CLASSIFIRE_ARCHITECTURE.md, CLASSIFIRE_ROADMAP.md, EMBEDDED_WORKSPACE_CHAT.md,
-PROJECT_STATE.md and this handoff. Inspect current GitHub PR/CI state for publication;
-do not infer this documentation change is merged merely because this text exists.
-Private validation/operator artifacts remain outside Git. The conflicted root and
-the clean tested activation checkout remain preserved.
+The approved six-document commit 95d90de was pushed and merged through PR #269 as
+89e58ef after successful PR CI 34747466912. No post-merge run for that merge was visible
+at diagnosis; do not claim it passed or trigger another job to replace missing evidence.
 
-Next valid work is the C1 operational gate and C2 native chat report journey described
-in [PROJECT_STATE.md](./PROJECT_STATE.md#recommended-next-actions). The latest request
-authorizes this documentation reconciliation; it does not itself execute the planned
-attachment/action implementation or authorize customer evidence use. Full production
-accuracy, physical entities/applicability, calibrated pricing, full portable history,
-scale/accessibility and protected phase exits remain incomplete.
+Diagnostic work is isolated in .tmp/workspace-chat-diagnostics-20260913, branch
+fix/workspace-chat-diagnostics-20260913, based on shared main 89e58ef. It changes the
+existing transport, synthetic tests and affected status documents. 77 chat tests and
+full Mypy over 233 source files passed locally. Inspect actual Git/PR/CI evidence for
+publication; this text is not a merge receipt. Private operational helpers/receipts
+stay outside Git. The root retains 46 unstaged modifications, 14 staged additions and
+four DU conflicts.
+
+Next valid work is exact CI/publication and a newly approved bounded diagnostic test,
+then conditional activation only after its gates pass. C2 report intake and C3
+reviewed page actions remain planned; production accuracy and phase exits incomplete.
 
 ## Copy-ready next-session prompt
 
-Continue CLASSIFIRE from verified repository and receipt state. Read AGENTS.md,
-GOAL.md, PROJECT_STATE, architecture, roadmap and EMBEDDED_WORKSPACE_CHAT. Preserve
-the conflicted C:/CLASSIFIRE root and pinned clean activation checkout. Reconcile
-the docs/chat-upload-design-20260913 branch/PR and poll its existing checks before
-merge; do not restart jobs just because observation timed out. Separately reverify successful
-post-merge run34737578361 attempt2 for a7e2e7a. The owner approved the exact 7dbc1cc
-activation plan; its one real gpt-5-mini synthetic connection test passed and may
-not be repeated. Activate only after exact CI and fresh approved backup/disposable
-15433 restore/restart/rollback proofs. Keep Scope/package confirmations separate.
-The next product design is native chat defect-report attachment/status/inspection,
-typed source-bound Scope proposals and explicit human confirmation, followed by
-reviewed actions on selected page records. Current chat supports selected saved
-text context and advice only; attachments/actions and evidence image transfer remain
-unimplemented. Reuse existing plugin/intake/review/package services and preserve
-unknowns, blank openings and unresolved links. Keep the current task's implementation,
-provider, customer-data and deployment authorizations distinct; record actual results.
+Continue CLASSIFIRE from current repository and receipts. Read AGENTS.md, GOAL.md,
+PROJECT_STATE, architecture, roadmap and EMBEDDED_WORKSPACE_CHAT. Preserve the
+conflicted root, both pinned runtime checkouts and original plans. Reconcile
+fix/workspace-chat-diagnostics-20260913 with GitHub and poll existing jobs; never
+restart just because observation timed out. PR #269 merged 95d90de as 89e58ef after
+successful PR CI. The 7dbc1cc activation failed its second browser reply and rolled
+back to 6c1e2a4 with chat disabled. Fresh recovery/browser/ZIP checks passed; domain
+data and storage are intact. The old 502 cause is unknown. All earlier provider-call
+allowances are consumed. Verify 77 offline chat tests and diagnostic publication.
+Execute new real requests or activation only under fresh exact approval. C2 remains
+native chat DOCX attachment/status/inspection, typed Scope proposal, separate human
+confirmation, reopening and distinct package confirmation/exact ZIP; C3 adds reviewed
+selected-record actions. Reuse existing services and preserve unknowns, blank openings,
+unresolved links and completed Word confirmations. Record actual results/limitations.

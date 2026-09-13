@@ -57,17 +57,43 @@ There is no remote tool invocation or automatic transition to another capability
 
 Implementation and exact validation results are recorded in PROJECT_STATE.md and
 private synthetic UAT receipts. Do not infer operational activation from publication.
-The running 8820 build remains the separately approved 6c1e2a4 while the approved
-7dbc1cc plan awaits fresh recovery verification and guarded activation.
+The running 8820 build was restored to 6c1e2a4 with chat disabled after 7dbc1cc passed
+startup and its first browser reply but failed the follow-up HTTP 502. Fresh recovery,
+browser reopening and exact Word ZIP checks passed. The historical cause remains
+unknown; all earlier provider requests are consumed. New testing and activation
+require a fresh exact approved plan.
 
 The native panel uses the application's configured OpenAI API connection. The
 existing external connector makes CLASSIFIRE tools available inside ChatGPT; it is
 not a browser widget or a credential for this application's model requests.
-A protected application configuration and one real synthetic gpt-5-mini transport
-reply have now been verified under separate owner approval. The existing synthetic
-browser proof used injected replies; real live-panel acceptance still depends on
-successful post-merge CI and the approved activation/recovery plan. Neither proof
-establishes customer accuracy. See PROJECT_STATE.md for the exact checkpoint.
+Protected gpt-5-mini configuration and one synthetic connection reply were verified
+before activation. The live first reply preserved unknown fields but broadened
+uncertainty about a source-described separate opening. Neither that response nor
+injected browser tests establish customer accuracy.
+
+### Bounded failure diagnosis
+
+The existing Responses adapter records one server warning on transport/response
+failure: fixed reason category, random locally generated request UUID, HTTP status
+when available, elapsed milliseconds and accepted response-byte count. The UUID is
+also sent as X-Client-Request-Id and contains no user/project identity. No exception
+text/traceback, provider header/body, prompt, reply, source/context, credential or
+free-form error data enters this warning. Successful advice is not logged.
+
+Categories distinguish network/timeouts, HTTP rejection, unsupported content/encoding,
+byte/time limits, invalid JSON, incomplete response, unexpected output/refusal and
+invalid advice. HTTP status is only an observation: 429 alone cannot distinguish
+quota from rate limiting. The browser retains CHAT_PROVIDER_FAILED without diagnostic
+internals. Model, time/token limits, no tools, no retries and admission boundaries
+are unchanged. No database or conversation store is introduced.
+
+This extends the current transport only for diagnosis because masking distinct
+failures prevented targeted correction. Migration impact: none. Offline mocks verify
+redaction, one-call failures, follow-up separation, partial reads and cleanup. The new
+diagnostic can identify a recurring failure class; it cannot reconstruct the older
+redacted 502. OpenAI documents [error categories](https://developers.openai.com/api/docs/guides/error-codes)
+and [client request references](https://developers.openai.com/api/reference/overview#debugging-requests).
+These mechanisms do not grant permission for automatic retries.
 
 Original documents, source pictures and complete technical files are not included
 in this context increment. Saved evidence references remain claims with explicit

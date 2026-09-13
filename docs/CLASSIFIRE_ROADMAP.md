@@ -21,7 +21,7 @@ P0-P6 are bounded Draft milestones, not completion of production Phases 0-16.
 | Completed bounded implementation | PDF/Excel/Word retained inspection/review, Scope v7, selected originals and ProjectPackage v6; Word PRs #252-#254 and multi-review PRs #263/#264 are merged |
 | Completed bounded implementation | Integrated register, row authoring, exact source inspection, imported-original navigation and Complete multi-review reports are merged through PR #265; PR #266 corrected a test clock/CI ceiling and PR #267 reconciled that activation |
 | Completed bounded implementation; operational acceptance pending | PR #268 adds the shared native advisory panel, typed page/record context and bounded qualified conversation; chat has no attachment or mutation endpoint |
-| Approved operational work | C1: exact advisory-panel activation plan and one synthetic provider test approved. The test passed; post-merge CI/recovery/live browser gates remain separately observed in PROJECT_STATE |
+| Active diagnosis; new operational approval required | C1: activation failed its second browser reply and rollback passed. Safe diagnostics are under validation/publication; earlier provider-call allowances are consumed. New test/activation needs an exact approved plan |
 | Next implementation slice | C2: native chat defect-report attachment, retained-source/status display, explicit scan/read, typed Scope proposal and separate human confirmation; reuse existing intake/review/package services |
 | Following bounded slice | C3: user-requested reviewed actions on selected page records, reusing authenticated typed commands and confirmation; advice never writes implicitly |
 | Completed bounded implementation | A/B profiles/review, A observations, B identity mapping, T9 coverage, T6 recipes, T13 roster and governed Scope quantity basis; preserve the independent technical/pricing track |
@@ -47,7 +47,7 @@ catalogues or grant canonical exits. Exact status belongs in
 
 | Slice | Deliverable and dependency | Exit evidence |
 | --- | --- | --- |
-| C1 - Advisory panel operational acceptance | Already merged PR #268; retain approved tested version, secure server-side model configuration, exact CI and fresh backup/disposable restore/restart/rollback gates | Actual synthetic browser selection -> preview/consent -> real reply/follow-up; preserved unknowns and domain state. One transport reply alone does not satisfy this exit |
+| C1 - Advisory panel operational acceptance | PR #268 is merged; its live follow-up failed and rollback passed. Diagnose offline, then require a new exact test/activation approval, CI and fresh backup/disposable restore/restart/rollback gates | Actual synthetic browser selection -> preview/consent -> real reply/follow-up; preserved unknowns and domain state. One transport reply alone does not satisfy this exit |
 | C2 - Report to Scope through native chat | Add the attachment and source/status/review controls to the existing panel. Reuse supported intake, explicit scan, source readers, typed requests and same-user confirmation. Start with one bounded DOCX case, then supported PDF/XLSX. Synthetic implementation can proceed while C1 waits; real-provider/live acceptance retains its approval gates | Browser attachment -> clean retained text/image inspection -> explicitly previewed/consented analysis -> source-bound typed proposal -> distinct human confirmation -> updated register -> reopen -> distinct package confirmation -> exact original-bearing ZIP |
 | C3 - Reviewed actions on selected page records | Extend the same panel with a small supported action set over exact project/Defect/Opening/Service/multiple-row/review/Estimate/library/pricing selections. Reuse existing typed commands; state unavailable actions and prerequisites | Actual selected-record question and requested edit; inspect proposed diff; save only on separate confirmation. Stale selection/revision, changed rights, ambiguity and duplicate submit fail safely; other capabilities never run implicitly |
 
@@ -59,7 +59,7 @@ Blank openings remain valid with zero Services; unresolved links are held for re
 Retained source and revision identity survives reopening without requiring chat memory.
 
 Use selected-checkout PYTHONPATH and a fresh basetemp for affected chat/client/intake/
-review/package tests. Database tests use disposable15433, never live15432. Inspect
+review/package tests. Database tests use disposable 15433, never live15432. Inspect
 actual browser controls and exact source/ZIP bytes. Keep expensive real-report
 accuracy evaluation behind its separate rights, reference and Phase8/8C decisions.
 
