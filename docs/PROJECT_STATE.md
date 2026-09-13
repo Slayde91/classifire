@@ -35,11 +35,17 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   rules, assertions and all validation steps are unchanged; PR #255 is preserved.
   Local reproduction failed before the fix; both rollover cases passed afterwards.
   All 51 import/activation governance tests, targeted Ruff, diff and workflow
-  invariant checks passed. Existing hosted run `34728245700` is pending completion.
+  invariant checks passed. Hosted run `34728245700` then passed 2,399 tests and all
+  remaining checks. PR #266 merged as `96fdf7a932e61107af7c39262706337fcacc092b`;
+  its full tree equals tested `7c9b570`. Post-merge run `34729555434` is the separate
+  activation gate; verify its actual result before any deployment.
 - No workspace activation follows from publication. The old `9cdc4a4` activation
   bundle is blocked by failed post-merge CI. A successful exact candidate needs a
   reconciled plan, separate owner approval, fresh matched backup and disposable
-  restore verification. The approved diagnostic runtime remains separate.
+  restore verification. The new `7c9b570` plan is prepared and unapproved; its 47
+  isolated launcher guard cases passed, including a corrected helper-hash pin.
+  This does not prove an approved startup or fresh live recovery. The separately
+  approved diagnostic runtime remains unchanged.
 
 ### Merged imported-original navigation increment
 
@@ -365,10 +371,10 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 ## Recommended Next Actions
 
 PRs #260-#264 and their post-merge checks passed. The four later approved commits
-are merged through PR #265; its post-merge run failed as recorded above. Observe
-PR #266's existing exact-head CI and current review requirements before merging,
-then verify the actual merge and post-merge CI. Never restart a job because an
-observation expires. Reconcile the exact successful candidate's activation plan,
+are merged through PR #265; its post-merge run failed as recorded above. PR #266
+is now merged after successful exact-head CI and review-rule verification. Observe
+its existing post-merge run `34729555434`; never restart a job because an observation
+expires. Reconcile the exact successful candidate's activation plan,
 including new report formats/mapping v4, backup/storage parity and disposable
 restore, before requesting separate owner approval. Provider, host policy and
 OAuth/tunnel changes remain separate decisions.

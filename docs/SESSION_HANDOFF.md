@@ -39,11 +39,17 @@ unchanged and incomplete.
   rules, assertions and all validation steps are unchanged; PR #255 is preserved.
   Local reproduction failed before the fix; both rollover cases passed afterwards.
   All 51 import/activation governance tests, targeted Ruff, diff and workflow
-  invariant checks passed. Existing hosted run `34728245700` is pending completion.
+  invariant checks passed. Hosted run `34728245700` then passed 2,399 tests and all
+  remaining checks. PR #266 merged as `96fdf7a932e61107af7c39262706337fcacc092b`;
+  its full tree equals tested `7c9b570`. Post-merge run `34729555434` is the separate
+  activation gate; verify its actual result before any deployment.
 - No workspace activation follows from publication. The old `9cdc4a4` activation
   bundle is blocked by failed post-merge CI. A successful exact candidate needs a
   reconciled plan, separate owner approval, fresh matched backup and disposable
-  restore verification. The approved diagnostic runtime remains separate.
+  restore verification. The new `7c9b570` plan is prepared and unapproved; its 47
+  isolated launcher guard cases passed, including a corrected helper-hash pin.
+  This does not prove an approved startup or fresh live recovery. The separately
+  approved diagnostic runtime remains unchanged.
 
 ## Merged imported-original navigation
 
@@ -191,8 +197,8 @@ PR #266 contains two files: one test and the CI workflow. This checkpoint correc
 changes documentation only. Private logs, originals, generated outputs and operator
 state remain outside Git. Preserve the conflicted root and all unrelated work.
 
-1. Observe PR #266's existing CI, verify current reviews and merge only after success.
-   Verify the actual merge and its post-merge CI; observation expiry is not a retry.
+1. PR #266's exact-head CI and merge are verified. Observe existing post-merge run
+   `34729555434` and retain its actual result; observation expiry is not a retry.
 2. Complete the successful candidate's exact activation/recovery plan before requesting
    separate approval. Existing historical approvals do not authorize this activation.
 3. Preserve the confirmed private ten-defect Draft reference and unknowns. Follow
