@@ -7,6 +7,43 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Current integration and deployment-readiness correction
+
+The combined native stack is local at `5d00b6c` (38 files versus shared `97c0778`).
+The closed-review attachment test was already reconciled for Word/PDF/XLSX in
+2fea699/8441195; do not rebuild the public Word-only correction in this stack.
+PR271 remains at approved d864c51 with failed CI; one-file8bce0b0 still needs its
+separate publication approval. Neither approval covers the newer feature range.
+
+Integration inspection found that the read-only deployment-lineage service still
+expected 0047 and omitted the new proposal table. Four regression cases reproduced
+its disagreement with the packaged 0048 migration, rejection of valid 0048 and false
+readiness for 0047. The local `fix/native-history-startup-lineage-20260914` correction
+now requires 0048 and `draft_workspace_proposals`; 0047 and 0046 remain recognized
+migration-required histories. Canonical preflight/admission callers retain all
+other guards. The architecture remains the same deterministic core; this aligns
+existing readiness checks with the already-added migration, without changing an
+operational database or granting operational authority.
+
+Only audited current-head expectations and the current-model test fixture change.
+Historical Word0047 targets and all deployed migration files stay unchanged. The
+packaged-head agreement regression prevents this production constant drifting
+silently at the next migration. Validation results belong in the private integration
+and correction receipts; a full combined-suite/hosted-CI pass is not yet established.
+The earlier immutable-baseline full run was stopped after 225 logged passes because
+of the reproduced version defects, not an observation timeout. Its partial log is
+preserved; it is not a passing full run. Complete validation on the corrected version
+before preparing the exact full-range publication request. No live PostgreSQL15432, provider,
+activation, OAuth or tunnel changes are included.
+
+The shared test environment was found to have pytest9 and cryptography50, outside
+the declared pytest<9/cryptography<46 ranges. It is preserved. A separate environment
+under `.tmp/native-stack-test-env-20260914` now satisfies every declared dependency
+constraint, with pytest8.4.2/cryptography45.0.7 and a clean pip check. All74 affected
+checks passed there (252.285s; two warnings reported), including actual
+PostgreSQL15433 readiness and retained-history checks. Full Ruff, Mypy238 and
+Bandit passed. A corrected-version full-suite result remains pending.
+
 ## Native saved-proposal history checkpoint
 
 Local `feat/native-proposal-history-20260914`, based on `eae7ee0`, adds explicit

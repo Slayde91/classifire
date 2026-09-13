@@ -40,6 +40,7 @@ from classifire.models import DraftEstimate, DraftSystemMatch, User
 from classifire.physical_models import PhysicalModelLock
 from classifire.services import draft_project_packages as packages
 from classifire.services import draft_scope as scopes
+from classifire.services.deployment_lineage import assess_deployment_lineage
 from classifire.services.proposal_review_package import (
     create_proposal_review_package_redaction,
     grant_proposal_review_reader_assignment,
@@ -250,6 +251,11 @@ def test_postgresql_fresh_history_and_native_upgrade_preserve_scope_package(
         db.commit()
     _upgrade(url, environment, "head")
     assert _version(engine) == (HEAD, "TEXT")
+    with Session(engine) as db:
+        readiness = assess_deployment_lineage(db)
+        assert readiness.status == "READY"
+        assert readiness.expected_head == HEAD
+        assert readiness.database_write_performed is False
     assert set(inspect(engine).get_table_names()) - before_tables == {
         "draft_scope_docx_sources",
         "draft_workspace_proposals",
