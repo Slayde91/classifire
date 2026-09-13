@@ -7,6 +7,37 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Native Word proposal checkpoint
+
+The isolated `feat/native-word-scope-proposals-20260913` branch starts at local
+selected-evidence commit `8bd0d7f`. The panel now explicitly requests typed Word
+additions, preserves all existing rows, checks selected quotes/pictures and prohibits
+Confirmed states. Current write permission, exact revision, preview hash, consent,
+source integrity and scan status are rechecked. No provider reply writes Scope.
+The existing session-bound Word review saves one separately confirmed Draft revision;
+the existing package page separately saves the chosen original-bearing ZIP.
+
+Validation:126 affected Word/chat/context/diagnostic/review/package tests passed in
+609.355s on disposable15433 with selected-checkout PYTHONPATH and fresh basetemp;
+one added pure contract test passed in7.085s. Full Ruff, Mypy over235 source files,
+scoped Bandit and JavaScript syntax passed. The final uninterrupted synthetic Chrome
+journey proved upload/explicit scan, selected text/picture consent, typed proposal,
+separate Scope and package confirmations, reopening after the test server restarted,
+and exact Scope/original ZIP bytes. Desktop and390px-wide proposal screenshots were inspected; no horizontal
+panel overflow. Scripted model and injected scan only; zero real provider calls.
+Earlier harness field-order/form-selector failures were diagnosed and preserved.
+
+The Word contract links Defects/Openings/Services; this action does not add observations,
+assumptions or exclusions. Existing observations are preserved. Proposal controls and
+model rationale are transient; the confirmed revision retains the existing human Word
+source claims, not a durable model-response transcript. No accuracy, complete C2,
+real malware, operational activation or production-readiness claim follows.
+
+Publication is separate: this branch and its selected-evidence parent remain local.
+PR271 still contains d864c51 with failed CI; test-only8bce0b0 needs the pending
+additional-file approval. Do not mix these branches or bypass that gate. Live8820,
+OAuth/tunnel configuration, live15432 and the conflicted root remain untouched.
+
 ## Selected Word evidence implementation checkpoint
 
 The native panel now lets users choose up to 10 retained Word text blocks and two
@@ -25,7 +56,8 @@ isolated Chrome journey proved selection, required consent, scripted advice, exa
 PNG/original bytes, unchanged Scope, restart/reopening and consent invalidation.
 Final desktop/narrow screenshots were inspected. Browser replies and scan verdicts
 were synthetic; zero real provider calls and no live activation occurred. Native
-typed Scope proposals, separate Scope/package confirmations and full C2 remain open.
+typed Scope proposals and separate Scope/package confirmations are covered by the
+newer synthetic checkpoint above; operational C2 remains open.
 
 Publication: approved d864c51 is pushed in PR271. Run34757320145 failed after639
 passes on a closed-review test expecting only logout/chat forms. The independent
@@ -64,7 +96,7 @@ offline-proven TLS environment mismatch; this does not explain the historical502
 
 Live8820 remains on rollback `6c1e2a4` with chat disabled. Preserve the conflicted
 root, pinned candidate/rollback checkouts and all historical receipts. Complete
-C2 typed review next while resolving the CI gate separately.
+C2 operational acceptance and broader coverage remain while resolving the CI gate separately.
 
 ## Current position
 
@@ -527,7 +559,9 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    attempt and successful rollback; do not infer its cause or retry silently.
 2. **C2 - Complete report analysis and Scope review.** Native DOCX attachment,
    status, explicit scan, evidence inspection and consented selected text/PNG advice are
-   implemented. Next deliver native typed proposals and distinct review. Reuse the existing
+   implemented, including typed additions and separate Word/package review in the
+   synthetic journey. Next resolve the operational gate and broaden supported report
+   coverage; do not repeat the proven synthetic increment. Reuse the existing
    intake/scan/Word review/client-request/package services, beginning with one
    supported synthetic DOCX. Finish the visible attachment-to-confirmed-Scope-to-ZIP
    journey from the [assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).

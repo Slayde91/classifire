@@ -221,9 +221,8 @@ source files, scoped Bandit and JavaScript syntax checks passed.
 
 This is the first C2 interaction, not the complete report-to-Scope exit. Report
 contents/pictures now enter advice only through the separate explicit selection and
-consent extension below. Native typed proposal,
-same-user Scope confirmation and separate package confirmation/download remain
-later increments. Existing manual Word review is available through its own link.
+consent extension below. The typed-additions section now records separate Scope
+and package confirmation. Existing manual Word review remains available.
 Live8820 remains on the rollback build; this feature has not been activated.
 
 
@@ -260,5 +259,49 @@ scan, foreign access, revoked rights during a reply and malformed/remote image p
 The browser found a shared-reference invalidation defect; copied event selections
 fixed it. Final restarted Chrome checks passed with scripted advice, zero real
 provider calls, unchanged Scope and exact original download. Final desktop/mobile
-screenshots were inspected. Native typed proposals, same-user Scope confirmation,
-separate package confirmation and complete C2 acceptance remain later work.
+screenshots were inspected. The following increment covers typed additions and
+separate Scope/package confirmation synthetically; complete operational C2 remains.
+
+
+## Native Word additions and separate confirmation
+
+Choose **Propose new Scope records from selected Word evidence** in the same panel.
+Select at least one Word text block and optionally pictures, preview, then explicitly
+consent. Changing the action clears preview and consent. The current user needs
+project write access and the latest Scope revision even to prepare this action.
+
+The existing Responses port uses a separate strict output schema derived from the
+Scope domain model; all fields, including null unknowns, are explicit, following
+OpenAI's [structured output contract](https://developers.openai.com/api/docs/guides/structured-outputs).
+The server enforces the same constraints for injected ports. At most25 new records
+are allowed across Defects, Openings and Services. Every item needs a selected text
+locator and a supported evidence basis. Text quotes must be exact substrings;
+pictures must be explicitly selected. Confirmed states, invented links, duplicate
+claims and blank-opening service links are refused. Known dimensions/quantities and
+shared openings are retained; unknowns remain null or unlinked. Model IDs are local
+graph placeholders and are remapped before composing additions with unchanged rows.
+New observations, assumptions and exclusions are excluded because the existing Word
+entity-review contract does not support their source bindings. Existing values remain.
+
+The proposal card shows additions, named relationships, source quotes/rationale and
+unknowns. **Review proposed Word Scope** opens the existing complete Word preview.
+It does not save. The user reviews the full graph and selected source links, then
+checks the existing confirmation and saves one Draft revision. Its signed token is
+bound to the user, browser session, source, graph and revision and expires after15
+minutes. Changed payloads, revoked rights, stale revisions and repeated saves fail
+closed. Package selection/save remains a later, distinct action on the existing page;
+no technical matching, estimate, report generation, canonical lock or release is run.
+
+Proposal controls are transient and are not restored from conversational history.
+The saved revision retains the existing human Word evidence references; raw model
+responses and rationale are not durable proposal history. This does not claim that
+all AI provenance or broader report coverage is finished. Empty unsupported proposals
+have no review/save control. Advice mode keeps its original contract.
+
+Validation:127 checks (126 affected regressions plus one added pure contract test)
+passed; full Ruff/Mypy, scoped Bandit and JS syntax passed. Final synthetic Chrome
+upload-to-Scope-to-package acceptance passed, with distinct consent/confirmations,
+exact saved graph and original DOCX in the ZIP, reopening after test-server restart
+and narrow-panel checks.
+Screenshots were inspected. No real provider, real scanner or customer-accuracy
+acceptance was performed. No schema migration, dependency or live change was needed.

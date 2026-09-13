@@ -34,6 +34,8 @@ flowchart TD
   WORD --> APP
   READ --> PORT[Optional bounded Responses transport]
   PORT --> ADVICE[Unverified advice with references and unknowns]
+  PORT --> ADD[Explicit Word additions proposal]
+  ADD --> HUMAN
   CHAT[ChatGPT MCP client] --> AUTH[OAuth and local identity/permission checks]
   AUTH --> PROPOSE[Durable proposal requests]
   PROPOSE --> HUMAN[Same-user browser review and confirmation]
@@ -63,7 +65,7 @@ untrusted evidence without saving Scope or granting approval.
 | Layer | Implemented components and responsibility |
 | --- | --- |
 | Interfaces | FastAPI/Jinja UI (`ui.py`, `draft_scope_ui.py`, format-specific review routes), API/CLI and optional `draft_client.py` MCP mounting |
-| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; advisory endpoints accept context/message only; a separate thin session adapter adds explicit Word retain/scan/inspection controls over existing services, without Scope edits or provider disclosure |
+| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; context/message endpoints offer advice or explicit Word additions for separate review; a separate thin session adapter adds explicit Word retain/scan/inspection controls over existing services, without Scope edits or provider disclosure |
 | Authentication | Existing user/session/CSRF checks plus `draft_client_auth.py` and explicit client policy; verified external identity maps to an active local user. Exact resource/issuer/signature/time/scope checks; approved optional nbf/Auth0 compatibility does not remove permission checks |
 | Application commands | `services/draft_client_requests.py` and `draft_client_capabilities.py` create typed durable requests; browser confirmation rechecks rights, owner, dependencies and expected state before executing the shared service |
 | Scope | `draft_scope.py`, `draft_scope_evidence.py`, format review services and shared editor. Immutable revision envelopes with explicit evidence state and unknowns |
@@ -87,7 +89,7 @@ with selection-aware context and collapsible/resizable layout.
 
 **Current architecture:** the native panel resolves typed identifiers and exact saved
 revisions through authenticated readers, previews the data, then sends it to the
-existing advisory-only Responses transport after consent. Separately, the existing
+existing bounded Responses transport after consent. Separately, the existing
 external ChatGPT/MCP client can request intake/scan and prepare durable Draft changes
 for same-user browser confirmation. Ordinary UI intake/review uses the same domain
 services. The native panel now also
@@ -98,17 +100,20 @@ selection of at most 10 text blocks and 2 verified PNG pictures from one retaine
 DOCX. Source/scan/document/image hashes bind the preview and are rechecked before
 and after provider use; original files and omitted content are excluded.
 
-**Proposed extension:** complete typed
-action review beside the native attachment controls, using existing evidence-reader,
-proposal-request, confirmation and package services. Browser routes use the existing
+**Implemented extension:** an explicit `propose_word_scope` action uses that same
+transport and selected Word evidence. A small composer validates new Defect, Opening
+and Service records against the existing Scope contract, remaps proposal IDs and
+preserves existing rows. The panel shows additions, source claims and unknowns, then
+posts to the existing Word preview route. Its session-bound confirmation remains the
+only save step. Existing selected-record edits and broader report coverage follow. Browser routes use the existing
 user session and
 CSRF checks; external clients retain their OAuth scope/policy checks. The browser
 does not need to loop through external MCP or acquire a second identity.
 
 **Reason:** selected-record advice and local Word attachment/inspection are
 implemented, and bounded selected Word evidence now enters the model contract only
-after preview and consent. The panel still cannot prepare or confirm Scope changes. The complete report-to-Scope journey
-still needs those distinct review and disclosure boundaries.
+after preview and consent. Users can now prepare typed additions without granting
+chat write authority. Separate review and package steps retain their existing guards.
 
 **Consequences:** distinguish local attachment/intake, explicitly requested scan,
 provider disclosure/consent, analysis proposal, human Draft confirmation and package
@@ -128,8 +133,9 @@ does not import it as a trusted technical or pricing library.
 existing Word readers without changing tables, migration history or dependencies.
 The selected-evidence extension adds optional typed selectors and an internal image
 argument to the same advisory port; no new provider, identity or write path is added.
-Later proposal work should reuse immutable Draft revisions and the applicable
-session/client review boundaries. No new table, migration, vector store, agent
+The proposal composer reuses immutable Draft revisions and the existing Word
+preview/confirmation service; it adds no schema version or write path. New Word
+observation claims are outside that existing contract; old observations remain intact. No new table, migration, vector store, agent
 framework or transcript
 store is required by this decision. If a demonstrated gap requires persistence
 changes, document compatibility and use a forward migration before activation.
@@ -302,8 +308,9 @@ production phase nor retires OpenClaw.
 ## Immediate direction
 
 Follow [Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions):
-C1 completes the already approved advisory-panel activation and acceptance; C2 is
-the next implementation slice for chat-based report intake and Scope review; C3
+C1 still needs successful applicable CI and a separately approved diagnostic test
+and activation. C2 has a synthetic native Word journey, with real-provider/live
+acceptance and broader coverage outstanding; C3
 adds explicitly reviewed selected-record actions. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked
 without forcing users through downstream capabilities.

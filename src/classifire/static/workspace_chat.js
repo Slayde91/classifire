@@ -8,7 +8,7 @@
   const messages = panel.querySelector(".chat-messages"), summary = panel.querySelector(".chat-context-summary");
   const recordList = panel.querySelector(".chat-record-list"), sourceList = panel.querySelector(".chat-source-list");
   const sensitive = panel.querySelector(".chat-sensitive"), remember = panel.querySelector(".chat-remember");
-  const picker = panel.querySelector(".chat-record-picker");
+  const picker = panel.querySelector(".chat-record-picker"), action = panel.querySelector(".chat-action");
   let selector;
   try { selector = JSON.parse(document.getElementById("workspace-chat-context").textContent); } catch { panel.hidden = true; return; }
   selector.ids ||= []; selector.records ||= []; selector.matches ||= []; selector.word ||= null;
@@ -77,6 +77,7 @@
   width.addEventListener("input", () => document.documentElement.style.setProperty("--chat-panel-width", `${width.value}px`));
   dock.addEventListener("click", () => { const on = panel.classList.toggle("is-docked"); dock.setAttribute("aria-pressed", String(on)); dock.textContent = on ? "Float over workspace" : "Dock beside workspace"; document.body.classList.toggle("chat-docked", on && !body.hidden); });
   remember.addEventListener("change", () => { if (remember.checked) saveThread(); else if (contextHash) storageRemove(key()); });
+  action.addEventListener("change", () => { selector.action = action.value; reset(true); report("Action changed. Preview the evidence and consent again."); });
   sensitive.addEventListener("change", () => { reset(); report("Context options changed. Preview them before sending."); });
   form.elements.prompt.addEventListener("change", () => { if (form.elements.prompt.value) form.elements.question.value = form.elements.prompt.value; });
   document.addEventListener("classifire:register-selection", event => {
@@ -184,6 +185,46 @@
     if (!context.source_references.length) { const item=document.createElement("li");item.textContent="No source references included.";sourceList.append(item); }
     panel.querySelector(".chat-context pre").textContent=JSON.stringify(context,null,2);summary.hidden=false;
   }
+  function showProposal(proposal) {
+    if (!proposal) return;
+    const card=document.createElement("section"), heading=document.createElement("h3"), note=document.createElement("p");
+    card.className="chat-scope-proposal"; heading.textContent="Proposed Scope additions (not saved)";
+    note.textContent=`${proposal.notice} Existing revision ${proposal.expected_revision} is unchanged. Check for duplicates before saving. These unsaved proposal controls are not remembered after leaving this page.`;
+    card.append(heading,note);
+    const names=new Map(Object.values(proposal.payload).filter(Array.isArray).flat().filter(row=>row&&typeof row==="object"&&row.id).map(row=>[row.id,row.label||row.text||row.id]));
+    const fieldLabels={defect_id:"Defect",opening_ids:"Openings",plane:"Plane",substrate:"Substrate",width_mm:"Width (mm)",height_mm:"Height (mm)",blank:"Blank opening",service_type:"Service type",quantity:"Quantity",unit:"Unit",state:"Evidence state",description:"Description"};
+    for (const collection of ["defects","openings","services","observations"]) {
+      for (const row of proposal.additions[collection]) {
+        const item=document.createElement("details"), title=document.createElement("summary"), facts=document.createElement("dl");
+        title.textContent=`${collection.slice(0,-1)}: ${row.label || row.text}`; item.open=true; item.append(title);
+        for (const [key,value] of Object.entries(row)) {
+          if(key==="id" || key==="label" || key==="text")continue;
+          const term=document.createElement("dt"), detail=document.createElement("dd");
+          term.textContent=fieldLabels[key] || key.replaceAll("_"," ");
+          detail.textContent=value===null || value==="" || (Array.isArray(value)&&!value.length) ? "Unknown / not linked" : typeof value==="boolean" ? (value ? "Yes" : "No") : Array.isArray(value) ? value.map(id=>names.get(id)||id).join(", ") : key==="defect_id" ? (names.get(value)||value) : String(value);
+          facts.append(term,detail);
+        }
+        const identity=document.createElement("details"), identityTitle=document.createElement("summary"), identityValue=document.createElement("p");
+        identityTitle.textContent="Record identity";identityValue.textContent=row.id;identity.append(identityTitle,identityValue);
+        item.append(facts,identity);card.append(item);
+      }
+    }
+    for (const claim of proposal.claims) {
+      const text=document.createElement("p");
+      text.textContent=`${names.get(claim.target_id)||claim.target_kind}: ${claim.locator}; ${claim.basis}; ${claim.image_ids.join(", ") || "no pictures"}. ${claim.quote ? `Quote: ${claim.quote}. ` : ""}${claim.rationale}`;
+      card.append(text);
+    }
+    const findings=document.createElement("ul");
+    for (const finding of proposal.findings) {const item=document.createElement("li");item.textContent=finding.message;findings.append(item);}
+    card.append(findings);
+    const review=document.createElement("form"), button=document.createElement("button");
+    review.method="post";review.action=`/scopes/${encodeURIComponent(selector.draft_id)}/word/${encodeURIComponent(proposal.source_id)}/preview`;
+    review.className="chat-scope-review";
+    const fields={csrf_token:panel.dataset.csrf,expected_revision:String(proposal.expected_revision),document_sha256:proposal.document_sha256,payload:JSON.stringify(proposal.payload),targets:JSON.stringify(proposal.targets)};
+    for (const [name,value] of Object.entries(fields)) {const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;review.append(input);}
+    button.type="submit";button.className="button button-primary";button.textContent="Review proposed Word Scope";
+    review.append(button);card.append(review);messages.append(card);
+  }
   preview.addEventListener("click", async () => {
     const version=epoch;busy=true;buttons();
     try { const context=await post("context","Preview saved context");if(version!==epoch)return;
@@ -205,6 +246,8 @@
       let trimmed=false;
       if(completeAnswer.length>12000){turns=[];storageRemove(key());trimmed=true;}
       else {turns.push({role:"user",content:question},{role:"assistant",content:completeAnswer});trimmed=trimTurns();if(!turns.length)storageRemove(key());saveThread();}
+      showProposal(result.proposal);
+      if(selector.action === "propose_word_scope"){ready=false;form.elements.consent.checked=false;}
       form.elements.question.value="";
       report(`${result.notice}${trimmed ? " Some displayed exchanges exceed the conversation window and will not be sent or remembered." : ""}`);
     }catch(error){if(version===epoch){ready=false;form.elements.consent.checked=false;report(error.message,true);}}

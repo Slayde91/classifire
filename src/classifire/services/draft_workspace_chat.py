@@ -1,4 +1,4 @@
-"""Read-only selected Scope context and optional bounded advisory conversation.
+"""Read-only context, advice and unverified additions for separate human review.
 
 No domain writer, downstream capability or conversation persistence is available.
 """
@@ -288,6 +288,7 @@ class WordEvidenceSelection(BaseModel):
 class WorkspaceChatRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     screen: ContextScreen
+    action: Literal["advice", "propose_word_scope"] = "advice"
     word: WordEvidenceSelection | None = None
     project_id: Identity | None = None
     draft_id: Identity | None = None
@@ -304,6 +305,8 @@ class WorkspaceChatRequest(BaseModel):
 
     @model_validator(mode="after")
     def bounded_selection(self) -> WorkspaceChatRequest:
+        if self.action == "propose_word_scope" and (self.word is None or not self.word.locators):
+            raise ValueError("selected Word text required for review anchors")
         identities = [self.project_id, self.draft_id, *self.ids]
         identities.extend(item.match_id for item in self.matches)
         identities.extend(item.id for item in self.records)
@@ -539,6 +542,13 @@ def workspace_context(
     from .draft_project_packages import validate_match_collection
 
     actor = workspace_actor(db, actor)
+    if request.action == "propose_word_scope":
+        _actor(db, actor, "project:write")
+        if (
+            request.draft_id is None
+            or read_revision(db, actor, request.draft_id)["revision"] != request.revision
+        ):
+            raise DraftScopeError("CHAT_CONTEXT_CHANGED", 409)
     records: list[dict[str, Any]] = []
     refs: list[dict[str, Any]] = []
     sections: list[dict[str, Any]] = []
@@ -731,6 +741,13 @@ def workspace_context(
         )
         if image_parts is not None:
             image_parts.extend(parts)
+    if request.action == "propose_word_scope":
+        context["action"] = request.action
+        context["limitations"].append(
+            "Propose new Word-derived records only; existing records are preserved. "
+            "Every new record needs selected evidence and separate human review. "
+            "Confirmed states, system selection and pricing are unavailable."
+        )
     raw = _encoded(context)
     if len(raw) > MAX_CONTEXT_BYTES:
         raise DraftScopeError("CHAT_CONTEXT_TOO_LARGE", 422)
@@ -768,7 +785,14 @@ def workspace_answer(
             if image_parts
             else port.complete(context, request)
         )
-        value = Advice.model_validate(reply).model_dump()
+        proposal_model = None
+        if request.action == "propose_word_scope":
+            from .draft_workspace_word_proposals import validate_output
+
+            proposal_model = validate_output(reply, context)
+            value = proposal_model.model_dump(mode="json", exclude={"additions", "claims"})
+        else:
+            value = Advice.model_validate(reply).model_dump()
         if not set(value["record_ids"]) <= {row["id"] for row in context["records"]} or not set(
             value["source_ids"]
         ) <= {row["source_id"] for row in context["source_references"]}:
@@ -779,6 +803,10 @@ def workspace_answer(
         raise DraftScopeError("CHAT_RESPONSE_INVALID", 502) from None
     if workspace_context(db, actor, request, settings=settings) != context:
         raise DraftScopeError("CHAT_CONTEXT_CHANGED", 409)
+    if proposal_model is not None:
+        from .draft_workspace_word_proposals import prepare_review
+
+        value["proposal"] = prepare_review(db, actor, request, proposal_model, settings=settings)
     return {**value, "notice": NOTICE, "context": context}
 
 

@@ -1,0 +1,166 @@
+"""Unverified Word additions prepared for the existing separate human review.
+
+No writer or provider is called here. Existing rows are copied unchanged; model
+identities belong only to the proposed graph and are remapped before review.
+"""
+
+from __future__ import annotations
+
+import copy
+from typing import Annotated, Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy.orm import Session
+
+from ..config import Settings
+from ..models import User, new_id
+from .draft_scope import DraftScopeError, DraftScopePayload, read_revision, validate_payload
+from .draft_scope_docx_review import preview_review
+from .draft_scope_evidence import TARGET_COLLECTIONS
+from .draft_workspace_chat import Advice, WorkspaceChatRequest
+
+
+class WordClaim(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    target_kind: Literal["defect", "opening", "service"]
+    target_id: Annotated[str, Field(min_length=36, max_length=36)]
+    locator: Annotated[str, Field(min_length=1, max_length=150)]
+    image_ids: Annotated[list[str], Field(max_length=2)]
+    basis: Literal["text", "picture", "both"]
+    quote: Annotated[str, Field(max_length=2000)]
+    rationale: Annotated[str, Field(min_length=1, max_length=1000)]
+
+
+class WordProposal(Advice):
+    additions: DraftScopePayload
+    claims: Annotated[list[WordClaim], Field(max_length=50)]
+
+
+def response_schema() -> dict[str, Any]:
+    """Keep the domain schema, requiring explicit fields including unknown/null values."""
+    schema = WordProposal.model_json_schema()
+
+    def required(node: Any) -> None:
+        if isinstance(node, dict):
+            node.pop("default", None)
+            if node.get("type") == "object":
+                node["required"] = list(node["properties"])
+                node["additionalProperties"] = False
+            for value in node.values():
+                required(value)
+        elif isinstance(node, list):
+            for value in node:
+                required(value)
+
+    required(schema)
+    fields = schema["$defs"]["DraftScopePayload"]["properties"]
+    for kind in TARGET_COLLECTIONS.values():
+        fields[kind]["maxItems"] = 25
+    for kind in ("observations", "assumptions", "exclusions"):
+        fields[kind]["maxItems"] = 0
+    # A proposal cannot establish human-confirmed facts.
+    for kind in ("DraftOpening", "DraftService", "DraftObservation"):
+        schema["$defs"][kind]["properties"]["state"]["enum"].remove("Confirmed")
+    return schema
+
+
+def validate_output(value: Any, context: dict[str, Any]) -> WordProposal:
+    model = WordProposal.model_validate(value)
+    graph = model.additions.model_dump(mode="json")
+    # Enforce complete fields locally too, including injected/mock providers.
+    raw_graph = value["additions"]
+    if set(raw_graph) != set(DraftScopePayload.model_fields):
+        raise ValueError("incomplete graph")
+    rows = {}
+    for kind, collection in TARGET_COLLECTIONS.items():
+        for raw, row in zip(raw_graph[collection], graph[collection], strict=True):
+            if set(raw) != set(row) or row.get("state") == "Confirmed":
+                raise ValueError("incomplete or confirmed proposal")
+            rows[kind, row["id"]] = row
+    if len(rows) > 25 or any(graph[key] for key in ("observations", "assumptions", "exclusions")):
+        raise ValueError("proposal budget or unbound assumptions")
+    validate_payload(graph)
+    evidence = context["word_evidence"]
+    blocks = {block["locator"]: block for block in evidence["blocks"]}
+    images = {image["id"] for image in evidence["pictures"]}
+    covered, seen = set(), set()
+    for claim in model.claims:
+        target = (claim.target_kind, claim.target_id)
+        identity = (*target, claim.locator)
+        if target not in rows or claim.locator not in blocks or identity in seen:
+            raise ValueError("unbound or duplicate claim")
+        if len(set(claim.image_ids)) != len(claim.image_ids) or not set(claim.image_ids) <= images:
+            raise ValueError("unselected image")
+        if claim.basis in {"text", "both"}:
+            if not claim.quote.strip() or claim.quote not in blocks[claim.locator]["text"]:
+                raise ValueError("unbound quote")
+        elif claim.quote:
+            raise ValueError("picture claim has text quote")
+        if (claim.basis != "text") != bool(claim.image_ids):
+            raise ValueError("evidence basis mismatch")
+        covered.add(target)
+        seen.add(identity)
+    if covered != set(rows):
+        raise ValueError("every proposed record needs evidence")
+    return model
+
+
+def prepare_review(
+    db: Session,
+    actor: User,
+    request: WorkspaceChatRequest,
+    model: WordProposal,
+    *,
+    settings: Settings,
+) -> dict[str, Any] | None:
+    if request.word is None or request.draft_id is None:
+        raise DraftScopeError("CHAT_INPUT_INVALID")
+    additions = model.additions.model_dump(mode="json")
+    identities = {
+        row["id"]: new_id()
+        for collection in TARGET_COLLECTIONS.values()
+        for row in additions[collection]
+    }
+    if not identities:
+        return None
+    current = read_revision(db, actor, request.draft_id)
+    if current["revision"] != request.revision:
+        raise DraftScopeError("CHAT_CONTEXT_CHANGED", 409)
+    payload = copy.deepcopy(current["content"])
+    for collection in TARGET_COLLECTIONS.values():
+        for row in additions[collection]:
+            row["id"] = identities[row["id"]]
+            if row.get("defect_id") is not None:
+                row["defect_id"] = identities[row["defect_id"]]
+            if "opening_ids" in row:
+                row["opening_ids"] = [identities[key] for key in row["opening_ids"]]
+        payload[collection].extend(additions[collection])
+    claims = [
+        claim.model_dump() | {"target_id": identities[claim.target_id]} for claim in model.claims
+    ]
+    targets = [
+        {key: claim[key] for key in ("target_kind", "target_id", "locator", "image_ids")}
+        for claim in claims
+    ]
+    checked = preview_review(
+        db,
+        actor,
+        request.draft_id,
+        request.word.source_id,
+        current["revision"],
+        payload,
+        targets,
+        request.word.document_sha256,
+        settings=settings,
+    )
+    return {
+        "additions": additions,
+        "claims": claims,
+        "findings": checked["findings"],
+        "expected_revision": current["revision"],
+        "source_id": request.word.source_id,
+        "document_sha256": request.word.document_sha256,
+        "payload": checked["payload"],
+        "targets": checked["targets"],
+        "notice": "Unverified additions only. Review separately before saving one Draft revision.",
+    }
