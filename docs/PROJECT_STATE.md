@@ -46,6 +46,33 @@ Keep this limitation visible before publication or activation. Public approval s
 covers only d864c51 and its12 files; the one-file8bce0b0 correction and all newer local
 ancestors require their own exact publication scope. No C2/C3 or production exit is claimed.
 
+## Synthetic 0049 recovery checkpoint
+
+Local implementation `b3c2203` passed a matched backup/restore rehearsal using three
+newly owned databases on disposable PostgreSQL15433. Actual pg_dump/pg_restore archives
+restored the 0048 baseline (70 tables/23 rows) and 0049 candidate (71 tables/32 rows)
+with all table row hashes matching. Restored application schemas also matched, including
+1,179 candidate columns, 450 constraints and 398 indexes; row-security definitions matched.
+Existing data survived migration; copied retained storage was recovered at its exact owned
+path. Source fixtures remained unchanged.
+
+The existing HTTP review paths explicitly rejected one historical synthetic proposal
+and separately confirmed another into Scope revision 3. One scripted reply, no real
+provider or scan, supplied the new proposal. Both decisions and unchanged original
+generations reopened identically in a fresh Python process. The exact original-bearing
+ZIP stayed at Scope revision 2; no new package was implicitly approved. Unknown opening
+facts and zero Services remained. Duplicate confirmation was refused without new writes.
+
+Downgrade refused retained-decision deletion. Prior d33f5ec code accepted the restored
+0048 backup and refused the newer0049 schema. Restoring0048 loses the post-backup Scope
+revision/decisions unless separately preserved and reconciled; code-only rollback is
+not assumed. Dump options excluded owner/ACL restoration, so this is not production
+roles/grants recovery evidence. This is a synthetic HTTP/new-process check, not browser
+or server-restart acceptance, live backup, activation or technical/customer validation.
+The private `native-decision-recovery-rehearsal-20260914` receipt and archives preserve
+actual results. Complete new-control browser/restart acceptance and candidate CI next;
+the still-running full suite covers the preceding d33f5ec/0048 checkout only.
+
 ## Preceding integration and deployment-readiness correction
 
 The preceding saved-history stack reached `5d00b6c` (38 files versus shared `97c0778`).
@@ -872,7 +899,8 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    Native XLSX now also has explicit header/row/picture context, proposed mappings,
    typed additions, separate workbook review and original-bearing package confirmation.
    Its synthetic journey passes. Explicit native proposal retention/reopening is now
-   implemented locally; decision/revision linkage and portable history remain. Resolve
+   implemented locally, including explicit decision/revision links. New-control browser
+   acceptance, portable history and operational validation remain. Resolve
    the operational gate separately; do not repeat the proven Word increment. Reuse the existing
    intake/scan/review/client-request/package services. Preserve the demonstrated
    Word/PDF interaction when extending the attachment-to-confirmed-Scope-to-ZIP

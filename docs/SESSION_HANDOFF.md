@@ -45,6 +45,33 @@ Keep this limitation visible before publication or activation. Public approval s
 covers only d864c51 and its12 files; the one-file8bce0b0 correction and all newer local
 ancestors require their own exact publication scope. No C2/C3 or production exit is claimed.
 
+## Synthetic 0049 recovery checkpoint
+
+Local implementation `b3c2203` passed a matched backup/restore rehearsal using three
+newly owned databases on disposable PostgreSQL15433. Actual pg_dump/pg_restore archives
+restored the 0048 baseline (70 tables/23 rows) and 0049 candidate (71 tables/32 rows)
+with all table row hashes matching. Restored application schemas also matched, including
+1,179 candidate columns, 450 constraints and 398 indexes; row-security definitions matched.
+Existing data survived migration; copied retained storage was recovered at its exact owned
+path. Source fixtures remained unchanged.
+
+The existing HTTP review paths explicitly rejected one historical synthetic proposal
+and separately confirmed another into Scope revision 3. One scripted reply, no real
+provider or scan, supplied the new proposal. Both decisions and unchanged original
+generations reopened identically in a fresh Python process. The exact original-bearing
+ZIP stayed at Scope revision 2; no new package was implicitly approved. Unknown opening
+facts and zero Services remained. Duplicate confirmation was refused without new writes.
+
+Downgrade refused retained-decision deletion. Prior d33f5ec code accepted the restored
+0048 backup and refused the newer0049 schema. Restoring0048 loses the post-backup Scope
+revision/decisions unless separately preserved and reconciled; code-only rollback is
+not assumed. Dump options excluded owner/ACL restoration, so this is not production
+roles/grants recovery evidence. This is a synthetic HTTP/new-process check, not browser
+or server-restart acceptance, live backup, activation or technical/customer validation.
+The private `native-decision-recovery-rehearsal-20260914` receipt and archives preserve
+actual results. Complete new-control browser/restart acceptance and candidate CI next;
+the still-running full suite covers the preceding d33f5ec/0048 checkout only.
+
 ## Preceding integration and deployment-readiness correction
 
 The preceding saved-history stack reached `5d00b6c` (38 files versus shared `97c0778`).
@@ -128,7 +155,8 @@ Inspect the private validation receipt for final test and visual evidence. No pr
 live database, schema/migration, activation or public push is included. Existing human
 row/entity references are durable; raw AI claims and unsaved controls are not.
 Review the complete local stack after the pending PR271 correction approval/CI;
-then prioritize decision/revision linkage, portable history and operational acceptance.
+decision/revision linkage is now implemented in the later local checkpoint above.
+Next complete its browser/restart acceptance, portable history and operational validation.
 
 ## Earlier native Excel panel checkpoint
 
@@ -528,7 +556,7 @@ The shorter architecture/roadmap aliases are absent. Preserve the conflicted roo
 pinned runtime and private receipts. Reconcile Git/worktrees, exact upstreams and
 PR/CI before selecting work; newer local evidence outranks old checkpoints.
 
-Start with feat/native-proposal-decisions-20260914, based on locald33f5ec. Inspect its
+Start with feat/native-proposal-decisions-20260914 and implementation b3c2203. Inspect its
 private validation receipt, exact diff and remaining browser limitation before publication.
 The current candidate uses0049; the separate full-suite run still covers unchanged d33f5ec
 and0048. Poll its existing live handle; never restart on observation timeout. The same
@@ -539,7 +567,10 @@ matching manual revision never infers a decision. Source preview signatures bind
 current owner/rights/context, atomicity and one-decision checks remain required. Package
 confirmation and canonical authority are separate. New decision browser/restart acceptance
 is unverified because the browser helper failed initialization; do not claim that prior
-history browser evidence covers the new controls. Both migrations are forward-only.
+history browser evidence covers the new controls. The private0049 recovery rehearsal
+passed exact baseline/candidate database and retained-file restores plus both decisions
+in a fresh Python process; it did not verify browser/server restart or production grants.
+Both migrations are forward-only.
 Activation needs a new exact approved backup/restore/restart/rollback plan and successful CI.
 Never rehearse on live15432. Portable AI history and full operational acceptance remain.
 

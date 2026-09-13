@@ -125,7 +125,11 @@ identities and hashes rather than another copy of private report/model content.
 
 **Migration impact:** readiness now requires0049 and its decision table;0048/0047 remain
 recognized migration-required histories. Downgrade refuses to discard decisions. The
-previous0048 backup rehearsal does not establish0049 recovery. Any activation still needs
+previous0048 backup rehearsal alone does not establish0049 recovery. The separate local
+b3c2203 rehearsal now verifies actual0048/0049 database and retained-file restores,
+explicit confirmed/rejected decisions, exact generation/Scope/ZIP bytes and fresh-process
+application reads on disposable15433. It excludes production owner/ACL restoration,
+browser/server restart, live backup and operational acceptance. Any activation still needs
 an exact approved plan, successful applicable CI, matched backup/disposable restore,
 restart and rollback verification. Restoring a pre0049 backup would lose subsequent
 Scope changes and decisions unless separately preserved/reconciled; code-only rollback
