@@ -1,11 +1,48 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-13 after PR #270 post-merge cancellation and the first native
-Word attachment implementation/validation. Live chat remains rolled back.
+Reconciled 2026-09-14 after local selected-record edit validation. Native Word
+proposal evidence is retained below. Live chat remains rolled back.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
+
+## Selected Scope record edit checkpoint
+
+The isolated `feat/native-selected-scope-edits-20260913` branch extends local
+Word proposal commit `9d64bd1`. The panel now offers `propose_scope_edits` over
+explicit saved Scope IDs. Register selection supplies the selected row identities
+without copying text; related context alone does not authorize an edit. Complete
+replacements are bounded to25 selected Defects/Openings/Services/observations.
+The server rejects additions, deletions, duplicate IDs, unselected/global edits,
+Confirmed states, undisclosed relationships and whole-graph conflicts.
+
+The panel shows named before/after fields and reasons. **Review changes in Draft
+editor** only validates through the existing manual editor; **Save new revision**
+is a separate user action with current permissions, CSRF and revision checks.
+Existing source claims remain retained and changed claims are marked for review.
+This path does not use the Word review's signed token or create a durable AI request;
+the existing manual writer remains the authority boundary. Unselected records and
+global assumptions/exclusions are preserved. Technical, pricing, package and release
+work never runs implicitly. No schema, migration, dependency or live change is included.
+
+Validation completed147 distinct checks:145 affected regressions passed without
+failures/skips in390.141s, plus two added multiple-record/edit-budget cases passed.
+The new budget fixture initially omitted its required uncertainty field; that fixture
+was corrected without changing application guards. Tests used this checkout's
+PYTHONPATH and fresh basetemp on disposable15433. Full Ruff, Mypy over236 source
+files, scoped Bandit and JS syntax passed. Synthetic Chrome proved selected-row
+preview/consent, visible differences, no write on proposal/validation, separate save
+and exact reopening after test-server restart. Local edits clear old proposals and
+consent; cancelling the existing unsaved-navigation prompt retains the working edits.
+Desktop,390px-panel and unsaved-editor screenshots were inspected. Earlier harness
+assumptions about retained controls/empty follow-up input were corrected and recorded.
+Scripted replies only: no real model accuracy or operational acceptance is established.
+
+This increment and its8bd0d7f/9d64bd1 parents remain unpublished. PR271's remote head
+is still approved d864c51; CI34757320145 failed. The one-file correction8bce0b0 is
+local and requires the pending extra-file publication approval. The conflicted root
+and pinned live/rollback checkouts are preserved. Full C2/C3 and production gates remain.
 
 ## Native Word proposal checkpoint
 
@@ -569,10 +606,11 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    Implementation with synthetic fixtures does not require live activation or
    customer evidence; selected Word pictures use verified PNG previews. Original-file
    and wider-format transfer remain excluded.
-3. **C3 - Add reviewed selected-record actions.** Keep selected-page advice available;
-   a requested edit yields a typed proposal/diff, then an explicit same-user
-   confirmation. Recheck exact revisions, current permissions and stale context.
-   Other capabilities remain independently requested and gated.
+3. **C3 - Extend reviewed selected-record coverage.** The local Scope replacement
+   action now provides selected-row context, a field diff and separate manual save.
+   Complete operational acceptance and durable AI proposal lineage before claiming
+   full C3; Match, Estimate and library/pricing edits still need their own typed
+   contracts and validation. Other capabilities remain independently requested.
 4. **Retained I2/N1 integration acceptance.** Dedicated external connector upload/
    scan and Excel transport evidence remain unproven; reuse the existing tools and
    clearly selected synthetic destinations without repeating completed Word

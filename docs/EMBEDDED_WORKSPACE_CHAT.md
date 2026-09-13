@@ -118,8 +118,8 @@ No connector rebuild or new ChatKit dependency is required by this intention.
 | --- | --- | --- |
 | Ask about selected page data | Native typed selectors, preview/consent and advisory replies implemented | Complete separately approved real browser activation/acceptance |
 | Attach a defect report in chat | Native DOCX attachment, retained-source/status cards and explicit scan now reuse existing Word intake; saved sources reopen without chat memory | Complete the wider C2 journey, then extend to supported PDF/XLSX |
-| Read report evidence while discussing it | Native panel inspects Word evidence and selects up to10 text blocks/two PNG pictures for preview and consented advice | Complete real-provider acceptance and typed Scope proposal/confirmation |
-| Propose and confirm a page change | Existing typed client requests and browser confirmation; native chat has no write action | Supported action routing, review/diff card and distinct human confirmation |
+| Read report evidence while discussing it | Native panel inspects Word evidence and selects up to10 text blocks/two PNG pictures for preview/consent and typed additions | Complete real-provider acceptance and broader format coverage |
+| Propose and confirm a page change | Explicit Word additions reuse Word review; selected saved Scope replacements show field differences and validate in the manual editor before separate save | Real-provider/live acceptance, durable AI lineage and remaining non-Scope action contracts |
 | Download a reviewed result | Existing exact saved packages and original-bearing ZIPs | In-context access to the same package review, separate confirmation and exact download |
 
 ### Report attachment to saved Draft
@@ -305,3 +305,44 @@ exact saved graph and original DOCX in the ZIP, reopening after test-server rest
 and narrow-panel checks.
 Screenshots were inspected. No real provider, real scanner or customer-accuracy
 acceptance was performed. No schema migration, dependency or live change was needed.
+
+
+## Selected Scope replacements and manual confirmation
+
+Select register rows and use **Ask AI about selection**, then **Propose edits to
+selected Scope records**. A row supplies its Defect/Opening/Service identities;
+column highlighting is not a field-level edit restriction. The exact selected IDs
+and saved fields appear in the preview. Unsaved editor values are excluded. Preview
+and consent are required, and a change of selection/action invalidates both.
+
+The server supports complete replacement records for at most25 explicitly selected
+Defects, Openings, Services or observations. Context ancestors are not edit targets
+unless selected. All fields, including null unknowns, are required. IDs cannot be
+added/deleted; unselected rows, assumptions and exclusions remain unchanged. Each
+changed record needs a reason. New links must point to supplied context, and the
+merged graph must still pass ordinary Scope validation. Confirmed states are refused.
+Current write permission and revision are checked before and after the response.
+
+The card shows named fields, before/after values, reasons, validation findings and
+how many retained source claims become stale. **Review changes in Draft editor**
+submits only `action=validate`. That screen is unsaved until the user independently
+clicks **Save new revision**. Existing session/CSRF, current write permission and
+optimistic revision checks apply; repeated or stale saves fail. Old evidence references
+are preserved rather than replaced with model claims. There is no new signed request
+or durable response history in this path; manual editor changes remain possible and
+are saved as the user's reviewed Draft. Word's signed review stays separate.
+
+No matching, estimating, package creation, technical approval or release runs as a
+side effect. Empty proposals provide no review control. Proposed edit controls are
+transient and are not restored from conversation history. Match/Estimate/library/
+pricing edits remain unsupported. Synthetic coverage proves the mechanical review
+boundary, not model accuracy or production acceptance. See PROJECT_STATE.md for the
+actual tests and private receipt status.
+
+Validation:147 distinct tests passed, including selected/unselected isolation,
+multiple record kinds, total edit limit, explicit fields, stale/repeated saves,
+revoked permissions, relationship conflicts and retained/stale source claims.
+Full Ruff/Mypy236, scoped Bandit and JavaScript syntax passed. Synthetic browser
+review/save/reopen and test-server restart preserved exact bytes; local editor changes
+cleared old proposals/consent and cancelling unsaved navigation preserved local work.
+Desktop/narrow/editor screenshots were inspected. No real provider call occurred.

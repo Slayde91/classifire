@@ -1,10 +1,29 @@
 # CLASSIFIRE Session Handoff
 
-Reconciled 2026-09-13. Current code, Git, CI and runtime evidence override this
+Reconciled 2026-09-14. Current code, Git, CI and runtime evidence override this
 checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 [architecture](./CLASSIFIRE_ARCHITECTURE.md), [roadmap](./CLASSIFIRE_ROADMAP.md) and
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
+
+## Current selected-record edit checkpoint
+
+Use `.tmp/native-selected-scope-edits-20260913`, branch
+`feat/native-selected-scope-edits-20260913`, based on local9d64bd1. The explicit
+selected-Scope action returns complete selected-record replacements and a field diff.
+Review only validates in the existing manual editor; a separate save creates a
+revision. Unselected rows and source references remain, with changed claims marked
+for review. No migration or new write authority was added. 147 distinct checks passed (145 affected regressions plus two added cases); full
+Ruff/Mypy236, scoped Bandit and JS syntax passed. Browser restart and unsaved-edit
+guards passed, with exact saved bytes and no extra writes. Desktop/narrow/unsaved-editor
+outputs were inspected. The private receipt retains earlier fixture/harness failures.
+No real provider or live activation was performed.
+
+Keep this increment and its unpublished parents separate from the exact12-file
+approval for d864c51. Resolve the pending8bce0b0 correction approval for PR271, then
+review the full local commit stack before publication. Scope proposals are locally
+implemented; broader report formats, non-Scope actions, durable AI proposal lineage
+and operational acceptance remain. Do not rebuild the proven synthetic journeys.
 
 ## Current native proposal checkpoint
 
@@ -22,7 +41,7 @@ This branch and selected-evidence8bd0d7f remain unpublished. The new increment a
 no migration, dependency or runtime change. New Word observation claims, durable
 raw model history, real-model accuracy and operational acceptance remain incomplete.
 Resolve the PR271 correction publication gate, then review the complete local stack
-before publishing. Broader formats and selected-record edits remain roadmap work.
+before publishing. Broader formats remain roadmap work; the newer selected-record checkpoint is above.
 
 ## Earlier native evidence checkpoint
 
@@ -338,12 +357,15 @@ and EMBEDDED_WORKSPACE_CHAT. The requested shorter architecture/roadmap filename
 are absent; these are the existing canonical documents. Preserve the conflicted
 root and pinned runtime/diagnostic checkouts. Reconcile
 feat/native-word-attachments-20260913, feat/native-word-chat-evidence-20260913 and
-feat/native-word-scope-proposals-20260913 with GitHub. PR271 failed on an obsolete form assertion; local test-only8bce0b0
+feat/native-word-scope-proposals-20260913 and
+feat/native-selected-scope-edits-20260913 with GitHub. PR271 failed on an obsolete form assertion; local test-only8bce0b0
 awaits separate publication approval. Selected Word text/PNG preview/consent/advice
 is implemented and passed94 affected tests plus synthetic browser checks.
 Native typed Word additions, separate Scope/package confirmations and exact-original
 ZIP download passed the synthetic journey, with127 checks. Real-provider/live
-acceptance, broader report coverage and selected-record edits remain. Reuse existing
+acceptance, broader report coverage and non-Scope edits remain. Selected Scope edits
+now show a field diff, validate without saving and require a separate manual save;
+147 distinct checks passed. Inspect the newer private validation receipt. Reuse existing
 services and preserve unknowns, blank openings and unresolved links. PR #270 merged
 5454b36 as 97c0778 after successful PR CI, but its post-merge run 34753856708 cancelled
 at 45 minutes without a final test summary. Do not restart jobs merely because

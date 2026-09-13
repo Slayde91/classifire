@@ -17,7 +17,7 @@ from ..models import User, new_id
 from .draft_scope import DraftScopeError, DraftScopePayload, read_revision, validate_payload
 from .draft_scope_docx_review import preview_review
 from .draft_scope_evidence import TARGET_COLLECTIONS
-from .draft_workspace_chat import Advice, WorkspaceChatRequest
+from .draft_workspace_chat import Advice, WorkspaceChatRequest, scope_response_schema
 
 
 class WordClaim(BaseModel):
@@ -37,31 +37,7 @@ class WordProposal(Advice):
 
 
 def response_schema() -> dict[str, Any]:
-    """Keep the domain schema, requiring explicit fields including unknown/null values."""
-    schema = WordProposal.model_json_schema()
-
-    def required(node: Any) -> None:
-        if isinstance(node, dict):
-            node.pop("default", None)
-            if node.get("type") == "object":
-                node["required"] = list(node["properties"])
-                node["additionalProperties"] = False
-            for value in node.values():
-                required(value)
-        elif isinstance(node, list):
-            for value in node:
-                required(value)
-
-    required(schema)
-    fields = schema["$defs"]["DraftScopePayload"]["properties"]
-    for kind in TARGET_COLLECTIONS.values():
-        fields[kind]["maxItems"] = 25
-    for kind in ("observations", "assumptions", "exclusions"):
-        fields[kind]["maxItems"] = 0
-    # A proposal cannot establish human-confirmed facts.
-    for kind in ("DraftOpening", "DraftService", "DraftObservation"):
-        schema["$defs"][kind]["properties"]["state"]["enum"].remove("Confirmed")
-    return schema
+    return scope_response_schema(WordProposal)
 
 
 def validate_output(value: Any, context: dict[str, Any]) -> WordProposal:

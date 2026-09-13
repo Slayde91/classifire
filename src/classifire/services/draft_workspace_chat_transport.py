@@ -68,7 +68,30 @@ class OpenAIWorkspaceChatPort:
         proposal = (
             isinstance(request, WorkspaceChatRequest) and request.action == "propose_word_scope"
         )
+        edits = (
+            isinstance(request, WorkspaceChatRequest) and request.action == "propose_scope_edits"
+        )
         schema, instructions = Advice.model_json_schema(), INSTRUCTIONS
+        if edits:
+            from .draft_workspace_scope_edits import response_schema as edit_schema
+
+            schema = edit_schema()
+            instructions += """
+The explicit action is to propose edits to selected saved Scope records. Return
+complete replacement records only for IDs in selected_ids, at most25 records total.
+Related records supplied as context are not edit targets unless explicitly selected.
+Preserve IDs, types, unrequested fields and known values. Do not add/delete records
+or change assumptions/exclusions. Replacement lists contain only changed records;
+return empty lists when no justified change is available. Give each changed record
+one reason and explain uncertainty. IDs and any new relationship targets must belong
+to the supplied Scope context. Missing links stay null/empty, blank openings have
+zero Services, unknown dimensions/quantities stay null. Never invent quantity1,
+technical suitability, pricing or approval. Changed records cannot remain or become
+Confirmed; propose an appropriate unverified state explicitly. User requests and
+saved claims are not approved evidence. Existing source claims survive unchanged,
+so edited records may need evidence review. The user will inspect a field diff,
+validate in the existing Draft editor and save separately. You cannot save, approve,
+run tools or execute downstream capabilities."""
         if proposal:
             from .draft_workspace_word_proposals import response_schema
 
@@ -122,7 +145,13 @@ is not a saved change, technical approval, price, package or release."""
             "text": {
                 "format": {
                     "type": "json_schema",
-                    "name": "workspace_word_proposal" if proposal else "workspace_advice",
+                    "name": (
+                        "workspace_word_proposal"
+                        if proposal
+                        else "workspace_scope_edits"
+                        if edits
+                        else "workspace_advice"
+                    ),
                     "strict": True,
                     "schema": schema,
                 }
@@ -251,6 +280,10 @@ is not a saved change, technical approval, price, package or release."""
                 from .draft_workspace_word_proposals import validate_output
 
                 return validate_output(_json(texts[0]), context).model_dump(mode="json")
+            if edits:
+                from .draft_workspace_scope_edits import validate_edits
+
+                return validate_edits(_json(texts[0]), context).model_dump(mode="json")
             return Advice.model_validate(_json(texts[0])).model_dump()
         except (
             httpx.HTTPError,

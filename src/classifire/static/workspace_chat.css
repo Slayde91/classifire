@@ -12,3 +12,5 @@
 .chat-action{display:block;width:100%;max-width:100%;box-sizing:border-box}.chat-scope-proposal{border:1px solid var(--line,#d8dee6);border-radius:6px;padding:.7rem;overflow-wrap:anywhere;min-width:0}.chat-scope-proposal h3{font-size:1rem}.chat-scope-proposal details{padding:.5rem 0;border-top:1px solid var(--line,#d8dee6)}.chat-scope-proposal dl{display:grid;grid-template-columns:6rem minmax(0,1fr);gap:.3rem;font-size:.8rem}.chat-scope-proposal dt{font-weight:600}.chat-scope-proposal dd{margin:0}.chat-scope-proposal p,.chat-scope-proposal li{font-size:.8rem;line-height:1.5}.chat-scope-review button{white-space:normal;max-width:100%}
 
 .chat-scope-proposal,.chat-scope-review{scroll-margin-top:4rem}
+
+.chat-edit-proposal section{border-top:1px solid var(--line,#d8dee6);padding:.5rem 0}.chat-edit-proposal section p{margin:.25rem 0 .6rem}.chat-edit-review{scroll-margin-top:4rem}.chat-edit-review button{white-space:normal;max-width:100%}

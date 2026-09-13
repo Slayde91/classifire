@@ -58,6 +58,35 @@ class Advice(BaseModel):
     ]
 
 
+def scope_response_schema(model: type[BaseModel], *, observations: bool = False) -> dict[str, Any]:
+    """Keep the domain schema, requiring explicit fields including unknown/null values."""
+    schema = model.model_json_schema()
+
+    def required(node: Any) -> None:
+        if isinstance(node, dict):
+            node.pop("default", None)
+            if node.get("type") == "object":
+                node["required"] = list(node["properties"])
+                node["additionalProperties"] = False
+            for value in node.values():
+                required(value)
+        elif isinstance(node, list):
+            for value in node:
+                required(value)
+
+    required(schema)
+    fields = schema["$defs"]["DraftScopePayload"]["properties"]
+    for kind in ("defects", "openings", "services"):
+        fields[kind]["maxItems"] = 25
+    fields["observations"]["maxItems"] = 25 if observations else 0
+    for kind in ("assumptions", "exclusions"):
+        fields[kind]["maxItems"] = 0
+    # A proposal cannot establish human-confirmed facts.
+    for kind in ("DraftOpening", "DraftService", "DraftObservation"):
+        schema["$defs"][kind]["properties"]["state"]["enum"].remove("Confirmed")
+    return schema
+
+
 class ChatPort(Protocol):
     def complete(
         self,
@@ -288,7 +317,7 @@ class WordEvidenceSelection(BaseModel):
 class WorkspaceChatRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     screen: ContextScreen
-    action: Literal["advice", "propose_word_scope"] = "advice"
+    action: Literal["advice", "propose_word_scope", "propose_scope_edits"] = "advice"
     word: WordEvidenceSelection | None = None
     project_id: Identity | None = None
     draft_id: Identity | None = None
@@ -307,6 +336,8 @@ class WorkspaceChatRequest(BaseModel):
     def bounded_selection(self) -> WorkspaceChatRequest:
         if self.action == "propose_word_scope" and (self.word is None or not self.word.locators):
             raise ValueError("selected Word text required for review anchors")
+        if self.action == "propose_scope_edits" and not self.ids:
+            raise ValueError("select saved Scope records to edit")
         identities = [self.project_id, self.draft_id, *self.ids]
         identities.extend(item.match_id for item in self.matches)
         identities.extend(item.id for item in self.records)
@@ -542,7 +573,7 @@ def workspace_context(
     from .draft_project_packages import validate_match_collection
 
     actor = workspace_actor(db, actor)
-    if request.action == "propose_word_scope":
+    if request.action in {"propose_word_scope", "propose_scope_edits"}:
         _actor(db, actor, "project:write")
         if (
             request.draft_id is None
@@ -748,6 +779,13 @@ def workspace_context(
             "Every new record needs selected evidence and separate human review. "
             "Confirmed states, system selection and pricing are unavailable."
         )
+    if request.action == "propose_scope_edits":
+        context["action"] = request.action
+        context["limitations"].append(
+            "Propose edits only to explicitly selected Scope IDs; related context rows "
+            "are not edit targets unless selected. No additions or deletions. "
+            "Changed evidence claims need review; no technical or commercial approval."
+        )
     raw = _encoded(context)
     if len(raw) > MAX_CONTEXT_BYTES:
         raise DraftScopeError("CHAT_CONTEXT_TOO_LARGE", 422)
@@ -786,11 +824,17 @@ def workspace_answer(
             else port.complete(context, request)
         )
         proposal_model = None
+        edit_model = None
         if request.action == "propose_word_scope":
             from .draft_workspace_word_proposals import validate_output
 
             proposal_model = validate_output(reply, context)
             value = proposal_model.model_dump(mode="json", exclude={"additions", "claims"})
+        elif request.action == "propose_scope_edits":
+            from .draft_workspace_scope_edits import validate_edits
+
+            edit_model = validate_edits(reply, context)
+            value = edit_model.model_dump(mode="json", exclude={"replacements", "reasons"})
         else:
             value = Advice.model_validate(reply).model_dump()
         if not set(value["record_ids"]) <= {row["id"] for row in context["records"]} or not set(
@@ -807,6 +851,10 @@ def workspace_answer(
         from .draft_workspace_word_proposals import prepare_review
 
         value["proposal"] = prepare_review(db, actor, request, proposal_model, settings=settings)
+    if edit_model is not None:
+        from .draft_workspace_scope_edits import prepare_edits
+
+        value["edit_proposal"] = prepare_edits(db, actor, request, edit_model)
     return {**value, "notice": NOTICE, "context": context}
 
 

@@ -65,7 +65,7 @@ untrusted evidence without saving Scope or granting approval.
 | Layer | Implemented components and responsibility |
 | --- | --- |
 | Interfaces | FastAPI/Jinja UI (`ui.py`, `draft_scope_ui.py`, format-specific review routes), API/CLI and optional `draft_client.py` MCP mounting |
-| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; context/message endpoints offer advice or explicit Word additions for separate review; a separate thin session adapter adds explicit Word retain/scan/inspection controls over existing services, without Scope edits or provider disclosure |
+| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; context/message endpoints offer advice, explicit Word additions or selected Scope replacements for separate review; a separate thin session adapter adds explicit Word retain/scan/inspection controls over existing services, without Scope edits or provider disclosure |
 | Authentication | Existing user/session/CSRF checks plus `draft_client_auth.py` and explicit client policy; verified external identity maps to an active local user. Exact resource/issuer/signature/time/scope checks; approved optional nbf/Auth0 compatibility does not remove permission checks |
 | Application commands | `services/draft_client_requests.py` and `draft_client_capabilities.py` create typed durable requests; browser confirmation rechecks rights, owner, dependencies and expected state before executing the shared service |
 | Scope | `draft_scope.py`, `draft_scope_evidence.py`, format review services and shared editor. Immutable revision envelopes with explicit evidence state and unknowns |
@@ -105,7 +105,13 @@ transport and selected Word evidence. A small composer validates new Defect, Ope
 and Service records against the existing Scope contract, remaps proposal IDs and
 preserves existing rows. The panel shows additions, source claims and unknowns, then
 posts to the existing Word preview route. Its session-bound confirmation remains the
-only save step. Existing selected-record edits and broader report coverage follow. Browser routes use the existing
+only save step. The additional `propose_scope_edits` action prepares at most25
+complete replacements of explicitly selected saved Scope records, with before/after
+fields and reasons. It preserves the rest of the graph, validates its relationships
+and retains old source claims, marking changed claims for review. Its review form
+uses the existing manual editor with `action=validate`; the user separately saves
+through that editor. This is not the signed Word confirmation or a durable AI request.
+Broader report and non-Scope edit coverage follow. Browser routes use the existing
 user session and
 CSRF checks; external clients retain their OAuth scope/policy checks. The browser
 does not need to loop through external MCP or acquire a second identity.
@@ -113,7 +119,9 @@ does not need to loop through external MCP or acquire a second identity.
 **Reason:** selected-record advice and local Word attachment/inspection are
 implemented, and bounded selected Word evidence now enters the model contract only
 after preview and consent. Users can now prepare typed additions without granting
-chat write authority. Separate review and package steps retain their existing guards.
+chat write authority. The selected-record extension lets users review requested
+changes in context without copying data, while preserving the existing manual writer.
+Separate review and package steps retain their existing guards.
 
 **Consequences:** distinguish local attachment/intake, explicitly requested scan,
 provider disclosure/consent, analysis proposal, human Draft confirmation and package
@@ -134,7 +142,8 @@ existing Word readers without changing tables, migration history or dependencies
 The selected-evidence extension adds optional typed selectors and an internal image
 argument to the same advisory port; no new provider, identity or write path is added.
 The proposal composer reuses immutable Draft revisions and the existing Word
-preview/confirmation service; it adds no schema version or write path. New Word
+preview/confirmation service; selected replacements reuse manual validation/save
+and shared strict-schema construction. Neither adds a schema version or writer. New Word
 observation claims are outside that existing contract; old observations remain intact. No new table, migration, vector store, agent
 framework or transcript
 store is required by this decision. If a demonstrated gap requires persistence
@@ -310,7 +319,7 @@ production phase nor retires OpenClaw.
 Follow [Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions):
 C1 still needs successful applicable CI and a separately approved diagnostic test
 and activation. C2 has a synthetic native Word journey, with real-provider/live
-acceptance and broader coverage outstanding; C3
-adds explicitly reviewed selected-record actions. Existing connector transport
+acceptance and broader coverage outstanding. C3 has a synthetically validated
+selected Scope replacement action; broader reviewed actions and durable AI lineage remain. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked
 without forcing users through downstream capabilities.
