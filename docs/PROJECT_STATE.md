@@ -1,13 +1,45 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-14 during local PDF proposal acceptance. Selected-record edits and
+Reconciled 2026-09-14 during local Excel panel acceptance. Selected-record edits and
 Word proposal evidence are retained below. Live chat remains rolled back.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
-## Native PDF proposal checkpoint
+## Native Excel attachment checkpoint
+
+The isolated `feat/native-xlsx-attachments-20260914` branch extends local `0c6767a`.
+The shared native attachment adapter/driver now also exposes supported XLSX defect
+registers. Upload retains the original; scanning remains an explicit action. The
+panel shows five rows at a time, worksheet choice, cell coordinates/types/values and
+verified picture previews with their structural anchors. Formula text stays text;
+cached formula results do not become quantities. Original download and the existing
+selected-sheet mapping/review remain available under current access and scan checks.
+
+This increment does not send workbook evidence to a model or create mappings, Scope,
+pricing, packages or technical decisions from inspection. Scope workbooks retain
+their existing purpose and cannot be adopted as pricing sources. Word/PDF model
+selection remains separate. No new parser, writer, schema, migration, dependency or
+provider configuration is included. The closed-review test explicitly accounts for
+the third independent attachment form while preserving no stale Scope save.
+
+Validation: 99 affected Excel/Word/PDF/review/package tests passed, no failures or
+skips, in 609.397s. Tests used this checkout's PYTHONPATH, fresh basetemp and
+only disposable PostgreSQL15433. Full Ruff, Mypy236, scoped Bandit, JavaScript syntax,
+diff checks and67 local documentation links passed. Browser upload, explicit scan,
+row/worksheet navigation, verified PNGs, exact original and mapping-review links passed
+with chat disabled and no Scope/package/model work. A fresh browser after test-server
+restart reopened the same evidence/original without upload or scan. Word text/picture
+selection and original download still work; loading Excel preserves the Word preview.
+The first screenshots showed adjacent row/cell labels; separate row headings corrected
+them, and fresh desktop/390px screenshots were inspected without horizontal overflow.
+The synthetic scanner is not real malware acceptance. No model accuracy is established.
+This increment and its local parents are unpublished; PR271 still needs successful
+CI and the pending approval for its additional test-only correction. The live app,
+live15432, credentials and activation configuration remain unchanged.
+
+## Earlier native PDF proposal checkpoint
 
 The isolated `feat/native-pdf-scope-proposals-20260914` branch extends local
 `2fea699`. The panel now selects one retained PDF page's text and/or rendered PNG
@@ -671,7 +703,9 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    implemented, including typed additions and separate Word/package review in the
    synthetic journey. The same PDF page text/image and typed-addition journey now
    passes synthetic browser checks with separate PDF and package confirmations.
-   Extend supported XLSX through its existing contracts next. Resolve
+   Native XLSX attachment, scan, worksheet/cell/image inspection and existing mapping
+   navigation now reuse the panel. Add explicitly selected workbook model context and
+   typed review through the existing Excel contract next. Resolve
    the operational gate separately; do not repeat the proven Word increment. Reuse the existing
    intake/scan/review/client-request/package services. Preserve the demonstrated
    Word/PDF interaction when extending the attachment-to-confirmed-Scope-to-ZIP

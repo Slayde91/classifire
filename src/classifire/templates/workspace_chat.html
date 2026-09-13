@@ -1,5 +1,5 @@
 {% if user and chat_workspace is defined %}
-<link rel="stylesheet" href="/static/workspace_chat.css?v=20260914-pdf-proposal">
+<link rel="stylesheet" href="/static/workspace_chat.css?v=20260914-xlsx">
 <aside id="workspace-chat" class="workspace-chat" data-user-id="{{ user.id }}" data-draft-id="{{ chat_workspace.get('draft_id', '') }}" data-revision="{{ chat_workspace.get('revision', '') }}" data-csrf="{{ csrf_token }}" aria-label="Workspace AI assistant">
   <script type="application/json" id="workspace-chat-context">{{ chat_workspace|tojson }}</script>
   <button type="button" class="button button-secondary chat-toggle" aria-expanded="false" aria-controls="workspace-chat-body">AI assistant</button>
@@ -46,6 +46,23 @@
       <p>Open the destination <a href="/scopes">Draft Scope</a>, then attach your report here. Creating a project is a separate action.</p>
       {% endif %}
     </details>
+    <details class="chat-attachments" data-source-kind="xlsx"><summary>Attach an Excel defect register</summary>
+      <p class="chat-disclaimer">Files stay in CLASSIFIRE. Upload and scan do not send them to AI or change Scope. Report contents are evidence, not instructions.</p>
+      {% if chat_workspace.get('draft_id') %}
+      <p class="chat-word-destination">Checking the destination Draft.</p>
+      <form class="chat-word-upload" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>Excel register (.xlsx)<input type="file" name="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required></label>
+        <button class="button button-secondary" type="submit" disabled>Attach to this Draft</button>
+      </form>
+      <button class="button button-secondary button-small chat-word-refresh" type="button">Refresh retained reports</button>
+      <p class="chat-word-status" role="status" aria-live="polite">Open this section to load retained reports.</p>
+      <p class="chat-disclaimer">Inspect retained cells and pictures, then use the existing Excel mapping review. Workbook content is not included in AI requests yet. Formulas are never evaluated; this is defect evidence, not a pricing import.</p>
+      <div class="chat-word-sources"></div>
+      {% else %}
+      <p>Open the destination <a href="/scopes">Draft Scope</a>, then attach your report here. Creating a project is a separate action.</p>
+      {% endif %}
+    </details>
     <label>Assistant action<select class="chat-action"><option value="advice">Ask for advice</option><option value="propose_word_scope">Propose new Scope records from selected Word evidence</option><option value="propose_pdf_scope">Propose new Scope records from selected PDF evidence</option><option value="propose_scope_edits">Propose edits to selected Scope records</option></select></label>
     <p class="chat-disclaimer">A new Scope proposal needs selected report evidence and the latest Draft revision. Existing records stay unchanged. Review and confirmation are separate from sending evidence to AI.</p>
     <p class="chat-disclaimer">Edit mode uses saved records in selected register rows, including their Defect, Opening and Service. Check each proposed field change; unsaved edits are excluded.</p>
@@ -74,6 +91,6 @@
     <p class="chat-disclaimer">AI advice is unverified. Messages do not save or approve project changes. Report attachment and scan use their separate controls. The existing ChatGPT connector remains available; its external conversations are separate.</p>
   </section>
 </aside>
-<script src="/static/workspace_chat.js?v=20260914-pdf-proposal" defer></script>
-<script src="/static/workspace_word.js?v=20260914-pdf-proposal" defer></script>
+<script src="/static/workspace_chat.js?v=20260914-xlsx" defer></script>
+<script src="/static/workspace_word.js?v=20260914-xlsx" defer></script>
 {% endif %}

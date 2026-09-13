@@ -3,11 +3,11 @@
   const panel = document.getElementById("workspace-chat");
   if (!panel) return;
   panel.querySelectorAll(".chat-attachments").forEach(section => {
-  const pdf = section.dataset.sourceKind === "pdf", format = pdf ? "PDF" : "DOCX";
-  const extension = pdf ? ".pdf" : ".docx";
+  const kind = section.dataset.sourceKind || "word", pdf = kind === "pdf", xlsx = kind === "xlsx";
+  const format = xlsx ? "XLSX" : pdf ? "PDF" : "DOCX", extension = xlsx ? ".xlsx" : pdf ? ".pdf" : ".docx";
   const form = section?.querySelector(".chat-word-upload");
   if (!form || !panel.dataset.draftId) return;
-  const draft = encodeURIComponent(panel.dataset.draftId), base = `/scopes/${draft}/assistant/${pdf ? "pdf" : "word"}`;
+  const draft = encodeURIComponent(panel.dataset.draftId), base = `/scopes/${draft}/assistant/${kind}`;
   const list = section.querySelector(".chat-word-sources"), status = section.querySelector(".chat-word-status");
   const destination = section.querySelector(".chat-word-destination");
   let busy = false, loaded = false, canWrite = false, limit = 0, generation = 0;
@@ -18,9 +18,15 @@
   function report(text, error = false) { status.textContent = text; status.dataset.error = String(error); }
   function controls() {
     section.querySelectorAll("button").forEach(button => { button.disabled = busy; });
+    section.querySelectorAll("select").forEach(select => {select.disabled=busy;});
     form.querySelector("button").disabled = busy || !loaded || !canWrite; form.elements.file.disabled = busy || !canWrite;
   }
   const errors = {
+    SCOPE_XLSX_UPLOAD_INVALID: "Choose a supported XLSX within the displayed size limit.",
+    SCOPE_XLSX_UPLOAD_CONFLICT: "These bytes belong to a different source purpose. Use the existing source workflow.",
+    SCOPE_XLSX_SOURCE_LIMIT: "This Draft has reached its retained workbook limit.",
+    SCOPE_XLSX_NOT_READY: "This workbook is not ready for inspection. Review its scan status.",
+    SCOPE_XLSX_SOURCE_INTEGRITY_FAILED: "The retained workbook could not be verified. Refresh its status.",
     PDF_UPLOAD_INVALID: "Choose a supported PDF within the displayed size limit.",
     PDF_UPLOAD_CONFLICT: "These bytes belong to a different source purpose. Use the existing source workflow.",
     PDF_SOURCE_LIMIT: "This Draft has reached its retained PDF report limit.",
@@ -59,8 +65,8 @@
     const actions = element("div", "", "chat-actions");
     if (canWrite && source.status !== "malware_detected") actions.append(button("Scan and prepare report", () => scan(source.id)));
     if (source.ready) actions.append(button("Inspect retained evidence", () => inspect(source.id, card, 0)));
-    const link = element("a", pdf ? "Open PDF page review" : "Open Word review", "button button-secondary button-small");
-    link.href = `/scopes/${draft}/${pdf ? "evidence" : "word"}/${encodeURIComponent(source.id)}`;
+    const link = element("a", xlsx ? "Open Excel mapping review" : pdf ? "Open PDF page review" : "Open Word review", "button button-secondary button-small");
+    link.href = `/scopes/${draft}/${xlsx ? "workbooks" : pdf ? "evidence" : "word"}/${encodeURIComponent(source.id)}`;
     if (source.ready) {
       const original=element("a", "Download retained original", "button button-secondary button-small");
       original.href=`${base}/${encodeURIComponent(source.id)}/original`;actions.append(original);
@@ -68,6 +74,7 @@
     actions.append(link); card.append(actions, element("div", "", "chat-word-evidence")); return card;
   }
   function publishSelection() {
+    if (xlsx) return;
     if (pdf) {
       const value=selection && (selection.include_text || selection.include_image) ? {...selection} : null;
       document.dispatchEvent(new CustomEvent("classifire:pdf-selection",{detail:{draftId:panel.dataset.draftId,pdf:value}}));
@@ -86,7 +93,7 @@
   section.querySelector(".chat-word-clear-selection")?.addEventListener("click", clearSelection);
   document.addEventListener("classifire:chat-evidence-clear", clearSelection);
   document.addEventListener(pdf ? "classifire:word-selection" : "classifire:pdf-selection",event=>{
-    if(event.detail?.draftId===panel.dataset.draftId && (pdf ? event.detail.word : event.detail.pdf))clearSelection();
+    if(!xlsx && event.detail?.draftId===panel.dataset.draftId && (pdf ? event.detail.word : event.detail.pdf))clearSelection();
   });
   function selectControl(data, key, id, label) {
     const wrap=element("label", "", "chat-consent"), input=document.createElement("input");
@@ -113,7 +120,7 @@
     if (!canWrite) destination.textContent += " Read only: attaching and scanning require write permission.";
     clearSelection();
     list.replaceChildren(...data.sources.map(sourceCard));
-    if (!data.sources.length) list.append(element("p", `No ${pdf ? "PDF" : "Word"} reports retained for this Draft.`));
+    if (!data.sources.length) list.append(element("p", `No ${xlsx ? "Excel" : pdf ? "PDF" : "Word"} reports retained for this Draft.`));
     loaded = true;
   }
   async function operation(work, progress, success) {
@@ -148,6 +155,7 @@
   }
   function inspect(sourceId, card, after) {
     if (busy) return;
+    if (xlsx) { inspectXlsx(sourceId, card, 1, 1); return; }
     if (pdf) { inspectPdf(sourceId, card, after || 1); return; }
     const content = card.querySelector(".chat-word-evidence"); content.replaceChildren();
     operation(async () => {
@@ -173,6 +181,35 @@
       if (data.next_after_block !== null) navigation.append(button("Next text", () => inspect(sourceId, card, data.next_after_block)));
       content.append(navigation);
     }, "Verifying retained evidence and scan state.", "Evidence displayed for inspection. Select items explicitly before previewing an AI request.");
+  }
+  function inspectXlsx(sourceId,card,sheet,row) {
+    const content=card.querySelector(".chat-word-evidence");content.replaceChildren();content.classList.add("chat-word-block");
+    operation(async()=>{
+      const data=await request(`/${encodeURIComponent(sourceId)}?sheet=${sheet}&row=${row}`);
+      content.append(element("p",`Sheet ${data.sheet.index}: ${data.sheet.name}. Rows ${data.start_row}-${data.end_row} of ${data.sheet.rows}. Inspection only; no AI request, mapping or Scope save.`));
+      content.append(element("p",`Document SHA256: ${data.document_sha256}`,"chat-word-hash"));
+      const label=element("label","Worksheet"),choose=document.createElement("select");choose.className="chat-xlsx-sheet";
+      for(const item of data.sheets){const option=element("option",`${item.index}: ${item.name}`);option.value=item.index;option.selected=item.index===sheet;choose.append(option);}
+      choose.addEventListener("change",()=>{if(!busy)inspectXlsx(sourceId,card,Number(choose.value),1);});label.append(choose);content.append(label);
+      content.append(element("p","Cell values retain their parser type. Formulas are source text, never evaluated; cached values are not quantities. Empty cells and missing relationships remain unknown."));
+      for(let current=data.start_row;current<=data.end_row;current++){
+        const block=element("div","","chat-word-block");block.append(element("h5",`Row ${current}`));
+        const cells=data.cells.filter(cell=>cell.row===current);
+        for(const cell of cells)block.append(element("strong",`${cell.address} (${cell.kind})`),element("pre",cell.value));
+        if(!cells.length)block.append(element("p","No retained nonempty cells in this row."));content.append(block);
+      }
+      content.append(element("p",`${data.images.length} picture anchor(s) intersect these rows; ${data.omitted_images} other picture(s) omitted. Anchors show worksheet placement, not defect or service ownership.`));
+      for(const picture of data.images){
+        const figure=element("figure",""),image=document.createElement("img");image.alt=`Retained ${picture.occurrence_id} from ${data.sheet.name}`;
+        image.src=`/scopes/${draft}/workbooks/${encodeURIComponent(sourceId)}/images/${sheet}/${encodeURIComponent(picture.occurrence_id)}.png`;
+        image.addEventListener("error",()=>{image.hidden=true;figure.append(element("p","Picture unavailable. Recheck access and scan status."));});
+        figure.append(image,element("figcaption",`${picture.occurrence_id}; anchor ${JSON.stringify(picture.anchor)}; original SHA256 ${picture.sha256}; preview SHA256 ${picture.preview_sha256}.`));content.append(figure);
+      }
+      const navigation=element("div","","chat-actions");
+      if(row>1)navigation.append(button("Previous rows",()=>inspectXlsx(sourceId,card,sheet,Math.max(1,row-5))));
+      if(data.next_row)navigation.append(button("Next rows",()=>inspectXlsx(sourceId,card,sheet,data.next_row)));
+      const review=element("a","Review this worksheet","button button-secondary button-small");review.href=`/scopes/${draft}/workbooks/${encodeURIComponent(sourceId)}?sheet=${sheet}&row=${row}`;navigation.append(review);content.append(navigation);
+    },"Verifying retained worksheet evidence and scan state.","Worksheet displayed. Mapping and confirmation use the separate Excel review controls; workbook evidence is not sent to AI.");
   }
   function selectPdfControl(data,key,label) {
     const wrap=element("label","","chat-consent"),input=document.createElement("input");

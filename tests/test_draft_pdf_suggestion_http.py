@@ -90,12 +90,13 @@ def assert_closed_review_page_forms(html):
     parsed = Forms(html)
     assert not parsed.nested
     assert parsed.ids.count("workspace-chat") == 1
-    assert [form["action"] for form in parsed.forms] == ["/logout", None, None, None]
+    assert [form["action"] for form in parsed.forms] == ["/logout", None, None, None, None]
     for form, expected_accept in zip(
-        parsed.forms[1:3],
+        parsed.forms[1:4],
         [
             [".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
             [".pdf", "application/pdf"],
+            [".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
         ],
         strict=True,
     ):
@@ -106,7 +107,7 @@ def assert_closed_review_page_forms(html):
         assert attachment["file"][0]["type"] == "file"
         assert "required" in attachment["file"][0]
         assert attachment["file"][0]["accept"].split(",") == expected_accept
-    advice = parsed.forms[3]["fields"]
+    advice = parsed.forms[4]["fields"]
     assert set(advice) == {"prompt", "question", "consent"}
     assert "required" in advice["question"][0]
     assert "required" in advice["consent"][0]

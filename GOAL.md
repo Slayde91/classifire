@@ -228,8 +228,9 @@ existing separate human Scope review and package confirmation. The synthetic jou
 passes. The native PDF selected page text/image and typed-addition journey also
 passes synthetic separate Scope/package confirmation and exact-original reopening.
 Selected Scope replacement edits now show field differences and use a separate manual
-save. Extend supported XLSX next; real-provider/live acceptance, durable AI lineage
-and broader actions remain. C2 is not complete operationally.
+save. Native XLSX attachment and retained worksheet inspection now reuse the panel;
+add explicit workbook model selection/proposals next. Real-provider/live acceptance,
+durable AI lineage and broader actions remain. C2 is not complete operationally.
 Follow C1-C3 in the
 [roadmap](./docs/CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
 [PROJECT_STATE.md](./docs/PROJECT_STATE.md#recommended-next-actions) for exact status.

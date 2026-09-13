@@ -93,12 +93,16 @@ existing bounded Responses transport after consent. Separately, the existing
 external ChatGPT/MCP client can request intake/scan and prepare durable Draft changes
 for same-user browser confirmation. Ordinary UI intake/review uses the same domain
 services. The native panel now also
-retains Word and PDF reports, explicitly scans them and displays retained evidence
+retains Word, PDF and XLSX reports, explicitly scans them and displays retained evidence
 via `draft_workspace_word_ui.py`. The historical module and Word routes remain; the
-same adapter now selects the existing PDF intake policy through a constrained source
-kind. A shared panel driver handles both formats. PDF inspection shows one retained
+same adapter selects the existing format-specific intake policy through a constrained
+source kind. A shared panel driver handles these formats. PDF inspection shows one retained
 page at a time, its rendered PNG and exact original download, with a link to that
-page's existing review. These controls never call the advice transport.
+page's existing review. XLSX now uses this same adapter/driver: five-row windows,
+worksheet selection, typed cells, verified anchored picture previews, original download
+and a link to existing mapping/review. Scope workbook purpose stays distinct from
+pricing. These controls never call the advice transport; native workbook model
+selection and typed proposals remain the next extension.
 The existing plugin is retained. The advice context additionally accepts explicit
 selection of at most 10 text blocks and 2 verified PNG pictures from one retained
 DOCX. Source/scan/document/image hashes bind the preview and are rechecked before
@@ -149,7 +153,7 @@ supported PDF and XLSX. Approved technical-source and commercial-library ingesti
 retain their distinct purpose, rights and authority; attaching a defect report
 does not import it as a trusted technical or pricing library.
 
-**Migration impact:** native Word/PDF attachments reuse the existing retained-source
+**Migration impact:** native Word/PDF/XLSX attachments reuse the existing retained-source
 policies, parser/scan workers and readers without changing tables, migration history
 or dependencies. Explicitly selected PDF page evidence now enters the same native
 chat transport; existing PDF suggestion/review services remain available. The

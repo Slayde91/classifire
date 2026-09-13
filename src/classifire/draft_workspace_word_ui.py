@@ -1,4 +1,4 @@
-"""Session-authenticated Word/PDF controls over the shared retained-source intake.
+"""Session-authenticated Word/PDF/XLSX controls over the shared retained-source intake.
 
 The historical module name and Word routes remain compatible."""
 
@@ -16,17 +16,18 @@ from .draft_scope_ui import Db
 from .security import has_permission, verify_csrf
 from .services import draft_pdf_intake as pdf
 from .services import draft_scope_docx as word
+from .services import draft_scope_xlsx as xlsx
 from .services.draft_scope import DraftScopeError, get_draft
 from .services.draft_source_intake import DraftSourceIntake
 from .services.malware_scan import MAX_SCAN_BYTES
 from .ui import _require
 
-SourceKind = Literal["word", "pdf"]
+SourceKind = Literal["word", "pdf", "xlsx"]
 router = APIRouter(prefix="/scopes/{draft_id}/assistant/{source_kind}", include_in_schema=False)
 
 
 def _intake(source_kind: SourceKind) -> DraftSourceIntake:
-    return word.intake() if source_kind == "word" else pdf._intake()
+    return {"word": word.intake, "pdf": pdf._intake, "xlsx": xlsx.intake}[source_kind]()
 
 
 def _response(value: object) -> JSONResponse:
@@ -103,12 +104,48 @@ def evidence(
     source_kind: SourceKind,
     page: int = Query(default=1, ge=1, le=50),
     after_block: int = Query(default=0, ge=0, le=1000),
+    sheet: int = Query(default=1, ge=1, le=10),
+    row: int = Query(default=1, ge=1, le=1000),
 ) -> JSONResponse:
     actor = _require(request, db, "project:read")
     try:
         source, document, _ = _intake(source_kind)._document(
             db, actor, draft_id, source_id, get_settings().storage_root
         )
+        if source_kind == "xlsx":
+            if page != 1 or after_block != 0:
+                raise DraftScopeError("CHAT_INPUT_INVALID", 422)
+            if sheet > len(document["sheets"]):
+                raise DraftScopeError("SCOPE_XLSX_SOURCE_NOT_FOUND", 404)
+            selected = document["sheets"][sheet - 1]
+            if row > selected["rows"]:
+                raise DraftScopeError("SCOPE_XLSX_SOURCE_NOT_FOUND", 404)
+            last = min(row + 4, selected["rows"])
+            images = [
+                image
+                for image in selected["images"]
+                if image["anchor"]["from"]["row"] <= last
+                and (image["anchor"]["to"] or image["anchor"]["from"])["row"] >= row
+            ]
+            return _response(
+                {
+                    "source_id": source.id,
+                    "document_sha256": source.document_sha256,
+                    "sheets": [
+                        {key: item[key] for key in ("index", "name", "rows", "columns")}
+                        for item in document["sheets"]
+                    ],
+                    "sheet": {key: selected[key] for key in ("index", "name", "rows", "columns")},
+                    "start_row": row,
+                    "end_row": last,
+                    "next_row": last + 1 if last < selected["rows"] else None,
+                    "cells": [cell for cell in selected["cells"] if row <= cell["row"] <= last],
+                    "images": images,
+                    "omitted_images": len(selected["images"]) - len(images),
+                }
+            )
+        if sheet != 1 or row != 1:
+            raise DraftScopeError("CHAT_INPUT_INVALID", 422)
         if source_kind == "pdf":
             if after_block != 0 or page > len(document["pages"]):
                 raise DraftScopeError("PDF_PAGE_NOT_FOUND", 404)

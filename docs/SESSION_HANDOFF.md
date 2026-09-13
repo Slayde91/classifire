@@ -6,7 +6,20 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
-## Current native PDF proposal checkpoint
+## Current native Excel panel checkpoint
+
+Use `.tmp/native-xlsx-attachments-20260914`, branch
+`feat/native-xlsx-attachments-20260914`, based on local0c6767a. Supported XLSX
+attachment/scan and five-row worksheet/cell/image inspection now use the existing
+native adapter/driver, with exact original download and selected-sheet mapping links.
+No workbook data enters AI requests yet. Formula values remain unevaluated, picture
+anchors are not physical ownership, and Scope purpose never adopts pricing authority.
+The existing closed-review test now expects three independent attachment forms.
+Inspect the private validation receipt for actual final tests and browser results.
+This branch and its parents remain local. No provider call, live change or activation
+is included. Next add explicit workbook model selection and source-bound typed review.
+
+## Earlier native PDF proposal checkpoint
 
 Use `.tmp/native-pdf-scope-proposals-20260914`, branch
 `feat/native-pdf-scope-proposals-20260914`, based on local2fea699. Explicit PDF page
@@ -392,7 +405,8 @@ root and pinned runtime/diagnostic checkouts. Reconcile
 feat/native-word-attachments-20260913, feat/native-word-chat-evidence-20260913 and
 feat/native-word-scope-proposals-20260913 and
 feat/native-selected-scope-edits-20260913, feat/native-pdf-attachments-20260914 and
-feat/native-pdf-scope-proposals-20260914 with GitHub. PR271 failed on an obsolete form assertion; local test-only8bce0b0
+feat/native-pdf-scope-proposals-20260914 and feat/native-xlsx-attachments-20260914
+with GitHub. PR271 failed on an obsolete form assertion; local test-only8bce0b0
 awaits separate publication approval. Selected Word text/PNG preview/consent/advice
 is implemented and passed94 affected tests plus synthetic browser checks.
 Native typed Word additions, separate Scope/package confirmations and exact-original
@@ -400,7 +414,9 @@ ZIP download passed the synthetic journey, with127 checks. Real-provider/live
 acceptance, broader report coverage and non-Scope edits remain. PDF attachment/scan/
 page inspection and explicit selected page text/image model context/proposals now
 pass the separate PDF Scope/package confirmation and restart journey. Extend supported
-XLSX through existing contracts next; preserve the PDF human-review provenance limit. Selected Scope edits
+XLSX model selection and proposals through existing contracts next; its native
+attachment/scan/worksheet inspection and mapping navigation now exist. Preserve the
+PDF human-review provenance limit. Selected Scope edits
 now show a field diff, validate without saving and require a separate manual save;
 147 distinct checks passed. Inspect the newer private validation receipt. Reuse existing
 services and preserve unknowns, blank openings and unresolved links. PR #270 merged

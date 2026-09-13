@@ -117,7 +117,7 @@ No connector rebuild or new ChatKit dependency is required by this intention.
 | User need | Current evidence | Required extension |
 | --- | --- | --- |
 | Ask about selected page data | Native typed selectors, preview/consent and advisory replies implemented | Complete separately approved real browser activation/acceptance |
-| Attach a defect report in chat | Native DOCX/PDF attachment, retained-source/status cards and explicit scan reuse existing intake; saved sources reopen without chat memory | PDF selection/model/proposal and separate package review are synthetically validated; extend supported XLSX and complete operational acceptance |
+| Attach a defect report in chat | Native DOCX/PDF/XLSX attachment, retained-source/status cards and explicit scan reuse existing intake; saved sources reopen without chat memory | Word/PDF proposal journeys are synthetically validated; add explicit XLSX model selection/proposals after its native inspection, then complete operational acceptance |
 | Read report evidence while discussing it | Native panel selects up to10 Word text blocks/two PNG pictures or one PDF page text/image for preview/consent and typed additions | Complete real-provider acceptance and broader format coverage |
 | Propose and confirm a page change | Explicit Word/PDF additions reuse their separate review; selected saved Scope replacements show field differences and validate in the manual editor before separate save | Real-provider/live acceptance, durable AI lineage and remaining non-Scope action contracts |
 | Download a reviewed result | Existing exact saved packages and original-bearing ZIPs | In-context access to the same package review, separate confirmation and exact download |
@@ -411,3 +411,27 @@ PDF suggestion-batch pipeline. No new migration, writer or provider is introduce
 Synthetic browser acceptance proved this sequence and the exact original-bearing
 ZIP across a test-server restart. It does not establish real model accuracy, real
 scanner acceptance, operational activation or a complete production C2 exit.
+
+
+## Native Excel attachment and retained inspection
+
+Open **Attach an Excel defect register** in the current Draft's panel. This retains
+supported `.xlsx` evidence under the existing Scope workbook policy. **Scan and
+prepare report** remains separate. **Inspect retained evidence** displays five rows
+at a time and lets you change worksheets. Each cell shows its coordinate, parser type
+and exact supported value; formulas are never evaluated. This is not Excel's visual
+formatting, inferred physical relationships or a pricing import.
+
+Pictures whose structural anchors intersect the displayed rows use the existing
+verified PNG reader. The panel states how many other pictures are omitted. Anchors
+show placement, not ownership or quantity; original and preview hashes stay distinct.
+**Download retained original** returns the exact workbook under fresh rights, source
+integrity and current scan checks. **Review this worksheet** opens the existing
+mapping UI with that worksheet/row position. Mapping, reviewing and saving require
+their own controls; browsing never runs them.
+
+Workbook content is not yet available to native AI selection or proposal actions.
+The panel states this boundary. Loading or scanning Excel does not clear or extend
+an existing Word/PDF model selection. Model configuration can remain disabled while
+these local attachment controls operate. Pending, failed, expired and corrupt sources
+are withheld; cross-user, cross-format and pricing-purpose access remains refused.
