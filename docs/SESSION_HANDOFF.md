@@ -6,6 +6,33 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
+## Real-app restart and full-suite checkpoint
+
+The parent d33f5ec/0048 full suite completed: 2,574 passed, two skipped, 386 warnings
+in 6,264.19 seconds. Both skips are unavailable Windows file/directory symlink creation;
+these paths still need an environment that supports them. The parent result does not
+cover the newer decision schema. A first full run of the 0049 candidate is now running
+from pinned `1aeded3`, with 2,595 collected cases, selected PYTHONPATH and fresh basetemp
+on disposable15433. Poll its existing handle; no timed-out CI job was restarted.
+
+Actual `classifire.main:app` startup and restart passed over HTTP on isolated8837,
+using a separate migrated synthetic15433 clone. Two distinct Uvicorn processes reopened
+both decisions, exact Scope revision 3 and the unchanged original-bearing Scope2 ZIP.
+The served JavaScript matched the checkout. Startup metadata/bootstrap changed no rows
+or tables. Unauthenticated history redirected to the exact login return path; repeated
+rejection returned409 without new writes. Each fresh login/download session changed only
+login fields and the two expected Scope/package download audits. Both owned processes
+stopped cleanly, port8837 was released and the source recovery fixture remained unchanged.
+No provider, scanner, new Scope/package confirmation, live activation or OAuth/tunnel ran.
+
+The private `native-decision-http-restart-20260914/attempt3` receipt records this pass.
+The first two private-driver failures remain preserved: the full app translates401 to
+303 login redirect, and the two separate downloads produce two audits. Their assertions
+were corrected to the exact existing behavior; application code/guards were unchanged.
+This verifies HTTP and actual server restart in test mode, not rendered browser behavior
+or production configuration. Browser automation still fails initialization with
+helper_unknown_error; visual interaction and browser reopening remain unverified.
+
 ## Local native proposal decisions (targeted validation complete)
 
 `feat/native-proposal-decisions-20260914` extends local `d33f5ec` in an isolated
@@ -17,8 +44,8 @@ and failures save no Scope change; package and canonical authority remain separa
 
 Forward migration0049 adds the decision table and required integrity constraints.
 Readiness and only audited current-head test expectations advance; historical0048/0047
-targets stay intact. This is not deployment approval. The prior full suite continues
-on unchanged d33f5ec, not this newer candidate; its result cannot cover0049.
+targets stay intact. This is not deployment approval. The prior full suite completed
+on d33f5ec/0048; the newer pinned1aeded3/0049 full run is still pending.
 
 Local validation passed 16 distinct new HTTP/provenance cases across the targeted runs,
 96 existing native regression cases, 49 SQLite migration/readiness/packaging cases,
@@ -39,8 +66,8 @@ owned disposable 15433 databases/schemas. No real provider/scanner, customer rep
 live database, activation, OAuth or tunnel change occurred.
 
 Browser automation failed during initialization with `helper_unknown_error`, including
-a reset/retry. No test server was started. JavaScript syntax and HTTP-rendered forms
-are not a substitute for the remaining visual, interactive and restart acceptance.
+a reset/retry. That attempt started no test server. A later actual-app HTTP/server
+restart passed as recorded above; visual interaction and browser reopening remain unverified.
 Keep this limitation visible before publication or activation. Public approval still
 covers only d864c51 and its12 files; the one-file8bce0b0 correction and all newer local
 ancestors require their own exact publication scope. No C2/C3 or production exit is claimed.
@@ -69,8 +96,8 @@ not assumed. Dump options excluded owner/ACL restoration, so this is not product
 roles/grants recovery evidence. This is a synthetic HTTP/new-process check, not browser
 or server-restart acceptance, live backup, activation or technical/customer validation.
 The private `native-decision-recovery-rehearsal-20260914` receipt and archives preserve
-actual results. Complete new-control browser/restart acceptance and candidate CI next;
-the still-running full suite covers the preceding d33f5ec/0048 checkout only.
+actual results. Complete new-control visual/browser acceptance and candidate CI next.
+The later HTTP/server-restart proof and distinct parent/candidate full runs are recorded above.
 
 ## Preceding integration and deployment-readiness correction
 
@@ -94,7 +121,8 @@ Only audited current-head expectations and the current-model test fixture change
 Historical Word0047 targets and all deployed migration files stay unchanged. The
 packaged-head agreement regression prevents this production constant drifting
 silently at the next migration. Validation results belong in the private integration
-and correction receipts; a full combined-suite/hosted-CI pass is not yet established.
+and correction receipts. The later parent full-suite result is recorded above; hosted CI
+and the newer0049 candidate full run remain separate gates.
 The earlier immutable-baseline full run was stopped after 225 logged passes because
 of the reproduced version defects, not an observation timeout. Its partial log is
 preserved; it is not a passing full run. Complete validation on the corrected version
@@ -107,7 +135,8 @@ under `.tmp/native-stack-test-env-20260914` now satisfies every declared depende
 constraint, with pytest8.4.2/cryptography45.0.7 and a clean pip check. All74 affected
 checks passed there (252.285s; two warnings reported), including actual
 PostgreSQL15433 readiness and retained-history checks. Full Ruff, Mypy238 and
-Bandit passed. A corrected-version full-suite result remains pending.
+Bandit passed. The corrected d33f5ec full suite later passed2,574 cases with two Windows
+symlink skips; the newer0049 candidate run remains pending.
 
 ## Native saved-proposal history checkpoint
 
@@ -156,7 +185,8 @@ live database, schema/migration, activation or public push is included. Existing
 row/entity references are durable; raw AI claims and unsaved controls are not.
 Review the complete local stack after the pending PR271 correction approval/CI;
 decision/revision linkage is now implemented in the later local checkpoint above.
-Next complete its browser/restart acceptance, portable history and operational validation.
+Next complete its visual/browser acceptance, portable history and operational validation;
+actual-app HTTP/server restart passed in the later checkpoint above.
 
 ## Earlier native Excel panel checkpoint
 
@@ -558,16 +588,19 @@ PR/CI before selecting work; newer local evidence outranks old checkpoints.
 
 Start with feat/native-proposal-decisions-20260914 and implementation b3c2203. Inspect its
 private validation receipt, exact diff and remaining browser limitation before publication.
-The current candidate uses0049; the separate full-suite run still covers unchanged d33f5ec
-and0048. Poll its existing live handle; never restart on observation timeout. The same
+The current candidate uses0049. Parent d33f5ec completed2,574 passes/two Windows symlink
+skips; the first full0049 run is pinned at1aeded3 in native-decision-full-suite-1aeded3-20260914,
+with private run state in native-decision-full-validation-20260914. Poll its existing live
+handle; never restart on observation timeout. The same
 native panel retains/reopens proposals and now links optional saved identities through the
 existing four review transactions. Confirmation records the actual reviewed Scope revision;
 explicit rejection records no Scope change. Original generation is unchanged, and a later
 matching manual revision never infers a decision. Source preview signatures bind the identity;
 current owner/rights/context, atomicity and one-decision checks remain required. Package
-confirmation and canonical authority are separate. New decision browser/restart acceptance
-is unverified because the browser helper failed initialization; do not claim that prior
-history browser evidence covers the new controls. The private0049 recovery rehearsal
+confirmation and canonical authority are separate. New-control visual interaction and
+browser reopening remain unverified because the browser helper failed initialization.
+Actual classifire.main app startup/restart on isolated8837 passed over HTTP, with exact
+decisions and Scope/ZIP bytes and accounted login/download audits. It does not prove UI clicks. The private0049 recovery rehearsal
 passed exact baseline/candidate database and retained-file restores plus both decisions
 in a fresh Python process; it did not verify browser/server restart or production grants.
 Both migrations are forward-only.

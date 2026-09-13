@@ -144,7 +144,12 @@ Scope and package, downloaded the exact original-bearing ZIP, then restarted and
 history without repeating work. This does not verify the new 0049 decision controls. Synthetic replies/scanner verdicts do not prove real
 provider behavior, malware detection, report accuracy or technical suitability.
 
-Remaining: browser/restart and operational acceptance of the new decision controls;
+A separate real-app HTTP startup/restart rehearsal now reopens exact decisions, Scope3
+and the unchanged Scope2 original-bearing ZIP from a migrated synthetic clone. Expected
+login/download audits are accounted; no provider/scanner or new confirmation ran. This
+is test-mode process acceptance, not rendered-browser or production-configuration proof.
+
+Remaining: visual interaction, browser reopening and operational acceptance of the new controls;
 portable proposal/review history in ProjectPackage; richer non-Scope actions; retention
 policy and broader operational/tenant/recovery validation. No full C1/C2/C3, Phase 8-16,
 AI audit-lineage or production-readiness completion is claimed.

@@ -378,7 +378,8 @@ C1 still needs successful applicable CI and a separately approved diagnostic tes
 and activation. C2 has synthetic native Word/PDF/XLSX journeys, with real-provider/live
 acceptance and broader coverage outstanding. C3 has a synthetically validated
 selected Scope replacement action. Explicit native proposal retention/reopening is
-implemented locally with explicit decision/revision links. New-control browser/restart
-acceptance, portable history and broader reviewed actions remain. Existing connector transport
+implemented locally with explicit decision/revision links. Actual-app HTTP/server restart
+passed. New-control visual/browser acceptance, portable history and broader reviewed
+actions remain. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked
 without forcing users through downstream capabilities.
