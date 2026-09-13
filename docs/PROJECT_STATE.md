@@ -1,7 +1,7 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-13 against merged PR #268, current CI/activation receipts and the
-owner's clarified in-app chat report-upload and page-interaction intention.
+Reconciled 2026-09-13 after merged PR #269, failed chat acceptance and verified
+rollback, and the bounded offline chat diagnostic fix.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
@@ -84,11 +84,27 @@ started on the exact same merge commit. Attempt2 passed
 files), Bandit and the single migration-head check; exact hosted output was read.
 This authorized retry is distinct from restarting because observation timed out.
 
-Live8820 remains the approved 6c1e2a4 build with workspace chat disabled. The approved
-7dbc1cc post-merge CI gate is now satisfied; activation still requires fresh matched backup,
-disposable15433 restore verification, guarded restart and real synthetic browser
-acceptance. Earlier project, Scope and package confirmations remain separate and
-complete. The documentation branch does not change the activation candidate.
+The approved 7dbc1cc activation was attempted after successful CI and fresh
+backup/disposable 15433 restore. Startup and the first browser reply passed; the
+follow-up returned HTTP 502. No retry occurred. Both browser sends are consumed.
+The transport erased the failure category, so the historical cause is unknown;
+neither billing nor a timeout is established.
+
+Rollback to 6c1e2a4 with chat disabled passed fresh recovery, restart and browser
+checks. Scope revision 2, Word text/image and the original-bearing ZIP remained exact.
+All domain rows, schema and storage were preserved; only login timestamps and one
+package-download audit event changed. No migration or live database restore occurred.
+Existing project, Scope and package confirmations remain complete. The first reply
+also broadened uncertainty about source-described separate openings; that unverified
+wording did not change saved records or establish report accuracy.
+
+The current diagnostic fix records fixed failure category, elapsed time, received
+byte count, HTTP status when available and a random per-request reference. No
+exception text, body/header, conversation, context or credential is logged.
+Browser errors, model, time/token limits, no tools, no retries and confirmation
+boundaries are unchanged. Offline validation passed 77 chat cases, including the
+reproduced missing-diagnostic regression and synthetic follow-up/partial-read failures.
+Any further provider test and activation need a fresh explicit approved plan.
 
 Private exact approval/test/activation receipts are retained under
 .tmp/workspace-chat-activation-7dbc1cc-20260913; no credential values or customer
@@ -357,7 +373,7 @@ protections without authorization.
 | Scope | `services/draft_scope.py`: separate defects, openings, services and observations; nullable measurements/quantities; multiple service-opening links; revisions/import/export. PDF page, Excel cell/picture and Word structural text/picture review share guarded revision writing | Draft service/opening graph is narrower than the full production physical model: substrate planes, service instances, treatments and richer relationships are not all separate Draft entities |
 | Evidence intake | `draft_pdf_intake.py`, `draft_scope_xlsx.py`, `draft_scope_docx.py`, shared `draft_source_intake.py`, bounded parser workers, malware/quarantine and retained-byte checks | Supported formats/layouts are bounded. DOCX structural positions are not pages; pictures expose original content, not Word layout/crop semantics. General OCR/drawings/inspection records and representative coverage remain incomplete |
 | Workspace | Shared Projects/Libraries navigation, hierarchy review register, guarded bulk edits, historical selections and saved system/price display | No new domain model or migration. Multi-review packages are merged; automatic pricing/recalculation and comprehensive visual/accessibility/scale acceptance remain incomplete |
-| Workspace advice | `draft_workspace_chat.py`, optional transport and UI preview bounded selected saved Scope records with their ancestors and source-reference claims | Provider disabled in verified UAT; no live provider response proven. This is an advisory API panel, not an embedded authenticated external ChatGPT/MCP session. No automatic writes or implicit capability calls |
+| Workspace advice | `draft_workspace_chat.py`, optional transport and UI preview bounded selected saved Scope records with their ancestors and source-reference claims | One live synthetic browser reply succeeded; follow-up failed and rollback restored chat-disabled operation. This is an advisory API panel, not an embedded authenticated external ChatGPT/MCP session. No automatic writes or implicit capability calls |
 | Optional AI | `draft_pdf_suggestions.py` and suggestion contracts produce reviewable claims, with uncertainty and human decisions | No general autonomous evidence interpretation or proven replacement of every OpenClaw protection; manual workflow remains available |
 | System matching | `draft_system_matches.py`: selected-target retrieval from an authorized retained technical release, immutable candidates, measured constraints/service sizes, human review and dependency staleness | Retrieval is not final suitability. Full configuration/substrate/insulation/installation constraints, bulk technical corpus and representative source coverage are incomplete |
 | Estimating | `draft_estimates.py`, `draft_estimate_contract.py`: independent manual lines, explicit rate methods/overrides, decimal arithmetic, revision history and Scope/optional Match dependencies. Retained workbook rate selection exists | Full six-method automatic default derivation, validated extrapolation, yield/productivity/waste/pack/shared-recovery calculations and representative commercial acceptance are not complete |
@@ -443,12 +459,11 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-1. **C1 - Complete the already approved advisory-panel activation.** Verify the
-   successful post-merge run34737578361 attempt2 and use the approved 7dbc1cc plan.
-   Perform fresh backup/disposable15433
-   restore/restart/rollback checks, then inspect real synthetic browser replies.
-   The single successful transport request is already consumed and reviewed; do
-   not repeat it. No repeat activation approval is needed within that exact plan.
+1. **C1 - Diagnose and revalidate advisory chat.** Publish the bounded diagnostic
+   fix after exact CI/reviews. Prepare one exact synthetic follow-up test and
+   conditional activation with fresh recovery proofs for explicit approval.
+   All earlier provider-call allowances are consumed. Preserve the failed browser
+   attempt and successful rollback; do not infer its cause or retry silently.
 2. **C2 - Build native chat report intake and Scope review.** Reuse the existing
    intake/scan/Word review/client-request/package services, beginning with one
    supported synthetic DOCX. Finish the visible attachment-to-confirmed-Scope-to-ZIP
@@ -472,9 +487,9 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    entities/history, T11-T14 validation, Phase8/8C accuracy and Phase8-16 production
    gates, tenant isolation, operational recovery and protected OpenClaw retirement.
 
-This reconciliation changes six documentation files only. No code, schema, library,
-provider, OAuth/tunnel or live runtime changes accompany publication. Validate
-Markdown links, intended diff and exact source-based claims; hosted checks and
-required reviews still govern merge. Keep the conflicted root, tested activation
-checkout and private originals/receipts untouched. Current branch/publication
-details and the next-session prompt belong in [SESSION_HANDOFF.md](./SESSION_HANDOFF.md).
+This increment changes chat diagnostics, synthetic regression tests and affected
+status documentation. There is no schema change; only a random diagnostic request
+header is added to the provider contract. Private preparation/operational artifacts
+remain outside Git. Preserve the conflicted root, pinned runtime checkouts and old
+receipts. Verify current Git/PR/CI before claiming publication or activation.
+See [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) for branch context and the next task.
