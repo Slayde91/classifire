@@ -138,11 +138,23 @@
     picker.addEventListener("change", () => { selector.records = [...picker.selectedOptions].map(o => { const r = choices.get(o.value); return {kind:r.kind,id:r.id}; }); reset(); if (selector.records.length > 20) { preview.disabled = true; report("Choose at most 20 library records.", true); } });
   }
   const errors = {CHAT_UNAVAILABLE:"The assistant is not enabled. Context preview and manual work remain available.",CHAT_SELECTION_INVALID:"The selection does not belong to these saved records.",CHAT_CONTEXT_CHANGED:"Saved context changed. Preview it again before sending.",CHAT_CONTEXT_TOO_LARGE:"This context is too large. Select fewer records or clear older messages.",CHAT_CONSENT_REQUIRED:"Confirm sending the previewed context first.",CHAT_PROVIDER_FAILED:"The provider could not return valid advice. No project changes were saved.",CHAT_RESPONSE_INVALID:"The response could not be verified. No project changes were saved.",CHAT_EDIT_CONFLICT:"These edits conflict with saved relationships or exceed the Draft limits. Select related records and review the proposed changes.",CHAT_INPUT_INVALID:"The selected context or conversation is not valid. Clear older messages or select fewer records."};
+  const sessionError = "Sign in again, then reload this workspace. Your session is no longer active.";
+  async function readResponse(response, failure, malformed = failure) {
+    const destination = response.redirected ? new URL(response.url, location.href) : null;
+    if (response.status === 401 || (destination?.origin === location.origin && destination.pathname === "/login")) {
+      throw new Error(sessionError);
+    }
+    if (!response.ok) {
+      let code = ""; try { code = (await response.json()).detail; } catch { /* Only known service errors are shown. */ }
+      throw new Error(typeof errors[code] === "string" ? errors[code] : failure);
+    }
+    if ((response.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase() !== "application/json") throw new Error(malformed);
+    try { return await response.json(); } catch { throw new Error(malformed); }
+  }
   async function post(action, question) {
     controller = new AbortController();
     const response = await fetch(`/workspace/assistant/${action}`, {method:"POST",credentials:"same-origin",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json","X-CSRF-Token":panel.dataset.csrf},body:JSON.stringify({...selector,question,turns,include_sensitive:sensitive.checked,consent:form.elements.consent.checked,context_sha256:contextHash || null})});
-    if (!response.ok) { let code=""; try { code=(await response.json()).detail; } catch { /* Fixed safe fallback. */ } throw new Error(errors[code] || "Request refused. Check your session, permissions and selected records."); }
-    return response.json();
+    return readResponse(response, "Request refused. Check your session, permissions and selected records.", "Assistant response could not be verified. Preview context again.");
   }
   function showContext(context) {
     recordList.replaceChildren(); sourceList.replaceChildren();
@@ -193,8 +205,7 @@
   const historyBase = selector.draft_id ? `/scopes/${encodeURIComponent(selector.draft_id)}/native-proposals` : "";
   async function historyRequest(url, options={}) {
     const response=await fetch(url,{credentials:"same-origin",cache:"no-store",...options});
-    if(!response.ok)throw new Error("Saved proposal unavailable. Recheck access, source scan and current inputs.");
-    return response.json();
+    return readResponse(response, "Saved proposal unavailable. Recheck access, source scan and current inputs.", "Saved proposal response could not be verified. Refresh saved proposals.");
   }
   async function loadProposals() {
     if(!history)return;
@@ -383,7 +394,7 @@
   window.addEventListener("pageshow",event=>{if(event.persisted)reset();});
   selectionLabel();buttons();
   fetch("/workspace/assistant",{credentials:"same-origin",cache:"no-store"}).then(async response=>{
-    if(!response.ok)throw new Error("Assistant unavailable for this session.");const info=await response.json();enabled=info.enabled===true;
+    const info=await readResponse(response,"Assistant unavailable for this session.");enabled=info.enabled===true;
     report(enabled?`OpenAI / ${info.model}. Preview context before sending.`:"AI provider not enabled. You can preview saved context and continue manual work.");buttons();
-  }).catch(()=>report("Assistant unavailable for this session.",true));
+  }).catch(error=>{enabled=false;ready=false;form.elements.consent.checked=false;buttons();report(error.message===sessionError?sessionError:"Assistant unavailable for this session.",true);});
 })();

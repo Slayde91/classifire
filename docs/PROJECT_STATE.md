@@ -7,6 +7,25 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Local assistant session-error correction
+
+The actual main-app HTTP rehearsal established that an expired browser login returns
+303 to the login page. The native scripts previously treated the final200 HTML as JSON,
+showing parser details. The isolated session-error correction now shows a fixed sign-in
+instruction for same-origin login redirects and401 responses. Unexpected content types
+or malformed JSON produce fixed messages; unauthorized attachment cards are cleared.
+Known service errors and normal responses are preserved. No authentication, authority,
+API, migration, model, confirmation, retry or redirect policy changes are included.
+
+The regression executes both shipped scripts with a minimal event/DOM surface. Its final
+expectations reproduced16 failures against unchanged0ef73d0 assets, then all25 cases
+passed on the correction. The pytest wrapper and nearby UI tests passed42 cases, with
+one warning and no skips. Node.js is an optional test tool: pytest explicitly skips this
+script test when Node is unavailable; run the standalone script check where available.
+These are script behavior checks, not browser rendering or live acceptance.
+The full2595-case run remains pinned at1aeded3 and cannot cover this later script fix.
+All newer work remains local; public approval still covers only d864c51.
+
 ## Real-app restart and full-suite checkpoint
 
 The parent d33f5ec/0048 full suite completed: 2,574 passed, two skipped, 386 warnings

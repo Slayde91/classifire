@@ -44,12 +44,19 @@
     try { response = await fetch(base + path, {credentials:"same-origin", cache:"no-store", ...options}); }
     catch { throw new Error("Connection interrupted. Refresh retained reports before trying again."); }
     if (current !== generation) throw new Error("Workspace changed. Refresh retained reports.");
+    const destination = response.redirected ? new URL(response.url, location.href) : null;
+    if (response.status === 401 || (destination?.origin === location.origin && destination.pathname === "/login")) {
+      list.replaceChildren(); loaded = false; canWrite = false;
+      throw new Error("Sign in again, then reload this workspace. Your session is no longer active.");
+    }
     if (!response.ok) {
       let code = ""; try { code = (await response.json()).detail; } catch { /* Fixed safe fallback. */ }
       if ([401, 403, 404].includes(response.status)) { list.replaceChildren(); loaded = false; }
       throw new Error(errors[code] || "Request refused. Check your session, access and report scan status.");
     }
-    const data = await response.json();
+    const malformed = "Report response could not be verified. Refresh retained reports.";
+    if ((response.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase() !== "application/json") throw new Error(malformed);
+    let data; try { data = await response.json(); } catch { throw new Error(malformed); }
     if (current !== generation) throw new Error("Workspace changed. Refresh retained reports.");
     return data;
   }

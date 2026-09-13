@@ -496,3 +496,16 @@ lineage limit as the Word/PDF additions path, not full AI audit-history acceptan
 The synthetic browser/ZIP/restart checks exercise orchestration and evidence integrity;
 scripted replies and an injected clean scan establish neither real model accuracy nor
 malware acceptance. Exact validation and publication state belong in PROJECT_STATE.
+
+## Session and response failures
+
+The native panel treats same-origin login redirects and401 responses as an inactive
+session. It asks the user to sign in again and reload the workspace; it does not replay
+an upload, model request, proposal save or confirmation. Malformed JSON and unexpected
+HTML show fixed messages instead of parser/server-body details. Known permission/source
+errors remain explicit, and lost attachment access clears source cards. The server's
+existing authentication and separate confirmation boundaries remain unchanged.
+
+Development check: `node --test tests/js/workspace_session_test.cjs` executes the shipped
+scripts with a minimal event/DOM surface. The pytest wrapper runs it when Node.js is
+available and explicitly skips otherwise. This is not visual/browser acceptance.
