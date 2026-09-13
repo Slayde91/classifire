@@ -6,7 +6,24 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
-## Latest local native proposal concurrency correction
+## Latest local rejection permission correction
+
+`fix/native-proposal-rejection-rights-20260914` extends `c2a5157`. Rejection now
+rechecks current write permission after source/Draft waits before saving a decision.
+The actual PostgreSQL15433 HTTP race reproduced an unauthorized rejection, then
+passed with 403 and an unchanged database snapshot after correction. All five
+selected regressions passed in 244.48s (18 deselected, no skips, one warning).
+Full Ruff, Mypy over 240 files, format and scoped Bandit passed. No schema or authority
+change. Private before/after outputs and receipts are in
+`native-proposal-rejection-rights-validation-20260914` under .tmp.
+
+Current PR271 remains open at the exact approved 12-file `d864c51`, with failed CI
+and no recorded review. The tested `8bce0b0` correction needs its separate public
+approval; no later local stack is authorized for publication. Preserve live8820
+and the conflicted root. Continue the remaining full-range review and browser
+acceptance; this isolated permission regression is not production acceptance.
+
+## Prior local native proposal concurrency correction
 
 `fix/native-proposal-lock-order-20260914` extends `af6e75a`. Publication review
 found opposite source/Draft lock ordering between proposal retention and linked

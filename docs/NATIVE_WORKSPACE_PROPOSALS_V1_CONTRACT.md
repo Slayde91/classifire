@@ -107,6 +107,9 @@ A confirmed reviewed result never rewrites the original generation or proves tha
 AI suggestion was accepted unchanged. These are Draft decisions, not technical approval.
 
 Rejection requires its own checkbox and confirmation. It records no Scope revision.
+The service rechecks current write permission after source/Draft lock waits, just
+before recording rejection. If writing was revoked during the wait, it returns
+403 without a decision or audit write; a readable proposal remains undecided.
 There can be only one decision per proposal; a decided proposal cannot later be confirmed
 or rejected again. An older signed preview cannot bypass that rule. Matching content,
 matching entity IDs, a later revision, retention or conversational agreement cannot infer

@@ -7,6 +7,29 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Local rejection permission correction
+
+`fix/native-proposal-rejection-rights-20260914` extends `c2a5157`. A synthetic
+HTTP request waiting on a real source row lock still saved a rejection after its
+owner lost write permission. The baseline returned 200 and added a decision. The
+service now refreshes write permission immediately before recording rejection.
+The same test returns 403, leaves the full database snapshot unchanged and reopens
+the original proposal as undecided and not rejectable.
+
+All five selected PostgreSQL15433 regressions passed in 244.48s, with 18 cases
+intentionally deselected, no skips and one warning. They include both existing
+lock-order races, explicit rejection/stale-confirmation protection and revoked
+actor confirmation. Full Ruff, Mypy over 240 files, format and scoped Bandit passed.
+Tests used the selected checkout PYTHONPATH, fresh basetemp and synthetic sources
+with an injected model; no real provider, live database or activation ran. No schema,
+architecture or authority expansion is introduced. The test proves revocation
+during the observed lock wait, not serialization of every possible role change.
+
+Private evidence is in `native-proposal-rejection-rights-validation-20260914`
+under .tmp. PR271 still contains exactly the approved 12-file `d864c51`; its CI
+failed. The separate test-only `8bce0b0` and this newer local stack remain
+unpublished pending their own public approval. Browser acceptance is unchanged.
+
 ## Local native proposal concurrency correction
 
 `fix/native-proposal-lock-order-20260914` extends `af6e75a`. Publication review

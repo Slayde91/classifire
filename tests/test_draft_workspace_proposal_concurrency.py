@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
+import json
+import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 
 import pytest
 import test_draft_workspace_proposal_decisions as cases
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import select, text, update
 from test_draft_workspace_chat import snapshot
 
-from classifire.models import User
+from classifire.models import DraftScopeXlsxSource, User
 from classifire.services import draft_workspace_chat as chat
 from classifire.services import draft_workspace_proposals as saved
 
@@ -127,3 +129,77 @@ def test_retention_and_decision_take_source_locks_in_consistent_order(
             "rejected" if operation == "reject" else None
         )
     assert len(x.calls) == 1, "No provider call, retry or implicit capability during race"
+
+
+def test_rejection_rechecks_write_permission_after_waiting_on_source(
+    xlsx_evidence_app,
+    monkeypatch,
+    tmp_path,
+):
+    x = xlsx_evidence_app
+    entered = Event()
+    blocked_pid = []
+    original_context = chat.workspace_context
+
+    def observed_context(db, *args, **kwargs):
+        if not entered.is_set():
+            blocked_pid.append(db.scalar(text("SELECT pg_backend_pid()")))
+            entered.set()
+        return original_context(db, *args, **kwargs)
+
+    with TestClient(x.app) as client:
+        _path, fields, offer = cases.generated(client, x, "xlsx")
+        identity = fields["native_proposal_id"]
+        path = f"/scopes/{x.ids[2]}/native-proposals/{identity}/reject"
+        monkeypatch.setattr(chat, "workspace_context", observed_context)
+        with x.factory() as locker, ThreadPoolExecutor(max_workers=1) as workers:
+            locker_pid = locker.scalar(text("SELECT pg_backend_pid()"))
+            locker.scalar(
+                select(DraftScopeXlsxSource)
+                .where(DraftScopeXlsxSource.id == x.xlsx_selection["source_id"])
+                .with_for_update()
+            )
+            waiting = workers.submit(
+                client.post,
+                path,
+                data={"csrf_token": fields["csrf_token"], "confirm": "reject"},
+            )
+            try:
+                assert entered.wait(10), "Rejection never reached source context"
+                deadline = time.monotonic() + 10
+                with x.factory() as observer:
+                    while True:
+                        blockers = observer.scalar(
+                            text("SELECT pg_blocking_pids(:pid)"),
+                            {"pid": blocked_pid[0]},
+                        )
+                        if locker_pid in blockers:
+                            break
+                        assert time.monotonic() < deadline, "No actual source lock wait observed"
+                        time.sleep(0.01)
+                # Revoke only writing: the actor still owns the Draft and may read it.
+                with x.factory() as admin:
+                    admin.execute(update(User).where(User.id == x.ids[0]).values(role="read_only"))
+                    admin.commit()
+                before = snapshot(x)
+            finally:
+                locker.rollback()
+            response = waiting.result(timeout=20)
+        after = snapshot(x)
+        result = {
+            "source_lock_wait_observed": True,
+            "response_status": response.status_code,
+            "response": response.json(),
+            "state_unchanged_after_role_revocation": after == before,
+            "decision_count": len(after["draft_workspace_proposal_decisions"]),
+            "provider_calls": len(x.calls),
+        }
+        (tmp_path / "rejection-race-result.json").write_text(json.dumps(result, indent=2))
+        assert response.status_code == 403, result
+        assert response.json()["detail"] == "DRAFT_PERMISSION_DENIED"
+        assert after == before, "Refused rejection must not save a decision or audit event"
+        value = cases.opened(client, x, identity)
+        assert value["document"] == offer["document"]
+        assert value["decision"] is None and value["can_reject"] is False
+        assert snapshot(x) == after
+        assert len(x.calls) == 1, "No model retry or implicit downstream capability"

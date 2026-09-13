@@ -584,4 +584,6 @@ def reject(db: Session, actor: User, draft_id: str, identity: str, *, settings: 
         proposal = db.get(DraftWorkspaceProposal, identity)
         if proposal is None:
             raise DraftScopeError("CHAT_PROPOSAL_NOT_FOUND", 404)
+        # Write permission may have changed while waiting for source or Draft locks.
+        _owner(db, actor, draft_id, write=True)
         _record_decision(db, actor, proposal)
