@@ -10,7 +10,8 @@ The local decision extension shows a recorded confirmation with its exact review
 revision, or a separately confirmed rejection. The original generation is not rewritten.
 It reuses existing reviews, does not infer decisions from later content, and adds forward
 migration0049. HTTP/service and migration checks are separate from browser acceptance;
-the new decision controls have not yet passed a browser/restart check.
+actual-app HTTP/server restart passed for the earlier decision candidate, while rendered
+browser acceptance remains unverified.
 
 The [native history contract](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md) adds
 **Save proposal for later** and **Saved AI proposals** for Word/PDF/XLSX additions
@@ -23,8 +24,11 @@ signed save authorization. This local schema extension requires migration0048 an
 separate approved activation. No new provider or downstream capability is invoked.
 
 The format-specific transience statements below apply to unsaved proposals. Explicit
-retention now preserves validated generated fields and prepared review controls, but
-there is still no automatic link to later review decisions or ProjectPackage history.
+retention now preserves validated generated fields and prepared review controls. Explicit
+review identities link later decisions; matching content never infers a decision. The local
+[selected package history](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md) extension optionally
+includes the exact generation and selected decision through separate package confirmation.
+Imported history remains foreign and read-only, without local proposal/approval authority.
 Raw provider bytes and prompt-version reproducibility are also outside this increment.
 
 ## Implemented advisory interaction

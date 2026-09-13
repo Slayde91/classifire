@@ -6,6 +6,42 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
+## Local selected native package history
+
+The isolated `feat/portable-native-history-20260914` branch extends `c837ce5`. Existing
+package preview/save now optionally pins saved native proposals and exact decisions,
+including an explicit no-selected-decision choice. ProjectPackage v7 carries these records;
+empty history preserves v1-v6. Saved/imported pages expose read-only history and exact JSON.
+Original imported archives and nested history remain retained without creating local native
+proposal/decision records. Scope and package confirmation stay separate. No database
+migration, dependency, provider or live change is included; current schema remains0049.
+
+Four synthetic PostgreSQL15433 HTTP/service cases passed, with one warning, in261.72s.
+Three SQLite compatibility/bounds cases passed in8.24s, including pending/rejected history,
+exact multi-review/Estimate/report bytes and denied sensitive-context export after rights
+changed. The selected generation no longer depends on an unselected later corrupt decision;
+the failing reproduction is preserved. Selected corrupt history remains blocked. A test-only
+response-field mistake also remains in the private evidence; the corrected permission case
+passed without changing the application. Full Ruff, Mypy240 and scoped Bandit passed.
+
+The 77-case native-decision/package/import regression passed, with two warnings, in989.64s
+on separate owned PostgreSQL15433. A subsequent negative case reproduced a saved re-export
+page refusing its own retained nested history. The page/download now reuse the existing
+recursive reader. The final eight-case HTTP/UI run passed with one warning in278.29s.
+Expired source scans correctly
+refuse page, ZIP and history access without extra writes. The older 2,595-case full run
+remains pinned at1aeded3 and cannot cover
+later fixes or this feature. Poll existing runs; do not replace observation timeouts with
+new runs. Private outputs are in `portable-native-history-validation-20260914` under .tmp.
+Seven final ZIP/HTML artifacts and74 local document-link targets were inspected. Saved/
+imported HTML structure and exact ZIP/JSON assertions passed; browser automation
+remains unavailable. No new actual-main v7 server/restart acceptance or live acceptance is
+claimed. See [the complete history contract](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md).
+
+PR #271 remains open at approved `d864c51`, with failed CI and no merge. Local Word-only
+correction `8bce0b0` still awaits separate public approval. All newer feature ancestors and
+this local extension remain unpublished; do not mix them into the 12-file approval.
+
 ## Local decision claim consistency correction
 
 The clean base `9b65cfb` is extended in `fix/native-decision-claims-20260914`. Rehashed
@@ -15,8 +51,8 @@ warning and no skips, on disposable PostgreSQL15433. Static checks and read-only
 with prior 0049 decisions, Scope and the original ZIP passed. See [current evidence](./PROJECT_STATE.md#local-native-decision-claim-consistency)
 and the [decision contract](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md).
 The 2,595-case full run remains pinned at `1aeded3` and does not cover later corrections.
-The next feature remains explicitly selected portable proposal/decision history using
-existing package confirmation and retained import origins; it is not implemented here.
+The subsequent selected package-history extension is recorded above. It reuses existing
+package confirmation and retained import origins; its broader acceptance remains incomplete.
 Public approval remains only `d864c51`; PR #271 CI failed and `8bce0b0` still needs separate
 publication approval. Keep later local work separate, with no live/provider execution.
 
@@ -221,7 +257,8 @@ live database, schema/migration, activation or public push is included. Existing
 row/entity references are durable; raw AI claims and unsaved controls are not.
 Review the complete local stack after the pending PR271 correction approval/CI;
 decision/revision linkage is now implemented in the later local checkpoint above.
-Next complete its visual/browser acceptance, portable history and operational validation;
+Selected portable history is now implemented locally. Next complete its
+actual-main restart, visual/browser acceptance and operational validation;
 actual-app HTTP/server restart passed in the later checkpoint above.
 
 ## Earlier native Excel panel checkpoint
@@ -622,8 +659,12 @@ The shorter architecture/roadmap aliases are absent. Preserve the conflicted roo
 pinned runtime and private receipts. Reconcile Git/worktrees, exact upstreams and
 PR/CI before selecting work; newer local evidence outranks old checkpoints.
 
-Start with feat/native-proposal-decisions-20260914 and implementation b3c2203. Inspect its
-private validation receipt, exact diff and remaining browser limitation before publication.
+Start with feat/portable-native-history-20260914, based on c837ce5. Inspect its current
+status, the selected-history contract and private portable-native-history-validation-20260914
+results. The 77-case regression, eight final HTTP/UI checks and three compatibility cases
+passed. Prepare
+actual-main v7 restart acceptance on owned synthetic15433. Preserve browser limitations
+and inspect the entire unpublished ancestor range before any public approval request.
 The current candidate uses0049. Parent d33f5ec completed2,574 passes/two Windows symlink
 skips; the first full0049 run is pinned at1aeded3 in native-decision-full-suite-1aeded3-20260914,
 with private run state in native-decision-full-validation-20260914. Poll its existing live
@@ -641,7 +682,8 @@ passed exact baseline/candidate database and retained-file restores plus both de
 in a fresh Python process; it did not verify browser/server restart or production grants.
 Both migrations are forward-only.
 Activation needs a new exact approved backup/restore/restart/rollback plan and successful CI.
-Never rehearse on live15432. Portable AI history and full operational acceptance remain.
+Never rehearse on live15432. Selected portable native history is implemented locally;
+its remaining acceptance and full operational/history coverage are not complete.
 
 PR271 contains approved d864c51 and12 files. Its CI failed after639 passes on an
 outdated form assertion; local one-file8bce0b0 passed30 checks but needs separate

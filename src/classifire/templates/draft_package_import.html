@@ -12,7 +12,7 @@
 <form method="post" action="/package-import/preview" enctype="multipart/form-data" class="stack-form">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <label for="project-zip">Project ZIP<input id="project-zip" type="file" name="file" accept=".zip,application/zip" required></label>
-<p class="muted">One selected Draft ProjectPackage v1 or v2 ZIP, up to {{ max_bytes // 1048576 }} MiB. Earlier Scope JSON downloads use the Scope import screen.</p>
+<p class="muted">One selected Draft ProjectPackage v1-v7 ZIP, up to {{ max_bytes // 1048576 }} MiB. Earlier Scope JSON downloads use the Scope import screen.</p>
 <button type="submit" class="button button-primary">Inspect package</button>
 </form></section>
 {% if result %}
@@ -26,6 +26,7 @@
 <ul>{% for name,state in result.manifest.capabilities.items() %}<li>{{ name|replace('_',' ')|capitalize }}: {{ state|replace('_',' ') }}</li>{% endfor %}</ul>
 <p>{{ result.match_candidates }} technical candidates; {{ result.estimate_lines }} Estimate lines; {{ result.reports|length }} retained report snapshots.</p>
 <dl>{% for name,count in result.scope_counts.items() %}<dt>{{ name|capitalize }}</dt><dd>{{ count }}</dd>{% endfor %}</dl>
+<p>{{ result.native_history_count|default(0) }} retained AI history items, including nested origins. These remain foreign claims; import creates no local AI proposals or decisions.</p>
 <h3>Scope findings</h3>
 {% if result.scope_findings %}<ul>{% for item in result.scope_findings %}<li>{{ item.message }}</li>{% endfor %}</ul>{% else %}<p>No structural Scope findings. This does not prove complete evidence or a reviewed physical model.</p>{% endif %}
 <h3>Report profiles</h3>

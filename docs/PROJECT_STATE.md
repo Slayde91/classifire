@@ -7,6 +7,42 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Local selected native package history
+
+The isolated `feat/portable-native-history-20260914` branch extends `c837ce5`. Existing
+package preview/save now optionally pins saved native proposals and exact decisions,
+including an explicit no-selected-decision choice. ProjectPackage v7 carries these records;
+empty history preserves v1-v6. Saved/imported pages expose read-only history and exact JSON.
+Original imported archives and nested history remain retained without creating local native
+proposal/decision records. Scope and package confirmation stay separate. No database
+migration, dependency, provider or live change is included; current schema remains0049.
+
+Four synthetic PostgreSQL15433 HTTP/service cases passed, with one warning, in261.72s.
+Three SQLite compatibility/bounds cases passed in8.24s, including pending/rejected history,
+exact multi-review/Estimate/report bytes and denied sensitive-context export after rights
+changed. The selected generation no longer depends on an unselected later corrupt decision;
+the failing reproduction is preserved. Selected corrupt history remains blocked. A test-only
+response-field mistake also remains in the private evidence; the corrected permission case
+passed without changing the application. Full Ruff, Mypy240 and scoped Bandit passed.
+
+The 77-case native-decision/package/import regression passed, with two warnings, in989.64s
+on separate owned PostgreSQL15433. A subsequent negative case reproduced a saved re-export
+page refusing its own retained nested history. The page/download now reuse the existing
+recursive reader. The final eight-case HTTP/UI run passed with one warning in278.29s.
+Expired source scans correctly
+refuse page, ZIP and history access without extra writes. The older 2,595-case full run
+remains pinned at1aeded3 and cannot cover
+later fixes or this feature. Poll existing runs; do not replace observation timeouts with
+new runs. Private outputs are in `portable-native-history-validation-20260914` under .tmp.
+Seven final ZIP/HTML artifacts and74 local document-link targets were inspected. Saved/
+imported HTML structure and exact ZIP/JSON assertions passed; browser automation
+remains unavailable. No new actual-main v7 server/restart acceptance or live acceptance is
+claimed. See [the complete history contract](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md).
+
+PR #271 remains open at approved `d864c51`, with failed CI and no merge. Local Word-only
+correction `8bce0b0` still awaits separate public approval. All newer feature ancestors and
+this local extension remain unpublished; do not mix them into the 12-file approval.
+
 ## Local native decision claim consistency
 
 An isolated correction based on `9b65cfb` now cross-checks the recorded changed flag against
@@ -19,7 +55,8 @@ reads reopened the earlier confirmed/rejected decisions, Scope 3 and the exact o
 bearing Scope 2 ZIP unchanged; all 71 tables and 32 rows matched before/after. The first private
 snapshot harness stopped on incomplete imported ORM metadata; reflecting the actual
 schema corrected that harness only. Its failure is retained in the private receipt.
-No schema, authority, provider or live change is included. Portable history remains next.
+No schema, authority, provider or live change is included. The subsequent local package
+history increment is recorded above.
 
 ## Local assistant session-error correction
 
@@ -964,8 +1001,9 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    Native XLSX now also has explicit header/row/picture context, proposed mappings,
    typed additions, separate workbook review and original-bearing package confirmation.
    Its synthetic journey passes. Explicit native proposal retention/reopening is now
-   implemented locally, including explicit decision/revision links. New-control browser
-   acceptance, portable history and operational validation remain. Resolve
+   implemented locally, including explicit decision/revision links and selected portable
+   history. Its targeted regressions passed. Complete actual-app restart, then browser and
+   operational acceptance. Full history coverage remains incomplete. Resolve
    the operational gate separately; do not repeat the proven Word increment. Reuse the existing
    intake/scan/review/client-request/package services. Preserve the demonstrated
    Word/PDF interaction when extending the attachment-to-confirmed-Scope-to-ZIP
@@ -990,9 +1028,9 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    entities/history, T11-T14 validation, Phase8/8C accuracy and Phase8-16 production
    gates, tenant isolation, operational recovery and protected OpenClaw retirement.
 
-This increment changes chat diagnostics, synthetic regression tests and affected
-status documentation. There is no schema change; only a random diagnostic request
-header is added to the provider contract. Private preparation/operational artifacts
+The latest local increment changes selected package history, read-only import inspection,
+synthetic tests and related documentation. It adds a forward package format, without a
+database migration or provider-contract change. Private preparation/operational artifacts
 remain outside Git. Preserve the conflicted root, pinned runtime checkouts and old
 receipts. Verify current Git/PR/CI before claiming publication or activation.
 See [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) for branch context and the next task.

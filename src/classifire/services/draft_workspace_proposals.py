@@ -216,9 +216,10 @@ def list_saved(db: Session, actor: User, draft_id: str) -> list[dict[str, Any]]:
     ]
 
 
-def reopen(
+def read_generation(
     db: Session, actor: User, draft_id: str, identity: str, *, settings: Settings
-) -> dict[str, Any]:
+) -> tuple[DraftScope, DraftWorkspaceProposal, dict[str, Any]]:
+    """Read only the verified generation; a later decision is an independent record."""
     draft = _owner(db, actor, draft_id)
     row = db.get(DraftWorkspaceProposal, identity, populate_existing=True)
     if row is None or row.created_by_id != actor.id or row.draft_scope_id != draft_id:
@@ -244,6 +245,14 @@ def reopen(
     chat.workspace_context(
         db, actor, request.model_copy(update={"action": "advice"}), settings=settings
     )
+    return draft, row, document
+
+
+def reopen(
+    db: Session, actor: User, draft_id: str, identity: str, *, settings: Settings
+) -> dict[str, Any]:
+    draft, row, document = read_generation(db, actor, draft_id, identity, settings=settings)
+    request = chat.parse_workspace(document["request"])
     decision = read_decision(db, actor, draft_id, row)
     can_review = False
     if decision is None and draft.latest_revision == row.base_revision:

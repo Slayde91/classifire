@@ -7,7 +7,10 @@ new-project import and imported-project v2 re-export are described below.
 
 Collection-bearing reports additionally require every exact review dependency and
 [import mapping v4](./MULTI_REVIEW_REPORTS.md#package-and-import-dependencies).
-The v1-v6 package formats and earlier mapping versions remain supported.
+The v1-v6 package formats and earlier mapping versions remain supported. The local
+[v7 extension](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md) adds explicitly selected native
+proposal/decision history through the same preview/save and retained import origins.
+Empty history preserves the earlier formats; the extension adds no database migration.
 
 ## Current architecture -> change -> consequences
 

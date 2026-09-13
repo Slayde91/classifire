@@ -106,8 +106,13 @@ and a separate one-per-proposal human decision record. Existing source-review si
 carry an optional saved-proposal identity; existing Scope-save transactions record the
 exact resulting revision atomically. Explicit rejection records no Scope change. Original
 generation remains immutable; matching content never implies acceptance. No new writer,
-provider or downstream authority is introduced. Browser validation of these new controls,
-portable history, raw provider/prompt-version records and full AI lineage remain incomplete.
+provider or downstream authority is introduced. A local ProjectPackage v7 extension now
+exports explicitly selected generations and exact decisions, or explicitly no selected
+decision, through existing package preview/save. Imported history remains read-only foreign
+claims in the original archive; it creates no local proposals or approvals. No new database
+migration is added. See [selected history](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md) for bounds,
+privacy, source/permission checks and compatibility. Browser validation of these controls,
+raw provider/prompt-version records and full AI lineage remain incomplete.
 The format-specific paragraphs below describe generation/confirmation; their former
 transience limit now applies to proposals the user has not explicitly retained.
 
@@ -305,9 +310,10 @@ substitute for database authority. Current exports are selected Draft artifacts.
 7. Require current local scanning/containment for retained imported originals; imported
    claims do not become local approval. Re-export checks retained binary ancestors too.
 
-Scope readers preserve v1-v7 evidence history; Word review uses v7. ProjectPackage v1-v6
+Scope readers preserve v1-v7 evidence history; Word review uses v7. ProjectPackage v1-v7
 readers coexist: v3 adds optional PDFs, v4 optional workbooks, v5 optional DOCX originals,
-and v6 an explicit collection of exact row reviews. Collection imports use mapping v3
+v6 an explicit collection of exact row reviews, and local v7 explicitly selected native
+proposal/decision history. Collection imports use mapping v3
 within the existing persistence model; no database migration is added. Older binaries
 cannot read these new formats. See [compatibility and recovery limits](./MULTI_REVIEW_PROJECT_PACKAGES.md).
 These are explicit format branches, not a claim that every export uses the newest version.
@@ -379,7 +385,8 @@ and activation. C2 has synthetic native Word/PDF/XLSX journeys, with real-provid
 acceptance and broader coverage outstanding. C3 has a synthetically validated
 selected Scope replacement action. Explicit native proposal retention/reopening is
 implemented locally with explicit decision/revision links. Actual-app HTTP/server restart
-passed. New-control visual/browser acceptance, portable history and broader reviewed
-actions remain. Existing connector transport
+passed for the earlier decision candidate. Selected portable history is implemented locally
+with passing targeted regression checks. Its actual-app restart and visual/browser acceptance,
+broader reviewed actions and operational acceptance remain. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked
 without forcing users through downstream capabilities.

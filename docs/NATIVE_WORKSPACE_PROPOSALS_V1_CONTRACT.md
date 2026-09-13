@@ -157,7 +157,13 @@ and the unchanged Scope2 original-bearing ZIP from a migrated synthetic clone. E
 login/download audits are accounted; no provider/scanner or new confirmation ran. This
 is test-mode process acceptance, not rendered-browser or production-configuration proof.
 
+Selected portable proposal/decision history now extends existing package preview/save locally.
+See [the v7 contract](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md): exact explicit decision selection,
+current source/export rights, unchanged older ZIPs and foreign read-only import origins.
+No native proposal or approval is materialized from imported history; no database migration
+is added by the package extension.
+
 Remaining: visual interaction, browser reopening and operational acceptance of the new controls;
-portable proposal/review history in ProjectPackage; richer non-Scope actions; retention
+full portable history coverage; richer non-Scope actions; retention
 policy and broader operational/tenant/recovery validation. No full C1/C2/C3, Phase 8-16,
 AI audit-lineage or production-readiness completion is claimed.
