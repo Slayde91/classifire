@@ -43,7 +43,9 @@ async def interact(draft_id: str, action: str, request: Request, db: Db) -> JSON
     try:
         data = chat.parse(_json(bytes(raw)))
         if action == "context":
-            value = chat.selected_context(db, actor, draft_id, data)
+            # Evidence readers can wait on source locks; keep dependency cleanup and
+            # other requests running while that synchronous work waits.
+            value = await run_in_threadpool(chat.selected_context, db, actor, draft_id, data)
         else:
             value = await run_in_threadpool(
                 chat.answer,
@@ -84,7 +86,9 @@ async def workspace_interact(action: str, request: Request, db: Db) -> JSONRespo
     try:
         data = chat.parse_workspace(_json(bytes(raw)))
         if action == "context":
-            value = chat.workspace_context(db, actor, data, settings=get_settings())
+            value = await run_in_threadpool(
+                chat.workspace_context, db, actor, data, settings=get_settings()
+            )
         else:
             value = await run_in_threadpool(
                 chat.workspace_answer,

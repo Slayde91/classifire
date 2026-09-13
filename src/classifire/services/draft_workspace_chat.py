@@ -331,14 +331,44 @@ class PdfEvidenceSelection(BaseModel):
         return self
 
 
+class XlsxEvidenceSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    source_id: Identity
+    document_sha256: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
+    sheet_index: Annotated[int, Field(ge=1, le=10)]
+    header_row: Annotated[int, Field(ge=1, le=999)]
+    rows: Annotated[list[Annotated[int, Field(ge=2, le=1000)]], Field(min_length=1, max_length=10)]
+    picture_ids: Annotated[
+        list[Annotated[str, Field(pattern=r"^image-([1-9]|[1-4][0-9]|50)$")]], Field(max_length=2)
+    ] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def explicit_rows(self) -> XlsxEvidenceSelection:
+        if (
+            str(UUID(self.source_id)) != self.source_id
+            or len(set(self.rows)) != len(self.rows)
+            or any(row <= self.header_row for row in self.rows)
+            or len(set(self.picture_ids)) != len(self.picture_ids)
+        ):
+            raise ValueError("explicit distinct data rows after header required")
+        self.rows.sort()
+        self.picture_ids.sort()
+        return self
+
+
 class WorkspaceChatRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     screen: ContextScreen
-    action: Literal["advice", "propose_word_scope", "propose_pdf_scope", "propose_scope_edits"] = (
-        "advice"
-    )
+    action: Literal[
+        "advice",
+        "propose_word_scope",
+        "propose_pdf_scope",
+        "propose_xlsx_scope",
+        "propose_scope_edits",
+    ] = "advice"
     word: WordEvidenceSelection | None = None
     pdf: PdfEvidenceSelection | None = None
+    xlsx: XlsxEvidenceSelection | None = None
     project_id: Identity | None = None
     draft_id: Identity | None = None
     revision: Revision | None = None
@@ -356,10 +386,12 @@ class WorkspaceChatRequest(BaseModel):
     def bounded_selection(self) -> WorkspaceChatRequest:
         if self.action == "propose_word_scope" and (self.word is None or not self.word.locators):
             raise ValueError("selected Word text required for review anchors")
-        if self.word is not None and self.pdf is not None:
+        if sum(item is not None for item in (self.word, self.pdf, self.xlsx)) > 1:
             raise ValueError("select evidence from one report format per request")
         if self.action == "propose_pdf_scope" and self.pdf is None:
             raise ValueError("selected PDF page required")
+        if self.action == "propose_xlsx_scope" and self.xlsx is None:
+            raise ValueError("selected workbook rows required")
         if self.action == "propose_scope_edits" and not self.ids:
             raise ValueError("select saved Scope records to edit")
         identities = [self.project_id, self.draft_id, *self.ids]
@@ -372,7 +404,7 @@ class WorkspaceChatRequest(BaseModel):
         if (self.draft_id is None) != (self.revision is None):
             raise ValueError("exact Scope revision required")
         if not self.draft_id and (
-            self.ids or self.matches or self.estimate or self.word or self.pdf
+            self.ids or self.matches or self.estimate or self.word or self.pdf or self.xlsx
         ):
             raise ValueError("Scope required")
         if (
@@ -599,7 +631,12 @@ def workspace_context(
     from .draft_project_packages import validate_match_collection
 
     actor = workspace_actor(db, actor)
-    if request.action in {"propose_word_scope", "propose_pdf_scope", "propose_scope_edits"}:
+    if request.action in {
+        "propose_word_scope",
+        "propose_pdf_scope",
+        "propose_xlsx_scope",
+        "propose_scope_edits",
+    }:
         _actor(db, actor, "project:write")
         if (
             request.draft_id is None
@@ -759,7 +796,7 @@ def workspace_context(
         context["limitations"].append(
             "No records are selected. Only the displayed screen/project identity is included."
         )
-    if request.word is not None or request.pdf is not None:
+    if request.word is not None or request.pdf is not None or request.xlsx is not None:
         if request.draft_id is None:
             raise DraftScopeError("CHAT_INPUT_INVALID", 422)
         if request.word is not None:
@@ -781,7 +818,7 @@ def workspace_context(
                 f" {len(word_selected.locators)} Word text blocks; "
                 f"{len(word_selected.picture_ids)} Word pictures."
             )
-        else:
+        elif request.pdf is not None:
             from .draft_pdf_intake import chat_evidence as pdf_evidence
 
             if request.pdf is None:
@@ -803,6 +840,29 @@ def workspace_context(
                 f" PDF page {pdf_selected.page_number}; text={pdf_selected.include_text}, "
                 f"image={pdf_selected.include_image}."
             )
+        else:
+            from .draft_scope_xlsx import chat_evidence as xlsx_evidence
+
+            if request.xlsx is None:
+                raise DraftScopeError("CHAT_INPUT_INVALID", 422)
+            xlsx_selected = request.xlsx
+            evidence, parts = xlsx_evidence(
+                db,
+                actor,
+                request.draft_id,
+                xlsx_selected.source_id,
+                xlsx_selected.document_sha256,
+                xlsx_selected.sheet_index,
+                xlsx_selected.header_row,
+                xlsx_selected.rows,
+                xlsx_selected.picture_ids,
+                settings=settings or get_settings(),
+            )
+            kind, label = "xlsx", "Excel"
+            context["summary"] += (
+                f" Excel worksheet {xlsx_selected.sheet_index}; header {xlsx_selected.header_row}; "
+                f"{len(xlsx_selected.rows)} rows; {len(xlsx_selected.picture_ids)} pictures."
+            )
         context[kind + "_evidence"] = evidence
         context["limitations"][0] = (
             f"Selected saved records and explicitly selected retained {label} evidence only; "
@@ -815,14 +875,14 @@ def workspace_context(
         refs.append(
             {
                 "source_id": evidence["source_id"],
-                "source_kind": "docx" if kind == "word" else "pdf",
+                "source_kind": "docx" if kind == "word" else kind,
                 "document_sha256": evidence["document_sha256"],
                 "claim_status": "Retained selected evidence; unverified interpretation",
             }
         )
         if image_parts is not None:
             image_parts.extend(parts)
-    if request.action in {"propose_word_scope", "propose_pdf_scope"}:
+    if request.action in {"propose_word_scope", "propose_pdf_scope", "propose_xlsx_scope"}:
         context["action"] = request.action
         context["limitations"].append(
             "Propose new source-derived records only; existing records are preserved. "
@@ -875,13 +935,21 @@ def workspace_answer(
         )
         proposal_model = None
         edit_model = None
-        if request.action in {"propose_word_scope", "propose_pdf_scope"}:
+        if request.action in {"propose_word_scope", "propose_pdf_scope", "propose_xlsx_scope"}:
             from .draft_workspace_word_proposals import validate_output
 
             proposal_model = validate_output(
-                reply, context, source_kind="pdf" if request.pdf is not None else "word"
+                reply,
+                context,
+                source_kind="xlsx"
+                if request.xlsx is not None
+                else "pdf"
+                if request.pdf is not None
+                else "word",
             )
-            value = proposal_model.model_dump(mode="json", exclude={"additions", "claims"})
+            value = proposal_model.model_dump(
+                mode="json", exclude={"additions", "claims", "mapping"}
+            )
         elif request.action == "propose_scope_edits":
             from .draft_workspace_scope_edits import validate_edits
 

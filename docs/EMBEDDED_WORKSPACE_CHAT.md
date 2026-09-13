@@ -117,7 +117,7 @@ No connector rebuild or new ChatKit dependency is required by this intention.
 | User need | Current evidence | Required extension |
 | --- | --- | --- |
 | Ask about selected page data | Native typed selectors, preview/consent and advisory replies implemented | Complete separately approved real browser activation/acceptance |
-| Attach a defect report in chat | Native DOCX/PDF/XLSX attachment, retained-source/status cards and explicit scan reuse existing intake; saved sources reopen without chat memory | Word/PDF proposal journeys are synthetically validated; add explicit XLSX model selection/proposals after its native inspection, then complete operational acceptance |
+| Attach a defect report in chat | Native DOCX/PDF/XLSX attachment, retained-source/status cards and explicit scan reuse existing intake; saved sources reopen without chat memory | Word/PDF/XLSX proposal journeys are synthetically validated; complete durable AI proposal lineage and operational acceptance |
 | Read report evidence while discussing it | Native panel selects up to10 Word text blocks/two PNG pictures or one PDF page text/image for preview/consent and typed additions | Complete real-provider acceptance and broader format coverage |
 | Propose and confirm a page change | Explicit Word/PDF additions reuse their separate review; selected saved Scope replacements show field differences and validate in the manual editor before separate save | Real-provider/live acceptance, durable AI lineage and remaining non-Scope action contracts |
 | Download a reviewed result | Existing exact saved packages and original-bearing ZIPs | In-context access to the same package review, separate confirmation and exact download |
@@ -430,8 +430,46 @@ integrity and current scan checks. **Review this worksheet** opens the existing
 mapping UI with that worksheet/row position. Mapping, reviewing and saving require
 their own controls; browsing never runs them.
 
-Workbook content is not yet available to native AI selection or proposal actions.
-The panel states this boundary. Loading or scanning Excel does not clear or extend
-an existing Word/PDF model selection. Model configuration can remain disabled while
+Loading or scanning Excel does not clear or extend an existing Word/PDF model
+selection. Explicitly selecting Excel evidence replaces the other format selection
+and invalidates old preview/consent, as described below. Model configuration can remain disabled while
 these local attachment controls operate. Pending, failed, expired and corrupt sources
 are withheld; cross-user, cross-format and pricing-purpose access remains refused.
+
+
+Both context endpoints execute blocking context readers in the existing thread
+pool. A source-lock wait therefore allows other requests and dependency cleanup to
+continue; integrity locks and current authority checks are unchanged. A bounded
+HTTP concurrency regression covers both the legacy Scope and workspace endpoints.
+
+## Selected Excel evidence and typed additions
+
+After inspection, choose a header and 1-10 distinct data rows after it, plus up to
+two retained pictures from the same worksheet (4 MiB combined). The exact preview
+includes every retained cell in the selected rows and header, coordinates, parser
+types and selected pictures. Other rows/sheets/pictures and the original XLSX are
+excluded. Formula/error cells remain source text, not evaluated quantities. A header
+change clears the row/picture selection and consent. Choosing another report format
+replaces this selection. Nothing is sent until a fresh preview and explicit consent.
+
+**Propose new Scope records from selected Excel evidence** returns at most 25 new
+Defects/Openings/Services in the existing additions contract plus all 12 nullable
+column mappings. Text/both claims quote exact selected mapped non-formula/non-error
+data cells; headers cannot support physical claims by themselves. Pictures must be
+selected and claims must name a selected data-row anchor. Placement does not establish
+ownership. Missing facts and mappings stay unknown. Existing rows are copied unchanged.
+
+**Review proposed Excel Scope** shows the proposed mapping and graph through the
+existing signed workbook review. The reviewer checks cells, pictures, relationships
+and unknowns, then separately confirms a new revision. Package selection and save
+remain separate and may include the exact original XLSX. No Match, Estimate, report,
+price, technical approval or canonical release runs implicitly. Modified mappings,
+stale Scope/source/rights and repeat confirmations are refused by existing guards.
+
+Confirmed revisions retain human workbook row/entity references with mapped cells
+and selected image identities. Raw AI claims/rationale, conversation and unsaved
+proposal controls do not become a durable suggestion batch. This is the same known
+lineage limit as the Word/PDF additions path, not full AI audit-history acceptance.
+The synthetic browser/ZIP/restart checks exercise orchestration and evidence integrity;
+scripted replies and an injected clean scan establish neither real model accuracy nor
+malware acceptance. Exact validation and publication state belong in PROJECT_STATE.

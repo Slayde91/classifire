@@ -74,7 +74,12 @@
     actions.append(link); card.append(actions, element("div", "", "chat-word-evidence")); return card;
   }
   function publishSelection() {
-    if (xlsx) return;
+    if (xlsx) {
+      const value=selection?.rows.length ? {...selection,rows:[...selection.rows],picture_ids:[...selection.picture_ids]} : null;
+      document.dispatchEvent(new CustomEvent("classifire:xlsx-selection",{detail:{draftId:panel.dataset.draftId,xlsx:value}}));
+      section.querySelector(".chat-word-selected").textContent=value ? `Selected worksheet ${value.sheet_index}, header row ${value.header_row}, data rows ${value.rows.join(", ")}; ${value.picture_ids.length} pictures. Preview and consent before sending.` : "Choose at least one data row and its header for AI preview.";
+      return;
+    }
     if (pdf) {
       const value=selection && (selection.include_text || selection.include_image) ? {...selection} : null;
       document.dispatchEvent(new CustomEvent("classifire:pdf-selection",{detail:{draftId:panel.dataset.draftId,pdf:value}}));
@@ -92,9 +97,11 @@
   }
   section.querySelector(".chat-word-clear-selection")?.addEventListener("click", clearSelection);
   document.addEventListener("classifire:chat-evidence-clear", clearSelection);
-  document.addEventListener(pdf ? "classifire:word-selection" : "classifire:pdf-selection",event=>{
-    if(!xlsx && event.detail?.draftId===panel.dataset.draftId && (pdf ? event.detail.word : event.detail.pdf))clearSelection();
-  });
+  for(const otherKind of ["word","pdf","xlsx"])if(otherKind!==kind){
+    document.addEventListener(`classifire:${otherKind}-selection`,event=>{
+      if(event.detail?.draftId===panel.dataset.draftId && event.detail[otherKind])clearSelection();
+    });
+  }
   function selectControl(data, key, id, label) {
     const wrap=element("label", "", "chat-consent"), input=document.createElement("input");
     input.type="checkbox"; input.className="chat-word-select";
@@ -182,6 +189,23 @@
       content.append(navigation);
     }, "Verifying retained evidence and scan state.", "Evidence displayed for inspection. Select items explicitly before previewing an AI request.");
   }
+  function selectXlsxControl(data,key,value,label,header) {
+    const wrap=element("label","","chat-consent"),input=document.createElement("input");input.type="checkbox";input.className="chat-word-select";
+    const same=()=>selection?.source_id===data.source_id && selection?.document_sha256===data.document_sha256 && selection?.sheet_index===data.sheet.index && selection?.header_row===Number(header.value);
+    input.checked=!!(same()&&selection[key].includes(value));
+    if(key==="rows"){input.dataset.xlsxRow=String(value);input.disabled=value<=Number(header.value);}
+    input.addEventListener("change",()=>{
+      const headerRow=Number(header.value);
+      if(!Number.isInteger(headerRow)||headerRow<1||headerRow>=data.sheet.rows||(key==="rows"&&value<=headerRow)){input.checked=false;report("Choose a valid header and data rows after it.",true);return;}
+      if(!same()){
+        section.querySelectorAll(".chat-word-select").forEach(other=>{if(other!==input)other.checked=false;});
+        selection={source_id:data.source_id,document_sha256:data.document_sha256,sheet_index:data.sheet.index,header_row:headerRow,rows:[],picture_ids:[]};
+      }
+      if(input.checked&&selection[key].length>=(key==="rows"?10:2)){input.checked=false;report("Select at most 10 data rows and 2 pictures from one worksheet.",true);return;}
+      selection[key]=input.checked?[...selection[key],value].sort((a,b)=>key==="rows"?a-b:String(a).localeCompare(String(b))):selection[key].filter(item=>item!==value);
+      publishSelection();
+    });wrap.append(input,document.createTextNode(label));return wrap;
+  }
   function inspectXlsx(sourceId,card,sheet,row) {
     const content=card.querySelector(".chat-word-evidence");content.replaceChildren();content.classList.add("chat-word-block");
     operation(async()=>{
@@ -191,9 +215,12 @@
       const label=element("label","Worksheet"),choose=document.createElement("select");choose.className="chat-xlsx-sheet";
       for(const item of data.sheets){const option=element("option",`${item.index}: ${item.name}`);option.value=item.index;option.selected=item.index===sheet;choose.append(option);}
       choose.addEventListener("change",()=>{if(!busy)inspectXlsx(sourceId,card,Number(choose.value),1);});label.append(choose);content.append(label);
+      const headerLabel=element("label","Header row (included in AI preview with selected data rows)"),header=document.createElement("input");header.type="number";header.min="1";header.max=String(Math.max(1,data.sheet.rows-1));header.className="chat-xlsx-header";
+      header.value=String(selection?.source_id===data.source_id&&selection?.sheet_index===sheet?selection.header_row:1);
+      header.addEventListener("change",()=>{clearSelection();content.querySelectorAll("[data-xlsx-row]").forEach(input=>{input.disabled=Number(input.dataset.xlsxRow)<=Number(header.value);});report("Header changed. Choose data rows, preview and consent again.");});headerLabel.append(header);content.append(headerLabel);
       content.append(element("p","Cell values retain their parser type. Formulas are source text, never evaluated; cached values are not quantities. Empty cells and missing relationships remain unknown."));
       for(let current=data.start_row;current<=data.end_row;current++){
-        const block=element("div","","chat-word-block");block.append(element("h5",`Row ${current}`));
+        const block=element("div","","chat-word-block");block.append(element("h5",`Row ${current}`),selectXlsxControl(data,"rows",current,"Include this data row and header in AI preview",header));
         const cells=data.cells.filter(cell=>cell.row===current);
         for(const cell of cells)block.append(element("strong",`${cell.address} (${cell.kind})`),element("pre",cell.value));
         if(!cells.length)block.append(element("p","No retained nonempty cells in this row."));content.append(block);
@@ -203,13 +230,13 @@
         const figure=element("figure",""),image=document.createElement("img");image.alt=`Retained ${picture.occurrence_id} from ${data.sheet.name}`;
         image.src=`/scopes/${draft}/workbooks/${encodeURIComponent(sourceId)}/images/${sheet}/${encodeURIComponent(picture.occurrence_id)}.png`;
         image.addEventListener("error",()=>{image.hidden=true;figure.append(element("p","Picture unavailable. Recheck access and scan status."));});
-        figure.append(image,element("figcaption",`${picture.occurrence_id}; anchor ${JSON.stringify(picture.anchor)}; original SHA256 ${picture.sha256}; preview SHA256 ${picture.preview_sha256}.`));content.append(figure);
+        figure.append(image,element("figcaption",`${picture.occurrence_id}; anchor ${JSON.stringify(picture.anchor)}; original SHA256 ${picture.sha256}; preview SHA256 ${picture.preview_sha256}.`),selectXlsxControl(data,"picture_ids",picture.occurrence_id,"Include this picture in AI preview",header));content.append(figure);
       }
       const navigation=element("div","","chat-actions");
       if(row>1)navigation.append(button("Previous rows",()=>inspectXlsx(sourceId,card,sheet,Math.max(1,row-5))));
       if(data.next_row)navigation.append(button("Next rows",()=>inspectXlsx(sourceId,card,sheet,data.next_row)));
       const review=element("a","Review this worksheet","button button-secondary button-small");review.href=`/scopes/${draft}/workbooks/${encodeURIComponent(sourceId)}?sheet=${sheet}&row=${row}`;navigation.append(review);content.append(navigation);
-    },"Verifying retained worksheet evidence and scan state.","Worksheet displayed. Mapping and confirmation use the separate Excel review controls; workbook evidence is not sent to AI.");
+    },"Verifying retained worksheet evidence and scan state.","Worksheet displayed. Select rows/header and pictures, then preview and consent. Mapping and Scope confirmation remain separate.");
   }
   function selectPdfControl(data,key,label) {
     const wrap=element("label","","chat-consent"),input=document.createElement("input");

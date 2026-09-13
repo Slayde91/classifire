@@ -68,11 +68,13 @@ class OpenAIWorkspaceChatPort:
         proposal = isinstance(request, WorkspaceChatRequest) and request.action in {
             "propose_word_scope",
             "propose_pdf_scope",
+            "propose_xlsx_scope",
         }
         edits = (
             isinstance(request, WorkspaceChatRequest) and request.action == "propose_scope_edits"
         )
         pdf = isinstance(request, WorkspaceChatRequest) and request.pdf is not None
+        xlsx = isinstance(request, WorkspaceChatRequest) and request.xlsx is not None
         schema, instructions = Advice.model_json_schema(), INSTRUCTIONS
         if edits:
             from .draft_workspace_scope_edits import response_schema as edit_schema
@@ -97,7 +99,7 @@ run tools or execute downstream capabilities."""
         if proposal:
             from .draft_workspace_word_proposals import response_schema
 
-            schema = response_schema()
+            schema = response_schema(xlsx=xlsx)
             proposal_instructions = """
 The explicitly requested action is to propose new Scope records from selected
 Word evidence. Produce additions only, never edits to existing records. Use fresh UUIDs
@@ -120,6 +122,20 @@ is not a saved change, technical approval, price, package or release."""
                     "text locator; cite only selected pictures.",
                     "page locator; cite only its selected text or selected page picture.",
                 )
+            if xlsx:
+                proposal_instructions = proposal_instructions.replace("Word", "Excel row").replace(
+                    "text locator; cite only selected pictures.",
+                    "data-row locator (xlsx:sheet:row); cite only selected worksheet pictures.",
+                )
+                proposal_instructions += """
+Propose all twelve column mapping fields as selected worksheet column numbers or null.
+This is an unverified mapping for separate human review. Every text/both quote must
+be an exact substring of a selected data cell in a mapped column, never header text,
+formula/error text or an omitted row. Preserve null mappings when meaning is unknown.
+Formula cells are source text only: never calculate them or use cached formula results
+as physical quantities. Row count, header labels and picture placement do not establish
+quantity, relationships or technical suitability. A picture claim still needs an
+explicitly selected data-row anchor; the user must review that relationship."""
             instructions += proposal_instructions
         body: dict[str, Any] = {
             "model": self.model,
@@ -154,7 +170,13 @@ is not a saved change, technical approval, price, package or release."""
                 "format": {
                     "type": "json_schema",
                     "name": (
-                        ("workspace_pdf_proposal" if pdf else "workspace_word_proposal")
+                        (
+                            "workspace_xlsx_proposal"
+                            if xlsx
+                            else "workspace_pdf_proposal"
+                            if pdf
+                            else "workspace_word_proposal"
+                        )
                         if proposal
                         else "workspace_scope_edits"
                         if edits
@@ -168,12 +190,14 @@ is not a saved change, technical approval, price, package or release."""
         if images:
             # Internal bytes must match the exact evidence hashes shown in the preview.
             try:
-                descriptors = context["pdf_evidence" if pdf else "word_evidence"]["pictures"]
+                descriptors = context[
+                    "xlsx_evidence" if xlsx else "pdf_evidence" if pdf else "word_evidence"
+                ]["pictures"]
                 if not isinstance(request, WorkspaceChatRequest) or not (
-                    request.word or request.pdf
+                    request.word or request.pdf or request.xlsx
                 ):
                     raise ValueError("Evidence selection required")
-                limit = 4 * 1024 * 1024 if pdf else MAX_CHAT_IMAGE_BYTES
+                limit = 4 * 1024 * 1024 if pdf or xlsx else MAX_CHAT_IMAGE_BYTES
                 if not 1 <= len(descriptors) <= (1 if pdf else 2) or len(images) != 2 * len(
                     descriptors
                 ):
@@ -293,7 +317,9 @@ is not a saved change, technical approval, price, package or release."""
                 from .draft_workspace_word_proposals import validate_output
 
                 return validate_output(
-                    _json(texts[0]), context, source_kind="pdf" if pdf else "word"
+                    _json(texts[0]),
+                    context,
+                    source_kind="xlsx" if xlsx else "pdf" if pdf else "word",
                 ).model_dump(mode="json")
             if edits:
                 from .draft_workspace_scope_edits import validate_edits

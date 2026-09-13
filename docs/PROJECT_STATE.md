@@ -1,13 +1,70 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-14 during local Excel panel acceptance. Selected-record edits and
+Reconciled 2026-09-14 during local Excel proposal acceptance. Selected-record edits and
 Word proposal evidence are retained below. Live chat remains rolled back.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
-## Native Excel attachment checkpoint
+## Native Excel proposal checkpoint
+
+The isolated `feat/native-xlsx-scope-proposals-20260914` branch extends local
+`8441195`. Users select one worksheet, one header, up to 10 data rows after that
+header and up to two retained PNG pictures (4 MiB combined). Exact selected cells,
+header and pictures are disclosed before separate provider consent; original files,
+other sheets and omitted rows/pictures are excluded. The shared transport validates
+all 12 nullable mapping fields and typed additions. Text claims must quote a selected,
+mapped, non-formula/non-error data cell; a picture claim still needs a selected row.
+
+**Review proposed Excel Scope** opens the existing signed workbook review. Mapping,
+relationships, images and unknowns remain human review decisions. Only a separate
+confirmation saves a revision; the package has its own confirmation. Existing records
+are preserved, blank openings can have zero Services, and unresolved values stay
+unknown. Formula values, row count and image placement do not establish quantities.
+This reuses existing services; no new writer, parser, dependency, schema, migration,
+provider configuration or implicit downstream capability is included.
+
+Confirmed references retain existing `human_xlsx_row_entity_review` provenance,
+mapped source cells and image identities. Raw AI claims/rationale and unsaved proposal
+controls remain transient, not a durable AI suggestion batch or complete history.
+
+The synthetic browser journey passed selected header/row/picture preview, consent
+refusal, a proposal without writes, separate Scope/package confirmations and exact
+original-bearing ZIP download. The ZIP has exactly the original XLSX, saved Scope
+and manifest, with matching member hashes and sizes. After test-server restart a
+fresh browser downloaded identical ZIP bytes with no repeated scan, model or save.
+The injected clean scan and scripted reply do not establish malware or real-model
+accuracy. Final regression/static and visual evidence is recorded in the private
+validation receipt; these local checks do not grant publication or activation.
+
+Validation: 157 affected Excel/Word/PDF/chat/edit/review tests passed
+without failures or skips in 1003.864s. After the evidenced route fix,
+84 affected context/Excel/concurrency tests passed in 281.045s,
+including both tests that failed before correction (188 distinct cases across the
+two passing runs). Tests used this checkout's PYTHONPATH, fresh basetemp and
+only disposable PostgreSQL15433 or isolated SQLite. Full Ruff, Mypy236, scoped
+Bandit, JavaScript syntax, diff and67 local document-path checks passed. Desktop,
+390px, Scope and package outputs were inspected; a read-only recapture verified the
+lazy-loaded picture. Header/format selection changes invalidate old selection and
+consent. The final browser preserved exact ZIP bytes and zero additional saves,
+scans or model calls. The test server was stopped; live8820 remains PID24324.
+
+An additional read-only browser check exposed a source-lock wait blocking the
+async request loop. The same defect was reproduced for both context endpoints with
+bounded HTTP responsiveness tests. Context resolution now runs in the existing
+thread pool, like model responses; source locks, rights and transaction cleanup are
+preserved. This prevents a blocked reader from stopping unrelated requests and
+cleanup. It does not add workers, queues or automatic retries. Final diff review
+also restored UTF-8 chat labels corrupted during editing. The review screenshot
+needed a later capture after the lazy-loaded picture became visible.
+
+This increment and its local parents remain unpublished. PR271 still has approved
+head d864c51 and failed CI34757320145; local one-file correction8bce0b0 awaits
+separate public approval. Diagnostic post-merge CI34753856708 is cancelled. The live
+8820 build, live15432, credentials, OAuth/tunnel and activation settings are unchanged.
+
+## Earlier native Excel attachment checkpoint
 
 The isolated `feat/native-xlsx-attachments-20260914` branch extends local `0c6767a`.
 The shared native attachment adapter/driver now also exposes supported XLSX defect
@@ -703,9 +760,9 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    implemented, including typed additions and separate Word/package review in the
    synthetic journey. The same PDF page text/image and typed-addition journey now
    passes synthetic browser checks with separate PDF and package confirmations.
-   Native XLSX attachment, scan, worksheet/cell/image inspection and existing mapping
-   navigation now reuse the panel. Add explicitly selected workbook model context and
-   typed review through the existing Excel contract next. Resolve
+   Native XLSX now also has explicit header/row/picture context, proposed mappings,
+   typed additions, separate workbook review and original-bearing package confirmation.
+   Its synthetic journey passes. Retain durable AI lineage as the next shared gap; resolve
    the operational gate separately; do not repeat the proven Word increment. Reuse the existing
    intake/scan/review/client-request/package services. Preserve the demonstrated
    Word/PDF interaction when extending the attachment-to-confirmed-Scope-to-ZIP

@@ -11,19 +11,19 @@
   const picker = panel.querySelector(".chat-record-picker"), action = panel.querySelector(".chat-action");
   let selector;
   try { selector = JSON.parse(document.getElementById("workspace-chat-context").textContent); } catch { panel.hidden = true; return; }
-  selector.ids ||= []; selector.records ||= []; selector.matches ||= []; selector.word ||= null; selector.pdf ||= null;
+  selector.ids ||= []; selector.records ||= []; selector.matches ||= []; selector.word ||= null; selector.pdf ||= null; selector.xlsx ||= null;
   let turns = [], enabled = false, ready = false, busy = false, epoch = 0, contextHash = "", controller = null, unappliedArtifacts = false;
   const prefix = `classifire-chat-v1:${panel.dataset.userId}:`, ttl = 30 * 60 * 1000;
   const bytes = value => new TextEncoder().encode(JSON.stringify(value)).length;
   const key = () => prefix + contextHash;
   function report(text, error = false) { status.textContent = text; status.dataset.error = String(error); }
   function buttons() {
-    const missing=selector.action==="propose_pdf_scope" ? !selector.pdf : selector.action==="propose_scope_edits" ? !selector.ids.length : selector.action==="propose_word_scope" ? !selector.word?.locators.length : false;
+    const missing=selector.action==="propose_xlsx_scope" ? !selector.xlsx : selector.action==="propose_pdf_scope" ? !selector.pdf : selector.action==="propose_scope_edits" ? !selector.ids.length : selector.action==="propose_word_scope" ? !selector.word?.locators.length : false;
     preview.disabled = busy || missing || unappliedArtifacts || selector.ids.length > 50 || selector.records.length > 20; send.disabled = !enabled || !ready || busy || missing;
   }
   function selectionLabel() {
     panel.querySelector(".chat-selection").textContent = selector.draft_id
-      ? `${selector.ids.length} register record(s); saved Scope revision ${selector.revision}; ${selector.word?.locators.length || 0} Word text block(s), ${selector.word?.picture_ids.length || 0} picture(s); PDF page ${selector.pdf?.page_number || "none"}. Unsaved edits are excluded.`
+      ? `${selector.ids.length} register record(s); saved Scope revision ${selector.revision}; ${selector.word?.locators.length || 0} Word text block(s), ${selector.word?.picture_ids.length || 0} picture(s); PDF page ${selector.pdf?.page_number || "none"}; Excel rows ${selector.xlsx?.rows.join(", ") || "none"}. Unsaved edits are excluded.`
       : `${selector.records.length} library record(s); ${selector.screen?.title || selector.screen?.name || "current workspace"}.`;
   }
   function storageRemove(name) { try { sessionStorage.removeItem(name); } catch { /* Storage is optional. */ } }
@@ -90,16 +90,11 @@
     if (JSON.stringify(ids) === JSON.stringify(selector.ids)) return;
     selector.ids = ids; reset(); if (ids.length > 50) { preview.disabled = true; report("Select at most 50 records.", true); }
   });
-  document.addEventListener("classifire:word-selection", event => {
-    const data=event.detail || {};
-    if (!selector.draft_id || data.draftId!==selector.draft_id) return;
-    if (JSON.stringify(selector.word)===JSON.stringify(data.word)) return;
-    selector.word=data.word;if(data.word)selector.pdf=null;reset();report("Report selection changed. Preview it and consent before sending.");
-  });
-  document.addEventListener("classifire:pdf-selection", event => {
-    const data=event.detail || {};
-    if(!selector.draft_id || data.draftId!==selector.draft_id || JSON.stringify(selector.pdf)===JSON.stringify(data.pdf))return;
-    selector.pdf=data.pdf;if(data.pdf)selector.word=null;reset();report("PDF selection changed. Preview it and consent before sending.");
+  for(const kind of ["word","pdf","xlsx"])document.addEventListener(`classifire:${kind}-selection`,event=>{
+    const data=event.detail||{};
+    if(!selector.draft_id||data.draftId!==selector.draft_id||JSON.stringify(selector[kind])===JSON.stringify(data[kind]))return;
+    selector[kind]=data[kind];if(data[kind])for(const other of ["word","pdf","xlsx"])if(other!==kind)selector[other]=null;
+    reset();report("Report selection changed. Preview it and consent before sending.");
   });
   document.getElementById("scope-editor")?.addEventListener("scope:changed", () => { reset(); report("The register contains unsaved edits. A new preview will use saved values only."); });
   document.querySelector(".register-artifacts")?.addEventListener("change", () => {
@@ -167,11 +162,12 @@
       const details=document.createElement("details"), title=document.createElement("summary"), content=document.createElement("pre");
       title.textContent=section.title;content.textContent=JSON.stringify(section.data,null,2);details.append(title,content);sections.append(details);
     }
-    if (context.word_evidence || context.pdf_evidence) {
-      const pdf=!!context.pdf_evidence, evidence=context.pdf_evidence || context.word_evidence, details=document.createElement("details"), heading=document.createElement("summary"), text=document.createElement("p");
-      details.open=true; heading.textContent=`Selected ${pdf ? "PDF page" : "Word"} evidence: ${evidence.original_filename}`;
-      text.textContent=pdf ? `Page ${evidence.page.page_number}: text ${evidence.blocks.length ? "included" : "excluded"}, image ${evidence.pictures.length ? "included" : "excluded"}. ${evidence.omitted_pages} other page(s) excluded. The original PDF is not sent.` : `${evidence.blocks.length} text block(s) and ${evidence.pictures.length} picture(s) selected. ${evidence.omitted_blocks} text block(s) and ${evidence.omitted_pictures} picture(s) are excluded. The original DOCX is not sent.`;
+    if (context.word_evidence || context.pdf_evidence || context.xlsx_evidence) {
+      const xlsx=!!context.xlsx_evidence, pdf=!!context.pdf_evidence, evidence=context.xlsx_evidence || context.pdf_evidence || context.word_evidence, details=document.createElement("details"), heading=document.createElement("summary"), text=document.createElement("p");
+      details.open=true; heading.textContent=`Selected ${xlsx ? "Excel" : pdf ? "PDF page" : "Word"} evidence: ${evidence.original_filename}`;
+      text.textContent=xlsx ? `Worksheet ${evidence.sheet.index}: ${evidence.sheet.name}; header ${evidence.header.row}, ${evidence.blocks.length} data rows, ${evidence.pictures.length} pictures. ${evidence.omitted_sheets} sheets, ${evidence.omitted_blocks} rows and ${evidence.omitted_pictures} pictures excluded. The original XLSX is not sent; formulas are not evaluated.` : pdf ? `Page ${evidence.page.page_number}: text ${evidence.blocks.length ? "included" : "excluded"}, image ${evidence.pictures.length ? "included" : "excluded"}. ${evidence.omitted_pages} other page(s) excluded. The original PDF is not sent.` : `${evidence.blocks.length} text block(s) and ${evidence.pictures.length} picture(s) selected. ${evidence.omitted_blocks} text block(s) and ${evidence.omitted_pictures} picture(s) are excluded. The original DOCX is not sent.`;
       details.append(heading,text);
+      if(xlsx){const header=document.createElement("pre");header.textContent=JSON.stringify(evidence.header,null,2);details.append(header);}
       for (const block of evidence.blocks) {
         const location=document.createElement("strong"), words=document.createElement("pre");
         location.textContent=block.locator;words.textContent=block.text;details.append(location,words);
@@ -179,7 +175,7 @@
       for (const picture of evidence.pictures) {
         const figure=document.createElement("figure"), image=document.createElement("img"), caption=document.createElement("figcaption");
         image.alt=`Selected ${picture.id} at ${picture.locator}`;
-        image.src=pdf ? `/scopes/${encodeURIComponent(selector.draft_id)}/evidence/${encodeURIComponent(evidence.source_id)}/pages/${picture.page_number}.png` : `/scopes/${encodeURIComponent(selector.draft_id)}/word/${encodeURIComponent(evidence.source_id)}/pictures/${encodeURIComponent(picture.id)}`;
+        image.src=xlsx ? `/scopes/${encodeURIComponent(selector.draft_id)}/workbooks/${encodeURIComponent(evidence.source_id)}/images/${picture.sheet_index}/${encodeURIComponent(picture.id)}.png` : pdf ? `/scopes/${encodeURIComponent(selector.draft_id)}/evidence/${encodeURIComponent(evidence.source_id)}/pages/${picture.page_number}.png` : `/scopes/${encodeURIComponent(selector.draft_id)}/word/${encodeURIComponent(evidence.source_id)}/pictures/${encodeURIComponent(picture.id)}`;
         image.className="chat-evidence-image";
         image.addEventListener("error",()=>{image.hidden=true;caption.textContent="Selected picture unavailable. Refresh evidence and preview again.";ready=false;form.elements.consent.checked=false;buttons();});
         caption.textContent=`${picture.id}; ${picture.locator}. Placement does not prove which opening or service it belongs to.`;
@@ -227,13 +223,20 @@
     card.append(findings);
     const review=document.createElement("form"), button=document.createElement("button");
     review.method="post";review.action=`/scopes/${encodeURIComponent(selector.draft_id)}/word/${encodeURIComponent(proposal.source_id)}/preview`;
-    const pdf=proposal.source_kind==="pdf";
+    const xlsx=proposal.source_kind==="xlsx", pdf=proposal.source_kind==="pdf";
+    if(xlsx){
+      review.action=`/scopes/${encodeURIComponent(selector.draft_id)}/workbooks/${encodeURIComponent(proposal.source_id)}/preview`;
+      const mapping=document.createElement("details"),title=document.createElement("summary"),list=document.createElement("dl");title.textContent="Proposed column mapping - review before saving";
+      for(const [field,column] of Object.entries(proposal.plan.mapping)){const name=document.createElement("dt"),value=document.createElement("dd");name.textContent=field.replaceAll("_"," ");value.textContent=column===null?"Not mapped":`Column ${column}`;list.append(name,value);}
+      mapping.append(title,list);card.append(mapping);
+    }
     if(pdf)review.action=`/scopes/${encodeURIComponent(selector.draft_id)}/evidence/${encodeURIComponent(proposal.source_id)}/scope/preview`;
     review.className="chat-scope-review";
     const fields={csrf_token:panel.dataset.csrf,expected_revision:String(proposal.expected_revision),document_sha256:proposal.document_sha256,payload:JSON.stringify(proposal.payload),targets:JSON.stringify(proposal.targets)};
+    if(xlsx)fields.plan=JSON.stringify(proposal.plan);
     if(pdf){fields.document_hash=fields.document_sha256;delete fields.document_sha256;fields.page=String(proposal.page_number);}
     for (const [name,value] of Object.entries(fields)) {const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;review.append(input);}
-    button.type="submit";button.className="button button-primary";button.textContent=pdf ? "Review proposed PDF Scope" : "Review proposed Word Scope";
+    button.type="submit";button.className="button button-primary";button.textContent=xlsx ? "Review proposed Excel Scope" : pdf ? "Review proposed PDF Scope" : "Review proposed Word Scope";
     review.append(button);card.append(review);messages.append(card);
   }
   function showEdits(proposal) {
@@ -286,7 +289,7 @@
       else {turns.push({role:"user",content:question},{role:"assistant",content:completeAnswer});trimmed=trimTurns();if(!turns.length)storageRemove(key());saveThread();}
       showProposal(result.proposal);
       showEdits(result.edit_proposal);
-      if(["propose_word_scope","propose_pdf_scope","propose_scope_edits"].includes(selector.action)){ready=false;form.elements.consent.checked=false;}
+      if(["propose_word_scope","propose_pdf_scope","propose_xlsx_scope","propose_scope_edits"].includes(selector.action)){ready=false;form.elements.consent.checked=false;}
       form.elements.question.value="";
       report(`${result.notice}${trimmed ? " Some displayed exchanges exceed the conversation window and will not be sent or remembered." : ""}`);
     }catch(error){if(version===epoch){ready=false;form.elements.consent.checked=false;report(error.message,true);}}

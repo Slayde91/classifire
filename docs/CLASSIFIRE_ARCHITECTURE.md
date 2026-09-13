@@ -30,11 +30,11 @@ Its validation/publication status is tracked separately; no schema or authority 
 flowchart TD
   UI[Standalone browser UI] --> APP[FastAPI routes and application commands]
   PANEL[Native workspace chat panel] --> READ[Permission-checked selected saved context]
-  PANEL --> WORD[Explicit Word attachment / scan / inspection]
+  PANEL --> WORD[Explicit Word / PDF / XLSX attachment and inspection]
   WORD --> APP
   READ --> PORT[Optional bounded Responses transport]
   PORT --> ADVICE[Unverified advice with references and unknowns]
-  PORT --> ADD[Explicit Word additions proposal]
+  PORT --> ADD[Explicit selected-evidence additions proposal]
   ADD --> HUMAN
   CHAT[ChatGPT MCP client] --> AUTH[OAuth and local identity/permission checks]
   AUTH --> PROPOSE[Durable proposal requests]
@@ -65,7 +65,7 @@ untrusted evidence without saving Scope or granting approval.
 | Layer | Implemented components and responsibility |
 | --- | --- |
 | Interfaces | FastAPI/Jinja UI (`ui.py`, `draft_scope_ui.py`, format-specific review routes), API/CLI and optional `draft_client.py` MCP mounting |
-| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; context/message endpoints offer advice, explicit Word additions or selected Scope replacements for separate review; a separate thin session adapter adds explicit Word retain/scan/inspection controls over existing services, without Scope edits or provider disclosure |
+| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; context/message endpoints offer advice, explicit Word/PDF/XLSX additions or selected Scope replacements for separate review; a separate thin session adapter adds explicit Word retain/scan/inspection controls over existing services, without Scope edits or provider disclosure |
 | Authentication | Existing user/session/CSRF checks plus `draft_client_auth.py` and explicit client policy; verified external identity maps to an active local user. Exact resource/issuer/signature/time/scope checks; approved optional nbf/Auth0 compatibility does not remove permission checks |
 | Application commands | `services/draft_client_requests.py` and `draft_client_capabilities.py` create typed durable requests; browser confirmation rechecks rights, owner, dependencies and expected state before executing the shared service |
 | Scope | `draft_scope.py`, `draft_scope_evidence.py`, format review services and shared editor. Immutable revision envelopes with explicit evidence state and unknowns |
@@ -101,15 +101,28 @@ page at a time, its rendered PNG and exact original download, with a link to tha
 page's existing review. XLSX now uses this same adapter/driver: five-row windows,
 worksheet selection, typed cells, verified anchored picture previews, original download
 and a link to existing mapping/review. Scope workbook purpose stays distinct from
-pricing. These controls never call the advice transport; native workbook model
-selection and typed proposals remain the next extension.
+pricing. Attachment and inspection do not call the transport. Explicit workbook model
+selection now chooses one header, up to 10 data rows and two verified PNG pictures
+(4 MiB combined) from one worksheet. All selected cells and the header are disclosed;
+originals, other worksheets and omitted rows/pictures are excluded. Strict nullable
+column mappings and additions use the shared composer and existing signed workbook
+review. Text claims must quote a selected mapped non-formula/non-error cell; picture
+claims still require a selected row. Mapping and relationships remain unverified
+until separate human review. Confirmation preserves existing row/entity provenance,
+not a durable copy of raw AI claims. Migration impact: none; no new writer or service.
 The existing plugin is retained. The advice context additionally accepts explicit
 selection of at most 10 text blocks and 2 verified PNG pictures from one retained
 DOCX. Source/scan/document/image hashes bind the preview and are rechecked before
 and after provider use; original files and omitted content are excluded. Alternatively,
-users select one PDF page's retained text and/or PNG (at most4MiB). Word and PDF
+users select one PDF page's retained text and/or PNG (at most4MiB). Word, PDF and XLSX
 selectors are mutually exclusive. The same evidence preview, consent, integrity
 and current-rights rechecks apply; no external image link or original PDF is sent.
+
+Both browser context endpoints offload synchronous context readers to the existing
+thread pool. Browser validation demonstrated that a source-lock wait on the async
+request loop could prevent another request's cleanup from releasing its lock.
+Keeping blocking reads off that loop preserves concurrent request progress without
+weakening source locks or introducing a new queue, service or migration.
 
 **Implemented extension:** an explicit `propose_word_scope` action uses that same
 transport and selected Word evidence. A small composer validates new Defect, Opening

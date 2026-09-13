@@ -1,4 +1,4 @@
-"""Unverified Word/PDF additions prepared for the existing separate human reviews.
+"""Unverified Word/PDF/XLSX additions prepared for the existing separate human reviews.
 
 No writer or provider is called here. Existing rows are copied unchanged; model
 identities belong only to the proposed graph and are remapped before review.
@@ -36,14 +36,41 @@ class WordProposal(Advice):
     claims: Annotated[list[WordClaim], Field(max_length=50)]
 
 
-def response_schema() -> dict[str, Any]:
-    return scope_response_schema(WordProposal)
+Column = Annotated[int, Field(ge=1, le=50)] | None
+
+
+class XlsxMapping(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    defect_label: Column
+    defect_description: Column
+    location: Column
+    opening_label: Column
+    plane: Column
+    substrate: Column
+    width_mm: Column
+    height_mm: Column
+    service_label: Column
+    service_type: Column
+    quantity: Column
+    unit: Column
+
+
+class XlsxProposal(WordProposal):
+    mapping: XlsxMapping
+
+
+def response_schema(*, xlsx: bool = False) -> dict[str, Any]:
+    return scope_response_schema(XlsxProposal if xlsx else WordProposal)
 
 
 def validate_output(
-    value: Any, context: dict[str, Any], *, source_kind: Literal["word", "pdf"] = "word"
+    value: Any, context: dict[str, Any], *, source_kind: Literal["word", "pdf", "xlsx"] = "word"
 ) -> WordProposal:
-    model = WordProposal.model_validate(value)
+    model = (
+        XlsxProposal.model_validate(value)
+        if source_kind == "xlsx"
+        else WordProposal.model_validate(value)
+    )
     graph = model.additions.model_dump(mode="json")
     # Enforce complete fields locally too, including injected/mock providers.
     raw_graph = value["additions"]
@@ -62,6 +89,14 @@ def validate_output(
     blocks = {block["locator"]: block for block in evidence["blocks"]}
     if source_kind == "pdf":
         blocks.setdefault(evidence["page"]["locator"], {"text": ""})
+    mapping: dict[str, int | None] = {}
+    if isinstance(model, XlsxProposal):
+        mapping = model.mapping.model_dump()
+        if any(
+            column is not None and column > evidence["sheet"]["columns"]
+            for column in mapping.values()
+        ):
+            raise ValueError("unselected mapping column")
     images = {image["id"] for image in evidence["pictures"]}
     covered, seen = set(), set()
     for claim in model.claims:
@@ -74,6 +109,13 @@ def validate_output(
         if claim.basis in {"text", "both"}:
             if not claim.quote.strip() or claim.quote not in blocks[claim.locator]["text"]:
                 raise ValueError("unbound quote")
+            if source_kind == "xlsx" and not any(
+                cell["column"] in mapping.values()
+                and cell["kind"] not in {"formula", "error"}
+                and claim.quote in cell["value"]
+                for cell in blocks[claim.locator]["cells"]
+            ):
+                raise ValueError("quote needs a selected mapped non-formula cell")
         elif claim.quote:
             raise ValueError("picture claim has text quote")
         if (claim.basis != "text") != bool(claim.image_ids):
@@ -93,7 +135,7 @@ def prepare_review(
     *,
     settings: Settings,
 ) -> dict[str, Any] | None:
-    selected = request.word or request.pdf
+    selected = request.word or request.pdf or request.xlsx
     if selected is None or request.draft_id is None:
         raise DraftScopeError("CHAT_INPUT_INVALID")
     additions = model.additions.model_dump(mode="json")
@@ -123,7 +165,49 @@ def prepare_review(
         {key: claim[key] for key in ("target_kind", "target_id", "locator", "image_ids")}
         for claim in claims
     ]
-    if request.pdf is not None:
+    extra: dict[str, Any] = {}
+    if request.xlsx is not None:
+        from .draft_scope_xlsx import preview_review as xlsx_preview
+
+        if not isinstance(model, XlsxProposal):
+            raise DraftScopeError("CHAT_INPUT_INVALID")
+        targets = [
+            {
+                "target_kind": claim["target_kind"],
+                "target_id": claim["target_id"],
+                "row": int(claim["locator"].rsplit(":", 1)[1]),
+                "image_ids": claim["image_ids"],
+            }
+            for claim in claims
+        ]
+        plan = {
+            "sheet_index": request.xlsx.sheet_index,
+            "header_row": request.xlsx.header_row,
+            "mapping": model.mapping.model_dump(),
+            "selections": [
+                {
+                    "row": row,
+                    "kinds": sorted(
+                        {target["target_kind"] for target in targets if target["row"] == row}
+                    ),
+                }
+                for row in sorted({target["row"] for target in targets})
+            ],
+        }
+        checked = xlsx_preview(
+            db,
+            actor,
+            request.draft_id,
+            selected.source_id,
+            current["revision"],
+            payload,
+            plan,
+            targets,
+            selected.document_sha256,
+            settings=settings,
+        )
+        extra = {"source_kind": "xlsx", "plan": checked["plan"]}
+    elif request.pdf is not None:
         from .draft_pdf_intake import preview_scope_page
 
         targets = [{key: claim[key] for key in ("target_kind", "target_id")} for claim in claims]
@@ -152,6 +236,7 @@ def prepare_review(
             settings=settings,
         )
     return {
+        **extra,
         **({"source_kind": "pdf", "page_number": request.pdf.page_number} if request.pdf else {}),
         "additions": additions,
         "claims": claims,
