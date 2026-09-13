@@ -6,7 +6,22 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
-## Latest local rejection permission correction
+## Latest local rejection display correction
+
+`fix/native-rejection-display-20260914` extends `567e5a9`. A delayed rejection
+could remove a newer opened proposal's review controls. Cleanup now targets only
+the original cards; the script cache version advances. The baseline reproduced
+one failure; all 35 shipped-script cases and 16 template/navigation/wrapper tests
+pass, with no skips. This is a display correction without schema or authority
+changes. No live app or provider workflow ran.
+
+Six complete frontend files are now reviewed; private coverage is 62 of 84 files
+in `native-rejection-display-validation-20260914/range-review-progress.json` under
+.tmp. Continue the remaining 22-file review and rendered-browser acceptance.
+Public approval remains limited to `d864c51`; PR271's CI correction `8bce0b0`
+and all later local work still require their separate publication approval.
+
+## Prior local rejection permission correction
 
 `fix/native-proposal-rejection-rights-20260914` extends `c2a5157`. Rejection now
 rechecks current write permission after source/Draft waits before saving a decision.

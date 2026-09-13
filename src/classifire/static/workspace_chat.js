@@ -267,6 +267,8 @@
         link.href=`/scopes/${encodeURIComponent(selector.draft_id)}/download?revision=${saved.decision.scope_revision}`;link.textContent="Download this exact Scope revision";section.append(note,link);
       }
     }else if(saved.can_reject){
+      // Bind removal to this opened proposal, even if another view replaces it.
+      const proposalCards=[...messages.querySelectorAll(".chat-scope-proposal")];
       const label=document.createElement("label"),check=document.createElement("input"),button=document.createElement("button"),note=document.createElement("p");
       check.type="checkbox";label.append(check,document.createTextNode(" I want to reject this saved proposal. Scope will stay unchanged."));
       button.type="button";button.className="button button-secondary";button.textContent="Confirm proposal rejection";button.disabled=true;
@@ -274,7 +276,7 @@
       button.addEventListener("click",async()=>{
         if(!check.checked)return;button.disabled=true;check.disabled=true;
         try{const fields=new URLSearchParams({csrf_token:panel.dataset.csrf,confirm:"reject"});await historyRequest(`${historyBase}/${encodeURIComponent(identity)}/reject`,{method:"POST",body:fields});
-          messages.querySelectorAll(".chat-scope-proposal").forEach(card=>card.remove());note.textContent="Proposal rejected. Scope is unchanged. Reopen the proposal to inspect the recorded decision.";button.remove();label.remove();await loadProposals();
+          proposalCards.forEach(card=>card.remove());note.textContent="Proposal rejected. Scope is unchanged. Reopen the proposal to inspect the recorded decision.";button.remove();label.remove();await loadProposals();
         }catch(error){note.textContent=error.message;check.disabled=false;button.disabled=!check.checked;}
       });section.append(label,button,note);
     }

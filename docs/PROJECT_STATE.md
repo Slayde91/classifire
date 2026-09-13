@@ -7,6 +7,24 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Local rejection display correction
+
+`fix/native-rejection-display-20260914` extends `567e5a9`. The frontend review
+reproduced a delayed rejection of proposal A removing proposal B's review controls
+when B was opened while A's response waited. Cleanup now keeps references to A's
+original cards. The script cache version advances; no backend, schema or authority
+changes are involved. The shipped-script baseline had 34 passes and one failure;
+all 35 cases now pass, including staying, opening another proposal and clearing.
+All 16 nearby template/navigation/wrapper tests passed with no skips in 64.58s,
+using this checkout's PYTHONPATH and fresh synthetic SQLite basetemp. JavaScript
+syntax and diff checks passed. No live app, provider or customer workflow ran.
+
+The six complete frontend file reviews bring recorded coverage to 62 of 84 files.
+The private ledger in `native-rejection-display-validation-20260914` under .tmp
+identifies each file and review scope; 22 files remain. Browser acceptance and
+full-range confidentiality review remain incomplete. This correction and later
+local work remain outside the exact public approval for `d864c51`.
+
 ## Local rejection permission correction
 
 `fix/native-proposal-rejection-rights-20260914` extends `c2a5157`. A synthetic

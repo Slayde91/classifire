@@ -8,11 +8,14 @@ class Element {
  constructor(){this.nodes=new Map();this.events=new Map();this.children=[];this.dataset={};this.value='';this.checked=false;this.disabled=false;this.hidden=false;this.textContent='';this.classList={toggle:()=>false,contains:()=>false,add:()=>{}};this.style={setProperty:()=>{}};this.elements=new Proxy({},{get:(target,key)=>target[key]||=(new Element())});}
  get childNodes(){return this.children;}
  querySelector(name){if(!this.nodes.has(name))this.nodes.set(name,new Element());return this.nodes.get(name);}
- querySelectorAll(){return [];}
+ querySelectorAll(selector){
+  const found=[];function visit(node){for(const child of node.children||[]){if(selector.startsWith('.')&&(child.className||'').split(' ').includes(selector.slice(1)))found.push(child);visit(child);}}visit(this);return found;
+ }
  addEventListener(name,callback){this.events.set(name,callback);}
  setAttribute(){} focus(){} reportValidity(){return true;}
- append(...nodes){this.children.push(...nodes);}
- replaceChildren(...nodes){this.children=nodes;}
+ append(...nodes){for(const node of nodes){node.parent=this;this.children.push(node);}}
+ remove(){if(this.parent){this.parent.children=this.parent.children.filter(node=>node!==this);this.parent=null;}}
+ replaceChildren(...nodes){for(const child of this.children)child.parent=null;this.children=[];this.append(...nodes);}
  async fire(name){const callback=this.events.get(name);assert.ok(callback,`Missing ${name} event`);await callback({preventDefault(){}});}
 }
 function response(mode,payload){
@@ -81,17 +84,19 @@ async function historyRace(deferLists=false){
  const history=panel.querySelector('.chat-proposal-history');
  await history.querySelector('.chat-proposal-refresh').fire('click');
  const buttons=history.querySelector('.chat-proposal-list').children;
- function finish(id,failed=false){
+ function finish(id,failed=false,withProposal=false){
   const waiting=pending.get(id);assert.ok(waiting,'Expected an outstanding saved-proposal read');
   if(failed){waiting.reject(new Error('Synthetic delayed failure'));return;}
-  waiting.resolve(response('success',{document:{request:{question:id+' question'},response:{answer:id+' answer',uncertainty:[]},context:{context_sha256:'a'.repeat(64),records:[],source_references:[],sections:[],selected_ids:[],summary:id+' context'}},can_review:true,can_reject:false,decision:null,notice:id+' notice'}));
+  const proposal=withProposal?{notice:id+' proposal',expected_revision:3,source_id:id,document_sha256:'b'.repeat(64),payload:{defects:[],openings:[],services:[],observations:[]},additions:{defects:[],openings:[],services:[],observations:[]},claims:[],findings:[],targets:[]}:undefined;
+  waiting.resolve(response('success',{document:{request:{question:id+' question'},response:{answer:id+' answer',uncertainty:[],proposal},context:{context_sha256:'a'.repeat(64),records:[],source_references:[],sections:[],selected_ids:[],summary:id+' context'}},can_review:true,can_reject:withProposal,decision:null,notice:id+' notice'}));
  }
  function finishList(index,mode,ids=[]){
   const waiting=pending.get('list-'+index);assert.ok(waiting,'Expected an outstanding proposal listing');
   if(mode==='network'){waiting.reject(new Error('Synthetic old listing failure'));return;}
   waiting.resolve(response(mode,{proposals:ids.map(id=>({id,base_revision:3,saved_at:id}))}));
  }
- return {panel,history,buttons,calls,finish,finishList};
+ function finishRejection(){const waiting=pending.get('reject');assert.ok(waiting,'Expected the explicitly confirmed rejection');waiting.resolve(response('success',{id:'first',outcome:'rejected'}));}
+ return {panel,history,buttons,calls,finish,finishList,finishRejection};
 }
 for(const failed of [false,true])test(`clearing conversation discards delayed saved-proposal ${failed?'failure':'content'}`,async()=>{
  const x=await historyRace(),opening=x.buttons[0].fire('click');
@@ -144,4 +149,33 @@ for(const [older,newer] of [['success','success'],['network','success'],['succes
  assert.equal(x.panel.querySelector('.chat-form').elements.consent.checked,false);
  assert.equal(x.calls.length,4,'Only availability and three explicit list reads');
  assert.ok(x.calls.every(call=>!call.options?.method||call.options.method==='GET'),'No state-changing request');
+});
+
+for(const transition of ['stay','open another','clear'])test(`delayed rejection affects only its proposal after ${transition}`,async()=>{
+ const x=await historyRace(),opening=x.buttons[0].fire('click');x.finish('first',false,true);await opening;
+ const messages=x.panel.querySelector('.chat-messages'),cards=messages.querySelectorAll('.chat-scope-proposal');
+ assert.equal(cards.length,1,'The first proposal offers a real generated review card');
+ const firstCard=cards[0],decision=messages.querySelectorAll('.chat-proposal-decision')[0];
+ const [label,button,note]=decision.children,check=label.children[0];
+ assert.equal(button.disabled,true,'Rejection requires a separate explicit check');
+ check.checked=true;await check.fire('change');const rejecting=button.fire('click');
+ if(transition==='open another'){const next=x.buttons[1].fire('click');x.finish('second',false,true);await next;}
+ if(transition==='clear')await x.panel.querySelector('.chat-clear').fire('click');
+ const visible=messages.children.slice(),currentCards=messages.querySelectorAll('.chat-scope-proposal').slice();
+ x.finishRejection();await rejecting;
+ if(transition==='stay'){
+  assert.equal(messages.querySelectorAll('.chat-scope-proposal').length,0,'Remove the rejected proposal review controls');
+  assert.match(note.textContent,/Proposal rejected/);
+ }else{
+  assert.deepEqual(messages.children,visible,'The old rejection must not alter the current conversation');
+  assert.deepEqual(messages.querySelectorAll('.chat-scope-proposal'),currentCards,'Keep the newly opened proposal review controls');
+  if(transition==='open another'){assert.equal(currentCards.length,1);assert.notEqual(currentCards[0],firstCard);assert.equal(x.panel.querySelector('.chat-status').textContent,'second notice');}
+  else assert.equal(visible.length,0);
+ }
+ const writes=x.calls.filter(call=>call.options?.method==='POST');assert.equal(writes.length,1,'Only the separately confirmed rejection may write');
+ assert.ok(writes[0].url.endsWith('/native-proposals/first/reject'));
+ assert.equal(writes[0].options.body.get('confirm'),'reject');
+ assert.equal(writes[0].options.body.get('csrf_token'),'synthetic-csrf');
+ assert.ok(x.calls.every(call=>call.url==='/workspace/assistant'||call.url.startsWith('/scopes/'+draft+'/native-proposals')),'No provider request or implicit Scope/package operation');
+ assert.equal(x.panel.querySelector('.chat-form').elements.consent.checked,false);
 });
