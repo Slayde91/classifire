@@ -101,8 +101,13 @@ Migration0048 adds `draft_workspace_proposals` after0047; no existing migration 
 rewritten. It refuses destructive downgrade, so future activation requires matched
 backup/restore, disposable rehearsal and an explicitly approved rollback plan. No
 live upgrade is included. See the [history contract](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md)
-for the full limits and consequences. Subsequent review-decision linkage, portable
-history, raw provider/prompt-version records and full AI lineage remain incomplete.
+for the full limits and consequences. The local decision extension adds forward0049
+and a separate one-per-proposal human decision record. Existing source-review signatures
+carry an optional saved-proposal identity; existing Scope-save transactions record the
+exact resulting revision atomically. Explicit rejection records no Scope change. Original
+generation remains immutable; matching content never implies acceptance. No new writer,
+provider or downstream authority is introduced. Browser validation of these new controls,
+portable history, raw provider/prompt-version records and full AI lineage remain incomplete.
 The format-specific paragraphs below describe generation/confirmation; their former
 transience limit now applies to proposals the user has not explicitly retained.
 

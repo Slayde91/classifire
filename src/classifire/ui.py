@@ -182,6 +182,7 @@ def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
     )
     return {
         "request": request,
+        "native_proposal_id": getattr(request.state, "native_proposal_id", None),
         "user": user,
         "library_sections": library_sections,
         "active_library": active_library,

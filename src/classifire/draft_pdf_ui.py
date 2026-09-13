@@ -12,22 +12,33 @@ from itsdangerous import BadData, URLSafeTimedSerializer
 
 from .config import get_settings
 from .draft_scope_ui import (
+    MAX_FORM_BYTES,
     Db,
     FormData,
     _editor_error,
     _finding_text,
+    _form_values,
     _import_session,
+    _native_proposal_binding,
     _payload,
     _unique_object,
 )
 from .security import verify_csrf
 from .services import draft_pdf_intake as intake
 from .services import draft_pdf_suggestions as suggestions
+from .services import draft_workspace_proposals as native_history
 from .services.draft_scope import DraftScopeError, get_draft, read_revision, validate_payload
 from .ui import _context, _require, templates
 from .ui_uploads import single_file
 
 router = APIRouter(include_in_schema=False)
+
+
+async def _native_review_form(request: Request) -> dict[str, str]:
+    return await _form_values(request, MAX_FORM_BYTES, max_fields=9)
+
+
+NativeReviewForm = Annotated[dict[str, str], Depends(_native_review_form)]
 
 
 async def _upload(request: Request, db: Db) -> dict[str, Any]:
@@ -293,17 +304,25 @@ def _review_error(exc: DraftScopeError) -> str:
 
 @router.post("/scopes/{draft_id}/evidence/{source_id}/scope/preview", response_class=HTMLResponse)
 def preview_page_scope(
-    request: Request, db: Db, draft_id: str, source_id: str, form: FormData
+    request: Request, db: Db, draft_id: str, source_id: str, form: NativeReviewForm
 ) -> HTMLResponse:
     verify_csrf(request, form.get("csrf_token"))
+    native_binding = _native_proposal_binding(request, form)
     user = _require(request, db, "project:write")
-    if set(form) not in (_REVIEW_FORM_FIELDS, _REVIEW_FORM_FIELDS | {"action"}):
+    if (set(form) - {"native_proposal_id"}) not in (
+        _REVIEW_FORM_FIELDS,
+        _REVIEW_FORM_FIELDS | {"action"},
+    ):
         raise HTTPException(422, "Use the page review form")
     if "action" in form and form["action"] != "edit":
         raise HTTPException(422, "Choose preview or return to editing")
     payload, targets = _payload(form), _review_targets(form)
     revision, page = _positive(form["expected_revision"]), _positive(form["page"])
     try:
+        native_history.prepare_review_link(
+            db, user, draft_id, form.get("native_proposal_id"), revision, payload,
+            action="propose_pdf_scope", source_id=source_id, settings=get_settings(),
+        )
         if form.get("action") == "edit":
             validate_payload(payload)
             return _source_response(
@@ -345,6 +364,7 @@ def preview_page_scope(
             status_code=exc.status_code,
         )
     binding = {
+        **native_binding,
         "actor_id": user.id,
         "draft_id": draft_id,
         "source_id": source_id,
@@ -372,11 +392,15 @@ def preview_page_scope(
 
 @router.post("/scopes/{draft_id}/evidence/{source_id}/scope/confirm", response_model=None)
 def confirm_page_scope(
-    request: Request, db: Db, draft_id: str, source_id: str, form: FormData
+    request: Request, db: Db, draft_id: str, source_id: str, form: NativeReviewForm
 ) -> HTMLResponse | RedirectResponse:
     verify_csrf(request, form.get("csrf_token"))
+    native_binding = _native_proposal_binding(request, form)
     user = _require(request, db, "project:write")
-    if set(form) != _REVIEW_FORM_FIELDS | {"preview_token", "confirm"} or form["confirm"] != "save":
+    if (set(form) - {"native_proposal_id"}) != _REVIEW_FORM_FIELDS | {
+        "preview_token",
+        "confirm",
+    } or form["confirm"] != "save":
         raise HTTPException(422, "Confirm the reviewed graph before saving")
     payload, targets = _payload(form), _review_targets(form)
     revision, page = _positive(form["expected_revision"]), _positive(form["page"])
@@ -387,10 +411,13 @@ def confirm_page_scope(
         binding = _review_signer().loads(token, max_age=900)
         if (
             type(binding) is not dict
-            or set(binding) != {"actor_id", "draft_id", "source_id", "session", "review_sha256"}
+            or set(binding)
+            != {"actor_id", "draft_id", "source_id", "session", "review_sha256"}
+            | native_binding.keys()
             or any(
                 binding.get(key) != value
                 for key, value in {
+                    **native_binding,
                     "actor_id": user.id,
                     "draft_id": draft_id,
                     "source_id": source_id,
@@ -399,6 +426,10 @@ def confirm_page_scope(
             )
         ):
             raise BadData("binding")
+        link = native_history.prepare_review_link(
+            db, user, draft_id, form.get("native_proposal_id"), revision, payload,
+            action="propose_pdf_scope", source_id=source_id, settings=get_settings(),
+        )
         intake.save_scope_page(
             db,
             user,
@@ -412,6 +443,7 @@ def confirm_page_scope(
             binding["review_sha256"],
             settings=get_settings(),
         )
+        native_history.record_confirmation(db, user, link)
         db.commit()
     except (BadData, DraftScopeError) as exc:
         db.rollback()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -14,9 +15,16 @@ from sqlalchemy.orm import Session
 
 from ..audit import record_audit
 from ..config import Settings
-from ..models import DraftScope, DraftWorkspaceProposal, User, new_id
+from ..models import (
+    DraftScope,
+    DraftScopeRevision,
+    DraftWorkspaceProposal,
+    DraftWorkspaceProposalDecision,
+    User,
+    new_id,
+)
 from . import draft_workspace_chat as chat
-from .draft_scope import DraftScopeError, _actor, _atomic, get_draft
+from .draft_scope import DraftScopeError, _actor, _atomic, get_draft, read_revision
 
 MAX_BYTES = 1048576
 SCHEMA = "CLASSIFIRE-NATIVE-PROPOSAL-v1"
@@ -235,8 +243,9 @@ def reopen(
     chat.workspace_context(
         db, actor, request.model_copy(update={"action": "advice"}), settings=settings
     )
+    decision = read_decision(db, actor, draft_id, row)
     can_review = False
-    if draft.latest_revision == row.base_revision:
+    if decision is None and draft.latest_revision == row.base_revision:
         try:
             can_review = (
                 chat.workspace_context(db, actor, request, settings=settings) == document["context"]
@@ -247,12 +256,305 @@ def reopen(
         "document": document,
         "sha256": row.proposal_sha256,
         "can_review": can_review,
+        "decision": decision,
+        "can_reject": decision is None and _can_write(db, actor, draft_id),
         "notice": (
-            "Saved AI proposal, not a saved Scope change. Review and confirmation remain separate."
-        )
-        if can_review
-        else (
-            "Historical proposal only. Inputs or permissions changed; "
-            "its save controls are unavailable."
+            (
+                "You rejected this saved proposal. Rejection did not change Scope."
+                if decision["outcome"] == "rejected"
+                else f"You confirmed reviewed Scope revision {decision['scope_revision']}. "
+                "The original generated proposal remains separate from your reviewed result."
+            )
+            if decision
+            else (
+                (
+                    "Saved AI proposal, not a saved Scope change. "
+                    "Review and confirmation remain separate."
+                )
+                if can_review
+                else (
+                    "Historical proposal only. Inputs or permissions changed; "
+                    "its save controls are unavailable."
+                )
+            )
         ),
     }
+
+
+DECISION_SCHEMA = "CLASSIFIRE-NATIVE-PROPOSAL-DECISION-v1"
+
+
+def _can_write(db: Session, actor: User, draft_id: str) -> bool:
+    try:
+        _owner(db, actor, draft_id, write=True)
+    except DraftScopeError:
+        return False
+    return True
+
+
+def read_decision(
+    db: Session, actor: User, draft_id: str, proposal: DraftWorkspaceProposal
+) -> dict[str, Any] | None:
+    """Verify an explicitly linked decision; never infer one from later revisions."""
+    _owner(db, actor, draft_id)
+    if proposal.draft_scope_id != draft_id or proposal.created_by_id != actor.id:
+        raise DraftScopeError("CHAT_PROPOSAL_NOT_FOUND", 404)
+    row = db.scalar(
+        select(DraftWorkspaceProposalDecision)
+        .where(DraftWorkspaceProposalDecision.proposal_id == proposal.id)
+        .execution_options(populate_existing=True)
+    )
+    if row is None:
+        return None
+    try:
+        document: dict[str, Any] = json.loads(row.decision_json)
+        expected = {
+            "schema",
+            "id",
+            "proposal_id",
+            "proposal_sha256",
+            "actor_id",
+            "draft_id",
+            "outcome",
+            "decided_at",
+            "base_revision",
+            "scope_revision",
+            "scope_sha256",
+            "reviewed_payload_sha256",
+            "proposal_payload_changed",
+        }
+        if (
+            set(document) != expected
+            or type(document["base_revision"]) is not int
+            or _raw(document) != row.decision_json
+            or _hash(row.decision_json) != row.decision_sha256
+            or document["schema"] != DECISION_SCHEMA
+            or (
+                document["id"],
+                document["proposal_id"],
+                document["proposal_sha256"],
+                document["actor_id"],
+                document["draft_id"],
+                document["outcome"],
+                document["base_revision"],
+            )
+            != (
+                row.id,
+                proposal.id,
+                proposal.proposal_sha256,
+                actor.id,
+                draft_id,
+                row.outcome,
+                proposal.base_revision,
+            )
+            or row.created_by_id != actor.id
+            or datetime.fromisoformat(document["decided_at"]) != row.created_at.replace(tzinfo=UTC)
+        ):
+            raise ValueError("binding")
+        if row.outcome == "confirmed":
+            revision = db.get(DraftScopeRevision, row.scope_revision_id, populate_existing=True)
+            if revision is None or (
+                revision.draft_scope_id != draft_id
+                or revision.created_by_id != actor.id
+                or revision.revision != proposal.base_revision + 1
+                or type(document["scope_revision"]) is not int
+                or document["scope_revision"] != revision.revision
+                or document["scope_sha256"] != _hash(revision.envelope_json)
+                or type(document["proposal_payload_changed"]) is not bool
+                or len(document["reviewed_payload_sha256"]) != 64
+            ):
+                raise ValueError("revision")
+            read_revision(db, actor, draft_id, revision.revision)
+        elif (
+            row.outcome != "rejected"
+            or row.scope_revision_id is not None
+            or any(
+                document[k] is not None
+                for k in (
+                    "scope_revision",
+                    "scope_sha256",
+                    "reviewed_payload_sha256",
+                    "proposal_payload_changed",
+                )
+            )
+        ):
+            raise ValueError("outcome")
+        return document
+    except (ValueError, TypeError, KeyError, AttributeError, DraftScopeError) as exc:
+        raise DraftScopeError("CHAT_PROPOSAL_DECISION_CORRUPT", 409) from exc
+
+
+@dataclass(frozen=True)
+class ReviewLink:
+    proposal_id: str
+    draft_id: str
+    actor_id: str
+    base_revision: int
+    proposal_sha256: str
+    reviewed_payload_sha256: str
+    proposal_payload_changed: bool
+
+
+def prepare_review_link(
+    db: Session,
+    actor: User,
+    draft_id: str,
+    identity: str | None,
+    expected_revision: int,
+    payload: dict[str, Any],
+    *,
+    action: str,
+    source_id: str | None = None,
+    settings: Settings,
+) -> ReviewLink | None:
+    """Lock and verify an optional saved proposal before the existing Scope writer."""
+    if identity is None:
+        return None
+    try:
+        if str(UUID(identity)) != identity:
+            raise ValueError("identity")
+    except (ValueError, TypeError, AttributeError) as exc:
+        raise DraftScopeError("CHAT_PROPOSAL_INVALID", 422) from exc
+    _owner(db, actor, draft_id, write=True)
+    db.scalar(select(DraftScope).where(DraftScope.id == draft_id).with_for_update())
+    row = db.scalar(
+        select(DraftWorkspaceProposal)
+        .where(
+            DraftWorkspaceProposal.id == identity,
+            DraftWorkspaceProposal.draft_scope_id == draft_id,
+            DraftWorkspaceProposal.created_by_id == actor.id,
+        )
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if row is None:
+        raise DraftScopeError("CHAT_PROPOSAL_NOT_FOUND", 404)
+    value = reopen(db, actor, draft_id, identity, settings=settings)
+    if value["decision"] is not None:
+        raise DraftScopeError("CHAT_PROPOSAL_ALREADY_DECIDED", 409)
+    if not value["can_review"] or row.base_revision != expected_revision:
+        raise DraftScopeError("CHAT_CONTEXT_CHANGED", 409)
+    document = value["document"]
+    if document["request"]["action"] != action:
+        raise DraftScopeError("CHAT_PROPOSAL_REVIEW_MISMATCH", 409)
+    prepared = document["response"].get(
+        "edit_proposal" if action == "propose_scope_edits" else "proposal"
+    )
+    if not prepared or prepared.get("source_id") != source_id:
+        raise DraftScopeError("CHAT_PROPOSAL_REVIEW_MISMATCH", 409)
+    reviewed = _hash(_raw(payload))
+    return ReviewLink(
+        row.id,
+        draft_id,
+        actor.id,
+        expected_revision,
+        row.proposal_sha256,
+        reviewed,
+        reviewed != _hash(_raw(prepared["payload"])),
+    )
+
+
+def _record_decision(
+    db: Session,
+    actor: User,
+    proposal: DraftWorkspaceProposal,
+    *,
+    revision: DraftScopeRevision | None = None,
+    link: ReviewLink | None = None,
+) -> DraftWorkspaceProposalDecision:
+    outcome = "confirmed" if revision is not None else "rejected"
+    now = datetime.now(UTC)
+    identity = new_id()
+    document = {
+        "schema": DECISION_SCHEMA,
+        "id": identity,
+        "proposal_id": proposal.id,
+        "proposal_sha256": proposal.proposal_sha256,
+        "actor_id": actor.id,
+        "draft_id": proposal.draft_scope_id,
+        "outcome": outcome,
+        "decided_at": now.isoformat(),
+        "base_revision": proposal.base_revision,
+        "scope_revision": revision.revision if revision else None,
+        "scope_sha256": _hash(revision.envelope_json) if revision else None,
+        "reviewed_payload_sha256": link.reviewed_payload_sha256 if link else None,
+        "proposal_payload_changed": link.proposal_payload_changed if link else None,
+    }
+    raw = _raw(document)
+    row = DraftWorkspaceProposalDecision(
+        id=identity,
+        created_at=now,
+        updated_at=now,
+        proposal_id=proposal.id,
+        created_by_id=actor.id,
+        outcome=outcome,
+        scope_revision_id=revision.id if revision else None,
+        decision_json=raw,
+        decision_sha256=_hash(raw),
+    )
+    db.add(row)
+    record_audit(
+        db,
+        actor=actor,
+        action="workspace_proposal." + outcome,
+        entity_type="draft_workspace_proposal",
+        entity_id=proposal.id,
+        new_value={
+            "decision_id": row.id,
+            "decision_sha256": row.decision_sha256,
+            "scope_revision": document["scope_revision"],
+        },
+    )
+    db.flush()
+    return row
+
+
+def record_confirmation(db: Session, actor: User, link: ReviewLink | None) -> None:
+    """Join the caller's Scope-save transaction; never execute a Scope writer."""
+    if link is None:
+        return
+    _owner(db, actor, link.draft_id, write=True)
+    proposal = db.get(DraftWorkspaceProposal, link.proposal_id, populate_existing=True)
+    revision = db.scalar(
+        select(DraftScopeRevision)
+        .where(
+            DraftScopeRevision.draft_scope_id == link.draft_id,
+            DraftScopeRevision.revision == link.base_revision + 1,
+        )
+        .execution_options(populate_existing=True)
+    )
+    if (
+        proposal is None
+        or revision is None
+        or actor.id != link.actor_id
+        or proposal.created_by_id != actor.id
+        or proposal.draft_scope_id != link.draft_id
+        or proposal.base_revision != link.base_revision
+        or revision.created_by_id != actor.id
+        or proposal.proposal_sha256 != link.proposal_sha256
+    ):
+        raise DraftScopeError("CHAT_PROPOSAL_REVIEW_MISMATCH", 409)
+    if (
+        db.scalar(
+            select(DraftWorkspaceProposalDecision.id).where(
+                DraftWorkspaceProposalDecision.proposal_id == proposal.id
+            )
+        )
+        is not None
+    ):
+        raise DraftScopeError("CHAT_PROPOSAL_ALREADY_DECIDED", 409)
+    _record_decision(db, actor, proposal, revision=revision, link=link)
+
+
+def reject(db: Session, actor: User, draft_id: str, identity: str, *, settings: Settings) -> None:
+    """Explicit human rejection closes a proposal without writing any Scope revision."""
+    _owner(db, actor, draft_id, write=True)
+    with _atomic(db):
+        db.scalar(select(DraftScope).where(DraftScope.id == draft_id).with_for_update())
+        opened = reopen(db, actor, draft_id, identity, settings=settings)
+        if opened["decision"] is not None:
+            raise DraftScopeError("CHAT_PROPOSAL_ALREADY_DECIDED", 409)
+        proposal = db.get(DraftWorkspaceProposal, identity)
+        if proposal is None:
+            raise DraftScopeError("CHAT_PROPOSAL_NOT_FOUND", 404)
+        _record_decision(db, actor, proposal)

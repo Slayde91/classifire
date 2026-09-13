@@ -6,6 +6,12 @@ It does not embed a signed-in ChatGPT account or copy its conversation history.
 
 ## Explicitly saved native proposals
 
+The local decision extension shows a recorded confirmation with its exact reviewed Scope
+revision, or a separately confirmed rejection. The original generation is not rewritten.
+It reuses existing reviews, does not infer decisions from later content, and adds forward
+migration0049. HTTP/service and migration checks are separate from browser acceptance;
+the new decision controls have not yet passed a browser/restart check.
+
 The [native history contract](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md) adds
 **Save proposal for later** and **Saved AI proposals** for Word/PDF/XLSX additions
 and selected Scope edits. Saving discloses retention of the question, included

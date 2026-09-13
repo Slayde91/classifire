@@ -163,3 +163,27 @@ def proposal_open(request: Request, db: Db, draft_id: str, proposal_id: str) -> 
         )
     except DraftScopeError as exc:
         raise HTTPException(exc.status_code, exc.code) from None
+
+
+@router.post("/scopes/{draft_id}/native-proposals/{proposal_id}/reject")
+def proposal_reject(
+    request: Request, db: Db, draft_id: str, proposal_id: str, form: ProposalForm,
+) -> JSONResponse:
+    from .services.draft_workspace_proposals import reject
+
+    actor = _require(request, db, "project:write")
+    verify_csrf(request, form.get("csrf_token"))
+    if set(form) != {"csrf_token", "confirm"} or form["confirm"] != "reject":
+        raise HTTPException(422, "Explicitly confirm rejection of this saved proposal")
+    try:
+        reject(db, actor, draft_id, proposal_id, settings=get_settings())
+        db.commit()
+        return JSONResponse(
+            {"id": proposal_id, "outcome": "rejected"}, headers={"Cache-Control": "no-store"}
+        )
+    except DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from None
+    except (ValueError, TypeError, UnicodeError, RecursionError):
+        db.rollback()
+        raise HTTPException(422, "CHAT_PROPOSAL_INVALID") from None

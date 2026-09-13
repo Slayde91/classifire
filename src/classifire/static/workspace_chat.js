@@ -211,9 +211,10 @@
             reset(true);const document=saved.document;
             showContext(document.context);message("user",document.request.question);
             message("assistant",`${document.response.answer}\nUncertainty: ${document.response.uncertainty.join("; ")}`);
-            if(saved.can_review){showProposal(document.response.proposal);showEdits(document.response.edit_proposal);}
+            if(saved.can_review){const lineage={id:row.id};showProposal(document.response.proposal,lineage);showEdits(document.response.edit_proposal,lineage);}
             else {const details=window.document.createElement("details"),heading=window.document.createElement("summary"),content=window.document.createElement("pre");content.className="chat-history-json";heading.textContent="Historical proposal (save controls unavailable)";content.textContent=JSON.stringify(document.response,null,2);details.append(heading,content);messages.append(details);}
             const disclosure=window.document.createElement("details"),title=window.document.createElement("summary"),raw=window.document.createElement("pre");raw.className="chat-history-json";title.textContent="Retained generation record and original context";raw.textContent=JSON.stringify(document,null,2);disclosure.append(title,raw);messages.append(disclosure);
+            showDecision(saved,row.id);
             report(saved.notice);ready=false;form.elements.consent.checked=false;buttons();
           }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
         });list.append(button);
@@ -223,19 +224,53 @@
   }
   history?.addEventListener("toggle",()=>{if(history.open)loadProposals();});
   history?.querySelector(".chat-proposal-refresh").addEventListener("click",loadProposals);
-  function showRetention(retention) {
+  function bindProposalReview(review,lineage) {
+    review.addEventListener("submit",event=>{
+      if(lineage.saving){event.preventDefault();report("Wait for the proposal to finish saving before opening review.");return;}
+      if(!lineage.id)return;
+      let field=review.querySelector('input[name="native_proposal_id"]');
+      if(!field){field=document.createElement("input");field.type="hidden";field.name="native_proposal_id";review.append(field);}
+      field.value=lineage.id;
+    });
+  }
+  function showDecision(saved,identity) {
+    const section=document.createElement("section");section.className="chat-proposal-decision";
+    if(saved.decision){
+      const title=document.createElement("h3"),details=document.createElement("details"),summary=document.createElement("summary"),raw=document.createElement("pre");
+      title.textContent=saved.decision.outcome==="rejected" ? "Proposal rejected" : `Reviewed Scope revision ${saved.decision.scope_revision} saved`;
+      summary.textContent="Exact human decision record";raw.className="chat-history-json";raw.textContent=JSON.stringify(saved.decision,null,2);details.append(summary,raw);section.append(title,details);
+      if(saved.decision.outcome==="confirmed"){
+        const note=document.createElement("p"),link=document.createElement("a");
+        note.textContent=saved.decision.proposal_payload_changed ? "The reviewer changed the proposed graph fields before saving." : "The submitted graph fields matched the proposed payload. Final source-review references are recorded in the saved Scope revision.";
+        link.href=`/scopes/${encodeURIComponent(selector.draft_id)}/download?revision=${saved.decision.scope_revision}`;link.textContent="Download this exact Scope revision";section.append(note,link);
+      }
+    }else if(saved.can_reject){
+      const label=document.createElement("label"),check=document.createElement("input"),button=document.createElement("button"),note=document.createElement("p");
+      check.type="checkbox";label.append(check,document.createTextNode(" I want to reject this saved proposal. Scope will stay unchanged."));
+      button.type="button";button.className="button button-secondary";button.textContent="Confirm proposal rejection";button.disabled=true;
+      check.addEventListener("change",()=>{button.disabled=!check.checked;});
+      button.addEventListener("click",async()=>{
+        if(!check.checked)return;button.disabled=true;check.disabled=true;
+        try{const fields=new URLSearchParams({csrf_token:panel.dataset.csrf,confirm:"reject"});await historyRequest(`${historyBase}/${encodeURIComponent(identity)}/reject`,{method:"POST",body:fields});
+          messages.querySelectorAll(".chat-scope-proposal").forEach(card=>card.remove());note.textContent="Proposal rejected. Scope is unchanged. Reopen the proposal to inspect the recorded decision.";button.remove();label.remove();await loadProposals();
+        }catch(error){note.textContent=error.message;check.disabled=false;button.disabled=!check.checked;}
+      });section.append(label,button,note);
+    }
+    if(section.childNodes.length)messages.append(section);
+  }
+  function showRetention(retention,lineage) {
     if(!retention||!history)return;
     const section=document.createElement("section"),note=document.createElement("p"),button=document.createElement("button");
     section.className="chat-proposal-retain";note.textContent="Save this AI proposal, question, disclosed context and included conversation for later. This does not save or approve Scope. The save authorization expires after 15 minutes.";
     button.type="button";button.className="button button-secondary";button.textContent="Save proposal for later";
     button.addEventListener("click",async()=>{
-      button.disabled=true;
+      button.disabled=true;lineage.saving=true;
       try {const fields=new URLSearchParams();fields.set("csrf_token",panel.dataset.csrf);fields.set("document",JSON.stringify(retention.document));fields.set("authorization",retention.authorization);
-        await historyRequest(historyBase,{method:"POST",body:fields});note.textContent="Proposal saved. Reopen it in Saved AI proposals; Scope is unchanged.";button.remove();await loadProposals();
-      }catch(error){note.textContent=error.message;button.disabled=false;}
+        const stored=await historyRequest(historyBase,{method:"POST",body:fields});lineage.id=stored.id;note.textContent="Proposal saved. Reopen it in Saved AI proposals; Scope is unchanged.";button.remove();await loadProposals();
+      }catch(error){note.textContent=error.message;button.disabled=false;}finally{lineage.saving=false;}
     });section.append(note,button);messages.append(section);
   }
-  function showProposal(proposal) {
+  function showProposal(proposal,lineage={id:null}) {
     if (!proposal) return;
     const card=document.createElement("section"), heading=document.createElement("h3"), note=document.createElement("p");
     card.className="chat-scope-proposal"; heading.textContent="Proposed Scope additions (not saved)";
@@ -277,7 +312,7 @@
       mapping.append(title,list);card.append(mapping);
     }
     if(pdf)review.action=`/scopes/${encodeURIComponent(selector.draft_id)}/evidence/${encodeURIComponent(proposal.source_id)}/scope/preview`;
-    review.className="chat-scope-review";
+    review.className="chat-scope-review";bindProposalReview(review,lineage);
     const fields={csrf_token:panel.dataset.csrf,expected_revision:String(proposal.expected_revision),document_sha256:proposal.document_sha256,payload:JSON.stringify(proposal.payload),targets:JSON.stringify(proposal.targets)};
     if(xlsx)fields.plan=JSON.stringify(proposal.plan);
     if(pdf){fields.document_hash=fields.document_sha256;delete fields.document_sha256;fields.page=String(proposal.page_number);}
@@ -285,7 +320,7 @@
     button.type="submit";button.className="button button-primary";button.textContent=xlsx ? "Review proposed Excel Scope" : pdf ? "Review proposed PDF Scope" : "Review proposed Word Scope";
     review.append(button);card.append(review);messages.append(card);
   }
-  function showEdits(proposal) {
+  function showEdits(proposal,lineage={id:null}) {
     if (!proposal) return;
     const card=document.createElement("section"), heading=document.createElement("h3"), note=document.createElement("p");
     card.className="chat-scope-proposal chat-edit-proposal";heading.textContent="Proposed field changes (not saved)";
@@ -307,7 +342,7 @@
     const findings=document.createElement("ul");
     for(const finding of proposal.findings){const item=document.createElement("li");item.textContent=finding.message;findings.append(item);}card.append(findings);
     const review=document.createElement("form"), button=document.createElement("button");
-    review.method="post";review.action=proposal.review_url;review.className="chat-edit-review";
+    review.method="post";review.action=proposal.review_url;review.className="chat-edit-review";bindProposalReview(review,lineage);
     const fields={csrf_token:panel.dataset.csrf,expected_revision:String(proposal.expected_revision),payload:JSON.stringify(proposal.payload),action:"validate"};
     for(const [name,value] of Object.entries(fields)){const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;review.append(input);}
     button.type="submit";button.className="button button-primary";button.textContent="Review changes in Draft editor";review.append(button);card.append(review);messages.append(card);
@@ -333,9 +368,10 @@
       let trimmed=false;
       if(completeAnswer.length>12000){turns=[];storageRemove(key());trimmed=true;}
       else {turns.push({role:"user",content:question},{role:"assistant",content:completeAnswer});trimmed=trimTurns();if(!turns.length)storageRemove(key());saveThread();}
-      showProposal(result.proposal);
-      showEdits(result.edit_proposal);
-      showRetention(result.retention);
+      const lineage={id:null,saving:false};
+      showProposal(result.proposal,lineage);
+      showEdits(result.edit_proposal,lineage);
+      showRetention(result.retention,lineage);
       if(["propose_word_scope","propose_pdf_scope","propose_xlsx_scope","propose_scope_edits"].includes(selector.action)){ready=false;form.elements.consent.checked=false;}
       form.elements.question.value="";
       report(`${result.notice}${trimmed ? " Some displayed exchanges exceed the conversation window and will not be sent or remembered." : ""}`);

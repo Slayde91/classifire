@@ -48,7 +48,7 @@ from classifire.services.proposal_review_package import (
 )
 
 BASELINE = "0046_draft_pricing_quantity_bases"
-HEAD = "0048_draft_workspace_proposals"
+HEAD = "0049_draft_proposal_decisions"
 
 
 @pytest.fixture
@@ -259,6 +259,7 @@ def test_postgresql_fresh_history_and_native_upgrade_preserve_scope_package(
     assert set(inspect(engine).get_table_names()) - before_tables == {
         "draft_scope_docx_sources",
         "draft_workspace_proposals",
+        "draft_workspace_proposal_decisions",
     }
     foreign_keys = inspect(engine).get_foreign_keys("draft_scope_docx_sources")
     assert any(
@@ -272,7 +273,7 @@ def test_postgresql_fresh_history_and_native_upgrade_preserve_scope_package(
         )
     refusal = _run_migration(url, environment, "downgrade", BASELINE, expect_success=False)
     assert refusal.returncode != 0
-    assert "Retained native proposal history cannot be downgraded" in refusal.stderr
+    assert "Retained native proposal decisions cannot be downgraded" in refusal.stderr
     assert _version(engine) == (HEAD, "VARCHAR(32)")
     with Session(engine) as db:
         actor = db.get(User, identities[0])

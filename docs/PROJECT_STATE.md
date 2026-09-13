@@ -7,9 +7,48 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
-## Current integration and deployment-readiness correction
+## Local native proposal decisions (targeted validation complete)
 
-The combined native stack is local at `5d00b6c` (38 files versus shared `97c0778`).
+`feat/native-proposal-decisions-20260914` extends local `d33f5ec` in an isolated
+worktree. It links explicitly saved proposals to their later human Scope confirmation
+or explicit rejection through the existing Word/PDF/XLSX/manual review paths. A separate
+immutable decision record references the exact saved revision; original generation is
+unchanged. Matching manual content without a link never implies acceptance. Rejection
+and failures save no Scope change; package and canonical authority remain separate.
+
+Forward migration0049 adds the decision table and required integrity constraints.
+Readiness and only audited current-head test expectations advance; historical0048/0047
+targets stay intact. This is not deployment approval. The prior full suite continues
+on unchanged d33f5ec, not this newer candidate; its result cannot cover0049.
+
+Local validation passed 16 distinct new HTTP/provenance cases across the targeted runs,
+96 existing native regression cases, 49 SQLite migration/readiness/packaging cases,
+25 affected current-head caller/migration cases and all three PostgreSQL history cases.
+The final seven-case run passed in 334.723 seconds. The initial failures are preserved:
+the disabled-actor expectation needed the existing exact 401 denial, and the PostgreSQL
+downgrade expectation needed the new 0049 refusal message. Neither production guard was
+weakened. All three PostgreSQL history cases passed after that expectation correction.
+
+Full Ruff, Mypy (239 source files), Bandit, JavaScript syntax and diff checks passed.
+The exported synthetic decision and Scope bytes were inspected: exact generation and
+Scope hashes, actor/Draft/revision bindings, two retained source references and disabled
+repeat-review controls matched. The blank opening still has zero Services, unknown
+dimensions/substrate and Unresolved state; Scope remains an unreviewed Draft.
+The private `native-proposal-decisions-validation-20260914` receipt retains actual results.
+The selected environment satisfies declared dependencies; PostgreSQL work used only
+owned disposable 15433 databases/schemas. No real provider/scanner, customer report,
+live database, activation, OAuth or tunnel change occurred.
+
+Browser automation failed during initialization with `helper_unknown_error`, including
+a reset/retry. No test server was started. JavaScript syntax and HTTP-rendered forms
+are not a substitute for the remaining visual, interactive and restart acceptance.
+Keep this limitation visible before publication or activation. Public approval still
+covers only d864c51 and its12 files; the one-file8bce0b0 correction and all newer local
+ancestors require their own exact publication scope. No C2/C3 or production exit is claimed.
+
+## Preceding integration and deployment-readiness correction
+
+The preceding saved-history stack reached `5d00b6c` (38 files versus shared `97c0778`).
 The closed-review attachment test was already reconciled for Word/PDF/XLSX in
 2fea699/8441195; do not rebuild the public Word-only correction in this stack.
 PR271 remains at approved d864c51 with failed CI; one-file8bce0b0 still needs its

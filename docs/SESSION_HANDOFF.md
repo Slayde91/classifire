@@ -6,9 +6,48 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
-## Current integration and deployment-readiness correction
+## Local native proposal decisions (targeted validation complete)
 
-The combined native stack is local at `5d00b6c` (38 files versus shared `97c0778`).
+`feat/native-proposal-decisions-20260914` extends local `d33f5ec` in an isolated
+worktree. It links explicitly saved proposals to their later human Scope confirmation
+or explicit rejection through the existing Word/PDF/XLSX/manual review paths. A separate
+immutable decision record references the exact saved revision; original generation is
+unchanged. Matching manual content without a link never implies acceptance. Rejection
+and failures save no Scope change; package and canonical authority remain separate.
+
+Forward migration0049 adds the decision table and required integrity constraints.
+Readiness and only audited current-head test expectations advance; historical0048/0047
+targets stay intact. This is not deployment approval. The prior full suite continues
+on unchanged d33f5ec, not this newer candidate; its result cannot cover0049.
+
+Local validation passed 16 distinct new HTTP/provenance cases across the targeted runs,
+96 existing native regression cases, 49 SQLite migration/readiness/packaging cases,
+25 affected current-head caller/migration cases and all three PostgreSQL history cases.
+The final seven-case run passed in 334.723 seconds. The initial failures are preserved:
+the disabled-actor expectation needed the existing exact 401 denial, and the PostgreSQL
+downgrade expectation needed the new 0049 refusal message. Neither production guard was
+weakened. All three PostgreSQL history cases passed after that expectation correction.
+
+Full Ruff, Mypy (239 source files), Bandit, JavaScript syntax and diff checks passed.
+The exported synthetic decision and Scope bytes were inspected: exact generation and
+Scope hashes, actor/Draft/revision bindings, two retained source references and disabled
+repeat-review controls matched. The blank opening still has zero Services, unknown
+dimensions/substrate and Unresolved state; Scope remains an unreviewed Draft.
+The private `native-proposal-decisions-validation-20260914` receipt retains actual results.
+The selected environment satisfies declared dependencies; PostgreSQL work used only
+owned disposable 15433 databases/schemas. No real provider/scanner, customer report,
+live database, activation, OAuth or tunnel change occurred.
+
+Browser automation failed during initialization with `helper_unknown_error`, including
+a reset/retry. No test server was started. JavaScript syntax and HTTP-rendered forms
+are not a substitute for the remaining visual, interactive and restart acceptance.
+Keep this limitation visible before publication or activation. Public approval still
+covers only d864c51 and its12 files; the one-file8bce0b0 correction and all newer local
+ancestors require their own exact publication scope. No C2/C3 or production exit is claimed.
+
+## Preceding integration and deployment-readiness correction
+
+The preceding saved-history stack reached `5d00b6c` (38 files versus shared `97c0778`).
 The closed-review attachment test was already reconciled for Word/PDF/XLSX in
 2fea699/8441195; do not rebuild the public Word-only correction in this stack.
 PR271 remains at approved d864c51 with failed CI; one-file8bce0b0 still needs its
@@ -489,18 +528,20 @@ The shorter architecture/roadmap aliases are absent. Preserve the conflicted roo
 pinned runtime and private receipts. Reconcile Git/worktrees, exact upstreams and
 PR/CI before selecting work; newer local evidence outranks old checkpoints.
 
-Start with fix/native-history-startup-lineage-20260914, based on local5d00b6c, and
-inspect its readiness-correction and combined-suite receipts. The read-only lineage
-check now matches0048; historical migration targets stay intact. Continue the
-corrected-version full-suite handle if it is live; do not restart on observation timeout. The same native panel now explicitly saves and
-reopens Word/PDF/XLSX additions and selected Scope edit proposals. Generation still
-writes nothing; retention, Scope confirmation and package confirmation are separate.
-Reopening checks current rights, owner, source integrity and scan status; historical
-context has no review controls. Migration0048 is forward-only and unpublished;
-activation needs a new exact approved backup/restore/restart/rollback plan. Never
-rehearse on live15432. The synthetic browser proved exact proposal/ZIP reopening after
-restart without repeating model/scan/save work. Later review-decision/revision linkage,
-portable AI history and full operational acceptance remain incomplete.
+Start with feat/native-proposal-decisions-20260914, based on locald33f5ec. Inspect its
+private validation receipt, exact diff and remaining browser limitation before publication.
+The current candidate uses0049; the separate full-suite run still covers unchanged d33f5ec
+and0048. Poll its existing live handle; never restart on observation timeout. The same
+native panel retains/reopens proposals and now links optional saved identities through the
+existing four review transactions. Confirmation records the actual reviewed Scope revision;
+explicit rejection records no Scope change. Original generation is unchanged, and a later
+matching manual revision never infers a decision. Source preview signatures bind the identity;
+current owner/rights/context, atomicity and one-decision checks remain required. Package
+confirmation and canonical authority are separate. New decision browser/restart acceptance
+is unverified because the browser helper failed initialization; do not claim that prior
+history browser evidence covers the new controls. Both migrations are forward-only.
+Activation needs a new exact approved backup/restore/restart/rollback plan and successful CI.
+Never rehearse on live15432. Portable AI history and full operational acceptance remain.
 
 PR271 contains approved d864c51 and12 files. Its CI failed after639 passes on an
 outdated form assertion; local one-file8bce0b0 passed30 checks but needs separate
