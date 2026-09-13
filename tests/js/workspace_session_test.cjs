@@ -62,15 +62,18 @@ test('known source refusal remains specific',async()=>{assert.equal((await exerc
 
 test('availability network failure keeps a fixed message',async()=>{assert.equal((await exercise('availability','network')).text,'Assistant unavailable for this session.');});
 
-async function historyRace(){
+async function historyRace(deferLists=false){
  const panel=new Element();panel.dataset={userId:'synthetic',draftId:draft,csrf:'synthetic-csrf'};
  const selector={draft_id:draft,revision:3,ids:[],records:[],matches:[],screen:{name:'scopes'},action:'advice'};
  const doc={getElementById:id=>id==='workspace-chat'?panel:id==='workspace-chat-context'?{textContent:JSON.stringify(selector)}:null,querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){},dispatchEvent(){},createElement:()=>new Element(),createTextNode:text=>({textContent:text}),body:new Element(),documentElement:new Element()};
- const pending=new Map(),calls=[];
+ const pending=new Map(),calls=[];let listReads=0;
  const context={document:doc,window:{document:doc,addEventListener(){}},location:{href:origin+'/scopes/'+draft,origin},URL,URLSearchParams,TextEncoder,AbortController,Headers,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},sessionStorage:{getItem:()=>null,removeItem(){},setItem(){}},fetch:async(url,options)=>{
   calls.push({url,options});
   if(url==='/workspace/assistant')return response('success',{enabled:true,model:'synthetic'});
-  if(url.endsWith('/native-proposals'))return response('success',{proposals:['first','second'].map(id=>({id,base_revision:3,saved_at:'synthetic'}))});
+  if(url.endsWith('/native-proposals')){
+   if(deferLists&&listReads++>0)return new Promise((resolve,reject)=>pending.set('list-'+listReads,{resolve,reject}));
+   return response('success',{proposals:['first','second'].map(id=>({id,base_revision:3,saved_at:'synthetic'}))});
+  }
   return new Promise((resolve,reject)=>pending.set(url.split('/').pop(),{resolve,reject}));
  }};
  vm.runInNewContext(fs.readFileSync(path.join(assets,'workspace_chat.js'),'utf8'),context,{filename:'workspace_chat.js'});
@@ -83,7 +86,12 @@ async function historyRace(){
   if(failed){waiting.reject(new Error('Synthetic delayed failure'));return;}
   waiting.resolve(response('success',{document:{request:{question:id+' question'},response:{answer:id+' answer',uncertainty:[]},context:{context_sha256:'a'.repeat(64),records:[],source_references:[],sections:[],selected_ids:[],summary:id+' context'}},can_review:true,can_reject:false,decision:null,notice:id+' notice'}));
  }
- return {panel,history,buttons,calls,finish};
+ function finishList(index,mode,ids=[]){
+  const waiting=pending.get('list-'+index);assert.ok(waiting,'Expected an outstanding proposal listing');
+  if(mode==='network'){waiting.reject(new Error('Synthetic old listing failure'));return;}
+  waiting.resolve(response(mode,{proposals:ids.map(id=>({id,base_revision:3,saved_at:id}))}));
+ }
+ return {panel,history,buttons,calls,finish,finishList};
 }
 for(const failed of [false,true])test(`clearing conversation discards delayed saved-proposal ${failed?'failure':'content'}`,async()=>{
  const x=await historyRace(),opening=x.buttons[0].fire('click');
@@ -119,4 +127,21 @@ test('earlier saved-proposal read stays hidden while the latest choice is pendin
  assert.equal(x.panel.querySelector('.chat-messages').children.length,3);
  assert.equal(x.panel.querySelector('.chat-form').elements.consent.checked,false);
  assert.equal(x.calls.length,4);
+});
+
+for(const [older,newer] of [['success','success'],['network','success'],['success','unauthorized']])test(`latest proposal listing wins over an older ${older} after ${newer}`,async()=>{
+ const x=await historyRace(true),refresh=x.history.querySelector('.chat-proposal-refresh');
+ const first=refresh.fire('click'),second=refresh.fire('click');
+ x.finishList(3,newer,['current']);await second;
+ const list=x.history.querySelector('.chat-proposal-list'),status=x.history.querySelector('.chat-proposal-status');
+ if(newer==='unauthorized'){assert.equal(list.children.length,0);assert.equal(status.textContent,signIn);}
+ else {assert.equal(list.children.length,1);assert.match(list.children[0].textContent,/current/);}
+ const children=list.children.slice(),message=status.textContent;
+ x.finishList(2,older,['stale']);await first;
+ assert.deepEqual(list.children,children,'An old refresh must not replace or restore the current list');
+ assert.equal(status.textContent,message,'An old refresh must not replace the current result or session warning');
+ assert.equal(x.panel.querySelector('.chat-messages').children.length,0);
+ assert.equal(x.panel.querySelector('.chat-form').elements.consent.checked,false);
+ assert.equal(x.calls.length,4,'Only availability and three explicit list reads');
+ assert.ok(x.calls.every(call=>!call.options?.method||call.options.method==='GET'),'No state-changing request');
 });

@@ -202,7 +202,7 @@
     panel.querySelector(".chat-context pre").textContent=JSON.stringify(context,null,2);summary.hidden=false;
   }
   const history = panel.querySelector(".chat-proposal-history");
-  let proposalOpenRequest = 0;
+  let proposalOpenRequest = 0, proposalListRequest = 0;
   const historyBase = selector.draft_id ? `/scopes/${encodeURIComponent(selector.draft_id)}/native-proposals` : "";
   async function historyRequest(url, options={}) {
     const response=await fetch(url,{credentials:"same-origin",cache:"no-store",...options});
@@ -211,8 +211,12 @@
   async function loadProposals() {
     if(!history)return;
     const status=history.querySelector(".chat-proposal-status"),list=history.querySelector(".chat-proposal-list");
+    const requestId=++proposalListRequest;
     try {
-      const result=await historyRequest(historyBase);list.replaceChildren();
+      const result=await historyRequest(historyBase);
+      // A newer refresh owns the list, including its access or session refusal.
+      if(requestId!==proposalListRequest)return;
+      list.replaceChildren();
       for(const row of result.proposals){
         const button=document.createElement("button");button.type="button";button.className="button button-secondary chat-proposal-open";
         button.textContent=`Open proposal saved ${row.saved_at} (Scope ${row.base_revision})`;
@@ -238,7 +242,7 @@
         });list.append(button);
       }
       status.textContent=result.proposals.length ? `${result.proposals.length} saved proposal(s). None is automatically applied.` : "No saved proposals for this Draft.";
-    }catch(error){list.replaceChildren();status.textContent=error.message;}
+    }catch(error){if(requestId===proposalListRequest){list.replaceChildren();status.textContent=error.message;}}
   }
   history?.addEventListener("toggle",()=>{if(history.open)loadProposals();});
   history?.querySelector(".chat-proposal-refresh").addEventListener("click",loadProposals);

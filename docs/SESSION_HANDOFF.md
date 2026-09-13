@@ -6,6 +6,23 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
+## Latest local saved-proposal list correction
+
+`fix/native-history-list-order-20260914` extends `23ab398`. Repeated list refreshes
+could let an older success or failure replace a newer result, including restoring
+proposal buttons after a newer session refusal. Three synthetic cases reproduced
+the defect. Only the latest refresh now updates the saved-proposal list and status.
+All 32 shipped-script Node VM checks and 16 nearby template/navigation/wrapper tests
+passed, with no skips; pytest used this checkout's PYTHONPATH and fresh SQLite
+basetemp. The script cache version is advanced. No schema or authority change.
+
+Private evidence is in `native-history-list-order-validation-20260914` under .tmp.
+The separate `native-range-review-23ab398-20260914/migration-readiness-review.json`
+records manual review of 24 changed migration/model/readiness files, unchanged
+from the earlier full-suite candidate `1aeded3`. Full-range manual review and
+rendered-browser acceptance remain incomplete. Public approval still covers only
+`d864c51`; this correction and its newer ancestors remain unpublished.
+
 ## Latest local package form correction
 
 `fix/native-history-package-choice-20260914` extends `3bdc27d`. Users can explicitly

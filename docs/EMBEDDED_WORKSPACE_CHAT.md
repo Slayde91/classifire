@@ -507,9 +507,12 @@ Opening a saved proposal is tied to the current conversation context and latest
 proposal choice. Clearing the conversation, changing its context or choosing another
 proposal discards an older read's delayed content and errors. The last choice wins
 regardless of response order; no reply grants consent or runs another capability.
-A local race reproduction failed three checks before correction; all 29 Node VM
-checks now pass, including four delayed-response cases. This executes the shipped
-script against a synthetic DOM/event surface, not a rendered browser.
+Repeated saved-proposal list refreshes also accept only the latest request's
+result. A delayed older success or failure cannot replace the current list/status
+or restore proposal controls after a newer session refusal. Three additional
+regression cases reproduced that list-ordering defect before correction. All 32
+Node VM checks pass, including seven delayed-response cases. This executes the
+shipped script against a synthetic DOM/event surface, not a rendered browser.
 
 The native panel treats same-origin login redirects and401 responses as an inactive
 session. It asks the user to sign in again and reload the workspace; it does not replay
