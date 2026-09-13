@@ -85,13 +85,28 @@ def confirm_form(html):
     return {name: fields[0]["value"] for name, fields in form["fields"].items()}
 
 
-def assert_advice_only_review_page(html):
-    """The shared chat adds advice controls, never a second saved-review action."""
+def assert_closed_review_page_forms(html):
+    """Closed reviews allow explicit attachment/advice, never another Scope save."""
     parsed = Forms(html)
     assert not parsed.nested
     assert parsed.ids.count("workspace-chat") == 1
-    assert [form["action"] for form in parsed.forms] == ["/logout", None]
-    advice = parsed.forms[1]["fields"]
+    assert [form["action"] for form in parsed.forms] == ["/logout", None, None, None]
+    for form, expected_accept in zip(
+        parsed.forms[1:3],
+        [
+            [".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+            [".pdf", "application/pdf"],
+        ],
+        strict=True,
+    ):
+        attachment = form["fields"]
+        assert set(attachment) == {"csrf_token", "file"}
+        assert attachment["csrf_token"][0]["type"] == "hidden"
+        assert attachment["csrf_token"][0]["value"]
+        assert attachment["file"][0]["type"] == "file"
+        assert "required" in attachment["file"][0]
+        assert attachment["file"][0]["accept"].split(",") == expected_accept
+    advice = parsed.forms[3]["fields"]
     assert set(advice) == {"prompt", "question", "consent"}
     assert "required" in advice["question"][0]
     assert "required" in advice["consent"][0]
@@ -135,7 +150,7 @@ def test_http_review_edit_back_confirm_retains_claims_and_reopens(suggestion_app
         assert (
             reopened.status_code == 200 and "Original proposed graph (read-only)" in reopened.text
         )
-        assert_advice_only_review_page(reopened.text)
+        assert_closed_review_page_forms(reopened.text)
         assert path in client.get(x.source_path).text
         assert client.post(path + "/confirm", data=submitted).status_code == 409
         assert client.get(f"/scopes/{x.ids[2]}/download?revision=2").content == downloaded.content
@@ -161,7 +176,7 @@ def test_http_explicit_rejection_changes_no_scope_revision(suggestion_app):
         assert rejected.status_code == 303, rejected.text
         page = client.get(path)
         assert "This batch was rejected" in page.text
-        assert_advice_only_review_page(page.text)
+        assert_closed_review_page_forms(page.text)
         assert client.get(f"/scopes/{x.ids[2]}/download?revision=1").content == x.original
     with x.factory() as db:
         assert db.scalar(select(func.count()).select_from(DraftScopeRevision)) == 1
@@ -234,6 +249,6 @@ def test_http_stale_confirmation_preserves_attempted_graph_without_stale_save(su
         refused = client.post(path + "/confirm", data=submitted)
         assert refused.status_code == 409, refused.text
         assert "Unsaved attempted graph" in refused.text and "Draft has changed" in refused.text
-        assert_advice_only_review_page(refused.text)
+        assert_closed_review_page_forms(refused.text)
         assert client.get(f"/scopes/{x.ids[2]}/download?revision=2").json() == newer
         assert len(x.port.calls) == 1

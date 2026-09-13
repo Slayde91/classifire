@@ -93,8 +93,12 @@ existing bounded Responses transport after consent. Separately, the existing
 external ChatGPT/MCP client can request intake/scan and prepare durable Draft changes
 for same-user browser confirmation. Ordinary UI intake/review uses the same domain
 services. The native panel now also
-retains Word reports, explicitly scans them and pages through retained text/pictures
-via `draft_workspace_word_ui.py`; these controls never call the advice transport.
+retains Word and PDF reports, explicitly scans them and displays retained evidence
+via `draft_workspace_word_ui.py`. The historical module and Word routes remain; the
+same adapter now selects the existing PDF intake policy through a constrained source
+kind. A shared panel driver handles both formats. PDF inspection shows one retained
+page at a time, its rendered PNG and exact original download, with a link to that
+page's existing review. These controls never call the advice transport.
 The existing plugin is retained. The advice context additionally accepts explicit
 selection of at most 10 text blocks and 2 verified PNG pictures from one retained
 DOCX. Source/scan/document/image hashes bind the preview and are rechecked before
@@ -137,8 +141,12 @@ supported PDF and XLSX. Approved technical-source and commercial-library ingesti
 retain their distinct purpose, rights and authority; attaching a defect report
 does not import it as a trusted technical or pricing library.
 
-**Migration impact:** the native attachment increment reuses retained sources and
-existing Word readers without changing tables, migration history or dependencies.
+**Migration impact:** native Word/PDF attachments reuse the existing retained-source
+policies, parser/scan workers and readers without changing tables, migration history
+or dependencies. PDF pages do not enter native chat model context in this increment;
+existing separately consented PDF suggestion/review services remain available. The
+reason for extending the shared adapter is to expose already supported evidence in
+the requested native working environment without another intake pipeline.
 The selected-evidence extension adds optional typed selectors and an internal image
 argument to the same advisory port; no new provider, identity or write path is added.
 The proposal composer reuses immutable Draft revisions and the existing Word

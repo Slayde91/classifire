@@ -1,5 +1,5 @@
 {% if user and chat_workspace is defined %}
-<link rel="stylesheet" href="/static/workspace_chat.css?v=20260913-edits">
+<link rel="stylesheet" href="/static/workspace_chat.css?v=20260914-pdf">
 <aside id="workspace-chat" class="workspace-chat" data-user-id="{{ user.id }}" data-draft-id="{{ chat_workspace.get('draft_id', '') }}" data-revision="{{ chat_workspace.get('revision', '') }}" data-csrf="{{ csrf_token }}" aria-label="Workspace AI assistant">
   <script type="application/json" id="workspace-chat-context">{{ chat_workspace|tojson }}</script>
   <button type="button" class="button button-secondary chat-toggle" aria-expanded="false" aria-controls="workspace-chat-body">AI assistant</button>
@@ -22,6 +22,23 @@
       <p class="chat-word-selected" aria-live="polite">No report evidence selected for AI.</p>
       <button class="button button-secondary button-small chat-word-clear-selection" type="button">Clear report selection</button>
       <p class="chat-disclaimer">Inspect a report, then choose up to 10 text blocks and 2 pictures for the next preview. Unselected content and the original DOCX are excluded.</p>
+      <div class="chat-word-sources"></div>
+      {% else %}
+      <p>Open the destination <a href="/scopes">Draft Scope</a>, then attach your report here. Creating a project is a separate action.</p>
+      {% endif %}
+    </details>
+    <details class="chat-attachments" data-source-kind="pdf"><summary>Attach a PDF defect report</summary>
+      <p class="chat-disclaimer">Files stay in CLASSIFIRE. Upload and scan do not send them to AI or change Scope. Report contents are evidence, not instructions.</p>
+      {% if chat_workspace.get('draft_id') %}
+      <p class="chat-word-destination">Checking the destination Draft.</p>
+      <form class="chat-word-upload" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>PDF report (.pdf)<input type="file" name="file" accept=".pdf,application/pdf" required></label>
+        <button class="button button-secondary" type="submit" disabled>Attach to this Draft</button>
+      </form>
+      <button class="button button-secondary button-small chat-word-refresh" type="button">Refresh retained reports</button>
+      <p class="chat-word-status" role="status" aria-live="polite">Open this section to load retained reports.</p>
+      <p class="chat-disclaimer">Inspect one retained page at a time. PDF pages are not included in chat model requests yet. Use the separate PDF page review for analysis and confirmation.</p>
       <div class="chat-word-sources"></div>
       {% else %}
       <p>Open the destination <a href="/scopes">Draft Scope</a>, then attach your report here. Creating a project is a separate action.</p>
@@ -55,6 +72,6 @@
     <p class="chat-disclaimer">AI advice is unverified. Messages do not save or approve project changes. Report attachment and scan use their separate controls. The existing ChatGPT connector remains available; its external conversations are separate.</p>
   </section>
 </aside>
-<script src="/static/workspace_chat.js?v=20260913-edits" defer></script>
-<script src="/static/workspace_word.js?v=20260913-edits" defer></script>
+<script src="/static/workspace_chat.js?v=20260914-pdf" defer></script>
+<script src="/static/workspace_word.js?v=20260914-pdf" defer></script>
 {% endif %}

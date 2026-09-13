@@ -117,7 +117,7 @@ No connector rebuild or new ChatKit dependency is required by this intention.
 | User need | Current evidence | Required extension |
 | --- | --- | --- |
 | Ask about selected page data | Native typed selectors, preview/consent and advisory replies implemented | Complete separately approved real browser activation/acceptance |
-| Attach a defect report in chat | Native DOCX attachment, retained-source/status cards and explicit scan now reuse existing Word intake; saved sources reopen without chat memory | Complete the wider C2 journey, then extend to supported PDF/XLSX |
+| Attach a defect report in chat | Native DOCX/PDF attachment, retained-source/status cards and explicit scan reuse existing intake; saved sources reopen without chat memory | Extend PDF selection/model/proposal review, then supported XLSX; complete operational acceptance |
 | Read report evidence while discussing it | Native panel inspects Word evidence and selects up to10 text blocks/two PNG pictures for preview/consent and typed additions | Complete real-provider acceptance and broader format coverage |
 | Propose and confirm a page change | Explicit Word additions reuse Word review; selected saved Scope replacements show field differences and validate in the manual editor before separate save | Real-provider/live acceptance, durable AI lineage and remaining non-Scope action contracts |
 | Download a reviewed result | Existing exact saved packages and original-bearing ZIPs | In-context access to the same package review, separate confirmation and exact download |
@@ -346,3 +346,38 @@ Full Ruff/Mypy236, scoped Bandit and JavaScript syntax passed. Synthetic browser
 review/save/reopen and test-server restart preserved exact bytes; local editor changes
 cleared old proposals/consent and cancelling unsaved navigation preserved local work.
 Desktop/narrow/editor screenshots were inspected. No real provider call occurred.
+
+
+## Native PDF attachment and inspection
+
+Open **Attach a PDF defect report** in the same panel. The destination is the current
+Draft; creating a new project remains separate. Upload retains the original through
+the existing PDF policy, with same-byte reuse. **Scan and prepare report** is another
+explicit action. **Inspect retained evidence** shows one page's retained text, page
+locator and rendered PNG; Previous/Next page never run analysis. **Download retained
+original** verifies current rights, source bytes and scan state before returning the
+exact PDF as a download. **Review this PDF page** opens the existing in-app page review
+with that page selected. Its suggestions and Scope confirmation retain their own
+controls and configuration; none runs because a PDF was uploaded or inspected.
+
+PDF pages are not automatically included in the native chat context. The panel states
+that native PDF model selection/proposals remain unavailable. Word text/picture
+selection and the existing native Word proposal flow are unchanged. Source kinds are
+restricted to Word/PDF and remain bound to their own retained purposes; a source ID
+cannot be read under the other format or another user's Draft. Both controls share
+the existing session adapter and driver; no new intake pipeline or provider is added.
+
+The initial browser check exposed PDF text/image overflow at390px. Reusing the existing
+evidence-block class constrains the image and wraps retained text. Failed and expired
+scans or integrity mismatches still withhold evidence and originals. Exact validation
+results and remaining operational limitations belong in PROJECT_STATE.md/private receipts.
+
+Validation:100 affected PDF/Word/chat/edit tests passed without failures/skips in432.920s.
+Full Ruff/Mypy236, scoped Bandit and JS syntax passed. Final synthetic Chrome upload,
+scan, both page reads, selected-page review navigation and exact original download
+passed. Desktop/390px screenshots were inspected. Reopening after a test-server
+restart returned identical PDF bytes and unchanged Scope with no rescan/model/package.
+No real scanner, model accuracy or live acceptance is claimed.
+
+A separate browser compatibility check also passed Word upload/scan, selected text/
+picture preview, unchanged Word selection while PDFs load and exact Word download.

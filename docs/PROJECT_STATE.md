@@ -1,11 +1,47 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-14 after local selected-record edit validation. Native Word
-proposal evidence is retained below. Live chat remains rolled back.
+Reconciled 2026-09-14 during local PDF panel acceptance. Selected-record edits and
+Word proposal evidence are retained below. Live chat remains rolled back.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
+
+## Native PDF attachment checkpoint
+
+The isolated `feat/native-pdf-attachments-20260914` branch starts at localb330266.
+The existing session adapter and attachment driver now support both Word and PDF
+through their existing retained-source policies. Word URLs remain compatible. PDF
+upload/duplicate reuse, explicit scan, paged retained text/PNG inspection, exact
+original download and links to the selected page's existing review are exposed in
+the panel. PDF pages are not yet sent through native chat context; the UI states
+this limitation. Existing PDF suggestion consent and human review remain separate.
+No provider/model configuration, parser, migration, schema or dependency changed.
+
+The six initial native PDF/Word checks passed on disposable15433 in70.192s. They
+cover duplicate reuse, unchanged protected tables, cross-format/foreign access,
+CSRF, read-only restrictions, failed/expired scans and corrupted document identity.
+The first browser journey reached both pages and exact original bytes, then found
+narrow-panel overflow: the PDF content lacked the existing evidence-block class.
+The correction reuses that class for text wrapping and image constraints.
+Final validation:100 affected PDF/Word/chat/selected-edit tests passed without failures
+or skips in432.920s. Full Ruff, Mypy236, scoped Bandit and JS syntax passed. A fresh
+synthetic browser journey proved upload/duplicate reuse, explicit scan, both retained
+pages/PNGs, exact original PDF bytes and the selected-page review link. Desktop and
+390px screenshots were inspected; the panel fits without horizontal overflow. After
+restarting the test server, a fresh browser reopened the pages and identical original
+without upload, scan, provider calls, Scope revisions or package creation. An earlier
+harness expected text before opening the existing collapsed text section; HTTP200 and
+page2 were correct, and the corrected harness passed without a product change.
+A further browser check proved Word upload/scan, text/picture selection and exact
+original download still work; loading PDF sources preserves the Word preview hash.
+
+The closed-review test now explicitly expects logout, separate DOCX/PDF uploads and
+advice while preserving rejection/repeat/stale-Scope checks. This locally extends
+the earlier8bce0b0 correction for the additional PDF form; it neither publishes that
+commit nor changes PR271. The exact12-file d864c51 approval does not cover this
+branch or its unpublished parents. No public push, activation, provider call or
+live15432 operation occurred. C2 PDF model/proposal and broader-format work remain.
 
 ## Selected Scope record edit checkpoint
 
@@ -597,8 +633,9 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 2. **C2 - Complete report analysis and Scope review.** Native DOCX attachment,
    status, explicit scan, evidence inspection and consented selected text/PNG advice are
    implemented, including typed additions and separate Word/package review in the
-   synthetic journey. Next resolve the operational gate and broaden supported report
-   coverage; do not repeat the proven synthetic increment. Reuse the existing
+   synthetic journey. PDF attachment/inspection now reuse the panel, but native PDF
+   model context and proposal review remain the next implementation step. Resolve
+   the operational gate separately; do not repeat the proven Word increment. Reuse the existing
    intake/scan/Word review/client-request/package services, beginning with one
    supported synthetic DOCX. Finish the visible attachment-to-confirmed-Scope-to-ZIP
    journey from the [assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).

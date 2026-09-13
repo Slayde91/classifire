@@ -1,10 +1,13 @@
 "use strict";
 (() => {
   const panel = document.getElementById("workspace-chat");
-  const section = panel?.querySelector(".chat-attachments");
+  if (!panel) return;
+  panel.querySelectorAll(".chat-attachments").forEach(section => {
+  const pdf = section.dataset.sourceKind === "pdf", format = pdf ? "PDF" : "DOCX";
+  const extension = pdf ? ".pdf" : ".docx";
   const form = section?.querySelector(".chat-word-upload");
   if (!form || !panel.dataset.draftId) return;
-  const draft = encodeURIComponent(panel.dataset.draftId), base = `/scopes/${draft}/assistant/word`;
+  const draft = encodeURIComponent(panel.dataset.draftId), base = `/scopes/${draft}/assistant/${pdf ? "pdf" : "word"}`;
   const list = section.querySelector(".chat-word-sources"), status = section.querySelector(".chat-word-status");
   const destination = section.querySelector(".chat-word-destination");
   let busy = false, loaded = false, canWrite = false, limit = 0, generation = 0;
@@ -18,6 +21,11 @@
     form.querySelector("button").disabled = busy || !loaded || !canWrite; form.elements.file.disabled = busy || !canWrite;
   }
   const errors = {
+    PDF_UPLOAD_INVALID: "Choose a supported PDF within the displayed size limit.",
+    PDF_UPLOAD_CONFLICT: "These bytes belong to a different source purpose. Use the existing source workflow.",
+    PDF_SOURCE_LIMIT: "This Draft has reached its retained PDF report limit.",
+    PDF_NOT_READY: "This report is not ready for inspection. Review its scan status.",
+    PDF_SOURCE_INTEGRITY_FAILED: "The retained report could not be verified. Refresh its status.",
     SCOPE_DOCX_UPLOAD_INVALID: "Choose a supported DOCX within the displayed size limit.",
     SCOPE_DOCX_UPLOAD_CONFLICT: "These bytes belong to a different source purpose. Use the existing source workflow.",
     SCOPE_DOCX_SOURCE_LIMIT: "This Draft has reached its retained Word report limit.",
@@ -51,11 +59,16 @@
     const actions = element("div", "", "chat-actions");
     if (canWrite && source.status !== "malware_detected") actions.append(button("Scan and prepare report", () => scan(source.id)));
     if (source.ready) actions.append(button("Inspect retained evidence", () => inspect(source.id, card, 0)));
-    const link = element("a", "Open Word review", "button button-secondary button-small");
-    link.href = `/scopes/${draft}/word/${encodeURIComponent(source.id)}`;
+    const link = element("a", pdf ? "Open PDF page review" : "Open Word review", "button button-secondary button-small");
+    link.href = `/scopes/${draft}/${pdf ? "evidence" : "word"}/${encodeURIComponent(source.id)}`;
+    if (source.ready) {
+      const original=element("a", "Download retained original", "button button-secondary button-small");
+      original.href=`${base}/${encodeURIComponent(source.id)}/original`;actions.append(original);
+    }
     actions.append(link); card.append(actions, element("div", "", "chat-word-evidence")); return card;
   }
   function publishSelection() {
+    if (pdf) return;
     const value = selection && (selection.locators.length || selection.picture_ids.length) ? selection : null;
     document.dispatchEvent(new CustomEvent("classifire:word-selection", {detail:{draftId:panel.dataset.draftId, word:value ? {...value,locators:[...value.locators],picture_ids:[...value.picture_ids]} : null}}));
     section.querySelector(".chat-word-selected").textContent = value
@@ -65,7 +78,7 @@
   function clearSelection() {
     selection = null; section.querySelectorAll(".chat-word-select").forEach(input => {input.checked=false;}); publishSelection();
   }
-  section.querySelector(".chat-word-clear-selection").addEventListener("click", clearSelection);
+  section.querySelector(".chat-word-clear-selection")?.addEventListener("click", clearSelection);
   document.addEventListener("classifire:chat-evidence-clear", clearSelection);
   function selectControl(data, key, id, label) {
     const wrap=element("label", "", "chat-consent"), input=document.createElement("input");
@@ -88,11 +101,11 @@
     const data = await request();
     if (data.draft_id !== panel.dataset.draftId) throw new Error("Destination changed. Reopen the Draft.");
     limit = data.max_upload_bytes; canWrite = data.can_write === true; form.hidden = !canWrite;
-    destination.textContent = `Destination: ${data.reference} - ${data.name}. Maximum ${Math.floor(limit / 1048576)} MB per DOCX.`;
+    destination.textContent = `Destination: ${data.reference} - ${data.name}. Maximum ${Math.floor(limit / 1048576)} MB per ${format}.`;
     if (!canWrite) destination.textContent += " Read only: attaching and scanning require write permission.";
     clearSelection();
     list.replaceChildren(...data.sources.map(sourceCard));
-    if (!data.sources.length) list.append(element("p", "No Word reports retained for this Draft."));
+    if (!data.sources.length) list.append(element("p", `No ${pdf ? "PDF" : "Word"} reports retained for this Draft.`));
     loaded = true;
   }
   async function operation(work, progress, success) {
@@ -110,8 +123,8 @@
   form.addEventListener("submit", event => {
     event.preventDefault(); if (busy || !loaded || !canWrite || !form.reportValidity()) return;
     const file = form.elements.file.files[0];
-    if (!file || !file.name.toLowerCase().endsWith(".docx") || !file.size || file.size > limit) {
-      report("Choose a nonempty DOCX within the displayed size limit.", true); return;
+    if (!file || !file.name.toLowerCase().endsWith(extension) || !file.size || file.size > limit) {
+      report(`Choose a nonempty ${format} within the displayed size limit.`, true); return;
     }
     // Capture before disabling controls. Upload is distinct from an AI message.
     const body = new FormData(form);
@@ -127,6 +140,7 @@
   }
   function inspect(sourceId, card, after) {
     if (busy) return;
+    if (pdf) { inspectPdf(sourceId, card, after || 1); return; }
     const content = card.querySelector(".chat-word-evidence"); content.replaceChildren();
     operation(async () => {
       const data = await request(`/${encodeURIComponent(sourceId)}?after_block=${after}`);
@@ -152,7 +166,27 @@
       content.append(navigation);
     }, "Verifying retained evidence and scan state.", "Evidence displayed for inspection. Select items explicitly before previewing an AI request.");
   }
+  function inspectPdf(sourceId, card, page) {
+    const content=card.querySelector(".chat-word-evidence");content.replaceChildren();content.classList.add("chat-word-block");
+    operation(async () => {
+      const data=await request(`/${encodeURIComponent(sourceId)}?page=${page}`);
+      content.append(element("p", `Page ${data.page.page_number} of ${data.total_pages}. Retained evidence only; no model request or Scope save.`));
+      content.append(element("p", `Document SHA256: ${data.document_sha256}`, "chat-word-hash"));
+      content.append(element("strong", data.page.locator_key), element("pre", data.page.text));
+      const image=document.createElement("img");image.alt=`Retained PDF page ${page}`;
+      image.src=`/scopes/${draft}/evidence/${encodeURIComponent(sourceId)}/pages/${page}.png`;
+      image.addEventListener("error",()=>{image.hidden=true;content.append(element("p","Page image unavailable. Recheck access and current scan status."));});
+      content.append(image);
+      const navigation=element("div", "", "chat-actions");
+      if(page>1)navigation.append(button("Previous page",()=>inspectPdf(sourceId,card,page-1)));
+      if(page<data.total_pages)navigation.append(button("Next page",()=>inspectPdf(sourceId,card,page+1)));
+      const review=element("a", "Review this PDF page", "button button-secondary button-small");
+      review.href=`/scopes/${draft}/evidence/${encodeURIComponent(sourceId)}?page=${page}`;
+      navigation.append(review);content.append(navigation);
+    }, "Verifying the selected PDF page and scan state.", "PDF page displayed. Analysis and confirmation use the separate PDF page review controls.");
+  }
   window.addEventListener("pagehide", () => { generation++; loaded = false; busy = false; clearSelection(); list.replaceChildren(); controls(); });
   window.addEventListener("pageshow", event => { if (event.persisted && section.open) reload(); });
   controls();
+  });
 })();
