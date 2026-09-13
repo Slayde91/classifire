@@ -1,13 +1,46 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-14 during local Excel proposal acceptance. Selected-record edits and
+Reconciled 2026-09-14 during local saved-proposal history validation. Selected-record edits and
 Word proposal evidence are retained below. Live chat remains rolled back.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
-## Native Excel proposal checkpoint
+## Native saved-proposal history checkpoint
+
+Local `feat/native-proposal-history-20260914`, based on `eae7ee0`, adds explicit
+**Save proposal for later** and **Saved AI proposals** within the existing assistant.
+Word/PDF/XLSX additions and selected Scope replacements retain their exact disclosed
+context, included conversation, validated generated fields and prepared review data.
+Generation remains read-only; retention is a separate Draft write and Scope/package
+confirmations stay separate. Current ownership, rights, source integrity and scan
+checks apply on reopening; changed revision/context disables the old review controls.
+
+The [history contract](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md) defines the
+1 MiB/100-per-Draft limits, 15-minute signed save authorization and forward migration0048.
+This is a local, unpublished schema change, not an activation. Prior source head0047
+and live runtime receipts below are historical; no live database or runtime changed.
+The synthetic browser passed explicit retention, exact review reopening, separate
+Scope/package confirmation and byte-identical original-bearing ZIP download. Restart
+reopened the exact historical record and ZIP with no scan/model/save replay. See the
+private validation receipt for final checks and limitations. The 23 new history/migration
+checks passed without failures or skips (651.156s). Narrow browser inspection also
+found and corrected scrollbar-related mobile clipping; the panel now fits inside
+the 390px viewport with no horizontal overflow. The affected existing proposal/chat
+regression added 107 passes (523.680s), for 130 distinct passing
+cases overall. Full Ruff, Mypy over238 files, full Bandit and JavaScript syntax
+also passed. This is targeted validation, not a full-suite or hosted-CI pass. Retention does not yet
+link later decisions or include proposal history in ProjectPackage; full AI lineage
+and operational acceptance remain incomplete.
+
+PR271 remains open at approved `d864c51`: its existing CI failed after639 passes on
+an obsolete closed-review form count. The isolated one-file correction `8bce0b0`
+passed30 affected checks but still needs publication approval. All newer feature
+commits and this history slice remain local. Preserve the conflicted root and the
+live rollback checkout. Do not fold the unpublished stack into the approved12 files.
+
+## Earlier native Excel proposal checkpoint
 
 The isolated `feat/native-xlsx-scope-proposals-20260914` branch extends local
 `8441195`. Users select one worksheet, one header, up to 10 data rows after that
@@ -646,7 +679,7 @@ the candidate/runtime paragraph above supersedes its then-current source and run
 | Parent main failure | Run 34658986190: 1 failed / 1,894 passed. Test dates were collected before midnight and evaluated afterwards; this was a test timing error, not evidence of a weakened production guard |
 | Correction | PR #255/18418f3 fixes only the test clock; all 23 targeted tests and hosted run 34662942874 passed. Merged as 7847288 at 2026-09-12 01:12:24 UTC; later run 34664119693 exceeded its 30-minute limit and ended cancelled, not passed |
 | Runtime | Authorized synthetic trial activated tested ff0272b after successful post-merge CI; actual user-confirmed Scope and original-bearing ZIP survived an operating-system process restart |
-| Migration | Source head remains 0047. Disposable PostgreSQL history/restore checks passed. Actual trial had verified metadata-created lineage; approved startup added only the Word source table, with no fabricated Alembic stamp or downgrade |
+| Migration | This operational receipt used0047; local native proposal history now adds0048. Disposable PostgreSQL history/restore checks passed. Actual trial had verified metadata-created lineage; approved startup added only the Word source table, with no fabricated Alembic stamp or downgrade |
 | Documentation | PR #256 merged as 1f12e4b after successful exact-head CI; its earlier pending-activation statements are superseded by this checkpoint |
 | PostgreSQL correction | PR #257 source ff0272b merged as eb3ddb3 after run 34681923704 passed. Post-merge run 34683024367 passed 2,043 tests and all checks; no job was restarted for an observation timeout |
 
@@ -762,7 +795,8 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    passes synthetic browser checks with separate PDF and package confirmations.
    Native XLSX now also has explicit header/row/picture context, proposed mappings,
    typed additions, separate workbook review and original-bearing package confirmation.
-   Its synthetic journey passes. Retain durable AI lineage as the next shared gap; resolve
+   Its synthetic journey passes. Explicit native proposal retention/reopening is now
+   implemented locally; decision/revision linkage and portable history remain. Resolve
    the operational gate separately; do not repeat the proven Word increment. Reuse the existing
    intake/scan/review/client-request/package services. Preserve the demonstrated
    Word/PDF interaction when extending the attachment-to-confirmed-Scope-to-ZIP

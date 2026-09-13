@@ -4,6 +4,23 @@ This increment extends the existing optional `draft_workspace_chat` service and
 OpenAI Responses transport. The external ChatGPT/MCP connector is preserved.
 It does not embed a signed-in ChatGPT account or copy its conversation history.
 
+## Explicitly saved native proposals
+
+The [native history contract](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md) adds
+**Save proposal for later** and **Saved AI proposals** for Word/PDF/XLSX additions
+and selected Scope edits. Saving discloses retention of the question, included
+conversation, exact disclosed context and generated reply. Generation does not save;
+retention does not confirm Scope or create a package. Reopening is permission/source/
+scan checked, and stale proposals have no review controls. Ordinary advice is not
+retained through this action. Limits are1 MiB,100 records per Draft and a15-minute
+signed save authorization. This local schema extension requires migration0048 and a
+separate approved activation. No new provider or downstream capability is invoked.
+
+The format-specific transience statements below apply to unsaved proposals. Explicit
+retention now preserves validated generated fields and prepared review controls, but
+there is still no automatic link to later review decisions or ProjectPackage history.
+Raw provider bytes and prompt-version reproducibility are also outside this increment.
+
 ## Implemented advisory interaction
 
 One collapsible panel is included in the authenticated application layout. On wide

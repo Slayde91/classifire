@@ -1,5 +1,5 @@
 {% if user and chat_workspace is defined %}
-<link rel="stylesheet" href="/static/workspace_chat.css?v=20260914-xlsx-proposal">
+<link rel="stylesheet" href="/static/workspace_chat.css?v=20260914-proposal-history">
 <aside id="workspace-chat" class="workspace-chat" data-user-id="{{ user.id }}" data-draft-id="{{ chat_workspace.get('draft_id', '') }}" data-revision="{{ chat_workspace.get('revision', '') }}" data-csrf="{{ csrf_token }}" aria-label="Workspace AI assistant">
   <script type="application/json" id="workspace-chat-context">{{ chat_workspace|tojson }}</script>
   <button type="button" class="button button-secondary chat-toggle" aria-expanded="false" aria-controls="workspace-chat-body">AI assistant</button>
@@ -65,6 +65,14 @@
       <p>Open the destination <a href="/scopes">Draft Scope</a>, then attach your report here. Creating a project is a separate action.</p>
       {% endif %}
     </details>
+    {% if chat_workspace.get('draft_id') %}
+    <details class="chat-proposal-history"><summary>Saved AI proposals</summary>
+      <p>Explicitly saved proposals retain the question, disclosed context, included conversation and generated reply. Saving a proposal does not change Scope or confirm technical facts. Historical proposals may no longer be usable.</p>
+      <button class="button button-secondary chat-proposal-refresh" type="button">Refresh saved proposals</button>
+      <p class="chat-proposal-status" role="status">Open this section to load your saved proposals.</p>
+      <div class="chat-proposal-list"></div>
+    </details>
+    {% endif %}
     <label>Assistant action<select class="chat-action"><option value="advice">Ask for advice</option><option value="propose_word_scope">Propose new Scope records from selected Word evidence</option><option value="propose_pdf_scope">Propose new Scope records from selected PDF evidence</option><option value="propose_xlsx_scope">Propose new Scope records from selected Excel evidence</option><option value="propose_scope_edits">Propose edits to selected Scope records</option></select></label>
     <p class="chat-disclaimer">A new Scope proposal needs selected report evidence and the latest Draft revision. Existing records stay unchanged. Review and confirmation are separate from sending evidence to AI.</p>
     <p class="chat-disclaimer">Edit mode uses saved records in selected register rows, including their Defect, Opening and Service. Check each proposed field change; unsaved edits are excluded.</p>
@@ -93,6 +101,6 @@
     <p class="chat-disclaimer">AI advice is unverified. Messages do not save or approve project changes. Report attachment and scan use their separate controls. The existing ChatGPT connector remains available; its external conversations are separate.</p>
   </section>
 </aside>
-<script src="/static/workspace_chat.js?v=20260914-xlsx-proposal" defer></script>
-<script src="/static/workspace_word.js?v=20260914-xlsx-proposal" defer></script>
+<script src="/static/workspace_chat.js?v=20260914-proposal-history" defer></script>
+<script src="/static/workspace_word.js?v=20260914-proposal-history" defer></script>
 {% endif %}

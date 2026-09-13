@@ -189,11 +189,57 @@
     if (!context.source_references.length) { const item=document.createElement("li");item.textContent="No source references included.";sourceList.append(item); }
     panel.querySelector(".chat-context pre").textContent=JSON.stringify(context,null,2);summary.hidden=false;
   }
+  const history = panel.querySelector(".chat-proposal-history");
+  const historyBase = selector.draft_id ? `/scopes/${encodeURIComponent(selector.draft_id)}/native-proposals` : "";
+  async function historyRequest(url, options={}) {
+    const response=await fetch(url,{credentials:"same-origin",cache:"no-store",...options});
+    if(!response.ok)throw new Error("Saved proposal unavailable. Recheck access, source scan and current inputs.");
+    return response.json();
+  }
+  async function loadProposals() {
+    if(!history)return;
+    const status=history.querySelector(".chat-proposal-status"),list=history.querySelector(".chat-proposal-list");
+    try {
+      const result=await historyRequest(historyBase);list.replaceChildren();
+      for(const row of result.proposals){
+        const button=document.createElement("button");button.type="button";button.className="button button-secondary chat-proposal-open";
+        button.textContent=`Open proposal saved ${row.saved_at} (Scope ${row.base_revision})`;
+        button.addEventListener("click",async()=>{
+          button.disabled=true;
+          try {
+            const saved=await historyRequest(`${historyBase}/${encodeURIComponent(row.id)}`);
+            reset(true);const document=saved.document;
+            showContext(document.context);message("user",document.request.question);
+            message("assistant",`${document.response.answer}\nUncertainty: ${document.response.uncertainty.join("; ")}`);
+            if(saved.can_review){showProposal(document.response.proposal);showEdits(document.response.edit_proposal);}
+            else {const details=window.document.createElement("details"),heading=window.document.createElement("summary"),content=window.document.createElement("pre");content.className="chat-history-json";heading.textContent="Historical proposal (save controls unavailable)";content.textContent=JSON.stringify(document.response,null,2);details.append(heading,content);messages.append(details);}
+            const disclosure=window.document.createElement("details"),title=window.document.createElement("summary"),raw=window.document.createElement("pre");raw.className="chat-history-json";title.textContent="Retained generation record and original context";raw.textContent=JSON.stringify(document,null,2);disclosure.append(title,raw);messages.append(disclosure);
+            report(saved.notice);ready=false;form.elements.consent.checked=false;buttons();
+          }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
+        });list.append(button);
+      }
+      status.textContent=result.proposals.length ? `${result.proposals.length} saved proposal(s). None is automatically applied.` : "No saved proposals for this Draft.";
+    }catch(error){list.replaceChildren();status.textContent=error.message;}
+  }
+  history?.addEventListener("toggle",()=>{if(history.open)loadProposals();});
+  history?.querySelector(".chat-proposal-refresh").addEventListener("click",loadProposals);
+  function showRetention(retention) {
+    if(!retention||!history)return;
+    const section=document.createElement("section"),note=document.createElement("p"),button=document.createElement("button");
+    section.className="chat-proposal-retain";note.textContent="Save this AI proposal, question, disclosed context and included conversation for later. This does not save or approve Scope. The save authorization expires after 15 minutes.";
+    button.type="button";button.className="button button-secondary";button.textContent="Save proposal for later";
+    button.addEventListener("click",async()=>{
+      button.disabled=true;
+      try {const fields=new URLSearchParams();fields.set("csrf_token",panel.dataset.csrf);fields.set("document",JSON.stringify(retention.document));fields.set("authorization",retention.authorization);
+        await historyRequest(historyBase,{method:"POST",body:fields});note.textContent="Proposal saved. Reopen it in Saved AI proposals; Scope is unchanged.";button.remove();await loadProposals();
+      }catch(error){note.textContent=error.message;button.disabled=false;}
+    });section.append(note,button);messages.append(section);
+  }
   function showProposal(proposal) {
     if (!proposal) return;
     const card=document.createElement("section"), heading=document.createElement("h3"), note=document.createElement("p");
     card.className="chat-scope-proposal"; heading.textContent="Proposed Scope additions (not saved)";
-    note.textContent=`${proposal.notice} Existing revision ${proposal.expected_revision} is unchanged. Check for duplicates before saving. These unsaved proposal controls are not remembered after leaving this page.`;
+    note.textContent=`${proposal.notice} Existing revision ${proposal.expected_revision} is unchanged. Check for duplicates before saving. Only explicitly saved proposals can be reopened in Saved AI proposals after leaving this page.`;
     card.append(heading,note);
     const names=new Map(Object.values(proposal.payload).filter(Array.isArray).flat().filter(row=>row&&typeof row==="object"&&row.id).map(row=>[row.id,row.label||row.text||row.id]));
     const fieldLabels={defect_id:"Defect",opening_ids:"Openings",plane:"Plane",substrate:"Substrate",width_mm:"Width (mm)",height_mm:"Height (mm)",blank:"Blank opening",service_type:"Service type",quantity:"Quantity",unit:"Unit",state:"Evidence state",description:"Description"};
@@ -243,7 +289,7 @@
     if (!proposal) return;
     const card=document.createElement("section"), heading=document.createElement("h3"), note=document.createElement("p");
     card.className="chat-scope-proposal chat-edit-proposal";heading.textContent="Proposed field changes (not saved)";
-    note.textContent=`${proposal.notice} ${proposal.changed_source_claims} previously matching source claim(s) will need review. These unsaved controls are not restored from conversation history.`;
+    note.textContent=`${proposal.notice} ${proposal.changed_source_claims} previously matching source claim(s) will need review. Only explicitly saved proposals can be reopened in Saved AI proposals after leaving this page.`;
     card.append(heading,note);
     const names=new Map(Object.values(proposal.payload).filter(Array.isArray).flat().filter(row=>row&&typeof row==="object"&&row.id).map(row=>[row.id,row.label||row.text||row.id]));
     const labels={defect_id:"Defect",opening_ids:"Openings",width_mm:"Width (mm)",height_mm:"Height (mm)",blank:"Blank opening",service_type:"Service type",state:"Evidence state"};
@@ -289,6 +335,7 @@
       else {turns.push({role:"user",content:question},{role:"assistant",content:completeAnswer});trimmed=trimTurns();if(!turns.length)storageRemove(key());saveThread();}
       showProposal(result.proposal);
       showEdits(result.edit_proposal);
+      showRetention(result.retention);
       if(["propose_word_scope","propose_pdf_scope","propose_xlsx_scope","propose_scope_edits"].includes(selector.action)){ready=false;form.elements.consent.checked=false;}
       form.elements.question.value="";
       report(`${result.notice}${trimmed ? " Some displayed exchanges exceed the conversation window and will not be sent or remembered." : ""}`);

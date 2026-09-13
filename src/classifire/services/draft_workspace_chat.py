@@ -911,6 +911,7 @@ def workspace_answer(
     settings: Settings,
     port: ChatPort | None = None,
 ) -> dict[str, Any]:
+    injected_port = port is not None
     image_parts: list[dict[str, Any]] = []
     context = workspace_context(db, actor, request, settings=settings, image_parts=image_parts)
     if not availability(settings)["enabled"]:
@@ -975,6 +976,20 @@ def workspace_answer(
         from .draft_workspace_scope_edits import prepare_edits
 
         value["edit_proposal"] = prepare_edits(db, actor, request, edit_model)
+    validated_model = proposal_model or edit_model
+    if validated_model is not None:
+        from .draft_workspace_proposals import offer
+
+        model_response = validated_model.model_dump(mode="json")
+        value["retention"] = offer(
+            actor,
+            request,
+            context,
+            dict(value),
+            model_response,
+            settings=settings,
+            injected=injected_port,
+        )
     return {**value, "notice": NOTICE, "context": context}
 
 

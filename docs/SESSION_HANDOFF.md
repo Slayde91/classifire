@@ -6,7 +6,40 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
-## Current native Excel proposal checkpoint
+## Native saved-proposal history checkpoint
+
+Local `feat/native-proposal-history-20260914`, based on `eae7ee0`, adds explicit
+**Save proposal for later** and **Saved AI proposals** within the existing assistant.
+Word/PDF/XLSX additions and selected Scope replacements retain their exact disclosed
+context, included conversation, validated generated fields and prepared review data.
+Generation remains read-only; retention is a separate Draft write and Scope/package
+confirmations stay separate. Current ownership, rights, source integrity and scan
+checks apply on reopening; changed revision/context disables the old review controls.
+
+The [history contract](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md) defines the
+1 MiB/100-per-Draft limits, 15-minute signed save authorization and forward migration0048.
+This is a local, unpublished schema change, not an activation. Prior source head0047
+and live runtime receipts below are historical; no live database or runtime changed.
+The synthetic browser passed explicit retention, exact review reopening, separate
+Scope/package confirmation and byte-identical original-bearing ZIP download. Restart
+reopened the exact historical record and ZIP with no scan/model/save replay. See the
+private validation receipt for final checks and limitations. The 23 new history/migration
+checks passed without failures or skips (651.156s). Narrow browser inspection also
+found and corrected scrollbar-related mobile clipping; the panel now fits inside
+the 390px viewport with no horizontal overflow. The affected existing proposal/chat
+regression added 107 passes (523.680s), for 130 distinct passing
+cases overall. Full Ruff, Mypy over238 files, full Bandit and JavaScript syntax
+also passed. This is targeted validation, not a full-suite or hosted-CI pass. Retention does not yet
+link later decisions or include proposal history in ProjectPackage; full AI lineage
+and operational acceptance remain incomplete.
+
+PR271 remains open at approved `d864c51`: its existing CI failed after639 passes on
+an obsolete closed-review form count. The isolated one-file correction `8bce0b0`
+passed30 affected checks but still needs publication approval. All newer feature
+commits and this history slice remain local. Preserve the conflicted root and the
+live rollback checkout. Do not fold the unpublished stack into the approved12 files.
+
+## Earlier native Excel proposal checkpoint
 
 Use `.tmp/native-xlsx-scope-proposals-20260914`, branch
 `feat/native-xlsx-scope-proposals-20260914`, based on local8441195. Explicit worksheet,
@@ -19,7 +52,7 @@ Inspect the private validation receipt for final test and visual evidence. No pr
 live database, schema/migration, activation or public push is included. Existing human
 row/entity references are durable; raw AI claims and unsaved controls are not.
 Review the complete local stack after the pending PR271 correction approval/CI;
-then prioritize durable shared AI proposal lineage and operational acceptance.
+then prioritize decision/revision linkage, portable history and operational acceptance.
 
 ## Earlier native Excel panel checkpoint
 
@@ -413,34 +446,34 @@ attachment interaction as complete C2, representative accuracy or production rea
 ## Copy-ready next-session prompt
 
 Continue CLASSIFIRE from current repository evidence. Read AGENTS.md, GOAL.md,
-docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md, docs/CLASSIFIRE_ROADMAP.md
-and EMBEDDED_WORKSPACE_CHAT. The requested shorter architecture/roadmap filenames
-are absent; these are the existing canonical documents. Preserve the conflicted
-root and pinned runtime/diagnostic checkouts. Reconcile
-feat/native-word-attachments-20260913, feat/native-word-chat-evidence-20260913 and
-feat/native-word-scope-proposals-20260913 and
-feat/native-selected-scope-edits-20260913, feat/native-pdf-attachments-20260914 and
-feat/native-pdf-scope-proposals-20260914 and feat/native-xlsx-attachments-20260914
-and feat/native-xlsx-scope-proposals-20260914 with GitHub. PR271 failed on an obsolete form assertion; local test-only8bce0b0
-awaits separate publication approval. Selected Word text/PNG preview/consent/advice
-is implemented and passed94 affected tests plus synthetic browser checks.
-Native typed Word additions, separate Scope/package confirmations and exact-original
-ZIP download passed the synthetic journey, with127 checks. Real-provider/live
-acceptance, broader report coverage and non-Scope edits remain. PDF attachment/scan/
-page inspection and explicit selected page text/image model context/proposals now
-pass the separate PDF Scope/package confirmation and restart journey. XLSX now also
-selects a header, data rows and pictures, proposes nullable mappings and typed additions,
-and passes the separate workbook/package confirmation and exact ZIP/restart journey.
-Preserve the Word/PDF/XLSX human-review provenance limits; durable AI proposal history
-remains a shared gap. Selected Scope edits
-now show a field diff, validate without saving and require a separate manual save;
-147 distinct checks passed. Inspect the newer private validation receipt. Reuse existing
-services and preserve unknowns, blank openings and unresolved links. PR #270 merged
-5454b36 as 97c0778 after successful PR CI, but its post-merge run 34753856708 cancelled
-at 45 minutes without a final test summary. Do not restart jobs merely because
-observation timed out or infer a billing/single-test cause. Live8820 remains on
-rollback6c1e2a4 with chat disabled. Old provider allowances are consumed; new real
-requests/activation require a fresh exact approval and successful applicable CI.
-Use selected-checkout PYTHONPATH, fresh basetemp and disposable15433 for tests.
-Inspect/classify explicit files, publish/merge only within authority and successful
-required CI/reviews, and record actual results and remaining production gates.
+docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md, docs/CLASSIFIRE_ROADMAP.md,
+docs/EMBEDDED_WORKSPACE_CHAT.md and docs/NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md.
+The shorter architecture/roadmap aliases are absent. Preserve the conflicted root,
+pinned runtime and private receipts. Reconcile Git/worktrees, exact upstreams and
+PR/CI before selecting work; newer local evidence outranks old checkpoints.
+
+Start with feat/native-proposal-history-20260914, based on local eae7ee0, and inspect
+its private validation receipt. The same native panel now explicitly saves and
+reopens Word/PDF/XLSX additions and selected Scope edit proposals. Generation still
+writes nothing; retention, Scope confirmation and package confirmation are separate.
+Reopening checks current rights, owner, source integrity and scan status; historical
+context has no review controls. Migration0048 is forward-only and unpublished;
+activation needs a new exact approved backup/restore/restart/rollback plan. Never
+rehearse on live15432. The synthetic browser proved exact proposal/ZIP reopening after
+restart without repeating model/scan/save work. Later review-decision/revision linkage,
+portable AI history and full operational acceptance remain incomplete.
+
+PR271 contains approved d864c51 and12 files. Its CI failed after639 passes on an
+outdated form assertion; local one-file8bce0b0 passed30 checks but needs separate
+publication approval. Do not publish the newer feature stack through that approval.
+Reconcile all unpublished ancestors before preparing a new exact publication scope.
+PR270 merged5454b36 as97c0778; post-merge34753856708 cancelled without a full test
+summary. Poll existing live jobs; observation timeout is not permission to restart.
+Live8820 remains rollback6c1e2a4 with chat disabled; old provider allowances are
+consumed. No real provider, customer evidence or activation is implicitly authorized.
+
+Use the selected checkout's PYTHONPATH, fresh basetemp and disposable15433. Keep
+blank openings without Services and unresolved links/quantities explicit. Inspect
+browser/ZIP outputs, classify explicit files, publish only within approved scope and
+merge only after observed successful CI and required reviews. The full production
+objective, technical/commercial validation and Phase8-16 gates remain incomplete.

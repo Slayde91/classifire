@@ -87,6 +87,25 @@ data on the page through it. A separate external chat page is insufficient for
 that working experience. Keep the native panel available across data-heavy screens,
 with selection-aware context and collapsible/resizable layout.
 
+### Explicit native proposal retention
+
+Native generated review controls were transient. The local extension now adds one
+Draft-only history table/service and explicit retention in the same panel, using
+existing authentication, context readers and review routes. This lets users reopen
+an exact proposal without fabricating an external client identity or repurposing the
+PDF-specific suggestion model. Generation remains read-only; retention, Scope
+confirmation and package creation are separate actions. History is owner-bound and
+rechecks current rights/source integrity/scans; changed context is historical only.
+
+Migration0048 adds `draft_workspace_proposals` after0047; no existing migration is
+rewritten. It refuses destructive downgrade, so future activation requires matched
+backup/restore, disposable rehearsal and an explicitly approved rollback plan. No
+live upgrade is included. See the [history contract](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md)
+for the full limits and consequences. Subsequent review-decision linkage, portable
+history, raw provider/prompt-version records and full AI lineage remain incomplete.
+The format-specific paragraphs below describe generation/confirmation; their former
+transience limit now applies to proposals the user has not explicitly retained.
+
 **Current architecture:** the native panel resolves typed identifiers and exact saved
 revisions through authenticated readers, previews the data, then sends it to the
 existing bounded Responses transport after consent. Separately, the existing
@@ -351,8 +370,10 @@ production phase nor retires OpenClaw.
 
 Follow [Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions):
 C1 still needs successful applicable CI and a separately approved diagnostic test
-and activation. C2 has synthetic native Word and PDF journeys, with real-provider/live
+and activation. C2 has synthetic native Word/PDF/XLSX journeys, with real-provider/live
 acceptance and broader coverage outstanding. C3 has a synthetically validated
-selected Scope replacement action; broader reviewed actions and durable AI lineage remain. Existing connector transport
+selected Scope replacement action. Explicit native proposal retention/reopening is
+implemented locally; decision/revision linkage, portable history and broader reviewed
+actions remain. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked
 without forcing users through downstream capabilities.

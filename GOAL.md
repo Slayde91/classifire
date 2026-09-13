@@ -231,8 +231,10 @@ Selected Scope replacement edits now show field differences and use a separate m
 save. Native XLSX also supports explicit header/row/picture selection, nullable mapping
 proposals and typed additions through the existing workbook review. Its separate
 Scope/package confirmations and exact original-bearing ZIP/restart journey pass
-synthetic acceptance. Real-provider/live acceptance,
-durable AI lineage and broader actions remain. C2 is not complete operationally.
+synthetic acceptance. Explicit native proposal retention/reopening is also implemented
+locally, with current access/source checks and historical-only stale controls. Its
+forward migration0048 requires separate activation approval. Decision/revision linkage,
+portable AI history, real-provider/live acceptance and broader actions remain. C2 is not complete operationally.
 Follow C1-C3 in the
 [roadmap](./docs/CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
 [PROJECT_STATE.md](./docs/PROJECT_STATE.md#recommended-next-actions) for exact status.

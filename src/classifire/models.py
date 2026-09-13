@@ -1669,6 +1669,21 @@ class DraftProjectPackage(RecordMixin, Base):
     archive_hash: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class DraftWorkspaceProposal(RecordMixin, Base):
+    """Explicitly retained native proposal; retention never applies a Scope change."""
+
+    __tablename__ = "draft_workspace_proposals"
+    __table_args__ = (
+        CheckConstraint("base_revision >= 1", name="ck_workspace_proposal_revision"),
+        CheckConstraint("length(proposal_json) <= 1048576", name="ck_workspace_proposal_size"),
+    )
+    draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    base_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    proposal_json: Mapped[str] = mapped_column(Text, nullable=False)
+    proposal_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class DraftClientRequest(RecordMixin, Base):
     """A client's proposal; only a separate human session can execute it."""
 
