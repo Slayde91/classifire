@@ -98,6 +98,20 @@ emitted a Windows connection-reset callback during teardown and its 15-second th
 join expired; the process subsequently exited and 8851 had no listener. This is a
 recorded harness limitation, not a clean server-shutdown claim.
 
+Initial PR #268 CI run 34735571580 stopped with 639 passes and one failure: an old
+PDF review-page test expected Logout to be the only form. The shared advisory form
+is now explicitly accounted for, with exact field/required-consent assertions; all
+existing no-resave, session, provenance and database checks are retained. This is a
+test-contract update for the authorised UI change, not a weakened application guard.
+The related imported-evidence parser now recognises the single actionless advisory
+form while preserving POST-only requirements for saved actions and the no-scan/no-write
+checks. Its first focused run exposed the matching method-attribute assumption; after
+correction, all eight imported-evidence cases passed. The 27 PDF HTTP/template cases
+also passed, bringing distinct affected local passes to 147. PostgreSQL cases used
+only disposable 15433. The failed run is preserved and was not restarted because of
+an observation timeout. Application source remains identical to the browser-tested
+candidate; this follow-up changes only two test files and this documentation.
+
 [Embedded assistant boundaries](./EMBEDDED_WORKSPACE_CHAT.md) describe the supported
 context and conversation limits. Publication/CI and operational activation are separate
 checks. This slice enables no provider, model, tools, domain writes or migration.
