@@ -278,5 +278,7 @@
   document.querySelector("[data-clear-review-selection]")?.addEventListener("click",()=>{
     document.querySelectorAll('.register-artifacts [name="match"] option').forEach(option=>{option.selected=false;});
   });
+  const ask=button("Ask AI about selection",()=>{selected();document.dispatchEvent(new CustomEvent("classifire:chat-open"));});
+  ask.classList.add("register-chat-action");toolbar.append(ask);
   render();
 })();

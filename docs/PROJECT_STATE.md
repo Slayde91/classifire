@@ -1,7 +1,7 @@
 # CLASSIFIRE Project State
 
 Reconciled 2026-09-13 against the integrated workspace candidate, isolated browser
-and regression receipts, and the separately approved upload-diagnostic activation.
+and regression receipts, and the completed separately approved workspace activation.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
@@ -17,35 +17,102 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
 
 ### Publication and CI checkpoint
 
-- The owner-approved commits `6d4793b`, `51e3666`, `1de68b9` and `9cdc4a4` merged
-  in [PR #265](https://github.com/Slayde91/classifire/pull/265) as
-  `0e9bf984b2fe074b1bb51c6017bd59516759bd00`. Its full tree equals tested `9cdc4a4`;
-  all 40 reviewed files were included. Explicit owner approval resolved the earlier
-  public-destination block for all four commits.
-- PR run [34725079252](https://github.com/Slayde91/classifire/actions/runs/34725079252)
-  passed 2,399 tests and every remaining check before merge. No required reviews
-  were configured; no human GitHub review is claimed.
-- Post-merge run [34726463470](https://github.com/Slayde91/classifire/actions/runs/34726463470)
-  ended cancelled at the 30-minute job limit. Its log also records a real test
-  failure: 1 failed, 2,295 passed. The import-governance test computed tomorrow at
-  collection but ran after midnight, when that date was correctly eligible.
-  This run did not pass and was not restarted.
-- Separate [PR #266](https://github.com/Slayde91/classifire/pull/266), source `7c9b570`,
-  freezes that test's clock and raises the CI ceiling to 45 minutes. Application
-  rules, assertions and all validation steps are unchanged; PR #255 is preserved.
-  Local reproduction failed before the fix; both rollover cases passed afterwards.
-  All 51 import/activation governance tests, targeted Ruff, diff and workflow
-  invariant checks passed. Hosted run `34728245700` then passed 2,399 tests and all
-  remaining checks. PR #266 merged as `96fdf7a932e61107af7c39262706337fcacc092b`;
-  its full tree equals tested `7c9b570`. Post-merge run `34729555434` is the separate
-  activation gate; verify its actual result before any deployment.
-- No workspace activation follows from publication. The old `9cdc4a4` activation
-  bundle is blocked by failed post-merge CI. A successful exact candidate needs a
-  reconciled plan, separate owner approval, fresh matched backup and disposable
-  restore verification. The new `7c9b570` plan is prepared and unapproved; its 47
-  isolated launcher guard cases passed, including a corrected helper-hash pin.
-  This does not prove an approved startup or fresh live recovery. The separately
-  approved diagnostic runtime remains unchanged.
+- The four owner-approved workspace commits merged through PR #265 as `0e9bf98`.
+  Its PR CI passed 2,399 tests; post-merge run `34726463470` failed a midnight-sensitive
+  test and hit the 30-minute limit. That failed result remains preserved.
+- PR #266 merged the separate clock/CI-limit repair `7c9b570` as `96fdf7a` after
+  2,399 passing tests and the remaining checks. Its post-merge run `34729555434`
+  cancelled at 45 minutes without a final test summary. The broad slowdown's cause
+  remains unestablished; the run was not restarted or counted as a pass.
+- Documentation PR #267 merged candidate `6c1e2a40a6448cc1facda2436f7780651408741d`
+  as `6012d159f0669e704a45d12db2eaf81b1d4cac80`, with exact full-tree equality.
+  PR CI [34729664769](https://github.com/Slayde91/classifire/actions/runs/34729664769)
+  passed 2,399 tests in 1,701.99 seconds; post-merge
+  [34731006875](https://github.com/Slayde91/classifire/actions/runs/34731006875)
+  passed 2,399 in 1,769.11 seconds. Both passed the remaining required checks.
+  No human GitHub review was required or claimed. Publication did not grant activation.
+
+### Approved workspace activation
+
+The owner separately approved and activated tested `6c1e2a4` on 2026-09-13 after
+successful exact CI and a fresh matched backup/disposable restore. The private
+`activation-result.json` records `activated_verified`; its 20 referenced artifacts
+were rehashed during this reconciliation. The 8820 listener was observed as PID
+33032 (parent 13708) at acceptance; process IDs are historical observations.
+
+The fresh backup/restore matched 69 tables and 80 rows. Fourteen raw CHECK strings
+required the individually allowed cast-placement proof; 28 typed evaluations passed.
+Other schema, objects, required roles/grants/ownership and retained files matched.
+Metadata/bootstrap were no-ops. No migration or stamp ran: the observed demo still
+has no Alembic version table. This is not a migration-history certification.
+
+Reopening retained Scope revision 2, native Word evidence and the original-bearing
+Word ZIP passed; the older Excel package also matched exact bytes. Domain rows and
+storage remained unchanged. The only accounted changes were login timestamps and
+two package-download audit events. The expired one-time confirmation URL stayed
+expired; the normal saved-project route worked. No confirmation was repeated and no
+new Scope, package, Match, Estimate or report was created.
+
+Workspace chat/PDF suggestions remain disabled. No provider, OAuth/tunnel, host
+allowlist, role or grant change occurred. No saved Match, Estimate, report or imported
+project existed in this demo, so those operational histories were not exercised.
+This is retained synthetic-state acceptance, not customer accuracy, production
+certification, storage relocation or full-cluster disaster recovery. Historical
+activation plans stay preserved; recovery retains the approved compatibility and
+no-lost-work conditions for the older `e2e8292` rollback source.
+
+### Current embedded-chat and accuracy-preparation increment
+
+Current work is isolated in `.tmp/embedded-workspace-chat-20260913`, branch
+`feat/embedded-workspace-chat-20260913`, based on merged `6012d15`. The requested
+interaction is a native collapsible, resizable, docked chat panel accessible from
+the main workspace without an external-page dependency. It reuses the existing
+chat API/transport and domain context services; the external connector is not rebuilt.
+
+Acceptance must cover exact current project, screen, Scope/Estimate revisions,
+selected Defect/Opening/Service or multiple records, selected technical systems,
+library and pricing context. Register selection must supply context without copying.
+Advice must support analysis, substrate, systems, prices, wording, missing information,
+inconsistencies and summaries while preserving unknowns and current permissions.
+An explicit context preview/hash and consent precede any provider transfer.
+Conversation continuity is opt-in and limited to the same freshly verified context,
+user and a 30-minute expiry; broader history sharing is not approved by convenience.
+
+The native panel and typed context extension are implemented. Local backend validation
+passed 55 cases, including all seven library kinds, exact three-review/Estimate history,
+permission changes, stale context, request bounds and the retained Scope-only API.
+Affected navigation/register/Word/package/0047 checks passed 52 cases initially; five
+PostgreSQL-dependent cases then passed on disposable 15433, alongside the repeated
+0047 migration case (six passes, no skips). Live 15432 was not used. Full Ruff,
+Mypy (233 source files), Bandit and the unchanged single 0047 migration head passed.
+
+Actual Edge acceptance used a new private SQLite database, loopback 8851 and two
+scripted replies. It verified global panel presence, selected shared services and blank
+openings, exact saved reviews/Estimate, opt-in sensitive details, full qualified reply
+history, fresh preview before restoration, inline-result refresh invalidation, logout,
+permissions, literal hostile HTML text and desktop/mobile layout. All 66 checked domain
+tables and retained synthetic source files matched; only login timestamps changed.
+No provider request or project write occurred. The private fixture needed seeding-order
+and missing-router corrections; application guards were preserved. The passing run
+emitted a Windows connection-reset callback during teardown and its 15-second thread
+join expired; the process subsequently exited and 8851 had no listener. This is a
+recorded harness limitation, not a clean server-shutdown claim.
+
+[Embedded assistant boundaries](./EMBEDDED_WORKSPACE_CHAT.md) describe the supported
+context and conversation limits. Publication/CI and operational activation are separate
+checks. This slice enables no provider, model, tools, domain writes or migration.
+No provider credentials/model were verified configured; a concrete configuration and
+activation decision is still required. It does not embed an external ChatGPT session
+or reuse that service's private conversation history. Synthetic replies prove the
+interaction and safeguards, not real model quality or the complete production phase.
+
+Accuracy preparation is separate. The existing comparator fix is already merged in
+PR #261. Twenty-four unchanged synthetic comparison/blocked-run checks passed in
+this checkout with explicit PYTHONPATH and a fresh basetemp. The private reference,
+original and photo hashes and authority limits are retained in a private run plan.
+No customer-report analysis, photo inference, real provider or database evaluation
+ran during this preparation; no accuracy score exists. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md)
+records the incompatible unresolved-topology contract and remaining Phase 8/8C gates.
 
 ### Merged imported-original navigation increment
 
@@ -123,8 +190,8 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   Explicit owner approval resolved the earlier public-destination block; repository
   visibility and protection settings were not changed.
 - Evidence-tab changes are published. Pinned source checkouts, the conflicted root
-  and operational runtime remain preserved. Activation still requires its exact
-  tested candidate plan and explicit approval.
+  remain preserved. The later separately approved workspace activation is recorded
+  above; this earlier increment did not itself authorize deployment.
 
 ### Merged workspace and current runtime
 
@@ -146,10 +213,10 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   disabled in the verified UAT. General accurate multimodal analysis, broader automatic
   system/pricing work and full redesign acceptance remain incomplete. Selected-row manual
   authoring is implemented in the current isolated increment described below.
-- Separately, approved diagnostic source e2e829209e8342241efebe714803d3c86d80ef6c
-  was activated after fresh exact backup/restore checks. This is the diagnostic runtime,
-  not activation of the workspace candidate. PR #259 and its post-merge CI each passed
-  2,066 tests in the inspected receipt; this does not validate the new workspace diff.
+- Historically, diagnostic source `e2e8292` was activated after its own backup/restore
+  checks and 2,066-test PR/post-merge CI. The later approved `6c1e2a4` workspace
+  activation above supersedes that runtime; the older source remains the governed
+  rollback target, subject to saved-data compatibility and no lost work.
 - The actual connected upload remains refused by `CLIENT_FILE_UNAPPROVED_HOST`.
   The bounded diagnostic now identifies the rejected host privately. No file was retained;
   all 69 table inventories and retained files/schema were unchanged by that probe.
@@ -189,10 +256,9 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   synthetic automated confirmations, not human technical or production approval.
   Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and migration-head checks passed.
   Publication is verified above; operational activation remains separate.
-- The operational 8820 diagnostic app, older 8840 workspace and pinned 8841 row-authoring
-  demo remain unchanged. The prepared `6c30361` activation plan is not approved and does
-  not include this newer format change. Future activation needs its exact candidate plan,
-  fresh matched backup/disposable restore, CI and explicit approval.
+- At this package increment, the 8820 diagnostic app and older demos were unchanged.
+  The historical `6c30361` plan excluded these formats. The separately approved
+  `6c1e2a4` activation above later included them after exact recovery verification.
 
 ### Merged multiple-review Scope reporting
 
@@ -219,7 +285,8 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   copying failed the absolute StoredFile-path guard; it was preserved and replaced
   with a fresh isolated fixture, without changing the guard or stored bindings.
 - The 469a57f activation plan excludes this newer report format and is unapproved.
-  Live 8820 remains outside this change. The reviewed ten-defect reference remains
+  That increment did not activate 8820; the later approved activation is above.
+  The reviewed ten-defect reference remains
   Draft evidence, not measured independent extraction accuracy or system approval.
 
 ### Merged Complete report increment
@@ -249,9 +316,9 @@ platform, broad document interpretation and canonical Phase 8-14 exits are incom
   diagnosis proved identical values and exact Estimate bytes in the original ZIP.
   A second restart proved byte-exact raw downloads of Estimate revisions 2 and 4.
   Original failure/diagnosis are retained; no application guard or test was weakened.
-- Commit `6d4793b` is included in merged PR #265. The ccaff7a activation plan excludes this
-  newer Complete format. Live 8820 remains at its separately approved diagnostic
-  version; no activation, OAuth/tunnel or host-policy change is included.
+- Commit `6d4793b` is included in merged PR #265. The historical ccaff7a plan
+  excluded this newer Complete format. That increment did not activate 8820; the
+  later approved `6c1e2a4` activation included it, without OAuth/tunnel or host changes.
 
 ### Earlier Word acceptance checkpoint
 
@@ -320,8 +387,8 @@ The diagnostic activation's fresh restore receipt verified all 69 tables, five s
 Scope revisions, two packages and two stored originals. The approved restart preserved
 schema/files and all Scope/package/original history; login-related changes were confined
 to users/audit events. An expired one-time review link returned 403, while the saved
-package route returned 200. No workspace schema migration or trial-runtime activation
-occurred.
+package route returned 200. That historical diagnostic check did not activate the
+workspace; the later `6c1e2a4` acceptance is recorded above. Neither ran a migration.
 
 The earlier controlled Word journey remains distinct:
 
@@ -356,9 +423,9 @@ Word review/package evidence additionally includes 105 integrated tests, 50 hist
 checks, 73 client/PDF checks and an Edge upload/review/package journey. These are bounded
 synthetic checks, not current hosted validation or customer acceptance.
 
-Health: functional Draft prototype, incomplete production assurance. Post-PR #265 CI
-exhausted its 30-minute budget; PR #266 raises the ceiling to 45 minutes without
-removing checks. Main protection was absent at the recorded
+Health: functional Draft prototype, incomplete production assurance. PR #267 and its
+post-merge CI passed all 2,399 tests and remaining checks. Earlier 30/45-minute
+cancellations remain preserved and were not restarted. Main protection was absent at the recorded
 inspection; CI must be explicitly observed. `worker.py` currently fails queued jobs with
 “No registered handler”; it is not a production document-processing queue.
 
@@ -370,19 +437,17 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-PRs #260-#264 and their post-merge checks passed. The four later approved commits
-are merged through PR #265; its post-merge run failed as recorded above. PR #266
-is now merged after successful exact-head CI and review-rule verification. Observe
-its existing post-merge run `34729555434`; never restart a job because an observation
-expires. Reconcile the exact successful candidate's activation plan,
-including new report formats/mapping v4, backup/storage parity and disposable
-restore, before requesting separate owner approval. Provider, host policy and
-OAuth/tunnel changes remain separate decisions.
+Complete and validate the native embedded-chat interaction described above, including
+context/permission changes, stale previews, consent, continuity expiry, keyboard and
+mobile layout. Use fake-provider synthetic acceptance first; no real provider is
+configured or implicitly approved. Preserve the activated runtime while this isolated
+increment is built and tested; any later deployment needs its exact approved plan.
 
-The user-confirmed private Draft reference retains its unknowns; no application
-accuracy result exists. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md) retains
-the existing comparator scope, proposed taxonomy, source-rights limits and Phase 8/8C
-gates. Do not launch a real report evaluation or invent reference topology implicitly.
+Accuracy-test preparation is complete to the bounded extent recorded in
+[reference readiness](./PHYSICAL_REFERENCE_READINESS.md): source/rights inventory,
+contract gaps, run/stop gates and 24 existing synthetic checks. The private Draft
+reference retains all unknowns. No actual application accuracy result exists; do not
+convert uncertain topology, run customer inference or choose thresholds implicitly.
 
 The retained I1-I3/N1-N2/L1-L2 backlog below remains valid. I1 and the earlier I2 application
 journey are proven. I2's connected upload/scan transport remains host-policy blocked;

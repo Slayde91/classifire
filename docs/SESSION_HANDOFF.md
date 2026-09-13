@@ -21,35 +21,102 @@ unchanged and incomplete.
 
 ## Latest publication and CI
 
-- The owner-approved commits `6d4793b`, `51e3666`, `1de68b9` and `9cdc4a4` merged
-  in [PR #265](https://github.com/Slayde91/classifire/pull/265) as
-  `0e9bf984b2fe074b1bb51c6017bd59516759bd00`. Its full tree equals tested `9cdc4a4`;
-  all 40 reviewed files were included. Explicit owner approval resolved the earlier
-  public-destination block for all four commits.
-- PR run [34725079252](https://github.com/Slayde91/classifire/actions/runs/34725079252)
-  passed 2,399 tests and every remaining check before merge. No required reviews
-  were configured; no human GitHub review is claimed.
-- Post-merge run [34726463470](https://github.com/Slayde91/classifire/actions/runs/34726463470)
-  ended cancelled at the 30-minute job limit. Its log also records a real test
-  failure: 1 failed, 2,295 passed. The import-governance test computed tomorrow at
-  collection but ran after midnight, when that date was correctly eligible.
-  This run did not pass and was not restarted.
-- Separate [PR #266](https://github.com/Slayde91/classifire/pull/266), source `7c9b570`,
-  freezes that test's clock and raises the CI ceiling to 45 minutes. Application
-  rules, assertions and all validation steps are unchanged; PR #255 is preserved.
-  Local reproduction failed before the fix; both rollover cases passed afterwards.
-  All 51 import/activation governance tests, targeted Ruff, diff and workflow
-  invariant checks passed. Hosted run `34728245700` then passed 2,399 tests and all
-  remaining checks. PR #266 merged as `96fdf7a932e61107af7c39262706337fcacc092b`;
-  its full tree equals tested `7c9b570`. Post-merge run `34729555434` is the separate
-  activation gate; verify its actual result before any deployment.
-- No workspace activation follows from publication. The old `9cdc4a4` activation
-  bundle is blocked by failed post-merge CI. A successful exact candidate needs a
-  reconciled plan, separate owner approval, fresh matched backup and disposable
-  restore verification. The new `7c9b570` plan is prepared and unapproved; its 47
-  isolated launcher guard cases passed, including a corrected helper-hash pin.
-  This does not prove an approved startup or fresh live recovery. The separately
-  approved diagnostic runtime remains unchanged.
+- The four owner-approved workspace commits merged through PR #265 as `0e9bf98`.
+  Its PR CI passed 2,399 tests; post-merge run `34726463470` failed a midnight-sensitive
+  test and hit the 30-minute limit. That failed result remains preserved.
+- PR #266 merged the separate clock/CI-limit repair `7c9b570` as `96fdf7a` after
+  2,399 passing tests and the remaining checks. Its post-merge run `34729555434`
+  cancelled at 45 minutes without a final test summary. The broad slowdown's cause
+  remains unestablished; the run was not restarted or counted as a pass.
+- Documentation PR #267 merged candidate `6c1e2a40a6448cc1facda2436f7780651408741d`
+  as `6012d159f0669e704a45d12db2eaf81b1d4cac80`, with exact full-tree equality.
+  PR CI [34729664769](https://github.com/Slayde91/classifire/actions/runs/34729664769)
+  passed 2,399 tests in 1,701.99 seconds; post-merge
+  [34731006875](https://github.com/Slayde91/classifire/actions/runs/34731006875)
+  passed 2,399 in 1,769.11 seconds. Both passed the remaining required checks.
+  No human GitHub review was required or claimed. Publication did not grant activation.
+
+## Verified workspace activation
+
+The owner separately approved and activated tested `6c1e2a4` on 2026-09-13 after
+successful exact CI and a fresh matched backup/disposable restore. The private
+`activation-result.json` records `activated_verified`; its 20 referenced artifacts
+were rehashed during this reconciliation. The 8820 listener was observed as PID
+33032 (parent 13708) at acceptance; process IDs are historical observations.
+
+The fresh backup/restore matched 69 tables and 80 rows. Fourteen raw CHECK strings
+required the individually allowed cast-placement proof; 28 typed evaluations passed.
+Other schema, objects, required roles/grants/ownership and retained files matched.
+Metadata/bootstrap were no-ops. No migration or stamp ran: the observed demo still
+has no Alembic version table. This is not a migration-history certification.
+
+Reopening retained Scope revision 2, native Word evidence and the original-bearing
+Word ZIP passed; the older Excel package also matched exact bytes. Domain rows and
+storage remained unchanged. The only accounted changes were login timestamps and
+two package-download audit events. The expired one-time confirmation URL stayed
+expired; the normal saved-project route worked. No confirmation was repeated and no
+new Scope, package, Match, Estimate or report was created.
+
+Workspace chat/PDF suggestions remain disabled. No provider, OAuth/tunnel, host
+allowlist, role or grant change occurred. No saved Match, Estimate, report or imported
+project existed in this demo, so those operational histories were not exercised.
+This is retained synthetic-state acceptance, not customer accuracy, production
+certification, storage relocation or full-cluster disaster recovery. Historical
+activation plans stay preserved; recovery retains the approved compatibility and
+no-lost-work conditions for the older `e2e8292` rollback source.
+
+## Current authorised increment
+
+Current work is isolated in `.tmp/embedded-workspace-chat-20260913`, branch
+`feat/embedded-workspace-chat-20260913`, based on merged `6012d15`. The requested
+interaction is a native collapsible, resizable, docked chat panel accessible from
+the main workspace without an external-page dependency. It reuses the existing
+chat API/transport and domain context services; the external connector is not rebuilt.
+
+Acceptance must cover exact current project, screen, Scope/Estimate revisions,
+selected Defect/Opening/Service or multiple records, selected technical systems,
+library and pricing context. Register selection must supply context without copying.
+Advice must support analysis, substrate, systems, prices, wording, missing information,
+inconsistencies and summaries while preserving unknowns and current permissions.
+An explicit context preview/hash and consent precede any provider transfer.
+Conversation continuity is opt-in and limited to the same freshly verified context,
+user and a 30-minute expiry; broader history sharing is not approved by convenience.
+
+The native panel and typed context extension are implemented. Local backend validation
+passed 55 cases, including all seven library kinds, exact three-review/Estimate history,
+permission changes, stale context, request bounds and the retained Scope-only API.
+Affected navigation/register/Word/package/0047 checks passed 52 cases initially; five
+PostgreSQL-dependent cases then passed on disposable 15433, alongside the repeated
+0047 migration case (six passes, no skips). Live 15432 was not used. Full Ruff,
+Mypy (233 source files), Bandit and the unchanged single 0047 migration head passed.
+
+Actual Edge acceptance used a new private SQLite database, loopback 8851 and two
+scripted replies. It verified global panel presence, selected shared services and blank
+openings, exact saved reviews/Estimate, opt-in sensitive details, full qualified reply
+history, fresh preview before restoration, inline-result refresh invalidation, logout,
+permissions, literal hostile HTML text and desktop/mobile layout. All 66 checked domain
+tables and retained synthetic source files matched; only login timestamps changed.
+No provider request or project write occurred. The private fixture needed seeding-order
+and missing-router corrections; application guards were preserved. The passing run
+emitted a Windows connection-reset callback during teardown and its 15-second thread
+join expired; the process subsequently exited and 8851 had no listener. This is a
+recorded harness limitation, not a clean server-shutdown claim.
+
+[Embedded assistant boundaries](./EMBEDDED_WORKSPACE_CHAT.md) describe the supported
+context and conversation limits. Publication/CI and operational activation are separate
+checks. This slice enables no provider, model, tools, domain writes or migration.
+No provider credentials/model were verified configured; a concrete configuration and
+activation decision is still required. It does not embed an external ChatGPT session
+or reuse that service's private conversation history. Synthetic replies prove the
+interaction and safeguards, not real model quality or the complete production phase.
+
+Accuracy preparation is separate. The existing comparator fix is already merged in
+PR #261. Twenty-four unchanged synthetic comparison/blocked-run checks passed in
+this checkout with explicit PYTHONPATH and a fresh basetemp. The private reference,
+original and photo hashes and authority limits are retained in a private run plan.
+No customer-report analysis, photo inference, real provider or database evaluation
+ran during this preparation; no accuracy score exists. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md)
+records the incompatible unresolved-topology contract and remaining Phase 8/8C gates.
 
 ## Merged imported-original navigation
 
@@ -113,8 +180,8 @@ application files, two synthetic test files and three documentation files. The l
 commit message is: Allow source inspection for Defects with unresolved relationships.
 Resolve its exact hash from this branch and the private finalization receipt.
 Commit `1de68b9f41582fc5297260d3a838e2851a4defbb` remains pinned and is included
-in merged PR #265. Keep activation separately approved and reconcile the exact
-successful candidate after PR #266's CI repair.
+in merged PR #265. The later exact `6c1e2a4` approval and verified activation above
+supersede earlier pending-activation instructions.
 
 ## Merged register source evidence increment
 
@@ -172,16 +239,14 @@ these completed fixtures.
 
 ## Runtime and approval boundaries
 
-Live 8820 remains the separately approved diagnostic source `e2e8292`. Earlier
-accepted Word/Scope/package confirmations are complete and must not be repeated.
-Connected upload still has the separately recorded host-policy refusal. No new
-OAuth/tunnel, grant, allowlist, provider or live 15432 operation is included.
+Live 8820 was accepted on source `6c1e2a4` under its separately approved plan, as
+recorded above. Earlier Word/Scope/package confirmations remain complete. The
+connected upload host-policy refusal is a separate unresolved transport limit;
+no OAuth/tunnel, grant, allowlist or provider change accompanies this increment.
 
-The historical ccaff7a plan excludes Complete v3. The later prepared `9cdc4a4`
-plan is unapproved and blocked by PR #265's failed post-merge CI. Reconcile the
-exact repaired candidate and successful PR/post-merge runs before requesting
-activation approval. Fresh matched database/storage backup and disposable 15433
-restore verification remain required.
+The historical `9cdc4a4` and `7c9b570` bundles remain blocked by their failed/cancelled
+post-merge runs. Do not reuse them as successful activation evidence or repeat the
+completed fresh backup/restore and activation merely because an old handoff says pending.
 Older readers cannot transparently read new Complete-v3 snapshots; retain all later
 records and originals before any recovery decision. Existing absolute StoredFile
 bindings must not be rewritten to bypass containment.
@@ -192,18 +257,21 @@ PostgreSQL tests use disposable 15433/classifire_containment_test, never live 15
 
 ## Classification and next action
 
-PR #265 published 40 reviewed files: 19 application, 11 synthetic tests and 10 docs.
-PR #266 contains two files: one test and the CI workflow. This checkpoint correction
-changes documentation only. Private logs, originals, generated outputs and operator
-state remain outside Git. Preserve the conflicted root and all unrelated work.
+PR #265 published 40 reviewed files; PR #266 contained the separate test/workflow
+repair; PR #267 contained two documentation files. The current working branch adds
+embedded-chat application/UI/tests through their assigned owners. This reconciliation
+owns only PROJECT_STATE, SESSION_HANDOFF and PHYSICAL_REFERENCE_READINESS plus private
+preparation records. Private customer originals, labels, file hashes and operator
+receipts stay outside Git. Preserve the conflicted root and unrelated changes.
 
-1. PR #266's exact-head CI and merge are verified. Observe existing post-merge run
-   `34729555434` and retain its actual result; observation expiry is not a retry.
-2. Complete the successful candidate's exact activation/recovery plan before requesting
-   separate approval. Existing historical approvals do not authorize this activation.
-3. Preserve the confirmed private ten-defect Draft reference and unknowns. Follow
-   [reference readiness](./PHYSICAL_REFERENCE_READINESS.md) before real evaluation.
-   It is not blind independent accuracy evidence or technical approval.
+1. Finish the embedded-chat slice against its full acceptance list above. Record actual
+   backend/UI/browser evidence before claiming completion; keep provider activation separate.
+2. Reuse the merged comparator fix. The private accuracy-preparation folder under the
+   existing operational private directory retains the controlled run plan, source/rights
+   manifest and 24-case synthetic receipt. Do not execute customer analysis from that plan:
+   unresolved topology/abstention contracts, rights and Phase 8/8C gates remain.
+3. Preserve activated `6c1e2a4`, exact originals/history and its recovery evidence. Normal
+   publication of this new slice does not authorize a replacement operational runtime.
 
 Full production work remains: general multimodal accuracy, full physical entities
 and applicability, calibrated automatic pricing, full project/audit history,

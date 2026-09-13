@@ -1,28 +1,37 @@
-{% if draft is defined and expected_revision is defined %}
-<link rel="stylesheet" href="/static/workspace_chat.css">
-<aside id="workspace-chat" class="workspace-chat" data-draft-id="{{ draft.id }}" data-revision="{{ expected_revision }}" data-csrf="{{ csrf_token }}" aria-label="Workspace AI assistant">
+{% if user and chat_workspace is defined %}
+<link rel="stylesheet" href="/static/workspace_chat.css?v=20260913-context">
+<aside id="workspace-chat" class="workspace-chat" data-user-id="{{ user.id }}" data-draft-id="{{ chat_workspace.get('draft_id', '') }}" data-revision="{{ chat_workspace.get('revision', '') }}" data-csrf="{{ csrf_token }}" aria-label="Workspace AI assistant">
+  <script type="application/json" id="workspace-chat-context">{{ chat_workspace|tojson }}</script>
   <button type="button" class="button button-secondary chat-toggle" aria-expanded="false" aria-controls="workspace-chat-body">AI assistant</button>
-  <section id="workspace-chat-body" hidden>
-    <header class="chat-header"><h2>Workspace assistant</h2><button type="button" class="button button-secondary button-small chat-close" aria-label="Close assistant">Close</button></header>
+  <section id="workspace-chat-body" aria-labelledby="workspace-chat-heading" hidden>
+    <header class="chat-header"><h2 id="workspace-chat-heading">Workspace assistant</h2><button type="button" class="button button-secondary button-small chat-close" aria-label="Close assistant">Close</button></header>
+    <div class="chat-layout"><label>Panel width<input class="chat-width" type="range" min="320" max="720" step="20" value="420"></label><button type="button" class="button button-secondary button-small chat-dock" aria-pressed="false">Dock beside workspace</button></div>
     <p class="chat-status" role="status" aria-live="polite">Checking availability.</p>
-    <ul class="chat-guidance"><li>Select register records, then preview the saved context.</li><li>Ask about missing information or wording; check the source before using advice.</li><li>Conversation stays in this page and clears when context changes.</li></ul>
-    <p class="chat-selection">No register records selected.</p>
-    <button type="button" class="button button-secondary chat-preview" disabled>Preview selected context</button>
+    <p class="chat-selection">Current workspace. Choose the saved context to discuss.</p>
+    <details class="chat-choose" open><summary>Context for this conversation</summary>
+      <p class="chat-disclaimer">Only saved values are included. Unsaved edits, original files and images are not sent.</p>
+      <label class="chat-record-picker-label" hidden>Records on this screen<select class="chat-record-picker" multiple size="4" aria-describedby="chat-picker-help"></select></label>
+      <p id="chat-picker-help" class="chat-disclaimer" hidden>Choose up to 20 records. Use Ctrl/Cmd or Shift for several records.</p>
+      <label class="chat-consent"><input type="checkbox" class="chat-sensitive">Include details of selected systems, libraries and prices in the preview</label>
+      <button type="button" class="button button-secondary chat-preview">Preview context</button>
+    </details>
     <section class="chat-context-summary" aria-label="Selected saved context" hidden>
-      <h3>Saved context</h3><p class="chat-context-basis"></p>
-      <ul class="chat-record-list"></ul>
-      <h4>Source references</h4><ul class="chat-source-list"></ul>
-      <p class="chat-context-note">Source references are saved claims. Images, full source text, systems and prices are not sent.</p>
+      <h3>Saved context</h3><p class="chat-context-basis"></p><ul class="chat-record-list"></ul>
+      <div class="chat-context-sections"></div><h4>Source references</h4><ul class="chat-source-list"></ul>
+      <p class="chat-context-note">Source references describe saved claims. Advice does not establish technical suitability or approve a price.</p>
     </section>
     <details class="chat-context"><summary>Exact context JSON</summary><pre></pre></details>
+    <label class="chat-consent chat-remember-label"><input type="checkbox" class="chat-remember">Remember this conversation in this browser tab for 30 minutes</label>
+    <p class="chat-disclaimer">Remembered messages reopen only after a fresh matching context preview. Clear the conversation to remove them.</p>
     <div class="chat-messages" role="log" aria-live="polite" aria-label="Advisory conversation"></div>
     <form class="chat-form">
-      <label>Question<textarea name="question" rows="3" maxlength="4000" required placeholder="What information needs checking for these records?"></textarea></label>
-      <label class="chat-consent"><input type="checkbox" name="consent" required>Send the previewed saved records and my questions to the configured OpenAI provider.</label>
+      <label>Help with<select name="prompt"><option value="">Write my own question</option><option>Identify missing information and inconsistencies</option><option>Review these services and substrate classifications</option><option>Explain the selected technical systems and their limitations</option><option>Explain the selected prices, quantities and assumptions</option><option>Draft scope wording while preserving unknowns</option><option>Summarise the selected project information</option></select></label>
+      <label>Question<textarea name="question" rows="3" maxlength="4000" required placeholder="What needs checking for this work?"></textarea></label>
+      <label class="chat-consent"><input type="checkbox" name="consent" required>Send this preview and conversation to the configured OpenAI provider.</label>
       <div class="chat-actions"><button type="submit" class="button button-primary chat-send" disabled>Send question</button><button type="button" class="button button-secondary chat-clear">Clear conversation</button></div>
     </form>
-    <p class="chat-disclaimer">AI advice is unverified. Nothing is saved or approved. This optional provider connection is separate from the external ChatGPT connector.</p>
+    <p class="chat-disclaimer">AI advice is unverified. Chat does not save or approve project changes. The existing ChatGPT connector remains available; its external conversations are separate.</p>
   </section>
 </aside>
-<script src="/static/workspace_chat.js" defer></script>
+<script src="/static/workspace_chat.js?v=20260913-context" defer></script>
 {% endif %}

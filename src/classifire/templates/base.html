@@ -57,6 +57,7 @@
 {% else %}
 {% block public_content %}{% endblock %}
 {% endif %}
+{% if user %}{% include "workspace_chat.html" %}{% endif %}
 </body>
 </html>
 
