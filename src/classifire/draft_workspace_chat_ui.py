@@ -12,7 +12,7 @@ from .security import verify_csrf
 from .services import draft_workspace_chat as chat
 from .services.draft_pdf_suggestion_transport import _json
 from .services.draft_scope import DraftScopeError, get_draft
-from .ui import _require
+from .ui import _require, _user
 
 router = APIRouter(include_in_schema=False)
 
@@ -50,6 +50,46 @@ async def interact(draft_id: str, action: str, request: Request, db: Db) -> JSON
                 db,
                 actor,
                 draft_id,
+                data,
+                settings=get_settings(),
+                port=getattr(request.app.state, "workspace_chat_port", None),
+            )
+        return JSONResponse(value, headers={"Cache-Control": "no-store"})
+    except DraftScopeError as exc:
+        raise HTTPException(exc.status_code, exc.code) from None
+    except (ValueError, TypeError, UnicodeError, RecursionError):
+        raise HTTPException(422, "CHAT_INPUT_INVALID") from None
+
+
+@router.get("/workspace/assistant")
+def workspace_status(request: Request, db: Db) -> JSONResponse:
+    if _user(request, db) is None:
+        raise HTTPException(401, "Authentication required")
+    return JSONResponse(chat.availability(get_settings()), headers={"Cache-Control": "no-store"})
+
+
+@router.post("/workspace/assistant/{action}")
+async def workspace_interact(action: str, request: Request, db: Db) -> JSONResponse:
+    actor = _user(request, db)
+    if actor is None:
+        raise HTTPException(401, "Authentication required")
+    verify_csrf(request, request.headers.get("X-CSRF-Token"))
+    if action not in {"context", "message"}:
+        raise HTTPException(404, "Not found")
+    raw = bytearray()
+    async for chunk in request.stream():
+        if len(raw) + len(chunk) > chat.MAX_WORKSPACE_BODY_BYTES:
+            raise HTTPException(413, "CHAT_INPUT_TOO_LARGE")
+        raw.extend(chunk)
+    try:
+        data = chat.parse_workspace(_json(bytes(raw)))
+        if action == "context":
+            value = chat.workspace_context(db, actor, data)
+        else:
+            value = await run_in_threadpool(
+                chat.workspace_answer,
+                db,
+                actor,
                 data,
                 settings=get_settings(),
                 port=getattr(request.app.state, "workspace_chat_port", None),

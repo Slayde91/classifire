@@ -143,6 +143,8 @@ LIBRARY_SECTIONS = (
 
 
 def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
+    from .services.draft_workspace_chat import workspace_descriptor
+
     user = _user(request, db)
     path = request.url.path
     library_sections = [
@@ -184,6 +186,7 @@ def _context(request: Request, db: Session, **values: Any) -> dict[str, Any]:
         "library_sections": library_sections,
         "active_library": active_library,
         "active_navigation": active_navigation,
+        "chat_workspace": workspace_descriptor(path, values),
         "csrf_token": create_csrf_token(request),
         "attribution": ATTRIBUTION,
         "has_permission": lambda permission: bool(user and has_permission(user, permission)),

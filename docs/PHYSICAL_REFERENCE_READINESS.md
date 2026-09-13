@@ -11,6 +11,14 @@ The existing `phase8_human_reference_comparison.py` service and
 proposal with an explicitly supplied post-inference reference. They have no database,
 inference, signing or lock interface. Reuse them for their supported contract.
 
+The mixed known/unknown service-value fix `f882106` is already merged through PR
+#261 as `095ee3d` and present in the selected `6012d15` baseline. It preserves null
+material/quantity values while comparing groups independently of input order. Do not
+rebuild it. The unchanged comparator tests and blocked representative-run CLI tests
+passed 24 cases on 2026-09-13 with selected-checkout PYTHONPATH and a fresh external
+basetemp; no failures, errors or skips. These synthetic fake-port/mocked-runtime
+checks do not consume the private reference or establish customer accuracy.
+
 That contract (`CLASSIFIRE-HUMAN-PHYSICAL-REFERENCE-v1`) requires a definite opening
 count, a Boolean blank/occupied value and explicit service groups for each opening.
 Service material and quantity may be unknown. A completed proposal must satisfy the
@@ -32,6 +40,38 @@ They do not automatically retrieve or analyse linked full-resolution photographs
 they do not generate measured quantity or dimension values. Retained source intake,
 manual review and proposal services are foundations to extend, not a full-report
 accuracy workflow to claim complete.
+
+## Prepared isolated run boundary and remaining contract work
+
+The private preparation inventory reverified the original, all retained linked-photo
+bytes and the reference's existing provenance hashes without reanalysing those sources.
+It records actual source-use authority, exact file bindings, isolated-state/run/stop
+requirements and unset provider/model/egress/budget decisions. This is a conditional
+plan, not an executable customer run package or newly granted provider permission.
+The successful workspace activation is operational evidence only; it does not satisfy
+Phase 8C's physical-model lock, independent review or accuracy prerequisites.
+
+The existing comparison still needs an explicitly reviewed compatible contract before
+this unresolved reference can be measured faithfully:
+
+- Definite opening counts and Boolean vacancy cannot represent every retained unknown.
+- Only a receipt-bound `MODEL_SUPPORTED` defect is compared; full-report accounting of
+  withheld, blocked, missing and unsupported outputs is not an existing metric.
+- Per-opening type/material/quantity signatures do not establish all shared-service
+  identities across openings, quantity units or dimensional/source-location correctness.
+- Null expected substrate skips that assertion. Existing positive lexical matching
+  does not measure unsupported certainty, contradiction handling or semantic accuracy.
+
+Keep any later extension within the existing comparison abstractions, preserve old
+contracts and add synthetic regression evidence. No new comparison code or reference
+schema is introduced here. Do not fabricate facts or choose scoring/acceptance rules
+to make the current comparator accept the private Draft reference. A supported subset
+must retain an explicit unscored denominator and cannot become a report-wide pass.
+
+The embedded workspace chat is a separate interface increment, not an accuracy runner
+or a grant to send private evidence. Its context preview/consent, permissions and
+provider configuration still apply. Advice and persisted Draft review remain separate
+from original prediction, human reference and governed approval.
 
 ## Proposed review taxonomy
 

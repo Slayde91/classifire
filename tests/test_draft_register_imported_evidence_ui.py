@@ -257,7 +257,11 @@ def test_nested_members_with_reused_local_source_have_unique_escaped_review_card
         assert result.text.count("Original SHA-256</dt><dd>" + "a" * 64) == 3
         assert not any("onclick" in attrs or "onerror" in attrs for _, attrs in html.elements)
         assert [item[3] for item in calls if item[0] == "source"] == [LOCAL_SOURCE] * 3
-        assert all(form["method"] == "post" for form in html.forms)
+        advice = [form for form in html.forms if form.get("class") == "chat-form"]
+        assert advice == [{"class": "chat-form"}]
+        assert all(
+            form["method"] == "post" for form in html.forms if form not in advice
+        )
         assert counts(x) == before
 
 
@@ -313,7 +317,7 @@ def test_navigation_and_card_keep_current_owner_access_and_read_only_permissions
         card = client.get(urls[1])
         assert card.status_code == 200 and FOREIGN_SOURCE in card.text
         assert not any(
-            form["action"].startswith(f"/scopes/{x.draft_id}/imported-package/")
+            form.get("action", "").startswith(f"/scopes/{x.draft_id}/imported-package/")
             for form in Navigation(card.text).forms
         )
         assert "Scan and check file" not in card.text

@@ -81,8 +81,21 @@ def generated(client, x):
 
 
 def confirm_form(html):
-    form = next(item for item in Forms(html).forms if item["action"].endswith("/confirm"))
+    form = next(item for item in Forms(html).forms if (item["action"] or "").endswith("/confirm"))
     return {name: fields[0]["value"] for name, fields in form["fields"].items()}
+
+
+def assert_advice_only_review_page(html):
+    """The shared chat adds advice controls, never a second saved-review action."""
+    parsed = Forms(html)
+    assert not parsed.nested
+    assert parsed.ids.count("workspace-chat") == 1
+    assert [form["action"] for form in parsed.forms] == ["/logout", None]
+    advice = parsed.forms[1]["fields"]
+    assert set(advice) == {"prompt", "question", "consent"}
+    assert "required" in advice["question"][0]
+    assert "required" in advice["consent"][0]
+    assert advice["consent"][0]["type"] == "checkbox"
 
 
 def test_http_review_edit_back_confirm_retains_claims_and_reopens(suggestion_app):
@@ -122,7 +135,7 @@ def test_http_review_edit_back_confirm_retains_claims_and_reopens(suggestion_app
         assert (
             reopened.status_code == 200 and "Original proposed graph (read-only)" in reopened.text
         )
-        assert [form["action"] for form in Forms(reopened.text).forms] == ["/logout"]
+        assert_advice_only_review_page(reopened.text)
         assert path in client.get(x.source_path).text
         assert client.post(path + "/confirm", data=submitted).status_code == 409
         assert client.get(f"/scopes/{x.ids[2]}/download?revision=2").content == downloaded.content
@@ -148,7 +161,7 @@ def test_http_explicit_rejection_changes_no_scope_revision(suggestion_app):
         assert rejected.status_code == 303, rejected.text
         page = client.get(path)
         assert "This batch was rejected" in page.text
-        assert [form["action"] for form in Forms(page.text).forms] == ["/logout"]
+        assert_advice_only_review_page(page.text)
         assert client.get(f"/scopes/{x.ids[2]}/download?revision=1").content == x.original
     with x.factory() as db:
         assert db.scalar(select(func.count()).select_from(DraftScopeRevision)) == 1
@@ -196,7 +209,9 @@ def test_http_preview_confirmation_is_session_bound_and_rejects_extra_claims(sug
         submitted["csrf_token"] = _csrf(second.get(path).text)
         refused = second.post(path + "/confirm", data=submitted)
         assert refused.status_code == 422 and "preview is invalid or expired" in refused.text
-        assert not any(item["action"].endswith("/confirm") for item in Forms(refused.text).forms)
+        assert not any(
+            (item["action"] or "").endswith("/confirm") for item in Forms(refused.text).forms
+        )
         assert second.get(f"/scopes/{x.ids[2]}/download?revision=1").content == x.original
         wrong_source = path.replace(x.source_id, "00000000-0000-0000-0000-000000000099")
         assert first.get(wrong_source).status_code == 404
@@ -219,6 +234,6 @@ def test_http_stale_confirmation_preserves_attempted_graph_without_stale_save(su
         refused = client.post(path + "/confirm", data=submitted)
         assert refused.status_code == 409, refused.text
         assert "Unsaved attempted graph" in refused.text and "Draft has changed" in refused.text
-        assert [form["action"] for form in Forms(refused.text).forms] == ["/logout"]
+        assert_advice_only_review_page(refused.text)
         assert client.get(f"/scopes/{x.ids[2]}/download?revision=2").json() == newer
         assert len(x.port.calls) == 1
