@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -352,6 +353,15 @@ def read_decision(
         ):
             raise ValueError("binding")
         if row.outcome == "confirmed":
+            # Reopening has verified the immutable generation. Check the derived claim,
+            # not just the decision's own checksum and the type of its changed flag.
+            original = json.loads(proposal.proposal_json)
+            prepared = original["response"][
+                "edit_proposal"
+                if original["request"]["action"] == "propose_scope_edits"
+                else "proposal"
+            ]
+            reviewed_hash = document["reviewed_payload_sha256"]
             revision = db.get(DraftScopeRevision, row.scope_revision_id, populate_existing=True)
             if revision is None or (
                 revision.draft_scope_id != draft_id
@@ -361,7 +371,10 @@ def read_decision(
                 or document["scope_revision"] != revision.revision
                 or document["scope_sha256"] != _hash(revision.envelope_json)
                 or type(document["proposal_payload_changed"]) is not bool
-                or len(document["reviewed_payload_sha256"]) != 64
+                or not isinstance(reviewed_hash, str)
+                or re.fullmatch(r"[0-9a-f]{64}", reviewed_hash) is None
+                or document["proposal_payload_changed"]
+                != (reviewed_hash != _hash(_raw(prepared["payload"])))
             ):
                 raise ValueError("revision")
             read_revision(db, actor, draft_id, revision.revision)

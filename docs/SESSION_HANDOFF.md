@@ -6,6 +6,20 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
+## Local decision claim consistency correction
+
+The clean base `9b65cfb` is extended in `fix/native-decision-claims-20260914`. Rehashed
+contradictory changed flags and malformed submitted hashes must be withheld. Two HTTP
+failures reproduced on the base; all 20 corrected decision HTTP cases passed, with one
+warning and no skips, on disposable PostgreSQL15433. Static checks and read-only compatibility
+with prior 0049 decisions, Scope and the original ZIP passed. See [current evidence](./PROJECT_STATE.md#local-native-decision-claim-consistency)
+and the [decision contract](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md).
+The 2,595-case full run remains pinned at `1aeded3` and does not cover later corrections.
+The next feature remains explicitly selected portable proposal/decision history using
+existing package confirmation and retained import origins; it is not implemented here.
+Public approval remains only `d864c51`; PR #271 CI failed and `8bce0b0` still needs separate
+publication approval. Keep later local work separate, with no live/provider execution.
+
 ## Local assistant session-error correction
 
 The actual main-app HTTP rehearsal established that an expired browser login returns
@@ -28,8 +42,11 @@ All newer work remains local; public approval still covers only d864c51.
 ## Real-app restart and full-suite checkpoint
 
 The parent d33f5ec/0048 full suite completed: 2,574 passed, two skipped, 386 warnings
-in 6,264.19 seconds. Both skips are unavailable Windows file/directory symlink creation;
-these paths still need an environment that supports them. The parent result does not
+in 6,264.19 seconds. Both Windows symlink skips remain recorded. A separate network-disabled
+Linux arm64/Python 3.12.14 storage run now passed 18 cases with no skips, including both
+file and directory symlink protections. The storage service/test files are unchanged
+since d33f5ec. Declared dependency ranges, pip check and mounted source hashes passed;
+this is not a full Linux suite or deployment certificate. The parent result does not
 cover the newer decision schema. A first full run of the 0049 candidate is now running
 from pinned `1aeded3`, with 2,595 collected cases, selected PYTHONPATH and fresh basetemp
 on disposable15433. Poll its existing handle; no timed-out CI job was restarted.

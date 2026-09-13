@@ -7,6 +7,20 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Local native decision claim consistency
+
+An isolated correction based on `9b65cfb` now cross-checks the recorded changed flag against
+original/submitted graph hashes and requires a valid lowercase SHA-256 string. Two new
+HTTP cases reproduced HTTP 200 responses for inconsistent rehashed claims on the unchanged
+reader. The corrected full decision HTTP suite passed 20 cases, one warning and no skips
+in 917.11 seconds on disposable PostgreSQL15433 with selected PYTHONPATH and fresh basetemp.
+Full Ruff, Mypy over 239 source files and changed-service Bandit passed. Fresh-process
+reads reopened the earlier confirmed/rejected decisions, Scope 3 and the exact original-
+bearing Scope 2 ZIP unchanged; all 71 tables and 32 rows matched before/after. The first private
+snapshot harness stopped on incomplete imported ORM metadata; reflecting the actual
+schema corrected that harness only. Its failure is retained in the private receipt.
+No schema, authority, provider or live change is included. Portable history remains next.
+
 ## Local assistant session-error correction
 
 The actual main-app HTTP rehearsal established that an expired browser login returns
@@ -29,8 +43,11 @@ All newer work remains local; public approval still covers only d864c51.
 ## Real-app restart and full-suite checkpoint
 
 The parent d33f5ec/0048 full suite completed: 2,574 passed, two skipped, 386 warnings
-in 6,264.19 seconds. Both skips are unavailable Windows file/directory symlink creation;
-these paths still need an environment that supports them. The parent result does not
+in 6,264.19 seconds. Both Windows symlink skips remain recorded. A separate network-disabled
+Linux arm64/Python 3.12.14 storage run now passed 18 cases with no skips, including both
+file and directory symlink protections. The storage service/test files are unchanged
+since d33f5ec. Declared dependency ranges, pip check and mounted source hashes passed;
+this is not a full Linux suite or deployment certificate. The parent result does not
 cover the newer decision schema. A first full run of the 0049 candidate is now running
 from pinned `1aeded3`, with 2,595 collected cases, selected PYTHONPATH and fresh basetemp
 on disposable15433. Poll its existing handle; no timed-out CI job was restarted.

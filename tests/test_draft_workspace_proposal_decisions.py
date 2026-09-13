@@ -372,15 +372,28 @@ def test_saved_source_proposal_cannot_be_attributed_to_a_different_review_action
         assert snapshot(x) == before
 
 
-@pytest.mark.parametrize("tamper", ["prior_revision", "boolean_base"])
+@pytest.mark.parametrize(
+    "tamper",
+    [
+        "prior_revision", "boolean_base", "changed_flag", "changed_flag_after_edit",
+        "invalid_payload_hash", "non_string_payload_hash",
+    ],
+)
 def test_decision_record_integrity_requires_more_than_a_matching_checksum(
     xlsx_evidence_app, tamper
 ):
     x = xlsx_evidence_app
     with TestClient(x.app) as client:
         path, fields, _ = generated(client, x, "xlsx")
+        if tamper == "changed_flag_after_edit":
+            payload = json.loads(fields["payload"])
+            payload["defects"][-1]["label"] = "Human corrected label"
+            fields["payload"] = json.dumps(payload)
         confirmation = preview(client, path, fields, "xlsx")
         assert commit(client, path, confirmation, "xlsx").status_code == 303
+        assert opened(client, x, fields["native_proposal_id"])["decision"][
+            "proposal_payload_changed"
+        ] is (tamper == "changed_flag_after_edit")
         with x.factory() as db:
             row = db.scalar(select(DraftWorkspaceProposalDecision))
             document = json.loads(row.decision_json)
@@ -394,8 +407,14 @@ def test_decision_record_integrity_requires_more_than_a_matching_checksum(
                 row.scope_revision_id = prior.id
                 document["scope_revision"] = prior.revision
                 document["scope_sha256"] = saved._hash(prior.envelope_json)
-            else:
+            elif tamper == "boolean_base":
                 document["base_revision"] = True
+            elif tamper in {"changed_flag", "changed_flag_after_edit"}:
+                document["proposal_payload_changed"] = not document["proposal_payload_changed"]
+            elif tamper == "non_string_payload_hash":
+                document["reviewed_payload_sha256"] = [0] * 64
+            else:
+                document["reviewed_payload_sha256"] = "z" * 64
             row.decision_json = saved._raw(document)
             row.decision_sha256 = saved._hash(row.decision_json)
             db.commit()

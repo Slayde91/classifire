@@ -114,6 +114,14 @@ integrity, and disables further review controls. Confirmed revisions remain down
 through existing permission checks. Corrupt decisions withhold the saved proposal view;
 missing decisions remain explicitly unknown.
 
+The decision reader also requires a lowercase SHA-256 string for the submitted graph
+and recomputes the changed flag from that hash and the immutable prepared graph. A
+matching decision checksum does not excuse contradictory claims; inconsistent records
+are withheld with no Scope write or silent repair. This preserves the existing submitted-
+field comparison, not a claim that source selections or the entire review were unchanged.
+These checks establish internal consistency, not authenticity against coordinated changes
+to several stored records. There is no schema, migration, writer or authority change.
+
 **Current architecture -> change:** migration0048 stores immutable generations;
 forward migration `0049_draft_proposal_decisions` adds a separate bounded decision table,
 three foreign keys, one-decision uniqueness and outcome/size constraints. Existing
