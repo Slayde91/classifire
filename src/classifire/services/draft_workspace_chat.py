@@ -17,7 +17,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from .. import models
-from ..config import Settings
+from ..config import Settings, get_settings
 from ..models import User
 from ..security import has_permission
 from .draft_scope import DraftScopeError, _actor, get_draft, read_revision
@@ -60,7 +60,11 @@ class Advice(BaseModel):
 
 class ChatPort(Protocol):
     def complete(
-        self, context: dict[str, Any], request: ChatRequest | WorkspaceChatRequest
+        self,
+        context: dict[str, Any],
+        request: ChatRequest | WorkspaceChatRequest,
+        *,
+        images: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]: ...
 
 
@@ -257,9 +261,34 @@ class ConversationTurn(BaseModel):
     content: Annotated[str, Field(min_length=1, max_length=12000)]
 
 
+class WordEvidenceSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    source_id: Identity
+    document_sha256: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
+    locators: Annotated[
+        list[Annotated[str, Field(min_length=1, max_length=150)]], Field(max_length=10)
+    ] = Field(default_factory=list)
+    picture_ids: Annotated[
+        list[Annotated[str, Field(pattern=r"^picture-([1-9]|[1-3][0-9]|40)$")]], Field(max_length=2)
+    ] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def bounded_evidence(self) -> WordEvidenceSelection:
+        if str(UUID(self.source_id)) != self.source_id or not (self.locators or self.picture_ids):
+            raise ValueError("explicit evidence required")
+        if len(set(self.locators)) != len(self.locators) or len(set(self.picture_ids)) != len(
+            self.picture_ids
+        ):
+            raise ValueError("duplicate evidence")
+        self.locators.sort()
+        self.picture_ids.sort()
+        return self
+
+
 class WorkspaceChatRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     screen: ContextScreen
+    word: WordEvidenceSelection | None = None
     project_id: Identity | None = None
     draft_id: Identity | None = None
     revision: Revision | None = None
@@ -284,7 +313,7 @@ class WorkspaceChatRequest(BaseModel):
             raise ValueError("canonical identity required")
         if (self.draft_id is None) != (self.revision is None):
             raise ValueError("exact Scope revision required")
-        if not self.draft_id and (self.ids or self.matches or self.estimate):
+        if not self.draft_id and (self.ids or self.matches or self.estimate or self.word):
             raise ValueError("Scope required")
         if (
             len(set(self.ids)) != len(self.ids)
@@ -498,7 +527,14 @@ def workspace_actor(db: Session, actor: User) -> User:
     return current
 
 
-def workspace_context(db: Session, actor: User, request: WorkspaceChatRequest) -> dict[str, Any]:
+def workspace_context(
+    db: Session,
+    actor: User,
+    request: WorkspaceChatRequest,
+    *,
+    settings: Settings | None = None,
+    image_parts: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     from . import draft_estimates, draft_system_matches
     from .draft_project_packages import validate_match_collection
 
@@ -656,6 +692,45 @@ def workspace_context(db: Session, actor: User, request: WorkspaceChatRequest) -
         context["limitations"].append(
             "No records are selected. Only the displayed screen/project identity is included."
         )
+    if request.word is not None:
+        from .draft_scope_docx import chat_evidence
+
+        if request.draft_id is None:
+            raise DraftScopeError("CHAT_INPUT_INVALID", 422)
+        word_selected = request.word
+        evidence, parts = chat_evidence(
+            db,
+            actor,
+            request.draft_id,
+            word_selected.source_id,
+            word_selected.document_sha256,
+            word_selected.locators,
+            word_selected.picture_ids,
+            settings=settings or get_settings(),
+        )
+        context["word_evidence"] = evidence
+        context["limitations"][0] = (
+            "Selected saved records and explicitly selected retained Word evidence only; "
+            "original files and credentials are excluded."
+        )
+        if not records:
+            context["limitations"].remove(
+                "No records are selected. Only the displayed screen/project identity is included."
+            )
+        context["summary"] += (
+            f" {len(word_selected.locators)} Word text blocks; "
+            f"{len(word_selected.picture_ids)} Word pictures."
+        )
+        refs.append(
+            {
+                "source_id": word_selected.source_id,
+                "source_kind": "docx",
+                "document_sha256": word_selected.document_sha256,
+                "claim_status": "Retained selected evidence; unverified interpretation",
+            }
+        )
+        if image_parts is not None:
+            image_parts.extend(parts)
     raw = _encoded(context)
     if len(raw) > MAX_CONTEXT_BYTES:
         raise DraftScopeError("CHAT_CONTEXT_TOO_LARGE", 422)
@@ -671,7 +746,8 @@ def workspace_answer(
     settings: Settings,
     port: ChatPort | None = None,
 ) -> dict[str, Any]:
-    context = workspace_context(db, actor, request)
+    image_parts: list[dict[str, Any]] = []
+    context = workspace_context(db, actor, request, settings=settings, image_parts=image_parts)
     if not availability(settings)["enabled"]:
         raise DraftScopeError("CHAT_UNAVAILABLE", 409)
     if not request.consent:
@@ -684,10 +760,15 @@ def workspace_answer(
         from .draft_workspace_chat_transport import OpenAIWorkspaceChatPort
 
         port = OpenAIWorkspaceChatPort(settings)
-    if workspace_context(db, actor, request) != context:
+    if workspace_context(db, actor, request, settings=settings) != context:
         raise DraftScopeError("CHAT_CONTEXT_CHANGED", 409)
     try:
-        value = Advice.model_validate(port.complete(context, request)).model_dump()
+        reply = (
+            port.complete(context, request, images=image_parts)
+            if image_parts
+            else port.complete(context, request)
+        )
+        value = Advice.model_validate(reply).model_dump()
         if not set(value["record_ids"]) <= {row["id"] for row in context["records"]} or not set(
             value["source_ids"]
         ) <= {row["source_id"] for row in context["source_references"]}:
@@ -696,7 +777,7 @@ def workspace_answer(
         raise DraftScopeError("CHAT_PROVIDER_FAILED", 502) from None
     except (ValueError, TypeError, ValidationError):
         raise DraftScopeError("CHAT_RESPONSE_INVALID", 502) from None
-    if workspace_context(db, actor, request) != context:
+    if workspace_context(db, actor, request, settings=settings) != context:
         raise DraftScopeError("CHAT_CONTEXT_CHANGED", 409)
     return {**value, "notice": NOTICE, "context": context}
 

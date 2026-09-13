@@ -6,19 +6,23 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
-## Current native attachment checkpoint
+## Current native evidence checkpoint
 
-Work is isolated in `.tmp/native-word-attachments-20260913`, branch
-`feat/native-word-attachments-20260913`, based on merge `97c0778`. The first native
-DOCX attachment/scan/inspection interaction passed 108 affected tests and a synthetic
-browser/restart check. No provider call or live activation was performed. See
-[PROJECT_STATE.md](./PROJECT_STATE.md#native-word-attachment-implementation-checkpoint)
-for measured results and the remaining C2 boundaries.
+Work is isolated in `.tmp/native-word-chat-evidence-20260913`, branch
+`feat/native-word-chat-evidence-20260913`, initially based on d864c51. It adds selected
+Word text/PNG evidence to the existing preview/consent/advice path.94 affected tests,
+full Ruff/Mypy, scoped Bandit and a synthetic browser/restart journey passed. Final
+desktop/narrow screenshots were inspected; zero real provider calls or live changes.
+See PROJECT_STATE.md for measured results and remaining typed Scope/package boundaries.
 
-Diagnostic PR #270 is merged, but existing post-merge run 34753856708 cancelled at
-45 minutes with last complete progress at 52%. It was not restarted and is not a
-pass. Live8820 remains on `6c1e2a4` with chat disabled. A separate exact operational
-approval and successful CI remain required for diagnostic testing/activation.
+PR271 contains approved d864c51. Run34757320145 failed after639 passes on an obsolete
+closed-review form assertion. Local correction8bce0b0 adds one test file and passed30
+affected checks; approval to publish that extra file is pending. Do not merge the
+failed head or treat local tests as hosted CI. CI logging commitbf700bc remains local.
+
+Diagnostic PR270 is merged, but post-merge34753856708 cancelled at45 minutes; it was
+not restarted. Live8820 remains rollback6c1e2a4 with chat disabled. Separate exact
+operational approval and successful applicable CI remain required.
 
 ## Verified publication
 
@@ -134,7 +138,7 @@ execution rather than treating this checkpoint as a fresh activation proof.
 The owner requests defect-report upload through the ChatGPT integration inside
 CLASSIFIRE and interaction with the data on the current page. The native panel is
 merged and can discuss selected saved data; its endpoints currently accept only
-context/message, with no attachment input or write action. Existing PDF/Word/XLSX
+context/message; the original selected-record increment had no attachment input or write action. Existing PDF/Word/XLSX
 intake, scan, review, typed client requests and package services are foundations.
 
 The [architecture](./CLASSIFIRE_ARCHITECTURE.md#native-chat-as-a-working-interface),
@@ -144,7 +148,8 @@ describe the same target: attach and inspect a retained report, explicitly reque
 analysis, review a source-bound typed Draft proposal, confirm separately, refresh
 the page and reopen/download exact saved artifacts. Later selected-record actions
 reuse that review path. Uploaded content never becomes instructions or authority;
-original/image provider transfer is still a planned bounded extension.
+original-file transfer is excluded; selected Word text/PNG transfer is now implemented
+and synthetically validated in the checkpoint above.
 
 Accuracy preparation is separate. The existing comparator fix is already merged in
 PR #261. Twenty-four unchanged synthetic comparison/blocked-run checks passed in
@@ -302,8 +307,8 @@ six reconciled documents. Private browser fixtures, screenshots, retained origin
 and CI receipts stay outside Git. The root retains 46 unstaged modifications,
 14 staged additions and four DU conflicts; preserve its unrelated untracked files.
 
-The next implementation slice is explicit bounded evidence disclosure and typed
-Scope review inside the panel, while resolving the CI reliability gate separately.
+The next implementation slice is native typed Scope proposals and separate human
+review inside the panel, while resolving the CI reliability gate separately.
 Inspect exact branch/PR status before publication or merging. Do not count the first
 attachment interaction as complete C2, representative accuracy or production readiness.
 
@@ -314,10 +319,11 @@ docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md, docs/CLASSIFIRE_ROADMAP.
 and EMBEDDED_WORKSPACE_CHAT. The requested shorter architecture/roadmap filenames
 are absent; these are the existing canonical documents. Preserve the conflicted
 root and pinned runtime/diagnostic checkouts. Reconcile
-feat/native-word-attachments-20260913 with GitHub and inspect its actual PR/CI.
-It implements native DOCX retention, status, explicit scan and paged text/picture
-inspection; 108 affected tests and synthetic browser/restart checks passed.
-Report content still does not enter AI requests; native typed Scope proposals and
+feat/native-word-attachments-20260913 and feat/native-word-chat-evidence-20260913
+with GitHub. PR271 failed on an obsolete form assertion; local test-only8bce0b0
+awaits separate publication approval. Selected Word text/PNG preview/consent/advice
+is implemented and passed94 affected tests plus synthetic browser checks.
+Native typed Scope proposals and
 separate confirmations/package download remain to be completed. Reuse existing
 services and preserve unknowns, blank openings and unresolved links. PR #270 merged
 5454b36 as 97c0778 after successful PR CI, but its post-merge run 34753856708 cancelled

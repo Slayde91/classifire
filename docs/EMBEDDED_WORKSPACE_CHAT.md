@@ -95,9 +95,9 @@ redacted 502. OpenAI documents [error categories](https://developers.openai.com/
 and [client request references](https://developers.openai.com/api/reference/overview#debugging-requests).
 These mechanisms do not grant permission for automatic retries.
 
-Original documents, source pictures and complete technical files are not included
-in this context increment. Saved evidence references remain claims with explicit
-limitations. This is not the full-report multimodal accuracy programme.
+Original documents and complete technical files remain excluded. The selected Word
+extension below permits previewed text and verified PNG pictures; saved reference
+claims retain their limitations. This is not full-report multimodal accuracy acceptance.
 
 Official integration references: [OpenAI ChatKit](https://developers.openai.com/api/docs/guides/chatkit)
 and [MCP and connectors](https://developers.openai.com/api/docs/guides/tools-connectors-mcp).
@@ -118,7 +118,7 @@ No connector rebuild or new ChatKit dependency is required by this intention.
 | --- | --- | --- |
 | Ask about selected page data | Native typed selectors, preview/consent and advisory replies implemented | Complete separately approved real browser activation/acceptance |
 | Attach a defect report in chat | Native DOCX attachment, retained-source/status cards and explicit scan now reuse existing Word intake; saved sources reopen without chat memory | Complete the wider C2 journey, then extend to supported PDF/XLSX |
-| Read report evidence while discussing it | Native panel pages through retained Word text and pictures under current scan/access checks; current chat sends saved text context only | Explicit evidence selection, bounded model input preview and provider consent |
+| Read report evidence while discussing it | Native panel inspects Word evidence and selects up to10 text blocks/two PNG pictures for preview and consented advice | Complete real-provider acceptance and typed Scope proposal/confirmation |
 | Propose and confirm a page change | Existing typed client requests and browser confirmation; native chat has no write action | Supported action routing, review/diff card and distinct human confirmation |
 | Download a reviewed result | Existing exact saved packages and original-bearing ZIPs | In-context access to the same package review, separate confirmation and exact download |
 
@@ -138,9 +138,9 @@ No connector rebuild or new ChatKit dependency is required by this intention.
    document/page/paragraph/table/cell/picture locators and exact original hashes.
    Document contents are untrusted evidence, never executable user instructions.
 5. Request analysis; preview exactly which clean text/image evidence and page records
-   will leave the application, then obtain provider consent. The existing chat
-   transport currently accepts text only: image/original transfer is planned and
-   requires its own bounded contract and validation, not an implicit full-file send.
+   will leave the application, then obtain provider consent. The Word extension
+   sends selected text and exact verified PNG previews through the same transport.
+   Original files, unselected evidence and other formats are excluded.
 6. Present a typed Draft proposal with source references, unknowns and conflicts,
    and a before/after review for existing records. Blank openings may have zero
    Services. Unresolved links remain held for review rather than guessed into the
@@ -220,7 +220,45 @@ All 108 affected Word/client/chat/migration cases passed. Full Ruff, Mypy over 2
 source files, scoped Bandit and JavaScript syntax checks passed.
 
 This is the first C2 interaction, not the complete report-to-Scope exit. Report
-contents/images still do not enter the advice request. Native typed proposal,
+contents/pictures now enter advice only through the separate explicit selection and
+consent extension below. Native typed proposal,
 same-user Scope confirmation and separate package confirmation/download remain
 later increments. Existing manual Word review is available through its own link.
 Live8820 remains on the rollback build; this feature has not been activated.
+
+
+## Selected Word evidence disclosure
+
+Current architecture -> change: extend the existing typed workspace context and
+advisory port with one optional Word selector and bounded internal image parts.
+The shared Word reader resolves source ID, document hash, up to10 text locators and
+two picture IDs under current permission, scan and retained-byte checks. No
+browser-provided evidence body, arbitrary URL, original file, tool invocation,
+new provider or canonical writer is accepted. Migration/dependency impact: none.
+
+Reason: attachment inspection alone could not let users discuss the retained report.
+Consequences: the preview contains exact text, picture identity/PNG hashes and sizes,
+source/document/scan hashes, omitted counts and ownership/layout limitations. The
+UI shows readable selected text and pictures; exact JSON retains traceability.
+Selection changes invalidate preview, remembered context and consent. Source/rights
+changes are checked before provider use and again before returning advice.
+
+The same Responses adapter retains no tools/retries/persistence, fixed response
+limits and safe diagnostics. Requests without selected pictures keep their existing
+text-only shape. Picture requests use at most two verified PNGs, each at most2MiB;
+text context remains at most64KiB and the encoded image request at most6MiB. Images
+use high detail and incur image-input usage; no cost or accuracy result is claimed
+from mocks. The adapter checks bytes against preview hashes and refuses remote URLs
+or mismatched parts. The original document never leaves this path. The format follows
+OpenAI's [image-input documentation](https://developers.openai.com/api/docs/guides/images-vision);
+[gpt-5-mini](https://developers.openai.com/api/docs/models/gpt-5-mini) supports image
+input. Real-provider acceptance remains separately authorized.
+
+Validation:94 affected tests passed, including exact outgoing PNG bytes, unchanged
+protected tables, no implicit inclusion, consent refusal, stale selection, expired
+scan, foreign access, revoked rights during a reply and malformed/remote image parts.
+The browser found a shared-reference invalidation defect; copied event selections
+fixed it. Final restarted Chrome checks passed with scripted advice, zero real
+provider calls, unchanged Scope and exact original download. Final desktop/mobile
+screenshots were inspected. Native typed proposals, same-user Scope confirmation,
+separate package confirmation and complete C2 acceptance remain later work.

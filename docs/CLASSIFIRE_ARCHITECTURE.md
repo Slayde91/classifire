@@ -93,9 +93,12 @@ for same-user browser confirmation. Ordinary UI intake/review uses the same doma
 services. The native panel now also
 retains Word reports, explicitly scans them and pages through retained text/pictures
 via `draft_workspace_word_ui.py`; these controls never call the advice transport.
-The existing plugin is retained.
+The existing plugin is retained. The advice context additionally accepts explicit
+selection of at most 10 text blocks and 2 verified PNG pictures from one retained
+DOCX. Source/scan/document/image hashes bind the preview and are rechecked before
+and after provider use; original files and omitted content are excluded.
 
-**Proposed extension:** complete explicitly consented report analysis and typed
+**Proposed extension:** complete typed
 action review beside the native attachment controls, using existing evidence-reader,
 proposal-request, confirmation and package services. Browser routes use the existing
 user session and
@@ -103,8 +106,8 @@ CSRF checks; external clients retain their OAuth scope/policy checks. The browse
 does not need to loop through external MCP or acquire a second identity.
 
 **Reason:** selected-record advice and local Word attachment/inspection are
-implemented, but report content is not yet part of the model contract and the panel
-cannot prepare or confirm Scope changes. The complete report-to-Scope journey
+implemented, and bounded selected Word evidence now enters the model contract only
+after preview and consent. The panel still cannot prepare or confirm Scope changes. The complete report-to-Scope journey
 still needs those distinct review and disclosure boundaries.
 
 **Consequences:** distinguish local attachment/intake, explicitly requested scan,
@@ -123,6 +126,8 @@ does not import it as a trusted technical or pricing library.
 
 **Migration impact:** the native attachment increment reuses retained sources and
 existing Word readers without changing tables, migration history or dependencies.
+The selected-evidence extension adds optional typed selectors and an internal image
+argument to the same advisory port; no new provider, identity or write path is added.
 Later proposal work should reuse immutable Draft revisions and the applicable
 session/client review boundaries. No new table, migration, vector store, agent
 framework or transcript

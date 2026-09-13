@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
+import hashlib
 import json
 import logging
 import re
@@ -14,6 +17,7 @@ import httpx
 from ..config import Settings
 from .draft_pdf_suggestion_transport import _json
 from .draft_scope import DraftScopeError
+from .draft_scope_docx import MAX_CHAT_IMAGE_BYTES
 from .draft_workspace_chat import Advice, ChatRequest, WorkspaceChatRequest
 
 ENDPOINT = "https://api.openai.com/v1/responses"
@@ -55,9 +59,13 @@ class OpenAIWorkspaceChatPort:
         self.model, self.key, self.transport = model, key, transport
 
     def complete(
-        self, context: dict[str, Any], request: ChatRequest | WorkspaceChatRequest
+        self,
+        context: dict[str, Any],
+        request: ChatRequest | WorkspaceChatRequest,
+        *,
+        images: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        body = {
+        body: dict[str, Any] = {
             "model": self.model,
             "store": False,
             "stream": False,
@@ -95,8 +103,43 @@ class OpenAIWorkspaceChatPort:
                 }
             },
         }
+        if images:
+            # Internal bytes must match the exact evidence hashes shown in the preview.
+            try:
+                descriptors = context["word_evidence"]["pictures"]
+                if not isinstance(request, WorkspaceChatRequest) or request.word is None:
+                    raise ValueError("Word selection required")
+                if not 1 <= len(descriptors) <= 2 or len(images) != 2 * len(descriptors):
+                    raise ValueError("picture count")
+                for index, descriptor in enumerate(descriptors):
+                    label, picture = images[index * 2 : index * 2 + 2]
+                    if (
+                        set(label) != {"type", "text"}
+                        or label["type"] != "input_text"
+                        or type(label["text"]) is not str
+                        or len(label["text"]) > 500
+                        or set(picture) != {"type", "image_url", "detail"}
+                        or picture["type"] != "input_image"
+                        or picture["detail"] != "high"
+                        or type(picture["image_url"]) is not str
+                        or not picture["image_url"].startswith("data:image/png;base64,")
+                        or len(picture["image_url"]) > MAX_CHAT_IMAGE_BYTES * 4 // 3 + 32
+                    ):
+                        raise ValueError("picture part")
+                    decoded = base64.b64decode(picture["image_url"].split(",", 1)[1], validate=True)
+                    if (
+                        not decoded.startswith(b"\x89PNG\r\n\x1a\n")
+                        or not 1 <= len(decoded) <= MAX_CHAT_IMAGE_BYTES
+                        or len(decoded) != descriptor["preview_size_bytes"]
+                        or hashlib.sha256(decoded).hexdigest() != descriptor["preview_sha256"]
+                    ):
+                        raise ValueError("picture identity")
+            except (ValueError, TypeError, KeyError, IndexError, binascii.Error):
+                raise DraftScopeError("CHAT_INPUT_INVALID", 422) from None
+            content = body["input"][0]["content"]
+            body["input"][0]["content"] = [{"type": "input_text", "text": content}, *images]
         encoded = json.dumps(body, ensure_ascii=False, allow_nan=False).encode("utf-8")
-        if len(encoded) > 100000:
+        if len(encoded) > (6 * 1024 * 1024 if images else 100000):
             raise DraftScopeError("CHAT_CONTEXT_TOO_LARGE", 422)
         started = time.monotonic()
         # Locally generated correlation only: never derive an ID from project or chat data.

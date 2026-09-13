@@ -222,8 +222,9 @@ ZIP. Extend the same interaction to supported PDF and XLSX intake without rebuil
 their existing services or silently accepting unsupported layouts.
 
 Selection-aware advice and the first native DOCX attachment/scan/inspection slice
-are implemented. Evidence-to-AI disclosure, typed Scope proposals and reviewed
-page-changing actions remain to be built; the complete C2 journey is not finished.
+are implemented. Explicit selected Word text/picture disclosure, preview and consent
+are now implemented and synthetically validated. Native typed Scope proposals and
+reviewed page-changing actions remain; the complete C2 journey is not finished.
 Follow C1-C3 in the
 [roadmap](./docs/CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
 [PROJECT_STATE.md](./docs/PROJECT_STATE.md#recommended-next-actions) for exact status.

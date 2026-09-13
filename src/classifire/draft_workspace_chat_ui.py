@@ -84,7 +84,7 @@ async def workspace_interact(action: str, request: Request, db: Db) -> JSONRespo
     try:
         data = chat.parse_workspace(_json(bytes(raw)))
         if action == "context":
-            value = chat.workspace_context(db, actor, data)
+            value = chat.workspace_context(db, actor, data, settings=get_settings())
         else:
             value = await run_in_threadpool(
                 chat.workspace_answer,

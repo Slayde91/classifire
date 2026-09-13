@@ -7,6 +7,34 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
+## Selected Word evidence implementation checkpoint
+
+The native panel now lets users choose up to 10 retained Word text blocks and two
+pictures from one source for an exact preview. Current access, scan and integrity
+checks resolve selected items on the server. The same advisory transport sends the
+text and verified PNG bytes only after consent; original DOCX bytes and unselected
+content are excluded. Omitted counts and structural-locator limits are visible.
+Selection changes clear preview, conversation and consent. A browser-proven shared
+mutable selection bug was fixed by copying the event payload.
+
+Validation: 94 affected Word/chat/context/diagnostic tests passed on disposable15433
+with selected-checkout PYTHONPATH and fresh basetemp. Full Ruff, Mypy over234 source
+files, scoped Bandit and JS syntax passed. Full Mypy required the existing complete
+development environment; global Python lacked optional MCP/JWT dependencies. The
+isolated Chrome journey proved selection, required consent, scripted advice, exact
+PNG/original bytes, unchanged Scope, restart/reopening and consent invalidation.
+Final desktop/narrow screenshots were inspected. Browser replies and scan verdicts
+were synthetic; zero real provider calls and no live activation occurred. Native
+typed Scope proposals, separate Scope/package confirmations and full C2 remain open.
+
+Publication: approved d864c51 is pushed in PR271. Run34757320145 failed after639
+passes on a closed-review test expecting only logout/chat forms. The independent
+DOCX form is intended. Local test-only8bce0b0 checks all three form roles and preserves
+stale/repeat-save protection;30 affected checks passed after reproducing the failure.
+It adds one file beyond the exact12-file approval, so publication approval is pending.
+The separate CI logging commitbf700bc also remains local. No failed job was restarted.
+Reverify GitHub before publishing; these are observed results, not merge receipts.
+
 ## Native Word attachment implementation checkpoint
 
 The first C2 interaction is implemented in an isolated checkout based on merge
@@ -36,7 +64,7 @@ offline-proven TLS environment mismatch; this does not explain the historical502
 
 Live8820 remains on rollback `6c1e2a4` with chat disabled. Preserve the conflicted
 root, pinned candidate/rollback checkouts and all historical receipts. Complete
-C2 evidence disclosure and typed review next while resolving the CI gate separately.
+C2 typed review next while resolving the CI gate separately.
 
 ## Current position
 
@@ -147,7 +175,7 @@ execution rather than treating this checkpoint as a fresh activation proof.
 The owner requests defect-report upload through the ChatGPT integration inside
 CLASSIFIRE and interaction with the data on the current page. The native panel is
 merged and can discuss selected saved data; its endpoints currently accept only
-context/message, with no attachment input or write action. Existing PDF/Word/XLSX
+context/message; the original selected-record increment had no attachment input or write action. Existing PDF/Word/XLSX
 intake, scan, review, typed client requests and package services are foundations.
 
 The [architecture](./CLASSIFIRE_ARCHITECTURE.md#native-chat-as-a-working-interface),
@@ -157,7 +185,8 @@ describe the same target: attach and inspect a retained report, explicitly reque
 analysis, review a source-bound typed Draft proposal, confirm separately, refresh
 the page and reopen/download exact saved artifacts. Later selected-record actions
 reuse that review path. Uploaded content never becomes instructions or authority;
-original/image provider transfer is still a planned bounded extension.
+original-file transfer remains excluded; selected retained Word text/PNG transfer is
+now implemented under the preview/consent boundary described above.
 
 Accuracy preparation is separate. The existing comparator fix is already merged in
 PR #261. Twenty-four unchanged synthetic comparison/blocked-run checks passed in
@@ -497,14 +526,15 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
    All earlier provider-call allowances are consumed. Preserve the failed browser
    attempt and successful rollback; do not infer its cause or retry silently.
 2. **C2 - Complete report analysis and Scope review.** Native DOCX attachment,
-   status, explicit scan and evidence inspection are implemented. Reuse the existing
+   status, explicit scan, evidence inspection and consented selected text/PNG advice are
+   implemented. Next deliver native typed proposals and distinct review. Reuse the existing
    intake/scan/Word review/client-request/package services, beginning with one
    supported synthetic DOCX. Finish the visible attachment-to-confirmed-Scope-to-ZIP
    journey from the [assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).
    Validate the actual browser, exact originals and distinct confirmations.
    Implementation with synthetic fixtures does not require live activation or
-   customer evidence; current text-only transport needs an explicit bounded
-   extension before any picture/original transfer to a provider.
+   customer evidence; selected Word pictures use verified PNG previews. Original-file
+   and wider-format transfer remain excluded.
 3. **C3 - Add reviewed selected-record actions.** Keep selected-page advice available;
    a requested edit yields a typed proposal/diff, then an explicit same-user
    confirmation. Recheck exact revisions, current permissions and stale context.

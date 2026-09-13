@@ -8,6 +8,7 @@
   const list = section.querySelector(".chat-word-sources"), status = section.querySelector(".chat-word-status");
   const destination = section.querySelector(".chat-word-destination");
   let busy = false, loaded = false, canWrite = false, limit = 0, generation = 0;
+  let selection = null;
   const element = (tag, text, className = "") => {
     const node = document.createElement(tag); node.textContent = text; node.className = className; return node;
   };
@@ -54,12 +55,42 @@
     link.href = `/scopes/${draft}/word/${encodeURIComponent(source.id)}`;
     actions.append(link); card.append(actions, element("div", "", "chat-word-evidence")); return card;
   }
+  function publishSelection() {
+    const value = selection && (selection.locators.length || selection.picture_ids.length) ? selection : null;
+    document.dispatchEvent(new CustomEvent("classifire:word-selection", {detail:{draftId:panel.dataset.draftId, word:value ? {...value,locators:[...value.locators],picture_ids:[...value.picture_ids]} : null}}));
+    section.querySelector(".chat-word-selected").textContent = value
+      ? `Selected for preview: ${value.locators.length} text block(s), ${value.picture_ids.length} picture(s). Nothing is sent until preview and consent.`
+      : "No report evidence selected for AI.";
+  }
+  function clearSelection() {
+    selection = null; section.querySelectorAll(".chat-word-select").forEach(input => {input.checked=false;}); publishSelection();
+  }
+  section.querySelector(".chat-word-clear-selection").addEventListener("click", clearSelection);
+  document.addEventListener("classifire:chat-evidence-clear", clearSelection);
+  function selectControl(data, key, id, label) {
+    const wrap=element("label", "", "chat-consent"), input=document.createElement("input");
+    input.type="checkbox"; input.className="chat-word-select";
+    input.checked=selection?.source_id===data.source_id && selection?.document_sha256===data.document_sha256 && selection[key].includes(id);
+    input.addEventListener("change", () => {
+      if (!selection || selection.source_id!==data.source_id || selection.document_sha256!==data.document_sha256) {
+        section.querySelectorAll(".chat-word-select").forEach(other=>{if(other!==input)other.checked=false;});
+        selection={source_id:data.source_id,document_sha256:data.document_sha256,locators:[],picture_ids:[]};
+      }
+      if (input.checked && selection[key].length >= (key==="locators" ? 10 : 2)) {
+        input.checked=false; report("Select at most 10 text blocks and 2 pictures from one report per question.",true); return;
+      }
+      selection[key]=input.checked ? [...selection[key],id].sort() : selection[key].filter(value=>value!==id);
+      publishSelection();
+    });
+    wrap.append(input,document.createTextNode(label));return wrap;
+  }
   async function load() {
     const data = await request();
     if (data.draft_id !== panel.dataset.draftId) throw new Error("Destination changed. Reopen the Draft.");
     limit = data.max_upload_bytes; canWrite = data.can_write === true; form.hidden = !canWrite;
     destination.textContent = `Destination: ${data.reference} - ${data.name}. Maximum ${Math.floor(limit / 1048576)} MB per DOCX.`;
     if (!canWrite) destination.textContent += " Read only: attaching and scanning require write permission.";
+    clearSelection();
     list.replaceChildren(...data.sources.map(sourceCard));
     if (!data.sources.length) list.append(element("p", "No Word reports retained for this Draft."));
     loaded = true;
@@ -104,14 +135,14 @@
       const pictures = new Map(data.pictures.map(picture => [picture.id, picture]));
       for (const block of data.blocks) {
         const part = element("div", "", "chat-word-block");
-        part.append(element("strong", block.locator), element("pre", block.text));
+        part.append(element("strong", block.locator), element("pre", block.text), selectControl(data,"locators",block.locator,"Include this text in AI preview"));
         for (const id of block.pictures) {
           const picture = pictures.get(id); if (!picture) continue;
           const figure = element("figure", ""), image = document.createElement("img");
           image.alt = `Retained ${picture.id} at ${picture.locator}`;
           image.src = `/scopes/${draft}/word/${encodeURIComponent(sourceId)}/pictures/${encodeURIComponent(id)}`;
           image.addEventListener("error", () => { image.hidden = true; figure.append(element("p", "Picture unavailable. Refresh status and recheck access or scan state.")); });
-          figure.append(image, element("figcaption", `${picture.id} | ${picture.locator}`)); part.append(figure);
+          figure.append(image, element("figcaption", `${picture.id} | ${picture.locator}`), selectControl(data,"picture_ids",id,"Include this picture in AI preview")); part.append(figure);
         }
         content.append(part);
       }
@@ -119,9 +150,9 @@
       if (after > 0) navigation.append(button("Previous text", () => inspect(sourceId, card, Math.max(0, after - 5))));
       if (data.next_after_block !== null) navigation.append(button("Next text", () => inspect(sourceId, card, data.next_after_block)));
       content.append(navigation);
-    }, "Verifying retained evidence and scan state.", "Evidence displayed for inspection. It has not been included in the AI conversation.");
+    }, "Verifying retained evidence and scan state.", "Evidence displayed for inspection. Select items explicitly before previewing an AI request.");
   }
-  window.addEventListener("pagehide", () => { generation++; loaded = false; busy = false; list.replaceChildren(); controls(); });
+  window.addEventListener("pagehide", () => { generation++; loaded = false; busy = false; clearSelection(); list.replaceChildren(); controls(); });
   window.addEventListener("pageshow", event => { if (event.persisted && section.open) reload(); });
   controls();
 })();

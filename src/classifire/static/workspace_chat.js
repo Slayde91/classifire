@@ -11,7 +11,7 @@
   const picker = panel.querySelector(".chat-record-picker");
   let selector;
   try { selector = JSON.parse(document.getElementById("workspace-chat-context").textContent); } catch { panel.hidden = true; return; }
-  selector.ids ||= []; selector.records ||= []; selector.matches ||= [];
+  selector.ids ||= []; selector.records ||= []; selector.matches ||= []; selector.word ||= null;
   let turns = [], enabled = false, ready = false, busy = false, epoch = 0, contextHash = "", controller = null, unappliedArtifacts = false;
   const prefix = `classifire-chat-v1:${panel.dataset.userId}:`, ttl = 30 * 60 * 1000;
   const bytes = value => new TextEncoder().encode(JSON.stringify(value)).length;
@@ -20,7 +20,7 @@
   function buttons() { preview.disabled = busy || unappliedArtifacts || selector.ids.length > 50 || selector.records.length > 20; send.disabled = !enabled || !ready || busy; }
   function selectionLabel() {
     panel.querySelector(".chat-selection").textContent = selector.draft_id
-      ? `${selector.ids.length} register record(s); saved Scope revision ${selector.revision}. Unsaved edits are excluded.`
+      ? `${selector.ids.length} register record(s); saved Scope revision ${selector.revision}; ${selector.word?.locators.length || 0} Word text block(s), ${selector.word?.picture_ids.length || 0} picture(s). Unsaved edits are excluded.`
       : `${selector.records.length} library record(s); ${selector.screen?.title || selector.screen?.name || "current workspace"}.`;
   }
   function storageRemove(name) { try { sessionStorage.removeItem(name); } catch { /* Storage is optional. */ } }
@@ -72,7 +72,7 @@
   document.addEventListener("classifire:chat-open", () => open(true));
   panel.querySelector(".chat-close").addEventListener("click", () => { open(false); toggle.focus(); });
   panel.addEventListener("keydown", event => { if (event.key === "Escape") { open(false); toggle.focus(); } });
-  panel.querySelector(".chat-clear").addEventListener("click", () => { reset(true); form.elements.question.value = ""; report("Conversation cleared. Preview context to start again."); });
+  panel.querySelector(".chat-clear").addEventListener("click", () => { reset(true); document.dispatchEvent(new CustomEvent("classifire:chat-evidence-clear")); form.elements.question.value = ""; report("Conversation cleared. Preview context to start again."); });
   const width = panel.querySelector(".chat-width"), dock = panel.querySelector(".chat-dock");
   width.addEventListener("input", () => document.documentElement.style.setProperty("--chat-panel-width", `${width.value}px`));
   dock.addEventListener("click", () => { const on = panel.classList.toggle("is-docked"); dock.setAttribute("aria-pressed", String(on)); dock.textContent = on ? "Float over workspace" : "Dock beside workspace"; document.body.classList.toggle("chat-docked", on && !body.hidden); });
@@ -85,6 +85,12 @@
     const ids = [...new Set(d.ids.filter(id => typeof id === "string"))].sort();
     if (JSON.stringify(ids) === JSON.stringify(selector.ids)) return;
     selector.ids = ids; reset(); if (ids.length > 50) { preview.disabled = true; report("Select at most 50 records.", true); }
+  });
+  document.addEventListener("classifire:word-selection", event => {
+    const data=event.detail || {};
+    if (!selector.draft_id || data.draftId!==selector.draft_id) return;
+    if (JSON.stringify(selector.word)===JSON.stringify(data.word)) return;
+    selector.word=data.word;reset();report("Report selection changed. Preview it and consent before sending.");
   });
   document.getElementById("scope-editor")?.addEventListener("scope:changed", () => { reset(); report("The register contains unsaved edits. A new preview will use saved values only."); });
   document.querySelector(".register-artifacts")?.addEventListener("change", () => {
@@ -151,6 +157,26 @@
     for (const section of context.sections || []) {
       const details=document.createElement("details"), title=document.createElement("summary"), content=document.createElement("pre");
       title.textContent=section.title;content.textContent=JSON.stringify(section.data,null,2);details.append(title,content);sections.append(details);
+    }
+    if (context.word_evidence) {
+      const evidence=context.word_evidence, details=document.createElement("details"), heading=document.createElement("summary"), text=document.createElement("p");
+      details.open=true; heading.textContent=`Selected Word evidence: ${evidence.original_filename}`;
+      text.textContent=`${evidence.blocks.length} text block(s) and ${evidence.pictures.length} picture(s) selected. ${evidence.omitted_blocks} text block(s) and ${evidence.omitted_pictures} picture(s) are excluded. The original DOCX is not sent.`;
+      details.append(heading,text);
+      for (const block of evidence.blocks) {
+        const location=document.createElement("strong"), words=document.createElement("pre");
+        location.textContent=block.locator;words.textContent=block.text;details.append(location,words);
+      }
+      for (const picture of evidence.pictures) {
+        const figure=document.createElement("figure"), image=document.createElement("img"), caption=document.createElement("figcaption");
+        image.alt=`Selected ${picture.id} at ${picture.locator}`;
+        image.src=`/scopes/${encodeURIComponent(selector.draft_id)}/word/${encodeURIComponent(evidence.source_id)}/pictures/${encodeURIComponent(picture.id)}`;
+        image.className="chat-evidence-image";
+        image.addEventListener("error",()=>{image.hidden=true;caption.textContent="Selected picture unavailable. Refresh evidence and preview again.";ready=false;form.elements.consent.checked=false;buttons();});
+        caption.textContent=`${picture.id}; ${picture.locator}. Placement does not prove which opening or service it belongs to.`;
+        figure.append(image,caption);details.append(figure);
+      }
+      sections.append(details);
     }
     for (const source of context.source_references) {
       const item=document.createElement("li");item.textContent=`${source.source_kind || "Source"}: ${source.locator || source.page_number || source.row?.sheet || "saved reference"}; ${source.claim_status || "unverified claim"}`;sourceList.append(item);
