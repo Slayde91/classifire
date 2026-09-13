@@ -19,7 +19,39 @@ unchanged and incomplete.
   reviews were configured; no human GitHub review is claimed. Post-merge run
   34715038796 passed 2,251 tests and all remaining checks.
 
-## Active imported-original navigation
+## Latest publication and CI
+
+- The owner-approved commits `6d4793b`, `51e3666`, `1de68b9` and `9cdc4a4` merged
+  in [PR #265](https://github.com/Slayde91/classifire/pull/265) as
+  `0e9bf984b2fe074b1bb51c6017bd59516759bd00`. Its full tree equals tested `9cdc4a4`;
+  all 40 reviewed files were included. Explicit owner approval resolved the earlier
+  public-destination block for all four commits.
+- PR run [34725079252](https://github.com/Slayde91/classifire/actions/runs/34725079252)
+  passed 2,399 tests and every remaining check before merge. No required reviews
+  were configured; no human GitHub review is claimed.
+- Post-merge run [34726463470](https://github.com/Slayde91/classifire/actions/runs/34726463470)
+  ended cancelled at the 30-minute job limit. Its log also records a real test
+  failure: 1 failed, 2,295 passed. The import-governance test computed tomorrow at
+  collection but ran after midnight, when that date was correctly eligible.
+  This run did not pass and was not restarted.
+- Separate [PR #266](https://github.com/Slayde91/classifire/pull/266), source `7c9b570`,
+  freezes that test's clock and raises the CI ceiling to 45 minutes. Application
+  rules, assertions and all validation steps are unchanged; PR #255 is preserved.
+  Local reproduction failed before the fix; both rollover cases passed afterwards.
+  All 51 import/activation governance tests, targeted Ruff, diff and workflow
+  invariant checks passed. Hosted run `34728245700` then passed 2,399 tests and all
+  remaining checks. PR #266 merged as `96fdf7a932e61107af7c39262706337fcacc092b`;
+  its full tree equals tested `7c9b570`. Post-merge run `34729555434` is the separate
+  activation gate; verify its actual result before any deployment.
+- No workspace activation follows from publication. The old `9cdc4a4` activation
+  bundle is blocked by failed post-merge CI. A successful exact candidate needs a
+  reconciled plan, separate owner approval, fresh matched backup and disposable
+  restore verification. The new `7c9b570` plan is prepared and unapproved; its 47
+  isolated launcher guard cases passed, including a corrected helper-hash pin.
+  This does not prove an approved startup or fresh live recovery. The separately
+  approved diagnostic runtime remains unchanged.
+
+## Merged imported-original navigation
 
 Separate checkout `.tmp/imported-evidence-navigation-20260913`, branch
 `feat/imported-evidence-navigation-20260913`, base `1de68b9`. Connect a selected
@@ -48,13 +80,12 @@ test and three documentation files. The local commit message is:
 Link imported evidence to exact retained original review cards.
 Resolve its exact hash from this branch and the private finalization receipt.
 
-Pinned local commits `6d4793b`, `51e3666` and `1de68b9` remain clean. The current
-three-commit public-publication question supersedes the earlier two-commit question;
-this extra navigation change is outside both. No publication or activation approval
-has arrived. Keep the prior candidates pinned while resolving explicit publication
-scope; do not retry the rejected push without the required approval.
+All four pinned commits are published through PR #265. Explicit owner approval
+resolved the public-destination block. Source `9cdc4a4` tracks its published branch;
+the earlier separate candidate checkouts are preserved. Publication is not activation
+approval, and failed post-merge CI blocks the old activation bundle.
 
-## Locally committed Defect-only source inspection
+## Merged Defect-only source inspection
 
 Source `.tmp/defect-source-evidence-20260913`, branch
 `feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`. It extends the
@@ -81,12 +112,11 @@ Final source review found no actionable issue. The reviewed change contains six
 application files, two synthetic test files and three documentation files. The local
 commit message is: Allow source inspection for Defects with unresolved relationships.
 Resolve its exact hash from this branch and the private finalization receipt.
-Commit `1de68b9f41582fc5297260d3a838e2851a4defbb` is clean in its pinned checkout
-and is included in the pending three-commit public-publication question. No upstream,
-PR or activation approval exists. Observe exact-head CI and required reviews before
-any merge; keep activation separately approved.
+Commit `1de68b9f41582fc5297260d3a838e2851a4defbb` remains pinned and is included
+in merged PR #265. Keep activation separately approved and reconcile the exact
+successful candidate after PR #266's CI repair.
 
-## Locally committed register source evidence increment
+## Merged register source evidence increment
 
 Source: `C:/CLASSIFIRE/.tmp/register-source-evidence-20260913`, branch
 `feat/register-source-evidence-20260913`, based on local `6d4793b`.
@@ -98,18 +128,16 @@ source-cell F2 passed. Continue from private `.tmp/register-source-evidence-uat-
 `.tmp/register-evidence-validation-20260913` receipts.
 The marked demo uses only PostgreSQL15433 and port8845; never use live15432 for tests.
 
-The separate Complete-report checkout is clean at `6d4793b`, no upstream or PR.
-Its push was rejected by automatic approval review: the destination is verified
-PUBLIC `Slayde91/classifire`, and explicit proprietary-publication approval is pending.
-Do not retry publication, change visibility/protection or activate a new candidate
-without its applicable approval. Finish local engineering and explicit classification.
+The separate Complete-report checkout remains pinned at `6d4793b`. It and register
+Evidence are published in PR #265. No repository visibility/protection setting or
+operational runtime changed during publication.
 
-## Active Complete report increment
+## Merged Complete report increment
 
 Checkout: `C:/CLASSIFIRE/.tmp/complete-multi-review-reports-20260913`.
 Branch: `feat/complete-multi-review-reports-20260913`, based on merged `e96c692`.
-The source is implemented and locally verified but publication is pending at this
-checkpoint. The pinned ccaff7a checkout remains unchanged.
+Source `6d4793b` is locally verified and published through PR #265. The pinned
+ccaff7a checkout is preserved; its old plan does not cover this Complete format.
 
 [Complete contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md) and
 [multiple-review contract](./MULTI_REVIEW_REPORTS.md) describe the actual change:
@@ -149,9 +177,11 @@ accepted Word/Scope/package confirmations are complete and must not be repeated.
 Connected upload still has the separately recorded host-policy refusal. No new
 OAuth/tunnel, grant, allowlist, provider or live 15432 operation is included.
 
-The unapproved ccaff7a plan covers Scope report v3/mapping v4, not the new Complete
-format. Activation requires an exact tested candidate plan, fresh matched database
-and storage backup, disposable 15433 restore verification and explicit approval.
+The historical ccaff7a plan excludes Complete v3. The later prepared `9cdc4a4`
+plan is unapproved and blocked by PR #265's failed post-merge CI. Reconcile the
+exact repaired candidate and successful PR/post-merge runs before requesting
+activation approval. Fresh matched database/storage backup and disposable 15433
+restore verification remain required.
 Older readers cannot transparently read new Complete-v3 snapshots; retain all later
 records and originals before any recovery decision. Existing absolute StoredFile
 bindings must not be rewritten to bypass containment.
@@ -162,17 +192,15 @@ PostgreSQL tests use disposable 15433/classifire_containment_test, never live 15
 
 ## Classification and next action
 
-Intentional local changes comprise shared report/package/client services, renderer,
-UI/templates, five synthetic test files and corresponding contract/state documents.
-Private logs, originals, generated outputs and operator state stay outside Git.
-Preserve conflicted root `de0cc5a`, CHERRY_PICK_HEAD `c3e4c810`, all unrelated work
-and four DU conflicts; no root source changes are included.
+PR #265 published 40 reviewed files: 19 application, 11 synthetic tests and 10 docs.
+PR #266 contains two files: one test and the CI workflow. This checkpoint correction
+changes documentation only. Private logs, originals, generated outputs and operator
+state remain outside Git. Preserve the conflicted root and all unrelated work.
 
-1. Finish final combined verification, review/classify explicit files, commit/push
-   and create the Complete-report PR. Observe successful CI and required reviews
-   before merging; verify the actual merge and post-merge run.
-2. Prepare its exact-version activation/recovery plan before requesting deployment
-   approval. Existing ccaff7a approval remains false and does not cover this version.
+1. PR #266's exact-head CI and merge are verified. Observe existing post-merge run
+   `34729555434` and retain its actual result; observation expiry is not a retry.
+2. Complete the successful candidate's exact activation/recovery plan before requesting
+   separate approval. Existing historical approvals do not authorize this activation.
 3. Preserve the confirmed private ten-defect Draft reference and unknowns. Follow
    [reference readiness](./PHYSICAL_REFERENCE_READINESS.md) before real evaluation.
    It is not blind independent accuracy evidence or technical approval.
