@@ -6,7 +6,20 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
-## Current native PDF panel checkpoint
+## Current native PDF proposal checkpoint
+
+Use `.tmp/native-pdf-scope-proposals-20260914`, branch
+`feat/native-pdf-scope-proposals-20260914`, based on local2fea699. Explicit PDF page
+text/image selection now reuses the native context/consent transport and typed
+additions composer. The separate signed PDF page review saves the exact graph;
+a separate package confirmation includes the exact PDF. Synthetic browser acceptance
+and reopening after test-server restart passed. Unknowns and blank openings remain.
+The existing human page/entity references are saved; raw AI claims and unsaved proposal
+controls remain transient. Inspect the private validation receipt for final tests.
+No new writer, migration, provider call, live change or public push is included.
+Broader XLSX coverage, durable AI lineage and operational acceptance remain.
+
+## Earlier native PDF panel checkpoint
 
 Use `.tmp/native-pdf-attachments-20260914`, branch
 `feat/native-pdf-attachments-20260914`, based on localb330266. The Word attachment
@@ -22,8 +35,8 @@ was corrected without changing the review page. Inspect the private receipt for 
 
 This branch locally extends the closed-review form assertion for separate DOCX
 and PDF uploads. PR271 still needs its own approved correction publication/CI;
-no new branch has public approval. Next implement explicitly selected PDF context
-and native typed proposal review using existing PDF contracts, preserving all
+no new branch has public approval. The newer checkpoint above implements explicitly
+selected PDF context and typed review using existing PDF contracts. Preserve all
 separate consent/confirmation gates. Do not rebuild the plugin or PDF parser.
 
 ## Current selected-record edit checkpoint
@@ -378,15 +391,16 @@ are absent; these are the existing canonical documents. Preserve the conflicted
 root and pinned runtime/diagnostic checkouts. Reconcile
 feat/native-word-attachments-20260913, feat/native-word-chat-evidence-20260913 and
 feat/native-word-scope-proposals-20260913 and
-feat/native-selected-scope-edits-20260913 and feat/native-pdf-attachments-20260914
-with GitHub. PR271 failed on an obsolete form assertion; local test-only8bce0b0
+feat/native-selected-scope-edits-20260913, feat/native-pdf-attachments-20260914 and
+feat/native-pdf-scope-proposals-20260914 with GitHub. PR271 failed on an obsolete form assertion; local test-only8bce0b0
 awaits separate publication approval. Selected Word text/PNG preview/consent/advice
 is implemented and passed94 affected tests plus synthetic browser checks.
 Native typed Word additions, separate Scope/package confirmations and exact-original
 ZIP download passed the synthetic journey, with127 checks. Real-provider/live
 acceptance, broader report coverage and non-Scope edits remain. PDF attachment/scan/
-page inspection now use the same native adapter; explicitly selected PDF model
-context/proposals remain the next C2 implementation step. Selected Scope edits
+page inspection and explicit selected page text/image model context/proposals now
+pass the separate PDF Scope/package confirmation and restart journey. Extend supported
+XLSX through existing contracts next; preserve the PDF human-review provenance limit. Selected Scope edits
 now show a field diff, validate without saving and require a separate manual save;
 147 distinct checks passed. Inspect the newer private validation receipt. Reuse existing
 services and preserve unknowns, blank openings and unresolved links. PR #270 merged

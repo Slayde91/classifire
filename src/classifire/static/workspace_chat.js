@@ -11,19 +11,19 @@
   const picker = panel.querySelector(".chat-record-picker"), action = panel.querySelector(".chat-action");
   let selector;
   try { selector = JSON.parse(document.getElementById("workspace-chat-context").textContent); } catch { panel.hidden = true; return; }
-  selector.ids ||= []; selector.records ||= []; selector.matches ||= []; selector.word ||= null;
+  selector.ids ||= []; selector.records ||= []; selector.matches ||= []; selector.word ||= null; selector.pdf ||= null;
   let turns = [], enabled = false, ready = false, busy = false, epoch = 0, contextHash = "", controller = null, unappliedArtifacts = false;
   const prefix = `classifire-chat-v1:${panel.dataset.userId}:`, ttl = 30 * 60 * 1000;
   const bytes = value => new TextEncoder().encode(JSON.stringify(value)).length;
   const key = () => prefix + contextHash;
   function report(text, error = false) { status.textContent = text; status.dataset.error = String(error); }
   function buttons() {
-    const missing=selector.action==="propose_scope_edits" ? !selector.ids.length : selector.action==="propose_word_scope" ? !selector.word?.locators.length : false;
+    const missing=selector.action==="propose_pdf_scope" ? !selector.pdf : selector.action==="propose_scope_edits" ? !selector.ids.length : selector.action==="propose_word_scope" ? !selector.word?.locators.length : false;
     preview.disabled = busy || missing || unappliedArtifacts || selector.ids.length > 50 || selector.records.length > 20; send.disabled = !enabled || !ready || busy || missing;
   }
   function selectionLabel() {
     panel.querySelector(".chat-selection").textContent = selector.draft_id
-      ? `${selector.ids.length} register record(s); saved Scope revision ${selector.revision}; ${selector.word?.locators.length || 0} Word text block(s), ${selector.word?.picture_ids.length || 0} picture(s). Unsaved edits are excluded.`
+      ? `${selector.ids.length} register record(s); saved Scope revision ${selector.revision}; ${selector.word?.locators.length || 0} Word text block(s), ${selector.word?.picture_ids.length || 0} picture(s); PDF page ${selector.pdf?.page_number || "none"}. Unsaved edits are excluded.`
       : `${selector.records.length} library record(s); ${selector.screen?.title || selector.screen?.name || "current workspace"}.`;
   }
   function storageRemove(name) { try { sessionStorage.removeItem(name); } catch { /* Storage is optional. */ } }
@@ -94,7 +94,12 @@
     const data=event.detail || {};
     if (!selector.draft_id || data.draftId!==selector.draft_id) return;
     if (JSON.stringify(selector.word)===JSON.stringify(data.word)) return;
-    selector.word=data.word;reset();report("Report selection changed. Preview it and consent before sending.");
+    selector.word=data.word;if(data.word)selector.pdf=null;reset();report("Report selection changed. Preview it and consent before sending.");
+  });
+  document.addEventListener("classifire:pdf-selection", event => {
+    const data=event.detail || {};
+    if(!selector.draft_id || data.draftId!==selector.draft_id || JSON.stringify(selector.pdf)===JSON.stringify(data.pdf))return;
+    selector.pdf=data.pdf;if(data.pdf)selector.word=null;reset();report("PDF selection changed. Preview it and consent before sending.");
   });
   document.getElementById("scope-editor")?.addEventListener("scope:changed", () => { reset(); report("The register contains unsaved edits. A new preview will use saved values only."); });
   document.querySelector(".register-artifacts")?.addEventListener("change", () => {
@@ -162,10 +167,10 @@
       const details=document.createElement("details"), title=document.createElement("summary"), content=document.createElement("pre");
       title.textContent=section.title;content.textContent=JSON.stringify(section.data,null,2);details.append(title,content);sections.append(details);
     }
-    if (context.word_evidence) {
-      const evidence=context.word_evidence, details=document.createElement("details"), heading=document.createElement("summary"), text=document.createElement("p");
-      details.open=true; heading.textContent=`Selected Word evidence: ${evidence.original_filename}`;
-      text.textContent=`${evidence.blocks.length} text block(s) and ${evidence.pictures.length} picture(s) selected. ${evidence.omitted_blocks} text block(s) and ${evidence.omitted_pictures} picture(s) are excluded. The original DOCX is not sent.`;
+    if (context.word_evidence || context.pdf_evidence) {
+      const pdf=!!context.pdf_evidence, evidence=context.pdf_evidence || context.word_evidence, details=document.createElement("details"), heading=document.createElement("summary"), text=document.createElement("p");
+      details.open=true; heading.textContent=`Selected ${pdf ? "PDF page" : "Word"} evidence: ${evidence.original_filename}`;
+      text.textContent=pdf ? `Page ${evidence.page.page_number}: text ${evidence.blocks.length ? "included" : "excluded"}, image ${evidence.pictures.length ? "included" : "excluded"}. ${evidence.omitted_pages} other page(s) excluded. The original PDF is not sent.` : `${evidence.blocks.length} text block(s) and ${evidence.pictures.length} picture(s) selected. ${evidence.omitted_blocks} text block(s) and ${evidence.omitted_pictures} picture(s) are excluded. The original DOCX is not sent.`;
       details.append(heading,text);
       for (const block of evidence.blocks) {
         const location=document.createElement("strong"), words=document.createElement("pre");
@@ -174,7 +179,7 @@
       for (const picture of evidence.pictures) {
         const figure=document.createElement("figure"), image=document.createElement("img"), caption=document.createElement("figcaption");
         image.alt=`Selected ${picture.id} at ${picture.locator}`;
-        image.src=`/scopes/${encodeURIComponent(selector.draft_id)}/word/${encodeURIComponent(evidence.source_id)}/pictures/${encodeURIComponent(picture.id)}`;
+        image.src=pdf ? `/scopes/${encodeURIComponent(selector.draft_id)}/evidence/${encodeURIComponent(evidence.source_id)}/pages/${picture.page_number}.png` : `/scopes/${encodeURIComponent(selector.draft_id)}/word/${encodeURIComponent(evidence.source_id)}/pictures/${encodeURIComponent(picture.id)}`;
         image.className="chat-evidence-image";
         image.addEventListener("error",()=>{image.hidden=true;caption.textContent="Selected picture unavailable. Refresh evidence and preview again.";ready=false;form.elements.consent.checked=false;buttons();});
         caption.textContent=`${picture.id}; ${picture.locator}. Placement does not prove which opening or service it belongs to.`;
@@ -222,10 +227,13 @@
     card.append(findings);
     const review=document.createElement("form"), button=document.createElement("button");
     review.method="post";review.action=`/scopes/${encodeURIComponent(selector.draft_id)}/word/${encodeURIComponent(proposal.source_id)}/preview`;
+    const pdf=proposal.source_kind==="pdf";
+    if(pdf)review.action=`/scopes/${encodeURIComponent(selector.draft_id)}/evidence/${encodeURIComponent(proposal.source_id)}/scope/preview`;
     review.className="chat-scope-review";
     const fields={csrf_token:panel.dataset.csrf,expected_revision:String(proposal.expected_revision),document_sha256:proposal.document_sha256,payload:JSON.stringify(proposal.payload),targets:JSON.stringify(proposal.targets)};
+    if(pdf){fields.document_hash=fields.document_sha256;delete fields.document_sha256;fields.page=String(proposal.page_number);}
     for (const [name,value] of Object.entries(fields)) {const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;review.append(input);}
-    button.type="submit";button.className="button button-primary";button.textContent="Review proposed Word Scope";
+    button.type="submit";button.className="button button-primary";button.textContent=pdf ? "Review proposed PDF Scope" : "Review proposed Word Scope";
     review.append(button);card.append(review);messages.append(card);
   }
   function showEdits(proposal) {
@@ -278,7 +286,7 @@
       else {turns.push({role:"user",content:question},{role:"assistant",content:completeAnswer});trimmed=trimTurns();if(!turns.length)storageRemove(key());saveThread();}
       showProposal(result.proposal);
       showEdits(result.edit_proposal);
-      if(selector.action === "propose_word_scope" || selector.action === "propose_scope_edits"){ready=false;form.elements.consent.checked=false;}
+      if(["propose_word_scope","propose_pdf_scope","propose_scope_edits"].includes(selector.action)){ready=false;form.elements.consent.checked=false;}
       form.elements.question.value="";
       report(`${result.notice}${trimmed ? " Some displayed exchanges exceed the conversation window and will not be sent or remembered." : ""}`);
     }catch(error){if(version===epoch){ready=false;form.elements.consent.checked=false;report(error.message,true);}}

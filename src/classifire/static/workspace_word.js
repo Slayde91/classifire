@@ -68,7 +68,12 @@
     actions.append(link); card.append(actions, element("div", "", "chat-word-evidence")); return card;
   }
   function publishSelection() {
-    if (pdf) return;
+    if (pdf) {
+      const value=selection && (selection.include_text || selection.include_image) ? {...selection} : null;
+      document.dispatchEvent(new CustomEvent("classifire:pdf-selection",{detail:{draftId:panel.dataset.draftId,pdf:value}}));
+      section.querySelector(".chat-word-selected").textContent=value ? `Selected PDF page ${value.page_number}: text ${value.include_text ? "included" : "excluded"}, image ${value.include_image ? "included" : "excluded"}. Preview and consent before sending.` : "No PDF page selected for AI.";
+      return;
+    }
     const value = selection && (selection.locators.length || selection.picture_ids.length) ? selection : null;
     document.dispatchEvent(new CustomEvent("classifire:word-selection", {detail:{draftId:panel.dataset.draftId, word:value ? {...value,locators:[...value.locators],picture_ids:[...value.picture_ids]} : null}}));
     section.querySelector(".chat-word-selected").textContent = value
@@ -80,6 +85,9 @@
   }
   section.querySelector(".chat-word-clear-selection")?.addEventListener("click", clearSelection);
   document.addEventListener("classifire:chat-evidence-clear", clearSelection);
+  document.addEventListener(pdf ? "classifire:word-selection" : "classifire:pdf-selection",event=>{
+    if(event.detail?.draftId===panel.dataset.draftId && (pdf ? event.detail.word : event.detail.pdf))clearSelection();
+  });
   function selectControl(data, key, id, label) {
     const wrap=element("label", "", "chat-consent"), input=document.createElement("input");
     input.type="checkbox"; input.className="chat-word-select";
@@ -166,24 +174,38 @@
       content.append(navigation);
     }, "Verifying retained evidence and scan state.", "Evidence displayed for inspection. Select items explicitly before previewing an AI request.");
   }
+  function selectPdfControl(data,key,label) {
+    const wrap=element("label","","chat-consent"),input=document.createElement("input");
+    input.type="checkbox";input.className="chat-word-select";
+    const same=()=>selection?.source_id===data.source_id && selection?.document_sha256===data.document_sha256 && selection?.page_number===data.page.page_number;
+    input.checked=!!(same()&&selection[key]);
+    input.addEventListener("change",()=>{
+      if(!same()){
+        section.querySelectorAll(".chat-word-select").forEach(other=>{if(other!==input)other.checked=false;});
+        selection={source_id:data.source_id,document_sha256:data.document_sha256,page_number:data.page.page_number,include_text:false,include_image:false};
+      }
+      selection[key]=input.checked;publishSelection();
+    });
+    wrap.append(input,document.createTextNode(label));return wrap;
+  }
   function inspectPdf(sourceId, card, page) {
     const content=card.querySelector(".chat-word-evidence");content.replaceChildren();content.classList.add("chat-word-block");
     operation(async () => {
       const data=await request(`/${encodeURIComponent(sourceId)}?page=${page}`);
       content.append(element("p", `Page ${data.page.page_number} of ${data.total_pages}. Retained evidence only; no model request or Scope save.`));
       content.append(element("p", `Document SHA256: ${data.document_sha256}`, "chat-word-hash"));
-      content.append(element("strong", data.page.locator_key), element("pre", data.page.text));
+      content.append(element("strong", data.page.locator_key), element("pre", data.page.text), selectPdfControl(data,"include_text","Include this page text in AI preview"));
       const image=document.createElement("img");image.alt=`Retained PDF page ${page}`;
       image.src=`/scopes/${draft}/evidence/${encodeURIComponent(sourceId)}/pages/${page}.png`;
       image.addEventListener("error",()=>{image.hidden=true;content.append(element("p","Page image unavailable. Recheck access and current scan status."));});
-      content.append(image);
+      content.append(image,selectPdfControl(data,"include_image","Include this page image in AI preview"));
       const navigation=element("div", "", "chat-actions");
       if(page>1)navigation.append(button("Previous page",()=>inspectPdf(sourceId,card,page-1)));
       if(page<data.total_pages)navigation.append(button("Next page",()=>inspectPdf(sourceId,card,page+1)));
       const review=element("a", "Review this PDF page", "button button-secondary button-small");
       review.href=`/scopes/${draft}/evidence/${encodeURIComponent(sourceId)}?page=${page}`;
       navigation.append(review);content.append(navigation);
-    }, "Verifying the selected PDF page and scan state.", "PDF page displayed. Analysis and confirmation use the separate PDF page review controls.");
+    }, "Verifying the selected PDF page and scan state.", "PDF page displayed. Select text/image explicitly, then preview and consent. Scope confirmation remains separate.");
   }
   window.addEventListener("pagehide", () => { generation++; loaded = false; busy = false; clearSelection(); list.replaceChildren(); controls(); });
   window.addEventListener("pageshow", event => { if (event.persisted && section.open) reload(); });

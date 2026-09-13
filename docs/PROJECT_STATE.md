@@ -1,13 +1,48 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-14 during local PDF panel acceptance. Selected-record edits and
+Reconciled 2026-09-14 during local PDF proposal acceptance. Selected-record edits and
 Word proposal evidence are retained below. Live chat remains rolled back.
 [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
 behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
-## Native PDF attachment checkpoint
+## Native PDF proposal checkpoint
+
+The isolated `feat/native-pdf-scope-proposals-20260914` branch extends local
+`2fea699`. The panel now selects one retained PDF page's text and/or rendered PNG
+for exact context preview and explicit provider consent. Other pages, the original
+PDF and external links stay excluded. Selecting Word or PDF clears the other format
+and invalidates old preview/consent; the request contract rejects mixed formats.
+The existing transport and additions composer validate source-bound Defect, Opening
+and Service proposals, preserve existing records and reject unsupported claims.
+**Review proposed PDF Scope** opens the existing signed PDF page review. Only its
+separate confirmation saves a revision; package confirmation remains separate.
+
+This path records existing human page/entity references when the user confirms.
+It does not persist raw model claims, rationale or a durable AI suggestion batch.
+Unsaved proposal controls are transient. No new writer, parser, dependency, table,
+migration, provider configuration or downstream execution is included.
+
+The synthetic browser journey passed selected text/image preview, consent refusal,
+proposal without writes, separate Scope/package confirmations, preserved unknowns
+and a blank opening with zero Services. The ZIP contains exactly the original PDF
+and saved Scope revision plus its manifest. After test-server restart a fresh browser
+returned the identical ZIP with no repeat scan, model call, Scope or package write.
+Desktop and390px proposal, Scope and package review outputs were inspected. Tests
+use scripted replies and an injected clean scan, not real accuracy or malware evidence.
+Validation:98 affected PDF/Word/chat/edit/package tests passed without failures or
+skips in439.395s, including all21 new cases. Tests used this checkout's PYTHONPATH,
+fresh basetemp and disposable15433. Full Ruff, Mypy236, scoped Bandit, JavaScript
+syntax and diff checks passed. The first screenshot preceded source-image loading;
+a read-only recapture verified the rendered page without another save.
+
+The increment and its local parents remain unpublished. PR271 still has approved
+head d864c51 and failed CI34757320145; no reviews or merge were observed. Local
+one-file correction8bce0b0 awaits separate publication approval. Diagnostic post-merge
+CI34753856708 remains cancelled. The live8820 runtime and live15432 remain untouched.
+
+## Earlier native PDF attachment checkpoint
 
 The isolated `feat/native-pdf-attachments-20260914` branch starts at localb330266.
 The existing session adapter and attachment driver now support both Word and PDF
@@ -41,7 +76,8 @@ advice while preserving rejection/repeat/stale-Scope checks. This locally extend
 the earlier8bce0b0 correction for the additional PDF form; it neither publishes that
 commit nor changes PR271. The exact12-file d864c51 approval does not cover this
 branch or its unpublished parents. No public push, activation, provider call or
-live15432 operation occurred. C2 PDF model/proposal and broader-format work remain.
+live15432 operation occurred. The newer PDF model/proposal checkpoint above supersedes
+that implementation gap; broader formats and operational acceptance remain.
 
 ## Selected Scope record edit checkpoint
 
@@ -633,11 +669,12 @@ See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 2. **C2 - Complete report analysis and Scope review.** Native DOCX attachment,
    status, explicit scan, evidence inspection and consented selected text/PNG advice are
    implemented, including typed additions and separate Word/package review in the
-   synthetic journey. PDF attachment/inspection now reuse the panel, but native PDF
-   model context and proposal review remain the next implementation step. Resolve
+   synthetic journey. The same PDF page text/image and typed-addition journey now
+   passes synthetic browser checks with separate PDF and package confirmations.
+   Extend supported XLSX through its existing contracts next. Resolve
    the operational gate separately; do not repeat the proven Word increment. Reuse the existing
-   intake/scan/Word review/client-request/package services, beginning with one
-   supported synthetic DOCX. Finish the visible attachment-to-confirmed-Scope-to-ZIP
+   intake/scan/review/client-request/package services. Preserve the demonstrated
+   Word/PDF interaction when extending the attachment-to-confirmed-Scope-to-ZIP
    journey from the [assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).
    Validate the actual browser, exact originals and distinct confirmations.
    Implementation with synthetic fixtures does not require live activation or

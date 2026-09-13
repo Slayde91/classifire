@@ -117,9 +117,9 @@ No connector rebuild or new ChatKit dependency is required by this intention.
 | User need | Current evidence | Required extension |
 | --- | --- | --- |
 | Ask about selected page data | Native typed selectors, preview/consent and advisory replies implemented | Complete separately approved real browser activation/acceptance |
-| Attach a defect report in chat | Native DOCX/PDF attachment, retained-source/status cards and explicit scan reuse existing intake; saved sources reopen without chat memory | Extend PDF selection/model/proposal review, then supported XLSX; complete operational acceptance |
-| Read report evidence while discussing it | Native panel inspects Word evidence and selects up to10 text blocks/two PNG pictures for preview/consent and typed additions | Complete real-provider acceptance and broader format coverage |
-| Propose and confirm a page change | Explicit Word additions reuse Word review; selected saved Scope replacements show field differences and validate in the manual editor before separate save | Real-provider/live acceptance, durable AI lineage and remaining non-Scope action contracts |
+| Attach a defect report in chat | Native DOCX/PDF attachment, retained-source/status cards and explicit scan reuse existing intake; saved sources reopen without chat memory | PDF selection/model/proposal and separate package review are synthetically validated; extend supported XLSX and complete operational acceptance |
+| Read report evidence while discussing it | Native panel selects up to10 Word text blocks/two PNG pictures or one PDF page text/image for preview/consent and typed additions | Complete real-provider acceptance and broader format coverage |
+| Propose and confirm a page change | Explicit Word/PDF additions reuse their separate review; selected saved Scope replacements show field differences and validate in the manual editor before separate save | Real-provider/live acceptance, durable AI lineage and remaining non-Scope action contracts |
 | Download a reviewed result | Existing exact saved packages and original-bearing ZIPs | In-context access to the same package review, separate confirmation and exact download |
 
 ### Report attachment to saved Draft
@@ -360,9 +360,11 @@ exact PDF as a download. **Review this PDF page** opens the existing in-app page
 with that page selected. Its suggestions and Scope confirmation retain their own
 controls and configuration; none runs because a PDF was uploaded or inspected.
 
-PDF pages are not automatically included in the native chat context. The panel states
-that native PDF model selection/proposals remain unavailable. Word text/picture
-selection and the existing native Word proposal flow are unchanged. Source kinds are
+PDF pages are not automatically included in native chat context. Two unchecked
+controls select the inspected page's text and/or image. Selecting PDF clears Word
+selection and old preview/consent, and vice versa. Inspecting another page does not
+silently select it. The server admits one explicit page (1-50), rejects mixed formats
+and reads the exact retained evidence under current source/scan/access checks. Source kinds are
 restricted to Word/PDF and remain bound to their own retained purposes; a source ID
 cannot be read under the other format or another user's Draft. Both controls share
 the existing session adapter and driver; no new intake pipeline or provider is added.
@@ -381,3 +383,31 @@ No real scanner, model accuracy or live acceptance is claimed.
 
 A separate browser compatibility check also passed Word upload/scan, selected text/
 picture preview, unchanged Word selection while PDFs load and exact Word download.
+
+
+## Native PDF evidence and typed additions
+
+After selecting page text and/or image, **Preview context** displays the source,
+page, exact selected text and PNG hash/size. Other pages, original PDF bytes and
+external links are excluded. The existing transport sends only the selected text
+and verified PNG after explicit consent. Text-only and image-only requests remain
+possible; an image-only proposal cannot quote text omitted from its preview.
+
+**Propose new Scope records from selected PDF evidence** reuses the strict additions
+contract: at most25 new Defects/Openings/Services, complete typed fields, explicit
+unknowns and source-bound claims. Existing rows remain unchanged. Wrong page/quote/
+image claims, Confirmed states and unbound rows are refused. Changed selection,
+revision, rights, scan or document identity requires fresh valid context; a reply
+cannot save data. The panel clears consent after producing a proposal.
+
+**Review proposed PDF Scope** opens the existing signed PDF page review with the
+complete graph, selected page and current revision. Its separate unchecked human
+confirmation is the only save step. Package preview and save remain another explicit
+interaction. Reopening saved results does not rerun model, scan or other capabilities.
+The existing PDF human page/entity references are retained on confirmation. Raw model
+claims/rationale and unsaved proposal controls are transient; this is not the durable
+PDF suggestion-batch pipeline. No new migration, writer or provider is introduced.
+
+Synthetic browser acceptance proved this sequence and the exact original-bearing
+ZIP across a test-server restart. It does not establish real model accuracy, real
+scanner acceptance, operational activation or a complete production C2 exit.

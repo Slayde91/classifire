@@ -65,12 +65,14 @@ class OpenAIWorkspaceChatPort:
         *,
         images: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        proposal = (
-            isinstance(request, WorkspaceChatRequest) and request.action == "propose_word_scope"
-        )
+        proposal = isinstance(request, WorkspaceChatRequest) and request.action in {
+            "propose_word_scope",
+            "propose_pdf_scope",
+        }
         edits = (
             isinstance(request, WorkspaceChatRequest) and request.action == "propose_scope_edits"
         )
+        pdf = isinstance(request, WorkspaceChatRequest) and request.pdf is not None
         schema, instructions = Advice.model_json_schema(), INSTRUCTIONS
         if edits:
             from .draft_workspace_scope_edits import response_schema as edit_schema
@@ -96,7 +98,7 @@ run tools or execute downstream capabilities."""
             from .draft_workspace_word_proposals import response_schema
 
             schema = response_schema()
-            instructions += """
+            proposal_instructions = """
 The explicitly requested action is to propose new Scope records from selected
 Word evidence. Produce additions only, never edits to existing records. Use fresh UUIDs
 as local proposal identities and link only within your proposed graph. At most 25
@@ -113,6 +115,12 @@ and exclusions stay empty: this Word review contract links Defects, Openings and
 Describe unknowns in uncertainty and preserve null/empty physical fields. If no
 supported additions can be made, return empty lists and explain why. A response
 is not a saved change, technical approval, price, package or release."""
+            if pdf:
+                proposal_instructions = proposal_instructions.replace("Word", "PDF page").replace(
+                    "text locator; cite only selected pictures.",
+                    "page locator; cite only its selected text or selected page picture.",
+                )
+            instructions += proposal_instructions
         body: dict[str, Any] = {
             "model": self.model,
             "store": False,
@@ -146,7 +154,7 @@ is not a saved change, technical approval, price, package or release."""
                 "format": {
                     "type": "json_schema",
                     "name": (
-                        "workspace_word_proposal"
+                        ("workspace_pdf_proposal" if pdf else "workspace_word_proposal")
                         if proposal
                         else "workspace_scope_edits"
                         if edits
@@ -160,10 +168,15 @@ is not a saved change, technical approval, price, package or release."""
         if images:
             # Internal bytes must match the exact evidence hashes shown in the preview.
             try:
-                descriptors = context["word_evidence"]["pictures"]
-                if not isinstance(request, WorkspaceChatRequest) or request.word is None:
-                    raise ValueError("Word selection required")
-                if not 1 <= len(descriptors) <= 2 or len(images) != 2 * len(descriptors):
+                descriptors = context["pdf_evidence" if pdf else "word_evidence"]["pictures"]
+                if not isinstance(request, WorkspaceChatRequest) or not (
+                    request.word or request.pdf
+                ):
+                    raise ValueError("Evidence selection required")
+                limit = 4 * 1024 * 1024 if pdf else MAX_CHAT_IMAGE_BYTES
+                if not 1 <= len(descriptors) <= (1 if pdf else 2) or len(images) != 2 * len(
+                    descriptors
+                ):
                     raise ValueError("picture count")
                 for index, descriptor in enumerate(descriptors):
                     label, picture = images[index * 2 : index * 2 + 2]
@@ -177,13 +190,13 @@ is not a saved change, technical approval, price, package or release."""
                         or picture["detail"] != "high"
                         or type(picture["image_url"]) is not str
                         or not picture["image_url"].startswith("data:image/png;base64,")
-                        or len(picture["image_url"]) > MAX_CHAT_IMAGE_BYTES * 4 // 3 + 32
+                        or len(picture["image_url"]) > limit * 4 // 3 + 32
                     ):
                         raise ValueError("picture part")
                     decoded = base64.b64decode(picture["image_url"].split(",", 1)[1], validate=True)
                     if (
                         not decoded.startswith(b"\x89PNG\r\n\x1a\n")
-                        or not 1 <= len(decoded) <= MAX_CHAT_IMAGE_BYTES
+                        or not 1 <= len(decoded) <= limit
                         or len(decoded) != descriptor["preview_size_bytes"]
                         or hashlib.sha256(decoded).hexdigest() != descriptor["preview_sha256"]
                     ):
@@ -279,7 +292,9 @@ is not a saved change, technical approval, price, package or release."""
             if proposal:
                 from .draft_workspace_word_proposals import validate_output
 
-                return validate_output(_json(texts[0]), context).model_dump(mode="json")
+                return validate_output(
+                    _json(texts[0]), context, source_kind="pdf" if pdf else "word"
+                ).model_dump(mode="json")
             if edits:
                 from .draft_workspace_scope_edits import validate_edits
 

@@ -102,14 +102,22 @@ page's existing review. These controls never call the advice transport.
 The existing plugin is retained. The advice context additionally accepts explicit
 selection of at most 10 text blocks and 2 verified PNG pictures from one retained
 DOCX. Source/scan/document/image hashes bind the preview and are rechecked before
-and after provider use; original files and omitted content are excluded.
+and after provider use; original files and omitted content are excluded. Alternatively,
+users select one PDF page's retained text and/or PNG (at most4MiB). Word and PDF
+selectors are mutually exclusive. The same evidence preview, consent, integrity
+and current-rights rechecks apply; no external image link or original PDF is sent.
 
 **Implemented extension:** an explicit `propose_word_scope` action uses that same
 transport and selected Word evidence. A small composer validates new Defect, Opening
 and Service records against the existing Scope contract, remaps proposal IDs and
 preserves existing rows. The panel shows additions, source claims and unknowns, then
 posts to the existing Word preview route. Its session-bound confirmation remains the
-only save step. The additional `propose_scope_edits` action prepares at most25
+only save step. `propose_pdf_scope` reuses this composer and transport with the
+selected page anchor, exact text quotes and selected image identity. Its review card
+posts to the existing signed PDF page preview/confirmation. Confirmed references
+record the existing human page/entity review; raw AI claims and rationale remain
+transient, without a new durable suggestion batch. The additional
+`propose_scope_edits` action prepares at most25
 complete replacements of explicitly selected saved Scope records, with before/after
 fields and reasons. It preserves the rest of the graph, validates its relationships
 and retains old source claims, marking changed claims for review. Its review form
@@ -143,8 +151,8 @@ does not import it as a trusted technical or pricing library.
 
 **Migration impact:** native Word/PDF attachments reuse the existing retained-source
 policies, parser/scan workers and readers without changing tables, migration history
-or dependencies. PDF pages do not enter native chat model context in this increment;
-existing separately consented PDF suggestion/review services remain available. The
+or dependencies. Explicitly selected PDF page evidence now enters the same native
+chat transport; existing PDF suggestion/review services remain available. The
 reason for extending the shared adapter is to expose already supported evidence in
 the requested native working environment without another intake pipeline.
 The selected-evidence extension adds optional typed selectors and an internal image
@@ -326,7 +334,7 @@ production phase nor retires OpenClaw.
 
 Follow [Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions):
 C1 still needs successful applicable CI and a separately approved diagnostic test
-and activation. C2 has a synthetic native Word journey, with real-provider/live
+and activation. C2 has synthetic native Word and PDF journeys, with real-provider/live
 acceptance and broader coverage outstanding. C3 has a synthetically validated
 selected Scope replacement action; broader reviewed actions and durable AI lineage remain. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked

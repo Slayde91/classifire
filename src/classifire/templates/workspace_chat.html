@@ -1,5 +1,5 @@
 {% if user and chat_workspace is defined %}
-<link rel="stylesheet" href="/static/workspace_chat.css?v=20260914-pdf">
+<link rel="stylesheet" href="/static/workspace_chat.css?v=20260914-pdf-proposal">
 <aside id="workspace-chat" class="workspace-chat" data-user-id="{{ user.id }}" data-draft-id="{{ chat_workspace.get('draft_id', '') }}" data-revision="{{ chat_workspace.get('revision', '') }}" data-csrf="{{ csrf_token }}" aria-label="Workspace AI assistant">
   <script type="application/json" id="workspace-chat-context">{{ chat_workspace|tojson }}</script>
   <button type="button" class="button button-secondary chat-toggle" aria-expanded="false" aria-controls="workspace-chat-body">AI assistant</button>
@@ -38,17 +38,19 @@
       </form>
       <button class="button button-secondary button-small chat-word-refresh" type="button">Refresh retained reports</button>
       <p class="chat-word-status" role="status" aria-live="polite">Open this section to load retained reports.</p>
-      <p class="chat-disclaimer">Inspect one retained page at a time. PDF pages are not included in chat model requests yet. Use the separate PDF page review for analysis and confirmation.</p>
+      <p class="chat-word-selected" aria-live="polite">No PDF page selected for AI.</p>
+      <button class="button button-secondary button-small chat-word-clear-selection" type="button">Clear PDF selection</button>
+      <p class="chat-disclaimer">Choose one page's text and/or image for the next preview. Other pages and the original PDF are excluded. Selecting PDF evidence replaces a Word selection; sending and saving require separate controls.</p>
       <div class="chat-word-sources"></div>
       {% else %}
       <p>Open the destination <a href="/scopes">Draft Scope</a>, then attach your report here. Creating a project is a separate action.</p>
       {% endif %}
     </details>
-    <label>Assistant action<select class="chat-action"><option value="advice">Ask for advice</option><option value="propose_word_scope">Propose new Scope records from selected Word evidence</option><option value="propose_scope_edits">Propose edits to selected Scope records</option></select></label>
-    <p class="chat-disclaimer">A Scope proposal needs selected Word text and the latest Draft revision. Existing records stay unchanged. Review and confirmation are separate from sending evidence to AI.</p>
+    <label>Assistant action<select class="chat-action"><option value="advice">Ask for advice</option><option value="propose_word_scope">Propose new Scope records from selected Word evidence</option><option value="propose_pdf_scope">Propose new Scope records from selected PDF evidence</option><option value="propose_scope_edits">Propose edits to selected Scope records</option></select></label>
+    <p class="chat-disclaimer">A new Scope proposal needs selected report evidence and the latest Draft revision. Existing records stay unchanged. Review and confirmation are separate from sending evidence to AI.</p>
     <p class="chat-disclaimer">Edit mode uses saved records in selected register rows, including their Defect, Opening and Service. Check each proposed field change; unsaved edits are excluded.</p>
     <details class="chat-choose" open><summary>Context for this conversation</summary>
-      <p class="chat-disclaimer">Only saved values and explicitly selected Word evidence are included. Review the selected text and pictures before consenting. Unsaved edits and original files are excluded.</p>
+      <p class="chat-disclaimer">Only saved values and explicitly selected report evidence are included. Review the selected text and pictures before consenting. Unsaved edits and original files are excluded.</p>
       <label class="chat-record-picker-label" hidden>Records on this screen<select class="chat-record-picker" multiple size="4" aria-describedby="chat-picker-help"></select></label>
       <p id="chat-picker-help" class="chat-disclaimer" hidden>Choose up to 20 records. Use Ctrl/Cmd or Shift for several records.</p>
       <label class="chat-consent"><input type="checkbox" class="chat-sensitive">Include details of selected systems, libraries and prices in the preview</label>
@@ -72,6 +74,6 @@
     <p class="chat-disclaimer">AI advice is unverified. Messages do not save or approve project changes. Report attachment and scan use their separate controls. The existing ChatGPT connector remains available; its external conversations are separate.</p>
   </section>
 </aside>
-<script src="/static/workspace_chat.js?v=20260914-pdf" defer></script>
-<script src="/static/workspace_word.js?v=20260914-pdf" defer></script>
+<script src="/static/workspace_chat.js?v=20260914-pdf-proposal" defer></script>
+<script src="/static/workspace_word.js?v=20260914-pdf-proposal" defer></script>
 {% endif %}

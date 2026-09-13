@@ -1,4 +1,4 @@
-"""Unverified Word additions prepared for the existing separate human review.
+"""Unverified Word/PDF additions prepared for the existing separate human reviews.
 
 No writer or provider is called here. Existing rows are copied unchanged; model
 identities belong only to the proposed graph and are remapped before review.
@@ -40,7 +40,9 @@ def response_schema() -> dict[str, Any]:
     return scope_response_schema(WordProposal)
 
 
-def validate_output(value: Any, context: dict[str, Any]) -> WordProposal:
+def validate_output(
+    value: Any, context: dict[str, Any], *, source_kind: Literal["word", "pdf"] = "word"
+) -> WordProposal:
     model = WordProposal.model_validate(value)
     graph = model.additions.model_dump(mode="json")
     # Enforce complete fields locally too, including injected/mock providers.
@@ -56,8 +58,10 @@ def validate_output(value: Any, context: dict[str, Any]) -> WordProposal:
     if len(rows) > 25 or any(graph[key] for key in ("observations", "assumptions", "exclusions")):
         raise ValueError("proposal budget or unbound assumptions")
     validate_payload(graph)
-    evidence = context["word_evidence"]
+    evidence = context[source_kind + "_evidence"]
     blocks = {block["locator"]: block for block in evidence["blocks"]}
+    if source_kind == "pdf":
+        blocks.setdefault(evidence["page"]["locator"], {"text": ""})
     images = {image["id"] for image in evidence["pictures"]}
     covered, seen = set(), set()
     for claim in model.claims:
@@ -89,7 +93,8 @@ def prepare_review(
     *,
     settings: Settings,
 ) -> dict[str, Any] | None:
-    if request.word is None or request.draft_id is None:
+    selected = request.word or request.pdf
+    if selected is None or request.draft_id is None:
         raise DraftScopeError("CHAT_INPUT_INVALID")
     additions = model.additions.model_dump(mode="json")
     identities = {
@@ -118,24 +123,42 @@ def prepare_review(
         {key: claim[key] for key in ("target_kind", "target_id", "locator", "image_ids")}
         for claim in claims
     ]
-    checked = preview_review(
-        db,
-        actor,
-        request.draft_id,
-        request.word.source_id,
-        current["revision"],
-        payload,
-        targets,
-        request.word.document_sha256,
-        settings=settings,
-    )
+    if request.pdf is not None:
+        from .draft_pdf_intake import preview_scope_page
+
+        targets = [{key: claim[key] for key in ("target_kind", "target_id")} for claim in claims]
+        checked = preview_scope_page(
+            db,
+            actor,
+            request.draft_id,
+            selected.source_id,
+            current["revision"],
+            request.pdf.page_number,
+            payload,
+            targets,
+            selected.document_sha256,
+            settings=settings,
+        )
+    else:
+        checked = preview_review(
+            db,
+            actor,
+            request.draft_id,
+            selected.source_id,
+            current["revision"],
+            payload,
+            targets,
+            selected.document_sha256,
+            settings=settings,
+        )
     return {
+        **({"source_kind": "pdf", "page_number": request.pdf.page_number} if request.pdf else {}),
         "additions": additions,
         "claims": claims,
         "findings": checked["findings"],
         "expected_revision": current["revision"],
-        "source_id": request.word.source_id,
-        "document_sha256": request.word.document_sha256,
+        "source_id": selected.source_id,
+        "document_sha256": selected.document_sha256,
         "payload": checked["payload"],
         "targets": checked["targets"],
         "notice": "Unverified additions only. Review separately before saving one Draft revision.",
