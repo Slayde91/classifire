@@ -348,6 +348,12 @@ execution journal/transport protections are foundations, not proof of full retir
 
 ## Migrations and deployment boundary
 
+Production startup and database-writing CLI commands use the same readiness guard.
+It requires the packaged Alembic head, then reuses the existing read-only deployment
+lineage assessment to refuse missing required tables or retired tables still present.
+It never stamps, migrates or repairs the database. These checks do not certify column,
+constraint or index equivalence; activation still needs its independent schema rehearsal.
+
 Published baseline `97c0778` uses migration 0047 for retained Word sources. This
 local native-history stack requires `0049_draft_proposal_decisions`, following
 `0048_draft_workspace_proposals`. Both forward migrations refuse destructive

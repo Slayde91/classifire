@@ -17,7 +17,7 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Local candidate | `docs/native-evidence-review-20260914`, based on `0f932c1`, with application code at `ef790d1`; documentation-only reconciliation; no upstream |
+| Local candidate | `fix/startup-lineage-validation-20260914`, based on `5418f51`; startup enforcement reuses the existing lineage service; no upstream |
 | Shared main | `97c07786355bbe938696aee56131e3f7aefe9dc6`, the PR #270 diagnostic merge |
 | Approved public feature | PR #271 remains open at exact `d864c51`, branch `feat/native-word-attachments-20260913`, base `main`; only its 12 files are approved |
 | PR #271 CI | Run `34757320145` failed: 639 passed, one closed-review form assertion failed. No merge and no recorded reviews |
@@ -73,6 +73,24 @@ may have zero Services; unresolved links are held for review, never guessed into
 Contracts: [assistant interaction](./EMBEDDED_WORKSPACE_CHAT.md),
 [native generations/decisions](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md),
 [selected package history](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md).
+
+## Startup lineage enforcement follow-up
+
+A disposable, freshly migrated SQLite database reproduced a startup defect:
+removing `draft_workspace_proposal_decisions` left the packaged migration head
+intact and the previous startup guard still accepted it. The shared guard now
+reuses `assess_deployment_lineage` after checking that head, refusing missing
+required tables or retired tables still present. Production web startup and CLI
+commands preserve their existing refusal before storage/schema/domain writes.
+No new service, schema, migration or authority boundary is introduced.
+
+All 89 affected startup, CLI, lineage and migration tests passed with no skips
+(25.047 seconds), selected-checkout PYTHONPATH and fresh basetemp. Tests verify
+read-only SQL and unchanged SQLite bytes for accepted and refused checks, and
+redacted inspection failures. Full Ruff and Mypy (240 source files), scoped Bandit
+and diff checks passed. This fix has no new PostgreSQL, browser or live activation
+acceptance. Column, constraint and index equivalence still require the existing
+independent deployment rehearsal.
 
 ## Migration and operational boundaries
 
@@ -138,6 +156,8 @@ synthetic fixtures do not establish customer accuracy or professional suitabilit
 | `567e5a9`, rejection rights | Unauthorized rejection reproduced; corrected request returned 403 with no decision/audit; five selected regressions passed | Eighteen deliberately deselected; no claim of broader execution |
 | `ef790d1`, rejection display | Delayed-card defect reproduced; all 35 shipped-script Node cases and 16 template/navigation/wrapper tests passed, no skips | Synthetic DOM, no new rendered-browser acceptance |
 | Subsequent review | Thirteen complete test files matched 137 prior passing cases to unchanged test content; five saved ZIPs independently inspected, 21 member sizes/hashes and exact originals/history verified | Prior test runs plus new artifact inspection, not a new suite run |
+| `5418f51`, generated reports | All 33 pages of two synthetic PDFs inspected at reduced layout scale; original bytes unchanged. Two XLSX archives preserved values, lineage, unknowns and independent decimal totals with no formulas/external links | XLSX visual acceptance is incomplete: the inspection tool misreads nine empty shared strings and has a native renderer exit failure; no application-output defect established |
+| Startup guard follow-up | Reproduced failure followed by 89 affected tests passing, zero skips; full Ruff/Mypy and scoped Bandit passed | Disposable SQLite only; no new full-suite, PostgreSQL or activation claim |
 
 The recovery readers require source-row locks. The completed verification used normal
 transactions with a SQL-mutation guard: 346 reads, 26 locks, zero mutation attempts,
@@ -157,10 +177,14 @@ Private evidence under `C:/CLASSIFIRE/.tmp/`:
   `native-document-reconciliation-20260914` records the current document review,
   link/consistency checks and updated per-file range ledger.
 
-Current documentation work adds no application or test changes. Earlier full
-Ruff/Mypy/scoped Bandit results belong to their tested versions. A fresh full suite
-for the complete current application range and new-control rendered-browser proof
-remain before a broad release claim. No real provider/customer run was executed here.
+The full regression of predecessor `5418f51` is already running in its pinned
+checkout; poll its actual process and retained attempt2 receipt without restarting
+it. That run does not include this startup guard follow-up. Its result and the new
+89-test result must remain separately attributed. Full current-source assurance,
+PostgreSQL coverage of this guard and new-control rendered-browser proof remain
+before a broad release claim. No real provider/customer run was executed here.
+Private receipts: `startup-lineage-validation-evidence-20260914` and
+`native-stack-full-validation-5418f51-20260914` under `C:/CLASSIFIRE/.tmp/`.
 
 ## Preserved acceptance and independent production gaps
 
@@ -196,11 +220,13 @@ historical byte/recovery evidence, or change any production-phase status.
 
 ## Local change classification
 
-The current isolated change is documentation only. The reviewed ancestor range has
-84 changed files: 75 application/migration/test/configuration files with recorded
-review scope and nine documents. The private ledger distinguishes complete-file
-reviews from changed-line reviews; it is not a blanket confidentiality certificate
-or publication approval. Private source reports, credentials, generated originals,
+The isolated startup follow-up changes six files: one application guard, three
+test files and two architecture/state documents. It contains no migration,
+dependency or configuration change. The preceding `5418f51` range has 84 reviewed
+files: 75 application/migration/test/configuration files and nine documents. That
+ledger distinguishes complete-file and changed-line reviews and does not cover this
+follow-up or confer publication approval. Private source reports, credentials,
+generated originals,
 ZIPs, screenshots and operator receipts remain outside Git.
 
 The root `C:/CLASSIFIRE` remains quarantined at `de0cc5a`: 46 unstaged modifications,

@@ -160,15 +160,17 @@ def test_production_lifespan_never_creates_schema_or_seeds_database(
     assert settings.storage_root.is_dir()
 
 
+@pytest.mark.parametrize("error_code", ["DATABASE_MIGRATION_REQUIRED", "DEPLOYMENT_SCHEMA_DRIFT"])
 def test_production_lifespan_refuses_unmigrated_database_before_storage(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    error_code: str,
 ) -> None:
     settings = _safe_production_settings(tmp_path)
     monkeypatch.setattr(main, "settings", settings)
 
     def missing_head(_settings: Settings) -> None:
-        raise MigrationReadinessError("DATABASE_MIGRATION_REQUIRED")
+        raise MigrationReadinessError(error_code)
 
     monkeypatch.setattr(main, "require_current_migration_head", missing_head)
 
@@ -176,7 +178,7 @@ def test_production_lifespan_refuses_unmigrated_database_before_storage(
         async with main.lifespan(main.app):
             pass
 
-    with pytest.raises(MigrationReadinessError, match="DATABASE_MIGRATION_REQUIRED"):
+    with pytest.raises(MigrationReadinessError, match=error_code):
         asyncio.run(run_lifespan())
 
     assert not settings.storage_root.exists()

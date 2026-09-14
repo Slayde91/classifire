@@ -10,6 +10,7 @@ from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from classifire.config import (
     ProductionConfigurationError,
@@ -17,6 +18,7 @@ from classifire.config import (
     get_settings,
     require_production_configuration,
 )
+from classifire.services.deployment_lineage import assess_deployment_lineage
 
 SCRIPT_LOCATION = "classifire:migrations"
 
@@ -46,7 +48,7 @@ def upgrade_to_head(settings: Settings) -> None:
 
 
 def require_current_migration_head(settings: Settings) -> None:
-    """Fail closed unless the configured database is exactly at every packaged head."""
+    """Require the packaged head and existing read-only table-lineage checks."""
 
     config = migration_config(settings)
     expected_heads = frozenset(ScriptDirectory.from_config(config).get_heads())
@@ -54,13 +56,16 @@ def require_current_migration_head(settings: Settings) -> None:
     try:
         with engine.connect() as connection:
             actual_heads = frozenset(MigrationContext.configure(connection).get_current_heads())
+            if actual_heads != expected_heads:
+                raise MigrationReadinessError("DATABASE_MIGRATION_REQUIRED")
+            with Session(bind=connection) as db:
+                assessment = assess_deployment_lineage(db)
+            if assessment.status != "READY":
+                raise MigrationReadinessError(assessment.code)
     except SQLAlchemyError as exc:
         raise MigrationReadinessError("DATABASE_MIGRATION_UNAVAILABLE") from exc
     finally:
         engine.dispose()
-
-    if actual_heads != expected_heads:
-        raise MigrationReadinessError("DATABASE_MIGRATION_REQUIRED")
 
 
 def main() -> None:
