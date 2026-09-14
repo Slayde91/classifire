@@ -88,7 +88,36 @@ def _verify_sqlite_foreign_keys(connection: Connection) -> None:
         raise RuntimeError(f"SQLite foreign-key check failed after migration: {violations!r}")
 
 
-if context.is_offline_mode():
+def _run_online_migrations(connection: Connection) -> None:
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+    )
+    with context.begin_transaction():
+        if connection.dialect.name == "postgresql" and _has_migration_destination():
+            _prepare_postgresql_version_table(connection)
+        context.run_migrations()
+
+
+provided_connection = config.attributes.get("connection")
+if provided_connection is not None:
+    # Alembic preserves an already-active external transaction. Do not create,
+    # commit, roll back or close the caller's connection. SQLite's separate
+    # foreign-key preparation cannot run safely inside such a transaction.
+    if (
+        context.is_offline_mode()
+        or not isinstance(provided_connection, Connection)
+        or provided_connection.closed
+        or provided_connection.invalidated
+        or provided_connection.dialect.name != "postgresql"
+        or not provided_connection.in_transaction()
+    ):
+        raise RuntimeError(
+            "Existing migration connection requires an active PostgreSQL transaction in online mode"
+        )
+    _run_online_migrations(provided_connection)
+elif context.is_offline_mode():
     context.configure(
         url=config.get_main_option("sqlalchemy.url"),
         target_metadata=target_metadata,
@@ -112,15 +141,7 @@ else:
             _set_sqlite_foreign_key_enforcement(connection, enabled=False)
 
         try:
-            context.configure(
-                connection=connection,
-                target_metadata=target_metadata,
-                compare_type=True,
-            )
-            with context.begin_transaction():
-                if connection.dialect.name == "postgresql" and _has_migration_destination():
-                    _prepare_postgresql_version_table(connection)
-                context.run_migrations()
+            _run_online_migrations(connection)
 
             if sqlite_foreign_keys:
                 connection.commit()

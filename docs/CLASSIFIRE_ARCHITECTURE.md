@@ -348,6 +348,19 @@ execution journal/transport protections are foundations, not proof of full retir
 
 ## Migrations and deployment boundary
 
+The optional programmatic migration path accepts an already-active PostgreSQL
+transaction through Alembic `config.attributes["connection"]`. The caller owns
+commit, rollback and closing; migration does not open a second connection. This lets
+an explicitly reviewed schema conversion, independently verified baseline attestation
+and subsequent forward migrations roll back together. Invalid, closed, invalidated, inactive,
+non-PostgreSQL and offline supplied connections are refused before migration work.
+Ordinary CLI/standalone migration and SQLite foreign-key handling remain unchanged.
+
+This extends the existing Alembic runner, adding no service, dependency, migration
+revision or authority. It does not establish baseline equivalence or authorize
+stamping, adoption or live execution. The operational caller must still prove those
+conditions and bind the exact destination, backup, candidate and approval before use.
+
 Production startup and database-writing CLI commands use the same readiness guard.
 It requires the packaged Alembic head, then reuses the existing read-only deployment
 lineage assessment to refuse missing required tables or retired tables still present.

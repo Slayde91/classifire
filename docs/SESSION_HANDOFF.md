@@ -8,12 +8,16 @@ The full production objective remains incomplete.
 
 ## Selected checkout and scope
 
-Continue in `C:/CLASSIFIRE/.tmp/package-import-guidance-20260915`, branch
-`fix/package-import-guidance-20260915`, based on merged main `3911ca4`.
-The six-file follow-up corrects stale package-import guidance on screen, verifies preserved
-historical manifest wording and exact download bytes and reconciles four canonical documents. It does not
-rewrite saved archives or change import, approval, schema or dependency contracts.
-Its own publication/CI/review gate remains separate from the merged baseline.
+Continue in `C:/CLASSIFIRE/.tmp/atomic-migration-connection-20260915`, branch
+`fix/atomic-migration-connection-20260915`, based on merged main `3591ac1`.
+The six-file follow-up extends the existing Alembic runner to preserve an explicitly
+supplied active PostgreSQL transaction, adds regression coverage and reconciles four
+canonical documents. Migration revisions, standalone/SQLite operation and application
+authority are unchanged. Its own CI/review gate remains pending.
+
+PR #275 merged the display-only package-guidance correction as `3591ac1`, exactly the
+916bae6 tree. PR run 34879918621 and post-merge run 34883667900 both passed 2,658 tests and all
+other applicable checks; post-merge tests took 1,941.86 seconds with 386 warnings.
 
 PR #273 merged guarded migrated restart as `46fc436`; PR run 34862079545 passed
 2,647 tests, and post-merge 34869099059 completed successfully. PR #274 merged
@@ -82,10 +86,25 @@ remain unverified. Historical equivalence does not authorize live baseline adopt
 
 ## Next executable task
 
-Finish this six-file guidance/evidence follow-up: inspect the exact diff, validate,
-commit explicit paths, normally push and create/reuse its PR. Observe exact-head
-successful CI and required reviews before merging; record post-merge CI separately.
-Poll existing jobs; do not restart because observation timed out.
+Finish the atomic migration transaction follow-up: inspect the six-file diff,
+complete relevant checks, commit explicit paths, push and create/reuse its PR. Observe
+successful exact-head CI and required reviews before merge; then record post-merge CI.
+Poll existing jobs without restarting merely because observation timed out.
+
+The unwanted second migration connection was reproduced first. All 17 targeted tests
+passed, plus 44 startup/foundation tests, full Ruff/Mypy and scoped Bandit.
+The strengthened final nine transaction tests also passed; 62 distinct affected tests
+are covered across these runs. Historical-copy rehearsal also proved
+all 162 conversion statements plus verified 0047 attestation and 0048/0049 upgrades share
+one transaction: failures after attestation and after upgrade restored the full dump;
+the success case committed with old rows unchanged. Read the receipts under
+`C:/CLASSIFIRE/.tmp/atomic-migration-validation-20260915` for actual outcomes.
+
+Matched historical/native database-and-file recovery passed on port 15433. Old `6c1e2a4` read
+historical Scopes/packages but refused native-history v7 packages. Current `3911ca4` opened
+both recovered native ZIPs with exact bytes, including the original DOCX and selected
+revision 2 decision. These were TestClient checks; no new live/provider/browser acceptance
+is implied. Do not assume full old-version write compatibility or erase later work.
 
 Then finish the exact activation plan: pinned source/environment, fresh live backup,
 disposable restore verification, owner/grants, current storage linkage, drift,
@@ -101,22 +120,22 @@ do not overlap fixtures that drop the same database. Never log real key/env cont
 Preserve root `C:/CLASSIFIRE` at `de0cc5a`: 46 unstaged modifications, 14 staged additions,
 4 DU conflicts and unrelated private/untracked files; inaccessible old test directories
 limit the untracked inventory. No root changes were staged, resolved, reset or published.
-The six reviewed follow-up files are the only intended publication. Private profiles,
+The six atomic-migration follow-up files are the only intended publication. Private profiles,
 reports, receipts, originals/ZIPs, credentials and pinned rollback checkouts stay intact.
 
 ## Copy-ready next-session prompt
 
-Continue CLASSIFIRE from verified repository state. Read AGENTS.md and the canonical
-state, architecture, roadmap and handoff. Inspect the isolated package-import-guidance-20260915
-checkout, branch/upstream/diff and any existing PR/CI. Main 3911ca4 merged PR #274 with
-successful PR and post-merge CI 34873941741: 2,658 tests plus all other checks. PR #273
-post-merge 34869099059 also passed. Inspect the six-file guidance/evidence follow-up
-and finish its authorized CI/review-gated publication without restarting existing jobs.
-Read native-headless-acceptance-8025729-20260915/acceptance-receipt.json: synthetic
-Word upload, separate Scope/package confirmations, exact original-bearing ZIP after
-restart, proposal-only export and rejection passed in disposable 15433. Two stub model
-calls, one stub scan, zero real/downstream calls; test browser/server stopped. Do not
-repeat the original user's confirmations. Preserve the conflicted root and all private
-evidence. Finish exact fresh backup/restore/roles/storage/drift/rollback preparation
-before requesting separate provider/activation approval. Live 8820 remains on its last
-rollback receipt with chat disabled. Do not claim production or real-model acceptance.
+Continue CLASSIFIRE from verified repository state. Read AGENTS.md and canonical
+state, architecture, roadmap and handoff. Inspect atomic-migration-connection-20260915,
+branch/upstream/diff and existing PR/CI. Main `3591ac1` merged PR #275; its post-merge
+34883667900 passed 2,658 tests and all other checks. The local migration correction lets
+an explicit active PostgreSQL connection retain caller commit/rollback control. It has
+62 distinct affected passing tests and historical-copy conversion rollback evidence;
+inspect remaining validation receipts and finish authorized publication/CI/review/merge.
+Do not restart existing jobs because observation timed out. Preserve the conflicted
+root and private fixtures. Existing headless Word acceptance and user project/Scope/package
+confirmations are complete. Old `6c1e2a4` cannot read native v7 packages; current-version
+copied recovery preserves them. Finish the exact fresh backup/restore/roles/storage/
+conditional migration/restart/recovery bundle. The single `3911ca4` model diagnostic is
+still separately pending approval; do not repin or reuse old allowances. No live port 15432
+work or activation is implied. Keep C1, broader accuracy and production gates open.
