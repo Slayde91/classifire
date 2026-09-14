@@ -71,6 +71,12 @@ jobs:
       - name: Run full Ruff check
         run: python -m ruff check .
 
+      - name: Build and verify distribution contents
+        shell: bash
+        run: |
+          python -m pip wheel --no-deps --wheel-dir "$RUNNER_TEMP/classifire-dist" .
+          python scripts/verify_distribution.py "$RUNNER_TEMP/classifire-dist"
+
       - name: Run tests
         # pyproject adds -q; -vv makes each test visible in timestamped job logs.
         # Keep output capture, fail-fast behavior and full coverage.

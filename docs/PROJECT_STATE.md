@@ -1,6 +1,6 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-15 against the isolated migrated-restart follow-up, migration source, retained
+Reconciled 2026-09-15 against the isolated distribution follow-up, migration source, retained
 validation evidence and GitHub. This is current state, not production certification.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
@@ -17,11 +17,11 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Selected follow-up | `fix/migrated-demo-restart-20260915`, based on merged `370888c`; opt-in migrated local startup reuses the existing readiness guard and skips bootstrap |
-| Shared main | `370888c54549642c1213eb4e2ebed2c54081aeb2`, PR #272 merged; merge tree matches tested `cb82409` |
-| PR #272 CI | Run `34846714887` passed 2,630 tests in 1,892.04 seconds, with successful type/security/migration checks; required-review state was checked before merge |
-| Post-merge CI | Run `34853579643` passed 2,630 tests in 1,963.93 seconds; predecessor run `34841047799` also succeeded. Existing jobs were observed, not restarted |
-| Publication | PR #272 is merged. This migrated-restart follow-up needs its own successful CI/reviews before merge; no branch was deleted |
+| Selected follow-up | `fix/distribution-ui-assets-20260915`, now includes merged `46fc436`; runtime/build code matches locally tested combined `25dd47d` |
+| Shared main | `46fc4366729ac25b8e73dd5bef82a85fb5a4792d`, PR #273 merged; merge tree matches tested `37a86ca` |
+| PR #273 CI | Run `34862079545` passed 2,647 tests in 3,509.19 seconds, with successful style/type/security/migration checks; current review requirements were checked before merge |
+| Post-merge CI | Run `34869099059` is in progress. Earlier PR #272 post-merge `34853579643` passed 2,630 tests and all later checks. Existing jobs were observed, not restarted |
+| Publication | PR #273 is merged. The distribution fix needs its own successful CI/reviews before merge; no branch was deleted |
 | Operational app | Last observed port8820 listener was PID24324; the last approved receipt remains rollback `6c1e2a4` with chat disabled. No activation accompanies this follow-up |
 
 The earlier `d864c51` CI failure was explained by the native attachment's third form. The
@@ -98,7 +98,7 @@ rolled back. A recovered copy matched an independently restored migration refere
 raw check-expression text differed after PostgreSQL dump/restore and is recorded as
 an explicit representation limitation. Both retained original files matched their
 historical manifests. This is not fresh-live-state, original-owner/ACL or activation proof.
-The new browser helper attempt still failed before UI actions; visible0049/v7 acceptance
+The new browser helper attempt still failed before UI actions; visible 0049/v7 acceptance
 remains outstanding. Finish the exact launcher/fresh-backup/restore/rollback plan before
 requesting new live activation and any separately bounded provider test.
 
@@ -116,7 +116,7 @@ All 89 affected startup, CLI, lineage and migration tests passed with no skips
 (25.047 seconds), selected-checkout PYTHONPATH and fresh basetemp. Tests verify
 read-only SQL and unchanged SQLite bytes for accepted and refused checks, and
 redacted inspection failures. Full Ruff and Mypy (240 source files), scoped Bandit
-and diff checks passed. A separate PostgreSQL16.15 rehearsal on disposable15433
+and diff checks passed. A separate PostgreSQL16.15 rehearsal on disposable 15433
 then passed seven candidate checks and reproduced the old guard's acceptance of
 a missing decision table. All eight guard connections were read-only; schema/data
 dumps matched before/after each check and after restoration of the 71-table database.
@@ -308,13 +308,13 @@ No root content was staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Finish guarded migrated restart.** Validate and review the local launcher, shared
-   web/CLI and read-only inspection changes, then publish one coherent PR and merge
-   only after successful exact-head CI and required reviews. The worker optimization
-   is already merged and its post-merge CI passed.
+1. **Finish distribution publication.** Guarded migrated restart is merged as
+   `46fc436`; observe its post-merge run `34869099059`. Review and publish the
+   packaging follow-up, then merge only after successful exact-head CI and required
+   reviews. Record its post-merge result separately; do not restart existing jobs.
 2. **Finish activation readiness.** Pin/rehearse the operational launcher and fresh
-   backup/restore/roles/storage/rollback commands. Historical15433 conversion/recovery
-   evidence does not establish current live state. Complete0049/v7 rendered-browser
+   backup/restore/roles/storage/rollback commands. Historical 15433 conversion/recovery
+   evidence does not establish current live state. Complete 0049/v7 rendered-browser
    acceptance when the browser helper becomes available.
 3. **Complete C1 and operational C2/C3 acceptance.** Diagnose the broader CI/runtime
    limits, then obtain separate approval for the exact prepared provider test and
@@ -323,3 +323,26 @@ No root content was staged, resolved, reset or published. See
    actions, I2/N1 connector transport, reviewed technical/commercial semantics,
    T11-T14 evaluation, full physical/history coverage and Phase 8-16 production exits
    remain. No synthetic success grants technical approval, pricing authority or release.
+
+## Distribution asset packaging follow-up
+
+A built-wheel inspection found that source-checkout validation had missed all 67
+HTML templates and 19 static UI assets in the distribution. The packaging follow-up
+adds explicit package data and a CI build/byte-comparison check without changing
+application logic, schemas or dependencies. Fifteen affected tests passed locally;
+a corrected wheel preserved all 326 application files. An isolated installed-wheel
+TestClient check compiled 67 templates and served login, all 19 static assets and
+branding, with unchanged disposable 15433 database bytes. This is packaging/HTTP
+proof, not rendered-browser or production acceptance. See
+[distribution verification](./DISTRIBUTION_VERIFICATION.md). Publication and its
+own successful CI/reviews remain required; no existing CI job is restarted.
+
+
+Combined local candidate `25dd47d` includes the reviewed migrated restart and
+packaging fixes. All 78 affected tests passed (258.41 seconds), and its built wheel
+preserved 326 files. Offline installation from 71 wheels into a fresh Python environment
+passed dependency checks, two installed-package HTTP starts and five exact-output
+Word/XLSX worker modes. System/user site-packages were disabled. These are private
+local validation results. PR #273 merged after successful CI; its post-merge run
+remains in progress, and this packaging follow-up still needs its own CI/review gate.
+No live activation, provider request or new human approval is implied. The combined checkout is `distribution-ui-assets-20260915`.
