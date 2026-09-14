@@ -41,6 +41,11 @@ def validate_external_policy(path: Path, origin: str, user_id: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path)
+    parser.add_argument(
+        "--require-current-migrations",
+        action="store_true",
+        help="Restart an existing migrated demo without creating schema, users or fixtures",
+    )
     parser.add_argument("--port", type=int, default=8796)
     client_mode = parser.add_mutually_exclusive_group()
     client_mode.add_argument(
@@ -106,6 +111,22 @@ def main() -> None:
         help="Enable the labelled exact synthetic PDF suggestion fixture; never a real provider",
     )
     args = parser.parse_args()
+    if args.require_current_migrations:
+        if args.data_dir is None or not (args.data_dir.expanduser() / MARKER).is_file():
+            parser.error("Migrated restart requires an existing marked demo directory")
+        if (
+            args.prepare_external_client
+            or args.client_demo
+            or args.seed_technical_library
+            or args.seed_constraint_library
+            or args.seed_service_size_library
+            or args.scripted_pdf_suggestions
+        ):
+            parser.error("Migrated restart cannot create identities, policies or fixtures")
+        if args.postgres_demo_port is None and not (
+            args.data_dir.expanduser() / "demo.sqlite3"
+        ).is_file():
+            parser.error("Migrated restart requires an existing database")
     external_client = args.prepare_external_client or args.external_client_policy is not None
     external_policy_path = None
     if external_client and (
@@ -210,6 +231,7 @@ def main() -> None:
     os.environ.update(
         {
             "CLASSIFIRE_ENV": "test",
+            "CLASSIFIRE_REQUIRE_MIGRATED_DATABASE": str(args.require_current_migrations).lower(),
             "CLASSIFIRE_DRAFT_PDF_SUGGESTIONS_ENABLED": "false",
             "CLASSIFIRE_DATABASE_URL": database_url,
             "CLASSIFIRE_STORAGE_ROOT": str(task_dir / "storage"),
@@ -238,6 +260,14 @@ def main() -> None:
     from classifire.models import User
     from classifire.security import hash_password
 
+    if args.require_current_migrations:
+        from classifire.config import get_settings
+        from classifire.migrations import MigrationReadinessError, require_current_migration_head
+
+        try:
+            require_current_migration_head(get_settings())
+        except MigrationReadinessError as exc:
+            parser.error(exc.code)
     if args.postgres_demo_port is not None:
         # Never adopt an existing project database. A marker binds this disposable
         # database to the explicitly selected synthetic directory across restarts.
@@ -247,6 +277,8 @@ def main() -> None:
             if "classifire_demo_guard" in tables:
                 if connection.scalar(text("SELECT token FROM classifire_demo_guard")) != token:
                     parser.error("The PostgreSQL demo belongs to a different synthetic directory")
+            elif args.require_current_migrations:
+                parser.error("Migrated restart requires the existing PostgreSQL demo guard")
             elif tables:
                 parser.error("Refusing an unmarked nonempty PostgreSQL database")
             else:
@@ -257,9 +289,12 @@ def main() -> None:
                     text("INSERT INTO classifire_demo_guard (token) VALUES (:token)"),
                     {"token": token},
                 )
-    Base.metadata.create_all(engine)
+    if not args.require_current_migrations:
+        Base.metadata.create_all(engine)
     with SessionLocal() as db:
         if db.scalar(select(User.id).limit(1)) is None:
+            if args.require_current_migrations:
+                parser.error("Migrated restart requires an existing demo user")
             db.add(
                 User(
                     email=DEMO_EMAIL,
