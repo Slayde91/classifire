@@ -17,13 +17,13 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| CI follow-up | `ci/native-suite-budget-20260914`, based on published `cef340b`; application, migrations, tests and dependencies remain unchanged; only CI timing/logging and state/handoff records change |
-| Shared main | `97c07786355bbe938696aee56131e3f7aefe9dc6`, the PR #270 diagnostic merge |
-| Public approval | On 2026-09-14 the owner approved continuing with the reviewed broader candidate: `5279904`, 29 commits and 89 files, plus this factual publication checkpoint. Reuse PR #271, branch `feat/native-word-attachments-20260913`, base `main` |
-| PR #271 CI | Published `cef340b` run `34831072452` was cancelled after exceeding the 45-minute job limit; last test progress was 63%, with no final summary. No merge or successful full CI result |
-| CI correction | The approved stack already contains the expanded closed-review form assertion for Word/PDF/XLSX. Preserve standalone `8bce0b0` locally; do not duplicate its earlier Word-only patch |
-| Publication execution | `cef340b` was pushed normally to PR271 and its remote head verified. The timeout follow-up retains all checks, raises the job limit to 90 minutes and reuses prepared per-test/duration logging. Verify its new exact-head CI and reviews before merge |
-| Operational app | Port 8820 listener remains PID 24324. The last approved receipt is rollback `6c1e2a4` with chat disabled; this inspection did not activate or reconfigure it |
+| Worker startup follow-up | `perf/native-test-state-snapshots-20260914`, based on merged `d2267fe`; defer unused adapter dependencies for Word/XLSX workers, preserving parsing and authority checks |
+| Shared main | `d2267fe894093d8c30aa31ac1a57e90c29b8aa39`, PR #271 merged on 2026-09-14 at 12:00:07 UTC; merge tree matches tested head `8492010` |
+| PR #271 CI | Run `34836524377` succeeded: 2,625 tests passed in 2,522.85 seconds, followed by successful type, security and migration-head checks; no enforced outstanding review requirement was found |
+| Post-merge CI | Run `34841047799` on `d2267fe` is still being observed; its outcome is separate from PR CI |
+| Earlier timeout | Run `34831072452` on `cef340b` exceeded the 45-minute job limit at 63% test progress; the approved `8492010` correction retained every check and raised the job budget to 90 minutes |
+| Publication | PR #271 is merged. This worker-startup follow-up needs its own reviewed commit, publication and successful exact-head CI/reviews before merge; no branch was deleted |
+| Operational app | Last observed port 8820 listener was PID 24324; the last approved receipt is rollback `6c1e2a4` with chat disabled. No activation or reconfiguration accompanies this follow-up |
 
 The earlier `d864c51` CI failure was explained by the native attachment's third form. The
 prepared strict correction verifies logout, attachment/CSRF/file controls and advice
@@ -99,7 +99,7 @@ index equivalence still require the independent deployment rehearsal.
 
 ## Migration and operational boundaries
 
-Published baseline `97c0778` uses 0047. The local candidate requires
+Earlier baseline `97c0778` uses 0047. Merged main `d2267fe` requires
 `0049_draft_proposal_decisions`, following `0048_draft_workspace_proposals`.
 Both add bounded history tables and refuse destructive downgrade. Attachment/review
 adapters and package v7 add no further database migration. Migration identifiers,
@@ -137,7 +137,7 @@ commercial authority change is included in the local native implementation.
 | Estimating | `draft_estimates.py`, `draft_estimate_contract.py`: independent manual lines, explicit rate methods/overrides, decimal arithmetic, revision history and Scope/optional Match dependencies. Retained workbook rate selection exists | Full six-method automatic default derivation, validated extrapolation, yield/productivity/waste/pack/shared-recovery calculations and representative commercial acceptance are not complete |
 | A/B pricing | Source profiles and review, A row observations, B system mappings, T9 coverage, T6 recipe links, T13 target-blind rosters and T10 bottom-up preview exist. `draft_pricing_quantities.py` already persists governed Scope-bound quantities (PR #233) | Do not rebuild the first quantity-basis feature. Preview is bounded to supported current confirmed sell-price evidence; unsupported inputs withhold amounts. Calibration, comparison/combination, holdout execution and production pricing activation remain later |
 | Reporting | `draft_scope_reports.py` / `draft_estimate_reports.py` and versioned renderers retain paired PDF/XLSX bytes for scope-only, scope-and-system, estimate-only and complete profiles | Draft reports are not canonical release. Do not infer professional acceptance across every input from synthetic examples |
-| Portable project | `draft_project_packages.py`, package inspection/materialization and imported-source services support selected revisions, imported origins and optional retained PDF/XLSX/DOCX originals | Local v7 adds explicitly selected native proposal/decision history; packages are not a full database backup or complete project/audit history; library source bodies and unselected artifacts are not automatically included |
+| Portable project | `draft_project_packages.py`, package inspection/materialization and imported-source services support selected revisions, imported origins and optional retained PDF/XLSX/DOCX originals | Merged v7 adds explicitly selected native proposal/decision history; packages are not a full database backup or complete project/audit history; library source bodies and unselected artifacts are not automatically included |
 | Client/UI | `draft_client.py`, typed capabilities, evidence tools and durable client requests reuse the same services. Word adds five tools and `review_word_scope`; exact schemas and bounded redacted field errors are exposed | Client proposals require separate same-user browser confirmation. Word application acceptance and actual connected text/image reads are verified. Dedicated connector Word upload remains host-policy blocked; successful connected scan and remote attachment retrieval remain unproven; Excel transport acceptance must be reconciled separately |
 
 Domain services above are in `src/classifire/services/`; UI/client adapters are
@@ -184,16 +184,46 @@ Private evidence under `C:/CLASSIFIRE/.tmp/`:
   `native-document-reconciliation-20260914` records the current document review,
   link/consistency checks and updated per-file range ledger.
 
-The predecessor full run is terminal, with its source unchanged and its original
-failure/log/JUnit preserved. It was not restarted after an observation timeout.
-The corrected fixture passed its targeted checks. The pinned `5279904` full run is
-active, with 2,625 collected tests; dependency, Ruff, Mypy, Bandit and migration-head
-preflight checks passed. Poll its existing receipt/process without restarting it.
-The pinned full run still covers unchanged application, migration, test and dependency
-blobs. This later CI follow-up changes only workflow timing/logging and documentation.
-Keep the eventual complete result separate from the predecessor 928 passes,
-89 startup checks and PostgreSQL rehearsal. New-control rendered-browser proof and
-other production exits also remain. No real provider/customer run was executed here.
+The predecessor failure remains preserved. The corrected pinned `5279904` full run
+completed with exit 0: 2,623 passed, two Windows symlink capability skips and no
+failures/errors in 8,868.19 seconds. PR #271's Linux CI passed all 2,625 tests on
+`8492010`; its application/test/migration blobs match that pinned local run.
+Four fresh synthetic ZIPs from the completed local run were independently inspected:
+10 members matched manifest sizes/hashes and the exact retained Word/PDF originals;
+proposal-only history carries no decision or approval. No real provider/customer run
+was executed. These runs predate the worker-import optimization below.
+
+## Measured parser startup follow-up
+
+Profiling one decision-integrity case found 18 disposable worker calls consuming
+95.79 seconds; four database snapshots consumed only 1.73 seconds. Snapshot checks
+and database isolation are therefore unchanged. Import tracing found the Word/XLSX
+parser loading unrelated ORM, application configuration, web and PDF dependencies.
+The existing report adapter now imports those dependencies in the operations that
+use them. It remains the single shared parser; subprocess limits, fresh retained-byte
+reads, scan/permission/hash checks and confirmation boundaries are unchanged.
+No migration, cache, dependency, worker pool or CI test-selection change is included.
+
+The same synthetic case passed before and after with fresh basetemp and disposable
+PostgreSQL15433: JUnit suite times were 107.340 and 28.299 seconds respectively.
+This is a local sample, not a predicted whole-CI saving. Import-only AST comparison
+verified identical non-import code. Five fresh-process regressions exercise exact
+pricing, Scope, picture and Word outputs while refusing unrelated application imports.
+All 183 affected tests passed without skips (1,046.966 seconds), including Word,
+client, review, parser and migration cases. Full Ruff, Mypy (240 source files) and
+Bandit passed. Alternating baseline/candidate worker comparisons preserved every
+output byte across five modes and 20 launches; median startup-plus-processing time
+fell from 4.257 to 0.929 seconds across ten launches per version. These Windows
+measurements ran alongside affected tests and do not predict complete Linux CI time.
+The new import regression failed on old code as expected. All 11 additional native
+history/package compatibility cases passed without skips (229.932 seconds), bringing
+affected coverage to 194 tests. Four fresh ZIPs preserved all 10 checked manifest
+members, exact retained Word/PDF originals and separate proposal-only/decision
+authority. This is synthetic HTTP/artifact acceptance, not a new rendered-browser
+or live-provider result. Evidence is under `native-test-performance-validation-20260914`.
+The first thread-profiler attempt and a later timing-reporter error remain preserved;
+neither is presented as a successful performance profile.
+
 Private receipts under `C:/CLASSIFIRE/.tmp/` include
 `startup-lineage-validation-evidence-20260914/postgresql/receipt.json`,
 `native-stack-full-validation-5418f51-20260914/attempt2/run.json` and
@@ -235,15 +265,12 @@ historical byte/recovery evidence, or change any production-phase status.
 
 ## Local change classification
 
-Startup fix `c47c119` changed six files: one application guard, three test files
-and two architecture/state documents. This follow-up changes one test fixture and
-two state/handoff documents; application source is unchanged. Neither change adds
-a migration, dependency or configuration change. The preceding `5418f51` range has 84 reviewed
-files: 75 application/migration/test/configuration files and nine documents. That
-ledger distinguishes complete-file and changed-line reviews and does not cover this
-follow-up or confer publication approval. Private source reports, credentials,
-generated originals,
-ZIPs, screenshots and operator receipts remain outside Git.
+The worker-startup follow-up changes four explicit files: one application adapter,
+one new regression-test file and two state/handoff documents. Existing test assertions,
+worker commands, CI selection, dependency versions and migration files are unchanged.
+The prior native stack is merged through PR271; its earlier review/approval ledgers
+remain historical evidence. Private profiles, synthetic originals/ZIPs, credentials,
+customer reports and operator receipts remain outside Git.
 
 The root `C:/CLASSIFIRE` remains quarantined at `de0cc5a`: 46 unstaged modifications,
 14 staged additions and four DU conflicts, with unrelated untracked files and
@@ -253,16 +280,14 @@ No root content was staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Finish the CI timeout correction and assurance.** Verify its explicit workflow
-   and documentation diff, push normally to the existing PR271 branch and
-   observe its exact-head CI and required reviews before merging. The complete local
-   suite is already running on pinned `5279904` with fresh basetemp and disposable15433;
-   preserve its process and result. New decision/package rendered-browser proof remains.
-2. **Verify the shared result.** Record the actual remote head, merge commit and
-   post-merge CI. The existing form correction is included; preserve its standalone
-   local commit without duplicating it. Never restart because observation expired or
-   treat cancelled/failed/missing results as success. Preserve cancelled run34831072452;
-   the workflow correction triggers a new run and does not rerun that failed budget.
+1. **Finish the measured worker optimization.** Verify the affected test and exact-byte
+   comparison receipts, review and commit its four files, then publish one coherent PR
+   and merge only after successful exact-head CI and required reviews. Measure actual
+   full CI before making a suite-wide speed claim; keep every assertion and check.
+2. **Verify the shared result.** PR271 is merged as d2267fe after successful PR CI;
+   separately observe existing post-merge run34841047799. Preserve previous failures
+   and never restart a job merely because observation expired. New 0049/v7 rendered
+   browser acceptance remains separate from synthetic HTTP and ZIP checks.
 3. **Complete C1 and operational C2/C3 acceptance.** Diagnose the broader CI/runtime
    limits, then obtain separate approval for the exact prepared provider test and
    activation. Preserve rollback state, consumed allowances and existing confirmations.

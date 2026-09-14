@@ -19,38 +19,29 @@ from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn
 
-import pymupdf
 from defusedxml import ElementTree as defused_elementtree  # type: ignore[import-untyped]
 from openpyxl import load_workbook  # type: ignore[import-untyped]
 from openpyxl.xml import DEFUSEDXML  # type: ignore[import-untyped]
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
 
-from ..models import (
-    ProjectEvidence,
-    ReportDefectScope,
-    ReportEvidenceLocator,
-)
-from ..physical_models import Defect
-from .phase8_visual_proposal import (
-    VISUAL_PROPOSAL_POLICY_VERSION,
-    Phase8VisualProposalError,
-    canonical_json_sha256,
-    validate_policy_bound_visual_physical_proposal,
-)
-from .project_evidence import (
-    read_project_evidence_for_update,
-    require_project_evidence_access,
-)
-from .report_expected_label_manifest import (
-    ApprovedReportExpectedLabelManifest,
-    ReportExpectedLabelManifestError,
-    require_approved_report_expected_label_manifest,
-)
-from .storage import VerifiedStoredFileContent
+# Word/XLSX parsing needs no ORM, application configuration or PDF renderer.
+# Load those dependencies only in the operations that use them.
+if TYPE_CHECKING:
+    import pymupdf
+    from sqlalchemy.orm import Session
+
+    from ..models import (
+        ProjectEvidence,
+        ReportDefectScope,
+        ReportEvidenceLocator,
+    )
+    from ..physical_models import Defect
+    from .report_expected_label_manifest import (
+        ApprovedReportExpectedLabelManifest,
+    )
+    from .storage import VerifiedStoredFileContent
+
 
 REPORT_EVIDENCE_LOCATOR_SCHEMA = 'CLASSIFIRE-REPORT-EVIDENCE-LOCATORS-v1'
 REPORT_DEFECT_EVIDENCE_PACKET_SCHEMA = 'CLASSIFIRE-REPORT-DEFECT-EVIDENCE-PACKET-v1'
@@ -321,6 +312,8 @@ def _media_type(value: object) -> str:
 
 
 def _verified_report_content(content: object) -> tuple[str, int, bytes]:
+    from .storage import VerifiedStoredFileContent
+
     if not isinstance(content, VerifiedStoredFileContent):
         _fail('REPORT_EVIDENCE_SOURCE_INVALID')
     source_sha256 = _normalise_sha256(content.sha256)
@@ -402,6 +395,8 @@ def _page_drafts(
     page: pymupdf.Page,
     page_number: int,
 ) -> list[dict[str, Any]]:
+    import pymupdf
+
     page_bounds = _bbox(page.rect)
     text = _normalised_text(page.get_text('text', sort=True))
     drafts = [
@@ -580,6 +575,7 @@ def _page_drafts(
 
 def normalise_verified_pdf_report(content: VerifiedStoredFileContent) -> NormalisedReportEvidence:
     '''Normalise one exact PDF into bounded, content-free stable locators.'''
+    import pymupdf
 
     source_sha256, source_size_bytes, report_bytes = _report_content(content)
     try:
@@ -1279,6 +1275,7 @@ def reextract_verified_docx_report_item(
 
 def normalise_verified_report(content: VerifiedStoredFileContent) -> NormalisedReportEvidence:
     '''Normalise one allowed exact retained report without broad file admission.'''
+    from .storage import VerifiedStoredFileContent
 
     if not isinstance(content, VerifiedStoredFileContent):
         _fail('REPORT_EVIDENCE_SOURCE_INVALID')
@@ -1347,6 +1344,8 @@ def _report_owner(
     project_id: str,
     estimate_id: str | None,
 ) -> ProjectEvidence:
+    from .project_evidence import require_project_evidence_access
+
     try:
         return require_project_evidence_access(
             db,
@@ -1635,6 +1634,10 @@ def _register_report_evidence_locators(
     estimate_id: str | None = None,
 ) -> tuple[ReportEvidenceLocator, ...]:
     '''Persist one exact normalised report after its clean-byte read is locked.'''
+    from sqlalchemy import select
+    from sqlalchemy.exc import IntegrityError
+
+    from ..models import ReportEvidenceLocator
 
     evidence = _report_owner(
         db,
@@ -1696,6 +1699,7 @@ def materialise_project_report_locators_for_update(
     estimate_id: str | None = None,
 ) -> tuple[ReportEvidenceLocator, ...]:
     '''Read clean exact report bytes, then persist their stable locators.'''
+    from .project_evidence import read_project_evidence_for_update
 
     try:
         content = read_project_evidence_for_update(
@@ -1739,6 +1743,10 @@ def _scope_locator_records(
     evidence: ProjectEvidence,
     scope: ReportDefectScope,
 ) -> tuple[ReportEvidenceLocator, ...]:
+    from sqlalchemy import select
+
+    from ..models import ReportEvidenceLocator
+
     start = db.get(ReportEvidenceLocator, scope.start_locator_id)
     end = db.get(ReportEvidenceLocator, scope.end_locator_id)
     if (
@@ -1807,6 +1815,7 @@ def _packet_artifact(
 
 def validate_report_defect_evidence_packet(packet: object) -> list[str]:
     '''Validate a selected-Defect report manifest before v2 proposal validation.'''
+    from .phase8_visual_proposal import Phase8VisualProposalError, canonical_json_sha256
 
     if not isinstance(packet, ReportDefectEvidencePacket):
         return ['report defect evidence packet has an unsupported type']
@@ -1966,6 +1975,11 @@ def _scope_admission_packet_binding(
     estimate_id: str,
     scope: ReportDefectScope,
 ) -> dict[str, str]:
+    from .report_expected_label_manifest import (
+        ReportExpectedLabelManifestError,
+        require_approved_report_expected_label_manifest,
+    )
+
     manifest_id = scope.approved_expected_label_manifest_id
     if manifest_id is None:
         return {}
@@ -1999,6 +2013,8 @@ def _build_report_defect_evidence_packet(
     defect: Defect,
     scope: ReportDefectScope,
 ) -> ReportDefectEvidencePacket:
+    from .phase8_visual_proposal import canonical_json_sha256
+
     if scope.source_sha256 != evidence.source_sha256:
         _fail('REPORT_EVIDENCE_SCOPE_BINDING_INVALID')
     records = _scope_locator_records(db, evidence=evidence, scope=scope)
@@ -2060,6 +2076,10 @@ def build_report_defect_evidence_packet(
     defect_id: str,
 ) -> ReportDefectEvidencePacket:
     '''Expose one report-selected Defect range as v2-approved documentary refs.'''
+    from sqlalchemy import select
+
+    from ..models import ReportDefectScope
+    from ..physical_models import Defect
 
     estimate_id = _required_text(estimate_id, code='REPORT_EVIDENCE_ESTIMATE_INVALID', maximum=36)
     defect_id = _required_text(defect_id, code='REPORT_EVIDENCE_DEFECT_INVALID', maximum=36)
@@ -2101,6 +2121,10 @@ def build_report_defect_evidence_packets(
     estimate_id: str,
 ) -> tuple[ReportDefectEvidencePacket, ...]:
     '''Expose every selected Defect range for one owned report and estimate.'''
+    from sqlalchemy import select
+
+    from ..models import ReportDefectScope
+    from ..physical_models import Defect
 
     estimate_id = _required_text(estimate_id, code='REPORT_EVIDENCE_ESTIMATE_INVALID', maximum=36)
     evidence = _report_owner(
@@ -2154,6 +2178,10 @@ def validate_report_defect_v2_proposal(
     proposal: object,
 ) -> list[str]:
     '''Apply the existing v2 proposal policy to exactly one report-selected range.'''
+    from .phase8_visual_proposal import (
+        VISUAL_PROPOSAL_POLICY_VERSION,
+        validate_policy_bound_visual_physical_proposal,
+    )
 
     if not isinstance(packet, ReportDefectEvidencePacket):
         return ['report defect evidence packet has an unsupported type']
@@ -2181,6 +2209,11 @@ def _bind_report_defect_scope(
     approved_expected_label_manifest_id: str,
 ) -> ReportDefectScope:
     '''Bind one ordered locator range to an existing Defect without model writes.'''
+    from sqlalchemy import select
+    from sqlalchemy.exc import IntegrityError
+
+    from ..models import ReportDefectScope, ReportEvidenceLocator
+    from ..physical_models import Defect
 
     estimate_id = _required_text(estimate_id, code='REPORT_EVIDENCE_ESTIMATE_INVALID', maximum=36)
     defect_id = _required_text(defect_id, code='REPORT_EVIDENCE_DEFECT_INVALID', maximum=36)
@@ -2332,6 +2365,11 @@ def _approved_scope_manifest(
     evidence: ProjectEvidence,
     bindings: tuple[ReportDefectScopeBinding, ...],
 ) -> ApprovedReportExpectedLabelManifest:
+    from .report_expected_label_manifest import (
+        ReportExpectedLabelManifestError,
+        require_approved_report_expected_label_manifest,
+    )
+
     try:
         approved = require_approved_report_expected_label_manifest(
             db,
@@ -2362,6 +2400,10 @@ def bind_approved_report_defect_scopes(
     scope_bindings: object,
 ) -> tuple[ReportDefectScope, ...]:
     '''Atomically admit every scope from one source-bound approved label set.'''
+    from sqlalchemy import select
+    from sqlalchemy.exc import IntegrityError
+
+    from ..models import ReportDefectScope
 
     stored_file = _required_text(
         stored_file_id,
