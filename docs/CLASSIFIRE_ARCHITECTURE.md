@@ -1,6 +1,6 @@
 # CLASSIFIRE Architecture
 
-Reconciled 2026-09-14 from merged and local source, approved ADRs and the owner's clarified
+Reconciled 2026-09-15 from merged and local source, approved ADRs and the owner's clarified
 in-app chat upload and page-interaction intention. This document
 separates implemented application structure from the target and remaining work.
 Exact branch, CI, runtime and validation facts belong in
@@ -385,7 +385,7 @@ these documents. Current runtime and CI observations belong in
 
 | Gap / decision | Planned direction and validation needed |
 | --- | --- |
-| Native chat upload and reviewed page actions | Bounded attachment, evidence proposals and Scope edits are implemented locally; finish decision/package browser acceptance, real-provider/live acceptance and broader typed actions |
+| Native chat upload and reviewed page actions | Bounded attachment, evidence proposals and Scope edits are implemented locally; bounded synthetic Word decision/package browser acceptance passed; real-provider/live acceptance and broader typed actions remain |
 | Broader physical/evidence representation | Extend current graph and provenance only for a proven user need; explicit instances/planes/treatments and additional report formats need representative acceptance and compatible schemas |
 | General document jobs | Implement bounded resumable stages/attempts/leases/recovery over existing persistence when the interactive pilot establishes need; current worker has no handlers |
 | Technical corpus scale | T2-T8 require retained source revisions, per-field lineage, duplicate/reprocess policy, pagination and measured capacity; no mandatory vector database or agent fleet |
@@ -410,7 +410,9 @@ implemented locally with explicit decision/revision links. Actual-app HTTP/serve
 passed for both the earlier decision candidate and local package-history commit23f5110.
 Selected history has targeted regression and exact synthetic database/storage recovery evidence.
 Source inspection retains transaction row locks for quarantine coordination; no-write behavior
-does not imply compatibility with a PostgreSQL read-only transaction. Rendered-browser,
-broader reviewed actions and operational acceptance remain. Existing connector transport
+does not imply compatibility with a PostgreSQL read-only transaction. Bounded headless
+browser acceptance now covers Word decisions, rejection and selected v7 history across
+restart with synthetic provider/scanner stubs. Broader reviewed actions, real-provider
+and operational acceptance remain. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked
 without forcing users through downstream capabilities.

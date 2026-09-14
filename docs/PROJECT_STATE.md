@@ -1,6 +1,6 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-15 against the isolated distribution follow-up, migration source, retained
+Reconciled 2026-09-15 against merged main, the package-guidance follow-up, retained
 validation evidence and GitHub. This is current state, not production certification.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
@@ -17,12 +17,12 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Selected follow-up | `fix/distribution-ui-assets-20260915`, now includes merged `46fc436`; runtime/build code matches locally tested combined `25dd47d` |
-| Shared main | `46fc4366729ac25b8e73dd5bef82a85fb5a4792d`, PR #273 merged; merge tree matches tested `37a86ca` |
-| PR #273 CI | Run `34862079545` passed 2,647 tests in 3,509.19 seconds, with successful style/type/security/migration checks; current review requirements were checked before merge |
-| Post-merge CI | Run `34869099059` is in progress. Earlier PR #272 post-merge `34853579643` passed 2,630 tests and all later checks. Existing jobs were observed, not restarted |
-| Publication | PR #273 is merged. The distribution fix needs its own successful CI/reviews before merge; no branch was deleted |
-| Operational app | Last observed port8820 listener was PID24324; the last approved receipt remains rollback `6c1e2a4` with chat disabled. No activation accompanies this follow-up |
+| Selected follow-up | `fix/package-import-guidance-20260915`, based on `3911ca4`; corrects stale import guidance and reconciles acceptance evidence |
+| Shared main | `3911ca4819fca6cc4662289cc3eb77c83f713675`, PR #274 merged; tree exactly matches tested `8025729` |
+| PR #273 CI | PR run `34862079545` passed 2,647 tests; post-merge `34869099059` also completed successfully |
+| PR #274 CI | PR run `34869742499` passed 2,658 tests; post-merge `34873941741` passed 2,658 tests in 1,908.17 seconds with 386 warnings, plus build/style/type/security/migration checks |
+| Publication | PRs #273/#274 merged after successful checks and observed review requirements. This guidance follow-up still needs its own CI/review gate; no branch was deleted |
+| Operational app | Port8820 listener remains PID24324; the last approved receipt remains rollback `6c1e2a4` with chat disabled. No activation accompanies this follow-up |
 
 The earlier `d864c51` CI failure was explained by the native attachment's third form. The
 prepared strict correction verifies logout, attachment/CSRF/file controls and advice
@@ -59,10 +59,30 @@ embedded signed-in ChatGPT account nor shared external conversation history is c
   passing targeted evidence, not full production acceptance.
 
 Word/PDF/XLSX synthetic attachment-to-Scope-to-original-ZIP journeys and the earlier
-0048 saved-proposal browser journey passed. The newer 0049 decision and v7 history
-controls have HTTP, artifact and restart checks, but rendered-browser acceptance
-remains unverified: the browser helper failed initialization. No new model or scanner
-call followed from reopening, downloading or this documentation reconciliation.
+0048 saved-proposal browser journey passed. The newer 0049 decision/v7 controls now
+also have rendered headless-Chrome acceptance on the exact `8025729` tree merged
+as `3911ca4`. This used an owned PostgreSQL15433 database, separate loopback app,
+synthetic provider/scanner stubs and fresh browser profiles; it is not live acceptance.
+
+The browser journey covered DOCX upload, explicit scan, retained text/image reads,
+selected evidence preview/consent, typed proposal retention/reopening, separate
+Scope revision2 confirmation and separate original-bearing package confirmation.
+The downloaded Scope, original DOCX and selected proposal/decision matched retained
+bytes. After restart, all71 tables matched before login; the reopened response and
+decision and downloaded ZIP remained exact. Proposal-only export omitted the decision
+and original even after confirmation existed. A separately confirmed rejection changed
+only its decision and audit, leaving Scope unchanged. Blank openings and unresolved
+links/quantities stayed explicit. Dock, resize and collapse controls were exercised,
+and rendered review/package screens were visually inspected.
+
+Two synthetic model calls and one synthetic scan ran in total; real-provider and
+Match/Estimate/report call counters remained zero. Reopening/downloads made no model
+or scanner calls. The owned browser/server stopped and port8839 closed. Evidence:
+`C:/CLASSIFIRE/.tmp/native-headless-acceptance-8025729-20260915/acceptance-receipt.json`.
+The native browser helper's initialization failure remains recorded; installed Chrome
+headless testing supplied this bounded UI evidence. Harness observation/assertion
+corrections are recorded, including fresh-login timestamps and reused download names.
+No real report accuracy, actual scanner efficacy or real-model acceptance is claimed.
 
 Ordinary advice remains unsaved unless its existing bounded tab-memory option applies.
 Raw provider responses, prompt-version reproducibility, full portable AI history,
@@ -98,8 +118,8 @@ rolled back. A recovered copy matched an independently restored migration refere
 raw check-expression text differed after PostgreSQL dump/restore and is recorded as
 an explicit representation limitation. Both retained original files matched their
 historical manifests. This is not fresh-live-state, original-owner/ACL or activation proof.
-The new browser helper attempt still failed before UI actions; visible 0049/v7 acceptance
-remains outstanding. Finish the exact launcher/fresh-backup/restore/rollback plan before
+The subsequent headless browser journey above passed bounded 0049/v7 acceptance.
+Finish the exact fresh-backup/restore/rollback plan before
 requesting new live activation and any separately bounded provider test.
 
 ## Startup lineage enforcement follow-up
@@ -127,7 +147,7 @@ index equivalence still require the independent deployment rehearsal.
 
 ## Migration and operational boundaries
 
-Earlier baseline `97c0778` uses 0047. Merged main `d2267fe` requires
+Earlier baseline `97c0778` uses 0047. Merged main `3911ca4` requires
 `0049_draft_proposal_decisions`, following `0048_draft_workspace_proposals`.
 Both add bounded history tables and refuse destructive downgrade. Attachment/review
 adapters and package v7 add no further database migration. Migration identifiers,
@@ -293,12 +313,22 @@ historical byte/recovery evidence, or change any production-phase status.
 
 ## Local change classification
 
-The merged worker-startup follow-up changed four explicit files: one application adapter,
-one new regression-test file and two state/handoff documents. Existing test assertions,
-worker commands, CI selection, dependency versions and migration files are unchanged.
-The prior native stack is merged through PR271; its earlier review/approval ledgers
-remain historical evidence. Private profiles, synthetic originals/ZIPs, credentials,
-customer reports and operator receipts remain outside Git.
+This follow-up changes six explicit files: one package template, one existing package UI
+regression-test file and four canonical documents. The package screen describes the
+existing preview and
+separate import into a new Draft. Historical manifest wording and ZIP bytes remain
+unchanged. Import validation and all integrity/authority rules are unchanged.
+The earlier native, startup and distribution stacks are merged; their review ledgers
+remain evidence. Private browser profiles, receipts, synthetic originals/ZIPs, credentials
+and customer evidence stay outside Git. No migration or dependency changes. A failed
+compatibility test proved that changing
+the serialized notice would invalidate existing packages during source recomposition.
+The final correction therefore changes presentation only and preserves that check.
+
+All 20 affected package/import service and UI tests passed with the selected checkout
+PYTHONPATH and fresh basetemp. Preview and saved-page checks verify the corrected
+guidance while downloaded archives retain the historical notice and exact bytes.
+Scoped Ruff and local document-link checks passed.
 
 The root `C:/CLASSIFIRE` remains quarantined at `de0cc5a`: 46 unstaged modifications,
 14 staged additions and four DU conflicts, with unrelated untracked files and
@@ -308,21 +338,19 @@ No root content was staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Finish distribution publication.** Guarded migrated restart is merged as
-   `46fc436`; observe its post-merge run `34869099059`. Review and publish the
-   packaging follow-up, then merge only after successful exact-head CI and required
-   reviews. Record its post-merge result separately; do not restart existing jobs.
-2. **Finish activation readiness.** Pin/rehearse the operational launcher and fresh
-   backup/restore/roles/storage/rollback commands. Historical 15433 conversion/recovery
-   evidence does not establish current live state. Complete 0049/v7 rendered-browser
-   acceptance when the browser helper becomes available.
-3. **Complete C1 and operational C2/C3 acceptance.** Diagnose the broader CI/runtime
-   limits, then obtain separate approval for the exact prepared provider test and
-   activation. Preserve rollback state, consumed allowances and existing confirmations.
-4. **Advance the independent product gates.** Broader typed Match/Estimate/library
-   actions, I2/N1 connector transport, reviewed technical/commercial semantics,
-   T11-T14 evaluation, full physical/history coverage and Phase 8-16 production exits
-   remain. No synthetic success grants technical approval, pricing authority or release.
+1. **Publish the evidenced display guidance correction.** Validate explicit files, then
+   observe its exact-head CI and required reviews before merge. Record post-merge CI
+   separately; do not restart existing jobs because observation timed out.
+2. **Finish activation readiness.** The pinned launcher/fresh-environment rehearsal
+   passed. Complete exact fresh backup/restore, owner/grants, current storage linkage,
+   drift and rollback commands. Historical15433 conversion/recovery does not establish
+   current live state, and a successful headless test does not authorize deployment.
+3. **Complete C1 and operational C2/C3 acceptance.** Obtain separate approval for the
+   exact prepared provider test and activation. Preserve rollback state, consumed
+   allowances and existing human confirmations.
+4. **Advance independent product gates.** Broader typed actions, I2/N1 connector
+   transport, reviewed technical/commercial semantics, T11-T14 evaluation, full
+   physical/history coverage and Phase8-16 production exits remain incomplete.
 
 ## Distribution asset packaging follow-up
 
@@ -334,8 +362,8 @@ a corrected wheel preserved all 326 application files. An isolated installed-whe
 TestClient check compiled 67 templates and served login, all 19 static assets and
 branding, with unchanged disposable 15433 database bytes. This is packaging/HTTP
 proof, not rendered-browser or production acceptance. See
-[distribution verification](./DISTRIBUTION_VERIFICATION.md). Publication and its
-own successful CI/reviews remain required; no existing CI job is restarted.
+[distribution verification](./DISTRIBUTION_VERIFICATION.md). PR #274 and its post-merge
+CI passed; no existing job was restarted.
 
 
 Combined local candidate `25dd47d` includes the reviewed migrated restart and
@@ -343,6 +371,13 @@ packaging fixes. All 78 affected tests passed (258.41 seconds), and its built wh
 preserved 326 files. Offline installation from 71 wheels into a fresh Python environment
 passed dependency checks, two installed-package HTTP starts and five exact-output
 Word/XLSX worker modes. System/user site-packages were disabled. These are private
-local validation results. PR #273 merged after successful CI; its post-merge run
-remains in progress, and this packaging follow-up still needs its own CI/review gate.
+local validation results. PRs #273/#274 and both post-merge runs subsequently passed.
 No live activation, provider request or new human approval is implied. The combined checkout is `distribution-ui-assets-20260915`.
+
+The pinned source demo launcher and fresh Python environment also completed two
+actual loopback HTTP starts on8838 with guarded migrated15433 startup. Login and all19
+static assets passed; full database dumps and retained files stayed unchanged. Owned
+process trees stopped and the port closed. The initial shutdown-harness failure is
+retained. This launcher inserts adjacent source into its import path: pin the source
+archive as well as the environment/wheel. Evidence is in
+`combined-release-25dd47d-20260915/fresh-launcher-http-attempt2/receipt.json`.
