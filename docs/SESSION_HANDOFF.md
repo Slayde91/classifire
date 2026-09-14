@@ -9,12 +9,12 @@ points here. The full production objective remains active and incomplete.
 
 ## Selected checkout and scope
 
-Continue in `C:/CLASSIFIRE/.tmp/ci-native-suite-budget-20260914`, branch
-`ci/native-suite-budget-20260914`, based on published `cef340b`. This follow-up changes
-CI timing/logging and state/handoff documents. Application source remains `c47c119`;
-application, migration, test and dependency blobs match the pinned `5279904` full run.
-Verify the actual HEAD/status before editing. No root recovery, live activation or
-new provider/customer workflow is included.
+Continue in `C:/CLASSIFIRE/.tmp/perf-native-test-state-snapshots-20260914`, branch
+`perf/native-test-state-snapshots-20260914`, based on merged main `d2267fe`.
+The active follow-up reduces repeated Word/XLSX worker startup by deferring unrelated
+report-adapter imports. Parsing, permissions, subprocess isolation and every existing
+assertion remain. No root recovery, live activation or provider/customer run is included.
+Verify HEAD/status and the local validation receipts before publication.
 
 The ancestor range implements native Word/PDF/XLSX evidence selection and typed
 additions, selected Scope edits, explicit saved generations/decisions and v7 package
@@ -39,23 +39,23 @@ chronology and failed attempts remain in Git and private receipts.
 
 ## Publication and operational boundaries
 
-- Shared main is `97c0778`; PR271 was updated by a verified normal push to `cef340b`.
-  Its run34831072452 reached 63% test progress, then GitHub cancelled the job at its
-  45-minute limit. The annotation explicitly records that cause; no complete pass
-  or later type/security/migration-head check was obtained. The old d864c51 form
-  failure remains preserved separately.
-- On 2026-09-14 the owner approved the reviewed broader `5279904` candidate:
-  29 commits/89 files, plus this factual publication checkpoint. Reuse PR271 from
-  `feat/native-word-attachments-20260913` to `main`; verify actual push, exact-head CI,
-  required reviews and merge rather than inferring success from approval.
+- PR271 merged as `d2267fe894093d8c30aa31ac1a57e90c29b8aa39` at 12:00:07 UTC
+  on 2026-09-14. Head `8492010` passed run34836524377 with 2,625 tests, full type/security
+  and migration-head checks. The merge tree matches that head; reviews/rules were
+  inspected and no enforced outstanding review requirement was found.
+- Post-merge run34841047799 on d2267fe is separate and still being observed. Poll it;
+  never restart a job because observation expired. The earlier 45-minute timeout
+  and its exact approval/publication receipts remain preserved.
+- The worker-startup optimization is a new isolated follow-up. Review its explicit
+  files, validation and commit range before normal publication and a new PR to main.
 - The stack includes the expanded Word/PDF/XLSX form correction. Standalone
   `8bce0b0` remains preserved locally; do not duplicate that earlier patch.
 - Diagnostic PR270 merged, but post-merge 34753856708 cancelled without a full summary.
   Do not restart a job because observation expired; poll the same live handle when one exists.
-- The 8820 listener is still PID 24324. The last approved receipt is rollback 6c1e2a4,
+- The last observed 8820 listener was PID 24324. The approved receipt is rollback 6c1e2a4,
   chat disabled after the 7dbc1cc follow-up 502. Its cause is unknown. Old provider
   allowances are consumed; a new exact test and activation need separate approval.
-- Current local migration head is 0049 after 0048; published baseline is 0047. Both new
+- Shared main migration head is 0049 after 0048; the older 97c0778 baseline is 0047. Both new
   migrations refuse destructive downgrade. v7 history adds no further DB migration.
   Never assume code-only rollback; preserve post-backup writes and newer artifacts.
 - Keep OAuth/tunnel/host policy and customer/technical/commercial authority unchanged.
@@ -80,12 +80,13 @@ The later full `5418f51` run ended with exit1 and 928 passes/one failure, zero
 skips/errors, before the remaining collected tests ran. Read
 `native-stack-full-validation-5418f51-20260914/attempt2/run.json` and its JUnit/log.
 The runner and pytest processes exited; do not keep polling their historical PIDs
-as though still active. The new corrected-source run is active at pinned `5279904`,
-with 2,625 collected tests and all five preflight checks passed. Poll
-`native-stack-full-validation-5279904-20260914/run.json` and its recorded process.
-The CI follow-up does not change application, migration, test or dependency blobs.
-It reuses the existing bf700bc per-test/duration logging and gives the complete job
-90 minutes. No test selection, assertion, fail-fast setting or later check is removed.
+as though still active. The corrected pinned 5279904 full run also finished:
+2,623 passed, two Windows symlink capability skips, exit 0 in 8,868.19 seconds.
+PR271 Linux CI subsequently passed all 2,625 tests. Four fresh ZIPs from the completed
+local run matched 10 manifest members and the exact Word/PDF originals; proposal-only
+history has no decision authority. The import optimization needs its own checks.
+The merged workflow retains every check and uses verbose test/duration output with a
+90-minute job budget. Do not change test selection or assertions to shorten CI.
 Startup evidence is in `startup-lineage-validation-evidence-20260914`, including
 `postgresql/receipt.json`; fixture checks are in
 `imported-evidence-fixture-validation-20260914/targeted.xml`.
@@ -105,14 +106,18 @@ policy, representative accuracy and the broader Phase 8-16 exits remain incomple
 
 ## Next executable task
 
-Publish the CI timeout/logging correction and factual documents through existing PR271,
-then observe the exact-head CI and required reviews before merge. Reconcile against
-`native-stack-full-validation-5279904-20260914/publication-manifest-5279904.json`
-and the subsequent checkpoint/CI diffs. The complete local suite is already
-running: preserve its actual process, fresh basetemp, result and predecessor failure.
-After merge verify the resulting commit and post-merge CI separately. Complete
-new-control browser acceptance when supported. Prepare the version-specific provider
-and activation plan before any operational execution; preserve prior confirmations.
+Finish the measured import optimization as one coherent update. One representative
+integrity case passed in 107.340 seconds before and 28.299 seconds after (JUnit suite
+times, fresh basetemp, disposable15433). The non-import AST is identical. All 194 affected/parser/client/review/migration/package
+cases passed with no skips; full Ruff, Mypy and Bandit passed. Four fresh ZIPs preserved
+10 checked members and the exact Word/PDF originals. Inspect
+`native-test-performance-validation-20260914` for these receipts, the byte-identical
+worker comparison and old-code regression control. Do not claim
+a whole-CI speedup from a local sample. Commit explicit reviewed files, publish and
+merge only after successful exact-head CI and required reviews; retain all branches.
+Observe existing post-merge run34841047799 independently. Complete new-control browser
+acceptance when supported. Provider testing and operational activation still need
+an exact approved plan; preserve the original project/Scope/package confirmations.
 
 Tests use `C:/CLASSIFIRE/.tmp/native-stack-test-env-20260914/Scripts/python.exe`,
 the selected checkout's `src` (and `tests` where required) on PYTHONPATH,
@@ -128,27 +133,22 @@ and private evidence must remain intact. Do not reset, clean, resolve or publish
 
 ## Copy-ready next-session prompt
 
-Continue CLASSIFIRE from repository evidence. Read AGENTS.md, GOAL.md,
-docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md, docs/CLASSIFIRE_ROADMAP.md,
-docs/EMBEDDED_WORKSPACE_CHAT.md and both native-history contracts. Use
-C:/CLASSIFIRE/.tmp/ci-native-suite-budget-20260914; reconcile its HEAD/status.
-Startup fix c47c119 passed 89 affected tests and a separate read-only PostgreSQL
-rehearsal. Full predecessor5418f51 stopped with 928 passes/one obsolete-fixture
-failure. The fixture correction passed 60 navigation tests. The complete pinned
-5279904 run is now active with 2,625 collected tests and all preflight checks passed;
-poll its existing receipt/process rather than restarting it. The owner approved the
-reviewed 29-commit/89-file stack and factual publication checkpoint on 2026-09-14.
-The exact approved cef340b was published to PR271, but run34831072452 was cancelled
-at the configured 45-minute job limit after 63% test progress. This isolated follow-up
-reuses per-test/duration logging and increases the job limit to 90 minutes, preserving
-every check and all application/test inputs. Verify its publication, new exact-head
-CI/reviews, merge and post-merge CI. Never rerun an existing job merely because
-observation expired. Do not duplicate standalone 8bce0b0, already represented here.
-Finish new decision/package rendered-browser acceptance when supported. Preserve
-prior evidence, failed attempts and full production gates.
-Live 8820's last receipt is rollback 6c1e2a4/chat disabled; new provider tests and
-activation need exact approval and successful applicable CI. Use selected PYTHONPATH,
-fresh basetemp and disposable 15433. Preserve unknowns, blank openings, separate Scope/
-package confirmation, original evidence and foreign-history authority boundaries.
-Keep the conflicted root and private files untouched. Follow all production roadmap
-exits; no local test or Draft confirmation establishes technical authority or release.
+Continue CLASSIFIRE from repository evidence. Read AGENTS.md, GOAL.md and the canonical
+state, architecture, roadmap and handoff. Use the isolated
+C:/CLASSIFIRE/.tmp/perf-native-test-state-snapshots-20260914 checkout and verify its
+HEAD/status. PR271 merged as d2267fe after 2,625 successful Linux tests and all later
+checks; its merge tree matches tested 8492010. Separately poll post-merge run34841047799.
+The pinned local 5279904 full suite finished with 2,623 passes and two Windows symlink
+skips. Do not restart completed or running jobs because observation timed out.
+The current measured optimization defers unrelated report-adapter imports for disposable
+Word/XLSX workers, preserving all parsing and authority logic. Inspect the exact local
+diff and native-test-performance-validation-20260914 receipts: 194 affected tests,
+full static checks and fresh exact-original ZIP inspection passed. Finish review,
+explicit-file commit, publication and CI-gated merge as one update.
+Do not duplicate previously merged native attachment/history/fixture/startup fixes.
+Live 8820's last receipt is rollback 6c1e2a4/chat disabled. New provider tests and
+activation need an exact approved plan and successful applicable CI. Use the selected
+checkout's PYTHONPATH, fresh basetemp and disposable15433, never live15432. Preserve
+unknowns, blank openings, separate Scope/package confirmation, original evidence and
+foreign-history authority boundaries. Keep the conflicted root and private files
+untouched. Browser acceptance of new 0049/v7 controls and production exits remain.
