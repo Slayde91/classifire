@@ -38,3 +38,14 @@ These checks do not prove rendered-browser appearance, clean-machine dependency
 installation, report accuracy or production readiness. The private wheel used the
 existing validated Python environment for dependencies. Live activation remains
 subject to its separate approved backup, restore, migration and rollback plan.
+
+
+The combined restart/packaging candidate then passed all78 affected tests and the
+same326-file wheel comparison. Its71-wheel dependency set installed offline into a
+fresh Windows Python environment with system/user site-packages disabled and the
+tested dependency constraints preserved. `pip check` passed. Two fresh processes
+imported the installed package, compiled67 templates and served all19 assets with
+unchanged disposable15433 database dumps. Five fresh installed Word/XLSX worker
+modes produced exact source-reference outputs while refusing unrelated application
+imports. These results strengthen installation evidence; they do not certify a
+separate machine, rendered browser, scanner/provider execution or live activation.

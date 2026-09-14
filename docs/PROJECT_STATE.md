@@ -336,3 +336,13 @@ branding, with unchanged disposable15433 database bytes. This is packaging/HTTP
 proof, not rendered-browser or production acceptance. See
 [distribution verification](./DISTRIBUTION_VERIFICATION.md). Publication and its
 own successful CI/reviews remain required; no existing CI job is restarted.
+
+
+Combined local candidate `25dd47d` includes the reviewed migrated restart and
+packaging fixes. All78 affected tests passed (258.41 seconds), and its built wheel
+preserved326 files. Offline installation from71 wheels into a fresh Python environment
+passed dependency checks, two installed-package HTTP starts and five exact-output
+Word/XLSX worker modes. System/user site-packages were disabled. These are private
+local validation results; PR273 CI is still being observed and the packaging PR
+will follow that merge. No live activation, provider request or new human approval
+is implied. The combined checkout is `distribution-ui-assets-20260915`.
