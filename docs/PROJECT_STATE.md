@@ -295,3 +295,16 @@ No root content was staged, resolved, reset or published. See
    actions, I2/N1 connector transport, reviewed technical/commercial semantics,
    T11-T14 evaluation, full physical/history coverage and Phase 8-16 production exits
    remain. No synthetic success grants technical approval, pricing authority or release.
+
+## Distribution asset packaging follow-up
+
+A built-wheel inspection found that source-checkout validation had missed all 67
+HTML templates and 19 static UI assets in the distribution. The packaging follow-up
+adds explicit package data and a CI build/byte-comparison check without changing
+application logic, schemas or dependencies. Fifteen affected tests passed locally;
+a corrected wheel preserved all326 application files. An isolated installed-wheel
+TestClient check compiled67 templates and served login, all19 static assets and
+branding, with unchanged disposable15433 database bytes. This is packaging/HTTP
+proof, not rendered-browser or production acceptance. See
+[distribution verification](./DISTRIBUTION_VERIFICATION.md). Publication and its
+own successful CI/reviews remain required; no existing CI job is restarted.

@@ -59,6 +59,17 @@ classifire-migrate = "classifire.migrations:main"
 where = ["src"]
 include = ["classifire*"]
 
+[tool.setuptools.package-data]
+classifire = [
+  "templates/*.html",
+  "templates/partials/*.html",
+  "static/*.css",
+  "static/*.js",
+  "static/css/*.css",
+  "static/brand/*.png",
+  "static/brand/generated/*.png"
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --disable-warnings --maxfail=1"
