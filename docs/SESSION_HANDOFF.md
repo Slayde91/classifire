@@ -10,9 +10,9 @@ points here. The full production objective remains active and incomplete.
 ## Selected checkout and scope
 
 Continue in `C:/CLASSIFIRE/.tmp/imported-evidence-fixture-20260914`, branch
-`fix/imported-evidence-fixture-20260914`, without an upstream. It follows startup
-fix `c47c119`; this follow-up changes a test fixture and state/handoff documents,
-with application source unchanged.
+`fix/imported-evidence-fixture-20260914`. Its publication checkpoint follows
+`5279904` and changes only state/handoff documents; application source remains
+`c47c119`. The pinned full-suite checkout remains at `5279904`.
 Verify the actual HEAD/status before editing. No root recovery, live activation or
 new provider/customer workflow is included.
 
@@ -39,11 +39,14 @@ chronology and failed attempts remain in Git and private receipts.
 
 ## Publication and operational boundaries
 
-- Shared main is `97c0778`. Open PR271 has approved `d864c51` on
-  `feat/native-word-attachments-20260913` to `main`. Existing run 34757320145 failed
-  after 639 passes on the obsolete two-form assertion. No merge/review success is claimed.
-- Local one-file `8bce0b0` passed 30 checks and remains unpushed, requiring separate
-  public approval. All later local work also requires its own exact publication scope.
+- Shared main is `97c0778`; before this publication PR271 was open at `d864c51`.
+  Existing run34757320145 failed after 639 passes on the obsolete form assertion.
+- On 2026-09-14 the owner approved the reviewed broader `5279904` candidate:
+  29 commits/89 files, plus this factual publication checkpoint. Reuse PR271 from
+  `feat/native-word-attachments-20260913` to `main`; verify actual push, exact-head CI,
+  required reviews and merge rather than inferring success from approval.
+- The stack includes the expanded Word/PDF/XLSX form correction. Standalone
+  `8bce0b0` remains preserved locally; do not duplicate that earlier patch.
 - Diagnostic PR270 merged, but post-merge 34753856708 cancelled without a full summary.
   Do not restart a job because observation expired; poll the same live handle when one exists.
 - The 8820 listener is still PID 24324. The last approved receipt is rollback 6c1e2a4,
@@ -74,7 +77,10 @@ The later full `5418f51` run ended with exit1 and 928 passes/one failure, zero
 skips/errors, before the remaining collected tests ran. Read
 `native-stack-full-validation-5418f51-20260914/attempt2/run.json` and its JUnit/log.
 The runner and pytest processes exited; do not keep polling their historical PIDs
-as though still active. A new complete corrected-source run is required.
+as though still active. The new corrected-source run is active at pinned `5279904`,
+with 2,625 collected tests and all five preflight checks passed. Poll
+`native-stack-full-validation-5279904-20260914/run.json` and its recorded process.
+This later documentation checkpoint does not change the tested non-document blobs.
 Startup evidence is in `startup-lineage-validation-evidence-20260914`, including
 `postgresql/receipt.json`; fixture checks are in
 `imported-evidence-fixture-validation-20260914/targeted.xml`.
@@ -94,14 +100,14 @@ policy, representative accuracy and the broader Phase 8-16 exits remain incomple
 
 ## Next executable task
 
-Finish complete corrected-source assurance and its reviewable publication manifest.
-Reconcile the 84-file ancestor ledger with the startup and fixture follow-ups, and
-inspect the full unpublished diff for private material. Run a fresh full suite from
-a pinned corrected commit; collecting all failures in that new run is appropriate.
-This follows a corrected terminal failure, not a restart caused by observation expiry.
-Complete new-control browser acceptance when supported. Then present the exact
-broader public scope for approval.
-Do not publish it under the earlier 12-file approval or silently activate anything.
+Publish the approved candidate and documentation checkpoint through existing PR271,
+then observe the exact-head CI and required reviews before merge. Reconcile against
+`native-stack-full-validation-5279904-20260914/publication-manifest-5279904.json`
+and the checkpoint's explicit two-document diff. The complete local suite is already
+running: preserve its actual process, fresh basetemp, result and predecessor failure.
+After merge verify the resulting commit and post-merge CI separately. Complete
+new-control browser acceptance when supported. Prepare the version-specific provider
+and activation plan before any operational execution; preserve prior confirmations.
 
 Tests use `C:/CLASSIFIRE/.tmp/native-stack-test-env-20260914/Scripts/python.exe`,
 the selected checkout's `src` (and `tests` where required) on PYTHONPATH,
@@ -123,13 +129,14 @@ docs/EMBEDDED_WORKSPACE_CHAT.md and both native-history contracts. Use
 C:/CLASSIFIRE/.tmp/imported-evidence-fixture-20260914; reconcile its HEAD/status.
 Startup fix c47c119 passed 89 affected tests and a separate read-only PostgreSQL
 rehearsal. Full predecessor5418f51 stopped with 928 passes/one obsolete-fixture
-failure. The fixture correction passed 60 navigation tests. Preserve the terminal
-run and start a fresh complete corrected-source regression with exact source/env
-receipts, then reconcile the publication manifest. Finish new decision/package
-rendered-browser acceptance when the helper works. Keep prior synthetic HTTP/recovery/ZIP evidence and
-failures, full production gates and independent capabilities intact. Public approval
-covers only d864c51/12 files in failed-CI PR271; 8bce0b0 and the later stack still require
-separate approval. Do not repeat or push the test correction into the larger stack.
+failure. The fixture correction passed 60 navigation tests. The complete pinned
+5279904 run is now active with 2,625 collected tests and all preflight checks passed;
+poll its existing receipt/process rather than restarting it. The owner approved the
+reviewed 29-commit/89-file stack and factual publication checkpoint on 2026-09-14.
+Verify its normal push to existing PR271, exact-head CI/reviews, merge and post-merge
+CI. Do not duplicate standalone 8bce0b0: its expanded correction is already included.
+Finish new decision/package rendered-browser acceptance when supported. Preserve
+prior evidence, failed attempts and full production gates.
 Live 8820's last receipt is rollback 6c1e2a4/chat disabled; new provider tests and
 activation need exact approval and successful applicable CI. Use selected PYTHONPATH,
 fresh basetemp and disposable 15433. Preserve unknowns, blank openings, separate Scope/

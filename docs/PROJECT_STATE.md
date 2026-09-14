@@ -17,12 +17,12 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Local candidate | `fix/imported-evidence-fixture-20260914`, based on startup fix `c47c119`; application source remains `c47c119`; imported-evidence fixture and evidence documentation follow-up; no upstream |
+| Publication candidate | `fix/imported-evidence-fixture-20260914`, based on tested fixture commit `5279904`; application source remains `c47c119`; this checkpoint changes only state/handoff documentation |
 | Shared main | `97c07786355bbe938696aee56131e3f7aefe9dc6`, the PR #270 diagnostic merge |
-| Approved public feature | PR #271 remains open at exact `d864c51`, branch `feat/native-word-attachments-20260913`, base `main`; only its 12 files are approved |
+| Public approval | On 2026-09-14 the owner approved continuing with the reviewed broader candidate: `5279904`, 29 commits and 89 files, plus this factual publication checkpoint. Reuse PR #271, branch `feat/native-word-attachments-20260913`, base `main` |
 | PR #271 CI | Run `34757320145` failed: 639 passed, one closed-review form assertion failed. No merge and no recorded reviews |
-| Local CI correction | `8bce0b0`, one additional test file, is clean and one commit ahead of that feature upstream. Thirty affected tests passed. Separate public approval remains pending |
-| Later native work | Later feature, fix, test and documentation commits are local and outside that 12-file public approval; do not push the larger stack through it |
+| CI correction | The approved stack already contains the expanded closed-review form assertion for Word/PDF/XLSX. Preserve standalone `8bce0b0` locally; do not duplicate its earlier Word-only patch |
+| Publication execution | Approval permits normal publication of this reviewed stack. Verify the resulting remote head and new exact-head CI/reviews before merge; approval alone is not a successful push, merge or activation |
 | Operational app | Port 8820 listener remains PID 24324. The last approved receipt is rollback `6c1e2a4` with chat disabled; this inspection did not activate or reconfigure it |
 
 Public feature CI failure is explained by the native attachment's third form. The
@@ -186,14 +186,19 @@ Private evidence under `C:/CLASSIFIRE/.tmp/`:
 
 The predecessor full run is terminal, with its source unchanged and its original
 failure/log/JUnit preserved. It was not restarted after an observation timeout.
-The corrected fixture passed its targeted checks; a complete run of the corrected
-source is still required. Keep that future result separate from the 928 passes,
+The corrected fixture passed its targeted checks. The pinned `5279904` full run is
+active, with 2,625 collected tests; dependency, Ruff, Mypy, Bandit and migration-head
+preflight checks passed. Poll its existing receipt/process without restarting it.
+This documentation checkpoint leaves every non-document Git blob unchanged.
+Keep the eventual complete result separate from the predecessor 928 passes,
 89 startup checks and PostgreSQL rehearsal. New-control rendered-browser proof and
 other production exits also remain. No real provider/customer run was executed here.
 Private receipts under `C:/CLASSIFIRE/.tmp/` include
 `startup-lineage-validation-evidence-20260914/postgresql/receipt.json`,
 `native-stack-full-validation-5418f51-20260914/attempt2/run.json` and
-`imported-evidence-fixture-validation-20260914/targeted.xml`.
+`imported-evidence-fixture-validation-20260914/targeted.xml` and
+`native-stack-full-validation-5279904-20260914/run.json`. The latter folder also
+contains the versioned 89-file publication manifest and inherited review scopes.
 
 ## Preserved acceptance and independent production gaps
 
@@ -247,17 +252,15 @@ No root content was staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Finish current-candidate assurance and prepare a precise publication scope.**
-   Use the updated per-file review ledger, inspect the whole diff for private data,
-   and run the complete current application suite with selected-checkout PYTHONPATH,
-   fresh basetemp and owned disposable 15433. Inspect new decision/package controls
-   in a rendered browser when the helper is available. Prepare an exact commit/file
-   manifest before seeking broader public approval; do not reuse the 12-file approval.
-2. **Resolve the separate public CI gate.** The prepared one-file `8bce0b0` correction
-   needs public approval, then new exact-head CI and any required reviews before
-   merging PR271. Its equivalent assertion is already in the larger native stack;
-   do not duplicate it. Poll existing active jobs; never restart because observation
-   expired or treat cancelled/failed/missing results as success.
+1. **Finish the approved publication and assurance.** Verify the reviewed candidate
+   and documentation checkpoint, push normally to the existing PR271 branch and
+   observe its exact-head CI and required reviews before merging. The complete local
+   suite is already running on pinned `5279904` with fresh basetemp and disposable15433;
+   preserve its process and result. New decision/package rendered-browser proof remains.
+2. **Verify the shared result.** Record the actual remote head, merge commit and
+   post-merge CI. The existing form correction is included; preserve its standalone
+   local commit without duplicating it. Never restart because observation expired or
+   treat cancelled/failed/missing results as success.
 3. **Complete C1 and operational C2/C3 acceptance.** Diagnose the broader CI/runtime
    limits, then obtain separate approval for the exact prepared provider test and
    activation. Preserve rollback state, consumed allowances and existing confirmations.
