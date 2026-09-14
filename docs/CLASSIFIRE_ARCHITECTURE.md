@@ -354,6 +354,17 @@ lineage assessment to refuse missing required tables or retired tables still pre
 It never stamps, migrates or repairs the database. These checks do not certify column,
 constraint or index equivalence; activation still needs its independent schema rehearsal.
 
+Local environments can opt into that same boundary with
+`CLASSIFIRE_REQUIRE_MIGRATED_DATABASE=true`. Web startup skips metadata creation
+and seeding; CLI seed commands refuse, while authorized non-seeding commands still
+require readiness. SQLite readiness opens read-only, and application connections
+preserve the existing journal mode. Production always enforces migrations regardless
+of this option. This does not make test-mode authentication or deployment production-ready.
+The existing demo launcher exposes `--require-current-migrations` for an already
+marked, migrated demo with existing users and, for PostgreSQL, its matching guard.
+It refuses preparation, generated client policy and fixture-seeding modes. It does
+not migrate, stamp, adopt, repair or authorize activation of an existing database.
+
 Published baseline `97c0778` uses migration 0047 for retained Word sources. This
 local native-history stack requires `0049_draft_proposal_decisions`, following
 `0048_draft_workspace_proposals`. Both forward migrations refuse destructive

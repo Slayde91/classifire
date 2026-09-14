@@ -1,6 +1,6 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-14 against the isolated native stack, migration source, retained
+Reconciled 2026-09-15 against the isolated migrated-restart follow-up, migration source, retained
 validation evidence and GitHub. This is current state, not production certification.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
@@ -17,13 +17,12 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Worker startup follow-up | `perf/native-test-state-snapshots-20260914`, based on merged `d2267fe`; defer unused adapter dependencies for Word/XLSX workers, preserving parsing and authority checks |
-| Shared main | `d2267fe894093d8c30aa31ac1a57e90c29b8aa39`, PR #271 merged on 2026-09-14 at 12:00:07 UTC; merge tree matches tested head `8492010` |
-| PR #271 CI | Run `34836524377` succeeded: 2,625 tests passed in 2,522.85 seconds, followed by successful type, security and migration-head checks; no enforced outstanding review requirement was found |
-| Post-merge CI | Run `34841047799` on `d2267fe` is still being observed; its outcome is separate from PR CI |
-| Earlier timeout | Run `34831072452` on `cef340b` exceeded the 45-minute job limit at 63% test progress; the approved `8492010` correction retained every check and raised the job budget to 90 minutes |
-| Publication | PR #271 is merged. This worker-startup follow-up needs its own reviewed commit, publication and successful exact-head CI/reviews before merge; no branch was deleted |
-| Operational app | Last observed port 8820 listener was PID 24324; the last approved receipt is rollback `6c1e2a4` with chat disabled. No activation or reconfiguration accompanies this follow-up |
+| Selected follow-up | `fix/migrated-demo-restart-20260915`, based on merged `370888c`; opt-in migrated local startup reuses the existing readiness guard and skips bootstrap |
+| Shared main | `370888c54549642c1213eb4e2ebed2c54081aeb2`, PR #272 merged; merge tree matches tested `cb82409` |
+| PR #272 CI | Run `34846714887` passed 2,630 tests in 1,892.04 seconds, with successful type/security/migration checks; required-review state was checked before merge |
+| Post-merge CI | Run `34853579643` passed 2,630 tests in 1,963.93 seconds; predecessor run `34841047799` also succeeded. Existing jobs were observed, not restarted |
+| Publication | PR #272 is merged. This migrated-restart follow-up needs its own successful CI/reviews before merge; no branch was deleted |
+| Operational app | Last observed port8820 listener was PID24324; the last approved receipt remains rollback `6c1e2a4` with chat disabled. No activation accompanies this follow-up |
 
 The earlier `d864c51` CI failure was explained by the native attachment's third form. The
 prepared strict correction verifies logout, attachment/CSRF/file controls and advice
@@ -73,6 +72,35 @@ may have zero Services; unresolved links are held for review, never guessed into
 Contracts: [assistant interaction](./EMBEDDED_WORKSPACE_CHAT.md),
 [native generations/decisions](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md),
 [selected package history](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md).
+
+## Migrated restart follow-up
+
+The existing demo runner and non-production web startup both called metadata.create_all
+and could seed users. The new opt-in mode requires the current migration head and
+required-table lineage before those paths, skips bootstrap, refuses missing existing
+demo users/markers/guards, and forbids identity/policy/fixture creation flags. Shared CLI
+seed commands also refuse in migrated mode. Production checks remain mandatory.
+SQLite inspection uses read-only file access and preserves the existing application
+journal mode; a regression test caught the former implicit WAL-header mutation.
+No migration, dependency, domain model or approval boundary changes.
+
+All 67 affected startup/demo/CLI/migration tests passed (one warning,155.02 seconds),
+using the selected checkout and a fresh basetemp. Full Ruff and Mypy (240 source files)
+and scoped Bandit passed. On a newly owned PostgreSQL15433 database, the actual demo
+launcher completed two TestClient restarts and refused a mismatched guard, missing
+guard and missing decision table. Each check preserved the full database dump. No
+listener or browser was used, and live15432 was not accessed.
+
+The private historical-backup conversion rehearsal on disposable PostgreSQL15433
+passed exact baseline comparison before its explicit baseline attestation and existing
+0048/0049 migrations. Existing data stayed unchanged. Drift and injected failure
+rolled back. A recovered copy matched an independently restored migration reference;
+raw check-expression text differed after PostgreSQL dump/restore and is recorded as
+an explicit representation limitation. Both retained original files matched their
+historical manifests. This is not fresh-live-state, original-owner/ACL or activation proof.
+The new browser helper attempt still failed before UI actions; visible0049/v7 acceptance
+remains outstanding. Finish the exact launcher/fresh-backup/restore/rollback plan before
+requesting new live activation and any separately bounded provider test.
 
 ## Startup lineage enforcement follow-up
 
@@ -265,7 +293,7 @@ historical byte/recovery evidence, or change any production-phase status.
 
 ## Local change classification
 
-The worker-startup follow-up changes four explicit files: one application adapter,
+The merged worker-startup follow-up changed four explicit files: one application adapter,
 one new regression-test file and two state/handoff documents. Existing test assertions,
 worker commands, CI selection, dependency versions and migration files are unchanged.
 The prior native stack is merged through PR271; its earlier review/approval ledgers
@@ -280,14 +308,14 @@ No root content was staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Finish the measured worker optimization.** Verify the affected test and exact-byte
-   comparison receipts, review and commit its four files, then publish one coherent PR
-   and merge only after successful exact-head CI and required reviews. Measure actual
-   full CI before making a suite-wide speed claim; keep every assertion and check.
-2. **Verify the shared result.** PR271 is merged as d2267fe after successful PR CI;
-   separately observe existing post-merge run34841047799. Preserve previous failures
-   and never restart a job merely because observation expired. New 0049/v7 rendered
-   browser acceptance remains separate from synthetic HTTP and ZIP checks.
+1. **Finish guarded migrated restart.** Validate and review the local launcher, shared
+   web/CLI and read-only inspection changes, then publish one coherent PR and merge
+   only after successful exact-head CI and required reviews. The worker optimization
+   is already merged and its post-merge CI passed.
+2. **Finish activation readiness.** Pin/rehearse the operational launcher and fresh
+   backup/restore/roles/storage/rollback commands. Historical15433 conversion/recovery
+   evidence does not establish current live state. Complete0049/v7 rendered-browser
+   acceptance when the browser helper becomes available.
 3. **Complete C1 and operational C2/C3 acceptance.** Diagnose the broader CI/runtime
    limits, then obtain separate approval for the exact prepared provider test and
    activation. Preserve rollback state, consumed allowances and existing confirmations.

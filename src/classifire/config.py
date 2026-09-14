@@ -94,6 +94,7 @@ class Settings(BaseSettings):
     )
 
     env: Literal["development", "test", "production"] = "development"
+    require_migrated_database: bool = False
     database_url: str = "sqlite:///./data/classifire.db"
     secret_key: str = "development-only-change-me"  # noqa: S105
     admin_email: str = "admin@example.com"
