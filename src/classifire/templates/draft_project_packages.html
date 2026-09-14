@@ -52,7 +52,9 @@
 <fieldset><legend>Estimate / complete reports (up to four)</legend>{% for item in cost_reports %}<label><input type="checkbox" name="estimate_reports" value="{{ item.id }}"{% if item.id in chosen.estimate_reports %} checked{% endif %}> {{ item.id }} &middot; Estimate revision {{ item.estimate_revision }}</label>{% else %}<p>No Estimate reports selected for preview.</p>{% endfor %}</fieldset>
 <button type="submit" class="button button-secondary">Preview package contents</button></form>
 {% endif %}</section>
-{% if result %}<section class="panel"><h2>Package contents</h2><p>{{ result.manifest.notice }}</p>
+{% if result %}<section class="panel"><h2>Package contents</h2>{# Preserve historical manifest bytes; current navigation guidance is display-only. #}
+<p>{{ result.manifest.notice | replace('Package import is not yet available.',
+  'Use Import package to preview a package before separately confirming import into a new Draft.') }}</p>
 <dl class="scope-import-details">{% for kind,state in result.manifest.capabilities.items() %}<dt>{{ kind|replace('_',' ')|capitalize }}</dt><dd>{{ state|replace('_',' ') }}</dd>{% endfor %}</dl>
 <table><thead><tr><th>Included file</th><th>Bytes</th><th>SHA-256</th></tr></thead><tbody>{% for item in result.manifest.members %}<tr><td>{{ item.path }}</td><td>{{ item.size_bytes }}</td><td class="scope-hint" style="overflow-wrap:anywhere">{{ item.sha256 }}</td></tr>{% endfor %}</tbody></table>
 <h3>Source membership</h3>{% for item in result.manifest.source_manifest %}<p><strong>{{ item.kind|replace('_',' ') }}: {{ item.membership }}</strong><br>{{ item.reason }}<br><span class="scope-hint">{{ item.reference }}</span></p>{% else %}<p>No source references recorded in the selected artifacts. This does not prove evidence completeness.</p>{% endfor %}

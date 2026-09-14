@@ -39,6 +39,9 @@ def test_package_browser_api_preview_save_download_and_rights(scope_app):  # noq
         preview = client.get(path)
         assert preview.status_code == 200
         assert "Package contents" in preview.text and "Save package revision 1" in preview.text
+        assert "Use Import package to preview a package" in preview.text
+        assert "separately confirming import into a new Draft" in preview.text
+        assert "Package import is not yet available." not in preview.text
         with app.factory() as db:
             assert db.scalar(select(func.count()).select_from(DraftProjectPackage)) == 0
             assert db.scalar(select(func.count()).select_from(AuditEvent)) == before
@@ -47,7 +50,10 @@ def test_package_browser_api_preview_save_download_and_rights(scope_app):  # noq
         response = client.post(path, data=form, follow_redirects=False)
         assert response.status_code == 303
         saved = response.headers["location"]
-        assert "Download saved project ZIP" in client.get(saved).text
+        saved_page = client.get(saved)
+        assert "Download saved project ZIP" in saved_page.text
+        assert "Use Import package to preview a package" in saved_page.text
+        assert "Package import is not yet available." not in saved_page.text
         zip_response = client.get(saved + "/download")
         assert (
             zip_response.status_code == 200 and zip_response.headers["cache-control"] == "no-store"
@@ -55,6 +61,8 @@ def test_package_browser_api_preview_save_download_and_rights(scope_app):  # noq
         manifest, members = packages.inspect_archive(zip_response.content)
         assert json.loads(members["artifacts/scope.json"])["revision"] == 1
         assert manifest["revision"] == 1
+        # Historical protocol wording stays byte-bound; only its UI display changes.
+        assert "Package import is not yet available." in manifest["notice"]
         assert client.post(path, data=form).status_code == 409
         assert client.get(path + "?scope_revision=1&scope_revision=2").status_code == 422
         assert (
