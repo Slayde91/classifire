@@ -9,10 +9,10 @@ points here. The full production objective remains active and incomplete.
 
 ## Selected checkout and scope
 
-Continue in `C:/CLASSIFIRE/.tmp/imported-evidence-fixture-20260914`, branch
-`fix/imported-evidence-fixture-20260914`. Its publication checkpoint follows
-`5279904` and changes only state/handoff documents; application source remains
-`c47c119`. The pinned full-suite checkout remains at `5279904`.
+Continue in `C:/CLASSIFIRE/.tmp/ci-native-suite-budget-20260914`, branch
+`ci/native-suite-budget-20260914`, based on published `cef340b`. This follow-up changes
+CI timing/logging and state/handoff documents. Application source remains `c47c119`;
+application, migration, test and dependency blobs match the pinned `5279904` full run.
 Verify the actual HEAD/status before editing. No root recovery, live activation or
 new provider/customer workflow is included.
 
@@ -39,8 +39,11 @@ chronology and failed attempts remain in Git and private receipts.
 
 ## Publication and operational boundaries
 
-- Shared main is `97c0778`; before this publication PR271 was open at `d864c51`.
-  Existing run34757320145 failed after 639 passes on the obsolete form assertion.
+- Shared main is `97c0778`; PR271 was updated by a verified normal push to `cef340b`.
+  Its run34831072452 reached 63% test progress, then GitHub cancelled the job at its
+  45-minute limit. The annotation explicitly records that cause; no complete pass
+  or later type/security/migration-head check was obtained. The old d864c51 form
+  failure remains preserved separately.
 - On 2026-09-14 the owner approved the reviewed broader `5279904` candidate:
   29 commits/89 files, plus this factual publication checkpoint. Reuse PR271 from
   `feat/native-word-attachments-20260913` to `main`; verify actual push, exact-head CI,
@@ -80,7 +83,9 @@ The runner and pytest processes exited; do not keep polling their historical PID
 as though still active. The new corrected-source run is active at pinned `5279904`,
 with 2,625 collected tests and all five preflight checks passed. Poll
 `native-stack-full-validation-5279904-20260914/run.json` and its recorded process.
-This later documentation checkpoint does not change the tested non-document blobs.
+The CI follow-up does not change application, migration, test or dependency blobs.
+It reuses the existing bf700bc per-test/duration logging and gives the complete job
+90 minutes. No test selection, assertion, fail-fast setting or later check is removed.
 Startup evidence is in `startup-lineage-validation-evidence-20260914`, including
 `postgresql/receipt.json`; fixture checks are in
 `imported-evidence-fixture-validation-20260914/targeted.xml`.
@@ -100,10 +105,10 @@ policy, representative accuracy and the broader Phase 8-16 exits remain incomple
 
 ## Next executable task
 
-Publish the approved candidate and documentation checkpoint through existing PR271,
+Publish the CI timeout/logging correction and factual documents through existing PR271,
 then observe the exact-head CI and required reviews before merge. Reconcile against
 `native-stack-full-validation-5279904-20260914/publication-manifest-5279904.json`
-and the checkpoint's explicit two-document diff. The complete local suite is already
+and the subsequent checkpoint/CI diffs. The complete local suite is already
 running: preserve its actual process, fresh basetemp, result and predecessor failure.
 After merge verify the resulting commit and post-merge CI separately. Complete
 new-control browser acceptance when supported. Prepare the version-specific provider
@@ -126,15 +131,19 @@ and private evidence must remain intact. Do not reset, clean, resolve or publish
 Continue CLASSIFIRE from repository evidence. Read AGENTS.md, GOAL.md,
 docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md, docs/CLASSIFIRE_ROADMAP.md,
 docs/EMBEDDED_WORKSPACE_CHAT.md and both native-history contracts. Use
-C:/CLASSIFIRE/.tmp/imported-evidence-fixture-20260914; reconcile its HEAD/status.
+C:/CLASSIFIRE/.tmp/ci-native-suite-budget-20260914; reconcile its HEAD/status.
 Startup fix c47c119 passed 89 affected tests and a separate read-only PostgreSQL
 rehearsal. Full predecessor5418f51 stopped with 928 passes/one obsolete-fixture
 failure. The fixture correction passed 60 navigation tests. The complete pinned
 5279904 run is now active with 2,625 collected tests and all preflight checks passed;
 poll its existing receipt/process rather than restarting it. The owner approved the
 reviewed 29-commit/89-file stack and factual publication checkpoint on 2026-09-14.
-Verify its normal push to existing PR271, exact-head CI/reviews, merge and post-merge
-CI. Do not duplicate standalone 8bce0b0: its expanded correction is already included.
+The exact approved cef340b was published to PR271, but run34831072452 was cancelled
+at the configured 45-minute job limit after 63% test progress. This isolated follow-up
+reuses per-test/duration logging and increases the job limit to 90 minutes, preserving
+every check and all application/test inputs. Verify its publication, new exact-head
+CI/reviews, merge and post-merge CI. Never rerun an existing job merely because
+observation expired. Do not duplicate standalone 8bce0b0, already represented here.
 Finish new decision/package rendered-browser acceptance when supported. Preserve
 prior evidence, failed attempts and full production gates.
 Live 8820's last receipt is rollback 6c1e2a4/chat disabled; new provider tests and
