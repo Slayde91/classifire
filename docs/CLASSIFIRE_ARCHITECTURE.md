@@ -1,6 +1,6 @@
 # CLASSIFIRE Architecture
 
-Reconciled 2026-09-13 from merged source, approved ADRs and the owner's clarified
+Reconciled 2026-09-14 from merged and local source, approved ADRs and the owner's clarified
 in-app chat upload and page-interaction intention. This document
 separates implemented application structure from the target and remaining work.
 Exact branch, CI, runtime and validation facts belong in
@@ -65,7 +65,7 @@ untrusted evidence without saving Scope or granting approval.
 | Layer | Implemented components and responsibility |
 | --- | --- |
 | Interfaces | FastAPI/Jinja UI (`ui.py`, `draft_scope_ui.py`, format-specific review routes), API/CLI and optional `draft_client.py` MCP mounting |
-| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; context/message endpoints offer advice, explicit Word/PDF/XLSX additions or selected Scope replacements for separate review; a separate thin session adapter adds explicit Word retain/scan/inspection controls over existing services, without Scope edits or provider disclosure |
+| Embedded assistant | Shared docked/collapsible/resizable panel, typed selected-context preview and hash, explicit provider consent and bounded qualified conversation; context/message endpoints offer advice, explicit Word/PDF/XLSX additions or selected Scope replacements for separate review; a separate thin session adapter adds explicit Word/PDF/XLSX retain/scan/inspection controls over existing services, without Scope edits or provider disclosure |
 | Authentication | Existing user/session/CSRF checks plus `draft_client_auth.py` and explicit client policy; verified external identity maps to an active local user. Exact resource/issuer/signature/time/scope checks; approved optional nbf/Auth0 compatibility does not remove permission checks |
 | Application commands | `services/draft_client_requests.py` and `draft_client_capabilities.py` create typed durable requests; browser confirmation rechecks rights, owner, dependencies and expected state before executing the shared service |
 | Scope | `draft_scope.py`, `draft_scope_evidence.py`, format review services and shared editor. Immutable revision envelopes with explicit evidence state and unknowns |
@@ -113,8 +113,8 @@ claims in the original archive; it creates no local proposals or approvals. No n
 migration is added. See [selected history](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md) for bounds,
 privacy, source/permission checks and compatibility. Browser validation of these controls,
 raw provider/prompt-version records and full AI lineage remain incomplete.
-The format-specific paragraphs below describe generation/confirmation; their former
-transience limit now applies to proposals the user has not explicitly retained.
+The format-specific paths below save human-reviewed Scope references. Optional
+proposal retention preserves generated fields separately; it never runs implicitly.
 
 **Current architecture:** the native panel resolves typed identifiers and exact saved
 revisions through authenticated readers, previews the data, then sends it to the
@@ -137,8 +137,9 @@ originals, other worksheets and omitted rows/pictures are excluded. Strict nulla
 column mappings and additions use the shared composer and existing signed workbook
 review. Text claims must quote a selected mapped non-formula/non-error cell; picture
 claims still require a selected row. Mapping and relationships remain unverified
-until separate human review. Confirmation preserves existing row/entity provenance,
-not a durable copy of raw AI claims. Migration impact: none; no new writer or service.
+until separate human review. Confirmation preserves existing row/entity provenance.
+Saving the generation requires the separate retention action above. Attachment and
+workbook review add no migration or new writer.
 The existing plugin is retained. The advice context additionally accepts explicit
 selection of at most 10 text blocks and 2 verified PNG pictures from one retained
 DOCX. Source/scan/document/image hashes bind the preview and are rechecked before
@@ -161,21 +162,22 @@ posts to the existing Word preview route. Its session-bound confirmation remains
 only save step. `propose_pdf_scope` reuses this composer and transport with the
 selected page anchor, exact text quotes and selected image identity. Its review card
 posts to the existing signed PDF page preview/confirmation. Confirmed references
-record the existing human page/entity review; raw AI claims and rationale remain
-transient, without a new durable suggestion batch. The additional
+record the existing human page/entity review. Generated claims and rationale remain
+transient unless the user explicitly saves the native proposal. The additional
 `propose_scope_edits` action prepares at most25
 complete replacements of explicitly selected saved Scope records, with before/after
 fields and reasons. It preserves the rest of the graph, validates its relationships
 and retains old source claims, marking changed claims for review. Its review form
 uses the existing manual editor with `action=validate`; the user separately saves
-through that editor. This is not the signed Word confirmation or a durable AI request.
+through that editor. Optional saved-proposal identity links the reviewed result to
+the immutable generation; the manual editor remains the Scope writer.
 Broader report and non-Scope edit coverage follow. Browser routes use the existing
 user session and
 CSRF checks; external clients retain their OAuth scope/policy checks. The browser
 does not need to loop through external MCP or acquire a second identity.
 
-**Reason:** selected-record advice and local Word attachment/inspection are
-implemented, and bounded selected Word evidence now enters the model contract only
+**Reason:** users can work with selected records and supported Word/PDF/XLSX reports
+in the same panel. Bounded selected evidence enters the model contract only
 after preview and consent. Users can now prepare typed additions without granting
 chat write authority. The selected-record extension lets users review requested
 changes in context without copying data, while preserving the existing manual writer.
@@ -190,8 +192,8 @@ review card can live beside the conversation while retaining the existing
 confirmation checks and explicit confirmation control. Typing "confirmed" alone
 does not execute the pending request.
 
-The first slice uses bounded DOCX intake, then the same interaction extends to
-supported PDF and XLSX. Approved technical-source and commercial-library ingestion
+The shared interaction supports bounded DOCX, PDF and XLSX intake. Approved technical-
+source and commercial-library ingestion
 retain their distinct purpose, rights and authority; attaching a defect report
 does not import it as a trusted technical or pricing library.
 
@@ -205,11 +207,11 @@ The selected-evidence extension adds optional typed selectors and an internal im
 argument to the same advisory port; no new provider, identity or write path is added.
 The proposal composer reuses immutable Draft revisions and the existing Word
 preview/confirmation service; selected replacements reuse manual validation/save
-and shared strict-schema construction. Neither adds a schema version or writer. New Word
-observation claims are outside that existing contract; old observations remain intact. No new table, migration, vector store, agent
-framework or transcript
-store is required by this decision. If a demonstrated gap requires persistence
-changes, document compatibility and use a forward migration before activation.
+and shared strict-schema construction. These proposal/review paths add no new writer.
+New Word observation claims are outside that existing contract; old observations
+remain intact. Optional native retention and decision linkage are separate persistence
+extensions requiring 0048/0049 as described above; package v7 adds no further migration.
+No vector store or agent framework is introduced.
 This refines the interface under ADRs 0001/0002; their domain/authority rules remain.
 
 Detailed interaction, source-disclosure and acceptance requirements belong in
@@ -346,24 +348,27 @@ execution journal/transport protections are foundations, not proof of full retir
 
 ## Migrations and deployment boundary
 
-The verified source migration head is 0047 (retained Word source rows), following 0046
-(governed pricing quantity bases). Word review uses existing JSON revisions and package
-storage; the client adapter adds no migration. Preserve historical migration files and
-old artifact readers; future changes require forward compatibility and restore evidence.
+Published baseline `97c0778` uses migration 0047 for retained Word sources. This
+local native-history stack requires `0049_draft_proposal_decisions`, following
+`0048_draft_workspace_proposals`. Both forward migrations refuse destructive
+downgrade. Word/PDF/XLSX attachment/review and ProjectPackage v7 reuse existing
+storage and writers; do not confuse their format changes with a database migration.
 
-Merged source and live runtime are separate. The accepted operational workspace
-runs the earlier 6c1e2a4; the native panel is merged through PR #268 and has a
-separately approved conditional activation plan for tested 7dbc1cc. One bounded
-real gpt-5-mini transport test passed with synthetic data. That is not a live-panel
-or report-upload acceptance result. Consult [PROJECT_STATE.md](./PROJECT_STATE.md)
-for observed CI/runtime status; publication of these documents does not repin the
-approved deployment or permit OAuth/tunnel changes.
+The last approved operational receipt is rollback `6c1e2a4` with chat disabled.
+The earlier `7dbc1cc` activation passed one browser reply, failed its follow-up,
+and was rolled back. Its old request allowance is consumed. New testing/activation
+requires successful applicable CI and a new exact approved plan with matched
+backup, disposable restore, migration/restart and rollback evidence. An older
+binary cannot safely read every newer schema or package format; code-only rollback
+is not assumed. No live upgrade, OAuth, tunnel or host-policy change follows from
+these documents. Current runtime and CI observations belong in
+[PROJECT_STATE.md](./PROJECT_STATE.md).
 
 ## Planned architecture and unresolved decisions
 
 | Gap / decision | Planned direction and validation needed |
 | --- | --- |
-| Native chat upload and reviewed page actions | Reuse existing intake and typed proposal/confirmation services; prove the complete in-context C2/C3 journeys before claiming chat attachment or edit support |
+| Native chat upload and reviewed page actions | Bounded attachment, evidence proposals and Scope edits are implemented locally; finish decision/package browser acceptance, real-provider/live acceptance and broader typed actions |
 | Broader physical/evidence representation | Extend current graph and provenance only for a proven user need; explicit instances/planes/treatments and additional report formats need representative acceptance and compatible schemas |
 | General document jobs | Implement bounded resumable stages/attempts/leases/recovery over existing persistence when the interactive pilot establishes need; current worker has no handlers |
 | Technical corpus scale | T2-T8 require retained source revisions, per-field lineage, duplicate/reprocess policy, pagination and measured capacity; no mandatory vector database or agent fleet |

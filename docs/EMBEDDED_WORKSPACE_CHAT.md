@@ -23,9 +23,8 @@ retained through this action. Limits are1 MiB,100 records per Draft and a15-minu
 signed save authorization. This local schema extension requires migration0048 and a
 separate approved activation. No new provider or downstream capability is invoked.
 
-The format-specific transience statements below apply to unsaved proposals. Explicit
-retention now preserves validated generated fields and prepared review controls. Explicit
-review identities link later decisions; matching content never infers a decision. The local
+Unsaved proposals remain transient. Explicit retention preserves validated generated
+fields and prepared review controls. Explicit review identities link later decisions; matching content never infers a decision. The local
 [selected package history](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md) extension optionally
 includes the exact generation and selected decision through separate package confirmation.
 Imported history remains foreign and read-only, without local proposal/approval authority.
@@ -56,7 +55,8 @@ Selection or saved-input changes invalidate preview and consent. Optional browse
 memory expires after 30 minutes and is scoped to the authenticated user and exact
 context hash. Remembered text is displayed only after a fresh successful matching
 preview; logging out or explicitly clearing removes it. There is no server-side
-conversation store or new database migration.
+general conversation store. Optional saved proposals and decisions are separate
+retained records requiring migrations 0048/0049, as described above.
 
 ## Architecture and boundaries
 
@@ -76,7 +76,8 @@ and bounded unverified conversation. Mutable selected context is hashed and rech
 before provider use and before returning the answer. Missing information stays
 unknown; a library entry or saved candidate never implies technical approval.
 
-Migration impact: none. The connector, canonical models, provider settings,
+Migration impact of advisory context: none. Optional retention/decisions require
+0048/0049. The connector, canonical models, provider settings,
 OAuth/tunnel/allowlist policy and existing confirmation boundaries are unchanged.
 There is no remote tool invocation or automatic transition to another capability.
 
@@ -84,7 +85,7 @@ There is no remote tool invocation or automatic transition to another capability
 
 Implementation and exact validation results are recorded in PROJECT_STATE.md and
 private synthetic UAT receipts. Do not infer operational activation from publication.
-The running 8820 build was restored to 6c1e2a4 with chat disabled after 7dbc1cc passed
+The last approved operational 8820 build was restored to 6c1e2a4 with chat disabled after 7dbc1cc passed
 startup and its first browser reply but failed the follow-up HTTP 502. Fresh recovery,
 browser reopening and exact Word ZIP checks passed. The historical cause remains
 unknown; all earlier provider requests are consumed. New testing and activation
@@ -122,8 +123,8 @@ redacted 502. OpenAI documents [error categories](https://developers.openai.com/
 and [client request references](https://developers.openai.com/api/reference/overview#debugging-requests).
 These mechanisms do not grant permission for automatic retries.
 
-Original documents and complete technical files remain excluded. The selected Word
-extension below permits previewed text and verified PNG pictures; saved reference
+Original documents and complete technical files remain excluded from model input.
+The Word/PDF/XLSX paths permit selected text/cells and verified PNG pictures; reference
 claims retain their limitations. This is not full-report multimodal accuracy acceptance.
 
 Official integration references: [OpenAI ChatKit](https://developers.openai.com/api/docs/guides/chatkit)
@@ -144,10 +145,10 @@ No connector rebuild or new ChatKit dependency is required by this intention.
 | User need | Current evidence | Required extension |
 | --- | --- | --- |
 | Ask about selected page data | Native typed selectors, preview/consent and advisory replies implemented | Complete separately approved real browser activation/acceptance |
-| Attach a defect report in chat | Native DOCX/PDF/XLSX attachment, retained-source/status cards and explicit scan reuse existing intake; saved sources reopen without chat memory | Word/PDF/XLSX proposal journeys are synthetically validated; complete durable AI proposal lineage and operational acceptance |
-| Read report evidence while discussing it | Native panel selects up to10 Word text blocks/two PNG pictures or one PDF page text/image for preview/consent and typed additions | Complete real-provider acceptance and broader format coverage |
-| Propose and confirm a page change | Explicit Word/PDF additions reuse their separate review; selected saved Scope replacements show field differences and validate in the manual editor before separate save | Real-provider/live acceptance, durable AI lineage and remaining non-Scope action contracts |
-| Download a reviewed result | Existing exact saved packages and original-bearing ZIPs | In-context access to the same package review, separate confirmation and exact download |
+| Attach a defect report in chat | Native DOCX/PDF/XLSX attachment, retained-source/status cards and explicit scan reuse existing intake; saved sources reopen without chat memory | Synthetic journeys and explicit saved generation/decision history exist; complete new-control browser, real-provider/live and full-lineage acceptance |
+| Read report evidence while discussing it | Native panel selects bounded Word blocks/pictures, one PDF page or XLSX header/rows/pictures for preview/consent and typed additions | Complete real-provider acceptance and broader format coverage |
+| Propose and confirm a page change | Explicit Word/PDF/XLSX additions reuse their separate review; selected saved Scope replacements show field differences and validate in the manual editor before separate save | Real-provider/live acceptance, full AI lineage and remaining non-Scope action contracts |
+| Download a reviewed result | Existing exact saved packages and original-bearing ZIPs; local v7 adds explicitly selected generation/decision history | Complete rendered-browser acceptance of new history choices and operational acceptance |
 
 ### Report attachment to saved Draft
 
@@ -165,9 +166,9 @@ No connector rebuild or new ChatKit dependency is required by this intention.
    document/page/paragraph/table/cell/picture locators and exact original hashes.
    Document contents are untrusted evidence, never executable user instructions.
 5. Request analysis; preview exactly which clean text/image evidence and page records
-   will leave the application, then obtain provider consent. The Word extension
-   sends selected text and exact verified PNG previews through the same transport.
-   Original files, unselected evidence and other formats are excluded.
+   will leave the application, then obtain provider consent. Supported Word/PDF/XLSX
+   paths send only the selected text/cells and verified PNG previews. Original files,
+   unselected evidence and unsupported formats are excluded.
 6. Present a typed Draft proposal with source references, unknowns and conflicts,
    and a before/after review for existing records. Blank openings may have zero
    Services. Unresolved links remain held for review rather than guessed into the
@@ -180,9 +181,9 @@ No connector rebuild or new ChatKit dependency is required by this intention.
    package confirmation and original-bearing ZIP download are separate explicit
    actions. Scope confirmation never creates a package or runs Match/Estimate/Report.
 
-Start with one supported synthetic DOCX journey, reusing Word intake/review and
-ProjectPackage services; apply the same interaction to supported PDF/XLSX afterwards.
-This ordering does not make Word parsing a substitute for general report accuracy.
+The bounded DOCX, PDF and XLSX journeys are implemented and synthetically validated.
+Continue acceptance of decision/package history and operational behavior. Supported
+format orchestration is not a substitute for representative report accuracy.
 
 ### Working with data on the page
 
@@ -195,7 +196,8 @@ This ordering does not make Word parsing a substitute for general report accurac
 - Clearly identify the included selection. Unsaved edits, off-screen unrelated rows,
   hidden form values, credentials and entire library bodies are not silently captured.
   Change of context requires a fresh preview and invalidates stale proposed actions.
-- Future explicit edit requests produce supported typed proposals and review cards.
+- Selected Scope edit requests produce typed replacements and a field diff; other
+  edit actions need their own supported contracts and review cards.
   Advice alone remains read-only. Unsupported or ambiguous intent stays a question
   or a stated limitation; it cannot fall through to arbitrary tools or a hidden write.
 - Requests to another capability remain independent and explicitly invoked, with its
@@ -319,9 +321,10 @@ minutes. Changed payloads, revoked rights, stale revisions and repeated saves fa
 closed. Package selection/save remains a later, distinct action on the existing page;
 no technical matching, estimate, report generation, canonical lock or release is run.
 
-Proposal controls are transient and are not restored from conversational history.
-The saved revision retains the existing human Word evidence references; raw model
-responses and rationale are not durable proposal history. This does not claim that
+Unsaved proposal controls are transient and are not restored from conversation.
+A separate explicit retention action saves validated generation fields and review
+controls; the confirmed revision retains human Word evidence references. Raw provider
+wire responses and full reproducible model execution remain excluded. This does not claim that
 all AI provenance or broader report coverage is finished. Empty unsupported proposals
 have no review/save control. Advice mode keeps its original contract.
 
@@ -355,14 +358,14 @@ how many retained source claims become stale. **Review changes in Draft editor**
 submits only `action=validate`. That screen is unsaved until the user independently
 clicks **Save new revision**. Existing session/CSRF, current write permission and
 optimistic revision checks apply; repeated or stale saves fail. Old evidence references
-are preserved rather than replaced with model claims. There is no new signed request
-or durable response history in this path; manual editor changes remain possible and
-are saved as the user's reviewed Draft. Word's signed review stays separate.
+are preserved rather than replaced with model claims. An optional saved-proposal
+identity links confirmation to its immutable generation. Manual editor changes remain
+possible and are saved as the user's reviewed Draft. Word's signed review stays separate.
 
 No matching, estimating, package creation, technical approval or release runs as a
 side effect. Empty proposals provide no review control. Proposed edit controls are
-transient and are not restored from conversation history. Match/Estimate/library/
-pricing edits remain unsupported. Synthetic coverage proves the mechanical review
+transient unless explicitly retained; saved proposals reopen through current
+rights/source checks. Match/Estimate/library/pricing edits remain unsupported. Synthetic coverage proves the mechanical review
 boundary, not model accuracy or production acceptance. See PROJECT_STATE.md for the
 actual tests and private receipt status.
 
@@ -431,9 +434,10 @@ cannot save data. The panel clears consent after producing a proposal.
 complete graph, selected page and current revision. Its separate unchecked human
 confirmation is the only save step. Package preview and save remain another explicit
 interaction. Reopening saved results does not rerun model, scan or other capabilities.
-The existing PDF human page/entity references are retained on confirmation. Raw model
-claims/rationale and unsaved proposal controls are transient; this is not the durable
-PDF suggestion-batch pipeline. No new migration, writer or provider is introduced.
+The existing PDF human page/entity references are retained on confirmation. Validated
+generated claims/rationale are retained only through the separate native save action. This
+is distinct from PDF suggestion batches; the PDF review path adds no new writer
+or provider. Optional native retention uses the 0048/0049 records described above.
 
 Synthetic browser acceptance proved this sequence and the exact original-bearing
 ZIP across a test-server restart. It does not establish real model accuracy, real
@@ -494,9 +498,9 @@ price, technical approval or canonical release runs implicitly. Modified mapping
 stale Scope/source/rights and repeat confirmations are refused by existing guards.
 
 Confirmed revisions retain human workbook row/entity references with mapped cells
-and selected image identities. Raw AI claims/rationale, conversation and unsaved
-proposal controls do not become a durable suggestion batch. This is the same known
-lineage limit as the Word/PDF additions path, not full AI audit-history acceptance.
+and selected image identities. Saving the generation, included conversation and
+validated claims requires the separate native retention action; it never happens
+implicitly. Raw provider bytes/prompt-version history and full AI lineage remain open.
 The synthetic browser/ZIP/restart checks exercise orchestration and evidence integrity;
 scripted replies and an injected clean scan establish neither real model accuracy nor
 malware acceptance. Exact validation and publication state belong in PROJECT_STATE.
@@ -509,10 +513,11 @@ proposal discards an older read's delayed content and errors. The last choice wi
 regardless of response order; no reply grants consent or runs another capability.
 Repeated saved-proposal list refreshes also accept only the latest request's
 result. A delayed older success or failure cannot replace the current list/status
-or restore proposal controls after a newer session refusal. Three additional
-regression cases reproduced that list-ordering defect before correction. All 32
-Node VM checks pass, including seven delayed-response cases. This executes the
-shipped script against a synthetic DOM/event surface, not a rendered browser.
+or restore proposal controls after a newer session refusal. A completed rejection
+removes only its original proposal cards, including when another proposal was opened
+or the conversation cleared while it waited. The current shipped-script suite has
+35 passing Node cases; this is a synthetic DOM/event surface, not rendered-browser
+acceptance. Exact validation versions belong in PROJECT_STATE.md.
 
 The native panel treats same-origin login redirects and401 responses as an inactive
 session. It asks the user to sign in again and reload the workspace; it does not replay

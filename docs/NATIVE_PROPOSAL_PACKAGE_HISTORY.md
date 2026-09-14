@@ -106,57 +106,24 @@ refusal; rehashed contradictions; explicit package/import confirmations; legacy 
 original-bearing ZIP; imported read-only history and nested re-export; and no implicit domain
 or provider execution. Use selected-checkout PYTHONPATH, fresh basetemp and disposable15433.
 
-Four synthetic PostgreSQL15433 HTTP/service cases passed in261.72s, including the
-reproduced unselected-corrupt-decision boundary and exact old/original-bearing ZIPs.
-Saved/imported HTML structure assertions passed. Three SQLite cases passed in8.24s,
-covering exact legacy multi-review/Estimate/report bytes, rejected history, bounded
-selection and denied Estimate-context export without export rights. The initial test-only
-response-field error is preserved separately. Full Ruff, Mypy240 and scoped Bandit passed.
-The 77-case native-decision/package/import regression passed with two warnings in989.64s.
-An additional saved re-export test reproduced a404 for retained nested history; the UI
-now reuses the recursive inspector for display/download. All eight final history/package/
-import UI cases passed with one warning in278.29s.
-Expired scan access was refused without extra writes. The older full run at1aeded3 completed
-2,593 passes, two Windows symlink skips and386 warnings in7,243.62 seconds. It does not
-cover this feature or later script/claim fixes; targeted evidence remains separate.
+Targeted PostgreSQL/SQLite validation covers those boundaries, Word/PDF originals,
+explicit proposal-only versus decision-bearing selection and legacy multi-capability
+packages. The actual-main HTTP rehearsal at `23f5110` separately saved/imported/
+re-exported history, restarted the owned test server and reopened exact JSON/ZIPs.
+A disposable backup/restore matched 71 tables, 76 rows, schema and retained bytes.
+The reader verification used normal transactions plus a SQL-mutation rejection guard:
+source row locks are required for quarantine coordination. It observed no mutations,
+and before/after rows and schema matched. Owner/ACL restoration was excluded.
 
-Application23f5110 passed actual-main HTTP startup/restart in test mode on owned15433/8837.
-The same two recorded histories were separately packaged, imported and re-exported. Two
-server processes reopened identical ZIP/JSON, unchanged source Scope3 and imported Scope2.
-Blank openings and unknowns remained; replay, CSRF and undeclared-member refusals caused no
-extra writes. Provider, scanner and downstream capability counters stayed zero. Both owned
-servers stopped. A fresh backup/restore matched71 tables,76 rows, schema and retained bytes;
-a fresh process reopened three exact packages and both decisions without changing rows.
+[PROJECT_STATE.md](./PROJECT_STATE.md#verification-and-health) records the versioned
+suite, recovery and independent artifact evidence. Earlier harness failures remain
+in private receipts; corrections to expected missing-confirm/CSRF statuses did not
+relax application guards. The earlier full suite at `1aeded3` does not cover v7 or
+later concurrency/UI fixes. Passing targeted checks are not successful public CI.
 
-The initial read-only PostgreSQL transaction refused existing source-row locks. The completed
-follow-up used the normal transaction mode with a SQL-mutation rejection guard (346 reads,
-26 source locks, zero mutation attempts) and complete before/after row/schema comparisons.
-Those locks preserve quarantine coordination; no guard was removed. Owner/ACL restoration
-was excluded. Private failed receipts remain: the HTTP harness initially expected409 for a
-missing confirm field (actual422), then for an old-session CSRF (actual403). With current CSRF,
-the old import approval correctly returned409. These corrections changed verification only.
-
-Direct Word and PDF HTTP cases additionally passed on disposable15433: two passes,
-no skips, one warning, 195.41s. Each explicitly retains a generated proposal, saves
-Scope, saves a package with the selected original and decision, then previews and
-confirms import separately. Old pending package bytes remain unchanged; selected
-original/history bytes remain exact. Imported history stays foreign and read-only,
-with no local proposal/decision rows. The saved ZIPs, JSON and HTML structure were
-inspected; this adds format coverage without changing the application or schema.
-
-Browser initialization remains unavailable, so rendered-browser and live acceptance are
-unverified. The main app ran in test mode; this is not production configuration approval.
-Synthetic replies/scanner verdicts do not prove real-provider behavior, malware detection,
-report accuracy, technical suitability, raw prompt/version lineage or full history coverage.
-
-A local form correction reproduced the missing proposal-only choice after a decision
-was recorded. The corrected HTTP/form and query-boundary checks passed in the
-focused selection (two cases, 82.60s); downloaded ZIPs preserve identical generation
-and Scope bytes with the explicitly selected decision or null. Existing local decision
-and older ZIP bytes stay unchanged. The initial over-specific control-shape failure
-was replaced with a behavior-based reproduction on unchanged application source.
-Full Ruff and Mypy240 passed. This does not establish rendered-browser acceptance.
-
-Ten existing history/compatibility/package-page regression cases passed in 398.79s,
-without failures or skips. All 7 generated regression ZIPs passed inspection.
-The schema and confirmation services are unchanged; public CI remains separate.
+Rendered-browser acceptance of these new controls remains unverified because the
+browser helper failed initialization. The HTTP app ran in test mode; no production
+configuration, real-provider behavior, malware detection or customer accuracy is
+established. Checksums establish internal consistency, not authenticity against
+coordinated tampering. Raw provider/prompt-version lineage, full history coverage,
+operational recovery including grants, and live acceptance remain separate work.
