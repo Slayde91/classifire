@@ -9,12 +9,14 @@ points here. The full production objective remains active and incomplete.
 
 ## Selected checkout and scope
 
-Continue in `C:/CLASSIFIRE/.tmp/migrated-demo-restart-20260915`, branch
-`fix/migrated-demo-restart-20260915`, based on shared main `370888c` (PR272).
-The active change provides an opt-in migrated local restart: the demo launcher,
-web startup and CLI reuse the existing migration guard and skip bootstrap. SQLite
-readiness is read-only and migrated connections retain the current journal mode.
-Review the exact diff and validation before publishing; no activation is included.
+Continue in `C:/CLASSIFIRE/.tmp/distribution-ui-assets-20260915`, branch
+`fix/distribution-ui-assets-20260915`. PR #273 merged as `46fc436` after 2,647
+passing tests and all CI checks. Its post-merge run `34869099059` is in progress.
+The selected branch includes that merge and the packaging fix: installed wheels
+retain the existing UI resources and CI verifies their exact source bytes.
+Runtime/build code matches combined candidate `25dd47d`, which passed 78 affected
+tests, a 326-file wheel check and fresh offline installation checks. No activation
+is included. Review the exact diff against current main before publication.
 
 The ancestor range implements native Word/PDF/XLSX evidence selection and typed
 additions, selected Scope edits, explicit saved generations/decisions and v7 package
@@ -47,8 +49,10 @@ chronology and failed attempts remain in Git and private receipts.
   data and the two original-file hashes survived. Recovery schema matches an independent
   restored migration reference; raw PostgreSQL check text changes after dump/restore.
   Fresh live drift, original owner/ACL and current file linkage remain unverified.
-- Publish this guarded-restart follow-up only after reviewing its explicit files and
-  passing validation. Merge after observed successful exact-head CI and required reviews.
+- Guarded migrated restart is merged as `46fc436`; PR CI `34862079545` passed
+  2,647 tests in 3,509.19 seconds and every later check. Observe post-merge
+  `34869099059`. Publish the distribution fix and merge only after its own
+  successful exact-head CI and required reviews.
 - The stack includes the expanded Word/PDF/XLSX form correction. Standalone
   `8bce0b0` remains preserved locally; do not duplicate that earlier patch.
 - Diagnostic PR270 merged, but post-merge 34753856708 cancelled without a full summary.
@@ -107,12 +111,14 @@ policy, representative accuracy and the broader Phase 8-16 exits remain incomple
 
 ## Next executable task
 
-Finish the migrated-restart follow-up as one coherent update. Verify the targeted
-startup/demo/CLI/migration results and exact PostgreSQL launcher rehearsal in
-`migrated-restart-validation-20260915`, then review explicit files, commit, publish
-and merge only after successful exact-head CI and required reviews. Retain branches.
-The preceding worker optimization is already merged with passing post-merge CI;
-do not rebuild it or restart its completed jobs.
+Finish the distribution fix as one coherent update. Its code and regression tests
+are reviewed and passed; the combined `25dd47d` evidence is in
+`combined-release-25dd47d-20260915`. Fresh isolated installation preserved all
+constrained dependencies; two installed HTTP starts and five installed worker modes
+passed. The database checks used disposable 15433 and preserved full dumps.
+Publish explicit files from the selected branch, then observe its exact-head CI
+and required reviews before merge. Record post-merge results separately and retain
+branches. Also observe PR #273 post-merge run `34869099059`; do not restart jobs.
 Then finish the operational launcher/dependency and fresh-backup/restore/rollback
 plan, including preserved roles/grants and current file linkage. The historical-copy
 conversion proof is in `native-activation-readiness-370888c-20260915`; it does not
@@ -136,21 +142,22 @@ and private evidence must remain intact. Do not reset, clean, resolve or publish
 
 Continue CLASSIFIRE from repository evidence. Read AGENTS.md, GOAL.md and the canonical
 state, architecture, roadmap and handoff. Use the isolated
-C:/CLASSIFIRE/.tmp/migrated-demo-restart-20260915 checkout and verify HEAD/status.
-PR272 merged as370888c; exact-head PR CI and post-merge34853579643 passed2,630 tests
-and all later checks. Do not repeat the completed worker optimization or restart jobs
-because observation timed out. The current change adds an explicit migrated local
-restart mode, preserving production checks and preventing automatic schema/user
-creation. Inspect the full diff and migrated-restart-validation-20260915 evidence;
-finish explicit-file commit, publication and CI/review-gated merge where authorized.
-The private15433 historical-copy conversion and independent-reference recovery passed;
-PostgreSQL dump/restore changes raw check-expression text, recorded as a comparison
-limitation. Existing data and two original-file hashes stayed exact. Do not stamp or
-adopt current live state from that historical proof. Finish the pinned launcher and
-fresh-backup/roles/storage/rollback plan, then request exact activation/provider
-approval. Live8820's last receipt remains rollback6c1e2a4 with chat disabled.
-Use selected-checkout PYTHONPATH and fresh basetemp; PostgreSQL tests only on owned
-15433 databases, never live15432. Preserve unknowns, blank openings, separate human
-Scope/package confirmations, original evidence and foreign-history authority.
-Keep the conflicted root and private evidence untouched. Browser acceptance of
-new0049/v7 controls and the full Phase8-16 production exits remain incomplete.
+C:/CLASSIFIRE/.tmp/distribution-ui-assets-20260915 checkout and verify HEAD/status.
+PR #273 merged as 46fc436 after 2,647 tests and all checks passed; observe its
+post-merge run 34869099059. The current packaging change includes 67 templates and
+19 static assets in the wheel and verifies exact source bytes in CI. Combined
+runtime/build code at 25dd47d passed 78 affected tests, a 326-file wheel comparison,
+fresh offline dependency installation, two installed HTTP starts and five isolated
+Word/XLSX worker modes. Inspect the full current diff and private evidence in
+combined-release-25dd47d-20260915. Finish explicit-file publication and CI/review-gated
+merge where authorized; record post-merge CI separately and retain branches.
+Do not restart jobs because observation timed out. The historical 15433 conversion
+and independent-reference recovery passed, but do not prove current live state or
+owner/ACL restoration. Finish the exact launcher, fresh-backup, roles, storage and
+rollback plan before requesting new activation/provider approval. Live 8820's last
+receipt remains rollback 6c1e2a4 with chat disabled. Use selected-checkout PYTHONPATH
+and fresh basetemp; PostgreSQL tests only on owned 15433 databases, never live 15432.
+Preserve unknowns, blank openings, separate human Scope/package confirmations,
+original evidence and foreign-history authority. Keep the conflicted root and
+private evidence untouched. Rendered-browser acceptance of newer 0049/v7 controls
+and full Phase 8-16 production exits remain incomplete.

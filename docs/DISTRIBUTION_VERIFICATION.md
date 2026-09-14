@@ -31,21 +31,22 @@ and scoped Bandit. The corrected wheel retained all 326 package files exactly.
 An isolated installation imported from the installed target, compiled all 67
 Jinja templates and served the login page, all 19 static resources and the brand
 route through TestClient. Returned asset bytes matched the installed files; the
-application check used an existing disposable15433 database with an unchanged full
+application check used an existing disposable 15433 database with an unchanged full
 dump. No listener, live database, provider request or deployment was involved.
 
 These checks do not prove rendered-browser appearance, clean-machine dependency
-installation, report accuracy or production readiness. The private wheel used the
-existing validated Python environment for dependencies. Live activation remains
+installation, report accuracy or production readiness. The initial private check used the
+existing validated Python environment for dependencies; the combined check below
+used a fresh isolated Python environment. Live activation remains
 subject to its separate approved backup, restore, migration and rollback plan.
 
 
-The combined restart/packaging candidate then passed all78 affected tests and the
-same326-file wheel comparison. Its71-wheel dependency set installed offline into a
+The combined restart/packaging candidate then passed all 78 affected tests and the
+same 326-file wheel comparison. Its 71-wheel dependency set installed offline into a
 fresh Windows Python environment with system/user site-packages disabled and the
 tested dependency constraints preserved. `pip check` passed. Two fresh processes
-imported the installed package, compiled67 templates and served all19 assets with
-unchanged disposable15433 database dumps. Five fresh installed Word/XLSX worker
+imported the installed package, compiled 67 templates and served all 19 assets with
+unchanged disposable 15433 database dumps. Five fresh installed Word/XLSX worker
 modes produced exact source-reference outputs while refusing unrelated application
 imports. These results strengthen installation evidence; they do not certify a
 separate machine, rendered browser, scanner/provider execution or live activation.
