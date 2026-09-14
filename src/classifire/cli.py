@@ -65,13 +65,15 @@ def _prepare_cli_write(*, seeds_controlled_defaults: bool = False) -> Settings:
         raise typer.BadParameter(str(exc)) from exc
     if settings.env == "production" and seeds_controlled_defaults:
         raise typer.BadParameter("PRODUCTION_SEEDING_FORBIDDEN_USE_CLASSIFIRE_MIGRATE")
+    if settings.require_migrated_database and seeds_controlled_defaults:
+        raise typer.BadParameter("MIGRATED_DATABASE_SEEDING_FORBIDDEN")
     return settings
 
 
 def _ensure_cli_schema(settings: Settings) -> None:
     """Keep development setup convenient without permitting production schema creation."""
 
-    if settings.env == "production":
+    if settings.env == "production" or settings.require_migrated_database:
         try:
             require_current_migration_head(settings)
         except MigrationReadinessError as exc:

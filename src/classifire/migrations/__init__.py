@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -52,7 +54,18 @@ def require_current_migration_head(settings: Settings) -> None:
 
     config = migration_config(settings)
     expected_heads = frozenset(ScriptDirectory.from_config(config).get_heads())
-    engine = create_engine(settings.database_url)
+    url = make_url(settings.database_url)
+    if url.get_backend_name() == "sqlite":
+        if not url.database or url.database == ":memory:":
+            raise MigrationReadinessError("DATABASE_MIGRATION_REQUIRED")
+        database = url.database
+        if not database.startswith("file:"):
+            database_path = Path(database).resolve()
+            if not database_path.is_file():
+                raise MigrationReadinessError("DATABASE_MIGRATION_REQUIRED")
+            database = database_path.as_uri()
+        url = url.set(database=database, query={**url.query, "mode": "ro", "uri": "true"})
+    engine = create_engine(url)
     try:
         with engine.connect() as connection:
             actual_heads = frozenset(MigrationContext.configure(connection).get_current_heads())

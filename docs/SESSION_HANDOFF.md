@@ -1,6 +1,6 @@
 # CLASSIFIRE Session Handoff
 
-Reconciled 2026-09-14. Current code, Git, tests and receipts outrank this checkpoint.
+Reconciled 2026-09-15. Current code, Git, tests and receipts outrank this checkpoint.
 Use [PROJECT_STATE.md](./PROJECT_STATE.md) for current evidence and limitations,
 [CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md) for structure and authority,
 and [CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md) for sequencing and exits.
@@ -9,12 +9,12 @@ points here. The full production objective remains active and incomplete.
 
 ## Selected checkout and scope
 
-Continue in `C:/CLASSIFIRE/.tmp/perf-native-test-state-snapshots-20260914`, branch
-`perf/native-test-state-snapshots-20260914`, based on merged main `d2267fe`.
-The active follow-up reduces repeated Word/XLSX worker startup by deferring unrelated
-report-adapter imports. Parsing, permissions, subprocess isolation and every existing
-assertion remain. No root recovery, live activation or provider/customer run is included.
-Verify HEAD/status and the local validation receipts before publication.
+Continue in `C:/CLASSIFIRE/.tmp/migrated-demo-restart-20260915`, branch
+`fix/migrated-demo-restart-20260915`, based on shared main `370888c` (PR272).
+The active change provides an opt-in migrated local restart: the demo launcher,
+web startup and CLI reuse the existing migration guard and skip bootstrap. SQLite
+readiness is read-only and migrated connections retain the current journal mode.
+Review the exact diff and validation before publishing; no activation is included.
 
 The ancestor range implements native Word/PDF/XLSX evidence selection and typed
 additions, selected Scope edits, explicit saved generations/decisions and v7 package
@@ -39,15 +39,16 @@ chronology and failed attempts remain in Git and private receipts.
 
 ## Publication and operational boundaries
 
-- PR271 merged as `d2267fe894093d8c30aa31ac1a57e90c29b8aa39` at 12:00:07 UTC
-  on 2026-09-14. Head `8492010` passed run34836524377 with 2,625 tests, full type/security
-  and migration-head checks. The merge tree matches that head; reviews/rules were
-  inspected and no enforced outstanding review requirement was found.
-- Post-merge run34841047799 on d2267fe is separate and still being observed. Poll it;
-  never restart a job because observation expired. The earlier 45-minute timeout
-  and its exact approval/publication receipts remain preserved.
-- The worker-startup optimization is a new isolated follow-up. Review its explicit
-  files, validation and commit range before normal publication and a new PR to main.
+- PR272 merged as `370888c54549642c1213eb4e2ebed2c54081aeb2`; its tree matches
+  tested `cb82409`. PR CI34846714887 passed 2,630 tests (1,892.04 seconds).
+  Post-merge CI34853579643 passed 2,630 tests (1,963.93 seconds), plus all later checks.
+  PR271 post-merge CI34841047799 also succeeded. No existing job was restarted.
+- The private historical-copy conversion/recovery rehearsal passed on15433. Existing
+  data and the two original-file hashes survived. Recovery schema matches an independent
+  restored migration reference; raw PostgreSQL check text changes after dump/restore.
+  Fresh live drift, original owner/ACL and current file linkage remain unverified.
+- Publish this guarded-restart follow-up only after reviewing its explicit files and
+  passing validation. Merge after observed successful exact-head CI and required reviews.
 - The stack includes the expanded Word/PDF/XLSX form correction. Standalone
   `8bce0b0` remains preserved locally; do not duplicate that earlier patch.
 - Diagnostic PR270 merged, but post-merge 34753856708 cancelled without a full summary.
@@ -106,18 +107,18 @@ policy, representative accuracy and the broader Phase 8-16 exits remain incomple
 
 ## Next executable task
 
-Finish the measured import optimization as one coherent update. One representative
-integrity case passed in 107.340 seconds before and 28.299 seconds after (JUnit suite
-times, fresh basetemp, disposable15433). The non-import AST is identical. All 194 affected/parser/client/review/migration/package
-cases passed with no skips; full Ruff, Mypy and Bandit passed. Four fresh ZIPs preserved
-10 checked members and the exact Word/PDF originals. Inspect
-`native-test-performance-validation-20260914` for these receipts, the byte-identical
-worker comparison and old-code regression control. Do not claim
-a whole-CI speedup from a local sample. Commit explicit reviewed files, publish and
-merge only after successful exact-head CI and required reviews; retain all branches.
-Observe existing post-merge run34841047799 independently. Complete new-control browser
-acceptance when supported. Provider testing and operational activation still need
-an exact approved plan; preserve the original project/Scope/package confirmations.
+Finish the migrated-restart follow-up as one coherent update. Verify the targeted
+startup/demo/CLI/migration results and exact PostgreSQL launcher rehearsal in
+`migrated-restart-validation-20260915`, then review explicit files, commit, publish
+and merge only after successful exact-head CI and required reviews. Retain branches.
+The preceding worker optimization is already merged with passing post-merge CI;
+do not rebuild it or restart its completed jobs.
+Then finish the operational launcher/dependency and fresh-backup/restore/rollback
+plan, including preserved roles/grants and current file linkage. The historical-copy
+conversion proof is in `native-activation-readiness-370888c-20260915`; it does not
+prove current live state. New0049/v7 rendered-browser acceptance remains blocked
+by browser-helper initialization. Live activation/provider testing needs a new exact
+approved plan; preserve consumed allowances and original Scope/package confirmations.
 
 Tests use `C:/CLASSIFIRE/.tmp/native-stack-test-env-20260914/Scripts/python.exe`,
 the selected checkout's `src` (and `tests` where required) on PYTHONPATH,
@@ -135,20 +136,21 @@ and private evidence must remain intact. Do not reset, clean, resolve or publish
 
 Continue CLASSIFIRE from repository evidence. Read AGENTS.md, GOAL.md and the canonical
 state, architecture, roadmap and handoff. Use the isolated
-C:/CLASSIFIRE/.tmp/perf-native-test-state-snapshots-20260914 checkout and verify its
-HEAD/status. PR271 merged as d2267fe after 2,625 successful Linux tests and all later
-checks; its merge tree matches tested 8492010. Separately poll post-merge run34841047799.
-The pinned local 5279904 full suite finished with 2,623 passes and two Windows symlink
-skips. Do not restart completed or running jobs because observation timed out.
-The current measured optimization defers unrelated report-adapter imports for disposable
-Word/XLSX workers, preserving all parsing and authority logic. Inspect the exact local
-diff and native-test-performance-validation-20260914 receipts: 194 affected tests,
-full static checks and fresh exact-original ZIP inspection passed. Finish review,
-explicit-file commit, publication and CI-gated merge as one update.
-Do not duplicate previously merged native attachment/history/fixture/startup fixes.
-Live 8820's last receipt is rollback 6c1e2a4/chat disabled. New provider tests and
-activation need an exact approved plan and successful applicable CI. Use the selected
-checkout's PYTHONPATH, fresh basetemp and disposable15433, never live15432. Preserve
-unknowns, blank openings, separate Scope/package confirmation, original evidence and
-foreign-history authority boundaries. Keep the conflicted root and private files
-untouched. Browser acceptance of new 0049/v7 controls and production exits remain.
+C:/CLASSIFIRE/.tmp/migrated-demo-restart-20260915 checkout and verify HEAD/status.
+PR272 merged as370888c; exact-head PR CI and post-merge34853579643 passed2,630 tests
+and all later checks. Do not repeat the completed worker optimization or restart jobs
+because observation timed out. The current change adds an explicit migrated local
+restart mode, preserving production checks and preventing automatic schema/user
+creation. Inspect the full diff and migrated-restart-validation-20260915 evidence;
+finish explicit-file commit, publication and CI/review-gated merge where authorized.
+The private15433 historical-copy conversion and independent-reference recovery passed;
+PostgreSQL dump/restore changes raw check-expression text, recorded as a comparison
+limitation. Existing data and two original-file hashes stayed exact. Do not stamp or
+adopt current live state from that historical proof. Finish the pinned launcher and
+fresh-backup/roles/storage/rollback plan, then request exact activation/provider
+approval. Live8820's last receipt remains rollback6c1e2a4 with chat disabled.
+Use selected-checkout PYTHONPATH and fresh basetemp; PostgreSQL tests only on owned
+15433 databases, never live15432. Preserve unknowns, blank openings, separate human
+Scope/package confirmations, original evidence and foreign-history authority.
+Keep the conflicted root and private evidence untouched. Browser acceptance of
+new0049/v7 controls and the full Phase8-16 production exits remain incomplete.
