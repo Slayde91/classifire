@@ -7,26 +7,30 @@ behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTAN
 retains its original acceptance evidence. Private operator receipts and customer
 material remain outside Git. This is not a production-readiness certificate.
 
-## Local evidence and proposal test review
+## Local native change review
 
-`docs/native-evidence-review-20260914` extends `ef790d1`. Eight complete intake,
-evidence, proposal and responsiveness test files were manually reviewed. Their
-unchanged Git content matches 90 passing, unskipped cases in the completed
-`1aeded3` full-suite JUnit record. This is verified prior execution, not a new
-current-checkout test run. No new application defect was found and no application
-code or tests changed.
+`docs/native-evidence-review-20260914` continues the review from `35a7777`;
+application code remains `ef790d1`. All 75 non-document files now have recorded
+manual review scope; nine documents remain. The latest five complete package,
+history, Scope edit and closed-review test files match 47 passing, unskipped cases
+from their prior completed runs (`1aeded3` or `23ab398`). Together with the earlier
+eight-file review, 137 prior passing cases are matched to unchanged test content.
+No new application defect was found and no application code or tests changed.
+These are verified prior results, not a new current-checkout suite execution.
 
-The reviewed assertions cover exact original/image bytes, selected context and
-consent, format/purpose separation, current scan/access checks, unchanged protected
-tables, preserved unknowns and blank openings, separate signed Scope confirmation
-and replay refusal. The responsiveness test uses a held reader, not a database
-lock. Injected scanners/replies do not prove detection or report accuracy, technical
-suitability, rendered-browser or real-provider/live acceptance.
+A new independent standard-library inspection verified five saved synthetic ZIPs:
+21 member sizes/hashes, exact Word/PDF originals, selected proposal/decision hashes
+and confirmed Scope bytes. Proposal-only and decision-bearing packages retain the
+same proposal and Scope while preserving the explicit decision choice. Existing
+assertions also check foreign import isolation, sensitive export rights, selected
+record limits, historical evidence, stale/replayed confirmation and protected state.
 
-Private evidence in `native-evidence-review-validation-20260914` under .tmp ties
-each reviewed file to its Git object and JUnit cases. Recorded manual coverage is
-70 of 84 files; five test files and nine documents remain. Public approval still
-covers only `d864c51`; no publication, activation or new provider execution occurred.
+Private `native-history-review-validation-20260914` and the preceding
+`native-evidence-review-validation-20260914` folders under .tmp retain per-file Git,
+JUnit and artifact evidence. Synthetic bytes and internal consistency do not prove
+report accuracy, technical suitability or authenticity against coordinated tampering.
+Rendered-browser and real-provider/live acceptance remain outstanding. Public
+approval still covers only `d864c51`; no publication or activation occurred.
 
 ## Local rejection display correction
 

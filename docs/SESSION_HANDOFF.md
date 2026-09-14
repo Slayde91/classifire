@@ -6,20 +6,21 @@ checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
 root GOAL.md. The four independent capabilities and full production objective remain
 unchanged and incomplete.
 
-## Latest local evidence/proposal review checkpoint
+## Latest local review checkpoint
 
-`docs/native-evidence-review-20260914` extends `ef790d1`. Eight more complete test
-files were reviewed and their unchanged Git content matched to 90 passing cases
-in the completed `1aeded3` suite, with no matched skips. No new test execution or
-application change was needed. Exact bytes, consent, protected-state preservation,
-unknowns, separate confirmation and refusal cases are covered; synthetic inputs
-are not evidence of report accuracy or operational acceptance.
+`docs/native-evidence-review-20260914` continues from `35a7777`; application code
+remains `ef790d1`. Recorded manual review covers all 75 non-document files. The last
+five complete test-file reviews matched 47 prior passing cases without skips; the
+earlier eight matched 90. No new tests or application changes were needed. A new
+offline inspection verified five synthetic ZIPs, 21 member sizes/hashes, exact
+Word/PDF originals and explicit proposal-only versus decision-bearing history.
 
-The private `native-evidence-review-validation-20260914` folder under .tmp records
-70 of 84 reviewed files. Finish the remaining package/history, Scope edit and closed
-PDF review test files, then the nine documents; rendered-browser acceptance also
-remains. Existing PR271 stays at approved `d864c51` with failed CI. Its separate
-`8bce0b0` test correction and all later local work still need public approval.
+`native-history-review-validation-20260914/range-review-progress.json` under .tmp
+is the latest per-file ledger, with links to earlier review groups and the new
+artifact inspection. Finish the nine documents and rendered-browser acceptance.
+Preserve the distinction between prior execution, current artifact inspection and
+real-provider/operational proof. PR271 remains at approved `d864c51` with failed CI;
+its separate `8bce0b0` correction and later local work still need public approval.
 
 ## Prior local rejection display correction
 
