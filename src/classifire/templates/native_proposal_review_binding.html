@@ -1,0 +1,4 @@
+{% if native_proposal_id|default(none) %}
+<input type="hidden" name="native_proposal_id" value="{{ native_proposal_id }}">
+<p class="scope-hint">This review is linked to a saved AI proposal. Saving records your reviewed Scope revision and the decision separately from the original generated proposal.</p>
+{% endif %}

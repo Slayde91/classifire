@@ -119,16 +119,18 @@ def test_safe_production_create_admin_never_creates_schema(
         ),
     ],
 )
+@pytest.mark.parametrize("error_code", ["DATABASE_MIGRATION_REQUIRED", "DEPLOYMENT_SCHEMA_DRIFT"])
 def test_safe_production_database_commands_refuse_unmigrated_schema(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    error_code: str,
     action: Callable[[], None],
 ) -> None:
     settings = _safe_production_settings(tmp_path)
     monkeypatch.setattr(cli, "get_settings", lambda: settings)
 
     def missing_head(_settings: Settings) -> None:
-        raise MigrationReadinessError("DATABASE_MIGRATION_REQUIRED")
+        raise MigrationReadinessError(error_code)
 
     def unexpected_schema_write(*_args: object, **_kwargs: object) -> None:
         pytest.fail("production create-admin must not create schema")
@@ -136,7 +138,7 @@ def test_safe_production_database_commands_refuse_unmigrated_schema(
     monkeypatch.setattr(cli, "require_current_migration_head", missing_head)
     monkeypatch.setattr(cli.Base.metadata, "create_all", unexpected_schema_write)
 
-    with pytest.raises(typer.BadParameter, match="DATABASE_MIGRATION_REQUIRED"):
+    with pytest.raises(typer.BadParameter, match=error_code):
         action()
 
 

@@ -19,11 +19,13 @@ from .draft_scope_ui import (
     _finding_text,
     _form_values,
     _import_session,
+    _native_proposal_binding,
     _payload,
     _unique_object,
 )
 from .security import verify_csrf
 from .services import draft_scope_xlsx as xlsx
+from .services import draft_workspace_proposals as native_history
 from .services.draft_scope import DraftScopeError, get_draft, read_revision
 from .ui import _context, _require, templates
 
@@ -355,8 +357,9 @@ def map_rows(request: Request, db: Db, draft_id: str, source_id: str, form: Form
 @router.post("/scopes/{draft_id}/workbooks/{source_id}/preview", response_class=HTMLResponse)
 def preview(request: Request, db: Db, draft_id: str, source_id: str, form: FormData):
     verify_csrf(request, form.get("csrf_token"))
+    native_binding = _native_proposal_binding(request, form)
     actor = _require(request, db, "project:write")
-    if set(form) not in (_REVIEW_FIELDS, _REVIEW_FIELDS | {"action"}):
+    if (set(form) - {"native_proposal_id"}) not in (_REVIEW_FIELDS, _REVIEW_FIELDS | {"action"}):
         raise HTTPException(422, "Use the workbook graph review form")
     if "action" in form and form["action"] != "edit":
         raise HTTPException(422, "Choose preview or return to editing")
@@ -372,6 +375,10 @@ def preview(request: Request, db: Db, draft_id: str, source_id: str, form: FormD
         "document_sha256": form["document_sha256"],
     }
     try:
+        native_history.prepare_review_link(
+            db, actor, draft_id, form.get("native_proposal_id"), revision, payload,
+            action="propose_xlsx_scope", source_id=source_id, settings=get_settings(),
+        )
         checked = xlsx.preview_review(
             db,
             actor,
@@ -400,6 +407,7 @@ def preview(request: Request, db: Db, draft_id: str, source_id: str, form: FormD
     if form.get("action") == "edit":
         return _page(request, db, draft_id, source_id, review=checked)
     binding = {
+        **native_binding,
         "actor_id": actor.id,
         "draft_id": draft_id,
         "source_id": source_id,
@@ -457,8 +465,12 @@ def preview(request: Request, db: Db, draft_id: str, source_id: str, form: FormD
 @router.post("/scopes/{draft_id}/workbooks/{source_id}/confirm", response_model=None)
 def confirm(request: Request, db: Db, draft_id: str, source_id: str, form: FormData):
     verify_csrf(request, form.get("csrf_token"))
+    native_binding = _native_proposal_binding(request, form)
     actor = _require(request, db, "project:write")
-    if set(form) != _REVIEW_FIELDS | {"preview_token", "confirm"} or form["confirm"] != "save":
+    if (set(form) - {"native_proposal_id"}) != _REVIEW_FIELDS | {
+        "preview_token",
+        "confirm",
+    } or form["confirm"] != "save":
         raise HTTPException(422, "Confirm the reviewed workbook graph before saving")
     payload = _payload(form)
     plan = _structured(form, "plan", dict, 16_384)
@@ -470,6 +482,7 @@ def confirm(request: Request, db: Db, draft_id: str, source_id: str, form: FormD
             raise BadData("preview")
         binding = _signer().loads(token, max_age=900)
         expected = {
+            **native_binding,
             "actor_id": actor.id,
             "draft_id": draft_id,
             "source_id": source_id,
@@ -479,6 +492,10 @@ def confirm(request: Request, db: Db, draft_id: str, source_id: str, form: FormD
             raise BadData("preview")
         if any(binding.get(key) != value for key, value in expected.items()):
             raise BadData("binding")
+        link = native_history.prepare_review_link(
+            db, actor, draft_id, form.get("native_proposal_id"), revision, payload,
+            action="propose_xlsx_scope", source_id=source_id, settings=get_settings(),
+        )
         xlsx.save_review(
             db,
             actor,
@@ -492,6 +509,7 @@ def confirm(request: Request, db: Db, draft_id: str, source_id: str, form: FormD
             binding["review_sha256"],
             settings=get_settings(),
         )
+        native_history.record_confirmation(db, actor, link)
         db.commit()
     except (BadData, DraftScopeError) as exc:
         db.rollback()

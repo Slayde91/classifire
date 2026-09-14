@@ -4,6 +4,7 @@
 {% macro related_label(items, identifier) -%}{{ items|selectattr('id', 'equalto', identifier)|map(attribute='label')|first|default(identifier) }}{%- endmacro %}
 {% macro review_fields() -%}
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{% include "native_proposal_review_binding.html" %}
 <input type="hidden" name="expected_revision" value="{{ preview.expected_revision }}">
 <input type="hidden" name="document_sha256" value="{{ preview.document_sha256 }}">
 <input type="hidden" name="plan" value="{{ preview.plan|tojson|forceescape }}">

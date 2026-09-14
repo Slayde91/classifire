@@ -22,4 +22,5 @@
 {% if has_permission('project:write') %}<form method="post" action="/scopes/{{ draft.id }}/imported-package/reports/{{ source.id }}/scan"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button-secondary">Scan and check file</button></form>{% endif %}
 <p><a href="/scopes/{{ draft.id }}/imported-package/reports/{{ source.id }}/download">Download checked original {{ source.format|upper }}</a></p>
 </article>{% else %}<p>No report or project-evidence attachments in this import.</p>{% endfor %}</section>
+{% include 'native_package_history.html' %}
 {% endblock %}

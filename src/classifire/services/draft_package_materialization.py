@@ -24,6 +24,7 @@ from ..models import (
 )
 from . import draft_estimate_contract as estimate_contract
 from . import draft_import_origin as origins
+from . import draft_native_history as native_history
 from . import draft_package_import as inspection
 from . import draft_project_packages as packages
 from . import draft_scope as scopes
@@ -42,6 +43,9 @@ def _access(
     if write:
         actor = scopes._actor(db, actor, "project:write")
     for included in value.walk():
+        for history in included.histories:
+            for permission in native_history.permissions(history, export=export):
+                actor = scopes._actor(db, actor, permission)
         if included.all_matches():
             actor = scopes._actor(db, actor, "technical:read")
         if included.estimate:

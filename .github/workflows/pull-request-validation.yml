@@ -13,7 +13,8 @@ jobs:
   validation:
     name: Python validation
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The full native workflow suite exceeded 45 minutes at 63% on run34831072452.
+    timeout-minutes: 90
     services:
       containment-postgres:
         image: postgres:16-alpine
@@ -71,7 +72,9 @@ jobs:
         run: python -m ruff check .
 
       - name: Run tests
-        run: python -m pytest -p no:cacheprovider --basetemp .pytest-ci
+        # pyproject adds -q; -vv makes each test visible in timestamped job logs.
+        # Keep output capture, fail-fast behavior and full coverage.
+        run: python -m pytest -vv --durations=25 -p no:cacheprovider --basetemp .pytest-ci
 
       - name: Run full type check
         run: python -m mypy src

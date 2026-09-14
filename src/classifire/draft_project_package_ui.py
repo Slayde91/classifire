@@ -12,6 +12,7 @@ from itsdangerous import BadData, URLSafeTimedSerializer
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from .audit import record_audit
 from .config import get_settings
 from .db import get_db
 from .draft_scope_ui import FormData
@@ -20,6 +21,7 @@ from .security import has_permission, verify_csrf
 from .services import draft_estimate_reports as estimate_reports
 from .services import draft_estimates as estimates
 from .services import draft_import_reports as imported_reports
+from .services import draft_native_history as native_history
 from .services import draft_package_import as imports
 from .services import draft_package_materialization as materialization
 from .services import draft_project_packages as packages
@@ -52,6 +54,7 @@ def _query(request: Request, latest: int) -> dict:
             "xlsx_sources",
             "docx_sources",
             "matches",
+            "native_proposals",
         }
     ):
         raise HTTPException(422, "Invalid package selection")
@@ -64,7 +67,18 @@ def _query(request: Request, latest: int) -> dict:
         if not separator or not identity or not revision or revision.startswith("0"):
             raise HTTPException(422, "Choose an exact saved system review and revision")
         references.append({"match_id": identity, "match_revision": _number(revision)})
+    history = []
+    for history_value in query.getlist("native_proposals"):
+        if history_value == "":
+            continue  # The form explicitly leaves this proposal out.
+        identity, separator, decision = history_value.partition(":")
+        if not separator or not identity or not decision:
+            raise HTTPException(422, "Choose an exact saved proposal and decision")
+        history.append(
+            {"proposal_id": identity, "decision_id": None if decision == "none" else decision}
+        )
     value = {
+        "native_proposals": history,
         "matches": references,
         "scope_revision": _number(query.get("scope_revision", str(latest))),
         "scope_reports": query.getlist("scope_reports"),
@@ -143,6 +157,7 @@ def _reopen_register_url(draft_id: str, selected: packages.Selection) -> str:
 
 def _configure_package_url(draft_id: str, selected: packages.Selection) -> str:
     query = [("scope_revision", str(selected.scope_revision))]
+    query.extend(("native_proposals", item.query_value()) for item in selected.native_proposals)
     if selected.matches:
         query.extend(
             ("matches", f"{item.match_id}:{item.match_revision}") for item in selected.matches
@@ -231,6 +246,10 @@ def package_page(request: Request, db: Db, draft_id: str) -> HTMLResponse:
                 draft=draft,
                 project=scope_reports._project(db, draft),
                 chosen=chosen,
+                native_proposal_choices=native_history.choices(
+                    db, user, draft_id, chosen.native_proposals
+                ),
+                max_native_proposals=native_history.MAX_SELECTED,
                 scope=scope,
                 pdf_sources={
                     ref["source_id"]: ref["original_filename"]
@@ -311,6 +330,10 @@ def saved_package(request: Request, db: Db, draft_id: str, package_id: str) -> H
     user = _require(request, db, "project:read")
     try:
         row, manifest = packages.read_package(db, user, draft_id, package_id)
+        history = list(imports.inspect_package(row.archive_bytes).history_members())
+        history_context = _history_context(
+            request, history, f"/scopes/{draft_id}/packages/{package_id}"
+        )
         stale = packages.staleness(
             db, user, draft_id, manifest, storage_root=get_settings().storage_root
         )
@@ -327,6 +350,7 @@ def saved_package(request: Request, db: Db, draft_id: str, package_id: str) -> H
                 staleness=stale,
                 error=None,
                 saved=row,
+                **history_context,
                 reopen_url=_reopen_register_url(
                     draft_id, packages.selection(manifest["selection"])
                 ),
@@ -554,6 +578,11 @@ def imported_package_page(request: Request, db: Db, draft_id: str) -> HTMLRespon
                 active_nav="draft_scopes",
                 draft=draft,
                 imported=row,
+                **_history_context(
+                    request,
+                    list(original.history_members()),
+                    f"/scopes/{draft_id}/imported-package",
+                ),
                 mapping=mapping,
                 reopen_url=_reopen_register_url(draft_id, selected),
                 configure_url=_configure_package_url(draft_id, selected),
@@ -623,3 +652,97 @@ def _import_download(content: bytes, filename: str) -> Response:
             "Content-Security-Policy": "default-src 'none'; sandbox",
         },
     )
+
+
+def _history_context(
+    request: Request, entries: list[tuple[dict[str, Any], str]], base_url: str
+) -> dict[str, Any]:
+    chosen = request.query_params.getlist("history")
+    if len(chosen) > 1:
+        raise HTTPException(422, "Choose one history item")
+    document = None
+    items = []
+    for value, path in entries:
+        items.append(
+            {
+                **native_history.summary(value),
+                "member": path,
+                "url": base_url + "?" + urlencode({"history": path}),
+                "download_url": base_url + "/native-history?" + urlencode({"member": path}),
+            }
+        )
+        if chosen and path == chosen[0]:
+            document = value
+    if chosen and document is None:
+        raise HTTPException(404, "History item not found")
+    return {"history_items": items, "history_document": document}
+
+
+def _history_download(
+    request: Request,
+    db: Db,
+    user,
+    entries: list[tuple[dict[str, Any], str]],
+    *,
+    entity_type: str,
+    entity_id: str,
+) -> Response:
+    paths = request.query_params.getlist("member")
+    if len(paths) != 1:
+        raise HTTPException(422, "Choose one history item")
+    value = next((value for value, path in entries if path == paths[0]), None)
+    if value is None:
+        raise HTTPException(404, "History item not found")
+    content = packages.encode(value)
+    record_audit(
+        db,
+        actor=user,
+        action=entity_type + ".native_history.download",
+        entity_type=entity_type,
+        entity_id=entity_id,
+        new_value={"sha256": packages.digest(content)},
+    )
+    db.commit()
+    return Response(
+        content,
+        media_type="application/json",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": 'attachment; filename="CLASSIFIRE-Proposal-History-'
+            + value["proposal"]["id"]
+            + '.json"',
+        },
+    )
+
+
+@router.get("/scopes/{draft_id}/packages/{package_id}/native-history")
+def download_package_history(request: Request, db: Db, draft_id: str, package_id: str) -> Response:
+    user = _require(request, db, "project:read")
+    try:
+        row, _manifest = packages.read_package(db, user, draft_id, package_id)
+        entries = list(imports.inspect_package(row.archive_bytes).history_members())
+        return _history_download(
+            request, db, user, entries, entity_type="draft_project_package", entity_id=row.id
+        )
+    except scopes.DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc
+
+
+@router.get("/scopes/{draft_id}/imported-package/native-history")
+def download_imported_history(request: Request, db: Db, draft_id: str) -> Response:
+    user = _require(request, db, "project:read")
+    try:
+        row, original, _mapping = materialization.read_import(db, user, draft_id, export=True)
+        return _history_download(
+            request,
+            db,
+            user,
+            list(original.history_members()),
+            entity_type="draft_package_import",
+            entity_id=row.id,
+        )
+    except scopes.DraftScopeError as exc:
+        db.rollback()
+        raise HTTPException(exc.status_code, exc.code) from exc

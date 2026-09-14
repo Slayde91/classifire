@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from ..models import User
 from . import draft_estimate_contract as estimate_contract
 from . import draft_estimate_reports as estimate_reports
+from . import draft_native_history as native_history
 from . import draft_project_packages as packages
 from . import draft_scope as scopes
 from . import draft_scope_reports as scope_reports
@@ -90,6 +91,10 @@ class ManifestV6(ManifestV5):
     schema_version: Literal["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v6"]  # type: ignore[assignment]
 
 
+class ManifestV7(ManifestV6):
+    schema_version: Literal["CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v7"]  # type: ignore[assignment]
+
+
 @dataclass(frozen=True)
 class InspectedPackage:
     manifest: dict[str, Any]
@@ -101,6 +106,8 @@ class InspectedPackage:
     archive_sha256: str
     origins: dict[str, InspectedPackage] = field(default_factory=dict)
     matches: list[dict[str, Any]] = field(default_factory=list)
+
+    histories: list[dict[str, Any]] = field(default_factory=list)
 
     def all_matches(self) -> list[dict[str, Any]]:
         return [self.match] if self.match is not None else self.matches
@@ -131,6 +138,12 @@ class InspectedPackage:
             yield source_id, prefix + f"evidence/{source_id}.docx"
         for path, item in self.origins.items():
             yield from item.evidence_members(prefix + path + "!")
+
+    def history_members(self, prefix: str = ""):
+        for value in self.histories:
+            yield value, prefix + native_history.member_path(value["proposal"]["id"])
+        for path, item in self.origins.items():
+            yield from item.history_members(prefix + path + "!")
 
     def resolve(self, path: str) -> bytes:
         if "!" not in path:
@@ -357,7 +370,9 @@ def inspect_package(
             raise ValueError("origin nesting bounds")
         manifest, members = packages.inspect_archive(content)
         parsed = (
-            ManifestV6
+            ManifestV7
+            if manifest.get("schema_version") == packages.SCHEMA_V7
+            else ManifestV6
             if manifest.get("schema_version") == packages.SCHEMA_V6
             else ManifestV5
             if manifest.get("schema_version") == packages.SCHEMA_V5
@@ -389,8 +404,12 @@ def inspect_package(
         if (parsed.revision == 1) != (parsed.parent_hash is None):
             raise ValueError("package parent")
         selected = parsed.selection
-        if bool(selected.matches) != isinstance(parsed, ManifestV6):
+        if (selected.matches and not isinstance(parsed, ManifestV6)) or (
+            type(parsed) is ManifestV6 and not selected.matches
+        ):
             raise ValueError("review collection version")
+        if bool(selected.native_proposals) != isinstance(parsed, ManifestV7):
+            raise ValueError("native history version")
         if selected.docx_sources and not isinstance(parsed, ManifestV5):
             raise ValueError("legacy Word selection")
         if selected.xlsx_sources and not isinstance(parsed, ManifestV4):
@@ -400,6 +419,9 @@ def inspect_package(
         if set(selected.scope_reports) & set(selected.estimate_reports):
             raise ValueError("duplicate report selection")
         wanted = {"artifacts/scope.json", *origins}
+        wanted.update(
+            native_history.member_path(ref.proposal_id) for ref in selected.native_proposals
+        )
         wanted.update(f"evidence/{sid}.pdf" for sid in selected.pdf_sources)
         wanted.update(f"evidence/{sid}.xlsx" for sid in selected.xlsx_sources)
         wanted.update(f"evidence/{sid}.docx" for sid in selected.docx_sources)
@@ -420,6 +442,8 @@ def inspect_package(
             if selected.scope_reports or selected.estimate_reports
             else "not_selected",
         }
+        if selected.native_proposals:
+            expected_capabilities["native_proposal_history"] = "included"
         if parsed.capabilities != expected_capabilities:
             raise ValueError("capability claims")
         scope = scopes.validate_portable_artifact(members["artifacts/scope.json"])
@@ -430,6 +454,12 @@ def inspect_package(
             or scope["revision"] != selected.scope_revision
         ):
             raise ValueError("scope selection")
+        histories = [
+            native_history.validate(
+                members[native_history.member_path(ref.proposal_id)], ref, scope
+            )
+            for ref in selected.native_proposals
+        ]
         match = None
         if selected.match_id:
             match = _json(members["artifacts/system-match.json"], match_contract.MAX_MATCH_BYTES)
@@ -525,6 +555,13 @@ def inspect_package(
             selected.xlsx_sources,
             selected.docx_sources,
             match_collection=matches or None,
+        ) + native_history.source_manifest(
+            histories,
+            {
+                "word": selected.docx_sources,
+                "pdf": selected.pdf_sources,
+                "xlsx": selected.xlsx_sources,
+            },
         ):
             raise ValueError("source inventory")
         reports = []
@@ -606,6 +643,7 @@ def inspect_package(
             packages.digest(content),
             origins,
             matches,
+            histories,
         )
     except packages.PackageError:
         raise
@@ -629,6 +667,9 @@ def preview_import(db: Session, actor: User, content: bytes) -> dict[str, Any]:
         actor = scopes._actor(db, actor, "project:read")
         inspected = inspect_package(content)
         for included in inspected.walk():
+            for history in included.histories:
+                for permission in native_history.permissions(history):
+                    actor = scopes._actor(db, actor, permission)
             if included.all_matches():
                 actor = scopes._actor(db, actor, "technical:read")
             if included.estimate:
@@ -649,6 +690,7 @@ def preview_import(db: Session, actor: User, content: bytes) -> dict[str, Any]:
                 for r in included.reports
             ],
             "source_count": len(inspected.manifest["source_manifest"]),
+            "native_history_count": sum(len(item.histories) for item in inspected.walk()),
             "import_available": True,
             "binary_status": "not_scanned_or_opened",
             "authority": "foreign_unverified",

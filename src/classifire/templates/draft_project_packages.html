@@ -21,6 +21,18 @@
 {% if docx_sources %}<fieldset><legend>Include reviewed Word reports (optional, up to four)</legend>
 <p>Include the exact original Word file and its embedded pictures. Imported files require a new local scan and Word-format check; their claims stay unverified.</p>
 {% for source_id, filename in docx_sources.items() %}<label><input type="checkbox" name="docx_sources" value="{{ source_id }}"{% if source_id in chosen.docx_sources %} checked{% endif %}>{{ filename }}</label>{% endfor %}</fieldset>{% endif %}
+{% if native_proposal_choices %}<fieldset><legend>AI proposal history (optional, up to {{ max_native_proposals }})</legend>
+<p>Selected history includes your question, included conversation, disclosed context and generated reply. It can contain private project, technical or pricing information. A recorded decision is captured exactly as selected; it does not grant technical approval. Original files stay separately selected above. Nothing is selected automatically.</p>
+{% for item in native_proposal_choices %}
+<label for="native-history-{{ item.id }}">Proposal {{ item.id }} &middot; base Scope {{ item.base_revision }} &middot; {{ item.saved_at }}</label>
+<select id="native-history-{{ item.id }}" name="native_proposals">
+<option value=""{% if not item.selected %} selected{% endif %}>Do not include this proposal</option>
+<option value="{{ item.id }}:none"{% if item.selected and item.value == item.id ~ ':none' %} selected{% endif %}>Include proposal only (no decision)</option>
+{% if item.decision_value %}<option value="{{ item.decision_value }}"{% if item.selected and item.value == item.decision_value %} selected{% endif %}>Include proposal and recorded decision (verified at preview)</option>{% endif %}
+</select>
+{% endfor %}
+<p>Proposal only omits the decision from this package; it does not mean that no decision exists.</p>
+</fieldset>{% endif %}
 {% if has_permission('technical:read') %}
 <fieldset><legend>Saved system reviews (optional, up to {{ max_selected_matches }})</legend>
 <p>Choose exact revisions for distinct Opening and Service targets. Nothing is selected automatically. Selected historical reviews remain listed even when newer work exists. The package's total file limit also applies.</p>
@@ -44,7 +56,9 @@
 <dl class="scope-import-details">{% for kind,state in result.manifest.capabilities.items() %}<dt>{{ kind|replace('_',' ')|capitalize }}</dt><dd>{{ state|replace('_',' ') }}</dd>{% endfor %}</dl>
 <table><thead><tr><th>Included file</th><th>Bytes</th><th>SHA-256</th></tr></thead><tbody>{% for item in result.manifest.members %}<tr><td>{{ item.path }}</td><td>{{ item.size_bytes }}</td><td class="scope-hint" style="overflow-wrap:anywhere">{{ item.sha256 }}</td></tr>{% endfor %}</tbody></table>
 <h3>Source membership</h3>{% for item in result.manifest.source_manifest %}<p><strong>{{ item.kind|replace('_',' ') }}: {{ item.membership }}</strong><br>{{ item.reason }}<br><span class="scope-hint">{{ item.reference }}</span></p>{% else %}<p>No source references recorded in the selected artifacts. This does not prove evidence completeness.</p>{% endfor %}
+{% if result.manifest.selection.native_proposals %}<h3>Selected AI history</h3><ul>{% for item in result.manifest.selection.native_proposals %}<li>Proposal {{ item.proposal_id }} &middot; {% if item.decision_id %}recorded decision {{ item.decision_id }}{% else %}no decision selected{% endif %}</li>{% endfor %}</ul><p>The package keeps this selection if a later decision is recorded. Earlier Scope bodies and unselected original files are not added implicitly.</p>{% endif %}
 {% if not saved and has_permission('project:write') %}<form method="post" class="stack-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="selection" value="{{ selection_json }}"><input type="hidden" name="expected_revision" value="{{ result.latest_revision }}"><input type="hidden" name="preview_hash" value="{{ result.preview_hash }}"><button class="button button-primary" type="submit">Save package revision {{ result.latest_revision + 1 }}</button><p>Saves the previewed membership and exact files. No matching, estimating or report generation runs.</p></form>{% endif %}
 </section>{% endif %}
 {% if not saved %}<section class="panel"><h2>Saved packages</h2>{% for item in packages %}<p><a href="/scopes/{{ draft.id }}/packages/{{ item.id }}">Package revision {{ item.revision }} &middot; {{ item.created_at }}</a></p>{% else %}<p>No saved project packages yet.</p>{% endfor %}</section>{% endif %}
+{% include 'native_package_history.html' %}
 {% endblock %}

@@ -1,311 +1,154 @@
 # CLASSIFIRE Session Handoff
 
-Reconciled 2026-09-13. Current code, Git, CI and runtime evidence override this
-checkpoint. Read [PROJECT_STATE.md](./PROJECT_STATE.md),
-[architecture](./CLASSIFIRE_ARCHITECTURE.md), [roadmap](./CLASSIFIRE_ROADMAP.md) and
-root GOAL.md. The four independent capabilities and full production objective remain
-unchanged and incomplete.
+Reconciled 2026-09-14. Current code, Git, tests and receipts outrank this checkpoint.
+Use [PROJECT_STATE.md](./PROJECT_STATE.md) for current evidence and limitations,
+[CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md) for structure and authority,
+and [CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md) for sequencing and exits.
+The requested shorter architecture/roadmap aliases are absent; root SESSION_HANDOFF.md
+points here. The full production objective remains active and incomplete.
 
-## Verified publication
+## Selected checkout and scope
 
-- Workspace PR #260 merged as `3eabb23`; exact-head and post-merge CI passed 2,113
-  tests. PR #261 merged as `095ee3d`; both runs passed 2,127 tests.
-- Row authoring PR #262 merged as `48b4b11`; both runs passed 2,134 tests.
-- Packages PR #263 merged as `d5c19d7`, equal in tree to tested `469a57f`.
-  Exact-head run 34711480773 and post-merge run 34712796245 passed 2,199 tests.
-- Scope multi-review reporting PR #264 merged tested `ccaff7a` as
-  `e96c6928ffdbc11a9bd2fb890105e83f05c87625`. Exact-head run 34713651083 passed
-  2,251 tests and all checks. Full merged tree equality was verified. No required
-  reviews were configured; no human GitHub review is claimed. Post-merge run
-  34715038796 passed 2,251 tests and all remaining checks.
+Continue in `C:/CLASSIFIRE/.tmp/ci-native-suite-budget-20260914`, branch
+`ci/native-suite-budget-20260914`, based on published `cef340b`. This follow-up changes
+CI timing/logging and state/handoff documents. Application source remains `c47c119`;
+application, migration, test and dependency blobs match the pinned `5279904` full run.
+Verify the actual HEAD/status before editing. No root recovery, live activation or
+new provider/customer workflow is included.
 
-## Latest publication and CI
+The ancestor range implements native Word/PDF/XLSX evidence selection and typed
+additions, selected Scope edits, explicit saved generations/decisions and v7 package
+history. It also fixes delayed UI replies, explicit proposal-only packaging,
+source/Draft lock ordering, rejection rights after waits and rejection-card cleanup.
+Do not rebuild these features or cherry-pick the standalone `8bce0b0` test correction
+into this stack: the equivalent expanded assertion is already present.
 
-- The four owner-approved workspace commits merged through PR #265 as `0e9bf98`.
-  Its PR CI passed 2,399 tests; post-merge run `34726463470` failed a midnight-sensitive
-  test and hit the 30-minute limit. That failed result remains preserved.
-- PR #266 merged the separate clock/CI-limit repair `7c9b570` as `96fdf7a` after
-  2,399 passing tests and the remaining checks. Its post-merge run `34729555434`
-  cancelled at 45 minutes without a final test summary. The broad slowdown's cause
-  remains unestablished; the run was not restarted or counted as a pass.
-- Documentation PR #267 merged candidate `6c1e2a40a6448cc1facda2436f7780651408741d`
-  as `6012d159f0669e704a45d12db2eaf81b1d4cac80`, with exact full-tree equality.
-  PR CI [34729664769](https://github.com/Slayde91/classifire/actions/runs/34729664769)
-  passed 2,399 tests in 1,701.99 seconds; post-merge
-  [34731006875](https://github.com/Slayde91/classifire/actions/runs/34731006875)
-  passed 2,399 in 1,769.11 seconds. Both passed the remaining required checks.
-  No human GitHub review was required or claimed. Publication did not grant activation.
+Startup fix `c47c119` reuses the existing read-only lineage assessment after the
+packaged-head check. It refuses missing required tables and retired tables before
+production startup/CLI writes. No schema or authority change is introduced. It passed
+89 affected tests and seven candidate checks on a separate owned PostgreSQL15433
+database, plus an old-code failure control; guard connections were read-only and
+dumps unchanged. This remains narrower than complete production schema certification.
 
-## Verified workspace activation
+The full `5418f51` regression terminated after 928 passes and one fixture failure.
+The imported-evidence UI test supplied an obsolete generic object without
+`history_members()`. This follow-up uses the real `InspectedPackage` type and
+explicitly preserves empty history. All 60 affected navigation tests passed;
+permission, exact-identity and no-implicit-action assertions remain. Earlier
+chronology and failed attempts remain in Git and private receipts.
 
-The owner separately approved and activated tested `6c1e2a4` on 2026-09-13 after
-successful exact CI and a fresh matched backup/disposable restore. The private
-`activation-result.json` records `activated_verified`; its 20 referenced artifacts
-were rehashed during this reconciliation. The 8820 listener was observed as PID
-33032 (parent 13708) at acceptance; process IDs are historical observations.
+## Publication and operational boundaries
 
-The fresh backup/restore matched 69 tables and 80 rows. Fourteen raw CHECK strings
-required the individually allowed cast-placement proof; 28 typed evaluations passed.
-Other schema, objects, required roles/grants/ownership and retained files matched.
-Metadata/bootstrap were no-ops. No migration or stamp ran: the observed demo still
-has no Alembic version table. This is not a migration-history certification.
+- Shared main is `97c0778`; PR271 was updated by a verified normal push to `cef340b`.
+  Its run34831072452 reached 63% test progress, then GitHub cancelled the job at its
+  45-minute limit. The annotation explicitly records that cause; no complete pass
+  or later type/security/migration-head check was obtained. The old d864c51 form
+  failure remains preserved separately.
+- On 2026-09-14 the owner approved the reviewed broader `5279904` candidate:
+  29 commits/89 files, plus this factual publication checkpoint. Reuse PR271 from
+  `feat/native-word-attachments-20260913` to `main`; verify actual push, exact-head CI,
+  required reviews and merge rather than inferring success from approval.
+- The stack includes the expanded Word/PDF/XLSX form correction. Standalone
+  `8bce0b0` remains preserved locally; do not duplicate that earlier patch.
+- Diagnostic PR270 merged, but post-merge 34753856708 cancelled without a full summary.
+  Do not restart a job because observation expired; poll the same live handle when one exists.
+- The 8820 listener is still PID 24324. The last approved receipt is rollback 6c1e2a4,
+  chat disabled after the 7dbc1cc follow-up 502. Its cause is unknown. Old provider
+  allowances are consumed; a new exact test and activation need separate approval.
+- Current local migration head is 0049 after 0048; published baseline is 0047. Both new
+  migrations refuse destructive downgrade. v7 history adds no further DB migration.
+  Never assume code-only rollback; preserve post-backup writes and newer artifacts.
+- Keep OAuth/tunnel/host policy and customer/technical/commercial authority unchanged.
+  Original Word project/Scope/package confirmations are complete; do not repeat them.
 
-Reopening retained Scope revision 2, native Word evidence and the original-bearing
-Word ZIP passed; the older Excel package also matched exact bytes. Domain rows and
-storage remained unchanged. The only accounted changes were login timestamps and
-two package-download audit events. The expired one-time confirmation URL stayed
-expired; the normal saved-project route worked. No confirmation was repeated and no
-new Scope, package, Match, Estimate or report was created.
+## Verified evidence and remaining checks
 
-At the earlier 6c1e2a4 activation, workspace chat/PDF suggestions stayed disabled
-and no provider, OAuth/tunnel, host allowlist, role or grant change occurred. No saved Match, Estimate, report or imported
-project existed in this demo, so those operational histories were not exercised.
-This is retained synthetic-state acceptance, not customer accuracy, production
-certification, storage relocation or full-cluster disaster recovery. Historical
-activation plans stay preserved; recovery retains the approved compatibility and
-no-lost-work conditions for the older `e2e8292` rollback source.
+Private evidence is under `C:/CLASSIFIRE/.tmp/`. The `5418f51` ancestor review ledger is in
+`native-document-reconciliation-20260914/range-review-progress.json`. It records
+scope and hashes for 84 files: 75 non-document files and nine documents. Complete-file
+and changed-line reviews are distinguished. This is not public approval or full
+confidentiality/production certification.
 
-## Current embedded-chat and documentation checkpoint
+Earlier full runs: d33f5ec passed 2,574 with two Windows symlink skips; 1aeded3 passed
+2,593 with two skips and terminal exit 0. Neither covers all later fixes or v7.
+Later targeted tests and artifacts are recorded by version in PROJECT_STATE.md.
+Earlier UI source ef790d1 has 35 passing Node cases and 16 nearby pytest cases;
+synthetic DOM checks do not prove visible interaction. Thirteen complete test-file
+reviews matched 137 prior passes to unchanged content; five independently inspected
+ZIPs verified 21 members, exact Word/PDF originals and explicit decision selection.
+The later full `5418f51` run ended with exit1 and 928 passes/one failure, zero
+skips/errors, before the remaining collected tests ran. Read
+`native-stack-full-validation-5418f51-20260914/attempt2/run.json` and its JUnit/log.
+The runner and pytest processes exited; do not keep polling their historical PIDs
+as though still active. The new corrected-source run is active at pinned `5279904`,
+with 2,625 collected tests and all five preflight checks passed. Poll
+`native-stack-full-validation-5279904-20260914/run.json` and its recorded process.
+The CI follow-up does not change application, migration, test or dependency blobs.
+It reuses the existing bf700bc per-test/duration logging and gives the complete job
+90 minutes. No test selection, assertion, fail-fast setting or later check is removed.
+Startup evidence is in `startup-lineage-validation-evidence-20260914`, including
+`postgresql/receipt.json`; fixture checks are in
+`imported-evidence-fixture-validation-20260914/targeted.xml`.
 
-PR #268 is merged: tested 7dbc1cc13b2501b6a449990abc36e330932b42c0 became
-a7e2e7aadd8860636432cb68127a0e83e3a9785c with identical full trees. PR validation
-34736343454 passed 2,428 tests and the remaining checks. The earlier PR test-contract
-failure remains recorded; no production guard was weakened. Local acceptance
-comprised 147 affected cases and a synthetic browser journey using injected replies.
+Actual-main HTTP/server restart and exact synthetic recovery at 23f5110 passed:
+read `native-history-http-restart-23f5110-20260914/attempt3/receipt.json` and
+`native-history-http-restart-23f5110-20260914/recovery/continuation-receipt.json`.
+Seventy-one tables, 76 rows, schema and retained bytes matched. Normal transactions
+plus a SQL-mutation guard allowed required source locks and recorded no mutations.
+Owner/ACL restoration was excluded; test-mode HTTP is not production or browser proof.
+Preserve the earlier harness failures; do not repeat completed recovery unnecessarily.
 
-The owner subsequently supplied protected server-side gpt-5-mini configuration and
-approved one synthetic connection test plus conditional activation of tested 7dbc1cc.
-Exactly one real request passed strict response/reference checks and preserved unknown
-quantity/substrate without claiming a write. The complete reply was inspected.
-Preparation also reran 55 chat tests and passed 47 activation plus 47 rollback guards.
-No live database was used for those tests; this is not customer accuracy or real
-browser upload/assistant acceptance.
+The earlier 0048 browser history journey passed. New 0049 decision/v7 package controls
+still need rendered-browser acceptance; the browser helper failed initialization.
+Real-provider/live acceptance, full raw provider/prompt-version lineage, retention
+policy, representative accuracy and the broader Phase 8-16 exits remain incomplete.
 
-Post-merge run34737578361 attempt1 remained queued without a runner for over three
-hours. After the owner explicitly requested a retry, it was cancelled and attempt2
-started on the exact same merge commit. Attempt2 passed
-2,428 tests (385 warnings) in 1,971.54 seconds plus full Ruff, Mypy (233 source
-files), Bandit and the single migration-head check; exact hosted output was read.
-This authorized retry is distinct from restarting because observation timed out.
+## Next executable task
 
-The approved 7dbc1cc activation was attempted after successful CI and fresh
-backup/disposable 15433 restore. Startup and the first browser reply passed; the
-follow-up returned HTTP 502. No retry occurred. Both browser sends are consumed.
-The transport erased the failure category, so the historical cause is unknown;
-neither billing nor a timeout is established.
+Publish the CI timeout/logging correction and factual documents through existing PR271,
+then observe the exact-head CI and required reviews before merge. Reconcile against
+`native-stack-full-validation-5279904-20260914/publication-manifest-5279904.json`
+and the subsequent checkpoint/CI diffs. The complete local suite is already
+running: preserve its actual process, fresh basetemp, result and predecessor failure.
+After merge verify the resulting commit and post-merge CI separately. Complete
+new-control browser acceptance when supported. Prepare the version-specific provider
+and activation plan before any operational execution; preserve prior confirmations.
 
-Rollback to 6c1e2a4 with chat disabled passed fresh recovery, restart and browser
-checks. Scope revision 2, Word text/image and the original-bearing ZIP remained exact.
-All domain rows, schema and storage were preserved; only login timestamps and one
-package-download audit event changed. No migration or live database restore occurred.
-Existing project, Scope and package confirmations remain complete. The first reply
-also broadened uncertainty about source-described separate openings; that unverified
-wording did not change saved records or establish report accuracy.
+Tests use `C:/CLASSIFIRE/.tmp/native-stack-test-env-20260914/Scripts/python.exe`,
+the selected checkout's `src` (and `tests` where required) on PYTHONPATH,
+`-p no:cacheprovider` and a unique basetemp. Clear inherited live/model configuration
+and use explicit synthetic fixtures. PostgreSQL must be owned disposable 15433,
+never live 15432; do not overlap tests that drop the same synthetic database.
+No real API key or workspace-chat.env content belongs in commands, logs or Git.
 
-The current diagnostic fix records fixed failure category, elapsed time, received
-byte count, HTTP status when available and a random per-request reference. No
-exception text, body/header, conversation, context or credential is logged.
-Browser errors, model, time/token limits, no tools, no retries and confirmation
-boundaries are unchanged. Offline validation passed 77 chat cases, including the
-reproduced missing-diagnostic regression and synthetic follow-up/partial-read failures.
-Any further provider test and activation need a fresh explicit approved plan.
-
-Private exact approval/test/activation receipts are retained under
-.tmp/workspace-chat-activation-7dbc1cc-20260913; no credential values or customer
-evidence are included in these documents. Reobserve actual CI/runtime facts before
-execution rather than treating this checkpoint as a fresh activation proof.
-
-### Clarified product intention and current gap
-
-The owner requests defect-report upload through the ChatGPT integration inside
-CLASSIFIRE and interaction with the data on the current page. The native panel is
-merged and can discuss selected saved data; its endpoints currently accept only
-context/message, with no attachment input or write action. Existing PDF/Word/XLSX
-intake, scan, review, typed client requests and package services are foundations.
-
-The [architecture](./CLASSIFIRE_ARCHITECTURE.md#native-chat-as-a-working-interface),
-[C1-C3 roadmap](./CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
-[assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience) now
-describe the same target: attach and inspect a retained report, explicitly request
-analysis, review a source-bound typed Draft proposal, confirm separately, refresh
-the page and reopen/download exact saved artifacts. Later selected-record actions
-reuse that review path. Uploaded content never becomes instructions or authority;
-original/image provider transfer is still a planned bounded extension.
-
-Accuracy preparation is separate. The existing comparator fix is already merged in
-PR #261. Twenty-four unchanged synthetic comparison/blocked-run checks passed in
-this checkout with explicit PYTHONPATH and a fresh basetemp. The private reference,
-original and photo hashes and authority limits are retained in a private run plan.
-No customer-report analysis, photo inference, real provider or database evaluation
-ran during this preparation; no accuracy score exists. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md)
-records the incompatible unresolved-topology contract and remaining Phase 8/8C gates.
-
-## Merged imported-original navigation
-
-Separate checkout `.tmp/imported-evidence-navigation-20260913`, branch
-`feat/imported-evidence-navigation-20260913`, base `1de68b9`. Connect a selected
-imported evidence reference to its exact retained-original review card through the
-existing validated package mapping. Preserve lineage, foreign unverified claims,
-current access and explicit scan/download actions. No inline imported preview,
-new parser/schema or approval is implied. All 94 distinct affected cases passed:
-30 core (seven new), eight new HTTP and 56 existing UI cases. Full Ruff, Mypy (233
-files), Bandit and single 0047 head passed. Final read-only source review found no
-issue. Private logs retain the corrected harness failures and formatting-only hash
-drift; no application guard or assertion about required behaviour was weakened.
-
-Browser acceptance retained all 67 checked domain tables before explicit scan,
-refused an unprocessed download, then returned exact DOCX/original ZIP bytes after
-explicit scan. Imported claims stayed unverified. Desktop/mobile, original identity
-and ZIP members were inspected. Restart preserved the same review link/anchor,
-DOCX, ZIP, Scope revisions 2/3 and all 67 tables without rescanning or package writes.
-Only the new isolated demo 8847 and disposable 15433 database were used.
-
-Private artifacts: `.tmp/imported-evidence-navigation-uat-20260913`,
-`.tmp/imported-evidence-validation-20260913`,
-`.tmp/imported-evidence-core-validation-20260913`, and
-`.tmp/imported-evidence-ui-validation-20260913`. Earlier completed fixtures and
-runtimes remain untouched. Nine files are classified: four application, two synthetic
-test and three documentation files. The local commit message is:
-Link imported evidence to exact retained original review cards.
-Resolve its exact hash from this branch and the private finalization receipt.
-
-All four pinned commits are published through PR #265. Explicit owner approval
-resolved the public-destination block. Source `9cdc4a4` tracks its published branch;
-the earlier separate candidate checkouts are preserved. Publication is not activation
-approval, and failed post-merge CI blocks the old activation bundle.
-
-## Merged Defect-only source inspection
-
-Source `.tmp/defect-source-evidence-20260913`, branch
-`feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`. It extends the
-existing read-only Evidence service and panel to select a Defect without an Opening
-or Service, returning only its own references. Missing relationships stay unresolved;
-no physical record is invented. No schema, parser, provider or authority changes.
-
-All 89 affected cases passed (23 native/core, 52 HTTP, 14 workbench/history), plus
-full Ruff, Mypy (233 files), Bandit, JavaScript syntax and single 0047 head checks.
-The native/core receipt pins the service/test hashes. The HTTP pass was observed in
-the test session; no JUnit XML or test-time hash manifest was captured for that run.
-Edge acceptance checked exact own-source selection, stale/history retention, keyboard
-focus, unsaved-edit exclusion, desktop/mobile output and refusal of a deliberately
-mismatched Defect fragment. Restart retained five image URLs, Scope revisions 1-4
-byte-for-byte and all 67 checked domain tables. No invented Opening/Service, provider
-call or live 15432 contact. Synthetic sources do not prove real-report accuracy.
-
-Private evidence: `.tmp/defect-source-evidence-uat-20260913` and
-`.tmp/defect-evidence-validation-20260913`. Use only the existing disposable 15433
-`classifire_defect_evidence_demo_20260913` database and port 8846 demo. Preserve
-completed fixture receipts and earlier pinned source/activation plans.
-
-Final source review found no actionable issue. The reviewed change contains six
-application files, two synthetic test files and three documentation files. The local
-commit message is: Allow source inspection for Defects with unresolved relationships.
-Resolve its exact hash from this branch and the private finalization receipt.
-Commit `1de68b9f41582fc5297260d3a838e2851a4defbb` remains pinned and is included
-in merged PR #265. The later exact `6c1e2a4` approval and verified activation above
-supersede earlier pending-activation instructions.
-
-## Merged register source evidence increment
-
-Source: `C:/CLASSIFIRE/.tmp/register-source-evidence-20260913`, branch
-`feat/register-source-evidence-20260913`, based on local `6d4793b`.
-The read-only [Evidence tab](./REGISTER_SOURCE_EVIDENCE.md) is implemented; 122 unique
-affected cases and static checks passed. Mixed-source Edge acceptance passed including
-stale, blank/unlinked and unsaved-edit checks with unchanged domain state. Restart
-retained 12 image URLs, three Scope downloads and all 67 checked domain tables exactly;
-source-cell F2 passed. Continue from private `.tmp/register-source-evidence-uat-20260913` and
-`.tmp/register-evidence-validation-20260913` receipts.
-The marked demo uses only PostgreSQL15433 and port8845; never use live15432 for tests.
-
-The separate Complete-report checkout remains pinned at `6d4793b`. It and register
-Evidence are published in PR #265. No repository visibility/protection setting or
-operational runtime changed during publication.
-
-## Merged Complete report increment
-
-Checkout: `C:/CLASSIFIRE/.tmp/complete-multi-review-reports-20260913`.
-Branch: `feat/complete-multi-review-reports-20260913`, based on merged `e96c692`.
-Source `6d4793b` is locally verified and published through PR #265. The pinned
-ccaff7a checkout is preserved; its old plan does not cover this Complete format.
-
-[Complete contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md) and
-[multiple-review contract](./MULTI_REVIEW_REPORTS.md) describe the actual change:
-explicit exact review collections for Complete reports, snapshot v3/render 12,
-unchanged Estimate arithmetic/dependencies, separate confirmation, technical grant
-checks and package import mapping-v4 reuse. No model or migration changes.
-
-Focused checks passed 53 core/package/legacy cases, 24 UI, 18 outputs, 13 client
-collection and 10 existing client cases. Full Ruff, Mypy (233 files), Bandit and
-single 0047 migration-head checks passed. Final combined verification passed all 62 new cases in 185.29 seconds, including
-actual disposable PostgreSQL import/scan checks.
-
-Actual Edge UAT on port 8844 retained Scope 2 and Estimate 4 with three selected
-reviews. Original rate 1.005 and override 1.505 yield partial subtotal 3.01; another
-line remains unknown. Report creation and package save were separate. PDF/XLSX/ZIP
-bytes matched retained originals. All 21 PDF pages were visually inspected in
-overviews, pages 1/3 at readable size, plus desktop/mobile screens. No clipping or
-page errors observed. Native Excel was not visually inspected.
-
-An actual restart preserved Scope/PDF/XLSX/ZIP and 66 domain-table hashes. The first
-Estimate comparison used a fixture's reformatted JSON; diagnosis proved identical
-values and the original ZIP's exact Estimate bytes. A second restart retained raw
-Estimate 2/4 downloads byte-for-byte. Keep the original failed verifier and diagnosis;
-no application guard or assertion was weakened.
-
-Private evidence: `C:/CLASSIFIRE/.tmp/complete-multi-review-reports-uat-20260913/`
-contains browser/restart receipts, screenshots, PDF/XLSX/ZIP, original diagnosis,
-verification scripts and synthetic SQLite data. Related output validation is in
-`complete-multi-review-output-checks-20260913/`; UI tests in
-`complete-multi-review-validation-20260913/`. Do not rerun creation scripts against
-these completed fixtures.
-
-## Runtime and approval boundaries
-
-Live 8820 was restored to 6c1e2a4 with chat disabled after the failed 7dbc1cc
-follow-up. Preserve both private activation/rollback receipts and failed observer
-attempts; corrected read-only checks passed. The original single connection request
-and both browser sends are consumed.
-
-The current user authorized diagnosis, evidenced fixes, offline tests and normal
-Git publication/merge after successful CI/reviews. New provider requests and activation
-require a separate exact approved plan. Preserve pinned runtime checkouts and old
-plans; no OAuth/tunnel/allowlist or customer-report operation is included.
-
-Other preserved synthetic demos: 8840 integrated workspace,8841 row authoring,
-8842 packages,8843 Scope reports. Only 8844 was restarted for this Complete acceptance.
-PostgreSQL tests use disposable 15433/classifire_containment_test, never live 15432.
-
-## Classification and next action
-
-The approved six-document commit 95d90de was pushed and merged through PR #269 as
-89e58ef after successful PR CI 34747466912. No post-merge run for that merge was visible
-at diagnosis; do not claim it passed or trigger another job to replace missing evidence.
-
-Diagnostic work is isolated in .tmp/workspace-chat-diagnostics-20260913, branch
-fix/workspace-chat-diagnostics-20260913, based on shared main 89e58ef. It changes the
-existing transport, synthetic tests and affected status documents. 77 chat tests and
-full Mypy over 233 source files passed locally. Inspect actual Git/PR/CI evidence for
-publication; this text is not a merge receipt. Private operational helpers/receipts
-stay outside Git. The root retains 46 unstaged modifications, 14 staged additions and
-four DU conflicts.
-
-Next valid work is exact CI/publication and a newly approved bounded diagnostic test,
-then conditional activation only after its gates pass. C2 report intake and C3
-reviewed page actions remain planned; production accuracy and phase exits incomplete.
+Preserve root `C:/CLASSIFIRE`: 46 unstaged modifications, 14 staged additions, 4 DU
+conflicts, unrelated untracked/private files and inaccessible old test directories.
+Use isolated checkouts and explicit staged paths. Pinned runtime/rollback checkouts
+and private evidence must remain intact. Do not reset, clean, resolve or publish root.
 
 ## Copy-ready next-session prompt
 
-Continue CLASSIFIRE from current repository and receipts. Read AGENTS.md, GOAL.md,
-PROJECT_STATE, architecture, roadmap and EMBEDDED_WORKSPACE_CHAT. Preserve the
-conflicted root, both pinned runtime checkouts and original plans. Reconcile
-fix/workspace-chat-diagnostics-20260913 with GitHub and poll existing jobs; never
-restart just because observation timed out. PR #269 merged 95d90de as 89e58ef after
-successful PR CI. The 7dbc1cc activation failed its second browser reply and rolled
-back to 6c1e2a4 with chat disabled. Fresh recovery/browser/ZIP checks passed; domain
-data and storage are intact. The old 502 cause is unknown. All earlier provider-call
-allowances are consumed. Verify 77 offline chat tests and diagnostic publication.
-Execute new real requests or activation only under fresh exact approval. C2 remains
-native chat DOCX attachment/status/inspection, typed Scope proposal, separate human
-confirmation, reopening and distinct package confirmation/exact ZIP; C3 adds reviewed
-selected-record actions. Reuse existing services and preserve unknowns, blank openings,
-unresolved links and completed Word confirmations. Record actual results/limitations.
+Continue CLASSIFIRE from repository evidence. Read AGENTS.md, GOAL.md,
+docs/PROJECT_STATE.md, docs/CLASSIFIRE_ARCHITECTURE.md, docs/CLASSIFIRE_ROADMAP.md,
+docs/EMBEDDED_WORKSPACE_CHAT.md and both native-history contracts. Use
+C:/CLASSIFIRE/.tmp/ci-native-suite-budget-20260914; reconcile its HEAD/status.
+Startup fix c47c119 passed 89 affected tests and a separate read-only PostgreSQL
+rehearsal. Full predecessor5418f51 stopped with 928 passes/one obsolete-fixture
+failure. The fixture correction passed 60 navigation tests. The complete pinned
+5279904 run is now active with 2,625 collected tests and all preflight checks passed;
+poll its existing receipt/process rather than restarting it. The owner approved the
+reviewed 29-commit/89-file stack and factual publication checkpoint on 2026-09-14.
+The exact approved cef340b was published to PR271, but run34831072452 was cancelled
+at the configured 45-minute job limit after 63% test progress. This isolated follow-up
+reuses per-test/duration logging and increases the job limit to 90 minutes, preserving
+every check and all application/test inputs. Verify its publication, new exact-head
+CI/reviews, merge and post-merge CI. Never rerun an existing job merely because
+observation expired. Do not duplicate standalone 8bce0b0, already represented here.
+Finish new decision/package rendered-browser acceptance when supported. Preserve
+prior evidence, failed attempts and full production gates.
+Live 8820's last receipt is rollback 6c1e2a4/chat disabled; new provider tests and
+activation need exact approval and successful applicable CI. Use selected PYTHONPATH,
+fresh basetemp and disposable 15433. Preserve unknowns, blank openings, separate Scope/
+package confirmation, original evidence and foreign-history authority boundaries.
+Keep the conflicted root and private files untouched. Follow all production roadmap
+exits; no local test or Draft confirmation establishes technical authority or release.

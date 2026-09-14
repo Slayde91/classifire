@@ -1,6 +1,6 @@
 # CLASSIFIRE Master Roadmap
 
-Reconciled 2026-09-13. Current facts and exact PR/CI state belong in
+Reconciled 2026-09-14. Current facts and exact PR/CI state belong in
 [PROJECT_STATE.md](./PROJECT_STATE.md); architecture in
 [CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md).
 
@@ -20,10 +20,10 @@ P0-P6 are bounded Draft milestones, not completion of production Phases 0-16.
 | Completed bounded implementation | Manual Draft Scope, JSON round trip, selected-target Match review/measurements, manual/rate-selected Estimate and all four PDF/XLSX report profiles; shared domain services |
 | Completed bounded implementation | PDF/Excel/Word retained inspection/review, Scope v7, selected originals and ProjectPackage v6; Word PRs #252-#254 and multi-review PRs #263/#264 are merged |
 | Completed bounded implementation | Integrated register, row authoring, exact source inspection, imported-original navigation and Complete multi-review reports are merged through PR #265; PR #266 corrected a test clock/CI ceiling and PR #267 reconciled that activation |
-| Completed bounded implementation; operational acceptance pending | PR #268 adds the shared native advisory panel, typed page/record context and bounded qualified conversation; chat has no attachment or mutation endpoint |
-| Active diagnosis; new operational approval required | C1: activation failed its second browser reply and rollback passed. Safe diagnostics are under validation/publication; earlier provider-call allowances are consumed. New test/activation needs an exact approved plan |
-| Next implementation slice | C2: native chat defect-report attachment, retained-source/status display, explicit scan/read, typed Scope proposal and separate human confirmation; reuse existing intake/review/package services |
-| Following bounded slice | C3: user-requested reviewed actions on selected page records, reusing authenticated typed commands and confirmation; advice never writes implicitly |
+| Completed bounded implementation; operational acceptance pending | PR #268 adds the shared native advisory panel, typed page/record context and bounded qualified conversation; advice remains read-only; the first native DOCX attachment/scan/inspection adapter is now implemented separately |
+| Active diagnosis; new operational approval required | C1: activation failed its second browser reply and rollback passed. Safe diagnostics merged in PR #270; post-merge run 34753856708 cancelled at 45 minutes with progress last shown at 52%, without a complete pass. Earlier provider-call allowances are consumed. New test/activation needs an exact approved plan |
+| In progress; synthetic Word/PDF/XLSX journeys | C2: native attachment, explicit scan/inspection, selected evidence preview/consent, typed additions and separate Scope/package confirmation are implemented locally. Synthetic exact-original ZIP/restart journeys pass; real-provider/live acceptance and broader coverage remain |
+| In progress; Scope edits synthetically validated | C3: selected saved Scope replacements use a field diff and separate manual save. Optional proposal/decision retention and selected v7 package history are implemented locally. New decision/package controls need rendered-browser acceptance; broader actions and operational acceptance remain |
 | Completed bounded implementation | A/B profiles/review, A observations, B identity mapping, T9 coverage, T6 recipes, T13 roster and governed Scope quantity basis; preserve the independent technical/pricing track |
 | Retained acceptance gap | I2 dedicated external connector upload/scan transport and N1 Excel acceptance remain distinct from browser upload or the new native chat journey; do not repeat completed Word confirmations |
 | Owner decision / independent work | I3 enforced merge policy needs its own approval; N2 representative quantity/recipe/commercial semantics remain before wider pricing methods |
@@ -48,13 +48,19 @@ catalogues or grant canonical exits. Exact status belongs in
 | Slice | Deliverable and dependency | Exit evidence |
 | --- | --- | --- |
 | C1 - Advisory panel operational acceptance | PR #268 is merged; its live follow-up failed and rollback passed. Diagnose offline, then require a new exact test/activation approval, CI and fresh backup/disposable restore/restart/rollback gates | Actual synthetic browser selection -> preview/consent -> real reply/follow-up; preserved unknowns and domain state. One transport reply alone does not satisfy this exit |
-| C2 - Report to Scope through native chat | Add the attachment and source/status/review controls to the existing panel. Reuse supported intake, explicit scan, source readers, typed requests and same-user confirmation. Start with one bounded DOCX case, then supported PDF/XLSX. Synthetic implementation can proceed while C1 waits; real-provider/live acceptance retains its approval gates | Browser attachment -> clean retained text/image inspection -> explicitly previewed/consented analysis -> source-bound typed proposal -> distinct human confirmation -> updated register -> reopen -> distinct package confirmation -> exact original-bearing ZIP |
-| C3 - Reviewed actions on selected page records | Extend the same panel with a small supported action set over exact project/Defect/Opening/Service/multiple-row/review/Estimate/library/pricing selections. Reuse existing typed commands; state unavailable actions and prerequisites | Actual selected-record question and requested edit; inspect proposed diff; save only on separate confirmation. Stale selection/revision, changed rights, ambiguity and duplicate submit fail safely; other capabilities never run implicitly |
+| C2 - Report to Scope through native chat | Reuse the implemented Word/PDF/XLSX intake, evidence readers, typed proposals and separate reviews. Optional native proposal retention, explicit decision-to-revision linkage and selected v7 history have targeted HTTP/recovery evidence. Finish rendered-browser acceptance of decision/package controls, then separately approved real-provider/live acceptance. Synthetic work can proceed while C1 waits; full AI lineage and report coverage remain incomplete. | Browser attachment -> clean retained text/image inspection -> explicitly previewed/consented analysis -> source-bound typed proposal -> distinct human confirmation -> updated register -> reopen -> distinct package confirmation -> exact original-bearing ZIP |
+| C3 - Reviewed actions on selected page records | The first selected Scope replacement action is implemented locally with multi-record review, separate manual save and synthetic checks. Extend the same panel to remaining supported review/Estimate/library/pricing actions only through their existing typed contracts. Saved generations/decisions exist; full AI lineage, broader action coverage and operational acceptance remain | Actual selected-record question and requested edit; inspect proposed diff; save only on separate confirmation. Stale selection/revision, changed rights, ambiguity and duplicate submit fail safely; other capabilities never run implicitly |
 
 C2/C3 share the [interaction and negative-case contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).
-The implemented text-only chat transport does not yet send original files or pictures;
-any evidence transfer extension needs explicit selection, disclosure, consent and
-bounded validation. Upload to CLASSIFIRE is separate from transfer to a provider.
+The implemented transport accepts explicitly selected retained Word text and up to
+two verified PNG previews after disclosure and consent. Original files are excluded.
+The explicit Word proposal action adds at most25 new Defects/Openings/Services and
+preserves existing rows. New observations, assumptions and exclusions are excluded
+from this action; current unknown values remain null/unlinked. PDF page and Excel header/row/picture selections now use the same contract through
+format-specific readers and existing human review. Excel text claims require a selected
+mapped non-formula cell. New observation claims, full AI lineage and broader
+coverage still need their own validation.
+Upload to CLASSIFIRE remains separate from transfer to a provider.
 Blank openings remain valid with zero Services; unresolved links are held for review.
 Retained source and revision identity survives reopening without requiring chat memory.
 

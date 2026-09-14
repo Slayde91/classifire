@@ -1,0 +1,5 @@
+{% if history_items %}<section class="panel"><h2>Retained AI proposal history</h2>
+<p>Read-only historical claims. Generation, recorded decisions and the saved Scope remain separate. Imported history is foreign and unverified; it cannot be resumed as a local proposal or replay a confirmation. Source originals and earlier revision bodies may be external.</p>
+<ul>{% for item in history_items %}<li><a href="{{ item.url }}">Inspect proposal {{ item.id }}</a> &middot; base Scope {{ item.base_revision }} &middot; {{ item.outcome|replace('_',' ') }} &middot; <a href="{{ item.download_url }}">Download exact history JSON</a></li>{% endfor %}</ul>
+{% if history_document %}<details open><summary>Original generation and selected decision</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ history_document|tojson(indent=2) }}</pre></details>{% endif %}
+</section>{% endif %}

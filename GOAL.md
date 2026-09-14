@@ -212,16 +212,26 @@ not dedicated A/B ingestion, bulk technical extraction or a pricing inference en
 
 ## Immediate delivery priority
 
-Resolve the advisory panel's failed follow-up through safe diagnostics and offline
-checks, then complete newly approved synthetic testing and guarded activation.
-In parallel, make the next product slice the in-app chat report journey: one supported synthetic DOCX
-attachment through retained evidence, explicit scan/read, a typed Scope proposal,
-separate human confirmation, reopening and a separately confirmed original-bearing
-ZIP. Extend the same interaction to supported PDF and XLSX intake without rebuilding
-their existing services or silently accepting unsupported layouts.
+The safe diagnostic fix is merged in PR #270, but its post-merge CI cancelled
+without a final test summary. Successful applicable CI and a separately approved
+synthetic provider test/activation plan remain required for C1.
 
-Selection-aware advice is implemented; chat attachments and reviewed page-changing
-actions remain to be built. Follow C1-C3 in the
+The native panel now implements bounded DOCX, PDF and XLSX attachment, explicit
+scan/inspection, selected evidence preview and consent, typed Scope additions,
+separate human Scope confirmation and a separately confirmed original-bearing ZIP.
+Selected saved Scope replacements show a field diff before manual confirmation.
+These paths reuse the existing services and have synthetic journey evidence;
+real-provider/live acceptance and representative report accuracy remain open.
+
+Explicit proposal retention and decision-to-revision linkage are implemented
+locally with forward migrations 0048/0049. ProjectPackage v7 carries explicitly
+selected proposals and decisions, with foreign read-only import history. Selected
+history passed targeted tests, actual-app HTTP restart and synthetic recovery.
+Rendered-browser acceptance of the new decision/package controls, raw provider and
+prompt-version lineage, full history coverage and broader reviewed actions remain.
+No complete operational C2/C3 or production phase is claimed. Do not rebuild the
+implemented report journeys or treat these local results as deployment authority.
+Follow C1-C3 in the
 [roadmap](./docs/CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
 [PROJECT_STATE.md](./docs/PROJECT_STATE.md#recommended-next-actions) for exact status.
 Preserve completed Word project/Scope/package confirmations and the existing connector.

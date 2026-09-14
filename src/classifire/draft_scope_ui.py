@@ -21,6 +21,7 @@ from .outputs.draft_system_review import sections as system_sections
 from .outputs.draft_system_review import summary as system_summary
 from .security import has_permission, verify_csrf
 from .services import draft_register as register_service
+from .services import draft_workspace_proposals as native_history
 from .services.draft_register import register_context
 from .services.draft_scope import (
     MAX_ARTIFACT_BYTES,
@@ -78,6 +79,13 @@ async def _form_values(request: Request, limit: int, *, max_fields: int = 8) -> 
     return values
 
 
+def _native_proposal_binding(request: Request, form: dict[str, str]) -> dict[str, str]:
+    """Keep only an explicitly submitted native identity through review and signatures."""
+    identity = form.get("native_proposal_id")
+    request.state.native_proposal_id = identity
+    return {} if identity is None else {"native_proposal_id": identity}
+
+
 async def _bounded_form(request: Request) -> dict[str, str]:
     return await _form_values(request, MAX_FORM_BYTES)
 
@@ -132,6 +140,20 @@ def _editor_error(code: str) -> str:
         "DRAFT_PAYLOAD_INVALID": "Some fields are invalid. Check the findings below.",
         "DRAFT_DUPLICATE_ID": "Each scope item must have a different identity.",
         "DRAFT_DUPLICATE_LINK": "A service cannot link to the same opening more than once.",
+        "CHAT_PROPOSAL_ALREADY_DECIDED": (
+            "This proposal already has a recorded decision. "
+            "Reopen Saved AI proposals to inspect it."
+        ),
+        "CHAT_PROPOSAL_REVIEW_MISMATCH": (
+            "This saved proposal belongs to a different review. "
+            "Reopen it and use its review control."
+        ),
+        "CHAT_PROPOSAL_DECISION_CORRUPT": (
+            "The saved proposal decision could not be verified. No Scope changes were saved."
+        ),
+        "CHAT_CONTEXT_CHANGED": (
+            "The saved inputs or your access changed. Reopen the current Scope and preview again."
+        ),
     }.get(code, code)
 
 
@@ -436,6 +458,7 @@ def update_scope(
     form: FormData,
 ) -> HTMLResponse | RedirectResponse:
     verify_csrf(request, form.get("csrf_token"))
+    _native_proposal_binding(request, form)
     user: User = _require(request, db, "project:write")
     try:
         draft = get_draft(db, user, draft_id)
@@ -452,9 +475,14 @@ def update_scope(
     if action not in {"save", "validate"}:
         raise HTTPException(422, "Choose Validate or Save")
     try:
+        link = native_history.prepare_review_link(
+            db, user, draft_id, form.get("native_proposal_id"), expected_revision, payload,
+            action="propose_scope_edits", settings=get_settings(),
+        )
         _model, warnings = validate_payload(payload)
         if action == "save":
             save_revision(db, user, draft_id, expected_revision, payload)
+            native_history.record_confirmation(db, user, link)
             db.commit()
             return RedirectResponse(
                 f"/scopes/{draft_id}" + _register_query(request), status_code=303

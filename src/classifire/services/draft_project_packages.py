@@ -35,6 +35,7 @@ from ..config import get_settings
 from ..models import DraftPackageImport, DraftProjectPackage, User, new_id
 from . import draft_estimate_reports as estimate_reports
 from . import draft_estimates as estimates
+from . import draft_native_history as native_history
 from . import draft_scope as scopes
 from . import draft_scope_reports as scope_reports
 from . import draft_system_matches as matches
@@ -45,6 +46,7 @@ SCHEMA_V3 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v3"
 SCHEMA_V4 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v4"
 SCHEMA_V5 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v5"
 SCHEMA_V6 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v6"
+SCHEMA_V7 = "CLASSIFIRE-DRAFT-PROJECT-PACKAGE-v7"
 MAX_ARCHIVE = 128 * 1024 * 1024
 MAX_V1_ARCHIVE = 64 * 1024 * 1024
 MAX_MANIFEST = 2 * 1024 * 1024
@@ -77,6 +79,9 @@ class MatchSelection(BaseModel):
 
 class Selection(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
+    native_proposals: Annotated[
+        list[native_history.Reference], Field(max_length=native_history.MAX_SELECTED)
+    ] = Field(default_factory=list)
     scope_revision: Annotated[int, Field(ge=1)]
     pdf_sources: Annotated[list[str], Field(max_length=4)] = Field(default_factory=list)
     xlsx_sources: Annotated[list[str], Field(max_length=4)] = Field(default_factory=list)
@@ -107,6 +112,15 @@ class Selection(BaseModel):
             raise ValueError("identities")
         return sorted(value)
 
+    @field_validator("native_proposals")
+    @classmethod
+    def proposal_identities(
+        cls, value: list[native_history.Reference]
+    ) -> list[native_history.Reference]:
+        if len({item.proposal_id for item in value}) != len(value):
+            raise ValueError("duplicate proposal")
+        return sorted(value, key=lambda item: item.proposal_id)
+
     @field_validator("matches")
     @classmethod
     def match_identities(cls, value: list[MatchSelection]) -> list[MatchSelection]:
@@ -117,6 +131,8 @@ class Selection(BaseModel):
     @model_serializer(mode="wrap")
     def portable_selection(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         value: dict[str, Any] = dict(handler(self))
+        if not self.native_proposals:
+            value.pop("native_proposals", None)
         if not self.pdf_sources:
             value.pop("pdf_sources", None)
         if not self.xlsx_sources:
@@ -233,6 +249,7 @@ def _archive(manifest: dict[str, Any], members: dict[str, bytes]) -> bytes:
         SCHEMA_V4,
         SCHEMA_V5,
         SCHEMA_V6,
+        SCHEMA_V7,
     )
     limit = MAX_ARCHIVE if extended else MAX_V1_ARCHIVE
     member_limit = MAX_MEMBERS if extended else MAX_V1_MEMBERS
@@ -270,7 +287,7 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
             manifest = json.loads(archive.read("manifest.json"))
             if (
                 manifest["schema_version"]
-                not in (SCHEMA, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6)
+                not in (SCHEMA, SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7)
                 or manifest["state"] != "Draft"
                 or manifest["authority"] != "historical_only"
                 or encode(manifest) != archive.read("manifest.json")
@@ -291,20 +308,21 @@ def inspect_archive(content: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
                         re.fullmatch(r"(?:artifacts|reports)/[a-z0-9_-]+\.(?:json|pdf|xlsx)", name)
                         or (
                             manifest["schema_version"]
-                            in (SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6)
+                            in (SCHEMA_V2, SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7)
                             and re.fullmatch(r"origins/[0-9a-f]{64}\.zip", name)
                         )
                         or (
                             manifest["schema_version"]
-                            in (SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6)
+                            in (SCHEMA_V3, SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7)
                             and re.fullmatch(r"evidence/[a-z0-9-]+\.pdf", name)
                         )
                         or (
-                            manifest["schema_version"] in (SCHEMA_V4, SCHEMA_V5, SCHEMA_V6)
+                            manifest["schema_version"]
+                            in (SCHEMA_V4, SCHEMA_V5, SCHEMA_V6, SCHEMA_V7)
                             and re.fullmatch(r"evidence/[a-z0-9-]+\.xlsx", name)
                         )
                         or (
-                            manifest["schema_version"] in (SCHEMA_V5, SCHEMA_V6)
+                            manifest["schema_version"] in (SCHEMA_V5, SCHEMA_V6, SCHEMA_V7)
                             and re.fullmatch(r"evidence/[a-z0-9-]+\.docx", name)
                         )
                     )
@@ -556,7 +574,7 @@ def _compose(
         selected.docx_sources,
         match_collection=collection,
     )
-    manifest = {
+    manifest: dict[str, Any] = {
         "schema_version": SCHEMA,
         "state": "Draft",
         "authority": "historical_only",
@@ -646,6 +664,36 @@ def _compose(
                 "Source membership stays explicit; imported claims remain unverified."
             ),
         )
+    if selected.native_proposals:
+        history_values = []
+        for reference in selected.native_proposals:
+            history_content = native_history.compose(db, actor, draft_id, reference, scope)
+            members[native_history.member_path(reference.proposal_id)] = history_content
+            history_values.append(json.loads(history_content))
+        manifest["source_manifest"] += native_history.source_manifest(
+            history_values,
+            {
+                "word": selected.docx_sources,
+                "pdf": selected.pdf_sources,
+                "xlsx": selected.xlsx_sources,
+            },
+        )
+        manifest.update(
+            schema_version=SCHEMA_V7,
+            origins=manifest.get("origins", []),
+            notice=(
+                "Explicitly selected Draft artifacts and AI proposal history. History includes "
+                "the question, included conversation/context and generated reply. "
+                "Selected decisions "
+                "are historical claims, not local technical approval. Unselected decisions and "
+                "unselected source originals are omitted; prior revision bodies remain external."
+            ),
+        )
+        manifest["capabilities"]["native_proposal_history"] = "included"
+        manifest["members"] = [
+            {"path": name, "sha256": digest(value), "size_bytes": len(value)}
+            for name, value in sorted(members.items())
+        ]
     if len(encode(manifest)) > MAX_MANIFEST:
         raise PackageError("PACKAGE_TOO_LARGE", 413)
     _archive(manifest, members)

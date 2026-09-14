@@ -1,370 +1,128 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-13 after merged PR #269, failed chat acceptance and verified
-rollback, and the bounded offline chat diagnostic fix.
-[Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) records implemented
-behaviour and unmet redesign criteria. [The earlier Word record](./WORD_ACCEPTANCE_ACTIVATION.md)
-retains its original acceptance evidence. Private operator receipts and customer
-material remain outside Git. This is not a production-readiness certificate.
+Reconciled 2026-09-14 against the isolated native stack, migration source, retained
+validation evidence and GitHub. This is current state, not production certification.
+[Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
+[roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
+[handoff](./SESSION_HANDOFF.md) gives the exact resume task.
 
 ## Current position
 
-The modular Draft prototype supports scope creation/review, selected technical
-candidate review, independent estimates and four paired PDF/XLSX report profiles.
-It has a shared authenticated client adapter and portable selected-project ZIPs.
-The accepted hybrid direction (ADRs 0001/0002) remains unchanged. The full production
-platform, broad document interpretation and canonical Phase 8-14 exits are incomplete.
+The functional Draft prototype provides independent Scope, selected-target Match,
+Estimate and four paired PDF/XLSX report profiles. The native assistant now supports
+bounded Word/PDF/XLSX evidence journeys and selected Scope edits locally. The full
+production platform, representative accuracy and canonical Phase 8-16 exits remain
+incomplete. Advice, technical approval, commercial authority and Human Release are
+separate; no capability runs merely because an upstream action finished.
 
-### Publication and CI checkpoint
-
-- The four owner-approved workspace commits merged through PR #265 as `0e9bf98`.
-  Its PR CI passed 2,399 tests; post-merge run `34726463470` failed a midnight-sensitive
-  test and hit the 30-minute limit. That failed result remains preserved.
-- PR #266 merged the separate clock/CI-limit repair `7c9b570` as `96fdf7a` after
-  2,399 passing tests and the remaining checks. Its post-merge run `34729555434`
-  cancelled at 45 minutes without a final test summary. The broad slowdown's cause
-  remains unestablished; the run was not restarted or counted as a pass.
-- Documentation PR #267 merged candidate `6c1e2a40a6448cc1facda2436f7780651408741d`
-  as `6012d159f0669e704a45d12db2eaf81b1d4cac80`, with exact full-tree equality.
-  PR CI [34729664769](https://github.com/Slayde91/classifire/actions/runs/34729664769)
-  passed 2,399 tests in 1,701.99 seconds; post-merge
-  [34731006875](https://github.com/Slayde91/classifire/actions/runs/34731006875)
-  passed 2,399 in 1,769.11 seconds. Both passed the remaining required checks.
-  No human GitHub review was required or claimed. Publication did not grant activation.
-
-### Approved workspace activation
-
-The owner separately approved and activated tested `6c1e2a4` on 2026-09-13 after
-successful exact CI and a fresh matched backup/disposable restore. The private
-`activation-result.json` records `activated_verified`; its 20 referenced artifacts
-were rehashed during this reconciliation. The 8820 listener was observed as PID
-33032 (parent 13708) at acceptance; process IDs are historical observations.
-
-The fresh backup/restore matched 69 tables and 80 rows. Fourteen raw CHECK strings
-required the individually allowed cast-placement proof; 28 typed evaluations passed.
-Other schema, objects, required roles/grants/ownership and retained files matched.
-Metadata/bootstrap were no-ops. No migration or stamp ran: the observed demo still
-has no Alembic version table. This is not a migration-history certification.
-
-Reopening retained Scope revision 2, native Word evidence and the original-bearing
-Word ZIP passed; the older Excel package also matched exact bytes. Domain rows and
-storage remained unchanged. The only accounted changes were login timestamps and
-two package-download audit events. The expired one-time confirmation URL stayed
-expired; the normal saved-project route worked. No confirmation was repeated and no
-new Scope, package, Match, Estimate or report was created.
-
-At the earlier 6c1e2a4 activation, workspace chat/PDF suggestions stayed disabled
-and no provider, OAuth/tunnel, host allowlist, role or grant change occurred. No saved Match, Estimate, report or imported
-project existed in this demo, so those operational histories were not exercised.
-This is retained synthetic-state acceptance, not customer accuracy, production
-certification, storage relocation or full-cluster disaster recovery. Historical
-activation plans stay preserved; recovery retains the approved compatibility and
-no-lost-work conditions for the older `e2e8292` rollback source.
-
-### Current embedded-chat publication and operational checkpoint
-
-PR #268 is merged: tested 7dbc1cc13b2501b6a449990abc36e330932b42c0 became
-a7e2e7aadd8860636432cb68127a0e83e3a9785c with identical full trees. PR validation
-34736343454 passed 2,428 tests and the remaining checks. The earlier PR test-contract
-failure remains recorded; no production guard was weakened. Local acceptance
-comprised 147 affected cases and a synthetic browser journey using injected replies.
-
-The owner subsequently supplied protected server-side gpt-5-mini configuration and
-approved one synthetic connection test plus conditional activation of tested 7dbc1cc.
-Exactly one real request passed strict response/reference checks and preserved unknown
-quantity/substrate without claiming a write. The complete reply was inspected.
-Preparation also reran 55 chat tests and passed 47 activation plus 47 rollback guards.
-No live database was used for those tests; this is not customer accuracy or real
-browser upload/assistant acceptance.
-
-Post-merge run34737578361 attempt1 remained queued without a runner for over three
-hours. After the owner explicitly requested a retry, it was cancelled and attempt2
-started on the exact same merge commit. Attempt2 passed
-2,428 tests (385 warnings) in 1,971.54 seconds plus full Ruff, Mypy (233 source
-files), Bandit and the single migration-head check; exact hosted output was read.
-This authorized retry is distinct from restarting because observation timed out.
-
-The approved 7dbc1cc activation was attempted after successful CI and fresh
-backup/disposable 15433 restore. Startup and the first browser reply passed; the
-follow-up returned HTTP 502. No retry occurred. Both browser sends are consumed.
-The transport erased the failure category, so the historical cause is unknown;
-neither billing nor a timeout is established.
-
-Rollback to 6c1e2a4 with chat disabled passed fresh recovery, restart and browser
-checks. Scope revision 2, Word text/image and the original-bearing ZIP remained exact.
-All domain rows, schema and storage were preserved; only login timestamps and one
-package-download audit event changed. No migration or live database restore occurred.
-Existing project, Scope and package confirmations remain complete. The first reply
-also broadened uncertainty about source-described separate openings; that unverified
-wording did not change saved records or establish report accuracy.
-
-The current diagnostic fix records fixed failure category, elapsed time, received
-byte count, HTTP status when available and a random per-request reference. No
-exception text, body/header, conversation, context or credential is logged.
-Browser errors, model, time/token limits, no tools, no retries and confirmation
-boundaries are unchanged. Offline validation passed 77 chat cases, including the
-reproduced missing-diagnostic regression and synthetic follow-up/partial-read failures.
-Any further provider test and activation need a fresh explicit approved plan.
-
-Private exact approval/test/activation receipts are retained under
-.tmp/workspace-chat-activation-7dbc1cc-20260913; no credential values or customer
-evidence are included in these documents. Reobserve actual CI/runtime facts before
-execution rather than treating this checkpoint as a fresh activation proof.
-
-### Clarified product intention and current gap
-
-The owner requests defect-report upload through the ChatGPT integration inside
-CLASSIFIRE and interaction with the data on the current page. The native panel is
-merged and can discuss selected saved data; its endpoints currently accept only
-context/message, with no attachment input or write action. Existing PDF/Word/XLSX
-intake, scan, review, typed client requests and package services are foundations.
-
-The [architecture](./CLASSIFIRE_ARCHITECTURE.md#native-chat-as-a-working-interface),
-[C1-C3 roadmap](./CLASSIFIRE_ROADMAP.md#embedded-chat-delivery-sequence) and
-[assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience) now
-describe the same target: attach and inspect a retained report, explicitly request
-analysis, review a source-bound typed Draft proposal, confirm separately, refresh
-the page and reopen/download exact saved artifacts. Later selected-record actions
-reuse that review path. Uploaded content never becomes instructions or authority;
-original/image provider transfer is still a planned bounded extension.
-
-Accuracy preparation is separate. The existing comparator fix is already merged in
-PR #261. Twenty-four unchanged synthetic comparison/blocked-run checks passed in
-this checkout with explicit PYTHONPATH and a fresh basetemp. The private reference,
-original and photo hashes and authority limits are retained in a private run plan.
-No customer-report analysis, photo inference, real provider or database evaluation
-ran during this preparation; no accuracy score exists. [Reference readiness](./PHYSICAL_REFERENCE_READINESS.md)
-records the incompatible unresolved-topology contract and remaining Phase 8/8C gates.
-
-### Merged imported-original navigation increment
-
-- Separate checkout `.tmp/imported-evidence-navigation-20260913`, branch
-  `feat/imported-evidence-navigation-20260913`, based on pinned `1de68b9`.
-  The selected local task connects exact imported row references to their existing
-  retained-original review cards; scanning and downloading remain explicit actions.
-  The imported claim remains unverified, without inline text/image previews.
-- Validation passed 94 distinct affected cases: 30 native/core (seven new), eight
-  new HTTP cases and 56 existing register/package UI cases. Full Ruff, Mypy (233 files),
-  Bandit and unchanged single 0047 migration head passed. Independent final source
-  review found no actionable issue. No application correction was needed during tests.
-- Actual synthetic Edge acceptance on 8847 opened the exact original card and left all
-  67 checked domain tables unchanged. Download was refused before the imported binding's
-  explicit source check. After an explicit scan, DOCX and original ZIP downloads matched
-  retained bytes exactly; only the imported-source table changed among those 67 tables.
-  The imported claim stayed unverified, with no inline source body or images. Desktop,
-  mobile, original identity and the three-member ZIP were inspected.
-- Restart preserved the exact review URL/anchor, DOCX, ZIP, Scope revisions 2/3 and all
-  67 checked domain tables, with no rescan, package write or page error. Synthetic
-  acceptance is not customer accuracy, human production acceptance or deployment.
-- Retained logs disclose test-harness corrections: fixture paths/revision assumptions,
-  an audited download inside a no-write check, ZIP member ordering, an overbroad form
-  assertion that caught Logout, and Edge internal assets misclassified as network
-  traffic. HTTP coverage passed across the original and corrected-case runs; its first
-  source manifest saw only Ruff formatting drift, with route/templates stable.
-- Nine reviewed files: four application files, two synthetic tests, three documentation
-  files. No schema, migration, package version, parser, provider or authority change.
-  All four candidate checkouts remain pinned. Publication and CI are recorded above;
-  no operational activation is implied.
-
-### Merged Defect-only source inspection
-
-- New isolated checkout `.tmp/defect-source-evidence-20260913`, branch
-  `feat/defect-source-evidence-20260913`, based on clean pinned `51e3666`.
-  The existing [Evidence service](./REGISTER_SOURCE_EVIDENCE.md) now accepts an exact
-  Defect-only selection, including review-queue Defects with no linked Opening.
-  It returns only that Defect's references and preserves unresolved relationships;
-  it creates no Opening/Service and runs no downstream capability.
-- Local validation passed 89 affected cases: 23 native/core, 52 HTTP and 14 existing
-  workbench/history cases. Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and
-  unchanged single 0047 migration head passed. Core service/test hashes match their
-  validation receipt. The 52-case HTTP pass was observed in the test session; no
-  JUnit XML or test-time source-hash manifest was retained for that run.
-- Actual synthetic Edge acceptance on port 8846 checked each Defect's own sources,
-  historical/stale claims, keyboard focus, unsaved-edit exclusion and desktop/mobile
-  output. A deliberately mismatched Defect fragment was refused. Restart preserved
-  five image URLs and four Scope downloads byte-for-byte; all 67 checked domain
-  tables remained unchanged. No Opening or Service was invented, no provider ran,
-  and no live 15432 database was contacted. This does not establish real-report accuracy.
-- Final source review found no actionable issue. The change contains six application
-  files, two synthetic tests and three documentation files. No model, migration,
-  parser, provider or existing authority change. Commit `1de68b9` is included in
-  merged PR #265. The historical `51e3666` activation plan excludes this increment
-  and grants no authority for a newer candidate.
-
-### Merged register evidence increment
-
-- Checkout `.tmp/register-source-evidence-20260913`, branch
-  `feat/register-source-evidence-20260913`, based on local Complete-report commit
-  `6d4793b`. [Evidence contract](./REGISTER_SOURCE_EVIDENCE.md) defines exact saved-row
-  PDF/Word/Excel inspection through existing intake readers and current access checks.
-  No migration/model, provider, downstream execution or canonical writer is added.
-- 54 unique core/HTTP cases passed (14 new core, 36 new HTTP and 4 existing register).
-  Full Ruff, Mypy (233 files), Bandit and unchanged single 0047 migration head passed.
-  Another 68 affected authoring/history/chat regressions passed: 122 unique affected
-  cases in total. Actual Edge showed nine verified references across PDF/Word/Excel,
-  including intact originals behind stale claims, blank and unlinked rows. Unsaved
-  edits were excluded, Scope 1/4/6 downloads matched exact retained bytes and all 67
-  checked domain tables stayed unchanged. Desktop/mobile output was inspected; no
-  page errors or mobile document overflow. Restart preserved all 12 checked image URLs,
-  Scope 1/4/6 bytes and all 67 domain tables; source-cell F2 passed.
-- Parent PR #264 post-merge run 34715038796 passed 2,251 tests and remaining checks.
-  Complete-report commit `6d4793b` and this increment are included in merged PR #265.
-  Explicit owner approval resolved the earlier public-destination block; repository
-  visibility and protection settings were not changed.
-- Evidence-tab changes are published. Pinned source checkouts, the conflicted root
-  remain preserved. The later separately approved workspace activation is recorded
-  above; this earlier increment did not itself authorize deployment.
-
-### Merged workspace and current runtime
-
-- PR #260 merged the integrated workspace as `3eabb23ecddce98dc3e8583236f9cb055b218280`.
-  Its source `6bc9e96` passed exact-head run 34704939887: 2,113 tests, Ruff, Mypy,
-  Bandit and single migration head. No required reviews were configured. The merged
-  tree matches the tested source. Post-merge run 34706301132 also passed all 2,113
-  tests and remaining checks; no workspace deployment is implied.
-- One Projects & estimates directory now includes accessible Draft Scopes, saved Draft
-  Estimates and existing estimates. Six existing libraries share one Libraries section.
-  Existing URLs, IDs, saved records and permission boundaries are retained.
-- The register supports range/bulk editing and explicit saved system/price projections.
-  Historical relationships remain available for review. A blank opening may have zero
-  services; no placeholder Service is created. Existing graph/schema history is unchanged.
-- 157 unique affected tests passed after one evidenced template-context correction.
-  Isolated Edge UAT saved Scope revision 3 with five source references and null quantities,
-  retained exact revision 2, and downloaded an exact original-bearing project ZIP.
-- The embedded advisory panel previews selected saved Scope context. Its provider is
-  disabled in the verified UAT. General accurate multimodal analysis, broader automatic
-  system/pricing work and full redesign acceptance remain incomplete. Selected-row manual
-  authoring is implemented in the current isolated increment described below.
-- Historically, diagnostic source `e2e8292` was activated after its own backup/restore
-  checks and 2,066-test PR/post-merge CI. The later approved `6c1e2a4` workspace
-  activation above supersedes that runtime; the older source remains the governed
-  rollback target, subject to saved-data compatibility and no lost work.
-- The actual connected upload remains refused by `CLIENT_FILE_UNAPPROVED_HOST`.
-  The bounded diagnostic now identifies the rejected host privately. No file was retained;
-  all 69 table inventories and retained files/schema were unchanged by that probe.
-  The allowlist and OAuth/tunnel configuration were not changed.
-
-### Merged row authoring and multi-review packages
-
-- PR #261 merged as `095ee3d`. Its exact-head run 34707202158 and post-merge
-  run 34708282314 each passed 2,127 tests and remaining checks.
-- PR #262 merged source `6c30361` as `48b4b111f6c8f539a9aa7d8211be5fcb2e61db52`.
-  Exact-head run 34709110199 passed 2,134 tests and remaining checks. The merged tree
-  equals the tested source. No required reviews were configured; no human GitHub review
-  is claimed. Post-merge run 34710331473 also passed 2,134 tests and remaining checks.
-- [Native row authoring](./REGISTER_ROW_AUTHORING.md) retains its 104 affected local tests
-  and actual service/blank review, manual-rate override, 409 conflict and restart evidence.
-  A fresh candidate rehearsal restored the existing synthetic PostgreSQL clone on 15433:
-  all 69 tables/schema/rows matched, metadata startup was a no-op, and retained packages
-  plus the accepted Word Scope/ZIP/original verified. This is not a fresh live 15432 backup.
-- PR #263 merged tested source `469a57f` as `d5c19d74746d4ac1cd2f6e19f63278bf560e53d7`.
-  Exact-head CI 34711480773 passed 2,199 tests and all remaining checks. The merged tree
-  equals the tested source; no required reviews were configured. Post-merge CI
-  34712796245 also passed 2,199 tests and all remaining checks.
-- Preserved package checkout: `.tmp/multi-review-package-20260913`, branch
-  `feat/multi-review-package-20260913`, based on `48b4b11`. It extends existing register and
-  package services to retain multiple exact row reviews, explicit v6 package save/reopen,
-  collection-aware imported mapping-v3 and the existing technical client-grant boundary.
-  No new table, migration, model, dependency, provider or canonical writer is introduced.
-- [Multi-review contract](./MULTI_REVIEW_PROJECT_PACKAGES.md) records compatibility and
-  limits. The isolated 8842 Edge journey retained three row reviews, updated one without
-  losing the others, separately saved/downloaded v6, and reopened the exact set. A later
-  review revision did not replace the package's older selection. 109 unique affected
-  tests passed, including retained DOCX and PostgreSQL import/scan/report checks on 15433.
-  Final Edge restart kept the saved 2/1/1 review set despite a newer first review, exact
-  Scope/ZIP/history and all non-login tables. Actual ZIP import created three mapped local
-  reviews; separate re-export retained the byte-exact original archive. Desktop/mobile
-  screenshots and ZIP contents were inspected; no page errors were observed. These are
-  synthetic automated confirmations, not human technical or production approval.
-  Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and migration-head checks passed.
-  Publication is verified above; operational activation remains separate.
-- At this package increment, the 8820 diagnostic app and older demos were unchanged.
-  The historical `6c30361` plan excluded these formats. The separately approved
-  `6c1e2a4` activation above later included them after exact recovery verification.
-
-### Merged multiple-review Scope reporting
-
-- Checkout `.tmp/multi-review-reports-20260913`, branch
-  `feat/multi-review-reports-20260913`, based on merged `d5c19d7`. The
-  [report contract](./MULTI_REVIEW_REPORTS.md) extends the existing scope-and-system
-  profile with exact selected reviews, report snapshot v3 and import mapping v4.
-  No migration, model, dependency, pricing calculation or provider is introduced.
-- Shared core, UI, typed client, package dependencies and renderer checks passed in
-  their focused runs. Final combined verification passed all 52 new cases, including
-  actual disposable PostgreSQL import/scan checks; final package-screen regression
-  passed 18 cases. Full Ruff, Mypy (233 files), Bandit, JavaScript syntax and the
-  unchanged single 0047 migration-head check passed. PR #264 merged tested source
-  `ccaff7a` as `e96c6928ffdbc11a9bd2fb890105e83f05c87625` after exact-head run
-  34713651083 passed 2,251 tests and all checks. The full merged tree equals the
-  tested source. No required reviews were configured; no human review is claimed.
-  Post-merge job 34715038796 passed 2,251 tests and all remaining checks.
-- Actual 8843 Edge UAT separately saved the three-review report and ZIP. PDF/XLSX
-  and ZIP bytes match retention. Restart preserved all exact downloads, Scope and
-  66 checked domain tables. All 19 PDF pages and desktop/mobile views were inspected;
-  XLSX values/structure were inspected programmatically, not in native Excel.
-- Evidenced fixes: distinct headings for repeated client review/measurement panels,
-  and Word v7 evidence labels/provenance in report views. Earlier synthetic fixture
-  copying failed the absolute StoredFile-path guard; it was preserved and replaced
-  with a fresh isolated fixture, without changing the guard or stored bindings.
-- The 469a57f activation plan excludes this newer report format and is unapproved.
-  That increment did not activate 8820; the later approved activation is above.
-  The reviewed ten-defect reference remains
-  Draft evidence, not measured independent extraction accuracy or system approval.
-
-### Merged Complete report increment
-
-- Checkout `.tmp/complete-multi-review-reports-20260913`, branch
-  `feat/complete-multi-review-reports-20260913`, based on merged `e96c692`.
-  The existing Complete profile now accepts up to 30 explicitly selected exact row
-  reviews. It retains the full unchanged Estimate and requires its embedded review
-  in any nonempty collection. Extra reviews are labelled report-only context.
-- [Complete contract](./DRAFT_COMPLETE_REPORT_CONTRACT.md) records snapshot v3,
-  renderer 12 and reuse of import mapping v4. No pricing arithmetic, database model,
-  migration, provider or canonical-write change is introduced. Empty selection
-  preserves legacy formats and client command/input hash shapes.
-- Focused runs passed 53 core/package/legacy cases, 24 UI cases, 18 output cases,
-  13 client collection cases and 10 existing client cases. Full Ruff, Mypy (233
-  files), Bandit and single 0047 migration-head checks passed. Final combined
-  validation passed all 62 new cases in 185.29 seconds, including actual disposable
-  PostgreSQL import/scan checks on port 15433.
-- Actual Edge UAT on isolated SQLite port 8844 saved three reviews with Scope 2
-  and Estimate 4: original rate 1.005, explicit override 1.505, subtotal 3.01 and
-  another line with unknown quantity/subtotal. Report and ZIP saves were separate.
-  PDF/XLSX/ZIP bytes matched retention. All 21 PDF pages were inspected in overviews,
-  pages 1/3 at readable size, and desktop/mobile views showed no observed clipping.
-  XLSX cells/structure were checked programmatically; native Excel was not inspected.
-- Process restart retained exact Scope/PDF/XLSX/ZIP and 66 domain-table hashes.
-  A verification fixture initially compared pretty JSON against compact downloads;
-  diagnosis proved identical values and exact Estimate bytes in the original ZIP.
-  A second restart proved byte-exact raw downloads of Estimate revisions 2 and 4.
-  Original failure/diagnosis are retained; no application guard or test was weakened.
-- Commit `6d4793b` is included in merged PR #265. The historical ccaff7a plan
-  excluded this newer Complete format. That increment did not activate 8820; the
-  later approved `6c1e2a4` activation included it, without OAuth/tunnel or host changes.
-
-### Earlier Word acceptance checkpoint
-
-The following table retains the earlier Word milestone and its historical CI evidence;
-the candidate/runtime paragraph above supersedes its then-current source and runtime.
-
-| Evidence | Verified state at this checkpoint |
+| Boundary | Verified position |
 | --- | --- |
-| Word checkpoint source | `origin/main` eb3ddb3f6ec23bd3ce66d7f7c82b7edaf830c4c2, merge of PR #257; tree matches tested ff0272b |
-| Word inspection | PR #252 merged as c5d4774; retained DOCX parsing/pictures and migration 0047 |
-| Word review/packages | PR #253 merged as 2fb422e after PR CI 34657065137 succeeded |
-| Word client | PR #254 merged as c496baf; source commit 4e2a2b1. PR CI 34662617629 subsequently succeeded; main CI 34662645680 ended cancelled (not a pass). The merge preceded the PR success |
-| Parent main failure | Run 34658986190: 1 failed / 1,894 passed. Test dates were collected before midnight and evaluated afterwards; this was a test timing error, not evidence of a weakened production guard |
-| Correction | PR #255/18418f3 fixes only the test clock; all 23 targeted tests and hosted run 34662942874 passed. Merged as 7847288 at 2026-09-12 01:12:24 UTC; later run 34664119693 exceeded its 30-minute limit and ended cancelled, not passed |
-| Runtime | Authorized synthetic trial activated tested ff0272b after successful post-merge CI; actual user-confirmed Scope and original-bearing ZIP survived an operating-system process restart |
-| Migration | Source head remains 0047. Disposable PostgreSQL history/restore checks passed. Actual trial had verified metadata-created lineage; approved startup added only the Word source table, with no fabricated Alembic stamp or downgrade |
-| Documentation | PR #256 merged as 1f12e4b after successful exact-head CI; its earlier pending-activation statements are superseded by this checkpoint |
-| PostgreSQL correction | PR #257 source ff0272b merged as eb3ddb3 after run 34681923704 passed. Post-merge run 34683024367 passed 2,043 tests and all checks; no job was restarted for an observation timeout |
+| CI follow-up | `ci/native-suite-budget-20260914`, based on published `cef340b`; application, migrations, tests and dependencies remain unchanged; only CI timing/logging and state/handoff records change |
+| Shared main | `97c07786355bbe938696aee56131e3f7aefe9dc6`, the PR #270 diagnostic merge |
+| Public approval | On 2026-09-14 the owner approved continuing with the reviewed broader candidate: `5279904`, 29 commits and 89 files, plus this factual publication checkpoint. Reuse PR #271, branch `feat/native-word-attachments-20260913`, base `main` |
+| PR #271 CI | Published `cef340b` run `34831072452` was cancelled after exceeding the 45-minute job limit; last test progress was 63%, with no final summary. No merge or successful full CI result |
+| CI correction | The approved stack already contains the expanded closed-review form assertion for Word/PDF/XLSX. Preserve standalone `8bce0b0` locally; do not duplicate its earlier Word-only patch |
+| Publication execution | `cef340b` was pushed normally to PR271 and its remote head verified. The timeout follow-up retains all checks, raises the job limit to 90 minutes and reuses prepared per-test/duration logging. Verify its new exact-head CI and reviews before merge |
+| Operational app | Port 8820 listener remains PID 24324. The last approved receipt is rollback `6c1e2a4` with chat disabled; this inspection did not activate or reconfigure it |
 
-PR #254 was merged prematurely by `gh pr merge --auto` while its checks were running.
-At that checkpoint the GitHub protection endpoint reported main unprotected. This is an observed
-process gap: use explicit exact-head successful-check/review verification before merge.
-Do not infer that an accepted merge command proves CI passed, or change repository
-protections without authorization.
+The earlier `d864c51` CI failure was explained by the native attachment's third form. The
+prepared strict correction verifies logout, attachment/CSRF/file controls and advice
+consent while retaining closed-review and replay protections. It changes no production
+code. An unchanged-job rerun is not a correction. Current successful checks and any
+required reviews must be observed before merge; record post-merge CI separately.
+
+## Native chat implementation and remaining acceptance
+
+The native panel is part of the working UI, with dock/collapse/resize controls and
+typed page/record selection. It uses CLASSIFIRE's configured API transport. The
+existing external ChatGPT/MCP connector remains separate and is reused; neither an
+embedded signed-in ChatGPT account nor shared external conversation history is claimed.
+
+- **Attachment and evidence:** supported DOCX/PDF/XLSX uploads use existing retained
+  intake, explicit scan and exact-byte readers. Preview and consent select bounded
+  text/cells and verified PNGs. Original files and omitted evidence are not sent to
+  the model. Document contents are untrusted evidence, never application instructions.
+- **Scope proposals:** typed additions preserve existing rows, unknowns and source
+  references. Selected saved Scope replacements show a field diff and use the manual
+  editor. The existing human review saves a revision only after separate confirmation.
+- **Saved proposals and decisions:** explicit retention preserves the generation,
+  included conversation and disclosed context. Optional identity links one separately
+  confirmed or rejected decision to its generation. A confirmation records the exact
+  reviewed Scope revision; rejection changes no Scope. Similar later content never
+  implies approval. Current rights/source/scan/context checks still apply.
+- **Selected portable history:** ProjectPackage v7 offers exclude, proposal-only,
+  or proposal plus one exact decision. Package confirmation is separate. Imported
+  history stays foreign and read-only and creates no local proposal or approver.
+- **Recent corrections:** delayed history replies cannot replace a newer selection;
+  proposal-only export remains available after a decision; source/Draft lock ordering
+  is consistent; rejection rechecks write permission after lock waits; completed
+  rejection removes only its original UI cards. These have reproduced-failure and
+  passing targeted evidence, not full production acceptance.
+
+Word/PDF/XLSX synthetic attachment-to-Scope-to-original-ZIP journeys and the earlier
+0048 saved-proposal browser journey passed. The newer 0049 decision and v7 history
+controls have HTTP, artifact and restart checks, but rendered-browser acceptance
+remains unverified: the browser helper failed initialization. No new model or scanner
+call followed from reopening, downloading or this documentation reconciliation.
+
+Ordinary advice remains unsaved unless its existing bounded tab-memory option applies.
+Raw provider responses, prompt-version reproducibility, full portable AI history,
+retention/expiry policy and non-Scope edit contracts remain incomplete. Blank openings
+may have zero Services; unresolved links are held for review, never guessed into facts.
+
+Contracts: [assistant interaction](./EMBEDDED_WORKSPACE_CHAT.md),
+[native generations/decisions](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md),
+[selected package history](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md).
+
+## Startup lineage enforcement follow-up
+
+A disposable, freshly migrated SQLite database reproduced a startup defect:
+removing `draft_workspace_proposal_decisions` left the packaged migration head
+intact and the previous startup guard still accepted it. The shared guard now
+reuses `assess_deployment_lineage` after checking that head, refusing missing
+required tables or retired tables still present. Production web startup and CLI
+commands preserve their existing refusal before storage/schema/domain writes.
+No new service, schema, migration or authority boundary is introduced.
+
+All 89 affected startup, CLI, lineage and migration tests passed with no skips
+(25.047 seconds), selected-checkout PYTHONPATH and fresh basetemp. Tests verify
+read-only SQL and unchanged SQLite bytes for accepted and refused checks, and
+redacted inspection failures. Full Ruff and Mypy (240 source files), scoped Bandit
+and diff checks passed. A separate PostgreSQL16.15 rehearsal on disposable15433
+then passed seven candidate checks and reproduced the old guard's acceptance of
+a missing decision table. All eight guard connections were read-only; schema/data
+dumps matched before/after each check and after restoration of the 71-table database.
+The rehearsal owned a separate database and did not share the full suite's database.
+Owner/ACL/comment fields were excluded from dump comparisons. This is not browser,
+live activation or complete schema-equivalence acceptance; column, constraint and
+index equivalence still require the independent deployment rehearsal.
+
+## Migration and operational boundaries
+
+Published baseline `97c0778` uses 0047. The local candidate requires
+`0049_draft_proposal_decisions`, following `0048_draft_workspace_proposals`.
+Both add bounded history tables and refuse destructive downgrade. Attachment/review
+adapters and package v7 add no further database migration. Migration identifiers,
+package formats and Scope envelope versions are different contracts.
+
+The approved `6c1e2a4` workspace activation previously passed matched backup/restore,
+schema/storage and exact older Scope/package/original checks. Operational startup
+used metadata without inventing an Alembic stamp. Do not infer that 0048/0049 have
+been activated, or that an older binary can read the new schema/packages.
+
+The later `7dbc1cc` advisory activation passed one synthetic browser reply, failed
+its follow-up with HTTP 502, and rolled back successfully. The cause remains unknown;
+neither billing nor a particular timeout is established. Earlier request allowances
+are consumed. Diagnostic PR #270 merged after successful PR CI, but post-merge run
+`34753856708` cancelled at 45 minutes, last recorded progress 52%, without a final
+suite summary. Cancellation is not a pass and the job was not restarted.
+
+Any new provider test or activation needs a separate exact approval, successful
+applicable CI, fresh matched live backup, disposable PostgreSQL 15433 restore and
+migration rehearsal, restart and rollback checks. Preserve all newer history and
+reconcile post-backup writes before a rollback; code-only rollback is not assumed.
+Never rehearse on live 15432. No OAuth, tunnel, allowlist, customer-report or technical/
+commercial authority change is included in the local native implementation.
 
 ## Implemented capability boundaries
 
@@ -379,7 +137,7 @@ protections without authorization.
 | Estimating | `draft_estimates.py`, `draft_estimate_contract.py`: independent manual lines, explicit rate methods/overrides, decimal arithmetic, revision history and Scope/optional Match dependencies. Retained workbook rate selection exists | Full six-method automatic default derivation, validated extrapolation, yield/productivity/waste/pack/shared-recovery calculations and representative commercial acceptance are not complete |
 | A/B pricing | Source profiles and review, A row observations, B system mappings, T9 coverage, T6 recipe links, T13 target-blind rosters and T10 bottom-up preview exist. `draft_pricing_quantities.py` already persists governed Scope-bound quantities (PR #233) | Do not rebuild the first quantity-basis feature. Preview is bounded to supported current confirmed sell-price evidence; unsupported inputs withhold amounts. Calibration, comparison/combination, holdout execution and production pricing activation remain later |
 | Reporting | `draft_scope_reports.py` / `draft_estimate_reports.py` and versioned renderers retain paired PDF/XLSX bytes for scope-only, scope-and-system, estimate-only and complete profiles | Draft reports are not canonical release. Do not infer professional acceptance across every input from synthetic examples |
-| Portable project | `draft_project_packages.py`, package inspection/materialization and imported-source services support selected revisions, imported origins and optional retained PDF/XLSX/DOCX originals | ProjectPackage v1-v6 represents selected revisions, not a full database backup or complete project/audit history; library source bodies and unselected artifacts are not automatically included |
+| Portable project | `draft_project_packages.py`, package inspection/materialization and imported-source services support selected revisions, imported origins and optional retained PDF/XLSX/DOCX originals | Local v7 adds explicitly selected native proposal/decision history; packages are not a full database backup or complete project/audit history; library source bodies and unselected artifacts are not automatically included |
 | Client/UI | `draft_client.py`, typed capabilities, evidence tools and durable client requests reuse the same services. Word adds five tools and `review_word_scope`; exact schemas and bounded redacted field errors are exposed | Client proposals require separate same-user browser confirmation. Word application acceptance and actual connected text/image reads are verified. Dedicated connector Word upload remains host-policy blocked; successful connected scan and remote attachment retrieval remain unproven; Excel transport acceptance must be reconciled separately |
 
 Domain services above are in `src/classifire/services/`; UI/client adapters are
@@ -388,108 +146,127 @@ The authoritative architecture description is [CLASSIFIRE_ARCHITECTURE.md](./CLA
 
 ## Verification and health
 
-The workspace regression receipt covers 157 unique cases across 12 files: Scope,
-Word/Excel/PDF UI, templates, estimates, system matching, packages, navigation, register,
-chat and register history. The first run passed 33 and failed one direct-template case;
-a fail-closed empty register context corrected the defect without changing assertions.
-The remaining runs passed 117 and 7 cases. Each used this checkout's `src`, disabled
-pytest cache and a fresh basetemp. PostgreSQL fixtures targeted only disposable 15433.
+These are versioned results. They do not sum to a full latest-candidate pass, and
+synthetic fixtures do not establish customer accuracy or professional suitability.
 
-The separate automated synthetic browser UAT used the isolated workspace app. It
-exercised column selection, bulk edit, undo/redo, save/reopen, historical revision
-selection, stale source warnings and selected saved chat context. The receipt reports
-no JavaScript errors or mobile document overflow. An explicitly selected original DOCX
-was retained in a 12,706-byte ZIP with byte-exact Scope revision 3 and original bytes.
-A separate restart receipt verifies the Scope and ZIP stayed exact after restarting only
-the isolated app on 8840, still using disposable database 15433.
-This automated UAT is not a human production confirmation or a general accuracy study.
-See [the acceptance matrix](./INTEGRATED_WORKSPACE_ACCEPTANCE.md) for precise limits.
+| Version / scope | Observed evidence | Limit |
+| --- | --- | --- |
+| `d33f5ec`, earlier 0048 stack | 2,574 passes, two Windows symlink skips | Predates decisions and later fixes/history |
+| `1aeded3`, earlier 0049 stack | Completed exit 0; JUnit confirms 2,593 passes, two skips | Predates v7 and later concurrency/UI corrections |
+| `23f5110`, selected package history | Four PostgreSQL cases, three SQLite compatibility cases, 77 regressions and eight final HTTP/UI cases passed in their recorded runs | Targeted coverage, not a new full suite |
+| `23f5110`, actual-main restart/recovery | Exact ZIP/JSON across two owned test server processes; 71 tables, 76 rows, schema and retained bytes matched after restore | Test mode, disposable 15433; owner/ACL restoration excluded |
+| Word/PDF history round trips | Two explicit retention/Scope/package/import cases passed; exact originals and foreign read-only history | Synthetic reports and injected replies/scans |
+| `23ab398`, explicit history selection | Two focused cases and ten history/compatibility regressions passed; nine ZIPs inspected | HTTP/form output, not rendered-browser proof |
+| `c2a5157`, lock ordering | Deadlock reproduced; two concurrency and 16 regression cases passed on 15433 | Preserves source locks; not unrestricted concurrency assurance |
+| `567e5a9`, rejection rights | Unauthorized rejection reproduced; corrected request returned 403 with no decision/audit; five selected regressions passed | Eighteen deliberately deselected; no claim of broader execution |
+| `ef790d1`, rejection display | Delayed-card defect reproduced; all 35 shipped-script Node cases and 16 template/navigation/wrapper tests passed, no skips | Synthetic DOM, no new rendered-browser acceptance |
+| Subsequent review | Thirteen complete test files matched 137 prior passing cases to unchanged test content; five saved ZIPs independently inspected, 21 member sizes/hashes and exact originals/history verified | Prior test runs plus new artifact inspection, not a new suite run |
+| `5418f51`, generated reports | All 33 pages of two synthetic PDFs inspected at reduced layout scale; original bytes unchanged. Two XLSX archives preserved values, lineage, unknowns and independent decimal totals with no formulas/external links | XLSX visual acceptance is incomplete: the inspection tool misreads nine empty shared strings and has a native renderer exit failure; no application-output defect established |
+| `c47c119`, startup guard | Reproduced failure followed by 89 affected tests passing, zero skips; full Ruff/Mypy and scoped Bandit passed. Seven candidate PostgreSQL checks passed with unchanged dumps and a separate old-code failure control | Disposable SQLite and owned PostgreSQL15433; no activation or full schema-equivalence claim |
+| `5418f51`, full regression | Terminal exit1: 928 passed, one failed, zero skips/errors; 929 of 2,614 collected cases ran before fail-fast stopped the suite | Imported-evidence UI fixture supplied a `SimpleNamespace` without the real package type's `history_members()` method; not a full pass |
+| Imported-evidence fixture correction | Uses the real `InspectedPackage` type; all 60 imported/defect/source navigation tests passed with original no-action/permission/identity assertions and explicit empty-history assertions retained | Test-only change; no new browser or application behaviour claim |
 
-The diagnostic activation's fresh restore receipt verified all 69 tables, five saved
-Scope revisions, two packages and two stored originals. The approved restart preserved
-schema/files and all Scope/package/original history; login-related changes were confined
-to users/audit events. An expired one-time review link returned 403, while the saved
-package route returned 200. That historical diagnostic check did not activate the
-workspace; the later `6c1e2a4` acceptance is recorded above. Neither ran a migration.
+The recovery readers require source-row locks. The completed verification used normal
+transactions with a SQL-mutation guard: 346 reads, 26 locks, zero mutation attempts,
+and unchanged row/schema snapshots. An initial read-only transaction refusal remains
+in the private evidence; no quarantine lock or write guard was removed.
 
-The earlier controlled Word journey remains distinct:
+Private evidence under `C:/CLASSIFIRE/.tmp/`:
 
-The controlled Word journey used an actual authenticated browser upload, real ClamAV
-scan, retained text/image inspection, connected typed proposal, separate human Scope
-and package confirmations, browser downloads and an approved process restart. The
-connected Word text/image tools became available and returned the same retained content.
-Scope revision 2 retained five source references; its content matched the confirmed
-proposal. Quantities and dimensions stayed null. The image was a 12x8 red placeholder,
-so text assertions remained provisional rather than becoming invented visual facts.
+- `native-decision-full-validation-20260914/run.json` and `full-first.xml`.
+- `portable-native-history-validation-20260914` and
+  `native-history-http-restart-23f5110-20260914/attempt3/receipt.json`, plus that
+  folder's sibling `recovery/continuation-receipt.json`.
+- `native-proposal-lock-order-validation-20260914`,
+  `native-proposal-rejection-rights-validation-20260914` and
+  `native-rejection-display-validation-20260914`.
+- `native-history-review-validation-20260914` holds unchanged-test and ZIP evidence;
+  `native-document-reconciliation-20260914` records the current document review,
+  link/consistency checks and updated per-file range ledger.
 
-The 12,847-byte ZIP contained exactly the manifest, saved Scope and byte-exact original
-DOCX. Repeated downloads before/after restart matched. All pre-existing Scope revisions,
-packages and originals remained exact; 60 other database tables were unchanged. No
-matching, estimating, reporting, canonical admission, lock or release ran implicitly.
-Runtime policy was unchanged; no OAuth/tunnel configuration change was made.
+The predecessor full run is terminal, with its source unchanged and its original
+failure/log/JUnit preserved. It was not restarted after an observation timeout.
+The corrected fixture passed its targeted checks. The pinned `5279904` full run is
+active, with 2,625 collected tests; dependency, Ruff, Mypy, Bandit and migration-head
+preflight checks passed. Poll its existing receipt/process without restarting it.
+The pinned full run still covers unchanged application, migration, test and dependency
+blobs. This later CI follow-up changes only workflow timing/logging and documentation.
+Keep the eventual complete result separate from the predecessor 928 passes,
+89 startup checks and PostgreSQL rehearsal. New-control rendered-browser proof and
+other production exits also remain. No real provider/customer run was executed here.
+Private receipts under `C:/CLASSIFIRE/.tmp/` include
+`startup-lineage-validation-evidence-20260914/postgresql/receipt.json`,
+`native-stack-full-validation-5418f51-20260914/attempt2/run.json` and
+`imported-evidence-fixture-validation-20260914/targeted.xml` and
+`native-stack-full-validation-5279904-20260914/run.json`. The latter folder also
+contains the versioned 89-file publication manifest and inherited review scopes.
 
-Preparation passed 159 affected tests, three PostgreSQL regressions, eight SQLite/history
-checks, Ruff, Mypy and Bandit. Exact candidate and post-merge CI each passed 2,043 tests.
-These are recorded execution results; documentation edits do not rerun or broaden them.
-Dedicated connector upload/scan and remote attachment transport are not covered by the
-successful browser upload/scan. The complete I2 client transport exit remains open. A later actual
-connected upload attempt was refused with CLIENT_FILE_UNAPPROVED_HOST; no new source,
-Scope revision or package was created. That earlier response did not expose the rejected
-host. The approved PR #259 diagnostic
-now identifies it privately; the refusal still stands and no allowlist change was made.
-Obtain approval for an exact necessary configuration change before retrying.
+## Preserved acceptance and independent production gaps
 
-Prior local Word feature evidence: 81 distinct selected client/retrieval/auth/PDF tests,
-one Edge client-confirmation journey, Ruff, Mypy (229 source files) and Bandit passed.
-Word review/package evidence additionally includes 105 integrated tests, 50 history/output
-checks, 73 client/PDF checks and an Edge upload/review/package journey. These are bounded
-synthetic checks, not current hosted validation or customer acceptance.
+The original controlled Word journey is complete within its recorded scope: browser
+DOCX upload, actual scan, retained text/image reads, connected typed proposal,
+separate human Scope/package confirmations and exact original ZIP after restart.
+Do not repeat those confirmations. Its placeholder picture cannot prove visual
+accuracy. Dedicated external connector upload remains host-policy refused; browser
+upload success does not complete external upload/scan or remote attachment transport.
+See [Word acceptance](./WORD_ACCEPTANCE_ACTIVATION.md).
 
-Health: functional Draft prototype, incomplete production assurance. PR #267 and its
-post-merge CI passed all 2,399 tests and remaining checks. Earlier 30/45-minute
-cancellations remain preserved and were not restarted. Main protection was absent at the recorded
-inspection; CI must be explicitly observed. `worker.py` currently fails queued jobs with
-“No registered handler”; it is not a production document-processing queue.
+Integrated register/row authoring/source inspection and multi-review packages/reports
+are already implemented and merged through PRs #260-#267. Scope-and-system and
+Complete profiles retain exact selected review dependencies; Complete uses unchanged
+Estimate arithmetic. [Workspace acceptance](./INTEGRATED_WORKSPACE_ACCEPTANCE.md),
+[row authoring](./REGISTER_ROW_AUTHORING.md), [multi-review packages](./MULTI_REVIEW_PROJECT_PACKAGES.md)
+and [reports](./MULTI_REVIEW_REPORTS.md) preserve their bounded tests and synthetic
+browser/restart evidence. PR #267 and its post-merge CI passed 2,399 tests; the later
+native stack is not covered by those runs.
 
-The earlier root inventory recorded recovery evidence at de0cc5a on
-`gpt/phase8-linked-original-images`: 46 unstaged modifications, 14 staged additions,
-four DU conflicts and CHERRY_PICK_HEAD c3e4c810. Untracked code, migrations, docs,
-operator state and generated/private data coexist. No root changes are included here.
-See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
+The human-reviewed ten-defect Draft reference and comparator are preparation for an
+accuracy study, not a measured accuracy result. Representative report/technical/
+commercial evidence, unresolved topology and Phase 8/8C gates remain separate.
+Technical applicability, six-method price derivation, yield/productivity/waste/shared
+recovery, calibration and target-blind evaluation are incomplete. Wider physical
+entities, tenant isolation, production jobs, clean-machine recovery/performance,
+close-out and protected OpenClaw retirement still need roadmap exit evidence.
+
+Older implementation/publication chronology remains in Git at `0f932c1` in this
+file and the prior handoff, with original contracts and private receipts preserved.
+Consolidating current state does not erase failed attempts, expired approvals or
+historical byte/recovery evidence, or change any production-phase status.
+
+## Local change classification
+
+Startup fix `c47c119` changed six files: one application guard, three test files
+and two architecture/state documents. This follow-up changes one test fixture and
+two state/handoff documents; application source is unchanged. Neither change adds
+a migration, dependency or configuration change. The preceding `5418f51` range has 84 reviewed
+files: 75 application/migration/test/configuration files and nine documents. That
+ledger distinguishes complete-file and changed-line reviews and does not cover this
+follow-up or confer publication approval. Private source reports, credentials,
+generated originals,
+ZIPs, screenshots and operator receipts remain outside Git.
+
+The root `C:/CLASSIFIRE` remains quarantined at `de0cc5a`: 46 unstaged modifications,
+14 staged additions and four DU conflicts, with unrelated untracked files and
+permission-denied historical test directories. Its untracked inventory is incomplete.
+No root content was staged, resolved, reset or published. See
+[local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-1. **C1 - Diagnose and revalidate advisory chat.** Publish the bounded diagnostic
-   fix after exact CI/reviews. Prepare one exact synthetic follow-up test and
-   conditional activation with fresh recovery proofs for explicit approval.
-   All earlier provider-call allowances are consumed. Preserve the failed browser
-   attempt and successful rollback; do not infer its cause or retry silently.
-2. **C2 - Build native chat report intake and Scope review.** Reuse the existing
-   intake/scan/Word review/client-request/package services, beginning with one
-   supported synthetic DOCX. Finish the visible attachment-to-confirmed-Scope-to-ZIP
-   journey from the [assistant contract](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience).
-   Validate the actual browser, exact originals and distinct confirmations.
-   Implementation with synthetic fixtures does not require live activation or
-   customer evidence; current text-only transport needs an explicit bounded
-   extension before any picture/original transfer to a provider.
-3. **C3 - Add reviewed selected-record actions.** Keep selected-page advice available;
-   a requested edit yields a typed proposal/diff, then an explicit same-user
-   confirmation. Recheck exact revisions, current permissions and stale context.
-   Other capabilities remain independently requested and gated.
-4. **Retained I2/N1 integration acceptance.** Dedicated external connector upload/
-   scan and Excel transport evidence remain unproven; reuse the existing tools and
-   clearly selected synthetic destinations without repeating completed Word
-   confirmations or OAuth setup.
-5. **Retained I3/N2 decisions.** Merge-protection changes require owner approval.
-   Representative technical recipe/quantity/commercial meaning must be reviewed
-   before wider derived-rate methods; no invented yield, productivity or recovery.
-6. **L1/L2 broader work.** Preserve wider report/corpus coverage, full physical
-   entities/history, T11-T14 validation, Phase8/8C accuracy and Phase8-16 production
-   gates, tenant isolation, operational recovery and protected OpenClaw retirement.
-
-This increment changes chat diagnostics, synthetic regression tests and affected
-status documentation. There is no schema change; only a random diagnostic request
-header is added to the provider contract. Private preparation/operational artifacts
-remain outside Git. Preserve the conflicted root, pinned runtime checkouts and old
-receipts. Verify current Git/PR/CI before claiming publication or activation.
-See [SESSION_HANDOFF.md](./SESSION_HANDOFF.md) for branch context and the next task.
+1. **Finish the CI timeout correction and assurance.** Verify its explicit workflow
+   and documentation diff, push normally to the existing PR271 branch and
+   observe its exact-head CI and required reviews before merging. The complete local
+   suite is already running on pinned `5279904` with fresh basetemp and disposable15433;
+   preserve its process and result. New decision/package rendered-browser proof remains.
+2. **Verify the shared result.** Record the actual remote head, merge commit and
+   post-merge CI. The existing form correction is included; preserve its standalone
+   local commit without duplicating it. Never restart because observation expired or
+   treat cancelled/failed/missing results as success. Preserve cancelled run34831072452;
+   the workflow correction triggers a new run and does not rerun that failed budget.
+3. **Complete C1 and operational C2/C3 acceptance.** Diagnose the broader CI/runtime
+   limits, then obtain separate approval for the exact prepared provider test and
+   activation. Preserve rollback state, consumed allowances and existing confirmations.
+4. **Advance the independent product gates.** Broader typed Match/Estimate/library
+   actions, I2/N1 connector transport, reviewed technical/commercial semantics,
+   T11-T14 evaluation, full physical/history coverage and Phase 8-16 production exits
+   remain. No synthetic success grants technical approval, pricing authority or release.
