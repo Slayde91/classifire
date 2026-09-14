@@ -1,6 +1,6 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-15 against merged main, the package-guidance follow-up, retained
+Reconciled 2026-09-15 against merged main, the atomic migration follow-up, retained
 validation evidence and GitHub. This is current state, not production certification.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
@@ -17,11 +17,12 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Selected follow-up | `fix/package-import-guidance-20260915`, based on `3911ca4`; corrects stale import guidance and reconciles acceptance evidence |
-| Shared main | `3911ca4819fca6cc4662289cc3eb77c83f713675`, PR #274 merged; tree exactly matches tested `8025729` |
+| Selected follow-up | `fix/atomic-migration-connection-20260915`, based on `3591ac1`; preserves a caller-owned PostgreSQL migration transaction |
+| Shared main | `3591ac1116b618dfa5b53422de4ee8fcf2d9359d`, PR #275 merged; tree exactly matches tested `916bae6` |
 | PR #273 CI | PR run `34862079545` passed 2,647 tests; post-merge `34869099059` also completed successfully |
 | PR #274 CI | PR run `34869742499` passed 2,658 tests; post-merge `34873941741` passed 2,658 tests in 1,908.17 seconds with 386 warnings, plus build/style/type/security/migration checks |
-| Publication | PRs #273/#274 merged after successful checks and observed review requirements. This guidance follow-up still needs its own CI/review gate; no branch was deleted |
+| PR #275 CI | PR run `34879918621` passed 2,658 tests; post-merge `34883667900` passed 2,658 tests in 1,941.86 seconds with 386 warnings, plus every remaining check |
+| Publication | PRs #273-#275 merged after successful checks and observed review requirements. The atomic migration follow-up still needs its own CI/review gate; no branch was deleted |
 | Operational app | Port8820 listener remains PID24324; the last approved receipt remains rollback `6c1e2a4` with chat disabled. No activation accompanies this follow-up |
 
 The earlier `d864c51` CI failure was explained by the native attachment's third form. The
@@ -61,12 +62,12 @@ embedded signed-in ChatGPT account nor shared external conversation history is c
 Word/PDF/XLSX synthetic attachment-to-Scope-to-original-ZIP journeys and the earlier
 0048 saved-proposal browser journey passed. The newer 0049 decision/v7 controls now
 also have rendered headless-Chrome acceptance on the exact `8025729` tree merged
-as `3911ca4`. This used an owned PostgreSQL15433 database, separate loopback app,
+as `3911ca4`. This used an owned PostgreSQL database on port 15433, separate loopback app,
 synthetic provider/scanner stubs and fresh browser profiles; it is not live acceptance.
 
 The browser journey covered DOCX upload, explicit scan, retained text/image reads,
 selected evidence preview/consent, typed proposal retention/reopening, separate
-Scope revision2 confirmation and separate original-bearing package confirmation.
+Scope revision 2 confirmation and separate original-bearing package confirmation.
 The downloaded Scope, original DOCX and selected proposal/decision matched retained
 bytes. After restart, all71 tables matched before login; the reopened response and
 decision and downloaded ZIP remained exact. Proposal-only export omitted the decision
@@ -93,6 +94,57 @@ Contracts: [assistant interaction](./EMBEDDED_WORKSPACE_CHAT.md),
 [native generations/decisions](./NATIVE_WORKSPACE_PROPOSALS_V1_CONTRACT.md),
 [selected package history](./NATIVE_PROPOSAL_PACKAGE_HISTORY.md).
 
+## Atomic migration transaction follow-up
+
+The migration runner previously ignored a supplied connection and always opened its
+own. That prevented a reviewed metadata conversion, baseline attestation and forward
+migrations from sharing one rollback boundary. A regression reproduced the unwanted
+second-connection attempt before the fix. The existing runner now accepts an active
+PostgreSQL connection through Alembic configuration; the caller alone decides commit
+or rollback. Unsupported supplied connections fail before migration. Existing CLI,
+SQLite handling and migration revision files are unchanged.
+
+All 17 targeted migration tests passed (one warning, 160.99 seconds), covering actual
+PostgreSQL commit visibility, rollback during and after upgrades, baseline/version-field
+restoration, refusal cases and existing standalone/native-history migration behaviour.
+The final nine transaction regressions passed in 16.87 seconds after strengthening
+active-PostgreSQL offline/closed/invalidated guards. Another 44 startup and
+migration-foundation tests passed in 94.67 seconds. Together with the nine unchanged
+migration/history cases in the initial run, this covers 62 distinct affected tests.
+Full Ruff and Mypy (240 source files) and scoped Bandit passed. Tests use the selected
+checkout, fresh basetemp and owned PostgreSQL schemas on port 15433; live port 15432 is excluded.
+
+The fixed historical-copy procedure also passed on a new disposable database on port 15433. All
+162 reviewed conversion statements, exact 0047 baseline comparison, explicit baseline
+attestation and 0048/0049 upgrades ran within one caller-owned transaction. Injected
+failures after attestation and after the complete upgrade restored the entire database
+dump exactly. Only the success case committed; all old rows stayed unchanged and the
+result matched a fresh migration reference under the declared comparison exceptions.
+This is fixed-input historical evidence, not a general adoption command or live proof.
+Evidence: `C:/CLASSIFIRE/.tmp/atomic-migration-validation-20260915/`.
+
+## Matched recovery and rollback compatibility
+
+Historical and native copied-state restores preserved 72/71 tables respectively,
+retained original bytes, stored-file pointers, schemas and owner/ACL/effective privileges.
+The old `6c1e2a4` runtime read historical Scopes and packages, but rejected both native-history
+v7 package pages/downloads with HTTP 409. Its structural reader does not support that version;
+this is not evidence of ZIP corruption. Its startup left both copied full dumps and
+schema/owner/ACL dumps unchanged; full old-version write compatibility is not established.
+
+The current `3911ca4` app reopened the recovered native state using recovered storage,
+with only copied-database file paths remapped. Both Scope revisions and both v7 ZIPs
+matched saved bytes. The original-bearing ZIP retained the exact DOCX and confirmed
+revision 2 decision; proposal-only export omitted the decision and original. Only
+expected login/read audit changes occurred. This uses TestClient HTTP; earlier
+headless-browser acceptance remains separately recorded. No real provider or scanner ran.
+
+These checks use existing roles on one disposable cluster, not fresh live or cross-cluster
+recovery. They do not authorize switching old code over newer writes or restoring a
+pre-change backup over later work. Preserve later state and use a compatible version
+under an exact approved recovery plan. Evidence: private `rollback-compatibility-6c1e2a4-20260915`,
+`matched-recovery-3911ca4-20260915` and `matched-native-recovery-3911ca4-20260915` receipts.
+
 ## Migrated restart follow-up
 
 The existing demo runner and non-production web startup both called metadata.create_all
@@ -106,12 +158,12 @@ No migration, dependency, domain model or approval boundary changes.
 
 All 67 affected startup/demo/CLI/migration tests passed (one warning,155.02 seconds),
 using the selected checkout and a fresh basetemp. Full Ruff and Mypy (240 source files)
-and scoped Bandit passed. On a newly owned PostgreSQL15433 database, the actual demo
+and scoped Bandit passed. On a newly owned PostgreSQL on port 15433 database, the actual demo
 launcher completed two TestClient restarts and refused a mismatched guard, missing
 guard and missing decision table. Each check preserved the full database dump. No
-listener or browser was used, and live15432 was not accessed.
+listener or browser was used, and live port 15432 was not accessed.
 
-The private historical-backup conversion rehearsal on disposable PostgreSQL15433
+The private historical-backup conversion rehearsal on disposable PostgreSQL on port 15433
 passed exact baseline comparison before its explicit baseline attestation and existing
 0048/0049 migrations. Existing data stayed unchanged. Drift and injected failure
 rolled back. A recovered copy matched an independently restored migration reference;
@@ -147,7 +199,7 @@ index equivalence still require the independent deployment rehearsal.
 
 ## Migration and operational boundaries
 
-Earlier baseline `97c0778` uses 0047. Merged main `3911ca4` requires
+Earlier baseline `97c0778` uses 0047. Merged main `3591ac1` requires
 `0049_draft_proposal_decisions`, following `0048_draft_workspace_proposals`.
 Both add bounded history tables and refuse destructive downgrade. Attachment/review
 adapters and package v7 add no further database migration. Migration identifiers,
@@ -210,7 +262,7 @@ synthetic fixtures do not establish customer accuracy or professional suitabilit
 | `ef790d1`, rejection display | Delayed-card defect reproduced; all 35 shipped-script Node cases and 16 template/navigation/wrapper tests passed, no skips | Synthetic DOM, no new rendered-browser acceptance |
 | Subsequent review | Thirteen complete test files matched 137 prior passing cases to unchanged test content; five saved ZIPs independently inspected, 21 member sizes/hashes and exact originals/history verified | Prior test runs plus new artifact inspection, not a new suite run |
 | `5418f51`, generated reports | All 33 pages of two synthetic PDFs inspected at reduced layout scale; original bytes unchanged. Two XLSX archives preserved values, lineage, unknowns and independent decimal totals with no formulas/external links | XLSX visual acceptance is incomplete: the inspection tool misreads nine empty shared strings and has a native renderer exit failure; no application-output defect established |
-| `c47c119`, startup guard | Reproduced failure followed by 89 affected tests passing, zero skips; full Ruff/Mypy and scoped Bandit passed. Seven candidate PostgreSQL checks passed with unchanged dumps and a separate old-code failure control | Disposable SQLite and owned PostgreSQL15433; no activation or full schema-equivalence claim |
+| `c47c119`, startup guard | Reproduced failure followed by 89 affected tests passing, zero skips; full Ruff/Mypy and scoped Bandit passed. Seven candidate PostgreSQL checks passed with unchanged dumps and a separate old-code failure control | Disposable SQLite and owned PostgreSQL on port 15433; no activation or full schema-equivalence claim |
 | `5418f51`, full regression | Terminal exit1: 928 passed, one failed, zero skips/errors; 929 of 2,614 collected cases ran before fail-fast stopped the suite | Imported-evidence UI fixture supplied a `SimpleNamespace` without the real package type's `history_members()` method; not a full pass |
 | Imported-evidence fixture correction | Uses the real `InspectedPackage` type; all 60 imported/defect/source navigation tests passed with original no-action/permission/identity assertions and explicit empty-history assertions retained | Test-only change; no new browser or application behaviour claim |
 
@@ -253,7 +305,7 @@ reads, scan/permission/hash checks and confirmation boundaries are unchanged.
 No migration, cache, dependency, worker pool or CI test-selection change is included.
 
 The same synthetic case passed before and after with fresh basetemp and disposable
-PostgreSQL15433: JUnit suite times were 107.340 and 28.299 seconds respectively.
+PostgreSQL on port 15433: JUnit suite times were 107.340 and 28.299 seconds respectively.
 This is a local sample, not a predicted whole-CI saving. Import-only AST comparison
 verified identical non-import code. Five fresh-process regressions exercise exact
 pricing, Scope, picture and Word outputs while refusing unrelated application imports.
@@ -338,9 +390,9 @@ No root content was staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Publish the evidenced display guidance correction.** Validate explicit files, then
-   observe its exact-head CI and required reviews before merge. Record post-merge CI
-   separately; do not restart existing jobs because observation timed out.
+1. **Publish the atomic migration transaction correction.** Finish relevant checks,
+   validate explicit files and observe exact-head CI/review requirements before merge.
+   Record post-merge CI separately; do not restart jobs because observation timed out.
 2. **Finish activation readiness.** The pinned launcher/fresh-environment rehearsal
    passed. Complete exact fresh backup/restore, owner/grants, current storage linkage,
    drift and rollback commands. Historical15433 conversion/recovery does not establish

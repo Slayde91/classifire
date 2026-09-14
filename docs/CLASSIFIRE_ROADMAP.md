@@ -27,6 +27,7 @@ P0-P6 are bounded Draft milestones, not completion of production Phases 0-16.
 | Completed bounded implementation | A/B profiles/review, A observations, B identity mapping, T9 coverage, T6 recipes, T13 roster and governed Scope quantity basis; preserve the independent technical/pricing track |
 | Retained acceptance gap | I2 dedicated external connector upload/scan transport and N1 Excel acceptance remain distinct from browser upload or the new native chat journey; do not repeat completed Word confirmations |
 | Owner decision / independent work | I3 enforced merge policy needs its own approval; N2 representative quantity/recipe/commercial semantics remain before wider pricing methods |
+| Operational prerequisite in progress | Caller-owned PostgreSQL migration transactions and historical-copy atomic conversion/rollback are locally verified; publication and an exact fresh live approval bundle remain. New v7 packages are not readable by the old rollback binary |
 | Planned/dependency-bound | L1 wider report/corpus/physical-model coverage and full portable history; L2 calibration, operations, production gates and protected OpenClaw retirement |
 | Superseded priority | Rebuilding the existing plugin, upload parsers, review services or package pipeline; a disconnected external chat page as the only working experience |
 | Deprecated | Mandatory autonomous fleet; chat history as canonical state; inferred technical/commercial approval; publication from the conflicted root |
@@ -65,7 +66,7 @@ Blank openings remain valid with zero Services; unresolved links are held for re
 Retained source and revision identity survives reopening without requiring chat memory.
 
 Use selected-checkout PYTHONPATH and a fresh basetemp for affected chat/client/intake/
-review/package tests. Database tests use disposable 15433, never live15432. Inspect
+review/package tests. Database tests use disposable 15433, never live port 15432. Inspect
 actual browser controls and exact source/ZIP bytes. Keep expensive real-report
 accuracy evaluation behind its separate rights, reference and Phase8/8C decisions.
 
