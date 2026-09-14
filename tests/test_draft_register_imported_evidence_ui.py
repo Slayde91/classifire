@@ -22,6 +22,7 @@ from classifire.models import User
 from classifire.services import draft_import_reports as imported_reports
 from classifire.services import draft_register as register
 from classifire.services import draft_scope as scopes
+from classifire.services.draft_package_import import InspectedPackage
 
 scope_app = _scope_app
 scope_password_hash = _scope_password_hash
@@ -127,7 +128,16 @@ def package_context(x, monkeypatch, *, paths=None):
         calls.append(("import", actor.id, draft_id))
         return (
             SimpleNamespace(archive_hash="b" * 64),
-            SimpleNamespace(manifest={"project": {"reference": "FOREIGN", "name": HOSTILE}}),
+            # Legacy imported evidence has no retained native proposal/decision history.
+            InspectedPackage(
+                manifest={"project": {"reference": "FOREIGN", "name": HOSTILE}},
+                members={},
+                scope=copy.deepcopy(x.scope),
+                match=None,
+                estimate=None,
+                reports=[],
+                archive_sha256="b" * 64,
+            ),
             copy.deepcopy(mapping),
         )
 
@@ -186,6 +196,10 @@ def test_exact_historical_defect_link_opens_matching_review_card_without_actions
         cards = Navigation(card_page.text).cards
         assert [card["id"] for card in cards] == [urlsplit(imported_url).fragment]
         assert cards[0]["tabindex"] == "-1"
+        assert "Retained AI proposal history" not in card_page.text
+        assert not any(
+            "/native-history?" in link["href"] for link in Navigation(card_page.text).links
+        )
         assert FOREIGN_SOURCE in card_page.text and MEMBER in card_page.text
         reopen = next(
             link["href"]
