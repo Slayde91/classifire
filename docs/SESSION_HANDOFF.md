@@ -1,6 +1,6 @@
 # CLASSIFIRE Session Handoff
 
-Reconciled 2026-09-15. Current code, Git, tests and receipts outrank this checkpoint.
+Reconciled 2026-09-16. Current code, Git, tests and receipts outrank this checkpoint.
 Use [PROJECT_STATE.md](./PROJECT_STATE.md) for evidence and limitations,
 [CLASSIFIRE_ARCHITECTURE.md](./CLASSIFIRE_ARCHITECTURE.md) for composition and authority,
 and [CLASSIFIRE_ROADMAP.md](./CLASSIFIRE_ROADMAP.md) for sequencing and exits.
@@ -8,42 +8,43 @@ The full production objective remains incomplete.
 
 ## Selected checkout and scope
 
-PR #277 merged `bf0e9fcd660072ab6c96ff7cc36bc6d952899c02` as
-`11ae2024143030410f62394c35681db20c41d818` after PR CI34955271348 passed
-2,673 tests in 2,033.51 seconds plus style/build/type/security/migration checks.
-Tested and merged trees match; no required reviews were outstanding at merge.
-Post-merge CI34958743322 was still running tests at 10:54 UTC on 2026-09-15.
-Observe that existing run; do not infer a pass or start a duplicate/replacement job.
-The existing local watch session is 74887 while available. Its durable output is
-`C:/CLASSIFIRE/.tmp/assistant-estimate-line-validation-20260915/postmerge-ci-watch.log`.
-The feature branch/upstream remains clean at `bf0e9fc`; main is `11ae202`.
+All six exact approved publications are merged: #278 `9a9b4fe`, #279 `b4e2134`,
+#280 `68baf00`, #281 `853cd18`, #282 `13a955e` and #283 `e28740e`.
+Current main is `e28740e3bea071e8a917445a6833c693590d6cd9`. Each merged after
+successful current-head CI, exact branch/file checks and clear review gates. No
+branch protection/review control was bypassed and no branch was deleted.
 
-PR #276 previously merged `8b4b79f81c2e85984675f2d00882a707709270be` as
-`ef9a29faf45d70dc2b9d3c6cd5c80fa8740a0be0`; tested and merged trees match.
-PR CI34890268945 and post-merge CI34894040919 succeeded. Post-merge passed
-2,667 tests in 1,987.85 seconds, 386 warnings, plus style/build/type/security/migration
-checks. The correction preserves a caller-owned PostgreSQL migration transaction;
-62 distinct targeted tests and full-dump injected rollback evidence also passed.
-It changes no migration revision, schema head, dependency or application authority.
-Do not republish or rebuild it, and do not restart completed CI jobs.
+#283's original `931da7f` CI passed. A normal merge commit `887051a` preserved both
+reviewed guide additions when #280 caused a documentation conflict. The changed
+source and combined 58-case JavaScript suite match the six-change rehearsal. Its
+updated-head CI34979326537 passed 2,694 Python tests plus nine dedicated Windows
+installer tests. The final merge tree exactly equals the rehearsal tree
+`65f55226207c9266989d1b1f79755df9eec5417d`; parents and tree were verified.
 
-The pinned deployment checkout remains
-`C:/CLASSIFIRE/.tmp/atomic-migration-connection-20260915`, branch/upstream
-`fix/atomic-migration-connection-20260915`, clean at `8b4b79f` when observed.
-Immutable source/environment artifacts are under `atomic-release-8b4b79f-20260915`.
-This documentation follow-up uses the separate checkout
-`C:/CLASSIFIRE/.tmp/docs-pr277-state-20260915`, branch
-`docs/pr277-state-20260915`, based on `11ae202`. It reuses and updates the four-document
-patch from preserved unpublished `5eb7aa7`; that earlier worktree is unchanged.
-This new payload needs its own exact approval for publication to the public repository. It is not an
-activation candidate. Separate unpublished reader fix `3032990` remains preserved.
-The user approved publication of `bf0e9fc` only; that approval is not approval for
-these other commits, a model call or activation.
+All six post-merge CI runs passed. Final run34983426541 for `e28740e` passed
+2,694 Python tests in 1,984.05 seconds, plus all nine dedicated Windows installer
+cases and distribution/style/type/security/migration checks. Linux skips the
+Windows-only cases; those skips are not Python passes. Intermediate run34978359729
+for `b4e2134` passed 2,690 tests. PR #277's earlier post-merge run34958743322 also
+succeeded; its old pending checkpoint is superseded.
 
-PRs #273-#275, native Word/PDF/XLSX adapters, selected Scope edits, proposal/decision
-retention, v7 history and review race/permission fixes are already merged. Their CI
-and acceptance receipts remain in project state and Git. Do not rebuild them or
-duplicate the old standalone `8bce0b0` test correction. No branch was deleted.
+Exact merge/CI receipts and logs are in
+`C:/CLASSIFIRE/.tmp/six-publications-20260915`. All three monitors (30119, 18416,
+42923) completed normally. Do not restart them or their completed GitHub jobs.
+If later work creates a new commit, validate that commit's own CI and required reviews.
+
+This two-document follow-up is isolated in
+`C:/CLASSIFIRE/.tmp/docs-six-publications-state-20260916`, branch
+`docs/six-publications-state-20260916`, based on `e28740e`. It is not an activation
+candidate. Metadata fix `6e3214a` remains a clean local commit on
+`fix/native-proposal-metadata-validation-20260915`, with its separate four-file
+publication approval pending. Its 47 affected tests passed on `853cd18`; do not
+publish it under the six older approvals. Preserved unpublished `5eb7aa7` is superseded.
+
+The pinned deployment source remains `8b4b79f`; immutable source/environment
+artifacts are under `atomic-release-8b4b79f-20260915`. It excludes PRs #277-#283.
+Publication neither repins that candidate nor approves the frozen diagnostic/activation
+plans. PRs #273-#277 and their completed synthetic journeys are not work to rebuild.
 
 ## New acceptance evidence
 
@@ -91,7 +92,8 @@ This is not clean-OS or live-configuration acceptance.
 
 ## Operational boundaries
 
-Port 8820 remains PID 24324. The last approved receipt is rollback 6c1e2a4 with chat
+The last recorded port 8820 process was PID 24324; this publication work did not
+refresh live runtime state. The last approved receipt is rollback 6c1e2a4 with chat
 disabled after the 7dbc1cc follow-up HTTP 502. The cause remains unknown; neither billing
 nor a particular timeout is established. Old provider allowances are consumed.
 New provider execution and activation need a separate exact approved plan. No live
@@ -110,9 +112,10 @@ remain unverified. Historical equivalence does not authorize live baseline adopt
 
 ## Next executable task
 
-First finish observing post-merge run34958743322 for `11ae202`. Record its actual
-conclusion, then reconcile this checkpoint if it changed. The operational approvals
-below remain separate and must not be inferred from feature publication or CI success.
+All six approved publications and their post-merge CI are complete. Review the
+separate exact `6e3214a` publication and this two-document checkpoint before any
+new push; each new PR still needs successful current-head CI and required reviews.
+The operational approvals below remain separate from publication or CI success.
 
 The exact private preparation is under
 `C:/CLASSIFIRE/.tmp/live-activation-8b4b79f-20260915`. Read its
@@ -166,7 +169,7 @@ Services and unresolved links held for review. No live/provider action is implie
 
 ## Local work and verification discipline
 
-This follow-up changes four canonical documents only. The frozen runtime/activation
+This follow-up changes PROJECT_STATE and SESSION_HANDOFF only. The frozen runtime/activation
 bundle is unchanged. Private scripts, profiles, reports, originals/ZIPs, credentials,
 backups and approval receipts stay outside Git. Preserve root `C:/CLASSIFIRE` at
 `de0cc5a`: 46 unstaged modifications, 14 staged additions, four DU conflicts and unrelated
@@ -182,21 +185,22 @@ and environment rules. Do not modify frozen files after approval.
 ## Copy-ready next-session prompt
 
 Continue CLASSIFIRE from current Git, code and receipts. Read AGENTS.md and canonical
-project state, architecture, roadmap and handoff. PR #277 is merged as `11ae202`
-with PR CI34955271348 successful; post-merge run34958743322 was still running at
-this checkpoint. Poll its existing watch/run and record the actual result. PR #276
-and its post-merge CI passed previously. Do not rebuild completed work or restart
-existing jobs because observation timed out. Inspect the new documentation branch
-`docs/pr277-state-20260915` separately; preserved `5eb7aa7` and reader fix `3032990`
-remain unpublished. Only the seven-file `bf0e9fc` feature publication was approved.
-Preserve the conflicted root and private data. The 23-file `8b4b79f` activation plan is
-frozen under `live-activation-8b4b79f-20260915`; verify its manifest and actual approval
-state. Separate `3911ca4` diagnostic and `8b4b79f` conditional-activation approvals are
-pending. Do not infer them from continuation prompts or old approvals. After exact
-approval, run only the bounded single diagnostic, review its reply, then follow the
-approved fresh backup/restore, conditional migration/startup and recovery gates.
-Recovery preserves later data and uses the compatible version with chat disabled;
+project state, architecture, roadmap and handoff. PRs #278-#283 are merged; main is
+`e28740e`, with exact tree equal to the six-change rehearsal. All original, updated
+PR and post-merge CI passed. Final run34983426541 passed 2,694 Python and nine Windows
+tests. All old monitors completed; do not restart them. Review local metadata commit
+`6e3214a` under its exact four-file publication approval and review this separate
+two-document checkpoint. Neither is covered by the six older approvals. For each
+new publication, verify its exact files, current-head CI and required reviews before
+merge. Preserve approved branches, staged rehearsal trees, conflicted root and private data.
+
+The 23-file `8b4b79f` activation plan remains frozen under
+`live-activation-8b4b79f-20260915`; verify its manifest and actual approval state.
+Separate `3911ca4` diagnostic and `8b4b79f` conditional activation approvals remain
+pending. Do not infer them from continuation prompts, publication or old allowances.
+After exact approval, run only the bounded single diagnostic, review its reply, then
+follow approved fresh backup/restore, conditional migration/startup and recovery gates.
+Recovery preserves later data and uses a compatible version with chat disabled;
 unverified failures may leave it offline. Prior Word confirmations and synthetic
 native browser acceptance are complete within their recorded scope. Real-model
-application acceptance, broader accuracy and production gates remain open. Continue
-independent useful work while awaiting required operational approval.
+application acceptance, representative accuracy and production gates remain open.
