@@ -128,6 +128,19 @@ Run a readiness check:
 classifire doctor
 ```
 
+To explicitly check only the configured ClamD endpoint, without connecting to the
+database, reading source files or sending document bytes:
+
+```bash
+classifire doctor --scanner-only
+```
+
+This bounded PING/VERSION check reports engine and signature metadata as JSON. It
+uses the existing scan policy: a seven-day signature-age limit and one-day clock
+tolerance. Unavailable/malformed responses or metadata outside those limits return
+a nonzero exit, with endpoint/error details withheld. It does not scan a file or
+prove malware detection. The ordinary `doctor` command makes no scanner request.
+
 ## Mission Control
 
 Mission Control is a transitional orchestration/visibility integration. CLASSIFIRE
