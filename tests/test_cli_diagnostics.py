@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from classifire import cli
@@ -91,3 +93,57 @@ def test_database_diagnostic_hides_invalid_database_url() -> None:
 
     assert detail == "Configured database (invalid URL)"
     assert marker not in detail
+
+
+
+@pytest.mark.parametrize("failure", [False, True])
+def test_scanner_only_doctor_does_not_open_database_or_read_sources(monkeypatch, failure):
+    from classifire.services import malware_scan
+
+    marker = "private-scanner-host.example.test"
+    settings = Settings(_env_file=None, env="test", clamav_host=marker, clamav_port=3311)
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+
+    def forbidden(*args):
+        raise AssertionError("Scanner-only check must not touch database or source files")
+
+    monkeypatch.setattr(cli, "SessionLocal", forbidden)
+    monkeypatch.setattr(cli, "repo_root", forbidden)
+    monkeypatch.setattr(cli, "_prepare_cli_write", forbidden)
+    calls = []
+
+    def status(*, host, port):
+        calls.append((host, port))
+        if failure:
+            raise malware_scan.MalwareScanError("SCAN_UNAVAILABLE")
+        return malware_scan.ScannerStatus(
+            "ClamAV 1.5.4", "28108", "synthetic-date", "synthetic-time"
+        )
+
+    monkeypatch.setattr(malware_scan, "scanner_status", status)
+    result = CliRunner().invoke(cli.app, ["doctor", "--scanner-only"])
+    assert result.exit_code == int(failure), result.output
+    value = json.loads(result.output)
+    assert value["file_scanned"] is False
+    assert marker not in result.output
+    assert calls == [(marker, 3311)]
+    if failure:
+        assert value == {"error": "SCAN_UNAVAILABLE", "file_scanned": False}
+    else:
+        assert value["check"] == "scanner_reachability_and_signature_freshness"
+        assert value["engine"] == "ClamAV 1.5.4"
+        assert "not a malware-detection test" in value["limitation"]
+
+
+def test_default_doctor_does_not_implicitly_contact_scanner(monkeypatch, tmp_path):
+    from classifire.services import malware_scan
+
+    def forbidden(**kwargs):
+        raise AssertionError("Default doctor must not contact scanner")
+
+    monkeypatch.setattr(malware_scan, "scanner_status", forbidden)
+    monkeypatch.setattr(cli, "get_settings", lambda: Settings(_env_file=None, env="test"))
+    monkeypatch.setattr(cli, "repo_root", lambda: _doctor_root(tmp_path))
+    monkeypatch.setattr(cli, "SessionLocal", _PassingSession)
+    result = CliRunner().invoke(cli.app, ["doctor"])
+    assert result.exit_code == 0, result.output

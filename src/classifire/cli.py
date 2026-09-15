@@ -213,9 +213,38 @@ def worker(interval: float = typer.Option(2.0)) -> None:
 
 
 @app.command()
-def doctor() -> None:
-    """Run non-destructive environment, source and database checks."""
+def doctor(
+    scanner_only: bool = typer.Option(
+        False,
+        "--scanner-only",
+        help="Check scanner reachability/signatures without files or database access.",
+    ),
+) -> None:
+    """Run non-destructive checks; scanner network checks are explicit opt-in."""
     settings = get_settings()
+    if scanner_only:
+        from .services.malware_scan import MalwareScanError, scanner_status
+
+        try:
+            status = scanner_status(host=settings.clamav_host, port=settings.clamav_port)
+        except MalwareScanError as exc:
+            typer.echo(json.dumps({"error": exc.code, "file_scanned": False}, sort_keys=True))
+            raise typer.Exit(1) from exc
+        typer.echo(
+            json.dumps(
+                {
+                    "check": "scanner_reachability_and_signature_freshness",
+                    "engine": status.engine,
+                    "database_version": status.database_version,
+                    "database_date": status.database_date,
+                    "checked_at": status.checked_at,
+                    "file_scanned": False,
+                    "limitation": "This is not a malware-detection test or a clean-file verdict.",
+                },
+                sort_keys=True,
+            )
+        )
+        return
     root = repo_root()
     checks: list[tuple[str, str, str]] = []
     checks.append(
