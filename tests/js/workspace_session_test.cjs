@@ -179,3 +179,50 @@ for(const transition of ['stay','open another','clear'])test(`delayed rejection 
  assert.ok(x.calls.every(call=>call.url==='/workspace/assistant'||call.url.startsWith('/scopes/'+draft+'/native-proposals')),'No provider request or implicit Scope/package operation');
  assert.equal(x.panel.querySelector('.chat-form').elements.consent.checked,false);
 });
+
+
+test('Estimate line selection scopes preview, clears consent and never expands an empty selection', async()=>{
+ const panel=new Element(),host=new Element(),ask=new Element(),events=new Map();
+ const estimate='00000000-0000-4000-8000-000000000090';
+ panel.dataset={userId:'synthetic',draftId:draft,csrf:'synthetic-csrf'};
+ panel.querySelector('.chat-form').elements.question.value='Explain the selected prices';
+ host.dataset={estimateId:estimate,estimateRevision:'4'};
+ const boxes=Array.from({length:51},(_,index)=>({value:`00000000-0000-4000-8000-${String(index+100).padStart(12,'0')}`,checked:false,matches:()=>true,closest:()=>host}));
+ host.querySelectorAll=()=>boxes.filter(box=>box.checked);
+ host.querySelector=()=>ask;
+ ask.closest=()=>host;
+ const selector={draft_id:draft,revision:2,ids:[],records:[],matches:[],estimate:{estimate_id:estimate,estimate_revision:4},screen:{name:'estimates'},action:'advice'};
+ const doc={getElementById:id=>id==='workspace-chat'?panel:id==='workspace-chat-context'?{textContent:JSON.stringify(selector)}:null,querySelector:name=>name==='.chat-estimate-selection'?host:null,querySelectorAll:()=>[],addEventListener(name,fn){events.set(name,fn);},dispatchEvent(event){events.get(event.type)?.(event);},createElement:()=>new Element(),createTextNode:text=>({textContent:text}),body:new Element(),documentElement:new Element()};
+ const calls=[];
+ const context={document:doc,window:{document:doc,addEventListener(){}},location:{href:origin+'/scopes/'+draft,origin},URL,URLSearchParams,TextEncoder,AbortController,Headers,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},sessionStorage:{getItem:()=>null,removeItem(){},setItem(){}},fetch:async(url,options)=>{
+  calls.push({url,options});
+  if(url==='/workspace/assistant')return response('success',{enabled:true,model:'synthetic'});
+  assert.equal(url,'/workspace/assistant/context','This journey only previews, never calls a model or writes');
+  return response('success',{context_sha256:'a'.repeat(64),records:[],source_references:[],sections:[],selected_ids:[],summary:'Synthetic selected lines'});
+ }};
+ vm.runInNewContext(fs.readFileSync(path.join(assets,'workspace_chat.js'),'utf8'),context,{filename:'workspace_chat.js'});
+ await new Promise(setImmediate);
+ const preview=panel.querySelector('.chat-preview'),form=panel.querySelector('.chat-form');
+ assert.equal(ask.disabled,true);
+ await preview.fire('click');
+ const lastRequest=()=>JSON.parse(calls.at(-1).options.body);
+ assert.deepEqual(lastRequest().estimate.line_ids,[],'No initial line choice must not disclose all prices');
+ boxes[2].checked=true;boxes[0].checked=true;events.get('change')({target:boxes[0]});
+ assert.equal(ask.disabled,false);
+ events.get('click')({target:{closest:()=>ask}});
+ assert.equal(panel.querySelector('#workspace-chat-body').hidden,false);
+ await preview.fire('click');
+ assert.deepEqual(lastRequest().estimate.line_ids,[boxes[0].value,boxes[2].value]);
+ form.elements.consent.checked=true;
+ boxes[0].checked=false;boxes[2].checked=false;events.get('change')({target:boxes[0]});
+ assert.equal(form.elements.consent.checked,false);
+ assert.equal(panel.querySelector('.chat-send').disabled,true);
+ assert.equal(ask.disabled,true);
+ await preview.fire('click');assert.deepEqual(lastRequest().estimate.line_ids,[]);
+ boxes.forEach(box=>box.checked=true);events.get('change')({target:boxes[0]});
+ assert.equal(preview.disabled,true);assert.equal(ask.disabled,true);
+ assert.match(panel.querySelector('.chat-status').textContent,/at most 50/);
+ host.dataset.estimateRevision='3';boxes.forEach(box=>box.checked=false);events.get('change')({target:boxes[0]});
+ assert.equal(preview.disabled,true,'A stale revision must not replace the current selection');
+ assert.ok(calls.every(call=>['/workspace/assistant','/workspace/assistant/context'].includes(call.url)));
+});

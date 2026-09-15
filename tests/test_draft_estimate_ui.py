@@ -872,3 +872,27 @@ def test_corrupt_retained_subtotal_is_refused_without_export_audit(
         assert client.get(detail).status_code == 409
         assert client.get(f"{detail}/download?revision=2").status_code == 409
         assert _counts(app) == before
+
+
+def test_saved_estimate_lines_render_read_only_assistant_selection(estimate_app, tmp_path):
+    with TestClient(estimate_app.scope.app) as client:
+        _login(client)
+        path = _prepare(client)
+        detail = _new_estimate(client, path)
+        _add_line(client, detail)
+        saved = _snapshot(client, detail, 2)
+        before = _counts(estimate_app)
+        response = client.get(detail)
+        assert response.status_code == 200
+        assert f'data-estimate-id="{saved["artifact_id"]}"' in response.text
+        assert 'data-estimate-revision="2"' in response.text
+        assert f'data-chat-estimate-line value="{saved["lines"][0]["line_id"]}"' in response.text
+        assert 'chat-estimate-ask" disabled' in response.text
+        assert "Ask AI about selected lines" in response.text
+        assert _counts(estimate_app) == before
+        (tmp_path / "estimate.html").write_text(response.text, encoding="utf-8")
+        assert _snapshot(client, detail, 2) == saved
+        historical = client.get(detail + "?revision=1")
+        assert historical.status_code == 200
+        assert 'data-estimate-revision="1"' in historical.text
+        assert "data-chat-estimate-line value=" not in historical.text

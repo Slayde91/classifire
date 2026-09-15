@@ -19,11 +19,11 @@
   function report(text, error = false) { status.textContent = text; status.dataset.error = String(error); }
   function buttons() {
     const missing=selector.action==="propose_xlsx_scope" ? !selector.xlsx : selector.action==="propose_pdf_scope" ? !selector.pdf : selector.action==="propose_scope_edits" ? !selector.ids.length : selector.action==="propose_word_scope" ? !selector.word?.locators.length : false;
-    preview.disabled = busy || missing || unappliedArtifacts || selector.ids.length > 50 || selector.records.length > 20; send.disabled = !enabled || !ready || busy || missing;
+    preview.disabled = busy || missing || unappliedArtifacts || selector.ids.length > 50 || (selector.estimate?.line_ids?.length || 0) > 50 || selector.records.length > 20; send.disabled = !enabled || !ready || busy || missing;
   }
   function selectionLabel() {
     panel.querySelector(".chat-selection").textContent = selector.draft_id
-      ? `${selector.ids.length} register record(s); saved Scope revision ${selector.revision}; ${selector.word?.locators.length || 0} Word text block(s), ${selector.word?.picture_ids.length || 0} picture(s); PDF page ${selector.pdf?.page_number || "none"}; Excel rows ${selector.xlsx?.rows.join(", ") || "none"}. Unsaved edits are excluded.`
+      ? `${selector.ids.length} register record(s); saved Scope revision ${selector.revision}; ${selector.estimate ? (Array.isArray(selector.estimate.line_ids) ? `${selector.estimate.line_ids.length} selected Estimate line(s)` : "whole saved Estimate") : "no Estimate"}; ${selector.word?.locators.length || 0} Word text block(s), ${selector.word?.picture_ids.length || 0} picture(s); PDF page ${selector.pdf?.page_number || "none"}; Excel rows ${selector.xlsx?.rows.join(", ") || "none"}. Unsaved edits are excluded.`
       : `${selector.records.length} library record(s); ${selector.screen?.title || selector.screen?.name || "current workspace"}.`;
   }
   function storageRemove(name) { try { sessionStorage.removeItem(name); } catch { /* Storage is optional. */ } }
@@ -90,6 +90,25 @@
     if (JSON.stringify(ids) === JSON.stringify(selector.ids)) return;
     selector.ids = ids; reset(); if (ids.length > 50) { preview.disabled = true; report("Select at most 50 records.", true); }
   });
+  function syncEstimateLines(host) {
+    if (!host || !selector.estimate || host.dataset.estimateId !== selector.estimate.estimate_id || Number(host.dataset.estimateRevision) !== selector.estimate.estimate_revision) return false;
+    const ids = [...host.querySelectorAll("[data-chat-estimate-line]:checked")].map(input => input.value).sort();
+    const ask = host.querySelector(".chat-estimate-ask");
+    if (ask) ask.disabled = !ids.length || ids.length > 50;
+    if (JSON.stringify(ids) !== JSON.stringify(selector.estimate.line_ids)) {
+      selector.estimate.line_ids = ids; reset();
+      report(ids.length > 50 ? "Select at most 50 Estimate lines." : "Estimate line selection changed. Preview it and consent before sending.", ids.length > 50);
+    }
+    return true;
+  }
+  document.addEventListener("change", event => {
+    if (event.target.matches?.("[data-chat-estimate-line]")) syncEstimateLines(event.target.closest(".chat-estimate-selection"));
+  });
+  document.addEventListener("click", event => {
+    const ask = event.target.closest?.(".chat-estimate-ask");
+    if (!ask || ask.disabled) return;
+    if (syncEstimateLines(ask.closest(".chat-estimate-selection"))) open(true);
+  });
   for(const kind of ["word","pdf","xlsx"])document.addEventListener(`classifire:${kind}-selection`,event=>{
     const data=event.detail||{};
     if(!selector.draft_id||data.draftId!==selector.draft_id||JSON.stringify(selector[kind])===JSON.stringify(data[kind]))return;
@@ -114,7 +133,7 @@
       const matches = data.match_selections.map(value => {const ref=parseRef(value);return {match_id:ref.id,match_revision:ref.revision};});
       const estimate = data.estimate_selection ? parseRef(data.estimate_selection) : null;
       selector.matches=matches;selector.estimate=estimate ? {estimate_id:estimate.id,estimate_revision:estimate.revision} : null;
-      unappliedArtifacts=false;reset();report("Saved systems or prices changed. Preview the updated selection before sending.");
+      unappliedArtifacts=false;reset();syncEstimateLines(document.querySelector(".chat-estimate-selection"));report("Saved systems or prices changed. Preview the updated selection before sending.");
     } catch {
       unappliedArtifacts=true;reset();report("Saved selections could not be verified. Reopen this register before using the assistant.",true);
     }
@@ -405,6 +424,7 @@
   document.querySelectorAll('form[action="/logout"]').forEach(logout=>logout.addEventListener("submit",()=>{try{Object.keys(sessionStorage).filter(k=>k.startsWith("classifire-chat-v1:")).forEach(storageRemove);}catch{}reset();}));
   window.addEventListener("pagehide",()=>{saveThread();reset();});
   window.addEventListener("pageshow",event=>{if(event.persisted)reset();});
+  syncEstimateLines(document.querySelector(".chat-estimate-selection"));
   selectionLabel();buttons();
   fetch("/workspace/assistant",{credentials:"same-origin",cache:"no-store"}).then(async response=>{
     const info=await readResponse(response,"Assistant unavailable for this session.");enabled=info.enabled===true;
