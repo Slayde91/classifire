@@ -1,9 +1,9 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-15 against merged PR #277, its successful PR CI and the frozen
-local activation preparation. Post-merge CI is recorded separately below. This documentation
-follow-up changes no application code
-or deployment authority; the full production objective remains incomplete.
+Reconciled 2026-09-16 against merged PRs #278-#283 and their observed CI.
+Current main is `e28740e3bea071e8a917445a6833c693590d6cd9`. Post-merge
+results are recorded separately below. This documentation changes no application
+code or deployment authority; the full production objective remains incomplete.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
 [handoff](./SESSION_HANDOFF.md) gives the exact resume task.
@@ -19,16 +19,49 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Implemented code baseline | PR #277 merged `bf0e9fcd660072ab6c96ff7cc36bc6d952899c02` as `11ae2024143030410f62394c35681db20c41d818`; tested and merged trees match |
-| Pinned runtime | The isolated `8b4b79f` source/environment remains separate from this documentation checkout; its original branch/upstream are clean. This frozen activation candidate excludes PR #277 |
+| Implemented code baseline | PR #283 merged `887051a` as `e28740e3bea071e8a917445a6833c693590d6cd9`; the final tree exactly matches the tested six-change rehearsal |
+| Pinned runtime | The isolated `8b4b79f` source/environment remains separate from this documentation checkout; its original branch/upstream are clean. This frozen activation candidate excludes PRs #277-#283 |
 | PR #273 CI | PR run `34862079545` and post-merge `34869099059` succeeded; 2,647 tests |
 | PR #274 CI | PR run `34869742499` and post-merge `34873941741` succeeded; post-merge passed 2,658 tests |
 | PR #275 CI | PR run `34879918621` and post-merge `34883667900` succeeded; post-merge passed 2,658 tests |
 | PR #276 CI | PR run `34890268945` and post-merge `34894040919` succeeded; post-merge passed 2,667 tests in 1,987.85 seconds, plus style/build/type/security/migration checks |
-| PR #277 CI | PR run `34955271348` succeeded: 2,673 tests in 2,033.51 seconds, plus style/build/type/security/migration checks. Post-merge run `34958743322` was still running tests when checked at 10:54 UTC on 2026-09-15; no post-merge pass is claimed |
-| Publication | PRs #273-#277 are merged after successful checks and observed review requirements. No existing job was restarted or branch deleted |
-| Operational app | Port 8820 remains PID24324; the last approved receipt is rollback `6c1e2a4` with chat disabled. Prepared `8b4b79f` activation has not executed |
+| PR #277 CI | PR run `34955271348` succeeded: 2,673 tests in 2,033.51 seconds, plus style/build/type/security/migration checks. Post-merge run `34958743322` subsequently completed successfully; do not restart it |
+| Publication | PRs #273-#283 are merged after successful current-head checks and observed review requirements. #283 retained its original commit and resolved one guide conflict in a normal merge commit. No existing job was restarted or branch deleted |
+| Operational app | Last recorded port 8820 process was PID24324; the last approved receipt is rollback `6c1e2a4` with chat disabled. This publication work did not refresh live runtime state or execute the prepared activation |
 | Prepared activation | A private 23-file bundle is frozen and verified. Separate `3911ca4` diagnostic and exact `8b4b79f` activation approvals remain pending |
+
+## Six-change publication checkpoint
+
+| PR / change | Merge commit | PR CI | Post-merge CI |
+| --- | --- | --- | --- |
+| #278 bounded reference reads | `9a9b4fe` | `34974367450` passed, 2,677 tests | `34978560779` passed, 2,694 tests |
+| #279 state documentation | `b4e2134` | `34974388680` passed, 2,673 tests | `34978359729` passed, 2,690 tests |
+| #280 visible library record labels | `68baf00` | `34974413443` passed, 2,673 tests | `34977726569` passed, 2,673 tests |
+| #281 Windows installer failure boundaries | `853cd18` | `34974436734` passed, 2,673 Python tests and 9 Windows tests | `34979090162` passed, 2,694 Python tests and 9 Windows tests |
+| #282 read-only scanner diagnostic | `13a955e` | `34974459453` passed, 2,690 tests | `34978187658` passed, 2,690 tests |
+| #283 restored-page attachment race | `e28740e` | Original `34974479447` and updated-head `34979326537` passed; updated head had 2,694 Python tests and 9 Windows tests | `34983426541` passed, 2,694 Python tests and 9 Windows tests |
+
+The Windows-only cases are skipped by Linux and pass in their dedicated Windows
+job; those skips are not counted as Python passes. Every merged PR had successful
+current-head checks and no outstanding required review or requested changes. The
+repository had no main protection/rules at those gates; no control was bypassed.
+
+These changes bound reference reads before rejecting oversize input, identify library
+choices by visible record codes, stop the installer on native-command failures,
+expose an explicit scanner PING/VERSION diagnostic, and prevent an old decoded
+attachment refusal from clearing fresh Word/PDF/Excel cards after page restoration.
+The diagnostic does not scan files or establish malware efficacy. None changes
+schemas, migrations, authority, technical rules, prices or downstream invocation.
+
+The final merged tree is `65f55226207c9266989d1b1f79755df9eec5417d`, identical to
+the six-change rehearsal. Combined shipped JavaScript passed 58 cases; the wheel
+retained 326 exact files. The earlier five-change rehearsal passed 115 affected tests;
+the attachment fix separately passed nine unchanged HTTP tests on a new owned 15433
+database with one retained schema per case. Three-format headless browser checks used
+synthetic replies and explicit page lifecycle events, not native browser-cache navigation.
+These versioned results are not one full local suite or real-provider/scanner acceptance.
+Evidence: `C:/CLASSIFIRE/.tmp/six-publications-20260915/`,
+`publication-six-way-validation-20260915` and `attachment-restored-page-validation-20260915`.
 
 The earlier `d864c51` CI failure was explained by the native attachment's third form. The
 prepared strict correction verifies logout, attachment/CSRF/file controls and advice
@@ -255,7 +288,7 @@ index equivalence still require the independent deployment rehearsal.
 
 ## Migration and operational boundaries
 
-Earlier baseline `97c0778` uses 0047. Merged main `3591ac1` requires
+Earlier baseline `97c0778` uses 0047. Current merged main requires
 `0049_draft_proposal_decisions`, following `0048_draft_workspace_proposals`.
 Both add bounded history tables and refuse destructive downgrade. Attachment/review
 adapters and package v7 add no further database migration. Migration identifiers,
@@ -421,28 +454,32 @@ historical byte/recovery evidence, or change any production-phase status.
 
 ## Local change classification
 
-This follow-up reconciles four canonical documents only. Application code, tests,
-migrations, dependencies and the frozen runtime/activation bundle are unchanged.
-PR #277's seven-file selected-line feature and PR #276's six-file migration correction
-are already merged, not work to republish. The clean feature branch/upstream stays
-at `bf0e9fc`; main is `11ae202`. The earlier four-document commit `5eb7aa7` remains
-unpublished and preserved in its own worktree; this reconciliation supersedes its
-checkpoint, not its history. The separate three-file bounded-reference-reader fix
-`3032990` is also preserved and unpublished. Neither has approval from the `bf0e9fc`
-publication decision. This documentation branch is `docs/pr277-state-20260915`. PR #275's
-earlier package guidance was display-only and retained historical ZIP bytes and
-integrity checks; its detailed validation remains in Git and private receipts.
+This follow-up changes PROJECT_STATE and SESSION_HANDOFF only, on
+`docs/six-publications-state-20260916`, based on `e28740e`. Architecture and roadmap
+intent are unchanged. The six approved branches are published and merged; preserve
+them and their receipts. The earlier four-document `5eb7aa7` is superseded and remains
+unpublished in its own worktree. The five/six-change staged rehearsal trees are retained.
 
-Private operational scripts, profiles, originals/ZIPs, reports, credentials, backups
-and approval receipts stay outside Git. The root `C:/CLASSIFIRE` remains quarantined
-at `de0cc5a`: 46 unstaged modifications, 14 staged additions and four DU conflicts.
-Its private/untracked inventory is incomplete. No root content was staged, resolved,
-reset or published. See [local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
+Separate metadata fix `6e3214a` on `fix/native-proposal-metadata-validation-20260915`
+is committed locally and unpublished, pending its own exact four-file approval. It
+shares existing provider/model/canonical-time checks between local saved proposals
+and portable history. All 47 affected synthetic tests passed on base `853cd18`, with
+Ruff and unchanged-source targeted Mypy/Bandit evidence. It adds no raw provider
+response, prompt-version history or operational authority. Do not include it in the
+six earlier publication approvals or claim it is merged.
+
+Private scripts, profiles, originals/ZIPs, reports, credentials, backups and approval
+receipts stay outside Git. Root `C:/CLASSIFIRE` is preserved at `de0cc5a`: 46 unstaged
+modifications, 14 staged additions and four DU conflicts; private/untracked inventory
+is incomplete. No root changes were staged, resolved, reset or published. See
+[local change classification](./LOCAL_CHANGE_CLASSIFICATION.md).
 
 ## Recommended Next Actions
 
-1. **Finish observing the existing post-merge CI.** Check run `34958743322` on
-   `11ae202`; record its actual result. Do not restart it because observation timed out.
+1. **Review the prepared local publications.** All six approved PRs and their
+   post-merge runs passed. Metadata commit `6e3214a` and this two-document handoff
+   update each need their own exact publication approval, followed by successful
+   current-head CI and required reviews. Do not restart completed jobs.
 2. **Resolve the two exact operational approvals.** The existing single synthetic diagnostic is
    pinned to `3911ca4`; conditional activation is pinned to `8b4b79f` and the frozen
    23-file plan. Neither approval substitutes for the other. Old provider allowances
