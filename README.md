@@ -91,6 +91,11 @@ chmod +x install.sh
 
 The installer creates a virtual environment, installs QUANTIFIRE, copies `.env.example` to `.env` when required, and initialises the local database.
 
+The Windows installer stops at a failed Python, package or initialization command
+and reports the failed step and exit code. Later steps and the success message do
+not run after failure. Existing configuration and any partially created environment
+are preserved; correct the reported problem before running the installer again.
+
 Start the application:
 
 ```powershell
