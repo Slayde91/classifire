@@ -146,7 +146,7 @@
       const match = url.pathname.match(pattern); if (!match) continue;
       const value = `${kind}:${match[1]}`;
       const label = link.textContent.trim();
-      const rowLabel = /^(view|open|details)$/i.test(label) ? link.closest("tr")?.querySelector("td")?.textContent.trim() : label;
+      const rowLabel = /^(?:view|open|details|edit)(?:\s*\/\s*revise)?$/i.test(label) ? link.closest("tr")?.querySelector("td")?.textContent.trim() : label;
       if (!choices.has(value)) choices.set(value, {kind,id:match[1],label:`${rowLabel?.slice(0,120) || kind} (${match[1].slice(0,8)})`});
     }
   });

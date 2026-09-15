@@ -297,3 +297,40 @@ test('Estimate line selection scopes preview, clears consent and never expands a
  assert.equal(preview.disabled,true,'A stale revision must not replace the current selection');
  assert.ok(calls.every(call=>['/workspace/assistant','/workspace/assistant/context'].includes(call.url)));
 });
+
+
+for (const [route,kind,actionLabel,code] of [
+ ['products','product','Edit / revise','SYN-PRODUCT-A'],
+ ['labour','labour','Edit / revise','SYN-LABOUR-A'],
+ ['pricing','pricing_record','View / revise','SYN-RATE-A'],
+ ['technical/variants','technical_variant','View','SYN-VARIANT-A'],
+]) test(`library picker identifies ${kind} by its visible record code`, async()=>{
+ const panel=new Element(),picker=panel.querySelector('.chat-record-picker');
+ panel.dataset={userId:'synthetic',csrf:'synthetic-csrf'};
+ const first='00000000-0000-4000-8000-000000000101',second='00000000-0000-4000-8000-000000000102';
+ const link=(id,label,host=origin)=>({href:host+'/'+route+'/'+id+(route==='products'||route==='labour'?'/edit':''),textContent:actionLabel,closest:()=>({querySelector:()=>({textContent:label})})});
+ const links=[link(first,code),link(second,code.replace(/A$/,'B')),link(first,code),link(first,'EXTERNAL','https://unrelated.example.test')];
+ const selector={ids:[],records:[],matches:[],screen:{name:route.split('/')[0]},action:'advice'};
+ const doc={getElementById:id=>id==='workspace-chat'?panel:id==='workspace-chat-context'?{textContent:JSON.stringify(selector)}:null,querySelector:()=>null,querySelectorAll:name=>name==='#main-content table a[href]'?links:[],addEventListener(){},dispatchEvent(){},createElement:()=>new Element(),createTextNode:text=>({textContent:text}),body:new Element(),documentElement:new Element()};
+ const calls=[];
+ const context={document:doc,window:{document:doc,addEventListener(){}},location:{href:origin+'/'+route,origin},Option:class{constructor(text,value){this.textContent=text;this.value=value;this.selected=false;}},URL,URLSearchParams,TextEncoder,AbortController,Headers,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},sessionStorage:{getItem:()=>null,removeItem(){},setItem(){}},fetch:async(url,options)=>{
+  calls.push({url,options});
+  if(url==='/workspace/assistant')return response('success',{enabled:false,model:null});
+  assert.equal(url,'/workspace/assistant/context');
+  return response('success',{context_sha256:'a'.repeat(64),records:[],source_references:[],sections:[],selected_ids:[],summary:'Synthetic library context'});
+ }};
+ vm.runInNewContext(fs.readFileSync(path.join(assets,'workspace_chat.js'),'utf8'),context,{filename:'workspace_chat.js'});
+ await new Promise(setImmediate);
+ assert.equal(picker.children.length,2,'Duplicate and foreign-host links do not add choices');
+ assert.equal(picker.children[0].textContent,code+' ('+first.slice(0,8)+')');
+ assert.equal(picker.children[1].textContent,code.replace(/A$/,'B')+' ('+second.slice(0,8)+')');
+ assert.ok(picker.children.every(option=>!option.selected),'Listing must not select all records');
+ picker.selectedOptions=[picker.children[1]];
+ const form=panel.querySelector('.chat-form');form.elements.consent.checked=true;
+ await picker.fire('change');assert.equal(form.elements.consent.checked,false);
+ await panel.querySelector('.chat-preview').fire('click');
+ const body=JSON.parse(calls.at(-1).options.body);
+ assert.deepEqual(body.records,[{kind,id:second}]);
+ assert.ok(!JSON.stringify(body).includes(code),'DOM labels are display-only, not trusted context');
+ assert.equal(calls.length,2,'Only availability and explicit preview; no provider or write');
+});
