@@ -537,9 +537,9 @@ Repeated saved-proposal list refreshes also accept only the latest request's
 result. A delayed older success or failure cannot replace the current list/status
 or restore proposal controls after a newer session refusal. A completed rejection
 removes only its original proposal cards, including when another proposal was opened
-or the conversation cleared while it waited. The current shipped-script suite has
-35 passing Node cases; this is a synthetic DOM/event surface, not rendered-browser
-acceptance. Exact validation versions belong in PROJECT_STATE.md.
+or the conversation cleared while it waited. The shipped-script suite exercises
+these races and record selection on a synthetic DOM/event surface, not a browser
+renderer. Exact validation versions belong in PROJECT_STATE.md.
 
 The native panel treats same-origin login redirects and401 responses as an inactive
 session. It asks the user to sign in again and reload the workspace; it does not replay
@@ -551,3 +551,12 @@ existing authentication and separate confirmation boundaries remain unchanged.
 Development check: `node --test tests/js/workspace_session_test.cjs` executes the shipped
 scripts with a minimal event/DOM surface. The pytest wrapper runs it when Node.js is
 available and explicitly skips otherwise. This is not visual/browser acceptance.
+
+## Library record choices
+
+The shared panel identifies product, labour and pricing choices by the visible row's
+record code, rather than its generic View / revise or Edit / revise button text.
+Only supported same-origin record links become choices; repeated links are deduplicated.
+The selection still sends typed record identities only. Display labels are not model
+context or authority. Existing server reads, permissions, sensitive-value preview
+and consent remain unchanged; choosing a record neither edits it nor calls a model.
