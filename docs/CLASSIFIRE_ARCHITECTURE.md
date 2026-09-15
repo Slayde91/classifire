@@ -214,6 +214,15 @@ extensions requiring 0048/0049 as described above; package v7 adds no further mi
 No vector store or agent framework is introduced.
 This refines the interface under ADRs 0001/0002; their domain/authority rules remain.
 
+The Estimate screen extends the same typed context with optional `line_ids` and
+selected-line controls. An explicit list, including an empty one, restricts context
+to those lines in the exact saved revision; omitted/null preserves the earlier
+whole-Estimate API behavior. Duplicate/malformed IDs, missing lines and over-50 selections
+fail closed. Partial context withholds the whole-Estimate summary and recalculates
+no totals. Existing sensitive-value, ownership and stale-context checks still apply.
+This is an advisory extension to the existing panel, not a new Estimate edit or
+approval path. It adds no migration, dependency, service or writer.
+
 Detailed interaction, source-disclosure and acceptance requirements belong in
 [Embedded workspace assistant](./EMBEDDED_WORKSPACE_CHAT.md#approved-target-experience);
 delivery order belongs in the roadmap's
@@ -379,7 +388,7 @@ It refuses preparation, generated client policy and fixture-seeding modes. It do
 not migrate, stamp, adopt, repair or authorize activation of an existing database.
 
 Published baseline `97c0778` uses migration 0047 for retained Word sources. This
-local native-history stack requires `0049_draft_proposal_decisions`, following
+merged native-history stack requires `0049_draft_proposal_decisions`, following
 `0048_draft_workspace_proposals`. Both forward migrations refuse destructive
 downgrade. Word/PDF/XLSX attachment/review and ProjectPackage v7 reuse existing
 storage and writers; do not confuse their format changes with a database migration.
@@ -398,7 +407,7 @@ these documents. Current runtime and CI observations belong in
 
 | Gap / decision | Planned direction and validation needed |
 | --- | --- |
-| Native chat upload and reviewed page actions | Bounded attachment, evidence proposals and Scope edits are implemented locally; bounded synthetic Word decision/package browser acceptance passed; real-provider/live acceptance and broader typed actions remain |
+| Native chat upload and reviewed page actions | Bounded attachment, evidence proposals and Scope edits are merged; bounded synthetic Word decision/package browser acceptance passed; real-provider/live acceptance and broader typed actions remain |
 | Broader physical/evidence representation | Extend current graph and provenance only for a proven user need; explicit instances/planes/treatments and additional report formats need representative acceptance and compatible schemas |
 | General document jobs | Implement bounded resumable stages/attempts/leases/recovery over existing persistence when the interactive pilot establishes need; current worker has no handlers |
 | Technical corpus scale | T2-T8 require retained source revisions, per-field lineage, duplicate/reprocess policy, pagination and measured capacity; no mandatory vector database or agent fleet |
@@ -415,11 +424,16 @@ production phase nor retires OpenClaw.
 ## Immediate direction
 
 Follow [Recommended Next Actions](./PROJECT_STATE.md#recommended-next-actions):
-C1 still needs successful applicable CI and a separately approved diagnostic test
-and activation. C2 has synthetic native Word/PDF/XLSX journeys, with real-provider/live
-acceptance and broader coverage outstanding. C3 has a synthetically validated
-selected Scope replacement action. Explicit native proposal retention/reopening is
-implemented locally with explicit decision/revision links. Actual-app HTTP/server restart
+Applicable CI for the pinned code baseline has passed. C1 still needs the separately
+approved diagnostic, activation and real-model application acceptance. C2 has synthetic
+native Word/PDF/XLSX journeys, with real-provider/live acceptance and broader coverage
+outstanding. C3 has a synthetically validated
+selected Scope replacement action and bounded selected saved Estimate-line advice.
+The latter has synthetic service/HTTP and rendered selection/preview evidence, not
+real-provider acceptance or an Estimate edit contract. The frozen `8b4b79f` activation
+candidate excludes this later feature; shared code and deployed code are distinct.
+Explicit native proposal retention/reopening is
+merged with explicit decision/revision links. Actual-app HTTP/server restart
 passed for both the earlier decision candidate and local package-history commit23f5110.
 Selected history has targeted regression and exact synthetic database/storage recovery evidence.
 Source inspection retains transaction row locks for quarantine coordination; no-write behavior
