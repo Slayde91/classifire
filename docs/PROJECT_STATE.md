@@ -1,9 +1,8 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-16 against merged PRs #278-#283 and their observed CI.
-Current main is `e28740e3bea071e8a917445a6833c693590d6cd9`. Post-merge
-results are recorded separately below. This documentation changes no application
-code or deployment authority; the full production objective remains incomplete.
+Reconciled 2026-09-16 against merged PRs #278-#285 and their observed CI.
+Verified shared main is `9ceffc6efa05a2d0bd271c64b5d7785d80fe0659`. Post-merge
+results are recorded separately below. This checkpoint grants no deployment authority; the full production objective remains incomplete.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
 [handoff](./SESSION_HANDOFF.md) gives the exact resume task.
@@ -19,16 +18,41 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Implemented code baseline | PR #283 merged `887051a` as `e28740e3bea071e8a917445a6833c693590d6cd9`; the final tree exactly matches the tested six-change rehearsal |
-| Pinned runtime | The isolated `8b4b79f` source/environment remains separate from this documentation checkout; its original branch/upstream are clean. This frozen activation candidate excludes PRs #277-#283 |
+| Implemented code baseline | PR #284 metadata validation and PR #285 documentation are merged; main `9ceffc6` has tree `d101185956276a7ba2f6c4e6d078919dd0a65493`, matching the combined rehearsal |
+| Prepared runtime | Isolated `9ceffc6` passed offline install, disposable 15433 migration/HTTP and fingerprint checks. It is not activated. The earlier frozen `8b4b79f` bundle remains preserved |
 | PR #273 CI | PR run `34862079545` and post-merge `34869099059` succeeded; 2,647 tests |
 | PR #274 CI | PR run `34869742499` and post-merge `34873941741` succeeded; post-merge passed 2,658 tests |
 | PR #275 CI | PR run `34879918621` and post-merge `34883667900` succeeded; post-merge passed 2,658 tests |
 | PR #276 CI | PR run `34890268945` and post-merge `34894040919` succeeded; post-merge passed 2,667 tests in 1,987.85 seconds, plus style/build/type/security/migration checks |
 | PR #277 CI | PR run `34955271348` succeeded: 2,673 tests in 2,033.51 seconds, plus style/build/type/security/migration checks. Post-merge run `34958743322` subsequently completed successfully; do not restart it |
-| Publication | PRs #273-#283 are merged after successful current-head checks and observed review requirements. #283 retained its original commit and resolved one guide conflict in a normal merge commit. No existing job was restarted or branch deleted |
+| Publication | PRs #273-#285 are merged after successful current-head checks and observed review requirements. #283 retained its original commit and resolved one guide conflict in a normal merge commit. No existing job was restarted or branch deleted |
 | Operational app | Last recorded port 8820 process was PID24324; the last approved receipt is rollback `6c1e2a4` with chat disabled. This publication work did not refresh live runtime state or execute the prepared activation |
-| Prepared activation | A private 23-file bundle is frozen and verified. Separate `3911ca4` diagnostic and exact `8b4b79f` activation approvals remain pending |
+| Prepared activation | New `9ceffc6` operational bundle is incomplete, disabled and unapproved. The approved single `3911ca4` diagnostic connected but failed semantic acceptance; its allowance is consumed. No activation followed |
+
+## Latest chat diagnosis and correction
+
+PR #284 merged `cddefd1`; post-merge run `34993231847` passed. PR #285 merged
+`9ceffc6`; post-merge run `34993421048` passed. Both were reobserved successful
+at their exact merge commits; no CI job was restarted. Their combined local
+rehearsal passed 191 Python and 58 Node cases with no skips, plus full Ruff and
+326 exact wheel files. See private `two-publications-20260916` receipts.
+
+The owner approved one bounded synthetic `gpt-5-mini` diagnostic at `3911ca4`.
+The exact runtime fingerprint matched and the single call returned valid structured
+advice. Semantic inspection failed: it invented a conflict between services sharing
+one opening and another reported separate blank opening. Unknown physical verification
+must not be confused with contradictory saved relationships. No retry or activation
+was performed; the earlier browser HTTP502 cause remains unknown.
+
+The current isolated correction adds a selected-record relationship projection and
+clarifies the existing advisory instructions. Seven focused cases passed. The broader
+run passed 178 cases; all 74 PostgreSQL skips subsequently passed in a fresh isolated
+schema on port 15433. With the additional legacy-context case, 253 distinct affected
+cases passed. All seven retained ZIPs passed inspection and three embedded Word/PDF/Excel
+originals matched retained bytes exactly. Full Ruff, targeted Mypy/Bandit and the
+326-file offline wheel check passed. Exact publication status is in the task receipt. It adds
+no writer, migration or dependency and does not establish model accuracy or C1
+operational acceptance. See [the interaction contract](./EMBEDDED_WORKSPACE_CHAT.md#saved-scope-relationships-in-advisory-context).
 
 ## Six-change publication checkpoint
 
@@ -177,13 +201,15 @@ result matched a fresh migration reference under the declared comparison excepti
 This is fixed-input historical evidence, not a general adoption command or live proof.
 Evidence: `C:/CLASSIFIRE/.tmp/atomic-migration-validation-20260915/`.
 
-## Prepared local activation and recovery
+## Historical 8b4b79f activation and recovery preparation
 
 The pinned `8b4b79f` source/environment passed final fingerprint verification. The
 private plan is `C:/CLASSIFIRE/.tmp/live-activation-8b4b79f-20260915/activation-plan-8b4b79f.md`;
 its `script-manifest.json`, `final-preparation-verification.json` and `continuation.json`
 record the 23-file binding and actual evidence. Activation approval remains false.
-The separate single-request diagnostic stays pinned to `3911ca4` and has not run.
+The separate `3911ca4` diagnostic subsequently ran once with approval and failed
+semantic acceptance despite a valid response. Its allowance is consumed. The newer
+`9ceffc6` operational bundle is separate, incomplete and disabled.
 
 Disposable PostgreSQL on port 15433 rehearsals passed historical metadata conversion,
 existing 0047 upgrade and current 0049 no-op paths. Fresh matched backup/restore
@@ -205,7 +231,9 @@ corrected. Changed identity is refused before stopping; the actual PowerShell st
 wrapper refuses false approval before credential access. Private harness corrections
 and earlier failures remain evidence.
 
-Recovery keeps compatible `8b4b79f` with chat disabled and preserves later work. It
+That historical recovery keeps `8b4b79f` with chat disabled for its tested inputs.
+It does not establish compatibility with newer selected Estimate `line_ids`; the
+new plan must retain a current compatible binary. It
 does not restore an old backup over new data or assume `6c1e2a4` can read v7 history.
 An unverified schema/process failure may leave the app offline with all state retained;
 that limitation is explicit in the approval request. No live port15432 SQL, live backup,
@@ -260,8 +288,9 @@ raw check-expression text differed after PostgreSQL dump/restore and is recorded
 an explicit representation limitation. Both retained original files matched their
 historical manifests. This is not fresh-live-state, original-owner/ACL or activation proof.
 The subsequent headless browser journey above passed bounded 0049/v7 acceptance.
-The later exact preparation is now frozen and awaiting its separate approvals,
-as recorded above; these historical checks are not fresh live evidence.
+The older 8b4b79f preparation remains frozen and unapproved. The one 3911ca4
+diagnostic has since been consumed and failed content review; these historical
+checks are not fresh live evidence or approval for a newer runtime.
 
 ## Startup lineage enforcement follow-up
 
@@ -454,19 +483,18 @@ historical byte/recovery evidence, or change any production-phase status.
 
 ## Local change classification
 
-This follow-up changes PROJECT_STATE and SESSION_HANDOFF only, on
-`docs/six-publications-state-20260916`, based on `e28740e`. Architecture and roadmap
+This correction changes two existing chat services, one synthetic regression test,
+the interaction contract, PROJECT_STATE and SESSION_HANDOFF on
+`fix/chat-saved-link-context-20260916`, based on `9ceffc6`. Architecture and roadmap
 intent are unchanged. The six approved branches are published and merged; preserve
 them and their receipts. The earlier four-document `5eb7aa7` is superseded and remains
 unpublished in its own worktree. The five/six-change staged rehearsal trees are retained.
 
-Separate metadata fix `6e3214a` on `fix/native-proposal-metadata-validation-20260915`
-is committed locally and unpublished, pending its own exact four-file approval. It
-shares existing provider/model/canonical-time checks between local saved proposals
-and portable history. All 47 affected synthetic tests passed on base `853cd18`, with
-Ruff and unchanged-source targeted Mypy/Bandit evidence. It adds no raw provider
-response, prompt-version history or operational authority. Do not include it in the
-six earlier publication approvals or claim it is merged.
+Metadata fix `6e3214a` is now merged through PR #284 as `cddefd1`, with
+successful PR and post-merge CI. It shares the existing provider/model/canonical-time
+checks between local saved proposals and portable history; it adds no raw provider
+response history or operational authority. The current relationship-grounding change
+is separate and must follow its own exact publication and CI/review gates.
 
 Private scripts, profiles, originals/ZIPs, reports, credentials, backups and approval
 receipts stay outside Git. Root `C:/CLASSIFIRE` is preserved at `de0cc5a`: 46 unstaged
@@ -476,22 +504,21 @@ is incomplete. No root changes were staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Review the prepared local publications.** All six approved PRs and their
-   post-merge runs passed. Metadata commit `6e3214a` and this two-document handoff
-   update each need their own exact publication approval, followed by successful
-   current-head CI and required reviews. Do not restart completed jobs.
-2. **Resolve the two exact operational approvals.** The existing single synthetic diagnostic is
-   pinned to `3911ca4`; conditional activation is pinned to `8b4b79f` and the frozen
-   23-file plan. Neither approval substitutes for the other. Old provider allowances
-   are consumed; do not infer approval from a continuation prompt.
-3. **Execute only after the gates pass.** Run the single approved diagnostic once and
-   review its actual reply. Activate only after that success, exact activation approval
-   and successful applicable CI. Use fresh matched backup/restore, conditional migration
-   and recovery; do not restart jobs merely because observation timed out.
-4. **Complete real-model C1/C2/C3 acceptance.** After activation, perform the separately
-   scoped in-context browser journey. Preserve distinct Scope/package confirmations
-   and inspect retained outputs. HTTP readiness or one transport reply is not full
-   application acceptance. Do not repeat original completed Word confirmations.
+1. **Review the saved-relationship correction for publication.** Its affected checks
+   passed; inspect the exact six-file commit and task receipt, obtain its publication
+   approval and follow its own PR CI/review gates. PRs #284/#285 are already complete.
+2. **Prepare a new bounded content test.** The `3911ca4` allowance is consumed and
+   semantic acceptance failed. Do not retry it or reinterpret transport success as
+   content acceptance. Any new request needs an exact candidate/body and fresh approval.
+3. **Finish the current activation plan before approval.** The prepared `9ceffc6`
+   runtime is not activated; the new operational bundle is incomplete and disabled.
+   Include the final corrected version, exact successful CI, backup/disposable restore,
+   conditional migration, restart and compatible recovery. Older frozen plans remain
+   historical and cannot authorize a newer version.
+4. **Complete real-model C1/C2/C3 acceptance after separate approval.** Preserve
+   distinct Scope/package confirmations and inspect retained outputs. HTTP readiness
+   or one transport reply is not full application acceptance. Do not repeat completed
+   original Word confirmations.
 5. **Advance independent product gates.** Broader typed actions, I2/N1 connector
    transport, reviewed technical/commercial semantics, T11-T14 evaluation, full
    physical/history coverage and Phase8-16 production exits remain incomplete.
@@ -517,7 +544,7 @@ passed dependency checks, two installed-package HTTP starts and five exact-outpu
 Word/XLSX worker modes. System/user site-packages were disabled. These are private
 local validation results. PRs #273/#274 and both post-merge runs subsequently passed.
 No live activation, provider request or new human approval is implied. These are
-historical combined-candidate receipts; the pinned activation version is now `8b4b79f`.
+historical combined-candidate receipts; neither `8b4b79f` nor the newer prepared runtime is activated.
 
 The pinned source demo launcher and fresh Python environment also completed two
 actual loopback HTTP starts on8838 with guarded migrated15433 startup. Login and all19

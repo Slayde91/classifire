@@ -58,6 +58,29 @@ preview; logging out or explicitly clearing removes it. There is no server-side
 general conversation store. Optional saved proposals and decisions are separate
 retained records requiring migrations 0048/0049, as described above.
 
+## Saved Scope relationships in advisory context
+
+Scope previews include a deterministic `scope_relationships` projection of the
+already-disclosed records: each opening's saved blank flag, defect link and the IDs
+of services in this preview that reference it, plus explicitly unlinked services.
+It is included in the existing context size limit and preview hash. It does not
+load additional records or infer physical topology, quantities or verification.
+Selecting an opening alone does not disclose its unselected services; an empty
+visible service list is not proof that the opening is blank.
+
+The shared transport instructions distinguish saved relationship fields from labels
+and prior assistant interpretations. Multiple services sharing one saved opening can
+coexist with another blank opening. Genuine conflicting claims must remain explicit,
+with their fields/entities identified; provisional facts are not automatically conflicts.
+No saved data, confirmation gate, schema migration, provider setting or dependency changes.
+Older retained contexts remain historical; new previews with this projection have a new hash.
+
+Offline tests cover the projection, selection boundary, preview hash and disclosed
+request. They do not prove model accuracy. The approved single synthetic diagnostic
+connected but invented an opening-label conflict; content acceptance and C1 browser
+acceptance remain incomplete. Any further real-provider test or activation needs a
+separately approved exact plan.
+
 ## Selected saved Estimate lines
 
 Saved Estimate pages provide checkboxes and **Ask AI about selected lines** in the
