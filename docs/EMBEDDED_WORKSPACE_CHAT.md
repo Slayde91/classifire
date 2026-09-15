@@ -58,6 +58,28 @@ preview; logging out or explicitly clearing removes it. There is no server-side
 general conversation store. Optional saved proposals and decisions are separate
 retained records requiring migrations 0048/0049, as described above.
 
+## Selected saved Estimate lines
+
+Saved Estimate pages provide checkboxes and **Ask AI about selected lines** in the
+working screen. Select up to 50 lines, preview the exact context, and explicitly
+include commercial details and consent before sending. Selection changes clear the
+old preview, conversation and consent. An empty page selection includes no line
+values; it never silently expands to all lines.
+
+The existing typed Estimate selector accepts optional `line_ids`. Omitted or null
+keeps the earlier whole-Estimate context contract for existing clients. An explicit
+list, including an empty list, limits context to those exact saved-revision lines.
+Duplicate, invalid, oversized or missing-line selections are refused. Partial
+selection excludes the overall Estimate summary; it does not calculate replacement
+totals. Unknown and zero values stay distinct. With sensitive details off, prices
+and line values remain withheld. Existing Scope/Estimate permissions and exact
+preview-hash checks still apply before and after a reply.
+
+This extends the current permission-checked context reader and native panel. It adds
+no model, writer, migration or dependency. Advice does not edit prices or quantities,
+recalculate the Estimate, approve a technical system or run downstream capabilities.
+Real-provider and live acceptance remain separate from synthetic validation.
+
 ## Architecture and boundaries
 
 Current architecture: authenticated page -> selected Scope context -> existing

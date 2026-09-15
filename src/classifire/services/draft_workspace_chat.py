@@ -276,6 +276,17 @@ class ContextEstimate(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     estimate_id: Identity
     estimate_revision: Revision
+    line_ids: Annotated[list[Identity], Field(max_length=50)] | None = None
+
+    @model_validator(mode="after")
+    def selected_lines(self) -> ContextEstimate:
+        if self.line_ids is not None:
+            if len(set(self.line_ids)) != len(self.line_ids):
+                raise ValueError("duplicate estimate line selection")
+            if any(str(UUID(value)) != value for value in self.line_ids):
+                raise ValueError("canonical estimate line identity required")
+            self.line_ids.sort()
+        return self
 
 
 class ContextRecord(BaseModel):
@@ -740,6 +751,17 @@ def workspace_context(
                 "revision": estimate["revision"],
                 "sha256": estimate["sha256"],
             }
+            selected_lines = estimate["lines"]
+            if chosen.line_ids is not None:
+                by_id = {line["line_id"]: line for line in selected_lines}
+                if any(line_id not in by_id for line_id in chosen.line_ids):
+                    raise DraftScopeError("CHAT_ESTIMATE_LINE_NOT_FOUND", 422)
+                selected_lines = [by_id[line_id] for line_id in chosen.line_ids]
+                record["selected_line_ids"] = chosen.line_ids
+                context["limitations"].append(
+                    "Only selected saved Estimate lines are included; "
+                    "the whole-Estimate summary is withheld. No totals are recalculated."
+                )
             records.append(record)
             detail = dict(record)
             embedded = estimate["system_match"]
@@ -752,7 +774,6 @@ def workspace_context(
                 detail.update(
                     currency=estimate["currency"],
                     tax_treatment=estimate["tax_treatment"],
-                    summary=estimate["summary"],
                     lines=[
                         {
                             key: line[key]
@@ -773,9 +794,13 @@ def workspace_context(
                                 "omission_reason",
                             )
                         }
-                        for line in estimate["lines"]
+                        for line in selected_lines
                     ],
                 )
+                if chosen.line_ids is None:
+                    detail["summary"] = estimate["summary"]
+                else:
+                    detail["summary_withheld"] = True
             else:
                 detail["details_withheld"] = True
             sections.append({"title": "Selected saved Estimate; no recalculation", "data": detail})

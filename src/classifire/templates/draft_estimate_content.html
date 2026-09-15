@@ -52,14 +52,17 @@
   <dl class="scope-import-details"><dt>Review ID</dt><dd class="scope-item-id">{{ envelope.system_match.artifact_id }}</dd><dt>Review checksum</dt><dd class="scope-item-id">{{ envelope.system_match.sha256 }}</dd></dl>
 </section>
 {% endif %}
-<section class="panel" aria-labelledby="estimate-lines-heading">
+<section class="panel chat-estimate-selection" aria-labelledby="estimate-lines-heading" data-estimate-id="{{ envelope.artifact_id }}" data-estimate-revision="{{ envelope.revision }}">
   <h2 id="estimate-lines-heading">Saved work lines</h2>
+  <p class="scope-hint">Select up to 50 saved lines to discuss with the assistant. Preview the context and choose whether to include commercial details. Unsaved changes and whole-estimate totals are excluded from a line selection.</p>
+  <button type="button" class="button button-secondary chat-estimate-ask" disabled>Ask AI about selected lines</button>
   <p class="scope-hint">Each action saves one new estimate revision. Save changes in one form before opening another target, history revision or page. Targets, units, descriptions and original values stay fixed after addition.</p>
   {% for line in envelope.lines %}
   {% set attempted = error_line_id == line.line_id %}
   {% set values = form_values if attempted else {} %}
   <article class="scope-item" data-estimate-target="{{ line.target_kind }}:{{ line.target_id }}" id="estimate-line-{{ line.line_id }}" aria-labelledby="line-heading-{{ line.line_id }}">
     <div class="scope-import-item-heading"><h3 id="line-heading-{{ line.line_id }}">{{ loop.index }}. {{ line.label }}</h3><span class="badge badge-draft">{{ line.pricing_status }}</span></div>
+    <label class="scope-check"><input type="checkbox" data-chat-estimate-line value="{{ line.line_id }}"> Discuss {{ line.label }} with AI</label>
     <p class="scope-preserve-text">{{ line.description }}</p>
     <dl class="scope-import-details">
       <dt>Work basis</dt><dd>{{ 'Service-specific work, excluding shared-opening work' if line.target_kind == 'service' else 'Blank-opening closure only' }}</dd>

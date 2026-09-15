@@ -538,3 +538,110 @@ def test_prior_assistant_cannot_add_current_citations(chat_case):
 
         with pytest.raises(scopes.DraftScopeError, match="CHAT_RESPONSE_INVALID"):
             chat.workspace_answer(db, actor, parsed, settings=settings(), port=InvalidPort())
+
+
+@pytest.mark.parametrize("line_ids", [[uid(1), uid(1)], [uid(i) for i in range(51)], ["A" * 36]])
+def test_estimate_line_selector_rejects_invalid_or_unbounded_ids(line_ids):
+    with pytest.raises(scopes.DraftScopeError, match="CHAT_INPUT_INVALID"):
+        chat.parse_workspace(
+            request(
+                draft_id=uid(90),
+                revision=1,
+                estimate={"estimate_id": uid(91), "estimate_revision": 1, "line_ids": line_ids},
+            )
+        )
+
+
+def test_selected_estimate_lines_limit_disclosure_and_preserve_saved_values(match_case):
+    from classifire.services import draft_estimates
+
+    x = match_case
+    with x["factory"]() as db:
+        actor, estimate, _, _ = prepared(db, x)
+        db.commit()
+        envelope = draft_estimates.read_estimate_revision(db, actor, x["draft_id"], estimate.id, 4)
+        ids = [line["line_id"] for line in envelope["lines"]]
+        selected = sorted(ids[1:])
+        before = {
+            table.name: sorted(repr(tuple(row)) for row in db.execute(select(table)))
+            for table in models.Base.metadata.sorted_tables
+        }
+        parsed = chat.parse_workspace(
+            request(
+                draft_id=x["draft_id"],
+                revision=2,
+                include_sensitive=True,
+                consent=True,
+                estimate={
+                    "estimate_id": estimate.id,
+                    "estimate_revision": 4,
+                    "line_ids": selected[::-1],
+                },
+            )
+        )
+        preview = chat.workspace_context(db, actor, parsed)
+        detail = next(s["data"] for s in preview["sections"] if "Estimate;" in s["title"])
+        assert [line["line_id"] for line in detail["lines"]] == selected
+        assert {line["quantity"] for line in detail["lines"]} == {"0", None}
+        assert {line["subtotal_ex_tax"] for line in detail["lines"]} == {"0.00", None}
+        assert "summary" not in detail and detail["summary_withheld"] is True
+        assert ids[0] not in json.dumps(preview)
+        assert detail["selected_line_ids"] == selected
+        assert any("No totals are recalculated" in text for text in preview["limitations"])
+        parsed.context_sha256 = preview["context_sha256"]
+        calls = []
+
+        class SyntheticPort:
+            def complete(self, context, request):
+                calls.append(context)
+                return {
+                    "answer": "One selected quantity is unknown.",
+                    "uncertainty": ["Unverified Draft"],
+                    "record_ids": [estimate.id],
+                    "source_ids": [],
+                }
+
+        answer = chat.workspace_answer(db, actor, parsed, settings=settings(), port=SyntheticPort())
+        assert answer["context"] == preview and calls == [preview]
+        parsed.estimate.line_ids = []
+        empty = chat.workspace_context(db, actor, parsed)
+        empty_detail = next(s["data"] for s in empty["sections"] if "Estimate;" in s["title"])
+        assert empty_detail["lines"] == [] and "summary" not in empty_detail
+        assert empty["context_sha256"] != preview["context_sha256"]
+        with pytest.raises(scopes.DraftScopeError, match="CHAT_CONTEXT_CHANGED"):
+            chat.workspace_answer(db, actor, parsed, settings=settings(), port=SyntheticPort())
+        assert len(calls) == 1
+        parsed.estimate.line_ids = selected
+        parsed.include_sensitive = False
+        private = chat.workspace_context(db, actor, parsed)
+        private_detail = next(s["data"] for s in private["sections"] if "Estimate;" in s["title"])
+        assert private_detail["details_withheld"] is True
+        assert "lines" not in private_detail and "summary" not in private_detail
+        assert before == {
+            table.name: sorted(repr(tuple(row)) for row in db.execute(select(table)))
+            for table in models.Base.metadata.sorted_tables
+        }
+
+
+def test_estimate_line_selection_is_bound_to_exact_saved_revision(match_case):
+    from classifire.services import draft_estimates
+
+    x = match_case
+    with x["factory"]() as db:
+        actor, estimate, _, _ = prepared(db, x)
+        envelope = draft_estimates.read_estimate_revision(db, actor, x["draft_id"], estimate.id, 4)
+        last_line = envelope["lines"][-1]["line_id"]
+        for revision, line_id in [(2, last_line), (4, uid(999))]:
+            parsed = chat.parse_workspace(
+                request(
+                    draft_id=x["draft_id"],
+                    revision=2,
+                    estimate={
+                        "estimate_id": estimate.id,
+                        "estimate_revision": revision,
+                        "line_ids": [line_id],
+                    },
+                )
+            )
+            with pytest.raises(scopes.DraftScopeError, match="CHAT_ESTIMATE_LINE_NOT_FOUND"):
+                chat.workspace_context(db, actor, parsed)
