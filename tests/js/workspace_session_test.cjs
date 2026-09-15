@@ -19,7 +19,7 @@ class Element {
  async fire(name){const callback=this.events.get(name);assert.ok(callback,`Missing ${name} event`);await callback({preventDefault(){}});}
 }
 function response(mode,payload){
- const status=mode==='unauthorized'?401:mode==='known_error'?422:200;
+ const status=mode==='unauthorized'?401:mode==='forbidden'?403:mode==='missing'?404:mode==='known_error'?422:200;
  const login=mode==='login',html=login||mode==='html';
  const raw=html?'<!doctype html>PRIVATE-HTML-PAYLOAD':mode==='broken'?'{PRIVATE-JSON-PAYLOAD':JSON.stringify(payload);
  return {ok:status>=200&&status<300,status,redirected:login,url:origin+(login?'/login?next=/scopes/'+draft:'/response'),headers:new Headers({'Content-Type':html?'text/html; charset=utf-8':'application/json; charset=utf-8'}),async json(){return JSON.parse(raw);}};
@@ -64,6 +64,77 @@ test('known context refusal remains specific',async()=>{assert.equal((await exer
 test('known source refusal remains specific',async()=>{assert.equal((await exercise('attachments','known_error')).text,'This report is not ready for inspection. Review its scan status.');});
 
 test('availability network failure keeps a fixed message',async()=>{assert.equal((await exercise('availability','network')).text,'Assistant unavailable for this session.');});
+
+
+for (const kind of ['word', 'pdf', 'xlsx']) {
+ for (const outcome of ['forbidden', 'missing', 'malformed-error', 'success']) {
+  test(`${kind}: restored attachment page ignores delayed ${outcome} body`, async () => {
+   const panel = new Element(), section = new Element(), lifecycle = new Map();
+   panel.dataset = {draftId: draft, csrf: 'synthetic-csrf'};
+   section.dataset.sourceKind = kind;
+   section.open = true;
+   panel.querySelectorAll = name => name === '.chat-attachments' ? [section] : [];
+   const list = section.querySelector('.chat-word-sources');
+   const events = [], calls = [];
+   const doc = {
+    getElementById: id => id === 'workspace-chat' ? panel : null,
+    addEventListener() {}, dispatchEvent(event) { events.push(event); },
+    createElement: () => new Element(), createTextNode: text => ({textContent: text}),
+   };
+   const source = {id: 'synthetic-source', filename: `fresh.${kind}`, size_bytes: 12, status: 'pending', sha256: 'a'.repeat(64), ready: false};
+   const fresh = {draft_id: draft, max_upload_bytes: 1024, can_write: true, reference: 'SYNTHETIC', name: 'Restored page', sources: [source]};
+   let releaseBody, bodyStarted = false;
+   const body = new Promise((resolve, reject) => { releaseBody = outcome === 'malformed-error' ? () => reject(new Error('PRIVATE-BODY')) : () => resolve(outcome === 'success' ? {...fresh, sources: []} : {detail: 'DENIED'}); });
+   const context = {
+    document: doc, window: {addEventListener: (name, handler) => lifecycle.set(name, handler)},
+    location: {href: origin + '/scopes/' + draft, origin}, URL, URLSearchParams,
+    CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } },
+    fetch: async (url, options) => {
+     calls.push({url, options});
+     assert.equal(url, `/scopes/${draft}/assistant/${kind}`);
+     if (calls.length === 1) return {
+      ...response('success', {}), ok: outcome === 'success', status: outcome === 'success' ? 200 : outcome === 'missing' ? 404 : 403,
+      json() { bodyStarted = true; return body; },
+     };
+     assert.equal(calls.length, 2, 'Old work must not trigger another request');
+     return response('success', fresh);
+    },
+   };
+   vm.runInNewContext(fs.readFileSync(path.join(assets, 'workspace_word.js'), 'utf8'), context, {filename: 'workspace_word.js'});
+   const pending = section.querySelector('.chat-word-refresh').fire('click');
+   await new Promise(setImmediate);
+   assert.equal(bodyStarted, true, 'Old response headers arrived but its body is still pending');
+   lifecycle.get('pagehide')({});
+   assert.equal(list.children.length, 0);
+   lifecycle.get('pageshow')({persisted: true});
+   await new Promise(setImmediate);
+   assert.equal(list.children.length, 1);
+   const currentCard = list.children[0], currentStatus = section.querySelector('.chat-word-status').textContent;
+   const selectedEvents = events.length;
+   releaseBody();
+   await pending;
+   await new Promise(setImmediate);
+   assert.equal(list.children[0], currentCard, 'An old response must not erase or replace current source cards');
+   assert.equal(section.querySelector('.chat-word-status').textContent, currentStatus);
+   assert.equal(section.querySelector('.chat-word-upload').querySelector('button').disabled, false);
+   assert.equal(events.length, selectedEvents, 'An old response must not alter current evidence selection');
+   await section.fire('toggle');
+   await new Promise(setImmediate);
+   assert.equal(calls.length, 2, 'The current loaded state must survive an old response');
+   assert.ok(calls.every(call => !call.options.method), 'Only retained-source reads; no upload, scan or model call');
+  });
+ }
+}
+
+
+for (const kind of ['word', 'pdf', 'xlsx']) for (const mode of ['forbidden', 'missing']) {
+ test(`${kind}: current ${mode} response still clears inaccessible attachment cards`, async () => {
+  const result = await exercise('attachments', mode, kind);
+  assert.equal(result.section.querySelector('.chat-word-sources').children.length, 0);
+  assert.equal(result.section.querySelector('.chat-word-upload').querySelector('button').disabled, true);
+  assert.equal(result.text, 'Request refused. Check your session, access and report scan status.');
+ });
+}
 
 async function historyRace(deferLists=false){
  const panel=new Element();panel.dataset={userId:'synthetic',draftId:draft,csrf:'synthetic-csrf'};
