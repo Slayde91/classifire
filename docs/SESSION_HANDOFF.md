@@ -8,30 +8,54 @@ The full production objective remains incomplete.
 
 ## Selected checkout and scope
 
-Continue in `C:/CLASSIFIRE/.tmp/atomic-migration-connection-20260915`, branch
-`fix/atomic-migration-connection-20260915`, based on merged main `3591ac1`.
-The six-file follow-up extends the existing Alembic runner to preserve an explicitly
-supplied active PostgreSQL transaction, adds regression coverage and reconciles four
-canonical documents. Migration revisions, standalone/SQLite operation and application
-authority are unchanged. Its own CI/review gate remains pending.
+PR #277 merged `bf0e9fcd660072ab6c96ff7cc36bc6d952899c02` as
+`11ae2024143030410f62394c35681db20c41d818` after PR CI34955271348 passed
+2,673 tests in 2,033.51 seconds plus style/build/type/security/migration checks.
+Tested and merged trees match; no required reviews were outstanding at merge.
+Post-merge CI34958743322 was still running tests at 10:54 UTC on 2026-09-15.
+Observe that existing run; do not infer a pass or start a duplicate/replacement job.
+The existing local watch session is 74887 while available. Its durable output is
+`C:/CLASSIFIRE/.tmp/assistant-estimate-line-validation-20260915/postmerge-ci-watch.log`.
+The feature branch/upstream remains clean at `bf0e9fc`; main is `11ae202`.
 
-PR #275 merged the display-only package-guidance correction as `3591ac1`, exactly the
-916bae6 tree. PR run 34879918621 and post-merge run 34883667900 both passed 2,658 tests and all
-other applicable checks; post-merge tests took 1,941.86 seconds with 386 warnings.
+PR #276 previously merged `8b4b79f81c2e85984675f2d00882a707709270be` as
+`ef9a29faf45d70dc2b9d3c6cd5c80fa8740a0be0`; tested and merged trees match.
+PR CI34890268945 and post-merge CI34894040919 succeeded. Post-merge passed
+2,667 tests in 1,987.85 seconds, 386 warnings, plus style/build/type/security/migration
+checks. The correction preserves a caller-owned PostgreSQL migration transaction;
+62 distinct targeted tests and full-dump injected rollback evidence also passed.
+It changes no migration revision, schema head, dependency or application authority.
+Do not republish or rebuild it, and do not restart completed CI jobs.
 
-PR #273 merged guarded migrated restart as `46fc436`; PR run 34862079545 passed
-2,647 tests, and post-merge 34869099059 completed successfully. PR #274 merged
-packaging verification as `3911ca4819fca6cc4662289cc3eb77c83f713675`, with exactly
-the tested 8025729 tree. PR run 34869742499 passed 2,658 tests; post-merge 34873941741
-passed 2,658 tests in 1,908.17 seconds, 386 warnings, plus every applicable build,
-style, type, security and migration check. No existing job was restarted or branch deleted.
+The pinned deployment checkout remains
+`C:/CLASSIFIRE/.tmp/atomic-migration-connection-20260915`, branch/upstream
+`fix/atomic-migration-connection-20260915`, clean at `8b4b79f` when observed.
+Immutable source/environment artifacts are under `atomic-release-8b4b79f-20260915`.
+This documentation follow-up uses the separate checkout
+`C:/CLASSIFIRE/.tmp/docs-pr277-state-20260915`, branch
+`docs/pr277-state-20260915`, based on `11ae202`. It reuses and updates the four-document
+patch from preserved unpublished `5eb7aa7`; that earlier worktree is unchanged.
+This new payload needs its own exact approval for publication to the public repository. It is not an
+activation candidate. Separate unpublished reader fix `3032990` remains preserved.
+The user approved publication of `bf0e9fc` only; that approval is not approval for
+these other commits, a model call or activation.
 
-The earlier native Word/PDF/XLSX adapters, selected Scope edits, proposal/decision
-retention, v7 package history and review race/permission fixes are merged. Do not
-rebuild them or duplicate the old standalone 8bce0b0 test correction. Older failures,
-review scopes and approvals remain in Git history and private receipts.
+PRs #273-#275, native Word/PDF/XLSX adapters, selected Scope edits, proposal/decision
+retention, v7 history and review race/permission fixes are already merged. Their CI
+and acceptance receipts remain in project state and Git. Do not rebuild them or
+duplicate the old standalone `8bce0b0` test correction. No branch was deleted.
 
 ## New acceptance evidence
+
+Selected Estimate-line advice passed 104 affected Python tests, 36 Node tests,
+targeted static/security checks and the final checkbox-layout regression. Owned
+headless Chrome exercised actual rendered HTML/shipped scripts with stubbed
+availability/preview replies, desktop/390px visual inspection and keyboard controls.
+Changed selection clears consent; explicit empty selection never expands to all
+lines; partial context omits whole-Estimate totals. No model or Estimate edit ran.
+Read the completion, merge and browser receipts in
+`C:/CLASSIFIRE/.tmp/assistant-estimate-line-validation-20260915`.
+The frozen `8b4b79f` activation candidate does not include this PR #277 feature.
 
 Read `C:/CLASSIFIRE/.tmp/native-headless-acceptance-8025729-20260915/acceptance-receipt.json`
 and its artifact, proposal-only and rejection receipts. Installed Chrome ran headlessly
@@ -56,7 +80,7 @@ no model/scanner call. This is synthetic UI acceptance, not representative accur
 real-model/scanner efficacy, live deployment or production certification. Preserve
 harness failures and corrected observations; do not repeat original user confirmations.
 
-Combined source/build 25dd47d passed 78 affected tests, exact 326-file wheel verification,
+Historical combined source/build 25dd47d passed 78 affected tests, exact 326-file wheel verification,
 fresh offline installation, two installed HTTP starts and five isolated Word/XLSX
 worker modes. See `combined-release-25dd47d-20260915` receipts. The pinned demo
 launcher plus fresh environment then passed two actual HTTP starts on 8838, exact 19
@@ -86,56 +110,93 @@ remain unverified. Historical equivalence does not authorize live baseline adopt
 
 ## Next executable task
 
-Finish the atomic migration transaction follow-up: inspect the six-file diff,
-complete relevant checks, commit explicit paths, push and create/reuse its PR. Observe
-successful exact-head CI and required reviews before merge; then record post-merge CI.
-Poll existing jobs without restarting merely because observation timed out.
+First finish observing post-merge run34958743322 for `11ae202`. Record its actual
+conclusion, then reconcile this checkpoint if it changed. The operational approvals
+below remain separate and must not be inferred from feature publication or CI success.
 
-The unwanted second migration connection was reproduced first. All 17 targeted tests
-passed, plus 44 startup/foundation tests, full Ruff/Mypy and scoped Bandit.
-The strengthened final nine transaction tests also passed; 62 distinct affected tests
-are covered across these runs. Historical-copy rehearsal also proved
-all 162 conversion statements plus verified 0047 attestation and 0048/0049 upgrades share
-one transaction: failures after attestation and after upgrade restored the full dump;
-the success case committed with old rows unchanged. Read the receipts under
-`C:/CLASSIFIRE/.tmp/atomic-migration-validation-20260915` for actual outcomes.
+The exact private preparation is under
+`C:/CLASSIFIRE/.tmp/live-activation-8b4b79f-20260915`. Read its
+`activation-plan-8b4b79f.md`, `script-manifest.json`,
+`final-preparation-verification.json` and `continuation.json` before any operation.
+The plan and 23 operational files are frozen; activation approval remains false.
+Separate approval questions have been sent, not answered or inferred.
 
-Matched historical/native database-and-file recovery passed on port 15433. Old `6c1e2a4` read
-historical Scopes/packages but refused native-history v7 packages. Current `3911ca4` opened
-both recovered native ZIPs with exact bytes, including the original DOCX and selected
-revision 2 decision. These were TestClient checks; no new live/provider/browser acceptance
-is implied. Do not assume full old-version write compatibility or erase later work.
+The single synthetic diagnostic remains pinned to `3911ca4` under
+`C:/CLASSIFIRE/.tmp/native-diagnostic-3911ca4-20260915/diagnostic-plan-3911ca4.md`.
+Do not repin it, read the key, spend a request or reuse consumed allowances without
+its exact approval. It permits one request with no retry. Review the actual reply
+and preserve unknowns; a transport reply is not application acceptance.
 
-Then finish the exact activation plan: pinned source/environment, fresh live backup,
-disposable restore verification, owner/grants, current storage linkage, drift,
-conditional migration and rollback. Obtain the required separate operational/provider
-approval only for a concrete reviewed plan. Keep C1 and real-provider C2/C3 acceptance
-open. Independent connector, technical/pricing, full-history and Phase 8-16 gates remain.
+Only after that approved diagnostic passes, its semantic review is recorded and
+exact activation approval exists may the prepared live steps execute. Verify the
+already-successful applicable CI, then use the fresh backup/restore, conditional
+migration and pinned startup plan. Poll existing handles; an observation timeout
+is not permission to restart. Neither approval confirms Scope, a package or a
+downstream capability. Continue independent useful work while approval is pending.
 
-Use `C:/CLASSIFIRE/.tmp/native-stack-test-env-20260914/Scripts/python.exe`, selected
-checkout `src` on PYTHONPATH, `-p no:cacheprovider` and unique basetemp. Clear inherited
-live/model configuration. PostgreSQL tests use owned 15433 databases, never live 15432;
-do not overlap fixtures that drop the same database. Never log real key/env contents.
+## New operational preparation evidence
 
-Preserve root `C:/CLASSIFIRE` at `de0cc5a`: 46 unstaged modifications, 14 staged additions,
-4 DU conflicts and unrelated private/untracked files; inaccessible old test directories
-limit the untracked inventory. No root changes were staged, resolved, reset or published.
-The six atomic-migration follow-up files are the only intended publication. Private profiles,
-reports, receipts, originals/ZIPs, credentials and pinned rollback checkouts stay intact.
+All database rehearsals used owned PostgreSQL on port 15433, never live port15432. Fresh matched
+capture/restore and conditional migration passed metadata, existing 0047 and current 0049
+entry paths. Injected failures rolled the whole source dump back exactly; successful
+upgrades retained old rows. Only 16 precise CHECK serialization pairs across 12 tables
+may compare equal after independent reference proof; unexpected changes are refused.
+
+Read-only prestart checks passed all three paths and refused source drift. Actual
+hidden startup on the owned PostgreSQL15433/HTTP8857 fixture served login and all 19 exact assets,
+preserved database/files and stopped only its recorded tree. A new failure-state
+capture retained a later synthetic edit and both originals in a verified restore.
+Compatible chat-disabled recovery prestart and actual HTTP startup/cleanup passed.
+Prestart and actual launch used their respective owned fixtures, not one completed
+live activation. The stop helper's missing local hash object was reproduced and fixed;
+the actual PowerShell startup wrapper refuses false approval before credential access.
+Private harness import/encoding corrections and prior failures remain evidence.
+
+Recovery retains compatible `8b4b79f` with chat disabled and preserves later work.
+It never restores an old backup over new data. Unverified schema or ownership may
+leave the app offline for diagnosis; this limitation is explicit in the approval plan.
+Old `6c1e2a4` read historical artifacts but cannot read native-history v7 packages.
+Current-version copied recovery retained those ZIPs and their original DOCX exactly;
+this does not establish general old-version write compatibility or rollback.
+
+C1 and real-model C2/C3 acceptance remain open. Broader selected-record actions,
+connector transport, representative accuracy, technical/pricing semantics, portable
+history and Phase8-16 exits remain incomplete. Keep blank openings valid with zero
+Services and unresolved links held for review. No live/provider action is implied.
+
+## Local work and verification discipline
+
+This follow-up changes four canonical documents only. The frozen runtime/activation
+bundle is unchanged. Private scripts, profiles, reports, originals/ZIPs, credentials,
+backups and approval receipts stay outside Git. Preserve root `C:/CLASSIFIRE` at
+`de0cc5a`: 46 unstaged modifications, 14 staged additions, four DU conflicts and unrelated
+private/untracked files. Its untracked inventory is incomplete. Do not stage, resolve,
+reset or publish that checkout.
+
+Use the selected checkout's `src` on PYTHONPATH and a unique pytest basetemp with
+`-p no:cacheprovider` for affected application tests. Clear inherited live/model
+configuration. PostgreSQL tests use owned port15433 fixtures, never live port15432; do not
+overlap destructive fixtures. The operational bundle has its own exact interpreter
+and environment rules. Do not modify frozen files after approval.
 
 ## Copy-ready next-session prompt
 
-Continue CLASSIFIRE from verified repository state. Read AGENTS.md and canonical
-state, architecture, roadmap and handoff. Inspect atomic-migration-connection-20260915,
-branch/upstream/diff and existing PR/CI. Main `3591ac1` merged PR #275; its post-merge
-34883667900 passed 2,658 tests and all other checks. The local migration correction lets
-an explicit active PostgreSQL connection retain caller commit/rollback control. It has
-62 distinct affected passing tests and historical-copy conversion rollback evidence;
-inspect remaining validation receipts and finish authorized publication/CI/review/merge.
-Do not restart existing jobs because observation timed out. Preserve the conflicted
-root and private fixtures. Existing headless Word acceptance and user project/Scope/package
-confirmations are complete. Old `6c1e2a4` cannot read native v7 packages; current-version
-copied recovery preserves them. Finish the exact fresh backup/restore/roles/storage/
-conditional migration/restart/recovery bundle. The single `3911ca4` model diagnostic is
-still separately pending approval; do not repin or reuse old allowances. No live port 15432
-work or activation is implied. Keep C1, broader accuracy and production gates open.
+Continue CLASSIFIRE from current Git, code and receipts. Read AGENTS.md and canonical
+project state, architecture, roadmap and handoff. PR #277 is merged as `11ae202`
+with PR CI34955271348 successful; post-merge run34958743322 was still running at
+this checkpoint. Poll its existing watch/run and record the actual result. PR #276
+and its post-merge CI passed previously. Do not rebuild completed work or restart
+existing jobs because observation timed out. Inspect the new documentation branch
+`docs/pr277-state-20260915` separately; preserved `5eb7aa7` and reader fix `3032990`
+remain unpublished. Only the seven-file `bf0e9fc` feature publication was approved.
+Preserve the conflicted root and private data. The 23-file `8b4b79f` activation plan is
+frozen under `live-activation-8b4b79f-20260915`; verify its manifest and actual approval
+state. Separate `3911ca4` diagnostic and `8b4b79f` conditional-activation approvals are
+pending. Do not infer them from continuation prompts or old approvals. After exact
+approval, run only the bounded single diagnostic, review its reply, then follow the
+approved fresh backup/restore, conditional migration/startup and recovery gates.
+Recovery preserves later data and uses the compatible version with chat disabled;
+unverified failures may leave it offline. Prior Word confirmations and synthetic
+native browser acceptance are complete within their recorded scope. Real-model
+application acceptance, broader accuracy and production gates remain open. Continue
+independent useful work while awaiting required operational approval.
