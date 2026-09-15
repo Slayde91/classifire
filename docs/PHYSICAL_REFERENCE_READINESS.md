@@ -11,6 +11,11 @@ The existing `phase8_human_reference_comparison.py` service and
 proposal with an explicitly supplied post-inference reference. They have no database,
 inference, signing or lock interface. Reuse them for their supported contract.
 
+Artifact reads stop at the existing 5 MiB limit plus one byte before rejecting an
+oversized input. Empty and oversized files remain errors; a valid file at the
+limit remains accepted. This bounds the read itself and preserves exact-byte
+hashes for accepted inputs. It does not change comparison or approval rules.
+
 The mixed known/unknown service-value fix `f882106` is already merged through PR
 #261 as `095ee3d` and present in the selected `6012d15` baseline. It preserves null
 material/quantity values while comparing groups independently of input order. Do not

@@ -58,7 +58,8 @@ def _read_json_object(path: Path, *, label: str) -> tuple[dict[str, Any], str]:
             f"{label}: {path}",
         )
     try:
-        raw = path.read_bytes()
+        with path.open("rb") as stream:
+            raw = stream.read(MAX_ARTIFACT_BYTES + 1)
     except OSError as exc:
         raise Phase8HumanReferenceComparisonError(
             "ARTIFACT_UNREADABLE",

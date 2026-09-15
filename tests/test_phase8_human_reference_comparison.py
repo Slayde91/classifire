@@ -3,8 +3,11 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -14,8 +17,10 @@ from classifire.services.phase8_human_reference_comparison import (
     HUMAN_COMPARISON_SCHEMA,
     HUMAN_REFERENCE_PURPOSE,
     HUMAN_REFERENCE_SCHEMA,
+    MAX_ARTIFACT_BYTES,
     Phase8HumanReferenceComparisonError,
     compare_phase8_human_reference,
+    validate_phase8_human_reference,
 )
 from classifire.services.phase8_property_assessments import PROPERTY_ASSESSMENT_SCHEMA
 from classifire.services.phase8_visual_prompts import current_visual_prompt_profile_hashes
@@ -842,3 +847,42 @@ def test_cli_writes_mismatch_receipt_and_returns_two(
     assert saved == printed
     assert saved["status"] == "MISMATCH"
     assert saved["canonical_write_performed"] is False
+
+
+@pytest.mark.parametrize(
+    "size", [0, MAX_ARTIFACT_BYTES, MAX_ARTIFACT_BYTES + 1, 2 * MAX_ARTIFACT_BYTES]
+)
+def test_reference_read_enforces_size_limit_before_loading_whole_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, size: int
+) -> None:
+    path = tmp_path / "human-reference.json"
+    reference = json.dumps(_reference([])).encode("utf-8")
+    path.write_bytes(reference.ljust(size, b" ") if size else b"")
+    original_open = Path.open
+    bytes_read = 0
+    streams = []
+
+    @contextmanager
+    def counted_open(opened_path: Path, *args: Any, **kwargs: Any) -> Iterator[Any]:
+        nonlocal bytes_read
+        with original_open(opened_path, *args, **kwargs) as stream:
+            streams.append(stream)
+
+            def read(*read_args: Any, **read_kwargs: Any) -> bytes:
+                nonlocal bytes_read
+                data = stream.read(*read_args, **read_kwargs)
+                bytes_read += len(data)
+                return data
+
+            yield SimpleNamespace(read=read)
+
+    monkeypatch.setattr(Path, "open", counted_open)
+    if 0 < size <= MAX_ARTIFACT_BYTES:
+        validate_phase8_human_reference(path)
+    else:
+        with pytest.raises(Phase8HumanReferenceComparisonError) as error:
+            validate_phase8_human_reference(path)
+        assert error.value.code == "ARTIFACT_SIZE_INVALID"
+
+    assert bytes_read <= MAX_ARTIFACT_BYTES + 1
+    assert streams and all(stream.closed for stream in streams)
