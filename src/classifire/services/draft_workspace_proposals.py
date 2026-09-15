@@ -91,6 +91,8 @@ def offer(
 
 
 def _document(value: Any) -> tuple[dict[str, Any], str]:
+    from .draft_scope_reports import _utc_text
+
     if not isinstance(value, dict) or set(value) != {
         "schema",
         "id",
@@ -111,9 +113,13 @@ def _document(value: Any) -> tuple[dict[str, Any], str]:
         if (
             value["schema"] != SCHEMA
             or len(raw.encode()) > MAX_BYTES
+            or value["provider"] not in {"openai", "injected"}
+            or not isinstance(value["model"], str)
+            or not 1 <= len(value["model"]) <= 200
             or any(str(UUID(value[k])) != value[k] for k in ("id", "actor_id", "draft_id"))
         ):
             raise ValueError("binding")
+        _utc_text(value["generated_at"])
         request = chat.parse_workspace(value["request"])
         if (
             request.action not in ACTIONS

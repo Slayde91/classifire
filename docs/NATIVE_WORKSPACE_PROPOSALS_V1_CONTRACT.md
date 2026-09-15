@@ -31,6 +31,12 @@ input bytes are excluded; retained source/image identities bind the context inst
 This is not the raw provider wire response, prompt-version history or full reproducible
 model execution. The configured model label is not proof of a resolved provider version.
 
+Local reads and portable history share the same metadata checks: provider is `openai`
+or `injected`, the configured model label is a string of 1-200 characters, and generation
+time uses the existing canonical UTC timestamp format. A matching stored hash does not
+make malformed metadata valid. These checks preserve accepted v1 bytes and do not add
+raw responses, prompt history, technical approval or model-version proof.
+
 The server issues a signed, actor/Draft/document-hash-bound save authorization valid
 for 15 minutes. Saving requires active current write permission, actual Draft ownership,
 CSRF, the exact generated document and unchanged context. The service locks the Draft,

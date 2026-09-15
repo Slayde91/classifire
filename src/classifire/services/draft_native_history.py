@@ -94,12 +94,8 @@ def validate(content: bytes, reference: Reference, scope: dict[str, Any]) -> dic
             or original["context"].get("draft_id") != original["draft_id"]
             or original["context"].get("revision") != original["base_revision"]
             or original["context"].get("project_id") != scope["project_id"]
-            or original["provider"] not in {"openai", "injected"}
-            or not isinstance(original["model"], str)
-            or not 1 <= len(original["model"]) <= 200
         ):
             raise ValueError("proposal binding")
-        reports._utc_text(original["generated_at"])
         if (
             original["base_revision"] == scope["revision"]
             and original["context"].get("scope_sha256") != scope["sha256"]
