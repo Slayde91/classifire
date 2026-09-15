@@ -154,3 +154,19 @@ JSON hashes survived a process restart; A source version 2 reopened and profile 
 did not advance the Estimate. Native visual inspection was blocked by the browser
 sandbox helper, so repeat layout inspection when available. No real workbook meaning,
 source rights, production scale or price accuracy is claimed.
+
+
+## Bottom-up preview arithmetic
+
+The independent T10 bottom-up preview uses the saved Estimate's 40-digit decimal
+precision for supported quantities and rates, rounds each exact line product half
+up to two decimal places, then sums those rounded lines. Ambient decimal precision
+must not change a valid quantity, amount or total. This prevents an extra cent when
+a high-value product lies just below a half-cent rounding boundary.
+
+This is an arithmetic correction within the existing read-only preview. It does not
+change reviewed rates, quantity evidence, recovery rules or saved Estimate history.
+Missing, stale or incompatible prerequisites still withhold totals. No migration is
+needed. `test_draft_pricing_precision.py` checks both quantity modes against an
+independent integer calculation and the saved Estimate calculation; existing
+bottom-up and quantity tests cover permissions, persistence and exact downloads.
