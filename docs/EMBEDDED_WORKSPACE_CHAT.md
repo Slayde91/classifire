@@ -552,6 +552,13 @@ Development check: `node --test tests/js/workspace_session_test.cjs` executes th
 scripts with a minimal event/DOM surface. The pytest wrapper runs it when Node.js is
 available and explicitly skips otherwise. This is not visual/browser acceptance.
 
+Attachment reads also remain tied to the current page lifecycle while response bodies
+are decoded. After leaving and restoring the page, an older permission/missing-source
+error cannot clear freshly loaded Word, PDF or Excel cards or change their loaded
+state. Current access refusals still clear inaccessible cards. Page restoration
+refreshes retained-source metadata only; it does not replay uploads, scans or model
+requests, select evidence, or confer consent.
+
 ## Library record choices
 
 The shared panel identifies product, labour and pricing choices by the visible row's

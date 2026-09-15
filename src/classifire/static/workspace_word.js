@@ -51,6 +51,7 @@
     }
     if (!response.ok) {
       let code = ""; try { code = (await response.json()).detail; } catch { /* Fixed safe fallback. */ }
+      if (current !== generation) throw new Error("Workspace changed. Refresh retained reports.");
       if ([401, 403, 404].includes(response.status)) { list.replaceChildren(); loaded = false; }
       throw new Error(errors[code] || "Request refused. Check your session, access and report scan status.");
     }
