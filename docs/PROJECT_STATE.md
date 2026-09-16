@@ -32,7 +32,9 @@ The fresh synthetic diagnostic plan targets exact merged `b2f8785`, with all six
 verified, 67 offline gate tests, guarded capture of the unchanged request and a fresh matching
 runtime fingerprint. Its approval is false and its attempt marker absent. The unapproved
 d0a9f39 plan is superseded because its single-head merge-tree assumption did not fit the
-combined merge. A fresh one-call approval is required; activation remains separate.
+combined merge. A fresh one-call approval is required; activation remains separate. The question has been
+presented but remains unanswered at the requested session handoff. The handoff request itself
+does not approve the diagnostic. Exact resume paths and evidence are in [the handoff](./SESSION_HANDOFF.md).
 
 ## Current position
 

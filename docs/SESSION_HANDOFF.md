@@ -74,3 +74,74 @@ The approved three-publication workflow is complete, including post-merge CI. Cl
 work-log browser gate, review/classify the exact diff, and continue publication only on
 verified evidence. The next model test has its own prepared exact approval request.
 Provider diagnostics and operational adoption remain separately governed actions.
+
+
+## Next-session entry point (2026-09-16 handoff)
+
+Use `C:/CLASSIFIRE/.tmp/draft-work-evidence-log-20260916`, branch
+`feat/draft-work-evidence-log-20260916`. Implementation is commit `653505b`; publication
+and diagnostic documentation is `d524f18`. Read the current branch HEAD for any later
+handoff-only commit. This branch has no upstream and has not been pushed or assigned a PR.
+Do not start from the conflicted root or accidentally publish the entire candidate before
+its browser acceptance gate. The three completed fix branches retain their origin upstreams.
+
+At this handoff, GitHub main, the three merged PRs and all six completed successful runs
+were freshly rechecked. The diagnostic approval is still false, its attempt marker is absent,
+and final offline admission evidence is 67 passed / zero failed / zero skipped. The separate
+one-call question was presented but has not been answered. A handoff request is not that
+approval. No live app/database/configuration read or activation was performed for this refresh.
+
+### Private evidence index
+
+All following paths are under `C:/CLASSIFIRE/.tmp/`; keep them local and out of public Git.
+
+- `continuation-blockers-20260916/publication-completion.json`: three exact publications,
+  merge commits and all six CI run identities. The individual merge-gate receipts record
+  the review/rules checks performed at merge. Older pending observations are superseded.
+- `work-record-validation-20260916/validation-completion.json`: 119 distinct affected tests
+  and retained failed/corrected attempts; JUnit files, `archive-inspection.json` and
+  `distribution.json` contain the test, four ZIP and 333-file wheel evidence.
+- `work-record-validation-20260916/commit-receipt.json`: 42-file implementation checkpoint;
+  `handoff-commit-receipt.json`: d524f18 documentation checkpoint;
+  `final-local-state.json`: preserved root and branch/upstream inventory.
+- `chat-grounding-diagnostic-b2f8785-20260916/diagnostic-plan-b2f8785.md`: exact new one-call
+  plan. Read `preparation-completion.json`, `six-ci-results.json`, `gate-tests-final.xml`,
+  `connection-approval.json` and the guarded capture/runtime fingerprint receipts before action.
+- `diagnostic-source-b2f8785-20260916`: clean detached b2f8785 source for that model test.
+  It deliberately excludes the unpublished work log and migration 0050.
+
+### Resume order and limits
+
+1. Read this worktree's AGENTS, PROJECT_STATE, roadmap and work-record contract. Inspect
+   branch/diff/worktree registry and private receipts again; preserve all unrelated changes.
+2. Restore supported browser access, then run synthetic isolated work-log acceptance:
+   select explicit target/evidence, preview without writes, separately confirm, reopen after
+   restart, and inspect the original-bearing ZIP/HTML. Verify blank/shared/unresolved targets
+   and stale/quarantined/foreign-source refusal. Record screenshots and exact artifacts.
+   HTTP tests are supporting evidence, not the missing rendered-browser proof.
+3. Fix only evidenced defects. Use this checkout's PYTHONPATH, fresh basetemp and
+   `-p no:cacheprovider`. Database rehearsals stay on disposable 15433 with fresh owned
+   schemas. Never use live 15432. Then review explicit files/commit range and continue the
+   authorized publication workflow only after the UI gate; observe CI and required reviews,
+   merge on success and observe post-merge CI. Do not restart a job because observation times out.
+4. Independently, obtain or verify a NEW exact approval for the b2f8785 diagnostic plan.
+   It permits one synthetic gpt-5-mini request, no retry, max 5000 output tokens. Only after
+   real approval bind its exact quote/time and approved hashes, then use the guarded existing
+   wrapper. Inspect the complete response for invented relationships, missing unknowns or
+   false suitability/approval claims. Consumed allowances stay consumed even on failure.
+5. Any activation needs a new candidate-specific backup, disposable restore/migration,
+   restart and rollback plan plus separate approval. Migration 0050 refuses destructive
+   downgrade to preserve work-record history; plan rollback compatibility explicitly.
+
+For offline checks, `C:/Python312-x64/python.exe` has the validation tools. It lacks some
+optional app/build dependencies; the proven complete runtime is
+`C:/CLASSIFIRE/.tmp/combined-release-25dd47d-20260915/clean-runtime/Scripts/python.exe`,
+and existing build tools are under `publication-integration-validation-20260915/build-tools`.
+Select the needed environment explicitly, clear inherited application/provider/database
+settings, and run from a private directory without .env before importing the app. Never print
+or copy the secured chat configuration. Do not blindly reuse old runner output/schema names.
+
+A local work log records unverified claims, not installation acceptance or sign-off. Direct
+site-photo intake, work-report PDF/XLSX, package work history, representative accuracy and
+production exit gates remain unfinished. Live 8820's last recorded rollback state is not a
+fresh runtime observation and cannot demonstrate this new work.
