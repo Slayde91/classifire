@@ -262,6 +262,7 @@ def test_postgresql_fresh_history_and_native_upgrade_preserve_scope_package(
         "draft_workspace_proposal_decisions",
         "draft_work_records",
         "draft_work_record_revisions",
+        "draft_work_photo_sources",
     }
     foreign_keys = inspect(engine).get_foreign_keys("draft_scope_docx_sources")
     assert any(
@@ -275,7 +276,7 @@ def test_postgresql_fresh_history_and_native_upgrade_preserve_scope_package(
         )
     refusal = _run_migration(url, environment, "downgrade", BASELINE, expect_success=False)
     assert refusal.returncode != 0
-    assert "Retained Draft work records cannot be downgraded" in refusal.stderr
+    assert "Retained Draft work photos cannot be downgraded" in refusal.stderr
     assert _version(engine) == (HEAD, "VARCHAR(32)")
     with Session(engine) as db:
         actor = db.get(User, identities[0])
