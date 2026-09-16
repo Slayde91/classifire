@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, localcontext
 from typing import Any, Literal, cast
 
 from sqlalchemy.orm import Session
@@ -43,7 +43,9 @@ def _quantity(value: str | None, unit: str) -> str | None:
         raise DraftScopeError("BOTTOM_UP_QUANTITY_INVALID", 422)
     if unit == "each" and number != number.to_integral_value():
         raise DraftScopeError("BOTTOM_UP_QUANTITY_INVALID", 422)
-    return format(number.normalize(), "f")
+    with localcontext() as context:
+        context.prec = 40
+        return format(number.normalize(), "f")
 
 
 def _money(value: Decimal) -> str:
@@ -208,7 +210,10 @@ def preview_bottom_up(
         amount = None
         if not reasons and rate is not None and quantity is not None:
             try:
-                amount = _money(Decimal(quantity) * Decimal(rate))
+                # Match saved estimates: retain the exact product before cent rounding.
+                with localcontext() as decimal_context:
+                    decimal_context.prec = 40
+                    amount = _money(Decimal(quantity) * Decimal(rate))
             except (InvalidOperation, ValueError):
                 reasons.append("rate_invalid")
         lines.append(
@@ -242,11 +247,15 @@ def preview_bottom_up(
     calculated = bool(lines) and all(
         line["calculation"]["status"] == "calculated" for line in lines
     )
-    total = (
-        _money(sum((Decimal(line["calculation"]["amount_ex_tax"]) for line in lines), Decimal("0")))
-        if calculated
-        else None
-    )
+    with localcontext() as decimal_context:
+        decimal_context.prec = 40
+        total = (
+            _money(
+                sum((Decimal(line["calculation"]["amount_ex_tax"]) for line in lines), Decimal("0"))
+            )
+            if calculated
+            else None
+        )
     result = {
         "schema_version": SCHEMA,
         "draft_scope_id": draft_id,
