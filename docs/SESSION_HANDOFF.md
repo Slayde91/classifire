@@ -1,28 +1,34 @@
 # CLASSIFIRE Session Handoff
 
-Reconciled 2026-09-16 against GitHub, current source and private validation receipts.
+Reconciled 2026-09-17 against GitHub, current source and private validation receipts.
 Repository evidence outranks this checkpoint. The full production goal remains incomplete.
 
-## Shared main and completed publications
+## Runtime implementation and completed publications
 
-Shared main is `1d692556d4c342d363c273b084f5ad736e5dd4df`.
+The verified runtime implementation baseline is
+`009cbc9766c4990b937acb2ca4720a17628e927d`.
 
-| PR | Published change | Verified merge | Successful PR run | Successful post-merge run |
+| PR | Published change | Verified merge | Successful PR run | Post-merge run |
 | --- | --- | --- | --- | --- |
-| #286 | saved Scope chat links | `c0f136b` | `35073202070` | `35076785315` |
-| #287 | decimal precision | `190dc17` | `35073214715` | `35076773492` |
-| #288 | due single-row worker claims | `b2f8785` | `35073227113` | `35076802648` |
-| #289 | Draft work/evidence log | `1d69255` | `35090914391` | `35094148466` |
+| #286 | saved Scope chat links | `c0f136b` | `35073202070` | `35076785315` success |
+| #287 | decimal precision | `190dc17` | `35073214715` | `35076773492` success |
+| #288 | due single-row worker claims | `b2f8785` | `35073227113` | `35076802648` success |
+| #289 | Draft work/evidence log | `1d69255` | `35090914391` | `35094148466` success |
+| #290 | governed Draft work photos | `009cbc9` | `35104192275` | `35108706394` success |
 
-All eight listed CI runs completed successfully at the relevant exact commits. No job was
-restarted, no control was bypassed and no branch was deleted. Do not repeat or republish
-these changes. The #289 post-merge receipt is
-`work-record-browser-acceptance-20260916/readonly-postmerge-20260916T124812353378Z.json`.
+PR #290 merged normally with parents `1d69255` and `11b06ca` after the exact
+read-only gate passed every head/base/file/CI/review/rules/merge-tree check. The feature branch
+remains. No job was restarted, no control was bypassed and no branch was deleted. A superseded
+old-head run `35102471364` failed after 1,877 passes on a stale migration-history expected
+table set; two test-only expectation corrections then passed locally and in exact-head CI.
+The old failed run remains evidence, not a result for the final head.
 
-## Current direct-photo candidate
+Exact post-merge run `35108706394` passed every configured job at merge `009cbc9`.
+The final read-only receipt verifies the normal merge parents/tree, exact main and successful run.
 
-Work only in `C:/CLASSIFIRE/.tmp/draft-work-photos-20260916`, branch
-`feat/draft-work-photos-20260916`, based on merged `1d69255`. The candidate adds:
+## Merged Draft work-photo boundary
+
+The existing Work log now supports:
 
 - a separate Draft-owned `draft_work_photo_sources` table through forward migration0051;
 - explicit JPEG/PNG retention and a separate malware-scan/validation action;
@@ -30,26 +36,27 @@ Work only in `C:/CLASSIFIRE/.tmp/draft-work-photos-20260916`, branch
 - exact stored-file id/hash/size binding, current-scan/quarantine and same-Draft checks;
 - optional explicit photo selection on work records, capped at 20 distinct sources;
 - `CLASSIFIRE-DRAFT-WORK-RECORD-v2` for new records while preserving v1 reads/reports;
-- exact selected originals in `evidence/photos/` within the existing deterministic ZIP.
+- exact selected originals in `evidence/photos/` within the deterministic record ZIP.
 
 The boundary remains Draft and unverified. A photo is supporting evidence, not installation
 acceptance, inspection, compliance certification, technical approval, commercial authority or
 Human Release. Upload, scan, record confirmation, Scope save and package save are separate
 actions. No model, matching, costing or other capability runs implicitly.
 
-The final focused suite passed 83 cases using only disposable PostgreSQL15433. Full repository
-Ruff, targeted Mypy and targeted Bandit passed. The rendered installed-Chrome journey passed
-upload -> explicit synthetic scan -> select -> no-write preview -> separate confirm -> HTML/ZIP
-report -> fresh app/browser profile -> reopen. The reopened ZIP was byte-identical; it contained
-the exact original PNG and a v2 record. Protected canonical tables remained empty. Provider and
-implicit-capability calls were zero; synthetic scanner calls were one.
+Local validation passed 83 focused cases and covered all 114 unique changed tests using only
+disposable PostgreSQL15433. Full Ruff, targeted Mypy and full Bandit passed. Full local Mypy
+was incomplete only because that Python lacked optional JWT/MCP packages; exact-head CI
+installed them and passed full Mypy over 248 source files. Exact-head run `35104192275`
+passed 2,787 tests with 9 skips, full Ruff/build/Mypy/Bandit/Alembic checks and the separate
+9-case Windows installer job.
 
-Nine screenshots were captured, but the local image viewer and native browser helper both
-failed during sandbox initialization. Manual pixel inspection is therefore not claimed. The
-rendered DOM, native CDP events, screenshot capture, response bytes, database write log and
-fresh-process checks passed. Real scanner efficacy remains untested. Private evidence is under
-`work-photo-browser-acceptance-20260916`; preserve the two corrected harness failures recorded
-in its final receipt.
+Installed Chrome passed upload -> explicit synthetic scan -> select -> no-write preview ->
+separate confirm -> HTML/ZIP report -> fresh app/browser profile -> reopen. The reopened ZIP
+was byte-identical and contained the exact original PNG and a v2 record. Protected canonical
+tables remained empty; provider and implicit-capability calls were zero. All nine screenshots
+decode at 1440x1100 with nonblank pixel ranges, and restart screenshot pairs are byte-identical.
+The sandbox image viewer/native helper still fails during initialization, so manual pixel
+inspection is not claimed. Real scanner efficacy remains untested.
 
 ## Runtime and model boundary
 
@@ -60,54 +67,53 @@ that process or database.
 Both prior single model allowances are consumed. The `3911ca4` request returned valid
 structured advice but failed semantic review. The owner separately approved exactly one
 `b2f8785` synthetic `gpt-5-mini` call. Its 14,299-byte request and six CI bindings passed
-the 67 offline safeguards, then the existing guarded wrapper timed out after 30,108 ms with
-no HTTP status or response bytes. No reply exists for semantic assessment; provider processing
-or cost remains unknown. Do not retry either request. No activation followed. Any further
-provider call needs a new exact plan and separate approval.
+67 offline safeguards, then the guarded wrapper timed out after 30,108 ms with no HTTP status
+or response bytes. No reply exists for semantic assessment; provider processing or cost
+remains unknown. Do not retry either request. No activation followed. Any further provider
+call needs a new exact plan and separate approval.
 
-## Local safety
+## Local safety and evidence
 
 The conflicted `C:/CLASSIFIRE` root remains recovery evidence at `de0cc5a`: 46 modified
 tracked files, 14 staged additions, four DU conflicts, and an incomplete untracked inventory.
-Do not clean, reset, resolve, stage or publish it. Worktree-registry and status checks show it
-remains unchanged. Preserve unrelated branches and changes.
+Do not clean, reset, resolve, stage or publish it. Latest exact tracked-root comparison passed.
+Preserve unrelated branches and changes.
+
+The current local change is docs-only worktree
+`C:/CLASSIFIRE/.tmp/docs-post-pr290-state-20260917`, branch
+`docs/post-pr290-state-20260917`, based on `009cbc9`. It records the already merged
+runtime; it grants no activation and must contain only the reviewed documentation paths.
+
+Private evidence under `C:/CLASSIFIRE/.tmp/`:
+
+- `work-photo-browser-acceptance-20260916/acceptance-completion.json`: final rendered v2
+  journey, source hashes, exact ZIP, database write log and visual-inspection limitation;
+- `work-photo-browser-acceptance-20260916/local-validation-completion.json`: final head,
+  114 changed tests, wheel/static checks and root receipt binding;
+- `work-photo-browser-acceptance-20260916/readonly-gate-20260916T142735986629Z.json`:
+  passed exact PR #290 merge gate;
+- `work-photo-browser-acceptance-20260916/readonly-postmerge-20260916T150151745037Z.json`:
+  passing final merge identity and exact post-merge CI receipt; the earlier pending receipt remains;
+- `work-record-browser-acceptance-20260916`: #289 publication and tracked-root receipts;
+- `chat-grounding-diagnostic-b2f8785-20260916`: exact approval, 67-case offline receipt
+  and consumed timeout evidence. It grants no retry or activation.
 
 Private scripts, profiles, screenshots, originals, ZIPs, receipts, credentials and customer
-evidence stay outside Git. Tests must use fresh owned databases on PostgreSQL15433 with
-`CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN=classifire-containment-test-drop-all`. Never
-use live15432.
-
-## Private evidence index
-
-All paths below are under `C:/CLASSIFIRE/.tmp/`.
-
-- `work-record-browser-acceptance-20260916`: #289 browser acceptance, publication, merge and
-  post-merge evidence; its latest root comparison passed.
-- `work-record-validation-20260916`: the original 119-case work-log validation, four inspected
-  ZIPs and 333-file wheel receipt.
-- `work-photo-browser-acceptance-20260916`: final v2 direct-photo browser acceptance, exact ZIP,
-  source hashes, database write log, screenshots and known visual-inspection limitation.
-- `work-photo-browser-acceptance-pre-v2-20260916`: superseded pre-v2 acceptance retained as
-  history; do not substitute it for the final receipt.
-- `chat-grounding-diagnostic-b2f8785-20260916`: exact approval, 67-case offline receipt and
-  consumed timeout evidence. It grants no retry or activation.
-- `diagnostic-source-b2f8785-20260916`: clean detached diagnostic source, deliberately without
-  the work-log/photo migrations.
+evidence stay outside Git. Tests use fresh owned databases on PostgreSQL15433, never live15432.
 
 ## Resume order and remaining limits
 
-1. Read this worktree's AGENTS, PROJECT_STATE, roadmap and work-record contract. Verify branch,
-   diff, receipts and root preservation before acting.
-2. Do not repeat the final 83-case or rendered-browser journeys unless application source
-   changes. If source changes, regenerate the bound evidence.
-3. Finish package/diff/secret checks, commit only explicit candidate files, push normally,
-   open a PR to main, and merge only after exact-head CI/review checks succeed. Observe
-   post-merge CI without restarting it.
-4. Do not activate or migrate an operational database. Any adoption needs a current
+1. Validate and publish only the five reviewed documentation files through the normal PR/CI
+   workflow. Do not repeat #290's browser, provider or local test journeys.
+2. The next bounded product slice is paired PDF/XLSX output from one immutable saved work-record
+   revision and its exact selected evidence. Reuse existing report services and versioned
+   renderers; preserve unknowns and separate confirmation. Output grants no inspection/sign-off
+   or Human Release authority.
+3. Do not activate or migrate an operational database. Any adoption needs a current
    candidate-specific backup, disposable restore/migration, restart and compatible rollback
    plan plus separate approval. Migrations0050/0051 refuse destructive downgrade.
-5. Do not retry the consumed provider diagnostics. Preserve unknown physical facts, separate
-   human confirmations and independent capability boundaries.
+4. Do not retry consumed provider diagnostics. Preserve unknown physical facts, human
+   confirmations and independent capability boundaries.
 
 PDF/XLSX work reports, ProjectPackage work history, real scanner efficacy,
 inspection/sign-off semantics, representative accuracy, operational activation and canonical

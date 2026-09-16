@@ -460,8 +460,8 @@ without forcing users through downstream capabilities.
 
 The approved first close-out slice extends the existing register/reporting capability,
 using immutable Draft assertions and selected saved Scope/evidence dependencies. PR #289
-merged that work-log foundation. The current direct-photo extension retains separately
-uploaded JPEG/PNG evidence as Draft-owned sources, requires an explicit scan, and binds a
+merged that work-log foundation. PR #290 merged the direct-photo extension, which retains
+separately uploaded JPEG/PNG evidence as Draft-owned sources, requires an explicit scan, and binds a
 confirmed v2 record to exact photo bytes and decoded dimensions. Existing v1 records remain
 readable through their versioned renderer. None of this is installation acceptance,
 inspection, compliance certification or Human Release.
