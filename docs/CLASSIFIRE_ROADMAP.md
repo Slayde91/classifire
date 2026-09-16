@@ -799,20 +799,25 @@ its quantities or arithmetic. Their local PDF/XLSX/package acceptance does not s
 canonical validation or Human Release. Desk-quote PDF/XLSX output does not mark this
 canonical phase complete.
 
-### Draft work-evidence increment alongside P4 (browser accepted)
+### Draft work-evidence increment alongside P4 (merged foundation; photo candidate accepted)
 
-The owner selected attributed Draft work/evidence capture first. The existing register now
-has a local Work log candidate: explicit saved Opening/Service, unknowns, selected retained
-report references, no-write preview, separate confirmation, immutable history and explicit
-HTML/original-bearing ZIP output. Migration0050 and 119 affected tests are validated locally,
-including disposable15433 history/concurrency. Rendered headless-Chrome create/preview/
-separate-confirm/restart/reopen/report acceptance passed, including exact original bytes,
-unknowns, unresolved holds and stale/quarantined/foreign-source refusals. The native helper
-still fails at initialization. Publication remains subject to exact-head CI/review; no activation
-or production exit is claimed. Direct site photos, work-report
-PDF/XLSX, package history and inspection/sign-off requirements remain later. This extends
-reporting rather than adding another independently orchestrated capability. See
-[the contract](./DRAFT_WORK_RECORDS.md). Phase12-14 authority gates remain unchanged.
+The owner selected attributed Draft work/evidence capture first. PR #289 merged the register
+Work log at `1d69255` after exact-head and post-merge CI: explicit saved Opening/Service,
+unknowns, selected retained report references, no-write preview, separate confirmation,
+immutable history and explicit HTML/original-bearing ZIP output. Migration0050 and 119
+affected tests were validated, including disposable15433 history/concurrency and rendered
+headless-Chrome create/preview/confirm/restart/reopen/report acceptance.
+
+The current direct-photo candidate adds separately uploaded/scanned JPEG/PNG sources through
+migration0051 and v2 work records while preserving v1 reads/reports. Its 83 focused cases and
+rendered Chrome upload/scan/select/no-write-preview/confirm/restart/reopen/report journey pass
+against disposable15433, including exact original bytes and protected-table non-mutation.
+The native helper and local image viewer still fail at initialization, so captured screenshots
+were not manually pixel-inspected. Publication remains subject to exact-head CI/review; no
+activation or production exit is claimed. Work-report PDF/XLSX, package history and
+inspection/sign-off requirements remain later. This extends reporting rather than adding
+another independently orchestrated capability. See [the contract](./DRAFT_WORK_RECORDS.md).
+Phase12-14 authority gates remain unchanged.
 
 ### Phase 14 - Human Release
 

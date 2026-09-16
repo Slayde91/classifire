@@ -5,6 +5,7 @@
 <p class="callout">{{ work_notice }}</p>
 <p>Saved Scope revision {{ scope.revision }}. <a href="/scopes/{{ draft.id }}?revision={{ scope.revision }}">Return to this register revision</a></p>
 <p>System suitability, work quantity, price and inspection acceptance are not established by this log.</p>
+<p><a href="/scopes/{{ draft.id }}/work-photos">Retain and explicitly scan direct work photos</a></p>
 {% if evidence %}<p><strong>{{ evidence.selection.opening_label or 'Opening unresolved' }}{% if evidence.selection.service_id %} / {{ evidence.selection.service_label }}{% endif %}</strong>{% if evidence.selection.blank %} ? saved as a blank Opening{% endif %}</p>
 {% for warning in evidence.selection.relationship_warnings %}<p class="alert alert-warning">{{ warning }}</p>{% endfor %}
 <p><a target="_blank" rel="noopener" href="/scopes/{{ draft.id }}/register-evidence?revision={{ scope.revision }}{% if content.opening_id %}&amp;opening_id={{ content.opening_id }}{% endif %}{% if content.service_id %}&amp;service_id={{ content.service_id }}{% endif %}">Inspect saved target and source evidence</a></p>
@@ -19,6 +20,7 @@
 <section data-work-preview><h3>Preview only ? nothing saved</h3><p>Review this exact assertion and selected evidence. Saving does not verify the work.</p>
 <dl>{% for key in ['note','reported_by','reported_role','observed_at','unknowns'] %}<dt>{{ key|replace('_',' ')|capitalize }}</dt><dd class="scope-preserve-text">{{ content[key] or 'Unknown / not supplied' }}</dd>{% endfor %}</dl>
 <p>{{ proposed.dependencies.evidence|length }} explicitly selected source reference(s). No evidence is selected automatically.</p>
+<p>{{ proposed.dependencies.photos|length }} explicitly selected direct photo(s). No photo is selected automatically.</p>
 <form method="post" action="/scopes/{{ draft.id }}/work-records/confirm">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="payload" value="{{ payload_json }}"><input type="hidden" name="preview_token" value="{{ preview_token }}">
 <button class="button" type="submit" name="confirm" value="save">Confirm and save unverified Draft work record</button></form></section>
@@ -33,6 +35,8 @@
 <label>Unknowns and missing evidence<textarea name="unknowns" maxlength="4000">{{ content.unknowns }}</textarea></label>
 <fieldset><legend>Supporting evidence from this saved Scope</legend><p>These references describe source context. Selecting them does not establish that installation occurred. For new evidence, use the existing Word/PDF/Excel intake and separately save its Scope review first.</p>
 {% for ref in evidence.refs %}<label><input type="checkbox" name="evidence_{{ ref.index }}" value="include"{% if ref.availability != 'verified' or ref.claim_changed %} disabled{% endif %}{% if ref.index in content.evidence_indices %} checked{% endif %}>{{ ref.label }} ? {{ ref.metadata.original_filename }} / {{ ref.metadata.locator }} ({{ ref.availability|replace('_',' ') }})</label>{% else %}<p>No retained evidence references. You can record the assertion with evidence still missing.</p>{% endfor %}</fieldset>
+<fieldset><legend>Direct work photos</legend><p>Only explicitly scanned, project-owned photos can be selected. A photo remains unverified evidence and is not inspection acceptance.</p>
+{% for photo in work_photos %}<label><input type="checkbox" name="photo_{{ photo.id }}" value="include"{% if not photo.ready %} disabled{% endif %}{% if photo.id in content.photo_source_ids %} checked{% endif %}>{{ photo.filename }} — {{ photo.status }}{% if photo.ready %} / ready{% endif %}</label>{% else %}<p>No direct work photos retained. Use the link above to upload and scan one.</p>{% endfor %}</fieldset>
 <button class="button" type="submit">Preview work record</button></form>
 {% else %}<p>Select an Opening or Service in the register, open its Evidence panel, then choose Work log.</p>{% endif %}
 <details><summary>Saved work history (up to 200 newest revisions)</summary><ul>{% for item in history %}<li><a href="/scopes/{{ draft.id }}/work-records/{{ item.record_id }}?revision={{ item.revision }}">{{ item.record_id }} / revision {{ item.revision }}</a> ? {{ item.recorded_at }}</li>{% else %}<li>No work records have been saved.</li>{% endfor %}</ul></details>

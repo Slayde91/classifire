@@ -25,6 +25,7 @@ from ..models import (
     DraftPricingSource,
     DraftScopeDocxSource,
     DraftScopeXlsxSource,
+    DraftWorkPhotoSource,
     StoredFile,
     User,
 )
@@ -49,6 +50,7 @@ SourceRow = (
     | DraftImportedReportSource
     | DraftScopeXlsxSource
     | DraftScopeDocxSource
+    | DraftWorkPhotoSource
 )
 
 

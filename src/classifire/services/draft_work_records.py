@@ -21,7 +21,9 @@ from ..models import DraftScope, DraftScopeRevision, DraftWorkRecord, DraftWorkR
 from .draft_register import evidence_context
 from .draft_scope import DraftScopeError, _actor, _atomic, _json, get_draft, read_revision
 
-SCHEMA = "CLASSIFIRE-DRAFT-WORK-RECORD-v1"
+SCHEMA_V1 = "CLASSIFIRE-DRAFT-WORK-RECORD-v1"
+SCHEMA = "CLASSIFIRE-DRAFT-WORK-RECORD-v2"
+SUPPORTED_SCHEMAS = frozenset({SCHEMA_V1, SCHEMA})
 NOTICE = (
     "Reported work, unverified. This is not inspection acceptance, "
     "compliance certification or Human Release."
@@ -42,6 +44,9 @@ class WorkInput(BaseModel):
     observed_at: Annotated[str, Field(max_length=40)] = ""
     unknowns: Annotated[str, Field(max_length=4000)] = ""
     evidence_indices: Annotated[list[int], Field(max_length=30)] = Field(default_factory=list)
+    photo_source_ids: Annotated[
+        list[Annotated[UUID, Field(strict=False)]], Field(max_length=20)
+    ] = Field(default_factory=list)
 
     @field_validator("observed_at")
     @classmethod
@@ -58,6 +63,13 @@ class WorkInput(BaseModel):
     def indices(cls, value: list[int]) -> list[int]:
         if any(i < 0 for i in value) or len(set(value)) != len(value):
             raise ValueError("Select distinct saved evidence references")
+        return sorted(value)
+
+    @field_validator("photo_source_ids")
+    @classmethod
+    def photo_ids(cls, value: list[UUID]) -> list[UUID]:
+        if len(set(value)) != len(value):
+            raise ValueError("Select distinct retained photos")
         return sorted(value)
 
 
@@ -98,7 +110,7 @@ def _read(db: Session, draft_id: str, record_id: str, revision: int) -> dict[str
         checksum = envelope.pop("sha256")
         valid = (
             _hash(envelope) == checksum == saved.content_hash
-            and envelope["schema_version"] == SCHEMA
+            and envelope["schema_version"] in SUPPORTED_SCHEMAS
             and envelope["state"] == "Draft"
             and envelope["review_status"] == "unverified"
             and envelope["record_id"] == record_id
@@ -107,6 +119,13 @@ def _read(db: Session, draft_id: str, record_id: str, revision: int) -> dict[str
             and envelope["parent_hash"] == saved.parent_hash
             and envelope["recorded_by"] == saved.created_by_id
             and envelope["scope_revision_id"] == saved.scope_revision_id
+            and (
+                envelope["schema_version"] != SCHEMA_V1
+                or (
+                    "photo_source_ids" not in envelope["content"]
+                    and "photos" not in envelope["dependencies"]
+                )
+            )
         )
         envelope["sha256"] = checksum
         if not valid or _json(envelope).decode("utf-8") != saved.envelope_json:
@@ -134,6 +153,8 @@ def choices(
 def _dependencies(
     db: Session, actor: User, draft_id: str, content: dict[str, Any], settings: Settings
 ) -> dict[str, Any]:
+    from . import draft_work_photos
+
     context = choices(db, actor, draft_id, content, settings=settings)
     available = {item["index"]: item for item in context["refs"]}
     selected = []
@@ -152,11 +173,24 @@ def _dependencies(
             ("services", "service_id"),
         )
     }
+    try:
+        photos = draft_work_photos.dependencies(
+            db,
+            actor,
+            draft_id,
+            content.get("photo_source_ids", []),
+            settings=settings,
+        )
+    except DraftScopeError as exc:
+        if exc.status_code == 403:
+            raise
+        raise DraftScopeError("WORK_RECORD_PHOTO_UNAVAILABLE", 409) from exc
     return {
         "scope_sha256": scope["sha256"],
         "selection": selection,
         "targets": targets,
         "evidence": selected,
+        "photos": photos,
     }
 
 
@@ -308,7 +342,13 @@ def read(
     draft = get_draft(db, actor, draft_id)
     value = _read(db, draft_id, record_id, revision)
     deps = _dependencies(db, actor, draft_id, value["content"], settings)
-    if deps != value["dependencies"]:
+    expected_dependencies = value["dependencies"]
+    if (
+        "photos" not in expected_dependencies
+        and not value["content"].get("photo_source_ids")
+    ):
+        deps.pop("photos")
+    if deps != expected_dependencies:
         raise DraftScopeError("WORK_RECORD_DEPENDENCY_CHANGED", 409)
     return {
         "record": value,
@@ -327,7 +367,7 @@ def report_archive(
     settings: Settings,
 ) -> bytes:
     """Explicit saved-revision export with byte-exact originals; no matching/costing."""
-    from . import draft_pdf_intake, draft_scope_docx, draft_scope_xlsx
+    from . import draft_pdf_intake, draft_scope_docx, draft_scope_xlsx, draft_work_photos
 
     result = read(db, actor, draft_id, record_id, revision, settings=settings)
     if result["stale"]:
@@ -355,11 +395,34 @@ def report_archive(
         if sum(map(len, members.values())) + content.size_bytes > 100 * 1024 * 1024:
             raise DraftScopeError("WORK_RECORD_EXPORT_TOO_LARGE", 422)
         members[name] = content.content
+    for item in value["dependencies"].get("photos", []):
+        try:
+            document, content = draft_work_photos.read_photo(
+                db, actor, draft_id, item["source_id"], settings=settings
+            )
+        except DraftScopeError as exc:
+            if exc.status_code == 403:
+                raise
+            raise DraftScopeError("WORK_RECORD_PHOTO_UNAVAILABLE", 409) from exc
+        manifest = document["manifest"]
+        if (
+            content.sha256 != item["source_sha256"]
+            or content.size_bytes != item["source_size_bytes"]
+            or manifest["media_type"] != item["media_type"]
+            or manifest["width_px"] != item["width_px"]
+            or manifest["height_px"] != item["height_px"]
+        ):
+            raise DraftScopeError("WORK_RECORD_DEPENDENCY_CHANGED", 409)
+        suffix = "jpg" if item["media_type"] == "image/jpeg" else "png"
+        name = f"evidence/photos/{item['source_id']}.{suffix}"
+        if sum(map(len, members.values())) + content.size_bytes > 100 * 1024 * 1024:
+            raise DraftScopeError("WORK_RECORD_EXPORT_TOO_LARGE", 422)
+        members[name] = content.content
     if sum(map(len, members.values())) > 100 * 1024 * 1024:
         raise DraftScopeError("WORK_RECORD_EXPORT_TOO_LARGE", 422)
     members["manifest.json"] = _json(
         {
-            "schema_version": SCHEMA,
+            "schema_version": value["schema_version"],
             "notice": NOTICE,
             "members": {
                 name: {"sha256": hashlib.sha256(raw).hexdigest(), "size_bytes": len(raw)}
@@ -367,6 +430,11 @@ def report_archive(
             },
             "exclusions": [
                 "Unselected evidence",
+                *(
+                    ["Unselected direct photos"]
+                    if value["schema_version"] == SCHEMA
+                    else []
+                ),
                 "Inspection acceptance",
                 "Technical approval",
                 "Prices",

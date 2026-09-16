@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Draft work photos | CLASSIFIRE{% endblock %}
+{% block heading %}Draft work photos{% endblock %}
+{% block content %}
+<p class="callout">Direct photos are retained as unverified Draft evidence. Upload and scan do not establish installation quality, inspection acceptance, compliance or Human Release.</p>
+<p><a href="/scopes/{{ draft.id }}?revision={{ draft.latest_revision }}">Return to Draft register</a></p>
+{% if source %}
+<h3>{{ source.filename }}</h3>
+<dl><dt>Scan status</dt><dd>{{ source.status }}</dd><dt>SHA-256</dt><dd>{{ source.sha256 }}</dd><dt>Size</dt><dd>{{ source.size_bytes }} bytes</dd></dl>
+{% if problem %}<p class="alert alert-warning">{{ problem }}. Scan this exact photo again before use.</p>{% endif %}
+{% if source.processing_error %}<p class="alert alert-warning">{{ source.processing_error }}</p>{% endif %}
+{% if document %}
+<p>{{ document.manifest.width_px }} × {{ document.manifest.height_px }} pixels / {{ document.manifest.media_type }}</p>
+<p><a href="/scopes/{{ draft.id }}/work-photos/{{ source.id }}/original" target="_blank" rel="noopener">Open exact retained photo</a></p>
+<img src="/scopes/{{ draft.id }}/work-photos/{{ source.id }}/original" alt="Unverified Draft work photo {{ source.filename }}" style="max-width:100%;height:auto">
+{% elif has_permission('project:write') and source.status != 'malware_detected' %}
+<form method="post" action="/scopes/{{ draft.id }}/work-photos/{{ source.id }}/scan"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button" type="submit">Scan and validate this photo</button></form>
+{% endif %}
+<p><a href="/scopes/{{ draft.id }}/work-photos">All Draft work photos</a></p>
+{% else %}
+{% if has_permission('project:write') %}<form method="post" action="/scopes/{{ draft.id }}/work-photos/upload" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>JPEG or PNG photo<input type="file" name="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" required></label><button class="button" type="submit">Retain photo for explicit scan</button></form>{% endif %}
+<h3>Retained photos</h3><ul>{% for item in sources %}<li><a href="/scopes/{{ draft.id }}/work-photos/{{ item.id }}">{{ item.filename }}</a> — {{ item.status }}{% if item.ready %} / ready to select{% endif %}</li>{% else %}<li>No direct work photos have been retained.</li>{% endfor %}</ul>
+{% endif %}
+{% endblock %}

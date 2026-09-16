@@ -48,7 +48,7 @@ from classifire.services.proposal_review_package import (
 )
 
 BASELINE = "0046_draft_pricing_quantity_bases"
-HEAD = "0050_draft_work_records"
+HEAD = "0051_draft_work_photos"
 
 
 @pytest.fixture
