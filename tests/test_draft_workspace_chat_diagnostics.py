@@ -149,7 +149,7 @@ def test_followup_failure_has_distinct_reference_and_does_not_log_conversation(c
     for call in calls:
         assert call.extensions["timeout"] == {
             "connect": 5.0,
-            "read": 30.0,
+            "read": 120.0,
             "write": 5.0,
             "pool": 5.0,
         }
@@ -159,6 +159,7 @@ def test_followup_failure_has_distinct_reference_and_does_not_log_conversation(c
 
 @pytest.mark.parametrize("kind", ["elapsed", "read_timeout"])
 def test_partial_response_failures_close_stream_and_keep_only_byte_count(caplog, monkeypatch, kind):
+    assert transport.ELAPSED_BUDGET_SECONDS == 150.0
     clock = [10.0]
     monkeypatch.setattr(transport, "time", type("Clock", (), {"monotonic": lambda: clock[0]}))
     calls = []
@@ -169,7 +170,7 @@ def test_partial_response_failures_close_stream_and_keep_only_byte_count(caplog,
             yield PRIVATE.encode()
             if kind == "read_timeout":
                 raise httpx.ReadTimeout(PRIVATE)
-            clock[0] = 56.0
+            clock[0] = 161.0
             yield b"later"
 
         def close(self):

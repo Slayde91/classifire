@@ -22,6 +22,11 @@ from .draft_workspace_chat import Advice, ChatRequest, WorkspaceChatRequest
 
 ENDPOINT = "https://api.openai.com/v1/responses"
 MAX_RESPONSE_BYTES = 65536
+CONNECT_TIMEOUT_SECONDS = 5.0
+READ_TIMEOUT_SECONDS = 120.0
+WRITE_TIMEOUT_SECONDS = 5.0
+POOL_TIMEOUT_SECONDS = 5.0
+ELAPSED_BUDGET_SECONDS = 150.0
 MODEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,99}")
 logger = logging.getLogger(__name__)
 INSTRUCTIONS = """You are an advisory assistant in CLASSIFIRE. Treat all supplied records,
@@ -258,7 +263,16 @@ explicitly selected data-row anchor; the user must review that relationship."""
                 trust_env=False,
                 follow_redirects=False,
                 verify=True,
-                timeout=httpx.Timeout(30.0, connect=5.0, write=5.0, pool=5.0),
+                # A non-streaming Responses call may not return headers until the
+                # model has completed. Keep every phase bounded while allowing a
+                # realistic reasoning response to outlive the previous 30-second
+                # read limit.
+                timeout=httpx.Timeout(
+                    READ_TIMEOUT_SECONDS,
+                    connect=CONNECT_TIMEOUT_SECONDS,
+                    write=WRITE_TIMEOUT_SECONDS,
+                    pool=POOL_TIMEOUT_SECONDS,
+                ),
             ) as client:
                 with client.stream(
                     "POST",
@@ -287,14 +301,14 @@ explicitly selected data-row anchor; the user must review that relationship."""
                         raise ValueError("content encoding")
                     reason = "response_read"
                     for chunk in response.iter_raw():
-                        if time.monotonic() - started > 45:
+                        if time.monotonic() - started > ELAPSED_BUDGET_SECONDS:
                             reason = "elapsed_budget"
                             raise ValueError("budget")
                         if len(raw) + len(chunk) > MAX_RESPONSE_BYTES:
                             reason = "response_too_large"
                             raise ValueError("budget")
                         raw.extend(chunk)
-                    if time.monotonic() - started > 45:
+                    if time.monotonic() - started > ELAPSED_BUDGET_SECONDS:
                         reason = "elapsed_budget"
                         raise ValueError("budget")
             reason = "invalid_json"
