@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from .db import SessionLocal
 from .models import BackgroundJob
@@ -11,10 +11,15 @@ from .models import BackgroundJob
 
 def run_once() -> bool:
     with SessionLocal() as db:
+        eligible_at = datetime.now(UTC)
         job = db.scalar(
             select(BackgroundJob)
-            .where(BackgroundJob.status == "queued")
-            .order_by(BackgroundJob.created_at)
+            .where(
+                BackgroundJob.status == "queued",
+                or_(BackgroundJob.run_after.is_(None), BackgroundJob.run_after <= eligible_at),
+            )
+            .order_by(BackgroundJob.created_at, BackgroundJob.id)
+            .limit(1)
             .with_for_update(skip_locked=True)
         )
         if not job:

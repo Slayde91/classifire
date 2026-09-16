@@ -403,6 +403,18 @@ is not assumed. No live upgrade, OAuth, tunnel or host-policy change follows fro
 these documents. Current runtime and CI observations belong in
 [PROJECT_STATE.md](./PROJECT_STATE.md).
 
+### Queue claim boundary
+
+The generic worker claims one `queued` record whose `run_after` is unset or no
+later than the current UTC time, ordered by creation time then ID. PostgreSQL
+`FOR UPDATE SKIP LOCKED` locks only that selected record, allowing another worker
+to claim another due job. Future and nonqueued records stay unchanged. No processing
+handlers are registered: an eligible unsupported job still finishes `failed`.
+This correction adds no report dispatch, retry, lease, recovery policy or schema
+change. Execution-journal `preparing` and `running` records are not queue work.
+Disposable PostgreSQL concurrency tests verify the claim boundary; general document
+processing and crash recovery remain planned below.
+
 ## Planned architecture and unresolved decisions
 
 | Gap / decision | Planned direction and validation needed |
