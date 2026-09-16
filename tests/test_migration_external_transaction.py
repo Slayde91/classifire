@@ -15,7 +15,7 @@ from classifire.migrations import SCRIPT_LOCATION
 
 migration_postgresql = _migration_postgresql
 BASELINE = "0047_draft_scope_docx_sources"
-HEAD = "0049_draft_proposal_decisions"
+HEAD = "0050_draft_work_records"
 
 
 def _config(connection: object) -> Config:

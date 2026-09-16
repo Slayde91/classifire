@@ -926,6 +926,35 @@ class DraftScopeRevision(RecordMixin, Base):
     created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class DraftWorkRecord(RecordMixin, Base):
+    """Draft reported work only; no inspection or release authority."""
+
+    __tablename__ = "draft_work_records"
+    __table_args__ = (CheckConstraint("latest_revision >= 1", name="ck_work_record_revision"),)
+
+    draft_scope_id: Mapped[str] = mapped_column(ForeignKey("draft_scopes.id"), index=True)
+    latest_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class DraftWorkRecordRevision(RecordMixin, Base):
+    """Append-only reported-work assertions and exact saved Scope dependencies."""
+
+    __tablename__ = "draft_work_record_revisions"
+    __table_args__ = (
+        UniqueConstraint("work_record_id", "revision", name="uq_work_record_revision"),
+        CheckConstraint("revision >= 1", name="ck_work_record_positive_revision"),
+        CheckConstraint("length(envelope_json) <= 262144", name="ck_work_record_size"),
+    )
+
+    work_record_id: Mapped[str] = mapped_column(ForeignKey("draft_work_records.id"), index=True)
+    scope_revision_id: Mapped[str] = mapped_column(ForeignKey("draft_scope_revisions.id"))
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_hash: Mapped[str | None] = mapped_column(String(64))
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    envelope_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
 class DraftPdfSource(RecordMixin, Base):
     """Draft-owned retained PDF and scanner/normalization metadata, never approval."""
 

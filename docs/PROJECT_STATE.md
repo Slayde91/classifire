@@ -1,11 +1,49 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-16 against merged PRs #278-#285 and their observed CI.
-Verified shared main is `9ceffc6efa05a2d0bd271c64b5d7785d80fe0659`. Post-merge
+Reconciled 2026-09-16 against merged PRs #278-#288, retained checks and rendered work-log acceptance.
+The verified work-log base is `b2f87850c9b3d591b1a48b68c69891e162394084`. Post-merge
 results are recorded separately below. This checkpoint grants no deployment authority; the full production objective remains incomplete.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
 [handoff](./SESSION_HANDOFF.md) gives the exact resume task.
+
+## Latest publication and local work-log checkpoint
+
+The owner approved the exact three publications. PR #287 (`7eae6f5`) merged as
+`190dc17bd440eb77e1be9f27cbc24ff786fbb355`; #286 (`d0a9f39`) as
+`c0f136babfd75a551cb6c4892dc7f7f890941053`; #288 (`c79def1`) as
+`b2f87850c9b3d591b1a48b68c69891e162394084`. Each exact-head PR CI succeeded.
+GitHub main was unprotected, effective rules/rulesets were empty, and no requested review
+or changes-requested decision remained. No rule was bypassed or branch deleted.
+Post-merge runs `35076773492`, `35076785315` and `35076802648` all completed successfully
+at their exact merge commits. All twelve approved files match main byte-for-byte. Shared
+main is `b2f8785`; the older checkpoints below remain historical.
+
+The approved Draft work/evidence-log first slice is implemented locally on
+`feat/draft-work-evidence-log-20260916`, commit `653505b`, based on that main. It passed 119
+distinct affected checks, actual 15433 migrations and original-file/concurrency tests, plus
+wheel/ZIP inspection.
+Its rendered-browser publication gate now passes using installed headless Chrome on a
+fresh disposable 15433 database and private loopback app. Create, no-write preview, separate
+confirmation, fresh-process/profile reopening and byte-identical original-bearing ZIP/HTML
+passed, with blank/shared/unresolved targets and stale/quarantined/foreign refusals. The
+native helper remains unavailable. Retained harness failures were corrected without changing
+application guards or code; no canonical/release state changed. This checkpoint precedes
+publication: verify exact branch/PR CI and review state, then record merge/post-merge results
+in the private publication receipt. No activation occurred. See [the contract](./DRAFT_WORK_RECORDS.md).
+Inspection/sign-off, representative accuracy and canonical production exits remain open.
+The browser run invoked no model. The separately approved diagnostic is recorded below.
+No customer processing, OAuth/tunnel change or live database action ran.
+
+The owner separately approved the exact `b2f8785` synthetic diagnostic on 2026-09-16.
+The unchanged 14,299-byte request, clean source, runtime fingerprint and all six CI bindings
+passed preflight after the 67 offline safeguards. The guarded wrapper ran once and failed
+with `read_timeout` after 30,108 ms, with no HTTP status or response bytes received. The
+attempt marker consumed that allowance; no retry ran. No reply exists for semantic review,
+and provider-side processing or cost cannot be inferred from the client timeout. This is
+neither a content pass nor a content failure. No activation or live database action occurred.
+Safe result/log/attempt receipts remain in `chat-grounding-diagnostic-b2f8785-20260916`.
+The earlier `3911ca4` allowance also remains consumed; the unapproved `d0a9f39` plan is superseded.
 
 ## Current position
 
@@ -18,7 +56,7 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Implemented code baseline | PR #284 metadata validation and PR #285 documentation are merged; main `9ceffc6` has tree `d101185956276a7ba2f6c4e6d078919dd0a65493`, matching the combined rehearsal |
+| Implemented code baseline | PRs #286-#288 are merged on `b2f8785`: saved Scope chat links, decimal precision and due single-row worker claims. Draft work-log code and bounded rendered acceptance are complete; exact publication is a separate CI/review gate |
 | Prepared runtime | Isolated `9ceffc6` passed offline install, disposable 15433 migration/HTTP and fingerprint checks. It is not activated. The earlier frozen `8b4b79f` bundle remains preserved |
 | PR #273 CI | PR run `34862079545` and post-merge `34869099059` succeeded; 2,647 tests |
 | PR #274 CI | PR run `34869742499` and post-merge `34873941741` succeeded; post-merge passed 2,658 tests |
@@ -27,7 +65,7 @@ separate; no capability runs merely because an upstream action finished.
 | PR #277 CI | PR run `34955271348` succeeded: 2,673 tests in 2,033.51 seconds, plus style/build/type/security/migration checks. Post-merge run `34958743322` subsequently completed successfully; do not restart it |
 | Publication | PRs #273-#285 are merged after successful current-head checks and observed review requirements. #283 retained its original commit and resolved one guide conflict in a normal merge commit. No existing job was restarted or branch deleted |
 | Operational app | Last recorded port 8820 process was PID24324; the last approved receipt is rollback `6c1e2a4` with chat disabled. This publication work did not refresh live runtime state or execute the prepared activation |
-| Prepared activation | New `9ceffc6` operational bundle is incomplete, disabled and unapproved. The approved single `3911ca4` diagnostic connected but failed semantic acceptance; its allowance is consumed. No activation followed |
+| Prepared activation | New `9ceffc6` operational bundle is incomplete, disabled and unapproved. The `3911ca4` diagnostic failed semantic acceptance; the separately approved `b2f8785` request timed out without a reply. Both allowances are consumed. No activation followed |
 
 ## Latest chat diagnosis and correction
 
@@ -44,7 +82,7 @@ one opening and another reported separate blank opening. Unknown physical verifi
 must not be confused with contradictory saved relationships. No retry or activation
 was performed; the earlier browser HTTP502 cause remains unknown.
 
-The current isolated correction adds a selected-record relationship projection and
+The correction merged in PR #286 adds a selected-record relationship projection and
 clarifies the existing advisory instructions. Seven focused cases passed. The broader
 run passed 178 cases; all 74 PostgreSQL skips subsequently passed in a fresh isolated
 schema on port 15433. With the additional legacy-context case, 253 distinct affected
@@ -483,18 +521,19 @@ historical byte/recovery evidence, or change any production-phase status.
 
 ## Local change classification
 
-This correction changes two existing chat services, one synthetic regression test,
-the interaction contract, PROJECT_STATE and SESSION_HANDOFF on
-`fix/chat-saved-link-context-20260916`, based on `9ceffc6`. Architecture and roadmap
-intent are unchanged. The six approved branches are published and merged; preserve
-them and their receipts. The earlier four-document `5eb7aa7` is superseded and remains
+The current local candidate is `feat/draft-work-evidence-log-20260916`, based on
+merged `b2f8785`. Its 42-file range contains the Draft work-log service, register UI,
+HTML/ZIP output, additive migration 0050, affected migration-head checks, tests and
+documentation. The saved-link, decimal-precision and worker corrections are already
+merged through PRs #286-#288; they are not pending publications. Preserve their
+branches and receipts. The earlier four-document `5eb7aa7` is superseded and remains
 unpublished in its own worktree. The five/six-change staged rehearsal trees are retained.
 
 Metadata fix `6e3214a` is now merged through PR #284 as `cddefd1`, with
 successful PR and post-merge CI. It shares the existing provider/model/canonical-time
 checks between local saved proposals and portable history; it adds no raw provider
-response history or operational authority. The current relationship-grounding change
-is separate and must follow its own exact publication and CI/review gates.
+response history or operational authority. The relationship-grounding correction
+subsequently merged in PR #286 with successful PR and post-merge CI.
 
 Private scripts, profiles, originals/ZIPs, reports, credentials, backups and approval
 receipts stay outside Git. Root `C:/CLASSIFIRE` is preserved at `de0cc5a`: 46 unstaged
@@ -504,12 +543,14 @@ is incomplete. No root changes were staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Review the saved-relationship correction for publication.** Its affected checks
-   passed; inspect the exact six-file commit and task receipt, obtain its publication
-   approval and follow its own PR CI/review gates. PRs #284/#285 are already complete.
-2. **Prepare a new bounded content test.** The `3911ca4` allowance is consumed and
-   semantic acceptance failed. Do not retry it or reinterpret transport success as
-   content acceptance. Any new request needs an exact candidate/body and fresh approval.
+1. **Complete or verify the Draft work-log publication.** Its bounded browser gate is
+   accepted. Use the exact candidate/PR and private publication receipts to check current
+   CI/reviews, merge only on success and record post-merge CI. Do not repeat completed
+   browser/test work or PRs #286-#288.
+2. **Keep diagnostic consumption explicit.** The separately approved `b2f8785`
+   request timed out without a reply; its allowance is consumed. Do not retry either
+   it or the earlier `3911ca4` request. Any further provider test needs its own exact
+   plan and new approval; semantic acceptance remains unresolved.
 3. **Finish the current activation plan before approval.** The prepared `9ceffc6`
    runtime is not activated; the new operational bundle is incomplete and disabled.
    Include the final corrected version, exact successful CI, backup/disposable restore,

@@ -1,0 +1,39 @@
+{% extends "draft_register_workbench_base.html" if workspace_register|default(false) else "base.html" %}
+{% block title %}Draft work log | CLASSIFIRE{% endblock %}
+{% block heading %}Draft work and evidence log{% endblock %}
+{% block content %}
+<p class="callout">{{ work_notice }}</p>
+<p>Saved Scope revision {{ scope.revision }}. <a href="/scopes/{{ draft.id }}?revision={{ scope.revision }}">Return to this register revision</a></p>
+<p>System suitability, work quantity, price and inspection acceptance are not established by this log.</p>
+{% if evidence %}<p><strong>{{ evidence.selection.opening_label or 'Opening unresolved' }}{% if evidence.selection.service_id %} / {{ evidence.selection.service_label }}{% endif %}</strong>{% if evidence.selection.blank %} ? saved as a blank Opening{% endif %}</p>
+{% for warning in evidence.selection.relationship_warnings %}<p class="alert alert-warning">{{ warning }}</p>{% endfor %}
+<p><a target="_blank" rel="noopener" href="/scopes/{{ draft.id }}/register-evidence?revision={{ scope.revision }}{% if content.opening_id %}&amp;opening_id={{ content.opening_id }}{% endif %}{% if content.service_id %}&amp;service_id={{ content.service_id }}{% endif %}">Inspect saved target and source evidence</a></p>
+{% endif %}
+{% if saved %}
+<h3>Recorded work revision {{ saved.record.revision }}</h3>
+{% if saved.stale %}<p class="alert alert-warning">Scope has changed. This historical work record has not been retargeted. Export is blocked until a new work revision is explicitly reviewed against current Scope.</p>{% endif %}
+{% set entry = saved.record %}{% include "draft_work_record_content.html" %}
+{% if not saved.stale %}<p><a href="/scopes/{{ draft.id }}/work-records/{{ entry.record_id }}/download?revision={{ entry.revision }}" data-work-download>Download Draft report ZIP with selected original files</a></p>{% endif %}
+{% if has_permission('project:write') and saved.latest_revision == entry.revision %}<p><a href="/scopes/{{ draft.id }}/work-records/{{ entry.record_id }}?revision={{ entry.revision }}&amp;edit=true">Review an amendment against current Scope</a></p>{% endif %}
+{% elif proposed %}
+<section data-work-preview><h3>Preview only ? nothing saved</h3><p>Review this exact assertion and selected evidence. Saving does not verify the work.</p>
+<dl>{% for key in ['note','reported_by','reported_role','observed_at','unknowns'] %}<dt>{{ key|replace('_',' ')|capitalize }}</dt><dd class="scope-preserve-text">{{ content[key] or 'Unknown / not supplied' }}</dd>{% endfor %}</dl>
+<p>{{ proposed.dependencies.evidence|length }} explicitly selected source reference(s). No evidence is selected automatically.</p>
+<form method="post" action="/scopes/{{ draft.id }}/work-records/confirm">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="payload" value="{{ payload_json }}"><input type="hidden" name="preview_token" value="{{ preview_token }}">
+<button class="button" type="submit" name="confirm" value="save">Confirm and save unverified Draft work record</button></form></section>
+{% elif evidence and has_permission('project:write') %}
+<form method="post" action="/scopes/{{ draft.id }}/work-records/preview" class="form-grid">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{% for key in ['record_id','expected_revision','scope_revision','opening_id','service_id'] %}<input type="hidden" name="{{ key }}" value="{{ content[key] if content[key] is not none else '' }}">{% endfor %}
+<label>Reported work<textarea name="note" required maxlength="4000">{{ content.note }}</textarea></label>
+<label>Reported installer or observer (leave blank if unknown)<input name="reported_by" maxlength="200" value="{{ content.reported_by }}"></label>
+<label>Reported role<select name="reported_role">{% for role in ['unknown','installer','observer','other'] %}<option value="{{ role }}"{% if role == content.reported_role %} selected{% endif %}>{{ role|capitalize }}</option>{% endfor %}</select></label>
+<label>Observation time, including timezone (optional)<input name="observed_at" maxlength="40" value="{{ content.observed_at }}" placeholder="2026-09-16T14:30:00+10:00"></label>
+<label>Unknowns and missing evidence<textarea name="unknowns" maxlength="4000">{{ content.unknowns }}</textarea></label>
+<fieldset><legend>Supporting evidence from this saved Scope</legend><p>These references describe source context. Selecting them does not establish that installation occurred. For new evidence, use the existing Word/PDF/Excel intake and separately save its Scope review first.</p>
+{% for ref in evidence.refs %}<label><input type="checkbox" name="evidence_{{ ref.index }}" value="include"{% if ref.availability != 'verified' or ref.claim_changed %} disabled{% endif %}{% if ref.index in content.evidence_indices %} checked{% endif %}>{{ ref.label }} ? {{ ref.metadata.original_filename }} / {{ ref.metadata.locator }} ({{ ref.availability|replace('_',' ') }})</label>{% else %}<p>No retained evidence references. You can record the assertion with evidence still missing.</p>{% endfor %}</fieldset>
+<button class="button" type="submit">Preview work record</button></form>
+{% else %}<p>Select an Opening or Service in the register, open its Evidence panel, then choose Work log.</p>{% endif %}
+<details><summary>Saved work history (up to 200 newest revisions)</summary><ul>{% for item in history %}<li><a href="/scopes/{{ draft.id }}/work-records/{{ item.record_id }}?revision={{ item.revision }}">{{ item.record_id }} / revision {{ item.revision }}</a> ? {{ item.recorded_at }}</li>{% else %}<li>No work records have been saved.</li>{% endfor %}</ul></details>
+{% endblock %}
