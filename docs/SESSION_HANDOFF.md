@@ -6,7 +6,7 @@ The full production goal remains incomplete. Repository evidence outranks this c
 ## Shared main and exact publications
 
 Shared main is `b2f87850c9b3d591b1a48b68c69891e162394084`.
-The owner approved three exact publications with ?All approved?.
+The owner approved three exact publications with "All approved".
 
 | PR | Approved head | Verified merge | Successful PR run | Post-merge run |
 | --- | --- | --- | --- | --- |
@@ -14,7 +14,8 @@ The owner approved three exact publications with ?All approved?.
 | #286 saved Scope chat links |d0a9f39|c0f136b|35073202070|35076785315|
 | #288 due single-row worker claims |c79def1|b2f8785|35073227113|35076802648|
 
-The post-merge runs are being observed; do not infer success from PR CI. No job was restarted.
+All three post-merge runs subsequently completed successfully at those exact merge commits.
+All twelve approved files match main byte-for-byte. No job was restarted.
 At merge, main had no branch protection/effective rules/rulesets, no review requests and no
 changes-requested review. No control was bypassed. An initial automatic approval rejection
 was resolved by supplying that current GitHub evidence. Branches and upstreams remain.
@@ -23,8 +24,9 @@ Private merge gates/receipts: `continuation-blockers-20260916`. Do not republish
 ## Approved local work-log candidate
 
 The owner chose Draft installation/work-evidence recording before inspection/sign-off design.
-Branch `feat/draft-work-evidence-log-20260916` is based on merged main; exact local commit and
-publication state are recorded in `work-record-validation-20260916`. It adds the native
+Branch `feat/draft-work-evidence-log-20260916` is based on merged main. Implementation
+checkpoint is `653505b`; exact local commit/publication state is recorded in
+`work-record-validation-20260916`. It adds the native
 register Work log, exact target/evidence-bound preview, separate session-bound confirmation,
 append-only history, and an explicit HTML/original-bearing ZIP. Unknowns remain unknown.
 No inspection acceptance, technical/commercial authority or Human Release is conferred.
@@ -48,8 +50,12 @@ ProjectPackage work history and inspection/sign-off requirements remain later wo
 No activation occurred. Port 8820's last recorded operational receipt is rollback 6c1e2a4
 with chat disabled; this development did not refresh the live process or database.
 The 3911ca4 single model request is consumed: transport/schema passed but semantic review
-failed. Do not retry it. The prepared d0a9f39 follow-up remains disabled/unapproved; bind it
-to the actual PR and successful post-merge CI, then obtain fresh exact single-call approval.
+failed. Do not retry it. The fresh b2f8785 follow-up is prepared, disabled and unapproved.
+Its three-PR merge-chain gate passed actual GitHub reads, all six CI runs passed, 67 offline admission tests passed,
+guarded capture matched the unchanged synthetic request, and the fresh runtime fingerprint
+matched. Private plan: `chat-grounding-diagnostic-b2f8785-20260916/diagnostic-plan-b2f8785.md`.
+The old unapproved d0a9f39 plan is preserved and superseded. Obtain fresh exact one-call
+approval before running the new wrapper. Approval=false and no attempt marker are deliberate.
 Activation separately needs a complete candidate-specific backup/restore/restart/rollback
 plan and explicit approval. Do not transfer old approvals to a newer runtime.
 
@@ -64,6 +70,7 @@ chat/pricing rehearsal worktree deliberately retains three staged overlay files;
 publish it. Exact publication branches are preserved. Private validation outputs are not
 public source and credentials/customer evidence must remain excluded.
 
-Finish observing the three existing post-merge jobs. Then close the local work-log browser
-gate, review/classify the exact diff, and continue its publication only on verified evidence.
+The approved three-publication workflow is complete, including post-merge CI. Close the local
+work-log browser gate, review/classify the exact diff, and continue publication only on
+verified evidence. The next model test has its own prepared exact approval request.
 Provider diagnostics and operational adoption remain separately governed actions.

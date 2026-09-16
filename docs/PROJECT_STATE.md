@@ -15,16 +15,24 @@ The owner approved the exact three publications. PR #287 (`7eae6f5`) merged as
 `b2f87850c9b3d591b1a48b68c69891e162394084`. Each exact-head PR CI succeeded.
 GitHub main was unprotected, effective rules/rulesets were empty, and no requested review
 or changes-requested decision remained. No rule was bypassed or branch deleted.
-Post-merge runs35076773492,35076785315,35076802648 are being observed; this sentence is not
-a success claim. Shared main is now `b2f8785`; the older checkpoints below remain historical.
+Post-merge runs `35076773492`, `35076785315` and `35076802648` all completed successfully
+at their exact merge commits. All twelve approved files match main byte-for-byte. Shared
+main is `b2f8785`; the older checkpoints below remain historical.
 
 The approved Draft work/evidence-log first slice is implemented locally on
-`feat/draft-work-evidence-log-20260916`, based on that main. It passed119 distinct affected
-checks, actual15433 migrations and original-file/concurrency tests, plus wheel/ZIP inspection.
+`feat/draft-work-evidence-log-20260916`, commit `653505b`, based on that main. It passed 119
+distinct affected checks, actual 15433 migrations and original-file/concurrency tests, plus
+wheel/ZIP inspection.
 The local candidate remains unpublished and unactivated pending its rendered-browser gate;
 helper initialization failed before interaction. See [the work-record contract](./DRAFT_WORK_RECORDS.md).
 Inspection/sign-off, representative accuracy and canonical production exits remain open.
 No new provider request, customer processing, OAuth/tunnel change or live database action ran.
+
+The fresh synthetic diagnostic plan targets exact merged `b2f8785`, with all six CI runs
+verified, 67 offline gate tests, guarded capture of the unchanged request and a fresh matching
+runtime fingerprint. Its approval is false and its attempt marker absent. The unapproved
+d0a9f39 plan is superseded because its single-head merge-tree assumption did not fit the
+combined merge. A fresh one-call approval is required; activation remains separate.
 
 ## Current position
 
