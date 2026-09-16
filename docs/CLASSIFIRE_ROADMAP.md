@@ -799,14 +799,17 @@ its quantities or arithmetic. Their local PDF/XLSX/package acceptance does not s
 canonical validation or Human Release. Desk-quote PDF/XLSX output does not mark this
 canonical phase complete.
 
-### Draft work-evidence increment alongside P4 (local candidate)
+### Draft work-evidence increment alongside P4 (browser accepted)
 
 The owner selected attributed Draft work/evidence capture first. The existing register now
 has a local Work log candidate: explicit saved Opening/Service, unknowns, selected retained
 report references, no-write preview, separate confirmation, immutable history and explicit
 HTML/original-bearing ZIP output. Migration0050 and 119 affected tests are validated locally,
-including disposable15433 history/concurrency. Browser acceptance is blocked by helper
-initialization; no activation or production exit is claimed. Direct site photos, work-report
+including disposable15433 history/concurrency. Rendered headless-Chrome create/preview/
+separate-confirm/restart/reopen/report acceptance passed, including exact original bytes,
+unknowns, unresolved holds and stale/quarantined/foreign-source refusals. The native helper
+still fails at initialization. Publication remains subject to exact-head CI/review; no activation
+or production exit is claimed. Direct site photos, work-report
 PDF/XLSX, package history and inspection/sign-off requirements remain later. This extends
 reporting rather than adding another independently orchestrated capability. See
 [the contract](./DRAFT_WORK_RECORDS.md). Phase12-14 authority gates remain unchanged.

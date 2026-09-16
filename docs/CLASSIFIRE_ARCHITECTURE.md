@@ -465,4 +465,4 @@ The two Draft tables use forward migration0050 and the existing database, audit,
 source-retention and scan controls. Explicit preview/save/reopen/report actions do not run
 matching, costing or AI. Source changes remain stale dependencies rather than silently
 retargeting work history. See [the work-record contract](./DRAFT_WORK_RECORDS.md) for
-architecture consequences, migration, output limits and the outstanding browser gate.
+architecture consequences, migration, output limits and the completed synthetic browser acceptance.

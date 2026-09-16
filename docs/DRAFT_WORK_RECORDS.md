@@ -62,7 +62,7 @@ fails closed. Historical migrations are unchanged. Downgrade is refused to prese
 work assertions. Operational adoption requires its own backup/restore/restart/rollback plan
 and explicit activation approval; this development work does not authorize it.
 
-## Verification and remaining gate
+## Verification and limits
 
 The local candidate passed 119 distinct affected cases across service, HTTP, register,
 deployment-lineage, SQLite migration and disposable PostgreSQL15433 runs. This includes
@@ -71,7 +71,21 @@ actual 0049-to-0050 migration and exact old Scope/package preservation. Four act
 were inspected and the offline wheel retained 333 exact application files. Full Ruff,
 three-file Mypy/Bandit and JavaScript syntax checks passed. Recorded pytest warnings remain.
 
-Browser initialization failed before app interaction (`helper_unknown_error`). HTTP and
-artifact evidence is not rendered-browser acceptance. The candidate has not been activated,
-and full close-out, inspection acceptance, compliance certificates and production Phase 12-14
-exits remain incomplete. Local evidence: private `work-record-validation-20260916` receipts.
+Rendered acceptance passed on 2026-09-16 using installed headless Chrome, a fresh owned
+PostgreSQL database on port 15433, private storage and a separate loopback app. The native
+browser helper still failed at initialization; actual rendered Chrome supplied the UI evidence.
+In-register creation, explicit evidence selection, no-write preview and separate confirmation
+passed for a shared-opening service and a blank Opening. Unresolved relationships remained
+held for review. A fresh app process and browser profile reopened the record and downloaded
+byte-identical ZIP content, including the selected original Word file. The standalone HTML
+was visually inspected; unknown person/time fields and escaped note text were preserved.
+Quarantined/foreign-source and stale-Scope refusals caused no writes. Canonical/release
+records stayed unchanged; the scanner was synthetic and no model capability was invoked.
+
+Private harness setup failures are retained, including an extra synthetic Draft confirmation
+before a quarantine fixture was correctly applied. The corrected refusal checks verified
+persisted quarantine first. No guard or application source was changed. These results and
+screenshots are in `work-record-browser-acceptance-20260916`; earlier test/wheel/ZIP receipts
+remain in `work-record-validation-20260916`. This passes the bounded browser publication
+gate, not real scanner efficacy, representative accuracy, activation or production Phase 12-14
+exits. Direct site photos, PDF/XLSX work reports, package history and inspection remain later.

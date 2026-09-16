@@ -39,23 +39,32 @@ were retained and corrected; no source guard was weakened. Full Ruff, targeted M
 JavaScript syntax, four actual ZIPs and 333 exact wheel files passed. Pytest warnings remain.
 PostgreSQL checks used verified disposable 15433 and fresh owned schemas, never live 15432.
 
-Browser initialization failed with `helper_unknown_error` before app interaction. HTTP/ZIP
-checks are not rendered-browser acceptance. Restore browser access and verify the complete
-in-register create/preview/confirm/reopen/report journey before treating this UI milestone
-as accepted or publishing the candidate. Source/native-photo intake, PDF/XLSX work reports,
+The native browser helper still fails with `helper_unknown_error`, but installed headless
+Chrome has now passed the full rendered in-register create/preview/separate-confirm/restart/
+reopen/report gate on fresh disposable15433. Exact original ZIP bytes survived restart;
+unknowns, blank/shared targets and unresolved holds remained explicit. Quarantine, foreign
+source and stale Scope refusals caused no writes. The screens and HTML report were
+visually inspected. No application code or guard needed correction. Private harness failures and
+one extra synthetic Draft record remain preserved; the corrected negative checks passed.
+Evidence: `work-record-browser-acceptance-20260916`, including independent visual review.
+Source/native-photo intake, PDF/XLSX work reports,
 ProjectPackage work history and inspection/sign-off requirements remain later work.
 
 ## Runtime and model boundary
 
 No activation occurred. Port 8820's last recorded operational receipt is rollback 6c1e2a4
 with chat disabled; this development did not refresh the live process or database.
-The 3911ca4 single model request is consumed: transport/schema passed but semantic review
-failed. Do not retry it. The fresh b2f8785 follow-up is prepared, disabled and unapproved.
-Its three-PR merge-chain gate passed actual GitHub reads, all six CI runs passed, 67 offline admission tests passed,
-guarded capture matched the unchanged synthetic request, and the fresh runtime fingerprint
-matched. Private plan: `chat-grounding-diagnostic-b2f8785-20260916/diagnostic-plan-b2f8785.md`.
-The old unapproved d0a9f39 plan is preserved and superseded. Obtain fresh exact one-call
-approval before running the new wrapper. Approval=false and no attempt marker are deliberate.
+Both single model allowances are consumed. The 3911ca4 request passed transport/schema
+but failed semantic review. The owner separately approved the exact b2f8785 follow-up
+with "Approve exactly this one call" at 2026-09-16T11:14:36+00:00. Fresh source/runtime
+and all six CI bindings passed preflight. The existing guarded wrapper ran once and
+exited 1 with read_timeout after 30,108 ms, HTTP status absent and zero response bytes.
+No response exists for semantic assessment. Provider processing/cost is unknown; do not
+infer that the provider did no work. No retry or activation ran. Preserve the used-attempt
+marker and original approval bindings. The old unapproved d0a9f39 plan is superseded.
+Private evidence: `chat-grounding-diagnostic-b2f8785-20260916/execution-review-receipt.json`,
+`connection-result.json`, `connection-diagnostics.log` and `connection-attempt-used.json`.
+The reviewed plan and execution scripts remain unchanged. Do not reuse this allowance.
 Activation separately needs a complete candidate-specific backup/restore/restart/rollback
 plan and explicit approval. Do not transfer old approvals to a newer runtime.
 
@@ -70,9 +79,10 @@ chat/pricing rehearsal worktree deliberately retains three staged overlay files;
 publish it. Exact publication branches are preserved. Private validation outputs are not
 public source and credentials/customer evidence must remain excluded.
 
-The approved three-publication workflow is complete, including post-merge CI. Close the local
-work-log browser gate, review/classify the exact diff, and continue publication only on
-verified evidence. The next model test has its own prepared exact approval request.
+The approved three-publication workflow is complete, including post-merge CI. The work-log
+browser gate now passes. Review/classify the exact diff and continue the already authorized
+publication with current-head CI/review checks; record merge and post-merge evidence.
+The approved b2f8785 diagnostic has already consumed its one attempt.
 Provider diagnostics and operational adoption remain separately governed actions.
 
 
@@ -81,15 +91,14 @@ Provider diagnostics and operational adoption remain separately governed actions
 Use `C:/CLASSIFIRE/.tmp/draft-work-evidence-log-20260916`, branch
 `feat/draft-work-evidence-log-20260916`. Implementation is commit `653505b`; publication
 and diagnostic documentation is `d524f18`. Read the current branch HEAD for any later
-handoff-only commit. This branch has no upstream and has not been pushed or assigned a PR.
-Do not start from the conflicted root or accidentally publish the entire candidate before
-its browser acceptance gate. The three completed fix branches retain their origin upstreams.
+acceptance/documentation commit. This checkpoint precedes work-log publication; recheck
+current upstream/PR/CI and private publication receipts before resuming. Do not start from
+the conflicted root. Browser acceptance is complete. Preserve all existing branches.
 
-At this handoff, GitHub main, the three merged PRs and all six completed successful runs
-were freshly rechecked. The diagnostic approval is still false, its attempt marker is absent,
-and final offline admission evidence is 67 passed / zero failed / zero skipped. The separate
-one-call question was presented but has not been answered. A handoff request is not that
-approval. No live app/database/configuration read or activation was performed for this refresh.
+GitHub main, the three merged PRs and all six completed successful runs were freshly
+rechecked on continuation. The earlier 67-test offline receipt was verified. The separate
+one-call approval then authorized only the exact b2f8785 diagnostic described above; it
+has now timed out and consumed its allowance. No live app/database action or activation ran.
 
 ### Private evidence index
 
@@ -104,31 +113,33 @@ All following paths are under `C:/CLASSIFIRE/.tmp/`; keep them local and out of 
 - `work-record-validation-20260916/commit-receipt.json`: 42-file implementation checkpoint;
   `handoff-commit-receipt.json`: d524f18 documentation checkpoint;
   `final-local-state.json`: preserved root and branch/upstream inventory.
-- `chat-grounding-diagnostic-b2f8785-20260916/diagnostic-plan-b2f8785.md`: exact new one-call
-  plan. Read `preparation-completion.json`, `six-ci-results.json`, `gate-tests-final.xml`,
-  `connection-approval.json` and the guarded capture/runtime fingerprint receipts before action.
+- `work-record-browser-acceptance-20260916`: rendered acceptance, fresh-process restart,
+  exact ZIP/HTML, refusal snapshots, retained harness errors and root visual review. The
+  publication audit verifies the original 119 affected checks and completed PRs #286-#288.
+  Read later publication gate/merge receipts for the current branch and CI state.
+- `chat-grounding-diagnostic-b2f8785-20260916`: exact reviewed plan/preparation, 67-case
+  offline receipt, approval, fresh preflight and the consumed timeout receipts above.
+  These are retained evidence, not permission for another invocation.
 - `diagnostic-source-b2f8785-20260916`: clean detached b2f8785 source for that model test.
-  It deliberately excludes the unpublished work log and migration 0050.
+  It deliberately excludes the work-log change and migration 0050.
 
 ### Resume order and limits
 
 1. Read this worktree's AGENTS, PROJECT_STATE, roadmap and work-record contract. Inspect
    branch/diff/worktree registry and private receipts again; preserve all unrelated changes.
-2. Restore supported browser access, then run synthetic isolated work-log acceptance:
-   select explicit target/evidence, preview without writes, separately confirm, reopen after
-   restart, and inspect the original-bearing ZIP/HTML. Verify blank/shared/unresolved targets
-   and stale/quarantined/foreign-source refusal. Record screenshots and exact artifacts.
-   HTTP tests are supporting evidence, not the missing rendered-browser proof.
+2. Read the completed `work-record-browser-acceptance-20260916` receipts and screenshots.
+   Do not repeat the passed browser journey unless source changes or new evidence require it.
+   The installed headless-Chrome path resolved the missing rendered proof; the native helper
+   failure remains an environment limitation, not a pass. Synthetic scanner results do not
+   establish production malware efficacy.
 3. Fix only evidenced defects. Use this checkout's PYTHONPATH, fresh basetemp and
    `-p no:cacheprovider`. Database rehearsals stay on disposable 15433 with fresh owned
    schemas. Never use live 15432. Then review explicit files/commit range and continue the
    authorized publication workflow only after the UI gate; observe CI and required reviews,
    merge on success and observe post-merge CI. Do not restart a job because observation times out.
-4. Independently, obtain or verify a NEW exact approval for the b2f8785 diagnostic plan.
-   It permits one synthetic gpt-5-mini request, no retry, max 5000 output tokens. Only after
-   real approval bind its exact quote/time and approved hashes, then use the guarded existing
-   wrapper. Inspect the complete response for invented relationships, missing unknowns or
-   false suitability/approval claims. Consumed allowances stay consumed even on failure.
+4. Do not retry the consumed b2f8785 or 3911ca4 diagnostic. Semantic acceptance of the
+   corrected b2f8785 context is unresolved because no reply arrived. Any further provider
+   test needs a separately reviewable exact plan and new owner approval.
 5. Any activation needs a new candidate-specific backup, disposable restore/migration,
    restart and rollback plan plus separate approval. Migration 0050 refuses destructive
    downgrade to preserve work-record history; plan rollback compatibility explicitly.
