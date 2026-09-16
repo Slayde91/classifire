@@ -1,11 +1,30 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-16 against merged PRs #278-#285 and their observed CI.
-Verified shared main is `9ceffc6efa05a2d0bd271c64b5d7785d80fe0659`. Post-merge
+Reconciled 2026-09-16 against merged PRs #278-#288 and their observed CI.
+Verified shared main is `b2f87850c9b3d591b1a48b68c69891e162394084`. Post-merge
 results are recorded separately below. This checkpoint grants no deployment authority; the full production objective remains incomplete.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
 [handoff](./SESSION_HANDOFF.md) gives the exact resume task.
+
+## Latest publication and local work-log checkpoint
+
+The owner approved the exact three publications. PR #287 (`7eae6f5`) merged as
+`190dc17bd440eb77e1be9f27cbc24ff786fbb355`; #286 (`d0a9f39`) as
+`c0f136babfd75a551cb6c4892dc7f7f890941053`; #288 (`c79def1`) as
+`b2f87850c9b3d591b1a48b68c69891e162394084`. Each exact-head PR CI succeeded.
+GitHub main was unprotected, effective rules/rulesets were empty, and no requested review
+or changes-requested decision remained. No rule was bypassed or branch deleted.
+Post-merge runs35076773492,35076785315,35076802648 are being observed; this sentence is not
+a success claim. Shared main is now `b2f8785`; the older checkpoints below remain historical.
+
+The approved Draft work/evidence-log first slice is implemented locally on
+`feat/draft-work-evidence-log-20260916`, based on that main. It passed119 distinct affected
+checks, actual15433 migrations and original-file/concurrency tests, plus wheel/ZIP inspection.
+The local candidate remains unpublished and unactivated pending its rendered-browser gate;
+helper initialization failed before interaction. See [the work-record contract](./DRAFT_WORK_RECORDS.md).
+Inspection/sign-off, representative accuracy and canonical production exits remain open.
+No new provider request, customer processing, OAuth/tunnel change or live database action ran.
 
 ## Current position
 
@@ -18,7 +37,7 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Implemented code baseline | PR #284 metadata validation and PR #285 documentation are merged; main `9ceffc6` has tree `d101185956276a7ba2f6c4e6d078919dd0a65493`, matching the combined rehearsal |
+| Implemented code baseline | PRs #286-#288 are merged on `b2f8785`: saved Scope chat links, decimal precision and due single-row worker claims. The separate Draft work-log candidate remains local |
 | Prepared runtime | Isolated `9ceffc6` passed offline install, disposable 15433 migration/HTTP and fingerprint checks. It is not activated. The earlier frozen `8b4b79f` bundle remains preserved |
 | PR #273 CI | PR run `34862079545` and post-merge `34869099059` succeeded; 2,647 tests |
 | PR #274 CI | PR run `34869742499` and post-merge `34873941741` succeeded; post-merge passed 2,658 tests |
@@ -44,7 +63,7 @@ one opening and another reported separate blank opening. Unknown physical verifi
 must not be confused with contradictory saved relationships. No retry or activation
 was performed; the earlier browser HTTP502 cause remains unknown.
 
-The current isolated correction adds a selected-record relationship projection and
+The correction merged in PR #286 adds a selected-record relationship projection and
 clarifies the existing advisory instructions. Seven focused cases passed. The broader
 run passed 178 cases; all 74 PostgreSQL skips subsequently passed in a fresh isolated
 schema on port 15433. With the additional legacy-context case, 253 distinct affected

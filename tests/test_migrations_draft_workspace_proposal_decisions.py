@@ -59,7 +59,8 @@ def test_decision_migration_preserves_saved_history_and_enforces_one_decision(ca
     }
     with Session(engine) as db:
         assessment = assess_deployment_lineage(db)
-        assert assessment.status == "READY" and not assessment.database_write_performed
+        assert assessment.code == "DATABASE_MIGRATION_REQUIRED"
+        assert not assessment.database_write_performed
     with engine.connect() as c:
         assert c.scalar(select(proposals.c.proposal_json)) == raw
     decisions = Table("draft_workspace_proposal_decisions", MetaData(), autoload_with=engine)

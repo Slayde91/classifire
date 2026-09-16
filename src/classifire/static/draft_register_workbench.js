@@ -15,14 +15,21 @@
     const url=new URL(raw,location.origin);
     if(url.origin!==location.origin || url.username || url.password || url.pathname.includes("%") || url.pathname.includes("\\")) throw new Error("Unsupported workspace address.");
     const prefix=base+"/", tail=url.pathname.startsWith(prefix) ? url.pathname.slice(prefix.length) : "";
-    const get=/^(register-evidence|(system-matches|estimates)(\/[a-zA-Z0-9-]+)?)$/;
-    const post=/^(system-matches|estimates)(\/[a-zA-Z0-9-]+(\/(review|constraints|lines)(\/[a-zA-Z0-9-]+)?)?)?$/;
+    const get=/^(work-records(\/[a-zA-Z0-9-]+)?|register-evidence|(system-matches|estimates)(\/[a-zA-Z0-9-]+)?)$/;
+    const post=/^(work-records\/(preview|confirm)|(system-matches|estimates)(\/[a-zA-Z0-9-]+(\/(review|constraints|lines)(\/[a-zA-Z0-9-]+)?)?)?)$/;
     if(!(method==="POST" ? post : get).test(tail)) throw new Error("Use an explicit supported capability action.");
     return url;
   }
-  function canLeave() { return !dirty || window.confirm("Discard unsaved review or price entries in this panel?"); }
+  function canLeave() { return !dirty || window.confirm("Discard unsaved entries in this panel?"); }
   function picker(kind) { return `${base}/${kind==="system" ? "system-matches" : "estimates"}?scope_revision=${revision}`; }
   function endpoint(kind) {
+    if(kind==="work") {
+      const url=new URL(`${base}/work-records`,location.origin);
+      url.searchParams.set("scope_revision",String(revision));
+      if(row?.opening_id)url.searchParams.set("opening_id",row.opening_id);
+      if(row?.service_id)url.searchParams.set("service_id",row.service_id);
+      return url;
+    }
     if(kind==="evidence") {
       const url=new URL(`${base}/register-evidence`,location.origin);
       url.searchParams.set("revision",String(revision));
@@ -139,16 +146,16 @@
     if(capability==="evidence" && method==="GET")body.replaceChildren();
     busy=true;body.setAttribute("aria-busy","true");const priorInert=scopeForm.inert, priorBodyInert=body.inert;
     scopeForm.inert=true;body.inert=true;
-    message(method==="POST" ? "Saving this Draft action..." : "Loading saved inputs...");
+    message(method==="POST" ? capability==="work" && url.pathname.endsWith("/preview") ? "Preparing the work record preview..." : "Saving this Draft action..." : "Loading saved inputs...");
     try {
       const response=await fetch(url,{method,body:fields,credentials:"same-origin",cache:"no-store",headers:{"X-Classifire-Workspace":"register",...(method==="POST" ? {"Content-Type":"application/x-www-form-urlencoded"} : {})}});
       const finalURL=allowed(response.url,response.redirected ? "GET" : method);
       const html=await response.text();
       const page=new DOMParser().parseFromString(html,"text/html"), content=page.querySelector("[data-workbench-content]");
-      if(!content || content.dataset.draftId!==draftId || content.querySelector("script") || !["system","price","evidence"].includes(content.dataset.capability)) {
+      if(!content || content.dataset.draftId!==draftId || content.querySelector("script") || !["system","price","evidence","work"].includes(content.dataset.capability)) {
         throw new Error(`The action was refused or the session changed (${response.status}). Your entries remain here; reopen the project before retrying.`);
       }
-      if(content.dataset.capability==="evidence" &&
+      if(["evidence","work"].includes(content.dataset.capability) &&
          (Number(content.dataset.scopeRevision)!==revision || (!row?.opening_id && !row?.service_id && content.dataset.defectId!==(row?.defect_id || "")) || content.dataset.openingId!==(row?.opening_id || "") || content.dataset.serviceId!==(row?.service_id || ""))) {
         throw new Error("Source evidence does not match the selected saved row. Reopen the row.");
       }
@@ -164,7 +171,7 @@
       panel.querySelectorAll("[data-workbench-tab]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.workbenchTab===capability)));
       if(response.ok) {
         await refreshProjection(body.firstElementChild);
-        message(capability==="evidence" ? `Source evidence for saved Scope revision ${revision}. No data was changed or sent to AI.` : fromSave || method==="POST" ? "Saved. The register shows the returned artifact revision; earlier values remain in history." : "Saved inputs loaded. Choose and save each action explicitly.");
+        message(capability==="work" && content.querySelector("[data-work-preview]") ? "Preview only. Review the record and separately confirm to save it." : capability==="evidence" ? `Source evidence for saved Scope revision ${revision}. No data was changed or sent to AI.` : fromSave || method==="POST" ? "Saved. The register shows the returned artifact revision; earlier values remain in history." : "Saved inputs loaded. Choose and save each action explicitly.");
       } else message(`Changes were not saved (${response.status}). Review the retained entries and errors below.`);
       lockForms();heading.focus({preventScroll:true});
     } catch(error) { message(error.message || "The action could not be verified. Reopen the saved artifact before retrying."); }
@@ -172,7 +179,7 @@
   }
   async function open(detail) {
     if(busy || !canLeave())return;
-    if(detail.capability!=="evidence" && (scopeDirty() || detail.modified)){opener=document.activeElement;panel.hidden=false;body.replaceChildren();row=null;message("Save the Scope before opening technical or price authoring. No capability has run.");heading.focus();return;}
+    if(detail.capability!=="evidence" && (scopeDirty() || detail.modified)){opener=document.activeElement;panel.hidden=false;body.replaceChildren();row=null;message("Save the Scope before opening Draft authoring. No capability has run.");heading.focus();return;}
     if(!detail.row || (!detail.row.defect_id && !detail.row.opening_id && !detail.row.service_id) || (detail.capability!=="evidence" && (!detail.row.opening_id || detail.row.needsReview)) || panel.dataset[detail.capability]!=="true")return;
     row=detail.row;capability=detail.capability;opener=document.activeElement;dirty=false;
     panel.hidden=false;panel.querySelector("[data-workbench-target]").textContent=[row.label,row.opening_id ? "Opening "+row.opening_id : row.service_id ? "Parent Opening unresolved" : "Opening relationship unresolved",row.service_id ? "Service "+row.service_id : row.blank ? "Blank opening" : "Services unresolved"].filter(Boolean).join(" / ");

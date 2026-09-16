@@ -455,3 +455,14 @@ restart with synthetic provider/scanner stubs. Broader reviewed actions, real-pr
 and operational acceptance remain. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked
 without forcing users through downstream capabilities.
+
+## Draft work-evidence capture (local candidate)
+
+The approved first close-out slice extends the existing register/reporting capability,
+using immutable Draft assertions and selected saved Scope/evidence dependencies. It is
+not installation acceptance, inspection, compliance certification or Human Release.
+The two Draft tables use forward migration0050 and the existing database, audit, permission,
+source-retention and scan controls. Explicit preview/save/reopen/report actions do not run
+matching, costing or AI. Source changes remain stale dependencies rather than silently
+retargeting work history. See [the work-record contract](./DRAFT_WORK_RECORDS.md) for
+architecture consequences, migration, output limits and the outstanding browser gate.
