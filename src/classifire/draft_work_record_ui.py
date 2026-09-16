@@ -16,6 +16,7 @@ from .config import get_settings
 from .db import get_db
 from .draft_scope_ui import _form_values, _import_session
 from .security import verify_csrf
+from .services import draft_work_photos as photos
 from .services import draft_work_records as work
 from .services.draft_scope import DraftScopeError, get_draft, read_revision
 from .ui import _context, _require, templates
@@ -74,6 +75,7 @@ def _page(
             payload_json=json.dumps(content),
             work_notice=work.NOTICE,
             history=work.history(db, actor, draft_id),
+            work_photos=photos.list_sources(db, actor, draft_id),
             current_scope_revision=draft.latest_revision,
         ),
         headers={"Cache-Control": "no-store", "Vary": "X-Classifire-Workspace, Cookie"},
@@ -106,6 +108,7 @@ def work_page(
                 "observed_at": "",
                 "unknowns": "",
                 "evidence_indices": [],
+                "photo_source_ids": [],
             },
         )
     except DraftScopeError as exc:
@@ -114,7 +117,7 @@ def work_page(
 
 @router.post("/scopes/{draft_id}/work-records/preview", response_class=HTMLResponse)
 async def preview_work(request: Request, db: Db, draft_id: str) -> HTMLResponse:
-    form = await _form_values(request, 40000, max_fields=50)
+    form = await _form_values(request, 40000, max_fields=70)
     verify_csrf(request, form.get("csrf_token"))
     actor = _require(request, db, "project:write")
     try:
@@ -138,6 +141,11 @@ async def preview_work(request: Request, db: Db, draft_id: str) -> HTMLResponse:
                 int(key.removeprefix("evidence_"))
                 for key, value in form.items()
                 if key.startswith("evidence_") and value == "include"
+            ],
+            photo_source_ids=[
+                key.removeprefix("photo_")
+                for key, value in form.items()
+                if key.startswith("photo_") and value == "include"
             ],
         )
         proposed = work.preview(db, actor, draft_id, content, settings=get_settings())
@@ -214,6 +222,7 @@ def saved_work(
             # Review current Scope explicitly; repeat the evidence selection.
             content["scope_revision"] = get_draft(db, actor, draft_id).latest_revision
             content["evidence_indices"] = []
+            content["photo_source_ids"] = []
         return _page(request, db, draft_id, content=content, saved=None if edit else value)
     except DraftScopeError as exc:
         raise _failure(exc) from exc

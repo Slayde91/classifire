@@ -1,39 +1,43 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-16 against merged PRs #278-#288, retained checks and rendered work-log acceptance.
-The verified work-log base is `b2f87850c9b3d591b1a48b68c69891e162394084`. Post-merge
-results are recorded separately below. This checkpoint grants no deployment authority; the full production objective remains incomplete.
+Reconciled 2026-09-16 against merged PRs #278-#289, current source, retained checks and
+rendered work-log/direct-photo acceptance. The verified shared base is
+`1d692556d4c342d363c273b084f5ad736e5dd4df`. This checkpoint grants no deployment
+authority; the full production objective remains incomplete.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
 [handoff](./SESSION_HANDOFF.md) gives the exact resume task.
 
-## Latest publication and local work-log checkpoint
+## Latest publication and local direct-photo checkpoint
 
-The owner approved the exact three publications. PR #287 (`7eae6f5`) merged as
+The owner approved the exact three precursor publications. PR #287 (`7eae6f5`) merged as
 `190dc17bd440eb77e1be9f27cbc24ff786fbb355`; #286 (`d0a9f39`) as
 `c0f136babfd75a551cb6c4892dc7f7f890941053`; #288 (`c79def1`) as
 `b2f87850c9b3d591b1a48b68c69891e162394084`. Each exact-head PR CI succeeded.
 GitHub main was unprotected, effective rules/rulesets were empty, and no requested review
 or changes-requested decision remained. No rule was bypassed or branch deleted.
 Post-merge runs `35076773492`, `35076785315` and `35076802648` all completed successfully
-at their exact merge commits. All twelve approved files match main byte-for-byte. Shared
-main is `b2f8785`; the older checkpoints below remain historical.
+at their exact merge commits. All twelve approved files match main byte-for-byte.
+The separately authorized work-log publication then merged through PR #289 as `1d69255`;
+PR run `35090914391` and post-merge run `35094148466` both succeeded.
 
-The approved Draft work/evidence-log first slice is implemented locally on
-`feat/draft-work-evidence-log-20260916`, commit `653505b`, based on that main. It passed 119
-distinct affected checks, actual 15433 migrations and original-file/concurrency tests, plus
-wheel/ZIP inspection.
-Its rendered-browser publication gate now passes using installed headless Chrome on a
-fresh disposable 15433 database and private loopback app. Create, no-write preview, separate
-confirmation, fresh-process/profile reopening and byte-identical original-bearing ZIP/HTML
-passed, with blank/shared/unresolved targets and stale/quarantined/foreign refusals. The
-native helper remains unavailable. Retained harness failures were corrected without changing
-application guards or code; no canonical/release state changed. This checkpoint precedes
-publication: verify exact branch/PR CI and review state, then record merge/post-merge results
-in the private publication receipt. No activation occurred. See [the contract](./DRAFT_WORK_RECORDS.md).
-Inspection/sign-off, representative accuracy and canonical production exits remain open.
-The browser run invoked no model. The separately approved diagnostic is recorded below.
-No customer processing, OAuth/tunnel change or live database action ran.
+The approved Draft work/evidence-log first slice passed 119 distinct affected checks, its
+rendered-browser gate, PR #289 exact-head run `35090914391` and post-merge run `35094148466`.
+It merged as `1d692556d4c342d363c273b084f5ad736e5dd4df`; its separate branch and receipts remain
+preserved. No CI job was restarted and no activation occurred.
+
+The current isolated candidate `feat/draft-work-photos-20260916` is based on that merge. It
+adds separately retained and explicitly scanned JPEG/PNG sources, work-record schema v2,
+v1 read/report compatibility, exact-photo HTML/ZIP output and forward migration0051. Its
+83 focused cases passed on disposable PostgreSQL15433, along with full Ruff and targeted
+Mypy/Bandit. Installed Chrome passed upload, scan, select, no-write preview, separate
+confirmation, exact report/ZIP, fresh-process/profile reopen and byte-identical ZIP. Protected
+canonical tables remained empty and no model or implicit capability ran. Nine screenshots
+were captured, but sandbox image-viewer and native-helper initialization failed, so manual
+pixel inspection is not claimed. See [the contract](./DRAFT_WORK_RECORDS.md).
+
+Inspection/sign-off, real scanner efficacy, representative accuracy and canonical production
+exits remain open. No customer processing, OAuth/tunnel change or live database action ran.
 
 The owner separately approved the exact `b2f8785` synthetic diagnostic on 2026-09-16.
 The unchanged 14,299-byte request, clean source, runtime fingerprint and all six CI bindings
@@ -56,14 +60,14 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Implemented code baseline | PRs #286-#288 are merged on `b2f8785`: saved Scope chat links, decimal precision and due single-row worker claims. Draft work-log code and bounded rendered acceptance are complete; exact publication is a separate CI/review gate |
+| Implemented code baseline | PRs #286-#289 are merged on `1d69255`: saved Scope chat links, decimal precision, due single-row worker claims and the Draft work log. Direct-photo support is a validated local candidate subject to its own publication gate |
 | Prepared runtime | Isolated `9ceffc6` passed offline install, disposable 15433 migration/HTTP and fingerprint checks. It is not activated. The earlier frozen `8b4b79f` bundle remains preserved |
 | PR #273 CI | PR run `34862079545` and post-merge `34869099059` succeeded; 2,647 tests |
 | PR #274 CI | PR run `34869742499` and post-merge `34873941741` succeeded; post-merge passed 2,658 tests |
 | PR #275 CI | PR run `34879918621` and post-merge `34883667900` succeeded; post-merge passed 2,658 tests |
 | PR #276 CI | PR run `34890268945` and post-merge `34894040919` succeeded; post-merge passed 2,667 tests in 1,987.85 seconds, plus style/build/type/security/migration checks |
 | PR #277 CI | PR run `34955271348` succeeded: 2,673 tests in 2,033.51 seconds, plus style/build/type/security/migration checks. Post-merge run `34958743322` subsequently completed successfully; do not restart it |
-| Publication | PRs #273-#285 are merged after successful current-head checks and observed review requirements. #283 retained its original commit and resolved one guide conflict in a normal merge commit. No existing job was restarted or branch deleted |
+| Publication | PRs #273-#289 are merged after successful current-head checks and observed review requirements. #283 retained its original commit and resolved one guide conflict in a normal merge commit. No existing job was restarted or branch deleted |
 | Operational app | Last recorded port 8820 process was PID24324; the last approved receipt is rollback `6c1e2a4` with chat disabled. This publication work did not refresh live runtime state or execute the prepared activation |
 | Prepared activation | New `9ceffc6` operational bundle is incomplete, disabled and unapproved. The `3911ca4` diagnostic failed semantic acceptance; the separately approved `b2f8785` request timed out without a reply. Both allowances are consumed. No activation followed |
 
@@ -521,13 +525,14 @@ historical byte/recovery evidence, or change any production-phase status.
 
 ## Local change classification
 
-The current local candidate is `feat/draft-work-evidence-log-20260916`, based on
-merged `b2f8785`. Its 42-file range contains the Draft work-log service, register UI,
-HTML/ZIP output, additive migration 0050, affected migration-head checks, tests and
-documentation. The saved-link, decimal-precision and worker corrections are already
-merged through PRs #286-#288; they are not pending publications. Preserve their
-branches and receipts. The earlier four-document `5eb7aa7` is superseded and remains
-unpublished in its own worktree. The five/six-change staged rehearsal trees are retained.
+The current local candidate is `feat/draft-work-photos-20260916`, based on merged
+`1d69255`. It contains the separate Draft photo source service/UI, fixed JPEG/PNG parser,
+v2/v1-compatible work-record integration, exact-photo ZIP/report output, additive migration
+0051, migration-head checks, tests and documentation. The work-log foundation and prior
+saved-link, decimal-precision and worker corrections are already merged through PRs #286-#289;
+they are not pending publications. Preserve their branches and receipts. The earlier
+four-document `5eb7aa7` is superseded and remains unpublished in its own worktree. The
+five/six-change staged rehearsal trees are retained.
 
 Metadata fix `6e3214a` is now merged through PR #284 as `cddefd1`, with
 successful PR and post-merge CI. It shares the existing provider/model/canonical-time
@@ -543,10 +548,10 @@ is incomplete. No root changes were staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Complete or verify the Draft work-log publication.** Its bounded browser gate is
-   accepted. Use the exact candidate/PR and private publication receipts to check current
-   CI/reviews, merge only on success and record post-merge CI. Do not repeat completed
-   browser/test work or PRs #286-#288.
+1. **Complete or verify the direct-photo publication.** Its bounded browser and focused
+   validation gates are accepted. Review the exact candidate diff, publish only this branch,
+   merge only after current-head CI/review checks succeed, and record post-merge CI. Do not
+   repeat the completed work-log journey or PRs #286-#289.
 2. **Keep diagnostic consumption explicit.** The separately approved `b2f8785`
    request timed out without a reply; its allowance is consumed. Do not retry either
    it or the earlier `3911ca4` request. Any further provider test needs its own exact

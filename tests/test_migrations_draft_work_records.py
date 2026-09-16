@@ -46,13 +46,14 @@ def test_work_log_forward_migration_preserves_scope_and_appends_revision(
     assert set(inspect(engine).get_table_names()) - before == {
         "draft_work_records",
         "draft_work_record_revisions",
+        "draft_work_photo_sources",
     }
     with Session(engine) as db:
         actor = db.get(User, uid(900))
         assert scopes.revision_bytes(db, actor, identity, 2) == exact
         assert assess_deployment_lineage(db).status == "READY"
         assert (
-            db.scalar(text("SELECT version_num FROM alembic_version")) == "0050_draft_work_records"
+            db.scalar(text("SELECT version_num FROM alembic_version")) == "0051_draft_work_photos"
         )
         payload = {
             "record_id": str(uuid4()),

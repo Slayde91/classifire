@@ -233,3 +233,39 @@ def test_amendment_cannot_retarget_and_timestamp_is_explicit(case):
                 content | {"expected_revision": 1, "service_id": None},
                 settings=settings,
             )
+
+
+def test_pre_photo_schema_record_remains_readable_and_exportable(case):
+    factory, identity, content, settings = case
+    with factory() as db:
+        actor = db.get(User, uid(100))
+        proposed = work.preview(db, actor, identity, content, settings=settings)
+        saved = work.save(db, actor, identity, content, proposed["sha256"], settings=settings)
+        row = db.scalar(select(DraftWorkRecordRevision))
+        legacy = copy.deepcopy(saved)
+        legacy["content"].pop("photo_source_ids")
+        legacy["dependencies"].pop("photos")
+        legacy["schema_version"] = work.SCHEMA_V1
+        legacy.pop("sha256")
+        legacy["sha256"] = work._hash(legacy)
+        row.content_hash = legacy["sha256"]
+        row.envelope_json = work._json(legacy).decode("utf-8")
+        db.commit()
+    with factory() as db:
+        actor = db.get(User, uid(100))
+        assert work.read(
+            db, actor, identity, content["record_id"], 1, settings=settings
+        )["record"] == legacy
+        with zipfile.ZipFile(
+            io.BytesIO(
+                work.report_archive(
+                    db, actor, identity, content["record_id"], 1, settings=settings
+                )
+            )
+        ) as archive:
+            assert archive.testzip() is None
+            report = archive.read("report.html").decode("utf-8")
+            assert "Selected direct photos" not in report
+            manifest = json.loads(archive.read("manifest.json"))
+            assert manifest["schema_version"] == work.SCHEMA_V1
+            assert "Unselected direct photos" not in manifest["exclusions"]

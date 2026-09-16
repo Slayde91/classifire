@@ -1,158 +1,114 @@
 # CLASSIFIRE Session Handoff
 
 Reconciled 2026-09-16 against GitHub, current source and private validation receipts.
-The full production goal remains incomplete. Repository evidence outranks this checkpoint.
+Repository evidence outranks this checkpoint. The full production goal remains incomplete.
 
-## Shared main and exact publications
+## Shared main and completed publications
 
-Shared main is `b2f87850c9b3d591b1a48b68c69891e162394084`.
-The owner approved three exact publications with "All approved".
+Shared main is `1d692556d4c342d363c273b084f5ad736e5dd4df`.
 
-| PR | Approved head | Verified merge | Successful PR run | Post-merge run |
+| PR | Published change | Verified merge | Successful PR run | Successful post-merge run |
 | --- | --- | --- | --- | --- |
-| #287 decimal precision |7eae6f5|190dc17|35073214715|35076773492|
-| #286 saved Scope chat links |d0a9f39|c0f136b|35073202070|35076785315|
-| #288 due single-row worker claims |c79def1|b2f8785|35073227113|35076802648|
+| #286 | saved Scope chat links | `c0f136b` | `35073202070` | `35076785315` |
+| #287 | decimal precision | `190dc17` | `35073214715` | `35076773492` |
+| #288 | due single-row worker claims | `b2f8785` | `35073227113` | `35076802648` |
+| #289 | Draft work/evidence log | `1d69255` | `35090914391` | `35094148466` |
 
-All three post-merge runs subsequently completed successfully at those exact merge commits.
-All twelve approved files match main byte-for-byte. No job was restarted.
-At merge, main had no branch protection/effective rules/rulesets, no review requests and no
-changes-requested review. No control was bypassed. An initial automatic approval rejection
-was resolved by supplying that current GitHub evidence. Branches and upstreams remain.
-Private merge gates/receipts: `continuation-blockers-20260916`. Do not republish these commits.
+All eight listed CI runs completed successfully at the relevant exact commits. No job was
+restarted, no control was bypassed and no branch was deleted. Do not repeat or republish
+these changes. The #289 post-merge receipt is
+`work-record-browser-acceptance-20260916/readonly-postmerge-20260916T124812353378Z.json`.
 
-## Approved local work-log candidate
+## Current direct-photo candidate
 
-The owner chose Draft installation/work-evidence recording before inspection/sign-off design.
-Branch `feat/draft-work-evidence-log-20260916` is based on merged main. Implementation
-checkpoint is `653505b`; exact local commit/publication state is recorded in
-`work-record-validation-20260916`. It adds the native
-register Work log, exact target/evidence-bound preview, separate session-bound confirmation,
-append-only history, and an explicit HTML/original-bearing ZIP. Unknowns remain unknown.
-No inspection acceptance, technical/commercial authority or Human Release is conferred.
-See [the contract](./DRAFT_WORK_RECORDS.md) for migration 0050, exclusions and current limits.
+Work only in `C:/CLASSIFIRE/.tmp/draft-work-photos-20260916`, branch
+`feat/draft-work-photos-20260916`, based on merged `1d69255`. The candidate adds:
 
-119 distinct affected cases passed across recorded runs, including 23 final work-log cases,
-53 lineage/register cases, 30 current-head/migration regressions, 9 existing PostgreSQL
-transaction cases and 4 migration-history cases. Failed runner/obsolete-head expectations
-were retained and corrected; no source guard was weakened. Full Ruff, targeted Mypy/Bandit,
-JavaScript syntax, four actual ZIPs and 333 exact wheel files passed. Pytest warnings remain.
-PostgreSQL checks used verified disposable 15433 and fresh owned schemas, never live 15432.
+- a separate Draft-owned `draft_work_photo_sources` table through forward migration0051;
+- explicit JPEG/PNG retention and a separate malware-scan/validation action;
+- a fixed subprocess image parser capped at 25 MiB, 50 megapixels and 12,000 pixels per side;
+- exact stored-file id/hash/size binding, current-scan/quarantine and same-Draft checks;
+- optional explicit photo selection on work records, capped at 20 distinct sources;
+- `CLASSIFIRE-DRAFT-WORK-RECORD-v2` for new records while preserving v1 reads/reports;
+- exact selected originals in `evidence/photos/` within the existing deterministic ZIP.
 
-The native browser helper still fails with `helper_unknown_error`, but installed headless
-Chrome has now passed the full rendered in-register create/preview/separate-confirm/restart/
-reopen/report gate on fresh disposable15433. Exact original ZIP bytes survived restart;
-unknowns, blank/shared targets and unresolved holds remained explicit. Quarantine, foreign
-source and stale Scope refusals caused no writes. The screens and HTML report were
-visually inspected. No application code or guard needed correction. Private harness failures and
-one extra synthetic Draft record remain preserved; the corrected negative checks passed.
-Evidence: `work-record-browser-acceptance-20260916`, including independent visual review.
-Source/native-photo intake, PDF/XLSX work reports,
-ProjectPackage work history and inspection/sign-off requirements remain later work.
+The boundary remains Draft and unverified. A photo is supporting evidence, not installation
+acceptance, inspection, compliance certification, technical approval, commercial authority or
+Human Release. Upload, scan, record confirmation, Scope save and package save are separate
+actions. No model, matching, costing or other capability runs implicitly.
+
+The final focused suite passed 83 cases using only disposable PostgreSQL15433. Full repository
+Ruff, targeted Mypy and targeted Bandit passed. The rendered installed-Chrome journey passed
+upload -> explicit synthetic scan -> select -> no-write preview -> separate confirm -> HTML/ZIP
+report -> fresh app/browser profile -> reopen. The reopened ZIP was byte-identical; it contained
+the exact original PNG and a v2 record. Protected canonical tables remained empty. Provider and
+implicit-capability calls were zero; synthetic scanner calls were one.
+
+Nine screenshots were captured, but the local image viewer and native browser helper both
+failed during sandbox initialization. Manual pixel inspection is therefore not claimed. The
+rendered DOM, native CDP events, screenshot capture, response bytes, database write log and
+fresh-process checks passed. Real scanner efficacy remains untested. Private evidence is under
+`work-photo-browser-acceptance-20260916`; preserve the two corrected harness failures recorded
+in its final receipt.
 
 ## Runtime and model boundary
 
-No activation occurred. Port 8820's last recorded operational receipt is rollback 6c1e2a4
-with chat disabled; this development did not refresh the live process or database.
-Both single model allowances are consumed. The 3911ca4 request passed transport/schema
-but failed semantic review. The owner separately approved the exact b2f8785 follow-up
-with "Approve exactly this one call" at 2026-09-16T11:14:36+00:00. Fresh source/runtime
-and all six CI bindings passed preflight. The existing guarded wrapper ran once and
-exited 1 with read_timeout after 30,108 ms, HTTP status absent and zero response bytes.
-No response exists for semantic assessment. Provider processing/cost is unknown; do not
-infer that the provider did no work. No retry or activation ran. Preserve the used-attempt
-marker and original approval bindings. The old unapproved d0a9f39 plan is superseded.
-Private evidence: `chat-grounding-diagnostic-b2f8785-20260916/execution-review-receipt.json`,
-`connection-result.json`, `connection-diagnostics.log` and `connection-attempt-used.json`.
-The reviewed plan and execution scripts remain unchanged. Do not reuse this allowance.
-Activation separately needs a complete candidate-specific backup/restore/restart/rollback
-plan and explicit approval. Do not transfer old approvals to a newer runtime.
+No activation occurred. Live PostgreSQL15432 was never used. Port8820's last recorded
+operational receipt remains rollback `6c1e2a4` with chat disabled; this work did not refresh
+that process or database.
 
-Preserve separate Scope and package confirmations, original Word acceptance evidence,
-unknown physical facts and independent capabilities. No downstream capability runs implicitly.
+Both prior single model allowances are consumed. The `3911ca4` request returned valid
+structured advice but failed semantic review. The owner separately approved exactly one
+`b2f8785` synthetic `gpt-5-mini` call. Its 14,299-byte request and six CI bindings passed
+the 67 offline safeguards, then the existing guarded wrapper timed out after 30,108 ms with
+no HTTP status or response bytes. No reply exists for semantic assessment; provider processing
+or cost remains unknown. Do not retry either request. No activation followed. Any further
+provider call needs a new exact plan and separate approval.
 
-## Local safety and next action
+## Local safety
 
-The conflicted root remains recovery evidence: 46 modified tracked files, 14 staged additions,
-4 DU conflicts; untracked inventory incomplete. Do not clean/reset/resolve it. The separate
-chat/pricing rehearsal worktree deliberately retains three staged overlay files; do not
-publish it. Exact publication branches are preserved. Private validation outputs are not
-public source and credentials/customer evidence must remain excluded.
+The conflicted `C:/CLASSIFIRE` root remains recovery evidence at `de0cc5a`: 46 modified
+tracked files, 14 staged additions, four DU conflicts, and an incomplete untracked inventory.
+Do not clean, reset, resolve, stage or publish it. Worktree-registry and status checks show it
+remains unchanged. Preserve unrelated branches and changes.
 
-The approved three-publication workflow is complete, including post-merge CI. The work-log
-browser gate now passes. Review/classify the exact diff and continue the already authorized
-publication with current-head CI/review checks; record merge and post-merge evidence.
-The approved b2f8785 diagnostic has already consumed its one attempt.
-Provider diagnostics and operational adoption remain separately governed actions.
+Private scripts, profiles, screenshots, originals, ZIPs, receipts, credentials and customer
+evidence stay outside Git. Tests must use fresh owned databases on PostgreSQL15433 with
+`CLASSIFIRE_POSTGRES_TEST_DESTRUCTIVE_OPT_IN=classifire-containment-test-drop-all`. Never
+use live15432.
 
+## Private evidence index
 
-## Next-session entry point (2026-09-16 handoff)
+All paths below are under `C:/CLASSIFIRE/.tmp/`.
 
-Use `C:/CLASSIFIRE/.tmp/draft-work-evidence-log-20260916`, branch
-`feat/draft-work-evidence-log-20260916`. Implementation is commit `653505b`; publication
-and diagnostic documentation is `d524f18`. Read the current branch HEAD for any later
-acceptance/documentation commit. This checkpoint precedes work-log publication; recheck
-current upstream/PR/CI and private publication receipts before resuming. Do not start from
-the conflicted root. Browser acceptance is complete. Preserve all existing branches.
+- `work-record-browser-acceptance-20260916`: #289 browser acceptance, publication, merge and
+  post-merge evidence; its latest root comparison passed.
+- `work-record-validation-20260916`: the original 119-case work-log validation, four inspected
+  ZIPs and 333-file wheel receipt.
+- `work-photo-browser-acceptance-20260916`: final v2 direct-photo browser acceptance, exact ZIP,
+  source hashes, database write log, screenshots and known visual-inspection limitation.
+- `work-photo-browser-acceptance-pre-v2-20260916`: superseded pre-v2 acceptance retained as
+  history; do not substitute it for the final receipt.
+- `chat-grounding-diagnostic-b2f8785-20260916`: exact approval, 67-case offline receipt and
+  consumed timeout evidence. It grants no retry or activation.
+- `diagnostic-source-b2f8785-20260916`: clean detached diagnostic source, deliberately without
+  the work-log/photo migrations.
 
-GitHub main, the three merged PRs and all six completed successful runs were freshly
-rechecked on continuation. The earlier 67-test offline receipt was verified. The separate
-one-call approval then authorized only the exact b2f8785 diagnostic described above; it
-has now timed out and consumed its allowance. No live app/database action or activation ran.
+## Resume order and remaining limits
 
-### Private evidence index
+1. Read this worktree's AGENTS, PROJECT_STATE, roadmap and work-record contract. Verify branch,
+   diff, receipts and root preservation before acting.
+2. Do not repeat the final 83-case or rendered-browser journeys unless application source
+   changes. If source changes, regenerate the bound evidence.
+3. Finish package/diff/secret checks, commit only explicit candidate files, push normally,
+   open a PR to main, and merge only after exact-head CI/review checks succeed. Observe
+   post-merge CI without restarting it.
+4. Do not activate or migrate an operational database. Any adoption needs a current
+   candidate-specific backup, disposable restore/migration, restart and compatible rollback
+   plan plus separate approval. Migrations0050/0051 refuse destructive downgrade.
+5. Do not retry the consumed provider diagnostics. Preserve unknown physical facts, separate
+   human confirmations and independent capability boundaries.
 
-All following paths are under `C:/CLASSIFIRE/.tmp/`; keep them local and out of public Git.
-
-- `continuation-blockers-20260916/publication-completion.json`: three exact publications,
-  merge commits and all six CI run identities. The individual merge-gate receipts record
-  the review/rules checks performed at merge. Older pending observations are superseded.
-- `work-record-validation-20260916/validation-completion.json`: 119 distinct affected tests
-  and retained failed/corrected attempts; JUnit files, `archive-inspection.json` and
-  `distribution.json` contain the test, four ZIP and 333-file wheel evidence.
-- `work-record-validation-20260916/commit-receipt.json`: 42-file implementation checkpoint;
-  `handoff-commit-receipt.json`: d524f18 documentation checkpoint;
-  `final-local-state.json`: preserved root and branch/upstream inventory.
-- `work-record-browser-acceptance-20260916`: rendered acceptance, fresh-process restart,
-  exact ZIP/HTML, refusal snapshots, retained harness errors and root visual review. The
-  publication audit verifies the original 119 affected checks and completed PRs #286-#288.
-  Read later publication gate/merge receipts for the current branch and CI state.
-- `chat-grounding-diagnostic-b2f8785-20260916`: exact reviewed plan/preparation, 67-case
-  offline receipt, approval, fresh preflight and the consumed timeout receipts above.
-  These are retained evidence, not permission for another invocation.
-- `diagnostic-source-b2f8785-20260916`: clean detached b2f8785 source for that model test.
-  It deliberately excludes the work-log change and migration 0050.
-
-### Resume order and limits
-
-1. Read this worktree's AGENTS, PROJECT_STATE, roadmap and work-record contract. Inspect
-   branch/diff/worktree registry and private receipts again; preserve all unrelated changes.
-2. Read the completed `work-record-browser-acceptance-20260916` receipts and screenshots.
-   Do not repeat the passed browser journey unless source changes or new evidence require it.
-   The installed headless-Chrome path resolved the missing rendered proof; the native helper
-   failure remains an environment limitation, not a pass. Synthetic scanner results do not
-   establish production malware efficacy.
-3. Fix only evidenced defects. Use this checkout's PYTHONPATH, fresh basetemp and
-   `-p no:cacheprovider`. Database rehearsals stay on disposable 15433 with fresh owned
-   schemas. Never use live 15432. Then review explicit files/commit range and continue the
-   authorized publication workflow only after the UI gate; observe CI and required reviews,
-   merge on success and observe post-merge CI. Do not restart a job because observation times out.
-4. Do not retry the consumed b2f8785 or 3911ca4 diagnostic. Semantic acceptance of the
-   corrected b2f8785 context is unresolved because no reply arrived. Any further provider
-   test needs a separately reviewable exact plan and new owner approval.
-5. Any activation needs a new candidate-specific backup, disposable restore/migration,
-   restart and rollback plan plus separate approval. Migration 0050 refuses destructive
-   downgrade to preserve work-record history; plan rollback compatibility explicitly.
-
-For offline checks, `C:/Python312-x64/python.exe` has the validation tools. It lacks some
-optional app/build dependencies; the proven complete runtime is
-`C:/CLASSIFIRE/.tmp/combined-release-25dd47d-20260915/clean-runtime/Scripts/python.exe`,
-and existing build tools are under `publication-integration-validation-20260915/build-tools`.
-Select the needed environment explicitly, clear inherited application/provider/database
-settings, and run from a private directory without .env before importing the app. Never print
-or copy the secured chat configuration. Do not blindly reuse old runner output/schema names.
-
-A local work log records unverified claims, not installation acceptance or sign-off. Direct
-site-photo intake, work-report PDF/XLSX, package work history, representative accuracy and
-production exit gates remain unfinished. Live 8820's last recorded rollback state is not a
-fresh runtime observation and cannot demonstrate this new work.
+PDF/XLSX work reports, ProjectPackage work history, real scanner efficacy,
+inspection/sign-off semantics, representative accuracy, operational activation and canonical
+Phase8-16 exits remain unfinished.

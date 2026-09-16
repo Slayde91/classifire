@@ -456,13 +456,19 @@ and operational acceptance remain. Existing connector transport
 acceptance, independent technical/pricing work and production gates remain tracked
 without forcing users through downstream capabilities.
 
-## Draft work-evidence capture (local candidate)
+## Draft work-evidence capture
 
 The approved first close-out slice extends the existing register/reporting capability,
-using immutable Draft assertions and selected saved Scope/evidence dependencies. It is
-not installation acceptance, inspection, compliance certification or Human Release.
-The two Draft tables use forward migration0050 and the existing database, audit, permission,
-source-retention and scan controls. Explicit preview/save/reopen/report actions do not run
-matching, costing or AI. Source changes remain stale dependencies rather than silently
-retargeting work history. See [the work-record contract](./DRAFT_WORK_RECORDS.md) for
-architecture consequences, migration, output limits and the completed synthetic browser acceptance.
+using immutable Draft assertions and selected saved Scope/evidence dependencies. PR #289
+merged that work-log foundation. The current direct-photo extension retains separately
+uploaded JPEG/PNG evidence as Draft-owned sources, requires an explicit scan, and binds a
+confirmed v2 record to exact photo bytes and decoded dimensions. Existing v1 records remain
+readable through their versioned renderer. None of this is installation acceptance,
+inspection, compliance certification or Human Release.
+
+The two work-record tables use forward migration0050; migration0051 adds the separate photo
+source table. Both reuse the existing database, audit, permission, retained-storage and scan
+controls. Explicit upload/scan/preview/save/reopen/report actions do not run matching, costing
+or AI. Source changes remain stale dependencies rather than silently retargeting work history.
+See [the work-record contract](./DRAFT_WORK_RECORDS.md) for architecture consequences,
+migrations, output limits and the completed synthetic browser acceptances.
