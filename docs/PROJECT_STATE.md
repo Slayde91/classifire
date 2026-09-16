@@ -1,14 +1,14 @@
 # CLASSIFIRE Project State
 
-Reconciled 2026-09-16 against merged PRs #278-#289, current source, retained checks and
-rendered work-log/direct-photo acceptance. The verified shared base is
-`1d692556d4c342d363c273b084f5ad736e5dd4df`. This checkpoint grants no deployment
+Reconciled 2026-09-17 against merged PRs #278-#290, current source, retained checks and
+rendered work-log/direct-photo acceptance. The verified runtime implementation baseline is
+`009cbc9766c4990b937acb2ca4720a17628e927d`. This checkpoint grants no deployment
 authority; the full production objective remains incomplete.
 [Architecture](./CLASSIFIRE_ARCHITECTURE.md) defines composition and authority;
 [roadmap](./CLASSIFIRE_ROADMAP.md) defines dependencies and exits;
 [handoff](./SESSION_HANDOFF.md) gives the exact resume task.
 
-## Latest publication and local direct-photo checkpoint
+## Latest work-log and direct-photo publication
 
 The owner approved the exact three precursor publications. PR #287 (`7eae6f5`) merged as
 `190dc17bd440eb77e1be9f27cbc24ff786fbb355`; #286 (`d0a9f39`) as
@@ -26,15 +26,19 @@ rendered-browser gate, PR #289 exact-head run `35090914391` and post-merge run `
 It merged as `1d692556d4c342d363c273b084f5ad736e5dd4df`; its separate branch and receipts remain
 preserved. No CI job was restarted and no activation occurred.
 
-The current isolated candidate `feat/draft-work-photos-20260916` is based on that merge. It
-adds separately retained and explicitly scanned JPEG/PNG sources, work-record schema v2,
+PR #290 merged the direct-photo addition normally as `009cbc9766c4990b937acb2ca4720a17628e927d`.
+It adds separately retained and explicitly scanned JPEG/PNG sources, work-record schema v2,
 v1 read/report compatibility, exact-photo HTML/ZIP output and forward migration0051. Its
-83 focused cases passed on disposable PostgreSQL15433, along with full Ruff and targeted
-Mypy/Bandit. Installed Chrome passed upload, scan, select, no-write preview, separate
+83 focused cases and a 114-case expanded changed set passed on disposable PostgreSQL15433,
+along with full Ruff and targeted Mypy/Bandit. Installed Chrome passed upload, scan, select,
+no-write preview, separate
 confirmation, exact report/ZIP, fresh-process/profile reopen and byte-identical ZIP. Protected
 canonical tables remained empty and no model or implicit capability ran. Nine screenshots
 were captured, but sandbox image-viewer and native-helper initialization failed, so manual
 pixel inspection is not claimed. See [the contract](./DRAFT_WORK_RECORDS.md).
+Exact-head run `35104192275` passed 2,787 tests with 9 skips, full
+Ruff/build/Mypy/Bandit/Alembic checks and the separate 9-case Windows installer job.
+Post-merge run `35108706394` also passed all configured jobs at that exact merge.
 
 Inspection/sign-off, real scanner efficacy, representative accuracy and canonical production
 exits remain open. No customer processing, OAuth/tunnel change or live database action ran.
@@ -60,14 +64,14 @@ separate; no capability runs merely because an upstream action finished.
 
 | Boundary | Verified position |
 | --- | --- |
-| Implemented code baseline | PRs #286-#289 are merged on `1d69255`: saved Scope chat links, decimal precision, due single-row worker claims and the Draft work log. Direct-photo support is a validated local candidate subject to its own publication gate |
+| Implemented code baseline | PRs #286-#290 are merged through `009cbc9`: saved Scope chat links, decimal precision, due single-row worker claims, the Draft work log and governed direct-photo evidence |
 | Prepared runtime | Isolated `9ceffc6` passed offline install, disposable 15433 migration/HTTP and fingerprint checks. It is not activated. The earlier frozen `8b4b79f` bundle remains preserved |
 | PR #273 CI | PR run `34862079545` and post-merge `34869099059` succeeded; 2,647 tests |
 | PR #274 CI | PR run `34869742499` and post-merge `34873941741` succeeded; post-merge passed 2,658 tests |
 | PR #275 CI | PR run `34879918621` and post-merge `34883667900` succeeded; post-merge passed 2,658 tests |
 | PR #276 CI | PR run `34890268945` and post-merge `34894040919` succeeded; post-merge passed 2,667 tests in 1,987.85 seconds, plus style/build/type/security/migration checks |
 | PR #277 CI | PR run `34955271348` succeeded: 2,673 tests in 2,033.51 seconds, plus style/build/type/security/migration checks. Post-merge run `34958743322` subsequently completed successfully; do not restart it |
-| Publication | PRs #273-#289 are merged after successful current-head checks and observed review requirements. #283 retained its original commit and resolved one guide conflict in a normal merge commit. No existing job was restarted or branch deleted |
+| Publication | PRs #273-#290 are merged after successful current-head checks and observed review requirements. #283 retained its original commit and resolved one guide conflict in a normal merge commit. No existing job was restarted or branch deleted |
 | Operational app | Last recorded port 8820 process was PID24324; the last approved receipt is rollback `6c1e2a4` with chat disabled. This publication work did not refresh live runtime state or execute the prepared activation |
 | Prepared activation | New `9ceffc6` operational bundle is incomplete, disabled and unapproved. The `3911ca4` diagnostic failed semantic acceptance; the separately approved `b2f8785` request timed out without a reply. Both allowances are consumed. No activation followed |
 
@@ -525,12 +529,11 @@ historical byte/recovery evidence, or change any production-phase status.
 
 ## Local change classification
 
-The current local candidate is `feat/draft-work-photos-20260916`, based on merged
-`1d69255`. It contains the separate Draft photo source service/UI, fixed JPEG/PNG parser,
-v2/v1-compatible work-record integration, exact-photo ZIP/report output, additive migration
-0051, migration-head checks, tests and documentation. The work-log foundation and prior
-saved-link, decimal-precision and worker corrections are already merged through PRs #286-#289;
-they are not pending publications. Preserve their branches and receipts. The earlier
+The direct-photo runtime branch is merged through PR #290. The current local change is the
+docs-only `docs/post-pr290-state-20260917` reconciliation, based on implementation merge
+`009cbc9`; it must not be treated as activation or a runtime change. The work-log, photo,
+saved-link, decimal-precision and worker branches are not pending publications. Preserve their
+branches and receipts. The earlier
 four-document `5eb7aa7` is superseded and remains unpublished in its own worktree. The
 five/six-change staged rehearsal trees are retained.
 
@@ -548,10 +551,10 @@ is incomplete. No root changes were staged, resolved, reset or published. See
 
 ## Recommended Next Actions
 
-1. **Complete or verify the direct-photo publication.** Its bounded browser and focused
-   validation gates are accepted. Review the exact candidate diff, publish only this branch,
-   merge only after current-head CI/review checks succeed, and record post-merge CI. Do not
-   repeat the completed work-log journey or PRs #286-#289.
+1. **Advance the next bounded work-record output slice.** Reuse the existing paired-report
+   services to create explicit PDF/XLSX output only from a saved immutable work-record revision
+   and its selected exact evidence. Preserve v1/v2 rendering, unknowns, separate confirmation,
+   and the boundary that a report grants no inspection/sign-off or Human Release authority.
 2. **Keep diagnostic consumption explicit.** The separately approved `b2f8785`
    request timed out without a reply; its allowance is consumed. Do not retry either
    it or the earlier `3911ca4` request. Any further provider test needs its own exact

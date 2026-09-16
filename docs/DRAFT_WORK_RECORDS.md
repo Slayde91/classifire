@@ -96,8 +96,9 @@ gate, not real scanner efficacy, representative accuracy, activation or producti
 exits. PR #289 merged it as `1d692556d4c342d363c273b084f5ad736e5dd4df` after PR run
 `35090914391`; post-merge run `35094148466` also succeeded.
 
-The local direct-photo candidate passed 83 focused photo/work-record/migration cases on
-disposable PostgreSQL15433, full repository Ruff, targeted Mypy and targeted Bandit. A second
+The direct-photo addition passed 83 focused photo/work-record/migration cases on disposable
+PostgreSQL15433, full repository Ruff, targeted Mypy and targeted Bandit. The expanded changed
+set covered 114 unique cases after correcting two migration0051 history expectations. A second
 rendered Chrome journey passed upload, explicit synthetic scan, select, no-write preview,
 separate confirmation, exact-photo HTML/ZIP output and fresh-process/profile reopen. The ZIP
 was byte-identical after restart, record schema was v2, protected canonical tables remained
@@ -106,3 +107,8 @@ viewer and native browser-helper initialization both failed, so manual pixel ins
 not claimed. Private evidence is in `work-photo-browser-acceptance-20260916`. Real scanner
 efficacy, PDF/XLSX work reports, package history, inspection/sign-off, activation and
 production Phase 12-14 exits remain open.
+
+PR #290 exact-head run `35104192275` then passed 2,787 tests with 9 skips, full
+Ruff/build/Mypy/Bandit/Alembic checks and the separate 9-case Windows installer job. It merged
+normally as `009cbc9766c4990b937acb2ca4720a17628e927d`. Exact post-merge run
+`35108706394` also passed all configured jobs at that merge.
