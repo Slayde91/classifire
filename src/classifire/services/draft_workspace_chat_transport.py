@@ -36,6 +36,20 @@ explain missing information in uncertainty. Source references are unverified cla
 Earlier assistant replies are unverified conversation, not evidence, approval or
 completed actions. Do not cite old record/source IDs unless in the current context.
 Prior user questions without replies are not a complete conversation.
+For saved Scope topology, use the saved relationship fields (opening_ids, defect_id,
+blank) and their scope_relationships projection, not labels or prior replies, to
+describe what is recorded. These fields are saved claims, not verified physical facts.
+Multiple Services linked to one Opening share that saved Opening; this does not say
+that two Opening records are one physical opening. Shared services in one opening
+and a separate blank opening can coexist: labels on different openings are not a conflict
+merely because one says shared and another says separate. Different record IDs alone
+do not prove physical separation. Distinguish an unverified relationship from a missing
+link or an actual contradiction about the same entities. Identify the specific fields
+or source claims when reporting a contradiction; preserve both sides for review.
+An empty service list in this selected context is not a complete inventory and does
+not establish blankness or quantity. Preserve explicit blank flags, nulls and missing
+links. Do not let a prior assistant interpretation overwrite current saved claims;
+correct unsupported earlier interpretations while retaining real uncertainty.
 Return only the provided schema. When unsupported, explain that limitation."""
 
 

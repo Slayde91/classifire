@@ -107,6 +107,37 @@ def parse(value: Any) -> ChatRequest:
         raise DraftScopeError("CHAT_INPUT_INVALID", 422) from None
 
 
+def _scope_relationships(records: list[dict[str, Any]]) -> dict[str, Any]:
+    """Project only saved links already disclosed, without interpreting labels."""
+    services = sorted(
+        (row for row in records if row["kind"] == "services"), key=lambda row: row["id"]
+    )
+    return {
+        "basis": "Saved relationship fields only; not physical verification or approval.",
+        "coverage": (
+            "Only records in this preview; not a complete inventory. An empty visible "
+            "service list does not establish a blank opening or a physical quantity."
+        ),
+        "openings": [
+            {
+                "opening_id": opening["id"],
+                "blank": opening["blank"],
+                "defect_id": opening["defect_id"],
+                "service_ids_in_context": [
+                    service["id"]
+                    for service in services
+                    if opening["id"] in service["opening_ids"]
+                ],
+            }
+            for opening in sorted(
+                (row for row in records if row["kind"] == "openings"),
+                key=lambda row: row["id"],
+            )
+        ],
+        "unlinked_service_ids": [row["id"] for row in services if not row["opening_ids"]],
+    }
+
+
 def selected_context(
     db: Session, actor: User, draft_id: str, request: ChatRequest
 ) -> dict[str, Any]:
@@ -189,6 +220,7 @@ def selected_context(
             "Unlinked records and unknown values remain unresolved; no hierarchy is invented.",
         ],
     }
+    context["scope_relationships"] = _scope_relationships(context["records"])
     if len(json.dumps(context, ensure_ascii=False).encode("utf-8")) > MAX_CONTEXT_BYTES:
         raise DraftScopeError("CHAT_CONTEXT_TOO_LARGE", 422)
     return context
@@ -693,6 +725,7 @@ def workspace_context(
             )
             records.extend(saved["records"])
             refs.extend(saved["source_references"])
+            context["scope_relationships"] = saved["scope_relationships"]
         chosen_reviews = [
             draft_system_matches.read_match_revision(
                 db, actor, draft.id, item.match_id, item.match_revision
